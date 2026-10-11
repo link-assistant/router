@@ -34,4 +34,7 @@ coordinates, including inline and external modules. The following run has
 negative assumption is invalid because the checked custom type is distinct
 from the standard owner. A typed positive now checks that custom layout,
 while an explicitly unsupported unsafe expression checks exact original
-inline/external parser coordinates. The complete scope awaits rerun.
+inline/external parser coordinates. Both engines then pass 246 of 247 cases;
+the new malformed custom-field assertion expects the existing TypeError value
+domain guard, separately from arithmetic RangeError overflow. Its exact
+message and full domain check remain required. The scope awaits final rerun.

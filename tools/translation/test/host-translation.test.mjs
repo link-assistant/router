@@ -39,7 +39,7 @@ test('a nested source module called std retains its own layout without standard 
  assert.deepEqual(result.meta.refused,[]);
  await verifyTypedTargets(result,api=>{
   const value=tagged('Duration',{secs:0n,nanos:4294967295n});assert.equal(api['child.identity'](value),value);
-  assert.throws(()=>api['child.identity'](tagged('Duration',{secs:0n,nanos:4294967296n})),RangeError);
+  assert.throws(()=>api['child.identity'](tagged('Duration',{secs:0n,nanos:4294967296n})),{name:'TypeError',message:/Rust value domain \$\.nanos: machine-integer value out of range/});
  });
 });
 test('registered JSON refinements validate parameters even when no JSON operation is called',async()=>{
