@@ -4,6 +4,8 @@ import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_va
 
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { rust_f64_is_nan as ml_host_rust_f64_is_nan, rust_f64_is_finite as ml_host_rust_f64_is_finite, rust_f64_floor as ml_host_rust_f64_floor, rust_f64_is_sign_negative as ml_host_rust_f64_is_sign_negative, rust_f64_is_sign_positive as ml_host_rust_f64_is_sign_positive } from "../runtime/float-runtime.mjs";
+
 import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs, std_time_duration_from_millis as ml_host_std_time_duration_from_millis, std_time_duration_min as ml_host_std_time_duration_min } from "../runtime/time-runtime.mjs";
 
 import { serde_json_value_get_string as ml_host_serde_json_value_get_string, serde_json_value_pointer as ml_host_serde_json_value_pointer, serde_json_value_as_str as ml_host_serde_json_value_as_str, serde_json_value_as_bool as ml_host_serde_json_value_as_bool, serde_json_value_as_u64 as ml_host_serde_json_value_as_u64, serde_json_value_as_i64 as ml_host_serde_json_value_as_i64, serde_json_value_as_array as ml_host_serde_json_value_as_array } from "../runtime/json-runtime.mjs";
@@ -15,6 +17,8 @@ import { createIntegerRuntime as ml_create_integer_runtime } from "../runtime/in
 import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from "../runtime/fixed-integer-runtime.mjs";
 
 import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
+
+import { encodeUtf16 as ml_encode_utf16, fixedToF64 as ml_fixed_to_f64 } from "../runtime/utf16-fixed-f64-runtime.mjs";
 
 import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
 
@@ -46,15 +50,17 @@ import { assertImmutableIterator as ml_assert_immutable_iterator } from "../runt
 
 function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }
 
+function ml_router_find(values, predicate) { for (const value of values) if (predicate(value)) return Object.freeze({ $: "Some", field0: value }); return Object.freeze({ $: "None" }); }
+
 function ml_router_find_map(values, transform) { for (const value of values) { const result = transform(value); if (result.$ === "Some") return result; } return Object.freeze({ $: "None" }); }
 
 function* ml_router_filter_map(values, transform) { for (const value of values) { const result = transform(value); if (result.$ === "Some") yield result.field0; } }
 
 function* ml_router_flatten(values) { for (const value of values) { ml_assert_immutable_iterator(value); yield* Array.prototype.values.call(value); } }
 
-function ml_router_find(values, predicate) { for (const value of values) if (predicate(value)) return Object.freeze({ $: "Some", field0: value }); return Object.freeze({ $: "None" }); }
-
 function ml_router_any(values, predicate) { for (const value of values) if (predicate(value)) return true; return false; }
+
+function ml_router_count(values) { let count = 0n; for (const value of values) { void value; count += 1n; } return count; }
 
 function* ml_router_filter(values, predicate) { for (const value of values) if (predicate(value)) yield value; }
 
@@ -74,6 +80,14 @@ function ml_router_try(value, option) {
   throw new TypeError('checked Rust ? operand does not match its standard Option/Result mode');
 }
 function ml_router_propagated(error) { return error && error[ml_router_try_return] === true; }
+
+const ml_host_value_schema_61e10a0c67c79dc73016f31c83c77c75ee4970ada81bf1813ab6f5addcbaa315 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573"}}]}]},"rp_526f757465724f7074696f6e5f355f666c6f6174":{"kind":"data","name":"rp_526f757465724f7074696f6e5f355f666c6f6174","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573","ctors":[{"name":"Allowed","fields":[]},{"name":"AllowedWarning","fields":[]},{"name":"Rejected","fields":[]}]},"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974","ctors":[{"name":"WindowLimit","fields":[{"name":"name","type":{"kind":"string"}},{"name":"status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733"}},{"name":"reset_unix","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"utilization","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f355f666c6f6174"}}]}]}}};
+
+const ml_host_value_refinements_61e10a0c67c79dc73016f31c83c77c75ee4970ada81bf1813ab6f5addcbaa315 = new Map([]);
+
+const ml_host_value_schema_56a2654796c9c3193b7f8c1a541fde90c2dafdd9ae197d9002b08b7a5690115f = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573"}}]}]},"rp_526f757465724f7074696f6e5f355f666c6f6174":{"kind":"data","name":"rp_526f757465724f7074696f6e5f355f666c6f6174","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e4c696d6974537461747573","ctors":[{"name":"Allowed","fields":[]},{"name":"AllowedWarning","fields":[]},{"name":"Rejected","fields":[]}]},"rp_6163636f756e745f6c696d6974732e556e69666965644c696d697473":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e556e69666965644c696d697473","ctors":[{"name":"UnifiedLimits","fields":[{"name":"windows","type":{"kind":"array","element":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974"}}},{"name":"representative_claim","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974":{"kind":"data","name":"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974","ctors":[{"name":"WindowLimit","fields":[{"name":"name","type":{"kind":"string"}},{"name":"status","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35375f6e616d65645f363136333633366637353665373435663663363936643639373437335f34633639366436393734353337343631373437353733"}},{"name":"reset_unix","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"utilization","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f355f666c6f6174"}}]}]}}};
+
+const ml_host_value_refinements_56a2654796c9c3193b7f8c1a541fde90c2dafdd9ae197d9002b08b7a5690115f = new Map([]);
 
 const ml_host_value_schema_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb = {"schemaVersion":1,"types":{"rp_6163636f756e74732e43726564656e7469616c5374617465":{"kind":"data","name":"rp_6163636f756e74732e43726564656e7469616c5374617465","ctors":[{"name":"Usable","fields":[]},{"name":"Refreshable","fields":[]},{"name":"Rejected","fields":[]},{"name":"Expired","fields":[]},{"name":"Unusable","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
 
@@ -103,9 +117,21 @@ const ml_host_value_schema_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f
 
 const ml_host_value_refinements_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 = new Map([]);
 
+const ml_host_value_schema_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f693634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733":{"kind":"data","name":"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573"}}]}]},"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663":{"kind":"data","name":"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c"}}}]}]},"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573","ctors":[{"name":"ClaudeModelCapabilities","fields":[{"name":"behaves_as","type":{"kind":"string"}},{"name":"source","type":{"kind":"string"}}]}]},"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573","ctors":[{"name":"RouterClientCapabilities","fields":[{"name":"claude","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733"}}]}]},"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c","ctors":[{"name":"RouterModel","fields":[{"name":"id","type":{"kind":"string"}},{"name":"owned_by","type":{"kind":"string"}},{"name":"selector_kind","type":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64"}},{"name":"capability_provenance","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}},{"name":"default_reasoning_level","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"provider_created_at","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}},{"name":"supported_reasoning_levels","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663"}},{"name":"client_capabilities","type":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573"}},{"name":"router_unavailable_reason","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c","ctors":[{"name":"RouterReasoningLevel","fields":[{"name":"effort","type":{"kind":"string"}},{"name":"description","type":{"kind":"string"}}]}]},"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64","ctors":[{"name":"Concrete","fields":[]},{"name":"ProviderDynamicAlias","fields":[]},{"name":"OperatorAlias","fields":[]},{"name":"Unknown","fields":[]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
+
+const ml_host_value_refinements_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
+
 const ml_host_value_schema_20ecc2a291bf2adeff86eca5311a94df9350e55538aaf9c9333b1dc4a9ec4ffb = {"schemaVersion":1,"types":{"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e744964656e74697479":{"kind":"data","name":"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e744964656e74697479","ctors":[{"name":"EnrollmentIdentity","fields":[{"name":"principal_id","type":{"kind":"string"}},{"name":"account_name","type":{"kind":"string"}},{"name":"server_id","type":{"kind":"string"}},{"name":"environment_id","type":{"kind":"string"}},{"name":"installation_id","type":{"kind":"string"}}]}]},"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e745265636f7264":{"kind":"data","name":"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e745265636f7264","ctors":[{"name":"EnrollmentRecord","fields":[{"name":"identity","type":{"kind":"data","name":"rp_636f6465785f72656d6f74655f636f6e74726f6c2e456e726f6c6c6d656e744964656e74697479"}},{"name":"upstream_token","type":{"kind":"string"}},{"name":"upstream_base_url","type":{"kind":"string"}},{"name":"expires_at","type":{"kind":"fixed","bits":64,"signed":true}}]}]}}};
 
 const ml_host_value_refinements_20ecc2a291bf2adeff86eca5311a94df9350e55538aaf9c9333b1dc4a9ec4ffb = new Map([]);
+
+const ml_host_value_schema_0c0142cc20c6cfece7a727955fc2509a046aac5620777d9d2fa77b1d206c6c98 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f693634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"rp_526f757465724f7074696f6e5f335f753634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]},"rp_6d6f64656c5f636f6e74726163742e4d6f64656c416363657373506f6c696379":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c416363657373506f6c696379","ctors":[{"name":"ModelAccessPolicy","fields":[{"name":"allowed_models","type":{"kind":"array","element":{"kind":"string"}}},{"name":"allow_substitution","type":{"kind":"bool"}},{"name":"substitution_source","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_73746f726167652e546f6b656e5265636f7264":{"kind":"data","name":"rp_73746f726167652e546f6b656e5265636f7264","ctors":[{"name":"TokenRecord","fields":[{"name":"id","type":{"kind":"string"}},{"name":"label","type":{"kind":"string"}},{"name":"issued_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"expires_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"revoked","type":{"kind":"bool"}},{"name":"ephemeral","type":{"kind":"bool"}},{"name":"run_lease_expires_at","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}},{"name":"sliding_window_seconds","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}},{"name":"account","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"max_requests","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"used_requests","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"max_tokens","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"used_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"reserved_tokens","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"rate_limit_per_minute","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}},{"name":"rate_window_started_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"rate_window_requests","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"scope","type":{"kind":"string"}},{"name":"github_repos","type":{"kind":"array","element":{"kind":"string"}}},{"name":"client_kind","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"principal_id","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"model_policy","type":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c416363657373506f6c696379"}}]}]}}};
+
+const ml_host_value_refinements_0c0142cc20c6cfece7a727955fc2509a046aac5620777d9d2fa77b1d206c6c98 = new Map([]);
+
+const ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = {"schemaVersion":1,"types":{}};
+
+const ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = new Map([]);
 
 const ml_host_value_schema_8174777fda70e9a8327ecb57b516ca791202637c71f3c24e9fab5964be02934c = {"schemaVersion":1,"types":{"rp_6769745f70726f78792e526566557064617465":{"kind":"data","name":"rp_6769745f70726f78792e526566557064617465","ctors":[{"name":"RefUpdate","fields":[{"name":"old","type":{"kind":"string"}},{"name":"new","type":{"kind":"string"}},{"name":"name","type":{"kind":"string"}}]}]}}};
 
@@ -142,6 +168,10 @@ const ml_host_value_refinements_a04caa44f88bbe206ff76b6b1508238ee6d35e913cffa290
 const ml_host_value_schema_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_6163636f756e74732e526f7574696e67436f6e74657874":{"kind":"data","name":"rp_6163636f756e74732e526f7574696e67436f6e74657874","ctors":[{"name":"RoutingContext","fields":[{"name":"session_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"parent_session_key","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"pinned_account","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"model","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"exclude","type":{"kind":"array","element":{"kind":"string"}}}]}]}}};
 
 const ml_host_value_refinements_543e2df02b1137da2b314f62aefdaa02f0c8a6719b40f81bb8db8ec99e767aa9 = new Map([]);
+
+const ml_host_value_schema_3e4062af6f2b6a1a6ad0be6a65529454ad45e240750c324394870c395e4e00bc = {"schemaVersion":1,"types":{"rp_70726f76696465725f616363657074616e63652e50726f766964657250726f766973696f6e4661696c7572654b696e64":{"kind":"data","name":"rp_70726f76696465725f616363657074616e63652e50726f766964657250726f766973696f6e4661696c7572654b696e64","ctors":[{"name":"InvalidCandidate","fields":[]},{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unverified","fields":[]},{"name":"PersistenceUncertain","fields":[]}]}}};
+
+const ml_host_value_refinements_3e4062af6f2b6a1a6ad0be6a65529454ad45e240750c324394870c395e4e00bc = new Map([]);
 
 const ml_host_value_schema_618c1d88e4b015cd71dde84d91243f7aab00f81eac1950c714e807cd556b06a5 = {"schemaVersion":1,"types":{"rp_726566726573682e496d706f7274526566726573684661696c7572654b696e64":{"kind":"data","name":"rp_726566726573682e496d706f7274526566726573684661696c7572654b696e64","ctors":[{"name":"NotAttempted","fields":[]},{"name":"ExchangeRejected","fields":[]},{"name":"ExchangeUncertain","fields":[]},{"name":"PersistenceUncertain","fields":[]}]}}};
 
@@ -233,6 +263,99 @@ function rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553() {
   return ml_copy_fixed_array(["opus", "sonnet", "haiku"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
 }
 
+function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f363337323631373436353265363136333633366637353665373435663663363936643639373437333265346336393664363937343533373436313734373537335f37303631373237333635(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = ((value).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+  if ((ml_s1 === "allowed")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Allowed' }) });
+  } else {
+    if ((ml_s1 === "allowed_warning")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'AllowedWarning' }) });
+    } else {
+      if ((ml_s1 === "rejected")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Rejected' }) });
+      } else {
+        return Object.freeze({ $: 'None' });
+      }
+    }
+  }
+}
+
+function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f363337323631373436353265363136333633366637353665373435663663363936643639373437333265353736393665363436663737346336393664363937345f366436663634363536633566363636313664363936633739(router_self) {
+  ml_assert_immutable_iterator(router_self);
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6163636f756e745f6c696d6974732e57696e646f774c696d6974"}, ml_host_value_schema_61e10a0c67c79dc73016f31c83c77c75ee4970ada81bf1813ab6f5addcbaa315, { refinements: ml_host_value_refinements_61e10a0c67c79dc73016f31c83c77c75ee4970ada81bf1813ab6f5addcbaa315 });
+  return ml_router_find(ml_router_iter(ml_copy_fixed_array(rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553(), {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}}), false), (family) => { const ml_text_1 = (router_self).name;
+  const ml_text_2 = family;
+  return ml_text_1.includes(ml_text_2); });
+}
+
+function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f36333732363137343635326536313633363336663735366537343566366336393664363937343733326535353665363936363639363536343463363936643639373437335f36393733356636353664373037343739(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6163636f756e745f6c696d6974732e556e69666965644c696d697473"}, ml_host_value_schema_56a2654796c9c3193b7f8c1a541fde90c2dafdd9ae197d9002b08b7a5690115f, { refinements: ml_host_value_refinements_56a2654796c9c3193b7f8c1a541fde90c2dafdd9ae197d9002b08b7a5690115f });
+  return (((router_self).windows.length === 0) && ((router_self).representative_claim.$ === 'None'));
+}
+
+function rp_6163636f756e74732e6d6c5f696d706c5f363337323631373436353265363136333633366637353665373437333265353336353663363536333734363936663665353337343732363137343635363737395f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = ((s).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).toLowerCase();
+  if ((ml_s1 === "weighted-round-robin")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'WeightedRoundRobin' }) });
+  } else {
+    if ((ml_s1 === "weighted_round_robin")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'WeightedRoundRobin' }) });
+    } else {
+      if ((ml_s1 === "round-robin")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RoundRobin' }) });
+      } else {
+        if ((ml_s1 === "roundrobin")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RoundRobin' }) });
+        } else {
+          if ((ml_s1 === "rr")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RoundRobin' }) });
+          } else {
+            if ((ml_s1 === "priority")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Priority' }) });
+            } else {
+              if ((ml_s1 === "prio")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Priority' }) });
+              } else {
+                if ((ml_s1 === "fill-first")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Priority' }) });
+                } else {
+                  if ((ml_s1 === "fillfirst")) {
+                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Priority' }) });
+                  } else {
+                    if ((ml_s1 === "least-used")) {
+                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                    } else {
+                      if ((ml_s1 === "leastused")) {
+                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                      } else {
+                        if ((ml_s1 === "least-utilized")) {
+                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                        } else {
+                          if ((ml_s1 === "quota-first")) {
+                            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                          } else {
+                            if ((ml_s1 === "lru")) {
+                              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'LeastUsed' }) });
+                            } else {
+                              return Object.freeze({ $: 'None' });
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 function rp_6163636f756e74732e6d6c5f696d706c5f3633373236313734363532653631363336333666373536653734373332653433373236353634363536653734363936313663353337343631373436355f36633631363236353663(router_self) {
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6163636f756e74732e43726564656e7469616c5374617465"}, ml_host_value_schema_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb, { refinements: ml_host_value_refinements_3bbb892a07e36f83788445e9468b051c145f45b5261c58b6e4334c1a69a531eb });
   switch (router_self.$) {
@@ -276,6 +399,14 @@ function rp_61646d696e2e41444d494e5f544f4b454e5f505245464958() {
 
 function rp_61646d696e2e434c41494d5f46494c455f4e414d45() {
   return "admin-claim.json";
+}
+
+function rp_61646d696e2e44454641554c545f43414e4449444154455f54544c5f53454353() {
+  return 120n;
+}
+
+function rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253() {
+  return ml_fixed((24n * 365n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
 }
 
 function rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c() {
@@ -844,6 +975,11 @@ function rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245
   return "glm-5.3";
 }
 
+function rp_636c69656e74732e636174616c6f672e6d6c5f696d706c5f3633373236313734363532653633366336393635366537343733326536333631373436313663366636373265353236663735373436353732346436663634363536635f36393733356637333635373237363631363236633635(router_self) {
+  ml_validate_rust_value(router_self, {"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c"}, ml_host_value_schema_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379, { refinements: ml_host_value_refinements_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 });
+  return ((router_self).router_unavailable_reason.$ === 'None');
+}
+
 function rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552() {
   return "x-link-assistant-client-check";
 }
@@ -996,6 +1132,227 @@ function rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e
   const ml_text_1 = path;
   const ml_text_2 = rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54();
   return ml_text_1.startsWith(ml_text_2);
+}
+
+function rp_636f6e6669672e44454641554c545f4d41585f50524f58595f524551554553545f4259544553() {
+  return ml_fixed((ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_636f6e6669672e64656661756c745f6d70705f636f6e666967() {
+  const ml_record1 = false;
+  const ml_record2 = "0.00";
+  const ml_record3 = "USD";
+  const ml_record4 = "";
+  const ml_record5 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "MppConfig", ["enabled"]: ml_record1, ["amount"]: ml_record2, ["currency"]: ml_record3, ["recipient"]: ml_record4, ["method"]: ml_record5 });
+}
+
+function rp_636f6e6669672e64656661756c745f61637469766974797075625f7075626c69635f6b65795f70656d() {
+  return "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA0000000000000000000000000000000000000000000=\n-----END PUBLIC KEY-----";
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f363337323631373436353265363336663665363636393637326535353730373337343732363536313664353037323666373636393634363537325f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = s.toLowerCase();
+  if ((ml_s1 === "auto")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Auto' }) });
+  } else {
+    if ((ml_s1 === "all")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Auto' }) });
+    } else {
+      if ((ml_s1 === "anthropic")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+      } else {
+        if ((ml_s1 === "claude")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+        } else {
+          if ((ml_s1 === "gonka")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gonka' }) });
+          } else {
+            if ((ml_s1 === "crater")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Crater' }) });
+            } else {
+              if ((ml_s1 === "forgefed")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Crater' }) });
+              } else {
+                if ((ml_s1 === "codex")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+                } else {
+                  if ((ml_s1 === "chatgpt")) {
+                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+                  } else {
+                    if ((ml_s1 === "openai-codex")) {
+                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+                    } else {
+                      if ((ml_s1 === "gemini")) {
+                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+                      } else {
+                        if ((ml_s1 === "google")) {
+                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+                        } else {
+                          if ((ml_s1 === "code-assist")) {
+                            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+                          } else {
+                            if ((ml_s1 === "qwen")) {
+                              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                            } else {
+                              if ((ml_s1 === "qwen-code")) {
+                                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                              } else {
+                                if ((ml_s1 === "dashscope")) {
+                                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+                                } else {
+                                  if ((ml_s1 === "openai")) {
+                                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+                                  } else {
+                                    if ((ml_s1 === "openai-compatible")) {
+                                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+                                    } else {
+                                      if ((ml_s1 === "openai_like")) {
+                                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+                                      } else {
+                                        if ((ml_s1 === "litellm")) {
+                                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+                                        } else {
+                                          if ((ml_s1 === "z.ai-coding-plan")) {
+                                            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZaiCodingPlan' }) });
+                                          } else {
+                                            if ((ml_s1 === "zai-coding-plan")) {
+                                              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZaiCodingPlan' }) });
+                                            } else {
+                                              return Object.freeze({ $: 'None' });
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f36333732363137343635326536333666366536363639363732653431373036393436366637323664363137345f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = s.toLowerCase();
+  if ((ml_s1 === "anthropic")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+  } else {
+    if ((ml_s1 === "messages")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+    } else {
+      if ((ml_s1 === "bedrock")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Bedrock' }) });
+      } else {
+        if ((ml_s1 === "invoke")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Bedrock' }) });
+        } else {
+          if ((ml_s1 === "vertex")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Vertex' }) });
+          } else {
+            if ((ml_s1 === "rawpredict")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Vertex' }) });
+            } else {
+              return Object.freeze({ $: 'None' });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f3633373236313734363532653633366636653636363936373265353236663735373436393665363734643666363436355f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = s.toLowerCase();
+  if ((ml_s1 === "direct")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Direct' }) });
+  } else {
+    if ((ml_s1 === "cli")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Cli' }) });
+    } else {
+      if ((ml_s1 === "subprocess")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Cli' }) });
+      } else {
+        if ((ml_s1 === "hybrid")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Hybrid' }) });
+        } else {
+          if ((ml_s1 === "auto")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Hybrid' }) });
+          } else {
+            return Object.freeze({ $: 'None' });
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f363337323631373436353265363336663665363636393637326535333734366637323631363736353530366636633639363337395f363637323666366435663733373437323566366637303734(s) {
+  if (!(typeof s === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(s))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = s.toLowerCase();
+  if ((ml_s1 === "memory")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Memory' }) });
+  } else {
+    if ((ml_s1 === "mem")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Memory' }) });
+    } else {
+      if ((ml_s1 === "none")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Memory' }) });
+      } else {
+        if ((ml_s1 === "text")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Text' }) });
+        } else {
+          if ((ml_s1 === "lino")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Text' }) });
+          } else {
+            if ((ml_s1 === "binary")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+            } else {
+              if ((ml_s1 === "bin")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+              } else {
+                if ((ml_s1 === "link-cli")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+                } else {
+                  if ((ml_s1 === "linkcli")) {
+                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+                  } else {
+                    if ((ml_s1 === "clink")) {
+                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Binary' }) });
+                    } else {
+                      if ((ml_s1 === "both")) {
+                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Both' }) });
+                      } else {
+                        if ((ml_s1 === "dual")) {
+                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Both' }) });
+                        } else {
+                          return Object.freeze({ $: 'None' });
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 function rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c() {
@@ -1179,6 +1536,14 @@ function rp_6465706c6f795f736565642e48414e444f5645525f4b4559() {
   return "handed_over";
 }
 
+function rp_6465706c6f796d656e745f707265736572766174696f6e2e757361626c65(record, now) {
+  ml_validate_rust_value(record, {"kind":"data","name":"rp_73746f726167652e546f6b656e5265636f7264"}, ml_host_value_schema_0c0142cc20c6cfece7a727955fc2509a046aac5620777d9d2fa77b1d206c6c98, { refinements: ml_host_value_refinements_0c0142cc20c6cfece7a727955fc2509a046aac5620777d9d2fa77b1d206c6c98 });
+  if (typeof now !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(now, -9223372036854775808n, 9223372036854775807n, "i64 argument now out of range");
+  if (!(typeof now === 'bigint' && now >= -9223372036854775808n && now <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
+  return (((!(record).revoked && ((record).expires_at > now)) && ((record).client_kind.$ === 'Some')) && ((record).principal_id.$ === 'Some'));
+}
+
 function rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049() {
   return "https://api.github.com/repos/link-assistant/router/releases/latest";
 }
@@ -1215,6 +1580,14 @@ function rp_656d657267656e63795f617574682e454e565f56415253() {
   return ml_copy_fixed_array([rp_656d657267656e63795f617574682e454e56(), rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), rp_656d657267656e63795f617574682e4455524154494f4e5f454e56()], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
 }
 
+function rp_656d657267656e63795f617574682e44454641554c545f4455524154494f4e5f4d494e55544553() {
+  return 60n;
+}
+
+function rp_656d657267656e63795f617574682e4d41585f4455524154494f4e5f4d494e55544553() {
+  return ml_fixed((24n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
 function rp_656d657267656e63795f617574682e5355424a4543545f505245464958() {
   return "emergency-bypass-";
 }
@@ -1225,6 +1598,13 @@ function rp_656d657267656e63795f617574682e4c4142454c() {
 
 function rp_656d657267656e63795f617574682e4845414c54485f484541444552() {
   return "x-link-assistant-emergency-auth";
+}
+
+function rp_656d657267656e63795f617574682e69735f73796e7468657469635f6964(token_id) {
+  if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_text_1 = token_id;
+  const ml_text_2 = rp_656d657267656e63795f617574682e5355424a4543545f505245464958();
+  return ml_text_1.startsWith(ml_text_2);
 }
 
 function rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f() {
@@ -1278,6 +1658,12 @@ function rp_67656d696e692e6d61705f66696e6973685f726561736f6e(gemini) {
       return "content_filter";
     }
   }
+}
+
+function rp_67656d696e692e67656d696e695f66696e6973685f726561736f6e(response) {
+  ml_validate_rust_value(response, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  const inner = ml_router_unwrap(ml_host_serde_json_value_get_string(response, "response"), response, true);
+  return ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_pointer(inner, "/candidates/0/finishReason"), () => { return ml_host_serde_json_value_pointer(inner, "/promptFeedback/blockReason"); }, "or_else"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
 }
 
 function rp_67656d696e692e6e61746976652e70617273655f6e61746976655f746172676574(path) {
@@ -1353,6 +1739,156 @@ function rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e(opena
       return "STOP";
     }
   }
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e(a, b) {
+  ml_validate_rust_value(a, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(b, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((ml_host_rust_f64_is_nan(a) || ml_host_rust_f64_is_nan(b))) {
+    return NaN;
+  } else {
+  }
+  if (((a === 0) && (b === 0))) {
+    return ((ml_host_rust_f64_is_sign_negative(a) || ml_host_rust_f64_is_sign_negative(b)) ? (-0) : 0);
+  } else {
+  }
+  if ((a < b)) {
+    return a;
+  } else {
+    return b;
+  }
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(a, b) {
+  ml_validate_rust_value(a, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(b, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((ml_host_rust_f64_is_nan(a) || ml_host_rust_f64_is_nan(b))) {
+    return NaN;
+  } else {
+  }
+  if (((a === 0) && (b === 0))) {
+    return ((ml_host_rust_f64_is_sign_positive(a) || ml_host_rust_f64_is_sign_positive(b)) ? 0 : (-0));
+  } else {
+  }
+  if ((a > b)) {
+    return a;
+  } else {
+    return b;
+  }
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f6275646765745f7065726d697473(used, reserved, reserve, max) {
+  ml_validate_rust_value(used, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(reserved, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(reserve, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(max, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return ((max < 0) || (((used + reserved) < max) && (((used + reserved) + reserve) <= max)));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6f6c646f776e5f616374697665(until, now) {
+  ml_validate_rust_value(until, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(now, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (until > now);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636c616d70(value, minimum, maximum) {
+  ml_validate_rust_value(value, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(minimum, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(maximum, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e(rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(value, minimum), maximum);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6c6f6e676573745f636f6f6c646f776e(previous, next) {
+  ml_validate_rust_value(previous, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(next, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(previous, next);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72657472795f61667465725f646561646c696e65(seconds, now, maximum) {
+  ml_validate_rust_value(seconds, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(now, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(maximum, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((!ml_host_rust_f64_is_finite(seconds) || (seconds < 0))) {
+    return now;
+  } else {
+  }
+  return (now + rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636c616d70(seconds, 0, maximum));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f636f7374(input, output, input_per_million, output_per_million) {
+  ml_validate_rust_value(input, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(output, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(input_per_million, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(output_per_million, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (((input * input_per_million) + (output * output_per_million)) / 1000000);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e76616c69645f746f6b656e5f636f756e74(value) {
+  ml_validate_rust_value(value, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return ((ml_host_rust_f64_is_finite(value) && (value >= 0)) && (ml_host_rust_f64_floor(value) === value));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e736574746c65645f746f6b656e5f7573616765(total, reserved, actual) {
+  ml_validate_rust_value(total, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(reserved, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(actual, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(0, (total - reserved)) + actual);
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72656d61696e696e675f746f6b656e5f627564676574(used, reserved, max) {
+  ml_validate_rust_value(used, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(reserved, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(max, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((max < 0)) {
+    return (-1);
+  } else {
+  }
+  return rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(0, ((max - used) - reserved));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6d706c6574696f6e5f746f6b656e5f6c696d6974(requested, available, limit) {
+  ml_validate_rust_value(requested, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(available, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(limit, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178(0, ml_host_rust_f64_floor(rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e(requested, rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e(available, limit))));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e726574727961626c655f737461747573(status) {
+  ml_validate_rust_value(status, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (((status === 408) || (status === 429)) || ((status >= 500) && (status <= 599)));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e737563636573735f737461747573(status) {
+  ml_validate_rust_value(status, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return ((status >= 200) && (status <= 299));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e77656967687465645f6361706163697479(weight, load) {
+  ml_validate_rust_value(weight, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(load, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  if ((((weight <= 0) || !ml_host_rust_f64_is_finite(weight)) || (load < 0))) {
+    return 0;
+  } else {
+  }
+  return (weight / (load + 1));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f65787069726564(now, expires, skew) {
+  ml_validate_rust_value(now, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(expires, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  ml_validate_rust_value(skew, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return (now >= (expires + skew));
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_fixed_to_f64(ml_router_count(ml_encode_utf16(value)), "usize");
+}
+
+function rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6d6f64656c5f6e616d655f6c656e6774685f7065726d697473(value, maximum) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(maximum, {"kind":"float"}, ml_host_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085, { refinements: ml_host_value_refinements_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 });
+  return ((rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468(value) > 0) && (rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468(value) <= maximum));
 }
 
 function rp_6769745f70726f78792e5a45524f5f4f4944() {
@@ -1516,6 +2052,58 @@ function rp_6c6f675f6465636f64652e42524f544c495f425546464552() {
   return 4096n;
 }
 
+function rp_6c6f6767696e672e687474705f6661696c757265(status) {
+  if (typeof status !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
+  if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
+  const ml_ordered_match_1 = status;
+  if ((ml_ordered_match_1 === 401n)) {
+    return "authentication_or_authorization";
+  } else {
+    if ((ml_ordered_match_1 === 403n)) {
+      return "authentication_or_authorization";
+    } else {
+      if ((ml_ordered_match_1 === 407n)) {
+        return "authentication_or_authorization";
+      } else {
+        if ((ml_ordered_match_1 === 402n)) {
+          return "billing";
+        } else {
+          if ((ml_ordered_match_1 === 408n)) {
+            return "transport_timeout";
+          } else {
+            if ((ml_ordered_match_1 === 504n)) {
+              return "transport_timeout";
+            } else {
+              if ((ml_ordered_match_1 === 429n)) {
+                return "rate_limited";
+              } else {
+                if ((ml_ordered_match_1 === 400n)) {
+                  return "invalid_request";
+                } else {
+                  if ((ml_ordered_match_1 === 422n)) {
+                    return "invalid_request";
+                  } else {
+                    if ((ml_ordered_match_1 === 404n)) {
+                      return "routing_not_found";
+                    } else {
+                      if (((ml_ordered_match_1 >= 500n) && (ml_ordered_match_1 <= 599n))) {
+                        return "upstream_server_error";
+                      } else {
+                        return "http_error";
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 function rp_6c6f67696e2e535543434553535f4d41524b455253() {
   return Object.freeze(Object.freeze(["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"]));
 }
@@ -1538,6 +2126,20 @@ function rp_6c6f67696e2e4c4f47494e5f4d4554484f445f4d41524b4552() {
 
 function rp_6c6f67696e2e52454144595f50524f4d50545f4d41524b4552() {
   return "Tipsforgettingstarted";
+}
+
+function rp_6c6f67696e5f6170692e7265717565737465645f70726f7669646572(value) {
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  const ml_s1 = ((ml_router_unwrap(value, "claude", true)).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+  if ((ml_s1 === "claude")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Claude' }) });
+  } else {
+    if ((ml_s1 === "codex")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+    } else {
+      return Object.freeze({ $: 'None' });
+    }
+  }
 }
 
 function rp_6c6f67696e5f7074792e5054595f434f4c53() {
@@ -1588,6 +2190,10 @@ function rp_6c6f67696e5f75726c2e7265646163745f76616c7565(text, secret) {
   const ml_text_2 = secret_2;
   const ml_text_3 = rp_6c6f67696e5f75726c2e5245444143544544();
   return (ml_text_2.length===0?(ml_text_1.length===0?ml_text_3:ml_text_3+Array.from(ml_text_1).join(ml_text_3)+ml_text_3):ml_text_1.split(ml_text_2).join(ml_text_3));
+}
+
+function rp_6d616e616765645f7365727665722e44454641554c545f4c4f43414c5f504f5254() {
+  return 8080n;
 }
 
 function rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259() {
@@ -1654,6 +2260,46 @@ function rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e
   return "model-catalog-invalidations";
 }
 
+function rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64(entry) {
+  ml_validate_rust_value(entry, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
+  const label = ml_router_unwrap(ml_host_option_bind(ml_host_option_bind(entry, (value) => { return ml_host_serde_json_value_get_string(value, "selector_kind"); }, "and_then"), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then"), "unknown", true);
+  const kind = rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f363337323631373436353265366436663634363536633566363336663665373437323631363337343265346436663634363536633533363536633635363337343666373234623639366536345f363637323666366435663737363937323635(label);
+  return Object.freeze({ $: 'Tuple', field0: label, field1: kind });
+}
+
+function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f363337323631373436353265366436663634363536633566363336663665373437323631363337343265346436663634363536633533363536633635363337343666373234623639366536345f363637323666366435663737363937323635(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  if ((value === "provider_dynamic_alias")) {
+    return Object.freeze({ $: 'ProviderDynamicAlias' });
+  } else {
+    if ((value === "provider_advertised_alias")) {
+      return Object.freeze({ $: 'ProviderDynamicAlias' });
+    } else {
+      if ((value === "operator_alias")) {
+        return Object.freeze({ $: 'OperatorAlias' });
+      } else {
+        if ((value === "concrete")) {
+          return Object.freeze({ $: 'Concrete' });
+        } else {
+          if ((value === "provider_advertised_exact_id")) {
+            return Object.freeze({ $: 'Concrete' });
+          } else {
+            return Object.freeze({ $: 'Unknown' });
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f36333732363137343635326536643666363436353663356636333666366537343732363136333734326534643666363436353663343136333633363537333733343537323732366637325f373036663663363936333739356637353665363137363631363936633631363236633635(requested) {
+  if (!(typeof requested === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(requested))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = "model_policy_unavailable";
+  const ml_record2 = requested;
+  const ml_record3 = Object.freeze([]);
+  return Object.freeze({ $: "ModelAccessError", ["code"]: ml_record1, ["requested_model"]: ml_record2, ["allowed_models"]: ml_record3 });
+}
+
 function rp_6d6f64656c5f726f7574696e672e70726f76696465725f6f776e6572(provider) {
   ml_validate_rust_value(provider, {"kind":"data","name":"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e50726f7669646572"}, ml_host_value_schema_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3, { refinements: ml_host_value_refinements_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 });
   switch (provider.$) {
@@ -1695,6 +2341,10 @@ function rp_6d70702e6d6c5f696d706c5f36333732363137343635326536643730373032653464
 
 function rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554() {
   return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_6f70656e61692e646f6e655f6672616d65() {
+  return "data: [DONE]\n\n";
 }
 
 function rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553() {
@@ -1754,6 +2404,21 @@ function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536
 function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536663735373437303735373435663663363936643639373432653466373537343730373537343534366636623635366534633639366436393734363537325f3733373436663730373036353634(router_self) {
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6f75747075745f6c696d69742e4f7574707574546f6b656e4c696d69746572"}, ml_host_value_schema_a848cb195b9218a810902449abf2dc148cf7c8a29b7f50827943d61af34c8919, { refinements: ml_host_value_refinements_a848cb195b9218a810902449abf2dc148cf7c8a29b7f50827943d61af34c8919 });
   return (router_self).stopped;
+}
+
+function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f3633373236313734363532653666373537343730373537343566366336393664363937343265353236353733373036663665373336353733353337343732363536313664353236353737373236393734363537325f366536353737(requested_model, limit) {
+  if (!(typeof requested_model === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(requested_model))) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(limit, {"kind":"data","name":"rp_526f757465724f7074696f6e5f335f753634"}, ml_host_value_schema_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a, { refinements: ml_host_value_refinements_931c1b14e9c7f25ce67e65592bea8fe26d11385e3b4ef76d393ac3312e5c453a });
+  const ml_record1 = requested_model;
+  const ml_record2 = rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536663735373437303735373435663663363936643639373432653466373537343730373537343534366636623635366534633639366436393734363537325f366536353737(limit);
+  const ml_record3 = Object.freeze([]);
+  const ml_record4 = false;
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze({ $: 'None' });
+  const ml_record7 = false;
+  const ml_record8 = false;
+  const ml_record9 = Object.freeze({ $: 'Unknown' });
+  return Object.freeze({ $: "ResponsesStreamRewriter", ["requested_model"]: ml_record1, ["limiter"]: ml_record2, ["buffer"]: ml_record3, ["finished"]: ml_record4, ["last_response"]: ml_record5, ["upstream_model"]: ml_record6, ["strict_identity"]: ml_record7, ["allow_substitution"]: ml_record8, ["selector_kind"]: ml_record9 });
 }
 
 function rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453() {
@@ -1822,6 +2487,14 @@ function rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553
   return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
+function rp_70726f76696465725f616363657074616e63652e6d6c5f696d706c5f363337323631373436353265373037323666373636393634363537323566363136333633363537303734363136653633363532653530373236663736363936343635373235303732366637363639373336393666366534363631363936633735373236355f366536353737(kind, message) {
+  ml_validate_rust_value(kind, {"kind":"data","name":"rp_70726f76696465725f616363657074616e63652e50726f766964657250726f766973696f6e4661696c7572654b696e64"}, ml_host_value_schema_3e4062af6f2b6a1a6ad0be6a65529454ad45e240750c324394870c395e4e00bc, { refinements: ml_host_value_refinements_3e4062af6f2b6a1a6ad0be6a65529454ad45e240750c324394870c395e4e00bc });
+  if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = kind;
+  const ml_record2 = message;
+  return Object.freeze({ $: "ProviderProvisionFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
+}
+
 function rp_70726f76696465725f70726f78792e70726f746f636f6c5f666f725f72657175657374(surface, path) {
   ml_validate_rust_value(surface, {"kind":"data","name":"rp_6d6574726963732e53757266616365"}, ml_host_value_schema_11ae799e50c019543ce4e21830424c35006aa347be7fb6b70ded49cf31a36419, { refinements: ml_host_value_refinements_11ae799e50c019543ce4e21830424c35006aa347be7fb6b70ded49cf31a36419 });
   if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
@@ -1857,6 +2530,48 @@ function rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546
   return ml_host_std_time_duration_from_secs(15n);
 }
 
+function rp_70726f7669646572732e64656661756c745f656e61626c6564() {
+  return true;
+}
+
+function rp_70726f7669646572732e6d6c5f696d706c5f36333732363137343635326537303732366637363639363436353732373332653530373236663736363936343635373234623639366536345f363637323666366435663733373437323566366637303734(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = value.toLowerCase();
+  if ((ml_s1 === "openai")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+  } else {
+    if ((ml_s1 === "openai-compatible")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+    } else {
+      if ((ml_s1 === "open-a-i-compatible")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+      } else {
+        if ((ml_s1 === "openai_like")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+        } else {
+          if ((ml_s1 === "litellm")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAICompatible' }) });
+          } else {
+            if ((ml_s1 === "lefine")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Lefine' }) });
+            } else {
+              if ((ml_s1 === "z.ai-coding-plan")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZaiCodingPlan' }) });
+              } else {
+                if ((ml_s1 === "zai-coding-plan")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZaiCodingPlan' }) });
+                } else {
+                  return Object.freeze({ $: 'None' });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 function rp_70726f78792e4150495f505245464958() {
   return "/api/services/anthropic/";
 }
@@ -1887,6 +2602,10 @@ function rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e54
 
 function rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147() {
   return "oauth-2025-04-20";
+}
+
+function rp_70726f78792e757073747265616d5f686561646572732e4d41585f50524f58595f524551554553545f4259544553() {
+  return rp_636f6e6669672e44454641554c545f4d41585f50524f58595f524551554553545f4259544553();
 }
 
 function rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253() {
@@ -2199,12 +2918,123 @@ function rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f61667465
   return ml_host_std_time_duration_min(duration, rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552());
 }
 
+function rp_7265736f757263655f636170747572652e4d41585f42554646455245445f49445f505245464958() {
+  return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_7265736f757263655f636170747572652e4d41585f42554646455245445f4a534f4e5f524553504f4e5345() {
+  return ml_fixed((ml_fixed((32n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
 function rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45() {
   return "response-affinities.lino";
 }
 
+function rp_726573706f6e73655f616666696e6974792e53544f52455f56455253494f4e() {
+  return 1n;
+}
+
 function rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c() {
   return ml_host_std_time_duration_from_secs(ml_fixed((ml_fixed((ml_fixed((30n * 24n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_726573706f6e73655f616666696e6974792e44454641554c545f4d41585f5245434f524453() {
+  return 10000n;
+}
+
+function rp_726573706f6e73655f616666696e6974792e4d41585f524553504f4e53455f49445f4259544553() {
+  return 256n;
+}
+
+function rp_726573706f6e73655f616666696e6974792e6d6c5f696d706c5f363337323631373436353265373236353733373036663665373336353566363136363636363936653639373437393265353236353733373036663665373336353465363136643635373337303631363336355f363637323666366435663730363137343638(path) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  if ((() => {
+    const ml_text_1 = path;
+    const ml_text_2 = "/api/services/openai/v1/responses";
+    return ml_text_1.startsWith(ml_text_2);
+  })()) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAiResponses' }) });
+  } else {
+    if ((() => {
+    const ml_text_3 = path;
+    const ml_text_4 = "/api/services/codex/v1/responses";
+    return ml_text_3.startsWith(ml_text_4);
+  })()) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'CodexResponses' }) });
+    } else {
+      if ((() => {
+    const ml_text_5 = path;
+    const ml_text_6 = "/api/services/qwen/v1/responses";
+    return ml_text_5.startsWith(ml_text_6);
+  })()) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'QwenResponses' }) });
+      } else {
+        if ((() => {
+    const ml_text_7 = path;
+    const ml_text_8 = "/api/services/openai/v1/chat/completions";
+    return ml_text_7.startsWith(ml_text_8);
+  })()) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAiChat' }) });
+        } else {
+          if ((() => {
+    const ml_text_9 = path;
+    const ml_text_10 = "/api/services/codex/v1/chat/completions";
+    return ml_text_9.startsWith(ml_text_10);
+  })()) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'CodexChat' }) });
+          } else {
+            if ((() => {
+    const ml_text_11 = path;
+    const ml_text_12 = "/api/services/qwen/v1/chat/completions";
+    return ml_text_11.startsWith(ml_text_12);
+  })()) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'QwenChat' }) });
+            } else {
+              return Object.freeze({ $: 'None' });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function rp_726573706f6e73655f616666696e6974792e6d6c5f696d706c5f363337323631373436353265373236353733373036663665373336353566363136363636363936653639373437393265353236353733373036663665373336353465363136643635373337303631363336355f36333666366537363635373237333631373436393666366537333566363637323666366435663730363137343638(path) {
+  if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
+  if ((() => {
+    const ml_text_1 = path;
+    const ml_text_2 = "/api/services/openai/v1/conversations";
+    return ml_text_1.startsWith(ml_text_2);
+  })()) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'OpenAiConversations' }), field1: Object.freeze({ $: 'OpenAiConversationItems' }) }) });
+  } else {
+    if ((() => {
+    const ml_text_3 = path;
+    const ml_text_4 = "/api/services/codex/v1/conversations";
+    return ml_text_3.startsWith(ml_text_4);
+  })()) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'CodexConversations' }), field1: Object.freeze({ $: 'CodexConversationItems' }) }) });
+    } else {
+      if ((() => {
+    const ml_text_5 = path;
+    const ml_text_6 = "/api/services/qwen/v1/conversations";
+    return ml_text_5.startsWith(ml_text_6);
+  })()) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: Object.freeze({ $: 'QwenConversations' }), field1: Object.freeze({ $: 'QwenConversationItems' }) }) });
+      } else {
+        return Object.freeze({ $: 'None' });
+      }
+    }
+  }
+}
+
+function rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579(event) {
+  ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
+  return Object.freeze({ $: 'Tuple', field0: ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "output_index"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_2_0); }, "and_then"), 0n, true), field1: ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_5_0); }, "and_then"), 0n, true) });
+}
+
+function rp_726573706f6e7365732e646f6e655f6672616d65() {
+  return "data: [DONE]\n\n";
 }
 
 function rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448() {
@@ -3076,5 +3906,5 @@ function rp_6d616e6167656d656e745f6163636573732e4d41585f434c49454e5453() {
 function rp_6d616e6167656d656e745f6163636573732e534e415053484f54() {
   return "management-lockouts.lenv";
 }
-export const translated = Object.freeze({ ["account_http.DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(), ["account_http.DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(), ["account_http.PROXY_SCHEMES"]: rp_6163636f756e745f687474702e50524f58595f534348454d4553(), ["account_limits.UNIFIED_PREFIX"]: rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958(), ["account_limits.MAX_VENDOR_COOLDOWN"]: rp_6163636f756e745f6c696d6974732e4d41585f56454e444f525f434f4f4c444f574e(), ["account_limits.STATE_FILE"]: rp_6163636f756e745f6c696d6974732e53544154455f46494c45(), ["account_limits.MODEL_FAMILIES"]: rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553(), ["accounts_cli.DEFAULT_PAUSE_REASON"]: rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e(), ["accounts_cli.LOCAL_NOTE"]: rp_6163636f756e74735f636c692e4c4f43414c5f4e4f5445(), ["activitypub.ACTIVITY_JSON"]: rp_61637469766974797075622e41435449564954595f4a534f4e(), ["admin.ADMIN_TOKEN_PREFIX"]: rp_61646d696e2e41444d494e5f544f4b454e5f505245464958(), ["admin.CLAIM_FILE_NAME"]: rp_61646d696e2e434c41494d5f46494c455f4e414d45(), ["admin.CLAIM_TOKEN_LABEL"]: rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c(), ["admin_recovery.RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["anthropic_bridge.DEFAULT_MAX_TOKENS"]: rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53(), ["anthropic_bridge.usage_field"]: rp_616e7468726f7069635f6272696467652e75736167655f6669656c64, ["anthropic_stream.map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["anthropic_stream.response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579, ["api_error.openai_error_type"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065, ["api_error.openai_error_code"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465, ["audit.surface_name"]: rp_61756469742e737572666163655f6e616d65, ["auth.CODEX_CLIENT_ID"]: rp_617574682e434f4445585f434c49454e545f4944(), ["auth.CODEX_ISSUER"]: rp_617574682e434f4445585f495353554552(), ["auth.CODEX_CALLBACK_PATH"]: rp_617574682e434f4445585f43414c4c4241434b5f50415448(), ["auth.CODEX_DEVICE_CALLBACK_PATH"]: rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448(), ["auth_remote.REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["auth_remote.POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["auth_remote.status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["auth_remote.home_in_accounts"]: rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473, ["bridge_controls.CHAT_FIELDS"]: rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453(), ["bridge_controls.RESPONSE_FIELDS"]: rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453(), ["bridge_response.stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["bridge_response.complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["bridge_response.incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["bridge_response.anthropic_service_tier_from_openai"]: rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169, ["bridge_selection.MODEL_SELECTION_REQUIRED"]: rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544(), ["capabilities.subscription"]: rp_6361706162696c69746965732e737562736372697074696f6e, ["capabilities.unsatisfiable_forced_tool_choice"]: rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365, ["chat_admin.DEFAULT_SECRET_TTL_SECS"]: rp_636861745f61646d696e2e44454641554c545f5345435245545f54544c5f53454353(), ["chat_admin.DEFAULT_RATE_LIMIT_PER_MINUTE"]: rp_636861745f61646d696e2e44454641554c545f524154455f4c494d49545f5045525f4d494e555445(), ["chat_admin.RATE_LIMIT_WINDOW"]: rp_636861745f61646d696e2e524154455f4c494d49545f57494e444f57(), ["chat_admin.SESSION_IDLE_TTL"]: rp_636861745f61646d696e2e53455353494f4e5f49444c455f54544c(), ["chat_admin.MAX_SESSIONS"]: rp_636861745f61646d696e2e4d41585f53455353494f4e53(), ["chat_admin.normalise"]: rp_636861745f61646d696e2e6e6f726d616c697365, ["chat_admin.ALREADY_CLAIMED"]: rp_636861745f61646d696e2e414c52454144595f434c41494d4544(), ["chat_admin.RATE_LIMITED"]: rp_636861745f61646d696e2e524154455f4c494d49544544(), ["chat_admin.HELP"]: rp_636861745f61646d696e2e48454c50(), ["chat_commands.DEFAULT_ISSUE_TTL_HOURS"]: rp_636861745f636f6d6d616e64732e44454641554c545f49535355455f54544c5f484f555253(), ["chat_commands.LIST_LIMIT"]: rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954(), ["chat_commands.ISSUE_KEYS"]: rp_636861745f636f6d6d616e64732e49535355455f4b455953(), ["chat_commands.yes_no"]: rp_636861745f636f6d6d616e64732e7965735f6e6f, ["claude_auth.CLAUDE_AUTHORIZE_URL"]: rp_636c617564655f617574682e434c415544455f415554484f52495a455f55524c(), ["claude_auth.CLAUDE_REDIRECT_URI"]: rp_636c617564655f617574682e434c415544455f52454449524543545f555249(), ["claude_auth.CLAUDE_SCOPES"]: rp_636c617564655f617574682e434c415544455f53434f504553(), ["claude_auth.CLAUDE_INFERENCE_SCOPE"]: rp_636c617564655f617574682e434c415544455f494e464552454e43455f53434f5045(), ["claude_auth.PENDING_LOGIN_FILE"]: rp_636c617564655f617574682e50454e44494e475f4c4f47494e5f46494c45(), ["claude_identity.CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["claude_identity.DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["claude_identity.is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["claude_identity.first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479, ["client_command.CLIENT_TOKEN_ENV"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56(), ["client_command.CLIENT_TOKEN_ENV_ALIAS"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e565f414c494153(), ["client_launch.CLAUDE_NATIVE_SERVICES_LIMITATION"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f53455256494345535f4c494d49544154494f4e(), ["client_launch.CLAUDE_NATIVE_SERVICE_REQUEST_ERROR"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52(), ["client_policy.PROXIED_CLIENT_EVIDENCE_HEADER"]: rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552(), ["client_policy.PROXIED_CODEX_EVIDENCE_VALUE"]: rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e43455f56414c5545(), ["clients.CODEX_PROVIDER"]: rp_636c69656e74732e434f4445585f50524f5649444552(), ["clients.CODEX_TOKEN_ENV"]: rp_636c69656e74732e434f4445585f544f4b454e5f454e56(), ["clients.CLAUDE_TOKEN_ENV"]: rp_636c69656e74732e434c415544455f544f4b454e5f454e56(), ["clients.CLAUDE_BASE_ENV"]: rp_636c69656e74732e434c415544455f424153455f454e56(), ["clients.ROUTER_TOKEN_ENV"]: rp_636c69656e74732e524f555445525f544f4b454e5f454e56(), ["clients.GROK_TOKEN_ENV"]: rp_636c69656e74732e47524f4b5f544f4b454e5f454e56(), ["clients.GROK_BASE_ENV"]: rp_636c69656e74732e47524f4b5f424153455f454e56(), ["clients.ROUTER_PROVIDER"]: rp_636c69656e74732e524f555445525f50524f5649444552(), ["clients.OWNERSHIP_MARKER"]: rp_636c69656e74732e4f574e4552534849505f4d41524b4552(), ["clients.CLAUDE_MODEL_ENV"]: rp_636c69656e74732e434c415544455f4d4f44454c5f454e56(), ["clients.CLAUDE_GATEWAY_TARGET_ENV"]: rp_636c69656e74732e434c415544455f474154455741595f5441524745545f454e56(), ["clients.CLAUDE_DEFAULT_ROW_ENV"]: rp_636c69656e74732e434c415544455f44454641554c545f524f575f454e56(), ["clients.OPENAI_MODEL_OWNER"]: rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552(), ["clients.ANTHROPIC_MODEL_OWNER"]: rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552(), ["clients.GOOGLE_MODEL_OWNER"]: rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552(), ["clients.QWEN_MODEL_OWNER"]: rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552(), ["clients.ZAI_MODEL_OWNER"]: rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552(), ["clients.DEFAULT_OPENAI_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254(), ["clients.DEFAULT_ANTHROPIC_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254(), ["clients.analysis.CLAUDE_PRECEDENCE_ENV"]: rp_636c69656e74732e616e616c797369732e434c415544455f505245434544454e43455f454e56(), ["clients.catalog.FRESH_ZAI_PREFERRED_MODEL"]: rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c(), ["clients.doctor.DOCTOR_EVIDENCE_HEADER"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552(), ["clients.doctor.DOCTOR_EVIDENCE_VALUE"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c5545(), ["clients.doctor.MINIMUM_CLAUDE_GATEWAY_VERSION"]: rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e(), ["codex_cloudflare_cookies.MAX_COOKIE_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553(), ["codex_cloudflare_cookies.MAX_COOKIE_COUNT"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54(), ["codex_cloudflare_cookies.MAX_COOKIE_HEADER_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553(), ["codex_cloudflare_cookies.EXACT_HOSTS"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), ["codex_cloudflare_cookies.SUBDOMAIN_SUFFIXES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), ["codex_cloudflare_cookies.EXACT_COOKIE_NAMES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(), ["codex_identity.DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["codex_identity.ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["codex_loopback_bridge.BACKEND_PATH"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4241434b454e445f50415448(), ["codex_loopback_bridge.CONNECT_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554(), ["codex_loopback_bridge.HEALTH_HEADER"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4845414c54485f484541444552(), ["codex_loopback_bridge.DAEMON_MARKER_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4d41524b45525f454e56(), ["codex_loopback_bridge.DAEMON_UPSTREAM_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f555053545245414d5f454e56(), ["codex_loopback_bridge.DAEMON_STATE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f53544154455f454e56(), ["codex_loopback_bridge.DAEMON_NONCE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4e4f4e43455f454e56(), ["codex_loopback_bridge.DAEMON_LISTEN_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4c495354454e5f454e56(), ["codex_loopback_bridge.START_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544152545f54494d454f5554(), ["codex_loopback_bridge.STOP_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544f505f54494d454f5554(), ["codex_loopback_bridge.POLL_INTERVAL"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e504f4c4c5f494e54455256414c(), ["codex_remote_control.CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["codex_remote_control.FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["codex_remote_control.STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["codex_remote_control.MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["codex_remote_control.validate_record"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e76616c69646174655f7265636f7264, ["codex_remote_control.ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["codex_remote_control.SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["codex_remote_control.ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["codex_remote_control.REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["codex_remote_control.REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["codex_remote_control.PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["codex_remote_control.PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["codex_remote_control.ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["codex_remote_control.is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468, ["config_defaults.default_gonka_model"]: rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c, ["config_defaults.default_openai_compatible_base_url"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c, ["conversation_record.RECORD_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245434f52445f454e56(), ["conversation_record.REPLAY_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f454e56(), ["conversation_record.REPLAY_TURN_HEADER"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f484541444552(), ["conversation_record.REFRAMED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253(), ["conversation_record.MAX_RECORDED_BODY"]: rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459(), ["conversation_record.matching.IGNORED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253(), ["conversation_record.matching.COMPARED_FIELDS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453(), ["conversation_record.matching.RENDERED_LIMIT"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954(), ["conversation_record.store.HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["conversation_record.store.TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["conversation_record.store.read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["conversation_record.store.string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64, ["crater.ACTIVITY_JSON"]: rp_6372617465722e41435449564954595f4a534f4e(), ["crater.LINKED_DATA_JSON"]: rp_6372617465722e4c494e4b45445f444154415f4a534f4e(), ["crater.DEFAULT_MODEL"]: rp_6372617465722e44454641554c545f4d4f44454c(), ["credential_acceptance.ACCEPTANCE_TIMEOUT"]: rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54494d454f5554(), ["credential_acceptance.STAGING_DIRECTORY"]: rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259(), ["credential_recovery_store.RECOVERY_VERSION"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f56455253494f4e(), ["credential_recovery_store.RECOVERY_DIRECTORY"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259(), ["credential_recovery_store.PRIMARY_ACCOUNT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5052494d4152595f4143434f554e54(), ["credential_recovery_store.CREDENTIAL_LOCK_TIMEOUT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e43524544454e5449414c5f4c4f434b5f54494d454f5554(), ["credential_source.ROUTER_METADATA_KEY"]: rp_63726564656e7469616c5f736f757263652e524f555445525f4d455441444154415f4b4559(), ["credential_source.CREDENTIAL_SOURCE_KEY"]: rp_63726564656e7469616c5f736f757263652e43524544454e5449414c5f534f555243455f4b4559(), ["credential_source.REFRESH_OWNER_KEY"]: rp_63726564656e7469616c5f736f757263652e524546524553485f4f574e45525f4b4559(), ["credential_source.EXTERNAL_REFRESH_OWNER"]: rp_63726564656e7469616c5f736f757263652e45585445524e414c5f524546524553485f4f574e4552(), ["credential_store.LOCK_SUFFIX"]: rp_63726564656e7469616c5f73746f72652e4c4f434b5f535546464958(), ["deploy.CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["deploy.RELAY"]: rp_6465706c6f792e52454c4159(), ["deploy.NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["deploy.BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["deploy.LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["deploy.LABEL"]: rp_6465706c6f792e4c4142454c(), ["deploy.DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["deploy.HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["deploy.DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(), ["deploy_config.RESERVED_ENV"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e56(), ["deploy_config.RESERVED_ENV_PREFIXES"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553(), ["deploy_config.VERIFIABLE_CLIENTS"]: rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453(), ["deploy_relay.STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["deploy_relay.LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["deploy_seed.METADATA_KEY"]: rp_6465706c6f795f736565642e4d455441444154415f4b4559(), ["deploy_seed.HANDOVER_KEY"]: rp_6465706c6f795f736565642e48414e444f5645525f4b4559(), ["doctor.latest_version.RELEASE_API"]: rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049(), ["durable_file.ROLLBACK_SUFFIX"]: rp_64757261626c655f66696c652e524f4c4c4241434b5f535546464958(), ["durable_file.COMMIT_SUFFIX"]: rp_64757261626c655f66696c652e434f4d4d49545f535546464958(), ["durable_file.LOCK_POLL_INTERVAL"]: rp_64757261626c655f66696c652e4c4f434b5f504f4c4c5f494e54455256414c(), ["emergency_auth.FLAG"]: rp_656d657267656e63795f617574682e464c4147(), ["emergency_auth.ENV"]: rp_656d657267656e63795f617574682e454e56(), ["emergency_auth.ALLOW_NON_LOOPBACK_ENV"]: rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), ["emergency_auth.DURATION_ENV"]: rp_656d657267656e63795f617574682e4455524154494f4e5f454e56(), ["emergency_auth.ENV_VARS"]: rp_656d657267656e63795f617574682e454e565f56415253(), ["emergency_auth.SUBJECT_PREFIX"]: rp_656d657267656e63795f617574682e5355424a4543545f505245464958(), ["emergency_auth.LABEL"]: rp_656d657267656e63795f617574682e4c4142454c(), ["emergency_auth.HEALTH_HEADER"]: rp_656d657267656e63795f617574682e4845414c54485f484541444552(), ["encoded_request_body.MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["encoded_request_body.ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["encoded_request_body.ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["encoded_request_body.MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["entrypoint.STACK_BYTES"]: rp_656e747279706f696e742e535441434b5f4259544553(), ["error_log.DEFAULT_MAX_BYTES"]: rp_6572726f725f6c6f672e44454641554c545f4d41585f4259544553(), ["error_log.MAX_BODY_BYTES"]: rp_6572726f725f6c6f672e4d41585f424f44595f4259544553(), ["error_log.MAX_DOCUMENT_BYTES"]: rp_6572726f725f6c6f672e4d41585f444f43554d454e545f4259544553(), ["gemini.PROJECT_ENV"]: rp_67656d696e692e50524f4a4543545f454e56(), ["gemini.MODEL_OWNER"]: rp_67656d696e692e4d4f44454c5f4f574e4552(), ["gemini.map_finish_reason"]: rp_67656d696e692e6d61705f66696e6973685f726561736f6e, ["gemini.native.parse_native_target"]: rp_67656d696e692e6e61746976652e70617273655f6e61746976655f746172676574, ["gemini_bridge.MODEL_ROLE"]: rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45(), ["gemini_bridge.map_finish_reason"]: rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e, ["git_proxy.ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["git_proxy.ancestry_from_compare"]: rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265, ["git_proxy.scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["git_proxy.canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468, ["github_proxy.POLICY_HEADER"]: rp_6769746875625f70726f78792e504f4c4943595f484541444552(), ["gonka.MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["gonka.CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["gonka.CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["gonka.FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["gonka.MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["gonka.MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["lefine.BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["lefine.COMPATIBLE_CLIENTS"]: rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(), ["lefine.MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["lefine.unavailable"]: rp_6c6566696e652e756e617661696c61626c65, ["lino_json.ARRAY_MARKER"]: rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552(), ["lino_json.OBJECT_MARKER"]: rp_6c696e6f5f6a736f6e2e4f424a4543545f4d41524b4552(), ["lino_json.EMPTY_STRING"]: rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47(), ["log_analysis.request_asks_for_a_stream"]: rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d, ["log_decode.BROTLI_BUFFER"]: rp_6c6f675f6465636f64652e42524f544c495f425546464552(), ["login.SUCCESS_MARKERS"]: rp_6c6f67696e2e535543434553535f4d41524b455253(), ["login.FAILURE_MARKERS"]: rp_6c6f67696e2e4641494c5552455f4d41524b455253(), ["login.THEME_PICKER_MARKER"]: rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552(), ["login.WORKSPACE_TRUST_MARKER"]: rp_6c6f67696e2e574f524b53504143455f54525553545f4d41524b4552(), ["login.LOGIN_METHOD_MARKER"]: rp_6c6f67696e2e4c4f47494e5f4d4554484f445f4d41524b4552(), ["login.READY_PROMPT_MARKER"]: rp_6c6f67696e2e52454144595f50524f4d50545f4d41524b4552(), ["login_pty.PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["login_pty.PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["login_pty.POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["login_pty_backend.contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572, ["login_url.AUTH_HOSTS"]: rp_6c6f67696e5f75726c2e415554485f484f535453(), ["login_url.TOKEN_PREFIXES"]: rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553(), ["login_url.REDACTED"]: rp_6c6f67696e5f75726c2e5245444143544544(), ["login_url.SECRET_PREFIXES"]: rp_6c6f67696e5f75726c2e5345435245545f5052454649584553(), ["login_url.redact_value"]: rp_6c6f67696e5f75726c2e7265646163745f76616c7565, ["managed_server.CONFIG_DIRECTORY"]: rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259(), ["managed_server.SERVER_CONFIG"]: rp_6d616e616765645f7365727665722e5345525645525f434f4e464947(), ["managed_server.MANAGED_STATE"]: rp_6d616e616765645f7365727665722e4d414e414745445f5354415445(), ["managed_server.MANAGED_LOCK"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4f434b(), ["managed_server.CONTAINER"]: rp_6d616e616765645f7365727665722e434f4e5441494e4552(), ["managed_server.VOLUME"]: rp_6d616e616765645f7365727665722e564f4c554d45(), ["managed_server.IMAGE"]: rp_6d616e616765645f7365727665722e494d414745(), ["managed_server.MANAGED_LABEL"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4142454c(), ["managed_server.run_lease.HEARTBEAT_INTERVAL"]: rp_6d616e616765645f7365727665722e72756e5f6c656173652e4845415254424541545f494e54455256414c(), ["managed_server.selection.TRUST_DIRECTORY"]: rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259(), ["model_catalog.CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["model_catalog.FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["model_catalog.MAX_CATALOG_PAGES"]: rp_6d6f64656c5f636174616c6f672e4d41585f434154414c4f475f5041474553(), ["model_catalog.PERSISTED_CATALOG_VERSION"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f56455253494f4e(), ["model_catalog.PERSISTED_CATALOG_FILE"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(), ["model_catalog.CATALOG_INVALIDATION_DIR"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952(), ["model_routing.provider_owner"]: rp_6d6f64656c5f726f7574696e672e70726f76696465725f6f776e6572, ["mpp.escape_header_value"]: rp_6d70702e6573636170655f6865616465725f76616c7565, ["native_service.CONNECT_TIMEOUT"]: rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(), ["operational_log.MAX_BYTES"]: rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553(), ["operational_log.BACKUPS"]: rp_6f7065726174696f6e616c5f6c6f672e4241434b555053(), ["output_limit.CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["output_limit.event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["pool_failover.DEFAULT_MAX_ATTEMPTS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(), ["pool_failover.DEFAULT_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(), ["pool_failover.MAX_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(), ["pool_failover.classify_status"]: rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573, ["pool_response.MAX_ERROR_BYTES"]: rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553(), ["pool_stream_limits.MAX_EVENT_BYTES"]: rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553(), ["provider_proxy.protocol_for_request"]: rp_70726f76696465725f70726f78792e70726f746f636f6c5f666f725f72657175657374, ["provider_proxy.PROVIDER_CATALOG_TTL"]: rp_70726f76696465725f70726f78792e50524f56494445525f434154414c4f475f54544c(), ["provider_proxy.PROVIDER_FAILED_REFRESH_RETRY"]: rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546524553485f5245545259(), ["proxy.API_PREFIX"]: rp_70726f78792e4150495f505245464958(), ["proxy.REQUIRED_FORWARD_HEADERS"]: rp_70726f78792e52455155495245445f464f52574152445f48454144455253(), ["proxy.HOP_BY_HOP_HEADERS"]: rp_70726f78792e484f505f42595f484f505f48454144455253(), ["proxy.RESPONSE_CREDENTIAL_HEADERS"]: rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253(), ["proxy.ACCEPTED_CREDENTIAL_CARRIERS"]: rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253(), ["proxy.CREDENTIAL_CARRIER_HINT"]: rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54(), ["proxy.upstream_headers.DEFAULT_ANTHROPIC_VERSION"]: rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e(), ["proxy.upstream_headers.OAUTH_BETA_FLAG"]: rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147(), ["proxy.upstream_headers.INGRESS_NETWORK_HEADERS"]: rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253(), ["proxy.upstream_path.resolve_upstream_path"]: rp_70726f78792e757073747265616d5f706174682e7265736f6c76655f757073747265616d5f70617468, ["refresh.CLAUDE_OAUTH_USER_AGENT"]: rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54(), ["refresh.ANTHROPIC_SDK_VERSION"]: rp_726566726573682e414e5448524f5049435f53444b5f56455253494f4e(), ["refresh.GEMINI_CLI_VERSION"]: rp_726566726573682e47454d494e495f434c495f56455253494f4e(), ["refresh.GOOGLE_AUTH_LIBRARY_VERSION"]: rp_726566726573682e474f4f474c455f415554485f4c4942524152595f56455253494f4e(), ["refresh.QWEN_CODE_VERSION"]: rp_726566726573682e5157454e5f434f44455f56455253494f4e(), ["refresh.GEMINI_CLIENT_ID_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f49445f454e56(), ["refresh.GEMINI_CLIENT_SECRET_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f5345435245545f454e56(), ["refresh.GEMINI_CLIENT_ID"]: rp_726566726573682e47454d494e495f434c49454e545f4944(), ["refresh.GEMINI_AUTH_USER_AGENT"]: rp_726566726573682e47454d494e495f415554485f555345525f4147454e54(), ["refresh.GEMINI_API_CLIENT"]: rp_726566726573682e47454d494e495f4150495f434c49454e54(), ["refresh.CLAUDE_CLIENT_ID"]: rp_726566726573682e434c415544455f434c49454e545f4944(), ["refresh.CLAUDE_TOKEN_URL"]: rp_726566726573682e434c415544455f544f4b454e5f55524c(), ["refresh.REFRESH_SKEW_MS"]: rp_726566726573682e524546524553485f534b45575f4d53(), ["refresh.ROTATION_ATTRIBUTION_MS"]: rp_726566726573682e524f544154494f4e5f4154545249425554494f4e5f4d53(), ["refresh.refresh_config"]: rp_726566726573682e726566726573685f636f6e666967, ["refresh_rejections.REJECTIONS_FILE_NAME"]: rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45(), ["request_log.LOG_FILE"]: rp_726571756573745f6c6f672e4c4f475f46494c45(), ["request_log.LEGACY_LOG_FILE"]: rp_726571756573745f6c6f672e4c45474143595f4c4f475f46494c45(), ["request_log.REDACTED"]: rp_726571756573745f6c6f672e5245444143544544(), ["request_log.UNAUTHENTICATED"]: rp_726571756573745f6c6f672e554e41555448454e54494341544544(), ["request_log.management.MAX_LOOKUP_BYTES"]: rp_726571756573745f6c6f672e6d616e6167656d656e742e4d41585f4c4f4f4b55505f4259544553(), ["request_log.redaction.BINARY_BODY_KEY"]: rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f4b4559(), ["request_log.stream_outcome.STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["request_log.stream_outcome.stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["request_log.stream_outcome.text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d, ["request_routing.MAX_RETRY_AFTER"]: rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552(), ["request_routing.bounded_retry_after"]: rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f6166746572, ["response_affinity.FILE_NAME"]: rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45(), ["response_affinity.DEFAULT_TTL"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c(), ["responses_websocket.RESPONSES_PATH"]: rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448(), ["responses_websocket.MAX_NAMED_STREAMS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53(), ["responses_websocket.MAX_STREAM_ID_CHARS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253(), ["responses_websocket.MAX_CONNECTION_AGE"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745(), ["responses_websocket.CONNECT_TIMEOUT"]: rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554(), ["responses_websocket.namespace_path"]: rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468, ["runtime.BOOTSTRAP_ADMIN_TTL_HOURS"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(), ["runtime.BOOTSTRAP_ADMIN_LABEL"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c(), ["safety_identifier.OPENAI_MAX_CHARACTERS"]: rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253(), ["security_headers.CONTENT_SECURITY_POLICY"]: rp_73656375726974795f686561646572732e434f4e54454e545f53454355524954595f504f4c494359(), ["storage.associative.TYPE"]: rp_73746f726167652e6173736f636961746976652e54595045(), ["storage.associative.TOKEN_RECORD"]: rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(), ["storage.associative.SUBTYPE"]: rp_73746f726167652e6173736f636961746976652e53554254595045(), ["storage.associative.VALUE"]: rp_73746f726167652e6173736f636961746976652e56414c5545(), ["storage.associative.STORAGE_FORMAT"]: rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(), ["storage.associative.FORMAT_VERSION"]: rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(), ["storage.associative.RECORD_PREFIX"]: rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(), ["storage.associative.STRING_TAG"]: rp_73746f726167652e6173736f636961746976652e535452494e475f544147(), ["storage.associative.EDGE_TAG"]: rp_73746f726167652e6173736f636961746976652e454447455f544147(), ["storage.associative.EMPTY_SEQUENCE"]: rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(), ["storage.associative.BYTE_NODE_START"]: rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(), ["storage.associative.SCHEMA_NODE_COUNT"]: rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(), ["stream_termination.INCOMPLETE_STREAM_MESSAGE"]: rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(), ["stream_termination.MAX_SSE_CARRY_BYTES"]: rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(), ["subscription.external.ROUTER_METADATA_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559(), ["subscription.external.REFRESH_OWNER_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524546524553485f4f574e45525f4b4559(), ["subscription.external.EXTERNAL_REFRESH_OWNER"]: rp_737562736372697074696f6e2e65787465726e616c2e45585445524e414c5f524546524553485f4f574e4552(), ["subscription.external.CREDENTIAL_SOURCE_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e43524544454e5449414c5f534f555243455f4b4559(), ["subscription.external.PROMOTION_RECEIPT_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e50524f4d4f54494f4e5f524543454950545f4b4559(), ["subscription_proxy.CODEX_RESPONSES_LITE_HEADER"]: rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552(), ["subscription_usage.SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["subscription_usage.MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["telegram.POLL_TIMEOUT_SECS"]: rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353(), ["telegram.ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["telegram.ALLOWED_UPDATES"]: rp_74656c656772616d2e414c4c4f5745445f55504441544553(), ["telegram.update_id"]: rp_74656c656772616d2e7570646174655f6964, ["thinking.anthropic.CLAUDE_DEFAULT_MAX_TOKENS"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f44454641554c545f4d41585f544f4b454e53(), ["thinking.anthropic.CLAUDE_MIN_THINKING_BUDGET"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4d494e5f5448494e4b494e475f425544474554(), ["thinking.anthropic.CLAUDE_OUTPUT_HEADROOM"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f48454144524f4f4d(), ["thinking.anthropic.CLAUDE_OUTPUT_FLOOR"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f464c4f4f52(), ["thinking.anthropic.CLAUDE_FIXED_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f46495845445f544f4b454e5f4345494c494e47(), ["thinking.anthropic.CLAUDE_ADAPTIVE_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f41444150544956455f544f4b454e5f4345494c494e47(), ["thinking.anthropic.reasoning_budget"]: rp_7468696e6b696e672e616e7468726f7069632e726561736f6e696e675f627564676574, ["thinking.anthropic.adaptive_effort"]: rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274, ["tls.GENERATED_DIRECTORY"]: rp_746c732e47454e4552415445445f4449524543544f5259(), ["tls.GENERATED_CERT"]: rp_746c732e47454e4552415445445f43455254(), ["tls.GENERATED_KEY"]: rp_746c732e47454e4552415445445f4b4559(), ["token.TOKEN_PREFIX"]: rp_746f6b656e2e544f4b454e5f505245464958(), ["token.CODEX_TOKEN_PREFIX"]: rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), ["token.ADMIN_SCOPE"]: rp_746f6b656e2e41444d494e5f53434f5045(), ["token_import.BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["token_report.HEADERS"]: rp_746f6b656e5f7265706f72742e48454144455253(), ["token_reservation.CHARS_PER_TOKEN"]: rp_746f6b656e5f7265736572766174696f6e2e43484152535f5045525f544f4b454e(), ["token_reservation.DEFAULT_MAX_OUTPUT_TOKENS"]: rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f55545055545f544f4b454e53(), ["token_reservation.declared_output_tokens"]: rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73, ["token_secret.SENTINEL"]: rp_746f6b656e5f7365637265742e53454e54494e454c(), ["token_secret.LEGACY_PLACEHOLDERS"]: rp_746f6b656e5f7365637265742e4c45474143595f504c414345484f4c44455253(), ["token_secret.refusal"]: rp_746f6b656e5f7365637265742e7265667573616c, ["token_secret.FILE_ENV"]: rp_746f6b656e5f7365637265742e46494c455f454e56(), ["verification.SCHEMA"]: rp_766572696669636174696f6e2e534348454d41(), ["verification.SKIP_LOG"]: rp_766572696669636174696f6e2e534b49505f4c4f47(), ["tunnel_command.TOKEN_ENV"]: rp_74756e6e656c5f636f6d6d616e642e544f4b454e5f454e56(), ["tunnel_command.DEFAULT_IMAGE"]: rp_74756e6e656c5f636f6d6d616e642e44454641554c545f494d414745(), ["tunnel_command.SUPERVISOR"]: rp_74756e6e656c5f636f6d6d616e642e53555045525649534f52(), ["upstream_client.DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(), ["upstream_client.parse_timeout_secs"]: rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373, ["upstream_client.parse_upstream_read_timeout"]: rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574, ["upstream_guard.ALLOW_PRIVATE_NETWORKS_ENV"]: rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56(), ["upstream_guard.METADATA_NAMES"]: rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553(), ["usage.token_count"]: rp_75736167652e746f6b656e5f636f756e74, ["usage.token_parts"]: rp_75736167652e746f6b656e5f7061727473, ["usage.ESTIMATED_CHARS_PER_TOKEN"]: rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(), ["usage.first_u64"]: rp_75736167652e66697273745f753634, ["vendor_cli_refresh.DEFAULT_TIMEOUT"]: rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554(), ["vendor_cli_refresh.CLAUDE_PROBE"]: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245(), ["vendor_cli_refresh.CODEX_PROBE"]: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245(), ["vendor_cli_refresh.PROBE_ARGS_ENV"]: rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56(), ["vendor_cli_refresh.probe_for"]: rp_76656e646f725f636c695f726566726573682e70726f62655f666f72, ["verification_client.safety_for"]: rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72, ["verification_client.CLIENTS"]: rp_766572696669636174696f6e5f636c69656e742e434c49454e5453(), ["vk.API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["vk.WAIT_SECS"]: rp_766b2e574149545f53454353(), ["vk.ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["vk.CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["vk.is_private"]: rp_766b2e69735f70726976617465, ["warmup.WARMUP_TEXT"]: rp_7761726d75702e5741524d55505f54455854(), ["with_command.CLAUDE_PRIVACY_DEFAULT_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f505249564143595f44454641554c545f454e56(), ["with_command.CLAUDE_FEATURE_FLAG_BLOCKING_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f464541545552455f464c41475f424c4f434b494e475f454e56(), ["zai_coding_plan.ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["zai_coding_plan.CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["zai_coding_plan.RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["zai_coding_plan.HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["zai_coding_plan.CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["zai_coding_plan.CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["zai_coding_plan.FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["zai_coding_plan.MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["zai_upstream_error.EXHAUSTED_CODES"]: rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(), ["zai_upstream_error.MAX_CLASSIFIED_BODY"]: rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(), ["zai_upstream_error.STATE_FILE"]: rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45(), ["anthropic_nonstream.MAX_BUFFERED_RESPONSE"]: rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345(), ["deploy_local.LABEL_KEY"]: rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559(), ["deploy_local.LEGACY"]: rp_6465706c6f795f6c6f63616c2e4c4547414359(), ["deploy_local.SPEC_VERSION"]: rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e(), ["deploy_local.READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e52454144595f415454454d505453(), ["deploy_local.claude_share.CREDENTIAL_FILE"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45(), ["deploy_local.claude_share.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e4c4142454c5f535546464958(), ["deploy_local.data_backup.LIMIT"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4c494d4954(), ["deploy_local.data_backup.FILES"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e46494c4553(), ["deploy_local.data_backup.DEPTH"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4445505448(), ["deploy_local.data_backup.DEADLINE"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e444541444c494e45(), ["deploy_local.data_backup.COVERED"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e434f5645524544(), ["deploy_local.data_backup.SCHEMA"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e534348454d41(), ["deploy_local.host.ROLLBACK_COMMAND"]: rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44(), ["deploy_local.preservation.CATALOG_ENV"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56(), ["deploy_local.preservation.CATALOG_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f534352495054(), ["deploy_local.relay_rotation.RELAY_IDLE_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e72656c61795f726f746174696f6e2e52454c41595f49444c455f415454454d505453(), ["deploy_local.runtime_env.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958(), ["deploy_local.secret.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["deploy_local.secret.PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["deploy_local.secret.PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["deploy_local.secret.probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564, ["deploy_local.service.MANAGER_ENV"]: rp_6465706c6f795f6c6f63616c2e736572766963652e4d414e414745525f454e56(), ["deploy_local.service.RECORD"]: rp_6465706c6f795f6c6f63616c2e736572766963652e5245434f5244(), ["deploy_local.service.SECRET"]: rp_6465706c6f795f6c6f63616c2e736572766963652e534543524554(), ["deploy_local.service.xml"]: rp_6465706c6f795f6c6f63616c2e736572766963652e786d6c, ["deploy_local.staging.LABEL"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4c4142454c(), ["deploy_local.staging.MARKER"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4d41524b4552(), ["deploy_remote.AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["deploy_remote.TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["deploy_remote.LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["deploy_remote.session.DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["deploy_remote.session.EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["logs_cli.SHOWN"]: rp_6c6f67735f636c692e53484f574e(), ["account_policy_dispatch.MAX_ERROR_BYTES"]: rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553(), ["account_policy_response.MAX_RESPONSE_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f524553504f4e53455f4259544553(), ["account_policy_response.MAX_EVENT_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f4556454e545f4259544553(), ["account_routing_policy.POLICY_FILE"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45(), ["account_routing_policy.MAX_WEIGHT"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f574549474854(), ["account_routing_policy.MAX_RETRIES"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f52455452494553(), ["account_routing_policy.COPY_HEADER_ALLOW_LIST"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354(), ["management_access.MAX_CLIENTS"]: rp_6d616e6167656d656e745f6163636573732e4d41585f434c49454e5453(), ["management_access.SNAPSHOT"]: rp_6d616e6167656d656e745f6163636573732e534e415053484f54() });
-export const provenance = {"entry":"src/lib.rs","runtimeParity":false,"moduleCount":300,"executableFunctions":60,"executableConstants":383};
+export const translated = Object.freeze({ ["account_http.DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(), ["account_http.DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(), ["account_http.PROXY_SCHEMES"]: rp_6163636f756e745f687474702e50524f58595f534348454d4553(), ["account_limits.UNIFIED_PREFIX"]: rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958(), ["account_limits.MAX_VENDOR_COOLDOWN"]: rp_6163636f756e745f6c696d6974732e4d41585f56454e444f525f434f4f4c444f574e(), ["account_limits.STATE_FILE"]: rp_6163636f756e745f6c696d6974732e53544154455f46494c45(), ["account_limits.MODEL_FAMILIES"]: rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553(), ["accounts_cli.DEFAULT_PAUSE_REASON"]: rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e(), ["accounts_cli.LOCAL_NOTE"]: rp_6163636f756e74735f636c692e4c4f43414c5f4e4f5445(), ["activitypub.ACTIVITY_JSON"]: rp_61637469766974797075622e41435449564954595f4a534f4e(), ["admin.ADMIN_TOKEN_PREFIX"]: rp_61646d696e2e41444d494e5f544f4b454e5f505245464958(), ["admin.CLAIM_FILE_NAME"]: rp_61646d696e2e434c41494d5f46494c455f4e414d45(), ["admin.DEFAULT_CANDIDATE_TTL_SECS"]: rp_61646d696e2e44454641554c545f43414e4449444154455f54544c5f53454353(), ["admin.DEFAULT_CLAIM_TTL_HOURS"]: rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253(), ["admin.CLAIM_TOKEN_LABEL"]: rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c(), ["admin_recovery.RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["anthropic_bridge.DEFAULT_MAX_TOKENS"]: rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53(), ["anthropic_bridge.usage_field"]: rp_616e7468726f7069635f6272696467652e75736167655f6669656c64, ["anthropic_stream.map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["anthropic_stream.response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579, ["api_error.openai_error_type"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065, ["api_error.openai_error_code"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465, ["audit.surface_name"]: rp_61756469742e737572666163655f6e616d65, ["auth.CODEX_CLIENT_ID"]: rp_617574682e434f4445585f434c49454e545f4944(), ["auth.CODEX_ISSUER"]: rp_617574682e434f4445585f495353554552(), ["auth.CODEX_CALLBACK_PATH"]: rp_617574682e434f4445585f43414c4c4241434b5f50415448(), ["auth.CODEX_DEVICE_CALLBACK_PATH"]: rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448(), ["auth_remote.REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["auth_remote.POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["auth_remote.status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["auth_remote.home_in_accounts"]: rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473, ["bridge_controls.CHAT_FIELDS"]: rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453(), ["bridge_controls.RESPONSE_FIELDS"]: rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453(), ["bridge_response.stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["bridge_response.complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["bridge_response.incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["bridge_response.anthropic_service_tier_from_openai"]: rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169, ["bridge_selection.MODEL_SELECTION_REQUIRED"]: rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544(), ["capabilities.subscription"]: rp_6361706162696c69746965732e737562736372697074696f6e, ["capabilities.unsatisfiable_forced_tool_choice"]: rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365, ["chat_admin.DEFAULT_SECRET_TTL_SECS"]: rp_636861745f61646d696e2e44454641554c545f5345435245545f54544c5f53454353(), ["chat_admin.DEFAULT_RATE_LIMIT_PER_MINUTE"]: rp_636861745f61646d696e2e44454641554c545f524154455f4c494d49545f5045525f4d494e555445(), ["chat_admin.RATE_LIMIT_WINDOW"]: rp_636861745f61646d696e2e524154455f4c494d49545f57494e444f57(), ["chat_admin.SESSION_IDLE_TTL"]: rp_636861745f61646d696e2e53455353494f4e5f49444c455f54544c(), ["chat_admin.MAX_SESSIONS"]: rp_636861745f61646d696e2e4d41585f53455353494f4e53(), ["chat_admin.normalise"]: rp_636861745f61646d696e2e6e6f726d616c697365, ["chat_admin.ALREADY_CLAIMED"]: rp_636861745f61646d696e2e414c52454144595f434c41494d4544(), ["chat_admin.RATE_LIMITED"]: rp_636861745f61646d696e2e524154455f4c494d49544544(), ["chat_admin.HELP"]: rp_636861745f61646d696e2e48454c50(), ["chat_commands.DEFAULT_ISSUE_TTL_HOURS"]: rp_636861745f636f6d6d616e64732e44454641554c545f49535355455f54544c5f484f555253(), ["chat_commands.LIST_LIMIT"]: rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954(), ["chat_commands.ISSUE_KEYS"]: rp_636861745f636f6d6d616e64732e49535355455f4b455953(), ["chat_commands.yes_no"]: rp_636861745f636f6d6d616e64732e7965735f6e6f, ["claude_auth.CLAUDE_AUTHORIZE_URL"]: rp_636c617564655f617574682e434c415544455f415554484f52495a455f55524c(), ["claude_auth.CLAUDE_REDIRECT_URI"]: rp_636c617564655f617574682e434c415544455f52454449524543545f555249(), ["claude_auth.CLAUDE_SCOPES"]: rp_636c617564655f617574682e434c415544455f53434f504553(), ["claude_auth.CLAUDE_INFERENCE_SCOPE"]: rp_636c617564655f617574682e434c415544455f494e464552454e43455f53434f5045(), ["claude_auth.PENDING_LOGIN_FILE"]: rp_636c617564655f617574682e50454e44494e475f4c4f47494e5f46494c45(), ["claude_identity.CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["claude_identity.DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["claude_identity.is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["claude_identity.first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479, ["client_command.CLIENT_TOKEN_ENV"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56(), ["client_command.CLIENT_TOKEN_ENV_ALIAS"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e565f414c494153(), ["client_launch.CLAUDE_NATIVE_SERVICES_LIMITATION"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f53455256494345535f4c494d49544154494f4e(), ["client_launch.CLAUDE_NATIVE_SERVICE_REQUEST_ERROR"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52(), ["client_policy.PROXIED_CLIENT_EVIDENCE_HEADER"]: rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552(), ["client_policy.PROXIED_CODEX_EVIDENCE_VALUE"]: rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e43455f56414c5545(), ["clients.CODEX_PROVIDER"]: rp_636c69656e74732e434f4445585f50524f5649444552(), ["clients.CODEX_TOKEN_ENV"]: rp_636c69656e74732e434f4445585f544f4b454e5f454e56(), ["clients.CLAUDE_TOKEN_ENV"]: rp_636c69656e74732e434c415544455f544f4b454e5f454e56(), ["clients.CLAUDE_BASE_ENV"]: rp_636c69656e74732e434c415544455f424153455f454e56(), ["clients.ROUTER_TOKEN_ENV"]: rp_636c69656e74732e524f555445525f544f4b454e5f454e56(), ["clients.GROK_TOKEN_ENV"]: rp_636c69656e74732e47524f4b5f544f4b454e5f454e56(), ["clients.GROK_BASE_ENV"]: rp_636c69656e74732e47524f4b5f424153455f454e56(), ["clients.ROUTER_PROVIDER"]: rp_636c69656e74732e524f555445525f50524f5649444552(), ["clients.OWNERSHIP_MARKER"]: rp_636c69656e74732e4f574e4552534849505f4d41524b4552(), ["clients.CLAUDE_MODEL_ENV"]: rp_636c69656e74732e434c415544455f4d4f44454c5f454e56(), ["clients.CLAUDE_GATEWAY_TARGET_ENV"]: rp_636c69656e74732e434c415544455f474154455741595f5441524745545f454e56(), ["clients.CLAUDE_DEFAULT_ROW_ENV"]: rp_636c69656e74732e434c415544455f44454641554c545f524f575f454e56(), ["clients.OPENAI_MODEL_OWNER"]: rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552(), ["clients.ANTHROPIC_MODEL_OWNER"]: rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552(), ["clients.GOOGLE_MODEL_OWNER"]: rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552(), ["clients.QWEN_MODEL_OWNER"]: rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552(), ["clients.ZAI_MODEL_OWNER"]: rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552(), ["clients.DEFAULT_OPENAI_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254(), ["clients.DEFAULT_ANTHROPIC_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254(), ["clients.analysis.CLAUDE_PRECEDENCE_ENV"]: rp_636c69656e74732e616e616c797369732e434c415544455f505245434544454e43455f454e56(), ["clients.catalog.FRESH_ZAI_PREFERRED_MODEL"]: rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c(), ["clients.doctor.DOCTOR_EVIDENCE_HEADER"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552(), ["clients.doctor.DOCTOR_EVIDENCE_VALUE"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c5545(), ["clients.doctor.MINIMUM_CLAUDE_GATEWAY_VERSION"]: rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e(), ["codex_cloudflare_cookies.MAX_COOKIE_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553(), ["codex_cloudflare_cookies.MAX_COOKIE_COUNT"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54(), ["codex_cloudflare_cookies.MAX_COOKIE_HEADER_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553(), ["codex_cloudflare_cookies.EXACT_HOSTS"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), ["codex_cloudflare_cookies.SUBDOMAIN_SUFFIXES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), ["codex_cloudflare_cookies.EXACT_COOKIE_NAMES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(), ["codex_identity.DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["codex_identity.ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["codex_loopback_bridge.BACKEND_PATH"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4241434b454e445f50415448(), ["codex_loopback_bridge.CONNECT_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554(), ["codex_loopback_bridge.HEALTH_HEADER"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4845414c54485f484541444552(), ["codex_loopback_bridge.DAEMON_MARKER_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4d41524b45525f454e56(), ["codex_loopback_bridge.DAEMON_UPSTREAM_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f555053545245414d5f454e56(), ["codex_loopback_bridge.DAEMON_STATE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f53544154455f454e56(), ["codex_loopback_bridge.DAEMON_NONCE_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4e4f4e43455f454e56(), ["codex_loopback_bridge.DAEMON_LISTEN_ENV"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e4441454d4f4e5f4c495354454e5f454e56(), ["codex_loopback_bridge.START_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544152545f54494d454f5554(), ["codex_loopback_bridge.STOP_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544f505f54494d454f5554(), ["codex_loopback_bridge.POLL_INTERVAL"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e504f4c4c5f494e54455256414c(), ["codex_remote_control.CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["codex_remote_control.FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["codex_remote_control.STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["codex_remote_control.MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["codex_remote_control.validate_record"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e76616c69646174655f7265636f7264, ["codex_remote_control.ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["codex_remote_control.SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["codex_remote_control.ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["codex_remote_control.REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["codex_remote_control.REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["codex_remote_control.PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["codex_remote_control.PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["codex_remote_control.ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["codex_remote_control.is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468, ["config.DEFAULT_MAX_PROXY_REQUEST_BYTES"]: rp_636f6e6669672e44454641554c545f4d41585f50524f58595f524551554553545f4259544553(), ["config.default_mpp_config"]: rp_636f6e6669672e64656661756c745f6d70705f636f6e666967, ["config.default_activitypub_public_key_pem"]: rp_636f6e6669672e64656661756c745f61637469766974797075625f7075626c69635f6b65795f70656d, ["config_defaults.default_gonka_model"]: rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c, ["config_defaults.default_openai_compatible_base_url"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c, ["conversation_record.RECORD_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245434f52445f454e56(), ["conversation_record.REPLAY_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f454e56(), ["conversation_record.REPLAY_TURN_HEADER"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f484541444552(), ["conversation_record.REFRAMED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253(), ["conversation_record.MAX_RECORDED_BODY"]: rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459(), ["conversation_record.matching.IGNORED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253(), ["conversation_record.matching.COMPARED_FIELDS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453(), ["conversation_record.matching.RENDERED_LIMIT"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954(), ["conversation_record.store.HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["conversation_record.store.TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["conversation_record.store.read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["conversation_record.store.string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64, ["crater.ACTIVITY_JSON"]: rp_6372617465722e41435449564954595f4a534f4e(), ["crater.LINKED_DATA_JSON"]: rp_6372617465722e4c494e4b45445f444154415f4a534f4e(), ["crater.DEFAULT_MODEL"]: rp_6372617465722e44454641554c545f4d4f44454c(), ["credential_acceptance.ACCEPTANCE_TIMEOUT"]: rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54494d454f5554(), ["credential_acceptance.STAGING_DIRECTORY"]: rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259(), ["credential_recovery_store.RECOVERY_VERSION"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f56455253494f4e(), ["credential_recovery_store.RECOVERY_DIRECTORY"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259(), ["credential_recovery_store.PRIMARY_ACCOUNT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5052494d4152595f4143434f554e54(), ["credential_recovery_store.CREDENTIAL_LOCK_TIMEOUT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e43524544454e5449414c5f4c4f434b5f54494d454f5554(), ["credential_source.ROUTER_METADATA_KEY"]: rp_63726564656e7469616c5f736f757263652e524f555445525f4d455441444154415f4b4559(), ["credential_source.CREDENTIAL_SOURCE_KEY"]: rp_63726564656e7469616c5f736f757263652e43524544454e5449414c5f534f555243455f4b4559(), ["credential_source.REFRESH_OWNER_KEY"]: rp_63726564656e7469616c5f736f757263652e524546524553485f4f574e45525f4b4559(), ["credential_source.EXTERNAL_REFRESH_OWNER"]: rp_63726564656e7469616c5f736f757263652e45585445524e414c5f524546524553485f4f574e4552(), ["credential_store.LOCK_SUFFIX"]: rp_63726564656e7469616c5f73746f72652e4c4f434b5f535546464958(), ["deploy.CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["deploy.RELAY"]: rp_6465706c6f792e52454c4159(), ["deploy.NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["deploy.BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["deploy.LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["deploy.LABEL"]: rp_6465706c6f792e4c4142454c(), ["deploy.DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["deploy.HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["deploy.DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(), ["deploy_config.RESERVED_ENV"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e56(), ["deploy_config.RESERVED_ENV_PREFIXES"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553(), ["deploy_config.VERIFIABLE_CLIENTS"]: rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453(), ["deploy_relay.STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["deploy_relay.LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["deploy_seed.METADATA_KEY"]: rp_6465706c6f795f736565642e4d455441444154415f4b4559(), ["deploy_seed.HANDOVER_KEY"]: rp_6465706c6f795f736565642e48414e444f5645525f4b4559(), ["deployment_preservation.usable"]: rp_6465706c6f796d656e745f707265736572766174696f6e2e757361626c65, ["doctor.latest_version.RELEASE_API"]: rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049(), ["durable_file.ROLLBACK_SUFFIX"]: rp_64757261626c655f66696c652e524f4c4c4241434b5f535546464958(), ["durable_file.COMMIT_SUFFIX"]: rp_64757261626c655f66696c652e434f4d4d49545f535546464958(), ["durable_file.LOCK_POLL_INTERVAL"]: rp_64757261626c655f66696c652e4c4f434b5f504f4c4c5f494e54455256414c(), ["emergency_auth.FLAG"]: rp_656d657267656e63795f617574682e464c4147(), ["emergency_auth.ENV"]: rp_656d657267656e63795f617574682e454e56(), ["emergency_auth.ALLOW_NON_LOOPBACK_ENV"]: rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), ["emergency_auth.DURATION_ENV"]: rp_656d657267656e63795f617574682e4455524154494f4e5f454e56(), ["emergency_auth.ENV_VARS"]: rp_656d657267656e63795f617574682e454e565f56415253(), ["emergency_auth.DEFAULT_DURATION_MINUTES"]: rp_656d657267656e63795f617574682e44454641554c545f4455524154494f4e5f4d494e55544553(), ["emergency_auth.MAX_DURATION_MINUTES"]: rp_656d657267656e63795f617574682e4d41585f4455524154494f4e5f4d494e55544553(), ["emergency_auth.SUBJECT_PREFIX"]: rp_656d657267656e63795f617574682e5355424a4543545f505245464958(), ["emergency_auth.LABEL"]: rp_656d657267656e63795f617574682e4c4142454c(), ["emergency_auth.HEALTH_HEADER"]: rp_656d657267656e63795f617574682e4845414c54485f484541444552(), ["emergency_auth.is_synthetic_id"]: rp_656d657267656e63795f617574682e69735f73796e7468657469635f6964, ["encoded_request_body.MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["encoded_request_body.ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["encoded_request_body.ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["encoded_request_body.MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["entrypoint.STACK_BYTES"]: rp_656e747279706f696e742e535441434b5f4259544553(), ["error_log.DEFAULT_MAX_BYTES"]: rp_6572726f725f6c6f672e44454641554c545f4d41585f4259544553(), ["error_log.MAX_BODY_BYTES"]: rp_6572726f725f6c6f672e4d41585f424f44595f4259544553(), ["error_log.MAX_DOCUMENT_BYTES"]: rp_6572726f725f6c6f672e4d41585f444f43554d454e545f4259544553(), ["gemini.PROJECT_ENV"]: rp_67656d696e692e50524f4a4543545f454e56(), ["gemini.MODEL_OWNER"]: rp_67656d696e692e4d4f44454c5f4f574e4552(), ["gemini.map_finish_reason"]: rp_67656d696e692e6d61705f66696e6973685f726561736f6e, ["gemini.gemini_finish_reason"]: rp_67656d696e692e67656d696e695f66696e6973685f726561736f6e, ["gemini.native.parse_native_target"]: rp_67656d696e692e6e61746976652e70617273655f6e61746976655f746172676574, ["gemini_bridge.MODEL_ROLE"]: rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45(), ["gemini_bridge.map_finish_reason"]: rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e, ["generated_js_first.policy.js_min"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e, ["generated_js_first.policy.js_max"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178, ["generated_js_first.policy.token_budget_permits"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f6275646765745f7065726d697473, ["generated_js_first.policy.cooldown_active"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6f6c646f776e5f616374697665, ["generated_js_first.policy.clamp"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636c616d70, ["generated_js_first.policy.longest_cooldown"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6c6f6e676573745f636f6f6c646f776e, ["generated_js_first.policy.retry_after_deadline"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72657472795f61667465725f646561646c696e65, ["generated_js_first.policy.token_cost"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f636f7374, ["generated_js_first.policy.valid_token_count"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e76616c69645f746f6b656e5f636f756e74, ["generated_js_first.policy.settled_token_usage"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e736574746c65645f746f6b656e5f7573616765, ["generated_js_first.policy.remaining_token_budget"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72656d61696e696e675f746f6b656e5f627564676574, ["generated_js_first.policy.completion_token_limit"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6d706c6574696f6e5f746f6b656e5f6c696d6974, ["generated_js_first.policy.retryable_status"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e726574727961626c655f737461747573, ["generated_js_first.policy.success_status"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e737563636573735f737461747573, ["generated_js_first.policy.weighted_capacity"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e77656967687465645f6361706163697479, ["generated_js_first.policy.token_expired"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f65787069726564, ["generated_js_first.policy.utf16_length"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468, ["generated_js_first.policy.model_name_length_permits"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6d6f64656c5f6e616d655f6c656e6774685f7065726d697473, ["git_proxy.ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["git_proxy.ancestry_from_compare"]: rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265, ["git_proxy.scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["git_proxy.canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468, ["github_proxy.POLICY_HEADER"]: rp_6769746875625f70726f78792e504f4c4943595f484541444552(), ["gonka.MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["gonka.CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["gonka.CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["gonka.FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["gonka.MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["gonka.MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["lefine.BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["lefine.COMPATIBLE_CLIENTS"]: rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(), ["lefine.MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["lefine.unavailable"]: rp_6c6566696e652e756e617661696c61626c65, ["lino_json.ARRAY_MARKER"]: rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552(), ["lino_json.OBJECT_MARKER"]: rp_6c696e6f5f6a736f6e2e4f424a4543545f4d41524b4552(), ["lino_json.EMPTY_STRING"]: rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47(), ["log_analysis.request_asks_for_a_stream"]: rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d, ["log_decode.BROTLI_BUFFER"]: rp_6c6f675f6465636f64652e42524f544c495f425546464552(), ["logging.http_failure"]: rp_6c6f6767696e672e687474705f6661696c757265, ["login.SUCCESS_MARKERS"]: rp_6c6f67696e2e535543434553535f4d41524b455253(), ["login.FAILURE_MARKERS"]: rp_6c6f67696e2e4641494c5552455f4d41524b455253(), ["login.THEME_PICKER_MARKER"]: rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552(), ["login.WORKSPACE_TRUST_MARKER"]: rp_6c6f67696e2e574f524b53504143455f54525553545f4d41524b4552(), ["login.LOGIN_METHOD_MARKER"]: rp_6c6f67696e2e4c4f47494e5f4d4554484f445f4d41524b4552(), ["login.READY_PROMPT_MARKER"]: rp_6c6f67696e2e52454144595f50524f4d50545f4d41524b4552(), ["login_api.requested_provider"]: rp_6c6f67696e5f6170692e7265717565737465645f70726f7669646572, ["login_pty.PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["login_pty.PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["login_pty.POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["login_pty_backend.contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572, ["login_url.AUTH_HOSTS"]: rp_6c6f67696e5f75726c2e415554485f484f535453(), ["login_url.TOKEN_PREFIXES"]: rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553(), ["login_url.REDACTED"]: rp_6c6f67696e5f75726c2e5245444143544544(), ["login_url.SECRET_PREFIXES"]: rp_6c6f67696e5f75726c2e5345435245545f5052454649584553(), ["login_url.redact_value"]: rp_6c6f67696e5f75726c2e7265646163745f76616c7565, ["managed_server.DEFAULT_LOCAL_PORT"]: rp_6d616e616765645f7365727665722e44454641554c545f4c4f43414c5f504f5254(), ["managed_server.CONFIG_DIRECTORY"]: rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259(), ["managed_server.SERVER_CONFIG"]: rp_6d616e616765645f7365727665722e5345525645525f434f4e464947(), ["managed_server.MANAGED_STATE"]: rp_6d616e616765645f7365727665722e4d414e414745445f5354415445(), ["managed_server.MANAGED_LOCK"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4f434b(), ["managed_server.CONTAINER"]: rp_6d616e616765645f7365727665722e434f4e5441494e4552(), ["managed_server.VOLUME"]: rp_6d616e616765645f7365727665722e564f4c554d45(), ["managed_server.IMAGE"]: rp_6d616e616765645f7365727665722e494d414745(), ["managed_server.MANAGED_LABEL"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4142454c(), ["managed_server.run_lease.HEARTBEAT_INTERVAL"]: rp_6d616e616765645f7365727665722e72756e5f6c656173652e4845415254424541545f494e54455256414c(), ["managed_server.selection.TRUST_DIRECTORY"]: rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259(), ["model_catalog.CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["model_catalog.FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["model_catalog.MAX_CATALOG_PAGES"]: rp_6d6f64656c5f636174616c6f672e4d41585f434154414c4f475f5041474553(), ["model_catalog.PERSISTED_CATALOG_VERSION"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f56455253494f4e(), ["model_catalog.PERSISTED_CATALOG_FILE"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(), ["model_catalog.CATALOG_INVALIDATION_DIR"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952(), ["model_command.selector_kind"]: rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64, ["model_routing.provider_owner"]: rp_6d6f64656c5f726f7574696e672e70726f76696465725f6f776e6572, ["mpp.escape_header_value"]: rp_6d70702e6573636170655f6865616465725f76616c7565, ["native_service.CONNECT_TIMEOUT"]: rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(), ["openai.done_frame"]: rp_6f70656e61692e646f6e655f6672616d65, ["operational_log.MAX_BYTES"]: rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553(), ["operational_log.BACKUPS"]: rp_6f7065726174696f6e616c5f6c6f672e4241434b555053(), ["output_limit.CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["output_limit.event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["pool_failover.DEFAULT_MAX_ATTEMPTS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(), ["pool_failover.DEFAULT_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(), ["pool_failover.MAX_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(), ["pool_failover.classify_status"]: rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573, ["pool_response.MAX_ERROR_BYTES"]: rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553(), ["pool_stream_limits.MAX_EVENT_BYTES"]: rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553(), ["provider_proxy.protocol_for_request"]: rp_70726f76696465725f70726f78792e70726f746f636f6c5f666f725f72657175657374, ["provider_proxy.PROVIDER_CATALOG_TTL"]: rp_70726f76696465725f70726f78792e50524f56494445525f434154414c4f475f54544c(), ["provider_proxy.PROVIDER_FAILED_REFRESH_RETRY"]: rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546524553485f5245545259(), ["providers.default_enabled"]: rp_70726f7669646572732e64656661756c745f656e61626c6564, ["proxy.API_PREFIX"]: rp_70726f78792e4150495f505245464958(), ["proxy.REQUIRED_FORWARD_HEADERS"]: rp_70726f78792e52455155495245445f464f52574152445f48454144455253(), ["proxy.HOP_BY_HOP_HEADERS"]: rp_70726f78792e484f505f42595f484f505f48454144455253(), ["proxy.RESPONSE_CREDENTIAL_HEADERS"]: rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253(), ["proxy.ACCEPTED_CREDENTIAL_CARRIERS"]: rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253(), ["proxy.CREDENTIAL_CARRIER_HINT"]: rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54(), ["proxy.upstream_headers.DEFAULT_ANTHROPIC_VERSION"]: rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e(), ["proxy.upstream_headers.OAUTH_BETA_FLAG"]: rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147(), ["proxy.upstream_headers.MAX_PROXY_REQUEST_BYTES"]: rp_70726f78792e757073747265616d5f686561646572732e4d41585f50524f58595f524551554553545f4259544553(), ["proxy.upstream_headers.INGRESS_NETWORK_HEADERS"]: rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253(), ["proxy.upstream_path.resolve_upstream_path"]: rp_70726f78792e757073747265616d5f706174682e7265736f6c76655f757073747265616d5f70617468, ["refresh.CLAUDE_OAUTH_USER_AGENT"]: rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54(), ["refresh.ANTHROPIC_SDK_VERSION"]: rp_726566726573682e414e5448524f5049435f53444b5f56455253494f4e(), ["refresh.GEMINI_CLI_VERSION"]: rp_726566726573682e47454d494e495f434c495f56455253494f4e(), ["refresh.GOOGLE_AUTH_LIBRARY_VERSION"]: rp_726566726573682e474f4f474c455f415554485f4c4942524152595f56455253494f4e(), ["refresh.QWEN_CODE_VERSION"]: rp_726566726573682e5157454e5f434f44455f56455253494f4e(), ["refresh.GEMINI_CLIENT_ID_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f49445f454e56(), ["refresh.GEMINI_CLIENT_SECRET_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f5345435245545f454e56(), ["refresh.GEMINI_CLIENT_ID"]: rp_726566726573682e47454d494e495f434c49454e545f4944(), ["refresh.GEMINI_AUTH_USER_AGENT"]: rp_726566726573682e47454d494e495f415554485f555345525f4147454e54(), ["refresh.GEMINI_API_CLIENT"]: rp_726566726573682e47454d494e495f4150495f434c49454e54(), ["refresh.CLAUDE_CLIENT_ID"]: rp_726566726573682e434c415544455f434c49454e545f4944(), ["refresh.CLAUDE_TOKEN_URL"]: rp_726566726573682e434c415544455f544f4b454e5f55524c(), ["refresh.REFRESH_SKEW_MS"]: rp_726566726573682e524546524553485f534b45575f4d53(), ["refresh.ROTATION_ATTRIBUTION_MS"]: rp_726566726573682e524f544154494f4e5f4154545249425554494f4e5f4d53(), ["refresh.refresh_config"]: rp_726566726573682e726566726573685f636f6e666967, ["refresh_rejections.REJECTIONS_FILE_NAME"]: rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45(), ["request_log.LOG_FILE"]: rp_726571756573745f6c6f672e4c4f475f46494c45(), ["request_log.LEGACY_LOG_FILE"]: rp_726571756573745f6c6f672e4c45474143595f4c4f475f46494c45(), ["request_log.REDACTED"]: rp_726571756573745f6c6f672e5245444143544544(), ["request_log.UNAUTHENTICATED"]: rp_726571756573745f6c6f672e554e41555448454e54494341544544(), ["request_log.management.MAX_LOOKUP_BYTES"]: rp_726571756573745f6c6f672e6d616e6167656d656e742e4d41585f4c4f4f4b55505f4259544553(), ["request_log.redaction.BINARY_BODY_KEY"]: rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f4b4559(), ["request_log.stream_outcome.STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["request_log.stream_outcome.stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["request_log.stream_outcome.text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d, ["request_routing.MAX_RETRY_AFTER"]: rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552(), ["request_routing.bounded_retry_after"]: rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f6166746572, ["resource_capture.MAX_BUFFERED_ID_PREFIX"]: rp_7265736f757263655f636170747572652e4d41585f42554646455245445f49445f505245464958(), ["resource_capture.MAX_BUFFERED_JSON_RESPONSE"]: rp_7265736f757263655f636170747572652e4d41585f42554646455245445f4a534f4e5f524553504f4e5345(), ["response_affinity.FILE_NAME"]: rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45(), ["response_affinity.STORE_VERSION"]: rp_726573706f6e73655f616666696e6974792e53544f52455f56455253494f4e(), ["response_affinity.DEFAULT_TTL"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c(), ["response_affinity.DEFAULT_MAX_RECORDS"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f4d41585f5245434f524453(), ["response_affinity.MAX_RESPONSE_ID_BYTES"]: rp_726573706f6e73655f616666696e6974792e4d41585f524553504f4e53455f49445f4259544553(), ["responses.stream_content_key"]: rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579, ["responses.done_frame"]: rp_726573706f6e7365732e646f6e655f6672616d65, ["responses_websocket.RESPONSES_PATH"]: rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448(), ["responses_websocket.MAX_NAMED_STREAMS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53(), ["responses_websocket.MAX_STREAM_ID_CHARS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253(), ["responses_websocket.MAX_CONNECTION_AGE"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745(), ["responses_websocket.CONNECT_TIMEOUT"]: rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554(), ["responses_websocket.namespace_path"]: rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468, ["runtime.BOOTSTRAP_ADMIN_TTL_HOURS"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(), ["runtime.BOOTSTRAP_ADMIN_LABEL"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c(), ["safety_identifier.OPENAI_MAX_CHARACTERS"]: rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253(), ["security_headers.CONTENT_SECURITY_POLICY"]: rp_73656375726974795f686561646572732e434f4e54454e545f53454355524954595f504f4c494359(), ["storage.associative.TYPE"]: rp_73746f726167652e6173736f636961746976652e54595045(), ["storage.associative.TOKEN_RECORD"]: rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(), ["storage.associative.SUBTYPE"]: rp_73746f726167652e6173736f636961746976652e53554254595045(), ["storage.associative.VALUE"]: rp_73746f726167652e6173736f636961746976652e56414c5545(), ["storage.associative.STORAGE_FORMAT"]: rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(), ["storage.associative.FORMAT_VERSION"]: rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(), ["storage.associative.RECORD_PREFIX"]: rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(), ["storage.associative.STRING_TAG"]: rp_73746f726167652e6173736f636961746976652e535452494e475f544147(), ["storage.associative.EDGE_TAG"]: rp_73746f726167652e6173736f636961746976652e454447455f544147(), ["storage.associative.EMPTY_SEQUENCE"]: rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(), ["storage.associative.BYTE_NODE_START"]: rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(), ["storage.associative.SCHEMA_NODE_COUNT"]: rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(), ["stream_termination.INCOMPLETE_STREAM_MESSAGE"]: rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(), ["stream_termination.MAX_SSE_CARRY_BYTES"]: rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(), ["subscription.external.ROUTER_METADATA_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559(), ["subscription.external.REFRESH_OWNER_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524546524553485f4f574e45525f4b4559(), ["subscription.external.EXTERNAL_REFRESH_OWNER"]: rp_737562736372697074696f6e2e65787465726e616c2e45585445524e414c5f524546524553485f4f574e4552(), ["subscription.external.CREDENTIAL_SOURCE_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e43524544454e5449414c5f534f555243455f4b4559(), ["subscription.external.PROMOTION_RECEIPT_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e50524f4d4f54494f4e5f524543454950545f4b4559(), ["subscription_proxy.CODEX_RESPONSES_LITE_HEADER"]: rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552(), ["subscription_usage.SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["subscription_usage.MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["telegram.POLL_TIMEOUT_SECS"]: rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353(), ["telegram.ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["telegram.ALLOWED_UPDATES"]: rp_74656c656772616d2e414c4c4f5745445f55504441544553(), ["telegram.update_id"]: rp_74656c656772616d2e7570646174655f6964, ["thinking.anthropic.CLAUDE_DEFAULT_MAX_TOKENS"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f44454641554c545f4d41585f544f4b454e53(), ["thinking.anthropic.CLAUDE_MIN_THINKING_BUDGET"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4d494e5f5448494e4b494e475f425544474554(), ["thinking.anthropic.CLAUDE_OUTPUT_HEADROOM"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f48454144524f4f4d(), ["thinking.anthropic.CLAUDE_OUTPUT_FLOOR"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f464c4f4f52(), ["thinking.anthropic.CLAUDE_FIXED_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f46495845445f544f4b454e5f4345494c494e47(), ["thinking.anthropic.CLAUDE_ADAPTIVE_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f41444150544956455f544f4b454e5f4345494c494e47(), ["thinking.anthropic.reasoning_budget"]: rp_7468696e6b696e672e616e7468726f7069632e726561736f6e696e675f627564676574, ["thinking.anthropic.adaptive_effort"]: rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274, ["tls.GENERATED_DIRECTORY"]: rp_746c732e47454e4552415445445f4449524543544f5259(), ["tls.GENERATED_CERT"]: rp_746c732e47454e4552415445445f43455254(), ["tls.GENERATED_KEY"]: rp_746c732e47454e4552415445445f4b4559(), ["token.TOKEN_PREFIX"]: rp_746f6b656e2e544f4b454e5f505245464958(), ["token.CODEX_TOKEN_PREFIX"]: rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), ["token.ADMIN_SCOPE"]: rp_746f6b656e2e41444d494e5f53434f5045(), ["token_import.BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["token_report.HEADERS"]: rp_746f6b656e5f7265706f72742e48454144455253(), ["token_reservation.CHARS_PER_TOKEN"]: rp_746f6b656e5f7265736572766174696f6e2e43484152535f5045525f544f4b454e(), ["token_reservation.DEFAULT_MAX_OUTPUT_TOKENS"]: rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f55545055545f544f4b454e53(), ["token_reservation.declared_output_tokens"]: rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73, ["token_secret.SENTINEL"]: rp_746f6b656e5f7365637265742e53454e54494e454c(), ["token_secret.LEGACY_PLACEHOLDERS"]: rp_746f6b656e5f7365637265742e4c45474143595f504c414345484f4c44455253(), ["token_secret.refusal"]: rp_746f6b656e5f7365637265742e7265667573616c, ["token_secret.FILE_ENV"]: rp_746f6b656e5f7365637265742e46494c455f454e56(), ["verification.SCHEMA"]: rp_766572696669636174696f6e2e534348454d41(), ["verification.SKIP_LOG"]: rp_766572696669636174696f6e2e534b49505f4c4f47(), ["tunnel_command.TOKEN_ENV"]: rp_74756e6e656c5f636f6d6d616e642e544f4b454e5f454e56(), ["tunnel_command.DEFAULT_IMAGE"]: rp_74756e6e656c5f636f6d6d616e642e44454641554c545f494d414745(), ["tunnel_command.SUPERVISOR"]: rp_74756e6e656c5f636f6d6d616e642e53555045525649534f52(), ["upstream_client.DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(), ["upstream_client.parse_timeout_secs"]: rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373, ["upstream_client.parse_upstream_read_timeout"]: rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574, ["upstream_guard.ALLOW_PRIVATE_NETWORKS_ENV"]: rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56(), ["upstream_guard.METADATA_NAMES"]: rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553(), ["usage.token_count"]: rp_75736167652e746f6b656e5f636f756e74, ["usage.token_parts"]: rp_75736167652e746f6b656e5f7061727473, ["usage.ESTIMATED_CHARS_PER_TOKEN"]: rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(), ["usage.first_u64"]: rp_75736167652e66697273745f753634, ["vendor_cli_refresh.DEFAULT_TIMEOUT"]: rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554(), ["vendor_cli_refresh.CLAUDE_PROBE"]: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245(), ["vendor_cli_refresh.CODEX_PROBE"]: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245(), ["vendor_cli_refresh.PROBE_ARGS_ENV"]: rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56(), ["vendor_cli_refresh.probe_for"]: rp_76656e646f725f636c695f726566726573682e70726f62655f666f72, ["verification_client.safety_for"]: rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72, ["verification_client.CLIENTS"]: rp_766572696669636174696f6e5f636c69656e742e434c49454e5453(), ["vk.API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["vk.WAIT_SECS"]: rp_766b2e574149545f53454353(), ["vk.ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["vk.CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["vk.is_private"]: rp_766b2e69735f70726976617465, ["warmup.WARMUP_TEXT"]: rp_7761726d75702e5741524d55505f54455854(), ["with_command.CLAUDE_PRIVACY_DEFAULT_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f505249564143595f44454641554c545f454e56(), ["with_command.CLAUDE_FEATURE_FLAG_BLOCKING_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f464541545552455f464c41475f424c4f434b494e475f454e56(), ["zai_coding_plan.ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["zai_coding_plan.CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["zai_coding_plan.RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["zai_coding_plan.HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["zai_coding_plan.CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["zai_coding_plan.CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["zai_coding_plan.FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["zai_coding_plan.MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["zai_upstream_error.EXHAUSTED_CODES"]: rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(), ["zai_upstream_error.MAX_CLASSIFIED_BODY"]: rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(), ["zai_upstream_error.STATE_FILE"]: rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45(), ["anthropic_nonstream.MAX_BUFFERED_RESPONSE"]: rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345(), ["deploy_local.LABEL_KEY"]: rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559(), ["deploy_local.LEGACY"]: rp_6465706c6f795f6c6f63616c2e4c4547414359(), ["deploy_local.SPEC_VERSION"]: rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e(), ["deploy_local.READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e52454144595f415454454d505453(), ["deploy_local.claude_share.CREDENTIAL_FILE"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45(), ["deploy_local.claude_share.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e4c4142454c5f535546464958(), ["deploy_local.data_backup.LIMIT"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4c494d4954(), ["deploy_local.data_backup.FILES"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e46494c4553(), ["deploy_local.data_backup.DEPTH"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4445505448(), ["deploy_local.data_backup.DEADLINE"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e444541444c494e45(), ["deploy_local.data_backup.COVERED"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e434f5645524544(), ["deploy_local.data_backup.SCHEMA"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e534348454d41(), ["deploy_local.host.ROLLBACK_COMMAND"]: rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44(), ["deploy_local.preservation.CATALOG_ENV"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56(), ["deploy_local.preservation.CATALOG_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f534352495054(), ["deploy_local.relay_rotation.RELAY_IDLE_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e72656c61795f726f746174696f6e2e52454c41595f49444c455f415454454d505453(), ["deploy_local.runtime_env.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958(), ["deploy_local.secret.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["deploy_local.secret.PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["deploy_local.secret.PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["deploy_local.secret.probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564, ["deploy_local.service.MANAGER_ENV"]: rp_6465706c6f795f6c6f63616c2e736572766963652e4d414e414745525f454e56(), ["deploy_local.service.RECORD"]: rp_6465706c6f795f6c6f63616c2e736572766963652e5245434f5244(), ["deploy_local.service.SECRET"]: rp_6465706c6f795f6c6f63616c2e736572766963652e534543524554(), ["deploy_local.service.xml"]: rp_6465706c6f795f6c6f63616c2e736572766963652e786d6c, ["deploy_local.staging.LABEL"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4c4142454c(), ["deploy_local.staging.MARKER"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4d41524b4552(), ["deploy_remote.AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["deploy_remote.TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["deploy_remote.LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["deploy_remote.session.DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["deploy_remote.session.EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["logs_cli.SHOWN"]: rp_6c6f67735f636c692e53484f574e(), ["account_policy_dispatch.MAX_ERROR_BYTES"]: rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553(), ["account_policy_response.MAX_RESPONSE_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f524553504f4e53455f4259544553(), ["account_policy_response.MAX_EVENT_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f4556454e545f4259544553(), ["account_routing_policy.POLICY_FILE"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45(), ["account_routing_policy.MAX_WEIGHT"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f574549474854(), ["account_routing_policy.MAX_RETRIES"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f52455452494553(), ["account_routing_policy.COPY_HEADER_ALLOW_LIST"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354(), ["management_access.MAX_CLIENTS"]: rp_6d616e6167656d656e745f6163636573732e4d41585f434c49454e5453(), ["management_access.SNAPSHOT"]: rp_6d616e6167656d656e745f6163636573732e534e415053484f54() });
+export const provenance = {"entry":"src/lib.rs","runtimeParity":false,"moduleCount":300,"executableFunctions":90,"executableConstants":395};
