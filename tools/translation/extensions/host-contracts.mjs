@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 // Crate contracts select operations by resolved paths and checked value types.
 // They never supply a repository function body or waive a body obligation.
 import {MethodRustParser,MethodChecker} from './methods.mjs';
+import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './match-patterns.mjs';
 import {EffectEmitter,effectData} from './effects.mjs';
 import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
 import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
@@ -37,7 +38,7 @@ export function hostData() {
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
-export class HostRustParser extends MethodRustParser {
+export class HostRustParser extends withNestedMatchPatternsParser(MethodRustParser) {
   genericType(kind,types,range){return {...super.genericType(kind,types,range),rustStandardGeneric:{kind,arguments:structuredClone(types)}};}
   attributes(options={}) {
     if(!this.compilationProfile)return super.attributes(options);
@@ -172,7 +173,7 @@ export class HostRustParser extends MethodRustParser {
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends MethodChecker {
+export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:type.rustReference}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
