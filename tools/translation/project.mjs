@@ -2,7 +2,9 @@
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
-import { EffectRustParser, checkProgram, emitJavaScript, effectData } from './extensions/effects.mjs';
+import { MethodRustParser, checkProgram, emitJavaScript } from './extensions/methods.mjs';
+import { effectData } from './extensions/effects.mjs';
+import { extractImplDeclarations, lowerSharedMethodTokens } from './impl-resolver.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
@@ -95,13 +97,13 @@ function declarationProgram(program, root) {
 
 export function translateProject(options) {
   const graph = resolveModuleGraph(options);
-  const declarations = [], refused = [], imports = [], unloweredItems = [];
+  const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   for (const module of graph.modules) {
     for (const item of module.items.filter(item => !['fn', 'const', 'enum', 'struct', 'use', 'mod'].includes(item.term) || item.name === 'main')) unloweredItems.push({ source: module.file, module: module.path, name: item.name, term: item.term, span: { start: item.start, end: item.end }, sha256: sha256(module.source.slice(item.start, item.end)), diagnostic: 'declaration needs effect, implementation, entrypoint or macro lowering' });
     const aliases = new Map();
     for (const item of module.items.filter(item => item.term === 'use')) {
       try {
-        const parser = new EffectRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
+        const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
         parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio'].includes(item.name)).map(item => item.name)]));
         parser.aliases = aliases;
         parser.modulePath = module.path;
@@ -109,9 +111,10 @@ export function translateProject(options) {
         imports.push({ file: module.file, module: module.path, span: { start: item.start, end: item.end }, aliases: Object.fromEntries(aliases.get(module.path.join('.')) ?? []) });
       } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, name: item.name, term: item.term, ...diagnostic(error) }); }
     }
+    moduleAliases.set(module.file, aliases);
     for (const item of module.items.filter(item => ['fn', 'const', 'enum', 'struct'].includes(item.term) && item.name !== 'main')) {
       try {
-        const parser = new EffectRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
+        const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
         parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio'].includes(item.name)).map(item => item.name)]));
         parser.aliases = aliases;
         parser.modulePath = module.path;
@@ -130,6 +133,36 @@ export function translateProject(options) {
         declarations.push({ file: module.file, path: module.path, name: [...module.path, item.name].join('.'), term: item.term, span: { start: item.start, end: item.end }, globalSpan: { start: base, end: module.offset + item.end }, surface: relocate(surface, base) });
         for (const type of parser.genericTypes.values()) if (!declarations.some(candidate => candidate.name === type.name && candidate.path.length === 0)) declarations.push({ file: module.file, path: [], name: type.name, term: 'generated-type', globalSpan: { start: base, end: module.offset + item.end }, surface: relocate(type, base) });
       } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, module: module.path, name: item.name, term: item.term, ...diagnostic(error) }); }
+    }
+  }
+  for (const module of graph.modules) {
+    const extracted = extractImplDeclarations(module.source, {sourcePath:module.file,modulePath:module.path});
+    for (const implementation of extracted.implementations) {
+      for (const method of implementation.methods) {
+        const aliases = moduleAliases.get(module.file)?.get(module.path.join('.'));
+        const resolved = aliases?.has(implementation.typePath[0]) ? [...aliases.get(implementation.typePath[0]), ...implementation.typePath.slice(1)] : implementation.typePath;
+        const qualifiedType = ['crate','self','super'].includes(resolved[0]) ? resolved : ['crate',...module.path,...resolved];
+        const display = [...qualifiedType.slice(1),method.name].join('.');
+        if (!method.loweringReady) {refused.push({file:module.file,name:display,term:'method',span:method.span,kind:'unsupported',message:method.diagnostics.map(item=>item.message).join('; ')});continue;}
+        try {
+          const lowered = lowerSharedMethodTokens(method,qualifiedType);
+          const parser = new MethodRustParser(lowered.tokens);
+          parser.modulePath = module.path;
+          // Methods inherit the module's checked import aliases.
+          parser.aliases = moduleAliases.get(module.file) ?? new Map();
+          parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio'].includes(item.name)).map(item => item.name)]));
+          parser.attributes(); parser.visibility();
+          if (parser.cursor.is('const')) parser.cursor.next();
+          const surface = parser.fn(module.path);
+          if (!parser.cursor.atEnd()) throw new TranslationError('syntax','unconsumed inherent method tokens',parser.cursor.peek());
+          surface.name = `ml_impl_${Buffer.from(qualifiedType.join('.')).toString('hex')}_${Buffer.from(method.name).toString('hex')}`;
+          surface.generated = 'router-checked-inherent-method';
+          surface.impl = {type:{kind:'named',path:qualifiedType},method:method.name,receiver:method.receiver,rewrites:lowered.rewrites,assumptions:lowered.assumptions};
+          const globalSpan = {start:module.offset+method.span.start,end:module.offset+method.span.end};
+          declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:relocate(surface,module.offset)});
+          for (const type of parser.genericTypes.values()) if (!declarations.some(candidate=>candidate.name === type.name && candidate.path.length === 0)) declarations.push({file:module.file,path:[],name:type.name,term:'generated-type',globalSpan,surface:relocate(type,module.offset)});
+        } catch(error) {if(!(error instanceof TranslationError))throw error;refused.push({file:module.file,name:display,term:'method',...diagnostic(error)});}
+      }
     }
   }
   const duplicateNames = new Set(declarations.filter((entry, index) => declarations.findIndex(candidate => candidate.name === entry.name) !== index).map(entry => entry.name));
@@ -151,24 +184,28 @@ export function translateProject(options) {
   const target = flatten(checked);
   const runtimeModule = posix.relative(posix.dirname(options.entry.replace(/\.rs$/u,'.mjs')), 'runtime/effects.mjs');
   const emitted = emitJavaScript(target.program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
+  const methods = active.filter(declaration => declaration.term === 'method');
   const entries = active.filter(declaration => ['fn', 'const'].includes(declaration.term));
   const targetName = name => emitted.mappings.find(mapping => mapping.source === target.names.get(name)).target;
   const exports = entries.map(declaration => `[${JSON.stringify(declaration.name)}]: ${targetName(declaration.name)}${declaration.term === 'const' ? '()' : ''}`).join(', ');
   const javascript = `${emitted.text}\nexport const translated = Object.freeze({ ${exports} });\nexport const provenance = ${JSON.stringify({ entry: options.entry, runtimeParity: false, moduleCount: graph.modules.length, executableFunctions: entries.filter(entry => entry.term === 'fn').length, executableConstants: entries.filter(entry => entry.term === 'const').length })};\n`;
   const dataTypes = [...target.program.declarations.values()].filter(declaration => declaration.k === 'data');
-  const parameterTypes = new Map(entries.map(entry => [targetName(entry.name), target.program.declarations.get(target.names.get(entry.name)).params]));
+  const functionSignatures = [...target.program.declarations.values()].filter(entry => entry.k === 'fn').map(entry => ({target: emitted.mappings.find(mapping => mapping.source === entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
+  const parameterTypes = new Map(functionSignatures.map(entry=>[entry.target,entry.params]));
+  const returnTypes = new Map(functionSignatures.map(entry=>[entry.target,entry.ret]));
   const types = entries.map(entry => {
     const own = target.program.declarations.get(target.names.get(entry.name));
     return `${JSON.stringify(entry.name)}: ${entry.term === 'const' ? tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes) : `(${own.params.map(param => `${param.name}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes)}`}`;
   }).join('; ');
-  const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
-  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), encodings: emitted.encodings, assumptions: emitted.assumptions };
+  const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
+  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
   const executableDeclarations = entries.map(entry => ({ source: entry.file, name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower(options = {}) {
     const program = declarationProgram(target.program, target.names.get(entry.name));
     const emitted = emitJavaScript(program, options);
     const own = program.declarations.get(target.names.get(entry.name));
     const targetMapping = emitted.mappings.find(mapping => mapping.source === own.fullName);
-    return { own, program, emitted: { ...emitted, mappings: [...emitted.mappings, { ...targetMapping, source: entry.name.split('.').at(-1) }] } };
+    const signatures = [...program.declarations.values()].filter(entry=>entry.k === 'fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source === entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
+    return { own, program, emitted: { ...emitted, signatures, mappings: [...emitted.mappings, { ...targetMapping, source: entry.name.split('.').at(-1) }] } };
   } }));
   return { meta, javascript, typescript, executableDeclarations };
 }

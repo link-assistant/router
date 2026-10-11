@@ -43,3 +43,12 @@ environment mutation, escaping futures, cancellation, concurrent borrowing, and
 external runtime scheduling are not established by this contract. Independent
 fixtures check effect order, early return, laziness, scoped capabilities, UTF-8,
 OS errors, domain guards and adapter faults. Runtime parity remains false.
+
+`methods.mjs` resolves inherent shared/static methods to checked free-function
+declarations with explicit immutable receivers. Repository module resolution
+checks actual method bodies and their dependency closure; token-only self/Self
+lowering comes from `impl-resolver.mjs`. Trait, generic, mutable/consuming, unsafe
+and conditional implementations remain obligations. Checked method counts are
+reported separately; an enclosing impl is not marked executable for partial
+method coverage. Standard-looking method spellings dispatch to actual checked
+inherent methods before scalar adapters. Aggregate clone is not erased.

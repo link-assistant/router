@@ -25,6 +25,16 @@ export class StringRustParser extends RustParser {
   }
 
   genericType(kind, types, span) {
+    const normalize = type => {
+      if (type.kind === 'array') return { ...type, element: normalize(type.element) };
+      if (type.kind !== 'named') return type;
+      let path = this.resolve(type.path, this.modulePath);
+      if (path[0] === 'self') path = ['crate', ...this.modulePath, ...path.slice(1)];
+      if (path[0] === 'super') { let count = 0; while (path[count] === 'super') count++; if (count > this.modulePath.length) throw typeError('super beyond crate root', span); path = ['crate', ...this.modulePath.slice(0, this.modulePath.length - count), ...path.slice(count)]; }
+      if (!['crate','std','serde_json'].includes(path[0])) path = ['crate', ...this.modulePath, ...path];
+      return { ...type, path };
+    };
+    types = types.map(normalize);
     const name = monomorphicTypeName(kind, types);
     if (!this.genericTypes.has(name)) {
       const ctors = kind === 'Option' ? [{ name: 'None', fields: [] }, { name: 'Some', fields: [{ type: types[0] }] }] : [{ name: 'Ok', fields: [{ type: types[0] }] }, { name: 'Err', fields: [{ type: types[1] }] }];

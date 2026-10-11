@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
-import { parseRust, checkProgram, emitJavaScript } from './extensions/effects.mjs';
+import { parseRust, checkProgram, emitJavaScript } from './extensions/methods.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { tokenize } from './vendor/meta-language/translation/lexer.js';
 import { roundTripProgram } from './semantic-meta.mjs';
@@ -28,7 +28,10 @@ function relocate(value, offset) {
 
 export function translateSource(source, path = 'input.rs', { projectDeclarations = [] } = {}) {
   const runtimeModule = posix.relative(posix.dirname(path), 'runtime/effects.mjs');
-  const emit = program => emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
+  const emit = program => {
+    const emitted = emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
+    return { ...emitted, signatures: [...program.declarations.values()].filter(entry => entry.k === 'fn').map(entry => ({ target: emitted.mappings.find(mapping => mapping.source === entry.fullName)?.target, params: entry.params, ret: entry.async ? { kind: 'routerFuture', value: entry.ret } : entry.ret })) };
+  };
   let structural;
   let structuralDiagnostic = null;
   try { structural = sourceItems(source); }
@@ -191,12 +194,14 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   const signature = (params, returns) => `(${params.map(param => `${param.name}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(returns, dataTypes)}`;
   const types = executable.map((item, index) => `${JSON.stringify(entries[index])}: ${item.semantic.constructors ? item.term === 'struct' ? signature(item.semantic.constructors[0].params, item.semantic.returns) : `Readonly<{ ${item.semantic.constructors.map((ctor, index) => `${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}: ${signature(ctor.params, item.semantic.returns)}`).join('; ')} }>` : item.term === 'const' ? tsType(item.semantic.returns, dataTypes) : signature(item.semantic.params, item.semantic.returns)}`).join('; ');
   const parameterTypes = new Map(executable.flatMap(item => item.semantic.constructors ? item.semantic.constructors.map(ctor => [constructorTarget(item, ctor), ctor.params]) : item.semantic.mappings.filter(mapping => mapping.source === item.name).map(mapping => [mapping.target, item.semantic.params])));
-  const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes);
+  const returnTypes = new Map();
+  for (const item of executable) for (const signature of emissions.get(item.name).signatures ?? []) { if (signature.target) { parameterTypes.set(signature.target, signature.params); returnTypes.set(signature.target, signature.ret); } }
+  const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes, returnTypes);
   const typescript = typedRuntime.replace('export const translated =', `export const translated: { ${types} } =`);
   return { ir, javascript: runtime, typescript };
 }
 
-export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTypes = []) {
+export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTypes = [], returnTypes = new Map()) {
   const tokens = tokenize(runtime, 'JavaScript').tokens;
   const annotations = [];
   const helperTypes = {
@@ -242,6 +247,10 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
       if (tokens[parameter].kind !== 'identifier') continue;
       annotations.push({ offset: tokens[parameter].end, text: `: ${known?.[index] ? tsType(known[index].type, dataTypes) : helper?.[index] ?? 'any'}` });
       index++;
+    }
+    if (returnTypes.has(name)) {
+      const close = tokens.find((token, index) => index > nameAt + 1 && token.value === ')');
+      annotations.push({ offset: close.end, text: `: ${tsType(returnTypes.get(name), dataTypes)}` });
     }
     if (['ml_abort', 'ml_router_unexpected'].includes(name)) {
       const close = tokens.find((token, index) => index > at + 2 && token.value === ')');

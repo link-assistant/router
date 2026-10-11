@@ -54,7 +54,7 @@ test('project checking carries external effects and every transitive caller', as
   const { translated } = await load(result.javascript);
   assert.deepEqual(Object.keys(translated), ['good']);
   assert.equal(translated.good(4n), 5n);
-  assert.deepEqual(result.meta.refused.filter(item => item.term === 'fn').map(item => item.name).sort(), ['caller', 'fetch', 'remote.middle'].sort());
+  assert.deepEqual(result.meta.refused.filter(item => item.term === 'fn').map(item => item.name).sort(), ['caller', 'remote.fetch', 'remote.middle'].sort());
 });
 
 test('imported immutable layouts retain constructor tags and cross-file fields', async () => {
