@@ -1,0 +1,228 @@
+{
+  "schema": "router-real-source-contract-tests-v1",
+  "fullParity": false,
+  "rustExecution": false,
+  "sourceProfile": "Tracked Router production declarations, UTF-16 spans verified at test time; bounded modules assemble exact declarations and imports only.",
+  "entries": [
+    {
+      "id": "identity-token",
+      "path": "src/claude_identity.rs",
+      "sourceSha256": "2b27501f2374251fb0f5a265ca80562734388d861db705cfcbbe37df257f02c6",
+      "declarations": [
+        {
+          "name": "is_oauth_credential",
+          "term": "fn",
+          "start": 969,
+          "end": 1068,
+          "sha256": "a9c014a806af4c2add5d590435864e9687159ebffbf179f0e08567734728d20f"
+        }
+      ],
+      "bodyNames": [
+        "is_oauth_credential"
+      ],
+      "testSource": "src/claude_identity.rs",
+      "testName": "only_oauth_credentials_are_patched"
+    },
+    {
+      "id": "identity-first-block",
+      "path": "src/claude_identity.rs",
+      "sourceSha256": "2b27501f2374251fb0f5a265ca80562734388d861db705cfcbbe37df257f02c6",
+      "declarations": [
+        {
+          "name": "serde_json",
+          "term": "use",
+          "start": 102,
+          "end": 132,
+          "sha256": "6516041db96a99b0e62b88caae0f1c7a9dbcfee4831ad98d3dcd81ac0f4e7ede"
+        },
+        {
+          "name": "CLAUDE_CODE_SYSTEM_PROMPT",
+          "term": "const",
+          "start": 207,
+          "end": 315,
+          "sha256": "9d1c790cbd7e94afb8f4f4dcbf6821206fbd9e98cf9d5b55988ab3ebe5e9519d"
+        },
+        {
+          "name": "first_block_is_identity",
+          "term": "fn",
+          "start": 2047,
+          "end": 2282,
+          "sha256": "34d4ccec998a6c04582a99e7684964aa30c0bec7618e3c566fdedbf9706fc14c"
+        }
+      ],
+      "bodyNames": [
+        "first_block_is_identity"
+      ],
+      "testSource": "src/claude_identity.rs",
+      "testName": "is_idempotent_for_claude_codes_own_requests"
+    },
+    {
+      "id": "token-records",
+      "path": "src/tokens_remote.rs",
+      "sourceSha256": "1d1a6a5f5b2b13e358edfe30d2e88f235574481642aa76b0b3016764c5ca3735",
+      "declarations": [
+        {
+          "name": "records_in",
+          "term": "fn",
+          "start": 8107,
+          "end": 8320,
+          "sha256": "15c879be14d16de8138af2bc61968c2240e6f9502abdeba589c767a92711241e"
+        }
+      ],
+      "bodyNames": [
+        "records_in"
+      ],
+      "testSource": "src/tokens_remote_tests.rs",
+      "testName": "records_are_read_from_the_data_array"
+    },
+    {
+      "id": "login-status",
+      "path": "src/auth_remote.rs",
+      "sourceSha256": "10e9e8cf780427d1a75abcc2ccfa567a69ba7b4d66c26e51646af216466fd05f",
+      "declarations": [
+        {
+          "name": "status_of",
+          "term": "fn",
+          "start": 8768,
+          "end": 8916,
+          "sha256": "3d4dca85a59ff80c4a3725df1f5ee528b8a5c6ce45d1a74fa4d8d975a986bda9"
+        }
+      ],
+      "bodyNames": [
+        "status_of"
+      ],
+      "testSource": null,
+      "testName": null
+    },
+    {
+      "id": "telegram-private",
+      "path": "src/telegram.rs",
+      "sourceSha256": "48a0372ad6b394247e12a9e3d8f8f2aaa264fc334eb8dad59e66df7406e006c9",
+      "declarations": [
+        {
+          "name": "serde_json",
+          "term": "use",
+          "start": 1113,
+          "end": 1143,
+          "sha256": "6516041db96a99b0e62b88caae0f1c7a9dbcfee4831ad98d3dcd81ac0f4e7ede"
+        },
+        {
+          "name": "is_private",
+          "term": "fn",
+          "start": 4870,
+          "end": 5005,
+          "sha256": "bc9c24c4e7936bf9c171b23bf09acbfc6fd15c2bae84df4953e4d5c9b9d9018d"
+        }
+      ],
+      "bodyNames": [
+        "is_private"
+      ],
+      "testSource": "src/telegram.rs",
+      "testName": "only_private_chats_are_accepted"
+    },
+    {
+      "id": "timeout-parser",
+      "path": "src/upstream_client.rs",
+      "sourceSha256": "ef45ff192c7fe3750f641a3e8ecb530518b482ca649676748d233703bf91cc73",
+      "declarations": [
+        {
+          "name": "std",
+          "term": "use",
+          "start": 99,
+          "end": 123,
+          "sha256": "6ddd16fc08d6d321b57de50496eb1f749d9f92b7bd5eaf606e986a325b8fb032"
+        },
+        {
+          "name": "DEFAULT_UPSTREAM_READ_TIMEOUT_SECS",
+          "term": "const",
+          "start": 848,
+          "end": 904,
+          "sha256": "551276913ca729697673e8fc423d3c3404366ff230191c6f8e4c8d9a18cbfc60"
+        },
+        {
+          "name": "parse_timeout_secs",
+          "term": "fn",
+          "start": 1678,
+          "end": 1943,
+          "sha256": "8ad8e1704cca4474ce5564e814380f69911145a75a9b8b06ebe775b0d90826c2"
+        },
+        {
+          "name": "parse_upstream_read_timeout",
+          "term": "fn",
+          "start": 2009,
+          "end": 2166,
+          "sha256": "076db046818482ebee28033d1098cf25dc24fc9fa13c0f1e34c9e9b9ea8025e6"
+        }
+      ],
+      "bodyNames": [
+        "parse_timeout_secs",
+        "parse_upstream_read_timeout"
+      ],
+      "testSource": "src/upstream_client_tests.rs",
+      "testName": "upstream_reads_are_bounded_unless_explicitly_disabled"
+    },
+    {
+      "id": "bounded-retry",
+      "path": "src/request_routing.rs",
+      "sourceSha256": "45ea38cb6ad56934e2534595a77d2442e5bfbfd7c4376b45afc9d3e199963134",
+      "declarations": [
+        {
+          "name": "std",
+          "term": "use",
+          "start": 68,
+          "end": 92,
+          "sha256": "6ddd16fc08d6d321b57de50496eb1f749d9f92b7bd5eaf606e986a325b8fb032"
+        },
+        {
+          "name": "MAX_RETRY_AFTER",
+          "term": "const",
+          "start": 169,
+          "end": 241,
+          "sha256": "b783afd2f14624b09072b47aae14903b6c4b416daf3234657cb7af9fedc14f12"
+        },
+        {
+          "name": "bounded_retry_after",
+          "term": "fn",
+          "start": 243,
+          "end": 351,
+          "sha256": "9685927eaa6757cc16a036a3e8614715baf5ca69fbbdca5d5e511c7efdacc00b"
+        }
+      ],
+      "bodyNames": [
+        "bounded_retry_after"
+      ],
+      "testSource": null,
+      "testName": null
+    }
+  ],
+  "obligations": [
+    {
+      "id": "identity-first-block",
+      "reason": "Value import and Option/Vec closure lowering"
+    },
+    {
+      "id": "token-records",
+      "reason": "Value import and Option<Vec<Value>>::cloned/unwrap_or_default"
+    },
+    {
+      "id": "login-status",
+      "reason": "Value method function reference and Option chaining"
+    },
+    {
+      "id": "telegram-private",
+      "reason": "Value pointer and Option string equality"
+    },
+    {
+      "id": "timeout-parser",
+      "reason": "Duration import, parse::<u64> method turbofish and closure chaining"
+    },
+    {
+      "id": "bounded-retry",
+      "reason": "Duration constant evaluation and Ord::min"
+    },
+    {
+      "id": "stream-termination",
+      "reason": "Character literals, mutable String buffers, closure iteration and dyn transport errors are unresolved; no source substitution or passing body count."
+    }
+  ]
+}
