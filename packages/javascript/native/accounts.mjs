@@ -11,6 +11,15 @@ export function requestErrorAction(policy,status,body) {
   const prefix=Buffer.from(body ?? '').subarray(0,16384);
   return policy.request_scoped_errors.find(rule=>rule.status===status && prefix.indexOf(Buffer.from(rule.match))>=0)?.action;
 }
+const subscriptionKinds=new Set(['anthropic','claude','codex','gemini','qwen','vertex','vertex-ai','bedrock']);
+const storedKinds=new Set(['openai-compatible','openai','litellm','lefine','z.ai-coding-plan']);
+export function principalAccountName(account,provider) {return account.implicit && subscriptionKinds.has(provider?.kind)?'primary':account.name;}
+/** Token principals pin subscription pools; stored provider records have no subscriber account. */
+export function principalAccountScope(records,providers,context={}) {
+  const pin=context.pinnedAccount ?? context.pinned_account,byProvider=new Map(providers.map(provider=>[provider.name,provider]));
+  return new Map([...records].filter(([,account])=>{const provider=byProvider.get(account.provider);return provider && (!pin || context.client && storedKinds.has(provider.kind) || (context.client?principalAccountName(account,provider):account.name)===pin);}));
+}
+export const principalOrderContext = context => context.client && (context.pinnedAccount ?? context.pinned_account)?{...context,pinnedAccount:undefined,pinned_account:undefined}:context;
 export function wildcardMatch(pattern, value) {
   const regex = pattern.split('').map(c => c === '*' ? '.*' : c === '?' ? '.' : c.replace(/[\\^$.[\]{}()+|]/g,'\\$&')).join('');
   return new RegExp(`^${regex}$`).test(value);
@@ -58,8 +67,11 @@ export class AccountRouter {
       if (account.request_limit != null && (!Number.isSafeInteger(account.request_limit) || account.request_limit < 0)) throw new RouterError('invalid_config','Account request_limit must be nonnegative');
       this.records.set(account.name,{ ...account,policy:validateAccountPolicy(account.policy) });
     }
-    // A provider without an explicit account still needs independent cooldowns.
-    for (const provider of config.providers) if (![...this.records.values()].some(a => a.provider === provider.name)) this.records.set(provider.name,{name:provider.name,provider:provider.name,policy:validateAccountPolicy(),implicit:true});
+    // Physical provider keys stay distinct; implicit subscription accounts expose logical primary.
+    for (const provider of config.providers) if (![...this.records.values()].some(a => a.provider === provider.name && (!subscriptionKinds.has(provider.kind) || a.name==='primary'))) {
+      if(this.records.has(provider.name))throw new RouterError('invalid_config','An implicit provider account collides with a named account');
+      this.records.set(provider.name,{name:provider.name,provider:provider.name,policy:validateAccountPolicy(),implicit:true});
+    }
   }
   async load() {
     for (const account of this.records.values()) if (account.home) {
