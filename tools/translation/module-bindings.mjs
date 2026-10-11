@@ -118,7 +118,7 @@ function collapse(candidates) {
 export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null}={}) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   const profile=compilationProfile(profileInput);
-  const scopes=new Map(),containers=new Map(),tasks=[],diagnostics=[];
+  const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
   for(const module of modules) {
     if(!Array.isArray(module.path) || typeof module.source!=='string' || typeof module.file!=='string')throw new TypeError('Module binding evidence is incomplete');
@@ -145,7 +145,9 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
       const span={start:item.start,end:item.end};
       if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'))continue;
       try {
-        const tokens=tokensOf(item),head=header(tokens,scope.path),effectiveAttributes=head.attributes.filter(attribute=>!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)),uncertain=uncertainty(effectiveAttributes,{moduleAttribute:tokens[head.at]?.text==='mod'});
+        const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
+        const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
+        const effectiveAttributes=head.attributes.filter(attribute=>!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
         uncertain.conditional ||= scope.configurationCondition==='unknown';
         for(const attribute of head.attributes.filter(attribute=>attribute.name==='derive'))for(const name of attribute.tokens.filter(token=>standardDerives.has(token)))scope.deriveNames.push({name,span:attribute.span});
         scope.baseType ||= uncertain.type;scope.baseMacro ||= uncertain.macro;
@@ -193,7 +195,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
         if(['fn','const','static'].includes(term))add(scope,declaration,name,'value',head.visibility,extra);
         if(term==='mod') {
           const target=key([...canonical(scope.path),name]);
-          if(!scopes.has(target)){scope.baseMacro=true;diagnostic(scope,'module target has no unconditional tracked body; exported macro names remain unresolved',span);}
+          if(!scopes.has(target)){scope.baseMacro=true;diagnostic(scope,'module target has no unconditional tracked body; exported macro names remain unresolved',span);} else if(macroUse)macroUses.push({scope,target,span,visibility:head.visibility});
         }
         if(term==='struct') {
           let at=keyword+2;
@@ -239,6 +241,19 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
   // Local declarations and imports retain higher namespace priority.
   const externPrelude=collapse((scopes.get('crate')?.seeds??[]).filter(binding=>binding.externCrateBinding));
   for(const scope of scopes.values())if(scope.path.length)for(const binding of externPrelude)scope.seeds.push({...binding,priority:0,via:'extern-prelude',origin:`extern-prelude:${binding.name}`});
+  // #[macro_use] extends the child's textual macro scope after its module
+  // declaration. Only original declared/imported textual names are exposed;
+  // their expansions remain unresolved, and child uncertainty propagates.
+  const inheritedTextual=new Map();
+  const textual=(name,active=new Set())=>{
+    if(inheritedTextual.has(name))return inheritedTextual.get(name);
+    if(active.has(name))return [];active.add(name);
+    const child=scopes.get(name),values=(child?.seeds??[]).filter(binding=>binding.namespace==='macro'&&binding.kind==='textual-macro');
+    for(const use of macroUses.filter(use=>key(canonical(use.scope.path))===name))for(const binding of textual(use.target,active))values.push({...binding,source:use.scope.file,span:use.span,via:'macro-use-import',visibility:{kind:'restricted',path:use.scope.path},textualScope:{source:use.scope.file,visibleAfter:use.span.end},origin:`${use.scope.file}:${use.span.start}:macro-use:${binding.name}`,priority:2});
+    values.sort((left,right)=>left.span.start-right.span.start);
+    active.delete(name);inheritedTextual.set(name,values);return values;
+  };
+  for(const use of macroUses)for(const binding of textual(use.target))use.scope.seeds.push({...binding,source:use.scope.file,span:use.span,via:'macro-use-import',visibility:{kind:'restricted',path:use.scope.path},textualScope:{source:use.scope.file,visibleAfter:use.span.end},origin:`${use.scope.file}:${use.span.start}:macro-use:${binding.name}`,priority:2});
   for(const scope of scopes.values())scope.bindings=collapse(scope.seeds);
   for(const [path,table] of externalModules) {
     if(typeof path!=='string' || path.split('::')[0]==='crate' || !Array.isArray(table.bindings) || typeof table.complete!=='boolean' || table.kind!==undefined && !['mod','enum','trait'].includes(table.kind))throw new TypeError('External module tables require an explicit completeness assertion and source container kind');
@@ -296,6 +311,10 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
       const shadowed=scope.deriveNames.some(derive=>scope.bindings.some(binding=>binding.namespace==='macro' && binding.name===derive.name && binding.standardDerive!==true));
       return [name,{candidates:[...scope.seeds],type:scope.baseType || shadowed,macro:scope.baseMacro || shadowed}];
     }));globEdges.clear();
+    // An unknown child expansion can emit #[macro_export], which binds at
+    // the crate root. Keep that uncertainty even for a non-macro_use child.
+    if(next.has('crate'))next.get('crate').macro ||= [...scopes.values()].some(scope=>scope.path.length&&scope.unknownMacro);
+    for(const use of macroUses){const state=next.get(key(canonical(use.scope.path))),child=scopes.get(use.target);state.macro ||= !child||child.unknownMacro||child.configurationCondition!=='active';}
     for(const task of tasks) {
       const state=next.get(key(canonical(task.scope.path))),result=lookup(task),prefix={source:task.scope.file,span:task.span,visibility:task.visibility,via:task.glob?'glob-import':'named-import',priority:task.glob?1:2};
       if(task.validateOnly)continue;

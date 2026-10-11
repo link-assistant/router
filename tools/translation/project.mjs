@@ -44,7 +44,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     catch (error) { diagnostics.push({ file, ...diagnostic(error) }); return; }
     for (const item of module.items.filter(item => item.term === 'mod')) {
       const condition=itemConfiguration(item.tokens,profile);
-      const prefix=condition.status==='active'&&condition.attributes.length&&condition.attributes.every(attribute=>attribute.name==='cfg')?condition.attributes.at(-1).span.end:item.start;
+      const prefix=condition.status==='active'&&condition.attributes.length&&condition.attributes.every(attribute=>attribute.name==='cfg'||attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')?condition.attributes.at(-1).span.end:item.start;
       const text = source.slice(prefix, item.end);
       const plain = /^\s*(?:pub(?:\s*\([^)]*\))?\s+)?mod\s+([\p{L}_][\p{L}\p{N}_]*)\s*;\s*$/u.exec(text);
       if (!plain) { diagnostics.push({ file, module: [...path, item.name], kind: 'module', message: 'module attributes or inline body require separate compilation-condition lowering', span: { start: item.start, end: item.end } }); continue; }
@@ -52,7 +52,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
       const candidates = [posix.normalize(`${directory}/${name}.rs`), posix.normalize(`${directory}/${name}/mod.rs`)].filter(candidate => tracked.has(candidate));
       if (candidates.length !== 1) { diagnostics.push({ file, module: [...path, name], kind: 'module', message: candidates.length ? 'ambiguous module files' : 'missing tracked module file', candidates, span: { start: item.start, end: item.end } }); continue; }
       const target = candidates[0];
-      edges.push({ from: file, to: target, module: [...path, name] });
+      edges.push({ from: file, to: target, module: [...path, name], ...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{}) });
       visit(target, [...path, name], target.endsWith('/mod.rs') ? posix.dirname(target) : target.slice(0, -3),module.configurationCondition);
     }
   };
