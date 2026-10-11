@@ -9,11 +9,11 @@ import { translateSource, sha256 } from '../translate.mjs';
 import { regenerate, trackedSource } from '../bulk.mjs';
 import { parseProgram, serializeProgram } from '../semantic-meta.mjs';
 import { parseRust, checkProgram } from '../extensions/data.mjs';
+import {loadJavaScript as load} from './artifact-loader.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const cases = JSON.parse(readFileSync(new URL('../fixtures/portable-cases.json', import.meta.url)));
 const value = input => Array.isArray(input) ? input.map(value) : input && typeof input === 'object' ? Object.fromEntries(Object.entries(input).map(([key, item]) => [key, value(item)])) : typeof input === 'string' && /^-?\d+n$/u.test(input) ? BigInt(input.slice(0, -1)) : input;
-const load = async code => import('data:text/javascript;base64,' + Buffer.from(code).toString('base64'));
 
 for (const fixture of cases) test(fixture.name, async () => {
   const result = translateSource(fixture.source);

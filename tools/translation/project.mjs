@@ -2,8 +2,7 @@
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
-import { MethodRustParser, checkProgram, emitJavaScript } from './extensions/methods.mjs';
-import { effectData } from './extensions/effects.mjs';
+import { HostRustParser as MethodRustParser, checkProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens } from './impl-resolver.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
@@ -104,7 +103,8 @@ export function translateProject(options) {
     for (const item of module.items.filter(item => item.term === 'use')) {
       try {
         const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
-        parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio'].includes(item.name)).map(item => item.name)]));
+        parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
+        parser.shadowedPreludeTypes=new Set(module.items.filter(item=>['enum','struct','type'].includes(item.term)&&['Option','Result'].includes(item.name)).map(item=>item.name));
         parser.aliases = aliases;
         parser.modulePath = module.path;
         parser.attributes(); parser.visibility(); parser.use(module.path);
@@ -115,7 +115,8 @@ export function translateProject(options) {
     for (const item of module.items.filter(item => ['fn', 'const', 'enum', 'struct'].includes(item.term) && item.name !== 'main')) {
       try {
         const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
-        parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio'].includes(item.name)).map(item => item.name)]));
+        parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
+        parser.shadowedPreludeTypes=new Set(module.items.filter(item=>['enum','struct','type'].includes(item.term)&&['Option','Result'].includes(item.name)).map(item=>item.name));
         parser.aliases = aliases;
         parser.modulePath = module.path;
         parser.attributes(); parser.visibility();
@@ -150,7 +151,7 @@ export function translateProject(options) {
           parser.modulePath = module.path;
           // Methods inherit the module's checked import aliases.
           parser.aliases = moduleAliases.get(module.file) ?? new Map();
-          parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio'].includes(item.name)).map(item => item.name)]));
+          parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
           parser.attributes(); parser.visibility();
           if (parser.cursor.is('const')) parser.cursor.next();
           const surface = parser.fn(module.path);

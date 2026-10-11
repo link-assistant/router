@@ -25,6 +25,8 @@ export class StringRustParser extends RustParser {
   }
 
   genericType(kind, types, span) {
+    const binding=this.resolve([kind],this.modulePath);
+    if(binding.length!==1||binding[0]!==kind||this.shadowedPreludeTypes?.has(kind))throw unsupported(`shadowed ${kind} generic`, 'the standard prelude type requires actual resolution', span);
     const normalize = type => {
       if (type.kind === 'array') return { ...type, element: normalize(type.element) };
       if (type.kind !== 'named') return type;
@@ -38,7 +40,7 @@ export class StringRustParser extends RustParser {
     const name = monomorphicTypeName(kind, types);
     if (!this.genericTypes.has(name)) {
       const ctors = kind === 'Option' ? [{ name: 'None', fields: [] }, { name: 'Some', fields: [{ type: types[0] }] }] : [{ name: 'Ok', fields: [{ type: types[0] }] }, { name: 'Err', fields: [{ type: types[1] }] }];
-      this.genericTypes.set(name, { k: 'data', name, ctors, span, generated: 'router-monomorphic-algebraic-type' });
+      this.genericTypes.set(name, { k: 'data', name, ctors, span, generated: 'router-monomorphic-algebraic-type', standardGeneric:{kind,arguments:types} });
     }
     return { kind: 'named', path: [name], span };
   }
@@ -177,14 +179,14 @@ export class StringRustParser extends RustParser {
 
 export class StringChecker extends Checker {
   normalisePattern(pattern, type, span) {
-    if (pattern.k === 'ctor' && type.kind === 'data' && /^Router(?:Option|Result)_/u.test(type.name) && pattern.path.length <= 2 && ['Some', 'None', 'Ok', 'Err'].includes(pattern.path.at(-1))) {
+    if (pattern.k === 'ctor' && type.kind === 'data' && ['Option','Result'].includes(this.items.get(type.name)?.standardGeneric?.kind) && pattern.path.length <= 2 && ['Some', 'None', 'Ok', 'Err'].includes(pattern.path.at(-1))) {
       pattern = { ...pattern, path: [type.name, pattern.path.at(-1)] };
     }
     return super.normalisePattern(pattern, type, span);
   }
 
   expr(node, env, path, expected, allowLiteral = false) {
-    if (expected?.kind === 'data' && /^Router(?:Option|Result)_/u.test(expected.name)) {
+    if (expected?.kind === 'data' && ['Option','Result'].includes(this.items.get(expected.name)?.standardGeneric?.kind)) {
       const callee = node.k === 'app' ? node.fn : node;
       if (callee.k === 'name' && callee.path.length <= 2 && ['Some', 'None', 'Ok', 'Err'].includes(callee.path.at(-1))) {
         const qualified = { ...callee, path: [expected.name, callee.path.at(-1)] };
@@ -193,8 +195,8 @@ export class StringChecker extends Checker {
     }
     if (node.k === 'routerAlgebraicOperation') {
       const value = this.expr(node.object, env, path, undefined);
-      if (value.type.kind !== 'data' || !/^Router(?:Option|Result)_/u.test(value.type.name)) throw typeError(`${node.op} requires a supported Option or Result`, node.span);
-      const option = value.type.name.startsWith('RouterOption_');
+      if (value.type.kind !== 'data' || !['Option','Result'].includes(this.items.get(value.type.name)?.standardGeneric?.kind)) throw typeError(`${node.op} requires a supported Option or Result`, node.span);
+      const option = this.items.get(value.type.name).standardGeneric.kind==='Option';
       if ((['is_some', 'is_none'].includes(node.op) && !option) || (['is_ok', 'is_err'].includes(node.op) && option)) throw typeError(`${node.op} is not a method of this algebraic type`, node.span);
       const ctor = this.items.get(value.type.name).ctors.find(ctor => ctor.name === (option ? 'Some' : 'Ok'));
       const resultType = node.op === 'unwrap_or' ? ctor.fields[0].type : BOOL;

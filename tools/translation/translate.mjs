@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
-import { parseRust, checkProgram, emitJavaScript } from './extensions/methods.mjs';
+import { parseRust, checkProgram, emitJavaScript } from './extensions/host-contracts.mjs';
+import {typeScriptType,typeScriptAliases} from './type-layout.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { tokenize } from './vendor/meta-language/translation/lexer.js';
 import { roundTripProgram } from './semantic-meta.mjs';
@@ -12,12 +13,7 @@ export const json = value => JSON.stringify(value, (_, item) => typeof item === 
 export const typeParameterName = (name, index) => /^[A-Za-z_$][A-Za-z0-9_$]*$/u.test(name) && !new Set('break case catch class const continue debugger default delete do else enum export extends false finally for function if import in instanceof new null return super switch this throw true try typeof var void while with yield await let static implements interface package private protected public arguments eval'.split(' ')).has(name) ? name : `arg${index}`;
 export const tsType = (type, dataTypes = []) => {
   if (type.kind === 'routerFuture') return `PromiseLike<${tsType(type.value, dataTypes)}>`;
-  if (type.kind === 'array') return `ReadonlyArray<${tsType(type.element, dataTypes)}>`;
-  if (type.kind === 'data') {
-    const definition = dataTypes.find(entry => entry.fullName === type.name);
-    if (!definition) return 'unknown';
-    return definition.ctors.map(ctor => `Readonly<{ $: ${JSON.stringify(ctor.name)}${ctor.fields.map(field => `; ${field.name}: ${tsType(field.type, dataTypes)}`).join('')} }>`).join(' | ');
-  }
+  if (['array','data','named'].includes(type.kind))return typeScriptType(type,new Map(dataTypes.map(entry=>[entry.fullName,entry])));
   return ({ fixed: 'bigint', nat: 'bigint', int: 'bigint', bool: 'boolean', string: 'string', unit: 'null', float: 'number' })[type.kind] ?? 'unknown';
 };
 
@@ -67,7 +63,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     if (item.status === 'preserved') continue;
     try {
       if (!['fn', 'enum', 'struct', 'const'].includes(item.term) || item.name === 'main') throw new TranslationError('unsupported', `draft item ${item.term}: no supported library declaration emission`, { start: 0, end: item.source.length });
-      const surface = parseRust(item.source + '\nfn main() {}\n', { shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio'].includes(entry.name)).map(entry => entry.name)) });
+      const surface = parseRust(item.source + '\nfn main() {}\n', { shadowedPreludeTypes: new Set(items.filter(entry=>['enum','struct','type'].includes(entry.term)&&['Option','Result'].includes(entry.name)).map(entry=>entry.name)), shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio','serde_json'].includes(entry.name)).map(entry => entry.name)) });
       const declarations = surface.items.filter(entry => !entry.generated);
       if (declarations.length !== 1 || !['fn', 'data'].includes(declarations[0].k)) throw new TranslationError('unsupported', 'item requires module-level declaration lowering', { start: 0, end: item.source.length });
       item.surface = relocate(declarations[0], item.span.start);
@@ -182,13 +178,14 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges', 'checked standard-library filesystem/environment reads, lazy async futures and identity-error propagation'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'const fn is lowered for pure runtime calls only; compile-time evaluability is not established', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'checked value results, local scalar mutation, immutable constructors, lazy future polling and named host effects; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
   const header = `// Generated draft from ${path}; sha256=${ir.sourceSha256}\n// Carried constructs are data, never runtime parity evidence.\n`;
   const body = [...preludes, ...definitions].join('\n\n');
-  const entries = executable.map(item => item.semantic.constructors || item.semantic.project ? item.name : emissions.get(item.name).mappings.find(mapping => mapping.source === item.name)?.target ?? item.name);
+  const entries = executable.map(item => item.name);
   const constructorTarget = (item, ctor) => emissions.get(item.name).mappings.find(mapping => mapping.source === ctor.fullName).target;
   const runtimeEntries = entries.map((entry, index) => {
     const item = executable[index];
     if (item.semantic.project) { const target = emissions.get(item.name).mappings.find(mapping => mapping.source === item.name).target; return `[${JSON.stringify(entry)}]: ${target}${item.term === 'const' ? '()' : ''}`; }
     if (item.semantic.constructors) return `[${JSON.stringify(entry)}]: ${item.term === 'struct' ? constructorTarget(item, item.semantic.constructors[0]) : `Object.freeze({ ${item.semantic.constructors.map((ctor, index) => `[${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}]: ${constructorTarget(item, ctor)}`).join(', ')} })`}`;
-    return item.term === 'const' ? `${JSON.stringify(entry)}: ${entry}()` : entry;
+    const target=emissions.get(item.name).mappings.find(mapping=>mapping.source===item.name)?.target??item.name;
+    return `[${JSON.stringify(entry)}]: ${target}${item.term === 'const' ? '()' : ''}`;
   });
   const runtime = `${header}${body}\n\nexport const translated = { ${runtimeEntries.join(', ')} };\nexport const provenance = ${JSON.stringify({ sourcePath: path, sourceSha256: ir.sourceSha256, ...ir.counts, runtimeParity: false })};\n`;
   const dataTypes = [...new Map(executable.flatMap(item => item.semantic.dataTypes.map(entry => [entry.fullName, entry]))).values()];
@@ -233,6 +230,8 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_router_defer: ['(...args: any[]) => T | PromiseLike<T>', 'ReadonlyArray<any>'],
     ml_router_try: ['{ $: string; field0?: any }', 'boolean'],
     ml_router_propagated: ['any'],
+    ml_validate_duration: ['any'],
+    ml_host_option_bind: ['{ $: string; field0?: any }','(...values: any[]) => any','string'],
   };
   const generics = { ml_router_future: 'T', ml_router_defer: 'T', ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
   for (let at = 0; at < tokens.length; at++) {
@@ -272,5 +271,5 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
   }
   let typedRuntime = runtime;
   for (const { offset, text } of annotations.sort((a, b) => b.offset - a.offset)) typedRuntime = typedRuntime.slice(0, offset) + text + typedRuntime.slice(offset);
-  return typedRuntime;
+  return typeScriptAliases(new Map(dataTypes.map(entry=>[entry.fullName,entry])))+'\n'+typedRuntime;
 }

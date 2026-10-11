@@ -12,7 +12,7 @@ const ROOT = Symbol('effect body context');
 const span = (a,b) => ({start:a.start,end:b.end});
 const contains = (node,k) => node && typeof node === 'object' && (node.k === k || Object.entries(node).some(([key,value])=>key !== 'type' && (Array.isArray(value)?value.some(item=>contains(item,k)):contains(value,k))));
 const builtin = value => Array.isArray(value) ? value.map(builtin) : value && typeof value === 'object' ? {...Object.fromEntries(Object.entries(value).map(([key,item])=>[key,builtin(item)])),...(['data','module'].includes(value.k)?{generated:'router-standard-effect-contract'}:{})} : value;
-export const effectData = () => builtin(EFFECT_DATA);
+export const effectData = () => builtin(EFFECT_DATA).map(item=>item.k==='data'?{...item,standardGeneric:{kind:item.ctors.some(ctor=>ctor.name==='Some')?'Option':'Result'}}:item);
 const future = value => ({kind:'routerFuture',value});
 
 export class EffectRustParser extends IteratorRustParser {
@@ -115,7 +115,8 @@ export class EffectChecker extends IteratorChecker {
       const value=this.expr(node.value,env,path),returns=this.functionResult(env);
       const input=value.type.kind === 'data'?this.items.get(value.type.name):null;
       const output=returns?.kind === 'data'?this.items.get(returns.name):null;
-      const option=input?.ctors.map(ctor=>ctor.name).join(',') === 'None,Some';
+      const option=input?.standardGeneric?.kind==='Option';
+      if(!['Option','Result'].includes(input?.standardGeneric?.kind)||input.standardGeneric.kind!==output?.standardGeneric?.kind)throw unsupported('? operand/result','requires actual standard Option/Result provenance',node.span);
       const good=option?'Some':'Ok',bad=option?'None':'Err';
       const success=input?.ctors.find(ctor=>ctor.name === good),failure=input?.ctors.find(ctor=>ctor.name === bad),outFailure=output?.ctors.find(ctor=>ctor.name === bad);
       if(!success || !failure || !outFailure || input.ctors.length !== 2 || output.ctors.length !== 2)throw unsupported('? operand/result','only checked Option/Result propagation is lowered',node.span);

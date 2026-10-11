@@ -6,9 +6,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { resolveModuleGraph, translateProject } from '../project.mjs';
 import { translateSource } from '../translate.mjs';
+import {loadJavaScript as load} from './artifact-loader.mjs';
 
 const project = files => ({ entry: 'src/lib.rs', paths: Object.keys(files), readSource: path => { assert.ok(Object.hasOwn(files, path)); return files[path]; } });
-const load = text => import('data:text/javascript;base64,' + Buffer.from(text).toString('base64'));
 
 test('tracked module edges and scoped aliases execute checked sibling and parent calls', async () => {
   const result = translateProject(project({

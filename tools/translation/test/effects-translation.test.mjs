@@ -8,11 +8,12 @@ import {execFileSync} from 'node:child_process';
 import {translateSource} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {effectRuntimeAssets} from '../effect-assets.mjs';
+import {writeRuntimeAssets} from './artifact-loader.mjs';
 
 async function compiled(source,operation,{project=false}={}) {
   const directory=mkdtempSync(join(tmpdir(),'router-checked-effects-'));
   try {
-    mkdirSync(join(directory,'runtime'));
+    writeRuntimeAssets(directory);
     const assets=effectRuntimeAssets();
     writeFileSync(join(directory,'runtime/effects.mjs'),assets.javascript);
     writeFileSync(join(directory,'runtime/effects.d.mts'),assets.declarations);
@@ -20,7 +21,7 @@ async function compiled(source,operation,{project=false}={}) {
     const result=project?translateProject({entry:'input.rs',paths:Object.keys(source),readSource:path=>source[path]}):translateSource(source,'input.rs');
     if(!project)assert.equal(result.ir.counts.carried,0,JSON.stringify(result.ir.items.map(item=>item.diagnostic)));
     writeFileSync(join(directory,'input.mjs'),result.javascript);writeFileSync(join(directory,'input.ts'),result.typescript);
-    execFileSync(process.env.ROUTER_TSC ?? '/Users/konard/.bun/bin/tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',join(directory,'input.ts')],{encoding:'utf8'});
+    execFileSync(process.env.ROUTER_TRANSLATION_TSC ?? 'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',join(directory,'input.ts')],{encoding:'utf8'});
     const module=await import(pathToFileURL(join(directory,'input.mjs')).href);
     const runtime=await import(pathToFileURL(join(directory,'runtime/effects.mjs')).href);
     await operation(module.translated,runtime,result);

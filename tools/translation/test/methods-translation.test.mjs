@@ -9,11 +9,11 @@ import {translateSource} from '../translate.mjs';
 import {trackedSource} from '../bulk.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {fileURLToPath} from 'node:url';
+import {loadJavaScript as load,writeRuntimeAssets} from './artifact-loader.mjs';
 const project=files=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
-const load=text=>import('data:text/javascript;base64,'+Buffer.from(text).toString('base64'));
 function strict(result) {
   const directory=mkdtempSync(join(tmpdir(),'router-checked-methods-'));
-  try {writeFileSync(join(directory,'module.ts'),result.typescript);execFileSync(process.env.ROUTER_TSC??'/Users/konard/.bun/bin/tsc',['--strict','--target','ES2022','--module','ES2022','--noEmit',join(directory,'module.ts')],{encoding:'utf8'});}finally{rmSync(directory,{recursive:true,force:true});}
+  try {writeRuntimeAssets(directory);writeFileSync(join(directory,'src/module.ts'),result.typescript);execFileSync(process.env.ROUTER_TRANSLATION_TSC ?? 'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',join(directory,'src/module.ts')],{encoding:'utf8'});}finally{rmSync(directory,{recursive:true,force:true});}
 }
 test('associated constructors, receiver fields and method-to-method calls check across real module scopes',async()=>{
   const sources={
@@ -64,7 +64,7 @@ test('module-local Option instantiations with equal type spellings retain distin
     'src/right.rs':'pub struct Item { pub value:i32 } pub fn make(value:i32)->Option<Item> { Some(Item { value:value + 1 }) }',
   });
   assert.deepEqual(result.meta.refused,[]);const names=result.meta.checkedSemanticProgram.program.declarations.$map.map(([name])=>name).filter(name=>name.startsWith('RouterOption'));
-  assert.equal(new Set(names).size,3);assert.equal((await load(result.javascript)).translated.run(4n),9n);strict(result);
+  const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));const local=[...checked.declarations.values()].filter(entry=>entry.k==='data'&&entry.ctors.some(ctor=>ctor.name==='Some'&&['left.Item','right.Item'].includes(ctor.fields[0]?.type?.name)));assert.equal(new Set(local.map(entry=>entry.name)).size,2);assert.equal((await load(result.javascript)).translated.run(4n),9n);strict(result);
 });
 
 test('actual tracked production methods retain independent constructor and ref-update behavior',async()=>{

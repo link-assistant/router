@@ -1,6 +1,7 @@
 // Expose upstream classes without modifying the pinned implementation. Every
-// substitution is exact and validated; only class exports and an injectable
-// emitter constructor differ. Semantic changes live in subclasses below.
+// substitution is exact and validated. Class exports, an injectable emitter
+// constructor and a fresh reserved-name Set isolate every emission; the pinned
+// vendor files remain unchanged. Semantic extensions live in subclasses below.
 import { readFileSync } from 'node:fs';
 
 const core = new URL('../vendor/meta-language/translation/', import.meta.url);
@@ -19,6 +20,7 @@ export const { RustParser } = await exposed('rust.js', [['class RustParser {', '
 export const { Checker } = await exposed('check.js', [['class Checker {', 'export class Checker {']]);
 export const { JavaScriptEmitter, emitJavaScript: emitWith } = await exposed('emit-javascript.js', [
   ['class JavaScriptEmitter {', 'export class JavaScriptEmitter {'],
+  ["new EmitState(program, 'JavaScript', ident, KEYWORDS,", "new EmitState(program, 'JavaScript', ident, new Set(KEYWORDS),"],
   ['export function emitJavaScript(program) {', 'export function emitJavaScript(program, Emitter = JavaScriptEmitter) {'],
   ['return new JavaScriptEmitter(program, state).file();', 'return new Emitter(program, state).file();'],
 ]);
