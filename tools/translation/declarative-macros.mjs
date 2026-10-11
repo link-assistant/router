@@ -18,7 +18,7 @@ function plan(trees,mode,bindings,depth=0) {
     if(text(tree)==='$') {
       const next=trees[++at];
       if(next?.kind==='group'&&next.delimiter==='(') {
-        if(depth)throw new TypeError('Nested declarative repetitions require a separate capture-shape profile');
+        if(depth>=4)throw new TypeError('Nested declarative capture-shape depth budget exceeded');
         let separator=null,operator=text(trees[++at]);
         if(!['*','+','?'].includes(operator)){separator=trees[at];operator=text(trees[++at]);}
         if(!['*','+','?'].includes(operator)||separator&&(!text(separator)||operator==='?'))throw new TypeError('Unproved declarative repetition separator or operator');
@@ -30,7 +30,9 @@ function plan(trees,mode,bindings,depth=0) {
       if(mode==='template') {
         if(next.text==='crate'){result.push({kind:'crate-owner'});continue;}
         if(!bindings.has(next.text))throw new TypeError('Unbound declarative transcription variable');
-        result.push({kind:'variable',name:next.text,depth});continue;
+        const binding=bindings.get(next.text);
+        if(binding.depth&&binding.depth!==depth)throw new TypeError('Declarative capture repetition depth differs from transcription');
+        result.push({kind:'variable',name:next.text,depth:binding.depth});continue;
       }
       if(text(trees[++at])!==':'||!ident(trees[++at]))throw new TypeError('Declarative matcher requires an explicit fragment specifier');
       const fragment=trees[at].text;
@@ -86,6 +88,10 @@ function sameLiteral(pattern,actual) {
   if(actual?.kind==='fragment')return ['ident','tt'].includes(actual.fragment)&&actual.trees.length===1&&sameLiteral(pattern,actual.trees[0]);
   return pattern?.kind==='token'&&actual?.kind==='token'&&pattern.text===actual.text;
 }
+function transparentTree(tree) {
+  while(tree?.kind==='fragment'&&['ident','tt'].includes(tree.fragment)&&tree.trees.length===1)tree=tree.trees[0];
+  return tree;
+}
 function opaque(tree,fragment) {return tree?.kind==='fragment'&&tree.fragment===fragment;}
 function boundedType(trees,start,depth=0) {
   if(depth>24)throw new TypeError('Declarative type fragment budget exceeded');
@@ -112,6 +118,26 @@ function boundedType(trees,start,depth=0) {
     if(text(trees[at])!=='::')return at;at++;
   }
 }
+function boundedMeta(trees,start,depth=0) {
+  if(depth>24)throw new TypeError('Declarative meta fragment depth budget exceeded');
+  if(opaque(trees[start],'meta'))return start+1;
+  if(!ident(trees[start]))return null;
+  let at=start+1;
+  while(text(trees[at])==='::'){if(!ident(trees[at+1]))return null;at+=2;}
+  if(text(trees[at])==='=') {
+    const value=trees[at+1];
+    return value?.kind==='token'&&(['string','number'].includes(value.type)||['true','false'].includes(value.text))?at+2:null;
+  }
+  if(trees[at]?.kind==='group') {
+    const group=trees[at];if(group.delimiter!=='(')return null;let child=0;
+    while(child<group.children.length) {
+      const end=boundedMeta(group.children,child,depth+1);if(end===null)return null;child=end;
+      if(child<group.children.length&&text(group.children[child++])!==',')return null;
+    }
+    at++;
+  }
+  return at;
+}
 function fragmentEnd(fragment,trees,start) {
   if(opaque(trees[start],fragment))return start+1;
   // A checked Block AST is a Rust expression. Retain its opaque AST rather
@@ -134,54 +160,61 @@ function fragmentEnd(fragment,trees,start) {
     if(restriction.delimiter==='('&&restriction.children.length===1&&['crate','self','super'].includes(text(restriction.children[0])))return start+2;
     throw new TypeError('Declarative visibility fragment requires checked source restriction');
   }
-  if(fragment==='meta') {
-    if(!ident(trees[start]))return null;
-    let at=start+1;
-    while(text(trees[at])==='::'){if(!ident(trees[at+1]))return null;at+=2;}
-    if(text(trees[at])==='='){if(trees[at+1]?.kind!=='token'||trees[at+1].type!=='string')return null;return at+2;}
-    if(trees[at]?.kind==='group') {
-      if(trees[at].delimiter!=='('||trees[at].children.some(tree=>tree.kind!=='token'||!ident(tree)&&![',','='].includes(text(tree))&&tree.type!=='string'))throw new TypeError('Declarative meta fragment expression remains unproved');
-      at++;
-    }
-    return at;
-  }
+  if(fragment==='meta')return boundedMeta(trees,start);
   throw new TypeError('Unchecked declarative fragment kind');
 }
 
-function matchSequence(nodes,trees,start,captures,budget) {
+const copyCapture=value=>Array.isArray(value)?value.map(copyCapture):value;
+function captureArray(captures,name,indices) {
+  let array=captures.get(name);
+  if(array===undefined){array=[];captures.set(name,array);}
+  if(!Array.isArray(array))throw new TypeError('Declarative capture shape is not a repetition');
+  for(const index of indices) {
+    if(array[index]===undefined)array[index]=[];
+    if(!Array.isArray(array[index]))throw new TypeError('Declarative nested capture shape differs from source repetition');
+    array=array[index];
+  }
+  return array;
+}
+function matchSequence(nodes,trees,start,captures,budget,indices=[]) {
   let at=start;
   for(let index=0;index<nodes.length;index++) {
     if(--budget.steps<0)throw new TypeError('Declarative matching step budget exceeded');
     const node=nodes[index];
     if(node.kind==='literal'){if(!sameLiteral(node.tree,trees[at]))return null;at++;continue;}
     if(node.kind==='group') {
-      const actual=trees[at];if(actual?.kind!=='group'||actual.delimiter!==node.delimiter)return null;
-      const nested=matchSequence(node.children,actual.children,0,captures,budget);
+      const actual=transparentTree(trees[at]);if(actual?.kind!=='group'||actual.delimiter!==node.delimiter)return null;
+      const nested=matchSequence(node.children,actual.children,0,captures,budget,indices);
       if(nested===null||nested!==actual.children.length)return null;at++;continue;
     }
     if(node.kind==='capture') {
       const end=fragmentEnd(node.fragment,trees,at);if(end===null)return null;
       const value=freezeMacroTree({kind:'fragment',fragment:node.fragment,trees:trees.slice(at,end)});
-      if(node.depth){if(!captures.has(node.name))captures.set(node.name,[]);captures.get(node.name).push(value);}
+      if(node.depth) {
+        if(indices.length!==node.depth)throw new TypeError('Declarative capture depth lacks source iteration evidence');
+        const array=captureArray(captures,node.name,indices.slice(0,-1)),index=indices.at(-1);
+        if(array[index]!==undefined)throw new TypeError('Declarative repetition capture was assigned twice');array[index]=value;
+      }
       else {if(captures.has(node.name))throw new TypeError('Declarative scalar capture was assigned twice');captures.set(node.name,value);}
       at=end;continue;
     }
     if(node.kind==='repeat') {
       if(index<nodes.length-1&&node.children[0]?.kind!=='literal')throw new TypeError('Declarative repetition lookahead may be locally ambiguous');
       let count=0;
+      for(const name of names(node.children))captureArray(captures,name,indices);
       for(;;) {
         const next=nodes[index+1];
         if(next&&next.kind==='literal'&&node.children[0]?.kind==='literal'&&sameLiteral(node.children[0].tree,trees[at])&&sameLiteral(next.tree,trees[at]))throw new TypeError('Declarative repetition has locally ambiguous source tokens');
-        const trial=new Map([...captures].map(([name,value])=>[name,Array.isArray(value)?[...value]:value]));
-        const end=matchSequence(node.children,trees,at,trial,budget);
-        if(end===null)break;if(end===at)throw new TypeError('Declarative repetition matched an empty source sequence');
+        let candidate=at;
+        if(count&&node.separator){if(!sameLiteral(node.separator,trees[candidate]))break;candidate++;}
+        const trial=new Map([...captures].map(([name,value])=>[name,copyCapture(value)]));
+        const end=matchSequence(node.children,trees,candidate,trial,budget,[...indices,count]);
+        if(end===null)break;if(end===candidate)throw new TypeError('Declarative repetition matched an empty source sequence');
         if(++count>budget.repetitions)throw new TypeError('Declarative repetition budget exceeded');
         captures.clear();for(const entry of trial)captures.set(...entry);at=end;
         if(node.operator==='?')break;
-        if(node.separator){if(!sameLiteral(node.separator,trees[at]))break;at++;if(at===trees.length)throw new TypeError('Declarative repetition has an unmatched trailing separator');}
       }
       if(node.operator==='+'&&!count)return null;
-      for(const name of names(node.children))if(!captures.has(name))captures.set(name,[]);
       continue;
     }
     throw new TypeError('Unproved declarative matcher node');
@@ -189,26 +222,31 @@ function matchSequence(nodes,trees,start,captures,budget) {
   return at;
 }
 
-function transcribe(nodes,captures,owner,budget,iteration=null) {
+function captureAt(captures,name,indices) {
+  let value=captures.get(name);
+  for(const index of indices){if(!Array.isArray(value))throw new TypeError('Declarative transcription capture shape differs from source');value=value[index];}
+  return value;
+}
+function transcribe(nodes,captures,owner,budget,indices=[]) {
   const output=[];
   for(const node of nodes) {
     if(--budget.output<0)throw new TypeError('Declarative output token budget exceeded');
     if(node.kind==='literal'){output.push(node.tree);continue;}
     if(node.kind==='crate-owner'){output.push({kind:'owner',target:[...owner],verified:false,sourceFeature:'definition-site-dollar-crate'});continue;}
-    if(node.kind==='group'){output.push({kind:'group',delimiter:node.delimiter,children:transcribe(node.children,captures,owner,budget,iteration)});continue;}
+    if(node.kind==='group'){output.push({kind:'group',delimiter:node.delimiter,children:transcribe(node.children,captures,owner,budget,indices)});continue;}
     if(node.kind==='variable') {
-      const value=captures.get(node.name);
-      if(Array.isArray(value)) {
-        if(iteration===null||!node.depth)throw new TypeError('Declarative capture repetition depth differs from transcription');
-        if(!value[iteration])throw new TypeError('Declarative capture repetition arity mismatch');output.push(value[iteration]);
-      } else {if(!value)throw new TypeError('Missing declarative transcription capture');output.push(value);}
+      if(node.depth>indices.length)throw new TypeError('Declarative capture repetition depth differs from transcription');
+      const value=captureAt(captures,node.name,indices.slice(0,node.depth));
+      if(!value||Array.isArray(value))throw new TypeError('Declarative transcription capture arity mismatch');output.push(value);
       continue;
     }
     if(node.kind==='repeat') {
-      const repeated=names(node.children).map(name=>captures.get(name)).filter(Array.isArray);
+      const repeated=names(node.children).map(name=>{
+        const value=captures.get(name);return Array.isArray(value)?captureAt(captures,name,indices):value;
+      }).filter(Array.isArray);
       if(!repeated.length||repeated.some(value=>value.length!==repeated[0].length))throw new TypeError('Declarative transcription needs consistent source repetition arity');
       const length=repeated[0].length;if(node.operator==='+'&&!length||node.operator==='?'&&length>1)throw new TypeError('Declarative transcription repetition operator disagrees with captures');
-      for(let at=0;at<length;at++){if(at&&node.separator)output.push(node.separator);output.push(...transcribe(node.children,captures,owner,budget,at));}continue;
+      for(let at=0;at<length;at++){if(at&&node.separator)output.push(node.separator);output.push(...transcribe(node.children,captures,owner,budget,[...indices,at]));}continue;
     }
     throw new TypeError('Unproved declarative transcription node');
   }

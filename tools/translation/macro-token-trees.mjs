@@ -74,3 +74,16 @@ export function originalMacroTreeText(tree) {
   if(tree.kind==='owner')return tree.target.join(' :: ');
   throw new TypeError('Unproved declarative macro output tree');
 }
+export function originalTopLevelMacroInvocations(source) {
+  const trees=originalMacroTrees(source),result=[];
+  for(let at=0;at<trees.length;at++) {
+    if(trees[at]?.kind!=='token'||!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(trees[at].text))continue;
+    let end=at+1;
+    while(trees[end]?.text==='::'&&trees[end+1]?.kind==='token'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(trees[end+1].text))end+=2;
+    if(trees[end]?.text!=='!'||trees[end+1]?.kind!=='group')continue;
+    const span={start:trees[at].span.start,end:trees[end+1].span.end};
+    result.push(freezeMacroTree({...originalMacroInvocation(source.slice(span.start,span.end)),sourceFileSha256:hash(source),sourceSpan:span}));
+    at=end+1;
+  }
+  return freezeMacroTree(result);
+}

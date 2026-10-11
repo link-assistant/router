@@ -3,7 +3,7 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
-import {freezeMacroTree} from './macro-token-trees.mjs';
+import {freezeMacroTree,originalTopLevelMacroInvocations} from './macro-token-trees.mjs';
 import {compileDeclarativeMacro} from './declarative-macros.mjs';
 const directory=new URL('./source-profiles/declarative/',import.meta.url);
 const manifestBytes=readFileSync(new URL('manifest.json',directory));
@@ -81,4 +81,13 @@ export function standardThreadLocalSourceDefinitions(proof) {
     ['thread_local',compileDeclarativeMacro(sources.get('rust/library/std/src/thread/local.rs'),{name:'thread_local',owner:['std']})],
     ...['no_threads','native','os'].map(branch=>[branch,compileDeclarativeMacro(sources.get('rust/library/std/src/sys/thread_local/'+(branch==='native'?'native/mod.rs':branch+'.rs')),{name:'thread_local_inner',owner:['std']})]),
   ]);
+}
+export function standardCfgIfSourceDefinition(proof) {
+  const sources=proofs.get(proof);if(!sources)throw new TypeError('Unsealed declarative dependency source proof');
+  return compileDeclarativeMacro(sources.get('cfg-if/src/lib.rs'),{name:'cfg_if',owner:['cfg_if']});
+}
+export function declarativeStandardInvocations(proof,path) {
+  const sources=proofs.get(proof),source=sources?.get('rust/'+path);
+  if(!source)throw new TypeError('Unsealed declarative standard source or unregistered module path');
+  return originalTopLevelMacroInvocations(source);
 }

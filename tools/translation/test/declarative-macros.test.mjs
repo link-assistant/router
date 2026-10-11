@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {compileDeclarativeMacro,expandDeclarativeMacro,declarativeSubInput,isDeclarativeExpansion,declarativeNamespaceObservation} from '../declarative-macros.mjs';
 import {originalMacroTrees,originalMacroInvocation,originalMacroTreeText} from '../macro-token-trees.mjs';
-import {loadDeclarativeSourceProof,taskLocalSourceDefinitions,standardThreadLocalSourceDefinitions,isDeclarativeSourceProof} from '../declarative-source-profile.mjs';
+import {loadDeclarativeSourceProof,taskLocalSourceDefinitions,standardThreadLocalSourceDefinitions,standardCfgIfSourceDefinition,declarativeStandardInvocations,isDeclarativeSourceProof} from '../declarative-source-profile.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const compile=source=>compileDeclarativeMacro(source,{name:'example',owner:['fixture']});
 const render=proof=>proof.trees.map(originalMacroTreeText).join(' ');
@@ -36,7 +36,7 @@ test('forwarded type fragments remain opaque to literal matching',()=>{
 
 test('ambiguity capture arity unsupported fragments and recursive resource excess remain explicit',()=>{
   for(const source of [
-    'macro_rules! example {($($($name:ident)*)*)=>{};}',
+    'macro_rules! example {($($($($($($name:ident)*)*)*)*)*)=>{};}',
     'macro_rules! example {($name:ident,$name:ident)=>{};}',
     'macro_rules! example {($value:expr unexpected)=>{};}',
     'macro_rules! example {($type:ty trailing)=>{};}',
@@ -54,6 +54,55 @@ test('ambiguity capture arity unsupported fragments and recursive resource exces
   let current=expandDeclarativeMacro(cycle,originalMacroTrees('same'));
   for(let at=0;at<32;at++)current=expandDeclarativeMacro(cycle,declarativeSubInput(current));
   assert.throws(()=>expandDeclarativeMacro(cycle,declarativeSubInput(current)),/depth budget/);
+});
+
+test('nested source repetition shapes retain empty rows and reject unequal transcription axes',()=>{
+  const nested=compile('macro_rules! example {($(($($cell:ident),*));*)=>{$($($cell),*);*};}');
+  const result=expandDeclarativeMacro(nested,originalMacroTrees('(first,second);();(third)'));
+  assert.equal(render(result),'first , second ; ; third');
+  const bad=compile('macro_rules! example {(($($left:ident),*)($($right:ident),*))=>{$($left $right)*};}');
+  assert.throws(()=>expandDeclarativeMacro(bad,originalMacroTrees('(a,b)(c)')),/arity/);
+  assert.throws(()=>compile('macro_rules! example {($($name:ident)*)=>{$name};}'),/depth/);
+  const grouped=compile('macro_rules! example {($tree:tt)=>{$tree};}');
+  const sender=expandDeclarativeMacro(grouped,originalMacroTrees('(value)'));
+  const receiver=compile('macro_rules! example {((value))=>{GROUP};}');
+  assert.equal(render(expandDeclarativeMacro(receiver,declarativeSubInput(sender))),'GROUP');
+});
+
+test('source metadata keeps nested conditional grammar opaque when forwarded',()=>{
+  const sender=compile('macro_rules! example {($condition:meta)=>{$condition};}');
+  const value=expandDeclarativeMacro(sender,originalMacroTrees('all(target_family="wasm",not(target_feature="atomics"))'));
+  const receiver=compile('macro_rules! example {(all(target_family="wasm",not(target_feature="atomics")))=>{LITERAL};($condition:meta)=>{OPAQUE};}');
+  assert.equal(render(expandDeclarativeMacro(receiver,declarativeSubInput(value))),'OPAQUE');
+  for(const source of ['all(unknown!())','all(name=call())','all(name + other)'])assert.throws(()=>expandDeclarativeMacro(sender,originalMacroTrees(source)),/does not match/);
+});
+
+test('actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner',()=>{
+  const proof=loadDeclarativeSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
+  const definition=standardCfgIfSourceDefinition(proof);
+  assert.throws(()=>standardCfgIfSourceDefinition(structuredClone(proof)),/Unsealed/);
+  const invocations=declarativeStandardInvocations(proof,'library/std/src/sys/thread_local/mod.rs').filter(input=>input.path.join('::')==='cfg_if::cfg_if');
+  assert.equal(invocations.length,1);
+  assert.equal(invocations[0].sourceFileSha256,'cc0695932796bb2997e321abcc30d55efaa710cb5c7badfbc143af84cc71daab');
+  const front=expandDeclarativeMacro(definition,invocations[0].trees);
+  let frame=expandDeclarativeMacro(definition,declarativeSubInput(front,invocationPath(front.trees,'cfg_if')));
+  const branches=[],guards=[];
+  for(let count=0;frame.trees.length;count++) {
+    assert.ok(count<4,'actual finite source branch recursion stays bounded');
+    const calls=[];
+    for(let at=0;at<frame.trees.length;at++)if(frame.trees[at].text==='cfg_if'&&frame.trees[at+1]?.text==='!'&&frame.trees[at+2]?.kind==='group')calls.push(at+2);
+    assert.equal(calls.length,2);
+    guards.push(render(frame));
+    const identity=expandDeclarativeMacro(definition,declarativeSubInput(frame,[calls[0]]));
+    branches.push(render(identity));
+    assert.equal(identity.namespaceComplete,false);assert.equal(identity.ownerVerified,false);
+    frame=expandDeclarativeMacro(definition,declarativeSubInput(frame,[calls[1]]));
+  }
+  assert.equal(branches.length,3);
+  for(const [index,name] of ['no_threads','native','os'].entries())assert.match(branches[index],new RegExp('mod '+name+' ;'));
+  assert.ok(guards.every(value=>value.includes('not (any (')));
+  assert.match(guards[0],/target_family/);assert.match(guards[1],/target_thread_local/);
+  assert.equal(frame.namespaceComplete,false);assert.equal(frame.generatedBehavior,false);
 });
 
 test('checked block expressions retain opacity and refuse unsupported statements or expression grammar',()=>{
