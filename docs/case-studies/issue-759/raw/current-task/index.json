@@ -35512,8 +35512,40 @@
       "headSha": "770fa7732557543bfe99f5eeb775fe9af880448a",
       "status": "Corrected producer passed and verified source pins; all-seven gate remains pending.",
       "archivedAtUtc": "2026-10-11T16:57:46.877114+00:00"
+    },
+    {
+      "label": "cycle-7-complete-failed-local-preflight",
+      "cycle": 7,
+      "pack": "1eef0ce42d1c46bc36de3bcf53103eecce7b1cc053b4ae65d38a0e0371f10032.tar.gz",
+      "sha256": "1eef0ce42d1c46bc36de3bcf53103eecce7b1cc053b4ae65d38a0e0371f10032",
+      "storedBytes": 50614,
+      "members": [
+        {
+          "path": "cycle-7-complete-failed-local-preflight/router-759-cycle-7-complete-local-failure-inventory.json",
+          "bytes": 3497,
+          "sha256": "d42c4fa210946d27dff63b03eba5267eb722622108822664496c7c2840933d23"
+        },
+        {
+          "path": "cycle-7-complete-failed-local-preflight/router-759-cycle-7-method-corpus-delta.json",
+          "bytes": 1303,
+          "sha256": "101efe8c2490f73389a0fc86e1f471f903dea9282064ec55d3b0f59b75e4a6ac"
+        },
+        {
+          "path": "cycle-7-complete-failed-local-preflight/router-759-final-preflight-4939c32f.json",
+          "bytes": 2087,
+          "sha256": "898c2b438f2d8e97b925327faf1cfba384553dd8dc0326481a30bea34753e27f"
+        },
+        {
+          "path": "cycle-7-complete-failed-local-preflight/router-759-final-preflight-4939c32f.log",
+          "bytes": 231498,
+          "sha256": "aa7c838175556d3d908f11be6d9486b0c1b7be6326f92c5840c879e0d6e86aa0"
+        }
+      ],
+      "headSha": "4939c32fe8bf4a5740ed109a95a38299f5816fdd",
+      "status": "All seven stages terminal; two unexpected failing commands plus expected strict 442 gaps/0 errors. Three commands not reached. Candidate unpublished.",
+      "archivedAtUtc": "2026-10-11T17:22:37.940500+00:00"
     }
   ],
-  "totalStoredPackBytes": 14418348,
-  "totalMembers": 6286
+  "totalStoredPackBytes": 14468962,
+  "totalMembers": 6290
 }
