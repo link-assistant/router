@@ -36,11 +36,16 @@ test('unchanged production RefUpdate create/delete bodies consume standard Strin
 });
 
 test('registered String str and shared String equality retains exact scalar outcomes in both targets',async()=>{
-  const source='pub fn owned(a:String,b:String)->bool{a==b} pub fn mixed(a:String,b:&str)->bool{a!=b} pub fn reverse(a:&str,b:String)->bool{a==b} pub fn refs(a:&String,b:&String)->bool{a==b} pub fn ref_str(a:&String,b:&str)->bool{a==b} pub fn str_ref(a:&str,b:&String)->bool{a!=b} pub fn strs(a:&str,b:&str)->bool{a==b}';
+  const source='pub fn owned(a:String,b:String)->bool{a==b} pub fn mixed(a:String,b:&str)->bool{a!=b} pub fn reverse(a:&str,b:String)->bool{a==b} pub fn refs(a:&String,b:&String)->bool{a==b} pub fn ref_str(a:&String,b:&str)->bool{a==b} pub fn str_ref(a:&str,b:&String)->bool{a!=b} pub fn strs(a:&str,b:&str)->bool{a==b} pub fn left()->String{String::from("x")} pub fn right()->String{String::from("x")} pub fn pair()->bool{left()==right()}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,api=>{
+  const target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),name=entry=>target.declarations.get(`rp_${Buffer.from(entry).toString('hex')}`).name;
+  // Test-only emitted-module instrumentation calls the original checked
+  // function bodies inside each wrapper. The Rust source is unchanged.
+  const probe=`\nexport function fixtureEqualityOrder(){const events=['start'];events.shift();const l=${name('left')},r=${name('right')};${name('left')}=()=>{events.push('left');return l();};${name('right')}=()=>{events.push('right');return r();};try{return {result:${name('pair')}(),order:events.join(',')};}finally{${name('left')}=l;${name('right')}=r;}}`;
+  await verifyTypedTargets({...result,javascript:result.javascript+probe,typescript:result.typescript+probe},(api,_result,module)=>{
     for(const name of ['owned','reverse','refs','ref_str','strs']){assert.equal(api[name]('é','é'),true);assert.equal(api[name]('é','é'),false);assert.equal(api[name]('🦀','🦀'),true);assert.throws(()=>api[name]('x',3),TypeError);}
     assert.equal(api.mixed('x','x'),false);assert.equal(api.mixed('x','y'),true);assert.equal(api.str_ref('x','x'),false);assert.equal(api.str_ref('x','y'),true);
+    assert.deepEqual(module.fixtureEqualityOrder(),{result:true,order:'left,right'});
   });
 });
 
