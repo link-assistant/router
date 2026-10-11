@@ -3,6 +3,11 @@ import assert from 'node:assert/strict';
 import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {projectCopyEvidence} from '../project-copy.mjs';
+import {parseRust} from '../extensions/host-contracts.mjs';
+import {sourceItems} from '../rust-structure.mjs';
+import {resolveModuleBindings} from '../module-bindings.mjs';
+import {moduleScopeKey} from '../source-module-views.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
 const copy='#[derive(Clone,Copy)] pub enum Kind{A,B} impl Kind{pub fn amount(self)->u8{match self{Self::A=>1,Self::B=>2}}} pub fn run(value:Kind)->u8{value.amount()}';
 test('a layoutless source module retains its original context for standard implementation targets',async()=>{
@@ -36,4 +41,18 @@ test('unknown conditional implementation scopes retain their Copy obligations',(
   const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});
   assert.equal(result.meta.executable.some(item=>item.name==='run'),false);
   assert.equal(result.sourceScopes.find(scope=>scope.module[0]==='empty').configurationCondition,'unknown');
+});
+test('Copy certification preserves original lexical uncertainty when its resolved scope is missing',()=>{
+  const declaration='#[derive(Clone,Copy)] pub enum Kind{A,B}';
+  const surface=parseRust(declaration+' fn main(){}').items.find(item=>item.k==='data');
+  for(const [suffix,expected] of [['',[true,true]], [' use unknown::*;',[false,false]], [' use custom::Copy;',[false,false]], [' macro_rules! Copy{()=>{}}',[false,true]]]){
+    const source=declaration+suffix,module={file:'src/lib.rs',path:[],source,items:sourceItems(source),configurationCondition:'active',compilationProfile:PRODUCTION_PROFILE};
+    const declarations=[{name:'Kind',term:'enum',file:module.file,path:[],globalSpan:{start:0,end:declaration.length},surface}];
+    const scopes=new Map(resolveModuleBindings({modules:[module],compilationProfile:PRODUCTION_PROFILE}).scopes.map(scope=>[moduleScopeKey(scope),scope]));
+    for(const [index,context] of [new Map(),scopes].entries()){
+      const proof=projectCopyEvidence(declarations,[module],new Map(),context)(['Kind'],module,{start:0,end:declaration.length});
+      assert.equal(proof.verified,expected[index],suffix);
+      if(!expected[index])assert.ok(proof.diagnostics.length);
+    }
+  }
 });

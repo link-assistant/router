@@ -53,8 +53,14 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
     const visit=current=>{if(current.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;const declaration=active.find(declaration=>declaration.name===current.name);if(declaration)for(const origin of declaration.sourceModuleOrigins??[{file:declaration.file,path:declaration.path}])owners.add(moduleScopeKey(origin));for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
     const ownerModules=modules.filter(module=>owners.has(moduleScopeKey(module)));
     const relevant=modules.filter(candidate=>ownerModules.some(owner=>candidate.path.every((name,index)=>owner.path[index]===name)));
-    const evidence=relevant.map(module=>macroProvenance(module.source));
-    const provenance=relevant.every(module=>scopes.has(moduleScopeKey(module)))?attributeMacroProvenance(relevant.map(module=>scopes.get(moduleScopeKey(module)))):{shadowedNames:[...new Set(evidence.flatMap(value=>value.shadowedNames))],importedNames:[...new Set(evidence.flatMap(value=>value.importedNames))],unresolvedImportScope:relevant.some(module=>macroProvenance(module.source).unresolvedImportScope)};
+    let provenance;
+    if(relevant.every(module=>scopes.has(moduleScopeKey(module))))provenance=attributeMacroProvenance(relevant.map(module=>scopes.get(moduleScopeKey(module))));
+    else {
+      // Only incomplete binding contexts consume this conservative lexical
+      // fallback. A complete context must not rescan discarded source text.
+      const evidence=relevant.map(module=>macroProvenance(module.source));
+      provenance={shadowedNames:[...new Set(evidence.flatMap(value=>value.shadowedNames))],importedNames:[...new Set(evidence.flatMap(value=>value.importedNames))],unresolvedImportScope:evidence.some(value=>value.unresolvedImportScope)};
+    }
     const certificate=certifyCopyType(type,{declarations:checked,implementations,nominalTypes,macroProvenance:provenance,span});
     return certificate;
   };
