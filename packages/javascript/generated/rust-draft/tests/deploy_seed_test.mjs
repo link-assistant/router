@@ -4,6 +4,27 @@ function SECRET() {
   return "deploy-seed-test-signing-secret";
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function CLAUDE_REFRESH() {
   return "sk-ant-ort01-claude-refresh-never-in-argv";
 }
@@ -16,5 +37,5 @@ function SERVER() {
   return "deploy@seed.example";
 }
 
-export const translated = { "SECRET": SECRET(), "CLAUDE_REFRESH": CLAUDE_REFRESH(), "CODEX_REFRESH": CODEX_REFRESH(), "SERVER": SERVER() };
-export const provenance = {"sourcePath":"tests/deploy_seed_test.rs","sourceSha256":"aced16a28d3413bc430c37bf2aa224af193e0c93fc9fad53eccc5f7ff4c33fb3","executable":4,"executableFunctions":0,"executableConstants":4,"carried":18,"preserved":23,"runtimeParity":false};
+export const translated = { ["SECRET"]: SECRET(), ["CLAUDE_REFRESH"]: CLAUDE_REFRESH(), ["CODEX_REFRESH"]: CODEX_REFRESH(), ["SERVER"]: SERVER() };
+export const provenance = {"sourcePath":"tests/deploy_seed_test.rs","sourceSha256":"aced16a28d3413bc430c37bf2aa224af193e0c93fc9fad53eccc5f7ff4c33fb3","executable":4,"executableFunctions":0,"executableConstants":4,"executableTypes":0,"executableConstructors":0,"carried":18,"preserved":23,"runtimeParity":false};

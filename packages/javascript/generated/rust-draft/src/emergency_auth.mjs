@@ -9,6 +9,27 @@ function FLAG() {
   return "--emergency-accept-any-token";
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function ENV() {
   return "EMERGENCY_ACCEPT_ANY_TOKEN";
 }
@@ -41,10 +62,18 @@ function HEALTH_HEADER() {
   return "x-link-assistant-emergency-auth";
 }
 
+function ml_make_EmergencyAuthConfig_EmergencyAuthConfig(enabled, allow_non_loopback, duration_minutes) {
+  if (!(typeof enabled === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof allow_non_loopback === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  ml_fixed(duration_minutes, 0n, 18446744073709551615n, "u64 argument duration_minutes out of range");
+  if (!(typeof duration_minutes === 'bigint' && duration_minutes >= 0n && duration_minutes <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "EmergencyAuthConfig", ["enabled"]: enabled, ["allow_non_loopback"]: allow_non_loopback, ["duration_minutes"]: duration_minutes });
+}
+
 function is_synthetic_id(token_id) {
   if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
   return token_id.startsWith(SUBJECT_PREFIX());
 }
 
-export const translated = { "FLAG": FLAG(), "ENV": ENV(), "ALLOW_NON_LOOPBACK_ENV": ALLOW_NON_LOOPBACK_ENV(), "DURATION_ENV": DURATION_ENV(), "DEFAULT_DURATION_MINUTES": DEFAULT_DURATION_MINUTES(), "MAX_DURATION_MINUTES": MAX_DURATION_MINUTES(), "SUBJECT_PREFIX": SUBJECT_PREFIX(), "LABEL": LABEL(), "HEALTH_HEADER": HEALTH_HEADER(), is_synthetic_id };
-export const provenance = {"sourcePath":"src/emergency_auth.rs","sourceSha256":"ebab1272b62f4aea43950d1b6f30189aec995e52330965df8f4dc00e0a5efe94","executable":10,"executableFunctions":1,"executableConstants":9,"carried":21,"preserved":32,"runtimeParity":false};
+export const translated = { ["FLAG"]: FLAG(), ["ENV"]: ENV(), ["ALLOW_NON_LOOPBACK_ENV"]: ALLOW_NON_LOOPBACK_ENV(), ["DURATION_ENV"]: DURATION_ENV(), ["DEFAULT_DURATION_MINUTES"]: DEFAULT_DURATION_MINUTES(), ["MAX_DURATION_MINUTES"]: MAX_DURATION_MINUTES(), ["SUBJECT_PREFIX"]: SUBJECT_PREFIX(), ["LABEL"]: LABEL(), ["HEALTH_HEADER"]: HEALTH_HEADER(), ["EmergencyAuthConfig"]: ml_make_EmergencyAuthConfig_EmergencyAuthConfig, ["is_synthetic_id"]: is_synthetic_id };
+export const provenance = {"sourcePath":"src/emergency_auth.rs","sourceSha256":"ebab1272b62f4aea43950d1b6f30189aec995e52330965df8f4dc00e0a5efe94","executable":11,"executableFunctions":1,"executableConstants":9,"executableTypes":1,"executableConstructors":1,"carried":20,"preserved":32,"runtimeParity":false};

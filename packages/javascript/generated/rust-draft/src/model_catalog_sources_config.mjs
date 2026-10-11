@@ -4,6 +4,27 @@ function DEFAULT_REFRESH_SECS() {
   return 10800n;
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function canonical_provider(provider) {
   if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
   if ((provider === "claude")) {
@@ -30,5 +51,5 @@ function canonical_provider(provider) {
   }
 }
 
-export const translated = { "DEFAULT_REFRESH_SECS": DEFAULT_REFRESH_SECS(), canonical_provider };
-export const provenance = {"sourcePath":"src/model_catalog_sources_config.rs","sourceSha256":"c2a422b2353658a5c2fd2e21a87769dcd9ff303a4ad07d047652ee245b95df51","executable":2,"executableFunctions":1,"executableConstants":1,"carried":7,"preserved":10,"runtimeParity":false};
+export const translated = { ["DEFAULT_REFRESH_SECS"]: DEFAULT_REFRESH_SECS(), ["canonical_provider"]: canonical_provider };
+export const provenance = {"sourcePath":"src/model_catalog_sources_config.rs","sourceSha256":"c2a422b2353658a5c2fd2e21a87769dcd9ff303a4ad07d047652ee245b95df51","executable":2,"executableFunctions":1,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":7,"preserved":10,"runtimeParity":false};

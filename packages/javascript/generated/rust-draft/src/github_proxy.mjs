@@ -4,5 +4,34 @@ function POLICY_HEADER() {
   return "x-link-assistant-policy";
 }
 
-export const translated = { "POLICY_HEADER": POLICY_HEADER() };
-export const provenance = {"sourcePath":"src/github_proxy.rs","sourceSha256":"3c65440f41bef37e9f55641ae298a8083884a42cffa9797e6c8ab40e81ef4e37","executable":1,"executableFunctions":0,"executableConstants":1,"carried":42,"preserved":44,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+function ml_make_PolicyDecision_Allow() {
+  return Object.freeze({ $: 'Allow' });
+}
+
+function ml_make_PolicyDecision_Deny() {
+  return Object.freeze({ $: 'Deny' });
+}
+
+export const translated = { ["POLICY_HEADER"]: POLICY_HEADER(), ["PolicyDecision"]: Object.freeze({ ["Allow"]: ml_make_PolicyDecision_Allow, ["Deny"]: ml_make_PolicyDecision_Deny }) };
+export const provenance = {"sourcePath":"src/github_proxy.rs","sourceSha256":"3c65440f41bef37e9f55641ae298a8083884a42cffa9797e6c8ab40e81ef4e37","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":2,"carried":41,"preserved":44,"runtimeParity":false};

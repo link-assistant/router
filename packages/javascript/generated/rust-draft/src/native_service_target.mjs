@@ -45,5 +45,26 @@ function codex_history_notes_operation(path) {
   }
 }
 
-export const translated = { codex_history_notes_operation };
-export const provenance = {"sourcePath":"src/native_service_target.rs","sourceSha256":"c8fa1aa66aa04abc9a5241f430aa6cdbad0356db355283c112a28371dde61d73","executable":1,"executableFunctions":1,"executableConstants":0,"carried":20,"preserved":21,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["codex_history_notes_operation"]: codex_history_notes_operation };
+export const provenance = {"sourcePath":"src/native_service_target.rs","sourceSha256":"c8fa1aa66aa04abc9a5241f430aa6cdbad0356db355283c112a28371dde61d73","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":20,"preserved":21,"runtimeParity":false};

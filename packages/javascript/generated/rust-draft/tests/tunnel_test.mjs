@@ -4,5 +4,26 @@ function ENTRYPOINT() {
   return "docker/tunnel/entrypoint.sh";
 }
 
-export const translated = { "ENTRYPOINT": ENTRYPOINT() };
-export const provenance = {"sourcePath":"tests/tunnel_test.rs","sourceSha256":"f9fb83ca531c167dcdacfc5891cba43ed5ecf793061caabc0a9f53ec9ed46649","executable":1,"executableFunctions":0,"executableConstants":1,"carried":7,"preserved":8,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["ENTRYPOINT"]: ENTRYPOINT() };
+export const provenance = {"sourcePath":"tests/tunnel_test.rs","sourceSha256":"f9fb83ca531c167dcdacfc5891cba43ed5ecf793061caabc0a9f53ec9ed46649","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":7,"preserved":8,"runtimeParity":false};

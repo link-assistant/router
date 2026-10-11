@@ -4,6 +4,27 @@ function MODEL_ROLE() {
   return "model";
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function map_finish_reason(openai) {
   if (!(typeof openai === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(openai))) throw new TypeError('argument outside supported Rust value domain');
   if ((openai === "length")) {
@@ -17,5 +38,5 @@ function map_finish_reason(openai) {
   }
 }
 
-export const translated = { "MODEL_ROLE": MODEL_ROLE(), map_finish_reason };
-export const provenance = {"sourcePath":"src/gemini_bridge.rs","sourceSha256":"cc8d02c94f8702946c064323d26df9bc4a845f9c84be6294f74497ccd2c183c5","executable":2,"executableFunctions":1,"executableConstants":1,"carried":7,"preserved":10,"runtimeParity":false};
+export const translated = { ["MODEL_ROLE"]: MODEL_ROLE(), ["map_finish_reason"]: map_finish_reason };
+export const provenance = {"sourcePath":"src/gemini_bridge.rs","sourceSha256":"cc8d02c94f8702946c064323d26df9bc4a845f9c84be6294f74497ccd2c183c5","executable":2,"executableFunctions":1,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":7,"preserved":10,"runtimeParity":false};

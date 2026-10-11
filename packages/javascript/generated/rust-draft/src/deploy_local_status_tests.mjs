@@ -4,5 +4,26 @@ function SECRET() {
   return "integration-test-signing-secret";
 }
 
-export const translated = { "SECRET": SECRET() };
-export const provenance = {"sourcePath":"src/deploy_local_status_tests.rs","sourceSha256":"2249bc85b62ba6a280256aae29aff6f7c7e90ef20d25071f5b1cd9f9707495bd","executable":1,"executableFunctions":0,"executableConstants":1,"carried":14,"preserved":16,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["SECRET"]: SECRET() };
+export const provenance = {"sourcePath":"src/deploy_local_status_tests.rs","sourceSha256":"2249bc85b62ba6a280256aae29aff6f7c7e90ef20d25071f5b1cd9f9707495bd","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":14,"preserved":16,"runtimeParity":false};

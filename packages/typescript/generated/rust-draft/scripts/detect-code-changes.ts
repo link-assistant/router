@@ -1,9 +1,117 @@
+type MLData_4368616e67654b696e6473 = Readonly<{ readonly "$": "ChangeKinds"; readonly "rs": boolean; readonly "toml": boolean; readonly "mjs": boolean; readonly "docs": boolean; readonly "workflow": boolean; readonly "any_code": boolean }>;
+type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
+type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
+type MLData_526f757465724f7074696f6e5f33395f6e616d65645f37333635373236343635356636613733366636655f346537353664363236353732 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }>;
+type MLData_526f757465724f7074696f6e5f335f693332 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+type MLData_526f757465724f7074696f6e5f335f693634 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+type MLData_526f757465724f7074696f6e5f335f753634 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+type MLData_526f757465724f7074696f6e5f34335f61727261795f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<MLData_73657264655f6a736f6e2e56616c7565> }>;
+type MLData_526f757465724f7074696f6e5f345f626f6f6c = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": boolean }>;
+type MLData_526f757465724f7074696f6e5f345f756e6974 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": null }>;
+type MLData_526f757465724f7074696f6e5f35395f6e616d65645f37333635373236343635356636613733366636655f3464363137303566353337343732363936653637356635363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 }>;
+type MLData_526f757465724f7074696f6e5f355f666c6f6174 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": number }>;
+type MLData_526f757465724f7074696f6e5f365f737472696e67 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+type MLData_526f75746572526573756c745f33375f6e616d65645f37333635373236343635356636613733366636655f353636313663373536355f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_526f75746572526573756c745f33385f6e616d65645f3733373436345f37343639366436355f343437353732363137343639366636655f36345f6e616d65645f3733373436345f37343639366436355f353437323739343637323666366434363663366636313734353336353633373334353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 }>;
+type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": null }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
+type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
+type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
+type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
+type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
+type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
+type MLData_73657264655f6a736f6e2e4e756d626572 = Readonly<{ readonly "$": "PosInt"; readonly "field0": bigint }> | Readonly<{ readonly "$": "NegInt"; readonly "field0": bigint }> | Readonly<{ readonly "$": "Float"; readonly "field0": number }>;
+type MLData_73657264655f6a736f6e2e56616c7565 = Readonly<{ readonly "$": "Null" }> | Readonly<{ readonly "$": "Bool"; readonly "field0": boolean }> | Readonly<{ readonly "$": "Number"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }> | Readonly<{ readonly "$": "String"; readonly "field0": string }> | Readonly<{ readonly "$": "Array"; readonly "field0": ReadonlyArray<MLData_73657264655f6a736f6e2e56616c7565> }> | Readonly<{ readonly "$": "Object"; readonly "field0": MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 }>;
+type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ readonly "$": "Io" }> | Readonly<{ readonly "$": "Syntax" }> | Readonly<{ readonly "$": "Data" }> | Readonly<{ readonly "$": "Eof" }>;
+type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
+type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
+type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
+type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
+type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from scripts/detect-code-changes.rs; sha256=5de76c5232d13baa340f7813a84591ed0c8fb872983e5cf024e4303250edc8a9
 // Carried constructs are data, never runtime parity evidence.
-function is_manifest_or_lockfile_change(file_path: string) {
+function ml_router_iter<T>(values: ReadonlyArray<T>): ArrayIterator<T> { return Array.prototype.values.call(values); }
+
+function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {
+  if (!Array.isArray(values)) return false;
+  for (let index = 0; index < values.length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));
+    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;
+  }
+  return true;
+}
+
+function* ml_router_filter<T>(values: Iterable<T>, predicate: (value: T) => boolean) { for (const value of values) if (predicate(value)) yield value; }
+
+function ml_router_collect<T>(values: Iterable<T>) { return Object.freeze(Array.from(values)); }
+
+function ml_router_any<T>(values: Iterable<T>, predicate: (value: T) => boolean) { for (const value of values) if (predicate(value)) return true; return false; }
+
+function is_excluded_from_code_changes(file_path: string): boolean {
+  if (!(typeof file_path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(file_path))) throw new TypeError('argument outside supported Rust value domain');
+  if (file_path.endsWith(".md")) {
+    return true;
+  } else {
+  }
+  const excluded_folders = Object.freeze(["changelog.d/", "dev/log/", "docs/", "experiments/", "examples/"]);
+  for (const folder of ml_router_iter(excluded_folders)) {
+    if (file_path.startsWith(folder)) {
+      return true;
+    } else {
+    }
+  }
+  return false;
+}
+
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+function is_manifest_or_lockfile_change(file_path: string): boolean {
   if (!(typeof file_path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(file_path))) throw new TypeError('argument outside supported Rust value domain');
   return (file_path.endsWith(".toml") || file_path.endsWith("Cargo.lock"));
 }
 
-export const translated: { "is_manifest_or_lockfile_change": (file_path: string) => boolean } = { is_manifest_or_lockfile_change };
-export const provenance = {"sourcePath":"scripts/detect-code-changes.rs","sourceSha256":"5de76c5232d13baa340f7813a84591ed0c8fb872983e5cf024e4303250edc8a9","executable":1,"executableFunctions":1,"executableConstants":0,"carried":13,"preserved":14,"runtimeParity":false};
+function ml_make_ChangeKinds_ChangeKinds(rs: boolean, toml: boolean, mjs: boolean, docs: boolean, workflow: boolean, any_code: boolean): Readonly<{ readonly "$": "ChangeKinds"; readonly "rs": boolean; readonly "toml": boolean; readonly "mjs": boolean; readonly "docs": boolean; readonly "workflow": boolean; readonly "any_code": boolean }> {
+  if (!(typeof rs === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof toml === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof mjs === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof docs === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof workflow === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof any_code === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "ChangeKinds", ["rs"]: rs, ["toml"]: toml, ["mjs"]: mjs, ["docs"]: docs, ["workflow"]: workflow, ["any_code"]: any_code });
+}
+
+function classify_changes(changed_files: ReadonlyArray<string>): Readonly<{ readonly "$": "ChangeKinds"; readonly "rs": boolean; readonly "toml": boolean; readonly "mjs": boolean; readonly "docs": boolean; readonly "workflow": boolean; readonly "any_code": boolean }> {
+  if (!ml_router_array(changed_files, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  const included = ml_router_collect(ml_router_filter(ml_router_iter(changed_files), (file) => { return !is_excluded_from_code_changes(file); }));
+  const ml_record1 = ml_router_any(ml_router_iter(included), (file_2) => { return file_2.endsWith(".rs"); });
+  const ml_record2 = ml_router_any(ml_router_iter(included), (file_3) => { return is_manifest_or_lockfile_change(file_3); });
+  const ml_record3 = ml_router_any(ml_router_iter(included), (file_4) => { return file_4.endsWith(".mjs"); });
+  const ml_record4 = ml_router_any(ml_router_iter(changed_files), (file_5) => { return file_5.endsWith(".md"); });
+  const ml_record5 = ml_router_any(ml_router_iter(included), (file_6) => { return file_6.startsWith(".github/workflows/"); });
+  const ml_record6 = !(included.length === 0);
+  return Object.freeze({ $: "ChangeKinds", ["rs"]: ml_record1, ["toml"]: ml_record2, ["mjs"]: ml_record3, ["docs"]: ml_record4, ["workflow"]: ml_record5, ["any_code"]: ml_record6 });
+}
+
+export const translated: { "is_excluded_from_code_changes": (file_path: string) => boolean; "is_manifest_or_lockfile_change": (file_path: string) => boolean; "ChangeKinds": (rs: boolean, toml: boolean, mjs: boolean, docs: boolean, workflow: boolean, any_code: boolean) => Readonly<{ readonly "$": "ChangeKinds"; readonly "rs": boolean; readonly "toml": boolean; readonly "mjs": boolean; readonly "docs": boolean; readonly "workflow": boolean; readonly "any_code": boolean }>; "classify_changes": (changed_files: ReadonlyArray<string>) => Readonly<{ readonly "$": "ChangeKinds"; readonly "rs": boolean; readonly "toml": boolean; readonly "mjs": boolean; readonly "docs": boolean; readonly "workflow": boolean; readonly "any_code": boolean }> } = { ["is_excluded_from_code_changes"]: is_excluded_from_code_changes, ["is_manifest_or_lockfile_change"]: is_manifest_or_lockfile_change, ["ChangeKinds"]: ml_make_ChangeKinds_ChangeKinds, ["classify_changes"]: classify_changes };
+export const provenance = {"sourcePath":"scripts/detect-code-changes.rs","sourceSha256":"5de76c5232d13baa340f7813a84591ed0c8fb872983e5cf024e4303250edc8a9","executable":4,"executableFunctions":3,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":10,"preserved":14,"runtimeParity":false};

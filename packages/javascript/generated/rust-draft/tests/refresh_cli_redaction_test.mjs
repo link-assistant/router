@@ -4,5 +4,26 @@ function SENTINEL() {
   return "oauth-cli-response-secret@example.invalid";
 }
 
-export const translated = { "SENTINEL": SENTINEL() };
-export const provenance = {"sourcePath":"tests/refresh_cli_redaction_test.rs","sourceSha256":"667dd37b5fe974498ec350492c8e5d96e98ad6d10508b3dafef9559dfa242d92","executable":1,"executableFunctions":0,"executableConstants":1,"carried":5,"preserved":7,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["SENTINEL"]: SENTINEL() };
+export const provenance = {"sourcePath":"tests/refresh_cli_redaction_test.rs","sourceSha256":"667dd37b5fe974498ec350492c8e5d96e98ad6d10508b3dafef9559dfa242d92","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":5,"preserved":7,"runtimeParity":false};

@@ -4,5 +4,26 @@ function default_enabled() {
   return true;
 }
 
-export const translated = { default_enabled };
-export const provenance = {"sourcePath":"src/providers.rs","sourceSha256":"80e6c02411fd9473c2704a49130b29edd122ddc66d233b0d586f44e61f8dbdf8","executable":1,"executableFunctions":1,"executableConstants":0,"carried":46,"preserved":48,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["default_enabled"]: default_enabled };
+export const provenance = {"sourcePath":"src/providers.rs","sourceSha256":"80e6c02411fd9473c2704a49130b29edd122ddc66d233b0d586f44e61f8dbdf8","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":46,"preserved":48,"runtimeParity":false};

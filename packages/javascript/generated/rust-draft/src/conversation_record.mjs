@@ -9,6 +9,27 @@ function RECORD_ENV() {
   return "CONVERSATION_RECORD";
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function REPLAY_ENV() {
   return "CONVERSATION_REPLAY";
 }
@@ -17,9 +38,13 @@ function REPLAY_TURN_HEADER() {
   return "x-router-replay-turn";
 }
 
+function REFRAMED_HEADERS() {
+  return Object.freeze(["content-length", "transfer-encoding", "connection", "date"]);
+}
+
 function MAX_RECORDED_BODY() {
   return ml_fixed((ml_fixed((10n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
-export const translated = { "RECORD_ENV": RECORD_ENV(), "REPLAY_ENV": REPLAY_ENV(), "REPLAY_TURN_HEADER": REPLAY_TURN_HEADER(), "MAX_RECORDED_BODY": MAX_RECORDED_BODY() };
-export const provenance = {"sourcePath":"src/conversation_record.rs","sourceSha256":"26ed5ebc7c6884e578253a9c5f714c9c4cc1e96a15d3e50506ff0d162e64bd49","executable":4,"executableFunctions":0,"executableConstants":4,"carried":30,"preserved":35,"runtimeParity":false};
+export const translated = { ["RECORD_ENV"]: RECORD_ENV(), ["REPLAY_ENV"]: REPLAY_ENV(), ["REPLAY_TURN_HEADER"]: REPLAY_TURN_HEADER(), ["REFRAMED_HEADERS"]: REFRAMED_HEADERS(), ["MAX_RECORDED_BODY"]: MAX_RECORDED_BODY() };
+export const provenance = {"sourcePath":"src/conversation_record.rs","sourceSha256":"26ed5ebc7c6884e578253a9c5f714c9c4cc1e96a15d3e50506ff0d162e64bd49","executable":5,"executableFunctions":0,"executableConstants":5,"executableTypes":0,"executableConstructors":0,"carried":29,"preserved":35,"runtimeParity":false};

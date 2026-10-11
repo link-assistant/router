@@ -9,6 +9,27 @@ function MAX_BYTES() {
   return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function ARCHIVES() {
   return 5n;
 }
@@ -17,5 +38,5 @@ function MAX_MESSAGE_BYTES() {
   return ml_fixed((16n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
-export const translated = { "MAX_BYTES": MAX_BYTES(), "ARCHIVES": ARCHIVES(), "MAX_MESSAGE_BYTES": MAX_MESSAGE_BYTES() };
-export const provenance = {"sourcePath":"src/launcher_log.rs","sourceSha256":"be755843f641b92af9b9bbcf46120ab477fdcc4ee1f75a8238aa7a069c9b3a9b","executable":3,"executableFunctions":0,"executableConstants":3,"carried":24,"preserved":28,"runtimeParity":false};
+export const translated = { ["MAX_BYTES"]: MAX_BYTES(), ["ARCHIVES"]: ARCHIVES(), ["MAX_MESSAGE_BYTES"]: MAX_MESSAGE_BYTES() };
+export const provenance = {"sourcePath":"src/launcher_log.rs","sourceSha256":"be755843f641b92af9b9bbcf46120ab477fdcc4ee1f75a8238aa7a069c9b3a9b","executable":3,"executableFunctions":0,"executableConstants":3,"executableTypes":0,"executableConstructors":0,"carried":24,"preserved":28,"runtimeParity":false};

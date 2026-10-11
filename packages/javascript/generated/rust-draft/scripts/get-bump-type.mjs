@@ -9,6 +9,27 @@ function get_changelog_dir(rust_root) {
   }
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function bump_priority(bump_type) {
   if (!(typeof bump_type === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(bump_type))) throw new TypeError('argument outside supported Rust value domain');
   if ((bump_type === "patch")) {
@@ -26,5 +47,5 @@ function bump_priority(bump_type) {
   }
 }
 
-export const translated = { get_changelog_dir, bump_priority };
-export const provenance = {"sourcePath":"scripts/get-bump-type.rs","sourceSha256":"da45d4eb202e38358641077a4e8972baa9ddc9bc1dfedee80384604ef9434cc3","executable":2,"executableFunctions":2,"executableConstants":0,"carried":12,"preserved":14,"runtimeParity":false};
+export const translated = { ["get_changelog_dir"]: get_changelog_dir, ["bump_priority"]: bump_priority };
+export const provenance = {"sourcePath":"scripts/get-bump-type.rs","sourceSha256":"da45d4eb202e38358641077a4e8972baa9ddc9bc1dfedee80384604ef9434cc3","executable":2,"executableFunctions":2,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":12,"preserved":14,"runtimeParity":false};

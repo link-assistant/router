@@ -4,6 +4,27 @@ function DEFAULT_PAUSE_REASON() {
   return "paused by an operator";
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function LOCAL_NOTE() {
   return "note: recorded in this machine's data directory; a router started from it applies the change at startup. Pass --server <URL> to change a running router.";
 }
@@ -18,5 +39,5 @@ function resume_message(name, was_paused) {
   }
 }
 
-export const translated = { "DEFAULT_PAUSE_REASON": DEFAULT_PAUSE_REASON(), "LOCAL_NOTE": LOCAL_NOTE(), resume_message };
-export const provenance = {"sourcePath":"src/accounts_cli.rs","sourceSha256":"3119369d8c1b4b1ac57d7ce1eb75ecdc8229ede1148eb8a0024a544da4583681","executable":3,"executableFunctions":1,"executableConstants":2,"carried":12,"preserved":16,"runtimeParity":false};
+export const translated = { ["DEFAULT_PAUSE_REASON"]: DEFAULT_PAUSE_REASON(), ["LOCAL_NOTE"]: LOCAL_NOTE(), ["resume_message"]: resume_message };
+export const provenance = {"sourcePath":"src/accounts_cli.rs","sourceSha256":"3119369d8c1b4b1ac57d7ce1eb75ecdc8229ede1148eb8a0024a544da4583681","executable":3,"executableFunctions":1,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":12,"preserved":16,"runtimeParity":false};

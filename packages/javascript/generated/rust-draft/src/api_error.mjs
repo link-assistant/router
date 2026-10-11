@@ -5,6 +5,43 @@ function ml_fixed(value, min, max, message) {
   return value;
 }
 
+function ml_make_ApiDialect_Anthropic() {
+  return Object.freeze({ $: 'Anthropic' });
+}
+
+function ml_make_ApiDialect_OpenAi() {
+  return Object.freeze({ $: 'OpenAi' });
+}
+
+function ml_make_ApiDialect_Gemini() {
+  return Object.freeze({ $: 'Gemini' });
+}
+
+function ml_make_ApiDialect_GitHub() {
+  return Object.freeze({ $: 'GitHub' });
+}
+
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function openai_error_type(status) {
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
@@ -57,5 +94,5 @@ function openai_error_code(status) {
   }
 }
 
-export const translated = { openai_error_type, openai_error_code };
-export const provenance = {"sourcePath":"src/api_error.rs","sourceSha256":"1afefa01a39e711dff5893b9490b4963fbcb53a5c626693b8b5657276232de6a","executable":2,"executableFunctions":2,"executableConstants":0,"carried":14,"preserved":16,"runtimeParity":false};
+export const translated = { ["ApiDialect"]: Object.freeze({ ["Anthropic"]: ml_make_ApiDialect_Anthropic, ["OpenAi"]: ml_make_ApiDialect_OpenAi, ["Gemini"]: ml_make_ApiDialect_Gemini, ["GitHub"]: ml_make_ApiDialect_GitHub }), ["openai_error_type"]: openai_error_type, ["openai_error_code"]: openai_error_code };
+export const provenance = {"sourcePath":"src/api_error.rs","sourceSha256":"1afefa01a39e711dff5893b9490b4963fbcb53a5c626693b8b5657276232de6a","executable":3,"executableFunctions":2,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":13,"preserved":16,"runtimeParity":false};

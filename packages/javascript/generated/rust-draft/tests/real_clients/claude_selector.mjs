@@ -5,5 +5,26 @@ function has_verified_profile(id) {
   return id.startsWith("future-glm");
 }
 
-export const translated = { has_verified_profile };
-export const provenance = {"sourcePath":"tests/real_clients/claude_selector.rs","sourceSha256":"872b722e55e136f7a7ba10940fe520817d71a57d65ba899fce4e4ade9a1b54b3","executable":1,"executableFunctions":1,"executableConstants":0,"carried":15,"preserved":16,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["has_verified_profile"]: has_verified_profile };
+export const provenance = {"sourcePath":"tests/real_clients/claude_selector.rs","sourceSha256":"872b722e55e136f7a7ba10940fe520817d71a57d65ba899fce4e4ade9a1b54b3","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":15,"preserved":16,"runtimeParity":false};

@@ -9,6 +9,27 @@ function INITIAL_BACKOFF_MS() {
   return 1000n;
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function MAX_BACKOFF_MS() {
   return ml_fixed((ml_fixed((5n * 60n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow") * 1000n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
 }
@@ -17,5 +38,5 @@ function ROTATION_GRACE_MS() {
   return ml_fixed((ml_fixed((5n * 60n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow") * 1000n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
 }
 
-export const translated = { "INITIAL_BACKOFF_MS": INITIAL_BACKOFF_MS(), "MAX_BACKOFF_MS": MAX_BACKOFF_MS(), "ROTATION_GRACE_MS": ROTATION_GRACE_MS() };
-export const provenance = {"sourcePath":"src/refresh_state.rs","sourceSha256":"19e80a6134db539df9d694302359cf150013e24cad3f552ba7f147cfff566495","executable":3,"executableFunctions":0,"executableConstants":3,"carried":16,"preserved":20,"runtimeParity":false};
+export const translated = { ["INITIAL_BACKOFF_MS"]: INITIAL_BACKOFF_MS(), ["MAX_BACKOFF_MS"]: MAX_BACKOFF_MS(), ["ROTATION_GRACE_MS"]: ROTATION_GRACE_MS() };
+export const provenance = {"sourcePath":"src/refresh_state.rs","sourceSha256":"19e80a6134db539df9d694302359cf150013e24cad3f552ba7f147cfff566495","executable":3,"executableFunctions":0,"executableConstants":3,"executableTypes":0,"executableConstructors":0,"carried":16,"preserved":20,"runtimeParity":false};

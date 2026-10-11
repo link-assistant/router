@@ -4,6 +4,27 @@ function CLAUDE_AUTHORIZE_URL() {
   return "https://claude.com/cai/oauth/authorize";
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function CLAUDE_REDIRECT_URI() {
   return "https://platform.claude.com/oauth/code/callback";
 }
@@ -20,5 +41,5 @@ function PENDING_LOGIN_FILE() {
   return ".link-assistant-router-claude-login.json";
 }
 
-export const translated = { "CLAUDE_AUTHORIZE_URL": CLAUDE_AUTHORIZE_URL(), "CLAUDE_REDIRECT_URI": CLAUDE_REDIRECT_URI(), "CLAUDE_SCOPES": CLAUDE_SCOPES(), "CLAUDE_INFERENCE_SCOPE": CLAUDE_INFERENCE_SCOPE(), "PENDING_LOGIN_FILE": PENDING_LOGIN_FILE() };
-export const provenance = {"sourcePath":"src/claude_auth.rs","sourceSha256":"4e28b3626da69d2444e2cc548cdd3894449520be2c2b601d9de72d19453c563c","executable":5,"executableFunctions":0,"executableConstants":5,"carried":21,"preserved":27,"runtimeParity":false};
+export const translated = { ["CLAUDE_AUTHORIZE_URL"]: CLAUDE_AUTHORIZE_URL(), ["CLAUDE_REDIRECT_URI"]: CLAUDE_REDIRECT_URI(), ["CLAUDE_SCOPES"]: CLAUDE_SCOPES(), ["CLAUDE_INFERENCE_SCOPE"]: CLAUDE_INFERENCE_SCOPE(), ["PENDING_LOGIN_FILE"]: PENDING_LOGIN_FILE() };
+export const provenance = {"sourcePath":"src/claude_auth.rs","sourceSha256":"4e28b3626da69d2444e2cc548cdd3894449520be2c2b601d9de72d19453c563c","executable":5,"executableFunctions":0,"executableConstants":5,"executableTypes":0,"executableConstructors":0,"carried":21,"preserved":27,"runtimeParity":false};

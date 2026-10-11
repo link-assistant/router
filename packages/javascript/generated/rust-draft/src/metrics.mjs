@@ -1,6 +1,37 @@
 // Generated draft from src/metrics.rs; sha256=24c7c235d98a359ae594483e102713449813da7187cb87b1e04828c7e93dc5ef
 // Carried constructs are data, never runtime parity evidence.
+function ml_make_Surface_Anthropic() {
+  return Object.freeze({ $: 'Anthropic' });
+}
 
+function ml_make_Surface_OpenAIChat() {
+  return Object.freeze({ $: 'OpenAIChat' });
+}
 
-export const translated = {  };
-export const provenance = {"sourcePath":"src/metrics.rs","sourceSha256":"24c7c235d98a359ae594483e102713449813da7187cb87b1e04828c7e93dc5ef","executable":0,"executableFunctions":0,"executableConstants":0,"carried":14,"preserved":15,"runtimeParity":false};
+function ml_make_Surface_OpenAIResponses() {
+  return Object.freeze({ $: 'OpenAIResponses' });
+}
+
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["Surface"]: Object.freeze({ ["Anthropic"]: ml_make_Surface_Anthropic, ["OpenAIChat"]: ml_make_Surface_OpenAIChat, ["OpenAIResponses"]: ml_make_Surface_OpenAIResponses }) };
+export const provenance = {"sourcePath":"src/metrics.rs","sourceSha256":"24c7c235d98a359ae594483e102713449813da7187cb87b1e04828c7e93dc5ef","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":13,"preserved":15,"runtimeParity":false};

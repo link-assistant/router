@@ -9,6 +9,27 @@ function DEFAULT_MAX_BYTES() {
   return ml_fixed((ml_fixed((10n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function MAX_BODY_BYTES() {
   return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
@@ -17,5 +38,5 @@ function MAX_DOCUMENT_BYTES() {
   return ml_fixed((ml_fixed((8n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
-export const translated = { "DEFAULT_MAX_BYTES": DEFAULT_MAX_BYTES(), "MAX_BODY_BYTES": MAX_BODY_BYTES(), "MAX_DOCUMENT_BYTES": MAX_DOCUMENT_BYTES() };
-export const provenance = {"sourcePath":"src/error_log.rs","sourceSha256":"254089f39473a56eb894ac8334c453e00f818449d1b65c9a598094047ef93ea4","executable":3,"executableFunctions":0,"executableConstants":3,"carried":13,"preserved":17,"runtimeParity":false};
+export const translated = { ["DEFAULT_MAX_BYTES"]: DEFAULT_MAX_BYTES(), ["MAX_BODY_BYTES"]: MAX_BODY_BYTES(), ["MAX_DOCUMENT_BYTES"]: MAX_DOCUMENT_BYTES() };
+export const provenance = {"sourcePath":"src/error_log.rs","sourceSha256":"254089f39473a56eb894ac8334c453e00f818449d1b65c9a598094047ef93ea4","executable":3,"executableFunctions":0,"executableConstants":3,"executableTypes":0,"executableConstructors":0,"carried":13,"preserved":17,"runtimeParity":false};

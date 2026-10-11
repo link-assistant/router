@@ -4,6 +4,27 @@ function CLAUDE_DEFAULT_MAX_TOKENS() {
   return 8192n;
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function CLAUDE_MIN_THINKING_BUDGET() {
   return 1024n;
 }
@@ -74,5 +95,5 @@ function adaptive_effort(effort) {
   }
 }
 
-export const translated = { "CLAUDE_DEFAULT_MAX_TOKENS": CLAUDE_DEFAULT_MAX_TOKENS(), "CLAUDE_MIN_THINKING_BUDGET": CLAUDE_MIN_THINKING_BUDGET(), "CLAUDE_OUTPUT_HEADROOM": CLAUDE_OUTPUT_HEADROOM(), "CLAUDE_OUTPUT_FLOOR": CLAUDE_OUTPUT_FLOOR(), "CLAUDE_FIXED_TOKEN_CEILING": CLAUDE_FIXED_TOKEN_CEILING(), "CLAUDE_ADAPTIVE_TOKEN_CEILING": CLAUDE_ADAPTIVE_TOKEN_CEILING(), reasoning_budget, adaptive_effort };
-export const provenance = {"sourcePath":"src/thinking/anthropic.rs","sourceSha256":"5f70c30a7f886ba0de83049872f598e3c18c9f5e9f5d2b070cbc9252d52aa2da","executable":8,"executableFunctions":2,"executableConstants":6,"carried":4,"preserved":13,"runtimeParity":false};
+export const translated = { ["CLAUDE_DEFAULT_MAX_TOKENS"]: CLAUDE_DEFAULT_MAX_TOKENS(), ["CLAUDE_MIN_THINKING_BUDGET"]: CLAUDE_MIN_THINKING_BUDGET(), ["CLAUDE_OUTPUT_HEADROOM"]: CLAUDE_OUTPUT_HEADROOM(), ["CLAUDE_OUTPUT_FLOOR"]: CLAUDE_OUTPUT_FLOOR(), ["CLAUDE_FIXED_TOKEN_CEILING"]: CLAUDE_FIXED_TOKEN_CEILING(), ["CLAUDE_ADAPTIVE_TOKEN_CEILING"]: CLAUDE_ADAPTIVE_TOKEN_CEILING(), ["reasoning_budget"]: reasoning_budget, ["adaptive_effort"]: adaptive_effort };
+export const provenance = {"sourcePath":"src/thinking/anthropic.rs","sourceSha256":"5f70c30a7f886ba0de83049872f598e3c18c9f5e9f5d2b070cbc9252d52aa2da","executable":8,"executableFunctions":2,"executableConstants":6,"executableTypes":0,"executableConstructors":0,"carried":4,"preserved":13,"runtimeParity":false};

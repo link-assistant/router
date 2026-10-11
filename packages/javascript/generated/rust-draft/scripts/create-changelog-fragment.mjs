@@ -17,5 +17,26 @@ function get_category(bump_type) {
   }
 }
 
-export const translated = { get_category };
-export const provenance = {"sourcePath":"scripts/create-changelog-fragment.rs","sourceSha256":"4b0149755d96c478da84f1842f82efa85b41a870abde4177c0373db200605711","executable":1,"executableFunctions":1,"executableConstants":0,"carried":8,"preserved":9,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["get_category"]: get_category };
+export const provenance = {"sourcePath":"scripts/create-changelog-fragment.rs","sourceSha256":"4b0149755d96c478da84f1842f82efa85b41a870abde4177c0373db200605711","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":8,"preserved":9,"runtimeParity":false};

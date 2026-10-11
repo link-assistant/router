@@ -27,6 +27,27 @@ function MAX_CRATE_BYTES() {
   return ml_fixed((ml_fixed((10n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function WARN_CRATE_BYTES() {
   return ml_divide(ml_fixed((MAX_CRATE_BYTES() * 8n), 0n, 18446744073709551615n, "attempt to multiply with overflow"), 10n, 'trunc', "attempt to divide by zero", false, [0n, 18446744073709551615n, "attempt to divide with overflow"]);
 }
@@ -35,5 +56,17 @@ function CARGO_PACKAGE_MAX_ATTEMPTS() {
   return 3n;
 }
 
-export const translated = { "MAX_CRATE_BYTES": MAX_CRATE_BYTES(), "WARN_CRATE_BYTES": WARN_CRATE_BYTES(), "CARGO_PACKAGE_MAX_ATTEMPTS": CARGO_PACKAGE_MAX_ATTEMPTS() };
-export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs","sourceSha256":"7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16","executable":3,"executableFunctions":0,"executableConstants":3,"carried":14,"preserved":17,"runtimeParity":false};
+function ml_make_SizeStatus_WithinLimit() {
+  return Object.freeze({ $: 'WithinLimit' });
+}
+
+function ml_make_SizeStatus_Warning() {
+  return Object.freeze({ $: 'Warning' });
+}
+
+function ml_make_SizeStatus_Violation() {
+  return Object.freeze({ $: 'Violation' });
+}
+
+export const translated = { ["MAX_CRATE_BYTES"]: MAX_CRATE_BYTES(), ["WARN_CRATE_BYTES"]: WARN_CRATE_BYTES(), ["CARGO_PACKAGE_MAX_ATTEMPTS"]: CARGO_PACKAGE_MAX_ATTEMPTS(), ["SizeStatus"]: Object.freeze({ ["WithinLimit"]: ml_make_SizeStatus_WithinLimit, ["Warning"]: ml_make_SizeStatus_Warning, ["Violation"]: ml_make_SizeStatus_Violation }) };
+export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs","sourceSha256":"7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16","executable":4,"executableFunctions":0,"executableConstants":3,"executableTypes":1,"executableConstructors":3,"carried":13,"preserved":17,"runtimeParity":false};

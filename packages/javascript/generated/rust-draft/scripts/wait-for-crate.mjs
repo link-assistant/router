@@ -9,5 +9,26 @@ function get_cargo_toml_path(rust_root) {
   }
 }
 
-export const translated = { get_cargo_toml_path };
-export const provenance = {"sourcePath":"scripts/wait-for-crate.rs","sourceSha256":"25f7a2b8da321abf9d0a53ba9cc0c854281f6e6e075fdf6f25e1c5c7f06e3873","executable":1,"executableFunctions":1,"executableConstants":0,"carried":14,"preserved":15,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["get_cargo_toml_path"]: get_cargo_toml_path };
+export const provenance = {"sourcePath":"scripts/wait-for-crate.rs","sourceSha256":"25f7a2b8da321abf9d0a53ba9cc0c854281f6e6e075fdf6f25e1c5c7f06e3873","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":14,"preserved":15,"runtimeParity":false};

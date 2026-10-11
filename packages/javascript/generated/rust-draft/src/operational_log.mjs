@@ -9,9 +9,30 @@ function MAX_BYTES() {
   return ml_fixed((ml_fixed((2n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function BACKUPS() {
   return 4n;
 }
 
-export const translated = { "MAX_BYTES": MAX_BYTES(), "BACKUPS": BACKUPS() };
-export const provenance = {"sourcePath":"src/operational_log.rs","sourceSha256":"e9b30715348879f62de6b532a765850318885e177e19a0687f0cc4a59a12746f","executable":2,"executableFunctions":0,"executableConstants":2,"carried":15,"preserved":18,"runtimeParity":false};
+export const translated = { ["MAX_BYTES"]: MAX_BYTES(), ["BACKUPS"]: BACKUPS() };
+export const provenance = {"sourcePath":"src/operational_log.rs","sourceSha256":"e9b30715348879f62de6b532a765850318885e177e19a0687f0cc4a59a12746f","executable":2,"executableFunctions":0,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":15,"preserved":18,"runtimeParity":false};

@@ -14,6 +14,27 @@ function recovery_skip_bump(has_fragments, tagged_head) {
   }
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function get_cargo_toml_path(rust_root) {
   if (!(typeof rust_root === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(rust_root))) throw new TypeError('argument outside supported Rust value domain');
   if ((rust_root === ".")) {
@@ -23,5 +44,5 @@ function get_cargo_toml_path(rust_root) {
   }
 }
 
-export const translated = { recovery_skip_bump, get_cargo_toml_path };
-export const provenance = {"sourcePath":"scripts/check-release-needed.rs","sourceSha256":"d417c95c3315bb91bfde2a80886c52166e32ec93398f635daf880e4ae7771fda","executable":2,"executableFunctions":2,"executableConstants":0,"carried":23,"preserved":25,"runtimeParity":false};
+export const translated = { ["recovery_skip_bump"]: recovery_skip_bump, ["get_cargo_toml_path"]: get_cargo_toml_path };
+export const provenance = {"sourcePath":"scripts/check-release-needed.rs","sourceSha256":"d417c95c3315bb91bfde2a80886c52166e32ec93398f635daf880e4ae7771fda","executable":2,"executableFunctions":2,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":23,"preserved":25,"runtimeParity":false};

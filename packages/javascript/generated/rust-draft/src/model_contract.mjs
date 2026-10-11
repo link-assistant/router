@@ -5,5 +5,26 @@ function is_false(value) {
   return !value;
 }
 
-export const translated = { is_false };
-export const provenance = {"sourcePath":"src/model_contract.rs","sourceSha256":"98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b","executable":1,"executableFunctions":1,"executableConstants":0,"carried":21,"preserved":23,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["is_false"]: is_false };
+export const provenance = {"sourcePath":"src/model_contract.rs","sourceSha256":"98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":21,"preserved":23,"runtimeParity":false};
