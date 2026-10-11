@@ -16,3 +16,10 @@ Join<&str> owner and are retained with MIT/Apache-2.0 licenses and checksums.
 
 No compiler, tests, corpus producer, Rust execution or artifact regeneration
 has run on this branch. No executable gain or runtime parity is established.
+
+The source-only followup adds trim_start/trim_end callback boundary cases,
+standard Option import/qualified-owner checks beside a local Option name,
+custom Option and str alias/shadow refusal cases, and existing private
+source-link freshness plus emitter profile-evidence refusal checks. All twelve
+authored test cases, including the three complete-original-file cases, remain
+unrun pending the publisher's exclusive compiler window.

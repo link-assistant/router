@@ -5,6 +5,8 @@ import {createHash} from 'node:crypto';
 import {stringLines,stringNext,stringJoin} from '../extensions/string-iterator-runtime.mjs';
 import {STRING_ITERATOR_PROFILE} from '../extensions/string-iterators.mjs';
 import {translateProject} from '../project.mjs';
+import {parseRust,checkProgram,emitJavaScript} from '../extensions/host-contracts.mjs';
+import {checkedSourceContext,bindCheckedSourceLinks,checkedSourceEvidence} from '../extensions/source-links.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -42,6 +44,54 @@ test('typed line next keeps input lifetime while joins and trim callbacks return
     assert.deepEqual(api.first(''),none);assert.deepEqual(api.first('a\r\nb'),some('a'));assert.deepEqual(api.first('\r'),some('\r'));
     assert.equal(api.joined(Object.freeze(['a','😀','']),':'),'a:😀:');assert.equal(api.trimmed(' \u0085a\r\n b\uFEFF \n'),'a|b\uFEFF');
   });
+});
+
+test('trim_start and trim_end function items preserve the other boundary and Rust whitespace',{timeout:60_000},async()=>{
+  const source='pub fn start(value:&str)->String{value.lines().map(str::trim_start).collect::<Vec<_>>().join("|")} pub fn end(value:&str)->String{value.lines().map(str::trim_end).collect::<Vec<_>>().join("|")}';
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{
+    for(const [value,start,end]of [['','',''],['  a  ','a  ','  a'],['\u0085a\u0085','a\u0085','\u0085a'],['\uFEFFa\uFEFF','\uFEFFa\uFEFF','\uFEFFa\uFEFF'],[' a \r\n\n b\t\n','a ||b\t',' a|| b']]){assert.equal(api.start(value),start);assert.equal(api.end(value),end);}
+  });
+});
+
+test('line next uses actual standard Option aliases despite a local Option name',{timeout:60_000},async()=>{
+  const source='enum Option{Other} use std::option::Option as Maybe; pub fn first(value:&str)->Maybe<&str>{value.lines().next()} pub fn qualified(value:&str)->std::option::Option<&str>{value.lines().next()}';
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{for(const name of ['first','qualified']){assert.deepEqual(api[name](''),none);assert.deepEqual(api[name]('a\r\nb'),some('a'));}});
+  // A source-defined enum with familiar variants is not the iterator's std Option.
+  for(const source of [
+    'enum Option{None,Some(&\'static str)}pub fn bad(value:&\'static str)->Option{value.lines().next()}',
+    'mod str{}pub fn bad(value:&str)->String{value.lines().map(str::trim_start).collect::<Vec<_>>().join(",")}',
+    // This first profile deliberately registers canonical str function items only.
+    'use std::primitive::str as Text;pub fn bad(value:&str)->String{value.lines().map(Text::trim_end).collect::<Vec<_>>().join(",")}',
+  ]){const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);}
+});
+
+const findNode=(value,kind)=>{
+  if(!value||typeof value!=='object')return null;
+  if(value.k===kind)return value;
+  for(const child of Object.values(value)){const found=findNode(child,kind);if(found)return found;}
+  return null;
+};
+test('new line nodes retain genuine parsed and checked body freshness',()=>{
+  const source='pub fn first(value:&str)->Option<&str>{value.lines().next()}fn main(){}';
+  const surface=parseRust(source),original=findNode(surface.items,'routerStringIteratorOperation');assert.ok(original);original.operation='join';
+  assert.throws(()=>checkProgram(surface),/changed after source capture/);
+  const program=checkProgram(parseRust(source)),entry=program.declarations.get('first'),context=checkedSourceContext(program);
+  const options={targetProfile:{id:'string-iterator-freshness-test'}},bound=bindCheckedSourceLinks(program,context,options);
+  assert.ok(checkedSourceEvidence(bound,entry));
+  assert.throws(()=>bindCheckedSourceLinks(program,{...context},options),/private parser source context/);
+  const next=findNode(entry.body,'routerStringNext');assert.ok(next);next.stringIteratorProof.consumption='caller-replaced';
+  assert.throws(()=>bindCheckedSourceLinks(program,context,options),/checked declaration changed before source binding/);
+  assert.throws(()=>checkedSourceEvidence(bound,entry),/checked source association became stale/);
+});
+
+test('emission refuses missing or replaced string iterator profile evidence',()=>{
+  const source='pub fn first(value:&str)->Option<&str>{value.lines().next()}fn main(){}';
+  for(const change of [node=>delete node.stringIteratorProof,node=>{node.stringIteratorProof.verified=false;},node=>{node.stringIteratorProof.profile='caller-profile';}]){
+    const program=checkProgram(parseRust(source)),node=findNode(program.declarations.get('first').body,'routerStringLines');assert.ok(node);change(node);
+    assert.throws(()=>emitJavaScript(program),/missing checked standard string iterator proof/);
+  }
 });
 
 test('unknown owners mutable or stored cursors escapes and const use remain carried',()=>{
