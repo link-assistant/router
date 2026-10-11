@@ -33,7 +33,7 @@
             "end": 1953
           },
           "sha256": "ada188f51465b090bb836191fc7124f4b8248e7b4050d4473a3ae06f48027c57",
-          "expectation": "retained-negative-unresolved-inner-lint-attribute"
+          "expectation": "verified-whole-original-file-js-and-strict-typescript"
         },
         {
           "owner": "ResponseNamespace",
@@ -43,9 +43,36 @@
             "end": 2533
           },
           "sha256": "91604f53f5d3df033a1105003d5f24ed4134896f8150239731d52f68be8fc95b",
-          "expectation": "retained-negative-unresolved-inner-lint-attribute"
+          "expectation": "verified-whole-original-file-js-and-strict-typescript"
         }
-      ]
+      ],
+      "verification": {
+        "namespaceOnlyDeriveCertificates": [
+          "ResponseNamespace",
+          "ResponseOwner",
+          "AffinityDestination",
+          "ResponseAffinity",
+          "AffinityFile"
+        ],
+        "sourceLintSpan": {
+          "start": 84,
+          "end": 122
+        },
+        "literalRoutingOutcomesPerTarget": 54,
+        "inputDomainGuardsPerTarget": 10,
+        "targets": [
+          "javascript",
+          "strict-compiled-typescript"
+        ],
+        "runners": [
+          "node",
+          "bun"
+        ],
+        "generatedTraitBehavior": false,
+        "bangMacroClosure": false,
+        "storageBehavior": false,
+        "fullParity": false
+      }
     },
     {
       "path": "src/bridge_selection.rs",
