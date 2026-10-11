@@ -55,12 +55,25 @@ test('grouped original fmt type imports permit unrelated typed scalar checking',
 });
 
 test('local shadows globs unstable names constructors and opaque runtime uses retain source refusals',()=>{
-  for(const source of ['mod std{} use std::fmt::Debug; pub fn bad(value:u8)->u8{value}',
+  for(const source of ['mod std{} use std::fmt::Debug; pub fn bad(value:Debug)->Debug{value}',
     'use std::fmt::*; pub fn bad(value:u8)->u8{value}',
-    'use std::fmt::FormattingOptions; pub fn bad(value:u8)->u8{value}',
+    'use std::fmt::FormattingOptions; pub fn bad(value:FormattingOptions)->FormattingOptions{value}',
     'use std::fmt::Formatter; pub fn bad(value:Formatter)->Formatter{value}',
     'use std::fmt::Error; pub fn bad()->Error{Error}']){
     const result=project(source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);assert.ok(result.meta.refused.length,source);
+  }
+});
+
+test('specific unresolved imports retain named obligations without inventing global type uncertainty',{timeout:30_000},async()=>{
+  for(const [source,name]of [
+    ['mod std{} use std::fmt::Debug; pub fn independent(value:u8)->u8{value}','Debug'],
+    ['use std::fmt::FormattingOptions; pub fn independent(value:u8)->u8{value}','FormattingOptions'],
+  ]){
+    const result=project(source),scope=result.meta.bindingEvidence.scopes[0];
+    const binding=scope.bindings.find(binding=>binding.namespace==='type'&&binding.name===name);
+    assert.equal(binding.status,'unresolved');assert.equal(binding.target,null);assert.equal(scope.unresolvedTypeScope,false);
+    assert.ok(result.meta.refused.length);assert.ok(result.meta.executable.some(item=>item.name==='independent'));assert.equal(result.meta.runtimeParity,false);
+    await verifyTypedTargets(result,api=>assert.equal(api.independent(5n),5n));
   }
 });
 
