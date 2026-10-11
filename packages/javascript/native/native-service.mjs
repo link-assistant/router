@@ -96,12 +96,13 @@ function resourceFor(path, method, headers) {
   for (const [root,listable] of roots) {
     if (path !== root && !path.startsWith(root+'/')) continue;
     const segments = path.slice(root.length).split('/').filter(Boolean).map(decodeURIComponent);
+    const namespace = root === '/api/services/codex/v1/live' ? '/api/services/codex/v1/realtime/calls' : root;
     if(root.endsWith('/responses') && segments[0] === 'compact' && method === 'POST')return {namespace:root,create:true};
     if(root.endsWith('/responses') && segments[0] === 'input_tokens')return null;
-    if (!segments.length) return {namespace:root,create:method === 'POST',list:method === 'GET' && (listable || root.endsWith('batches') || root.endsWith('skills') || root.endsWith('chat/completions'))};
+    if (!segments.length) return {namespace,create:method === 'POST',list:method === 'GET' && (listable || root.endsWith('batches') || root.endsWith('skills') || root.endsWith('chat/completions'))};
     if (root.endsWith('skills') && segments[1] === 'versions') return {namespace:root+'/versions',parent:segments[0],id:segments[2],create:method === 'POST' && segments.length === 2,list:method === 'GET' && segments.length === 2,remove:method === 'DELETE',idFields:['version','id']};
     if (root.endsWith('conversations') && segments[1] === 'items') return {namespace:root+'/items',parent:segments[0],id:segments[2],create:method === 'POST' && segments.length === 2,list:method === 'GET' && segments.length === 2,remove:method === 'DELETE',captureList:true};
-    return {namespace:root,id:segments[0],remove:method === 'DELETE'};
+    return {namespace,id:segments[0],remove:method === 'DELETE'};
   }
   if (path === '/api/services/codex/backend-api/ps/mcp') {
     const id = headers.get('mcp-session-id'); if (id && (id.length > 256 || id.includes(','))) throw new ProtocolError('Mcp-Session-Id is invalid');

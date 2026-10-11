@@ -15,7 +15,8 @@
     "request logging: exact eager capture/read-prefix bounds, runtime debug lease, per-process aggregate retention cache and all route error fixtures",
     "thinking truth tables, suffix/account-capability replay and full provider model activation",
     "retry rounds/deadline/recovery selection, pre-first-byte SSE error probing and live policy/account capability replay",
-    "subscription primary sidecar policy loading, provider-scoped account-management projections and full credential/catalog entitlement activation"
+    "subscription primary sidecar policy loading, provider-scoped account-management projections and full credential/catalog entitlement activation",
+    "canonical census verifies one stored-provider and absent-subscription scenario; full credentials/entitlements, all request schemas, state transitions and transport variants need independent per-family evidence"
   ],
   "implemented_subsets": [
     "canonical 368-method route matcher",
@@ -39,6 +40,8 @@
     "reviewed account header copy allow-list applied without forwarding client credentials",
     "Gemini STOP/max-token/all blocked terminal reasons and candidate-less prompt-block JSON/SSE map to source content-filter incomplete states, including incomplete output item statuses",
     "provider-aware principal scopes keep implicit subscription primary per provider and explicit named accounts strict, stored providers governed by client/model/service authority and private owner affinities",
-    "actual OAuth primary credentials use canonical logical account while physical credential routing keys remain distinct; source absent account ids normalize to Rust None"
+    "actual OAuth primary credentials use canonical logical account while physical credential routing keys remain distinct; source absent account ids normalize to Rust None",
+    "configured canonical 368-route census with exact status/error messages, real bound JWT/admin peer, 22 localhost upstream recorder cases, 108 empty HEAD bodies and explicit four TRACE transport refusals; every outcome is partial evidence",
+    "Codex live resources share Rust Realtime calls affinity namespace; HEAD body cancellation preserves upstream upgrade rejection despite expected abort"
   ]
 }

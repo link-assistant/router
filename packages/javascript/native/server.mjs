@@ -450,7 +450,7 @@ export function createNativeRouter(options = {}) {
     }
     if(path === '/api/management/admin/bootstrap/confirm' && response.ok)core.managementAccess?.success(socketPeer(peers.get(request) ?? options.peer));
     if(listenerKind === 'admin')hardenAdmin(response);
-    if(head){await response.body?.cancel();response=new Response(null,{status:response.status,headers:response.headers});}
+    if(head){await response.body?.cancel().catch(()=>{});response=new Response(null,{status:response.status,headers:response.headers});}
     logs.push({ time: started, method: incomingMethod, path, status: response.status, duration_ms: clock() - started }); if (logs.length > 1000) logs.shift();
     return response;
   }

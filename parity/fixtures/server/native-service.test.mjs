@@ -4,10 +4,28 @@ import {createServer} from 'node:http';
 import {createNativeRouter} from '../../../packages/javascript/native/server.mjs';
 import {NativeAffinityStore,nativeURL,nativeRequestHeaders,nativeResponseHeaders} from '../../../packages/javascript/native/native-service.mjs';
 import {HTTP_ROUTES,matchHTTPRoute} from '../../../packages/javascript/native/http-route-contract.mjs';
+import {AffinityStore} from '../../../packages/javascript/native/affinities.mjs';
 
 const req = (path,method='GET',body,token='alice',headers={}) => new Request(`http://router${path}`,{method,headers:{authorization:`Bearer ${token}`,...headers},...(body === undefined ? {} : {body:typeof body === 'string' ? body : JSON.stringify(body)})});
 const candidate = {provider:'vendor',account:'primary',protocol:'chat',provider_kind:'openai-compatible',base_url:'http://localhost:1/v1',api_key:'vendor-secret'};
 const core = (extra={}) => ({config:{},nativeCandidates:async () => [candidate],tokens:{validate:token => ({sub:token,client_kind:'claude',principal_id:token})},...extra});
+test('Codex live calls share the persisted Realtime namespace and keep foreign owners isolated',async t=>{
+  const hits=[],upstream=createServer((incoming,outgoing)=>{hits.push(incoming.url);outgoing.setHeader('content-type','application/json');outgoing.end(JSON.stringify({id:'call_fixture',object:'realtime.call'}));});
+  await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>{upstream.close(resolve);upstream.closeIdleConnections();}));
+  const affinities=new AffinityStore({dataDir:'/unused-census-memory',persistent:false}),c=core({affinities,nativeCandidates:async()=>[{...candidate,provider:'codex',provider_kind:'codex',destination_kind:'subscription',protocol:'responses',base_url:`http://127.0.0.1:${upstream.address().port}`}],tokens:{validate:token=>({client_kind:'codex',principal_id:token})}});
+  const router=createNativeRouter({core:c});t.after(()=>router.close());
+  const created=await router.fetch(req('/api/services/codex/v1/live','POST',{}));assert.equal(created.status,200);await created.json();
+  const stored=await affinities.get('/api/services/codex/v1/realtime/calls',{client_kind:'codex',principal_id:'alice'},'call_fixture');assert.equal(stored.destination.account,'primary');
+  const found=await router.fetch(req('/api/services/codex/v1/live/call_fixture'));assert.equal(found.status,200);await found.json();
+  assert.equal((await router.fetch(req('/api/services/codex/v1/live/call_fixture','GET',undefined,'bob'))).status,404);assert.equal(hits.length,2);
+  assert.equal(hits[0],'/v1/realtime/calls?intent=quicksilver&architecture=avas');
+});
+test('native HEAD retains upstream upgrade rejection while cancelling its actual HTTP body',async t=>{
+  const upstream=createServer((incoming,outgoing)=>{outgoing.writeHead(426,{'content-type':'application/json','x-request-id':'upgrade-fixture'});outgoing.end(JSON.stringify({error:{message:'WebSocket upgrade required'}}));});
+  await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>{upstream.close(resolve);upstream.closeIdleConnections();}));
+  const router=createNativeRouter({core:core({nativeCandidates:async()=>[{...candidate,base_url:`http://127.0.0.1:${upstream.address().port}/v1`}]})});t.after(()=>router.close());
+  for(const path of ['/api/services/openai/v1/responses','/api/services/openai/v1/realtime']){const response=await router.fetch(req(path,'HEAD'));assert.equal(response.status,426);assert.equal(await response.text(),'');assert.equal(response.headers.get('x-request-id'),'upgrade-fixture');}
+});
 test('canonical route matcher accepts declared methods and rejects unlisted vendor operations',() => {
   assert.equal(HTTP_ROUTES.length,368);
   assert.ok(matchHTTPRoute('GET','/api/services/anthropic/v1/skills/s/versions/1/content'));
