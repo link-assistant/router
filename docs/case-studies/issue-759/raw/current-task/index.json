@@ -35398,8 +35398,80 @@
       "headSha": "a0053888fff23cfac5b5e6674756eb15e910a3de",
       "status": "Focused coherent source tests passed; initial failures retained; one fresh bulk producer and full gate remain pending.",
       "archivedAtUtc": "2026-10-11T16:41:21.696195+00:00"
+    },
+    {
+      "label": "cycle-7-initial-producer-and-static-lifetime-repair",
+      "cycle": 7,
+      "pack": "77c5fb4c39b07ad6bdf68276ab80d0bff18dd1cc60604498ab9bafed0062e423.tar.gz",
+      "sha256": "77c5fb4c39b07ad6bdf68276ab80d0bff18dd1cc60604498ab9bafed0062e423",
+      "storedBytes": 9283,
+      "members": [
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-corpus-census.json",
+          "bytes": 25078,
+          "sha256": "a39b7157ee250833c22f828e0d173846664256ce5b6b0c7bee1a2932483f017e"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-corpus-summary.log",
+          "bytes": 15001,
+          "sha256": "6b9bc3daf2761a35d8e05696cd98202ace6dcf50beeb20a3b78054f9976ce7cd"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-local-static-baseline.json",
+          "bytes": 1571,
+          "sha256": "41604f34f923e4f497ae7fabbb2bcaffb7c0be9c45da477c51258138d1edecba"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-local-static-bun.log",
+          "bytes": 3351,
+          "sha256": "6e5a279a50f25f1b63970a23ffc6e4a2d95fad788adf2b9e03deb84222e5f61d"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-local-static-final-bun.log",
+          "bytes": 2368,
+          "sha256": "6992ea16441367b468d8d86622ab121fc1469580676f59b8faa0355e97339824"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-local-static-final-node.log",
+          "bytes": 4712,
+          "sha256": "ae90570da6e38c17911b7ac21d3b79adb96c7b8539dfb5a1c0cbb45cbc25204f"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-local-static-node.log",
+          "bytes": 5671,
+          "sha256": "48cf7296835b2a139940f2ffc496d62ab9e47b2adca87f3bc0403021b67781cc"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-static-repair-receipt.json",
+          "bytes": 952,
+          "sha256": "043bd770c953230a590193f3470ec43ba5e93dc9a2f9833984fc5675dbcf209a"
+        },
+        {
+          "path": "cycle-7-focused/router-759-generated-7e25187c9-integrity.json",
+          "bytes": 4330,
+          "sha256": "29991e5798d72db4547b3c9e80539450da88d582eb085c0f75501f6f7b91f6d5"
+        },
+        {
+          "path": "cycle-7-focused/router-759-generation-7e25187c9-time.log",
+          "bytes": 777,
+          "sha256": "a9531068623c9bcfb7237967d62201178ad35668854383e31e6db2dc885e7770"
+        },
+        {
+          "path": "cycle-7-focused/router-759-generation-7e25187c9.json",
+          "bytes": 772,
+          "sha256": "353a0072c2c8786cb7ea66a1370abcd68c049159b70a8c511dd36cfc7c4039a3"
+        },
+        {
+          "path": "cycle-7-focused/router-759-generation-7e25187c9.log",
+          "bytes": 1071,
+          "sha256": "e701dafc1b3a0a443321afd1408991df21c9903f65b34bdfd283d1ef5a3ac709"
+        }
+      ],
+      "headSha": "cb86d5b144c0f2b7958ccf2e5203a9eba26fbf71",
+      "status": "Initial producer passed; reproduced invalid static locals require corrected source generation. Final focused lifetime tests 21/21 Node and Bun passed; initial failure retained; full gate pending.",
+      "archivedAtUtc": "2026-10-11T16:51:31.112318+00:00"
     }
   ],
-  "totalStoredPackBytes": 14403297,
-  "totalMembers": 6268
+  "totalStoredPackBytes": 14412580,
+  "totalMembers": 6280
 }
