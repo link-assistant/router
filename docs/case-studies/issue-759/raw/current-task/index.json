@@ -35470,8 +35470,50 @@
       "headSha": "cb86d5b144c0f2b7958ccf2e5203a9eba26fbf71",
       "status": "Initial producer passed; reproduced invalid static locals require corrected source generation. Final focused lifetime tests 21/21 Node and Bun passed; initial failure retained; full gate pending.",
       "archivedAtUtc": "2026-10-11T16:51:31.112318+00:00"
+    },
+    {
+      "label": "cycle-7-corrected-producer",
+      "cycle": 7,
+      "pack": "b1ea867dff41b03241b1fb2ee91e5fdbfb7fc577d21cd796bd45441bf8076d06.tar.gz",
+      "sha256": "b1ea867dff41b03241b1fb2ee91e5fdbfb7fc577d21cd796bd45441bf8076d06",
+      "storedBytes": 5768,
+      "members": [
+        {
+          "path": "cycle-7-corrected-producer/router-759-cycle-7-corrected-corpus-census.json",
+          "bytes": 25078,
+          "sha256": "75b07d246cd0fbd342293c18c30a6e7951010a90b596387ccc82071f902c8a77"
+        },
+        {
+          "path": "cycle-7-corrected-producer/router-759-cycle-7-corrected-corpus-summary.log",
+          "bytes": 15001,
+          "sha256": "03b4f034624452d1749124e1eeea4250a27f2bbc7a5aa7b1da64f0d9c213e2e6"
+        },
+        {
+          "path": "cycle-7-corrected-producer/router-759-generated-87a7ef2bd-integrity.json",
+          "bytes": 4330,
+          "sha256": "69bbcbdd85dde044f989a72a797fa7639b02071849209ce52e0e66e6c91564cd"
+        },
+        {
+          "path": "cycle-7-corrected-producer/router-759-generation-87a7ef2bd-time.log",
+          "bytes": 777,
+          "sha256": "15ac187a79ba5fdc982af0aae2e3b06878fc3ae39a22105c5d4574e8ed459281"
+        },
+        {
+          "path": "cycle-7-corrected-producer/router-759-generation-87a7ef2bd.json",
+          "bytes": 774,
+          "sha256": "e6923617bc4e4f6e1a3e5fdf8cf752de17e58871977f67933712db25b8054ca1"
+        },
+        {
+          "path": "cycle-7-corrected-producer/router-759-generation-87a7ef2bd.log",
+          "bytes": 1071,
+          "sha256": "e701dafc1b3a0a443321afd1408991df21c9903f65b34bdfd283d1ef5a3ac709"
+        }
+      ],
+      "headSha": "770fa7732557543bfe99f5eeb775fe9af880448a",
+      "status": "Corrected producer passed and verified source pins; all-seven gate remains pending.",
+      "archivedAtUtc": "2026-10-11T16:57:46.877114+00:00"
     }
   ],
-  "totalStoredPackBytes": 14412580,
-  "totalMembers": 6280
+  "totalStoredPackBytes": 14418348,
+  "totalMembers": 6286
 }
