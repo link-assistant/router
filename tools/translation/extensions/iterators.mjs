@@ -45,6 +45,13 @@ export class IteratorRustParser extends DataRustParser {
     const params = [];
     if (start.value === '|') {
       while (!c.is('|')) {
+        const pattern=this.callbackPatternParameter?.(path);
+        if(pattern) {
+          const type=c.eat(':')?this.type():null;
+          params.push({...pattern,type});
+          if(!c.eat(','))break;
+          continue;
+        }
         c.eat('&');
         if (c.is('mut')) throw unsupported('mutable closure parameter', 'only immutable scalar callback arguments are lowered', c.peek());
         const token = c.identifier('closure parameter');
@@ -100,9 +107,13 @@ export class IteratorRustParser extends DataRustParser {
 }
 
 export class IteratorChecker extends DataChecker {
-  lambda(node, argumentTypes, env, path, expected) {
+  lambda(node, argumentTypes, env, path, expected, context) {
     if (node.k !== 'routerLambda' || node.params.length !== argumentTypes.length) throw typeError(`iterator callback needs ${argumentTypes.length} scalar parameters`, node.span);
     if (containsExit(node.body)) throw unsupported('closure exit', 'callback bodies must use tail values', node.span);
+    if(node.params.some(param=>param.pattern)) {
+      if(typeof this.patternLambda!=='function')throw unsupported('callback pattern','requires a checked pattern binding extension',node.span);
+      return this.patternLambda(node,argumentTypes,env,path,expected,context);
+    }
     let inner = new Map(env);
     node.params.forEach((param, index) => {
       if (param.type && !sameType(this.resolveType(param.type, path, param.span), argumentTypes[index])) throw typeError('callback parameter type differs from iterator element', param.span);
@@ -153,7 +164,7 @@ export class IteratorChecker extends DataChecker {
     const element = object.type.element;
     if (['copied', 'cloned'].includes(op)) return object;
     if (op === 'map' || op === 'filter') {
-      const callback = this.lambda(node.args[0], [element], env, path, op === 'filter' ? BOOL : itemExpected?.element);
+      const callback = this.lambda(node.args[0], [element], env, path, op === 'filter' ? BOOL : itemExpected?.element,{source:'iterator'});
       const result = op === 'map' ? callback.type.result : element;
       if (!['fixed', 'bool', 'string'].includes(result.kind)) throw unsupported('mapped iterator result', 'only scalar iterator values have a checked contract', node.span);
       return { k: 'routerIteratorOperation', op, object, args: [callback], type: { kind: 'routerIterator', element: result }, span: node.span };
@@ -168,12 +179,12 @@ export class IteratorChecker extends DataChecker {
       return { k: 'routerIteratorOperation', op, object, args: [], type, span: node.span };
     }
     if (op === 'count') return { k: 'routerIteratorOperation', op, object, args: [], type: USIZE, span: node.span };
-    if (op === 'any' || op === 'all') return { k: 'routerIteratorOperation', op, object, args: [this.lambda(node.args[0], [element], env, path, BOOL)], type: BOOL, span: node.span };
+    if (op === 'any' || op === 'all') return { k: 'routerIteratorOperation', op, object, args: [this.lambda(node.args[0], [element], env, path, BOOL,{source:'iterator'})], type: BOOL, span: node.span };
     if (op === 'fold') {
       let initial = this.expr(node.args[0], env, path, wanted);
       if (wanted) initial = coerce(initial, wanted, this.language, node.span);
       if (!['fixed', 'bool', 'string'].includes(initial.type.kind)) throw unsupported('fold accumulator', 'only scalar accumulators have a checked contract', node.span);
-      const callback = this.lambda(node.args[1], [initial.type, element], env, path, initial.type);
+      const callback = this.lambda(node.args[1], [initial.type, element], env, path, initial.type,{source:'iterator'});
       return { k: 'routerIteratorOperation', op, object, args: [initial, callback], type: initial.type, span: node.span };
     }
     if (op === 'sum') {

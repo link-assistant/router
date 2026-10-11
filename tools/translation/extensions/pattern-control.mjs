@@ -8,10 +8,27 @@ import {planPattern} from '../pattern-bindings.mjs';
 import {BOOL,UNIT,sameType} from '../vendor/meta-language/translation/types.js';
 import {coerce} from '../vendor/meta-language/translation/check.js';
 import {TranslationError,typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
 const owned=new Set(['Box','Vec','String','Arc','Rc','Cell','RefCell','UnsafeCell','Mutex','RwLock','Pin','ManuallyDrop','MaybeUninit']);
+function checkCallbackCaptures(node,env,bound,span) {
+  if(!node||typeof node!=='object')return;
+  if(node.k==='routerSet'||node.k==='let'&&node.mutable)throw unsupported('tuple callback mutation','requires a separate checked closure mutation and borrowing contract',node.span??span);
+  if(node.k==='var'&&!bound.has(node.name)&&env.has(node.name)) {
+    const type=env.get(node.name);
+    if(!scalar(type)||type.patternOwnershipRefusal)throw unsupported('tuple callback capture ownership','only immutable scalar capture views have a checked contract',node.span??span);
+  }
+  if(node.k==='let') {
+    checkCallbackCaptures(node.value,env,bound,span);
+    checkCallbackCaptures(node.body,env,new Set([...bound,node.name]),span);return;
+  }
+  for(const [key,value]of Object.entries(node))if(!['type','span','patternControl'].includes(key)) {
+    if(Array.isArray(value))for(const child of value)checkCallbackCaptures(child,env,bound,span);
+    else checkCallbackCaptures(value,env,bound,span);
+  }
+}
 // A proof about this block's own exits, never an exit hidden in a nested loop
 // or a value expression. Calls/loops with an unproven never type stay refused.
 function diverges(node) {
@@ -72,13 +89,39 @@ export function withPatternControlParser(Base=ControlRustParser) {
       };
       return annotate(pattern);
     }
+    callbackPatternParameter(path) {
+      const c=this.cursor,first=c.peek();
+      if(c.is('&')&&c.is('(',1))throw unsupported('reference tuple callback pattern','requires actual checked borrowing, not portable reference erasure',first);
+      if(!c.is('('))return null;
+      let depth=0,stop=c.index;
+      for(;stop<c.tokens.length;stop++) {
+        const token=c.tokens[stop];
+        if(token.kind==='punct'&&depth===0&&['|',',',':'].includes(token.value))break;
+        if(token.kind==='punct'&&['(','[','{'].includes(token.value))depth++;
+        if(token.kind==='punct'&&[')',']','}'].includes(token.value))depth--;
+        if(depth<0||token.kind==='eof')throw unsupported('tuple callback parameter syntax','requires a bounded actual parameter pattern',first);
+      }
+      // The closing closure bar is not a top-level or-pattern separator. This
+      // cursor view bounds the original tokens; no source text is substituted.
+      const end=c.tokens[stop];
+      class ParameterCursor extends TokenCursor {
+        peek(offset=0){return this.index+offset>=stop?{kind:'eof',value:'',start:end.start,end:end.start}:super.peek(offset);}
+      }
+      const bounded=new ParameterCursor(c.tokens,c.language);bounded.index=c.index;
+      this.cursor=bounded;
+      let pattern;
+      try {pattern=this.controlPattern(path,first);if(bounded.index!==stop)throw unsupported('tuple callback pattern suffix','requires a completely checked parameter pattern',bounded.peek());}
+      finally {this.cursor=c;c.index=bounded.index;}
+      return {pattern,span:pattern.span};
+    }
     letStatement(path) {
       const c=this.cursor,checkpoint=c.index;
       // Look only for a structural statement-level else. Ordinary let parsing
       // remains with the enclosing frontend, including its mutable bindings.
       let depth=0,hasElse=false;
       for(let offset=1;offset<c.tokens.length-c.index;offset++) {
-        const value=c.peek(offset).value;
+        const token=c.peek(offset);if(!['punct','identifier'].includes(token.kind))continue;
+        const value=token.value;
         if(value===';'&&depth===0)break;
         if(value==='}'&&depth===0)break;
         if(value==='else'&&depth===0){hasElse=true;break;}
@@ -99,9 +142,10 @@ export function withPatternControlParser(Base=ControlRustParser) {
       }
       if(annotation)throw unsupported('let-else type annotation','requires a separate checked pattern annotation contract',range(first,c.peek()));
       const initializer=c.tokens.slice(begin,c.index);
-      if(initializer.at(-1)?.value==='}')throw unsupported('let-else brace initializer','Rust requires parentheses around an initializer ending in a brace',subject.span);
+      if(initializer.at(-1)?.kind==='punct'&&initializer.at(-1)?.value==='}')throw unsupported('let-else brace initializer','Rust requires parentheses around an initializer ending in a brace',subject.span);
       depth=0;
       for(const token of initializer) {
+        if(token.kind!=='punct')continue;
         if(['&&','||'].includes(token.value)&&depth===0)throw unsupported('let-else lazy boolean initializer','Rust requires parentheses around a lazy boolean initializer',subject.span);
         if(['(','[','{'].includes(token.value))depth++;
         if([')',']','}'].includes(token.value))depth--;
@@ -110,6 +154,7 @@ export function withPatternControlParser(Base=ControlRustParser) {
       // or-pattern, unlike the if-let grammar handled by controlIf.
       const syntax=c.tokens.slice(checkpoint+1,begin-1);depth=0;
       for(const token of syntax) {
+        if(token.kind!=='punct')continue;
         if(token.value==='|'&&depth===0)throw unsupported('let-else top-level or-pattern','requires source parentheses',pattern.span);
         if(['(','[','{'].includes(token.value))depth++;
         if([')',']','}'].includes(token.value))depth--;
@@ -126,6 +171,7 @@ export function withPatternControlParser(Base=ControlRustParser) {
       let depth=0;
       for(let offset=0;offset<c.tokens.length-c.index;offset++) {
         const token=c.peek(offset);
+        if(!['punct','identifier'].includes(token.kind))continue;
         if(token.value==='{'&&depth===0)break;
         if(token.value==='&&'&&depth===0)throw unsupported('if-let chain or guard','guard bindings and let chains require separate control lowering',range(first,token));
         if(['(','['].includes(token.value))depth++;
@@ -220,6 +266,40 @@ export function withPatternControlChecker(Base=ControlChecker) {
         return tests.map(test=>this.patternTest(test,subject)).reduce((left,right)=>({k:'binary',op:test.kind,left,right,type:BOOL}));
       }
       throw typeError('unchecked pattern test plan',subject.span);
+    }
+    patternLambda(node,argumentTypes,env,path,expected,context) {
+      if(context?.source!=='standard-option'||context.receiverType?.patternOwnershipRefusal)throw unsupported('tuple callback argument ownership','requires an actual by-value standard Option payload; erased iterator/reference inputs are unproven',node.span);
+      const receiver=context.receiverType?.kind==='data'?this.items.get(context.receiverType.name):null;
+      if(receiver?.standardGeneric?.kind!=='Option'||argumentTypes.length!==1||!sameType(this.resolveType(receiver.standardGeneric.arguments[0],receiver.modulePath,node.span),argumentTypes[0]))throw typeError('tuple callback argument differs from the actual checked Option payload',node.span);
+      const payload=argumentTypes[0].kind==='data'?this.items.get(argumentTypes[0].name):null;
+      if(!payload?.tuple||payload.generated!=='router-tuple-type')throw unsupported('tuple callback payload','requires an actual anonymous tuple product, not a named aggregate or erased array',node.span);
+      let inner=new Map(env),parameters=[],bindings=[],names=new Set();
+      for(const [index,param] of node.params.entries()) {
+        if(!param.pattern)throw unsupported('mixed tuple callback parameters','requires a separate checked multi-argument callback context',param.span);
+        if(param.type)throw unsupported('tuple callback annotation','requires a separately checked annotated pattern contract',param.span);
+        const type=argumentTypes[index];this.patternDomain(type,param.span);
+        const pattern=this.patternOwner(param.pattern,type,path,env),plan=planPattern(pattern,type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,param.span),span:param.span});
+        if(plan.refutable)throw typeError('callback parameters require irrefutable checked patterns',param.span);
+        for(const binding of plan.bindings) {
+          if(!scalar(binding.type)||binding.type.patternOwnershipRefusal)throw unsupported('tuple callback binding ownership','only immutable scalar bindings have a checked contract',binding.span??param.span);
+          if(names.has(binding.name))throw typeError('duplicate callback pattern binding',binding.span??param.span);
+          names.add(binding.name);inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
+        }
+        let name;do{name=this.freshName('ml_pattern_callback_');}while(env.has(name)||names.has(name));
+        parameters.push({name,type,plan,span:param.span});
+        const variable={k:'var',name,type,span:param.span};
+        bindings.push(...plan.bindings.map(binding=>({name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),span:binding.span??param.span})));
+      }
+      let body=this.expr(node.body,inner,path,expected);if(expected)body=coerce(body,expected,this.language,node.span);
+      checkCallbackCaptures(body,env,names,node.span);
+      if(!scalar(body.type)||body.type.patternOwnershipRefusal)throw unsupported('tuple callback result ownership','only immutable scalar callback results have a checked contract',node.span);
+      const result=body.type;
+      body=bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type:result}),body);
+      for(const param of parameters.toReversed()) {
+        body={k:'routerDiscard',value:{k:'routerPatternImmutable',object:{k:'var',name:param.name,type:param.type,span:param.span},type:BOOL},body,type:result,span:param.span};
+        body={k:'let',name:param.name,value:{k:'routerLambdaInput',position:parameters.indexOf(param),type:param.type},body,mutable:false,type:result,span:param.span};
+      }
+      return {k:'routerLambda',binding:body,arity:parameters.length,type:{kind:'routerCallback',result},span:node.span,patternControl:{kind:'tuple-callback',parameters:parameters.map(param=>({type:param.type,plan:param.plan})),ownership:'checked-by-value-option'}};
     }
     expr(node,env,path,expected,allowLiteral=false) {
       if(node.k==='routerLetPattern') {
