@@ -80,7 +80,10 @@ export function planStandardMethod(receiverType,method,{declarations,resolveType
   if(operation==='option_map_or'){
     const result=checkedType(resolveType(defaultType,span),span),output=expected==null?null:checkedType(resolveType(expected,span),span);
     mapOrOutput(result,span);if(output)mapOrOutput(output,span);
-    if(output&&!sameOutput(result,output))throw typeError('Option.map_or default differs from the checked expected Rust result type',span);
+    // An unqualified portable STRING is an ABI hint, not a written Rust
+    // ownership obligation. Actual default/callback agreement remains exact.
+    const coarseStringHint=output?.kind==='string'&&!output.rustSourceType&&!output.rustOwnership&&!output.rustReference&&!output.patternOwnershipRefusal&&!output.rustGenericIdentityUnresolved;
+    if(output&&!coarseStringHint&&!sameOutput(result,output))throw typeError('Option.map_or default differs from the checked expected Rust result type',span);
     return freeze(structuredClone({operation,receiver,callbackParameters:parameters,callbackExpected:result,element,expectedResult:output,defaultType:result,evaluationOrder:['receiver','default','callback'],callbackCondition:'Some',constEligible:false,span,sourceProfile:STANDARD_METHOD_PROFILE.version}));
   }
   const output=expected==null?null:standard(expected,'Option',context,true);

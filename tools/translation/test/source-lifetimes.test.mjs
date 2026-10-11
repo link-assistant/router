@@ -80,3 +80,19 @@ test('unchanged tracked static error classifier retains literal lifetime origin 
   assert.deepEqual(result.meta.executable.map(item=>item.name),['openai_error_type']);
   await both(result,api=>{for(const [status,value] of [[400n,'invalid_request_error'],[404n,'invalid_request_error'],[422n,'invalid_request_error'],[401n,'authentication_error'],[403n,'permission_error'],[429n,'rate_limit_error'],[500n,'api_error'],[0n,'api_error']])assert.equal(api.openai_error_type(status),value);});
 });
+
+test('computed standard Option results retain borrowed source leaves',{timeout:30_000},async()=>{
+  const source="pub fn prefix(v:&'static str,p:&str)->Option<&'static str>{v.strip_prefix(p)} pub fn split(v:&str)->Option<(&str,&str)>{v.split_once('=')}";
+  const result=project(source);await both(result,api=>{assert.deepEqual(api.prefix('prefix','pre'),{$:'Some',field0:'fix'});assert.deepEqual(api.prefix('prefix','x'),{$:'None'});assert.deepEqual(api.split('a=b'),{$:'Some',field0:{$:'Tuple',field0:'a',field1:'b'}});});
+  for(const source of ["pub fn bad(v:&str)->Option<&'static str>{v.strip_prefix(\"x\")}","pub fn bad(v:&str)->Option<(&'static str,&'static str)>{v.split_once('=')}"])assert.ok(project(source).meta.refused.some(entry=>entry.name==='bad'));
+});
+test('source static reference field copies retain their written origin',{timeout:30_000},async()=>{
+  const source="struct S{value:&'static u64} impl S{fn read(&self)->&'static u64{self.value}} pub fn run(v:S)->&'static u64{v.read()}";
+  await both(project(source),api=>assert.equal(api.run(Object.freeze({$:'S',value:7n})),7n));
+  assert.ok(project("struct S{value:&'static str} pub fn bad(v:S)->&str{v.value}").meta.refused.some(entry=>entry.name==='bad'));
+});
+
+test('diverging branches and checked let-else continuations retain borrow origins',{timeout:30_000},async()=>{
+  const source="fn never()->&'static str{panic!(\"first\")} pub fn ordered()->&'static str{never().trim_end_matches(\"x\")} pub fn selected(v:&str)->&str{let Some((_,right))=v.rsplit_once('=') else{return v;};right}";
+  await both(project(source),api=>{assert.throws(()=>api.ordered(),{message:'first'});assert.equal(api.selected('a=b'),'b');assert.equal(api.selected('plain'),'plain');});
+});

@@ -11,7 +11,7 @@ const io = code => Object.assign(new Error(`independent ${code} failure`),{code}
 test('effect layouts resolve through the copied semantic checker and every contract names an actual adapter',()=>{
   const checker=new Checker('Rust',[]),program=checker.program({language:'Rust',items:structuredClone(EFFECT_DATA)});
   assert.equal(program.declarations.get('std.io.Error').ctors[0].fields[2].type.name,'RouterOption_3_i32');
-  assert.equal(program.declarations.get('RouterResult_6_string_28_named_737464_696f_4572726f72').ctors[1].fields[0].type.name,'std.io.Error');
+  assert.equal(program.declarations.get(checker.resolveType(effectContract('std::fs::read_to_string').ret,[],{start:0,end:0}).name).ctors[1].fields[0].type.name,'std.io.Error');
   assert.equal(program.declarations.get('std.env.VarError').ctors[1].fields[0].type.name,'std.ffi.OsString');
   assert.equal(EFFECT_CONTRACTS.length,11);
   for (const contract of EFFECT_CONTRACTS) {assert.equal(typeof effects[contract.jsExport],'function');assert.equal(effectContract(contract.rustPath),contract);assert.ok(Object.isFrozen(contract));checker.resolveType(contract.ret,[],{start:0,end:0});}

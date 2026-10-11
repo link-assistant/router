@@ -32,7 +32,7 @@ async function bothTargets(result,assertions){
   }finally{rmSync(directory,{recursive:true,force:true});}
 }
 test('actual production transaction checkpoint retains all original conditional variants and executes both targets',{timeout:30_000},async()=>{
-  const declarations=originalDeclarations(),source=declarations.join('\n')+'\npub fn invoke(stage:&str)->Result<(),ClientError>{transaction_checkpoint(stage)}';
+  const declarations=originalDeclarations(),source=declarations.join('\n')+'\npub fn invoke(stage:&\'static str)->Result<(),ClientError>{transaction_checkpoint(stage)}';
   const result=compile(source,PRODUCTION_PROFILE);assert.deepEqual(result.meta.refused,[]);
   // invoke is a fixture carrier, excluded from original production body counts.
   assert.deepEqual(result.meta.executable.filter(entry=>entry.term==='fn').map(entry=>entry.name),['transaction_checkpoint','invoke']);
@@ -47,7 +47,7 @@ test('actual production transaction checkpoint retains all original conditional 
   await bothTargets(local,api=>assert.deepEqual(api.invoke('write'),{$:'Ok',field0:null}));
 });
 test('unknown and test profiles never select the production checkpoint body',()=>{
-  const source=originalDeclarations().join('\n')+'\npub fn invoke(stage:&str)->Result<(),ClientError>{transaction_checkpoint(stage)}';
+  const source=originalDeclarations().join('\n')+'\npub fn invoke(stage:&\'static str)->Result<(),ClientError>{transaction_checkpoint(stage)}';
   for(const profile of [null,{flags:{test:true}},{flags:{unix:true}}]){const result=compile(source,profile);assert.equal(result.meta.executable.some(entry=>entry.name==='transaction_checkpoint'||entry.name==='invoke'),false);}
 });
 test('per-source profile evidence cannot restore inactive or unknown crate bodies',()=>{
@@ -64,4 +64,9 @@ test('tracked generation records its explicit profile and keeps every inactive f
     for(const [path,original] of [['src/lib',source],['src/tests',testSource]]){const meta=JSON.parse(readFileSync(join(directory,`tools/translation/meta/${path}.meta.json`),'utf8'));assert.equal(meta.items.map(item=>item.source).join(''),original);}
     const result={javascript:readFileSync(join(directory,'packages/javascript/generated/rust-draft/src/lib.mjs'),'utf8'),typescript:readFileSync(join(directory,'packages/typescript/generated/rust-draft/src/lib.ts'),'utf8')};await bothTargets(result,api=>assert.equal(api.selected(),3n));
   }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+test('an elided fixture carrier cannot forward a borrow to a written static parameter',()=>{
+  const source=originalDeclarations().join('\n')+'\npub fn invoke(stage:&str)->Result<(),ClientError>{transaction_checkpoint(stage)}';
+  const result=compile(source,PRODUCTION_PROFILE);assert.ok(result.meta.refused.some(entry=>entry.name==='invoke'&&/static source parameter/.test(entry.message)));
 });

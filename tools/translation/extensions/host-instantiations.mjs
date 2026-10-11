@@ -45,7 +45,7 @@ export class HostInstantiations {
       const data=[{k:'data',name,ctors:[{name:'None',fields:[]},{name:'Some',fields:[{name:'field0',type:element}]}],span,generated:'router-standard-option-instantiation',standardGeneric:{kind:'Option',arguments:[element]}}];
       this.checker.declare(data,[]);this.items.push(...this.checker.checkItems(data,[]));
     }
-    return this.checker.resolveType({kind:'named',path:[name]},[],span);
+    return {...this.checker.resolveType({kind:'named',path:[name]},[],span),rustStandardGeneric:{kind:'Option',arguments:[structuredClone(element)]}};
   }
   vector(element, span) { return this.register('vector', element, vectorContracts, span); }
   fixed(type,span) {return this.register('fixed',type,fixedIntegerContracts,span);}

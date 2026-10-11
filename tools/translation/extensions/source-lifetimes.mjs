@@ -126,7 +126,8 @@ function origins(node,env,context,returns,depth=0) {
     if(node.mutable&&hasBorrow(node.value.type,context))throw unsupported('mutable borrowed local','the lifetime profile requires immutable borrow bindings',node.span??context.entry.span);
     const value=read(node.value),inner=new Map(env);inner.set(node.name,value);return read(node.body,inner);
   }
-  if(node.k==='if'){read(node.cond);return union(read(node.then),read(node.else));}
+  if(['routerPanic','abort'].includes(node.k)){for(const value of node.args??[])read(value);return new Set();}
+  if(['if','routerIf'].includes(node.k)){read(node.cond);const branches=union(read(node.then),read(node.else));return node.k==='routerIf'?union(branches,read(node.body)):branches;}
   if(node.k==='match') {
     const subject=read(node.scrutinee);
     return union(...node.cases.map(arm=>{const inner=new Map(env);for(const name of arm.pattern.binds??[])if(name)inner.set(name,subject);return read(arm.body,inner);}));
@@ -169,7 +170,27 @@ function origins(node,env,context,returns,depth=0) {
     const value=read(node.string);for(const arg of node.args??[])read(arg);if(node.search)read(node.search);
     return borrowed&&node.string?.type.rustOwnership?.kind==='borrowed'?uniformOrigins(node.type,at(value,[]),context):borrowed?new Set([UNKNOWN]):new Set();
   }
-  if(['routerPatternProjection','routerTupleProjection','routerDataField'].includes(node.k)) {const value=read(node.object);return borrowed?value:new Set();}
+  if(node.k==='routerField') {
+    const object=read(node.object),proof=node.sharedProjectionProof;
+    const entry=proof?.pointee?.kind==='data'?context.declarations.get(proof.pointee.name):null;
+    const field=entry?.ctors.flatMap(ctor=>ctor.fields).find(field=>field.name===node.field);
+    // A copied source reference can retain the lifetime written on its actual
+    // declared field. Nominal field lifetimes still supply no signature elision.
+    if(field&&['source-shared-reference-copy','source-borrowed-str-copy'].includes(proof.copy?.kind)) {
+      const regions=sourceBorrowRegions(context.resolveType(field.type,entry.modulePath,node.span),context);
+      if(regions.length&&regions.every(region=>region.kind==='static'))return uniformOrigins(node.type,new Set(['static']),context);
+    }
+    return borrowed?object:new Set();
+  }
+  if(['routerPatternProjection','routerTupleProjection','routerDataField'].includes(node.k)) {
+    const value=read(node.object),entry=node.object.type.kind==='data'?context.declarations.get(node.object.type.name):null;
+    if(!borrowed)return new Set();
+    const index=Number(/^field(\d+)$/u.exec(node.field)?.[1]);
+    if(entry?.tuple&&Number.isInteger(index))return project(value,['tuple',index]);
+    if(entry?.standardGeneric?.kind==='Option'&&node.field==='field0')return project(value,['argument',0]);
+    if(entry?.standardGeneric?.kind==='Result')return new Set([UNKNOWN]);
+    return value;
+  }
   if(node.k==='ctor') {
     const values=node.args.map(value=>read(value));
     const declaration=context.declarations.get(node.data),ctor=declaration?.ctors.find(ctor=>ctor.name===node.ctor);
@@ -191,7 +212,7 @@ function origins(node,env,context,returns,depth=0) {
 
 function emptyBorrowValue(node,context) {
   if(!node)return false;
-  if(['routerReturn','routerPanic'].includes(node.k))return true;
+  if(['routerReturn','routerPanic','abort'].includes(node.k))return true;
   if(node.k==='let'||node.k==='routerDiscard')return emptyBorrowValue(node.body,context);
   if(node.k==='if')return emptyBorrowValue(node.then,context)&&emptyBorrowValue(node.else,context);
   if(node.k==='match')return node.cases.every(arm=>emptyBorrowValue(arm.body,context));
