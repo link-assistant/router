@@ -39,6 +39,7 @@
     "native:typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext test/native-types.ts"
   },
   "dependencies": {
+    "@iarna/toml": "3.0.0",
     "ajv": "^8.17.1"
   },
   "devDependencies": {

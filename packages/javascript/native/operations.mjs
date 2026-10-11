@@ -8,6 +8,8 @@ import {CodexLogin} from './codex-login.mjs';
 import {nativeCredentialStatus} from './auth-service.mjs';
 import {nativeConfigOptions} from './config.mjs';
 import {parsePauseUntil} from './remote-operations.mjs';
+import {clientIntegrations} from './client-files.mjs';
+import {nativeClientStatus} from './client-status.mjs';
 import { executeManagedOperation, supportedManagedOperations, selectedManagedTarget } from './managed-server.mjs';
 import { executeRemoteOperation, remoteStateFamilies } from './remote-operations.mjs';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -54,6 +56,7 @@ export const nativeOperationSupport = Object.freeze({
   'tokens.import': 'partial', 'tokens.expire': 'partial', 'tokens.rotate': 'partial', 'tokens.recover-admin': 'partial',
   'providers.list': 'partial', 'providers.show': 'partial', 'providers.add': 'partial', 'providers.remove': 'partial',
   'providers.import': 'partial', 'models.explain': 'partial', serve: 'partial', doctor: 'partial', 'auth.status': 'partial',
+  'clients.list':'partial','clients.show':'partial',
 });
 function normalizeOptions(operation, options) {
   const allowed = new Map(operation.options.map(option => [snake(option.name), option]));
@@ -116,6 +119,20 @@ async function dispatch(router, name, options, invocation) {
   if (name === 'version') { localOnly(options); return { version, source_commit: 'unknown' }; }
   if (name === 'contracts') { localOnly(options); return catalog; }
   const env = {...(router.options.env ?? process.env),...(invocation.env ?? {})};
+  if(['clients.list','clients.show'].includes(name)) {
+    for(const key of Object.keys(options)) if(!['home','local',...(name==='clients.show' ? ['client'] : [])].includes(key)) unsupported(`Client observation does not consume ${key}`);
+    if(invocation.deadlineMs!==undefined || invocation.maxOutputBytes!==undefined) unsupported('Client observation does not yet implement invocation deadline/output limits');
+    const context={home:options.home,env,cwd:invocation.cwd};
+    if(name==='clients.show') {
+      const row=await nativeClientStatus(options.client,context);
+      if(row.unreadable) {const error=new NativeRouterError(row.unreadable,{code:'client'});error.data=row;throw error;}return row;
+    }
+    const rows=[];for(const client of clientIntegrations) rows.push(await nativeClientStatus(client.client,context));
+    if(rows.some(row=>row.unreadable || row.conflicts.some(key=>key.endsWith(':invalid')))) {
+      const error=new NativeRouterError('One or more client configurations could not be read',{code:'client'});error.data=rows;throw error;
+    }
+    return rows;
+  }
   if (remoteStateFamilies.has(name.split('.')[0])) {
     const target = await selectedManagedTarget({name,options,config:router.options.config,env,cwd:invocation.cwd});
     if (target) return executeRemoteOperation({name,options,invocation,target,fetch:router.options.fetch});
@@ -159,12 +176,7 @@ async function dispatch(router, name, options, invocation) {
   }
   if (name === 'accounts.pause') {
     localOnly(options, ['name', 'reason', 'until']);
-    let until;
-    if (options.until !== undefined) {
-      until = Number(options.until);
-      if (!Number.isFinite(until)) until = Date.parse(options.until) / 1000;
-      if (!Number.isFinite(until)) throw new NativeRouterError('until must be Unix seconds or an ISO timestamp', { code: 'options' });
-    }
+    const until=options.until!==undefined ? parsePauseUntil(options.until,core.clock()) : undefined;
     await core.accounts.pause(options.name, { reason: options.reason, until_unix: until });
     return output(`Paused account ${options.name}`);
   }

@@ -10,7 +10,7 @@ export const fixtureOperations = Object.freeze([
   'auth.import', 'auth.claude', 'auth.codex', 'server.start', 'server.stop', 'server.status', 'server.use', 'server.claim', 'server.reap', 'server.remove',
   'version', 'contracts', 'logs.show', 'logs.summary', 'logs.anomalies', 'tls.ca', 'tls.generate', 'accounts.list', 'accounts.pause', 'accounts.resume', 'accounts.policy',
   'tokens.import', 'tokens.issue', 'tokens.list', 'tokens.show', 'tokens.revoke', 'tokens.expire', 'tokens.rotate', 'tokens.recover-admin',
-  'providers.list', 'providers.show', 'providers.add', 'providers.remove', 'providers.import', 'models.explain', 'serve', 'doctor', 'auth.status',
+  'providers.list', 'providers.show', 'providers.add', 'providers.remove', 'providers.import', 'models.explain', 'serve', 'doctor', 'auth.status', 'clients.list','clients.show',
 ]);
 export async function runOperationFixtures() {
   const directory = await realpath(await mkdtemp(join(tmpdir(), 'router-native-operation-fixtures-')));
@@ -137,6 +137,8 @@ export async function runOperationFixtures() {
     assert.equal(childExit, 0);
     await record('server.reap', { pid: child.pid }, async () => { assert.equal((await router.server.status()).data.managed.state, 'stopped'); });
     await record('server.remove', { yes: true }, async () => { assert.equal((await router.server.status()).data.managed.present, false); });
+    await record('clients.list',{home:directory},rows=>{assert.equal(rows.length,8);assert.equal(rows.find(row=>row.client==='codex').ownership_state,'unconfigured');assert(rows.some(row=>row.client==='gemini' && row.unsupported));});
+    await record('clients.show',{home:directory,client:'opencode'},row=>{assert.equal(row.client,'opencode');assert.equal(row.configured,false);assert.equal(row.config_path,join(directory,'.config/opencode/opencode.json'));});
     // Unsupported commands must fail closed with a complete versioned contract.
     for (const operation of catalog.operations.filter(operation => !fixtureOperations.includes(operation.name))) {
       const options = Object.fromEntries(operation.options.filter(option => option.required && !option.secret).map(option => [option.name, 'fixture']));
