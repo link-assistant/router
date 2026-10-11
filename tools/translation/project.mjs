@@ -119,15 +119,20 @@ export function translateProject(options) {
         parser.shadowedPreludeTypes=new Set(module.items.filter(item=>['enum','struct','type','mod'].includes(item.term)&&['Option','Result'].includes(item.name)).map(item=>item.name));
         parser.aliases = aliases;
         parser.modulePath = module.path;
-        parser.attributes(); parser.visibility();
         let surface;
-        if (parser.cursor.is('const') && parser.cursor.is('fn', 1)) { parser.cursor.next(); surface = parser.fn(module.path); }
-        else if (parser.cursor.is('fn')) surface = parser.fn(module.path);
-        else if (parser.cursor.is('const')) surface = parser.constItem(module.path);
-        else if (parser.cursor.is('enum')) surface = parser.enumItem();
-        else {
+        if (['struct', 'enum'].includes(item.term)) {
+          // Layout parsing owns outer, variant and field attributes. Feeding
+          // the original token cursor from zero retains their exact metadata.
           const root = { main: null }; const items = [];
-          parser.items(root, items, module.path, () => parser.cursor.atEnd()); surface = items[0];
+          parser.items(root, items, module.path, () => parser.cursor.atEnd());
+          if (items.length !== 1 || items[0].k !== 'data') throw new TranslationError('syntax', 'expected one original data declaration', parser.cursor.peek());
+          surface = items[0];
+        } else {
+          parser.attributes(); parser.visibility();
+          if (parser.cursor.is('const') && parser.cursor.is('fn', 1)) { parser.cursor.next(); surface = parser.fn(module.path); }
+          else if (parser.cursor.is('fn') || parser.cursor.is('async')) surface = parser.fn(module.path);
+          else if (parser.cursor.is('const')) surface = parser.constItem(module.path);
+          else throw new TranslationError('syntax', 'expected original function or constant', parser.cursor.peek());
         }
         if (!parser.cursor.atEnd()) throw new TranslationError('syntax', 'unconsumed declaration tokens', parser.cursor.peek());
         const base = module.offset + item.start;

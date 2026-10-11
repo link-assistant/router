@@ -12,7 +12,7 @@ const ROOT = Symbol('effect body context');
 const span = (a,b) => ({start:a.start,end:b.end});
 const contains = (node,k) => node && typeof node === 'object' && (node.k === k || Object.entries(node).some(([key,value])=>key !== 'type' && (Array.isArray(value)?value.some(item=>contains(item,k)):contains(value,k))));
 const builtin = value => Array.isArray(value) ? value.map(builtin) : value && typeof value === 'object' ? {...Object.fromEntries(Object.entries(value).map(([key,item])=>[key,builtin(item)])),...(['data','module'].includes(value.k)?{generated:'router-standard-effect-contract'}:{})} : value;
-export const effectData = () => builtin(EFFECT_DATA).map(item=>item.k==='data'?{...item,standardGeneric:{kind:item.ctors.some(ctor=>ctor.name==='Some')?'Option':'Result'}}:item);
+export const effectData = () => builtin(EFFECT_DATA);
 const future = value => ({kind:'routerFuture',value});
 
 export class EffectRustParser extends IteratorRustParser {

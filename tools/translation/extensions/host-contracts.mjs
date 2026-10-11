@@ -24,7 +24,7 @@ export function hostData() {
     if(item.k==='module') {
       const module=existing??{...item,items:[]};if(!existing)target.push(module);
       merge(module.items,item.items,[...path,item.name]);
-    } else if(!existing)target.push({...item,...(path.length===0&&item.k==='data'&&!item.standardGeneric?{standardGeneric:{kind:item.ctors.some(ctor=>ctor.name==='Some')?'Option':'Result'}}:{}),hostTypePath:[...path,item.name],generated:item.generated??'router-host-contract'});
+    } else if(!existing)target.push({...item,hostTypePath:[...path,item.name],generated:item.generated??'router-host-contract'});
   }};
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);return result;
 }

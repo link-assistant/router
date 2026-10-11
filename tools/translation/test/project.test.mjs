@@ -81,3 +81,24 @@ test('ambiguous, missing, and conditional module edges never read an invented so
   assert.match(graph.diagnostics[0].message, /ambiguous/u);
   assert.match(graph.diagnostics[1].message, /missing/u);
 });
+
+test('project data declarations preserve original attributes and constructor style without inventing derived behavior', async () => {
+  const files = {
+    'src/lib.rs': 'mod model; use crate::model::Record; pub fn amount(value:&Record)->u8 {value.amount} pub fn invented()->Record {Record::default()}',
+    'src/model.rs': '#[derive(Clone,Debug,Default)] pub struct Record {#[allow(dead_code)] pub amount:u8}\n#[derive(Debug)] pub enum Choice {None,Some(u8)}',
+  };
+  const result = translateProject(project(files));
+  const declarations = new Map(result.meta.checkedSemanticProgram.program.declarations.$map);
+  const record = declarations.get('model.Record');
+  assert.deepEqual(record.deriveTraits, ['Clone','Debug','Default']);
+  assert.equal(record.rustAttributes[0].kind, 'derive');
+  assert.equal(record.ctors[0].ctorStyle, 'named');
+  assert.equal(record.ctors[0].fields[0].rustAttributes[0].name, 'allow');
+  assert.deepEqual(declarations.get('model.Choice').deriveTraits, ['Debug']);
+  assert.deepEqual(declarations.get('model.Choice').ctors.map(ctor=>ctor.ctorStyle), ['unit','tuple']);
+  assert.equal(result.meta.executable.some(entry=>entry.name==='invented'), false);
+  assert.ok(result.meta.refused.some(entry=>entry.name==='invented'));
+  const api = (await load(result.javascript)).translated;
+  assert.equal(api.amount(Object.freeze({$: 'Record', amount: 9n})), 9n);
+  assert.throws(()=>api.amount(Object.freeze({$: 'Record', amount: 256n})), TypeError);
+});

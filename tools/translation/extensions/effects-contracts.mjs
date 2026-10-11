@@ -9,13 +9,13 @@ const RESULT_STRING_IO=monomorphicTypeName('Result',[STRING,named('std','io','Er
 const RESULT_UNIT_IO=monomorphicTypeName('Result',[UNIT,named('std','io','Error')]);
 const RESULT_STRING_ENV=monomorphicTypeName('Result',[STRING,named('std','env','VarError')]);
 function freeze(value) {if (value && typeof value === 'object') {for (const item of Object.values(value)) freeze(item);Object.freeze(value);}return value;}
-const declaration = (name,ctors) => ({k:'data',name,ctors,span,generated:'router-standard-effect-contract'});
+const declaration = (name,ctors,standardGeneric) => ({k:'data',name,ctors,span,generated:'router-standard-effect-contract',...(standardGeneric?{standardGeneric}:{})});
 const constructor = (name,fields = []) => ({name,fields});
 const field = (type,name='field0') => ({name,type});
-const result = (name,ok,error) => declaration(name,[constructor('Ok',[field(ok)]),constructor('Err',[field(error)])]);
+const result = (name,ok,error) => declaration(name,[constructor('Ok',[field(ok)]),constructor('Err',[field(error)])],{kind:'Result',arguments:[ok,error]});
 
 export const EFFECT_DATA = freeze([
-  declaration(OPTION_I32,[constructor('None'),constructor('Some',[field(fixed(32,true))])]),
+  declaration(OPTION_I32,[constructor('None'),constructor('Some',[field(fixed(32,true))])],{kind:'Option',arguments:[fixed(32,true)]}),
   {k:'module',name:'std',span,items:[
     {k:'module',name:'io',span,items:[declaration('Error',[constructor('IoError',[
       field(STRING,'kind'),field(STRING,'message'),field(named('crate',OPTION_I32),'raw_os_error'),
