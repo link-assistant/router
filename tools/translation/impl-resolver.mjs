@@ -3,6 +3,8 @@
 import {sourceItems} from './rust-structure.mjs';
 import {tokenizeRust} from './extensions/lexical.mjs';
 import {TranslationError} from './vendor/meta-language/translation/diagnostics.js';
+import {createHash} from 'node:crypto';
+import {typeKey} from './vendor/meta-language/translation/types.js';
 
 const range = tokens => ({start:tokens[0]?.start ?? 0,end:tokens.at(-1)?.end ?? 0});
 const significant = tokens => tokens.filter(token=>token.type !== 'comment');
@@ -131,18 +133,22 @@ export function extractImplDeclarations(source,{sourcePath=null,modulePath=[]}={
 /** Token-only self/Self substitution; literal and comment contents never change. */
 export function lowerSharedMethodTokens(method,typePath=method.typePath) {
   if (!method.loweringReady || ![null,'shared'].includes(method.receiver)) throw new TranslationError('unsupported','method receiver, trait or capability obligations remain unresolved',method.span);
+  return lowerMethodTokens(method,typePath,'shared');
+}
+function lowerMethodTokens(method,typePath,mode,certificate=null) {
   if (!Array.isArray(typePath) || !typePath.length || typePath.some(name=>typeof name !== 'string' || !/^(?:r#)?[\p{L}_][\p{L}\p{N}_]*$/u.test(name))) throw new TranslationError('syntax','method lowering requires a resolved type path',method.span);
   let tokens=tokenizeRust(method.source).map(token=>({...token,start:token.start+method.span.start,end:token.end+method.span.start}));
   const rewrites=[];
   const freshName='router_self';
   if (tokens.some(token=>token.kind === 'identifier' && token.value === freshName)) throw new TranslationError('unsupported','receiver lowering name collides with a source identifier',method.span);
   const typeTokens=origin=>typePath.flatMap((value,index)=>[...(index ? [{kind:'punct',value:'::',raw:'::',...origin,generated:true}] : []),{kind:'identifier',value,raw:value,...origin,generated:true}]);
-  if (method.receiver === 'shared') {
+  if (method.receiver === 'shared' || mode === 'copy') {
     const fn=tokens.findIndex(token=>token.value === 'fn'),open=tokens.findIndex((token,index)=>index > fn && token.value === '(');
-    if (tokens[open+1]?.value !== '&' || tokens[open+2]?.value !== 'self') throw new TranslationError('syntax','shared receiver tokens differ from extracted signature',method.receiverSpan ?? method.span);
-    const origin={start:tokens[open+1].start,end:tokens[open+2].end};
+    const width=mode === 'copy' ? 1 : 2;
+    if (mode === 'copy' ? tokens[open+1]?.value !== 'self' || ![',',')'].includes(tokens[open+2]?.value) : tokens[open+1]?.value !== '&' || tokens[open+2]?.value !== 'self') throw new TranslationError('syntax','receiver tokens differ from extracted signature',method.receiverSpan ?? method.span);
+    const origin={start:tokens[open+1].start,end:tokens[open+width].end};
     const explicit=[{kind:'identifier',value:freshName,raw:freshName,...origin,generated:true},{kind:'punct',value:':',raw:':',...origin,generated:true},...typeTokens(origin)];
-    tokens.splice(open+1,2,...explicit);rewrites.push({kind:'shared-receiver',span:origin,name:freshName,typePath:[...typePath]});
+    tokens.splice(open+1,width,...explicit);rewrites.push({kind:mode === 'copy' ? 'copy-receiver' : 'shared-receiver',span:origin,name:freshName,typePath:[...typePath],...(certificate ? {certificate:certificate.digest} : {})});
   }
   tokens=tokens.flatMap((token,index)=>{
     if (token.kind !== 'identifier') return [token];
@@ -151,5 +157,98 @@ export function lowerSharedMethodTokens(method,typePath=method.typePath) {
     return [token];
   });
   return {tokens,rewrites,receiver:method.receiver,receiverName:method.receiver ? freshName : null,typePath:[...typePath],
-    assumptions:['Shared receivers pass immutable checked values; mutation, consuming receivers, trait dispatch and unsafe operations remain frontend refusals until their own semantics are checked.']};
+    assumptions:mode === 'copy' ? certificate.obligations : ['Shared receivers pass immutable checked values; mutation, consuming receivers, trait dispatch and unsafe operations remain frontend refusals until their own semantics are checked.']};
+}
+
+const frozen=value=>{if(value && typeof value==='object'){for(const child of Object.values(value))frozen(child);Object.freeze(value);}return value;};
+const seal=value=>{const clone=structuredClone(value);return frozen({...clone,digest:createHash('sha256').update(JSON.stringify(clone)).digest('hex')});};
+const consumingReceiver='mutable or consuming receiver requires checked ownership and alias semantics';
+const checkedKey=type=>{
+  if(!type || typeof type!=='object')return null;
+  if(['bool','unit','float'].includes(type.kind))return typeKey(type);
+  if(type.kind==='fixed' && [8,16,32,64,128].includes(type.bits) && typeof type.signed==='boolean')return typeKey(type);
+  if(type.kind==='data' && typeof type.name==='string' && type.name.length)return typeKey(type);
+  return null;
+};
+const ownershipSyntax=/^(?:Box|Vec|String|Arc|Rc|Cell|RefCell|UnsafeCell|Mutex|RwLock|Pin|ManuallyDrop|MaybeUninit)$/u;
+
+/**
+ * Prove a narrow Rust Copy layout from actual checked declarations and source
+ * derives. The caller supplies the complete relevant implementation set with
+ * canonical resolvedType targets. This is not an ownership or alias checker.
+ */
+export function certifyCopyType(type,{declarations,implementations,macroProvenance,span={start:0,end:0}}={}) {
+  const diagnostics=[],proofs=[],active=new Set(),done=new Set();
+  const refuse=(message,location=span)=>{diagnostics.push({kind:'unsupported',message,span:location});return false;};
+  const certificate=()=>seal({version:1,profile:'checked-rust-copy-layout-v1',type:type??null,verified:diagnostics.length===0,proofs,diagnostics,
+    obligations:['The frontend must supply canonical type resolution and all relevant implementation evidence.',
+      'Copy receivers must use immutable checked values or an equivalent typed value copy; this certificate does not prove JavaScript alias safety.']});
+  if(!(declarations instanceof Map) || !Array.isArray(implementations)) {refuse('Copy certification requires checked declarations and complete implementation evidence');return certificate();}
+  const provenance=macroProvenance;
+  function implementationProof(current) {
+    const key=checkedKey(current);let valid=true;
+    for(const implementation of implementations) {
+      const trait=implementation.traitPath!=null || implementation.diagnostics?.some(diagnostic=>/trait implementation/u.test(diagnostic.message));
+      const target=checkedKey(implementation.resolvedType);
+      if(trait && !target) {valid=refuse('unresolved trait implementation target prevents Copy certification',implementation.headerSpan??span);continue;}
+      if(target!==key)continue;
+      if(trait)valid=refuse('manual trait or Drop implementation is outside the derived Copy profile',implementation.headerSpan??span);
+      if(implementation.attributes?.some(attribute=>['cfg','cfg_attr'].includes(attribute.name)) || implementation.diagnostics?.some(diagnostic=>/unsafe implementation/u.test(diagnostic.message)))valid=refuse('conditional or unsafe implementation prevents Copy certification',implementation.headerSpan??span);
+    }
+    return valid;
+  }
+  function visit(current,location=span) {
+    const key=checkedKey(current);
+    if(!key)return refuse('type has no checked standard primitive or derived Copy profile',location);
+    if(done.has(key))return true;
+    if(active.has(key))return refuse('recursive value layout has no finite checked Copy proof',location);
+    if(!implementationProof(current))return false;
+    if(current.kind!=='data') {proofs.push({kind:'standard-primitive',type:current});done.add(key);return true;}
+    const entry=declarations.get(current.name);
+    if(entry?.k!=='data' || entry.fullName!==current.name || !Array.isArray(entry.modulePath) || !Array.isArray(entry.ctors))return refuse('Copy requires an actual resolved algebraic declaration',location);
+    active.add(key);let valid=true,standard=false;
+    const generic=entry.standardGeneric;
+    if(generic) {
+      const names=generic.kind==='Option'?['Some','None']:generic.kind==='Result'?['Ok','Err']:null;
+      const arguments_=generic.arguments;
+      if(!names || !Array.isArray(arguments_) || arguments_.length!==(generic.kind==='Option'?1:2) || entry.ctors.length!==2 || names.some(name=>entry.ctors.filter(ctor=>ctor.name===name).length!==1))valid=refuse('invalid registered standard Copy generic provenance',location);
+      else {
+        const fieldTypes=[];
+        for(const [index,name] of names.entries()) {
+          const fields=entry.ctors.find(ctor=>ctor.name===name).fields,count=generic.kind==='Option' && index===1?0:1;
+          if(!Array.isArray(fields) || fields.length!==count || count && (fields[0].name!=='field0' || !checkedKey(fields[0].type) || checkedKey(fields[0].type)!==checkedKey(arguments_[index])))valid=refuse('standard Copy generic arguments disagree with checked fields',location);
+          else if(count)fieldTypes.push(fields[0].type);
+        }
+        if(valid){standard=true;for(const fieldType of fieldTypes)if(!visit(fieldType,location))valid=false;}
+      }
+    } else {
+      if(!provenance || !Array.isArray(provenance.importedNames) || !Array.isArray(provenance.shadowedNames) || provenance.unresolvedImportScope!==false || [...provenance.importedNames,...provenance.shadowedNames].some(name=>['Copy','Clone'].includes(name)))valid=refuse('Copy derive requires resolved unshadowed standard trait provenance',location);
+      if(!['Copy','Clone'].every(trait=>entry.deriveTraits?.includes(trait) && entry.rustAttributes?.some(attribute=>attribute.kind==='derive' && attribute.traits?.includes(trait))))valid=refuse('source declaration has no checked Copy and Clone derives',location);
+      for(const ctor of entry.ctors) {
+        if(!Array.isArray(ctor.fields)){valid=refuse('Copy constructor layout is unchecked',location);continue;}
+        for(const field of ctor.fields) {
+          const syntax=field.rustTypeSyntax;
+          if(!Array.isArray(syntax) || !syntax.length || syntax.some(token=>typeof token!=='string' || ownershipSyntax.test(token) || ['&','*','[',']','dyn','impl'].includes(token))) {valid=refuse('field ownership syntax has no supported Copy proof',location);continue;}
+          if(!visit(field.type,location))valid=false;
+        }
+      }
+    }
+    active.delete(key);
+    if(valid){proofs.push({kind:standard?'standard-generic':'source-derived',type:current,derive:standard?null:'Copy',constructors:entry.ctors.map(ctor=>({name:ctor.name,fields:ctor.fields.map(field=>({name:field.name,type:field.type,...(field.rustTypeSyntax?{rustTypeSyntax:field.rustTypeSyntax}:{})}))}))});done.add(key);}
+    return valid;
+  }
+  visit(type);return certificate();
+}
+
+/** Discharge only the exact plain `self` receiver obligation, using Copy proof. */
+export function lowerCopyMethodTokens(method,resolvedType,certificate) {
+  const refuse=message=>{throw new TranslationError('unsupported',message,method.span);};
+  if(!certificate || certificate.version!==1 || certificate.profile!=='checked-rust-copy-layout-v1' || !certificate.verified || certificate.diagnostics?.length || checkedKey(certificate.type)!==checkedKey(resolvedType) || !checkedKey(resolvedType))refuse('by-value receiver requires a matching checked Copy certificate');
+  const {digest,...evidence}=certificate;
+  if(createHash('sha256').update(JSON.stringify(evidence)).digest('hex')!==digest)refuse('Copy certificate integrity check failed');
+  if(method.receiver!=='value' || method.traitPath!=null || method.resolvedType && checkedKey(method.resolvedType)!==checkedKey(resolvedType))refuse('method requires a resolved plain by-value inherent receiver');
+  if(!Array.isArray(method.diagnostics) || method.diagnostics.length!==1 || method.diagnostics[0].message!==consumingReceiver || method.diagnostics[0].kind!=='unsupported' || method.diagnostics[0].span?.start!==method.receiverSpan?.start || method.diagnostics[0].span?.end!==method.receiverSpan?.end)refuse('method obligations remain beyond the checked Copy receiver');
+  if(resolvedType.kind!=='data')refuse('inherent by-value lowering currently requires a named algebraic Copy type');
+  const lowered=lowerMethodTokens(method,resolvedType.name.split('.'),'copy',certificate);
+  return {...lowered,copyCertificate:certificate,discharged:[method.diagnostics[0]]};
 }
