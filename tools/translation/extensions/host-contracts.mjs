@@ -24,6 +24,7 @@ import {BOOL,FLOAT} from '../vendor/meta-language/translation/types.js';
 import {HostInstantiations} from './host-instantiations.mjs';
 import {macroProvenance} from '../macro-provenance.mjs';
 import {configureParserSourceScope} from '../source-scopes.mjs';
+import {withSourceNamespaceParser} from './source-namespaces.mjs';
 
 export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -77,7 +78,7 @@ export function hostData() {
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
-export class HostRustParser extends withNestedMatchPatternsParser(withSourceOwnershipParser(MethodRustParser)) {
+export class HostRustParser extends withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(MethodRustParser))) {
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
   genericType(kind,types,range){return {...super.genericType(kind,types,range),rustStandardGeneric:{kind,arguments:structuredClone(types)}};}
   attributes(options={}) {
@@ -105,11 +106,11 @@ export class HostRustParser extends withNestedMatchPatternsParser(withSourceOwne
     return resolved;
   }
   registeredGenericKind(segments,path=this.modulePath,sourceName=segments[0]) {
-    const target=this.resolve(segments,path),kind=target.join('::')==='std::option::Option'?'Option':target.join('::')==='std::result::Result'?'Result':null;
+    const target=this.resolveSourceNamespace(segments,path,'type'),kind=target.join('::')==='std::option::Option'?'Option':target.join('::')==='std::result::Result'?'Result':null;
     if(!kind)return null;
     // Explicit aliases are resolved external identities, even when another
     // unknown glob exists. A raw std prefix needs an unshadowed crate scope.
-    const alias=this.aliases.get(path.join('.'))?.has(sourceName);
+    const alias=this.hasResolvedSourceAlias(sourceName,target,path);
     if(!alias&&(this.unresolvedImportScope||this.shadowedEffectRoots?.has('std')||this.shadowedPreludeTypes?.has('std')))return null;
     return kind;
   }
