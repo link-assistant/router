@@ -55,7 +55,7 @@ export function tokenizeRust(source) {
     if (!(error instanceof TranslationError) || !error.span) throw error;
     throw new TranslationError(error.kind, error.reason, { start: starts[error.span.start] ?? source.length, end: ends[error.span.end - 1] ?? source.length }, error.details);
   }
-  // const fn has the same pure runtime body; compile-time evaluability remains
-  // outside the draft contract. Keep all original token spans.
-  return parsed.tokens.filter((token, index) => !(token.value === 'const' && parsed.tokens[index + 1]?.value === 'fn')).map(token => ({ ...token, start: starts[token.start] ?? source.length, end: ends[token.end - 1] ?? source.length }));
+  // Preserve source qualification, including const fn. Eligibility is checked
+  // by the semantic frontend rather than erased during lexical normalization.
+  return parsed.tokens.map(token => ({ ...token, start: starts[token.start] ?? source.length, end: ends[token.end - 1] ?? source.length }));
 }
