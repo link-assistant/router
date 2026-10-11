@@ -208,13 +208,13 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
     scope.bindings=collapse(scope.seeds);
   }
   for(const [path,table] of externalModules) {
-    if(typeof path!=='string' || path.split('::')[0]==='crate' || !Array.isArray(table.bindings) || typeof table.complete!=='boolean')throw new TypeError('External module tables require an explicit completeness assertion');
+    if(typeof path!=='string' || path.split('::')[0]==='crate' || !Array.isArray(table.bindings) || typeof table.complete!=='boolean' || table.kind!==undefined && !['mod','enum','trait'].includes(table.kind))throw new TypeError('External module tables require an explicit completeness assertion and source container kind');
     const bindings=table.bindings.map(binding=>{
       if(!namespaces.includes(binding.namespace) || typeof binding.name!=='string' || !Array.isArray(binding.target) || !binding.target.length || binding.target.some(part=>typeof part!=='string'))throw new TypeError('External bindings require canonical targets and namespaces');
       return {...structuredClone(binding),status:'resolved',visibility:{kind:'public'},source:binding.source??'registered-external-table',span:binding.span??null};
     });
     if(new Set(bindings.map(binding=>`${binding.namespace}:${binding.name}`)).size!==bindings.length)throw new TypeError('External table namespaces contain duplicate bindings');
-    containers.set(path,{file:null,path:path.split('::'),bindings,baseType:!table.complete,baseMacro:!table.complete,unknownType:!table.complete,unknownMacro:!table.complete,external:true});
+    containers.set(path,{file:null,path:path.split('::'),bindings,kind:table.kind??'mod',baseType:!table.complete,baseMacro:!table.complete,unknownType:!table.complete,unknownMacro:!table.complete,external:true});
   }
   const lookup=(task)=>{
     const requester=task.scope.path,segments=task.segments;
@@ -231,7 +231,7 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
     if(task.externalOnly || !local?.length) {
       let match;
       for(let length=segments.length;length>0;length--)if(externalModules.has(key(segments.slice(0,length)))){match=length;break;}
-      if(match){owner=containers.get(key(segments.slice(0,match)));at=match;if(at===segments.length)return {bindings:[{name:segments.at(-1),namespace:'type',target:segments,kind:'mod',status:'resolved',visibility:{kind:'public'},source:'registered-external-table',span:null}],container:owner};}
+      if(match){owner=containers.get(key(segments.slice(0,match)));at=match;if(at===segments.length)return {bindings:[{name:segments.at(-1),namespace:'type',target:segments,kind:owner.kind,status:'resolved',visibility:{kind:'public'},source:'registered-external-table',span:null}],container:owner};}
       else if(task.externalOnly)return {error:'absolute extern path has no registered module evidence'};
     }
     return selfChecked(task,walk(owner,segments,at,requester));
@@ -242,7 +242,7 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
   }
   function walk(owner,segments,at,requester) {
     if(!owner)return {error:'use target has no tracked or registered module evidence'};
-    if(at===segments.length)return {bindings:[{name:owner.path.at(-1)??'crate',namespace:'type',target:owner.external?owner.path:canonical(owner.path),kind:'mod',status:'resolved',visibility:{kind:'public'},source:owner.file,span:null}],container:owner};
+    if(at===segments.length)return {bindings:[{name:owner.path.at(-1)??'crate',namespace:'type',target:owner.external?owner.path:canonical(owner.path),kind:owner.kind??'mod',status:'resolved',visibility:{kind:'public'},source:owner.file,span:null}],container:owner};
     for(;at<segments.length;at++) {
       const all=owner.bindings.filter(binding=>binding.name===segments[at] && visible(binding.visibility,requester));
       if(at===segments.length-1) {
