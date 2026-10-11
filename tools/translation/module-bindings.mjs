@@ -119,7 +119,7 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
   for(const module of modules) {
     if(!Array.isArray(module.path) || typeof module.source!=='string' || typeof module.file!=='string')throw new TypeError('Module binding evidence is incomplete');
     const name=key(canonical(module.path));if(scopes.has(name))throw new TypeError('Duplicate tracked module scope');
-    const scope={file:module.file,path:[...module.path],seeds:[],bindings:[],unknownType:false,unknownMacro:false,baseType:false,baseMacro:false};
+    const scope={file:module.file,path:[...module.path],seeds:[],bindings:[],deriveNames:[],unknownType:false,unknownMacro:false,baseType:false,baseMacro:false};
     scopes.set(name,scope);containers.set(name,scope);
   }
   const add=(scope,item,name,namespace,visibility,extra={})=>scope.seeds.push({name,namespace,target:[...canonical(scope.path),name],kind:item.term,status:'resolved',visibility,source:scope.file,span:{start:item.start,end:item.end},declaration:{source:extra.source??scope.file,span:{start:item.start,end:item.end}},via:'declaration',origin:`${extra.source??scope.file}:${item.start}:${namespace}:${name}`,priority:2,...extra});
@@ -131,6 +131,7 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
       const span={start:item.start,end:item.end};
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),uncertain=uncertainty(head.attributes);
+        for(const attribute of head.attributes.filter(attribute=>attribute.name==='derive'))for(const name of attribute.tokens.filter(token=>standardDerives.has(token)))scope.deriveNames.push({name,span:attribute.span});
         scope.baseType ||= uncertain.type;scope.baseMacro ||= uncertain.macro;
         if(uncertain.type || uncertain.macro || uncertain.conditional)diagnostic(scope,'attribute scope requires compilation-condition or procedural expansion evidence',span);
         if(item.term==='use') {for(const [index,leaf] of leaves(tokens,head.at+1).entries())tasks.push({...leaf,scope,visibility:head.visibility,span,id:`${module.file}:${item.start}:${index}`,conditional:uncertain.type || uncertain.conditional});continue;}
@@ -256,7 +257,10 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
   let previous='',converged=false;
   const roundLimit=Math.max(16,tasks.length+modules.length+4),globEdges=new Map();
   for(let round=0;round<roundLimit;round++) {
-    const next=new Map([...scopes].map(([name,scope])=>[name,{candidates:[...scope.seeds],type:scope.baseType,macro:scope.baseMacro}]));globEdges.clear();
+    const next=new Map([...scopes].map(([name,scope])=>{
+      const shadowed=scope.deriveNames.some(derive=>scope.bindings.some(binding=>binding.namespace==='macro' && binding.name===derive.name && binding.standardDerive!==true));
+      return [name,{candidates:[...scope.seeds],type:scope.baseType || shadowed,macro:scope.baseMacro || shadowed}];
+    }));globEdges.clear();
     for(const task of tasks) {
       const state=next.get(key(canonical(task.scope.path))),result=lookup(task),prefix={source:task.scope.file,span:task.span,visibility:task.visibility,via:task.glob?'glob-import':'named-import',priority:task.glob?1:2};
       if(task.validateOnly)continue;
@@ -291,6 +295,7 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
   for(const [name,scope] of scopes) {
     if(!converged || cyclic.has(name)){scope.unknownType=scope.unknownMacro=true;diagnostic(scope,!converged?'binding fixed point did not converge':'glob import cycle requires further resolution',{start:0,end:modules.find(module=>key(canonical(module.path))===name).source.length});}
     for(const binding of scope.bindings.filter(binding=>binding.status==='ambiguous'))diagnostic(scope,`ambiguous ${binding.namespace} binding ${binding.name}`,binding.span,{name:binding.name,namespace:binding.namespace});
+    for(const derive of scope.deriveNames)if(scope.bindings.some(binding=>binding.namespace==='macro' && binding.name===derive.name && binding.standardDerive!==true))diagnostic(scope,'derive binding requires resolved standard attribute macro provenance',derive.span,{name:derive.name});
   }
   for(const task of tasks) {
     const result=lookup(task);

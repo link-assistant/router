@@ -128,6 +128,16 @@ test('macro definitions retain expansion obligations and exported identities bel
   assert.equal(binding(result,'published','macro').source,'src/model.rs');
 });
 
+test('familiar derive names cannot certify a complete scope when their macro binding is unproven',()=>{
+  const result=resolve({'':'mod model; use model::*;',model:'use custom::Debug; #[derive(Debug)] pub struct Plain;'});
+  assert.equal(scope(result).unresolvedTypeScope,true);assert.equal(scope(result).unresolvedMacroScope,true);
+  assert.ok(result.diagnostics.some(diagnostic=>/attribute macro provenance/u.test(diagnostic.message)));
+  const typeOnly=resolve({'':'use library::Debug; #[derive(Debug)] pub struct Plain;'}, {externalModules:new Map([['library',{complete:true,bindings:[{name:'Debug',namespace:'type',target:['library','Debug'],kind:'trait'}]}]])});
+  assert.equal(scope(typeOnly).unresolvedTypeScope,false,'a type namespace import does not shadow the derive macro namespace');
+  const registered=resolve({'':'use library::Debug; #[derive(Debug)] pub struct Plain;'}, {externalModules:new Map([['library',{complete:true,bindings:[{name:'Debug',namespace:'macro',target:['library','Debug'],kind:'derive-macro',standardDerive:true}]}]])});
+  assert.equal(scope(registered).unresolvedTypeScope,false,'an explicit trusted standard derive profile may establish its own provenance');
+});
+
 test('const fn qualifiers, raw names and generic tuple constructors keep their actual namespaces',()=>{
   const result=resolve({'':'mod model; use model::*;',model:'pub const fn read()->u8{1} pub const r#unsafe:u8=1; pub struct r#type; pub struct Generic<T>(pub T); pub const unsafe fn owned()->u8{1}'});
   assert.equal(binding(result,'read','value').status,'resolved');assert.equal(binding(result,'fn','value'),undefined);
