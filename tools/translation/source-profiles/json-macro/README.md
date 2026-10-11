@@ -55,3 +55,9 @@ namespace, generic, lifetime and allocation prerequisites as negative evidence.
 No production function or corpus admission is claimed before that run. Actual
 root numeric parse admission remains governed by the independent Cargo parser
 capability guard; this future branch must be composed with that guarded baseline.
+
+The separate ../json-roundtrip source-only candidate additionally pins the
+original de.rs and complete lexical source members from this same archive. Its
+six UNRUN cases exercise a shared exact-rational operation and a separate
+bounded runtime branch. They do not change this macro subset or grant actual
+root parsing admission. The earlier twenty-four JSON macro cases remain UNRUN.

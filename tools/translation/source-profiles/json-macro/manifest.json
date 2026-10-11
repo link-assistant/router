@@ -19,6 +19,116 @@
           "sha256": "00b920255c320a278bf25b962b491263a19d8c90e12e4a91c1d823db71eabb2f"
         },
         {
+          "path": "LICENSE-APACHE",
+          "bytes": 9723,
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "LICENSE-MIT",
+          "bytes": 1023,
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        },
+        {
+          "path": "src/de.rs",
+          "bytes": 86840,
+          "sha256": "4998d7e252eb513be85b298e287048b4fb283882e9ba7df905f572f07200f3f3"
+        },
+        {
+          "path": "src/lexical/algorithm.rs",
+          "bytes": 6117,
+          "sha256": "54d599033e5a182a3076a0ba23a3550bf8680c99399b0313166b3c42c85b35b9"
+        },
+        {
+          "path": "src/lexical/bhcomp.rs",
+          "bytes": 7035,
+          "sha256": "26f39d52008225a6b377d7246d326940d44200e160a7b4652733e712e1a45a04"
+        },
+        {
+          "path": "src/lexical/bignum.rs",
+          "bytes": 679,
+          "sha256": "db688e8112389998d0f91906f6857e28f9b510a8b4065ad476c8e8be2f77becf"
+        },
+        {
+          "path": "src/lexical/cached.rs",
+          "bytes": 2156,
+          "sha256": "0e127398691f8042c19cde209e7f4b0161f0f3150342430145929f711e6fdac8"
+        },
+        {
+          "path": "src/lexical/cached_float80.rs",
+          "bytes": 5782,
+          "sha256": "0f8f74a22cb7d871322a9893bffd0255ca10bf9dffd13afb2462dd3d7f51805f"
+        },
+        {
+          "path": "src/lexical/digit.rs",
+          "bytes": 444,
+          "sha256": "9502805adbc3da059131d1fac0a802e17065b36cd7472606b3af24e3241d5cb8"
+        },
+        {
+          "path": "src/lexical/errors.rs",
+          "bytes": 5082,
+          "sha256": "3d9f6de6245533bcb101dfd718cfed61d59dc293f6768cedae28aa13ace164f5"
+        },
+        {
+          "path": "src/lexical/exponent.rs",
+          "bytes": 1562,
+          "sha256": "51f19443008e8884b15c7d5d4b1f1cfbd5673a9d1da02f1af39fcf20e315f01f"
+        },
+        {
+          "path": "src/lexical/float.rs",
+          "bytes": 5482,
+          "sha256": "fe356213c92a049f4bef2f58bc0e3a26866ca06b8c1d74d0f961c5b883852cad"
+        },
+        {
+          "path": "src/lexical/large_powers.rs",
+          "bytes": 250,
+          "sha256": "18d697b846b44ecb61bfaaa3b881e0696f9b7bb6be582623e9d3a8a176a48d2f"
+        },
+        {
+          "path": "src/lexical/large_powers32.rs",
+          "bytes": 15362,
+          "sha256": "c70b57a727960beec258758a4d4a1050f8eaf3b4e60027c663a2bfb0246e0153"
+        },
+        {
+          "path": "src/lexical/large_powers64.rs",
+          "bytes": 15879,
+          "sha256": "e7af83ce3159b5fc4669fc5a231e767d8af21bacaece52a0a48951198965b197"
+        },
+        {
+          "path": "src/lexical/math.rs",
+          "bytes": 26327,
+          "sha256": "c5452d3ef9cc9ebd74a99f22dcabf74f4f062bbaeade46301260b79e4662d5df"
+        },
+        {
+          "path": "src/lexical/mod.rs",
+          "bytes": 1059,
+          "sha256": "ace2ccea2cd541f019a84b9eeb3b9ecd88daf6bccbe9edf0eac00b62704f47c4"
+        },
+        {
+          "path": "src/lexical/num.rs",
+          "bytes": 11179,
+          "sha256": "2d06111d28616221995f7b4d4f13625b8d902884921268b0e02e544f871a5339"
+        },
+        {
+          "path": "src/lexical/parse.rs",
+          "bytes": 2241,
+          "sha256": "c2bfac4c70a19938ced61e991f4ec606764887cf12bac1a0978b5b5318a56aac"
+        },
+        {
+          "path": "src/lexical/rounding.rs",
+          "bytes": 7388,
+          "sha256": "4762af3612880b17468ff2a1bb800c8e99f08330ae439699dd53d8dc5463ad13"
+        },
+        {
+          "path": "src/lexical/shift.rs",
+          "bytes": 1235,
+          "sha256": "bc1ed053dd63d45ac9c35302f18de9f00d94027f28af4ab749c9248439de832a"
+        },
+        {
+          "path": "src/lexical/small_powers.rs",
+          "bytes": 1345,
+          "sha256": "73c56b7b83310c6fefa898fb94771c65bdc251c1579ab105151da43935ea02be"
+        },
+        {
           "path": "src/lib.rs",
           "bytes": 14369,
           "sha256": "34a1ddabdcf4759d9a6c64a2e851372546d635d1a578ad902d962fef3c45de58"
@@ -29,6 +139,21 @@
           "sha256": "94dda91c847e819a95e64d655eb066dfa44ed69712064016c3fe862c34ef92e6"
         },
         {
+          "path": "src/map.rs",
+          "bytes": 35057,
+          "sha256": "b5a2fd1ee865e6cfd83ef2da0a2e1057f892465ac7ede8a78a11354a60526f33"
+        },
+        {
+          "path": "src/number.rs",
+          "bytes": 25285,
+          "sha256": "70b83c36286f6c58123f544f27db2b54a1135f928fe33b08b521b2997773f862"
+        },
+        {
+          "path": "src/value/from.rs",
+          "bytes": 6357,
+          "sha256": "ae4b5f93b27e578fa40e3a8d25d0df2032fe40b680cddb15963e47cbd56db613"
+        },
+        {
           "path": "src/value/mod.rs",
           "bytes": 30963,
           "sha256": "6331d59ea362a74b6cd3d302d08114a63a73a384ff56fef737de29edea2f8d91"
@@ -37,31 +162,6 @@
           "path": "src/value/ser.rs",
           "bytes": 28223,
           "sha256": "11f2b7daa1eba826d4086d5497f73729478dd7647bff77deccde5e47b0f126f2"
-        },
-        {
-          "path": "src/value/from.rs",
-          "bytes": 6357,
-          "sha256": "ae4b5f93b27e578fa40e3a8d25d0df2032fe40b680cddb15963e47cbd56db613"
-        },
-        {
-          "path": "src/map.rs",
-          "bytes": 35057,
-          "sha256": "b5a2fd1ee865e6cfd83ef2da0a2e1057f892465ac7ede8a78a11354a60526f33"
-        },
-        {
-          "path": "LICENSE-MIT",
-          "bytes": 1023,
-          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
-        },
-        {
-          "path": "LICENSE-APACHE",
-          "bytes": 9723,
-          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
-        },
-        {
-          "path": "src/number.rs",
-          "bytes": 25285,
-          "sha256": "70b83c36286f6c58123f544f27db2b54a1135f928fe33b08b521b2997773f862"
         }
       ]
     },

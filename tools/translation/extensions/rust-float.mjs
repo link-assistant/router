@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {TranslationError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {roundPositiveRationalBinary64} from './exact-binary64.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 export const RUST_FLOAT_LITERAL_PROFILE=freeze({id:'rust-1.89-binary64-decimal-literals',rust:'1.89.0',maxTokenBytes:4096,maxDecimalExponent:4096,
@@ -20,27 +21,12 @@ for(const entry of RUST_FLOAT_LITERAL_PROFILE.sources) {
 }
 const refuse=(reason,span)=>{throw unsupported('Rust floating literal',reason,span);};
 const malformed=span=>{throw new TranslationError('syntax','malformed original Rust floating token',span);};
-const ratioLessPower=(numerator,denominator,exponent)=>exponent>=0?numerator<denominator<<BigInt(exponent):numerator<<BigInt(-exponent)<denominator;
-function roundedRatio(numerator,denominator,shift) {
-  if(shift>=0)numerator<<=BigInt(shift);else denominator<<=BigInt(-shift);
-  const quotient=numerator/denominator,remainder=numerator%denominator,twice=remainder*2n;
-  return quotient+(twice>denominator||twice===denominator&&(quotient&1n)!==0n?1n:0n);
-}
 function binary64(coefficient,decimalExponent,span) {
   let numerator=coefficient,denominator=1n;
   if(decimalExponent>=0)numerator*=10n**BigInt(decimalExponent);else denominator=10n**BigInt(-decimalExponent);
-  let bits=0n;
-  if(numerator!==0n) {
-    let exponent=numerator.toString(2).length-denominator.toString(2).length;
-    if(ratioLessPower(numerator,denominator,exponent))exponent--;
-    if(exponent < -1022)bits=roundedRatio(numerator,denominator,1074);
-    else {
-      let significand=roundedRatio(numerator,denominator,52-exponent);
-      if(significand===1n<<53n){significand>>=1n;exponent++;}
-      if(exponent>1023)refuse('overflowing literal requires a separately checked overflowing_literals lint profile',span);
-      bits=BigInt(exponent+1023)<<52n|significand-(1n<<52n);
-    }
-  }
+  let bits;
+  try{bits=roundPositiveRationalBinary64(numerator,denominator);}
+  catch(error){if(error?.code==='ERR_EXACT_BINARY64_OVERFLOW')refuse('overflowing literal requires a separately checked overflowing_literals lint profile',span);if(error?.code==='ERR_EXACT_BINARY64_BOUND')refuse('fraction and exponent exceed the exact-rational budget',span);throw error;}
   const bytes=new DataView(new ArrayBuffer(8));bytes.setBigUint64(0,bits);
   return {value:String(bytes.getFloat64(0)),floatBits:bits.toString(16).padStart(16,'0')};
 }

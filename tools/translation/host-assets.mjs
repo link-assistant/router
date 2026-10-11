@@ -21,6 +21,8 @@ export function hostRuntimeAssets() {
   files.set('json-macro-runtime.mjs',readFileSync(new URL('./json-macro-runtime.mjs',import.meta.url),'utf8').replaceAll("'./extensions/json-values.mjs'","'./json-values.mjs'").replaceAll("'./extensions/json-numbers.mjs'","'./json-numbers.mjs'"));
   files.set('json-macro-runtime.d.mts',readFileSync(new URL('./json-macro-runtime.d.mts',import.meta.url),'utf8'));
   for(const file of ['slice-membership-runtime.mjs','slice-membership-runtime.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
+  for(const file of ['json-roundtrip-numbers.mjs','json-roundtrip-numbers.d.mts','json-roundtrip-runtime.mjs','json-roundtrip-runtime.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
+  for(const file of ['exact-binary64.mjs','exact-binary64.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
   files.set('utf16-fixed-f64-runtime.mjs',readFileSync(new URL('./extensions/utf16-fixed-f64-runtime.mjs',import.meta.url),'utf8'));
   files.set('utf16-fixed-f64-runtime.d.mts','export declare function encodeUtf16(value: string): IterableIterator<bigint>;\nexport declare function fixedToF64(value: bigint, source: string): number;\n');
   files.set('float-runtime.mjs',readFileSync(new URL('./extensions/float-runtime.mjs',import.meta.url),'utf8'));
