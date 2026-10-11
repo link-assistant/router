@@ -2,13 +2,18 @@ import { rustTokens } from '../rust-structure.mjs';
 import { tokenize } from '../vendor/meta-language/translation/lexer.js';
 import { TranslationError } from '../vendor/meta-language/translation/diagnostics.js';
 import {decodeRustCharacter} from './rust-character.mjs';
+import {decodeRustInteger} from './rust-number.mjs';
 
-// Normalize raw strings and Rust's ASCII whitespace line continuations into
-// the upstream string token vocabulary. Every token is mapped back to source
-// coordinates; original text remains exclusively in the structural meta IR.
+// Adapt written integer, character and string payloads to the pinned token
+// vocabulary. Every token is mapped back to original source coordinates;
+// the structural meta IR preserves the original source text.
 export function tokenizeRust(source) {
-  const replacements = [],characters=new Map();
+  const replacements = [],characters=new Map(),numbers=new Map();
   for (const token of rustTokens(source)) {
+    if(token.type==='number'){
+      numbers.set(token.start,{...decodeRustInteger(token.text,{start:token.start,end:token.end}),end:token.end});
+      replacements.push({start:token.start,end:token.end,text:'0'});continue;
+    }
     if (token.type !== 'string') continue;
     if(token.text.startsWith("'")){const value=decodeRustCharacter(token.text,{start:token.start,end:token.end});characters.set(token.start,{value,raw:token.text,end:token.end});replacements.push({start:token.start,end:token.end,text:'"\\u{'+value.codePointAt(0).toString(16)+'}"'});continue;}
     const raw = /^r(#{0,})"([\s\S]*)"\1$/u.exec(token.text);
@@ -60,7 +65,8 @@ export function tokenizeRust(source) {
   // Preserve source qualification, including const fn. Eligibility is checked
   // by the semantic frontend rather than erased during lexical normalization.
   return parsed.tokens.map(token => {
-    const start=starts[token.start]??source.length,end=ends[token.end-1]??source.length,character=characters.get(start);
+    const start=starts[token.start]??source.length,end=ends[token.end-1]??source.length,character=characters.get(start),number=numbers.get(start);
+    if(number&&number.end===end)return {...token,...number,start,end};
     return character&&character.end===end?{...token,kind:'rustChar',value:character.value,raw:character.raw,start,end}:{...token,start,end};
   });
 }

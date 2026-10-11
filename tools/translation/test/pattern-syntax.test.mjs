@@ -51,7 +51,11 @@ test('literal patterns preserve exact negative integers, suffix obligations, Uni
   assert.throws(()=>plan('1u8',fixed()),/suffix/);assert.throws(()=>plan('256u8',fixed(8)),/outside/);
   const raw='r#"Ω"#',pattern=parse(raw);assert.equal(pattern.value,'Ω');assert.deepEqual(pattern.span,{start:0,end:raw.length});
   assert.equal(plan(raw,{kind:'string'}).test.value,'Ω');
-  assert.throws(()=>parse('0xff'),error=>error.kind === 'unsupported');
+  assert.equal(plan('0xff',fixed(8)).test.value,'255');
+  assert.equal(plan('0o_77u8',fixed(8)).test.value,'63');
+  assert.equal(plan('0b_10u8',fixed(8)).test.value,'2');
+  assert.throws(()=>plan('0x100u8',fixed(8)),/outside/);
+  assert.throws(()=>parse('0xff_unknown'),error=>error.kind === 'unsupported');
   assert.throws(()=>parse('-identifier'),error=>error.kind === 'syntax');
 });
 test('pattern parsing leaves expression delimiters untouched and literal hooks must prove consumption',()=>{

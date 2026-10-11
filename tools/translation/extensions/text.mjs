@@ -6,6 +6,7 @@ import {BOOL,STRING,fixed,rustFixedType,sameType} from '../vendor/meta-language/
 import {coerce} from '../vendor/meta-language/translation/check.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {SOURCE_STR} from './source-contract-types.mjs';
+import {sharedStrPatternProof} from './standard-str-pattern.mjs';
 const SPLITS=new Set(['split_once','rsplit_once']);
 const STRIPS=new Set(['strip_prefix','strip_suffix']);
 const TRIMS=new Set(['trim_start_matches','trim_end_matches','trim_matches']);
@@ -52,14 +53,16 @@ export class TextChecker extends FormatChecker {
       return value;
     }
     env=this.contextEnvironment(node,env,expected);
-    const bindings=[];
+    const bindings=[];let patternTraitProof;
     const bind=(surface,wanted,stringView=false,characterPattern=false)=>{
       if(exits(surface))throw unsupported('string method control','nonlocal exits require statement lowering',surface.span);
       const checked=characterPattern&&surface.k==='routerPatternChar'?{k:'lit',value:surface.value,type:STRING,sourceRustChar:{raw:surface.raw,span:surface.span},span:surface.span}:this.expr(surface,env,path,wanted);
       const value=coerce(checked,wanted,this.language,node.span);
       if(value.type.kind!==wanted.kind)throw typeError(`${node.op} requires checked string values and a usize replacement count`,node.span);
       if(wanted===USIZE&&(value.type.rustPrimitiveName!=='usize'||value.type.patternOwnershipRefusal))throw unsupported('replacement count Rust type','requires actual by-value usize provenance; equal portable widths and erased references are insufficient',surface.span);
-      if(stringView&&value.type.patternOwnershipRefusal)throw unsupported('string Pattern ownership','requires an actual borrowed scalar string; owned arguments and erased non-string references need separate trait/borrow checking',surface.span);
+      const sharedPattern=characterPattern&&sharedStrPatternProof(value.type,surface.span);
+      if(stringView&&value.type.patternOwnershipRefusal&&!sharedPattern)throw unsupported('string Pattern ownership','requires an actual borrowed scalar string or the checked standard &&str Pattern; owned arguments and other references need separate trait/borrow checking',surface.span);
+      if(sharedPattern)patternTraitProof=sharedPattern;
       let name;do{name=this.freshName('ml_text_');}while(env.has(name));bindings.push({name,value});
       return {k:'var',name,type:value.type,span:surface.span};
     };
@@ -82,7 +85,7 @@ export class TextChecker extends FormatChecker {
       if(node.op==='trim_matches'&&node.args[0].k!=='routerPatternChar')throw unsupported('double-ended trim Pattern','the checked profile requires an actual scalar char literal; str searchers do not implement the required DoubleEndedSearcher',node.span);
       type=SOURCE_STR;
     }
-    const operation={k:node.k,op:node.op,value,args,type,...(tupleType?{tupleType}:{}),constEligible:false,patternKind:node.args[0].k==='routerPatternChar'?'char':'borrowed-str',sourceProfile:'checked-str-pattern-v1',span:node.span};
+    const operation={k:node.k,op:node.op,value,args,type,...(tupleType?{tupleType}:{}),...(patternTraitProof?{sourcePatternTrait:patternTraitProof}:{}),constEligible:false,patternKind:node.args[0].k==='routerPatternChar'?'char':patternTraitProof?'shared-borrowed-str':'borrowed-str',sourceProfile:'checked-str-pattern-v1',span:node.span};
     return bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type,span:node.span}),operation);
   }
 }
