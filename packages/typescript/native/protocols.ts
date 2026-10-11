@@ -1,15 +1,16 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=adaa6a471f6d8eb7d193a4111554bcbf5551bea9bb17745b903fc727cc3799a7; dynamic any annotations are explicit draft gaps.
+// Meta sha256=db42925eba10f38ecff8bc5a5323a03de9013947f0ab2dd9131437daa3184051; dynamic any annotations are explicit draft gaps.
+import { chatToGemini, geminiToChat, geminiCanonical, canonicalGemini } from "./gemini-protocol.js";
 export class ProtocolError extends Error {
     declare code: any;
     declare status: any;
     constructor(message: any, status: any = 400) { super(message); this.status = status; this.code = 'unsupported_translation'; }
 }
 const copy: any = (value?: any): any => structuredClone(value);
-const text: any = (content?: any): any => typeof content === 'string' ? content : (content ?? []).map((p?: any): any => p.text ?? '').join('');
+const text: any = (content?: any): any => typeof content === 'string' ? content : (((content ?? []).map as any)((p?: any): any => p.text ?? '').join as any)('');
 const parseArguments: any = (raw?: any): any => {
     try {
-        return typeof raw === 'string' ? JSON.parse(raw as any) : raw ?? {};
+        return typeof raw === 'string' ? (JSON as any).parse(raw) : raw ?? {};
     }
     catch {
         throw new (ProtocolError as any)('Function arguments must contain valid JSON');
@@ -18,7 +19,7 @@ const parseArguments: any = (raw?: any): any => {
 function chatParts(content?: any): any {
     if (content == null || typeof content === 'string')
         return content ?? '';
-    if (!Array.isArray(content))
+    if (!(Array as any).isArray(content))
         throw new (ProtocolError as any)('Message content must be a string or array');
     return content.map((p?: any): any => {
         if (['text', 'input_text', 'output_text'].includes(p.type))
@@ -34,7 +35,7 @@ function chatParts(content?: any): any {
 function anthropicParts(content?: any): any {
     if (typeof content === 'string')
         return content;
-    return (content ?? []).map((p?: any): any => {
+    return ((content ?? []).map as any)((p?: any): any => {
         if (p.cache_control || p.citations?.length)
             throw new (ProtocolError as any)('Cache controls and citations require a native Anthropic upstream');
         if (p.type === 'text')
@@ -47,6 +48,8 @@ function anthropicParts(content?: any): any {
 export function requestToChat(body?: any, source?: any): any {
     if (source === 'chat')
         return copy(body);
+    if (source === 'gemini')
+        return geminiToChat(body);
     const out: any = { model: body.model, messages: [], stream: body.stream ?? false };
     for (const key of ['temperature', 'top_p', 'parallel_tool_calls'] as any)
         if ((body as any)[key] !== undefined)
@@ -68,7 +71,7 @@ export function requestToChat(body?: any, source?: any): any {
                     out.messages.push({ role: 'tool', tool_call_id: block.tool_use_id, content: anthropicParts(block.content) });
                 }
                 else if (block.type === 'tool_use') {
-                    tools.push({ id: block.id, type: 'function', function: { name: block.name, arguments: JSON.stringify(block.input ?? {}) } });
+                    tools.push({ id: block.id, type: 'function', function: { name: block.name, arguments: (JSON as any).stringify(block.input ?? {}) } });
                 }
                 else
                     ordinary.push(block);
@@ -77,7 +80,7 @@ export function requestToChat(body?: any, source?: any): any {
                 out.messages.push({ role: message.role, content: anthropicParts(ordinary), ...(tools.length ? { tool_calls: tools } : {}) });
         }
         if (body.tools)
-            out.tools = body.tools.map((t?: any): any => {
+            out.tools = (body.tools.map as any)((t?: any): any => {
                 if (t.type && t.type !== 'custom')
                     throw new (ProtocolError as any)(`Cannot translate server tool ${t.type}`);
                 return { type: 'function', function: { name: t.name, description: t.description, parameters: t.input_schema } };
@@ -106,9 +109,9 @@ export function requestToChat(body?: any, source?: any): any {
             if (item.type === 'function_call')
                 out.messages.push({ role: 'assistant', content: null, tool_calls: [{ id: item.call_id, type: 'function', function: { name: item.name, arguments: item.arguments } }] });
             else if (item.type === 'function_call_output')
-                out.messages.push({ role: 'tool', tool_call_id: item.call_id, content: typeof item.output === 'string' ? item.output : JSON.stringify(item.output) });
+                out.messages.push({ role: 'tool', tool_call_id: item.call_id, content: typeof item.output === 'string' ? item.output : (JSON as any).stringify(item.output) });
             else if (!item.type || item.type === 'message')
-                out.messages.push({ role: item.role, content: (typeof item.content === 'string') ? item.content : (item.content ?? []).map((p?: any): any => {
+                out.messages.push({ role: item.role, content: (typeof item.content === 'string') ? item.content : ((item.content ?? []).map as any)((p?: any): any => {
                         if (['input_text', 'output_text', 'text'].includes(p.type))
                             return { type: 'text', text: p.text };
                         if (p.type === 'input_image')
@@ -119,7 +122,7 @@ export function requestToChat(body?: any, source?: any): any {
                 throw new (ProtocolError as any)(`Cannot translate Responses input ${item.type}`);
         }
         if (body.tools)
-            out.tools = body.tools.map((t?: any): any => {
+            out.tools = (body.tools.map as any)((t?: any): any => {
                 if (t.type !== 'function')
                     throw new (ProtocolError as any)(`Cannot translate Responses tool ${t.type}`);
                 const { type, ...fn }: any = t;
@@ -141,6 +144,8 @@ export function translateRequest(body?: any, source?: any, target?: any, model: 
     chat.model = model;
     if (target === 'chat')
         return chat;
+    if (target === 'gemini')
+        return chatToGemini(chat);
     if (chat.n && chat.n !== 1)
         throw new (ProtocolError as any)('Only n=1 can be translated');
     for (const key of ['response_format', 'audio', 'modalities', 'logprobs', 'logit_bias', 'frequency_penalty', 'presence_penalty', 'seed', 'reasoning', 'reasoning_effort'] as any) {
@@ -161,7 +166,7 @@ export function translateRequest(body?: any, source?: any, target?: any, model: 
                 if (previous?.role === 'user') {
                     if (typeof previous.content === 'string')
                         previous.content = [{ type: 'text', text: previous.content }];
-                    previous.content.push(block);
+                    (previous.content.push as any)(block);
                 }
                 else
                     out.messages.push({ role: 'user', content: [block] });
@@ -172,8 +177,8 @@ export function translateRequest(body?: any, source?: any, target?: any, model: 
             let content: any = chatParts(m.content);
             if (m.tool_calls?.length) {
                 if (typeof content === 'string')
-                    content = content ? [{ type: 'text', text: content }] : [];
-                content.push(...m.tool_calls.map((t?: any): any => ({ type: 'tool_use', id: t.id, name: t.function.name, input: parseArguments(t.function.arguments) })));
+                    (content as any) = content ? [{ type: 'text', text: content }] : [];
+                ((content as any).push as any)(...(m.tool_calls.map as any)((t?: any): any => ({ type: 'tool_use', id: t.id, name: t.function.name, input: parseArguments(t.function.arguments) })));
             }
             out.messages.push({ role: m.role, content });
         }
@@ -183,9 +188,9 @@ export function translateRequest(body?: any, source?: any, target?: any, model: 
             if ((chat as any)[key] !== undefined)
                 (out as any)[key] = (chat as any)[key];
         if (chat.stop)
-            out.stop_sequences = Array.isArray(chat.stop) ? chat.stop : [chat.stop];
+            out.stop_sequences = (Array as any).isArray(chat.stop) ? chat.stop : [chat.stop];
         if (chat.tools)
-            out.tools = chat.tools.map((t?: any): any => ({ name: t.function.name, description: t.function.description, input_schema: t.function.parameters ?? { type: 'object', properties: {} } }));
+            out.tools = (chat.tools.map as any)((t?: any): any => ({ name: t.function.name, description: t.function.description, input_schema: t.function.parameters ?? { type: 'object', properties: {} } }));
         if (chat.tool_choice)
             out.tool_choice = typeof chat.tool_choice === 'string' ? { type: ({ auto: 'auto', required: 'any', none: 'none' } as any)[chat.tool_choice] } : { type: 'tool', name: chat.tool_choice.function.name };
         if (chat.parallel_tool_calls !== undefined)
@@ -201,7 +206,7 @@ export function translateRequest(body?: any, source?: any, target?: any, model: 
                 out.input.push({ type: 'function_call_output', call_id: m.tool_call_id, output: text(m.content) });
             else {
                 if (m.content != null && (typeof m.content === 'string' ? m.content.length : m.content.length))
-                    out.input.push({ role: m.role, content: typeof m.content === 'string' ? m.content : m.content.map((p?: any): any => {
+                    out.input.push({ role: m.role, content: typeof m.content === 'string' ? m.content : (m.content.map as any)((p?: any): any => {
                             if (p.type === 'text')
                                 return { type: m.role === 'assistant' ? 'output_text' : 'input_text', text: p.text };
                             if (p.type === 'image_url')
@@ -218,7 +223,7 @@ export function translateRequest(body?: any, source?: any, target?: any, model: 
             if ((chat as any)[key] !== undefined)
                 (out as any)[key] = (chat as any)[key];
         if (chat.tools)
-            out.tools = chat.tools.map((t?: any): any => ({ type: 'function', ...t.function }));
+            out.tools = (chat.tools.map as any)((t?: any): any => ({ type: 'function', ...t.function }));
         if (chat.tool_choice)
             out.tool_choice = typeof chat.tool_choice === 'string' ? chat.tool_choice : { type: 'function', name: chat.tool_choice.function.name };
         return out;
@@ -226,17 +231,19 @@ export function translateRequest(body?: any, source?: any, target?: any, model: 
     throw new (ProtocolError as any)(`Unsupported upstream protocol ${target}`, 501);
 }
 export function normalizeUsage(usage: any = {}, protocol: any = 'chat'): any {
-    const rawInput: any = usage.input_tokens ?? usage.prompt_tokens ?? 0;
-    const output: any = usage.output_tokens ?? usage.completion_tokens ?? 0;
-    const cached: any = usage.cache_read_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? usage.prompt_tokens_details?.cached_tokens ?? 0;
+    const rawInput: any = usage.input_tokens ?? usage.prompt_tokens ?? usage.promptTokenCount ?? 0;
+    const output: any = usage.output_tokens ?? usage.completion_tokens ?? usage.candidatesTokenCount ?? 0;
+    const cached: any = usage.cache_read_input_tokens ?? usage.input_tokens_details?.cached_tokens ?? usage.prompt_tokens_details?.cached_tokens ?? usage.cachedContentTokenCount ?? 0;
     const created: any = usage.cache_creation_input_tokens ?? 0;
     const input: any = rawInput + (protocol === 'anthropic' ? cached + created : 0);
-    const normalized: any = { input, output, cached, created, total: usage.total_tokens ?? input + output };
-    if (Object.values(normalized).some((value?: any): boolean => !Number.isSafeInteger(value) || value < 0))
+    const normalized: any = { input, output, cached, created, total: usage.total_tokens ?? usage.totalTokenCount ?? input + output };
+    if ((Object as any).values(normalized).some((value?: any): boolean => !(Number as any).isSafeInteger(value) || value < 0))
         throw new (ProtocolError as any)('Upstream returned invalid token usage', 502);
     return normalized;
 }
 export function responseToCanonical(body?: any, protocol?: any): any {
+    if (protocol === 'gemini')
+        return geminiCanonical(body, normalizeUsage);
     const result: any = { id: body.id, model: body.model, text: '', tools: [], usage: normalizeUsage(body.usage, protocol), finish: 'stop' };
     if (protocol === 'chat') {
         const choice: any = body.choices?.[0];
@@ -244,18 +251,18 @@ export function responseToCanonical(body?: any, protocol?: any): any {
             throw new (ProtocolError as any)('Cannot translate multiple response choices', 502);
         if (!choice?.message)
             throw new (ProtocolError as any)('Upstream Chat response has no message', 502);
-        if (Array.isArray(choice.message.content) && choice.message.content.some((p?: any): any => p.type !== 'text' || p.annotations?.length))
+        if ((Array as any).isArray(choice.message.content) && (choice.message.content.some as any)((p?: any): any => p.type !== 'text' || p.annotations?.length))
             throw new (ProtocolError as any)('Cannot translate non-text response content or annotations', 502);
         result.text = text(choice.message.content);
         result.tools = copy(choice.message.tool_calls ?? []);
         result.finish = choice.finish_reason ?? 'stop';
-        if (!['stop', 'length', 'tool_calls'].includes(result.finish))
+        if (!['stop', 'length', 'tool_calls', 'content_filter'].includes(result.finish))
             throw new (ProtocolError as any)(`Cannot translate finish reason ${result.finish}`, 502);
         if (choice.message.refusal)
             throw new (ProtocolError as any)('Refusal cannot be translated to this dialect', 502);
     }
     else if (protocol === 'anthropic') {
-        if (!Array.isArray(body.content))
+        if (!(Array as any).isArray(body.content))
             throw new (ProtocolError as any)('Upstream Messages response has no content', 502);
         for (const p of body.content as any) {
             if (p.type === 'text') {
@@ -264,7 +271,7 @@ export function responseToCanonical(body?: any, protocol?: any): any {
                 result.text += p.text;
             }
             else if (p.type === 'tool_use')
-                result.tools.push({ id: p.id, type: 'function', function: { name: p.name, arguments: JSON.stringify(p.input) } });
+                result.tools.push({ id: p.id, type: 'function', function: { name: p.name, arguments: (JSON as any).stringify(p.input) } });
             else
                 throw new (ProtocolError as any)(`Cannot translate response block ${p.type}`, 502);
         }
@@ -276,7 +283,7 @@ export function responseToCanonical(body?: any, protocol?: any): any {
     else if (protocol === 'responses') {
         if (body.error || body.status && !['completed', 'incomplete'].includes(body.status))
             throw new (ProtocolError as any)('Upstream Responses operation did not complete successfully', 502);
-        if (!Array.isArray(body.output))
+        if (!(Array as any).isArray(body.output))
             throw new (ProtocolError as any)('Upstream Responses response has no output', 502);
         for (const item of body.output as any) {
             if (item.type === 'message')
@@ -292,20 +299,24 @@ export function responseToCanonical(body?: any, protocol?: any): any {
             else
                 throw new (ProtocolError as any)(`Cannot translate response item ${item.type}`, 502);
         }
-        result.finish = body.status === 'incomplete' ? 'length' : result.tools.length ? 'tool_calls' : 'stop';
+        result.finish = body.status === 'incomplete' ? body.incomplete_details?.reason === 'content_filter' ? 'content_filter' : 'length' : result.tools.length ? 'tool_calls' : 'stop';
     }
     return result;
 }
-export function canonicalResponse(r?: any, protocol?: any, model: any = r.model, now: any = Date.now()): any {
-    const created: number = Math.floor(now / 1000), id: any = r.id ?? `native_${created}`;
-    const u: any = r.usage;
+export function canonicalResponse(r?: any, protocol?: any, model: any = r.model, now: any = (Date as any).now()): any {
+    if (protocol === 'gemini')
+        return canonicalGemini(r, model);
+    const created: number = (Math as any).floor(now / 1000), id: any = r.id ?? `native_${created}`;
+    const u: any = r.usage, incomplete: boolean = ['length', 'content_filter'].includes(r.finish), status: string = incomplete ? 'incomplete' : 'completed';
     if (protocol === 'chat')
         return { id, object: 'chat.completion', created, model, choices: [{ index: 0, message: { role: 'assistant', content: r.text || (r.tools.length ? null : ''), ...(r.tools.length ? { tool_calls: r.tools } : {}) }, finish_reason: r.finish }], usage: { prompt_tokens: u.input, completion_tokens: u.output, total_tokens: u.total, prompt_tokens_details: { cached_tokens: u.cached } } };
     if (protocol === 'anthropic')
-        return { id, type: 'message', role: 'assistant', model, content: [...(r.text ? [{ type: 'text', text: r.text }] : []), ...r.tools.map((t?: any): any => ({ type: 'tool_use', id: t.id, name: t.function.name, input: parseArguments(t.function.arguments) }))], stop_reason: r.finish === 'tool_calls' ? 'tool_use' : r.finish === 'length' ? 'max_tokens' : r.stopSequence ? 'stop_sequence' : 'end_turn', stop_sequence: r.stopSequence ?? null, usage: { input_tokens: Math.max(0, u.input - u.cached - u.created), output_tokens: u.output, cache_read_input_tokens: u.cached, cache_creation_input_tokens: u.created } };
-    return { id: id.startsWith('resp_') ? id : `resp_${id}`, object: 'response', created_at: created, model, status: r.finish === 'length' ? 'incomplete' : 'completed', error: null, incomplete_details: r.finish === 'length' ? { reason: 'max_output_tokens' } : null, output: [...(r.text ? [{ id: `msg_${id}`, type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: r.text, annotations: [] }] }] : []), ...r.tools.map((t?: any): any => ({ id: `fc_${t.id}`, type: 'function_call', status: 'completed', call_id: t.id, name: t.function.name, arguments: t.function.arguments }))], usage: { input_tokens: u.input, output_tokens: u.output, total_tokens: u.total, input_tokens_details: { cached_tokens: u.cached }, output_tokens_details: { reasoning_tokens: 0 } } };
+        return { id, type: 'message', role: 'assistant', model, content: [...(r.text ? [{ type: 'text', text: r.text }] : []), ...(r.tools.map as any)((t?: any): any => ({ type: 'tool_use', id: t.id, name: t.function.name, input: parseArguments(t.function.arguments) }))], stop_reason: r.finish === 'tool_calls' ? 'tool_use' : r.finish === 'length' ? 'max_tokens' : r.stopSequence ? 'stop_sequence' : 'end_turn', stop_sequence: r.stopSequence ?? null, usage: { input_tokens: (Math as any).max(0, u.input - u.cached - u.created), output_tokens: u.output, cache_read_input_tokens: u.cached, cache_creation_input_tokens: u.created } };
+    return { id: (id.startsWith as any)('resp_') ? id : `resp_${id}`, object: 'response', created_at: created, model, status, error: null, incomplete_details: incomplete ? { reason: r.finish === 'length' ? 'max_output_tokens' : 'content_filter' } : null, output: [...(r.text ? [{ id: `msg_${id}`, type: 'message', role: 'assistant', status, content: [{ type: 'output_text', text: r.text, annotations: [] }] }] : []), ...(r.tools.map as any)((t?: any): any => ({ id: `fc_${t.id}`, type: 'function_call', status, call_id: t.id, name: t.function.name, arguments: t.function.arguments }))], usage: { input_tokens: u.input, output_tokens: u.output, total_tokens: u.total, input_tokens_details: { cached_tokens: u.cached }, output_tokens_details: { reasoning_tokens: 0 } } };
 }
 export function translateResponse(body?: any, source?: any, target?: any, model?: any, now?: any): any {
+    if (source === target && source === 'gemini')
+        return { ...copy(body.response ?? body), modelVersion: model };
     try {
         return source === target ? { ...copy(body), model } : canonicalResponse(responseToCanonical(body, source), target, model, now);
     }
@@ -316,7 +327,7 @@ export function translateResponse(body?: any, source?: any, target?: any, model?
     }
 }
 export function projectModels(entries?: any, protocol: any = 'chat', query: any = new (URLSearchParams as any)()): any {
-    const data: any = entries.map((model?: any): any => protocol === 'anthropic' ? Object.fromEntries(Object.entries({ id: model.id, type: 'model', display_name: model.display_name, created_at: model.created_at, max_input_tokens: model.max_input_tokens, max_tokens: model.max_tokens, capabilities: model.capabilities, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]: any): boolean => value !== undefined)) : Object.fromEntries(Object.entries({ id: model.id, object: 'model', created: model.created, owned_by: model.owned_by, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]: any): boolean => value !== undefined)));
+    const data: any = (entries.map as any)((model?: any): any => protocol === 'anthropic' ? (Object as any).fromEntries((Object as any).entries({ id: model.id, type: 'model', display_name: model.display_name, created_at: model.created_at, max_input_tokens: model.max_input_tokens, max_tokens: model.max_tokens, capabilities: model.capabilities, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]: any): boolean => value !== undefined)) : (Object as any).fromEntries((Object as any).entries({ id: model.id, object: 'model', created: model.created, owned_by: model.owned_by, router_available: model.router_available, router_unavailable_reason: model.router_unavailable_reason }).filter(([, value]: any): boolean => value !== undefined)));
     if (protocol !== 'anthropic')
         return { object: 'list', data };
     for (const key of ['limit', 'before_id', 'after_id'] as any)
@@ -327,26 +338,26 @@ export function projectModels(entries?: any, protocol: any = 'chat', query: any 
     if (query.has('limit') && !/^\d+$/.test(query.get('limit')))
         throw new (ProtocolError as any)('limit must be between 1 and 1000');
     const limit: number = query.has('limit') ? Number(query.get('limit')) : 20;
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
+    if (!(Number as any).isSafeInteger(limit) || limit < 1 || limit > 1000)
         throw new (ProtocolError as any)('limit must be between 1 and 1000');
     let start: any = 0, end: any, has_more: any;
     if (query.has('before_id')) {
-        end = data.findIndex((m?: any): boolean => m.id === query.get('before_id'));
+        (end as any) = (data.findIndex as any)((m?: any): boolean => m.id === query.get('before_id'));
         if (end < 0)
             throw new (ProtocolError as any)('before_id cursor not found');
-        start = Math.max(0, end - limit);
-        has_more = start > 0;
+        (start as any) = (Math as any).max(0, end - limit);
+        (has_more as any) = start > 0;
     }
     else {
         if (query.has('after_id')) {
-            const index: any = data.findIndex((m?: any): boolean => m.id === query.get('after_id'));
+            const index: any = (data.findIndex as any)((m?: any): boolean => m.id === query.get('after_id'));
             if (index < 0)
                 throw new (ProtocolError as any)('after_id cursor not found');
-            start = index + 1;
+            (start as any) = index + 1;
         }
-        end = Math.min(data.length, start + limit);
-        has_more = end < data.length;
+        (end as any) = (Math as any).min(data.length, start + limit);
+        (has_more as any) = end < data.length;
     }
-    const page: any = data.slice(start, end);
-    return { data: page, first_id: (page as any)[0]?.id ?? null, last_id: page.at(-1)?.id ?? null, has_more };
+    const page: any = (data.slice as any)(start, end);
+    return { data: page, first_id: (page as any)[0]?.id ?? null, last_id: (page.at as any)(-1)?.id ?? null, has_more };
 }

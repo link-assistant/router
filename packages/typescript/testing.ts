@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=b83ff2860ab056cf4487b3cc400f304881013f5796165cf156ce10e2ce2aee7d; dynamic any annotations are explicit draft gaps.
+// Meta sha256=31aa325582c41b007335d177687ef485d7f7c2e9eb5b68694c4ca459f4a5a635; dynamic any annotations are explicit draft gaps.
 import { createServer } from 'node:http';
 import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -10,24 +10,24 @@ export async function temporaryHome(): Promise<any> {
     const env: any = { HOME: home, USERPROFILE: home, XDG_CONFIG_HOME: join(home, '.config'), XDG_DATA_HOME: join(home, '.local/share'), XDG_CACHE_HOME: join(home, '.cache'), CODEX_HOME: join(home, '.codex'), CLAUDE_CONFIG_DIR: join(home, '.claude'), DATA_DIR: join(home, 'router-data') };
     return { home, env, close: (): Promise<void> => rm(home, { recursive: true, force: true }) };
 }
-export async function mockUpstream(handler: any = (request?: any): any => ({ status: 200, body: request.path.endsWith('/models') ? { object: 'list', data: [{ id: 'fixture-model', object: 'model', owned_by: 'fixture' }] } : { id: 'fixture-completion', object: 'chat.completion', model: 'fixture-model', choices: [{ index: 0, message: { role: 'assistant', content: 'fixture answer' }, finish_reason: 'stop' }], usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } } })): Promise<any> {
+export async function mockUpstream(handler: any = (request?: any): any => ({ status: 200, body: (request.path.endsWith as any)('/models') ? { object: 'list', data: [{ id: 'fixture-model', object: 'model', owned_by: 'fixture' }] } : { id: 'fixture-completion', object: 'chat.completion', model: 'fixture-model', choices: [{ index: 0, message: { role: 'assistant', content: 'fixture answer' }, finish_reason: 'stop' }], usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 } } })): Promise<any> {
     const requests: any = [];
     const server: any = createServer(async (request?: any, response?: any): Promise<void> => {
         try {
             let bytes: any = 0, body: any = '';
             for await (const chunk of request as any) {
-                bytes += chunk.length;
+                (bytes as any) += chunk.length;
                 if (bytes > 1048576) {
                     response.writeHead(413).end();
                     return;
                 }
-                body += chunk;
+                (body as any) += chunk;
             }
-            const record: any = { method: request.method, path: request.url, body: body ? JSON.parse(body as any) : null };
+            const record: any = { method: request.method, path: request.url, body: body ? (JSON as any).parse(body) : null };
             requests.push(record);
             const result: any = await handler(record);
             response.writeHead(result.status ?? 200, { 'content-type': 'application/json', ...result.headers });
-            response.end(typeof result.body === 'string' ? result.body : JSON.stringify(result.body));
+            response.end(typeof result.body === 'string' ? result.body : (JSON as any).stringify(result.body));
         }
         catch {
             response.writeHead(500).end();
@@ -41,24 +41,24 @@ export async function vendorStub({ name = 'codex', version = '0.158.0', output =
         throw new (RouterError as any)('Invalid stub executable name', { code: 'options' });
     const directory: string = await mkdtemp(join(tmpdir(), 'router-vendor-'));
     const binary: string = join(directory, name);
-    const source: string = `#!/usr/bin/env node\nif(process.argv.includes('--version')){console.log(${JSON.stringify(version)});process.exit(0)}console.log(${JSON.stringify(output)});process.exit(${Number(exitCode)});\n`;
+    const source: string = `#!/usr/bin/env node\nif(process.argv.includes('--version')){console.log(${(JSON as any).stringify(version)});process.exit(0)}console.log(${(JSON as any).stringify(output)});process.exit(${Number(exitCode)});\n`;
     await writeFile(binary, source, { mode: 0o755 });
-    return { binary, directory, env: { PATH: `${directory}${process.platform === 'win32' ? ';' : ':'}${process.env.PATH ?? ''}` }, close: (): Promise<void> => rm(directory, { recursive: true, force: true }) };
+    return { binary, directory, env: { PATH: `${directory}${(process as any).platform === 'win32' ? ';' : ':'}${(process as any).env.PATH ?? ''}` }, close: (): Promise<void> => rm(directory, { recursive: true, force: true }) };
 }
-export async function verifyContracts({ router = new (Router as any)(), areas = [], linux = false, repository = process.cwd(), output, clientVersions = 'installed', deadlineMs = 3600000, requireParity = false, env = {} }: any = {}): Promise<any> {
+export async function verifyContracts({ router = new (Router as any)(), areas = [], linux = false, repository = (process as any).cwd(), output, clientVersions = 'installed', deadlineMs = 3600000, requireParity = false, env = {} }: any = {}): Promise<any> {
     const args: any = areas.flatMap((area?: any): any => ['--area', area]);
     if (requireParity)
         args.push('--require-parity');
     if (!linux) {
         if (output)
             args.push('--output', resolve(output));
-        return (await router.verify({ arguments: args }, { deadlineMs, cwd: repository, env })).data;
+        return (await (router.verify as any)({ arguments: args }, { deadlineMs, cwd: repository, env })).data;
     }
     const response: any = await runProcess('bash', [join(repository, 'scripts/verify-contracts-in-linux.sh'), '--client-versions', clientVersions, ...args], { env, deadlineMs, cwd: repository });
     const path: string = join(repository, 'target/verification-linux/result.json');
     let result: any;
     try {
-        result = JSON.parse(await readFile(path, 'utf8') as any);
+        (result as any) = (JSON as any).parse(await readFile(path, 'utf8'));
     }
     catch (cause: any) {
         throw new (RouterError as any)('Linux verification produced no result.json', { code: 'schema', stderr: response.stderr, exitCode: response.exitCode, cause });

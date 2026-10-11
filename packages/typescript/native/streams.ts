@@ -1,8 +1,8 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=9b2058ecc9312e549667b1f062fca6de13f21c7937a4f434fce1d574b5a27353; dynamic any annotations are explicit draft gaps.
+// Meta sha256=24bb0b16bef6bb8860de7d0d3a2f61f4ff160a0863bb61fceb8809540bc6b445; dynamic any annotations are explicit draft gaps.
 import { canonicalResponse, normalizeUsage, ProtocolError } from "./protocols.js";
 const encoder: any = new (TextEncoder as any)();
-const frame: any = (data?: any, event?: any): string => `${event ? `event: ${event}\n` : ''}data: ${typeof data === 'string' ? data : JSON.stringify(data)}\n\n`;
+const frame: any = (data?: any, event?: any): string => `${event ? `event: ${event}\n` : ''}data: ${typeof data === 'string' ? data : (JSON as any).stringify(data)}\n\n`;
 export async function* decodeSSE(body?: any, { maxFrameBytes = 1024 * 1024 }: any = {}): AsyncGenerator<any, any, any> {
     const reader: any = body.getReader(), decoder: any = new (TextDecoder as any)();
     let buffer: any = '', data: any = [], event: any = '';
@@ -11,20 +11,20 @@ export async function* decodeSSE(body?: any, { maxFrameBytes = 1024 * 1024 }: an
             throw new (ProtocolError as any)('Upstream SSE line exceeds limit', 502);
         if (!line) {
             const value: any = data.length ? { event, data: data.join('\n') } : null;
-            data = [];
-            event = '';
+            (data as any) = [];
+            (event as any) = '';
             return value;
         }
         if ((line as any)[0] === ':')
             return null;
-        const colon: any = line.indexOf(':'), key: any = colon < 0 ? line : line.slice(0, colon);
-        let value: any = colon < 0 ? '' : line.slice(colon + 1);
+        const colon: any = (line.indexOf as any)(':'), key: any = colon < 0 ? line : (line.slice as any)(0, colon);
+        let value: any = colon < 0 ? '' : (line.slice as any)(colon + 1);
         if ((value as any)[0] === ' ')
-            value = value.slice(1);
+            (value as any) = ((value as any).slice as any)(1);
         if (key === 'data')
             data.push(value);
         else if (key === 'event')
-            event = value;
+            (event as any) = value;
         if (data.reduce((n?: any, value?: any): any => n + encoder.encode(value).byteLength + 1, 0) > maxFrameBytes)
             throw new (ProtocolError as any)('Upstream SSE frame exceeds limit', 502);
         return null;
@@ -32,13 +32,13 @@ export async function* decodeSSE(body?: any, { maxFrameBytes = 1024 * 1024 }: an
     try {
         while (true) {
             const { value, done }: any = await reader.read();
-            buffer += decoder.decode(value, { stream: !done });
+            (buffer as any) += decoder.decode(value, { stream: !done });
             let match: any;
-            while ((match = /\r\n|\n|\r/.exec(buffer))) {
+            while (((match as any) = /\r\n|\n|\r/.exec(buffer))) {
                 if ((match as any)[0] === '\r' && match.index === buffer.length - 1 && !done)
                     break;
                 const line: string = buffer.slice(0, match.index);
-                buffer = buffer.slice(match.index + (match as any)[0].length);
+                (buffer as any) = buffer.slice(match.index + (match as any)[0].length);
                 const parsed: any = consume(line);
                 if (parsed)
                     yield parsed;
@@ -56,7 +56,7 @@ export async function* decodeSSE(body?: any, { maxFrameBytes = 1024 * 1024 }: an
         }
     }
     finally {
-        await reader.cancel().catch((): void => { });
+        await (reader.cancel().catch as any)((): void => { });
         reader.releaseLock();
     }
 }
@@ -65,32 +65,32 @@ async function* normalizedEvents(body?: any, protocol?: any): AsyncGenerator<any
     let ended: any = false, finish: any = 'stop', usage: any = normalizeUsage(), id: any, started: any = false;
     for await (const f of decodeSSE(body) as any) {
         if (f.data === '[DONE]') {
-            ended = true;
+            (ended as any) = true;
             break;
         }
         let p: any;
         try {
-            p = JSON.parse(f.data as any);
+            (p as any) = (JSON as any).parse(f.data);
         }
         catch {
             throw new (ProtocolError as any)('Malformed upstream SSE JSON', 502);
         }
-        if (p.error || p.type === 'error' || ['response.failed', 'response.incomplete'].includes(p.type) && p.response?.error)
-            throw new (ProtocolError as any)(p.error?.message ?? p.response?.error?.message ?? 'Upstream stream failed', 502);
-        const type: any = p.type ?? f.event;
+        if ((p as any).error || (p as any).type === 'error' || ['response.failed', 'response.incomplete'].includes((p as any).type) && (p as any).response?.error)
+            throw new (ProtocolError as any)((p as any).error?.message ?? (p as any).response?.error?.message ?? 'Upstream stream failed', 502);
+        const type: any = (p as any).type ?? f.event;
         if (protocol === 'chat') {
             if (!started) {
-                id = p.id;
-                started = true;
+                (id as any) = (p as any).id;
+                (started as any) = true;
                 yield { type: 'start', id };
             }
-            if (p.usage) {
-                usage = normalizeUsage(p.usage);
+            if ((p as any).usage) {
+                (usage as any) = normalizeUsage((p as any).usage);
                 yield { type: 'usage', usage };
             }
-            if (p.choices?.length > 1 || p.choices?.[0]?.index > 0)
+            if ((p as any).choices?.length > 1 || (p as any).choices?.[0]?.index > 0)
                 throw new (ProtocolError as any)('Cannot translate multiple streamed choices', 502);
-            const c: any = p.choices?.[0];
+            const c: any = (p as any).choices?.[0];
             if (!c)
                 continue;
             if (c.delta?.content)
@@ -112,27 +112,59 @@ async function* normalizedEvents(body?: any, protocol?: any): AsyncGenerator<any
                     yield { type: 'arguments', index, text: t.function.arguments };
             }
             if (c.finish_reason) {
-                if (!['stop', 'length', 'tool_calls'].includes(c.finish_reason))
+                if (!['stop', 'length', 'tool_calls', 'content_filter'].includes(c.finish_reason))
                     throw new (ProtocolError as any)(`Cannot translate finish reason ${c.finish_reason}`, 502);
-                finish = c.finish_reason;
+                (finish as any) = c.finish_reason;
+            }
+        }
+        else if (protocol === 'gemini') {
+            const value: any = (p as any).response ?? p, candidate: any = value.candidates?.[0];
+            if (!started) {
+                (started as any) = true;
+                (id as any) = value.responseId;
+                yield { type: 'start', id };
+            }
+            if (value.candidates?.length > 1)
+                throw new (ProtocolError as any)('Cannot translate multiple Gemini candidates', 502);
+            for (const part of candidate?.content?.parts ?? [] as any) {
+                if (part.text !== undefined) {
+                    yield { type: 'text', text: part.text };
+                }
+                else if (part.functionCall) {
+                    const call: any = part.functionCall, index: number = tools.size, tool: any = { id: call.id ?? `call_${index}`, name: call.name, index };
+                    tools.set(index, tool);
+                    yield { type: 'tool', ...tool };
+                    yield { type: 'arguments', index, text: (JSON as any).stringify(call.args ?? {}) };
+                }
+                else
+                    throw new (ProtocolError as any)('Gemini output part cannot be represented', 502);
+            }
+            if (value.usageMetadata) {
+                (usage as any) = normalizeUsage(value.usageMetadata, 'gemini');
+                yield { type: 'usage', usage };
+            }
+            const reason: any = candidate?.finishReason ?? value.promptFeedback?.blockReason;
+            if (reason) {
+                (finish as any) = reason === 'MAX_TOKENS' ? 'length' : reason === 'STOP' ? tools.size ? 'tool_calls' : 'stop' : 'content_filter';
+                (ended as any) = true;
             }
         }
         else if (protocol === 'anthropic') {
             if (type === 'message_start') {
-                started = true;
-                id = p.message.id;
-                usage = normalizeUsage(p.message.usage, protocol);
+                (started as any) = true;
+                (id as any) = (p as any).message.id;
+                (usage as any) = normalizeUsage((p as any).message.usage, protocol);
                 yield { type: 'start', id };
                 yield { type: 'usage', usage };
             }
             else if (type === 'content_block_start') {
-                const b: any = p.content_block;
+                const b: any = (p as any).content_block;
                 if (b.type === 'tool_use') {
-                    const tool: any = { id: b.id, name: b.name, index: p.index };
-                    tools.set(p.index, tool);
+                    const tool: any = { id: b.id, name: b.name, index: (p as any).index };
+                    tools.set((p as any).index, tool);
                     yield { type: 'tool', ...tool };
-                    if (b.input && Object.keys(b.input).length)
-                        yield { type: 'arguments', index: p.index, text: JSON.stringify(b.input) };
+                    if (b.input && (Object as any).keys(b.input).length)
+                        yield { type: 'arguments', index: (p as any).index, text: (JSON as any).stringify(b.input) };
                 }
                 else if (b.type === 'text') {
                     if (b.text)
@@ -142,54 +174,54 @@ async function* normalizedEvents(body?: any, protocol?: any): AsyncGenerator<any
                     throw new (ProtocolError as any)(`Cannot translate streamed block ${b.type}`, 502);
             }
             else if (type === 'content_block_delta') {
-                if (p.delta.type === 'text_delta')
-                    yield { type: 'text', text: p.delta.text };
-                else if (p.delta.type === 'input_json_delta')
-                    yield { type: 'arguments', index: p.index, text: p.delta.partial_json };
+                if ((p as any).delta.type === 'text_delta')
+                    yield { type: 'text', text: (p as any).delta.text };
+                else if ((p as any).delta.type === 'input_json_delta')
+                    yield { type: 'arguments', index: (p as any).index, text: (p as any).delta.partial_json };
                 else
-                    throw new (ProtocolError as any)(`Cannot translate streamed delta ${p.delta.type}`, 502);
+                    throw new (ProtocolError as any)(`Cannot translate streamed delta ${(p as any).delta.type}`, 502);
             }
             else if (type === 'message_delta') {
-                if (p.delta.stop_reason) {
-                    finish = ({ end_turn: 'stop', stop_sequence: 'stop', tool_use: 'tool_calls', max_tokens: 'length' } as any)[p.delta.stop_reason];
+                if ((p as any).delta.stop_reason) {
+                    (finish as any) = ({ end_turn: 'stop', stop_sequence: 'stop', tool_use: 'tool_calls', max_tokens: 'length' } as any)[(p as any).delta.stop_reason];
                     if (!finish)
-                        throw new (ProtocolError as any)(`Cannot translate stop reason ${p.delta.stop_reason}`, 502);
+                        throw new (ProtocolError as any)(`Cannot translate stop reason ${(p as any).delta.stop_reason}`, 502);
                 }
-                if (p.usage) {
-                    usage = { ...usage, output: p.usage.output_tokens ?? usage.output };
+                if ((p as any).usage) {
+                    (usage as any) = { ...usage, output: (p as any).usage.output_tokens ?? usage.output };
                     usage.total = usage.input + usage.output;
                     yield { type: 'usage', usage };
                 }
             }
             else if (type === 'message_stop') {
-                ended = true;
+                (ended as any) = true;
                 break;
             }
         }
         else if (protocol === 'responses') {
             if (type === 'response.created') {
-                started = true;
-                id = p.response.id;
+                (started as any) = true;
+                (id as any) = (p as any).response.id;
                 yield { type: 'start', id };
             }
             else if (type === 'response.output_text.delta')
-                yield { type: 'text', text: p.delta };
+                yield { type: 'text', text: (p as any).delta };
             else if (type === 'response.output_item.added') {
-                if (p.item.type === 'function_call') {
-                    const tool: any = { id: p.item.call_id, name: p.item.name, index: p.output_index };
-                    tools.set(p.output_index, tool);
+                if ((p as any).item.type === 'function_call') {
+                    const tool: any = { id: (p as any).item.call_id, name: (p as any).item.name, index: (p as any).output_index };
+                    tools.set((p as any).output_index, tool);
                     yield { type: 'tool', ...tool };
                 }
-                else if (p.item.type !== 'message')
-                    throw new (ProtocolError as any)(`Cannot translate streamed item ${p.item.type}`, 502);
+                else if ((p as any).item.type !== 'message')
+                    throw new (ProtocolError as any)(`Cannot translate streamed item ${(p as any).item.type}`, 502);
             }
             else if (type === 'response.function_call_arguments.delta')
-                yield { type: 'arguments', index: p.output_index, text: p.delta };
+                yield { type: 'arguments', index: (p as any).output_index, text: (p as any).delta };
             else if (['response.completed', 'response.incomplete'].includes(type)) {
-                usage = normalizeUsage(p.response.usage);
-                finish = type === 'response.incomplete' ? 'length' : tools.size ? 'tool_calls' : 'stop';
+                (usage as any) = normalizeUsage((p as any).response.usage);
+                (finish as any) = type === 'response.incomplete' ? (p as any).response.incomplete_details?.reason === 'content_filter' ? 'content_filter' : 'length' : tools.size ? 'tool_calls' : 'stop';
                 yield { type: 'usage', usage };
-                ended = true;
+                (ended as any) = true;
                 break;
             }
             else if (type === 'response.refusal.delta')
@@ -202,53 +234,55 @@ async function* normalizedEvents(body?: any, protocol?: any): AsyncGenerator<any
         yield { type: 'start', id };
     yield { type: 'finish', finish, usage };
 }
-export function translateStream(body?: any, source?: any, target?: any, model?: any, { clock = Date.now, onStart, onComplete, onError, onCancel, maxStateBytes = 32 * 1024 * 1024 }: any = {}): any {
-    const events: any = (normalizedEvents(body, source) as any)[Symbol.asyncIterator]();
+export function translateStream(body?: any, source?: any, target?: any, model?: any, { clock = (Date as any).now, onStart, onComplete, onError, onCancel, maxStateBytes = 32 * 1024 * 1024 }: any = {}): any {
+    const events: any = (normalizedEvents(body, source) as any)[(Symbol as any).asyncIterator]();
     const state: any = { id: undefined, text: '', tools: [], usage: normalizeUsage(), finish: 'stop' };
     const toolMap: any = new (Map as any)(), openToolBlocks: any = new (Set as any)();
     let stateBytes: any = 0, begun: any = false, finished: any = false, sequence: any = 0, activeBlock: any, nextBlock: any = 0, messageItem: any, outputIndex: any = 0;
     const now: number = clock();
     const responses: any = (type?: any, payload?: any): string => frame({ type, sequence_number: sequence++, ...payload }, type);
-    const chat: any = (delta?: any, finish_reason: any = null, usage?: any): string => frame({ id: state.id, object: 'chat.completion.chunk', created: Math.floor(now / 1000), model, choices: usage ? [] : [{ index: 0, delta, finish_reason }], ...(usage ? { usage } : {}) });
+    const chat: any = (delta?: any, finish_reason: any = null, usage?: any): string => frame({ id: state.id, object: 'chat.completion.chunk', created: (Math as any).floor(now / 1000), model, choices: usage ? [] : [{ index: 0, delta, finish_reason }], ...(usage ? { usage } : {}) });
     const closeBlock: any = (): string => { if (activeBlock === undefined)
-        return ''; const result: string = frame({ type: 'content_block_stop', index: activeBlock }, 'content_block_stop'); activeBlock = undefined; return result; };
+        return ''; const result: string = frame({ type: 'content_block_stop', index: activeBlock }, 'content_block_stop'); (activeBlock as any) = undefined; return result; };
     const render: any = (e?: any): string => {
         let out: any = '';
-        stateBytes += encoder.encode(e.text ?? '').byteLength + (e.type === 'tool' ? 1024 : 0);
+        (stateBytes as any) += encoder.encode(e.text ?? '').byteLength + (e.type === 'tool' ? 1024 : 0);
         if (stateBytes > maxStateBytes)
             throw new (ProtocolError as any)('Upstream stream exceeds translation memory limit', 502);
         if (!begun) {
-            begun = true;
-            state.id = e.id ?? `native_${Math.floor(now / 1000)}`;
+            (begun as any) = true;
+            state.id = e.id ?? `native_${(Math as any).floor(now / 1000)}`;
             if (target === 'chat')
-                out += chat({ role: 'assistant', content: '' });
+                (out as any) += chat({ role: 'assistant', content: '' });
             else if (target === 'anthropic')
-                out += frame({ type: 'message_start', message: { id: state.id, type: 'message', role: 'assistant', model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } } }, 'message_start');
-            else {
+                (out as any) += frame({ type: 'message_start', message: { id: state.id, type: 'message', role: 'assistant', model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } } }, 'message_start');
+            else if (target !== 'gemini') {
                 const response: any = { ...canonicalResponse(state, target, model, now), status: 'in_progress', usage: null };
-                out += responses('response.created', { response });
-                out += responses('response.in_progress', { response });
+                (out as any) += responses('response.created', { response });
+                (out as any) += responses('response.in_progress', { response });
             }
         }
         if (e.type === 'text') {
             state.text += e.text;
             if (target === 'chat')
-                out += chat({ content: e.text });
+                (out as any) += chat({ content: e.text });
+            else if (target === 'gemini')
+                (out as any) += frame({ candidates: [{ index: 0, content: { role: 'model', parts: [{ text: e.text }] } }], modelVersion: model });
             else if (target === 'anthropic') {
                 if (activeBlock === undefined) {
-                    activeBlock = nextBlock++;
-                    out += frame({ type: 'content_block_start', index: activeBlock, content_block: { type: 'text', text: '' } }, 'content_block_start');
+                    (activeBlock as any) = nextBlock++;
+                    (out as any) += frame({ type: 'content_block_start', index: activeBlock, content_block: { type: 'text', text: '' } }, 'content_block_start');
                 }
-                out += frame({ type: 'content_block_delta', index: activeBlock, delta: { type: 'text_delta', text: e.text } }, 'content_block_delta');
+                (out as any) += frame({ type: 'content_block_delta', index: activeBlock, delta: { type: 'text_delta', text: e.text } }, 'content_block_delta');
             }
             else {
                 if (!messageItem) {
-                    messageItem = { id: `msg_${state.id}`, type: 'message', role: 'assistant', status: 'in_progress', content: [] };
+                    (messageItem as any) = { id: `msg_${state.id}`, type: 'message', role: 'assistant', status: 'in_progress', content: [] };
                     messageItem.output_index = outputIndex++;
-                    out += responses('response.output_item.added', { output_index: messageItem.output_index, item: { ...messageItem, output_index: undefined } });
-                    out += responses('response.content_part.added', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, part: { type: 'output_text', text: '', annotations: [] } });
+                    (out as any) += responses('response.output_item.added', { output_index: messageItem.output_index, item: { ...messageItem, output_index: undefined } });
+                    (out as any) += responses('response.content_part.added', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, part: { type: 'output_text', text: '', annotations: [] } });
                 }
-                out += responses('response.output_text.delta', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, delta: e.text });
+                (out as any) += responses('response.output_text.delta', { item_id: (messageItem as any).id, output_index: (messageItem as any).output_index, content_index: 0, delta: e.text });
             }
         }
         else if (e.type === 'tool') {
@@ -257,15 +291,15 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
             const record: any = { index, tool, block: undefined, output_index: outputIndex++ };
             toolMap.set(e.index, record);
             if (target === 'chat')
-                out += chat({ tool_calls: [{ index, ...tool }] });
+                (out as any) += chat({ tool_calls: [{ index, ...tool }] });
             else if (target === 'anthropic') {
-                out += closeBlock();
+                (out as any) += closeBlock();
                 record.block = nextBlock++;
                 openToolBlocks.add(record.block);
-                out += frame({ type: 'content_block_start', index: record.block, content_block: { type: 'tool_use', id: tool.id, name: tool.function.name, input: {} } }, 'content_block_start');
+                (out as any) += frame({ type: 'content_block_start', index: record.block, content_block: { type: 'tool_use', id: tool.id, name: tool.function.name, input: {} } }, 'content_block_start');
             }
-            else
-                out += responses('response.output_item.added', { output_index: record.output_index, item: { id: `fc_${tool.id}`, type: 'function_call', status: 'in_progress', call_id: tool.id, name: tool.function.name, arguments: '' } });
+            else if (target !== 'gemini')
+                (out as any) += responses('response.output_item.added', { output_index: record.output_index, item: { id: `fc_${tool.id}`, type: 'function_call', status: 'in_progress', call_id: tool.id, name: tool.function.name, arguments: '' } });
         }
         else if (e.type === 'arguments') {
             const r: any = toolMap.get(e.index);
@@ -273,11 +307,11 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
                 throw new (ProtocolError as any)('Tool arguments arrived without a tool call', 502);
             r.tool.function.arguments += e.text;
             if (target === 'chat')
-                out += chat({ tool_calls: [{ index: r.index, function: { arguments: e.text } }] });
+                (out as any) += chat({ tool_calls: [{ index: r.index, function: { arguments: e.text } }] });
             else if (target === 'anthropic')
-                out += frame({ type: 'content_block_delta', index: r.block, delta: { type: 'input_json_delta', partial_json: e.text } }, 'content_block_delta');
-            else
-                out += responses('response.function_call_arguments.delta', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, delta: e.text });
+                (out as any) += frame({ type: 'content_block_delta', index: r.block, delta: { type: 'input_json_delta', partial_json: e.text } }, 'content_block_delta');
+            else if (target !== 'gemini')
+                (out as any) += responses('response.function_call_arguments.delta', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, delta: e.text });
         }
         else if (e.type === 'usage')
             state.usage = e.usage;
@@ -288,46 +322,48 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
                 if (!tool.function.arguments)
                     tool.function.arguments = '{}';
                 try {
-                    JSON.parse(tool.function.arguments as any);
+                    (JSON as any).parse(tool.function.arguments);
                 }
                 catch {
                     throw new (ProtocolError as any)('Upstream streamed invalid tool arguments', 502);
                 }
             }
             if (target === 'chat') {
-                out += chat({}, state.finish);
+                (out as any) += chat({}, state.finish);
                 const u: any = canonicalResponse(state, 'chat', model, now).usage;
-                out += chat({}, null, u);
-                out += frame('[DONE]');
+                (out as any) += chat({}, null, u);
+                (out as any) += frame('[DONE]');
             }
+            else if (target === 'gemini')
+                (out as any) += frame(canonicalResponse({ ...state, text: '' }, 'gemini', model, now));
             else if (target === 'anthropic') {
-                out += closeBlock();
+                (out as any) += closeBlock();
                 for (const index of openToolBlocks as any)
-                    out += frame({ type: 'content_block_stop', index }, 'content_block_stop');
+                    (out as any) += frame({ type: 'content_block_stop', index }, 'content_block_stop');
                 const message: any = canonicalResponse(state, 'anthropic', model, now);
-                out += frame({ type: 'message_delta', delta: { stop_reason: message.stop_reason, stop_sequence: message.stop_sequence }, usage: message.usage }, 'message_delta');
-                out += frame({ type: 'message_stop' }, 'message_stop');
+                (out as any) += frame({ type: 'message_delta', delta: { stop_reason: message.stop_reason, stop_sequence: message.stop_sequence }, usage: message.usage }, 'message_delta');
+                (out as any) += frame({ type: 'message_stop' }, 'message_stop');
             }
             else {
                 if (messageItem) {
-                    out += responses('response.output_text.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, text: state.text });
-                    const item: any = { id: messageItem.id, type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: state.text, annotations: [] }] };
-                    out += responses('response.content_part.done', { item_id: messageItem.id, output_index: messageItem.output_index, content_index: 0, part: (item.content as any)[0] });
-                    out += responses('response.output_item.done', { output_index: messageItem.output_index, item });
+                    (out as any) += responses('response.output_text.done', { item_id: (messageItem as any).id, output_index: (messageItem as any).output_index, content_index: 0, text: state.text });
+                    const item: any = { id: (messageItem as any).id, type: 'message', role: 'assistant', status: ['length', 'content_filter'].includes(state.finish) ? 'incomplete' : 'completed', content: [{ type: 'output_text', text: state.text, annotations: [] }] };
+                    (out as any) += responses('response.content_part.done', { item_id: (messageItem as any).id, output_index: (messageItem as any).output_index, content_index: 0, part: (item.content as any)[0] });
+                    (out as any) += responses('response.output_item.done', { output_index: (messageItem as any).output_index, item });
                 }
                 for (const r of toolMap.values() as any) {
-                    out += responses('response.function_call_arguments.done', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, arguments: r.tool.function.arguments });
-                    out += responses('response.output_item.done', { output_index: r.output_index, item: { id: `fc_${r.tool.id}`, type: 'function_call', status: 'completed', call_id: r.tool.id, name: r.tool.function.name, arguments: r.tool.function.arguments } });
+                    (out as any) += responses('response.function_call_arguments.done', { item_id: `fc_${r.tool.id}`, output_index: r.output_index, arguments: r.tool.function.arguments });
+                    (out as any) += responses('response.output_item.done', { output_index: r.output_index, item: { id: `fc_${r.tool.id}`, type: 'function_call', status: ['length', 'content_filter'].includes(state.finish) ? 'incomplete' : 'completed', call_id: r.tool.id, name: r.tool.function.name, arguments: r.tool.function.arguments } });
                 }
-                const type: string = state.finish === 'length' ? 'response.incomplete' : 'response.completed', response: any = canonicalResponse(state, target, model, now);
+                const response: any = canonicalResponse(state, target, model, now), type: string = response.status === 'incomplete' ? 'response.incomplete' : 'response.completed';
                 const order: any = new (Map as any)([...toolMap.values()].map((r?: any): any => [`fc_${r.tool.id}`, r.output_index]));
                 if (messageItem)
-                    order.set(messageItem.id, messageItem.output_index);
-                response.output.sort((a?: any, b?: any): number => order.get(a.id) - order.get(b.id));
+                    order.set((messageItem as any).id, (messageItem as any).output_index);
+                (response.output.sort as any)((a?: any, b?: any): number => order.get(a.id) - order.get(b.id));
                 state.response = response;
-                out += responses(type, { response });
+                (out as any) += responses(type, { response });
             }
-            finished = true;
+            (finished as any) = true;
         }
         return out;
     };
@@ -358,15 +394,15 @@ export function translateStream(body?: any, source?: any, target?: any, model?: 
                 const payload: any = { error: { type: 'upstream_stream_error', message: 'Upstream stream failed or ended prematurely' } };
                 controller.enqueue(encoder.encode(target === 'responses' ? responses('error', payload) : frame(target === 'anthropic' ? { type: 'error', ...payload } : payload, target === 'anthropic' ? 'error' : undefined)));
                 controller.close();
-                finished = true;
+                (finished as any) = true;
                 await events.return?.();
             }
         },
-        async cancel(): Promise<void> { finished = true; await onCancel?.(); await events.return?.(); },
+        async cancel(): Promise<void> { (finished as any) = true; await onCancel?.(); await events.return?.(); },
     });
 }
 export function monitorNativeStream(body?: any, protocol?: any, { model, onStart, onComplete, onError, onCancel }: any = {}): any {
-    const events: any = (decodeSSE(body) as any)[Symbol.asyncIterator]();
+    const events: any = (decodeSSE(body) as any)[(Symbol as any).asyncIterator]();
     let terminal: any = false, usage: any = normalizeUsage(), anthropicUsage: any = {}, response: any, started: any = false;
     return new (ReadableStream as any)({
         async pull(controller?: any): Promise<void> {
@@ -381,49 +417,59 @@ export function monitorNativeStream(body?: any, protocol?: any, { model, onStart
                 }
                 let frameData: any = f.data;
                 if (f.data === '[DONE]')
-                    terminal = true;
+                    (terminal as any) = true;
                 else {
                     let p: any;
                     try {
-                        p = JSON.parse(f.data as any);
+                        (p as any) = (JSON as any).parse(f.data);
                     }
                     catch {
                         throw new (ProtocolError as any)('Malformed upstream SSE JSON', 502);
                     }
-                    if (p.error || p.type === 'error' || p.type === 'response.failed')
+                    if (protocol === 'gemini')
+                        (p as any) = (p as any).response ?? p;
+                    if ((p as any).error || (p as any).type === 'error' || (p as any).type === 'response.failed')
                         throw new (ProtocolError as any)('Upstream stream reported failure', 502);
                     if (model) {
-                        if (p.model)
-                            p.model = model;
-                        if (p.message?.model)
-                            p.message.model = model;
-                        if (p.response?.model)
-                            p.response.model = model;
-                        frameData = JSON.stringify(p);
+                        if ((p as any).model)
+                            (p as any).model = model;
+                        if ((p as any).message?.model)
+                            (p as any).message.model = model;
+                        if ((p as any).response?.model)
+                            (p as any).response.model = model;
+                        if ((p as any).modelVersion)
+                            (p as any).modelVersion = model;
+                        (frameData as any) = (JSON as any).stringify(p);
                     }
-                    if (p.usage) {
+                    if ((p as any).usage) {
                         if (protocol === 'anthropic') {
-                            anthropicUsage = { ...anthropicUsage, ...p.usage };
-                            usage = normalizeUsage(anthropicUsage, protocol);
+                            (anthropicUsage as any) = { ...anthropicUsage, ...(p as any).usage };
+                            (usage as any) = normalizeUsage(anthropicUsage, protocol);
                         }
                         else
-                            usage = normalizeUsage(p.usage, protocol);
+                            (usage as any) = normalizeUsage((p as any).usage, protocol);
                     }
-                    if (p.message?.usage) {
-                        anthropicUsage = p.message.usage;
-                        usage = normalizeUsage(p.message.usage, protocol);
+                    if ((p as any).message?.usage) {
+                        (anthropicUsage as any) = (p as any).message.usage;
+                        (usage as any) = normalizeUsage((p as any).message.usage, protocol);
                     }
-                    if (p.response?.usage)
-                        usage = normalizeUsage(p.response.usage, protocol);
-                    if (p.response?.id) {
-                        response = p.response;
+                    if ((p as any).response?.usage)
+                        (usage as any) = normalizeUsage((p as any).response.usage, protocol);
+                    if ((p as any).usageMetadata)
+                        (usage as any) = normalizeUsage((p as any).usageMetadata, 'gemini');
+                    if ((p as any).response?.id) {
+                        (response as any) = (p as any).response;
                         if (!started) {
-                            started = true;
+                            (started as any) = true;
                             await onStart?.({ ...response, status: 'in_progress', usage: null });
                         }
                     }
-                    if (p.type === 'message_stop' || ['response.completed', 'response.incomplete'].includes(p.type))
-                        terminal = true;
+                    if ((p as any).type === 'message_stop' || ['response.completed', 'response.incomplete'].includes((p as any).type))
+                        (terminal as any) = true;
+                    if (protocol === 'gemini' && ((p as any).candidates?.some((candidate?: any): any => candidate.finishReason) || (p as any).promptFeedback?.blockReason)) {
+                        (terminal as any) = true;
+                        (frameData as any) = (JSON as any).stringify(p);
+                    }
                 }
                 if (terminal)
                     await onComplete?.({ usage, response });

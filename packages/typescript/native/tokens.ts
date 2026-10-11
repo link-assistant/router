@@ -1,8 +1,9 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=6ab3761b68e5006c32a3d251f9a8e3bf73f15979b85389d0b1f54c9da46966b1; dynamic any annotations are explicit draft gaps.
+// Meta sha256=0cede9f13455942e38e6017ae108dbd64cc16bffaa024083f487726ace037dc5; dynamic any annotations are explicit draft gaps.
 import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { tokenBudgetPermits } from "../portable/policy.js";
 import { MemoryTokenStore } from "./storage.js";
+import { isSyntheticTokenId, diagnosticReason, firstAuthenticationOutcome } from "./emergency-auth.js";
 export class RouterError extends Error {
     declare code: any;
     declare name: any;
@@ -10,15 +11,15 @@ export class RouterError extends Error {
     constructor(code: any, message: any, status: any = 400) { super(message); this.name = 'RouterError'; this.code = code; this.status = status; }
 }
 export function ensureRealSecret(secret?: any): any {
-    if (!secret || secret.startsWith('\0') || ['unused-by-remote-command', 'unused-by-auth', 'unused-by-this-client-command'].includes(secret))
+    if (!secret || (secret.startsWith as any)('\0') || ['unused-by-remote-command', 'unused-by-auth', 'unused-by-this-client-command'].includes(secret))
         throw new (RouterError as any)('issuer_secret_unset', 'TOKEN_SECRET is required', 401);
     return secret;
 }
-const encode: any = (object?: any): string => Buffer.from(JSON.stringify(object)).toString('base64url');
+const encode: any = (object?: any): string => (Buffer as any).from((JSON as any).stringify(object)).toString('base64url');
 const clients: any = new (Set as any)(['claude', 'codex', 'cursor', 'opencode', 'gemini', 'grok', 'qwen', 'agent']);
 const clientAliases: any = new (Map as any)([['claude-code', 'claude'], ['cursor-agent', 'cursor'], ['gemini-cli', 'gemini'], ['grok-cli', 'grok'], ['qwen-code', 'qwen']]);
 const number: any = (value?: any, name?: any, positive: any = false): any => {
-    if (!Number.isSafeInteger(value) || value < (positive ? 1 : 0))
+    if (!(Number as any).isSafeInteger(value) || value < (positive ? 1 : 0))
         throw new (RouterError as any)('invalid_argument', `${name} must be a ${positive ? 'positive' : 'nonnegative'} safe integer`);
     return value;
 };
@@ -30,7 +31,7 @@ const defaults: any = {
 };
 export function validateModelPolicy(policy: any = {}): any {
     const models: any = policy.allowed_models ?? [];
-    if (!Array.isArray(models) || models.some((model?: any): boolean => typeof model !== 'string' || !model.trim()) || new (Set as any)(models).size !== models.length)
+    if (!(Array as any).isArray(models) || models.some((model?: any): boolean => typeof model !== 'string' || !model.trim()) || new (Set as any)(models).size !== models.length)
         throw new (RouterError as any)('invalid_argument', 'allowed model ids must be nonempty and unique');
     if (policy.allow_substitution ? !policy.substitution_source?.trim() : policy.substitution_source != null)
         throw new (RouterError as any)('invalid_argument', 'model substitution must name its configuration source');
@@ -38,14 +39,18 @@ export function validateModelPolicy(policy: any = {}): any {
 }
 export class TokenManager {
     declare clock: any;
+    declare diagnostics: any;
+    declare emergency: any;
     declare leeway: any;
     declare secret: any;
     declare store: any;
-    constructor({ secret, store = new (MemoryTokenStore as any)(), clock = (): number => Math.floor(Date.now() / 1000), leeway = 60 }: any = {}) {
+    constructor({ secret, store = new (MemoryTokenStore as any)(), clock = (): number => (Math as any).floor((Date as any).now() / 1000), leeway = 60, emergency, diagnostics }: any = {}) {
         this.secret = secret;
         this.store = store;
         this.clock = clock;
         this.leeway = leeway;
+        this.emergency = emergency;
+        this.diagnostics = diagnostics;
     }
     sign(claims?: any): string {
         ensureRealSecret(this.secret);
@@ -54,7 +59,7 @@ export class TokenManager {
     }
     async issue(options: any = {}): Promise<any> {
         ensureRealSecret(this.secret);
-        options = { ...options };
+        (options as any) = { ...options };
         if (options.client_kind != null) {
             const name: string = String(options.client_kind).trim().toLowerCase();
             options.client_kind = clientAliases.get(name) ?? name;
@@ -71,7 +76,7 @@ export class TokenManager {
             throw new (RouterError as any)('invalid_argument', 'client_kind and principal_id must be paired');
         if (options.client_kind != null && (!clients.has(options.client_kind) || !options.principal_id?.trim() || options.account !== options.principal_id || options.scope === 'admin'))
             throw new (RouterError as any)('invalid_argument', 'invalid client/principal/account binding');
-        if (options.github_repos != null && (!Array.isArray(options.github_repos) || options.github_repos.some((repo?: any): boolean => typeof repo !== 'string' || !/^[^\s/]+\/[^\s/]+$/.test(repo))))
+        if (options.github_repos != null && (!(Array as any).isArray(options.github_repos) || (options.github_repos.some as any)((repo?: any): boolean => typeof repo !== 'string' || !/^[^\s/]+\/[^\s/]+$/.test(repo))))
             throw new (RouterError as any)('invalid_argument', 'github repository scope must be owner/repo');
         if (typeof (options.label ?? '') !== 'string')
             throw new (RouterError as any)('invalid_argument', 'label must be a string');
@@ -82,8 +87,8 @@ export class TokenManager {
             if ((options as any)[field] && (field !== 'github_repos' || (options as any)[field].length))
                 (claims as any)[field] = (options as any)[field];
         const record: any = { ...structuredClone(defaults), id, label: claims.label, issued_at: now, expires_at: claims.exp, revoked: false };
-        for (const field of Object.keys(defaults) as any)
-            if (Object.hasOwn(options, field))
+        for (const field of (Object as any).keys(defaults) as any)
+            if ((Object as any).hasOwn(options, field))
                 (record as any)[field] = structuredClone((options as any)[field]);
         if (options.run_lease_seconds != null)
             record.run_lease_expires_at = now + options.run_lease_seconds;
@@ -91,8 +96,8 @@ export class TokenManager {
         await this.store.transaction((records?: any): void => {
             for (const [key, held] of records as any)
                 if (held.ephemeral && (held.revoked || held.expires_at <= now))
-                    records.delete(key);
-            records.set(id, record);
+                    (records.delete as any)(key);
+            (records.set as any)(id, record);
         });
         return { token, id, record: structuredClone(record) };
     }
@@ -106,65 +111,91 @@ export class TokenManager {
             throw new (RouterError as any)('invalid_token', 'Invalid token encoding', 401);
         let header: any, claims: any;
         try {
-            header = JSON.parse(Buffer.from((parts as any)[0], 'base64url') as any);
-            claims = JSON.parse(Buffer.from((parts as any)[1], 'base64url') as any);
+            (header as any) = (JSON as any).parse((Buffer as any).from((parts as any)[0], 'base64url'));
+            (claims as any) = (JSON as any).parse((Buffer as any).from((parts as any)[1], 'base64url'));
         }
         catch {
             throw new (RouterError as any)('invalid_token', 'Invalid token JSON', 401);
         }
-        if (header.alg !== 'HS256')
+        if ((header as any).alg !== 'HS256')
             throw new (RouterError as any)('invalid_token', 'Only HS256 tokens are accepted', 401);
         const expected: any = createHmac('sha256', this.secret).update(`${(parts as any)[0]}.${(parts as any)[1]}`).digest();
-        const actual: any = Buffer.from((parts as any)[2], 'base64url');
+        const actual: any = (Buffer as any).from((parts as any)[2], 'base64url');
         if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
             throw new (RouterError as any)('signature_invalid', 'Token signature is invalid', 401);
-        if (typeof claims.sub !== 'string' || !claims.sub || !Number.isSafeInteger(claims.exp) || !Number.isSafeInteger(claims.iat))
+        if (typeof (claims as any).sub !== 'string' || !(claims as any).sub || !(Number as any).isSafeInteger((claims as any).exp) || !(Number as any).isSafeInteger((claims as any).iat))
             throw new (RouterError as any)('invalid_token', 'Missing token claims', 401);
-        if (claims.nbf != null && (!Number.isSafeInteger(claims.nbf) || claims.nbf > this.clock() + this.leeway))
+        if ((claims as any).nbf != null && (!(Number as any).isSafeInteger((claims as any).nbf) || (claims as any).nbf > this.clock() + this.leeway))
             throw new (RouterError as any)('not_yet_valid', 'Token is not yet valid', 401);
-        const stored: any = await this.store.get(claims.sub);
+        const stored: any = await this.store.get((claims as any).sub);
         const record: any = stored ? { ...structuredClone(defaults), ...stored } : null;
-        if (claims.exp < this.clock() - this.leeway && !(record?.sliding_window_seconds && record.expires_at > this.clock()))
+        if ((claims as any).exp < this.clock() - this.leeway && !(record?.sliding_window_seconds && record.expires_at > this.clock()))
             throw new (RouterError as any)('expired', 'Token expired', 401);
         if (record?.revoked)
             throw new (RouterError as any)('revoked', 'Token revoked', 401);
-        if (record && ((record.client_kind ?? null) !== (claims.client_kind ?? null) || (record.principal_id ?? null) !== (claims.principal_id ?? null)))
+        if (record && ((record.client_kind ?? null) !== ((claims as any).client_kind ?? null) || (record.principal_id ?? null) !== ((claims as any).principal_id ?? null)))
             throw new (RouterError as any)('binding_mismatch', 'Token binding mismatch', 401);
-        if (!record && (claims.client_kind || claims.principal_id))
+        if (!record && ((claims as any).client_kind || (claims as any).principal_id))
             throw new (RouterError as any)('missing_record', 'Bound token record is missing', 401);
-        if (admin && claims.scope !== 'admin')
+        if (admin && (claims as any).scope !== 'admin')
             throw new (RouterError as any)('admin_required', 'Administrative token required', 403);
-        const repos: any = claims.github_repos ?? [];
-        if (!Array.isArray(repos) || repos.some((repo?: any): boolean => typeof repo !== 'string'))
+        const repos: any = (claims as any).github_repos ?? [];
+        if (!(Array as any).isArray(repos) || repos.some((repo?: any): boolean => typeof repo !== 'string'))
             throw new (RouterError as any)('invalid_token', 'Invalid repository scope', 401);
         if (repository && repos.length && !repos.some((repo?: any): boolean => repo.toLowerCase() === repository.toLowerCase()))
             throw new (RouterError as any)('repository_not_allowed', 'Repository outside token scope', 403);
         if (model && !record)
             throw new (RouterError as any)('model_policy_unavailable', 'Durable model authority is unavailable', 403);
         const allowed: any = record?.model_policy?.allowed_models ?? [];
-        if (model && allowed.length && !allowed.includes(model))
+        if (model && allowed.length && !(allowed.includes as any)(model))
             throw new (RouterError as any)('model_not_allowed', 'Model outside token scope', 403);
-        return { ...claims, account: record?.account ?? null, record, is_admin: claims.scope === 'admin' };
+        return { ...claims, account: record?.account ?? null, record, is_admin: (claims as any).scope === 'admin' };
     }
-    async list(): Promise<any> { return (await this.store.list()).sort((a?: any, b?: any): any => a.issued_at - b.issued_at || a.id.localeCompare(b.id)); }
+    async list(): Promise<any> { return (await this.store.list()).sort((a?: any, b?: any): any => a.issued_at - b.issued_at || (a.id.localeCompare as any)(b.id)); }
+    async authenticateIncoming(token?: any, options: any = {}): Promise<any> {
+        const count: boolean = firstAuthenticationOutcome();
+        if (typeof token !== 'string' || !token) {
+            const error: any = new (RouterError as any)('missing_credential', 'Router credential is required', 401);
+            if (count)
+                this.diagnostics?.record('missing_credential');
+            throw error;
+        }
+        let claims: any, error: any;
+        try {
+            (claims as any) = await this.validate(token, options);
+        }
+        catch (failure: any) {
+            (error as any) = failure;
+        }
+        if (!options.admin && this.emergency?.isActive())
+            return (this.emergency.admit as any)(token, options.headers ?? {}, error ? diagnosticReason(error) : 'none', count);
+        if (error) {
+            if (count)
+                this.diagnostics?.record(diagnosticReason(error), token);
+            throw error;
+        }
+        return claims;
+    }
     async get(id?: any): Promise<any> { return this.store.get(id); }
     async authorizeModel(id?: any, model?: any): Promise<any> {
+        if (isSyntheticTokenId(id))
+            return {};
         const record: any = await this.get(id);
         if (!record)
             throw new (RouterError as any)('model_policy_unavailable', 'Durable model authority is unavailable', 403);
-        if (record.model_policy?.allowed_models?.length && !record.model_policy.allowed_models.includes(model))
+        if (record.model_policy?.allowed_models?.length && !(record.model_policy.allowed_models.includes as any)(model))
             throw new (RouterError as any)('model_not_allowed', 'Model outside token scope', 403);
         return record.model_policy ?? {};
     }
-    async revoke(id?: any): Promise<any> { return this.store.transaction((records?: any): boolean => { const r: any = records.get(id); if (!r)
+    async revoke(id?: any): Promise<any> { return this.store.transaction((records?: any): boolean => { const r: any = (records.get as any)(id); if (!r)
         throw new (RouterError as any)('not_found', 'Token not found', 404); const changed: boolean = !r.revoked; r.revoked = true; return changed; }); }
-    async expire(id?: any): Promise<any> { return this.store.transaction((records?: any): any => { const r: any = records.get(id); if (!r)
+    async expire(id?: any): Promise<any> { return this.store.transaction((records?: any): any => { const r: any = (records.get as any)(id); if (!r)
         throw new (RouterError as any)('not_found', 'Token not found', 404); r.revoked = true; r.expires_at = this.clock(); return r; }); }
     async rotate(id?: any, overrides: any = {}): Promise<any> {
         const held: any = await this.get(id);
         if (!held)
             throw new (RouterError as any)('not_found', 'Token not found', 404);
-        const options: any = { ttl_hours: Math.max(1, Math.floor((held.expires_at - this.clock()) / 3600)) };
+        const options: any = { ttl_hours: (Math as any).max(1, (Math as any).floor((held.expires_at - this.clock()) / 3600)) };
         for (const field of ['label', 'account', 'max_requests', 'max_tokens', 'rate_limit_per_minute'] as any)
             (options as any)[field] = (overrides as any)[field] ?? (held as any)[field];
         options.ttl_hours = overrides.ttl_hours ?? options.ttl_hours;
@@ -175,9 +206,11 @@ export class TokenManager {
         return replacement;
     }
     async admit(id?: any, reserve: any = 0): Promise<any> {
+        if (isSyntheticTokenId(id))
+            return 'admitted';
         number(reserve, 'reserve');
         return this.store.transaction((records?: any): string => {
-            const r: any = records.get(id);
+            const r: any = (records.get as any)(id);
             if (!r)
                 return 'admitted';
             const now: number = this.clock();
@@ -199,16 +232,18 @@ export class TokenManager {
             r.used_requests++;
             r.reserved_tokens = (r.reserved_tokens ?? 0) + reserve;
             if (r.sliding_window_seconds)
-                r.expires_at = Math.max(r.expires_at, now + r.sliding_window_seconds);
+                r.expires_at = (Math as any).max(r.expires_at, now + r.sliding_window_seconds);
             return 'admitted';
         });
     }
     async settle(id?: any, reserved?: any, actual?: any): Promise<any> {
+        if (isSyntheticTokenId(id))
+            return;
         number(reserved, 'reserved');
         number(actual, 'actual');
-        return this.store.transaction((records?: any): void => { const r: any = records.get(id); if (r) {
-            r.reserved_tokens = Math.max(0, (r.reserved_tokens ?? 0) - reserved);
-            r.used_tokens = Math.min(Number.MAX_SAFE_INTEGER, (r.used_tokens ?? 0) + actual);
+        return this.store.transaction((records?: any): void => { const r: any = (records.get as any)(id); if (r) {
+            r.reserved_tokens = (Math as any).max(0, (r.reserved_tokens ?? 0) - reserved);
+            r.used_tokens = (Math as any).min((Number as any).MAX_SAFE_INTEGER, (r.used_tokens ?? 0) + actual);
         } });
     }
     async releaseStaleReservations(): Promise<any> { return this.store.transaction((records?: any): number => { let n: any = 0; for (const r of records.values() as any)
@@ -216,5 +251,25 @@ export class TokenManager {
             r.reserved_tokens = 0;
             n++;
         } return n; }); }
+    async enforceRequestBudget(id?: any, reserve: any = 0): Promise<void> {
+        const verdict: any = await this.admit(id, reserve);
+        if (verdict !== 'admitted') {
+            const error: any = new (RouterError as any)(verdict, 'Router token budget is exhausted', 429);
+            this.diagnostics?.record(diagnosticReason(error));
+            throw error;
+        }
+    }
+    async recordUsage(id?: any, tokens?: any): Promise<any> { return this.settle(id, 0, tokens); }
+    async renewRunLease(id?: any): Promise<any> {
+        if (isSyntheticTokenId(id))
+            return this.clock() + 120;
+        return this.store.transaction((records?: any): any => {
+            const record: any = (records.get as any)(id), now: number = this.clock();
+            if (!record?.ephemeral || record.revoked || record.expires_at <= now || record.run_lease_expires_at == null)
+                throw new (RouterError as any)('invalid_token', 'Run lease is absent, revoked, expired as a token, or not ephemeral', 401);
+            record.run_lease_expires_at = now + 120;
+            return record.run_lease_expires_at;
+        });
+    }
 }
-export const codexTokenAlias: any = (token?: any): null | string => token.startsWith('la_sk_') ? `at-${token.slice(6)}` : null;
+export const codexTokenAlias: any = (token?: any): null | string => (token.startsWith as any)('la_sk_') ? `at-${(token.slice as any)(6)}` : null;

@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=c3f326f92de7b39147cdff9a8f8c6de7b226b8cf5226a046512d7935133a61a6; dynamic any annotations are explicit draft gaps.
+// Meta sha256=033257515a966ccf68abbd774f7cfc5cb588d8a7356dc727e34f3810a2188e89; dynamic any annotations are explicit draft gaps.
 import { createHash, randomUUID } from 'node:crypto';
 import { ProtocolError } from "./protocols.js";
 const TRANSITION_RESERVE_BYTES: number = 256;
@@ -11,9 +11,9 @@ export class ResponsesStore {
     declare maxRecords: any;
     declare records: any;
     declare ttlMs: any;
-    constructor({ clock = Date.now, ttlMs = 3600000, maxRecords = 1000, maxBytes = 16 * 1024 * 1024, maxRecordBytes = 1024 * 1024 }: any = {}) {
-        for (const [key, value] of Object.entries({ ttlMs, maxRecords, maxBytes, maxRecordBytes }) as any)
-            if (!Number.isSafeInteger(value) || value < 1)
+    constructor({ clock = (Date as any).now, ttlMs = 3600000, maxRecords = 1000, maxBytes = 16 * 1024 * 1024, maxRecordBytes = 1024 * 1024 }: any = {}) {
+        for (const [key, value] of (Object as any).entries({ ttlMs, maxRecords, maxBytes, maxRecordBytes }) as any)
+            if (!(Number as any).isSafeInteger(value) || value < 1)
                 throw new (TypeError as any)(`${key} must be a positive safe integer`);
         this.clock = clock;
         this.ttlMs = ttlMs;
@@ -23,8 +23,8 @@ export class ResponsesStore {
         this.records = new (Map as any)();
         this.bytes = 0;
     }
-    key(namespace?: any, owner?: any, id?: any): string { return JSON.stringify([namespace, owner, id]); }
-    serializedBytes(record?: any): number { return Buffer.byteLength(JSON.stringify({ namespace: record.namespace, owner: record.owner, input: record.input, response: record.response })); }
+    key(namespace?: any, owner?: any, id?: any): string { return (JSON as any).stringify([namespace, owner, id]); }
+    serializedBytes(record?: any): number { return (Buffer as any).byteLength((JSON as any).stringify({ namespace: record.namespace, owner: record.owner, input: record.input, response: record.response })); }
     size(record?: any): number { return TRANSITION_RESERVE_BYTES + this.serializedBytes(record); }
     transition(record?: any, fields?: any): void {
         const next: any = { ...record, response: { ...record.response, ...fields } };
@@ -104,23 +104,23 @@ export class ResponsesStore {
         this.get(namespace, owner, id);
         const record: any = this.records.get(this.key(namespace, owner, id));
         const limit: number = query.has('limit') ? Number(query.get('limit')) : 20;
-        if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+        if (!(Number as any).isSafeInteger(limit) || limit < 1 || limit > 100)
             throw new (ProtocolError as any)('limit must be an integer from 1 to 100');
         const order: string = query.get('order') ?? 'desc';
         if (!['asc', 'desc'].includes(order))
             throw new (ProtocolError as any)('order must be asc or desc');
         let items: any = structuredClone(record.input);
         if (order === 'desc')
-            items.reverse();
+            (items as any).reverse();
         for (const key of ['after', 'before'] as any)
             if (query.has(key)) {
-                const index: any = items.findIndex((item?: any): boolean => item.id === query.get(key));
+                const index: any = ((items as any).findIndex as any)((item?: any): boolean => item.id === query.get(key));
                 if (index < 0)
                     throw new (ProtocolError as any)('Input-item cursor not found');
-                items = key === 'after' ? items.slice(index + 1) : items.slice(0, index);
+                (items as any) = key === 'after' ? ((items as any).slice as any)(index + 1) : ((items as any).slice as any)(0, index);
             }
-        const data: any = items.slice(0, limit);
-        return { object: 'list', data, first_id: (data as any)[0]?.id ?? null, last_id: data.at(-1)?.id ?? null, has_more: items.length > limit };
+        const data: any = ((items as any).slice as any)(0, limit);
+        return { object: 'list', data, first_id: (data as any)[0]?.id ?? null, last_id: (data.at as any)(-1)?.id ?? null, has_more: (items as any).length > limit };
     }
     close(): void { for (const record of this.records.values() as any)
         record.abort?.(); this.records.clear(); this.bytes = 0; }
@@ -129,16 +129,16 @@ export function responseOwner(claims?: any, credential?: any): string {
     const value: any = claims.client_kind && claims.principal_id ? ['principal', claims.client_kind, claims.principal_id] : claims.sub ?? claims.id ? ['token', claims.sub ?? claims.id] : credential ? ['credential', credential] : null;
     if (!value)
         throw new (ProtocolError as any)('A stable credential identity is required for Responses storage', 403);
-    return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+    return createHash('sha256').update((JSON as any).stringify(value)).digest('hex');
 }
 export function normalizeResponseInput(body?: any): any {
-    if (!body || typeof body.input !== 'string' && !Array.isArray(body.input))
+    if (!body || typeof body.input !== 'string' && !(Array as any).isArray(body.input))
         throw new (ProtocolError as any)('input must be a string or array');
     const input: any = typeof body.input === 'string' ? [{ role: 'user', content: body.input }] : body.input;
     const ids: any = new (Set as any)();
-    return input.map((raw?: any): any => {
+    return (input.map as any)((raw?: any): any => {
         const item: any = typeof raw === 'string' ? { role: 'user', content: raw } : structuredClone(raw);
-        if (!item || typeof item !== 'object' || Array.isArray(item))
+        if (!item || typeof item !== 'object' || (Array as any).isArray(item))
             throw new (ProtocolError as any)('Response input items must be objects or strings');
         if (!item.id)
             item.id = `item_${randomUUID().replaceAll('-', '')}`;

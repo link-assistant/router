@@ -1,16 +1,18 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=c1c2dfaf09b61d5baf29c17c553aeb0ad237dc18545be0398972dbc8ad899f51; dynamic any annotations are explicit draft gaps.
+// Meta sha256=ba2d547602205f313f85e76a2b6256b6bf2ad0377694eed4eefd45116d7fe320; dynamic any annotations are explicit draft gaps.
 import { mkdir, open, readFile, rename, unlink, rm, stat } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { rustLockPath, withAdvisoryFileLock } from "./file-lock.js";
+import { encodeBinaryTokenRecords, readBinaryTokenRecords } from "./doublets.js";
 const queues: any = new (Map as any)();
 export async function serialized(key?: any, operation?: any): Promise<any> {
-    const previous: any = queues.get(key) ?? Promise.resolve();
+    const previous: any = queues.get(key) ?? (Promise as any).resolve();
     let release: any;
-    const held: any = new (Promise as any)((resolve?: any): void => { release = resolve; });
-    const tail: any = previous.catch((): void => { }).then((): any => held);
+    const held: any = new (Promise as any)((resolve?: any): void => { (release as any) = resolve; });
+    const tail: any = ((previous.catch as any)((): void => { }).then as any)((): any => held);
     queues.set(key, tail);
-    await previous.catch((): void => { });
+    await (previous.catch as any)((): void => { });
     try {
         return await operation();
     }
@@ -25,19 +27,13 @@ export async function atomicWrite(path?: any, text?: any): Promise<void> {
     const temporary: string = `${path}.${randomUUID()}.tmp`;
     let file: any;
     try {
-        file = await open(temporary, 'wx', 0o600);
+        (file as any) = await open(temporary, 'wx', 0o600);
         await file.writeFile(text, 'utf8');
         await file.sync();
         await file.close();
-        file = null;
+        (file as any) = null;
         await rename(temporary, path);
-        const directory: any = await open(dirname(path), 'r');
-        try {
-            await directory.sync();
-        }
-        finally {
-            await directory.close();
-        }
+        await syncDirectory(dirname(path));
     }
     finally {
         await file?.close();
@@ -48,12 +44,12 @@ export async function atomicWrite(path?: any, text?: any): Promise<void> {
 export async function withNativeFileLock(path?: any, operation?: any, timeout: any = 30000): Promise<any> {
     const lock: string = `${path}.native-lock`;
     await mkdir(dirname(path), { recursive: true, mode: 0o700 });
-    const started: number = Date.now();
+    const started: number = (Date as any).now();
     for (;;) {
         try {
             await mkdir(lock, { mode: 0o700 });
             try {
-                await atomicWrite(`${lock}/owner.json`, JSON.stringify({ pid: process.pid }));
+                await atomicWrite(`${lock}/owner.json`, (JSON as any).stringify({ pid: (process as any).pid }));
             }
             catch (error: any) {
                 await rm(lock, { recursive: true, force: true });
@@ -66,15 +62,15 @@ export async function withNativeFileLock(path?: any, operation?: any, timeout: a
                 throw error;
             let dead: any = false;
             try {
-                const owner: any = JSON.parse(await readFile(`${lock}/owner.json`, 'utf8') as any);
-                if (!Number.isSafeInteger(owner.pid) || owner.pid <= 0)
+                const owner: any = (JSON as any).parse(await readFile(`${lock}/owner.json`, 'utf8'));
+                if (!(Number as any).isSafeInteger(owner.pid) || owner.pid <= 0)
                     throw new (Error as any)('Invalid native lock owner');
                 try {
-                    process.kill(owner.pid, 0);
+                    (process as any).kill(owner.pid, 0);
                 }
                 catch (error: any) {
                     if (error.code === 'ESRCH')
-                        dead = true;
+                        (dead as any) = true;
                     else if (error.code !== 'EPERM')
                         throw error;
                 }
@@ -82,7 +78,7 @@ export async function withNativeFileLock(path?: any, operation?: any, timeout: a
             catch (error: any) {
                 if (error.code === 'ENOENT') {
                     try {
-                        dead = Date.now() - (await stat(lock)).mtimeMs > timeout;
+                        (dead as any) = (Date as any).now() - (await stat(lock)).mtimeMs > timeout;
                     }
                     catch (e: any) {
                         if (e.code !== 'ENOENT')
@@ -99,18 +95,18 @@ export async function withNativeFileLock(path?: any, operation?: any, timeout: a
                     try {
                         let stillDead: any = false;
                         try {
-                            const owner: any = JSON.parse(await readFile(`${lock}/owner.json`, 'utf8') as any);
+                            const owner: any = (JSON as any).parse(await readFile(`${lock}/owner.json`, 'utf8'));
                             try {
-                                process.kill(owner.pid, 0);
+                                (process as any).kill(owner.pid, 0);
                             }
                             catch (e: any) {
-                                stillDead = e.code === 'ESRCH';
+                                (stillDead as any) = e.code === 'ESRCH';
                             }
                         }
                         catch (e: any) {
                             if (e.code === 'ENOENT') {
                                 try {
-                                    stillDead = Date.now() - (await stat(lock)).mtimeMs > timeout;
+                                    (stillDead as any) = (Date as any).now() - (await stat(lock)).mtimeMs > timeout;
                                 }
                                 catch { }
                             }
@@ -128,7 +124,7 @@ export async function withNativeFileLock(path?: any, operation?: any, timeout: a
                 }
                 continue;
             }
-            if (Date.now() - started >= timeout)
+            if ((Date as any).now() - started >= timeout)
                 throw new (Error as any)('Timed out waiting for native storage lock');
             await new (Promise as any)((resolve?: any): any => setTimeout(resolve, 20));
         }
@@ -150,14 +146,86 @@ export async function readOptional(path?: any, fallback: any = ''): Promise<stri
         throw error;
     }
 }
+const transactionPaths: any = (path?: any): any => ({ rollback: join(dirname(path), `.${basename(path)}.router-rollback`), commit: join(dirname(path), `.${basename(path)}.router-commit`) });
+const removeOptional: any = async (path?: any): Promise<void> => { try {
+    await unlink(path);
+}
+catch (error: any) {
+    if (error.code !== 'ENOENT')
+        throw error;
+} };
+async function syncDirectory(path?: any): Promise<void> {
+    if ((process as any).platform === 'win32')
+        return;
+    const directory: any = await open(path, 'r');
+    try {
+        await directory.sync();
+    }
+    finally {
+        await directory.close();
+    }
+}
+export async function recoverTransactionalWrite(path?: any): Promise<void> {
+    const { rollback, commit }: any = transactionPaths(path);
+    const marker: string = await readOptional(commit, null);
+    if (marker != null) {
+        await removeOptional(rollback);
+        await syncDirectory(dirname(path));
+        await removeOptional(commit);
+        await syncDirectory(dirname(path));
+        return;
+    }
+    let previous: any;
+    try {
+        (previous as any) = await readFile(rollback);
+    }
+    catch (error: any) {
+        if (error.code === 'ENOENT')
+            return;
+        throw error;
+    }
+    if ((previous as any)[0] === 0)
+        await removeOptional(path);
+    else if ((previous as any)[0] === 1)
+        await atomicWrite(path, previous.subarray(1));
+    else
+        throw new (Error as any)('Invalid transactional rollback document');
+    await unlink(rollback);
+    await syncDirectory(dirname(path));
+}
+export async function transactionalWrite(path?: any, contents?: any): Promise<void> {
+    await recoverTransactionalWrite(path);
+    const { rollback, commit }: any = transactionPaths(path);
+    let previous: any;
+    try {
+        (previous as any) = (Buffer as any).concat([(Buffer as any).from([1]), await readFile(path)]);
+    }
+    catch (error: any) {
+        if (error.code !== 'ENOENT')
+            throw error;
+        (previous as any) = (Buffer as any).from([0]);
+    }
+    await atomicWrite(rollback, previous);
+    try {
+        await atomicWrite(path, contents);
+        await atomicWrite(commit, 'committed\n');
+    }
+    catch (error: any) {
+        await removeOptional(commit);
+        await syncDirectory(dirname(path));
+        await recoverTransactionalWrite(path);
+        throw error;
+    }
+    await recoverTransactionalWrite(path).catch((): void => { });
+}
 function quote(text?: any): string {
-    if (!text.includes('"'))
+    if (!(text.includes as any)('"'))
         return `"${text}"`;
-    if (!text.includes("'"))
+    if (!(text.includes as any)("'"))
         return `'${text}'`;
-    const delimiter: string = text.startsWith('"') ? "'" : '"';
-    const runs: any = text.match(new (RegExp as any)(`${delimiter}+`, 'g')) ?? [];
-    const count: number = Math.max(3, ...runs.map((run?: any): any => run.length + 1));
+    const delimiter: string = (text.startsWith as any)('"') ? "'" : '"';
+    const runs: any = (text.match as any)(new (RegExp as any)(`${delimiter}+`, 'g')) ?? [];
+    const count: number = (Math as any).max(3, ...(runs.map as any)((run?: any): any => run.length + 1));
     return delimiter.repeat(count) + text + delimiter.repeat(count);
 }
 export function encodeLino(value?: any, level: any = 0): any {
@@ -171,14 +239,14 @@ export function encodeLino(value?: any, level: any = 0): any {
     if (value === null || typeof value === 'boolean')
         return String(value);
     if (typeof value === 'number') {
-        if (!Number.isSafeInteger(value))
+        if (!(Number as any).isSafeInteger(value))
             throw new (Error as any)('Storage numbers must be safe integers');
         return String(value);
     }
     const indent: string = '  '.repeat(level + 1), close: string = '  '.repeat(level);
-    if (Array.isArray(value))
+    if ((Array as any).isArray(value))
         return value.length ? `(\n${value.map((v?: any): any => indent + encodeLino(v, level + 1)).join('\n')}\n${close})` : '()';
-    const entries: any = Object.entries(value);
+    const entries: any = (Object as any).entries(value);
     return `(\n${entries.map(([key, v]: any): any => `${indent}${key} ${encodeLino(v, level + 1)}`).join('\n')}${entries.length ? '\n' : ''}${close})`;
 }
 export function decodeLino(text?: any): any {
@@ -194,7 +262,7 @@ export function decodeLino(text?: any): any {
             return raw === 'true';
         if (/^-?\d+$/.test(raw)) {
             const n: number = Number(raw);
-            if (!Number.isSafeInteger(n))
+            if (!(Number as any).isSafeInteger(n))
                 throw new (Error as any)('Unsafe storage integer');
             return n;
         }
@@ -209,10 +277,10 @@ export function decodeLino(text?: any): any {
             let row: any = [], multiline: any = false;
             while (i < text.length && (text as any)[i] !== ')') {
                 if ((text as any)[i] === '\n') {
-                    multiline = true;
+                    (multiline as any) = true;
                     if (row.length)
                         rows.push(row);
-                    row = [];
+                    (row as any) = [];
                     i++;
                     skip();
                     continue;
@@ -225,12 +293,12 @@ export function decodeLino(text?: any): any {
             if (row.length)
                 rows.push(row);
             if (rows.length === 1 && ((rows as any)[0] as any)[0] === 'escaped' && (rows as any)[0].length === 2) {
-                return ((rows as any)[0] as any)[1].replace(/(?:%[0-9A-Fa-f]{2})+/g, (run?: any): string => Buffer.from(run.replaceAll('%', ''), 'hex').toString('utf8'));
+                return (((rows as any)[0] as any)[1].replace as any)(/(?:%[0-9A-Fa-f]{2})+/g, (run?: any): string => (Buffer as any).from((run.replaceAll as any)('%', ''), 'hex').toString('utf8'));
             }
             if (rows.length === 1 && ((rows as any)[0] as any)[0] === 'o:') {
-                const object: any = Object.create(null);
+                const object: any = (Object as any).create(null);
                 for (const pair of (rows as any)[0].slice(1) as any) {
-                    const entries: any = Array.isArray(pair) ? [pair] : Object.entries(pair);
+                    const entries: any = (Array as any).isArray(pair) ? [pair] : (Object as any).entries(pair);
                     if (entries.length !== 1 || (entries as any)[0].length !== 2)
                         throw new (Error as any)('Invalid Lino object pair');
                     (object as any)[((entries as any)[0] as any)[0]] = ((entries as any)[0] as any)[1];
@@ -238,9 +306,9 @@ export function decodeLino(text?: any): any {
                 return object;
             }
             if (multiline && rows.every((r?: any): boolean => r.length === 2 && typeof (r as any)[0] === 'string')) {
-                const object: any = Object.create(null);
+                const object: any = (Object as any).create(null);
                 for (const [key, v] of rows as any) {
-                    if (Object.hasOwn(object, key))
+                    if ((Object as any).hasOwn(object, key))
                         throw new (Error as any)('Duplicate Lino key');
                     (object as any)[key] = v;
                 }
@@ -254,14 +322,14 @@ export function decodeLino(text?: any): any {
             while ((text as any)[i + count] === delimiter)
                 count++;
             if (count === 2) {
-                i += 2;
+                (i as any) += 2;
                 return '';
             }
-            i += count;
+            (i as any) += count;
             let raw: any = '';
             while (i < text.length) {
                 if ((text as any)[i] !== delimiter) {
-                    raw += (text as any)[i++];
+                    (raw as any) += (text as any)[i++];
                     continue;
                 }
                 let run: any = 0;
@@ -269,20 +337,20 @@ export function decodeLino(text?: any): any {
                     run++;
                 if (count === 1) {
                     if (run >= 2) {
-                        raw += delimiter;
-                        i += 2;
+                        (raw as any) += delimiter;
+                        (i as any) += 2;
                         continue;
                     }
                     i++;
                     return scalar(raw, true);
                 }
                 if (run >= count) {
-                    raw += delimiter.repeat(run - count);
-                    i += run;
+                    (raw as any) += (delimiter.repeat as any)(run - count);
+                    (i as any) += run;
                     return scalar(raw, true);
                 }
-                raw += delimiter.repeat(run);
-                i += run;
+                (raw as any) += (delimiter.repeat as any)(run);
+                (i as any) += run;
             }
             throw new (Error as any)('Unclosed Lino string');
         }
@@ -291,7 +359,7 @@ export function decodeLino(text?: any): any {
             i++;
         if (i === start)
             throw new (Error as any)('Invalid Links Notation input');
-        return scalar(text.slice(start, i));
+        return scalar((text.slice as any)(start, i));
     }
     while (/\s/.test((text as any)[i] ?? '') && i < text.length)
         i++;
@@ -304,13 +372,13 @@ export function decodeLino(text?: any): any {
 }
 const strings: Array<string> = ['max_requests', 'used_requests', 'max_tokens', 'used_tokens', 'reserved_tokens', 'rate_limit_per_minute', 'rate_window_started_at', 'rate_window_requests', 'sliding_window_seconds', 'run_lease_expires_at'];
 export function encodeTokenRecords(records?: any): any {
-    const values: any = records.slice().sort((a?: any, b?: any): any => a.id.localeCompare(b.id)).map((record?: any): any => {
+    const values: any = ((records.slice().sort as any)((a?: any, b?: any): any => (a.id.localeCompare as any)(b.id)).map as any)((record?: any): any => {
         const value: any = { ...record };
         for (const field of strings as any)
             if ((value as any)[field] != null)
                 (value as any)[field] = String((value as any)[field]);
-        value.github_repos = (value.github_repos ?? []).join(',');
-        value.model_policy = JSON.stringify(value.model_policy ?? {});
+        value.github_repos = ((value.github_repos ?? []).join as any)(',');
+        value.model_policy = (JSON as any).stringify(value.model_policy ?? {});
         return { type: 'TokenRecord', subtype: record.id, value };
     });
     return encodeLino({ type: 'RouterState', subtype: 'TokenStore', value: values });
@@ -319,10 +387,10 @@ export function decodeTokenRecords(text?: any): any {
     if (!text.trim())
         return [];
     const root: any = decodeLino(text);
-    if (root.type !== 'RouterState' || root.subtype !== 'TokenStore' || !Array.isArray(root.value))
+    if (root.type !== 'RouterState' || root.subtype !== 'TokenStore' || !(Array as any).isArray(root.value))
         throw new (Error as any)('Unsupported token storage format');
     const ids: any = new (Set as any)();
-    return root.value.map((row?: any): any => {
+    return (root.value.map as any)((row?: any): any => {
         if (row.type !== 'TokenRecord' || row.subtype !== row.value?.id || ids.has(row.subtype))
             throw new (Error as any)('Invalid/duplicate token record');
         ids.add(row.subtype);
@@ -332,13 +400,13 @@ export function decodeTokenRecords(text?: any): any {
                 if (!/^-?\d+$/.test(String((record as any)[field])))
                     throw new (Error as any)(`Invalid token field ${field}`);
                 (record as any)[field] = Number((record as any)[field]);
-                if (!Number.isSafeInteger((record as any)[field]) || (field !== 'rate_window_started_at' && (record as any)[field] < 0))
+                if (!(Number as any).isSafeInteger((record as any)[field]) || (field !== 'rate_window_started_at' && (record as any)[field] < 0))
                     throw new (Error as any)(`Unsafe token field ${field}`);
             }
-        if (typeof record.id !== 'string' || typeof record.revoked !== 'boolean' || !Number.isSafeInteger(record.expires_at) || !Number.isSafeInteger(record.issued_at))
+        if (typeof record.id !== 'string' || typeof record.revoked !== 'boolean' || !(Number as any).isSafeInteger(record.expires_at) || !(Number as any).isSafeInteger(record.issued_at))
             throw new (Error as any)('Invalid token record');
-        record.github_repos = record.github_repos ? record.github_repos.split(',') : [];
-        record.model_policy = JSON.parse(record.model_policy ?? '{}' as any);
+        record.github_repos = record.github_repos ? (record.github_repos.split as any)(',') : [];
+        record.model_policy = (JSON as any).parse(record.model_policy ?? '{}');
         return record;
     });
 }
@@ -349,38 +417,137 @@ export class MemoryTokenStore {
     async transaction(operation?: any): Promise<any> {
         return serialized(this.key, async (): Promise<any> => {
             const records: any = new (Map as any)([...this.records].map(([id, r]: any): any => [id, structuredClone(r)]));
-            const result: any = await operation(records);
+            const result: any = await (operation as any)(records);
             this.records = records;
             return structuredClone(result);
         });
     }
     async list(): Promise<any> { return structuredClone([...this.records.values()]); }
     async get(id?: any): Promise<any> { return structuredClone(this.records.get(id) ?? null); }
-    async put(record?: any): Promise<any> { return this.transaction((records?: any): any => records.set(record.id, structuredClone(record)) && record); }
-    async delete(id?: any): Promise<any> { return this.transaction((records?: any): any => records.delete(id)); }
+    async put(record?: any): Promise<any> { return this.transaction((records?: any): any => (records.set as any)(record.id, structuredClone(record)) && record); }
+    async delete(id?: any): Promise<any> { return this.transaction((records?: any): any => (records.delete as any)(id)); }
 }
 export class TextTokenStore extends MemoryTokenStore {
     declare path: any;
     declare records: any;
     constructor(path: any) { super(); this.path = path; }
     async transaction(operation?: any): Promise<any> {
-        return serialized(this.path, (): any => withNativeFileLock(this.path, async (): Promise<any> => {
-            const records: any = new (Map as any)(decodeTokenRecords(await readOptional(this.path)).map((r?: any): any => [r.id, r]));
-            const result: any = await operation(records);
-            await atomicWrite(this.path, encodeTokenRecords([...records.values()]));
+        return serialized(this.path, (): any => withAdvisoryFileLock(rustLockPath(this.path), async (): Promise<any> => {
+            await recoverTransactionalWrite(this.path);
+            const records: any = new (Map as any)((decodeTokenRecords(await readOptional(this.path)).map as any)((r?: any): any => [r.id, r]));
+            const result: any = await (operation as any)(records);
+            await transactionalWrite(this.path, encodeTokenRecords([...records.values()]));
             this.records = records;
             return structuredClone(result);
         }));
     }
-    async list(): Promise<any> { return decodeTokenRecords(await readOptional(this.path)); }
-    async get(id?: any): Promise<any> { return (await this.list()).find((r?: any): boolean => r.id === id) ?? null; }
+    async list(): Promise<any> { return withAdvisoryFileLock(rustLockPath(this.path), async (): Promise<any> => { await recoverTransactionalWrite(this.path); return decodeTokenRecords(await readOptional(this.path)); }); }
+    async get(id?: any): Promise<any> { return ((await this.list()).find as any)((r?: any): boolean => r.id === id) ?? null; }
+}
+export class BinaryTokenStore extends MemoryTokenStore {
+    declare path: any;
+    declare records: any;
+    constructor(path: any) { super(); this.path = path; }
+    async transaction(operation?: any): Promise<any> {
+        return serialized(this.path, (): any => withAdvisoryFileLock(rustLockPath(this.path), async (): Promise<any> => {
+            const records: any = new (Map as any)(((await readBinaryTokenRecords(this.path)).map as any)((record?: any): any => [record.id, record]));
+            const result: any = await (operation as any)(records);
+            await atomicWrite(this.path, encodeBinaryTokenRecords([...records.values()]));
+            this.records = records;
+            return structuredClone(result);
+        }));
+    }
+    async list(): Promise<any> { return withAdvisoryFileLock(rustLockPath(this.path), (): any => readBinaryTokenRecords(this.path), { shared: true }); }
+    async get(id?: any): Promise<any> { return ((await this.list()).find as any)((record?: any): boolean => record.id === id) ?? null; }
+}
+export function mergeSaferRecord(current?: any, other?: any): any {
+    current.revoked ||= other.revoked;
+    for (const field of ['used_requests', 'used_tokens', 'reserved_tokens'] as any)
+        (current as any)[field] = (Math as any).max((current as any)[field] ?? 0, (other as any)[field] ?? 0);
+    if ((other.rate_window_started_at ?? 0) > (current.rate_window_started_at ?? 0)) {
+        current.rate_window_started_at = other.rate_window_started_at;
+        current.rate_window_requests = other.rate_window_requests;
+    }
+    else if (other.rate_window_started_at === current.rate_window_started_at)
+        current.rate_window_requests = (Math as any).max(current.rate_window_requests ?? 0, other.rate_window_requests ?? 0);
+    return current;
+}
+export class DualTokenStore extends MemoryTokenStore {
+    declare binary: any;
+    declare journal: any;
+    declare path: any;
+    declare records: any;
+    declare text: any;
+    constructor(dataDir: any) {
+        super();
+        this.path = join(dataDir, 'tokens.transaction.lock');
+        this.journal = join(dataDir, 'tokens.transaction.json');
+        this.text = new (TextTokenStore as any)(join(dataDir, 'tokens.lino'));
+        this.binary = new (BinaryTokenStore as any)(join(dataDir, 'tokens.bin'));
+    }
+    async install(records?: any): Promise<void> {
+        await this.text.transaction((current?: any): void => { current.clear(); for (const record of records as any)
+            (current.set as any)(record.id, record); });
+        const projection: any = await this.binary.list();
+        const canonical: any = (rows?: any): any => encodeTokenRecords(rows);
+        if (canonical(projection) !== canonical(records))
+            await this.binary.transaction((current?: any): void => { current.clear(); for (const record of records as any)
+                (current.set as any)(record.id, record); });
+        await removeOptional(this.journal);
+        await syncDirectory(dirname(this.journal));
+    }
+    async recover(): Promise<void> {
+        const source: string = await readOptional(this.journal, null);
+        if (source != null) {
+            const records: any = source.trimStart().startsWith('[') ? (JSON as any).parse(source) : decodeLino(source);
+            if (!(Array as any).isArray(records))
+                throw new (Error as any)('Invalid token transaction journal');
+            await this.install(records);
+        }
+    }
+    async mergedRecords(): Promise<any> {
+        const records: any = new (Map as any)(((await this.text.list()).map as any)((record?: any): any => [record.id, record]));
+        for (const record of await this.binary.list() as any) {
+            if (records.has(record.id))
+                mergeSaferRecord(records.get(record.id), record);
+            else
+                records.set(record.id, record);
+        }
+        return records;
+    }
+    async transaction(operation?: any): Promise<any> {
+        return serialized(this.path, (): any => withAdvisoryFileLock(this.path, async (): Promise<any> => {
+            await this.recover();
+            const records: any = await this.mergedRecords(), result: any = await (operation as any)(records);
+            const sorted: any = [...records.values()].sort((left?: any, right?: any): number => (Buffer as any).compare((Buffer as any).from(left.id), (Buffer as any).from(right.id)));
+            await atomicWrite(this.journal, encodeLino(sorted));
+            await this.install(sorted);
+            this.records = records;
+            return structuredClone(result);
+        }));
+    }
+    async list(): Promise<any> {
+        const read: any = async (): Promise<any> => {
+            const records: any = await this.text.list();
+            return records.length ? records : [...(await this.mergedRecords()).values()];
+        };
+        const result: any = await withAdvisoryFileLock(this.path, async (): Promise<any> => (await readOptional(this.journal, null)) != null ? null : read(), { shared: true });
+        if (result != null)
+            return result;
+        return withAdvisoryFileLock(this.path, async (): Promise<any> => { await this.recover(); return read(); });
+    }
+    async get(id?: any): Promise<any> { return ((await this.list()).find as any)((record?: any): boolean => record.id === id) ?? null; }
 }
 export function createTokenStore({ storage_policy = 'memory', data_dir = '.', storage }: any = {}): any {
     if (storage)
         return storage;
     if (['memory', 'mem', 'none'].includes(storage_policy))
         return new (MemoryTokenStore as any)();
-    if (storage_policy === 'text')
+    if (['text', 'txt', 'lino'].includes(storage_policy))
         return new (TextTokenStore as any)(`${data_dir}/tokens.lino`);
-    throw Object.assign(new (Error as any)(`Native token storage '${storage_policy}' is not implemented; select text or memory explicitly`), { code: 'native_unsupported' });
+    if (['binary', 'bin', 'link-cli', 'linkcli', 'clink'].includes(storage_policy))
+        return new (BinaryTokenStore as any)(`${data_dir}/tokens.bin`);
+    if (['both', 'dual'].includes(storage_policy))
+        return new (DualTokenStore as any)(data_dir);
+    throw (Object as any).assign(new (Error as any)(`Unknown token storage policy '${storage_policy}'`), { code: 'invalid_config' });
 }

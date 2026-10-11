@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=3386aa0451e69c4c5fcee873795819bbe72a819f8884fadf45b88007a28dfb28; dynamic any annotations are explicit draft gaps.
+// Meta sha256=a31587ae2e08e82fa34f68b31727d6ced165ba0ede8a1c2a71812bd945fdc54a; dynamic any annotations are explicit draft gaps.
 import { open, lstat, readdir, mkdir, mkdtemp, rename, chmod, rm } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { resolve, join, dirname, parse } from 'node:path';
@@ -10,9 +10,9 @@ import { isIP } from 'node:net';
 const exec: any = promisify(execFile);
 const tlsTasks: any = new (Map as any)();
 const MAX_BYTES: number = 256 * 1024 * 1024, MAX_FILES: number = 10000, MAX_DEPTH: number = 128;
-const unsupported: any = (message?: any): any => Object.assign(new (Error as any)(message), { code: 'unsupported' });
-const bad: any = (message?: any): any => Object.assign(new (Error as any)(message), { code: 'invalid_resource' });
-export const supportedResourceOperations: any = Object.freeze({
+const unsupported: any = (message?: any): any => (Object as any).assign(new (Error as any)(message), { code: 'unsupported' });
+const bad: any = (message?: any): any => (Object as any).assign(new (Error as any)(message), { code: 'invalid_resource' });
+export const supportedResourceOperations: any = (Object as any).freeze({
     'logs.show': { status: 'partial', limitations: ['Local logs only; 256 MiB / 10000-file read budget; symlinks refused; zstd needs a Node runtime with zstdDecompressSync.'] },
     'logs.summary': { status: 'partial', limitations: ['Local logs only; 256 MiB / 10000-file read budget; symlinks refused; zstd needs a Node runtime with zstdDecompressSync.'] },
     'logs.anomalies': { status: 'partial', limitations: ['Local logs only; 256 MiB / 10000-file read budget; symlinks refused; zstd needs a Node runtime with zstdDecompressSync.'] },
@@ -25,7 +25,7 @@ export function decodeLogLine(source?: any): any {
         return undefined;
     if (/^[\[{]/.test(text)) {
         try {
-            return JSON.parse(text as any);
+            return (JSON as any).parse(text);
         }
         catch {
             return undefined;
@@ -42,21 +42,21 @@ export function decodeLogLine(source?: any): any {
         while (pos < text.length) {
             const ch: any = (text as any)[pos++];
             if (ch === '"') {
-                closed = true;
+                (closed as any) = true;
                 break;
             }
             if (ch === '\\') {
                 const next: any = (text as any)[pos++];
                 if (next === undefined)
                     throw bad('Malformed quoted record');
-                value += next === 'n' ? '\n' : next === 'r' ? '\r' : next;
+                (value as any) += next === 'n' ? '\n' : next === 'r' ? '\r' : next;
             }
             else
-                value += ch;
+                (value as any) += ch;
         }
         if (!closed)
             throw bad('Malformed quoted record');
-        return escaped ? value === '%z' ? '' : value.replace(/%([0-9a-fA-F]{2})/g, (_?: any, hex?: any): string => String.fromCharCode(parseInt(hex, 16))) : value;
+        return escaped ? value === '%z' ? '' : value.replace(/%([0-9a-fA-F]{2})/g, (_?: any, hex?: any): string => (String as any).fromCharCode(parseInt(hex, 16))) : value;
     };
     const value: any = (escaped: any = false, depth: any = 0): any => {
         if (depth > MAX_DEPTH)
@@ -68,13 +68,13 @@ export function decodeLogLine(source?: any): any {
             const start: number = pos;
             while (pos < text.length && !/[\s()]/.test((text as any)[pos]))
                 pos++;
-            const token: any = text.slice(start, pos);
+            const token: any = (text.slice as any)(start, pos);
             if (['null', 'true', 'false'].includes(token))
-                return JSON.parse(token as any);
+                return (JSON as any).parse(token);
             if (!/^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(token))
                 throw bad('Malformed scalar record');
             const number: number = Number(token);
-            if (!Number.isFinite(number))
+            if (!(Number as any).isFinite(number))
                 throw bad('Invalid number');
             return number;
         }
@@ -82,12 +82,12 @@ export function decodeLogLine(source?: any): any {
         space();
         let marker: any = null;
         if ((text as any)[pos] === '#') {
-            marker = text.slice(pos, pos + 2);
-            pos += 2;
+            (marker as any) = (text.slice as any)(pos, pos + 2);
+            (pos as any) += 2;
             if (!['#a', '#o'].includes(marker))
                 throw bad('Invalid marker');
         }
-        const object: any = Object.create(null), items: any = [];
+        const object: any = (Object as any).create(null), items: any = [];
         let keyed: any = true, pairs: any = 0;
         while (true) {
             space();
@@ -109,7 +109,7 @@ export function decodeLogLine(source?: any): any {
                 pairs++;
             }
             else {
-                keyed = false;
+                (keyed as any) = false;
                 items.push(value(marker === '#a', depth + 1));
             }
         }
@@ -144,7 +144,7 @@ async function noLinks(path?: any): Promise<void> {
             throw bad(`Resource path contains a symlink: ${current}`);
         if (current === parse(current).root)
             break;
-        current = dirname(current);
+        (current as any) = dirname(current);
         if (++hops > 256)
             throw bad('Resource path is too deep');
     }
@@ -161,17 +161,17 @@ async function boundedFile(path?: any, budget?: any): Promise<any> {
         const chunks: any = [];
         let total: any = 0;
         while (true) {
-            const chunk: any = Buffer.alloc(Math.min(65536, budget.remaining - total + 1));
+            const chunk: any = (Buffer as any).alloc((Math as any).min(65536, budget.remaining - total + 1));
             const { bytesRead }: any = await handle.read(chunk, 0, chunk.length, null);
             if (!bytesRead)
                 break;
-            total += bytesRead;
+            (total as any) += bytesRead;
             if (total > budget.remaining)
                 throw unsupported(`Resource read exceeds the ${budget.limit} byte budget`);
             chunks.push(chunk.subarray(0, bytesRead));
         }
         budget.remaining -= total;
-        return Buffer.concat(chunks, total);
+        return (Buffer as any).concat(chunks, total);
     }
     finally {
         await handle.close();
@@ -185,7 +185,7 @@ function utf8(bytes?: any, path?: any): string {
         throw bad(`Resource is not valid UTF-8: ${path}`);
     }
 }
-async function readLogs(root?: any, token?: any): Promise<any> {
+export async function readNativeRequestLogs(root?: any, token?: any): Promise<any> {
     await noLinks(root);
     const rootStat: any = await statOptional(root);
     if (!rootStat?.isDirectory())
@@ -229,9 +229,9 @@ async function readLogs(root?: any, token?: any): Promise<any> {
     }
     return { files: decoded, bytes: MAX_BYTES - budget.remaining, unparsable };
 }
-const terminates: any = (text?: any): boolean => ['message_stop', '[DONE]', 'response.completed', 'finishReason'].some((marker?: any): any => text.includes(marker));
-function encoding(header?: any): any { return (header ?? 'identity').split(',').map((s?: any): any => s.trim()).filter(Boolean).at(-1)?.toLowerCase() ?? 'identity'; }
-function base64Bytes(text?: any): any { return typeof text === 'string' && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(text) ? Buffer.from(text, 'base64') : null; }
+const terminates: any = (text?: any): boolean => ['message_stop', '[DONE]', 'response.completed', 'finishReason'].some((marker?: any): any => (text.includes as any)(marker));
+function encoding(header?: any): any { return (((((header ?? 'identity').split as any)(',').map as any)((s?: any): any => s.trim()).filter as any)(Boolean).at as any)(-1)?.toLowerCase() ?? 'identity'; }
+function base64Bytes(text?: any): any { return typeof text === 'string' && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(text) ? (Buffer as any).from(text, 'base64') : null; }
 function decompress(bytes?: any, kind?: any): any {
     if (kind === 'identity' || !bytes.length)
         return null;
@@ -241,8 +241,8 @@ function decompress(bytes?: any, kind?: any): any {
     if (!(decoders as any)[kind])
         return null;
     try {
-        const decoded: any = (decoders as any)[kind](bytes, { finishFlush: (zlib as any).constants.Z_SYNC_FLUSH, maxOutputLength: MAX_BYTES });
-        return decoded.length ? decoded.toString('utf8') : null;
+        const decoded: any = ((decoders as any)[kind] as any)(bytes, { finishFlush: (zlib as any).constants.Z_SYNC_FLUSH, maxOutputLength: MAX_BYTES });
+        return decoded.length ? (decoded.toString as any)('utf8') : null;
     }
     catch (error: any) {
         if (error.code === 'ERR_BUFFER_TOO_LARGE')
@@ -266,7 +266,7 @@ function exchanges(log?: any): any {
                 x.requested = true;
         }
         if (['client_response', 'upstream_response'].includes(record.phase)) {
-            const status: any = Number.isSafeInteger(record.status) && record.status >= 0 ? record.status : undefined;
+            const status: any = (Number as any).isSafeInteger(record.status) && record.status >= 0 ? record.status : undefined;
             if (record.phase === 'client_response')
                 x.status = status;
             else
@@ -285,10 +285,10 @@ function exchanges(log?: any): any {
                     x.undecodable++;
                     const bytes: any = base64Bytes(record.body.base64);
                     if (bytes)
-                        x.encoded.push(bytes);
+                        (x.encoded.push as any)(bytes);
                 }
             }
-            else if (record.body != null && terminates(typeof record.body === 'string' ? record.body : JSON.stringify(record.body)))
+            else if (record.body != null && terminates(typeof record.body === 'string' ? record.body : (JSON as any).stringify(record.body)))
                 x.terminated = true;
         }
         if (record.phase === 'stream_end') {
@@ -304,20 +304,20 @@ function exchanges(log?: any): any {
         if (!['identity', 'gzip', 'x-gzip', 'deflate', 'br', 'zstd'].includes(x.kind))
             x.inspectable = false;
         else if (x.kind !== 'identity' && x.encoded.length) {
-            const decoded: any = decompress(Buffer.concat(x.encoded), x.kind);
+            const decoded: any = decompress((Buffer as any).concat(x.encoded), x.kind);
             if (!decoded)
                 x.inspectable = false;
             else {
                 x.inspectable = true;
                 x.undecodable = 0;
-                x.error = decoded.split(/\r?\n/).some((line?: any): boolean => {
+                x.error = ((decoded.split as any)(/\r?\n/).some as any)((line?: any): boolean => {
                     const text: any = line.trim();
                     if (text.toLowerCase() === 'event: error')
                         return true;
-                    if (!text.startsWith('data:'))
+                    if (!(text.startsWith as any)('data:'))
                         return false;
                     try {
-                        return JSON.parse(text.slice(5).trim() as any).type === 'error';
+                        return (JSON as any).parse((text.slice as any)(5).trim()).type === 'error';
                     }
                     catch {
                         return false;
@@ -360,9 +360,9 @@ function summary(log?: any, all?: any): any {
 }
 function anomalies(all?: any): any {
     const result: any = [], add: any = (kind?: any, detail?: any, test?: any, minimum: any = 1): void => {
-        const ids: any = all.filter(test).map((x?: any): any => x.id);
+        const ids: any = ((all.filter as any)(test).map as any)((x?: any): any => x.id);
         if (ids.length >= minimum)
-            result.push({ kind, detail: typeof detail === 'function' ? detail(ids.length) : detail, correlation_ids: ids });
+            result.push({ kind, detail: typeof detail === 'function' ? (detail as any)(ids.length) : detail, correlation_ids: ids });
     };
     add('stream_ended_without_terminator', 'a streamed turn stopped before its dialect terminator; the client saw a truncated answer while the status line said 200', incomplete);
     add('no_terminal_record', 'a streamed exchange has no terminal record, so how it ended is unknown', unterminated);
@@ -376,15 +376,15 @@ function anomalies(all?: any): any {
 function show(log?: any, id?: any): any {
     const records: any = [];
     for (const file of log.files as any) {
-        const selected: any = file.filter((record?: any): boolean => record?.correlation_id === id);
-        const header: any = selected.find((record?: any): boolean => typeof record.headers?.['content-encoding'] === 'string')?.headers['content-encoding'];
-        const stored: any = selected.map((record?: any): any => base64Bytes(record.body?.base64)).filter(Boolean);
-        const decoded: any = decompress(Buffer.concat(stored), encoding(header));
-        const first: any = selected.findIndex((record?: any): boolean => typeof record.body?.base64 === 'string');
+        const selected: any = (file.filter as any)((record?: any): boolean => record?.correlation_id === id);
+        const header: any = (selected.find as any)((record?: any): boolean => typeof record.headers?.['content-encoding'] === 'string')?.headers['content-encoding'];
+        const stored: any = ((selected.map as any)((record?: any): any => base64Bytes(record.body?.base64)).filter as any)(Boolean);
+        const decoded: any = decompress((Buffer as any).concat(stored), encoding(header));
+        const first: any = (selected.findIndex as any)((record?: any): boolean => typeof record.body?.base64 === 'string');
         for (const [index, record] of selected.entries() as any)
             records.push(decoded && typeof record.body?.base64 === 'string' ? { ...record, body: index === first ? decoded : '[decoded with the first frame: only the whole stream decodes]' } : record);
     }
-    const output: Array<string> = records.length ? records.flatMap((record?: any): Array<string> => JSON.stringify(record, null, 2).split('\n')) : [`no records for correlation id ${id}`];
+    const output: Array<string> = records.length ? records.flatMap((record?: any): Array<string> => (JSON as any).stringify(record, null, 2).split('\n')) : [`no records for correlation id ${id}`];
     return { correlation_id: id, records, output };
 }
 async function tlsGenerate(dataDir?: any, dns?: any): Promise<any> {
@@ -421,8 +421,8 @@ async function tlsGenerate(dataDir?: any, dns?: any): Promise<any> {
     return { output: [cert] };
 }
 async function serializedTlsGenerate(dataDir?: any, dns?: any): Promise<any> {
-    const before: any = tlsTasks.get(dataDir) ?? Promise.resolve();
-    const task: any = before.catch((): void => { }).then((): any => tlsGenerate(dataDir, dns));
+    const before: any = tlsTasks.get(dataDir) ?? (Promise as any).resolve();
+    const task: any = ((before.catch as any)((): void => { }).then as any)((): any => tlsGenerate(dataDir, dns));
     tlsTasks.set(dataDir, task);
     try {
         return await task;
@@ -435,8 +435,8 @@ async function serializedTlsGenerate(dataDir?: any, dns?: any): Promise<any> {
 export async function executeResourceOperation({ name, options = {}, config = {}, core }: any): Promise<any> {
     if (!(supportedResourceOperations as any)[name])
         throw unsupported(`Native resource operation ${name} is unavailable`);
-    const accepted: any = new (Set as any)(['data_dir', 'home', 'local', 'json', ...(name.startsWith('logs.') ? ['token', 'correlation_id', 'request_log'] : name === 'tls.generate' ? ['dns'] : [])]);
-    for (const [key, value] of Object.entries(options) as any)
+    const accepted: any = new (Set as any)(['data_dir', 'home', 'local', 'json', ...((name.startsWith as any)('logs.') ? ['token', 'correlation_id', 'request_log'] : name === 'tls.generate' ? ['dns'] : [])]);
+    for (const [key, value] of (Object as any).entries(options) as any)
         if (value !== undefined && value !== false && !accepted.has(key))
             throw unsupported(`Native ${name} does not support option ${key}`);
     const resolvedConfig: any = core?.config ?? config;
@@ -465,7 +465,7 @@ export async function executeResourceOperation({ name, options = {}, config = {}
     if (name === 'logs.show' && typeof options.correlation_id !== 'string')
         throw bad('logs.show requires correlation_id');
     const root: any = options.request_log ?? resolvedConfig.request_log ?? join(dataDir, 'requests');
-    const log: any = await readLogs(root, options.token);
+    const log: any = await readNativeRequestLogs(root, options.token);
     if (name === 'logs.show')
         return show(log, options.correlation_id);
     const all: any = exchanges(log);
@@ -473,6 +473,6 @@ export async function executeResourceOperation({ name, options = {}, config = {}
         return summary(log, all);
     const found: any = anomalies(all);
     if (found.length)
-        throw Object.assign(new (Error as any)('Request-log anomalies found'), { data: found, exitCode: 1 });
+        throw (Object as any).assign(new (Error as any)('Request-log anomalies found'), { data: found, exitCode: 1 });
     return found;
 }

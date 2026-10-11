@@ -1,16 +1,29 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=6fde108fa8f8c4f3faf63e9ce3fe563a3b3a8e21a61d93cb7955f4089cc88772; dynamic any annotations are explicit draft gaps.
+// Meta sha256=cd0599c874e61bafed0f36179a0e90d06891938fc392e8ad104c4647b016c86e; dynamic any annotations are explicit draft gaps.
 import { readFileSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { executeCredentialOperation, credentialWithdrawal } from "./credential-operations.js";
+import { readNativeText } from "./operation-input.js";
+import { readTokenImportSource, importTokenRecords } from "./token-import.js";
 import { executeResourceOperation, supportedResourceOperations } from "./resources.js";
 import { executeAuthOperation } from "./oauth.js";
-import { executeManagedOperation, supportedManagedOperations, selectedManagedServer } from "./managed-server.js";
+import { CodexLogin } from "./codex-login.js";
+import { nativeCredentialStatus } from "./auth-service.js";
+import { nativeConfigOptions } from "./config.js";
+import { parseProviderImport } from "./provider-manifest.js";
+import { provisionLocalProvider, importLocalProviders } from "./provider-provision.js";
+import { parsePauseUntil } from "./remote-operations.js";
+import { clientIntegrations } from "./client-files.js";
+import { nativeClientStatus } from "./client-status.js";
+import { setupNativeClient, removeNativeClient } from "./client-setup.js";
+import { executeManagedOperation, supportedManagedOperations, selectedManagedTarget } from "./managed-server.js";
+import { executeRemoteOperation, remoteStateFamilies } from "./remote-operations.js";
 import Ajv2020 from 'ajv/dist/2020.js';
-export const catalog: any = JSON.parse(readFileSync(new (URL as any)('../catalog.json', import.meta.url), 'utf8') as any);
+export const catalog: any = (JSON as any).parse(readFileSync(new (URL as any)('../catalog.json', import.meta.url), 'utf8'));
 export const version: any = catalog.version;
-export const operationNames: any = Object.freeze(catalog.operations.map((operation?: any): any => operation.name));
-const camel: any = (value?: any): any => value.replace(/[-_]([a-z])/g, (_?: any, letter?: any): any => letter.toUpperCase());
-const snake: any = (value?: any): any => value.replace(/[A-Z]/g, (letter?: any): string => '_' + letter.toLowerCase()).replaceAll('-', '_');
+const sharedOptions: any = new (Set as any)(((catalog.operations.find as any)((operation?: any): boolean => operation.name === 'version').options.map as any)((option?: any): any => option.name));
+export const operationNames: any = (Object as any).freeze((catalog.operations.map as any)((operation?: any): any => operation.name));
+const camel: any = (value?: any): any => (value.replace as any)(/[-_]([a-z])/g, (_?: any, letter?: any): any => letter.toUpperCase());
+const snake: any = (value?: any): any => ((value.replace as any)(/[A-Z]/g, (letter?: any): string => '_' + letter.toLowerCase()).replaceAll as any)('-', '_');
 const validators: any = new (Map as any)();
 const ajv: any = new (Ajv2020 as any)({ strict: true, allowUnionTypes: true, validateFormats: false });
 export class NativeRouterError extends Error {
@@ -30,42 +43,43 @@ export class NativeRouterError extends Error {
 }
 export function validateNativeResult(name?: any, result?: any): any {
     if (!validators.has(name)) {
-        const schema: any = JSON.parse(readFileSync(new (URL as any)(`../schemas/${name.replaceAll('.', '-')}.v1.json`, import.meta.url), 'utf8') as any);
-        validators.set(name, ajv.compile(schema));
+        const schema: any = (JSON as any).parse(readFileSync(new (URL as any)(`../schemas/${(name.replaceAll as any)('.', '-')}.v1.json`, import.meta.url), 'utf8'));
+        validators.set(name, (ajv.compile as any)(schema));
     }
-    if (!validators.get(name)(result))
-        throw new (NativeRouterError as any)(`Invalid ${name} contract: ${ajv.errorsText(validators.get(name).errors)}`, { code: 'schema', result });
+    if (!(validators.get(name) as any)(result))
+        throw new (NativeRouterError as any)(`Invalid ${name} contract: ${(ajv.errorsText as any)(validators.get(name).errors)}`, { code: 'schema', result });
     return result;
 }
 export function operationResult(name?: any, data?: any, diagnostics: any = [], exitCode: any = 0): any {
     return validateNativeResult(name, {
-        schema: `link-assistant-router/${name.replaceAll('.', '-')}/v1`, operation: name,
+        schema: `link-assistant-router/${(name.replaceAll as any)('.', '-')}/v1`, operation: name,
         success: exitCode === 0, exit_code: exitCode, data, diagnostics,
     });
 }
 const output: any = (...lines: any[]): any => ({ output: lines });
-const unsupported: any = (message?: any): never => { throw new (NativeRouterError as any)(message, { code: 'unsupported' }); };
-export const nativeOperationSupport: any = Object.freeze({
-    ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]: any): any => [name, support.status])),
-    ...Object.fromEntries(Object.keys(supportedManagedOperations).map((name?: any): any => [name, 'partial'])),
-    'auth.import': 'partial', 'auth.claude': 'partial', 'auth.codex': 'partial',
+const unsupported: any = (message?: any): any => { throw new (NativeRouterError as any)(message, { code: 'unsupported' }); };
+export const nativeOperationSupport: any = (Object as any).freeze({
+    ...(Object as any).fromEntries((Object as any).entries(supportedResourceOperations).map(([name, support]: any): any => [name, support.status])),
+    ...(Object as any).fromEntries((Object as any).keys(supportedManagedOperations).map((name?: any): any => [name, 'partial'])),
+    'auth.import': 'partial', 'auth.claude': 'partial', 'auth.codex': 'partial', 'auth.clear': 'partial', 'auth.gh': 'partial',
     version: 'implemented', contracts: 'implemented',
     'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': 'partial', 'accounts.policy': 'partial',
     'tokens.issue': 'partial', 'tokens.list': 'partial', 'tokens.show': 'partial', 'tokens.revoke': 'partial',
     'tokens.import': 'partial', 'tokens.expire': 'partial', 'tokens.rotate': 'partial', 'tokens.recover-admin': 'partial',
     'providers.list': 'partial', 'providers.show': 'partial', 'providers.add': 'partial', 'providers.remove': 'partial',
     'providers.import': 'partial', 'models.explain': 'partial', serve: 'partial', doctor: 'partial', 'auth.status': 'partial',
+    'clients.list': 'partial', 'clients.show': 'partial', 'clients.setup': 'partial', 'clients.remove': 'partial',
 });
 function normalizeOptions(operation?: any, options?: any): any {
-    const allowed: any = new (Map as any)(operation.options.map((option?: any): any => [snake(option.name), option]));
+    const allowed: any = new (Map as any)((operation.options.map as any)((option?: any): any => [snake(option.name), option]));
     const normalized: any = {};
-    for (const [key, value] of Object.entries(options) as any) {
+    for (const [key, value] of (Object as any).entries(options) as any) {
         if (value === undefined || value === null)
             continue;
         const name: any = snake(key), option: any = allowed.get(name);
         if (!option)
             throw new (NativeRouterError as any)(`Unknown ${operation.name} option: ${key}`, { code: 'options' });
-        if (option.secret)
+        if (option.secret && !((operation.name.startsWith as any)('logs.') && name === 'token'))
             throw new (NativeRouterError as any)(`${key} is secret; use invocation env or stdin`, { code: 'secret-argv' });
         if (option.boolean && typeof value !== 'boolean')
             throw new (NativeRouterError as any)(`${key} must be boolean`, { code: 'options' });
@@ -77,8 +91,8 @@ function normalizeOptions(operation?: any, options?: any): any {
     return normalized;
 }
 function localOnly(options?: any, accepted: any = []): void {
-    const consumed: any = new (Set as any)(['local', ...accepted]);
-    for (const [name, value] of Object.entries(options) as any) {
+    const consumed: any = new (Set as any)(['local', ...nativeConfigOptions, ...accepted]);
+    for (const [name, value] of (Object as any).entries(options) as any) {
         if (value === false)
             continue;
         if (!consumed.has(name))
@@ -92,7 +106,7 @@ function redactedProvider(provider?: any): any {
         has_encrypted_api_key: Boolean(provider.has_encrypted_api_key ?? provider.api_key),
         enabled: provider.enabled !== false, intermediary_risk_acknowledged: Boolean(provider.intermediary_risk_acknowledged),
         unsupported_clients: provider.unsupported_clients ?? [],
-        ...Object.fromEntries(['api_key_env', 'default_model', 'subscriber_id'].filter((key?: any): boolean => (provider as any)[key] !== undefined).map((key?: any): any => [key, (provider as any)[key]])),
+        ...(Object as any).fromEntries(['api_key_env', 'default_model', 'subscriber_id'].filter((key?: any): boolean => (provider as any)[key] !== undefined).map((key?: any): any => [key, (provider as any)[key]])),
     };
 }
 function tokenOptions(options?: any): any {
@@ -101,7 +115,7 @@ function tokenOptions(options?: any): any {
         if ((options as any)[key] === undefined)
             continue;
         const number: number = Number((options as any)[key]);
-        if (!Number.isSafeInteger(number) || number < 0 || (key === 'ttl_hours' && number === 0))
+        if (!(Number as any).isSafeInteger(number) || number < 0 || (key === 'ttl_hours' && number === 0))
             throw new (NativeRouterError as any)(`${key} must be a positive safe integer (limits may be zero)`, { code: 'options' });
         (result as any)[key] = number;
     }
@@ -111,19 +125,19 @@ function tokenOptions(options?: any): any {
     if (options.admin)
         result.scope = 'admin';
     if (options.github_repo)
-        result.github_repos = Array.isArray(options.github_repo) ? options.github_repo : [options.github_repo];
+        result.github_repos = (Array as any).isArray(options.github_repo) ? options.github_repo : [options.github_repo];
     if (options.allowed_model)
-        result.model_policy = { allowed_models: Array.isArray(options.allowed_model) ? options.allowed_model : [options.allowed_model] };
+        result.model_policy = { allowed_models: (Array as any).isArray(options.allowed_model) ? options.allowed_model : [options.allowed_model] };
     return result;
 }
 const find: any = (records?: any, key?: any, value?: any): any => {
-    const record: any = records.find((record?: any): boolean => (record as any)[key] === value);
+    const record: any = (records.find as any)((record?: any): boolean => (record as any)[key] === value);
     if (!record)
         throw new (NativeRouterError as any)(`Unknown ${key}: ${value}`, { code: 'not-found' });
     return record;
 };
 async function runtimeFor(router?: any): Promise<any> {
-    router.corePromise ??= router.options.core ? Promise.resolve(router.options.core)
+    router.corePromise ??= router.options.core ? (Promise as any).resolve(router.options.core)
         : import("./core.js").then(({ createRouterCore }: any): any => createRouterCore(router.options));
     return router.corePromise;
 }
@@ -136,109 +150,135 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
         localOnly(options);
         return catalog;
     }
+    const env: any = { ...(router.options.env ?? (process as any).env), ...(invocation.env ?? {}) };
+    if (['clients.list', 'clients.show'].includes(name)) {
+        for (const key of (Object as any).keys(options) as any)
+            if (!['home', 'local', ...(name === 'clients.show' ? ['client'] : [])].includes(key))
+                unsupported(`Client observation does not consume ${key}`);
+        if (invocation.deadlineMs !== undefined || invocation.maxOutputBytes !== undefined)
+            unsupported('Client observation does not yet implement invocation deadline/output limits');
+        const context: any = { home: options.home, env, cwd: invocation.cwd };
+        if (name === 'clients.show') {
+            const row: any = await nativeClientStatus(options.client, context);
+            if (row.unreadable) {
+                const error: any = new (NativeRouterError as any)(row.unreadable, { code: 'client' });
+                error.data = row;
+                throw error;
+            }
+            return row;
+        }
+        const rows: any = [];
+        for (const client of clientIntegrations as any)
+            rows.push(await nativeClientStatus(client.client, context));
+        if (rows.some((row?: any): any => row.unreadable || row.conflicts.some((key?: any): boolean => key.endsWith(':invalid')))) {
+            const error: any = new (NativeRouterError as any)('One or more client configurations could not be read', { code: 'client' });
+            error.data = rows;
+            throw error;
+        }
+        return rows;
+    }
+    if (['auth.status', 'auth.clear', 'auth.gh'].includes(name) || credentialWithdrawal(name, options)) {
+        const target: any = await selectedManagedTarget({ name, options, config: router.options.config, env, cwd: invocation.cwd });
+        if (target) {
+            if (credentialWithdrawal(name, options))
+                unsupported('Credential withdrawal removes local files and cannot clear a selected remote deployment; pass local to act on this machine');
+            return executeRemoteOperation({ name, options, invocation, target, fetch: router.options.fetch });
+        }
+        const accepted: Array<string> = name === 'auth.status' ? ['clear_all', 'yes'] : name === 'auth.clear' ? ['provider', 'all', 'yes'] : name === 'auth.gh' ? ['from_gh_config', 'token_stdin', 'status', 'clear'] : ['clear', 'home'];
+        localOnly(options, accepted);
+        const inherited: any = router.options.core ?? (router.corePromise ? await router.corePromise : undefined);
+        return executeCredentialOperation({ name, options, invocation, routerOptions: { ...router.options, ...(inherited ? { core: inherited } : {}) }, env });
+    }
+    if (remoteStateFamilies.has(((name.split as any)('.') as any)[0])) {
+        const target: any = await selectedManagedTarget({ name, options, config: router.options.config, env, cwd: invocation.cwd });
+        if (target)
+            return executeRemoteOperation({ name, options, invocation, target, fetch: router.options.fetch });
+    }
     if (!(nativeOperationSupport as any)[name])
         unsupported(`Native operation ${name} is not implemented in this draft; use the explicit Rust Router wrapper`);
-    const core: any = await runtimeFor(router);
-    const env: any = router.options.env ?? process.env;
+    for (const key of ['deadlineMs', 'maxOutputBytes'] as any)
+        if ((invocation as any)[key] !== undefined && name !== 'auth.codex')
+            unsupported(`Native local per-invocation ${key} requires operation cancellation and output accounting`);
+    const configOverrides: any = (Object as any).fromEntries((Object as any).entries(options).filter(([key]: any): boolean => sharedOptions.has(key)));
+    for (const key of (Object as any).keys(configOverrides) as any)
+        if (!nativeConfigOptions.has(key))
+            unsupported(`Native configuration does not implement ${key}`);
+    const baseCore: any = await runtimeFor(router);
+    let core: any = baseCore;
+    if ((Object as any).keys(configOverrides).length || invocation.env || invocation.cwd) {
+        if (!baseCore.withConfig)
+            unsupported('Injected runtime cannot apply an operation context');
+        (core as any) = (await (await import("./core.js")).createOperationContext(baseCore, { configOverrides, env, cwd: invocation.cwd, signal: invocation.signal })).core;
+    }
+    if (invocation.signal?.aborted)
+        throw new (NativeRouterError as any)('Operation cancelled', { code: 'cancelled' });
+    if (['clients.setup', 'clients.remove'].includes(name)) {
+        localOnly(options, name === 'clients.setup' ? ['client', 'token', 'token_stdin', 'base_url', 'management_server', 'ttl_hours'] : ['client', 'revoke_supplied', 'force']);
+        return (name === 'clients.setup' ? setupNativeClient : removeNativeClient)({ options, invocation, core, env, fetch: router.options.fetch });
+    }
     if ((supportedManagedOperations as any)[name])
-        return executeManagedOperation({ name, options, invocation, core, config: core.config, env, routerOptions: router.options });
-    if (options.local !== true && await selectedManagedServer({ core, config: core.config ?? {}, env }))
-        unsupported('Native remote delegation is not implemented; use local:true to explicitly operate on local state or use the Rust wrapper');
+        return executeManagedOperation({ name, options, invocation, core, config: (core as any).config, env, routerOptions: router.options });
     if (['auth.import', 'auth.claude', 'auth.codex'].includes(name)) {
         const accepted: Array<string> = name === 'auth.import' ? ['provider', 'dir', 'home', 'if_absent', 'snapshot', 'follow']
             : name === 'auth.claude' ? ['home', 'code', 'flow', 'mode', 'from_claude_home'] : ['home', 'from_codex_home'];
-        localOnly(options, accepted);
+        localOnly(options, [...accepted, ...(name === 'auth.codex' ? ['flow', 'port'] : [])]);
+        if (name === 'auth.codex' && !options.from_codex_home) {
+            const login: any = await CodexLogin.begin({ home: (core as any).config.codex_home ?? env.CODEX_HOME ?? (await import('node:path')).join((core as any).config.data_dir, 'codex'), manager: (core as any).oauth, clock: (core as any).clock, dataDir: (core as any).config.data_dir, flow: options.flow, port: options.port, signal: invocation.signal, ...(invocation.deadlineMs !== undefined ? { timeoutMs: invocation.deadlineMs } : {}), ...router.options.oauth });
+            invocation.onProgress?.(`Open this URL:\n${login.authorizationURL()}${login.userCode ? `\nEnter this one-time code:\n${login.userCode}` : ''}`);
+            try {
+                await login.wait();
+                return output(`Codex authorization saved in ${login.home}`);
+            }
+            finally {
+                await login.cancel();
+            }
+        }
         if (options.follow && options.snapshot)
             throw new (NativeRouterError as any)('follow and snapshot cannot be combined', { code: 'options' });
-        const data: any = await executeAuthOperation({ name, options, core, config: core.config, env, fetch: router.options.fetch,
-            clockSeconds: core.clock, oauth: router.options.oauth });
-        return name !== 'auth.import' && data.results ? output(`${name.slice(5)} credential ${(data.results as any)[0].outcome}.`) : data;
+        const data: any = await executeAuthOperation({ name, options, core, config: (core as any).config, env, fetch: router.options.fetch,
+            clockSeconds: (core as any).clock, oauth: router.options.oauth });
+        return name !== 'auth.import' && data.results ? output(`${(name.slice as any)(5)} credential ${(data.results as any)[0].outcome}.`) : data;
     }
     if ((supportedResourceOperations as any)[name]) {
-        localOnly(options, name.startsWith('logs.') ? ['correlation_id', 'token'] : name === 'tls.generate' ? ['dns'] : []);
-        return executeResourceOperation({ name, options, invocation, core, config: core.config });
+        localOnly(options, (name.startsWith as any)('logs.') ? ['correlation_id', 'token'] : name === 'tls.generate' ? ['dns'] : []);
+        return executeResourceOperation({ name, options, invocation, core, config: (core as any).config });
     }
     if (name === 'accounts.list') {
         localOnly(options);
-        return { accounts: (await core.accounts.list()).map((account?: any): any => ({
+        return { accounts: ((await (core as any).accounts.list()).map as any)((account?: any): any => ({
                 name: account.name, healthy: account.healthy ?? !account.paused,
-                paused: Boolean(account.limits?.pause && (account.limits.pause.until_unix == null || account.limits.pause.until_unix > core.clock())),
+                paused: Boolean(account.limits?.pause && (account.limits.pause.until_unix == null || account.limits.pause.until_unix > (core as any).clock())),
                 ...(account.policy ? { routing_policy: account.policy } : {}),
                 ...(account.limits?.pause ? { pause: account.limits.pause } : {}),
             })) };
     }
     if (name === 'accounts.pause') {
         localOnly(options, ['name', 'reason', 'until']);
-        let until: any;
-        if (options.until !== undefined) {
-            until = Number(options.until);
-            if (!Number.isFinite(until))
-                until = Date.parse(options.until) / 1000;
-            if (!Number.isFinite(until))
-                throw new (NativeRouterError as any)('until must be Unix seconds or an ISO timestamp', { code: 'options' });
-        }
-        await core.accounts.pause(options.name, { reason: options.reason, until_unix: until });
+        const until: any = options.until !== undefined ? parsePauseUntil(options.until, (core as any).clock()) : undefined;
+        await ((core as any).accounts.pause as any)(options.name, { reason: options.reason, until_unix: until });
         return output(`Paused account ${options.name}`);
     }
     if (name === 'accounts.resume') {
         localOnly(options, ['name']);
-        await core.accounts.resume(options.name);
+        await ((core as any).accounts.resume as any)(options.name);
         return output(`Resumed account ${options.name}`);
     }
     if (name === 'accounts.policy') {
         localOnly(options, ['name', 'file']);
         if (options.file) {
-            const policy: any = JSON.parse(await readFile(options.file, 'utf8') as any);
+            const policy: any = (JSON as any).parse(await readNativeText(options.file, { cwd: invocation.cwd }));
             operationResult(name, policy);
-            await core.accounts.policy(options.name, policy);
+            await ((core as any).accounts.policy as any)(options.name, policy);
         }
-        const account: any = find(await core.accounts.list(), 'name', options.name);
+        const account: any = find(await (core as any).accounts.list(), 'name', options.name);
         return account.policy ?? account.routing_policy ?? {};
     }
-    if (name.startsWith('tokens.')) {
-        const tokens: any = core.tokens;
+    if ((name.startsWith as any)('tokens.')) {
+        const tokens: any = (core as any).tokens;
         if (name === 'tokens.import') {
-            localOnly(options, ['from', 'ids', 'dry_run']);
-            if (!options.from.endsWith('.json'))
-                unsupported('Native token import supports JSON token export files only; binary, lino and deployment directory imports remain incomplete');
-            const source: any = JSON.parse(await readFile(options.from, 'utf8') as any);
-            if (!Array.isArray(source))
-                throw new (NativeRouterError as any)('Token export must be an array', { code: 'options' });
-            const ids: any = new (Set as any)();
-            for (const record of source as any) {
-                operationResult('tokens.show', record);
-                if (ids.has(record.id))
-                    throw new (NativeRouterError as any)('Duplicate imported token id', { code: 'options' });
-                ids.add(record.id);
-            }
-            const wanted: any = options.ids ? (Array.isArray(options.ids) ? options.ids : [options.ids]) : [];
-            const report: any = { mode: 'merge-missing', dry_run: options.dry_run ?? false, source_records: source.length,
-                target_records_before: 0, added: [], unchanged: [], conflicts: [], replaced: [], kept_revoked: [],
-                missing_from_source: wanted.filter((id?: any): boolean => !ids.has(id)).sort() };
-            const apply: any = (records?: any): void => {
-                report.target_records_before = records.size;
-                for (const incoming of source.slice().sort((a?: any, b?: any): any => a.id.localeCompare(b.id)) as any) {
-                    if (wanted.length && !wanted.includes(incoming.id))
-                        continue;
-                    const existing: any = records.get(incoming.id);
-                    if (!existing) {
-                        report.added.push(incoming.id);
-                        if (!options.dry_run)
-                            records.set(incoming.id, structuredClone(incoming));
-                    }
-                    else {
-                        const fields: Array<string> = [...new (Set as any)([...Object.keys(existing), ...Object.keys(incoming)])].filter((key?: any): boolean => JSON.stringify((existing as any)[key]) !== JSON.stringify((incoming as any)[key])).sort();
-                        if (fields.length)
-                            report.conflicts.push({ id: incoming.id, fields });
-                        else
-                            report.unchanged.push(incoming.id);
-                    }
-                }
-            };
-            if (options.dry_run)
-                apply(new (Map as any)((await tokens.list()).map((record?: any): any => [record.id, record])));
-            else
-                await tokens.store.transaction(apply);
+            localOnly(options, ['from', 'ids', 'dry_run', 'replace']);
+            const source: any = await readTokenImportSource(options.from, { cwd: invocation.cwd, validateRecord: (record?: any): any => operationResult('tokens.show', record) });
+            const report: any = await importTokenRecords({ source, store: tokens.store, options, dataDir: (core as any).config.data_dir, clock: (core as any).clock });
             if (report.conflicts.length || report.missing_from_source.length) {
                 const error: any = new (NativeRouterError as any)('Token import has unresolved conflicts or missing requested IDs', { code: 'import-conflict' });
                 error.data = report;
@@ -258,39 +298,39 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
         if (['tokens.revoke', 'tokens.expire'].includes(name)) {
             localOnly(options, ['id']);
             find(await tokens.list(), 'id', options.id);
-            await (tokens as any)[(name.split('.') as any)[1]](options.id);
-            return output(`${(name.split('.') as any)[1]}: ${options.id}`);
+            await ((tokens as any)[((name.split as any)('.') as any)[1]] as any)(options.id);
+            return output(`${((name.split as any)('.') as any)[1]}: ${options.id}`);
         }
         const allowed: Array<string> = ['ttl_hours', 'label', 'account', 'max_requests', 'max_tokens', 'rate_limit_per_minute', 'admin', 'github_repo', 'allowed_model'];
         if (name === 'tokens.issue') {
             localOnly(options, allowed);
-            const issued: any = await tokens.issue(tokenOptions(options));
+            const issued: any = await (tokens.issue as any)(tokenOptions(options));
             return { token: issued.token };
         }
         if (name === 'tokens.rotate') {
             localOnly(options, ['id', ...allowed]);
             find(await tokens.list(), 'id', options.id);
-            const issued: any = await tokens.rotate(options.id, tokenOptions(options));
+            const issued: any = await (tokens.rotate as any)(options.id, tokenOptions(options));
             return { token: issued.token };
         }
         if (name === 'tokens.recover-admin') {
             localOnly(options, ['ttl_hours', 'label', 'revoke_others']);
-            const admins: any = (await tokens.list()).filter((record?: any): boolean => record.scope === 'admin' && !record.revoked);
-            const issued: any = await tokens.issue(tokenOptions({ ttl_hours: options.ttl_hours, label: options.label ?? 'recovered-admin', admin: true }));
+            const admins: any = ((await tokens.list()).filter as any)((record?: any): boolean => record.scope === 'admin' && !record.revoked);
+            const issued: any = await (tokens.issue as any)(tokenOptions({ ttl_hours: options.ttl_hours, label: options.label ?? 'recovered-admin', admin: true }));
             const revoked: any = [];
             if (options.revoke_others)
                 for (const record of admins as any) {
-                    await tokens.revoke(record.id);
+                    await (tokens.revoke as any)(record.id);
                     revoked.push(record.id);
                 }
             return { recovered: true, token: issued.token, token_id: issued.id, retained_admins: options.revoke_others ? 0 : admins.length, revoked };
         }
     }
-    if (name.startsWith('providers.')) {
-        const providers: any = core.providers;
+    if ((name.startsWith as any)('providers.')) {
+        const providers: any = (core as any).providers;
         if (name === 'providers.list') {
             localOnly(options);
-            return (await providers.list()).map(redactedProvider);
+            return ((await providers.list()).map as any)(redactedProvider);
         }
         if (name === 'providers.show') {
             localOnly(options, ['name']);
@@ -299,63 +339,47 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
         if (name === 'providers.remove') {
             localOnly(options, ['name']);
             find(await providers.list(), 'name', options.name);
-            await providers.remove(options.name);
+            await (providers.remove as any)(options.name);
             return output(`Removed provider ${options.name}`);
         }
         if (name === 'providers.add') {
             localOnly(options, ['name', 'kind', 'base_url', 'model', 'models', 'supported_clients', 'api_key_env', 'api_key_stdin', 'enabled', 'if_absent']);
-            if (options.kind && options.kind !== 'openai-compatible')
-                unsupported('Native provider provisioning currently supports openai-compatible only; specialized provider validation is incomplete');
-            const existing: any = (await providers.list()).find((provider?: any): boolean => provider.name === options.name);
-            if (existing && options.if_absent)
-                return { ...redactedProvider(existing), outcome: 'already_present' };
-            const models: any = Array.isArray(options.models) ? options.models : options.models ? [options.models] : options.model ? [options.model] : [];
+            const models: any = (Array as any).isArray(options.models) ? options.models : options.models ? [options.models] : options.model ? [options.model] : [];
             const apiKey: any = options.api_key_stdin ? String(invocation.stdin ?? '').trim() : undefined;
             if (options.api_key_stdin && !apiKey)
                 throw new (NativeRouterError as any)('api-key-stdin requires nonempty stdin', { code: 'options' });
-            const provider: any = { name: options.name, kind: 'openai-compatible', base_url: options.base_url, models,
-                default_model: options.model ?? (models as any)[0], supported_clients: options.supported_clients ?? [],
+            const provider: any = { name: options.name, kind: options.kind ?? 'openai-compatible', base_url: options.base_url, models,
+                default_model: options.model, if_absent: options.if_absent ?? false, supported_clients: options.supported_clients ?? [],
                 api_key_env: options.api_key_env, ...(apiKey ? { api_key: apiKey } : {}), enabled: options.enabled ?? true };
-            if (core.upsertProvider)
-                await core.upsertProvider(provider);
-            else
-                await providers.upsert(provider);
-            return { ...redactedProvider(provider), outcome: existing ? 'replaced' : 'created' };
+            return provisionLocalProvider(core, provider);
         }
         if (name === 'providers.import') {
             localOnly(options, ['path']);
-            const imported: any = JSON.parse(await readFile(options.path, 'utf8') as any);
-            const records: any = Array.isArray(imported) ? imported : imported.providers;
-            if (!Array.isArray(records))
-                throw new (NativeRouterError as any)('Import requires an array or {providers: []}', { code: 'options' });
-            for (const record of records as any) {
-                if (record.kind && record.kind !== 'openai-compatible')
-                    unsupported('Import of specialized provider kinds is incomplete');
-                if (typeof record.name !== 'string' || !record.name || !['http:', 'https:'].includes(new (URL as any)(record.base_url).protocol))
-                    throw new (NativeRouterError as any)('Invalid imported provider', { code: 'options' });
+            const records: any = parseProviderImport(await readNativeText(options.path, { cwd: invocation.cwd }));
+            const report: any = await importLocalProviders(core, records);
+            const data: any = output((JSON as any).stringify(report, null, 2));
+            if (!report.complete) {
+                const error: any = new (NativeRouterError as any)('Provider import stopped after a rejected candidate', { code: 'provider_acceptance' });
+                error.exitCode = 1;
+                error.data = data;
+                throw error;
             }
-            for (const record of records as any) {
-                if (core.upsertProvider)
-                    await core.upsertProvider(record);
-                else
-                    await providers.upsert(record);
-            }
-            return output(`Imported ${records.length} providers`);
+            return data;
         }
     }
     if (name === 'serve') {
         localOnly(options, ['host', 'port']);
         const port: any = options.port === undefined ? undefined : Number(options.port);
-        if (port !== undefined && (!Number.isInteger(port) || port < 0 || port > 65535))
+        if (port !== undefined && (!(Number as any).isInteger(port) || port < 0 || port > 65535))
             throw new (NativeRouterError as any)('port must be in 0..65535', { code: 'options' });
-        const server: any = await router.listen({ host: options.host, port });
+        const server: any = await (router.listen as any)({ host: options.host, port }, core);
         return output('Native server is listening');
     }
     if (name === 'models.explain') {
         localOnly(options, ['id', 'client']);
-        const candidates: any = await core.candidates({ model: options.id });
-        const model: any = (await core.models()).find((model?: any): boolean => model.id === options.id);
-        const healthy: any = [...new (Set as any)(candidates.map((candidate?: any): any => candidate.provider?.name ?? candidate.provider).filter((name?: any): boolean => typeof name === 'string'))];
+        const candidates: any = await ((core as any).candidates as any)({ model: options.id });
+        const model: any = ((await (core as any).models()).find as any)((model?: any): boolean => model.id === options.id);
+        const healthy: any = [...new (Set as any)(((candidates.map as any)((candidate?: any): any => candidate.provider?.name ?? candidate.provider).filter as any)((name?: any): boolean => typeof name === 'string'))];
         const route: any = { protocols: ['openai-chat'], ...(model?.provider ? { provider: model.provider } : {}) };
         return { contract_version: 1, requested_selector: options.id, selector_kind: 'concrete',
             model_descriptor: { selector_kind: 'concrete', requested_selector: options.id, route, capabilities: {},
@@ -368,12 +392,11 @@ async function dispatch(router?: any, name?: any, options?: any, invocation?: an
     }
     if (name === 'auth.status') {
         localOnly(options);
-        return { credentials: [], sources: [], api_key_providers: (await core.providers.list()).map(redactedProvider),
-            output: ['Native draft inspects configured API-key providers; subscription OAuth credential discovery is not implemented'] };
+        return (core as any).credentialStatus ? (core as any).credentialStatus() : nativeCredentialStatus(core, { env, fetch: router.options.fetch, ...router.options.oauth });
     }
     if (name === 'doctor') {
         localOnly(options);
-        const config: any = core.config ?? router.options.config ?? {};
+        const config: any = (core as any).config ?? router.options.config ?? {};
         return { status: 'partial', version, checks: [{ name: 'native-runtime', state: 'ok' }, { name: 'subscription-auth', state: 'unverified', detail: 'OAuth discovery and provider verification are not implemented' }],
             providers: [], deployments: [], recommended_models: [], data_dir: config.data_dir ?? '',
             listen_addr: `${config.host ?? '127.0.0.1'}:${config.port ?? 3000}`, forwarded_headers: [],
@@ -387,6 +410,7 @@ export class NativeRouter {
     declare deployStatus: any;
     declare logs: any;
     declare options: any;
+    declare serverContexts: any;
     declare serverPromise: any;
     declare with: any;
     constructor(options: any = {}) {
@@ -395,25 +419,22 @@ export class NativeRouter {
         this.serverPromise = null;
         for (const operation of catalog.operations as any) {
             let namespace: any = this;
-            const names: any = operation.name.split('.').map(camel);
-            for (const name of names.slice(0, -1) as any)
-                namespace = (namespace as any)[name] ??= {};
-            (namespace as any)[names.at(-1)] = (options: any = {}, invocation: any = {}): any => this.invoke(operation.name, options, invocation);
+            const names: any = ((operation.name.split as any)('.').map as any)(camel);
+            for (const name of (names.slice as any)(0, -1) as any)
+                (namespace as any) = (namespace as any)[name] ??= {};
+            (namespace as any)[(names.at as any)(-1)] = (options: any = {}, invocation: any = {}): any => this.invoke(operation.name, options, invocation);
         }
-        this.deployStatus = (options: any = {}, invocation: any = {}): any => this.deploy({ ...options, status: true }, invocation);
-        this.logs = Object.assign((options: any = {}, invocation: any = {}): any => this.invoke('logs.show', options, invocation), this.logs);
+        this.deployStatus = (options: any = {}, invocation: any = {}): any => (this.deploy as any)({ ...options, status: true }, invocation);
+        this.logs = (Object as any).assign((options: any = {}, invocation: any = {}): any => this.invoke('logs.show', options, invocation), this.logs);
         const launch: any = this.with;
         this.with = (client?: any, args?: any, options: any = {}, invocation: any = {}): any => typeof client === 'string'
-            ? launch({ ...options, client, clientArgs: args }, invocation) : launch(client, args);
+            ? (launch as any)({ ...options, client, clientArgs: args }, invocation) : (launch as any)(client, args);
     }
     async execute(name?: any, options: any = {}, invocation: any = {}): Promise<any> {
-        const operation: any = catalog.operations.find((operation?: any): boolean => operation.name === name);
+        const operation: any = (catalog.operations.find as any)((operation?: any): boolean => operation.name === name);
         if (!operation)
             return operationResult('cli-error', output(), [`Unknown operation: ${name}`], 2);
         try {
-            for (const key of ['env', 'cwd', 'deadlineMs', 'maxOutputBytes'] as any)
-                if ((invocation as any)[key] !== undefined)
-                    unsupported(`Native per-invocation ${key} is not implemented; configure the runtime at construction`);
             if (invocation.signal?.aborted)
                 throw new (NativeRouterError as any)('Operation cancelled', { code: 'cancelled' });
             const normalized: any = normalizeOptions(operation, options);
@@ -421,23 +442,32 @@ export class NativeRouter {
             return operationResult(name, data);
         }
         catch (error: any) {
-            return operationResult(name, error.data ?? output(), [`${error.code ?? 'operation'}: ${error.message}`], (Number.isInteger(error.exitCode) && error.exitCode > 0 ? error.exitCode : null) ?? (error.code === 'options' || error.code === 'secret-argv' ? 2 : 1));
+            return operationResult(name, error.data ?? output(), [`${error.code ?? 'operation'}: ${error.message}`], ((Number as any).isInteger(error.exitCode) && error.exitCode > 0 ? error.exitCode : null) ?? (error.code === 'options' || error.code === 'secret-argv' ? 2 : 1));
         }
     }
     async invoke(name?: any, options: any = {}, invocation: any = {}): Promise<any> {
         const result: any = await this.execute(name, options, invocation);
         if (!result.success)
-            throw new (NativeRouterError as any)(result.diagnostics.join('; '), { result,
+            throw new (NativeRouterError as any)((result.diagnostics.join as any)('; '), { result,
                 code: (result.diagnostics as any)[0]?.split(':')[0] ?? 'operation' });
         return result;
     }
-    async runtime(): Promise<any> {
-        this.serverPromise ??= Promise.all([runtimeFor(this), import("./server.js")]).then(([core, { createNativeRouter }]: any): any => createNativeRouter({ ...this.options, core, clock: this.options.serverClock ?? Date.now }));
+    async runtime(core?: any): Promise<any> {
+        if (core) {
+            this.serverContexts ??= new (Map as any)();
+            const key: string = (JSON as any).stringify(core.config);
+            if (!(this.serverContexts.has as any)(key))
+                (this.serverContexts.set as any)(key, import("./server.js").then(({ createNativeRouter }: any): any => createNativeRouter({ ...this.options, core, clock: this.options.serverClock ?? (Date as any).now })));
+            this.serverPromise ??= (this.serverContexts.get as any)(key);
+            return (this.serverContexts.get as any)(key);
+        }
+        this.serverPromise ??= (Promise as any).all([runtimeFor(this), import("./server.js")]).then(([core, { createNativeRouter }]: any): any => createNativeRouter({ ...this.options, core, clock: this.options.serverClock ?? (Date as any).now }));
         return this.serverPromise;
     }
-    async fetch(request?: any): Promise<any> { return (await this.runtime()).fetch(request); }
-    async listen(options?: any): Promise<any> { return (await this.runtime()).listen(options); }
+    async fetch(request?: any): Promise<any> { return ((await this.runtime()).fetch as any)(request); }
+    async listen(options?: any, core?: any): Promise<any> { return ((await this.runtime(core)).listen as any)(options); }
     async close(): Promise<void> { if (this.serverPromise)
-        await (await this.serverPromise).close(); }
+        await (await this.serverPromise).close(); for (const runtime of this.serverContexts?.values() ?? [] as any)
+        await (await runtime).close(); }
 }
 export const createNativeRouter: any = (options?: any): any => new (NativeRouter as any)(options);

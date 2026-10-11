@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=d331212a38fd9b182c0dfc49c81c3a92a286d4476192be48ce4741a3ba6b2cf5; dynamic any annotations are explicit draft gaps.
+// Meta sha256=7d642e63694e3cfef8be873d3352c5bfd98b7ddc0a3d4a5ecba275f74d51984d; dynamic any annotations are explicit draft gaps.
 import { providerModelId } from "../portable/policy.js";
 import { accountVisibleModels } from "./accounts.js";
 import { RouterError } from "./tokens.js";
@@ -11,7 +11,7 @@ export function modelCandidates(providers?: any, accounts?: any, context: any = 
     for (const provider of providers as any) {
         if (provider.enabled === false || context.provider && context.provider !== provider.name)
             continue;
-        if (context.client && !provider.supported_clients.includes(context.client))
+        if (context.client && !(provider.supported_clients.includes as any)(context.client))
             continue;
         for (const account of accounts.values() as any) {
             if (account.provider !== provider.name || account.enabled === false)
