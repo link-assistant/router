@@ -7,6 +7,7 @@ import {coerce} from '../checked-coercions.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {SOURCE_STR} from './source-contract-types.mjs';
 import {sharedStrPatternProof} from './standard-str-pattern.mjs';
+import {borrowedStringSliceReceiver,planBorrowedStringSliceContains} from './slice-membership.mjs';
 const SPLITS=new Set(['split_once','rsplit_once']);
 const STRIPS=new Set(['strip_prefix','strip_suffix']);
 const TRIMS=new Set(['trim_start_matches','trim_end_matches','trim_matches']);
@@ -29,7 +30,7 @@ export class TextRustParser extends FormatRustParser {
   unary(path,options) {
     const token=this.cursor.peek();if(!this.cursor.eat('&'))return super.unary(path,options);
     if(this.cursor.is('mut'))throw unsupported('mutable shared reference','requires separately checked borrowing',token);
-    const value=this.unary(path,{});return {k:'routerTextReference',value,span:{start:token.start,end:value.span.end}};
+    const value=this.unary(path,{});return {k:'routerTextReference',value,sourceBorrowToken:{value:'&',span:{start:token.start,end:token.end}},span:{start:token.start,end:value.span.end}};
   }
   method(object,name,args,span) {
     if(!METHODS.has(name.value))return super.method(object,name,args,span);
@@ -39,7 +40,8 @@ export class TextRustParser extends FormatRustParser {
     if(STRIPS.has(name.value)&&typeof this.registeredGenericKind!=='function')return super.method(object,name,args,span);
     if(args.length!==METHODS.get(name.value))throw typeError(`${name.value} expects ${METHODS.get(name.value)} arguments`,span);
     const tupleType=SPLITS.has(name.value)?this.tupleType([0,1].map(index=>({name:`field${index}`,type:SOURCE_STR,rustTypeSyntax:['&','str']})),span):null;
-    return {k:'routerTextPattern',op:name.value,object,args,...(tupleType?{tupleType}:{}),span};
+    const methodScope=name.value==='contains'&&this.sourceNamespaceEvidence?{...structuredClone(this.sourceNamespaceEvidence),unresolvedTypeScope:this.unresolvedImportScope!==false,unresolvedAttributeMacroScope:this.unresolvedAttributeMacroScope!==false}:null;
+    return {k:'routerTextPattern',op:name.value,object,args,...(tupleType?{tupleType}:{}),...(methodScope?{sourceMethodScope:methodScope}:{}),span};
   }
 }
 export class TextChecker extends FormatChecker {
@@ -53,10 +55,19 @@ export class TextChecker extends FormatChecker {
       return value;
     }
     env=this.contextEnvironment(node,env,expected);
+    const checkedReceiver=node.op==='contains'?this.expr(node.object,env,path):null;
+    if(checkedReceiver?.type.kind==='array'){
+      if(node.args.length!==1||exits(node.object)||exits(node.args[0]))throw unsupported('slice membership control','requires one ordinary argument and no nonlocal exits',node.span);
+      const surface=node.args[0],explicit=surface.k==='routerTextReference';
+      const argument=this.expr(explicit?surface.value:surface,env,path);
+      const proof=planBorrowedStringSliceContains(checkedReceiver,argument,surface,node.span,node.sourceMethodScope);
+      const borrowed=explicit?{k:'routerSliceMembershipBorrow',value:argument,type:{...argument.type,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:structuredClone(argument.type),span:{...surface.span},tokens:[{value:'&',kind:'operator',span:{...surface.sourceBorrowToken.span}}]}},sourceBorrowToken:surface.sourceBorrowToken,span:surface.span}:argument;
+      return {k:'routerSliceContains',value:checkedReceiver,args:[borrowed],membershipProof:proof,type:BOOL,constEligible:false,span:node.span};
+    }
     const bindings=[];let patternTraitProof;
-    const bind=(surface,wanted,stringView=false,characterPattern=false)=>{
+    const bind=(surface,wanted,stringView=false,characterPattern=false,alreadyChecked=null)=>{
       if(exits(surface))throw unsupported('string method control','nonlocal exits require statement lowering',surface.span);
-      const checked=characterPattern&&surface.k==='routerPatternChar'?{k:'lit',value:surface.value,type:STRING,sourceRustChar:{raw:surface.raw,span:surface.span},span:surface.span}:this.expr(surface,env,path,wanted);
+      const checked=alreadyChecked??(characterPattern&&surface.k==='routerPatternChar'?{k:'lit',value:surface.value,type:STRING,sourceRustChar:{raw:surface.raw,span:surface.span},span:surface.span}:this.expr(surface,env,path,wanted));
       const value=coerce(checked,wanted,this.language,node.span);
       if(value.type.kind!==wanted.kind)throw typeError(`${node.op} requires checked string values and a usize replacement count`,node.span);
       if(wanted===USIZE&&(value.type.rustPrimitiveName!=='usize'||value.type.patternOwnershipRefusal))throw unsupported('replacement count Rust type','requires actual by-value usize provenance; equal portable widths and erased references are insufficient',surface.span);
@@ -66,7 +77,7 @@ export class TextChecker extends FormatChecker {
       let name;do{name=this.freshName('ml_text_');}while(env.has(name));bindings.push({name,value});
       return {k:'var',name,type:value.type,span:surface.span};
     };
-    const value=bind(node.object,STRING),args=node.args.map((arg,index)=>bind(arg,index===2?USIZE:STRING,index<2,index===0));
+    const value=bind(node.object,STRING,false,false,checkedReceiver),args=node.args.map((arg,index)=>bind(arg,index===2?USIZE:STRING,index<2,index===0));
     const owning=node.op==='replace'||node.op==='replacen';let type=owning?{...STRING,patternOwnershipRefusal:'owned String replacement'}:BOOL,tupleType;
     if([...SPLITS,...STRIPS,...TRIMS].includes(node.op)&&value.type.patternOwnershipRefusal)throw unsupported('string borrowed receiver','requires actual borrowed str provenance; owned temporaries and erased references need checked lifetimes',node.span);
     if(SPLITS.has(node.op)) {
@@ -90,7 +101,31 @@ export class TextChecker extends FormatChecker {
   }
 }
 export class TextEmitter extends FormatEmitter {
+  constructor(program,state){super(program,state);state.reserved.add('ml_slice_str_contains');state.reserved.add('ml_assert_str_slice');}
+  fn(entry){
+    const previous=this.sliceMembershipFunction;
+    const contains=node=>node&&typeof node==='object'&&(node.k==='routerSliceContains'||Object.entries(node).some(([key,value])=>!['type','membershipProof','sourceBorrowToken'].includes(key)&&(Array.isArray(value)?value.some(contains):contains(value))));
+    this.sliceMembershipFunction=Boolean(contains(entry.body));
+    try{return super.fn(entry);}finally{this.sliceMembershipFunction=previous;}
+  }
+  parameterGuard(param){
+    const guards=super.parameterGuard(param);
+    if(!this.sliceMembershipFunction||param.type.kind!=='array'||param.type.element?.kind!=='string'||param.type.element.rustOwnership?.kind!=='borrowed'||param.type.element.rustOwnership.source!=='str')return guards;
+    const receiver=borrowedStringSliceReceiver(param.type,param.span);this.sliceMembershipUsed=true;
+    return [`ml_assert_str_slice(${param.name}, ${JSON.stringify(receiver.length)});`,...guards];
+  }
+  file(){
+    const result=super.file();if(!this.sliceMembershipUsed)return result;
+    const helper=`import { borrowedStringSliceContains as ml_slice_str_contains, assertBorrowedStringSlice as ml_assert_str_slice } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'slice-membership-runtime.mjs'))};`;
+    return {...result,preludes:[helper,...result.preludes],text:helper+'\n'+result.text};
+  }
   expr(node) {
+    if(node.k==='routerSliceMembershipBorrow')return this.expr(node.value);
+    if(node.k==='routerSliceContains'){
+      if(node.membershipProof?.profile!=='rust-1.89-borrowed-str-slice-contains'||node.membershipProof.constEligible!==false)throw new Error('missing checked borrowed-string membership proof');
+      this.sliceMembershipUsed=true;
+      return `ml_slice_str_contains(${this.expr(node.value)}, ${this.expr(node.args[0])}, ${JSON.stringify(node.membershipProof.receiver.length)})`;
+    }
     if(node.k==='routerTextReference')return this.expr(node.value);
     if(node.k!=='routerTextPattern')return super.expr(node);
     const value=this.expr(node.value),[pattern,replacement,count]=node.args.map(arg=>this.expr(arg));

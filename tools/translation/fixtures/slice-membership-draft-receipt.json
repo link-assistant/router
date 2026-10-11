@@ -1,0 +1,66 @@
+{
+  "status": "unverified-source-only-draft",
+  "parentSourceHead": "fdee2507643f6c10bf091d24e63d4e2c6f062b74",
+  "validation": "Python in-memory gzip reopening, byte/hash equality and original UTF-16 span hashing only; no compiler, test runner or Rust execution.",
+  "sourceInputs": [
+    {
+      "file": "rust-slice-mod-1.89.0.rs.gz",
+      "compressedBytes": 33616,
+      "bytes": 198187,
+      "sha256": "de53de44b944b73cd8d811425a32064fbc3400e1c856692f278d349ef61a75c7"
+    },
+    {
+      "file": "rust-slice-cmp-1.89.0.rs.gz",
+      "compressedBytes": 3787,
+      "bytes": 13980,
+      "sha256": "4559cc249fd533b0715bce7b961898b11ad0daba0d769d17a77e5b98940eef01"
+    },
+    {
+      "file": "rust-str-traits-1.89.0.rs.gz",
+      "compressedBytes": 4721,
+      "bytes": 31972,
+      "sha256": "8373e9a829477d832cde6818f9e5a3c5887d22918a15d3144c933b93681fe6db"
+    },
+    {
+      "file": "rust-core-cmp-1.89.0.rs.gz",
+      "compressedBytes": 13733,
+      "bytes": 69754,
+      "sha256": "4d99f17bff4740a566d839f9ec990ebb5f593cbfe369334fac5f08463203e1c4"
+    },
+    {
+      "file": "rust-vec-mod-1.89.0.rs.gz",
+      "compressedBytes": 31835,
+      "bytes": 149006,
+      "sha256": "550d150a5f0a546ea94e6a3b29a70007980f42c930d042d044e2d03ae9e36ae5"
+    },
+    {
+      "file": "rust-array-mod-1.89.0.rs.gz",
+      "compressedBytes": 8304,
+      "bytes": 32590,
+      "sha256": "b5239b8af6bb1eb99b589518161f7fcf017dc80c275620517d145974cf7029a1"
+    }
+  ],
+  "compressedSourceBytes": 95996,
+  "originalSourceBytes": 495489,
+  "plannedTestCases": 8,
+  "plannedOriginalWholeFiles": 3,
+  "plannedOriginalFunctions": 4,
+  "plannedOriginalLiteralOutcomesPerTarget": 55,
+  "productionBodiesVerified": 0,
+  "runtimeParity": false,
+  "namespaceAuthority": false,
+  "compilerChecksRun": false,
+  "rustExecution": false,
+  "licenses": [
+    {
+      "file": "LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "file": "LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ]
+}

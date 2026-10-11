@@ -117,6 +117,8 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   // Namespace authority consumes the exact offline dependency source bytes,
   // not only descriptors containing their expected digests.
   implementation.push(...['derive-dependencies.mjs','derive-footprints.mjs','derive-helper-paths.mjs','derive-builtin-default.mjs','derive-inputs.mjs','derive-layout.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push('tools/translation/extensions/slice-membership-runtime.d.mts');
+  implementation.push(...readdirSync(new URL('./source-profiles/slice-membership/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/slice-membership/${name}`));
   implementation.push('tools/translation/copy-trait-owners.mjs');
   implementation.push('tools/translation/source-module-views.mjs');
   implementation.push('tools/translation/module-paths.mjs');

@@ -177,6 +177,18 @@ engine preserves captured fragment opacity, original tokens and definition-site
 no macro owner, complete namespace or generated runtime authority. Unsupported
 fragments, ambiguous repetitions and unresolved nested expansions remain explicit.
 
+The borrowed-string membership draft retains six original Rust 1.89 files in
+`source-profiles/slice-membership` (95,996 bytes compressed), together with their
+manifest and licenses. It checks actual `&str` elements, one shared needle borrow,
+and source-known slice, default `Vec` or fixed-array receivers. Vec/array
+adjustment additionally requires a closed value-only source namespace so an
+earlier trait method cannot replace slice membership. Its descriptor
+runtime validates dense own data elements before content comparison; proxy,
+accessor, custom-trait and escaping temporary-borrow cases remain unsupported.
+The draft tests include whole unchanged Router files and separate strict
+TypeScript execution, but have not been run. No recovered production-body count,
+complete namespace authority or Router parity is claimed by this profile.
+
 With Node, Bun and the repository’s TypeScript tooling available:
 
 ```sh

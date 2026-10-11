@@ -1,0 +1,109 @@
+{
+  "profile": "rust-1.89-borrowed-str-slice-contains",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "path": "library/core/src/slice/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/slice/mod.rs",
+      "file": "rust-slice-mod-1.89.0.rs.gz",
+      "bytes": 198187,
+      "sha256": "de53de44b944b73cd8d811425a32064fbc3400e1c856692f278d349ef61a75c7",
+      "compressedSha256": "52d94aaad891f4da00a67ef972710cc73c89c6cc1341afe09519d9cf17a49894",
+      "lines": [
+        2622,
+        2627
+      ]
+    },
+    {
+      "path": "library/core/src/slice/cmp.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/slice/cmp.rs",
+      "file": "rust-slice-cmp-1.89.0.rs.gz",
+      "bytes": 13980,
+      "sha256": "4559cc249fd533b0715bce7b961898b11ad0daba0d769d17a77e5b98940eef01",
+      "compressedSha256": "e80545770ee02837338128fedccd683ff60dabed40ee344fa979cb616ff512b3",
+      "lines": [
+        344,
+        355
+      ]
+    },
+    {
+      "path": "library/core/src/str/traits.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/traits.rs",
+      "file": "rust-str-traits-1.89.0.rs.gz",
+      "bytes": 31972,
+      "sha256": "8373e9a829477d832cde6818f9e5a3c5887d22918a15d3144c933b93681fe6db",
+      "compressedSha256": "662360e0d06803201230d9c00abc7e6ab2c378305bdb108a295843802cab3ad6",
+      "lines": [
+        26,
+        31
+      ]
+    },
+    {
+      "path": "library/core/src/cmp.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/cmp.rs",
+      "file": "rust-core-cmp-1.89.0.rs.gz",
+      "bytes": 69754,
+      "sha256": "4d99f17bff4740a566d839f9ec990ebb5f593cbfe369334fac5f08463203e1c4",
+      "compressedSha256": "c5f183d323590fe0716db965988e4a15f3aecad895e5d7891461e0a68898f4a2",
+      "lines": [
+        2021,
+        2033
+      ]
+    },
+    {
+      "path": "library/alloc/src/vec/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/alloc/src/vec/mod.rs",
+      "file": "rust-vec-mod-1.89.0.rs.gz",
+      "bytes": 149006,
+      "sha256": "550d150a5f0a546ea94e6a3b29a70007980f42c930d042d044e2d03ae9e36ae5",
+      "compressedSha256": "23c0282775cc91c9405559d55e8bbb5df1b87445e164ae7f9205b7161f434e70",
+      "lines": [
+        3326,
+        3333
+      ]
+    },
+    {
+      "path": "library/core/src/array/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/array/mod.rs",
+      "file": "rust-array-mod-1.89.0.rs.gz",
+      "bytes": 32590,
+      "sha256": "b5239b8af6bb1eb99b589518161f7fcf017dc80c275620517d145974cf7029a1",
+      "compressedSha256": "eb054bdef9ccfd34f35deec0e11bd54d1ca1c8909921d259e7eeb6858da5ac64",
+      "lines": [
+        208,
+        213
+      ]
+    }
+  ],
+  "namespaceAuthority": false,
+  "runtimeParity": false,
+  "generatedTraitBehavior": false,
+  "rustExecution": false,
+  "methods": [
+    "slice.contains"
+  ],
+  "element": "&str",
+  "arguments": [
+    "&&str"
+  ],
+  "reference": "https://doc.rust-lang.org/reference/expressions/method-call-expr.html",
+  "obligations": [
+    "Only actual checked builtin slice, Vec and fixed-array source receivers are supported.",
+    "Receiver method adjustment is restricted to one checked shared reference, builtin fixed-array unsizing and the pinned standard Vec Deref to slice.",
+    "Vec/fixed-array method adjustment requires the actual closed value-only module namespace; trait, imported type, attribute and unknown namespace candidates remain unsupported.",
+    "The pinned shared-reference PartialEq forwards to standard str byte-content equality; custom traits and other element types remain unsupported.",
+    "This source profile does not provide namespace, macro, custom allocator, target runtime or full Router parity authority."
+  ],
+  "licenses": [
+    {
+      "file": "LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "file": "LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ]
+}
