@@ -129,10 +129,10 @@ try {
   for (const source of tracked) if (!seen.has(source)) throw new Error(`Missing tracked Rust source: ${source}`);
   for (const [kind, total] of Object.entries(totals)) if (translation.totals?.[kind] !== total) throw new Error(`Translation total mismatch: ${kind}`);
   // Run the deterministic translator's check mode to reject edited/stale generated artifacts.
-  // All ten cycle-six same-head standalone checks passed in 135–240 seconds.
-  // Nine embedded checks were killed at 180 seconds. Preserve the full exact
-  // comparison and give it a bounded six-minute completion window.
-  const translationTimeoutMs = 360_000, translationStarted = performance.now();
+  // All ten cycle-eight same-head standalone checks passed in 300–498 seconds.
+  // Eight embedded checks were killed at 360 seconds. Preserve the full exact
+  // comparison and allow a bounded ten-minute completion window.
+  const translationTimeoutMs = 600_000, translationStarted = performance.now();
   try {
     await exec(process.execPath, ['scripts/translate-router.mjs','--check'], { cwd: root, timeout: translationTimeoutMs, maxBuffer: 4_194_304 });
   } catch (error) {

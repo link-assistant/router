@@ -112,8 +112,9 @@ jobs:
       - run: node scripts/build-js-first-ui.mjs
   parity:
     runs-on: ubuntu-24.04
-    # Observed acceptance reached 1032s; retain 600s for the bounded strict checker and setup.
-    timeout-minutes: 30
+    # Observed acceptance reached 1133s. Its three checker calls may each use an
+    # additional 240s; add the 840s canonical checker and 60s setup: 2753s total.
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
