@@ -158,7 +158,7 @@ export function withNestedMatchPatternsChecker(Base) {
       const result=super.expr(node,env,path,expected,allowLiteral),evidence=this.nestedMatchEvidence?.get(node);
       // PatternEmitter installs boundary guards before typed layout inspection.
       // Const permission for the new immutable-match profile is not inferred.
-      return evidence?{...result,patternControl:evidence,constEligible:false}:result;
+      return evidence?{...result,patternControl:result.patternControl?{...result.patternControl,nestedMatchAlternatives:evidence}:evidence,constEligible:false}:result;
     }
   };
 }

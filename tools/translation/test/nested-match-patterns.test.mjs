@@ -29,6 +29,21 @@ test('constructor products distribute source alternatives and retain identical s
   const result=project('enum Choice{Pick(u8,u8),Empty} pub fn product(value:Choice)->u8{match value{Choice::Pick(1 | 2,3 | 4)=>9,Choice::Pick(_,_)=>0,Choice::Empty=>1}} pub fn captured(value:Choice,offset:u8)->u8{match value{Choice::Pick(0 | 2,n) | Choice::Pick(3,n)=>n+offset,Choice::Pick(_,_)=>0,Choice::Empty=>1}}');
   await both(result,api=>{for(let a=0;a<4;a++)for(let b=2;b<6;b++){const value=Object.freeze({$:'Pick',field0:BigInt(a),field1:BigInt(b)});assert.equal(api.product(value),(a===1||a===2)&&(b===3||b===4)?9n:0n);assert.equal(api.captured(value,3n),a!==1?BigInt(b)+3n:0n);}assert.equal(api.product(Object.freeze({$:'Empty'})),1n);});
 });
+test('nested alternatives preserve labelled match joins and real function returns',{timeout:30_000},async()=>{
+  const source='pub fn choose(value:Option<&str>)->Option<bool>{let flag:bool=match value{Some("go" | "yes")=>true,Some(_)=>false,None=>return None};Some(flag)}';
+  const checked=checkProgram(parseRust(source+' fn main(){}')),entry=checked.declarations.get('choose'),initializer=entry.body.value;
+  assert.equal(initializer.k,'routerControlInitializer');assert.equal(initializer.type.kind,'bool');
+  assert.equal(initializer.patternControl.kind,'match-return');assert.equal(initializer.patternControl.initializerType.kind,'bool');
+  const alternatives=initializer.patternControl.nestedMatchAlternatives;
+  assert.equal(alternatives.kind,'nested-match-alternatives');assert.equal(alternatives.expandedRows,4);
+  const pipe=alternatives.rows[0].sourcePattern.tokens.find(token=>token.value==='|');assert.equal(source.slice(pipe.span.start,pipe.span.end),'|');
+  await both(project(source),api=>{
+    for(const [input,expected]of [[none,none],[some('go'),some(true)],[some('yes'),some(true)],[some('other'),some(false)]])assert.deepEqual(api.choose(input),expected);
+    let reads=0;const proxy=new Proxy(some('go'),{get(){reads++;throw Error('get');},getOwnPropertyDescriptor(){reads++;throw Error('descriptor');},ownKeys(){reads++;throw Error('keys');},getPrototypeOf(){reads++;throw Error('prototype');}});
+    assert.throws(()=>api.choose(proxy),TypeError);assert.equal(reads,0);
+    assert.throws(()=>api.choose(Object.freeze({$:'Some',get field0(){reads++;return 'go';}})),TypeError);assert.equal(reads,0);
+  });
+});
 test('one computed scrutinee and one selected effectful arm execute in source order',{timeout:30_000},async()=>{
   const result=project('fn mark(path:&str)->bool{std::fs::read_to_string(path).is_ok()} fn subject(v:u8)->Option<u8>{let ignored=mark("subject");Some(v)} pub fn ordered(v:u8)->u8{match subject(v){Some(1 | 2)=>{let ignored=mark("selected");7},Some(_)=>{let ignored=mark("fallback");8},None=>0}}');
   await both(result,(api,{withEffectCapabilities})=>{for(const [input,expected,arm]of [[1n,7n,'selected'],[2n,7n,'selected'],[3n,8n,'fallback']]){const calls=[],capability={fs:{sync:{readFileSync(path){calls.push(path);return new Uint8Array();}}}};assert.equal(withEffectCapabilities(capability,()=>api.ordered(input)),expected);assert.deepEqual(calls,['subject',arm]);}});
