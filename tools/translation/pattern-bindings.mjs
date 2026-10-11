@@ -1,6 +1,6 @@
 // Typed projection plans for destructuring and refutable control flow.
 // These plans inspect declarations, never evaluate or rewrite Rust source.
-import {fixedBounds,typeKey,sameType} from './vendor/meta-language/translation/types.js';
+import {fixedBounds,typeKey,sameType} from './checked-types.mjs';
 import {unsupported,typeError} from './vendor/meta-language/translation/diagnostics.js';
 const always=()=>({kind:'always'});
 const combine=(kind,tests)=>{const useful=tests.filter(test=>test.kind !== 'always');return useful.length?useful.length === 1?useful[0]:{kind,tests:useful}:always();};

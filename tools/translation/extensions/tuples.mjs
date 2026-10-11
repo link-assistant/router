@@ -1,8 +1,8 @@
 // Rust tuple products have their own checked layout, distinct from tuple structs.
 import {PatternControlRustParser,PatternControlChecker,PatternControlEmitter} from './pattern-control.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
-import {sameType,UNIT} from '../vendor/meta-language/translation/types.js';
-import {coerce} from '../vendor/meta-language/translation/check.js';
+import {sameType,UNIT} from '../checked-types.mjs';
+import {coerce} from '../checked-coercions.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {withParameterPatternParser} from './parameter-patterns.mjs';
 

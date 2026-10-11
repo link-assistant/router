@@ -12,7 +12,7 @@ async function exposed(name, replacements) {
     if (source.split(before).length !== 2) throw new Error(`upstream patch anchor drift: ${name}: ${before}`);
     source = source.replace(before, after);
   }
-  source = source.replace(/from (['"])(\.\.?\/[^'"]+)\1/gu, (_, quote, path) => `from ${quote}${new URL(path, url).href}${quote}`);
+  source = source.replace(/from (['"])(\.\.?\/[^'"]+)\1/gu, (_, quote, path) => `from ${quote}${(path==='./types.js'?new URL('../checked-types.mjs',import.meta.url):new URL(path, url)).href}${quote}`);
   return import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 }
 

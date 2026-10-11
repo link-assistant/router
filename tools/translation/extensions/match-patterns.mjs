@@ -1,7 +1,7 @@
 // Nested alternatives are checked as source patterns before distribution.
 // The existing matrix compiler retains first-arm priority and exhaustiveness.
 import {planPattern} from '../pattern-bindings.mjs';
-import {BOOL} from '../vendor/meta-language/translation/types.js';
+import {BOOL} from '../checked-types.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 const LIMIT=256;
 const scalar=type=>['fixed','bool','string','unit','nat','int','float'].includes(type.kind)&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved;

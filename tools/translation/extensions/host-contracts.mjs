@@ -7,20 +7,21 @@ import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './ma
 import {withSourceOwnershipParser,withSourceOwnershipChecker} from './ownership.mjs';
 import {withSourceLifetimeChecker} from './source-lifetimes.mjs';
 import {withSharedArrayBorrowChecker} from './array-borrows.mjs';
+import {withFixedArrayParser,withFixedArrayChecker,fixedArrayCopyCells} from './fixed-arrays.mjs';
 import {EffectEmitter,effectData} from './effects.mjs';
 import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
 import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
 import {planStandardMethod,completeStandardMethod} from './standard-method-plans.mjs';
-import {rustFixedType} from '../vendor/meta-language/translation/types.js';
+import {rustFixedType} from '../checked-types.mjs';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
 import {tokenizeRust} from './lexical.mjs';
-import {sameType,fixedBounds} from '../vendor/meta-language/translation/types.js';
-import {coerce} from '../vendor/meta-language/translation/check.js';
+import {sameType,fixedBounds} from '../checked-types.mjs';
+import {coerce} from '../checked-coercions.mjs';
 import {TranslationError,typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {valueSchema} from '../type-layout.mjs';
-import {BOOL,FLOAT} from '../vendor/meta-language/translation/types.js';
+import {BOOL,FLOAT} from '../checked-types.mjs';
 import {HostInstantiations} from './host-instantiations.mjs';
 import {macroProvenance} from '../macro-provenance.mjs';
 import {configureParserSourceScope} from '../source-scopes.mjs';
@@ -31,7 +32,7 @@ import {evaluateCheckedConstant,CONSTANT_EVALUATION_PROFILE} from './constant-ev
 export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
-const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element)}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
+const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
 const nonlocalDefault=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(nonlocalDefault):nonlocalDefault(value))));
 const INHERENT_FIXED_COPY=new Set(['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul']);
 // Built-in shared primitive reads copy an immutable BigInt value. Trait Deref,
@@ -80,7 +81,7 @@ export function hostData() {
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
-export class HostRustParser extends withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(MethodRustParser)))) {
+export class HostRustParser extends withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser))))) {
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
   genericType(kind,types,range){return {...super.genericType(kind,types,range),rustStandardGeneric:{kind,arguments:structuredClone(types)}};}
   attributes(options={}) {
@@ -242,7 +243,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(MethodChecker))))) {
+export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
@@ -392,16 +393,20 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
   }
 }
 export class HostEmitter extends EffectEmitter {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
+    if(param.type.kind==='array'&&param.type.rustFixedArray) {
+      fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
+      return [`${param.name} = ml_copy_fixed_array(${param.name}, ${JSON.stringify(runtimeValueType(param.type))});`,this.valueGuard(param.name,param.type)+';'];
+    }
     // The portable bounds helper compares values. Reject non-BigInts before
     // that helper can invoke a hostile object's conversion hooks.
     if(param.type.kind==='fixed')return [`if (typeof ${param.name} !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');`,...super.parameterGuard(param)];
-    const hasData=type=>type.kind==='data'||type.kind==='named'||type.kind==='array'&&hasData(type.element);
+    const hasData=type=>type.kind==='data'||type.kind==='named'||type.kind==='array'&&(type.rustFixedArray||hasData(type.element));
     if(!hasData(param.type)&&param.type.kind!=='float')return super.parameterGuard(param);
     // A helper's guard must depend only on its actual reachable parameter
     // layout, not on unrelated callers in another checked dependency closure.
-    return [...(this.patternParameterGuards?.(param)??[]),...((param.copyReceiver||param.type.kind==='data'&&this.copyTypes.has(param.type.name))?(this.copyReceivers=true,[`ml_assert_immutable_copy(${param.name});`]):[]),this.valueGuard(param.name,param.type)+';'];
+    return [...(this.iteratorParameterGuards?.(param)??[]),...(this.patternParameterGuards?.(param)??[]),...((param.copyReceiver||param.type.kind==='data'&&this.copyTypes.has(param.type.name))?(this.copyReceivers=true,[`ml_assert_immutable_copy(${param.name});`]):[]),this.valueGuard(param.name,param.type)+';'];
   }
   valueGuard(value,type) {
     const all=valueSchema(this.program.declarations),types={};
@@ -418,6 +423,14 @@ export class HostEmitter extends EffectEmitter {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(node.k==='array'&&node.type?.rustFixedArray) {
+      this.fixedArrays=true;
+      return `ml_copy_fixed_array([${node.items.map(item=>this.expr(item)).join(', ')}], ${JSON.stringify(runtimeValueType(node.type))})`;
+    }
+    if(node.type?.kind==='array'&&node.type.rustFixedArray) {
+      this.fixedArrays=true;
+      return `ml_copy_fixed_array(${super.expr(node)}, ${JSON.stringify(runtimeValueType(node.type))})`;
+    }
     if(node.k==='routerSharedArrayLiteral'){if(!node.arrayBorrowProof?.verified)throw new Error('missing checked shared array origin proof');return `Object.freeze(${this.expr(node.value)})`;}
     if(node.k==='routerPrimitiveDereference')return this.expr(node.value);
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k))return this.expr(node.value);
@@ -436,6 +449,7 @@ export class HostEmitter extends EffectEmitter {
   }
   file() {
     const result=super.file(),preludes=[...result.preludes];
+    if(this.fixedArrays)preludes.unshift(`import { copyFixedArray as ml_copy_fixed_array } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-array-runtime.mjs'))};`);
     if(this.copyReceivers)preludes.unshift(`import { assertImmutableCopy as ml_assert_immutable_copy } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_integer_')))preludes.unshift(`import { createIntegerRuntime as ml_create_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'integer-runtime.mjs'))};`);

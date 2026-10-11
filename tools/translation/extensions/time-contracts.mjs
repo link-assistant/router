@@ -1,5 +1,5 @@
 // Checked pure std::time::Duration ABI from Rust 1.89 core/time.rs.
-import {BOOL,FLOAT,fixed} from '../vendor/meta-language/translation/types.js';
+import {BOOL,FLOAT,fixed} from '../checked-types.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {SOURCE_STRING} from './source-contract-types.mjs';
 const named=(...path)=>({kind:'named',path}),span={start:0,end:0};

@@ -2,8 +2,8 @@
 // https://doc.rust-lang.org/std/primitive.str.html#method.contains
 // https://doc.rust-lang.org/std/primitive.str.html#method.replacen
 import {FormatRustParser,FormatChecker,FormatEmitter} from './formatting.mjs';
-import {BOOL,STRING,fixed,rustFixedType,sameType} from '../vendor/meta-language/translation/types.js';
-import {coerce} from '../vendor/meta-language/translation/check.js';
+import {BOOL,STRING,fixed,rustFixedType,sameType} from '../checked-types.mjs';
+import {coerce} from '../checked-coercions.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {SOURCE_STR} from './source-contract-types.mjs';
 import {sharedStrPatternProof} from './standard-str-pattern.mjs';

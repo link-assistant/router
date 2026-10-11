@@ -2,7 +2,7 @@
 // https://doc.rust-lang.org/std/fmt/index.html
 // https://doc.rust-lang.org/std/fmt/trait.LowerHex.html
 import {TupleRustParser,TupleChecker,TupleEmitter} from './tuples.mjs';
-import {STRING} from '../vendor/meta-language/translation/types.js';
+import {STRING} from '../checked-types.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 const span=(first,last)=>({start:first.start,end:last.end});
 const control=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(control):control(value))));

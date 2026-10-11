@@ -1,7 +1,7 @@
 // Type-directed plans only. The frontend still checks the original callback,
 // owns its evaluation/ownership obligations, and emits the checked semantic IR.
 import {typeError} from '../vendor/meta-language/translation/diagnostics.js';
-import {typeKey} from '../vendor/meta-language/translation/types.js';
+import {typeKey} from '../checked-types.mjs';
 const freeze=value=>{if(value && typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 export const STANDARD_METHOD_PROFILE=freeze({
   version:'1.89.0',

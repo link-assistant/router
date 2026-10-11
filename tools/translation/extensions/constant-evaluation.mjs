@@ -52,7 +52,7 @@ function sameType(actual,expected) {
   if(actual.rustGenericIdentityUnresolved||expected.rustGenericIdentityUnresolved)return false;
   if(actual.rustStandardGeneric&&expected.rustStandardGeneric){const left=actual.rustStandardGeneric,right=expected.rustStandardGeneric;if(left.kind!==right.kind||left.arguments.length!==right.arguments.length||left.arguments.some((type,index)=>!sameType(type,right.arguments[index])))return false;}
   if(actual.kind==='fixed')return actual.bits===expected.bits&&actual.signed===expected.signed;
-  if(actual.kind==='array')return sameType(actual.element,expected.element);
+  if(actual.kind==='array')return actual.rustFixedArray?.length===expected.rustFixedArray?.length&&sameType(actual.element,expected.element);
   if(actual.kind==='data')return actual.name===expected.name;
   return ['bool','string','unit'].includes(actual.kind);
 }
@@ -215,6 +215,7 @@ class Evaluator {
       }
       case 'array':{
         if(node.type?.kind!=='array')refuse('constant array has no checked element type',node);
+        if(node.type.rustFixedArray&&(!Number.isSafeInteger(node.type.rustFixedArray.length)||node.type.rustFixedArray.length<0||node.type.rustFixedArray.length>4096||node.type.rustFixedArray.length!==node.items.length||node.type.rustOwnership?.kind!=='value'||node.type.rustOwnership.source!=='array'))refuse('constant fixed array has no exact source length and value ownership',node);
         return result(Object.freeze(node.items.map(item=>{const value=this.evaluate(item,env,depth+1);if(!sameType(value.type,node.type.element))refuse('constant array element type mismatch',node);return value.value;})));
       }
       case 'routerSharedArrayLiteral':{const value=this.evaluate(node.value,env,depth+1);return result(value.value);}

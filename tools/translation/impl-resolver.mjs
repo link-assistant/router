@@ -2,9 +2,11 @@
 // Extraction is structural evidence; only later checked bodies are executable.
 import {sourceItems} from './rust-structure.mjs';
 import {tokenizeRust} from './extensions/lexical.mjs';
+import {fixedArrayCopyCells,FIXED_ARRAY_PROFILE} from './extensions/fixed-arrays.mjs';
+import {fixedArrayLength} from './checked-types.mjs';
 import {TranslationError} from './vendor/meta-language/translation/diagnostics.js';
 import {createHash} from 'node:crypto';
-import {typeKey} from './vendor/meta-language/translation/types.js';
+import {typeKey} from './checked-types.mjs';
 
 const range = tokens => ({start:tokens[0]?.start ?? 0,end:tokens.at(-1)?.end ?? 0});
 const significant = tokens => tokens.filter(token=>token.type !== 'comment');
@@ -169,6 +171,8 @@ const checkedKey=type=>{
   if(['bool','unit','float'].includes(type.kind))return typeKey(type);
   if(type.kind==='fixed' && [8,16,32,64,128].includes(type.bits) && typeof type.signed==='boolean')return typeKey(type);
   if(type.kind==='data' && typeof type.name==='string' && type.name.length)return typeKey(type);
+  if(type.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return 'rust-borrowed-str';
+  if(type.kind==='array'&&fixedArrayLength(type)!==null&&type.rustOwnership?.kind==='value'&&type.rustOwnership.source==='array')return checkedKey(type.element)?typeKey(type):null;
   return null;
 };
 export function validCopyCertificate(certificate,type) {
@@ -218,6 +222,11 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
     if(done.has(key))return true;
     if(active.has(key))return refuse('recursive value layout has no finite checked Copy proof',location);
     if(!implementationProof(current))return false;
+    if(current.kind==='array') {
+      try{fixedArrayCopyCells(current,location);}catch(error){return refuse(error.message,location);}
+      if(!visit(current.element,location))return false;
+      proofs.push({kind:'standard-fixed-array',type:current,length:fixedArrayLength(current),profile:FIXED_ARRAY_PROFILE});done.add(key);return true;
+    }
     if(current.kind!=='data') {proofs.push({kind:'standard-primitive',type:current});done.add(key);return true;}
     const entry=declarations.get(current.name);
     if(entry?.k!=='data' || entry.fullName!==current.name || !Array.isArray(entry.modulePath) || !Array.isArray(entry.ctors))return refuse('Copy requires an actual resolved algebraic declaration',location);
@@ -243,7 +252,8 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
         if(!Array.isArray(ctor.fields)){valid=refuse('Copy constructor layout is unchecked',location);continue;}
         for(const field of ctor.fields) {
           const syntax=field.rustTypeSyntax;
-          if(!Array.isArray(syntax) || !syntax.length || syntax.some(token=>typeof token!=='string' || ownershipSyntax.test(token) || ['&','*','[',']','dyn','impl'].includes(token))) {valid=refuse('field ownership syntax has no supported Copy proof',location);continue;}
+          const sized=field.type.kind==='array'&&field.type.rustFixedArray&&syntax?.[0]==='['&&syntax.at(-1)===']';
+          if(!Array.isArray(syntax) || !syntax.length || syntax.some(token=>typeof token!=='string' || ownershipSyntax.test(token) || (sized?['*','dyn','impl']:['&','*','[',']','dyn','impl']).includes(token))) {valid=refuse('field ownership syntax has no supported Copy proof',location);continue;}
           if(!visit(field.type,location))valid=false;
         }
       }

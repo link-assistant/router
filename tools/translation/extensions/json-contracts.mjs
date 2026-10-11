@@ -1,5 +1,5 @@
 // Registered serde_json 1.0.151 Value instantiations, not Router function copies.
-import {BOOL,STRING,UNIT,FLOAT,fixed,array} from '../vendor/meta-language/translation/types.js';
+import {BOOL,STRING,UNIT,FLOAT,fixed,array} from '../checked-types.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {SOURCE_STR,SOURCE_STRING,sourceShared,sourceVector} from './source-contract-types.mjs';
 const named=(...path)=>({kind:'named',path}),span={start:0,end:0};

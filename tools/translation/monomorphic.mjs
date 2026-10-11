@@ -1,7 +1,7 @@
 // Identifier-safe injective encoding of supported monomorphic type syntax.
 // Delimiters are outside the UTF-8 hex alphabet, so paths and nested arrays
 // cannot collide (including distinct underscore-containing Rust identifiers).
-import {typeKey} from './vendor/meta-language/translation/types.js';
+import {typeKey,fixedArrayLength} from './checked-types.mjs';
 export function encodeMonomorphicType(type) {
   if(type.rustGenericIdentityUnresolved) {
     const {rustGenericIdentityUnresolved,...pointee}=type;
@@ -12,6 +12,7 @@ export function encodeMonomorphicType(type) {
     return 'reference_shared_'+encodeMonomorphicType(type.rustReference.pointee);
   }
   if(type.rustOwnership?.kind==='owned'&&type.kind==='string')return 'rust_owned_string';
+  if(type.kind==='array'&&fixedArrayLength(type)!==null)return 'rust_fixed_array_'+fixedArrayLength(type)+'_'+encodeMonomorphicType(type.element);
   if(type.rustOwnership?.kind==='owned'&&type.kind==='array')return 'rust_owned_vec_'+encodeMonomorphicType(type.element);
   if(type.kind === 'named')return 'named_' + type.path.filter((part,index)=>index !== 0 || part !== 'crate').map(part=>Buffer.from(part,'utf8').toString('hex')).join('_');
   if(type.kind === 'array')return 'array_' + encodeMonomorphicType(type.element);

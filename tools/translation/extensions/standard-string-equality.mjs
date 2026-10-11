@@ -1,6 +1,6 @@
 // A pinned standard trait profile, not a coercion between owned and borrowed
 // strings. The checked operands and their source ownership remain intact.
-import {BOOL,STRING} from '../vendor/meta-language/translation/types.js';
+import {BOOL,STRING} from '../checked-types.mjs';
 import {unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 
 export const STANDARD_STRING_EQUALITY_PROFILE=Object.freeze({

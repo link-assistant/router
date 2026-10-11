@@ -1,7 +1,7 @@
 // Checked semantic contracts for generic Rust standard-library effects.
 // These declarations describe value/error layouts, never repository functions.
 import {monomorphicTypeName} from '../monomorphic.mjs';
-import {STRING,UNIT,fixed,array} from '../vendor/meta-language/translation/types.js';
+import {STRING,UNIT,fixed,array} from '../checked-types.mjs';
 import {SOURCE_STRING} from './source-contract-types.mjs';
 const named = (...path) => ({kind:'named',path});
 const span = {start:0,end:0};

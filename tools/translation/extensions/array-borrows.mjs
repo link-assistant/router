@@ -93,7 +93,7 @@ export function withSharedArrayBorrowChecker(Base) {
     sharedArrayBorrow(node,env,path,expected) {
       if(node.value.k!=='array'||node.value.sourceRustOwnership||node.value.items.some(item=>item.spread))fail('source array borrow syntax',node.span);
       if(expected&&(expected.kind!=='array'||expected.rustReference?.kind!=='shared'||expected.rustOwnership?.source!=='slice'))throw typeError('array literal borrow requires an actual shared slice boundary',node.span);
-      const hint=expected?{kind:'array',element:expected.rustReference.pointee.element}:undefined;
+      const hint={kind:'array',...(expected?{element:expected.rustReference.pointee.element}:{}),rustArrayBorrowStorage:true};
       const value=this.expr(node.value,env,path,hint);
       if(value.k!=='array')fail('array literal borrow checked shape',node.span);
       const pointee={...value.type,rustOwnership:{kind:'borrowed',source:'slice'}};

@@ -3,8 +3,8 @@
 import { TextRustParser, TextChecker, TextEmitter } from './text.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
-import { coerce } from '../vendor/meta-language/translation/check.js';
-import { data, rustFixedType } from '../vendor/meta-language/translation/types.js';
+import { coerce } from '../checked-coercions.mjs';
+import { data, rustFixedType } from '../checked-types.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 import {validCopyCertificate} from '../impl-resolver.mjs';
 import {withStandardStringEqualityChecker} from './standard-string-equality.mjs';

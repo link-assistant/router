@@ -2,13 +2,14 @@
 // No borrow, move, dereference or allocation is fabricated by this adapter.
 import {TextRustParser,TextChecker} from './text.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {fixedArrayLength} from '../checked-types.mjs';
 
 const OWNED_STRING=Object.freeze({kind:'owned',source:'String'});
 const BORROWED_STR=Object.freeze({kind:'borrowed',source:'str'});
 const OWNED_VEC=Object.freeze({kind:'owned',source:'Vec'});
 const BORROWED_SLICE=Object.freeze({kind:'borrowed',source:'slice'});
 const location=(first,last)=>({start:first.start,end:last.end});
-const canonical=owner=>owner&&(owner.kind==='owned'&&['String','Vec'].includes(owner.source)||owner.kind==='borrowed'&&['String','str','Vec','slice'].includes(owner.source));
+const canonical=owner=>owner&&(owner.kind==='owned'&&['String','Vec'].includes(owner.source)||owner.kind==='borrowed'&&['String','str','Vec','slice'].includes(owner.source)||owner.kind==='value'&&owner.source==='array');
 function ownership(type) {
   if(type?.rustOwnership) {
     if(!canonical(type.rustOwnership))throw new TypeError('Malformed checked Rust ownership qualifier');
@@ -55,7 +56,10 @@ export function assertRustOwnership(actual,expected,span,{declarations,resolveTy
     if(left.kind!==right.kind||left.source!==right.source)throw typeError('distinct Rust owned and borrowed source types require a checked conversion',span);
     if(actual.rustBorrowingUnresolved&&right.kind==='borrowed')throw unsupported('escaping owned string borrow','requires a checked lifetime and borrowing contract',span);
   }
-  if(actual.kind==='array'&&expected.kind==='array')assertRustOwnership(actual.element,expected.element,span,{declarations,resolveType},active);
+  if(actual.kind==='array'&&expected.kind==='array') {
+    if(fixedArrayLength(actual)!==fixedArrayLength(expected))throw typeError('Rust fixed-array length differs at the source boundary',span);
+    assertRustOwnership(actual.element,expected.element,span,{declarations,resolveType},active);
+  }
   if(actual.kind==='data'&&expected.kind==='data') {
     const key=actual.name+'|'+expected.name;if(active.has(key))return;active.add(key);
     const generic=type=>{
@@ -106,8 +110,11 @@ export function withOwnershipParser(Base=TextRustParser) {
       else if(type.kind==='string'&&borrow&&root==='str')owner=BORROWED_STR;
       else if(type.kind==='array'&&root==='Vec'&&known('Vec'))owner={kind:borrow?'borrowed':'owned',source:'Vec'};
       else if(type.kind==='array'&&root==='[') {
-        if(!borrow&&!referenceDepth)throw unsupported('unsized slice value','requires an actual source borrow, not an owned Vec encoding',location(first,tokens.at(-1)));
-        owner=BORROWED_SLICE;
+        if(type.rustFixedArray)owner={kind:'value',source:'array'};
+        else {
+          if(!borrow&&!referenceDepth)throw unsupported('unsized slice value','requires an actual source borrow, not an owned Vec encoding',location(first,tokens.at(-1)));
+          owner=BORROWED_SLICE;
+        }
       }
       const qualified={...type,rustSourceType:true,...(owner?{rustOwnership:owner}:{})};
       // A pointee's lifetime is not the lifetime of an outer reference.

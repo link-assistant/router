@@ -1,4 +1,5 @@
 // Stable recursive algebraic layouts for target types and runtime domains.
+import {fixedArrayLength} from './checked-types.mjs';
 const PRIMITIVES=new Set(['bool','string','unit','float','nat','int']);
 export const dataAliasName=name=>'MLData_'+Buffer.from(name,'utf8').toString('hex');
 function dataEntries(declarations) {
@@ -12,7 +13,7 @@ function normalizeType(type,declarations) {
     if(![8,16,32,64,128].includes(type.bits) || typeof type.signed !== 'boolean')throw new TypeError('Invalid checked machine-integer layout');
     return {kind:'fixed',bits:type.bits,signed:type.signed};
   }
-  if(type.kind === 'array')return {kind:'array',element:normalizeType(type.element,declarations)};
+  if(type.kind === 'array')return {kind:'array',element:normalizeType(type.element,declarations),...(fixedArrayLength(type)!==null?{rustFixedArray:{length:fixedArrayLength(type)}}:{})};
   let name;
   if(type.kind === 'data')name=type.name;
   else if(type.kind === 'named')name=(type.path[0] === 'crate'?type.path.slice(1):type.path).join('.');
@@ -64,7 +65,7 @@ function render(type,schema,aliases,active=new Set()) {
     case 'bool':return 'boolean';
     case 'string':return 'string';
     case 'unit':return 'null';
-    case 'array':return `ReadonlyArray<${render(type.element,schema,aliases,active)}>`;
+    case 'array':return `ReadonlyArray<${render(type.element,schema,aliases,active)}>${type.rustFixedArray?` & { readonly length: ${type.rustFixedArray.length} }`:''}`;
     case 'data': {
       if(aliases.has(type.name))return dataAliasName(type.name);
       if(active.has(type.name))throw new TypeError(`Recursive type ${type.name} requires a named TypeScript alias`);

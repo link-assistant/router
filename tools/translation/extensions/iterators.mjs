@@ -3,8 +3,8 @@
 import { DataRustParser, DataChecker, DataEmitter } from './data.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
-import { BOOL, UNIT, array, fixed, isNumeric, sameType, rustFixedType } from '../vendor/meta-language/translation/types.js';
-import { coerce } from '../vendor/meta-language/translation/check.js';
+import { BOOL, UNIT, array, fixed, isNumeric, sameType, rustFixedType } from '../checked-types.mjs';
+import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 
 // Iterator::count and size-taking adapters use the actual Rust usize type,

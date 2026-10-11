@@ -4,8 +4,8 @@ import { IteratorRustParser, IteratorChecker, IteratorEmitter } from './iterator
 import { EFFECT_DATA, EFFECT_CONTRACTS, effectContract } from './effects-contracts.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
-import { sameType } from '../vendor/meta-language/translation/types.js';
-import { coerce } from '../vendor/meta-language/translation/check.js';
+import { sameType } from '../checked-types.mjs';
+import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 const ASYNC = Symbol('async function');
 const ROOT = Symbol('effect body context');

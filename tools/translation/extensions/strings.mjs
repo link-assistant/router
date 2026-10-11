@@ -1,8 +1,8 @@
 import { RustParser, Checker, JavaScriptEmitter, emitWith } from './core.mjs';
 import { monomorphicTypeName } from '../monomorphic.mjs';
 import { tokenizeRust } from './lexical.mjs';
-import { BOOL, STRING, fixed, fixedBounds, typeKey, array, rustFixedType } from '../vendor/meta-language/translation/types.js';
-import { coerce } from '../vendor/meta-language/translation/check.js';
+import { BOOL, STRING, fixed, fixedBounds, typeKey, array, rustFixedType } from '../checked-types.mjs';
+import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 
 // Unicode White_Space, stable through the pinned Rust 1.99 Unicode tables.

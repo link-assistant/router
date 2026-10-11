@@ -3,7 +3,7 @@
 import { vectorContracts } from './vector-contracts.mjs';
 import {fixedIntegerContracts} from './fixed-integer-contracts.mjs';
 import { integerContracts } from './integer-contracts.mjs';
-import {sameType} from '../vendor/meta-language/translation/types.js';
+import {sameType} from '../checked-types.mjs';
 import { encodeMonomorphicType, monomorphicTypeName } from '../monomorphic.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 

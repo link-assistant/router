@@ -3,8 +3,8 @@
 import { StringRustParser, StringChecker, StringEmitter } from './strings.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
-import { BOOL, UNIT, fixed, sameType } from '../vendor/meta-language/translation/types.js';
-import { coerce } from '../vendor/meta-language/translation/check.js';
+import { BOOL, UNIT, fixed, sameType } from '../checked-types.mjs';
+import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 
 const MUTABLE = Symbol('mutable scalar locals');

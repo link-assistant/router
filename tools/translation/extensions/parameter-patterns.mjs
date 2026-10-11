@@ -1,6 +1,6 @@
 // Written function parameter patterns reuse the checked irrefutable binding
 // planner. The original body is parsed once and retained without substitutions.
-import {UNIT} from '../vendor/meta-language/translation/types.js';
+import {UNIT} from '../checked-types.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 
 const range=(first,last)=>({start:first.start,end:last.end});
