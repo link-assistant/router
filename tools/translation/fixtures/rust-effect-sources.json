@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-11",
+  "rustVersion": "1.99.0",
+  "sources": [
+    {"url":"https://doc.rust-lang.org/std/fs/fn.read_to_string.html","contracts":["strict UTF-8 input","Interrupted read retry","entire file String result"]},
+    {"url":"https://doc.rust-lang.org/std/env/fn.var.html","contracts":["absent or equal-sign/NUL key is NotPresent","non-Unicode value is NotUnicode"]},
+    {"url":"https://doc.rust-lang.org/std/io/enum.ErrorKind.html","contracts":["OS error categories","non-exhaustive unknown-error handling"]},
+    {"url":"https://docs.rs/tokio/latest/tokio/fs/fn.read_to_string.html","contracts":["async filesystem future resolves to std::io::Result<String>"]}
+  ],
+  "validationLimits": [
+    "No Rust executable or Cargo build was run before the complete JavaScript gate passes.",
+    "Windows native OS error-code parity and opaque non-Unicode filesystem paths remain unverified.",
+    "Adapters cover declared monomorphic overloads; they do not promote complete Router runtime parity."
+  ]
+}
