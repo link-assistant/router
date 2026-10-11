@@ -6,7 +6,9 @@ import {BOOL,STRING,fixed,rustFixedType,sameType} from '../vendor/meta-language/
 import {coerce} from '../vendor/meta-language/translation/check.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 const SPLITS=new Set(['split_once','rsplit_once']);
-const METHODS=new Map([['starts_with',1],['ends_with',1],['contains',1],['replace',2],['replacen',3],...Array.from(SPLITS,method=>[method,1])]);
+const STRIPS=new Set(['strip_prefix','strip_suffix']);
+const TRIMS=new Set(['trim_start_matches','trim_end_matches','trim_matches']);
+const METHODS=new Map([['starts_with',1],['ends_with',1],['contains',1],['replace',2],['replacen',3],...Array.from([...SPLITS,...STRIPS,...TRIMS],method=>[method,1])]);
 const USIZE={...fixed(64,false),rustPrimitiveName:'usize'};
 const exits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(exits):exits(value))));
 export class TextRustParser extends FormatRustParser {
@@ -58,13 +60,22 @@ export class TextChecker extends FormatChecker {
     };
     const value=bind(node.object,STRING),args=node.args.map((arg,index)=>bind(arg,index===2?USIZE:STRING,index<2,index===0));
     const owning=node.op==='replace'||node.op==='replacen';let type=owning?{...STRING,patternOwnershipRefusal:'owned String replacement'}:BOOL,tupleType;
+    if([...SPLITS,...STRIPS,...TRIMS].includes(node.op)&&value.type.patternOwnershipRefusal)throw unsupported('string borrowed receiver','requires actual borrowed str provenance; owned temporaries and erased references need checked lifetimes',node.span);
     if(SPLITS.has(node.op)) {
-      if(value.type.patternOwnershipRefusal)throw unsupported('split borrowed receiver','requires actual borrowed str provenance; owned temporaries and erased references need checked lifetimes',node.span);
       tupleType=this.resolveType(node.tupleType,path,node.span);const entry=this.items.get(tupleType.name);
       if(!entry?.tuple||entry.generated!=='router-tuple-type'||entry.ctors.length!==1||entry.ctors[0].name!=='Tuple'||entry.ctors[0].fields.length!==2||entry.ctors[0].fields.some(field=>!sameType(field.type,STRING)||field.type.patternOwnershipRefusal||field.rustTypeSyntax?.[0]!=='&'||field.rustTypeSyntax?.at(-1)!=='str'))throw unsupported('split borrowed product','requires the actual two-borrowed-str tuple layout; equal portable scalar encodings do not prove ownership',node.span);
       if(!this.instantiations?.option)throw unsupported('split standard Option','requires checked standard-library result instantiation',node.span);
       type=this.instantiations.option(tupleType,node.span);
       if(expected&&!sameType(expected,type))throw typeError('split result differs from the actual expected standard Option layout',node.span);
+    }
+    if(STRIPS.has(node.op)) {
+      if(!this.instantiations?.option)throw unsupported('strip standard Option','requires checked standard-library result instantiation',node.span);
+      type=this.instantiations.option(STRING,node.span);
+      if(expected&&!sameType(expected,type))throw typeError('strip result differs from the actual expected standard Option layout',node.span);
+    }
+    if(TRIMS.has(node.op)) {
+      if(node.op==='trim_matches'&&node.args[0].k!=='routerPatternChar')throw unsupported('double-ended trim Pattern','the checked profile requires an actual scalar char literal; str searchers do not implement the required DoubleEndedSearcher',node.span);
+      type=STRING;
     }
     const operation={k:node.k,op:node.op,value,args,type,...(tupleType?{tupleType}:{}),constEligible:false,patternKind:node.args[0].k==='routerPatternChar'?'char':'borrowed-str',sourceProfile:'checked-str-pattern-v1',span:node.span};
     return bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type,span:node.span}),operation);
@@ -81,6 +92,17 @@ export class TextEmitter extends FormatEmitter {
       const product=this.ctorObject(tuple,tuple.ctors[0],[`${value}.slice(0,index)`,`${value}.slice(index+${pattern}.length)`]);
       const some=this.ctorObject(option,option.ctors.find(ctor=>ctor.name==='Some'),[product]),none=this.ctorObject(option,option.ctors.find(ctor=>ctor.name==='None'),[]);
       return `(()=>{const index=${value}.${node.op==='split_once'?'indexOf':'lastIndexOf'}(${pattern});return index<0?${none}:${some};})()`;
+    }
+    if(STRIPS.has(node.op)) {
+      const option=this.program.declarations.get(node.type.name),suffix=node.op==='strip_suffix';
+      const some=this.ctorObject(option,option.ctors.find(ctor=>ctor.name==='Some'),[suffix?`${value}.slice(0,${value}.length-${pattern}.length)`:`${value}.slice(${pattern}.length)`]);
+      const none=this.ctorObject(option,option.ctors.find(ctor=>ctor.name==='None'),[]);
+      return `(${value}.${suffix?'endsWith':'startsWith'}(${pattern})?${some}:${none})`;
+    }
+    if(TRIMS.has(node.op)) {
+      const start=node.op!=='trim_end_matches'?`while(text.startsWith(${pattern}))text=text.slice(${pattern}.length);`:'';
+      const end=node.op!=='trim_start_matches'?`while(text.endsWith(${pattern}))text=text.slice(0,text.length-${pattern}.length);`:'';
+      return `(()=>{let text=${value};if(${pattern}.length===0)return text;${start}${end}return text;})()`;
     }
     // Empty patterns match each UTF-8 character boundary, including both ends.
     // Array.from visits Unicode scalars, unlike String.split("") or replaceAll.

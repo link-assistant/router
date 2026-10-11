@@ -12,7 +12,7 @@ async function translate(source,verify) {
   await verifyTypedTargets(result,verify);return result;
 }
 test('first and last splits return actual immutable Option of borrowed tuple products',async()=>{
-  await translate('pub fn first(v:&str,p:&str)->Option<(&str,&str)>{v.split_once(p)} pub fn last(v:&str,p:&str)->Option<(&str,&str)>{v.rsplit_once(p)}',api=>{
+  await translate("pub fn first(v:&'static str,p:&str)->Option<(&'static str,&'static str)>{v.split_once(p)} pub fn last(v:&'static str,p:&str)->Option<(&'static str,&'static str)>{v.rsplit_once(p)}",api=>{
     for(const [value,pattern,first,last] of [
       ['cfg','=',none(),none()],['cfg=','=',some('cfg',''),some('cfg','')],
       ['cfg=foo=bar','=',some('cfg','foo=bar'),some('cfg=foo','bar')],
@@ -46,10 +46,10 @@ test('standard split results retain intrinsic Option identity under a local same
 });
 test('split argument order is receiver first and each checked operand is bound once',async()=>{
   await translate('fn receiver()->&\'static str{panic!("receiver first")} fn delimiter()->&\'static str{panic!("delimiter second")} pub fn run()->Option<(&\'static str,&\'static str)>{receiver().split_once(delimiter())}',api=>assert.throws(()=>api.run(),{message:'receiver first'}));
-  const result=await translate('pub fn run(v:&str,p:&str)->Option<(&str,&str)>{v.split_once(p)}',api=>assert.deepEqual(api.run('a=b','='),some('a','b')));
+  const result=await translate("pub fn run(v:&'static str,p:&str)->Option<(&'static str,&'static str)>{v.split_once(p)}",api=>assert.deepEqual(api.run('a=b','='),some('a','b')));
   let body=result.ir.items.find(item=>item.name==='run').semantic.checkedIR.body,count=0;
   while(body.k==='let'){count++;body=body.body;}assert.equal(count,2);assert.equal(body.k,'routerTextPattern');assert.equal(body.constEligible,false);
-  const tuple=result.ir.items.find(item=>item.name==='run').semantic.dataTypes.find(entry=>entry.tuple);assert.deepEqual(tuple.ctors[0].fields.map(field=>field.rustTypeSyntax),[['&','str'],['&','str']]);
+  const tuple=result.ir.items.find(item=>item.name==='run').semantic.dataTypes.find(entry=>entry.tuple);assert.deepEqual(tuple.ctors[0].fields.map(field=>field.rustTypeSyntax),[['&',"'",'static','str'],['&',"'",'static','str']]);
 });
 test('split preserves source-bearing refusals for unproved ownership, trait or result identities',()=>{
   for(const source of [
