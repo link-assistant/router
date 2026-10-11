@@ -116,7 +116,10 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
     }
   }
   const evidence={schema:'derive-footprint-context-v1',dependenciesDigest:dependencies.digest,compilationProfile:profile,sources:moduleHashes,certificates:[...byId.values()],diagnostics};
-  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{byId,external});return context;
+  const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});
+  const originalModules=freeze(modules.map(module=>({file:module.file,path:[...module.path],source:module.source,compilationProfile:profile,...(module.configurationCondition?{configurationCondition:module.configurationCondition}:{})})));
+  const originalExternal=new Map([...external].map(([path,table])=>[path,freeze(structuredClone(table))]));
+  contexts.set(context,{byId,external:originalExternal,dependencies,originalModules});return context;
 }
 
 export function deriveFootprintAt(context,module,item) {
@@ -132,6 +135,13 @@ export function deriveFootprintAt(context,module,item) {
 }
 export function isDeriveFootprintCertificate(certificate){return !!certificate&&certificates.has(certificate);}
 export function isDeriveFootprintContext(context){return !!context&&contexts.has(context);}
+// A later output grammar check must use the same original module/dependency
+// context as the input certificate. This accessor confers no output authority.
+export function deriveFootprintOriginalContext(context,certificate){
+  const state=contexts.get(context);
+  if(!state||![...state.byId.values()].includes(certificate))throw new TypeError('Derive output requires its original sealed input context');
+  return {modules:state.originalModules,dependencies:state.dependencies,externalModules:new Map(state.external),compilationProfile:context.compilationProfile};
+}
 export function deriveFootprintExternalModules(context){const state=contexts.get(context);if(!state)throw new TypeError('Unsealed derive footprint context');return new Map(state.external);}
 export function assertDeriveFootprintCertificate(certificate,source,offset=0) {
   if(!isDeriveFootprintCertificate(certificate)||source!==certificates.get(certificate).source.slice(certificate.span.start,certificate.span.end)||offset!==certificate.span.start)throw new TypeError('Unsealed or mismatched original derive source certificate');
