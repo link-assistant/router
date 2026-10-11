@@ -15,7 +15,26 @@ const plan=(owner,paths)=>planTrackedModulePath(owner,item(owner),[owner.file,..
 test('module-file profile retains unchanged pinned Rust source and no behavior authority',()=>{
   assert.equal(MODULE_PATH_PROFILE.rust,'1.89.0');
   assert.equal(MODULE_PATH_PROFILE.source.sha256,'ffd5ab103a966ee584b99c99fb8009f52c9aa6f7fce592f86498924c513e65e5');
+  assert.equal(MODULE_PATH_PROFILE.identifierSource.sha256,'35b84de01138877958228c55fcfbbff7749f7b97dd4e089fc3e4cad1733196b2');
   for(const name of ['namespaceAuthority','attributeExpansionAuthority','runtimeAuthority'])assert.equal(MODULE_PATH_PROFILE[name],false);
+});
+
+test('module names retain keyword raw-identifier and filesystem spelling restrictions',()=>{
+  for(const name of ['_','fn','async','await','dyn','type','true','try','gen','abstract','yield']){
+    assert.throws(()=>plan(module(`#[path="actual.rs"]mod ${name};`),['src/actual.rs']),/permitted original Rust identifier/,name);
+  }
+  for(const name of ['_','crate','self','Self','super'])assert.throws(()=>plan(module(`#[path="actual.rs"]mod r#${name};`),['src/actual.rs']),/permitted original Rust identifier/,name);
+  for(const name of ['fn','async','type','try','gen']){
+    const selected=plan(module(`#[path="actual.rs"]mod r#${name};`),['src/actual.rs']);assert.equal(selected.name,name);assert.equal(selected.rawIdentifier,true);
+  }
+  for(const name of ['union','macro_rules','raw','safe','_valid']){
+    const selected=plan(module(`mod ${name};`),[`src/${name}.rs`]);assert.equal(selected.name,name);assert.equal(selected.rawIdentifier,false);
+  }
+  assert.throws(()=>plan(module('mod café;'),['src/café.rs']),/ASCII filesystem identifier/);
+  assert.equal(plan(module('#[path="actual.rs"]mod café;'),['src/actual.rs']).name,'café');
+  assert.equal(plan(module('mod café {}'),[]).name,'café');
+  assert.throws(()=>plan(module('#[path="actual.rs"]mod cafe\u0301;'),['src/actual.rs']),/permitted original Rust identifier/);
+  for(const source of ['pub(in fn)mod child;','pub(in crate::fn)mod child;','pub(in crate::_)mod child;'])assert.throws(()=>plan(module(source),['src/child.rs']),/checked grammar/);
 });
 
 test('ordinary external module candidates retain foo.rs and foo/mod.rs ownership',()=>{

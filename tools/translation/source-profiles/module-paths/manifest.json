@@ -32,6 +32,35 @@
   "limits": {
     "trackedPaths": 20000,
     "pathBytes": 4096,
-    "modules": 4096
+    "modules": 4096,
+    "externalDepth": 64,
+    "graphDepth": 128
+  },
+  "identifierSource": {
+    "file": "rustc-symbol.rs.gz",
+    "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_span/src/symbol.rs",
+    "bytes": 77781,
+    "sha256": "35b84de01138877958228c55fcfbbff7749f7b97dd4e089fc3e4cad1733196b2",
+    "compressedSha256": "0fe76fef2e6a0d434b6a4a2baaae292705ded8b6aa1c172d1e0028a8ee1454f9",
+    "lines": {
+      "strictAndReservedKeywords": [
+        43,
+        115
+      ],
+      "rawIdentifierRestrictions": [
+        2799,
+        2818
+      ]
+    }
+  },
+  "identifierProfile": {
+    "editions": [
+      2021,
+      2024
+    ],
+    "policy": "conservative intersection; unprefixed gen remains refused in both profiles",
+    "defaultExternalNames": "ASCII identifiers",
+    "nonAsciiNames": "NFC XID identifiers only for inline or explicit-path modules",
+    "reference": "https://doc.rust-lang.org/reference/identifiers.html"
   }
 }

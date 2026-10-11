@@ -36,6 +36,10 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
   const tracked = new Set(paths);
   if (!tracked.has(entry)) throw new Error(`crate entrypoint is not tracked: ${entry}`);
   const modules = [], edges = [], diagnostics = [], visited = new Set();
+  const boundedChild=(file,path,item)=>{
+    if(path.length<=MODULE_PATH_PROFILE.limits.graphDepth)return true;
+    diagnostics.push({file,module:path,kind:'module',message:'Tracked module graph exceeds its bounded combined module depth',limit:MODULE_PATH_PROFILE.limits.graphDepth,span:{start:item.start,end:item.end}});return false;
+  };
   let offset = 0;
   const visit = (file, path, directory, parentCondition='active',original=null,sourceView=null,pathDirectory=posix.dirname(file),ancestors=[]) => {
     if(modules.length>=MODULE_PATH_PROFILE.limits.modules){diagnostics.push({file,module:path,kind:'module',message:'Tracked module graph exceeds its bounded module count'});return;}
@@ -73,6 +77,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
         if(!plan&&!supported){diagnostics.push({file,module:[...path,childView.modulePath.at(-1)],kind:'module',message:'Original inline module attribute owner or expansion remains unresolved',span:{start:item.start,end:item.end}});continue;}
         const name=childView.modulePath.at(-1),childPath=[...path,name];
         if(plan&&(!plan.inline||plan.name!==name))throw new TypeError('Tracked module header differs from its original inline view');
+        if(!boundedChild(file,childPath,item))continue;
         edges.push({from:file,to:file,module:childPath,kind:'original-inline-module',span:{start:item.start,end:item.end},sourceViewDigest:childView.digest,...(plan?{pathSelection:plan}:{}),...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{})});
         const inherited=module.configurationCondition==='inactive'||condition.status==='inactive'?'inactive':module.configurationCondition==='unknown'||condition.status==='unknown'?'unknown':'active';
         const childDirectory=plan?.directory??posix.join(directory,name);
@@ -80,7 +85,9 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
       }
       if(!plan||plan.inline){diagnostics.push({file,module:[...path,item.name],kind:'module',message:'External module compilation condition or original header remains unresolved',span:{start:item.start,end:item.end}});continue;}
       const name=plan.name,target=plan.target;
+      if(!boundedChild(file,[...path,name],item))continue;
       if(original.ancestors.includes(target)){diagnostics.push({file,module:[...path,name],kind:'module',message:'Circular tracked module files require compiler rejection',cycle:[...original.ancestors,target],span:{start:item.start,end:item.end}});continue;}
+      if(original.ancestors.length>=MODULE_PATH_PROFILE.limits.externalDepth){diagnostics.push({file,module:[...path,name],kind:'module',message:'Tracked module graph exceeds its bounded external-file depth',limit:MODULE_PATH_PROFILE.limits.externalDepth,target,span:{start:item.start,end:item.end}});continue;}
       edges.push({from:file,to:target,module:[...path,name],pathSelection:plan,...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{})});
       visit(target,[...path,name],plan.directory,module.configurationCondition,null,null,plan.pathDirectory,original.ancestors);
     }

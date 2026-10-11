@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {resolveModuleGraph,translateProject} from '../project.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {MODULE_PATH_PROFILE} from '../module-paths.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const options=(files,profile=null)=>({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>{assert.ok(Object.hasOwn(files,path));return files[path];},compilationProfile:profile});
@@ -65,6 +66,33 @@ test('circular literal paths are diagnosed before repeated whole-file reads',()=
     assert.ok(graph.diagnostics.some(entry=>entry.message.includes('Circular tracked module')));assert.equal(read.length,Object.keys(files).length);
     assert.equal(new Set(read).size,read.length);assert.ok(graph.diagnostics.find(entry=>entry.cycle).cycle.at(-1)==='src/lib.rs');
   }
+});
+
+test('long acyclic external chains stop before reading beyond their explicit source depth bound',()=>{
+  for(const inline of [false,true]){
+    const files={},read=[],limit=MODULE_PATH_PROFILE.limits.externalDepth;
+    for(let index=0;index<limit+3;index++){
+      const file=index===0?'src/lib.rs':`src/node${index}.rs`,child=`#[path="node${index+1}.rs"]mod next;`;
+      files[file]=inline?`#[path="."]mod layer {${child}}`:child;
+    }
+    const graph=resolveModuleGraph({...options(files),readSource:path=>{read.push(path);return files[path];}});
+    const refusal=graph.diagnostics.find(entry=>entry.message.includes('bounded external-file depth'));assert.ok(refusal);
+    assert.equal(refusal.limit,limit);assert.equal(refusal.target,`src/node${limit}.rs`);assert.equal(read.length,limit);
+    assert.equal(graph.edges.some(edge=>edge.to===refusal.target),false);assert.equal(new Set(read).size,read.length);
+  }
+});
+
+test('combined inline and external depth has a bound independent of file and module counts',()=>{
+  const files={},read=[],depth=MODULE_PATH_PROFILE.limits.graphDepth;
+  for(let index=0;index<MODULE_PATH_PROFILE.limits.externalDepth;index++){
+    const file=index===0?'src/lib.rs':`src/node${index}.rs`;
+    files[file]=`#[path="."]mod a {#[path="."]mod b {#[path="."]mod c {#[path="node${index+1}.rs"]mod next;}}}`;
+  }
+  const graph=resolveModuleGraph({...options(files),readSource:path=>{read.push(path);return files[path];}});
+  const refusal=graph.diagnostics.find(entry=>entry.message.includes('bounded combined module depth'));assert.ok(refusal);
+  assert.equal(refusal.limit,depth);assert.equal(refusal.module.length,depth+1);
+  assert.ok(read.length<MODULE_PATH_PROFILE.limits.externalDepth);assert.ok(graph.modules.length<MODULE_PATH_PROFILE.limits.modules);
+  assert.equal(graph.edges.some(edge=>edge.module.length>depth),false);assert.equal(graph.diagnostics.some(entry=>entry.message.includes('bounded external-file depth')),false);
 });
 
 test('whole unchanged deployment graph follows all five original literal-file edges and facade views',()=>{
