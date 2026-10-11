@@ -7,7 +7,7 @@ import {isJsonMacroSourceProof,jsonMacroOriginalSource} from './json-macro-sourc
 import {proveJsonMacroFeatures,isJsonMacroFeatureProof} from './json-macro-features.mjs';
 const root=new URL('./source-profiles/json-roundtrip/',import.meta.url),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const bytes=readFileSync(new URL('manifest.json',root));
-if(hash(bytes)!=='1200c0404383e192af5e8fb2d6503ee5b9275f345eafe0b09e04481a367f9541')throw new TypeError('JSON roundtrip source candidate changed');
+if(hash(bytes)!=='253d7a8c492fdb6840e024b7641845a69b3808eb00ba241befe4eaef501f3983')throw new TypeError('JSON roundtrip source candidate changed');
 const profile=freezeMacroTree(JSON.parse(bytes)),candidates=new WeakSet();
 export function jsonRoundtripCandidateProfile({dependencies,compilationProfile=null}={}) {
   if(!isJsonMacroSourceProof(dependencies))throw new TypeError('JSON roundtrip needs sealed exact Cargo/source dependencies');

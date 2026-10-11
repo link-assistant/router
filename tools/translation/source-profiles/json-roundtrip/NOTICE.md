@@ -1,7 +1,8 @@
 This source-only candidate reuses the existing exact checksum-locked
 serde_json-1.0.151.crate under ../json-macro. No archive is downloaded, installed
-or duplicated. Its manifest now pins all twenty original de.rs/lexical members
-(203,444 decoded bytes), including the original decimal fast/moderate/fallback
+or duplicated. The frozen first draft pinned twenty original de.rs/lexical
+members. This audit adds original build.rs/read.rs/error.rs: twenty-three
+members (254,912 decoded bytes), including decimal fast/moderate/fallback
 algorithms, half-way comparison, cached power tables, binary64 parameters and
 rounding. Original MIT/Apache license members remain verified in that profile.
 The lexical files retain their original rust-lexical adaptation notices.
@@ -18,9 +19,12 @@ overflow follow the pinned de.rs Value-f64 branches; f32 is not covered.
 JSON syntax errors use the existing byte reader. Bound failures are explicit
 adapter-domain RangeError values, not fabricated serde_json errors.
 
-Twenty source pins plus mathematical expectations do not prove every lexical
-fast/moderate/fallback algorithm branch. The source algorithm equivalence review,
-six new authored tests and affected Rust/default JSON regressions remain UNRUN.
+Source pins plus mathematical expectations do not prove every lexical branch.
+A source-inferred769-digit integer zero-tail counterexample now blocks complete
+equivalence of the4096-digit exact replacement. Its hand trace/reproduction and
+the proposed768-digit proof boundary are retained under fixtures/json-roundtrip.
+The source equivalence review, six original plus three new authored tests and
+affected Rust/default JSON regressions remain UNRUN.
 parseAdmission and algorithmEquivalenceVerified stay false. CURRENT guard82→225
 still denies actual root float_roundtrip parsing, until a separately reviewed
 private capability dispatch is integrated. No complete allocation/OOM/drop,

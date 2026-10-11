@@ -3,7 +3,7 @@
   "package": "serde_json",
   "version": "1.0.151",
   "lockedArchiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
-  "jsonMacroSourceProfileSha256": "3e43c5a0bdcbc899c196e65286a3de01c525d34d3999f13b866c3b5bb2d07bbf",
+  "jsonMacroSourceProfileSha256": "101f9e042d3c4665f531017082115d209a390940732532cef1b08a1420f8cfab",
   "sources": [
     {
       "path": "src/de.rs",
@@ -104,6 +104,21 @@
       "path": "src/lexical/small_powers.rs",
       "bytes": 1345,
       "sha256": "73c56b7b83310c6fefa898fb94771c65bdc251c1579ab105151da43935ea02be"
+    },
+    {
+      "path": "build.rs",
+      "bytes": 1206,
+      "sha256": "a681e754be844c7dbef957f5d2d00b01f37c5dca160ef1055a8d8f975697a881"
+    },
+    {
+      "path": "src/read.rs",
+      "bytes": 33041,
+      "sha256": "17a2efe49e5a6937c8d7d4a5c0b9eac84453de0f86bf8e7ee421387e82341bb3"
+    },
+    {
+      "path": "src/error.rs",
+      "bytes": 17221,
+      "sha256": "a13add05a63adf53d89e37effa03221d897a60486cfe360a5a958c0dd2a7e90d"
     }
   ],
   "domain": {
@@ -121,6 +136,7 @@
     "rounding.rs tie-even including subnormal carry and exponent overflow"
   ],
   "remainingSemanticObligations": [
+    "source-inferred 769-digit integer zero-tail sticky counterexample disagrees with full4096-digit exact replacement; no complete admission",
     "focused mathematical/runtime/default-regression checks are unrun",
     "source algorithm equivalence requires review of the pinned fast/moderate/fallback branches, not just tests",
     "parser scratch allocation, BigInt and linked allocator/OOM behavior are not a complete application effect contract",
@@ -133,5 +149,6 @@
   "algorithmEquivalenceVerified": false,
   "applicationEffectCompleteness": false,
   "runtimeParity": false,
-  "rustExecution": false
+  "rustExecution": false,
+  "buildCfgFacts": "original build.rs chooses32 or64 fast_arithmetic exhaustively; both limb math paths require proof, external cfg overrides remain uncertified"
 }

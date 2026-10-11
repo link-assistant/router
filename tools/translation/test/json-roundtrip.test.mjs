@@ -14,7 +14,7 @@ const number=source=>{const result=parse(source);assert.equal(result.$,'Ok',sour
 
 test('actual locked roundtrip source/feature candidate is sealed while admission and algorithm equivalence remain unverified',()=>{
   const profile=jsonRoundtripCandidateProfile({dependencies:dependency()});assert.equal(isJsonRoundtripCandidateProfile(profile),true);assert.equal(isJsonRoundtripCandidateProfile(structuredClone(profile)),false);
-  assert.equal(profile.features.features.includes('float_roundtrip'),true);assert.equal(profile.sources.length,20);
+  assert.equal(profile.features.features.includes('float_roundtrip'),true);assert.equal(profile.sources.length,23);
   assert.equal(profile.sources.find(pin=>pin.path==='src/de.rs').sha256,'4998d7e252eb513be85b298e287048b4fb283882e9ba7df905f572f07200f3f3');
   assert.equal(profile.defaultNumericAdapterChanged,false);assert.equal(profile.actualParserGuardChanged,false);
   for(const key of ['parseAdmission','algorithmEquivalenceVerified','namespaceAuthority','expansionAuthority','applicationEffectCompleteness','runtimeParity','rustExecution'])assert.equal(profile[key],false,key);

@@ -29,9 +29,19 @@
           "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
         },
         {
+          "path": "build.rs",
+          "bytes": 1206,
+          "sha256": "a681e754be844c7dbef957f5d2d00b01f37c5dca160ef1055a8d8f975697a881"
+        },
+        {
           "path": "src/de.rs",
           "bytes": 86840,
           "sha256": "4998d7e252eb513be85b298e287048b4fb283882e9ba7df905f572f07200f3f3"
+        },
+        {
+          "path": "src/error.rs",
+          "bytes": 17221,
+          "sha256": "a13add05a63adf53d89e37effa03221d897a60486cfe360a5a958c0dd2a7e90d"
         },
         {
           "path": "src/lexical/algorithm.rs",
@@ -147,6 +157,11 @@
           "path": "src/number.rs",
           "bytes": 25285,
           "sha256": "70b83c36286f6c58123f544f27db2b54a1135f928fe33b08b521b2997773f862"
+        },
+        {
+          "path": "src/read.rs",
+          "bytes": 33041,
+          "sha256": "17a2efe49e5a6937c8d7d4a5c0b9eac84453de0f86bf8e7ee421387e82341bb3"
         },
         {
           "path": "src/value/from.rs",

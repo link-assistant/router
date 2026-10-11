@@ -128,6 +128,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...['json-macro-sources.mjs','json-macro-features.mjs','json-macro-context.mjs','json-macro-syntax.mjs','json-macro-plans.mjs','json-macro-runtime.mjs','json-macro-runtime.d.mts','json-macro-arrays.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...files(fileURLToPath(new URL('./source-profiles/json-macro/',import.meta.url))).map(path=>path.slice(translatorRoot.length+1)).sort());
   implementation.push('tools/translation/json-roundtrip-capabilities.mjs');
+  implementation.push('tools/translation/json-roundtrip-cached-powers.mjs');
   implementation.push(...files(fileURLToPath(new URL('./source-profiles/json-roundtrip/',import.meta.url))).map(path=>path.slice(translatorRoot.length+1)).sort());
   implementation.push(...['exact-binary64.d.mts','json-roundtrip-runtime.d.mts','json-roundtrip-numbers.d.mts'].map(name=>`tools/translation/extensions/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/slice-membership/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/slice-membership/${name}`));
