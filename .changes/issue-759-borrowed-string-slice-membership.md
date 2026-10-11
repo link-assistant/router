@@ -18,3 +18,10 @@ all other unknown ownership obligations remain refused. Preserve the original
 shared fixed-array case and both its initial Copy/lifetime diagnostic and current
 earlier membership refusal. Fix source-order fixture instrumentation to insert
 only into the emitted function body, preserving its TypeScript return type.
+
+The final clean-source focused scope passes 58 cases in both Node and Bun,
+including strict compiled TypeScript, source-only bundle relocation, and the four
+unchanged production predicates in three whole files. Their independent cases
+cover 55 literal outcomes and 24 input rejections per target. A reopened 20,387
+byte archive retains every initial/final log and measurement receipt; generated
+corpus coverage and complete Router parity remain unmeasured.

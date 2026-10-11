@@ -190,7 +190,9 @@ prerequisite; by-value source fixed arrays remain checked.
 The focused tests read three whole unchanged Router files and execute four
 predicates against independent expectations in JavaScript and strict compiled
 TypeScript. Archived execution evidence is separate from the initial draft
-receipt. No generated-corpus gain, complete namespace authority or Router parity
+receipt: `fixtures/slice-membership-validation/receipt.json` records the complete
+58-case Node/Bun check of a clean source commit and references all earlier raw
+failure and repair logs. No generated-corpus gain, complete namespace authority or Router parity
 is claimed by this profile.
 
 With Node, Bun and the repository’s TypeScript tooling available:
