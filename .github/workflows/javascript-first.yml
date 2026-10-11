@@ -108,6 +108,7 @@ jobs:
       - run: node --test tools/translation/js-to-rust/test/native-typescript.test.mjs
       - run: node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json
       - run: node tools/translation/check-typescript-fixtures.mjs
+      - run: node scripts/check-profile-typescript.mjs
       - run: npm ci --prefix ui --ignore-scripts
       - run: node scripts/build-js-first-ui.mjs
   parity:
@@ -136,7 +137,10 @@ jobs:
       - run: node scripts/check-router-parity.mjs --strict
   translation:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    # The explicit three-profile check measured 1595.5s. Prior completed CI
+    # needed up to 498s for the canonical check and 98s for tests. Retain every
+    # command, with room for the expanded suite and checkout/setup.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -155,6 +159,7 @@ jobs:
           "
       - run: node --test --test-concurrency=2 tools/translation/test/*.test.mjs
       - run: node scripts/translate-router.mjs --check
+      - run: node scripts/translate-router.mjs --profile-matrix --check
   reverse-translation:
     runs-on: ubuntu-24.04
     timeout-minutes: 15

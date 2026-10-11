@@ -64,6 +64,20 @@ test('aggregate rejects partial green, skipped and cancelled stages', () => {
   fails('javascript-first.yml', workflow => { workflow.jobs.complete.needs.pop(); }, 'depend on every');
   fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].run = 'echo success'; }, 'reject skipped');
 });
+test('independent profile freshness and strict TypeScript cannot be removed or replaced by canonical checks', () => {
+  for (const [stage, command, substitute] of [
+    ['translation', 'node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --check'],
+    ['typescript', 'node scripts/check-profile-typescript.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json'],
+  ]) {
+    assert.ok(parse(baseline['javascript-first.yml']).jobs[stage].steps.some(step => step.run === command));
+    fails('javascript-first.yml', workflow => {
+      workflow.jobs[stage].steps = workflow.jobs[stage].steps.filter(step => step.run !== command);
+    }, `missing mandatory command ${command}`);
+    fails('javascript-first.yml', workflow => {
+      workflow.jobs[stage].steps.find(step => step.run === command).run = substitute;
+    }, `missing mandatory command ${command}`);
+  }
+});
 test('no Rust setup or Rust compilation inside the JavaScript stage', () => {
   for (const run of ['cargo test', 'rust-script x.rs', 'docker/build-push-action@abc']) fails('javascript-first.yml', workflow => { workflow.jobs.lint.steps.push({ run }); }, 'Rust must not execute');
 });
