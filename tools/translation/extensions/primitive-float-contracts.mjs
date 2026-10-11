@@ -32,9 +32,15 @@ export const FLOAT_CONTRACTS=freeze([
   {method:'is_finite',ret:{kind:'bool'},constEligible:true,constSince:'1.83.0',sourceIndex:0,sourceLines:[575,583]},
   // Rust 1.89 writes const fn, but const use is unstable on stable Rust.
   {method:'floor',ret:SOURCE_F64,constEligible:false,constUnstable:'const_float_round_methods',sourceIndex:1,sourceLines:[29,51]},
+  // Only a checked zero branch can authorize these runtime adapters. Stable
+  // Rust const eligibility does not establish this restricted source profile.
+  {method:'is_sign_negative',ret:{kind:'bool'},constEligible:false,constSince:'1.83.0',requiresRefinement:'checked-zero-branch',sourceIndex:0,sourceLines:[721,727]},
+  {method:'is_sign_positive',ret:{kind:'bool'},constEligible:false,constSince:'1.83.0',requiresRefinement:'checked-zero-branch',sourceIndex:0,sourceLines:[686,691]},
 ].map(({method,...details})=>({id:'rust_f64_'+method,jsExport:'rust_f64_'+method,rustPath:['f64',method],kind:'method',family:'float',receiver:SOURCE_F64,params:[SOURCE_F64],async:false,pure:true,profile:PRIMITIVE_FLOAT_PROFILE.id,assumptions,...details})));
-const contracts=new Map(FLOAT_CONTRACTS.map(contract=>[contract.rustPath.at(-1),contract]));
+const contracts=new Map(FLOAT_CONTRACTS.filter(contract=>!contract.requiresRefinement).map(contract=>[contract.rustPath.at(-1),contract]));
 export function primitiveFloatContract(method) {return contracts.get(method)??null;}
+const signs=new Map(FLOAT_CONTRACTS.filter(contract=>contract.requiresRefinement).map(contract=>[contract.rustPath.at(-1),contract]));
+export function primitiveFloatSignContract(method) {return signs.get(method)??null;}
 const nan=freeze({id:'rust_f64_nan',name:'NAN',owner:'f64',value:'NaN',type:SOURCE_F64,profile:PRIMITIVE_FLOAT_PROFILE.id,sourceIndex:0,sourceLines:[479,494]});
 export function primitiveFloatConstant(name) {return name==='NAN'?nan:null;}
 export function requirePrimitiveFloat(value,span) {

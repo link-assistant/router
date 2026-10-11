@@ -16,6 +16,7 @@ import {planStandardMethod,completeStandardMethod} from './standard-method-plans
 import {rustFixedType} from '../checked-types.mjs';
 import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
+import {floatSignObligation,withFloatZeroSignChecker} from './float-zero-refinements.mjs';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
@@ -269,7 +270,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))) {
+export class HostChecker extends withCheckedSourceLinks(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
@@ -342,6 +343,7 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
     if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};
     value=this.qualifyOwnershipResult?.(node,value,expected,path)??value;
     value=qualifyPrimitiveFloatResult(value);
+    if(node.k==='binary'&&value.k==='binary'&&value.op==='eq'&&value.domain?.rustPrimitiveName==='f64')value={...value,span:node.span};
     this.expectedOwnership?.(value.type,expected,path,node.span);
     this.expectedPrimitiveIdentity(value.type,expected,path,node.span);
     return value;
@@ -398,7 +400,7 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
       const instance=this.instantiations.integer(type,node.span),operation=node.k==='routerIntegerParse'?'rust_integer_parse':node.operation==='from_str'?'rust_integer_from_str':'rust_integer_from_str_radix';
       return this.hostCall(instance.contracts.filter(contract=>contract.id.startsWith(operation+'_')),(node.object?[node.object,...node.args]:node.args),env,path,expected,node.span,type);
     }
-    if(node.k==='routerHostCall')return this.hostCall(HOST_CONTRACTS.filter(contract=>node.id?contract.id===node.id:pathKey(contract.rustPath)===pathKey(node.path)),node.args,env,path,expected,node.span,node.instantiation);
+    if(node.k==='routerHostCall')return this.hostCall(HOST_CONTRACTS.filter(contract=>!contract.requiresRefinement&&(node.id?contract.id===node.id:pathKey(contract.rustPath)===pathKey(node.path))),node.args,env,path,expected,node.span,node.instantiation);
     if(['routerDispatchMethod','routerIteratorOperation'].includes(node.k)) {
       if(node.k==='routerDispatchMethod'&&node.object.k==='routerDispatchMethod'&&node.object.fallback?.k==='routerStringView'&&this.expr(node.object.object,env,path).type.kind==='string')return super.expr(node,env,path,expected,allowLiteral);
       const receiver=this.expr(node.object,env,path),method=node.method??node.op;
@@ -406,7 +408,7 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
       if(receiver.type.kind==='float') {
         const contract=primitiveFloatContract(method);
         if(contract){requirePrimitiveFloat(receiver,node.span);return this.hostCall([contract],[node.object,...node.args],env,path,expected,node.span);}
-        if(['is_sign_negative','is_sign_positive'].includes(method))throw unsupported('NaN sign observability','requires a separately checked non-NaN receiver refinement',node.span);
+        if(['is_sign_negative','is_sign_positive'].includes(method)){if(node.args.length)throw typeError('primitive f64 sign predicate takes no arguments',node.span);this.floatSignObligations=true;return floatSignObligation(method,receiver,node.span);}
       }
       const contracts=HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&contract.kind==='method'&&contract.rustPath.at(-1)===method&&sameType(this.hostType(contract.receiver,path,node.span),receiver.type));
       if(contracts.length)return this.hostCall(contracts,[node.object,...node.args],env,path,expected,node.span);
@@ -443,6 +445,7 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
     return super.expr(node,env,path,expected,allowLiteral);
   }
   program(surface) {
+    this.floatSignObligations=false;
     const program=super.program(surface);
     const sourceContext=checkedSourceContext(program);
     program.items.push(...this.instantiations.items);
