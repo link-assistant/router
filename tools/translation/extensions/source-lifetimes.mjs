@@ -105,7 +105,10 @@ function origins(node,env,context,returns,depth=0) {
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerLambdaInput')return borrowed?(context.lambdaInputs?.[node.position]??new Set([UNKNOWN])):new Set();
   if(node.k==='lit'&&typeof node.value==='string'&&node.type?.rustBorrowLifetime?.source==='string-literal'&&node.type.rustBorrowLifetime.kind==='static')return staticOrigin();
-  if(node.k==='let') {const value=read(node.value),inner=new Map(env);inner.set(node.name,value);return read(node.body,inner);}
+  if(node.k==='let') {
+    if(node.mutable&&hasBorrow(node.value.type,context))throw unsupported('mutable borrowed local','the lifetime profile requires immutable borrow bindings',node.span??context.entry.span);
+    const value=read(node.value),inner=new Map(env);inner.set(node.name,value);return read(node.body,inner);
+  }
   if(node.k==='if'){read(node.cond);return union(read(node.then),read(node.else));}
   if(node.k==='match') {
     const subject=read(node.scrutinee);
@@ -185,10 +188,14 @@ function emptyBorrowValue(node,context) {
 export function withSourceLifetimeChecker(Base) {
   return class extends Base {
     program(surface) {
+      const mutableParameters=new Map();
+      const collect=(items,path=[])=>{for(const item of items)if(item.k==='module')collect(item.items,[...path,item.name]);else if(item.k==='fn')mutableParameters.set([...path,item.name].join('.'),item.params.filter(param=>param.mutable).map(param=>param.name));};
+      collect(surface.items);
       const program=super.program(surface),context={declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
       const signatures=new Map();
       for(const entry of program.declarations.values())if(entry.k==='fn')signatures.set(entry.fullName,functionLifetimeSignature(entry,context));
       for(const entry of program.declarations.values())if(entry.k==='fn') {
+        if(entry.params.some(param=>mutableParameters.get(entry.fullName)?.includes(param.name)&&hasBorrow(param.type,context)))throw unsupported('mutable borrowed parameter','the lifetime profile requires immutable borrow bindings',entry.span);
         const signature=signatures.get(entry.fullName),env=new Map(entry.params.map((param,index)=>[param.name,leafOrigins(new Map(signature.params[index].map(region=>[key(region.path),new Set([region.identity])]))) ]));
         const returns=[],result=origins(entry.body,env,{...context,entry,signatures,hostContracts:this.sourceLifetimeHostContracts},returns);
         if(signature.outputs.length)for(const {value:actual,node} of [...returns,{value:result,node:entry.body}]) {

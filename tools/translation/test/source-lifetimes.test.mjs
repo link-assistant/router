@@ -55,6 +55,15 @@ test('per-use tuple lifetimes cannot inherit a previous portable layout staticne
     assert.ok(result.meta.refused.some(entry=>entry.name==='bad'));
   }
 });
+test('mutable borrowed bindings cannot retain stale initializer lifetime origins',()=>{
+  for(const source of [
+    'pub fn bad(v:&str)->&\'static str{let mut x:&str="fixed";x=v;x}',
+    'pub fn bad(mut v:&str)->&\'static str{v="fixed";v}',
+    'pub fn bad(v:&u64)->&\'static u64{let mut x:&u64=v;x=v;x}',
+    'pub fn bad(mut v:&\'static str)->&\'static str{v="fixed";v}',
+  ]){const result=project(source);assert.ok(result.meta.refused.some(entry=>entry.name==='bad'&&/mutable borrowed/.test(entry.message)),source);}
+  assert.deepEqual(project('pub fn count(mut n:u8)->u8{n=n+1;n}').meta.refused,[]);
+});
 test('mixed tuple leaves retain their distinct input and static origins',{timeout:30_000},async()=>{
   const source='pub fn good(v:&str)->(&str,&\'static str){(v,"fixed")} fn needs(v:(&\'static str,&str))->u8{1} pub fn accepted(v:&str)->u8{needs(("fixed",v))}';
   await both(project(source),api=>{const result=api.good('input');assert.equal(result.field0,'input');assert.equal(result.field1,'fixed');assert.equal(api.accepted('dynamic'),1n);});
