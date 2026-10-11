@@ -28791,8 +28791,60 @@
       "status": "One successful replacement producer after the complete failure/repair cohort; source and implementation integrity passed. Full seven-stage verification and remote CI remain pending.",
       "reviewedSourceHead": "21a382bed7dfc3b3d54a2436f22aa7f6e658661f",
       "archivedAtUtc": "2026-10-11T14:53:38.577198+00:00"
+    },
+    {
+      "label": "cycle-6-compiled-fixture-and-checker-deadline-repair",
+      "pack": "b468f96a1b1eabcc0b09f69f0b2b36afc746a47cb51ce2ccedff70a9d99cfd7a.tar.gz",
+      "sha256": "b468f96a1b1eabcc0b09f69f0b2b36afc746a47cb51ce2ccedff70a9d99cfd7a",
+      "storedBytes": 50550,
+      "members": [
+        {
+          "path": "router-759-final-preflight-bf9eda02.log",
+          "bytes": 225854,
+          "sha256": "54b3b0beb69973847080e1cdab65dff479dce49922ae0fbd73b673ae530b6443"
+        },
+        {
+          "path": "router-759-final-preflight-bf9eda02.json",
+          "bytes": 1245,
+          "sha256": "c4a0548c4f3096c0106b25685420e2d662916cf1fe215e511de934f2584cd169"
+        },
+        {
+          "path": "router-759-cycle-6-repaired-complete-failure-inventory.json",
+          "bytes": 5914,
+          "sha256": "b5f3ff4e16425411e6f7a81af59b61b46e3ba940eb12764b8d724b77353408fc"
+        },
+        {
+          "path": "router-759-cycle-6-fixture-budget-compiled-runtime.log",
+          "bytes": 2920,
+          "sha256": "0ee082957d678ccc348e76a18441a0dd569802a329a91e0a7d895ffe7e262f71"
+        },
+        {
+          "path": "router-759-cycle-6-fixture-budget-compiled-runtime.json",
+          "bytes": 567,
+          "sha256": "47334ce388eb89961f6edae558493a46a37020781b1b3e9fee5a3bc30ea05e88"
+        },
+        {
+          "path": "router-759-cycle-6-fixture-budget-strict-tamper.log",
+          "bytes": 854,
+          "sha256": "33b78442f0cea56ba656aba98811761e56b1daa5bc39d2fff340e8ec5687532a"
+        },
+        {
+          "path": "router-759-cycle-6-fixture-budget-strict-tamper.json",
+          "bytes": 439,
+          "sha256": "c4ddc858cc31938ecfc5c780d75047bc3838965bd75418b1e16181fc3461d6b3"
+        },
+        {
+          "path": "router-759-cycle-6-fixture-budget-focused.json",
+          "bytes": 1232,
+          "sha256": "105ac8aa1f61e059eb7a6ca1d3f7b08c9b05d09d7777ea24bfd85d93f7369658"
+        }
+      ],
+      "status": "Complete failed seven-stage verification and focused correction receipts; full corrected seven-stage verification remains pending.",
+      "failedHead": "bf9eda024deeea0df0e55dee4538e70be6ac2a71",
+      "repairHead": "1c626e0a2c1d040a22eb72aa91720f984b1138fd",
+      "archivedAtUtc": "2026-10-11T15:27:55.957514+00:00"
     }
   ],
-  "totalStoredPackBytes": 11332652,
-  "totalMembers": 5182
+  "totalStoredPackBytes": 11383202,
+  "totalMembers": 5190
 }
