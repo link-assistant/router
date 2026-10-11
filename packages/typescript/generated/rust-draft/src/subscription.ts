@@ -18,7 +18,6 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
-type MLData_537562736372697074696f6e4572726f72 = Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -28,29 +27,19 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/subscription.rs; sha256=e0949d81ba1a62586fd99dc79fb3e889346bc2fb60e17aa5e3e30f252018ce28
 // Carried constructs are data, never runtime parity evidence.
-function ml_make_SubscriptionError_NoCredentials(field0: string): Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'NoCredentials', field0: field0 });
+function ml_make_InstallMode_Replace(): Readonly<{ readonly "$": "Replace" }> | Readonly<{ readonly "$": "IfAbsent" }> {
+  return Object.freeze({ $: 'Replace' });
 }
 
-function ml_make_SubscriptionError_ReadError(field0: string): Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'ReadError', field0: field0 });
-}
-
-function ml_make_SubscriptionError_ParseError(field0: string): Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'ParseError', field0: field0 });
-}
-
-function ml_make_SubscriptionError_NoToken(field0: string): Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'NoToken', field0: field0 });
+function ml_make_InstallMode_IfAbsent(): Readonly<{ readonly "$": "Replace" }> | Readonly<{ readonly "$": "IfAbsent" }> {
+  return Object.freeze({ $: 'IfAbsent' });
 }
 
 const std = {
@@ -66,6 +55,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -74,13 +66,5 @@ const serde_json = {
   },
 };
 
-function ml_make_InstallMode_Replace(): Readonly<{ readonly "$": "Replace" }> | Readonly<{ readonly "$": "IfAbsent" }> {
-  return Object.freeze({ $: 'Replace' });
-}
-
-function ml_make_InstallMode_IfAbsent(): Readonly<{ readonly "$": "Replace" }> | Readonly<{ readonly "$": "IfAbsent" }> {
-  return Object.freeze({ $: 'IfAbsent' });
-}
-
-export const translated: { "SubscriptionError": Readonly<{ "NoCredentials": (field0: string) => Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }>; "ReadError": (field0: string) => Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }>; "ParseError": (field0: string) => Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }>; "NoToken": (field0: string) => Readonly<{ readonly "$": "NoCredentials"; readonly "field0": string }> | Readonly<{ readonly "$": "ReadError"; readonly "field0": string }> | Readonly<{ readonly "$": "ParseError"; readonly "field0": string }> | Readonly<{ readonly "$": "NoToken"; readonly "field0": string }> }>; "InstallMode": Readonly<{ "Replace": () => Readonly<{ readonly "$": "Replace" }> | Readonly<{ readonly "$": "IfAbsent" }>; "IfAbsent": () => Readonly<{ readonly "$": "Replace" }> | Readonly<{ readonly "$": "IfAbsent" }> }> } = { ["SubscriptionError"]: Object.freeze({ ["NoCredentials"]: ml_make_SubscriptionError_NoCredentials, ["ReadError"]: ml_make_SubscriptionError_ReadError, ["ParseError"]: ml_make_SubscriptionError_ParseError, ["NoToken"]: ml_make_SubscriptionError_NoToken }), ["InstallMode"]: Object.freeze({ ["Replace"]: ml_make_InstallMode_Replace, ["IfAbsent"]: ml_make_InstallMode_IfAbsent }) };
-export const provenance = {"sourcePath":"src/subscription.rs","sourceSha256":"e0949d81ba1a62586fd99dc79fb3e889346bc2fb60e17aa5e3e30f252018ce28","executable":2,"executableFunctions":0,"executableConstants":0,"executableTypes":2,"executableConstructors":6,"carried":28,"preserved":31,"runtimeParity":false};
+export const translated: { "InstallMode": Readonly<{ "Replace": () => Readonly<{ readonly "$": "Replace" }> | Readonly<{ readonly "$": "IfAbsent" }>; "IfAbsent": () => Readonly<{ readonly "$": "Replace" }> | Readonly<{ readonly "$": "IfAbsent" }> }> } = { ["InstallMode"]: Object.freeze({ ["Replace"]: ml_make_InstallMode_Replace, ["IfAbsent"]: ml_make_InstallMode_IfAbsent }) };
+export const provenance = {"sourcePath":"src/subscription.rs","sourceSha256":"e0949d81ba1a62586fd99dc79fb3e889346bc2fb60e17aa5e3e30f252018ce28","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":2,"carried":29,"preserved":31,"runtimeParity":false};

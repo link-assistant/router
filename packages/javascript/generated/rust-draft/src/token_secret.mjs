@@ -1,42 +1,16 @@
 // Generated draft from src/token_secret.rs; sha256=a158416f1f1bd591e909a43ea5ee6dc1fcd5bebdf864e3e0b8684a453e1d5aae
 // Carried constructs are data, never runtime parity evidence.
-function SENTINEL() {
+function rp_746f6b656e5f7365637265742e53454e54494e454c() {
   return "\u0000link-assistant-router:no-token-secret:";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function placeholder(reason) {
-  if (!(typeof reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(reason))) throw new TypeError('argument outside supported Rust value domain');
-  return (SENTINEL() + reason);
-}
-
-function refusal() {
+function rp_746f6b656e5f7365637265742e7265667573616c() {
   return "TOKEN_SECRET environment variable is required: this command signs or encrypts on this machine, and no signing secret was supplied";
 }
 
-function FILE_ENV() {
+function rp_746f6b656e5f7365637265742e46494c455f454e56() {
   return "TOKEN_SECRET_FILE";
 }
 
-export const translated = { ["SENTINEL"]: SENTINEL(), ["placeholder"]: placeholder, ["refusal"]: refusal, ["FILE_ENV"]: FILE_ENV() };
-export const provenance = {"sourcePath":"src/token_secret.rs","sourceSha256":"a158416f1f1bd591e909a43ea5ee6dc1fcd5bebdf864e3e0b8684a453e1d5aae","executable":4,"executableFunctions":2,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":6,"preserved":11,"runtimeParity":false};
+export const translated = { ["SENTINEL"]: rp_746f6b656e5f7365637265742e53454e54494e454c(), ["refusal"]: rp_746f6b656e5f7365637265742e7265667573616c, ["FILE_ENV"]: rp_746f6b656e5f7365637265742e46494c455f454e56() };
+export const provenance = {"sourcePath":"src/token_secret.rs","sourceSha256":"a158416f1f1bd591e909a43ea5ee6dc1fcd5bebdf864e3e0b8684a453e1d5aae","executable":3,"executableFunctions":1,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":7,"preserved":11,"runtimeParity":false};

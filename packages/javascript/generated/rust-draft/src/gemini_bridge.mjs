@@ -1,31 +1,10 @@
 // Generated draft from src/gemini_bridge.rs; sha256=cc8d02c94f8702946c064323d26df9bc4a845f9c84be6294f74497ccd2c183c5
 // Carried constructs are data, never runtime parity evidence.
-function MODEL_ROLE() {
+function rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45() {
   return "model";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function map_finish_reason(openai) {
+function rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e(openai) {
   if (!(typeof openai === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(openai))) throw new TypeError('argument outside supported Rust value domain');
   if ((openai === "length")) {
     return "MAX_TOKENS";
@@ -38,5 +17,5 @@ function map_finish_reason(openai) {
   }
 }
 
-export const translated = { ["MODEL_ROLE"]: MODEL_ROLE(), ["map_finish_reason"]: map_finish_reason };
+export const translated = { ["MODEL_ROLE"]: rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45(), ["map_finish_reason"]: rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e };
 export const provenance = {"sourcePath":"src/gemini_bridge.rs","sourceSha256":"cc8d02c94f8702946c064323d26df9bc4a845f9c84be6294f74497ccd2c183c5","executable":2,"executableFunctions":1,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":7,"preserved":10,"runtimeParity":false};

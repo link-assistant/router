@@ -27,6 +27,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -65,6 +67,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -73,9 +78,9 @@ const serde_json = {
   },
 };
 
-function BROTLI_BUFFER(): bigint {
+function rp_6c6f675f6465636f64652e42524f544c495f425546464552(): bigint {
   return 4096n;
 }
 
-export const translated: { "Encoding": Readonly<{ "Identity": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }>; "Gzip": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }>; "Deflate": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }>; "Brotli": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }>; "Zstd": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }> }>; "BROTLI_BUFFER": bigint } = { ["Encoding"]: Object.freeze({ ["Identity"]: ml_make_Encoding_Identity, ["Gzip"]: ml_make_Encoding_Gzip, ["Deflate"]: ml_make_Encoding_Deflate, ["Brotli"]: ml_make_Encoding_Brotli, ["Zstd"]: ml_make_Encoding_Zstd }), ["BROTLI_BUFFER"]: BROTLI_BUFFER() };
+export const translated: { "Encoding": Readonly<{ "Identity": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }>; "Gzip": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }>; "Deflate": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }>; "Brotli": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }>; "Zstd": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Gzip" }> | Readonly<{ readonly "$": "Deflate" }> | Readonly<{ readonly "$": "Brotli" }> | Readonly<{ readonly "$": "Zstd" }> }>; "BROTLI_BUFFER": bigint } = { ["Encoding"]: Object.freeze({ ["Identity"]: ml_make_Encoding_Identity, ["Gzip"]: ml_make_Encoding_Gzip, ["Deflate"]: ml_make_Encoding_Deflate, ["Brotli"]: ml_make_Encoding_Brotli, ["Zstd"]: ml_make_Encoding_Zstd }), ["BROTLI_BUFFER"]: rp_6c6f675f6465636f64652e42524f544c495f425546464552() };
 export const provenance = {"sourcePath":"src/log_decode.rs","sourceSha256":"7dc190395c8ec6d786647c81b143c591337e18ddbdeeeae86038c38d3b945b8e","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":5,"carried":4,"preserved":7,"runtimeParity":false};

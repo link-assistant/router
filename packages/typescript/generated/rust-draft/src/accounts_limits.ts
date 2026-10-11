@@ -1,3 +1,5 @@
+type MLData_4c696d6974436f756e7473 = Readonly<{ readonly "$": "LimitCounts"; readonly "cooling_down": bigint; readonly "paused": bigint; readonly "model_cooldowns": bigint }>;
+type MLData_4f627365727665644c696d697473 = Readonly<{ readonly "$": "ObservedLimits"; readonly "credential_cooldown": boolean; readonly "model_cooldown": MLData_526f757465724f7074696f6e5f365f737472696e67; readonly "paused": boolean }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
 type MLData_526f757465724f7074696f6e5f33395f6e616d65645f37333635373236343635356636613733366636655f346537353664363236353732 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }>;
@@ -26,11 +28,24 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/accounts_limits.rs; sha256=2b5bfdda60ce2ffb8ff3d52459b13b8b68a56977f18e3db9100f5ff516861a1f
 // Carried constructs are data, never runtime parity evidence.
+import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
+
+const ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = {"schemaVersion":1,"types":{"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = new Map([]);
+
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
+  if (value < min || value > max) throw new RangeError(message);
+  return value;
+}
+
 function LIMITS_SAVE_INTERVAL_SECS(): bigint {
   return 60n;
 }
@@ -48,6 +63,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -56,5 +74,22 @@ const serde_json = {
   },
 };
 
-export const translated: { "LIMITS_SAVE_INTERVAL_SECS": bigint } = { ["LIMITS_SAVE_INTERVAL_SECS"]: LIMITS_SAVE_INTERVAL_SECS() };
-export const provenance = {"sourcePath":"src/accounts_limits.rs","sourceSha256":"2b5bfdda60ce2ffb8ff3d52459b13b8b68a56977f18e3db9100f5ff516861a1f","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":11,"preserved":13,"runtimeParity":false};
+function ml_make_ObservedLimits_ObservedLimits(credential_cooldown: boolean, model_cooldown: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, paused: boolean): Readonly<{ readonly "$": "ObservedLimits"; readonly "credential_cooldown": boolean; readonly "model_cooldown": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "paused": boolean }> {
+  if (!(typeof credential_cooldown === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(model_cooldown, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  if (!(typeof paused === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "ObservedLimits", ["credential_cooldown"]: credential_cooldown, ["model_cooldown"]: model_cooldown, ["paused"]: paused });
+}
+
+function ml_make_LimitCounts_LimitCounts(cooling_down: bigint, paused: bigint, model_cooldowns: bigint): Readonly<{ readonly "$": "LimitCounts"; readonly "cooling_down": bigint; readonly "paused": bigint; readonly "model_cooldowns": bigint }> {
+  ml_fixed(cooling_down, 0n, 18446744073709551615n, "u64 argument cooling_down out of range");
+  if (!(typeof cooling_down === 'bigint' && cooling_down >= 0n && cooling_down <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  ml_fixed(paused, 0n, 18446744073709551615n, "u64 argument paused out of range");
+  if (!(typeof paused === 'bigint' && paused >= 0n && paused <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  ml_fixed(model_cooldowns, 0n, 18446744073709551615n, "u64 argument model_cooldowns out of range");
+  if (!(typeof model_cooldowns === 'bigint' && model_cooldowns >= 0n && model_cooldowns <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "LimitCounts", ["cooling_down"]: cooling_down, ["paused"]: paused, ["model_cooldowns"]: model_cooldowns });
+}
+
+export const translated: { "LIMITS_SAVE_INTERVAL_SECS": bigint; "ObservedLimits": (credential_cooldown: boolean, model_cooldown: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, paused: boolean) => Readonly<{ readonly "$": "ObservedLimits"; readonly "credential_cooldown": boolean; readonly "model_cooldown": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "paused": boolean }>; "LimitCounts": (cooling_down: bigint, paused: bigint, model_cooldowns: bigint) => Readonly<{ readonly "$": "LimitCounts"; readonly "cooling_down": bigint; readonly "paused": bigint; readonly "model_cooldowns": bigint }> } = { ["LIMITS_SAVE_INTERVAL_SECS"]: LIMITS_SAVE_INTERVAL_SECS(), ["ObservedLimits"]: ml_make_ObservedLimits_ObservedLimits, ["LimitCounts"]: ml_make_LimitCounts_LimitCounts };
+export const provenance = {"sourcePath":"src/accounts_limits.rs","sourceSha256":"2b5bfdda60ce2ffb8ff3d52459b13b8b68a56977f18e3db9100f5ff516861a1f","executable":3,"executableFunctions":0,"executableConstants":1,"executableTypes":2,"executableConstructors":2,"carried":9,"preserved":13,"runtimeParity":false};

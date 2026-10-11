@@ -1,91 +1,66 @@
 // Generated draft from src/clients.rs; sha256=2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d
 // Carried constructs are data, never runtime parity evidence.
-function CODEX_PROVIDER() {
+function rp_636c69656e74732e434f4445585f50524f5649444552() {
   return "link-assistant";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function CODEX_TOKEN_ENV() {
+function rp_636c69656e74732e434f4445585f544f4b454e5f454e56() {
   return "LINK_ASSISTANT_TOKEN";
 }
 
-function CLAUDE_TOKEN_ENV() {
+function rp_636c69656e74732e434c415544455f544f4b454e5f454e56() {
   return "ANTHROPIC_AUTH_TOKEN";
 }
 
-function CLAUDE_BASE_ENV() {
+function rp_636c69656e74732e434c415544455f424153455f454e56() {
   return "ANTHROPIC_BASE_URL";
 }
 
-function ROUTER_TOKEN_ENV() {
+function rp_636c69656e74732e524f555445525f544f4b454e5f454e56() {
   return "LINK_ASSISTANT_TOKEN";
 }
 
-function GROK_TOKEN_ENV() {
+function rp_636c69656e74732e47524f4b5f544f4b454e5f454e56() {
   return "GROK_API_KEY";
 }
 
-function GROK_BASE_ENV() {
+function rp_636c69656e74732e47524f4b5f424153455f454e56() {
   return "GROK_BASE_URL";
 }
 
-function ROUTER_PROVIDER() {
+function rp_636c69656e74732e524f555445525f50524f5649444552() {
   return "link-assistant";
 }
 
-function OWNERSHIP_MARKER() {
+function rp_636c69656e74732e4f574e4552534849505f4d41524b4552() {
   return ".link-assistant-router-client.json";
 }
 
-function OPENAI_MODEL_OWNER() {
+function rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552() {
   return "openai";
 }
 
-function ANTHROPIC_MODEL_OWNER() {
+function rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552() {
   return "anthropic";
 }
 
-function GOOGLE_MODEL_OWNER() {
+function rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552() {
   return "google";
 }
 
-function QWEN_MODEL_OWNER() {
+function rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552() {
   return "qwen";
 }
 
-function ZAI_MODEL_OWNER() {
+function rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552() {
   return "z.ai";
 }
 
-function DEFAULT_OPENAI_REASONING_EFFORT() {
+function rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254() {
   return "xhigh";
 }
 
-function DOCTOR_MAX_TOKENS() {
-  return 64n;
-}
-
-function DEFAULT_ANTHROPIC_REASONING_EFFORT() {
+function rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254() {
   return "high";
 }
 
@@ -113,5 +88,29 @@ function ml_make_ClientIsolation_Unsupported() {
   return Object.freeze({ $: 'Unsupported' });
 }
 
-export const translated = { ["CODEX_PROVIDER"]: CODEX_PROVIDER(), ["CODEX_TOKEN_ENV"]: CODEX_TOKEN_ENV(), ["CLAUDE_TOKEN_ENV"]: CLAUDE_TOKEN_ENV(), ["CLAUDE_BASE_ENV"]: CLAUDE_BASE_ENV(), ["ROUTER_TOKEN_ENV"]: ROUTER_TOKEN_ENV(), ["GROK_TOKEN_ENV"]: GROK_TOKEN_ENV(), ["GROK_BASE_ENV"]: GROK_BASE_ENV(), ["ROUTER_PROVIDER"]: ROUTER_PROVIDER(), ["OWNERSHIP_MARKER"]: OWNERSHIP_MARKER(), ["OPENAI_MODEL_OWNER"]: OPENAI_MODEL_OWNER(), ["ANTHROPIC_MODEL_OWNER"]: ANTHROPIC_MODEL_OWNER(), ["GOOGLE_MODEL_OWNER"]: GOOGLE_MODEL_OWNER(), ["QWEN_MODEL_OWNER"]: QWEN_MODEL_OWNER(), ["ZAI_MODEL_OWNER"]: ZAI_MODEL_OWNER(), ["DEFAULT_OPENAI_REASONING_EFFORT"]: DEFAULT_OPENAI_REASONING_EFFORT(), ["DOCTOR_MAX_TOKENS"]: DOCTOR_MAX_TOKENS(), ["DEFAULT_ANTHROPIC_REASONING_EFFORT"]: DEFAULT_ANTHROPIC_REASONING_EFFORT(), ["ClientIsolation"]: Object.freeze({ ["Home"]: ml_make_ClientIsolation_Home, ["ClaudeConfig"]: ml_make_ClientIsolation_ClaudeConfig, ["GeminiHome"]: ml_make_ClientIsolation_GeminiHome, ["ConfigFile"]: ml_make_ClientIsolation_ConfigFile, ["Environment"]: ml_make_ClientIsolation_Environment, ["Unsupported"]: ml_make_ClientIsolation_Unsupported }) };
-export const provenance = {"sourcePath":"src/clients.rs","sourceSha256":"2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d","executable":18,"executableFunctions":0,"executableConstants":17,"executableTypes":1,"executableConstructors":6,"carried":43,"preserved":62,"runtimeParity":false};
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated = { ["CODEX_PROVIDER"]: rp_636c69656e74732e434f4445585f50524f5649444552(), ["CODEX_TOKEN_ENV"]: rp_636c69656e74732e434f4445585f544f4b454e5f454e56(), ["CLAUDE_TOKEN_ENV"]: rp_636c69656e74732e434c415544455f544f4b454e5f454e56(), ["CLAUDE_BASE_ENV"]: rp_636c69656e74732e434c415544455f424153455f454e56(), ["ROUTER_TOKEN_ENV"]: rp_636c69656e74732e524f555445525f544f4b454e5f454e56(), ["GROK_TOKEN_ENV"]: rp_636c69656e74732e47524f4b5f544f4b454e5f454e56(), ["GROK_BASE_ENV"]: rp_636c69656e74732e47524f4b5f424153455f454e56(), ["ROUTER_PROVIDER"]: rp_636c69656e74732e524f555445525f50524f5649444552(), ["OWNERSHIP_MARKER"]: rp_636c69656e74732e4f574e4552534849505f4d41524b4552(), ["OPENAI_MODEL_OWNER"]: rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552(), ["ANTHROPIC_MODEL_OWNER"]: rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552(), ["GOOGLE_MODEL_OWNER"]: rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552(), ["QWEN_MODEL_OWNER"]: rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552(), ["ZAI_MODEL_OWNER"]: rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552(), ["DEFAULT_OPENAI_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254(), ["DEFAULT_ANTHROPIC_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254(), ["ClientIsolation"]: Object.freeze({ ["Home"]: ml_make_ClientIsolation_Home, ["ClaudeConfig"]: ml_make_ClientIsolation_ClaudeConfig, ["GeminiHome"]: ml_make_ClientIsolation_GeminiHome, ["ConfigFile"]: ml_make_ClientIsolation_ConfigFile, ["Environment"]: ml_make_ClientIsolation_Environment, ["Unsupported"]: ml_make_ClientIsolation_Unsupported }) };
+export const provenance = {"sourcePath":"src/clients.rs","sourceSha256":"2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d","executable":17,"executableFunctions":0,"executableConstants":16,"executableTypes":1,"executableConstructors":6,"carried":44,"preserved":62,"runtimeParity":false};

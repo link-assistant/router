@@ -27,6 +27,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -74,6 +76,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -82,11 +87,11 @@ const serde_json = {
   },
 };
 
-function contains_marker(compact: string, markers: ReadonlyArray<string>): boolean {
+function rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572(compact: string, markers: ReadonlyArray<string>): boolean {
   if (!(typeof compact === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(compact))) throw new TypeError('argument outside supported Rust value domain');
   if (!ml_router_array(markers, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
   return ml_router_any(ml_router_iter(markers), (marker) => { return compact.includes(marker); });
 }
 
-export const translated: { "TuiAction": Readonly<{ "AcceptTheme": () => Readonly<{ readonly "$": "AcceptTheme" }> | Readonly<{ readonly "$": "AcceptWorkspaceTrust" }> | Readonly<{ readonly "$": "SendLogin" }> | Readonly<{ readonly "$": "SelectLoginMethod" }>; "AcceptWorkspaceTrust": () => Readonly<{ readonly "$": "AcceptTheme" }> | Readonly<{ readonly "$": "AcceptWorkspaceTrust" }> | Readonly<{ readonly "$": "SendLogin" }> | Readonly<{ readonly "$": "SelectLoginMethod" }>; "SendLogin": () => Readonly<{ readonly "$": "AcceptTheme" }> | Readonly<{ readonly "$": "AcceptWorkspaceTrust" }> | Readonly<{ readonly "$": "SendLogin" }> | Readonly<{ readonly "$": "SelectLoginMethod" }>; "SelectLoginMethod": () => Readonly<{ readonly "$": "AcceptTheme" }> | Readonly<{ readonly "$": "AcceptWorkspaceTrust" }> | Readonly<{ readonly "$": "SendLogin" }> | Readonly<{ readonly "$": "SelectLoginMethod" }> }>; "contains_marker": (compact: string, markers: ReadonlyArray<string>) => boolean } = { ["TuiAction"]: Object.freeze({ ["AcceptTheme"]: ml_make_TuiAction_AcceptTheme, ["AcceptWorkspaceTrust"]: ml_make_TuiAction_AcceptWorkspaceTrust, ["SendLogin"]: ml_make_TuiAction_SendLogin, ["SelectLoginMethod"]: ml_make_TuiAction_SelectLoginMethod }), ["contains_marker"]: contains_marker };
+export const translated: { "TuiAction": Readonly<{ "AcceptTheme": () => Readonly<{ readonly "$": "AcceptTheme" }> | Readonly<{ readonly "$": "AcceptWorkspaceTrust" }> | Readonly<{ readonly "$": "SendLogin" }> | Readonly<{ readonly "$": "SelectLoginMethod" }>; "AcceptWorkspaceTrust": () => Readonly<{ readonly "$": "AcceptTheme" }> | Readonly<{ readonly "$": "AcceptWorkspaceTrust" }> | Readonly<{ readonly "$": "SendLogin" }> | Readonly<{ readonly "$": "SelectLoginMethod" }>; "SendLogin": () => Readonly<{ readonly "$": "AcceptTheme" }> | Readonly<{ readonly "$": "AcceptWorkspaceTrust" }> | Readonly<{ readonly "$": "SendLogin" }> | Readonly<{ readonly "$": "SelectLoginMethod" }>; "SelectLoginMethod": () => Readonly<{ readonly "$": "AcceptTheme" }> | Readonly<{ readonly "$": "AcceptWorkspaceTrust" }> | Readonly<{ readonly "$": "SendLogin" }> | Readonly<{ readonly "$": "SelectLoginMethod" }> }>; "contains_marker": (compact: string, markers: ReadonlyArray<string>) => boolean } = { ["TuiAction"]: Object.freeze({ ["AcceptTheme"]: ml_make_TuiAction_AcceptTheme, ["AcceptWorkspaceTrust"]: ml_make_TuiAction_AcceptWorkspaceTrust, ["SendLogin"]: ml_make_TuiAction_SendLogin, ["SelectLoginMethod"]: ml_make_TuiAction_SelectLoginMethod }), ["contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572 };
 export const provenance = {"sourcePath":"src/login_pty_backend.rs","sourceSha256":"c808f2dc1cb7c07f2a78c4f4ad4edee6d43fb2f0f37ed4bb0c63a3fc968547e8","executable":2,"executableFunctions":1,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":17,"preserved":20,"runtimeParity":false};

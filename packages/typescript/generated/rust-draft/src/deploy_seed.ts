@@ -27,13 +27,27 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/deploy_seed.rs; sha256=f8262b8e6b73eeb61e4f67ab1bbde8678369585c50b1225a0790df6974379a84
 // Carried constructs are data, never runtime parity evidence.
-function METADATA_KEY(): string {
+function rp_6465706c6f795f736565642e4d455441444154415f4b4559(): string {
   return "_link_assistant_router";
+}
+
+function rp_6465706c6f795f736565642e48414e444f5645525f4b4559(): string {
+  return "handed_over";
+}
+
+function ml_make_SeedProvider_Claude(): Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> {
+  return Object.freeze({ $: 'Claude' });
+}
+
+function ml_make_SeedProvider_Codex(): Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> {
+  return Object.freeze({ $: 'Codex' });
 }
 
 const std = {
@@ -49,6 +63,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -57,17 +74,5 @@ const serde_json = {
   },
 };
 
-function HANDOVER_KEY(): string {
-  return "handed_over";
-}
-
-function ml_make_SeedProvider_Claude(): Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> {
-  return Object.freeze({ $: 'Claude' });
-}
-
-function ml_make_SeedProvider_Codex(): Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> {
-  return Object.freeze({ $: 'Codex' });
-}
-
-export const translated: { "METADATA_KEY": string; "HANDOVER_KEY": string; "SeedProvider": Readonly<{ "Claude": () => Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }>; "Codex": () => Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> }> } = { ["METADATA_KEY"]: METADATA_KEY(), ["HANDOVER_KEY"]: HANDOVER_KEY(), ["SeedProvider"]: Object.freeze({ ["Claude"]: ml_make_SeedProvider_Claude, ["Codex"]: ml_make_SeedProvider_Codex }) };
+export const translated: { "METADATA_KEY": string; "HANDOVER_KEY": string; "SeedProvider": Readonly<{ "Claude": () => Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }>; "Codex": () => Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> }> } = { ["METADATA_KEY"]: rp_6465706c6f795f736565642e4d455441444154415f4b4559(), ["HANDOVER_KEY"]: rp_6465706c6f795f736565642e48414e444f5645525f4b4559(), ["SeedProvider"]: Object.freeze({ ["Claude"]: ml_make_SeedProvider_Claude, ["Codex"]: ml_make_SeedProvider_Codex }) };
 export const provenance = {"sourcePath":"src/deploy_seed.rs","sourceSha256":"f8262b8e6b73eeb61e4f67ab1bbde8678369585c50b1225a0790df6974379a84","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":2,"carried":15,"preserved":19,"runtimeParity":false};

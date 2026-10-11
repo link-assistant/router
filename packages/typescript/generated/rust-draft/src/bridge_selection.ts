@@ -1,4 +1,3 @@
-type MLData_4d6f64656c53656c656374696f6e5265717569726564 = Readonly<{ readonly "$": "ModelSelectionRequired"; readonly "provider": string; readonly "reason": MLData_53656c656374696f6e4661696c757265 }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
 type MLData_526f757465724f7074696f6e5f33395f6e616d65645f37333635373236343635356636613733366636655f346537353664363236353732 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }>;
@@ -28,44 +27,13 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/bridge_selection.rs; sha256=b1b06bd11c9567e1b0110aad0b92c28dd9ec7111563e062c78f0bb6fba8af32a
 // Carried constructs are data, never runtime parity evidence.
-import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
-
-const ml_host_value_schema_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb = {"schemaVersion":1,"types":{"SelectionFailure":{"kind":"data","name":"SelectionFailure","ctors":[{"name":"NotDiscovered","fields":[]},{"name":"CredentialUnavailable","fields":[]},{"name":"EmptyCatalog","fields":[]},{"name":"ConfiguredModelUnavailable","fields":[]}]}}};
-
-const ml_host_value_refinements_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb = new Map([]);
-
-function ml_make_ModelSelectionRequired_ModelSelectionRequired(provider: string, reason: Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>): Readonly<{ readonly "$": "ModelSelectionRequired"; readonly "provider": string; readonly "reason": Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }> }> {
-  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
-  ml_validate_rust_value(reason, {"kind":"data","name":"SelectionFailure"}, ml_host_value_schema_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb, { refinements: ml_host_value_refinements_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb });
-  return Object.freeze({ $: "ModelSelectionRequired", ["provider"]: provider, ["reason"]: reason });
-}
-
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
 function ml_make_SelectionFailure_NotDiscovered(): Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }> {
   return Object.freeze({ $: 'NotDiscovered' });
 }
@@ -82,9 +50,33 @@ function ml_make_SelectionFailure_ConfiguredModelUnavailable(): Readonly<{ reado
   return Object.freeze({ $: 'ConfiguredModelUnavailable' });
 }
 
-function MODEL_SELECTION_REQUIRED(): string {
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+function rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544(): string {
   return "model_selection_required";
 }
 
-export const translated: { "ModelSelectionRequired": (provider: string, reason: Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>) => Readonly<{ readonly "$": "ModelSelectionRequired"; readonly "provider": string; readonly "reason": Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }> }>; "SelectionFailure": Readonly<{ "NotDiscovered": () => Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>; "CredentialUnavailable": () => Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>; "EmptyCatalog": () => Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>; "ConfiguredModelUnavailable": () => Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }> }>; "MODEL_SELECTION_REQUIRED": string } = { ["ModelSelectionRequired"]: ml_make_ModelSelectionRequired_ModelSelectionRequired, ["SelectionFailure"]: Object.freeze({ ["NotDiscovered"]: ml_make_SelectionFailure_NotDiscovered, ["CredentialUnavailable"]: ml_make_SelectionFailure_CredentialUnavailable, ["EmptyCatalog"]: ml_make_SelectionFailure_EmptyCatalog, ["ConfiguredModelUnavailable"]: ml_make_SelectionFailure_ConfiguredModelUnavailable }), ["MODEL_SELECTION_REQUIRED"]: MODEL_SELECTION_REQUIRED() };
-export const provenance = {"sourcePath":"src/bridge_selection.rs","sourceSha256":"b1b06bd11c9567e1b0110aad0b92c28dd9ec7111563e062c78f0bb6fba8af32a","executable":3,"executableFunctions":0,"executableConstants":1,"executableTypes":2,"executableConstructors":5,"carried":5,"preserved":9,"runtimeParity":false};
+export const translated: { "SelectionFailure": Readonly<{ "NotDiscovered": () => Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>; "CredentialUnavailable": () => Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>; "EmptyCatalog": () => Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>; "ConfiguredModelUnavailable": () => Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }> }>; "MODEL_SELECTION_REQUIRED": string } = { ["SelectionFailure"]: Object.freeze({ ["NotDiscovered"]: ml_make_SelectionFailure_NotDiscovered, ["CredentialUnavailable"]: ml_make_SelectionFailure_CredentialUnavailable, ["EmptyCatalog"]: ml_make_SelectionFailure_EmptyCatalog, ["ConfiguredModelUnavailable"]: ml_make_SelectionFailure_ConfiguredModelUnavailable }), ["MODEL_SELECTION_REQUIRED"]: rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544() };
+export const provenance = {"sourcePath":"src/bridge_selection.rs","sourceSha256":"b1b06bd11c9567e1b0110aad0b92c28dd9ec7111563e062c78f0bb6fba8af32a","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":4,"carried":6,"preserved":9,"runtimeParity":false};

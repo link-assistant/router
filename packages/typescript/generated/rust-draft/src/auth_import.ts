@@ -27,34 +27,13 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/auth_import.rs; sha256=0410916d8c67ba696216d47f221dc92b725c4d6f6c22e5fe6b46a3e6c815fef1
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
-  if (value < min || value > max) throw new RangeError(message);
-  return value;
-}
-
-// Integer division with the source's rounding; by zero it aborts with the message `zero`
-// or, when that is null, is total (x / 0 = 0, x % 0 = x); a machine-integer quotient
-// out of [min, max] aborts with `overflow`, the remainder too.
-function ml_divide(a: bigint, b: bigint, rounding: string, zero: string | null, remainder: boolean, bounds: [bigint, bigint, string] | null) {
-  if (b === 0n) {
-    if (zero !== null) throw new RangeError(zero);
-    return remainder ? a : 0n;
-  }
-  let q = a / b;
-  const r = a - q * b;
-  if (r !== 0n) {
-    if (rounding === 'floor' && (r < 0n) !== (b < 0n)) q -= 1n;
-    if (rounding === 'euclid' && r < 0n) q = b > 0n ? q - 1n : q + 1n;
-  }
-  if (bounds && (q < bounds[0] || q > bounds[1])) throw new RangeError(bounds[2]);
-  return remainder ? a - q * b : q;
-}
-
 function ml_make_CredentialProbe_Accepted(): Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "Rejected" }> | Readonly<{ readonly "$": "Unverified" }> {
   return Object.freeze({ $: 'Accepted' });
 }
@@ -80,6 +59,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -88,20 +70,5 @@ const serde_json = {
   },
 };
 
-function humanize_minutes(minutes: bigint): string {
-  ml_fixed(minutes, -9223372036854775808n, 9223372036854775807n, "i64 argument minutes out of range");
-  if (!(typeof minutes === 'bigint' && minutes >= -9223372036854775808n && minutes <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
-  if ((minutes < 90n)) {
-    return (String(minutes) + " minutes");
-  } else {
-  }
-  const hours = ml_divide(minutes, 60n, 'trunc', "attempt to divide by zero", false, [-9223372036854775808n, 9223372036854775807n, "attempt to divide with overflow"]);
-  if ((hours < 48n)) {
-    return (String(hours) + " hours");
-  } else {
-  }
-  return (String(ml_divide(hours, 24n, 'trunc', "attempt to divide by zero", false, [-9223372036854775808n, 9223372036854775807n, "attempt to divide with overflow"])) + " days");
-}
-
-export const translated: { "CredentialProbe": Readonly<{ "Accepted": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "Rejected" }> | Readonly<{ readonly "$": "Unverified" }>; "Rejected": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "Rejected" }> | Readonly<{ readonly "$": "Unverified" }>; "Unverified": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "Rejected" }> | Readonly<{ readonly "$": "Unverified" }> }>; "humanize_minutes": (minutes: bigint) => string } = { ["CredentialProbe"]: Object.freeze({ ["Accepted"]: ml_make_CredentialProbe_Accepted, ["Rejected"]: ml_make_CredentialProbe_Rejected, ["Unverified"]: ml_make_CredentialProbe_Unverified }), ["humanize_minutes"]: humanize_minutes };
-export const provenance = {"sourcePath":"src/auth_import.rs","sourceSha256":"0410916d8c67ba696216d47f221dc92b725c4d6f6c22e5fe6b46a3e6c815fef1","executable":2,"executableFunctions":1,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":31,"preserved":34,"runtimeParity":false};
+export const translated: { "CredentialProbe": Readonly<{ "Accepted": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "Rejected" }> | Readonly<{ readonly "$": "Unverified" }>; "Rejected": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "Rejected" }> | Readonly<{ readonly "$": "Unverified" }>; "Unverified": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "Rejected" }> | Readonly<{ readonly "$": "Unverified" }> }> } = { ["CredentialProbe"]: Object.freeze({ ["Accepted"]: ml_make_CredentialProbe_Accepted, ["Rejected"]: ml_make_CredentialProbe_Rejected, ["Unverified"]: ml_make_CredentialProbe_Unverified }) };
+export const provenance = {"sourcePath":"src/auth_import.rs","sourceSha256":"0410916d8c67ba696216d47f221dc92b725c4d6f6c22e5fe6b46a3e6c815fef1","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":32,"preserved":34,"runtimeParity":false};

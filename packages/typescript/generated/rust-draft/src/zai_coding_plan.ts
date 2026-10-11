@@ -17,7 +17,6 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
-type MLData_5a616950726f62654661696c757265 = Readonly<{ readonly "$": "ZaiProbeFailure"; readonly "kind": MLData_5a616950726f62654661696c7572654b696e64; readonly "message": string }>;
 type MLData_5a616950726f62654661696c7572654b696e64 = Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>;
 type MLData_72705f37333734363432653734363936643635326534343735373236313734363936663665 = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
@@ -29,6 +28,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -41,50 +42,23 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
-
-const ml_host_value_schema_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288 = {"schemaVersion":1,"types":{"ZaiProbeFailureKind":{"kind":"data","name":"ZaiProbeFailureKind","ctors":[{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unverified","fields":[]}]}}};
-
-const ml_host_value_refinements_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288 = new Map([]);
-
-function ANTHROPIC_BASE_PATH(): string {
+function rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(): string {
   return "/api/anthropic";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function CHAT_BASE_PATH(): string {
+function rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(): string {
   return "/api/coding/paas/v4";
 }
 
-function RESPONSES_BASE_PATH(): string {
+function rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(): string {
   return "/api/v1";
 }
 
-function HEALTH_PATH(): string {
+function rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(): string {
   return "/api/monitor/usage/quota/limit";
 }
 
-function CATALOG_PATH(): string {
+function rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(): string {
   return "/api/anthropic/v1/models";
 }
 
@@ -96,7 +70,7 @@ function rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f524554
   return ml_host_std_time_duration_from_secs(15n);
 }
 
-function MAX_CATALOG_BODY(): bigint {
+function rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(): bigint {
   return ml_fixed((1024n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
@@ -112,11 +86,29 @@ function ml_make_ZaiProbeFailureKind_Unverified(): Readonly<{ readonly "$": "Cre
   return Object.freeze({ $: 'Unverified' });
 }
 
-function ml_make_ZaiProbeFailure_ZaiProbeFailure(kind: Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>, message: string): Readonly<{ readonly "$": "ZaiProbeFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>; readonly "message": string }> {
-  ml_validate_rust_value(kind, {"kind":"data","name":"ZaiProbeFailureKind"}, ml_host_value_schema_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288, { refinements: ml_host_value_refinements_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288 });
-  if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "ZaiProbeFailure", ["kind"]: kind, ["message"]: message });
-}
+const std = {
+  io: {
 
-export const translated: { "ANTHROPIC_BASE_PATH": string; "CHAT_BASE_PATH": string; "RESPONSES_BASE_PATH": string; "HEALTH_PATH": string; "CATALOG_PATH": string; "CATALOG_TTL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "FAILED_REFRESH_RETRY": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "MAX_CATALOG_BODY": bigint; "ZaiProbeFailureKind": Readonly<{ "CredentialRejected": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>; "RateLimited": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>; "Unverified": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }> }>; "ZaiProbeFailure": (kind: Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>, message: string) => Readonly<{ readonly "$": "ZaiProbeFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>; readonly "message": string }> } = { ["ANTHROPIC_BASE_PATH"]: ANTHROPIC_BASE_PATH(), ["CHAT_BASE_PATH"]: CHAT_BASE_PATH(), ["RESPONSES_BASE_PATH"]: RESPONSES_BASE_PATH(), ["HEALTH_PATH"]: HEALTH_PATH(), ["CATALOG_PATH"]: CATALOG_PATH(), ["CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["MAX_CATALOG_BODY"]: MAX_CATALOG_BODY(), ["ZaiProbeFailureKind"]: Object.freeze({ ["CredentialRejected"]: ml_make_ZaiProbeFailureKind_CredentialRejected, ["RateLimited"]: ml_make_ZaiProbeFailureKind_RateLimited, ["Unverified"]: ml_make_ZaiProbeFailureKind_Unverified }), ["ZaiProbeFailure"]: ml_make_ZaiProbeFailure_ZaiProbeFailure };
-export const provenance = {"sourcePath":"src/zai_coding_plan.rs","sourceSha256":"47c521e6806fa8d543d939fd6b1751fb48b180874322cf0699957c9c85b79aa2","executable":10,"executableFunctions":0,"executableConstants":8,"executableTypes":2,"executableConstructors":4,"carried":38,"preserved":49,"runtimeParity":false};
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated: { "ANTHROPIC_BASE_PATH": string; "CHAT_BASE_PATH": string; "RESPONSES_BASE_PATH": string; "HEALTH_PATH": string; "CATALOG_PATH": string; "CATALOG_TTL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "FAILED_REFRESH_RETRY": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "MAX_CATALOG_BODY": bigint; "ZaiProbeFailureKind": Readonly<{ "CredentialRejected": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>; "RateLimited": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }>; "Unverified": () => Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unverified" }> }> } = { ["ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["ZaiProbeFailureKind"]: Object.freeze({ ["CredentialRejected"]: ml_make_ZaiProbeFailureKind_CredentialRejected, ["RateLimited"]: ml_make_ZaiProbeFailureKind_RateLimited, ["Unverified"]: ml_make_ZaiProbeFailureKind_Unverified }) };
+export const provenance = {"sourcePath":"src/zai_coding_plan.rs","sourceSha256":"47c521e6806fa8d543d939fd6b1751fb48b180874322cf0699957c9c85b79aa2","executable":9,"executableFunctions":0,"executableConstants":8,"executableTypes":1,"executableConstructors":3,"carried":39,"preserved":49,"runtimeParity":false};

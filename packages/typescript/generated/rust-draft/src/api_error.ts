@@ -18,6 +18,7 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_72705f353236663735373436353732346637303734363936663665356633363566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -27,6 +28,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -66,6 +69,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -74,7 +80,7 @@ const serde_json = {
   },
 };
 
-function openai_error_type(status: bigint): string {
+function rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065(status: bigint): string {
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if ((status === 400n)) {
@@ -104,7 +110,7 @@ function openai_error_type(status: bigint): string {
   }
 }
 
-function openai_error_code(status: bigint): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {
+function rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465(status: bigint): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if ((status === 401n)) {
@@ -126,5 +132,5 @@ function openai_error_code(status: bigint): Readonly<{ readonly "$": "None" }> |
   }
 }
 
-export const translated: { "ApiDialect": Readonly<{ "Anthropic": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "GitHub" }>; "OpenAi": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "GitHub" }>; "Gemini": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "GitHub" }>; "GitHub": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "GitHub" }> }>; "openai_error_type": (status: bigint) => string; "openai_error_code": (status: bigint) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> } = { ["ApiDialect"]: Object.freeze({ ["Anthropic"]: ml_make_ApiDialect_Anthropic, ["OpenAi"]: ml_make_ApiDialect_OpenAi, ["Gemini"]: ml_make_ApiDialect_Gemini, ["GitHub"]: ml_make_ApiDialect_GitHub }), ["openai_error_type"]: openai_error_type, ["openai_error_code"]: openai_error_code };
+export const translated: { "ApiDialect": Readonly<{ "Anthropic": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "GitHub" }>; "OpenAi": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "GitHub" }>; "Gemini": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "GitHub" }>; "GitHub": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "GitHub" }> }>; "openai_error_type": (status: bigint) => string; "openai_error_code": (status: bigint) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> } = { ["ApiDialect"]: Object.freeze({ ["Anthropic"]: ml_make_ApiDialect_Anthropic, ["OpenAi"]: ml_make_ApiDialect_OpenAi, ["Gemini"]: ml_make_ApiDialect_Gemini, ["GitHub"]: ml_make_ApiDialect_GitHub }), ["openai_error_type"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065, ["openai_error_code"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465 };
 export const provenance = {"sourcePath":"src/api_error.rs","sourceSha256":"1afefa01a39e711dff5893b9490b4963fbcb53a5c626693b8b5657276232de6a","executable":3,"executableFunctions":2,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":13,"preserved":16,"runtimeParity":false};

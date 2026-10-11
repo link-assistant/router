@@ -28,6 +28,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -40,8 +42,27 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function API_VERSION(): string {
+function rp_766b2e4150495f56455253494f4e(): string {
   return "5.199";
+}
+
+function rp_766b2e574149545f53454353(): bigint {
+  return 25n;
+}
+
+function rp_766b2e4552524f525f4241434b4f4646(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
+  return ml_host_std_time_duration_from_secs(5n);
+}
+
+function rp_766b2e434841545f504545525f4f4646534554(): bigint {
+  return 2000000000n;
+}
+
+function ml_make_LongPollServer_LongPollServer(server: string, key: string, ts: string): Readonly<{ readonly "$": "LongPollServer"; readonly "server": string; readonly "key": string; readonly "ts": string }> {
+  if (!(typeof server === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(server))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof key === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(key))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof ts === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(ts))) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "LongPollServer", ["server"]: server, ["key"]: key, ["ts"]: ts });
 }
 
 const std = {
@@ -57,6 +78,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -65,32 +89,13 @@ const serde_json = {
   },
 };
 
-function WAIT_SECS(): bigint {
-  return 25n;
-}
-
-function rp_766b2e4552524f525f4241434b4f4646(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
-  return ml_host_std_time_duration_from_secs(5n);
-}
-
-function CHAT_PEER_OFFSET(): bigint {
-  return 2000000000n;
-}
-
-function ml_make_LongPollServer_LongPollServer(server: string, key: string, ts: string): Readonly<{ readonly "$": "LongPollServer"; readonly "server": string; readonly "key": string; readonly "ts": string }> {
-  if (!(typeof server === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(server))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof key === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(key))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof ts === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(ts))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "LongPollServer", ["server"]: server, ["key"]: key, ["ts"]: ts });
-}
-
-function is_private(peer_id: bigint, from_id: bigint): boolean {
+function rp_766b2e69735f70726976617465(peer_id: bigint, from_id: bigint): boolean {
   ml_fixed(peer_id, -9223372036854775808n, 9223372036854775807n, "i64 argument peer_id out of range");
   if (!(typeof peer_id === 'bigint' && peer_id >= -9223372036854775808n && peer_id <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
   ml_fixed(from_id, -9223372036854775808n, 9223372036854775807n, "i64 argument from_id out of range");
   if (!(typeof from_id === 'bigint' && from_id >= -9223372036854775808n && from_id <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
-  return (((peer_id === from_id) && (from_id > 0n)) && (peer_id < CHAT_PEER_OFFSET()));
+  return (((peer_id === from_id) && (from_id > 0n)) && (peer_id < rp_766b2e434841545f504545525f4f4646534554()));
 }
 
-export const translated: { "API_VERSION": string; "WAIT_SECS": bigint; "ERROR_BACKOFF": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "CHAT_PEER_OFFSET": bigint; "LongPollServer": (server: string, key: string, ts: string) => Readonly<{ readonly "$": "LongPollServer"; readonly "server": string; readonly "key": string; readonly "ts": string }>; "is_private": (peer_id: bigint, from_id: bigint) => boolean } = { ["API_VERSION"]: API_VERSION(), ["WAIT_SECS"]: WAIT_SECS(), ["ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["CHAT_PEER_OFFSET"]: CHAT_PEER_OFFSET(), ["LongPollServer"]: ml_make_LongPollServer_LongPollServer, ["is_private"]: is_private };
+export const translated: { "API_VERSION": string; "WAIT_SECS": bigint; "ERROR_BACKOFF": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "CHAT_PEER_OFFSET": bigint; "LongPollServer": (server: string, key: string, ts: string) => Readonly<{ readonly "$": "LongPollServer"; readonly "server": string; readonly "key": string; readonly "ts": string }>; "is_private": (peer_id: bigint, from_id: bigint) => boolean } = { ["API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["WAIT_SECS"]: rp_766b2e574149545f53454353(), ["ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["LongPollServer"]: ml_make_LongPollServer_LongPollServer, ["is_private"]: rp_766b2e69735f70726976617465 };
 export const provenance = {"sourcePath":"src/vk.rs","sourceSha256":"89da12f9d4e6ff191da1fef2f5a07dda7770d10b7dc88d504c23f6bc0f1bcb27","executable":6,"executableFunctions":1,"executableConstants":4,"executableTypes":1,"executableConstructors":1,"carried":11,"preserved":18,"runtimeParity":false};

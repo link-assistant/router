@@ -17,6 +17,7 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_5373655465726d696e616c4465746563746f72 = Readonly<{ readonly "$": "SseTerminalDetector"; readonly "carry": ReadonlyArray<bigint>; readonly "terminal_in_discarded_prefix": boolean }>;
 type MLData_72705f37333734363432653734363936643635326534343735373236313734363936663665 = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
@@ -27,6 +28,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -39,8 +42,43 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function MISSING_API_KEY_MESSAGE(): string {
+function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {
+  if (!Array.isArray(values)) return false;
+  for (let index = 0; index < values.length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));
+    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;
+  }
+  return true;
+}
+
+function rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(): string {
   return "Gonka broker mode requires GONKA_API_KEY";
+}
+
+function rp_676f6e6b612e434154414c4f475f54544c(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
+  return ml_host_std_time_duration_from_secs(ml_fixed((5n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_676f6e6b612e4641494c45445f524546524553485f5245545259(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_676f6e6b612e4d41585f434154414c4f475f4259544553(): bigint {
+  return ml_fixed((ml_fixed((4n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(): bigint {
+  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function ml_make_SseTerminalDetector_SseTerminalDetector(carry: ReadonlyArray<bigint>, terminal_in_discarded_prefix: boolean): Readonly<{ readonly "$": "SseTerminalDetector"; readonly "carry": ReadonlyArray<bigint>; readonly "terminal_in_discarded_prefix": boolean }> {
+  if (!ml_router_array(carry, (element0) => (typeof element0 === 'bigint' && element0 >= 0n && element0 <= 255n))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof terminal_in_discarded_prefix === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "SseTerminalDetector", ["carry"]: carry, ["terminal_in_discarded_prefix"]: terminal_in_discarded_prefix });
 }
 
 const std = {
@@ -56,6 +94,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -64,25 +105,5 @@ const serde_json = {
   },
 };
 
-function rp_676f6e6b612e434154414c4f475f54544c(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
-  return ml_host_std_time_duration_from_secs(ml_fixed((5n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
-}
-
-function rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
-  return ml_host_std_time_duration_from_secs(15n);
-}
-
-function rp_676f6e6b612e4641494c45445f524546524553485f5245545259(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
-  return ml_host_std_time_duration_from_secs(15n);
-}
-
-function MAX_CATALOG_BYTES(): bigint {
-  return ml_fixed((ml_fixed((4n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
-}
-
-function MAX_SSE_CARRY_BYTES(): bigint {
-  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
-}
-
-export const translated: { "MISSING_API_KEY_MESSAGE": string; "CATALOG_TTL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "CATALOG_REQUEST_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "FAILED_REFRESH_RETRY": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "MAX_CATALOG_BYTES": bigint; "MAX_SSE_CARRY_BYTES": bigint } = { ["MISSING_API_KEY_MESSAGE"]: MISSING_API_KEY_MESSAGE(), ["CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["MAX_CATALOG_BYTES"]: MAX_CATALOG_BYTES(), ["MAX_SSE_CARRY_BYTES"]: MAX_SSE_CARRY_BYTES() };
-export const provenance = {"sourcePath":"src/gonka.rs","sourceSha256":"e88edf7455de0af62be89883df2ca5063a60aa59591f22ee75f73dec6e3a15b9","executable":6,"executableFunctions":0,"executableConstants":6,"executableTypes":0,"executableConstructors":0,"carried":30,"preserved":37,"runtimeParity":false};
+export const translated: { "MISSING_API_KEY_MESSAGE": string; "CATALOG_TTL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "CATALOG_REQUEST_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "FAILED_REFRESH_RETRY": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "MAX_CATALOG_BYTES": bigint; "MAX_SSE_CARRY_BYTES": bigint; "SseTerminalDetector": (carry: ReadonlyArray<bigint>, terminal_in_discarded_prefix: boolean) => Readonly<{ readonly "$": "SseTerminalDetector"; readonly "carry": ReadonlyArray<bigint>; readonly "terminal_in_discarded_prefix": boolean }> } = { ["MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["SseTerminalDetector"]: ml_make_SseTerminalDetector_SseTerminalDetector };
+export const provenance = {"sourcePath":"src/gonka.rs","sourceSha256":"e88edf7455de0af62be89883df2ca5063a60aa59591f22ee75f73dec6e3a15b9","executable":7,"executableFunctions":0,"executableConstants":6,"executableTypes":1,"executableConstructors":1,"carried":29,"preserved":37,"runtimeParity":false};

@@ -14,8 +14,17 @@ function ml_router_array(values, validate) {
   return true;
 }
 
-function RECOVERED_ADMIN_LABEL() {
+function rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c() {
   return "recovered-admin";
+}
+
+function ml_make_Recovery_Recovery(token, token_id, revoked, retained_admins) {
+  if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
+  if (!ml_router_array(revoked, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  ml_fixed(retained_admins, 0n, 18446744073709551615n, "u64 argument retained_admins out of range");
+  if (!(typeof retained_admins === 'bigint' && retained_admins >= 0n && retained_admins <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "Recovery", ["token"]: token, ["token_id"]: token_id, ["revoked"]: revoked, ["retained_admins"]: retained_admins });
 }
 
 const std = {
@@ -31,6 +40,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -39,14 +51,5 @@ const serde_json = {
   },
 };
 
-function ml_make_Recovery_Recovery(token, token_id, revoked, retained_admins) {
-  if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
-  if (!ml_router_array(revoked, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
-  ml_fixed(retained_admins, 0n, 18446744073709551615n, "u64 argument retained_admins out of range");
-  if (!(typeof retained_admins === 'bigint' && retained_admins >= 0n && retained_admins <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "Recovery", ["token"]: token, ["token_id"]: token_id, ["revoked"]: revoked, ["retained_admins"]: retained_admins });
-}
-
-export const translated = { ["RECOVERED_ADMIN_LABEL"]: RECOVERED_ADMIN_LABEL(), ["Recovery"]: ml_make_Recovery_Recovery };
+export const translated = { ["RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["Recovery"]: ml_make_Recovery_Recovery };
 export const provenance = {"sourcePath":"src/admin_recovery.rs","sourceSha256":"3c5dd4fb50cb708c6a0a54d076018e1794765c2c0a89a6f1a50ef004123821c9","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":7,"preserved":10,"runtimeParity":false};

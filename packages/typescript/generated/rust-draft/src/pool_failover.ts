@@ -1,5 +1,4 @@
 type MLData_5265747279526561736f6e = Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>;
-type MLData_526f757465724f7074696f6e5f32385f6e616d65645f35323635373437323739353236353631373336663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_5265747279526561736f6e }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
 type MLData_526f757465724f7074696f6e5f33395f6e616d65645f37333635373236343635356636613733366636655f346537353664363236353732 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }>;
@@ -19,6 +18,8 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_72705f35323666373537343635373234663730373436393666366535663335333535663665363136643635363435663337333033363636333636363336363333353636333633363336333133363339333636333336363633373336333633353337333235663335333233363335333733343337333233373339333533323336333533363331333733333336363633363635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3730366636663663356636363631363936633666373636353732326535323635373437323739353236353631373336663665 }>;
+type MLData_72705f3730366636663663356636363631363936633666373636353732326535323635373437323739353236353631373336663665 = Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -28,6 +29,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -38,36 +41,15 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function DEFAULT_MAX_ATTEMPTS(): bigint {
+function rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(): bigint {
   return 3n;
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function DEFAULT_BUDGET_SECS(): bigint {
+function rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(): bigint {
   return 30n;
 }
 
-function MAX_BUDGET_SECS(): bigint {
+function rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(): bigint {
   return ml_fixed((ml_fixed((24n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
@@ -91,7 +73,31 @@ function ml_make_RetryReason_Transport(): Readonly<{ readonly "$": "RateLimited"
   return Object.freeze({ $: 'Transport' });
 }
 
-function classify_status(status: bigint): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }> }> {
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+function rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573(status: bigint): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }> }> {
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if ((status === 429n)) {
@@ -125,5 +131,5 @@ function classify_status(status: bigint): Readonly<{ readonly "$": "None" }> | R
   }
 }
 
-export const translated: { "DEFAULT_MAX_ATTEMPTS": bigint; "DEFAULT_BUDGET_SECS": bigint; "MAX_BUDGET_SECS": bigint; "RetryReason": Readonly<{ "RateLimited": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>; "Overloaded": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>; "ServerError": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>; "Unauthorized": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>; "Transport": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }> }>; "classify_status": (status: bigint) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }> }> } = { ["DEFAULT_MAX_ATTEMPTS"]: DEFAULT_MAX_ATTEMPTS(), ["DEFAULT_BUDGET_SECS"]: DEFAULT_BUDGET_SECS(), ["MAX_BUDGET_SECS"]: MAX_BUDGET_SECS(), ["RetryReason"]: Object.freeze({ ["RateLimited"]: ml_make_RetryReason_RateLimited, ["Overloaded"]: ml_make_RetryReason_Overloaded, ["ServerError"]: ml_make_RetryReason_ServerError, ["Unauthorized"]: ml_make_RetryReason_Unauthorized, ["Transport"]: ml_make_RetryReason_Transport }), ["classify_status"]: classify_status };
+export const translated: { "DEFAULT_MAX_ATTEMPTS": bigint; "DEFAULT_BUDGET_SECS": bigint; "MAX_BUDGET_SECS": bigint; "RetryReason": Readonly<{ "RateLimited": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>; "Overloaded": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>; "ServerError": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>; "Unauthorized": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }>; "Transport": () => Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }> }>; "classify_status": (status: bigint) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Overloaded" }> | Readonly<{ readonly "$": "ServerError" }> | Readonly<{ readonly "$": "Unauthorized" }> | Readonly<{ readonly "$": "Transport" }> }> } = { ["DEFAULT_MAX_ATTEMPTS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(), ["DEFAULT_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(), ["MAX_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(), ["RetryReason"]: Object.freeze({ ["RateLimited"]: ml_make_RetryReason_RateLimited, ["Overloaded"]: ml_make_RetryReason_Overloaded, ["ServerError"]: ml_make_RetryReason_ServerError, ["Unauthorized"]: ml_make_RetryReason_Unauthorized, ["Transport"]: ml_make_RetryReason_Transport }), ["classify_status"]: rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573 };
 export const provenance = {"sourcePath":"src/pool_failover.rs","sourceSha256":"58c0977f22c4b44d1ec68723ea808d866de108cb6ed94a9e870cf8442c1865db","executable":5,"executableFunctions":1,"executableConstants":3,"executableTypes":1,"executableConstructors":5,"carried":18,"preserved":24,"runtimeParity":false};

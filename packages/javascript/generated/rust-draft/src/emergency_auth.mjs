@@ -1,79 +1,32 @@
 // Generated draft from src/emergency_auth.rs; sha256=ebab1272b62f4aea43950d1b6f30189aec995e52330965df8f4dc00e0a5efe94
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value, min, max, message) {
-  if (value < min || value > max) throw new RangeError(message);
-  return value;
-}
-
-function FLAG() {
+function rp_656d657267656e63795f617574682e464c4147() {
   return "--emergency-accept-any-token";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function ENV() {
+function rp_656d657267656e63795f617574682e454e56() {
   return "EMERGENCY_ACCEPT_ANY_TOKEN";
 }
 
-function ALLOW_NON_LOOPBACK_ENV() {
+function rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56() {
   return "EMERGENCY_ALLOW_NON_LOOPBACK";
 }
 
-function DURATION_ENV() {
+function rp_656d657267656e63795f617574682e4455524154494f4e5f454e56() {
   return "EMERGENCY_DURATION_MINUTES";
 }
 
-function DEFAULT_DURATION_MINUTES() {
-  return 60n;
-}
-
-function MAX_DURATION_MINUTES() {
-  return ml_fixed((24n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
-}
-
-function SUBJECT_PREFIX() {
+function rp_656d657267656e63795f617574682e5355424a4543545f505245464958() {
   return "emergency-bypass-";
 }
 
-function LABEL() {
+function rp_656d657267656e63795f617574682e4c4142454c() {
   return "emergency-bypass";
 }
 
-function HEALTH_HEADER() {
+function rp_656d657267656e63795f617574682e4845414c54485f484541444552() {
   return "x-link-assistant-emergency-auth";
 }
 
-function ml_make_EmergencyAuthConfig_EmergencyAuthConfig(enabled, allow_non_loopback, duration_minutes) {
-  if (!(typeof enabled === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof allow_non_loopback === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  ml_fixed(duration_minutes, 0n, 18446744073709551615n, "u64 argument duration_minutes out of range");
-  if (!(typeof duration_minutes === 'bigint' && duration_minutes >= 0n && duration_minutes <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "EmergencyAuthConfig", ["enabled"]: enabled, ["allow_non_loopback"]: allow_non_loopback, ["duration_minutes"]: duration_minutes });
-}
-
-function is_synthetic_id(token_id) {
-  if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
-  return token_id.startsWith(SUBJECT_PREFIX());
-}
-
-export const translated = { ["FLAG"]: FLAG(), ["ENV"]: ENV(), ["ALLOW_NON_LOOPBACK_ENV"]: ALLOW_NON_LOOPBACK_ENV(), ["DURATION_ENV"]: DURATION_ENV(), ["DEFAULT_DURATION_MINUTES"]: DEFAULT_DURATION_MINUTES(), ["MAX_DURATION_MINUTES"]: MAX_DURATION_MINUTES(), ["SUBJECT_PREFIX"]: SUBJECT_PREFIX(), ["LABEL"]: LABEL(), ["HEALTH_HEADER"]: HEALTH_HEADER(), ["EmergencyAuthConfig"]: ml_make_EmergencyAuthConfig_EmergencyAuthConfig, ["is_synthetic_id"]: is_synthetic_id };
-export const provenance = {"sourcePath":"src/emergency_auth.rs","sourceSha256":"ebab1272b62f4aea43950d1b6f30189aec995e52330965df8f4dc00e0a5efe94","executable":11,"executableFunctions":1,"executableConstants":9,"executableTypes":1,"executableConstructors":1,"carried":20,"preserved":32,"runtimeParity":false};
+export const translated = { ["FLAG"]: rp_656d657267656e63795f617574682e464c4147(), ["ENV"]: rp_656d657267656e63795f617574682e454e56(), ["ALLOW_NON_LOOPBACK_ENV"]: rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), ["DURATION_ENV"]: rp_656d657267656e63795f617574682e4455524154494f4e5f454e56(), ["SUBJECT_PREFIX"]: rp_656d657267656e63795f617574682e5355424a4543545f505245464958(), ["LABEL"]: rp_656d657267656e63795f617574682e4c4142454c(), ["HEALTH_HEADER"]: rp_656d657267656e63795f617574682e4845414c54485f484541444552() };
+export const provenance = {"sourcePath":"src/emergency_auth.rs","sourceSha256":"ebab1272b62f4aea43950d1b6f30189aec995e52330965df8f4dc00e0a5efe94","executable":7,"executableFunctions":0,"executableConstants":7,"executableTypes":0,"executableConstructors":0,"carried":24,"preserved":32,"runtimeParity":false};

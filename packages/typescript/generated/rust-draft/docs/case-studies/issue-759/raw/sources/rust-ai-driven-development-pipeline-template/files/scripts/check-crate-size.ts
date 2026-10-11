@@ -27,36 +27,23 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs; sha256=7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
-  if (value < min || value > max) throw new RangeError(message);
-  return value;
+function ml_make_SizeStatus_WithinLimit(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
+  return Object.freeze({ $: 'WithinLimit' });
 }
 
-// Integer division with the source's rounding; by zero it aborts with the message `zero`
-// or, when that is null, is total (x / 0 = 0, x % 0 = x); a machine-integer quotient
-// out of [min, max] aborts with `overflow`, the remainder too.
-function ml_divide(a: bigint, b: bigint, rounding: string, zero: string | null, remainder: boolean, bounds: [bigint, bigint, string] | null) {
-  if (b === 0n) {
-    if (zero !== null) throw new RangeError(zero);
-    return remainder ? a : 0n;
-  }
-  let q = a / b;
-  const r = a - q * b;
-  if (r !== 0n) {
-    if (rounding === 'floor' && (r < 0n) !== (b < 0n)) q -= 1n;
-    if (rounding === 'euclid' && r < 0n) q = b > 0n ? q - 1n : q + 1n;
-  }
-  if (bounds && (q < bounds[0] || q > bounds[1])) throw new RangeError(bounds[2]);
-  return remainder ? a - q * b : q;
+function ml_make_SizeStatus_Warning(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
+  return Object.freeze({ $: 'Warning' });
 }
 
-function MAX_CRATE_BYTES(): bigint {
-  return ml_fixed((ml_fixed((10n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+function ml_make_SizeStatus_Violation(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
+  return Object.freeze({ $: 'Violation' });
 }
 
 const std = {
@@ -72,6 +59,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -80,25 +70,5 @@ const serde_json = {
   },
 };
 
-function WARN_CRATE_BYTES(): bigint {
-  return ml_divide(ml_fixed((MAX_CRATE_BYTES() * 8n), 0n, 18446744073709551615n, "attempt to multiply with overflow"), 10n, 'trunc', "attempt to divide by zero", false, [0n, 18446744073709551615n, "attempt to divide with overflow"]);
-}
-
-function CARGO_PACKAGE_MAX_ATTEMPTS(): bigint {
-  return 3n;
-}
-
-function ml_make_SizeStatus_WithinLimit(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
-  return Object.freeze({ $: 'WithinLimit' });
-}
-
-function ml_make_SizeStatus_Warning(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
-  return Object.freeze({ $: 'Warning' });
-}
-
-function ml_make_SizeStatus_Violation(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
-  return Object.freeze({ $: 'Violation' });
-}
-
-export const translated: { "MAX_CRATE_BYTES": bigint; "WARN_CRATE_BYTES": bigint; "CARGO_PACKAGE_MAX_ATTEMPTS": bigint; "SizeStatus": Readonly<{ "WithinLimit": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Warning": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Violation": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> }> } = { ["MAX_CRATE_BYTES"]: MAX_CRATE_BYTES(), ["WARN_CRATE_BYTES"]: WARN_CRATE_BYTES(), ["CARGO_PACKAGE_MAX_ATTEMPTS"]: CARGO_PACKAGE_MAX_ATTEMPTS(), ["SizeStatus"]: Object.freeze({ ["WithinLimit"]: ml_make_SizeStatus_WithinLimit, ["Warning"]: ml_make_SizeStatus_Warning, ["Violation"]: ml_make_SizeStatus_Violation }) };
-export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs","sourceSha256":"7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16","executable":4,"executableFunctions":0,"executableConstants":3,"executableTypes":1,"executableConstructors":3,"carried":13,"preserved":17,"runtimeParity":false};
+export const translated: { "SizeStatus": Readonly<{ "WithinLimit": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Warning": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Violation": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> }> } = { ["SizeStatus"]: Object.freeze({ ["WithinLimit"]: ml_make_SizeStatus_WithinLimit, ["Warning"]: ml_make_SizeStatus_Warning, ["Violation"]: ml_make_SizeStatus_Violation }) };
+export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-crate-size.rs","sourceSha256":"7dc506345b0d1a5d23c9b975a890643daa7461316d90c8d211f5f86d06348e16","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":16,"preserved":17,"runtimeParity":false};

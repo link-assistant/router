@@ -19,6 +19,7 @@ type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_53657276696365 = Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }>;
+type MLData_72705f37333734363432653734363936643635326534343735373236313734363936663665 = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -28,6 +29,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -35,30 +38,9 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64
 // Carried constructs are data, never runtime parity evidence.
 import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../runtime/time-runtime.mjs";
 
-function CONNECT_TIMEOUT(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
+function rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
   return ml_host_std_time_duration_from_secs(15n);
 }
-
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
 
 function ml_make_Service_OpenAi(): Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }> {
   return Object.freeze({ $: 'OpenAi' });
@@ -76,6 +58,30 @@ function ml_make_Service_CodexBackend(): Readonly<{ readonly "$": "OpenAi" }> | 
   return Object.freeze({ $: 'CodexBackend' });
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function ml_make_NativeResourceAction_Create(): Readonly<{ readonly "$": "Create" }> | Readonly<{ readonly "$": "Use" }> | Readonly<{ readonly "$": "Delete" }> {
   return Object.freeze({ $: 'Create' });
 }
@@ -88,5 +94,5 @@ function ml_make_NativeResourceAction_Delete(): Readonly<{ readonly "$": "Create
   return Object.freeze({ $: 'Delete' });
 }
 
-export const translated: { "CONNECT_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "Service": Readonly<{ "OpenAi": () => Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }>; "Anthropic": () => Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }>; "Codex": () => Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }>; "CodexBackend": () => Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }> }>; "NativeResourceAction": Readonly<{ "Create": () => Readonly<{ readonly "$": "Create" }> | Readonly<{ readonly "$": "Use" }> | Readonly<{ readonly "$": "Delete" }>; "Use": () => Readonly<{ readonly "$": "Create" }> | Readonly<{ readonly "$": "Use" }> | Readonly<{ readonly "$": "Delete" }>; "Delete": () => Readonly<{ readonly "$": "Create" }> | Readonly<{ readonly "$": "Use" }> | Readonly<{ readonly "$": "Delete" }> }> } = { ["CONNECT_TIMEOUT"]: CONNECT_TIMEOUT(), ["Service"]: Object.freeze({ ["OpenAi"]: ml_make_Service_OpenAi, ["Anthropic"]: ml_make_Service_Anthropic, ["Codex"]: ml_make_Service_Codex, ["CodexBackend"]: ml_make_Service_CodexBackend }), ["NativeResourceAction"]: Object.freeze({ ["Create"]: ml_make_NativeResourceAction_Create, ["Use"]: ml_make_NativeResourceAction_Use, ["Delete"]: ml_make_NativeResourceAction_Delete }) };
+export const translated: { "CONNECT_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "Service": Readonly<{ "OpenAi": () => Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }>; "Anthropic": () => Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }>; "Codex": () => Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }>; "CodexBackend": () => Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "CodexBackend" }> }>; "NativeResourceAction": Readonly<{ "Create": () => Readonly<{ readonly "$": "Create" }> | Readonly<{ readonly "$": "Use" }> | Readonly<{ readonly "$": "Delete" }>; "Use": () => Readonly<{ readonly "$": "Create" }> | Readonly<{ readonly "$": "Use" }> | Readonly<{ readonly "$": "Delete" }>; "Delete": () => Readonly<{ readonly "$": "Create" }> | Readonly<{ readonly "$": "Use" }> | Readonly<{ readonly "$": "Delete" }> }> } = { ["CONNECT_TIMEOUT"]: rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(), ["Service"]: Object.freeze({ ["OpenAi"]: ml_make_Service_OpenAi, ["Anthropic"]: ml_make_Service_Anthropic, ["Codex"]: ml_make_Service_Codex, ["CodexBackend"]: ml_make_Service_CodexBackend }), ["NativeResourceAction"]: Object.freeze({ ["Create"]: ml_make_NativeResourceAction_Create, ["Use"]: ml_make_NativeResourceAction_Use, ["Delete"]: ml_make_NativeResourceAction_Delete }) };
 export const provenance = {"sourcePath":"src/native_service.rs","sourceSha256":"478d8a6cc9a58defd2fb3c3eefeea81846b4499533530d7539ef1c8dbfb11337","executable":3,"executableFunctions":0,"executableConstants":1,"executableTypes":2,"executableConstructors":7,"carried":45,"preserved":49,"runtimeParity":false};

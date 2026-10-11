@@ -17,7 +17,6 @@ type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436
 type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
-type MLData_526f75746572526573756c745f365f737472696e675f365f737472696e67 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": string }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
@@ -28,13 +27,31 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/account_http.rs; sha256=876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09
 // Carried constructs are data, never runtime parity evidence.
-function DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS(): bigint {
+function rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(): bigint {
   return 90n;
+}
+
+function rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(): bigint {
+  return 300n;
+}
+
+function rp_6163636f756e745f687474702e50524f58595f534348454d4553(): ReadonlyArray<string> {
+  return Object.freeze(["http", "https", "socks5", "socks5h"]);
+}
+
+function ml_make_CookieMode_None(): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "CodexCloudflare" }> {
+  return Object.freeze({ $: 'None' });
+}
+
+function ml_make_CookieMode_CodexCloudflare(): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "CodexCloudflare" }> {
+  return Object.freeze({ $: 'CodexCloudflare' });
 }
 
 const std = {
@@ -50,6 +67,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -58,32 +78,5 @@ const serde_json = {
   },
 };
 
-function DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS(): bigint {
-  return 300n;
-}
-
-function PROXY_SCHEMES(): ReadonlyArray<string> {
-  return Object.freeze(["http", "https", "socks5", "socks5h"]);
-}
-
-function non_empty(value: string, what: string): Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": string }> {
-  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof what === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(what))) throw new TypeError('argument outside supported Rust value domain');
-  const value_2 = (value).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '');
-  if ((value_2.length === 0)) {
-    return Object.freeze({ $: 'Err', field0: (what + " needs a value") });
-  } else {
-    return Object.freeze({ $: 'Ok', field0: value_2 });
-  }
-}
-
-function ml_make_CookieMode_None(): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "CodexCloudflare" }> {
-  return Object.freeze({ $: 'None' });
-}
-
-function ml_make_CookieMode_CodexCloudflare(): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "CodexCloudflare" }> {
-  return Object.freeze({ $: 'CodexCloudflare' });
-}
-
-export const translated: { "DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS": bigint; "DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS": bigint; "PROXY_SCHEMES": ReadonlyArray<string>; "non_empty": (value: string, what: string) => Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": string }>; "CookieMode": Readonly<{ "None": () => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "CodexCloudflare" }>; "CodexCloudflare": () => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "CodexCloudflare" }> }> } = { ["DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS(), ["DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS(), ["PROXY_SCHEMES"]: PROXY_SCHEMES(), ["non_empty"]: non_empty, ["CookieMode"]: Object.freeze({ ["None"]: ml_make_CookieMode_None, ["CodexCloudflare"]: ml_make_CookieMode_CodexCloudflare }) };
-export const provenance = {"sourcePath":"src/account_http.rs","sourceSha256":"876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09","executable":5,"executableFunctions":1,"executableConstants":3,"executableTypes":1,"executableConstructors":2,"carried":24,"preserved":30,"runtimeParity":false};
+export const translated: { "DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS": bigint; "DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS": bigint; "PROXY_SCHEMES": ReadonlyArray<string>; "CookieMode": Readonly<{ "None": () => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "CodexCloudflare" }>; "CodexCloudflare": () => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "CodexCloudflare" }> }> } = { ["DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(), ["DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(), ["PROXY_SCHEMES"]: rp_6163636f756e745f687474702e50524f58595f534348454d4553(), ["CookieMode"]: Object.freeze({ ["None"]: ml_make_CookieMode_None, ["CodexCloudflare"]: ml_make_CookieMode_CodexCloudflare }) };
+export const provenance = {"sourcePath":"src/account_http.rs","sourceSha256":"876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09","executable":4,"executableFunctions":0,"executableConstants":3,"executableTypes":1,"executableConstructors":2,"carried":25,"preserved":30,"runtimeParity":false};

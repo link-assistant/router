@@ -27,6 +27,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -46,8 +48,17 @@ function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => b
   return true;
 }
 
-function RECOVERED_ADMIN_LABEL(): string {
+function rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(): string {
   return "recovered-admin";
+}
+
+function ml_make_Recovery_Recovery(token: string, token_id: string, revoked: ReadonlyArray<string>, retained_admins: bigint): Readonly<{ readonly "$": "Recovery"; readonly "token": string; readonly "token_id": string; readonly "revoked": ReadonlyArray<string>; readonly "retained_admins": bigint }> {
+  if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
+  if (!ml_router_array(revoked, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  ml_fixed(retained_admins, 0n, 18446744073709551615n, "u64 argument retained_admins out of range");
+  if (!(typeof retained_admins === 'bigint' && retained_admins >= 0n && retained_admins <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "Recovery", ["token"]: token, ["token_id"]: token_id, ["revoked"]: revoked, ["retained_admins"]: retained_admins });
 }
 
 const std = {
@@ -63,6 +74,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -71,14 +85,5 @@ const serde_json = {
   },
 };
 
-function ml_make_Recovery_Recovery(token: string, token_id: string, revoked: ReadonlyArray<string>, retained_admins: bigint): Readonly<{ readonly "$": "Recovery"; readonly "token": string; readonly "token_id": string; readonly "revoked": ReadonlyArray<string>; readonly "retained_admins": bigint }> {
-  if (!(typeof token === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof token_id === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_id))) throw new TypeError('argument outside supported Rust value domain');
-  if (!ml_router_array(revoked, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
-  ml_fixed(retained_admins, 0n, 18446744073709551615n, "u64 argument retained_admins out of range");
-  if (!(typeof retained_admins === 'bigint' && retained_admins >= 0n && retained_admins <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "Recovery", ["token"]: token, ["token_id"]: token_id, ["revoked"]: revoked, ["retained_admins"]: retained_admins });
-}
-
-export const translated: { "RECOVERED_ADMIN_LABEL": string; "Recovery": (token: string, token_id: string, revoked: ReadonlyArray<string>, retained_admins: bigint) => Readonly<{ readonly "$": "Recovery"; readonly "token": string; readonly "token_id": string; readonly "revoked": ReadonlyArray<string>; readonly "retained_admins": bigint }> } = { ["RECOVERED_ADMIN_LABEL"]: RECOVERED_ADMIN_LABEL(), ["Recovery"]: ml_make_Recovery_Recovery };
+export const translated: { "RECOVERED_ADMIN_LABEL": string; "Recovery": (token: string, token_id: string, revoked: ReadonlyArray<string>, retained_admins: bigint) => Readonly<{ readonly "$": "Recovery"; readonly "token": string; readonly "token_id": string; readonly "revoked": ReadonlyArray<string>; readonly "retained_admins": bigint }> } = { ["RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["Recovery"]: ml_make_Recovery_Recovery };
 export const provenance = {"sourcePath":"src/admin_recovery.rs","sourceSha256":"3c5dd4fb50cb708c6a0a54d076018e1794765c2c0a89a6f1a50ef004123821c9","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":7,"preserved":10,"runtimeParity":false};

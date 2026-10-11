@@ -42,6 +42,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -50,11 +53,11 @@ const serde_json = {
   },
 };
 
-function contains_marker(compact, markers) {
+function rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572(compact, markers) {
   if (!(typeof compact === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(compact))) throw new TypeError('argument outside supported Rust value domain');
   if (!ml_router_array(markers, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
   return ml_router_any(ml_router_iter(markers), (marker) => { return compact.includes(marker); });
 }
 
-export const translated = { ["TuiAction"]: Object.freeze({ ["AcceptTheme"]: ml_make_TuiAction_AcceptTheme, ["AcceptWorkspaceTrust"]: ml_make_TuiAction_AcceptWorkspaceTrust, ["SendLogin"]: ml_make_TuiAction_SendLogin, ["SelectLoginMethod"]: ml_make_TuiAction_SelectLoginMethod }), ["contains_marker"]: contains_marker };
+export const translated = { ["TuiAction"]: Object.freeze({ ["AcceptTheme"]: ml_make_TuiAction_AcceptTheme, ["AcceptWorkspaceTrust"]: ml_make_TuiAction_AcceptWorkspaceTrust, ["SendLogin"]: ml_make_TuiAction_SendLogin, ["SelectLoginMethod"]: ml_make_TuiAction_SelectLoginMethod }), ["contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572 };
 export const provenance = {"sourcePath":"src/login_pty_backend.rs","sourceSha256":"c808f2dc1cb7c07f2a78c4f4ad4edee6d43fb2f0f37ed4bb0c63a3fc968547e8","executable":2,"executableFunctions":1,"executableConstants":0,"executableTypes":1,"executableConstructors":4,"carried":17,"preserved":20,"runtimeParity":false};

@@ -27,13 +27,23 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/token_import.rs; sha256=cab8e9946b0f348c195d39ac22b0a90e97e3d254c3d5c3fa2058bbc1742c69c8
 // Carried constructs are data, never runtime parity evidence.
-function BACKUP_DIRECTORY(): string {
+function rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(): string {
   return "token-import-backups";
+}
+
+function ml_make_ImportMode_MergeMissing(): Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> {
+  return Object.freeze({ $: 'MergeMissing' });
+}
+
+function ml_make_ImportMode_Replace(): Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> {
+  return Object.freeze({ $: 'Replace' });
 }
 
 const std = {
@@ -49,6 +59,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -57,13 +70,5 @@ const serde_json = {
   },
 };
 
-function ml_make_ImportMode_MergeMissing(): Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> {
-  return Object.freeze({ $: 'MergeMissing' });
-}
-
-function ml_make_ImportMode_Replace(): Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> {
-  return Object.freeze({ $: 'Replace' });
-}
-
-export const translated: { "BACKUP_DIRECTORY": string; "ImportMode": Readonly<{ "MergeMissing": () => Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }>; "Replace": () => Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> }> } = { ["BACKUP_DIRECTORY"]: BACKUP_DIRECTORY(), ["ImportMode"]: Object.freeze({ ["MergeMissing"]: ml_make_ImportMode_MergeMissing, ["Replace"]: ml_make_ImportMode_Replace }) };
+export const translated: { "BACKUP_DIRECTORY": string; "ImportMode": Readonly<{ "MergeMissing": () => Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }>; "Replace": () => Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> }> } = { ["BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["ImportMode"]: Object.freeze({ ["MergeMissing"]: ml_make_ImportMode_MergeMissing, ["Replace"]: ml_make_ImportMode_Replace }) };
 export const provenance = {"sourcePath":"src/token_import.rs","sourceSha256":"cab8e9946b0f348c195d39ac22b0a90e97e3d254c3d5c3fa2058bbc1742c69c8","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":2,"carried":24,"preserved":27,"runtimeParity":false};

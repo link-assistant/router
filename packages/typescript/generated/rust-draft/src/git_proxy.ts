@@ -21,6 +21,7 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_72705f353236663735373436353732346637303734363936663665356633363566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -30,6 +31,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -59,8 +62,15 @@ function ml_router_unwrap(value: any, fallback: any, option: boolean) {
   return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
 }
 
-function ZERO_OID(): string {
+function rp_6769745f70726f78792e5a45524f5f4f4944(): string {
   return "0000000000000000000000000000000000000000";
+}
+
+function ml_make_RefUpdate_RefUpdate(old: string, new_: string, name: string): Readonly<{ readonly "$": "RefUpdate"; readonly "old": string; readonly "new": string; readonly "name": string }> {
+  if (!(typeof old === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(old))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof new_ === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(new_))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "RefUpdate", ["old"]: old, ["new"]: new_, ["name"]: name });
 }
 
 const std = {
@@ -76,6 +86,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -83,13 +96,6 @@ const serde_json = {
 
   },
 };
-
-function ml_make_RefUpdate_RefUpdate(old: string, new_: string, name: string): Readonly<{ readonly "$": "RefUpdate"; readonly "old": string; readonly "new": string; readonly "name": string }> {
-  if (!(typeof old === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(old))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof new_ === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(new_))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "RefUpdate", ["old"]: old, ["new"]: new_, ["name"]: name });
-}
 
 function ml_make_RefRefusal_Delete(field0: string): Readonly<{ readonly "$": "Delete"; readonly "field0": string }> | Readonly<{ readonly "$": "NonFastForward"; readonly "field0": string }> | Readonly<{ readonly "$": "Unverifiable"; readonly "field0": string; readonly "field1": string }> {
   if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
@@ -126,16 +132,16 @@ function ml_make_Ancestry_Unknown(): Readonly<{ readonly "$": "FastForward" }> |
   return Object.freeze({ $: 'Unknown' });
 }
 
-function scope_admits(allowed_repositories: ReadonlyArray<string>, repository: string): boolean {
+function rp_6769745f70726f78792e73636f70655f61646d697473(allowed_repositories: ReadonlyArray<string>, repository: string): boolean {
   if (!ml_router_array(allowed_repositories, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof repository === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(repository))) throw new TypeError('argument outside supported Rust value domain');
   return ((allowed_repositories.length === 0) || ml_router_any(ml_router_iter(allowed_repositories), (allowed) => { return ((allowed).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (repository).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32))); }));
 }
 
-function canonical_git_path(path: string): string {
+function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path: string): string {
   if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
   return ml_router_unwrap(ml_router_strip(path, "/api/services/github", false), path, true);
 }
 
-export const translated: { "ZERO_OID": string; "RefUpdate": (old: string, arg1: string, name: string) => Readonly<{ readonly "$": "RefUpdate"; readonly "old": string; readonly "new": string; readonly "name": string }>; "RefRefusal": Readonly<{ "Delete": (field0: string) => Readonly<{ readonly "$": "Delete"; readonly "field0": string }> | Readonly<{ readonly "$": "NonFastForward"; readonly "field0": string }> | Readonly<{ readonly "$": "Unverifiable"; readonly "field0": string; readonly "field1": string }>; "NonFastForward": (field0: string) => Readonly<{ readonly "$": "Delete"; readonly "field0": string }> | Readonly<{ readonly "$": "NonFastForward"; readonly "field0": string }> | Readonly<{ readonly "$": "Unverifiable"; readonly "field0": string; readonly "field1": string }>; "Unverifiable": (field0: string, field1: string) => Readonly<{ readonly "$": "Delete"; readonly "field0": string }> | Readonly<{ readonly "$": "NonFastForward"; readonly "field0": string }> | Readonly<{ readonly "$": "Unverifiable"; readonly "field0": string; readonly "field1": string }> }>; "AncestryQuery": (name: string, old: string, arg2: string) => Readonly<{ readonly "$": "AncestryQuery"; readonly "name": string; readonly "old": string; readonly "new": string }>; "Ancestry": Readonly<{ "FastForward": () => Readonly<{ readonly "$": "FastForward" }> | Readonly<{ readonly "$": "Diverged" }> | Readonly<{ readonly "$": "Unknown" }>; "Diverged": () => Readonly<{ readonly "$": "FastForward" }> | Readonly<{ readonly "$": "Diverged" }> | Readonly<{ readonly "$": "Unknown" }>; "Unknown": () => Readonly<{ readonly "$": "FastForward" }> | Readonly<{ readonly "$": "Diverged" }> | Readonly<{ readonly "$": "Unknown" }> }>; "scope_admits": (allowed_repositories: ReadonlyArray<string>, repository: string) => boolean; "canonical_git_path": (path: string) => string } = { ["ZERO_OID"]: ZERO_OID(), ["RefUpdate"]: ml_make_RefUpdate_RefUpdate, ["RefRefusal"]: Object.freeze({ ["Delete"]: ml_make_RefRefusal_Delete, ["NonFastForward"]: ml_make_RefRefusal_NonFastForward, ["Unverifiable"]: ml_make_RefRefusal_Unverifiable }), ["AncestryQuery"]: ml_make_AncestryQuery_AncestryQuery, ["Ancestry"]: Object.freeze({ ["FastForward"]: ml_make_Ancestry_FastForward, ["Diverged"]: ml_make_Ancestry_Diverged, ["Unknown"]: ml_make_Ancestry_Unknown }), ["scope_admits"]: scope_admits, ["canonical_git_path"]: canonical_git_path };
+export const translated: { "ZERO_OID": string; "RefUpdate": (old: string, arg1: string, name: string) => Readonly<{ readonly "$": "RefUpdate"; readonly "old": string; readonly "new": string; readonly "name": string }>; "RefRefusal": Readonly<{ "Delete": (field0: string) => Readonly<{ readonly "$": "Delete"; readonly "field0": string }> | Readonly<{ readonly "$": "NonFastForward"; readonly "field0": string }> | Readonly<{ readonly "$": "Unverifiable"; readonly "field0": string; readonly "field1": string }>; "NonFastForward": (field0: string) => Readonly<{ readonly "$": "Delete"; readonly "field0": string }> | Readonly<{ readonly "$": "NonFastForward"; readonly "field0": string }> | Readonly<{ readonly "$": "Unverifiable"; readonly "field0": string; readonly "field1": string }>; "Unverifiable": (field0: string, field1: string) => Readonly<{ readonly "$": "Delete"; readonly "field0": string }> | Readonly<{ readonly "$": "NonFastForward"; readonly "field0": string }> | Readonly<{ readonly "$": "Unverifiable"; readonly "field0": string; readonly "field1": string }> }>; "AncestryQuery": (name: string, old: string, arg2: string) => Readonly<{ readonly "$": "AncestryQuery"; readonly "name": string; readonly "old": string; readonly "new": string }>; "Ancestry": Readonly<{ "FastForward": () => Readonly<{ readonly "$": "FastForward" }> | Readonly<{ readonly "$": "Diverged" }> | Readonly<{ readonly "$": "Unknown" }>; "Diverged": () => Readonly<{ readonly "$": "FastForward" }> | Readonly<{ readonly "$": "Diverged" }> | Readonly<{ readonly "$": "Unknown" }>; "Unknown": () => Readonly<{ readonly "$": "FastForward" }> | Readonly<{ readonly "$": "Diverged" }> | Readonly<{ readonly "$": "Unknown" }> }>; "scope_admits": (allowed_repositories: ReadonlyArray<string>, repository: string) => boolean; "canonical_git_path": (path: string) => string } = { ["ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["RefUpdate"]: ml_make_RefUpdate_RefUpdate, ["RefRefusal"]: Object.freeze({ ["Delete"]: ml_make_RefRefusal_Delete, ["NonFastForward"]: ml_make_RefRefusal_NonFastForward, ["Unverifiable"]: ml_make_RefRefusal_Unverifiable }), ["AncestryQuery"]: ml_make_AncestryQuery_AncestryQuery, ["Ancestry"]: Object.freeze({ ["FastForward"]: ml_make_Ancestry_FastForward, ["Diverged"]: ml_make_Ancestry_Diverged, ["Unknown"]: ml_make_Ancestry_Unknown }), ["scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468 };
 export const provenance = {"sourcePath":"src/git_proxy.rs","sourceSha256":"ed47b0f287dcf7cc1d03672ed1abd924bebb5862929af06f714ccdff42409f22","executable":7,"executableFunctions":2,"executableConstants":1,"executableTypes":4,"executableConstructors":8,"carried":22,"preserved":30,"runtimeParity":false};

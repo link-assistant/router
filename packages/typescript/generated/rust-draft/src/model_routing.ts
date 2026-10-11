@@ -1,4 +1,3 @@
-type MLData_4d6f64656c526f7574654572726f72 = Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }>;
 type MLData_50726f76696465724865616c74685374617465 = Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
@@ -28,33 +27,23 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/model_routing.rs; sha256=e5a7479d421e89d650c22682fc7ff8b0b32067cd7af9dc5fc7b421a02bf39e3f
 // Carried constructs are data, never runtime parity evidence.
-function ml_make_ModelRouteError_ModelRequired(): Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }> {
-  return Object.freeze({ $: 'ModelRequired' });
+function ml_make_ProviderHealthState_Starting(): Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> {
+  return Object.freeze({ $: 'Starting' });
 }
 
-function ml_make_ModelRouteError_NotFound(field0: string): Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'NotFound', field0: field0 });
+function ml_make_ProviderHealthState_Healthy(): Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> {
+  return Object.freeze({ $: 'Healthy' });
 }
 
-function ml_make_ModelRouteError_AccountUnavailable(field0: string): Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'AccountUnavailable', field0: field0 });
-}
-
-function ml_make_ModelRouteError_Conflict(field0: string): Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'Conflict', field0: field0 });
-}
-
-function ml_make_ModelRouteError_Forbidden(field0: string): Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'Forbidden', field0: field0 });
+function ml_make_ProviderHealthState_Degraded(): Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> {
+  return Object.freeze({ $: 'Degraded' });
 }
 
 const std = {
@@ -70,6 +59,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -78,21 +70,5 @@ const serde_json = {
   },
 };
 
-function ADVERTISED_IN_ERRORS(): bigint {
-  return 24n;
-}
-
-function ml_make_ProviderHealthState_Starting(): Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> {
-  return Object.freeze({ $: 'Starting' });
-}
-
-function ml_make_ProviderHealthState_Healthy(): Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> {
-  return Object.freeze({ $: 'Healthy' });
-}
-
-function ml_make_ProviderHealthState_Degraded(): Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> {
-  return Object.freeze({ $: 'Degraded' });
-}
-
-export const translated: { "ModelRouteError": Readonly<{ "ModelRequired": () => Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }>; "NotFound": (field0: string) => Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }>; "AccountUnavailable": (field0: string) => Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }>; "Conflict": (field0: string) => Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }>; "Forbidden": (field0: string) => Readonly<{ readonly "$": "ModelRequired" }> | Readonly<{ readonly "$": "NotFound"; readonly "field0": string }> | Readonly<{ readonly "$": "AccountUnavailable"; readonly "field0": string }> | Readonly<{ readonly "$": "Conflict"; readonly "field0": string }> | Readonly<{ readonly "$": "Forbidden"; readonly "field0": string }> }>; "ADVERTISED_IN_ERRORS": bigint; "ProviderHealthState": Readonly<{ "Starting": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>; "Healthy": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>; "Degraded": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> }> } = { ["ModelRouteError"]: Object.freeze({ ["ModelRequired"]: ml_make_ModelRouteError_ModelRequired, ["NotFound"]: ml_make_ModelRouteError_NotFound, ["AccountUnavailable"]: ml_make_ModelRouteError_AccountUnavailable, ["Conflict"]: ml_make_ModelRouteError_Conflict, ["Forbidden"]: ml_make_ModelRouteError_Forbidden }), ["ADVERTISED_IN_ERRORS"]: ADVERTISED_IN_ERRORS(), ["ProviderHealthState"]: Object.freeze({ ["Starting"]: ml_make_ProviderHealthState_Starting, ["Healthy"]: ml_make_ProviderHealthState_Healthy, ["Degraded"]: ml_make_ProviderHealthState_Degraded }) };
-export const provenance = {"sourcePath":"src/model_routing.rs","sourceSha256":"e5a7479d421e89d650c22682fc7ff8b0b32067cd7af9dc5fc7b421a02bf39e3f","executable":3,"executableFunctions":0,"executableConstants":1,"executableTypes":2,"executableConstructors":8,"carried":70,"preserved":74,"runtimeParity":false};
+export const translated: { "ProviderHealthState": Readonly<{ "Starting": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>; "Healthy": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>; "Degraded": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> }> } = { ["ProviderHealthState"]: Object.freeze({ ["Starting"]: ml_make_ProviderHealthState_Starting, ["Healthy"]: ml_make_ProviderHealthState_Healthy, ["Degraded"]: ml_make_ProviderHealthState_Degraded }) };
+export const provenance = {"sourcePath":"src/model_routing.rs","sourceSha256":"e5a7479d421e89d650c22682fc7ff8b0b32067cd7af9dc5fc7b421a02bf39e3f","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":72,"preserved":74,"runtimeParity":false};

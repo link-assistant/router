@@ -27,6 +27,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -37,8 +39,19 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function STATE_ENV(): string {
+function rp_6465706c6f795f72656c61792e53544154455f454e56(): string {
   return "ROUTER_DEPLOY_RELAY_STATE";
+}
+
+function rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(): string {
+  return "ROUTER_DEPLOY_RELAY_LISTENERS";
+}
+
+function ml_make_Binding_Binding(listen: string, backend_port: bigint): Readonly<{ readonly "$": "Binding"; readonly "listen": string; readonly "backend_port": bigint }> {
+  if (!(typeof listen === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(listen))) throw new TypeError('argument outside supported Rust value domain');
+  ml_fixed(backend_port, 0n, 65535n, "u16 argument backend_port out of range");
+  if (!(typeof backend_port === 'bigint' && backend_port >= 0n && backend_port <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "Binding", ["listen"]: listen, ["backend_port"]: backend_port });
 }
 
 const std = {
@@ -54,6 +67,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -62,16 +78,5 @@ const serde_json = {
   },
 };
 
-function LISTENERS_ENV(): string {
-  return "ROUTER_DEPLOY_RELAY_LISTENERS";
-}
-
-function ml_make_Binding_Binding(listen: string, backend_port: bigint): Readonly<{ readonly "$": "Binding"; readonly "listen": string; readonly "backend_port": bigint }> {
-  if (!(typeof listen === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(listen))) throw new TypeError('argument outside supported Rust value domain');
-  ml_fixed(backend_port, 0n, 65535n, "u16 argument backend_port out of range");
-  if (!(typeof backend_port === 'bigint' && backend_port >= 0n && backend_port <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "Binding", ["listen"]: listen, ["backend_port"]: backend_port });
-}
-
-export const translated: { "STATE_ENV": string; "LISTENERS_ENV": string; "Binding": (listen: string, backend_port: bigint) => Readonly<{ readonly "$": "Binding"; readonly "listen": string; readonly "backend_port": bigint }> } = { ["STATE_ENV"]: STATE_ENV(), ["LISTENERS_ENV"]: LISTENERS_ENV(), ["Binding"]: ml_make_Binding_Binding };
+export const translated: { "STATE_ENV": string; "LISTENERS_ENV": string; "Binding": (listen: string, backend_port: bigint) => Readonly<{ readonly "$": "Binding"; readonly "listen": string; readonly "backend_port": bigint }> } = { ["STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["Binding"]: ml_make_Binding_Binding };
 export const provenance = {"sourcePath":"src/deploy_relay.rs","sourceSha256":"df9ebb29d74eefc749d1587e640e4b54445e7204c5368bc438059cf761576355","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":1,"carried":17,"preserved":21,"runtimeParity":false};

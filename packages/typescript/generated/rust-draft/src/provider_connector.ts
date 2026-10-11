@@ -1,4 +1,3 @@
-type MLData_436f6e6e6563746f72456e64706f696e7473 = Readonly<{ readonly "$": "ConnectorEndpoints"; readonly "token_url": string; readonly "catalog_base": string }>;
 type MLData_4c6f67696e466c6f77 = Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
@@ -28,6 +27,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -66,6 +67,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -74,11 +78,5 @@ const serde_json = {
   },
 };
 
-function ml_make_ConnectorEndpoints_ConnectorEndpoints(token_url: string, catalog_base: string): Readonly<{ readonly "$": "ConnectorEndpoints"; readonly "token_url": string; readonly "catalog_base": string }> {
-  if (!(typeof token_url === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(token_url))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof catalog_base === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(catalog_base))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "ConnectorEndpoints", ["token_url"]: token_url, ["catalog_base"]: catalog_base });
-}
-
-export const translated: { "LoginFlow": Readonly<{ "DeviceCode": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>; "Loopback": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>; "AuthorizationCode": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>; "ApiKey": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>; "VendorCli": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }> }>; "ConnectorEndpoints": (token_url: string, catalog_base: string) => Readonly<{ readonly "$": "ConnectorEndpoints"; readonly "token_url": string; readonly "catalog_base": string }> } = { ["LoginFlow"]: Object.freeze({ ["DeviceCode"]: ml_make_LoginFlow_DeviceCode, ["Loopback"]: ml_make_LoginFlow_Loopback, ["AuthorizationCode"]: ml_make_LoginFlow_AuthorizationCode, ["ApiKey"]: ml_make_LoginFlow_ApiKey, ["VendorCli"]: ml_make_LoginFlow_VendorCli }), ["ConnectorEndpoints"]: ml_make_ConnectorEndpoints_ConnectorEndpoints };
-export const provenance = {"sourcePath":"src/provider_connector.rs","sourceSha256":"67ce14fc49995863bd5d6b32d2f8c9e07978aff3af45f6a87c0f403446c9ff65","executable":2,"executableFunctions":0,"executableConstants":0,"executableTypes":2,"executableConstructors":6,"carried":16,"preserved":19,"runtimeParity":false};
+export const translated: { "LoginFlow": Readonly<{ "DeviceCode": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>; "Loopback": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>; "AuthorizationCode": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>; "ApiKey": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }>; "VendorCli": () => Readonly<{ readonly "$": "DeviceCode" }> | Readonly<{ readonly "$": "Loopback" }> | Readonly<{ readonly "$": "AuthorizationCode" }> | Readonly<{ readonly "$": "ApiKey" }> | Readonly<{ readonly "$": "VendorCli" }> }> } = { ["LoginFlow"]: Object.freeze({ ["DeviceCode"]: ml_make_LoginFlow_DeviceCode, ["Loopback"]: ml_make_LoginFlow_Loopback, ["AuthorizationCode"]: ml_make_LoginFlow_AuthorizationCode, ["ApiKey"]: ml_make_LoginFlow_ApiKey, ["VendorCli"]: ml_make_LoginFlow_VendorCli }) };
+export const provenance = {"sourcePath":"src/provider_connector.rs","sourceSha256":"67ce14fc49995863bd5d6b32d2f8c9e07978aff3af45f6a87c0f403446c9ff65","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":5,"carried":17,"preserved":19,"runtimeParity":false};

@@ -27,41 +27,22 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/tunnel_command.rs; sha256=3c5a81ac948cc5510f25929859b5cd435fc460b7f938e7b38c3a14bbe446e85e
 // Carried constructs are data, never runtime parity evidence.
-function TOKEN_ENV(): string {
+function rp_74756e6e656c5f636f6d6d616e642e544f4b454e5f454e56(): string {
   return "LINK_ASSISTANT_ROUTER_TOKEN";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function DEFAULT_IMAGE(): string {
+function rp_74756e6e656c5f636f6d6d616e642e44454641554c545f494d414745(): string {
   return "link-assistant-router-tunnel";
 }
 
-function SUPERVISOR(): string {
+function rp_74756e6e656c5f636f6d6d616e642e53555045525649534f52(): string {
   return "while :; do \"$@\"; sleep 5; done";
 }
 
@@ -77,5 +58,29 @@ function ml_make_Checked_Unreachable(): Readonly<{ readonly "$": "Usable" }> | R
   return Object.freeze({ $: 'Unreachable' });
 }
 
-export const translated: { "TOKEN_ENV": string; "DEFAULT_IMAGE": string; "SUPERVISOR": string; "Checked": Readonly<{ "Usable": () => Readonly<{ readonly "$": "Usable" }> | Readonly<{ readonly "$": "Refused" }> | Readonly<{ readonly "$": "Unreachable" }>; "Refused": () => Readonly<{ readonly "$": "Usable" }> | Readonly<{ readonly "$": "Refused" }> | Readonly<{ readonly "$": "Unreachable" }>; "Unreachable": () => Readonly<{ readonly "$": "Usable" }> | Readonly<{ readonly "$": "Refused" }> | Readonly<{ readonly "$": "Unreachable" }> }> } = { ["TOKEN_ENV"]: TOKEN_ENV(), ["DEFAULT_IMAGE"]: DEFAULT_IMAGE(), ["SUPERVISOR"]: SUPERVISOR(), ["Checked"]: Object.freeze({ ["Usable"]: ml_make_Checked_Usable, ["Refused"]: ml_make_Checked_Refused, ["Unreachable"]: ml_make_Checked_Unreachable }) };
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated: { "TOKEN_ENV": string; "DEFAULT_IMAGE": string; "SUPERVISOR": string; "Checked": Readonly<{ "Usable": () => Readonly<{ readonly "$": "Usable" }> | Readonly<{ readonly "$": "Refused" }> | Readonly<{ readonly "$": "Unreachable" }>; "Refused": () => Readonly<{ readonly "$": "Usable" }> | Readonly<{ readonly "$": "Refused" }> | Readonly<{ readonly "$": "Unreachable" }>; "Unreachable": () => Readonly<{ readonly "$": "Usable" }> | Readonly<{ readonly "$": "Refused" }> | Readonly<{ readonly "$": "Unreachable" }> }> } = { ["TOKEN_ENV"]: rp_74756e6e656c5f636f6d6d616e642e544f4b454e5f454e56(), ["DEFAULT_IMAGE"]: rp_74756e6e656c5f636f6d6d616e642e44454641554c545f494d414745(), ["SUPERVISOR"]: rp_74756e6e656c5f636f6d6d616e642e53555045525649534f52(), ["Checked"]: Object.freeze({ ["Usable"]: ml_make_Checked_Usable, ["Refused"]: ml_make_Checked_Refused, ["Unreachable"]: ml_make_Checked_Unreachable }) };
 export const provenance = {"sourcePath":"src/tunnel_command.rs","sourceSha256":"3c5a81ac948cc5510f25929859b5cd435fc460b7f938e7b38c3a14bbe446e85e","executable":4,"executableFunctions":0,"executableConstants":3,"executableTypes":1,"executableConstructors":3,"carried":29,"preserved":34,"runtimeParity":false};

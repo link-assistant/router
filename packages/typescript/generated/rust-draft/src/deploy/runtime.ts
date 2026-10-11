@@ -1,4 +1,5 @@
 type MLData_436f6e7461696e65725374617465 = Readonly<{ readonly "$": "Absent" }> | Readonly<{ readonly "$": "Running" }> | Readonly<{ readonly "$": "Stopped" }>;
+type MLData_446f636b6572 = Readonly<{ readonly "$": "Docker" }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
 type MLData_526f757465724f7074696f6e5f33395f6e616d65645f37333635373236343635356636613733366636655f346537353664363236353732 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }>;
@@ -27,6 +28,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -57,6 +60,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -65,25 +71,9 @@ const serde_json = {
   },
 };
 
-function explain_unavailable(error_2: string): string {
-  if (!(typeof error_2 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(error_2))) throw new TypeError('argument outside supported Rust value domain');
-  const lowered = (error_2).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
-  if (lowered.includes("permission denied")) {
-    return "permission denied while connecting to Docker; add this user to the Docker group";
-  } else {
-    if (lowered.includes("not installed")) {
-      return error_2;
-    } else {
-      return ("the Docker daemon is not running or unreachable: " + error_2);
-    }
-  }
+function ml_make_Docker_Docker(): Readonly<{ readonly "$": "Docker" }> {
+  return Object.freeze({ $: "Docker" });
 }
 
-function is_absent(error_2: string): boolean {
-  if (!(typeof error_2 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(error_2))) throw new TypeError('argument outside supported Rust value domain');
-  const lowered = (error_2).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
-  return ((lowered.includes("no such object") || lowered.includes("no such container")) || lowered.includes("no such image"));
-}
-
-export const translated: { "ContainerState": Readonly<{ "Absent": () => Readonly<{ readonly "$": "Absent" }> | Readonly<{ readonly "$": "Running" }> | Readonly<{ readonly "$": "Stopped" }>; "Running": () => Readonly<{ readonly "$": "Absent" }> | Readonly<{ readonly "$": "Running" }> | Readonly<{ readonly "$": "Stopped" }>; "Stopped": () => Readonly<{ readonly "$": "Absent" }> | Readonly<{ readonly "$": "Running" }> | Readonly<{ readonly "$": "Stopped" }> }>; "explain_unavailable": (error: string) => string; "is_absent": (error: string) => boolean } = { ["ContainerState"]: Object.freeze({ ["Absent"]: ml_make_ContainerState_Absent, ["Running"]: ml_make_ContainerState_Running, ["Stopped"]: ml_make_ContainerState_Stopped }), ["explain_unavailable"]: explain_unavailable, ["is_absent"]: is_absent };
-export const provenance = {"sourcePath":"src/deploy/runtime.rs","sourceSha256":"f532645841e7f32dc2d9f01cdeb9b75eae721f593e29b1a866065269bd09ad04","executable":3,"executableFunctions":2,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":12,"preserved":16,"runtimeParity":false};
+export const translated: { "ContainerState": Readonly<{ "Absent": () => Readonly<{ readonly "$": "Absent" }> | Readonly<{ readonly "$": "Running" }> | Readonly<{ readonly "$": "Stopped" }>; "Running": () => Readonly<{ readonly "$": "Absent" }> | Readonly<{ readonly "$": "Running" }> | Readonly<{ readonly "$": "Stopped" }>; "Stopped": () => Readonly<{ readonly "$": "Absent" }> | Readonly<{ readonly "$": "Running" }> | Readonly<{ readonly "$": "Stopped" }> }>; "Docker": () => Readonly<{ readonly "$": "Docker" }> } = { ["ContainerState"]: Object.freeze({ ["Absent"]: ml_make_ContainerState_Absent, ["Running"]: ml_make_ContainerState_Running, ["Stopped"]: ml_make_ContainerState_Stopped }), ["Docker"]: ml_make_Docker_Docker };
+export const provenance = {"sourcePath":"src/deploy/runtime.rs","sourceSha256":"f532645841e7f32dc2d9f01cdeb9b75eae721f593e29b1a866065269bd09ad04","executable":2,"executableFunctions":0,"executableConstants":0,"executableTypes":2,"executableConstructors":4,"carried":13,"preserved":16,"runtimeParity":false};

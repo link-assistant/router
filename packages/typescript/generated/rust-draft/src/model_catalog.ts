@@ -28,6 +28,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -69,6 +71,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -85,21 +90,13 @@ function rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(): Readonly<{
   return ml_host_std_time_duration_from_secs(15n);
 }
 
-function MAX_CATALOG_PAGES(): bigint {
-  return 100n;
-}
-
-function PERSISTED_CATALOG_VERSION(): bigint {
-  return 1n;
-}
-
-function PERSISTED_CATALOG_FILE(): string {
+function rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(): string {
   return "model-catalogs.json";
 }
 
-function CATALOG_INVALIDATION_DIR(): string {
+function rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952(): string {
   return "model-catalog-invalidations";
 }
 
-export const translated: { "CatalogAcceptance": Readonly<{ "Accepted": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "MissingSubscription" }> | Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "Unverified" }>; "MissingSubscription": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "MissingSubscription" }> | Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "Unverified" }>; "CredentialRejected": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "MissingSubscription" }> | Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "Unverified" }>; "Unverified": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "MissingSubscription" }> | Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "Unverified" }> }>; "CATALOG_TTL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "FETCH_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "MAX_CATALOG_PAGES": bigint; "PERSISTED_CATALOG_VERSION": bigint; "PERSISTED_CATALOG_FILE": string; "CATALOG_INVALIDATION_DIR": string } = { ["CatalogAcceptance"]: Object.freeze({ ["Accepted"]: ml_make_CatalogAcceptance_Accepted, ["MissingSubscription"]: ml_make_CatalogAcceptance_MissingSubscription, ["CredentialRejected"]: ml_make_CatalogAcceptance_CredentialRejected, ["Unverified"]: ml_make_CatalogAcceptance_Unverified }), ["CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["MAX_CATALOG_PAGES"]: MAX_CATALOG_PAGES(), ["PERSISTED_CATALOG_VERSION"]: PERSISTED_CATALOG_VERSION(), ["PERSISTED_CATALOG_FILE"]: PERSISTED_CATALOG_FILE(), ["CATALOG_INVALIDATION_DIR"]: CATALOG_INVALIDATION_DIR() };
-export const provenance = {"sourcePath":"src/model_catalog.rs","sourceSha256":"2972dab979148c9b1deb3ec2cfb4e2800e8445585044d93c629e83538be01ed5","executable":7,"executableFunctions":0,"executableConstants":6,"executableTypes":1,"executableConstructors":4,"carried":37,"preserved":45,"runtimeParity":false};
+export const translated: { "CatalogAcceptance": Readonly<{ "Accepted": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "MissingSubscription" }> | Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "Unverified" }>; "MissingSubscription": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "MissingSubscription" }> | Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "Unverified" }>; "CredentialRejected": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "MissingSubscription" }> | Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "Unverified" }>; "Unverified": () => Readonly<{ readonly "$": "Accepted" }> | Readonly<{ readonly "$": "MissingSubscription" }> | Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "Unverified" }> }>; "CATALOG_TTL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "FETCH_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "PERSISTED_CATALOG_FILE": string; "CATALOG_INVALIDATION_DIR": string } = { ["CatalogAcceptance"]: Object.freeze({ ["Accepted"]: ml_make_CatalogAcceptance_Accepted, ["MissingSubscription"]: ml_make_CatalogAcceptance_MissingSubscription, ["CredentialRejected"]: ml_make_CatalogAcceptance_CredentialRejected, ["Unverified"]: ml_make_CatalogAcceptance_Unverified }), ["CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["PERSISTED_CATALOG_FILE"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(), ["CATALOG_INVALIDATION_DIR"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952() };
+export const provenance = {"sourcePath":"src/model_catalog.rs","sourceSha256":"2972dab979148c9b1deb3ec2cfb4e2800e8445585044d93c629e83538be01ed5","executable":5,"executableFunctions":0,"executableConstants":4,"executableTypes":1,"executableConstructors":4,"carried":39,"preserved":45,"runtimeParity":false};

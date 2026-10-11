@@ -19,6 +19,7 @@ type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_53747265616d4469616c656374 = Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }>;
+type MLData_5465726d696e616c4576656e744465746563746f72 = Readonly<{ readonly "$": "TerminalEventDetector"; readonly "carry": ReadonlyArray<bigint>; readonly "seen": boolean }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -28,6 +29,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -38,32 +41,20 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function INCOMPLETE_STREAM_MESSAGE(): string {
+function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {
+  if (!Array.isArray(values)) return false;
+  for (let index = 0; index < values.length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));
+    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;
+  }
+  return true;
+}
+
+function rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(): string {
   return "upstream stream ended before completion";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function MAX_SSE_CARRY_BYTES(): bigint {
+function rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(): bigint {
   return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
@@ -83,6 +74,30 @@ function ml_make_StreamDialect_Gemini(): Readonly<{ readonly "$": "Anthropic" }>
   return Object.freeze({ $: 'Gemini' });
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function ml_make_FailureKind_Stalled(): Readonly<{ readonly "$": "Stalled" }> | Readonly<{ readonly "$": "Interrupted" }> | Readonly<{ readonly "$": "Truncated" }> {
   return Object.freeze({ $: 'Stalled' });
 }
@@ -95,5 +110,11 @@ function ml_make_FailureKind_Truncated(): Readonly<{ readonly "$": "Stalled" }> 
   return Object.freeze({ $: 'Truncated' });
 }
 
-export const translated: { "INCOMPLETE_STREAM_MESSAGE": string; "MAX_SSE_CARRY_BYTES": bigint; "StreamDialect": Readonly<{ "Anthropic": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }>; "OpenAiChat": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }>; "Responses": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }>; "Gemini": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }> }>; "FailureKind": Readonly<{ "Stalled": () => Readonly<{ readonly "$": "Stalled" }> | Readonly<{ readonly "$": "Interrupted" }> | Readonly<{ readonly "$": "Truncated" }>; "Interrupted": () => Readonly<{ readonly "$": "Stalled" }> | Readonly<{ readonly "$": "Interrupted" }> | Readonly<{ readonly "$": "Truncated" }>; "Truncated": () => Readonly<{ readonly "$": "Stalled" }> | Readonly<{ readonly "$": "Interrupted" }> | Readonly<{ readonly "$": "Truncated" }> }> } = { ["INCOMPLETE_STREAM_MESSAGE"]: INCOMPLETE_STREAM_MESSAGE(), ["MAX_SSE_CARRY_BYTES"]: MAX_SSE_CARRY_BYTES(), ["StreamDialect"]: Object.freeze({ ["Anthropic"]: ml_make_StreamDialect_Anthropic, ["OpenAiChat"]: ml_make_StreamDialect_OpenAiChat, ["Responses"]: ml_make_StreamDialect_Responses, ["Gemini"]: ml_make_StreamDialect_Gemini }), ["FailureKind"]: Object.freeze({ ["Stalled"]: ml_make_FailureKind_Stalled, ["Interrupted"]: ml_make_FailureKind_Interrupted, ["Truncated"]: ml_make_FailureKind_Truncated }) };
-export const provenance = {"sourcePath":"src/stream_termination.rs","sourceSha256":"96e99a807fab7c520d2739fcbb3a0138b1933d7c2c8bfe816db329d257e9e50a","executable":4,"executableFunctions":0,"executableConstants":2,"executableTypes":2,"executableConstructors":7,"carried":16,"preserved":21,"runtimeParity":false};
+function ml_make_TerminalEventDetector_TerminalEventDetector(carry: ReadonlyArray<bigint>, seen: boolean): Readonly<{ readonly "$": "TerminalEventDetector"; readonly "carry": ReadonlyArray<bigint>; readonly "seen": boolean }> {
+  if (!ml_router_array(carry, (element0) => (typeof element0 === 'bigint' && element0 >= 0n && element0 <= 255n))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof seen === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "TerminalEventDetector", ["carry"]: carry, ["seen"]: seen });
+}
+
+export const translated: { "INCOMPLETE_STREAM_MESSAGE": string; "MAX_SSE_CARRY_BYTES": bigint; "StreamDialect": Readonly<{ "Anthropic": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }>; "OpenAiChat": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }>; "Responses": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }>; "Gemini": () => Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "Responses" }> | Readonly<{ readonly "$": "Gemini" }> }>; "FailureKind": Readonly<{ "Stalled": () => Readonly<{ readonly "$": "Stalled" }> | Readonly<{ readonly "$": "Interrupted" }> | Readonly<{ readonly "$": "Truncated" }>; "Interrupted": () => Readonly<{ readonly "$": "Stalled" }> | Readonly<{ readonly "$": "Interrupted" }> | Readonly<{ readonly "$": "Truncated" }>; "Truncated": () => Readonly<{ readonly "$": "Stalled" }> | Readonly<{ readonly "$": "Interrupted" }> | Readonly<{ readonly "$": "Truncated" }> }>; "TerminalEventDetector": (carry: ReadonlyArray<bigint>, seen: boolean) => Readonly<{ readonly "$": "TerminalEventDetector"; readonly "carry": ReadonlyArray<bigint>; readonly "seen": boolean }> } = { ["INCOMPLETE_STREAM_MESSAGE"]: rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(), ["MAX_SSE_CARRY_BYTES"]: rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(), ["StreamDialect"]: Object.freeze({ ["Anthropic"]: ml_make_StreamDialect_Anthropic, ["OpenAiChat"]: ml_make_StreamDialect_OpenAiChat, ["Responses"]: ml_make_StreamDialect_Responses, ["Gemini"]: ml_make_StreamDialect_Gemini }), ["FailureKind"]: Object.freeze({ ["Stalled"]: ml_make_FailureKind_Stalled, ["Interrupted"]: ml_make_FailureKind_Interrupted, ["Truncated"]: ml_make_FailureKind_Truncated }), ["TerminalEventDetector"]: ml_make_TerminalEventDetector_TerminalEventDetector };
+export const provenance = {"sourcePath":"src/stream_termination.rs","sourceSha256":"96e99a807fab7c520d2739fcbb3a0138b1933d7c2c8bfe816db329d257e9e50a","executable":5,"executableFunctions":0,"executableConstants":2,"executableTypes":3,"executableConstructors":8,"carried":15,"preserved":21,"runtimeParity":false};

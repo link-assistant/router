@@ -17,6 +17,7 @@ type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f373337
 type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
 type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
+type MLData_546d7578436c69656e74496e666f = Readonly<{ readonly "$": "TmuxClientInfo"; readonly "termtype": MLData_526f757465724f7074696f6e5f365f737472696e67; readonly "termname": MLData_526f757465724f7074696f6e5f365f737472696e67 }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -26,13 +27,31 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/codex_identity.rs; sha256=7c53538bbf40978613f8b97282d67db9beabcf2ad3b1fab02b0ffcc8906b951e
 // Carried constructs are data, never runtime parity evidence.
-function DEFAULT_CLIENT_VERSION(): string {
+import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
+
+const ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = {"schemaVersion":1,"types":{"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = new Map([]);
+
+function rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(): string {
   return "0.154.0";
+}
+
+function rp_636f6465785f6964656e746974792e4f524947494e41544f52(): string {
+  return "codex_cli_rs";
+}
+
+function ml_make_TmuxClientInfo_TmuxClientInfo(termtype: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, termname: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>): Readonly<{ readonly "$": "TmuxClientInfo"; readonly "termtype": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "termname": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }> {
+  ml_validate_rust_value(termtype, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  ml_validate_rust_value(termname, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
+  return Object.freeze({ $: "TmuxClientInfo", ["termtype"]: termtype, ["termname"]: termname });
 }
 
 const std = {
@@ -48,6 +67,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -56,9 +78,5 @@ const serde_json = {
   },
 };
 
-function ORIGINATOR(): string {
-  return "codex_cli_rs";
-}
-
-export const translated: { "DEFAULT_CLIENT_VERSION": string; "ORIGINATOR": string } = { ["DEFAULT_CLIENT_VERSION"]: DEFAULT_CLIENT_VERSION(), ["ORIGINATOR"]: ORIGINATOR() };
-export const provenance = {"sourcePath":"src/codex_identity.rs","sourceSha256":"7c53538bbf40978613f8b97282d67db9beabcf2ad3b1fab02b0ffcc8906b951e","executable":2,"executableFunctions":0,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":14,"preserved":17,"runtimeParity":false};
+export const translated: { "DEFAULT_CLIENT_VERSION": string; "ORIGINATOR": string; "TmuxClientInfo": (termtype: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, termname: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>) => Readonly<{ readonly "$": "TmuxClientInfo"; readonly "termtype": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "termname": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }> } = { ["DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["TmuxClientInfo"]: ml_make_TmuxClientInfo_TmuxClientInfo };
+export const provenance = {"sourcePath":"src/codex_identity.rs","sourceSha256":"7c53538bbf40978613f8b97282d67db9beabcf2ad3b1fab02b0ffcc8906b951e","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":1,"carried":13,"preserved":17,"runtimeParity":false};

@@ -27,6 +27,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -37,8 +39,15 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function ESTIMATED_CHARS_PER_TOKEN(): bigint {
+function rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(): bigint {
   return 4n;
+}
+
+function ml_make_Settlement_Settlement(tokens: bigint, estimated: boolean): Readonly<{ readonly "$": "Settlement"; readonly "tokens": bigint; readonly "estimated": boolean }> {
+  ml_fixed(tokens, 0n, 18446744073709551615n, "u64 argument tokens out of range");
+  if (!(typeof tokens === 'bigint' && tokens >= 0n && tokens <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof estimated === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "Settlement", ["tokens"]: tokens, ["estimated"]: estimated });
 }
 
 const std = {
@@ -54,6 +63,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -62,12 +74,5 @@ const serde_json = {
   },
 };
 
-function ml_make_Settlement_Settlement(tokens: bigint, estimated: boolean): Readonly<{ readonly "$": "Settlement"; readonly "tokens": bigint; readonly "estimated": boolean }> {
-  ml_fixed(tokens, 0n, 18446744073709551615n, "u64 argument tokens out of range");
-  if (!(typeof tokens === 'bigint' && tokens >= 0n && tokens <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof estimated === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "Settlement", ["tokens"]: tokens, ["estimated"]: estimated });
-}
-
-export const translated: { "ESTIMATED_CHARS_PER_TOKEN": bigint; "Settlement": (tokens: bigint, estimated: boolean) => Readonly<{ readonly "$": "Settlement"; readonly "tokens": bigint; readonly "estimated": boolean }> } = { ["ESTIMATED_CHARS_PER_TOKEN"]: ESTIMATED_CHARS_PER_TOKEN(), ["Settlement"]: ml_make_Settlement_Settlement };
+export const translated: { "ESTIMATED_CHARS_PER_TOKEN": bigint; "Settlement": (tokens: bigint, estimated: boolean) => Readonly<{ readonly "$": "Settlement"; readonly "tokens": bigint; readonly "estimated": boolean }> } = { ["ESTIMATED_CHARS_PER_TOKEN"]: rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(), ["Settlement"]: ml_make_Settlement_Settlement };
 export const provenance = {"sourcePath":"src/usage.rs","sourceSha256":"58cb4eb54cd5cc9358b24edb70095c02e74bcb895117f476ca9c344727a0cd2a","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":15,"preserved":18,"runtimeParity":false};

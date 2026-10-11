@@ -5,34 +5,13 @@ function ml_fixed(value, min, max, message) {
   return value;
 }
 
-function BOOTSTRAP_ADMIN_TTL_HOURS() {
+function rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253() {
   return ml_fixed((24n * 365n), -9223372036854775808n, 9223372036854775807n, "attempt to multiply with overflow");
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function BOOTSTRAP_ADMIN_LABEL() {
+function rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c() {
   return "bootstrap-admin";
 }
 
-export const translated = { ["BOOTSTRAP_ADMIN_TTL_HOURS"]: BOOTSTRAP_ADMIN_TTL_HOURS(), ["BOOTSTRAP_ADMIN_LABEL"]: BOOTSTRAP_ADMIN_LABEL() };
+export const translated = { ["BOOTSTRAP_ADMIN_TTL_HOURS"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(), ["BOOTSTRAP_ADMIN_LABEL"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c() };
 export const provenance = {"sourcePath":"src/runtime.rs","sourceSha256":"fd15ba6130a241b55808aff7c3107c9e9687587715ea9ad7cf358f5362f1a52f","executable":2,"executableFunctions":0,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":30,"preserved":33,"runtimeParity":false};

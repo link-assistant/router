@@ -7,8 +7,43 @@ function ml_fixed(value, min, max, message) {
   return value;
 }
 
-function MISSING_API_KEY_MESSAGE() {
+function ml_router_array(values, validate) {
+  if (!Array.isArray(values)) return false;
+  for (let index = 0; index < values.length; index++) {
+    const descriptor = Object.getOwnPropertyDescriptor(values, String(index));
+    if (!descriptor || !('value' in descriptor) || !validate(descriptor.value)) return false;
+  }
+  return true;
+}
+
+function rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745() {
   return "Gonka broker mode requires GONKA_API_KEY";
+}
+
+function rp_676f6e6b612e434154414c4f475f54544c() {
+  return ml_host_std_time_duration_from_secs(ml_fixed((5n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_676f6e6b612e4641494c45445f524546524553485f5245545259() {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_676f6e6b612e4d41585f434154414c4f475f4259544553() {
+  return ml_fixed((ml_fixed((4n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_676f6e6b612e4d41585f5353455f43415252595f4259544553() {
+  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function ml_make_SseTerminalDetector_SseTerminalDetector(carry, terminal_in_discarded_prefix) {
+  if (!ml_router_array(carry, (element0) => (typeof element0 === 'bigint' && element0 >= 0n && element0 <= 255n))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof terminal_in_discarded_prefix === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "SseTerminalDetector", ["carry"]: carry, ["terminal_in_discarded_prefix"]: terminal_in_discarded_prefix });
 }
 
 const std = {
@@ -24,6 +59,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -32,25 +70,5 @@ const serde_json = {
   },
 };
 
-function rp_676f6e6b612e434154414c4f475f54544c() {
-  return ml_host_std_time_duration_from_secs(ml_fixed((5n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
-}
-
-function rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554() {
-  return ml_host_std_time_duration_from_secs(15n);
-}
-
-function rp_676f6e6b612e4641494c45445f524546524553485f5245545259() {
-  return ml_host_std_time_duration_from_secs(15n);
-}
-
-function MAX_CATALOG_BYTES() {
-  return ml_fixed((ml_fixed((4n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
-}
-
-function MAX_SSE_CARRY_BYTES() {
-  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
-}
-
-export const translated = { ["MISSING_API_KEY_MESSAGE"]: MISSING_API_KEY_MESSAGE(), ["CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["MAX_CATALOG_BYTES"]: MAX_CATALOG_BYTES(), ["MAX_SSE_CARRY_BYTES"]: MAX_SSE_CARRY_BYTES() };
-export const provenance = {"sourcePath":"src/gonka.rs","sourceSha256":"e88edf7455de0af62be89883df2ca5063a60aa59591f22ee75f73dec6e3a15b9","executable":6,"executableFunctions":0,"executableConstants":6,"executableTypes":0,"executableConstructors":0,"carried":30,"preserved":37,"runtimeParity":false};
+export const translated = { ["MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["SseTerminalDetector"]: ml_make_SseTerminalDetector_SseTerminalDetector };
+export const provenance = {"sourcePath":"src/gonka.rs","sourceSha256":"e88edf7455de0af62be89883df2ca5063a60aa59591f22ee75f73dec6e3a15b9","executable":7,"executableFunctions":0,"executableConstants":6,"executableTypes":1,"executableConstructors":1,"carried":29,"preserved":37,"runtimeParity":false};

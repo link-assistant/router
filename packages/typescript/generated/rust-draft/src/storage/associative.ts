@@ -27,13 +27,65 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/storage/associative.rs; sha256=ed0ece47432947d26bd5c026ab6bbf4a9efd7e415deeca6424213ff836f450d1
 // Carried constructs are data, never runtime parity evidence.
-function TYPE(): string {
+function rp_73746f726167652e6173736f636961746976652e54595045(): string {
   return "Type";
+}
+
+function rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(): string {
+  return "TokenRecord";
+}
+
+function rp_73746f726167652e6173736f636961746976652e53554254595045(): string {
+  return "SubType";
+}
+
+function rp_73746f726167652e6173736f636961746976652e56414c5545(): string {
+  return "Value";
+}
+
+function rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(): string {
+  return "StorageFormat";
+}
+
+function rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(): string {
+  return "router-token-doublets-v1";
+}
+
+function rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(): string {
+  return "Record/";
+}
+
+function rp_73746f726167652e6173736f636961746976652e535452494e475f544147(): bigint {
+  return 1n;
+}
+
+function rp_73746f726167652e6173736f636961746976652e454447455f544147(): bigint {
+  return 2n;
+}
+
+function rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(): bigint {
+  return 3n;
+}
+
+function rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(): bigint {
+  return 4n;
+}
+
+function rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(): bigint {
+  return 259n;
+}
+
+function ml_make_SemanticLink_SemanticLink(source: string, target: string): Readonly<{ readonly "$": "SemanticLink"; readonly "source": string; readonly "target": string }> {
+  if (!(typeof source === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(source))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof target === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(target))) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "SemanticLink", ["source"]: source, ["target"]: target });
 }
 
 const std = {
@@ -49,6 +101,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -57,55 +112,5 @@ const serde_json = {
   },
 };
 
-function TOKEN_RECORD(): string {
-  return "TokenRecord";
-}
-
-function SUBTYPE(): string {
-  return "SubType";
-}
-
-function VALUE(): string {
-  return "Value";
-}
-
-function STORAGE_FORMAT(): string {
-  return "StorageFormat";
-}
-
-function FORMAT_VERSION(): string {
-  return "router-token-doublets-v1";
-}
-
-function RECORD_PREFIX(): string {
-  return "Record/";
-}
-
-function STRING_TAG(): bigint {
-  return 1n;
-}
-
-function EDGE_TAG(): bigint {
-  return 2n;
-}
-
-function EMPTY_SEQUENCE(): bigint {
-  return 3n;
-}
-
-function BYTE_NODE_START(): bigint {
-  return 4n;
-}
-
-function SCHEMA_NODE_COUNT(): bigint {
-  return 259n;
-}
-
-function ml_make_SemanticLink_SemanticLink(source: string, target: string): Readonly<{ readonly "$": "SemanticLink"; readonly "source": string; readonly "target": string }> {
-  if (!(typeof source === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(source))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof target === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(target))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "SemanticLink", ["source"]: source, ["target"]: target });
-}
-
-export const translated: { "TYPE": string; "TOKEN_RECORD": string; "SUBTYPE": string; "VALUE": string; "STORAGE_FORMAT": string; "FORMAT_VERSION": string; "RECORD_PREFIX": string; "STRING_TAG": bigint; "EDGE_TAG": bigint; "EMPTY_SEQUENCE": bigint; "BYTE_NODE_START": bigint; "SCHEMA_NODE_COUNT": bigint; "SemanticLink": (source: string, target: string) => Readonly<{ readonly "$": "SemanticLink"; readonly "source": string; readonly "target": string }> } = { ["TYPE"]: TYPE(), ["TOKEN_RECORD"]: TOKEN_RECORD(), ["SUBTYPE"]: SUBTYPE(), ["VALUE"]: VALUE(), ["STORAGE_FORMAT"]: STORAGE_FORMAT(), ["FORMAT_VERSION"]: FORMAT_VERSION(), ["RECORD_PREFIX"]: RECORD_PREFIX(), ["STRING_TAG"]: STRING_TAG(), ["EDGE_TAG"]: EDGE_TAG(), ["EMPTY_SEQUENCE"]: EMPTY_SEQUENCE(), ["BYTE_NODE_START"]: BYTE_NODE_START(), ["SCHEMA_NODE_COUNT"]: SCHEMA_NODE_COUNT(), ["SemanticLink"]: ml_make_SemanticLink_SemanticLink };
+export const translated: { "TYPE": string; "TOKEN_RECORD": string; "SUBTYPE": string; "VALUE": string; "STORAGE_FORMAT": string; "FORMAT_VERSION": string; "RECORD_PREFIX": string; "STRING_TAG": bigint; "EDGE_TAG": bigint; "EMPTY_SEQUENCE": bigint; "BYTE_NODE_START": bigint; "SCHEMA_NODE_COUNT": bigint; "SemanticLink": (source: string, target: string) => Readonly<{ readonly "$": "SemanticLink"; readonly "source": string; readonly "target": string }> } = { ["TYPE"]: rp_73746f726167652e6173736f636961746976652e54595045(), ["TOKEN_RECORD"]: rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(), ["SUBTYPE"]: rp_73746f726167652e6173736f636961746976652e53554254595045(), ["VALUE"]: rp_73746f726167652e6173736f636961746976652e56414c5545(), ["STORAGE_FORMAT"]: rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(), ["FORMAT_VERSION"]: rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(), ["RECORD_PREFIX"]: rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(), ["STRING_TAG"]: rp_73746f726167652e6173736f636961746976652e535452494e475f544147(), ["EDGE_TAG"]: rp_73746f726167652e6173736f636961746976652e454447455f544147(), ["EMPTY_SEQUENCE"]: rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(), ["BYTE_NODE_START"]: rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(), ["SCHEMA_NODE_COUNT"]: rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(), ["SemanticLink"]: ml_make_SemanticLink_SemanticLink };
 export const provenance = {"sourcePath":"src/storage/associative.rs","sourceSha256":"ed0ece47432947d26bd5c026ab6bbf4a9efd7e415deeca6424213ff836f450d1","executable":13,"executableFunctions":0,"executableConstants":12,"executableTypes":1,"executableConstructors":1,"carried":49,"preserved":62,"runtimeParity":false};

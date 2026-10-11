@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "measurementScope": "Issue 759 archive compression and filesystem observations only",
+  "measurementScope": "Issue 759 archive/filesystem observations and separately scoped translation process measurements",
   "archiveCompressionProbe": {
     "reportedBy": "root agent; decoded hashes independently matched by root",
     "sourceArchivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/runs/36707093374/attempt-1/logs/0_Binary-tree Agent CLI ladder.txt.xz",
@@ -106,5 +106,44 @@
       "The common Git directory includes all repository/task history and worktree metadata. Its allocation must not be attributed solely to this research branch.",
       "Case counts include existing local collector bookkeeping; decoded corpus bytes and integrity coverage are separately specified by the final integrity receipt."
     ]
-  }
+  },
+  "translationProcessObservations": [
+    {
+      "observedAtUtc": "2026-10-11T07:25:45.143812+00:00",
+      "sourceCommit": "1a3e61aecedbb46bea6d45f752f320a8b978d28c",
+      "sourceCommitMeaning": "Assembled source cohort before committing regenerated outputs and this observation",
+      "argv": [
+        "/usr/bin/time",
+        "-l",
+        "node",
+        "scripts/translate-router.mjs",
+        "--check"
+      ],
+      "nodeVersion": "v20.19.4",
+      "platform": "macOS",
+      "exitCode": 0,
+      "elapsedSeconds": 25.87,
+      "userSeconds": 27.16,
+      "systemSeconds": 0.98,
+      "maximumResidentSetSizeBytes": 567279616,
+      "peakMemoryFootprintBytes": 574878912,
+      "inventorySha256": "c66569b10fc4689061973db0b39cfc192f24525f5def4c0d627072327d3a0020",
+      "measurementLogSha256": "5b02e6503214cf07d4827d9b2cade89c539c1960cb10730488d4662be9ab6fce",
+      "stdoutSha256": "1b07cd765daac0771242b652d945f117deef07be675066e3be091fcdbd5b465f",
+      "scope": "One deterministic full 804-source translator check; not whole-task/process-tree peak, typical feature development memory, CI billing, or Rust build usage",
+      "regenerationObservation": {
+        "argv": [
+          "/usr/bin/time",
+          "-l",
+          "node",
+          "scripts/translate-router.mjs"
+        ],
+        "translatorSucceeded": true,
+        "elapsedSeconds": 24.08,
+        "maximumResidentSetSizeBytes": null,
+        "instrumentExitCode": 1,
+        "limitation": "Default sandbox denied time sysctl kern.clockrate after translator completed; no RSS recorded. Required deterministic check measured separately under approved escalation."
+      }
+    }
+  ]
 }

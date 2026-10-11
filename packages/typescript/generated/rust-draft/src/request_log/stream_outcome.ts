@@ -29,6 +29,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -76,6 +78,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -84,7 +89,7 @@ const serde_json = {
   },
 };
 
-function STREAM_END_MARKER(): string {
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(): string {
   return "stream-end marker";
 }
 
@@ -102,10 +107,10 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c
   return (((router_self).streamed && (router_self).inspectable) && !(router_self).terminated);
 }
 
-function text_terminates_stream(text: string): boolean {
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d(text: string): boolean {
   if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
   return (((text.includes("message_stop") || text.includes("[DONE]")) || text.includes("response.completed")) || text.includes("finishReason"));
 }
 
-export const translated: { "StreamOutcome": (streamed: boolean, terminated: boolean, inspectable: boolean, detail: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, frames: bigint, bytes: bigint, duration_ms: bigint) => Readonly<{ readonly "$": "StreamOutcome"; readonly "streamed": boolean; readonly "terminated": boolean; readonly "inspectable": boolean; readonly "detail": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "frames": bigint; readonly "bytes": bigint; readonly "duration_ms": bigint }>; "STREAM_END_MARKER": string; "stream_warrants_a_warning": (outcome: Readonly<{ readonly "$": "StreamOutcome"; readonly "streamed": boolean; readonly "terminated": boolean; readonly "inspectable": boolean; readonly "detail": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "frames": bigint; readonly "bytes": bigint; readonly "duration_ms": bigint }>) => boolean; "text_terminates_stream": (text: string) => boolean } = { ["StreamOutcome"]: ml_make_StreamOutcome_StreamOutcome, ["STREAM_END_MARKER"]: STREAM_END_MARKER(), ["stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["text_terminates_stream"]: text_terminates_stream };
+export const translated: { "StreamOutcome": (streamed: boolean, terminated: boolean, inspectable: boolean, detail: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, frames: bigint, bytes: bigint, duration_ms: bigint) => Readonly<{ readonly "$": "StreamOutcome"; readonly "streamed": boolean; readonly "terminated": boolean; readonly "inspectable": boolean; readonly "detail": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "frames": bigint; readonly "bytes": bigint; readonly "duration_ms": bigint }>; "STREAM_END_MARKER": string; "stream_warrants_a_warning": (outcome: Readonly<{ readonly "$": "StreamOutcome"; readonly "streamed": boolean; readonly "terminated": boolean; readonly "inspectable": boolean; readonly "detail": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "frames": bigint; readonly "bytes": bigint; readonly "duration_ms": bigint }>) => boolean; "text_terminates_stream": (text: string) => boolean } = { ["StreamOutcome"]: ml_make_StreamOutcome_StreamOutcome, ["STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d };
 export const provenance = {"sourcePath":"src/request_log/stream_outcome.rs","sourceSha256":"92452a28069d0b7055a62026b34c241153c21059c18943df97e165790b6f1f29","executable":4,"executableFunctions":2,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":7,"preserved":12,"runtimeParity":false};

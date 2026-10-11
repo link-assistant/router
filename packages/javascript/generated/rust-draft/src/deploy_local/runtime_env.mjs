@@ -1,29 +1,8 @@
 // Generated draft from src/deploy_local/runtime_env.rs; sha256=50881eb069ffbadfd84d61b46fd9abbeef819143f342efc40724804cb937ec06
 // Carried constructs are data, never runtime parity evidence.
-function LABEL_SUFFIX() {
+function rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958() {
   return "runtime-env";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-export const translated = { ["LABEL_SUFFIX"]: LABEL_SUFFIX() };
+export const translated = { ["LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958() };
 export const provenance = {"sourcePath":"src/deploy_local/runtime_env.rs","sourceSha256":"50881eb069ffbadfd84d61b46fd9abbeef819143f342efc40724804cb937ec06","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":12,"preserved":14,"runtimeParity":false};

@@ -5,30 +5,9 @@ function ml_fixed(value, min, max, message) {
   return value;
 }
 
-function STACK_BYTES() {
+function rp_656e747279706f696e742e535441434b5f4259544553() {
   return ml_fixed((ml_fixed((16n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-export const translated = { ["STACK_BYTES"]: STACK_BYTES() };
+export const translated = { ["STACK_BYTES"]: rp_656e747279706f696e742e535441434b5f4259544553() };
 export const provenance = {"sourcePath":"src/entrypoint.rs","sourceSha256":"39268a95729f7c2f4004ce47761afb31369ddb600ff3c63b3fc890868f6aa85e","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":4,"preserved":6,"runtimeParity":false};

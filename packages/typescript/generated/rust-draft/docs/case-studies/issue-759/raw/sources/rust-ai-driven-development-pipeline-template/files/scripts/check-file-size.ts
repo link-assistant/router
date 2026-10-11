@@ -1,5 +1,3 @@
-type MLData_436865636b526573756c74 = Readonly<{ readonly "$": "CheckResult"; readonly "warnings": ReadonlyArray<MLData_46696e64696e67>; readonly "violations": ReadonlyArray<MLData_46696e64696e67> }>;
-type MLData_46696e64696e67 = Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>;
 type MLData_4c696e65537461747573 = Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
@@ -29,24 +27,15 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs; sha256=9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
-  if (value < min || value > max) throw new RangeError(message);
-  return value;
-}
-
-import { validateRustValue as ml_validate_rust_value } from "../../../../../../../../runtime/type-layout-runtime.mjs";
-
-const ml_host_value_schema_c2e4a4c2cf2f57b0674c5b31c35eec46bab8dc91ed7ab5045ba970c441f90617 = {"schemaVersion":1,"types":{"Finding":{"kind":"data","name":"Finding","ctors":[{"name":"Finding","fields":[{"name":"file","type":{"kind":"string"}},{"name":"lines","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
-
-const ml_host_value_refinements_c2e4a4c2cf2f57b0674c5b31c35eec46bab8dc91ed7ab5045ba970c441f90617 = new Map([]);
-
-function MAX_LINES(): bigint {
-  return 1000n;
+function FILE_EXTENSIONS(): ReadonlyArray<string> {
+  return Object.freeze([".rs", ".md"]);
 }
 
 const std = {
@@ -62,6 +51,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -70,37 +62,8 @@ const serde_json = {
   },
 };
 
-function WARN_LINES(): bigint {
-  return 900n;
-}
-
-function MAX_DOC_LINES(): bigint {
-  return 2500n;
-}
-
-function WARN_DOC_LINES(): bigint {
-  return 2250n;
-}
-
-function FILE_EXTENSIONS(): ReadonlyArray<string> {
-  return Object.freeze([".rs", ".md"]);
-}
-
 function EXCLUDE_PATTERNS(): ReadonlyArray<string> {
   return Object.freeze(["target", ".git", "node_modules"]);
-}
-
-function ml_make_Finding_Finding(file: string, lines: bigint): Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }> {
-  if (!(typeof file === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(file))) throw new TypeError('argument outside supported Rust value domain');
-  ml_fixed(lines, 0n, 18446744073709551615n, "u64 argument lines out of range");
-  if (!(typeof lines === 'bigint' && lines >= 0n && lines <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "Finding", ["file"]: file, ["lines"]: lines });
-}
-
-function ml_make_CheckResult_CheckResult(warnings: ReadonlyArray<Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>>, violations: ReadonlyArray<Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>>): Readonly<{ readonly "$": "CheckResult"; readonly "warnings": ReadonlyArray<Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>>; readonly "violations": ReadonlyArray<Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>> }> {
-  ml_validate_rust_value(warnings, {"kind":"array","element":{"kind":"data","name":"Finding"}}, ml_host_value_schema_c2e4a4c2cf2f57b0674c5b31c35eec46bab8dc91ed7ab5045ba970c441f90617, { refinements: ml_host_value_refinements_c2e4a4c2cf2f57b0674c5b31c35eec46bab8dc91ed7ab5045ba970c441f90617 });
-  ml_validate_rust_value(violations, {"kind":"array","element":{"kind":"data","name":"Finding"}}, ml_host_value_schema_c2e4a4c2cf2f57b0674c5b31c35eec46bab8dc91ed7ab5045ba970c441f90617, { refinements: ml_host_value_refinements_c2e4a4c2cf2f57b0674c5b31c35eec46bab8dc91ed7ab5045ba970c441f90617 });
-  return Object.freeze({ $: "CheckResult", ["warnings"]: warnings, ["violations"]: violations });
 }
 
 function ml_make_LineStatus_WithinLimit(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
@@ -115,23 +78,5 @@ function ml_make_LineStatus_Violation(): Readonly<{ readonly "$": "WithinLimit" 
   return Object.freeze({ $: 'Violation' });
 }
 
-function classify_line_count(line_count: bigint, warn: bigint, max: bigint): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
-  ml_fixed(line_count, 0n, 18446744073709551615n, "u64 argument line_count out of range");
-  if (!(typeof line_count === 'bigint' && line_count >= 0n && line_count <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  ml_fixed(warn, 0n, 18446744073709551615n, "u64 argument warn out of range");
-  if (!(typeof warn === 'bigint' && warn >= 0n && warn <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  ml_fixed(max, 0n, 18446744073709551615n, "u64 argument max out of range");
-  if (!(typeof max === 'bigint' && max >= 0n && max <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
-  if ((line_count > max)) {
-    return Object.freeze({ $: 'Violation' });
-  } else {
-    if ((line_count > warn)) {
-      return Object.freeze({ $: 'Warning' });
-    } else {
-      return Object.freeze({ $: 'WithinLimit' });
-    }
-  }
-}
-
-export const translated: { "MAX_LINES": bigint; "WARN_LINES": bigint; "MAX_DOC_LINES": bigint; "WARN_DOC_LINES": bigint; "FILE_EXTENSIONS": ReadonlyArray<string>; "EXCLUDE_PATTERNS": ReadonlyArray<string>; "Finding": (file: string, lines: bigint) => Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>; "CheckResult": (warnings: ReadonlyArray<Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>>, violations: ReadonlyArray<Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>>) => Readonly<{ readonly "$": "CheckResult"; readonly "warnings": ReadonlyArray<Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>>; readonly "violations": ReadonlyArray<Readonly<{ readonly "$": "Finding"; readonly "file": string; readonly "lines": bigint }>> }>; "LineStatus": Readonly<{ "WithinLimit": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Warning": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Violation": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> }>; "classify_line_count": (line_count: bigint, warn: bigint, max: bigint) => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> } = { ["MAX_LINES"]: MAX_LINES(), ["WARN_LINES"]: WARN_LINES(), ["MAX_DOC_LINES"]: MAX_DOC_LINES(), ["WARN_DOC_LINES"]: WARN_DOC_LINES(), ["FILE_EXTENSIONS"]: FILE_EXTENSIONS(), ["EXCLUDE_PATTERNS"]: EXCLUDE_PATTERNS(), ["Finding"]: ml_make_Finding_Finding, ["CheckResult"]: ml_make_CheckResult_CheckResult, ["LineStatus"]: Object.freeze({ ["WithinLimit"]: ml_make_LineStatus_WithinLimit, ["Warning"]: ml_make_LineStatus_Warning, ["Violation"]: ml_make_LineStatus_Violation }), ["classify_line_count"]: classify_line_count };
-export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs","sourceSha256":"9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76","executable":10,"executableFunctions":1,"executableConstants":6,"executableTypes":3,"executableConstructors":5,"carried":21,"preserved":31,"runtimeParity":false};
+export const translated: { "FILE_EXTENSIONS": ReadonlyArray<string>; "EXCLUDE_PATTERNS": ReadonlyArray<string>; "LineStatus": Readonly<{ "WithinLimit": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Warning": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Violation": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> }> } = { ["FILE_EXTENSIONS"]: FILE_EXTENSIONS(), ["EXCLUDE_PATTERNS"]: EXCLUDE_PATTERNS(), ["LineStatus"]: Object.freeze({ ["WithinLimit"]: ml_make_LineStatus_WithinLimit, ["Warning"]: ml_make_LineStatus_Warning, ["Violation"]: ml_make_LineStatus_Violation }) };
+export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs","sourceSha256":"9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":3,"carried":28,"preserved":31,"runtimeParity":false};

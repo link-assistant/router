@@ -10,31 +10,6 @@ const ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1
 
 const ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = new Map([]);
 
-function done_frame() {
-  return "data: [DONE]\n\n";
-}
-
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
 function rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373(reason) {
   ml_validate_rust_value(reason, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
   const ml_s1 = ml_router_unwrap(reason, "end_turn", true);
@@ -94,5 +69,5 @@ function rp_6f70656e61692e6d61705f66696e6973685f726561736f6e(reason) {
   return (rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373(Object.freeze({ $: 'Some', field0: reason }))).chat_finish_reason;
 }
 
-export const translated = { ["done_frame"]: done_frame, ["map_finish_reason"]: rp_6f70656e61692e6d61705f66696e6973685f726561736f6e };
-export const provenance = {"sourcePath":"src/openai.rs","sourceSha256":"9c7d6a2c5a25987042a54b98f96b2688a9d1ee2204cf670efa62e220ca15a87d","executable":2,"executableFunctions":2,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":25,"preserved":28,"runtimeParity":false};
+export const translated = { ["map_finish_reason"]: rp_6f70656e61692e6d61705f66696e6973685f726561736f6e };
+export const provenance = {"sourcePath":"src/openai.rs","sourceSha256":"9c7d6a2c5a25987042a54b98f96b2688a9d1ee2204cf670efa62e220ca15a87d","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":26,"preserved":28,"runtimeParity":false};

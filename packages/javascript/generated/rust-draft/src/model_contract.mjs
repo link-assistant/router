@@ -1,30 +1,6 @@
 // Generated draft from src/model_contract.rs; sha256=98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b
 // Carried constructs are data, never runtime parity evidence.
-function is_false(value) {
-  if (!(typeof value === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  return !value;
-}
 
-const std = {
-  io: {
 
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-export const translated = { ["is_false"]: is_false };
-export const provenance = {"sourcePath":"src/model_contract.rs","sourceSha256":"98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":21,"preserved":23,"runtimeParity":false};
+export const translated = {  };
+export const provenance = {"sourcePath":"src/model_contract.rs","sourceSha256":"98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b","executable":0,"executableFunctions":0,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":22,"preserved":23,"runtimeParity":false};

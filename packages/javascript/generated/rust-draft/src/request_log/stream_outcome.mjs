@@ -42,6 +42,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -50,7 +53,7 @@ const serde_json = {
   },
 };
 
-function STREAM_END_MARKER() {
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552() {
   return "stream-end marker";
 }
 
@@ -68,10 +71,10 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c
   return (((router_self).streamed && (router_self).inspectable) && !(router_self).terminated);
 }
 
-function text_terminates_stream(text) {
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d(text) {
   if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
   return (((text.includes("message_stop") || text.includes("[DONE]")) || text.includes("response.completed")) || text.includes("finishReason"));
 }
 
-export const translated = { ["StreamOutcome"]: ml_make_StreamOutcome_StreamOutcome, ["STREAM_END_MARKER"]: STREAM_END_MARKER(), ["stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["text_terminates_stream"]: text_terminates_stream };
+export const translated = { ["StreamOutcome"]: ml_make_StreamOutcome_StreamOutcome, ["STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d };
 export const provenance = {"sourcePath":"src/request_log/stream_outcome.rs","sourceSha256":"92452a28069d0b7055a62026b34c241153c21059c18943df97e165790b6f1f29","executable":4,"executableFunctions":2,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":7,"preserved":12,"runtimeParity":false};

@@ -1,68 +1,65 @@
-type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
-type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
-type MLData_526f757465724f7074696f6e5f33395f6e616d65645f37333635373236343635356636613733366636655f346537353664363236353732 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }>;
-type MLData_526f757465724f7074696f6e5f335f693332 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-type MLData_526f757465724f7074696f6e5f335f693634 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-type MLData_526f757465724f7074696f6e5f335f753634 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
-type MLData_526f757465724f7074696f6e5f34335f61727261795f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<MLData_73657264655f6a736f6e2e56616c7565> }>;
-type MLData_526f757465724f7074696f6e5f345f626f6f6c = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": boolean }>;
-type MLData_526f757465724f7074696f6e5f345f756e6974 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": null }>;
-type MLData_526f757465724f7074696f6e5f35395f6e616d65645f37333635373236343635356636613733366636655f3464363137303566353337343732363936653637356635363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 }>;
-type MLData_526f757465724f7074696f6e5f355f666c6f6174 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": number }>;
-type MLData_526f757465724f7074696f6e5f365f737472696e67 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
-type MLData_526f75746572526573756c745f33375f6e616d65645f37333635373236343635356636613733366636655f353636313663373536355f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
-type MLData_526f75746572526573756c745f33385f6e616d65645f3733373436345f37343639366436355f343437353732363137343639366636655f36345f6e616d65645f3733373436345f37343639366436355f353437323739343637323666366434363663366636313734353336353633373334353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 }>;
-type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": null }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
-type MLData_526f75746572526573756c745f365f737472696e675f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
-type MLData_526f75746572526573756c745f365f737472696e675f33365f6e616d65645f3733373436345f3635366537365f35363631373234353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e656e762e5661724572726f72 }>;
-type MLData_526f75746572526573756c745f365f737472696e675f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": string }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
-type MLData_526f75746572526573756c745f385f61727261795f75385f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": ReadonlyArray<bigint> }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
-type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
-type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
-type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
-type MLData_73657264655f6a736f6e2e4e756d626572 = Readonly<{ readonly "$": "PosInt"; readonly "field0": bigint }> | Readonly<{ readonly "$": "NegInt"; readonly "field0": bigint }> | Readonly<{ readonly "$": "Float"; readonly "field0": number }>;
-type MLData_73657264655f6a736f6e2e56616c7565 = Readonly<{ readonly "$": "Null" }> | Readonly<{ readonly "$": "Bool"; readonly "field0": boolean }> | Readonly<{ readonly "$": "Number"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }> | Readonly<{ readonly "$": "String"; readonly "field0": string }> | Readonly<{ readonly "$": "Array"; readonly "field0": ReadonlyArray<MLData_73657264655f6a736f6e2e56616c7565> }> | Readonly<{ readonly "$": "Object"; readonly "field0": MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 }>;
-type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ readonly "$": "Io" }> | Readonly<{ readonly "$": "Syntax" }> | Readonly<{ readonly "$": "Data" }> | Readonly<{ readonly "$": "Eof" }>;
-type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
-type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
-type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
-type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
-type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
-type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
+type MLData_72705f353236663735373436353732346637303734363936663665356633333338356636653631366436353634356633373333333733343336333435663337333433363339333636343336333535663334333433373335333733323336333133373334333633393336363633363635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f37333734363432653734363936643635326534343735373236313734363936663665 }>;
+type MLData_72705f353236663735373436353732346637303734363936663665356633333566373533363334 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
+type MLData_72705f353236663735373436353732346637303734363936663665356633363566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
+type MLData_72705f35323666373537343635373235323635373337353663373435663333356637353336333435663334333635663665363136643635363435663337333333373334333633343566333636353337333533363634356633353330333633313337333233373333333633353334333933363635333733343334333533373332333733323336363633373332 = Readonly<{ readonly "$": "Ok"; readonly "field0": bigint }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_72705f373337343634326536653735366432653530363137323733363534393665373434353732373236663732 }>;
+type MLData_72705f37333734363432653665373536643265343936653734343537323732366637323462363936653634 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_72705f373337343634326536653735366432653530363137323733363534393665373434353732373236663732 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_72705f37333734363432653665373536643265343936653734343537323732366637323462363936653634 }>;
+type MLData_72705f37333734363432653734363936643635326534343735373236313734363936663665 = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 // Generated draft from src/upstream_client.rs; sha256=ef45ff192c7fe3750f641a3e8ecb530518b482ca649676748d233703bf91cc73
 // Carried constructs are data, never runtime parity evidence.
-function DEFAULT_UPSTREAM_READ_TIMEOUT_SECS(): bigint {
+import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
+
+import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../runtime/time-runtime.mjs";
+
+import { createIntegerRuntime as ml_create_integer_runtime } from "../runtime/integer-runtime.mjs";
+
+function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
+  if (value < min || value > max) throw new RangeError(message);
+  return value;
+}
+
+function ml_router_unwrap(value: any, fallback: any, option: boolean) {
+  return value.$ === (option ? 'Some' : 'Ok') ? value.field0 : fallback;
+}
+
+const ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = new Map([]);
+
+function ml_host_bool_then<T>(value: boolean, callback: () => T): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { return value ? Object.freeze({ $: 'Some', field0: callback() }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_result_ok<T>(value: Readonly<{ $: 'Ok'; field0: T }> | Readonly<{ $: 'Err'; field0: unknown }>): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}> { return value.$ === 'Ok' ? Object.freeze({ $: 'Some', field0: value.field0 }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_map<T, U>(value: Readonly<{ $: 'Some'; field0: T }> | Readonly<{ $: 'None' }>, callback: (value: T) => U): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}> { return value.$ === 'Some' ? Object.freeze({ $: 'Some', field0: callback(value.field0) }) : Object.freeze({ $: 'None' }); }
+
+function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...values: any[]) => any, mode: string) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
+
+const ml_host_rust_integer_parse_u64 = ml_create_integer_runtime({"kind":"fixed","bits":64,"signed":false}).rust_integer_parse;
+
+function rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(): bigint {
   return 120n;
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS(): bigint {
+function rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(): bigint {
   return 10n;
 }
 
-function DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS(): bigint {
-  return DEFAULT_UPSTREAM_READ_TIMEOUT_SECS();
+function rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(): bigint {
+  return rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353();
 }
 
-export const translated: { "DEFAULT_UPSTREAM_READ_TIMEOUT_SECS": bigint; "DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS": bigint; "DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS": bigint } = { ["DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: DEFAULT_UPSTREAM_READ_TIMEOUT_SECS(), ["DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS(), ["DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS() };
-export const provenance = {"sourcePath":"src/upstream_client.rs","sourceSha256":"ef45ff192c7fe3750f641a3e8ecb530518b482ca649676748d233703bf91cc73","executable":3,"executableFunctions":0,"executableConstants":3,"executableTypes":0,"executableConstructors":0,"carried":26,"preserved":30,"runtimeParity":false};
+function rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373(value: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, default_: bigint): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> }> {
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  ml_fixed(default_, 0n, 18446744073709551615n, "u64 argument default_ out of range");
+  if (!(typeof default_ === 'bigint' && default_ >= 0n && default_ <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  const seconds = ml_router_unwrap(ml_host_option_bind(value, (value_2) => { return ml_host_result_ok(ml_host_rust_integer_parse_u64((value_2).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''))); }, "and_then"), default_, true);
+  return ml_host_bool_then((seconds > 0n), () => { return ml_host_std_time_duration_from_secs(seconds); });
+}
+
+function rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574(value: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> }> {
+  ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  return rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373(value, rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353());
+}
+
+export const translated: { "DEFAULT_UPSTREAM_READ_TIMEOUT_SECS": bigint; "DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS": bigint; "DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS": bigint; "parse_timeout_secs": (value: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, arg1: bigint) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> }>; "parse_upstream_read_timeout": (value: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> }> } = { ["DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(), ["DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(), ["DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(), ["parse_timeout_secs"]: rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373, ["parse_upstream_read_timeout"]: rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574 };
+export const provenance = {"sourcePath":"src/upstream_client.rs","sourceSha256":"ef45ff192c7fe3750f641a3e8ecb530518b482ca649676748d233703bf91cc73","executable":5,"executableFunctions":2,"executableConstants":3,"executableTypes":0,"executableConstructors":0,"carried":24,"preserved":30,"runtimeParity":false};

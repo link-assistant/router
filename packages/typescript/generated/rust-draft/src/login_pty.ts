@@ -30,6 +30,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -43,32 +45,11 @@ const ml_host_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d
 
 const ml_host_value_refinements_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 = new Map([]);
 
-function PTY_COLS(): bigint {
+function rp_6c6f67696e5f7074792e5054595f434f4c53(): bigint {
   return 400n;
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function PTY_ROWS(): bigint {
+function rp_6c6f67696e5f7074792e5054595f524f5753(): bigint {
   return 60n;
 }
 
@@ -85,6 +66,30 @@ function ml_make_WaitError_ChildExited(field0: Readonly<{ readonly "$": "None" }
   return Object.freeze({ $: 'ChildExited', field0: field0 });
 }
 
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
 function ml_make_Key_Enter(): Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }> {
   return Object.freeze({ $: 'Enter' });
 }
@@ -97,5 +102,5 @@ function ml_make_Key_CtrlC(): Readonly<{ readonly "$": "Enter" }> | Readonly<{ r
   return Object.freeze({ $: 'CtrlC' });
 }
 
-export const translated: { "PTY_COLS": bigint; "PTY_ROWS": bigint; "POLL_INTERVAL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "WaitError": Readonly<{ "Timeout": () => Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }>; "ChildExited": (field0: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>) => Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }>; "Key": Readonly<{ "Enter": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }>; "Escape": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }>; "CtrlC": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }> }> } = { ["PTY_COLS"]: PTY_COLS(), ["PTY_ROWS"]: PTY_ROWS(), ["POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["WaitError"]: Object.freeze({ ["Timeout"]: ml_make_WaitError_Timeout, ["ChildExited"]: ml_make_WaitError_ChildExited }), ["Key"]: Object.freeze({ ["Enter"]: ml_make_Key_Enter, ["Escape"]: ml_make_Key_Escape, ["CtrlC"]: ml_make_Key_CtrlC }) };
+export const translated: { "PTY_COLS": bigint; "PTY_ROWS": bigint; "POLL_INTERVAL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "WaitError": Readonly<{ "Timeout": () => Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }>; "ChildExited": (field0: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>) => Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }>; "Key": Readonly<{ "Enter": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }>; "Escape": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }>; "CtrlC": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }> }> } = { ["PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["WaitError"]: Object.freeze({ ["Timeout"]: ml_make_WaitError_Timeout, ["ChildExited"]: ml_make_WaitError_ChildExited }), ["Key"]: Object.freeze({ ["Enter"]: ml_make_Key_Enter, ["Escape"]: ml_make_Key_Escape, ["CtrlC"]: ml_make_Key_CtrlC }) };
 export const provenance = {"sourcePath":"src/login_pty.rs","sourceSha256":"ce27eba647479e2a4f909b90f05de08cd212284797706fe7220e8c56d19ebe22","executable":5,"executableFunctions":0,"executableConstants":3,"executableTypes":2,"executableConstructors":5,"carried":14,"preserved":20,"runtimeParity":false};

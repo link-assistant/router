@@ -27,6 +27,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -37,36 +39,15 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function LABEL_SUFFIX(): string {
+function rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(): string {
   return "token-secret";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function PROBE_ENV(): string {
+function rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(): string {
   return "ROUTER_DEPLOY_PROBE_TOKEN";
 }
 
-function PROBE_SCRIPT(): string {
+function rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(): string {
   return "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_DEPLOY_PROBE_TOKEN}});console.log(r.status)";
 }
 
@@ -86,11 +67,35 @@ function ml_make_SecretMatch_NotSupplied(): Readonly<{ readonly "$": "Matches" }
   return Object.freeze({ $: 'NotSupplied' });
 }
 
-function probe_accepted(status: bigint): boolean {
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+function rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564(status: bigint): boolean {
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   return ((status !== 401n) && (status < 500n));
 }
 
-export const translated: { "LABEL_SUFFIX": string; "PROBE_ENV": string; "PROBE_SCRIPT": string; "SecretMatch": Readonly<{ "Matches": () => Readonly<{ readonly "$": "Matches" }> | Readonly<{ readonly "$": "Changed" }> | Readonly<{ readonly "$": "Unknown" }> | Readonly<{ readonly "$": "NotSupplied" }>; "Changed": () => Readonly<{ readonly "$": "Matches" }> | Readonly<{ readonly "$": "Changed" }> | Readonly<{ readonly "$": "Unknown" }> | Readonly<{ readonly "$": "NotSupplied" }>; "Unknown": () => Readonly<{ readonly "$": "Matches" }> | Readonly<{ readonly "$": "Changed" }> | Readonly<{ readonly "$": "Unknown" }> | Readonly<{ readonly "$": "NotSupplied" }>; "NotSupplied": () => Readonly<{ readonly "$": "Matches" }> | Readonly<{ readonly "$": "Changed" }> | Readonly<{ readonly "$": "Unknown" }> | Readonly<{ readonly "$": "NotSupplied" }> }>; "probe_accepted": (status: bigint) => boolean } = { ["LABEL_SUFFIX"]: LABEL_SUFFIX(), ["PROBE_ENV"]: PROBE_ENV(), ["PROBE_SCRIPT"]: PROBE_SCRIPT(), ["SecretMatch"]: Object.freeze({ ["Matches"]: ml_make_SecretMatch_Matches, ["Changed"]: ml_make_SecretMatch_Changed, ["Unknown"]: ml_make_SecretMatch_Unknown, ["NotSupplied"]: ml_make_SecretMatch_NotSupplied }), ["probe_accepted"]: probe_accepted };
+export const translated: { "LABEL_SUFFIX": string; "PROBE_ENV": string; "PROBE_SCRIPT": string; "SecretMatch": Readonly<{ "Matches": () => Readonly<{ readonly "$": "Matches" }> | Readonly<{ readonly "$": "Changed" }> | Readonly<{ readonly "$": "Unknown" }> | Readonly<{ readonly "$": "NotSupplied" }>; "Changed": () => Readonly<{ readonly "$": "Matches" }> | Readonly<{ readonly "$": "Changed" }> | Readonly<{ readonly "$": "Unknown" }> | Readonly<{ readonly "$": "NotSupplied" }>; "Unknown": () => Readonly<{ readonly "$": "Matches" }> | Readonly<{ readonly "$": "Changed" }> | Readonly<{ readonly "$": "Unknown" }> | Readonly<{ readonly "$": "NotSupplied" }>; "NotSupplied": () => Readonly<{ readonly "$": "Matches" }> | Readonly<{ readonly "$": "Changed" }> | Readonly<{ readonly "$": "Unknown" }> | Readonly<{ readonly "$": "NotSupplied" }> }>; "probe_accepted": (status: bigint) => boolean } = { ["LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["SecretMatch"]: Object.freeze({ ["Matches"]: ml_make_SecretMatch_Matches, ["Changed"]: ml_make_SecretMatch_Changed, ["Unknown"]: ml_make_SecretMatch_Unknown, ["NotSupplied"]: ml_make_SecretMatch_NotSupplied }), ["probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564 };
 export const provenance = {"sourcePath":"src/deploy_local/secret.rs","sourceSha256":"c71ccee74d6f7e25b12dce61a5b7a41015a80748a48570ca289845e0ba30b9f8","executable":5,"executableFunctions":1,"executableConstants":3,"executableTypes":1,"executableConstructors":4,"carried":10,"preserved":16,"runtimeParity":false};

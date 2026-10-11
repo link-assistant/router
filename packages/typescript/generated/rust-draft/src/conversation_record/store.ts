@@ -35,6 +35,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -60,8 +62,18 @@ const ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777
 
 function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...values: any[]) => any, mode: string) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
-function HEADER_PHASE(): string {
+function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(): string {
   return "recording";
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(): string {
+  return "turn";
+}
+
+function ml_make_Provenance_Provenance(router_version: string, provider: string): Readonly<{ readonly "$": "Provenance"; readonly "router_version": string; readonly "provider": string }> {
+  if (!(typeof router_version === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(router_version))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "Provenance", ["router_version"]: router_version, ["provider"]: provider });
 }
 
 const std = {
@@ -77,6 +89,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -84,16 +99,6 @@ const serde_json = {
 
   },
 };
-
-function TURN_PHASE(): string {
-  return "turn";
-}
-
-function ml_make_Provenance_Provenance(router_version: string, provider: string): Readonly<{ readonly "$": "Provenance"; readonly "router_version": string; readonly "provider": string }> {
-  if (!(typeof router_version === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(router_version))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "Provenance", ["router_version"]: router_version, ["provider"]: provider });
-}
 
 function ml_make_LoadError_Unreadable(field0: Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }>): Readonly<{ readonly "$": "Unreadable"; readonly "field0": Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }> | Readonly<{ readonly "$": "MissingHeader" }> {
   ml_validate_rust_value(field0, {"kind":"data","name":"std.io.Error"}, ml_host_value_schema_e49a0da85e7ce49f045fe03fa441d61a99c7ff10a47a84b74deba3ff254feafe, { refinements: ml_host_value_refinements_e49a0da85e7ce49f045fe03fa441d61a99c7ff10a47a84b74deba3ff254feafe });
@@ -117,5 +122,5 @@ function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f66
   return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(record, name), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then"), "unknown", true);
 }
 
-export const translated: { "HEADER_PHASE": string; "TURN_PHASE": string; "Provenance": (router_version: string, provider: string) => Readonly<{ readonly "$": "Provenance"; readonly "router_version": string; readonly "provider": string }>; "LoadError": Readonly<{ "Unreadable": (field0: Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }>) => Readonly<{ readonly "$": "Unreadable"; readonly "field0": Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }> | Readonly<{ readonly "$": "MissingHeader" }>; "MissingHeader": () => Readonly<{ readonly "$": "Unreadable"; readonly "field0": Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }> | Readonly<{ readonly "$": "MissingHeader" }> }>; "read_provenance": (record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => Readonly<{ readonly "$": "Provenance"; readonly "router_version": string; readonly "provider": string }>; "string_field": (record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635, name: string) => string } = { ["HEADER_PHASE"]: HEADER_PHASE(), ["TURN_PHASE"]: TURN_PHASE(), ["Provenance"]: ml_make_Provenance_Provenance, ["LoadError"]: Object.freeze({ ["Unreadable"]: ml_make_LoadError_Unreadable, ["MissingHeader"]: ml_make_LoadError_MissingHeader }), ["read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64 };
+export const translated: { "HEADER_PHASE": string; "TURN_PHASE": string; "Provenance": (router_version: string, provider: string) => Readonly<{ readonly "$": "Provenance"; readonly "router_version": string; readonly "provider": string }>; "LoadError": Readonly<{ "Unreadable": (field0: Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }>) => Readonly<{ readonly "$": "Unreadable"; readonly "field0": Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }> | Readonly<{ readonly "$": "MissingHeader" }>; "MissingHeader": () => Readonly<{ readonly "$": "Unreadable"; readonly "field0": Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }> | Readonly<{ readonly "$": "MissingHeader" }> }>; "read_provenance": (record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => Readonly<{ readonly "$": "Provenance"; readonly "router_version": string; readonly "provider": string }>; "string_field": (record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635, name: string) => string } = { ["HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["Provenance"]: ml_make_Provenance_Provenance, ["LoadError"]: Object.freeze({ ["Unreadable"]: ml_make_LoadError_Unreadable, ["MissingHeader"]: ml_make_LoadError_MissingHeader }), ["read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64 };
 export const provenance = {"sourcePath":"src/conversation_record/store.rs","sourceSha256":"95231afb1d4fd503bd9f5c394d058c2468d4bbd5d17c0f8635fbdb5b11b2553a","executable":6,"executableFunctions":2,"executableConstants":2,"executableTypes":2,"executableConstructors":3,"carried":13,"preserved":20,"runtimeParity":false};

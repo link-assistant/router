@@ -27,41 +27,22 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/deploy_remote.rs; sha256=8e1156091bd5b9d16659d4ba4cd1e30100b615d960ef0e3af345a135b747c588
 // Carried constructs are data, never runtime parity evidence.
-function AGENT_LEASE_EXIT(): bigint {
+function rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(): bigint {
   return 73n;
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function TRANSPORT_EXIT(): bigint {
+function rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(): bigint {
   return 10n;
 }
 
-function LEASE_EXIT(): bigint {
+function rp_6465706c6f795f72656d6f74652e4c454153455f45584954(): bigint {
   return 11n;
 }
 
@@ -77,5 +58,29 @@ function ml_make_RemoteMode_Down(): Readonly<{ readonly "$": "Deploy" }> | Reado
   return Object.freeze({ $: 'Down' });
 }
 
-export const translated: { "AGENT_LEASE_EXIT": bigint; "TRANSPORT_EXIT": bigint; "LEASE_EXIT": bigint; "RemoteMode": Readonly<{ "Deploy": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }>; "Status": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }>; "Down": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }> }> } = { ["AGENT_LEASE_EXIT"]: AGENT_LEASE_EXIT(), ["TRANSPORT_EXIT"]: TRANSPORT_EXIT(), ["LEASE_EXIT"]: LEASE_EXIT(), ["RemoteMode"]: Object.freeze({ ["Deploy"]: ml_make_RemoteMode_Deploy, ["Status"]: ml_make_RemoteMode_Status, ["Down"]: ml_make_RemoteMode_Down }) };
+const std = {
+  io: {
+
+  },
+  ffi: {
+
+  },
+  env: {
+
+  },
+  time: {
+
+  },
+  num: {
+
+  },
+};
+
+const serde_json = {
+  error: {
+
+  },
+};
+
+export const translated: { "AGENT_LEASE_EXIT": bigint; "TRANSPORT_EXIT": bigint; "LEASE_EXIT": bigint; "RemoteMode": Readonly<{ "Deploy": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }>; "Status": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }>; "Down": () => Readonly<{ readonly "$": "Deploy" }> | Readonly<{ readonly "$": "Status" }> | Readonly<{ readonly "$": "Down" }> }> } = { ["AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["RemoteMode"]: Object.freeze({ ["Deploy"]: ml_make_RemoteMode_Deploy, ["Status"]: ml_make_RemoteMode_Status, ["Down"]: ml_make_RemoteMode_Down }) };
 export const provenance = {"sourcePath":"src/deploy_remote.rs","sourceSha256":"8e1156091bd5b9d16659d4ba4cd1e30100b615d960ef0e3af345a135b747c588","executable":4,"executableFunctions":0,"executableConstants":3,"executableTypes":1,"executableConstructors":3,"carried":27,"preserved":32,"runtimeParity":false};

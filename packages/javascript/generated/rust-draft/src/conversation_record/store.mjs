@@ -20,8 +20,18 @@ const ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777
 
 function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
-function HEADER_PHASE() {
+function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345() {
   return "recording";
+}
+
+function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345() {
+  return "turn";
+}
+
+function ml_make_Provenance_Provenance(router_version, provider) {
+  if (!(typeof router_version === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(router_version))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
+  return Object.freeze({ $: "Provenance", ["router_version"]: router_version, ["provider"]: provider });
 }
 
 const std = {
@@ -37,6 +47,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -44,16 +57,6 @@ const serde_json = {
 
   },
 };
-
-function TURN_PHASE() {
-  return "turn";
-}
-
-function ml_make_Provenance_Provenance(router_version, provider) {
-  if (!(typeof router_version === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(router_version))) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "Provenance", ["router_version"]: router_version, ["provider"]: provider });
-}
 
 function ml_make_LoadError_Unreadable(field0) {
   ml_validate_rust_value(field0, {"kind":"data","name":"std.io.Error"}, ml_host_value_schema_e49a0da85e7ce49f045fe03fa441d61a99c7ff10a47a84b74deba3ff254feafe, { refinements: ml_host_value_refinements_e49a0da85e7ce49f045fe03fa441d61a99c7ff10a47a84b74deba3ff254feafe });
@@ -77,5 +80,5 @@ function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f66
   return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(record, name), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then"), "unknown", true);
 }
 
-export const translated = { ["HEADER_PHASE"]: HEADER_PHASE(), ["TURN_PHASE"]: TURN_PHASE(), ["Provenance"]: ml_make_Provenance_Provenance, ["LoadError"]: Object.freeze({ ["Unreadable"]: ml_make_LoadError_Unreadable, ["MissingHeader"]: ml_make_LoadError_MissingHeader }), ["read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64 };
+export const translated = { ["HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["Provenance"]: ml_make_Provenance_Provenance, ["LoadError"]: Object.freeze({ ["Unreadable"]: ml_make_LoadError_Unreadable, ["MissingHeader"]: ml_make_LoadError_MissingHeader }), ["read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64 };
 export const provenance = {"sourcePath":"src/conversation_record/store.rs","sourceSha256":"95231afb1d4fd503bd9f5c394d058c2468d4bbd5d17c0f8635fbdb5b11b2553a","executable":6,"executableFunctions":2,"executableConstants":2,"executableTypes":2,"executableConstructors":3,"carried":13,"preserved":20,"runtimeParity":false};

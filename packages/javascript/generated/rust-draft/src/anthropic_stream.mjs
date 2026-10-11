@@ -1,6 +1,6 @@
 // Generated draft from src/anthropic_stream.rs; sha256=fcd91d239af65a88e746f67d6f3c6c7888ae6d467bbc0a75825e02d93eebf6b0
 // Carried constructs are data, never runtime parity evidence.
-function map_stop_reason(finish_reason) {
+function rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e(finish_reason) {
   if (!(typeof finish_reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(finish_reason))) throw new TypeError('argument outside supported Rust value domain');
   if ((finish_reason === "length")) {
     return "max_tokens";
@@ -29,26 +29,5 @@ function map_stop_reason(finish_reason) {
   }
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-export const translated = { ["map_stop_reason"]: map_stop_reason };
+export const translated = { ["map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e };
 export const provenance = {"sourcePath":"src/anthropic_stream.rs","sourceSha256":"fcd91d239af65a88e746f67d6f3c6c7888ae6d467bbc0a75825e02d93eebf6b0","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":10,"preserved":12,"runtimeParity":false};

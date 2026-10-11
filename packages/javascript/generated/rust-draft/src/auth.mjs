@@ -1,41 +1,20 @@
 // Generated draft from src/auth.rs; sha256=e4222da65913ce755353d55ea06053cd0885a89dc05949f9c1db6e9a0f153336
 // Carried constructs are data, never runtime parity evidence.
-function CODEX_CLIENT_ID() {
+function rp_617574682e434f4445585f434c49454e545f4944() {
   return "app_EMoamEEZ73f0CkXaXp7hrann";
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function CODEX_ISSUER() {
+function rp_617574682e434f4445585f495353554552() {
   return "https://auth.openai.com";
 }
 
-function CODEX_CALLBACK_PATH() {
+function rp_617574682e434f4445585f43414c4c4241434b5f50415448() {
   return "/auth/callback";
 }
 
-function CODEX_DEVICE_CALLBACK_PATH() {
+function rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448() {
   return "/deviceauth/callback";
 }
 
-export const translated = { ["CODEX_CLIENT_ID"]: CODEX_CLIENT_ID(), ["CODEX_ISSUER"]: CODEX_ISSUER(), ["CODEX_CALLBACK_PATH"]: CODEX_CALLBACK_PATH(), ["CODEX_DEVICE_CALLBACK_PATH"]: CODEX_DEVICE_CALLBACK_PATH() };
+export const translated = { ["CODEX_CLIENT_ID"]: rp_617574682e434f4445585f434c49454e545f4944(), ["CODEX_ISSUER"]: rp_617574682e434f4445585f495353554552(), ["CODEX_CALLBACK_PATH"]: rp_617574682e434f4445585f43414c4c4241434b5f50415448(), ["CODEX_DEVICE_CALLBACK_PATH"]: rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448() };
 export const provenance = {"sourcePath":"src/auth.rs","sourceSha256":"e4222da65913ce755353d55ea06053cd0885a89dc05949f9c1db6e9a0f153336","executable":4,"executableFunctions":0,"executableConstants":4,"executableTypes":0,"executableConstructors":0,"carried":39,"preserved":44,"runtimeParity":false};

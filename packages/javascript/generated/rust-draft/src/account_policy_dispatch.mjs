@@ -5,30 +5,9 @@ function ml_fixed(value, min, max, message) {
   return value;
 }
 
-function MAX_ERROR_BYTES() {
+function rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553() {
   return ml_fixed((16n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-export const translated = { ["MAX_ERROR_BYTES"]: MAX_ERROR_BYTES() };
+export const translated = { ["MAX_ERROR_BYTES"]: rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553() };
 export const provenance = {"sourcePath":"src/account_policy_dispatch.rs","sourceSha256":"974d618e5cb271eb7708dbaeb62e8d6225aee82bbf34329e74f603f3eb7c39cd","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":13,"preserved":15,"runtimeParity":false};

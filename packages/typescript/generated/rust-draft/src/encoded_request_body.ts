@@ -28,6 +28,8 @@ type MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279 = Readonly<{ read
 type MLData_7374642e656e762e5661724572726f72 = Readonly<{ readonly "$": "NotPresent" }> | Readonly<{ readonly "$": "NotUnicode"; readonly "field0": MLData_7374642e6666692e4f73537472696e67 }>;
 type MLData_7374642e6666692e4f73537472696e67 = Readonly<{ readonly "$": "OsString"; readonly "bytes": ReadonlyArray<bigint> }>;
 type MLData_7374642e696f2e4572726f72 = Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": MLData_526f757465724f7074696f6e5f335f693332 }>;
+type MLData_7374642e6e756d2e496e744572726f724b696e64 = Readonly<{ readonly "$": "Empty" }> | Readonly<{ readonly "$": "InvalidDigit" }> | Readonly<{ readonly "$": "PosOverflow" }> | Readonly<{ readonly "$": "NegOverflow" }> | Readonly<{ readonly "$": "Zero" }>;
+type MLData_7374642e6e756d2e5061727365496e744572726f72 = Readonly<{ readonly "$": "ParseIntError"; readonly "kind": MLData_7374642e6e756d2e496e744572726f724b696e64 }>;
 type MLData_7374642e74696d652e4475726174696f6e = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Readonly<{ readonly "$": "TryFromFloatSecsError"; readonly "kind": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 }>;
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
@@ -40,8 +42,28 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
-function MAX_DECOMPRESSION_RATIO(): bigint {
+function rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(): bigint {
   return 200n;
+}
+
+function rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
+  return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(): bigint {
+  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(): bigint {
+  return 4n;
+}
+
+function ml_make_Encoding_Identity(): Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Zstd" }> {
+  return Object.freeze({ $: 'Identity' });
+}
+
+function ml_make_Encoding_Zstd(): Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Zstd" }> {
+  return Object.freeze({ $: 'Zstd' });
 }
 
 const std = {
@@ -57,6 +79,9 @@ const std = {
   time: {
 
   },
+  num: {
+
+  },
 };
 
 const serde_json = {
@@ -65,25 +90,5 @@ const serde_json = {
   },
 };
 
-function rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
-  return ml_host_std_time_duration_from_secs(15n);
-}
-
-function ZSTD_DECODE_CHUNK_BYTES(): bigint {
-  return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
-}
-
-function MAX_PARALLEL_ZSTD_DECODES(): bigint {
-  return 4n;
-}
-
-function ml_make_Encoding_Identity(): Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Zstd" }> {
-  return Object.freeze({ $: 'Identity' });
-}
-
-function ml_make_Encoding_Zstd(): Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Zstd" }> {
-  return Object.freeze({ $: 'Zstd' });
-}
-
-export const translated: { "MAX_DECOMPRESSION_RATIO": bigint; "ZSTD_DECODE_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "ZSTD_DECODE_CHUNK_BYTES": bigint; "MAX_PARALLEL_ZSTD_DECODES": bigint; "Encoding": Readonly<{ "Identity": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Zstd" }>; "Zstd": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Zstd" }> }> } = { ["MAX_DECOMPRESSION_RATIO"]: MAX_DECOMPRESSION_RATIO(), ["ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["ZSTD_DECODE_CHUNK_BYTES"]: ZSTD_DECODE_CHUNK_BYTES(), ["MAX_PARALLEL_ZSTD_DECODES"]: MAX_PARALLEL_ZSTD_DECODES(), ["Encoding"]: Object.freeze({ ["Identity"]: ml_make_Encoding_Identity, ["Zstd"]: ml_make_Encoding_Zstd }) };
+export const translated: { "MAX_DECOMPRESSION_RATIO": bigint; "ZSTD_DECODE_TIMEOUT": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "ZSTD_DECODE_CHUNK_BYTES": bigint; "MAX_PARALLEL_ZSTD_DECODES": bigint; "Encoding": Readonly<{ "Identity": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Zstd" }>; "Zstd": () => Readonly<{ readonly "$": "Identity" }> | Readonly<{ readonly "$": "Zstd" }> }> } = { ["MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["Encoding"]: Object.freeze({ ["Identity"]: ml_make_Encoding_Identity, ["Zstd"]: ml_make_Encoding_Zstd }) };
 export const provenance = {"sourcePath":"src/encoded_request_body.rs","sourceSha256":"93719eb74b1053297dc429a2eba5f12d03f09d5fd5eb3cd9653caa7641b540ce","executable":5,"executableFunctions":0,"executableConstants":4,"executableTypes":1,"executableConstructors":2,"carried":23,"preserved":29,"runtimeParity":false};

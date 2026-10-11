@@ -18,36 +18,15 @@ const ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777
 
 function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
-function POLL_TIMEOUT_SECS() {
+function rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353() {
   return 30n;
 }
-
-const std = {
-  io: {
-
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
 
 function rp_74656c656772616d2e4552524f525f4241434b4f4646() {
   return ml_host_std_time_duration_from_secs(5n);
 }
 
-function ALLOWED_UPDATES() {
+function rp_74656c656772616d2e414c4c4f5745445f55504441544553() {
   return "[\"message\"]";
 }
 
@@ -56,5 +35,5 @@ function rp_74656c656772616d2e7570646174655f6964(update) {
   return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(update, "update_id"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_i64(ml_host_callback_2_0); }, "and_then"), 0n, true);
 }
 
-export const translated = { ["POLL_TIMEOUT_SECS"]: POLL_TIMEOUT_SECS(), ["ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["ALLOWED_UPDATES"]: ALLOWED_UPDATES(), ["update_id"]: rp_74656c656772616d2e7570646174655f6964 };
+export const translated = { ["POLL_TIMEOUT_SECS"]: rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353(), ["ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["ALLOWED_UPDATES"]: rp_74656c656772616d2e414c4c4f5745445f55504441544553(), ["update_id"]: rp_74656c656772616d2e7570646174655f6964 };
 export const provenance = {"sourcePath":"src/telegram.rs","sourceSha256":"48a0372ad6b394247e12a9e3d8f8f2aaa264fc334eb8dad59e66df7406e006c9","executable":4,"executableFunctions":1,"executableConstants":3,"executableTypes":0,"executableConstructors":0,"carried":12,"preserved":17,"runtimeParity":false};
