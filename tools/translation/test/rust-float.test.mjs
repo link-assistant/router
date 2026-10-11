@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from '../extensions/rust-float.mjs';
+import {decodeRustFloat,isRustFloatToken,RUST_FLOAT_LITERAL_PROFILE} from '../extensions/rust-float.mjs';
 import {tokenizeRust,capturedRustTokenSource} from '../extensions/lexical.mjs';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
@@ -13,6 +13,7 @@ const decode=raw=>decodeRustFloat(raw,{start:5,end:5+raw.length});
 
 test('Rust decimal literals round once at normal, subnormal and exact halfway boundaries',()=>{
   assert.equal(RUST_FLOAT_LITERAL_PROFILE.binary32,false);
+  for(const raw of ['1usize','1isize','0xf64','0xff64','2u64'])assert.equal(isRustFloatToken(raw),false,raw);
   for(const [raw,bits]of [
     ['0.0','0000000000000000'],['0.1','3fb999999999999a'],['2.','4000000000000000'],
     ['1_2E+2_f64','4092c00000000000'],['9007199254740993f64','4340000000000000'],
@@ -32,7 +33,7 @@ test('float lexical adaptation preserves original bytes, opaque text, ranges and
   assert.equal(captured.source,source);assert.deepEqual(floats.map(token=>token.raw),['1.25e_2_f64','2.']);
   assert.deepEqual(floats.map(token=>token.value),['125','2']);
   for(const token of floats)assert.equal(source.slice(token.start,token.end),token.raw);
-  assert.deepEqual(tokenizeRust('1..2 1..=2 2.max(3) 0xff64').slice(0,-1).map(token=>token.value),['1','..','2','1','..=','2','2','.','max','(','3',')','65380']);
+  assert.deepEqual(tokenizeRust('1..2 1..=2 2.max(3) 0xff64 1usize 2isize').slice(0,-1).map(token=>token.value),['1','..','2','1','..=','2','2','.','max','(','3',')','65380','1','2']);
   assert.equal(tokens.find(token=>token.kind==='string').value,'1e3');
 });
 

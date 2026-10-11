@@ -45,7 +45,7 @@ function binary64(coefficient,decimalExponent,span) {
   return {value:String(bytes.getFloat64(0)),floatBits:bits.toString(16).padStart(16,'0')};
 }
 export function isRustFloatToken(raw) {
-  return typeof raw==='string'&&!/^0[xob]/u.test(raw)&&(/[.eE]/u.test(raw)||/f(?:32|64)$/u.test(raw));
+  return typeof raw==='string'&&!/^0[xob]/u.test(raw)&&/^[0-9][0-9_]*(?:[.eE]|f(?:32|64)$)/u.test(raw);
 }
 export function decodeRustFloat(raw,span) {
   if(typeof raw!=='string'||!raw.length)malformed(span);

@@ -44,7 +44,7 @@ export function tokenizeRust(source) {
     if(token.type==='number'){
       // Rust's trailing decimal point cannot precede '.', '_' or XID_Start.
       // Consume only an adjacent actual dot; ranges and method calls stay intact.
-      const next=originalTokens[index+1],after=source[next?.end];
+      const next=originalTokens[index+1],point=next?source.codePointAt(next.end):undefined,after=point===undefined?'':String.fromCodePoint(point);
       if(/^[0-9][0-9_]*$/u.test(token.text)&&next?.text==='.'&&next.start===token.end&&after!=='.'&&after!=='_'&&!/[\p{ID_Start}]/u.test(after??'')) {
         token={...token,text:token.text+'.',end:next.end};index++;
       }
