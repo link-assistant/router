@@ -21,3 +21,8 @@ docs/case-studies/issue-759/raw/**/*provenance*.json linguist-generated=false
 docs/case-studies/issue-759/raw/**/*ledger*.json* linguist-generated=false
 docs/case-studies/issue-759/raw/**/archive-index*.json* linguist-generated=false
 docs/case-studies/issue-759/raw/ci/*.py linguist-generated=false
+
+# Keep task verification provenance and narrative visible beside compressed packs.
+docs/case-studies/issue-759/raw/current-task/README.md linguist-generated=false
+docs/case-studies/issue-759/raw/current-task/index.json linguist-generated=false
+docs/case-studies/issue-759/raw/current-task/integrity-receipt.json linguist-generated=false
