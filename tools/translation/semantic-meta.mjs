@@ -1,0 +1,29 @@
+// Targets consume serialized semantic nodes, never a source-bearing envelope.
+// Map entries are explicit links; the tagged encoding cannot collide with a
+// Rust literal object because literals occur only in typed semantic nodes.
+const SCHEMA = 'checked-rust-semantic-meta-v1';
+export function serializeProgram(program) {
+  return JSON.stringify({ schema: SCHEMA, program }, (_, value) => value instanceof Map ? { $map: [...value] } : value);
+}
+
+export function parseProgram(text) {
+  const document = JSON.parse(text, (_, value) => {
+    if (value && typeof value === 'object' && '$map' in value) {
+      if (Object.keys(value).length !== 1 || !Array.isArray(value.$map) || value.$map.some(entry => !Array.isArray(entry) || entry.length !== 2 || typeof entry[0] !== 'string')) throw new Error('invalid checked meta declaration links');
+      const map = new Map(value.$map);
+      if (map.size !== value.$map.length) throw new Error('duplicate checked meta declaration link');
+      return map;
+    }
+    return value;
+  });
+  if (document.schema !== SCHEMA || document.program?.schemaVersion !== 1 || document.program.sourceLanguage !== 'Rust' || !(document.program.declarations instanceof Map) || !Array.isArray(document.program.items)) throw new Error('invalid checked Rust semantic meta root');
+  for (const [name, entry] of document.program.declarations) {
+    if (entry.fullName !== name || !['fn', 'data'].includes(entry.k) || !Array.isArray(entry.modulePath)) throw new Error('invalid checked meta declaration');
+    if (entry.k === 'fn' && (!Array.isArray(entry.params) || !entry.ret?.kind || !entry.body?.k || !entry.body.type?.kind)) throw new Error('unchecked meta function');
+    if (entry.k === 'data' && !Array.isArray(entry.ctors)) throw new Error('unchecked meta data layout');
+  }
+  if (serializeProgram(document.program) !== text) throw new Error('noncanonical checked Rust semantic meta');
+  return document.program;
+}
+
+export const roundTripProgram = program => parseProgram(serializeProgram(program));

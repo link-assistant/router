@@ -567,5 +567,269 @@
         "throws": "Error"
       }
     ]
+  },
+  {
+    "name": "mutable scalar summation and zero-iteration while",
+    "source": "pub fn sum(n: u64) -> u64 { let mut i: u64 = 0; let mut total: u64 = 0; while i < n { total += i; i += 1; } total }",
+    "calls": [
+      {
+        "name": "sum",
+        "args": [
+          "0n"
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "sum",
+        "args": [
+          "1n"
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "sum",
+        "args": [
+          "5n"
+        ],
+        "expected": "10n"
+      }
+    ]
+  },
+  {
+    "name": "early return avoids later bounds panic",
+    "source": "pub fn choose(v: &[u64], use_first: bool) -> u64 { if use_first { return 7; } v[0] }",
+    "calls": [
+      {
+        "name": "choose",
+        "args": [
+          [],
+          true
+        ],
+        "expected": "7n"
+      },
+      {
+        "name": "choose",
+        "args": [
+          [
+            "11n"
+          ],
+          false
+        ],
+        "expected": "11n"
+      },
+      {
+        "name": "choose",
+        "args": [
+          [],
+          false
+        ],
+        "throws": "RangeError"
+      }
+    ]
+  },
+  {
+    "name": "continue and innermost break preserve loop iteration",
+    "source": "pub fn odds(n: u64) -> u64 { let mut i: u64 = 0; let mut total: u64 = 0; loop { i += 1; if i > n { break; } if i % 2 == 0 { continue; } total += i; } total }",
+    "calls": [
+      {
+        "name": "odds",
+        "args": [
+          "0n"
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "odds",
+        "args": [
+          "5n"
+        ],
+        "expected": "9n"
+      },
+      {
+        "name": "odds",
+        "args": [
+          "6n"
+        ],
+        "expected": "9n"
+      }
+    ]
+  },
+  {
+    "name": "shadowing immutable local does not overwrite outer mutable binding",
+    "source": "pub fn scoped(n: u64) -> u64 { let mut result = n; if n > 0 { let result: u64 = 99; result; } result += 1; result }",
+    "calls": [
+      {
+        "name": "scoped",
+        "args": [
+          "0n"
+        ],
+        "expected": "1n"
+      },
+      {
+        "name": "scoped",
+        "args": [
+          "3n"
+        ],
+        "expected": "4n"
+      }
+    ]
+  },
+  {
+    "name": "compound assignment retains checked overflow and truncating division",
+    "source": "pub fn bump(n: u8) -> u8 { let mut result = n; result += 1; result } pub fn div(n: i64, d: i64) -> i64 { let mut result = n; result /= d; result }",
+    "calls": [
+      {
+        "name": "bump",
+        "args": [
+          "254n"
+        ],
+        "expected": "255n"
+      },
+      {
+        "name": "bump",
+        "args": [
+          "255n"
+        ],
+        "throws": "RangeError"
+      },
+      {
+        "name": "div",
+        "args": [
+          "-7n",
+          "3n"
+        ],
+        "expected": "-2n"
+      },
+      {
+        "name": "div",
+        "args": [
+          "1n",
+          "0n"
+        ],
+        "throws": "RangeError"
+      }
+    ]
+  },
+  {
+    "name": "immutable slice indexing checks usize bounds",
+    "source": "pub fn at(v: &[u64], index: usize) -> u64 { v[index] }",
+    "calls": [
+      {
+        "name": "at",
+        "args": [
+          [
+            "10n",
+            "20n"
+          ],
+          "1n"
+        ],
+        "expected": "20n"
+      },
+      {
+        "name": "at",
+        "args": [
+          [
+            "10n"
+          ],
+          "1n"
+        ],
+        "throws": "RangeError"
+      },
+      {
+        "name": "at",
+        "args": [
+          [
+            "10n"
+          ],
+          "9007199254740993n"
+        ],
+        "throws": "RangeError"
+      }
+    ]
+  },
+  {
+    "name": "named enum constructors and exhaustive typed match",
+    "source": "pub enum State { Ready, Waiting(u64) } pub fn code(s: State) -> u64 { match s { State::Ready => 0, State::Waiting(n) => n } }",
+    "calls": [
+      {
+        "name": "code",
+        "args": [
+          {
+            "$": "Ready"
+          }
+        ],
+        "expected": "0n"
+      },
+      {
+        "name": "code",
+        "args": [
+          {
+            "$": "Waiting",
+            "field0": "7n"
+          }
+        ],
+        "expected": "7n"
+      },
+      {
+        "name": "code",
+        "args": [
+          {
+            "$": "Other"
+          }
+        ],
+        "throws": "TypeError"
+      }
+    ]
+  },
+  {
+    "name": "immutable record construction field order and projection",
+    "source": "pub struct Pair { pub left: u64, pub right: u64 } pub fn swap(p: Pair) -> Pair { Pair { right: p.left, left: p.right } }",
+    "calls": [
+      {
+        "name": "swap",
+        "args": [
+          {
+            "$": "Pair",
+            "left": "2n",
+            "right": "5n"
+          }
+        ],
+        "expected": {
+          "$": "Pair",
+          "left": "5n",
+          "right": "2n"
+        }
+      }
+    ]
+  },
+  {
+    "name": "record literal evaluates fields in written order",
+    "source": "pub struct Pair { pub left: u64, pub right: u64 } fn fail_first() -> u64 { panic!(\"first\") } fn fail_second() -> u64 { panic!(\"second\") } pub fn build() -> Pair { Pair { right: fail_first(), left: fail_second() } }",
+    "calls": [
+      {
+        "name": "build",
+        "args": [],
+        "throws": "Error",
+        "message": "first"
+      }
+    ]
+  },
+  {
+    "name": "mutable primitive parameters and unit results",
+    "source": "pub fn step(mut n: u64) -> u64 { n += 1; n } pub fn unit() {}",
+    "calls": [
+      {
+        "name": "step",
+        "args": [
+          "3n"
+        ],
+        "expected": "4n"
+      },
+      {
+        "name": "unit",
+        "args": [],
+        "expected": null
+      }
+    ]
   }
 ]

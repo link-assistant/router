@@ -6,7 +6,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
 import { translateSource, sha256 } from '../translate.mjs';
-import { regenerate } from '../bulk.mjs';
+import { regenerate, trackedSource } from '../bulk.mjs';
+import { parseProgram, serializeProgram } from '../semantic-meta.mjs';
+import { parseRust, checkProgram } from '../extensions/data.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const cases = JSON.parse(readFileSync(new URL('../fixtures/portable-cases.json', import.meta.url)));
@@ -18,7 +20,7 @@ for (const fixture of cases) test(fixture.name, async () => {
   assert.equal(result.ir.counts.carried, 0);
   const { translated } = await load(result.javascript);
   for (const call of fixture.calls) {
-    if (call.throws) assert.throws(() => translated[call.name](...call.args.map(value)), { name: call.throws });
+    if (call.throws) assert.throws(() => translated[call.name](...call.args.map(value)), { name: call.throws, ...(call.message ? { message: call.message } : {}) });
     else assert.deepEqual(translated[call.name](...call.args.map(value)), value(call.expected));
   }
   for (const [name, expected] of Object.entries(fixture.constants ?? {})) assert.equal(translated[name], value(expected));
@@ -41,20 +43,53 @@ test('duplicate definitions and dependents are never executable', async () => {
   assert.equal(result.ir.items.filter(item => item.name === 'duplicate').length, 2);
 });
 
+test('typed constructors validate inputs and freeze records with ordinary proto-named fields', async () => {
+  const result = translateSource('pub enum State { Ready, Waiting(u8) } pub struct Weird { __proto__: u64 } pub fn field(value: Weird) -> u64 { value.__proto__ }');
+  assert.equal(result.ir.counts.executableTypes, 2);
+  assert.equal(result.ir.counts.executableConstructors, 3);
+  const { translated } = await load(result.javascript);
+  const record = translated.Weird(9n);
+  assert.ok(Object.isFrozen(record));
+  assert.ok(Object.hasOwn(record, '__proto__'));
+  assert.equal(Object.getPrototypeOf(record), Object.prototype);
+  assert.equal(translated.field(record), 9n);
+  assert.deepEqual(translated.State.Ready(), { $: 'Ready' });
+  assert.deepEqual(translated.State.Waiting(255n), { $: 'Waiting', field0: 255n });
+  assert.throws(() => translated.State.Waiting(256n), RangeError);
+  assert.throws(() => translated.State.Waiting('wrong'), TypeError);
+  assert.throws(() => { record.__proto__ = 4n; }, TypeError);
+});
+
+test('semantic target input round-trips declaration links without source bodies', () => {
+  const checked = checkProgram(parseRust('fn double(n: u64) -> u64 { n + n } fn main() {}'));
+  const serialized = serializeProgram(checked);
+  const reparsed = parseProgram(serialized);
+  assert.equal(serializeProgram(reparsed), serialized);
+  assert.equal(reparsed.declarations.get('double').body.k, 'binary');
+  assert.equal(reparsed.declarations.get('double').body.semantics, 'checked');
+  assert.ok(!serialized.includes('fn double'));
+  assert.throws(() => parseProgram(serialized.replace('checked-rust-semantic-meta-v1', 'opaque-source')), /invalid checked Rust semantic meta/u);
+  assert.throws(() => parseProgram(serialized + ' '), /noncanonical/u);
+});
+
 test('calls of a carried function stay carried transitively', () => {
   const result = translateSource('fn missing() -> u64 { extern_call() } fn middle() -> u64 { missing() } fn top() -> u64 { middle() }');
   assert.equal(result.ir.counts.executable, 0);
   assert.equal(result.ir.counts.carried, 3);
 });
 
-test('bounded generic lowering rejects non-exhaustiveness, mutation, closures and missing inference', async () => {
+test('bounded generic lowering rejects non-exhaustiveness, aggregate mutation, closures and missing inference', async () => {
   const sources = [
     'fn bad(v: Option<u64>) -> u64 { match v { Some(x) => x } }',
     'fn bad() -> Vec<u64> { let mut v = Vec::new(); v.push(1); v }',
     'fn bad(v: &[u64]) -> Vec<u64> { v.iter().map(|x| x + 1).collect() }',
-    'fn bad(v: u64) -> u64 { if v > 0 { return v; } 0 }',
     'fn bad() -> u64 { None.unwrap_or(1) }',
     'fn bad() -> u64 { panic!("must abort"); 7 }',
+    'fn bad(v: u64) -> u64 { v = 9; v }',
+    'fn bad(v: u64) -> u64 { let v = v; v += 1; v }',
+    'fn bad(v: u64) -> u64 { break; v }',
+    'fn bad(v: u64) -> u64 { while true { unknown_effect(); } v }',
+    'fn bad(v: u64) -> u64 { let x: u64 = { return 7; }; x }',
   ];
   for (const source of sources) {
     const result = translateSource(source);
@@ -156,7 +191,7 @@ test('all tracked Rust artifacts reconstruct source and all generated JS modules
   assert.equal(inventory.runtimeParity, false);
   for (const entry of inventory.sources) {
     const ir = JSON.parse(readFileSync(join(root, entry.targets.meta)));
-    const source = readFileSync(join(root, entry.source), 'utf8');
+    const source = trackedSource(root, entry.source);
     assert.equal(ir.items.map(item => item.source).join(''), source, entry.source);
     assert.equal(ir.sourceSha256, sha256(source), entry.source);
     const module = await import(pathToFileURL(join(root, entry.targets.javascript)));

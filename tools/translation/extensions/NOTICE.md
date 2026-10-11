@@ -14,8 +14,15 @@ exhaustive narrowing. `lexical.mjs` adapts Rust raw literals, ASCII continuation
 escapes and CRLF normalization with source-coordinate mapping.
 
 These are generic lowerings, not Router function substitutions. Unsupported
-effects, ambiguous names, unresolved dependencies, mutation and generic syntax
+effects, ambiguous names, unresolved dependencies, aggregate mutation and generic syntax
 continue to carry original source and diagnostics. Expected outcomes are
 independently authored in `../fixtures/portable-cases.json`, with official Rust
 contracts recorded in `../fixtures/rust-stdlib-sources.json`. No Rust compilation
 was used as validation. Inventory implementation hashes include these modules.
+
+`control.mjs` adds checked scalar statement nodes, lexical mutability, overflow-
+preserving compound assignments, loop exits, early returns and slice indexing.
+`data.mjs` adds module-local algebraic layouts, immutable record constructors
+and fields while preserving written field evaluation order. Target emission
+consumes the serialized/reparsed semantic program from `../semantic-meta.mjs`.
+No Rust, platform API, trait or async implementation is substituted.

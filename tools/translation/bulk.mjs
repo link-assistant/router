@@ -5,6 +5,17 @@ import { fileURLToPath } from 'node:url';
 import { translateSource, json, PIN, sha256 } from './translate.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'packages/javascript/generated/rust-draft', 'packages/typescript/generated/rust-draft'];
+// Sparse workers still translate the complete tracked census. A missing
+// skip-worktree file is read from this checkout's immutable HEAD, never omitted.
+// Missing ordinary working files must continue to fail rather than resurrecting
+// a user's deletion. NUL-delimited ls-files output handles unusual path names.
+export function trackedSource(root, path) {
+  const absolute = join(root, path);
+  if (existsSync(absolute)) return readFileSync(absolute, 'utf8');
+  const records = execFileSync('git', ['ls-files', '-v', '-z', '--', path], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean);
+  if (!records.some(record => record.startsWith('S ') && record.slice(2) === path)) return readFileSync(absolute, 'utf8');
+  return execFileSync('git', ['show', `HEAD:${path}`], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+}
 function files(root) {
   if (!existsSync(root)) return [];
   return readdirSync(root, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? files(join(root, entry.name)) : [join(root, entry.name)]);
@@ -18,10 +29,10 @@ export function regenerate({ root, check = false, sources } = {}) {
   const diagnostics = new Map();
   const coverage = () => ({ topLevelFunctions: 0, executableFunctions: 0, carriedFunctions: 0, refusalCategories: {} });
   const functionCoverage = { scope: 'top-level fn items; nested declarations inside carried enclosing items are excluded', productionPathRule: 'src/ paths excluding names containing tests or test_support', all: coverage(), production: coverage() };
-  const totals = { sources: paths.length, executable: 0, executableFunctions: 0, executableConstants: 0, carried: 0, preserved: 0 };
+  const totals = { sources: paths.length, executable: 0, executableFunctions: 0, executableConstants: 0, executableTypes: 0, executableConstructors: 0, carried: 0, preserved: 0 };
   for (const path of paths) {
     if (path.split('/').includes('..') || path.startsWith('/')) throw new Error(`source must be repository relative: ${path}`);
-    const source = readFileSync(join(root, path), 'utf8');
+    const source = trackedSource(root, path);
     const result = translateSource(source, path);
     const stem = path.replace(/\.rs$/u, '');
     const targets = { meta: `${OUTPUT_ROOTS[0]}/${stem}.meta.json`, javascript: `${OUTPUT_ROOTS[1]}/${stem}.mjs`, typescript: `${OUTPUT_ROOTS[2]}/${stem}.ts` };
@@ -29,7 +40,7 @@ export function regenerate({ root, check = false, sources } = {}) {
     expected.set(targets.javascript, result.javascript);
     expected.set(targets.typescript, result.typescript);
     inventory.push({ source: path, sha256: result.ir.sourceSha256, bytes: result.ir.sourceBytes, ...result.ir.counts, runtimeParity: false, targets });
-    for (const key of ['executable', 'executableFunctions', 'executableConstants', 'carried', 'preserved']) totals[key] += result.ir.counts[key];
+    for (const key of ['executable', 'executableFunctions', 'executableConstants', 'executableTypes', 'executableConstructors', 'carried', 'preserved']) totals[key] += result.ir.counts[key];
     for (const item of result.ir.items) if (item.diagnostic) {
       const key = `${item.diagnostic.kind}: ${item.diagnostic.message}`;
       diagnostics.set(key, (diagnostics.get(key) ?? 0) + 1);
@@ -55,7 +66,7 @@ export function regenerate({ root, check = false, sources } = {}) {
       }
     }
   }
-  const implementation = ['tools/translation/translate.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
+  const implementation = ['tools/translation/translate.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/semantic-meta.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
   const translatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory };

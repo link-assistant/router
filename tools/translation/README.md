@@ -14,7 +14,9 @@ Each source produces one compact source-bearing structural meta JSON in
 `packages/typescript/generated/rust-draft`. Source text is stored only in the
 meta JSON. Source and item SHA-256 hashes, UTF-16 and UTF-8 spans, diagnostics,
 checked semantic IR, encodings and assumptions remain reviewable there.
-The inventory counts executable functions separately from constants.
+The inventory counts executable functions, constants, type layouts and
+constructor factories separately. Targets consume a serialized and reparsed
+checked semantic program; only structural meta retains source text.
 `parity/rust-source-inventory.json` exhaustively records source provenance,
 output paths, diagnostic frequencies, and executable/carried/preserved
 counts. Its name does **not** make draft artifacts runtime parity evidence:
@@ -32,7 +34,7 @@ all generated functions have explicit parameter annotations.
 Carried constructs retain exact original source with a structured diagnostic;
 they create no callable stub or successful fake behavior. An unsupported
 dependency carries every caller. Duplicate declarations are ambiguous and
-carried. Async/Tokio, I/O, platform APIs, mutable data, traits/impls, external
+carried. Async/Tokio, I/O, platform APIs, mutable aggregates, traits/impls, external
 modules, unbounded generics, closures, conditional compilation and
 test attributes remain boundaries. Nested declarations remain inside their
 carried enclosing source item. The structural scanner is not a full Rust
@@ -47,7 +49,17 @@ and comparison, string byte length, scalar count, immutable vec! literals,
 Vec::new, and slice/array measurements. Monomorphic Option/Result values
 support typed constructors, exhaustive match, predicates and eager unwrap_or.
 Generic inference beyond explicit expected types, mutable vectors, indexing,
-iterator closures and early returns remain carried. Arguments reject lone
+iterator closures remain carried. Checked scalar locals and parameters support
+assignment, compound arithmetic, while/loop, unlabelled break/continue, statement
+if/else and early returns. Slice indexing validates usize bounds and preserves
+out-of-bounds aborts. Unit functions return null. Value expressions containing
+nonlocal exits remain refused to prevent IIFE control-flow errors.
+
+Module-local enum layouts and immutable named/tuple/unit structs now emit
+typed constructor factories. Struct fields and literal shorthand are checked;
+literal fields evaluate in written order before layout reordering. Only accepted
+non-behavioral derives are allowed. Unknown field types and unresolved dependencies
+remain refused, and constructors do not implement external derive or trait APIs. Arguments reject lone
 surrogates, wrong tags and out-of-range fixed integers. Raw literals and Rust
 ASCII line continuations normalize semantically while meta source remains exact.
 Pure const fn lowers runtime calls only. See [extensions/NOTICE.md](extensions/NOTICE.md)

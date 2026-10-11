@@ -11,7 +11,7 @@ const MAPS = new Set(['trim', 'trim_start', 'trim_end', 'to_ascii_lowercase', 't
 const TESTS = new Set(['eq_ignore_ascii_case', 'is_empty', 'is_ascii']);
 const USIZE = fixed(64, false);
 
-class StringRustParser extends RustParser {
+export class StringRustParser extends RustParser {
   constructor(tokens) {
     super(tokens);
     this.genericTypes = new Map();
@@ -155,7 +155,7 @@ class StringRustParser extends RustParser {
   }
 }
 
-class StringChecker extends Checker {
+export class StringChecker extends Checker {
   normalisePattern(pattern, type, span) {
     if (pattern.k === 'ctor' && type.kind === 'data' && /^Router(?:Option|Result)_/u.test(type.name) && pattern.path.length <= 2 && ['Some', 'None', 'Ok', 'Err'].includes(pattern.path.at(-1))) {
       pattern = { ...pattern, path: [type.name, pattern.path.at(-1)] };
@@ -199,7 +199,7 @@ class StringChecker extends Checker {
   }
 }
 
-class StringEmitter extends JavaScriptEmitter {
+export class StringEmitter extends JavaScriptEmitter {
   constructor(program, state) {
     super(program, state);
     this.routerHelpers = new Set();
