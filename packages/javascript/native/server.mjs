@@ -11,6 +11,12 @@ import { createNativeService } from './native-service.mjs';
 import {managementOperation} from './http-management.mjs';
 import {relayWebSocket} from './websocket-relay.mjs';
 import {UsageTracker} from './usage.mjs';
+import {activityResponse} from './activitypub.mjs';
+import {githubConfiguration,relayGithub} from './github-proxy.mjs';
+import {relayGit} from './git-proxy.mjs';
+import {serveAdminAsset,hardenAdmin} from './admin-assets.mjs';
+import {matchHTTPRoute,HTTP_ROUTES} from './http-route-contract.mjs';
+import {isIP} from 'node:net';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -66,7 +72,7 @@ function relayHeaders(upstream) {
   for (const [key, value] of upstream.headers) if (/^(?:x-request-id|request-id|retry-after|x-ratelimit-[a-z_-]+|anthropic-ratelimit-[a-z_-]+)$/.test(key)) result[key] = value;
   return result;
 }
-async function boundedJSON(request, maxBytes) {
+async function boundedJSON(request, maxBytes,objectOnly=true) {
   if (!request.body) throw new ProtocolError('Request body is required');
   const length = Number(request.headers.get('content-length'));
   if (Number.isFinite(length) && length > maxBytes) throw new ProtocolError('Request body exceeds limit', 413);
@@ -74,7 +80,7 @@ async function boundedJSON(request, maxBytes) {
   try { while (true) { const { value, done } = await reader.read(); if (done) break; total += value.byteLength; if (total > maxBytes) { await reader.cancel(); throw new ProtocolError('Request body exceeds limit', 413); } parts.push(value); } }
   finally { reader.releaseLock(); }
   let value; try { value = JSON.parse(Buffer.concat(parts).toString('utf8')); } catch { throw new ProtocolError('Request body must contain valid JSON'); }
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new ProtocolError('Request body must be a JSON object');
+  if (objectOnly && (!value || typeof value !== 'object' || Array.isArray(value))) throw new ProtocolError('Request body must be a JSON object');
   return value;
 }
 const retryStatuses = new Set([401, 403, 408, 429, 500, 502, 503, 504, 529]);
@@ -87,6 +93,9 @@ export function createNativeRouter(options = {}) {
   const useTLS=Boolean(tlsConfig.tls_self_signed || tlsConfig.tlsSelfSigned || tlsConfig.tls_cert || tlsConfig.tlsCert || tlsConfig.tls_key || tlsConfig.tlsKey || tlsConfig.https || tlsConfig.tls || (Array.isArray(tlsConfig.listeners) ? tlsConfig.listeners : Object.values(tlsConfig.listeners ?? {})).some(listener=>listener?.tls || listener?.https || listener?.protocol === 'https' || typeof listener === 'string' && listener.startsWith('https:')));
   const responseStore = options.responseStore ?? new ResponsesStore({ clock, ...options.responseStoreOptions });
   const logs = []; const counters = { requests: 0, failures: 0, upstream_attempts: 0, input_tokens: 0, output_tokens: 0 };
+  const peers=new WeakMap();
+  const listenerKind=options.listenerKind ?? (core.config?.inference_only ? 'inference-only':'combined');
+  let githubConfig;
   let server;
   const configuration = () => core.config ?? options.config ?? {};
   const errorResponse = (error, protocol) => {
@@ -133,7 +142,9 @@ export function createNativeRouter(options = {}) {
     const open=['/api/management/admin/status','/api/management/admin/bootstrap','/api/management/admin/bootstrap/confirm'].includes(path);
     if(open) {const result=await managementOperation(core,request,path,request.body ? await boundedJSON(request,maxBodyBytes) : {});if(result === undefined)throw new ProtocolError('Route not found',404);return json(result);}
     if(path.startsWith('/api/management/login') && configuration().login?.enabled === false)throw new ProtocolError('Route not found',404);
-    const adminClaims = await authorize(request, true);
+    let adminClaims;
+    try {adminClaims = await authorize(request, true);}catch(error){error.managementAuthenticationFailure=true;throw error;}
+    core.managementAccess?.success(peers.get(request) ?? options.peer);
     const method = request.method, body = ['POST', 'PATCH'].includes(method) ? request.body ? await boundedJSON(request, maxBodyBytes) : {} : undefined;
     const delegated=await managementOperation(core,request,path,body);if(delegated !== undefined)return json(delegated);
     if (path === '/api/management/tokens' && method === 'GET') return json({ data: redact(await core.tokens.list()) });
@@ -316,16 +327,42 @@ export function createNativeRouter(options = {}) {
     } catch (error) { await settle(); throw error; }
   }
   async function handle(request) {
+    const incomingMethod=request.method;
+    const head=request.method === 'HEAD';
+    if(head){const original=request;request=new Request(original,{method:'GET'});if(peers.has(original))peers.set(request,peers.get(original));}
     const path = new URL(request.url).pathname, service = serviceOf(path), source = service === 'gemini' || service === 'vertex' && !path.includes('/publishers/anthropic/') ? 'gemini' : service === 'anthropic' || service === 'bedrock' || path.includes('/publishers/anthropic/') || path.endsWith('/messages') ? 'anthropic' : path.endsWith('/responses') ? 'responses' : 'chat';
+    const adapter=path.startsWith('/api/v3/') || path==='/api/graphql' || path.startsWith('/git/');
     const started = clock(); counters.requests++;
     let response;
     try {
+      const managementPath=path === '/api/management' || path.startsWith('/api/management/');
+      if(listenerKind === 'admin' && !managementPath)response=await serveAdminAsset(request,{directory:options.adminAssetDirectory});
+      else {
+      const privateService=path.startsWith('/api/services/activitypub/') || path.startsWith('/api/services/github/');
+      if(listenerKind === 'admin' && !managementPath || listenerKind === 'inference-only' && (managementPath || privateService || adapter) || listenerKind === 'github-adapter' && !adapter || listenerKind === 'combined' && adapter)throw new ProtocolError('Route not found',404);
+      if(configuration().enable_openai_api === false && ['openai','codex','qwen','gemini'].includes(service) || configuration().enable_anthropic_api === false && (service === 'anthropic' || service === 'bedrock' || path.includes('/publishers/anthropic/')))throw new ProtocolError('Route not found',404);
+      if(managementPath) {
+        const peer=(peers.get(request) ?? options.peer)?.replace(/^::ffff:/,'');
+        if(!peer || !isIP(peer))throw new ProtocolError('management requires socket peer metadata',403);
+        const config=core.managementAccess?.config?.() ?? {allow_remote:configuration().management?.allow_remote};
+        if(listenerKind !== 'admin' && !config.allow_remote && peer !== '::1' && !peer.startsWith('127.'))throw new ProtocolError('remote management requires MANAGEMENT_ALLOW_REMOTE / --management-allow-remote or the admin listener',403);
+        const remaining=core.managementAccess?.check(peer);
+        if(remaining) {const error=new ProtocolError('management authentication temporarily locked for this client IP',429);error.retryAfter=remaining;throw error;}
+        if(!matchHTTPRoute(request.method,path) && HTTP_ROUTES.some(route=>matchHTTPRoute(route.method,path)))throw new ProtocolError('Method not allowed',405);
+      }
       if (['/health', '/api/health'].includes(path) && request.method === 'GET') response = new Response('ok', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
       else if(path === '/api/run-lease' && request.method === 'POST') {
         const claims=await authorize(request,false);if(!core.tokens?.renewRunLease)throw new ProtocolError('This credential has no renewable live run lease',409);
         response=json({run_lease_expires_at:await core.tokens.renewRunLease(claims.sub ?? claims.id)});
       }
       else if (path.startsWith('/api/management/')) response = await management(request, path);
+      else if(path.startsWith('/api/services/activitypub/')) {response=await activityResponse(request,configuration(),value=>boundedJSON(value,maxBodyBytes,false));if(!response)throw new ProtocolError('Route not found',404);}
+      else if(path.startsWith('/api/services/github/') || adapter) {
+        githubConfig ??= githubConfiguration(configuration(),options.env ?? core.env ?? {});
+        const config=await githubConfig;if(!config.token)throw new ProtocolError('Route not found',404);
+        const claims=await authorize(request,false),relay=path.startsWith('/git/') || path.startsWith('/api/services/github/git/') ? relayGit:relayGithub;
+        response=await relay(request,{config,claims,fetch:upstreamFetch,maxBodyBytes,maxResponseBytes,timeoutMs});
+      }
       else if (path.startsWith('/api/services/gemini/v1beta/models') && request.method === 'GET') {
         const claims=await authorize(request,false), entries=await models(request,claims);
         const project = model => Object.fromEntries(Object.entries({name:model.id,...(model.raw ?? model)}).filter(([key])=>['name','baseModelId','version','displayName','description','inputTokenLimit','outputTokenLimit','supportedGenerationMethods','temperature','maxTemperature','topP','topK'].includes(key)));
@@ -371,8 +408,21 @@ export function createNativeRouter(options = {}) {
       }
       else if (/^\/api\/services\/(?:openai|anthropic|codex|qwen)(?:\/|$)/.test(path)) response = await nativeService.fetch(request);
       else throw new ProtocolError('Route not found', 404);
-    } catch (error) { counters.failures++; response = errorResponse(error, source); }
-    logs.push({ time: started, method: request.method, path, status: response.status, duration_ms: clock() - started }); if (logs.length > 1000) logs.shift();
+      }
+    } catch (error) {
+      counters.failures++;
+      if(error.managementAuthenticationFailure || path === '/api/management/admin/bootstrap/confirm' && error.status === 401) {
+        const peer=(peers.get(request) ?? options.peer)?.replace(/^::ffff:/,'');
+        await core.managementAccess?.failure(peer);
+        const retryAfter=core.managementAccess?.check(peer);if(retryAfter){error=new ProtocolError('management authentication temporarily locked for this client IP',429);error.retryAfter=retryAfter;}
+      }
+      response=path.startsWith('/api/services/github/') || adapter ? json({message:error.message},error.status ?? 500) : errorResponse(error,source);
+      if(error.retryAfter)response.headers.set('retry-after',String(error.retryAfter));
+    }
+    if(path === '/api/management/admin/bootstrap/confirm' && response.ok)core.managementAccess?.success((peers.get(request) ?? options.peer)?.replace(/^::ffff:/,''));
+    if(listenerKind === 'admin')hardenAdmin(response);
+    if(head){await response.body?.cancel();response=new Response(null,{status:response.status,headers:response.headers});}
+    logs.push({ time: started, method: incomingMethod, path, status: response.status, duration_ms: clock() - started }); if (logs.length > 1000) logs.shift();
     return response;
   }
   const router = {
@@ -398,12 +448,14 @@ export function createNativeRouter(options = {}) {
         try {
           const headers = new Headers(); for (const [key, value] of Object.entries(incoming.headers)) if (value !== undefined) headers.set(key, Array.isArray(value) ? value.join(', ') : value);
           const request = new Request(`${useTLS ? 'https':'http'}://${host.includes(':') ? `[${host}]` : host}:${server.address().port}${incoming.url}`, { method: incoming.method, headers, signal: controller.signal, ...(['GET', 'HEAD'].includes(incoming.method) ? {} : { body: Readable.toWeb(incoming), duplex: 'half' }) });
+          peers.set(request,incoming.socket.remoteAddress);
           const result = await handle(request); outgoing.writeHead(result.status, Object.fromEntries(result.headers));
           if (!result.body) outgoing.end(); else Readable.fromWeb(result.body).on('error', () => outgoing.destroy()).pipe(outgoing);
         } catch { if (!outgoing.headersSent) outgoing.writeHead(500, JSON_HEADERS); outgoing.end(JSON.stringify({ error: { message: 'Router request failed' } })); }
       };
       server=useTLS ? createHTTPSServer(secureOptions,serve) : createServer(serve);
       server.on('upgrade',(incoming,socket,head)=>{
+        if(!['combined','inference-only'].includes(listenerKind)){socket.end('HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');return;}
         const headers=new Headers();for(const [name,value] of Object.entries(incoming.headers))if(value !== undefined)headers.set(name,Array.isArray(value)?value.join(', '):value);
         const request=new Request(`${useTLS?'https':'http'}://${host.includes(':')?`[${host}]`:host}:${server.address().port}${incoming.url}`,{headers});
         relayWebSocket(incoming,socket,head,{target:()=>nativeService.websocketTarget(request),authorize:model=>authorize(request,false,model),core,maxMessageBytes:maxBodyBytes,timeoutMs:Math.min(timeoutMs,15000)}).catch(()=>socket.destroy());

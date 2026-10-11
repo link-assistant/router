@@ -48,7 +48,7 @@ test('bounded failover retries transient errors and leaves request errors alone'
 });
 test('authentication, model discovery, administrative mutation and redaction', async () => {
   let issued;
-  const router = createNativeRouter({ core: core({ tokens: { list: () => [{ id: 'one', token: 'private' }], issue: value => { issued = value; return { token: 'issued' }; } }, providers: { list: () => [{ name: 'a', api_key: 'secret' }] } }) });
+  const router = createNativeRouter({ peer:'127.0.0.1', core: core({ tokens: { list: () => [{ id: 'one', token: 'private' }], issue: value => { issued = value; return { token: 'issued' }; } }, providers: { list: () => [{ name: 'a', api_key: 'secret' }] } }) });
   assert.equal((await router.fetch(new Request('http://router/v1/models'))).status, 401);
   const listed = await router.fetch(new Request('http://router/v1/models', { headers: { authorization: 'Bearer client-secret' } })); assert.equal((await listed.json()).data[0].id, 'alias');
   assert.equal((await router.fetch(request('/api/management/tokens', {}))).status, 401);

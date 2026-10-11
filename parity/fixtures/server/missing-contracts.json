@@ -4,15 +4,15 @@
   "missing": [
     "all canonical routes require independent fixtures before promotion",
     "native resources: Codex plugin references/privateaccountbindings/remotecontrol/history-notes semantics and list pagination",
-    "conversation item-list creation records and resource deletion cascades",
     "Gemini thinking, exact image/media/schema alias/error contracts and full provider entitlement matrix",
     "Bedrock/Vertex exact retry/cooldown/settlement and complete route fixtures",
     "background/previous response durable capture and stream resume",
     "WebSocket sideband exact URL rewriting, close/abort/error/subprotocol fixtures and budget settlement edgecases",
-    "listener isolation/management middleware, full CORS and HEAD methods",
     "admin bootstrap/login/emergency-auth/observability callbacks depend on core services",
-    "ActivityPub/GitHub forwarding",
-    "foreground Responses durable state and disconnect retention semantics"
+    "foreground Responses durable state and disconnect retention semantics",
+    "listener all-or-nothing multi-bind/admin/unix socket runtime orchestration and management persistence integration",
+    "GitHub API/Git interruption, upstream compare failure and audit log fixtures",
+    "public management feature switches and full route error/observability source contracts"
   ],
   "implemented_subsets": [
     "canonical 368-method route matcher",
@@ -22,6 +22,11 @@
     "Gemini strict JSON function/system/generation bridges, six additional SSE directions, Code Assist native route",
     "native TLS listener and generated self-signed certificates",
     "native Responses/Realtime WebSocket tunnel, bounded RFC6455 inspection, model/budget checks",
-    "canonical management token/provider wire wrappers and rotation routes"
+    "canonical management token/provider wire wrappers and rotation routes",
+    "ActivityPub exact actor/collections/follow documents and inbox validation",
+    "GitHub API credential-source precedence, repository scope, destructive REST/GraphQL policy and opaque HTTP relay",
+    "Git smart HTTP pkt-line policy and fail-closed upstream ancestry mediation",
+    "admin embedded UI bytes and security headers",
+    "HEAD methods, listener route isolation and actual socket-peer management gating/lockout callbacks"
   ]
 }
