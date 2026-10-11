@@ -99,6 +99,18 @@ function tree(declarations) {
   return root.items;
 }
 
+function captureGenericDeclarations(declarations,parser,module,globalSpan,offset){
+  const origin={file:module.file,path:[...module.path]};
+  for(const type of parser.genericTypes.values()){
+    const previous=declarations.find(candidate=>candidate.name===type.name&&candidate.path.length===0);
+    if(previous){
+      if(previous.term==='generated-type'&&!previous.sourceModuleOrigins.some(candidate=>moduleScopeKey(candidate)===moduleScopeKey(origin)))previous.sourceModuleOrigins.push(origin);
+      continue;
+    }
+    declarations.push({file:module.file,path:[],sourceModuleOrigins:[origin],name:type.name,term:'generated-type',globalSpan,surface:relocate(type,offset)});
+  }
+}
+
 function flatten(program) {
   const names = new Map([...program.declarations.keys()].map(name => [name, `rp_${Buffer.from(name).toString('hex')}`]));
   const visit = node => {
@@ -191,7 +203,7 @@ export function translateProject(options) {
         const semantic=relocate(surface,base);
         linkProjectDeclaration(parser,surface,semantic,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:module.offset,path:module.path,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
         declarations.push({ file: module.file, path: module.path, name: [...module.path, item.name].join('.'), term: item.term, span: { start: item.start, end: item.end }, globalSpan: { start: base, end: module.offset + item.end }, surface: semantic });
-        for (const type of parser.genericTypes.values()) if (!declarations.some(candidate => candidate.name === type.name && candidate.path.length === 0)) declarations.push({ file: module.file, path: [], name: type.name, term: 'generated-type', globalSpan: { start: base, end: module.offset + item.end }, surface: relocate(type, base) });
+        captureGenericDeclarations(declarations,parser,module,{start:base,end:module.offset+item.end},base);
       } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, module: module.path, name: item.name, term: item.term, ...diagnostic(error) }); }
     }
   }
@@ -231,7 +243,7 @@ export function translateProject(options) {
           surface.impl = {type:{kind:'named',path:qualifiedType},method:method.name,receiver:method.receiver,receiverName:lowered.receiverName,...(lowered.sharedReceiverSource?{sharedReceiverSource:lowered.sharedReceiverSource}:{}),...(certificate?{copyCertificate:certificate}:{}),rewrites:lowered.rewrites,assumptions:lowered.assumptions};
           const globalSpan = {start:module.offset+method.span.start,end:module.offset+method.span.end};
           declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:(()=>{const value=relocate(surface,module.offset);if(certificate)value.impl.copyCertificate=certificate;return value;})()});
-          for (const type of parser.genericTypes.values()) if (!declarations.some(candidate=>candidate.name === type.name && candidate.path.length === 0)) declarations.push({file:module.file,path:[],name:type.name,term:'generated-type',globalSpan,surface:relocate(type,module.offset)});
+          captureGenericDeclarations(declarations,parser,module,globalSpan,module.offset);
         } catch(error) {if(!(error instanceof TranslationError))throw error;refused.push({file:module.file,name:display,term:'method',...diagnostic(error)});}
       }
     }

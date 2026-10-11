@@ -33,7 +33,7 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
   const resolve=(qualifiedType,module,span)=>{try{return checker.resolveType({kind:'named',path:qualifiedType},module.path,span);}catch(error){if(!(error instanceof TranslationError))throw error;return null;}};
   const certify=(type,span)=>{
     const owners=new Set(),seen=new Set();
-    const visit=current=>{if(current.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;const declaration=active.find(declaration=>declaration.name===current.name);if(declaration)owners.add(moduleScopeKey({file:declaration.file,path:declaration.path}));for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
+    const visit=current=>{if(current.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;const declaration=active.find(declaration=>declaration.name===current.name);if(declaration)for(const origin of declaration.sourceModuleOrigins??[{file:declaration.file,path:declaration.path}])owners.add(moduleScopeKey(origin));for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
     const ownerModules=modules.filter(module=>owners.has(moduleScopeKey(module)));
     const relevant=modules.filter(candidate=>ownerModules.some(owner=>candidate.path.every((name,index)=>owner.path[index]===name)));
     const evidence=relevant.map(module=>macroProvenance(module.source));

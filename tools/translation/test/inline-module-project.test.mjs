@@ -76,3 +76,19 @@ test('whole unchanged diagnostic module translates all 18 original reason consta
   await verifyTypedTargets(result,api=>{for(const [name,value]of Object.entries(expected))assert.equal(api['reason.'+name],value);});
   assert.ok(result.meta.refused.length);assert.equal(result.meta.runtimeParity,false);
 });
+
+test('deduplicated standard generic layouts retain both sibling original Copy owner scopes',{timeout:30_000},async()=>{
+  const leaf='#[derive(Clone,Copy)]pub struct Item{pub value:Option<u8>}impl Item{pub fn get(self)->Option<u8>{self.value}}';
+  const source=`mod outer {pub mod left {${leaf}}pub mod right {${leaf}}}pub fn left()->u8{outer::left::Item{value:Some(3)}.get().unwrap_or(0)}pub fn right()->u8{outer::right::Item{value:Some(9)}.get().unwrap_or(0)}`;
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  assert.deepEqual(result.meta.checkedMethods.map(method=>method.name).sort(),['outer.left.Item.get','outer.right.Item.get']);
+  await verifyTypedTargets(result,api=>{assert.equal(api.left(),3n);assert.equal(api.right(),9n);});
+});
+
+test('external-file inline generic method wrappers retain their actual source owner',{timeout:30_000},async()=>{
+  const sources={'src/lib.rs':'mod outer;pub fn result()->u8{outer::inner::Item{value:Some(5)}.get().unwrap_or(0)}',
+    'src/outer.rs':'pub mod inner {#[derive(Clone,Copy)]pub struct Item{pub value:Option<u8>}impl Item{pub fn get(self)->Option<u8>{self.value}}}'};
+  const result=translateProject(options(sources));assert.deepEqual(result.meta.refused,[]);
+  assert.equal(result.meta.checkedMethods.length,1);assert.equal(result.meta.checkedMethods[0].name,'outer.inner.Item.get');assert.equal(result.meta.checkedMethods[0].source,'src/outer.rs');
+  await verifyTypedTargets(result,api=>assert.equal(api.result(),5n));
+});

@@ -40,6 +40,9 @@ test('sealed actual derive attributes retain layout source and do not implement 
   assert.throws(()=>configureDeriveLayout(new HostRustParser(tokenizeRust(slice)),structuredClone(certificate),slice,certificate.span.start),/Unsealed/);
   assert.throws(()=>configureDeriveLayout(new HostRustParser(tokenizeRust(slice+' ')),certificate,slice+' ',certificate.span.start),/mismatched/);
   assert.throws(()=>configureDeriveLayout(new HostRustParser(tokenizeRust(slice)),certificate,slice,certificate.span.start+1),/mismatched/);
+  const scoped=()=>{const parser=new HostRustParser(tokenizeRust(slice));parser.sourceNamespaceEvidence={source:certificate.source,module:[...certificate.module]};parser.compilationProfile=certificate.compilationProfile;return parser;};
+  assert.equal(configureDeriveLayout(scoped(),certificate,slice,certificate.span.start).sourceNamespaceEvidence.source,certificate.source);
+  for(const changed of [parser=>{parser.sourceNamespaceEvidence.module=['other'];},parser=>{parser.sourceNamespaceEvidence.source='src/other.rs';},parser=>{parser.compilationProfile=null;}]){const parser=scoped();changed(parser);assert.throws(()=>configureDeriveLayout(parser,certificate,slice,certificate.span.start),/original module/);}
   await verifyTypedTargets(result,api=>assert.equal(api.value(),7n));
   const invalid=project({'src/lib.rs':'use serde::Serialize; #[derive(Serialize)] pub struct Entry {value:u8} pub fn bad(value:Entry)->String {value.to_string()}'});
   assert.equal(invalid.meta.executable.some(entry=>entry.name==='bad'),false);

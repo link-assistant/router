@@ -12,10 +12,10 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const contexts=new WeakMap(),certificates=new WeakMap();
 const key=path=>path.join('::');
-const invocationId=(file,item)=>file+':'+item.start+':'+item.end;
+const invocationId=(module,item)=>moduleScopeKey(module)+':'+item.start+':'+item.end;
 const standardOwner=(path,scope)=>path.length===1&&STANDARD_LAYOUT_DERIVES.has(path[0])&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.name===path[0]&&binding.macroKind!=='bang');
-function originalDeclarationHeader(item,condition,source) {
-  if(inertInnerLintItem(item,source))return true;
+function originalDeclarationHeader(item,condition,module) {
+  if(inertInnerLintItem(item,module.source,module.sourceView))return true;
   const tokens=item.tokens.filter(token=>token.type!=='comment'),end=condition.attributes.at(-1)?.span.end??item.start;
   let at=tokens.findIndex(token=>token.start>=end);
   if(tokens[at]?.text==='pub') {
@@ -71,7 +71,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
     attributeClosure.set(moduleScopeKey(module),scope.configurationCondition==='active'&&module.items.every(candidate=>{
       const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
       if(inputs.has(candidate.start))return inputs.get(candidate.start).derives.every(invocation=>standardOwner(invocation.path,scope)||actualOwner(invocation.path,scope,scopes,external,dependencies));
-      return condition.attributes.every(attribute=>['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module.source);
+      return condition.attributes.every(attribute=>['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module);
     })&&!scope.unresolvedImports.some(entry=>entry.glob));
   }
   const root=scopes.get('crate');
@@ -110,8 +110,8 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
         for(const helper of input.attributes.filter(attribute=>attribute.helpers)) {
           if(helper.name==='schemars'&&!owners.some(owner=>owner.target[0]==='schemars')||helper.name==='serde'&&!owners.some(owner=>['serde','schemars'].includes(owner.target[0])))throw new TypeError('Helper attribute lacks an actual declaring derive owner');
         }
-        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs have one anonymous const group; standard error outputs cannot introduce names. Original data and inert helper syntax remain unchanged.'};
-        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});certificates.set(certificate,{dependencies,input,source:module.source});byId.set(invocationId(module.file,item),certificate);
+        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs have one anonymous const group; standard error outputs cannot introduce names. Original data and inert helper syntax remain unchanged.'};
+        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView});byId.set(invocationId(module,item),certificate);
       } catch(error){diagnostics.push({source:module.file,span:{start:item.start,end:item.end},name:item.name,message:error.message});}
     }
   }
@@ -121,9 +121,13 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
 
 export function deriveFootprintAt(context,module,item) {
   const state=contexts.get(context);if(!state)throw new TypeError('Unsealed derive footprint context');
-  const certificate=state.byId.get(invocationId(module.file,item));
+  const certificate=state.byId.get(invocationId(module,item));
   if(!certificate)return null;
   if(certificate.sourceSha256!==hash(module.source)||certificate.itemSha256!==hash(module.source.slice(item.start,item.end)))throw new TypeError('Derive certificate no longer matches original source');
+  const suppliedProfile=Object.hasOwn(module,'compilationProfile')?compilationProfile(module.compilationProfile):context.compilationProfile;
+  if(certificates.get(certificate).sourceView!==module.sourceView||JSON.stringify(suppliedProfile)!==JSON.stringify(certificate.compilationProfile))throw new TypeError('Derive certificate original module view or compilation profile changed');
+  const original=originalSourceModuleItems(module).find(candidate=>candidate.start===item.start&&candidate.end===item.end);
+  if(!original||original.term!==item.term||original.name!==item.name||JSON.stringify(original.tokens)!==JSON.stringify(item.tokens))throw new TypeError('Derive certificate invocation differs from original module items');
   return certificate;
 }
 export function isDeriveFootprintCertificate(certificate){return !!certificate&&certificates.has(certificate);}

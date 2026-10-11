@@ -7,6 +7,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {deriveFootprintExternalModules} from '../derive-footprints.mjs';
+import {resolveModuleGraph} from '../project.mjs';
 const root=new URL('../source-profiles/derive/',import.meta.url);
 const inputs=()=>({manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8'),archives:new Map(DERIVE_SOURCE_PROFILE.packages.map(entry=>[entry.name+'@'+entry.version,readFileSync(new URL(entry.archive,root))])),standardCore:readFileSync(new URL(DERIVE_SOURCE_PROFILE.standardCore.archive,root))});
 const dependency=createDeriveDependencyProof(inputs());
@@ -28,9 +29,9 @@ test('actual qualified and imported derive owners certify independent namespace 
   const certificate=result.certificates[0];assert.equal(isDeriveFootprintCertificate(certificate),true);assert.equal(isDeriveFootprintCertificate(structuredClone(certificate)),false);
   assert.deepEqual(certificate.owners.map(owner=>owner.target),[['serde','Serialize'],['serde','Deserialize'],['schemars','JsonSchema']]);
   assert.deepEqual(certificate.dimensions,{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false});assert.equal(certificate.generatedImplBehavior,false);
-  const item=sourceItems(source).find(item=>item.term==='enum');assert.strictEqual(deriveFootprintAt(result,{file:'src/model.rs',source},item),certificate);
+  const module={file:'src/model.rs',source,path:['model'],compilationProfile:PRODUCTION_PROFILE},item=sourceItems(source).find(item=>item.term==='enum');assert.strictEqual(deriveFootprintAt(result,module,item),certificate);
   assert.strictEqual(assertDeriveFootprintCertificate(certificate,source.slice(item.start,item.end),item.start),certificate);
-  assert.throws(()=>deriveFootprintAt(structuredClone(result),{file:'src/model.rs',source},item),/Unsealed/);
+  assert.throws(()=>deriveFootprintAt(structuredClone(result),module,item),/Unsealed/);
   assert.throws(()=>assertDeriveFootprintCertificate(certificate,source.slice(item.start,item.end)+' ',item.start),/mismatched/);
 });
 
@@ -79,4 +80,26 @@ test('actual local packages unknown macro imports and custom core owners cannot 
   ])assert.equal(context(source,rootSource).certificates.length,0,source+' '+rootSource);
   assert.throws(()=>createDeriveFootprintContext({modules:[],dependencies:structuredClone(dependency)}),/sealed/);
   assert.throws(()=>createDeriveFootprintContext({modules:[],dependencies:dependency,externalModules:new Map([['evil',{bindings:[{name:'Imported',namespace:'macro',macroKind:'derive',target:['serde','Serialize'],deriveDependencyDigest:dependency.digest}]}]])}),/privately verified/);
+});
+
+test('same-file inline certificates preserve actual child lint owner path profile and private view',()=>{
+  const source='pub mod child {#![allow(dead_code)]use serde::Serialize;#[derive(Serialize)]pub enum Entry{Ready}}';
+  const graph=resolveModuleGraph({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
+  const proof=createDeriveFootprintContext({modules:graph.modules,dependencies:dependency,compilationProfile:PRODUCTION_PROFILE});
+  assert.deepEqual(proof.diagnostics,[]);assert.equal(proof.certificates.length,1);
+  const module=graph.modules.find(module=>module.path.join('.')==='child'),item=module.items.find(item=>item.term==='enum'),certificate=deriveFootprintAt(proof,module,item);
+  assert.equal(certificate,proof.certificates[0]);assert.deepEqual(certificate.module,['child']);assert.equal(certificate.sourceViewDigest,module.sourceView.digest);
+  assert.equal(deriveFootprintAt(proof,{...module,path:['other']},item),null);
+  for(const changed of [{sourceView:graph.modules[0].sourceView},{sourceView:structuredClone(module.sourceView)},{compilationProfile:null},{compilationProfile:{flags:{test:true}}}])assert.throws(()=>deriveFootprintAt(proof,{...module,...changed},item),/view|profile/);
+  const forged=structuredClone(item);forged.tokens[0].text='fn';assert.throws(()=>deriveFootprintAt(proof,module,forged),/invocation/);
+  assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);
+});
+
+test('same-file sibling derive aliases and package shadows do not share attribute closure',()=>{
+  const source='pub mod good {use serde::Serialize as Actual;#[derive(Actual)]pub enum Entry{Ready}}pub mod bad {mod serde {}#[derive(serde::Serialize)]pub enum Entry{Ready}}';
+  const graph=resolveModuleGraph({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
+  const proof=createDeriveFootprintContext({modules:graph.modules,dependencies:dependency,compilationProfile:PRODUCTION_PROFILE});
+  assert.deepEqual(proof.certificates.map(certificate=>certificate.module),[['good']]);
+  assert.ok(proof.diagnostics.some(entry=>entry.name==='Entry'));
+  const bad=graph.modules.find(module=>module.path.join('.')==='bad');assert.equal(deriveFootprintAt(proof,bad,bad.items.find(item=>item.term==='enum')),null);
 });

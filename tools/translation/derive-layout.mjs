@@ -1,6 +1,7 @@
 import {assertDeriveFootprintCertificate} from './derive-footprints.mjs';
 import {STANDARD_LAYOUT_DERIVES} from './derive-inputs.mjs';
 import {capturedRustTokenSource} from './extensions/lexical.mjs';
+import {compilationProfile} from './cfg-profile.mjs';
 
 const parserSources=new WeakMap();
 // A source certificate cannot authorize a fresh, caller-authored token array.
@@ -8,6 +9,8 @@ export function configureDeriveLayout(parser,certificate,source,offset=0) {
   assertDeriveFootprintCertificate(certificate,source,offset);
   const original=capturedRustTokenSource(parser.cursor.tokens);
   if(!original||original.source!==source)throw new TypeError('Derive layout requires unchanged tokenizer source');
+  const scope=parser.sourceNamespaceEvidence;
+  if(!scope||scope.source!==certificate.source||JSON.stringify(scope.module)!==JSON.stringify(certificate.module)||JSON.stringify(compilationProfile(parser.compilationProfile))!==JSON.stringify(certificate.compilationProfile))throw new TypeError('Derive layout requires its original module and compilation scope');
   parserSources.set(parser,{certificate,source,offset,tokens:parser.cursor.tokens});return parser;
 }
 
