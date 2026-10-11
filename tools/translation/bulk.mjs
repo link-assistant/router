@@ -98,6 +98,8 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   // not only descriptors containing their expected digests.
   implementation.push(...['derive-dependencies.mjs','derive-footprints.mjs','derive-helper-paths.mjs','derive-builtin-default.mjs','derive-inputs.mjs','derive-layout.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push('tools/translation/copy-trait-owners.mjs');
+  implementation.push(...['namespace-census.mjs','namespace-standard.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push(...['rust-std-lib-1.89.0.rs.gz','rust-alloc-lib-1.89.0.rs.gz','rust-alloc-fmt-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/namespace-standard/${name}`));
   implementation.push(...['tool-attributes.mjs','tool-attribute-layout.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...['rust-resolve-macros-1.89.0.rs.gz','rust-resolve-ident-1.89.0.rs.gz','rust-builtin-attrs-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/tool-attributes/${name}`));
   implementation.push(...['rust-marker-1.89.0.rs.gz','rust-fmt-1.89.0.rs.gz','rust-path-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/copy-standard/${name}`));
