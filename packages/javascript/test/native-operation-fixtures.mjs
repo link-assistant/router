@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import { NativeRouter, catalog, validateNativeResult } from '../native/operations.mjs';
 
 export const fixtureOperations = Object.freeze([
-  'auth.import', 'auth.claude', 'auth.codex', 'server.start', 'server.stop', 'server.status', 'server.use', 'server.claim', 'server.reap', 'server.remove',
+  'auth.import', 'auth.claude', 'auth.codex', 'auth.clear', 'auth.gh', 'server.start', 'server.stop', 'server.status', 'server.use', 'server.claim', 'server.reap', 'server.remove',
   'version', 'contracts', 'logs.show', 'logs.summary', 'logs.anomalies', 'tls.ca', 'tls.generate', 'accounts.list', 'accounts.pause', 'accounts.resume', 'accounts.policy',
   'tokens.import', 'tokens.issue', 'tokens.list', 'tokens.show', 'tokens.revoke', 'tokens.expire', 'tokens.rotate', 'tokens.recover-admin',
   'providers.list', 'providers.show', 'providers.add', 'providers.remove', 'providers.import', 'models.explain', 'serve', 'doctor', 'auth.status', 'clients.list','clients.show','clients.setup','clients.remove',
@@ -87,6 +87,8 @@ export async function runOperationFixtures() {
       assert.equal(health.status, 200);
     });
     await record('auth.status', {}, data => { assert.equal(data.api_key_providers[0].name, 'fixture'); assert.deepEqual(data.credentials.map(record=>record.provider),['claude','codex','gemini','qwen']); assert.ok(data.credentials.every(record=>['absent','unverified'].includes(record.state))); });
+    await record('auth.clear',{provider:'qwen',local:true},data=>{assert.ok(data.output.some(line=>line.includes('absent')));assert.match(data.output.at(-1),/local credentials only/);});
+    await record('auth.gh',{status:true,local:true},data=>{assert.match(data.output[0],/github credential: absent/);});
     const requests = join(directory, 'requests', 'fixture'); await mkdir(requests, { recursive: true });
     const logPath = join(requests, 'requests.jsonl');
     await writeFile(logPath, JSON.stringify({ correlation_id: 'operation-log', phase: 'client_response', status: 200 }) + '\n');

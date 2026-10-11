@@ -160,7 +160,7 @@ export class ProviderStore {
     return serialized(this.path,() => this.persistent ? withAdvisoryFileLock(rustLockPath(this.path),operationWithState) : operationWithState());
   }
   stage(input) {
-    const normalized = normalizeProvider({...input,name:typeof input.name === 'string' ? input.name.trim() : input.name},this.env);
+    const normalized = normalizeProvider({...input,name:typeof input.name === 'string' ? input.name.trim() : input.name},{});
     if (!['openai-compatible','lefine','z.ai-coding-plan'].includes(normalized.kind)) throw new RouterError('invalid_provider','Subscription services are configured separately from persisted providers');
     const { api_key, apiKey, protocol, if_absent, acknowledge_intermediary_risk, acknowledge_unsupported_clients, ...record } = normalized;
     record.intermediary_risk_acknowledged = input.acknowledge_intermediary_risk ?? input.intermediary_risk_acknowledged ?? false;

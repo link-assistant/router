@@ -57,3 +57,12 @@ test('provider add canonical client validation, atomic replacement and IfAbsent 
   assert.equal((await router.providers.show({name:'single',local:true})).data.base_url,'https://vendor.invalid');
   const specialized=await router.execute('providers.add',{name:'special',kind:'lefine',base_url:'https://special.invalid',local:true});assert.equal(specialized.success,false);assert.match(specialized.diagnostics.join(),/reviewed live catalog probe/);
 });
+
+test('staged environment references remain references and follow rotation without storing key bytes',async t=> {
+  const dir=await temporary(t),env={LIVE_VENDOR_KEY:'first-environment-secret'};
+  const store=new ProviderStore({dataDir:dir,secret,env});
+  const installed=await store.install({...record('environment'),api_key_env:'LIVE_VENDOR_KEY'});
+  assert.equal(installed.record.has_encrypted_api_key,false);
+  const bytes=await readFile(store.path,'utf8');assert.ok(!bytes.includes('first-environment-secret'));assert.ok(!bytes.includes('aes256gcm:'));
+  assert.equal((await store.resolve())[0].api_key,'first-environment-secret');env.LIVE_VENDOR_KEY='rotated-secret';assert.equal((await store.resolve())[0].api_key,'rotated-secret');
+});

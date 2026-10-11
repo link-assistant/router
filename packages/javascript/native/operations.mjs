@@ -1,5 +1,6 @@
 /** Native operation dispatcher. This module never resolves or spawns a Rust executable. */
 import { readFileSync } from 'node:fs';
+import {executeCredentialOperation,credentialWithdrawal} from './credential-operations.mjs';
 import {readNativeText} from './operation-input.mjs';
 import {readTokenImportSource,importTokenRecords} from './token-import.mjs';
 import { executeResourceOperation, supportedResourceOperations } from './resources.mjs';
@@ -52,7 +53,7 @@ const unsupported = message => { throw new NativeRouterError(message, { code: 'u
 export const nativeOperationSupport = Object.freeze({
   ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]) => [name, support.status])),
   ...Object.fromEntries(Object.keys(supportedManagedOperations).map(name => [name, 'partial'])),
-  'auth.import': 'partial', 'auth.claude': 'partial', 'auth.codex': 'partial',
+  'auth.import': 'partial', 'auth.claude': 'partial', 'auth.codex': 'partial', 'auth.clear':'partial','auth.gh':'partial',
   version: 'implemented', contracts: 'implemented',
   'accounts.list': 'partial', 'accounts.pause': 'partial', 'accounts.resume': 'partial', 'accounts.policy': 'partial',
   'tokens.issue': 'partial', 'tokens.list': 'partial', 'tokens.show': 'partial', 'tokens.revoke': 'partial',
@@ -136,6 +137,17 @@ async function dispatch(router, name, options, invocation) {
       const error=new NativeRouterError('One or more client configurations could not be read',{code:'client'});error.data=rows;throw error;
     }
     return rows;
+  }
+  if(['auth.status','auth.clear','auth.gh'].includes(name) || credentialWithdrawal(name,options)) {
+    const target=await selectedManagedTarget({name,options,config:router.options.config,env,cwd:invocation.cwd});
+    if(target) {
+      if(credentialWithdrawal(name,options))unsupported('Credential withdrawal removes local files and cannot clear a selected remote deployment; pass local to act on this machine');
+      return executeRemoteOperation({name,options,invocation,target,fetch:router.options.fetch});
+    }
+    const accepted=name==='auth.status' ? ['clear_all','yes'] : name==='auth.clear' ? ['provider','all','yes'] : name==='auth.gh' ? ['from_gh_config','token_stdin','status','clear'] : ['clear','home'];
+    localOnly(options,accepted);
+    const inherited=router.options.core ?? (router.corePromise ? await router.corePromise : undefined);
+    return executeCredentialOperation({name,options,invocation,routerOptions:{...router.options,...(inherited ? {core:inherited}:{})},env});
   }
   if (remoteStateFamilies.has(name.split('.')[0])) {
     const target = await selectedManagedTarget({name,options,config:router.options.config,env,cwd:invocation.cwd});
