@@ -46,8 +46,10 @@ function relocate(value, offset) {
   return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, key === 'span' && item ? { start: item.start + offset, end: item.end + offset } : relocate(item, offset)]));
 }
 
-export function translateSource(source, path = 'input.rs', { projectDeclarations = [] } = {}) {
-  const macroEvidence=macroProvenance(source);
+export function translateSource(source, path = 'input.rs', { projectDeclarations = [],projectSourceScopes=[] } = {}) {
+  const macroEvidence=macroProvenance(source),sourceHash=sha256(source);
+  const matchingScopes=projectSourceScopes.filter(entry=>entry.source===path&&entry.sha256===sourceHash);
+  const sourceScope=matchingScopes.length===1?matchingScopes[0]:null;
   const runtimeModule = posix.relative(posix.dirname(path), 'runtime/effects.mjs');
   const emit = program => {
     const emitted = emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule, reserved: [...candidates.keys(), ...layouts.keys()] });
@@ -87,7 +89,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     if (item.status === 'preserved') continue;
     try {
       if (!['fn', 'enum', 'struct', 'const'].includes(item.term) || item.name === 'main') throw new TranslationError('unsupported', `draft item ${item.term}: no supported library declaration emission`, { start: 0, end: item.source.length });
-      const surface = parseRust(item.source + '\nfn main() {}\n', { macroEvidence, shadowedPreludeTypes: new Set(items.filter(entry=>['enum','struct','type','mod'].includes(entry.term)).map(entry=>entry.name)), shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio','serde_json'].includes(entry.name)).map(entry => entry.name)) });
+      const surface = parseRust(item.source + '\nfn main() {}\n', { macroEvidence, sourceScope, shadowedPreludeTypes: new Set(items.filter(entry=>['enum','struct','type','mod'].includes(entry.term)).map(entry=>entry.name)), shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio','serde_json'].includes(entry.name)).map(entry => entry.name)) });
       const declarations = surface.items.filter(entry => !entry.generated);
       if (declarations.length !== 1 || !['fn', 'data'].includes(declarations[0].k)) throw new TranslationError('unsupported', 'item requires module-level declaration lowering', { start: 0, end: item.source.length });
       item.surface = relocate(declarations[0], item.span.start);
@@ -166,12 +168,12 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
       item.diagnostic = { kind: error.kind, message: error.reason, span: error.span ?? { start: item.span.start, end: item.span.end }, details: error.details };
     }
   }
-  for (const item of items.filter(item => item.status === 'carried' && ['fn', 'const'].includes(item.term))) {
-    const contexts = projectDeclarations.filter(entry => entry.source === path && entry.name === item.name && entry.span.start === item.span.start && entry.span.end === item.span.end);
+  for (const item of items.filter(item => ['fn', 'const'].includes(item.term) && (item.status === 'carried'||matchingScopes.length))) {
+    const contexts = projectDeclarations.filter(entry => entry.source === path && entry.sourceSha256 === sourceHash && entry.name === item.name && entry.span.start === item.span.start && entry.span.end === item.span.end);
     // A source reached through two crate roots may have different bindings.
     // Keep that ambiguity carried rather than selecting a guessed namespace.
-    if (contexts.length !== 1) continue;
-    const context = contexts[0], { own, program, emitted } = context.lower({ runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
+    if (contexts.length !== 1) {if(matchingScopes.length){item.status='carried';emissions.delete(item.name);item.diagnostic={kind:'module-binding',message:matchingScopes.length>1?'source has ambiguous crate compilation contexts':'body has no checked implementation in its resolved crate scope',span:item.span};}continue;}
+    const context = contexts[0];if(sourceScope&&context.project!==sourceScope.project)continue;const { own, program, emitted } = context.lower({ runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
     item.status = 'executable'; item.diagnostic = null;
     item.semantic = { checkedIR: own, dataTypes: [...program.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, params: own.params, returns: own.async ? { kind: 'routerFuture', value: own.ret } : own.ret, project: { entry: context.project, declaration: context.qualifiedName } };
     emissions.set(item.name, emitted);

@@ -6,7 +6,7 @@ import {TranslationError} from './vendor/meta-language/translation/diagnostics.j
 import {macroProvenance} from './macro-provenance.mjs';
 
 function tree(declarations){const items=[];for(const entry of declarations){let owner=items;for(const name of entry.path){let module=owner.find(item=>item.k==='module'&&item.name===name);if(!module){module={k:'module',name,items:[]};owner.push(module);}owner=module.items;}owner.push(entry.surface);}return items;}
-export function projectCopyEvidence(declarations,modules,aliases){
+export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map()){
   let active=declarations.filter(entry=>['enum','struct','generated-type'].includes(entry.term)),checker,program;
   for(let attempts=0;attempts<=declarations.length;attempts++){
     checker=new HostChecker('Rust',[]);
@@ -19,7 +19,7 @@ export function projectCopyEvidence(declarations,modules,aliases){
   const implementations=modules.flatMap(module=>extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path}).implementations.map(implementation=>{
     const binding=aliases.get(module.file)?.get(module.path.join('.'))?.get(implementation.typePath?.[0]);
     const path=binding?[...binding,...implementation.typePath.slice(1)]:implementation.typePath;
-    let resolvedType=null;try{resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
+    let resolvedType=null;try{if(Array.isArray(path)&&path.length&&path.every(part=>typeof part==='string'))resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
     return {...implementation,resolvedType};
   }));
   return (qualifiedType,module,span)=>{
@@ -28,8 +28,8 @@ export function projectCopyEvidence(declarations,modules,aliases){
     const visit=current=>{if(current.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;const declaration=active.find(declaration=>declaration.name===current.name);if(declaration)owners.add(declaration.file);for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
     const relevant=modules.filter(candidate=>owners.has(candidate.file)||[...owners].some(file=>{const owner=modules.find(candidate=>candidate.file===file);return candidate.path.every((name,index)=>owner.path[index]===name);}));
     const evidence=relevant.map(module=>macroProvenance(module.source));
-    const provenance={shadowedNames:[...new Set(evidence.flatMap(value=>value.shadowedNames))],importedNames:[...new Set(evidence.flatMap(value=>value.importedNames))],unresolvedImportScope:evidence.some(value=>value.unresolvedImportScope)};
+    const provenance={shadowedNames:[...new Set(evidence.flatMap(value=>value.shadowedNames))],importedNames:[...new Set(evidence.flatMap(value=>value.importedNames))],unresolvedImportScope:relevant.some(module=>scopes.has(module.file)?scopes.get(module.file).unresolvedMacroScope||scopes.get(module.file).unresolvedTypeScope:macroProvenance(module.source).unresolvedImportScope)};
     const certificate=certifyCopyType(type,{declarations:checked,implementations,macroProvenance:provenance,span});
-    return certificate.verified?certificate:null;
+    return certificate;
   };
 }

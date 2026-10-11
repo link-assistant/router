@@ -40,10 +40,10 @@ export function regenerate({ root, check = false, sources, entries } = {}) {
   const coverage = () => ({ topLevelFunctions: 0, executableFunctions: 0, carriedFunctions: 0, refusalCategories: {} });
   const functionCoverage = { scope: 'top-level fn items; nested declarations inside carried enclosing items are excluded', productionPathRule: 'src/ paths excluding names containing tests or test_support', all: coverage(), production: coverage() };
   const totals = { sources: paths.length, executable: 0, executableFunctions: 0, executableConstants: 0, executableTypes: 0, executableConstructors: 0, carried: 0, preserved: 0 };
-  const projects = [], projectDeclarations = [];
+  const projects = [], projectDeclarations = [], projectSourceScopes=[];
   for (const entry of entries ?? ['src/lib.rs', 'src/main.rs'].filter(path => paths.includes(path))) {
     const result = translateProject({ entry, paths, readSource: path => trackedSource(root, path) });
-    projectDeclarations.push(...result.executableDeclarations);
+    projectDeclarations.push(...result.executableDeclarations);projectSourceScopes.push(...result.sourceScopes);
     const stem = entry.replace(/\.rs$/u, '');
     const targets = { meta: `${OUTPUT_ROOTS[3]}/${stem}.meta.json`, javascript: `${OUTPUT_ROOTS[4]}/${stem}.mjs`, typescript: `${OUTPUT_ROOTS[5]}/${stem}.ts` };
     expected.set(targets.meta, json(result.meta)); expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
@@ -52,7 +52,7 @@ export function regenerate({ root, check = false, sources, entries } = {}) {
   for (const path of paths) {
     if (path.split('/').includes('..') || path.startsWith('/')) throw new Error(`source must be repository relative: ${path}`);
     const source = trackedSource(root, path);
-    const result = translateSource(source, path, { projectDeclarations });
+    const result = translateSource(source, path, { projectDeclarations,projectSourceScopes });
     const stem = path.replace(/\.rs$/u, '');
     const targets = { meta: `${OUTPUT_ROOTS[0]}/${stem}.meta.json`, javascript: `${OUTPUT_ROOTS[1]}/${stem}.mjs`, typescript: `${OUTPUT_ROOTS[2]}/${stem}.ts` };
     expected.set(targets.meta, json(result.ir));
@@ -85,7 +85,7 @@ export function regenerate({ root, check = false, sources, entries } = {}) {
       }
     }
   }
-  const implementation = ['tools/translation/translate.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/project.mjs', 'tools/translation/project-copy.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/host-assets.mjs', 'tools/translation/type-layout.mjs', 'tools/translation/type-layout-runtime.mjs', 'tools/translation/pattern-bindings.mjs', 'tools/translation/pattern-syntax.mjs', 'tools/translation/monomorphic.mjs', 'tools/translation/macro-provenance.mjs', 'tools/translation/impl-resolver.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
+  const implementation = ['tools/translation/translate.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/project.mjs', 'tools/translation/project-copy.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/host-assets.mjs', 'tools/translation/type-layout.mjs', 'tools/translation/type-layout-runtime.mjs', 'tools/translation/pattern-bindings.mjs', 'tools/translation/pattern-syntax.mjs', 'tools/translation/monomorphic.mjs', 'tools/translation/macro-provenance.mjs', 'tools/translation/module-bindings.mjs', 'tools/translation/registered-bindings.mjs', 'tools/translation/source-scopes.mjs', 'tools/translation/impl-resolver.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
   const translatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };

@@ -2,8 +2,11 @@
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
-import {macroProvenance} from './macro-provenance.mjs';
-import { HostRustParser as MethodRustParser, checkProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
+import {resolveModuleBindings} from './module-bindings.mjs';
+import {externalModuleBindings} from './registered-bindings.mjs';
+import {configureParserSourceScope} from './source-scopes.mjs';
+import {EFFECT_CONTRACTS} from './extensions/effects-contracts.mjs';
+import { HostRustParser as MethodRustParser, checkProgram, emitJavaScript,HOST_CONTRACTS,hostData as effectData } from './extensions/host-contracts.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens } from './impl-resolver.mjs';
 import {projectCopyEvidence} from './project-copy.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
@@ -98,32 +101,19 @@ function declarationProgram(program, root) {
 
 export function translateProject(options) {
   const graph = resolveModuleGraph(options);
-  const macroEvidence=new Map(graph.modules.map(module=>[module.file,macroProvenance(module.source)]));
-  // Conservatively include every source macro in the crate: expansion and
-  // textual parent-module scope must be resolved before narrower admission.
-  const macroNames=new Set([...macroEvidence.values()].flatMap(evidence=>evidence.shadowedNames));
-  const unresolvedMacroScope=[...macroEvidence.values()].some(evidence=>evidence.unresolvedImportScope);
-  const configureSourceScope=(parser,module)=>{
-    parser.shadowedPreludeTypes=new Set(module.items.filter(item=>['enum','struct','type','mod'].includes(item.term)).map(item=>item.name));
-    parser.shadowedBuiltinMacros=macroNames;
-    parser.shadowedImportedBindings=new Set(macroEvidence.get(module.file).importedNames);
-    parser.unresolvedMacroScope=unresolvedMacroScope;
-    parser.unresolvedImportScope=macroEvidence.get(module.file).unresolvedImportScope;
-  };
+  const registeredTypes=[['std','time','Duration'],['serde_json','Value'],['serde_json','Number'],['serde_json','Error'],['serde_json','error','Category'],['std','io','Error'],['std','env','VarError'],['std','ffi','OsString'],['std','num','ParseIntError'],['std','num','IntErrorKind'],['std','time','TryFromFloatSecsError']];
+  const externalModules=externalModuleBindings({data:effectData(),contracts:[...HOST_CONTRACTS,...EFFECT_CONTRACTS],extraBindings:[...registeredTypes.map(target=>({name:target.at(-1),namespace:'type',target,kind:['Value','Category','VarError','IntErrorKind'].includes(target.at(-1))?'enum':'struct'})),{name:'FromStr',namespace:'type',target:['std','str','FromStr'],kind:'trait'},{name:'json',namespace:'macro',target:['serde_json','json'],kind:'macro'}]});
+  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules});
+  const scopes=new Map(bindingEvidence.scopes.map(scope=>[scope.file,scope]));
+  const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(module.file),bindingEvidence.scopes,module.path);
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   for (const module of graph.modules) {
     for (const item of module.items.filter(item => !['fn', 'const', 'enum', 'struct', 'use', 'mod'].includes(item.term) || item.name === 'main')) unloweredItems.push({ source: module.file, module: module.path, name: item.name, term: item.term, span: { start: item.start, end: item.end }, sha256: sha256(module.source.slice(item.start, item.end)), diagnostic: 'declaration needs effect, implementation, entrypoint or macro lowering' });
-    const aliases = new Map();
+    const configured=configureSourceScope(new MethodRustParser([]),module),aliases=configured.aliases;
     for (const item of module.items.filter(item => item.term === 'use')) {
-      try {
-        const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
-        parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
-        configureSourceScope(parser,module);
-        parser.aliases = aliases;
-        parser.modulePath = module.path;
-        parser.attributes(); parser.visibility(); parser.use(module.path);
-        imports.push({ file: module.file, module: module.path, span: { start: item.start, end: item.end }, aliases: Object.fromEntries(aliases.get(module.path.join('.')) ?? []) });
-      } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, name: item.name, term: item.term, ...diagnostic(error) }); }
+      const scope=scopes.get(module.file),own=scope.unresolvedImports.filter(entry=>entry.span?.start===item.start&&entry.span?.end===item.end);
+      imports.push({file:module.file,module:module.path,span:{start:item.start,end:item.end},aliases:Object.fromEntries(aliases.get(module.path.join('.'))??[]),diagnostics:own});
+      for(const entry of own)refused.push({file:module.file,name:item.name,term:'use',kind:entry.kind,message:entry.message,span:entry.span});
     }
     moduleAliases.set(module.file, aliases);
     for (const item of module.items.filter(item => ['fn', 'const', 'enum', 'struct'].includes(item.term) && item.name !== 'main')) {
@@ -155,7 +145,7 @@ export function translateProject(options) {
       } catch (error) { if (!(error instanceof TranslationError)) throw error; refused.push({ file: module.file, module: module.path, name: item.name, term: item.term, ...diagnostic(error) }); }
     }
   }
-  const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases);
+  const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes);
   for (const module of graph.modules) {
     const extracted = extractImplDeclarations(module.source, {sourcePath:module.file,modulePath:module.path});
     for (const implementation of extracted.implementations) {
@@ -164,8 +154,8 @@ export function translateProject(options) {
         const resolved = aliases?.has(implementation.typePath[0]) ? [...aliases.get(implementation.typePath[0]), ...implementation.typePath.slice(1)] : implementation.typePath;
         const qualifiedType = ['crate','self','super'].includes(resolved[0]) ? resolved : ['crate',...module.path,...resolved];
         const display = [...qualifiedType.slice(1),method.name].join('.');
-        const certificate=method.receiver==='value'?copyEvidence(qualifiedType,module,method.span):null;
-        if (!method.loweringReady && !certificate) {refused.push({file:module.file,name:display,term:'method',span:method.span,kind:'unsupported',message:method.diagnostics.map(item=>item.message).join('; ')});continue;}
+        const copyProof=method.receiver==='value'?copyEvidence(qualifiedType,module,method.span):null,certificate=copyProof?.verified?copyProof:null;
+        if (!method.loweringReady && !certificate) {refused.push({file:module.file,name:display,term:'method',span:method.span,kind:'unsupported',message:method.diagnostics.map(item=>item.message).join('; '),...(copyProof?{copyDiagnostics:copyProof.diagnostics}: {})});continue;}
         try {
           const lowered = certificate ? lowerCopyMethodTokens(method,certificate.type,certificate) : lowerSharedMethodTokens(method,qualifiedType);
           const parser = new MethodRustParser(lowered.tokens);
@@ -221,8 +211,9 @@ export function translateProject(options) {
     return `${JSON.stringify(entry.name)}: ${entry.term === 'const' ? tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes) : `(${own.params.map((param,index) => `${typeParameterName(param.name,index)}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes)}`}`;
   }).join('; ');
   const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
-  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
-  const executableDeclarations = entries.map(entry => ({ source: entry.file, name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower(options = {}) {
+  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
+  const sourceScopes=graph.modules.map(module=>({source:module.file,sha256:sha256(module.source),project:options.entry,scope:scopes.get(module.file),scopes:bindingEvidence.scopes}));
+  const executableDeclarations = entries.map(entry => ({ source: entry.file, sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source), name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower(options = {}) {
     const program = declarationProgram(target.program, target.names.get(entry.name));
     const emitted = emitJavaScript(program, options);
     const own = program.declarations.get(target.names.get(entry.name));
@@ -230,5 +221,5 @@ export function translateProject(options) {
     const signatures = [...program.declarations.values()].filter(entry=>entry.k === 'fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source === entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret}));
     return { own, program, emitted: { ...emitted, signatures, mappings: [...emitted.mappings, { ...targetMapping, source: entry.name.split('.').at(-1) }] } };
   } }));
-  return { meta, javascript, typescript, executableDeclarations };
+  return { meta, javascript, typescript, executableDeclarations, sourceScopes };
 }
