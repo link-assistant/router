@@ -10,6 +10,7 @@ import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {parseProgram} from '../semantic-meta.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const borrowed={kind:'string',rustSourceType:true,rustOwnership:{kind:'borrowed',source:'str'},rustBorrowLifetime:{kind:'elided',source:'borrowed-str-type'}};
 const owned={kind:'string',rustSourceType:true,rustOwnership:{kind:'owned',source:'String'}};
@@ -63,7 +64,7 @@ test('temporary String call borrowing is local, preserves ordinary Unicode resul
   const source='fn consume(value:&str)->usize{value.encode_utf16().count()} pub fn length(value:&str)->usize{consume(&value.to_string())}';
   const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{assert.equal(api.length('😀'),2n);assert.equal(api.length('a😀é'),4n);assert.equal(api.length(''),0n);});
-  const entries=result.meta.checkedSemanticProgram.items.filter(entry=>entry.k==='fn');
+  const entries=[...parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.values()].filter(entry=>entry.k==='fn');
   assert.ok(JSON.stringify(entries).includes('call-local-temporary'));assert.ok(JSON.stringify(entries).includes('sourceAmpersand'));
 });
 

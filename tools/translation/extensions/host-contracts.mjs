@@ -166,7 +166,8 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
       // Preserve only written borrows of actual allocation candidates. Their
       // authority is checked later against an ordinary scalar-returning call.
       const operand=value.k==='routerTextReference'?value.value:null;
-      if(operand&&(operand.k==='toString'||operand.k==='routerStringOwnership'&&operand.operation==='to_owned'||operand.k==='routerBuiltinConversion'&&operand.operation==='String::from'||operand.k==='routerOwnedString'))return {...value,sourceAmpersand:{value:'&',span:{start:first.start,end:first.end}}};
+      const allocation=operand?.k==='routerDispatchMethod'&&!operand.args.length?operand.fallback:operand;
+      if(allocation&&(allocation.k==='toString'||allocation.k==='routerStringOwnership'&&allocation.operation==='to_owned'||allocation.k==='routerBuiltinConversion'&&allocation.operation==='String::from'||allocation.k==='routerOwnedString'))return {...value,sourceAmpersand:{value:'&',span:{start:first.start,end:first.end}}};
       return value;
     }
     const first=this.cursor.peek();if(!this.cursor.eat('*'))return super.unary(path,options);
