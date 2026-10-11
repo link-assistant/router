@@ -102,6 +102,8 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   implementation.push(...['rust-resolve-macros-1.89.0.rs.gz','rust-resolve-ident-1.89.0.rs.gz','rust-builtin-attrs-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/tool-attributes/${name}`));
   implementation.push(...['rust-marker-1.89.0.rs.gz','rust-fmt-1.89.0.rs.gz','rust-path-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/copy-standard/${name}`));
   implementation.push(...['rust-lexer-1.89.0.rs.gz','rust-dec2flt-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/floating-standard/${name}`));
+  implementation.push(...['macro-token-trees.mjs','declarative-macros.mjs','declarative-source-profile.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push(...readdirSync(new URL('./source-profiles/declarative/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/declarative/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/derive/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/derive/${name}`));
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, compilationProfile:profile, compilationProfileScope:'resolved tracked crate contexts; unmatched standalone source conditions remain unknown', translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };

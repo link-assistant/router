@@ -1,0 +1,112 @@
+{
+  "schema": "locked-declarative-source-profile-v1",
+  "manifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "lockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+  "tokio": {
+    "name": "tokio",
+    "version": "1.53.2",
+    "archive": "tokio-1.53.2.crate",
+    "bytes": 928280,
+    "sha256": "e95f91fcc7a621e8b030f6aa23c71fe9838ae2fb4d8118b75602a328f5144044",
+    "members": [
+      {
+        "path": "Cargo.toml",
+        "bytes": 17621,
+        "sha256": "d5da534aec653dc20626a50578d87da105303bbcfd3adbc912054d9cf138dc57"
+      },
+      {
+        "path": "src/lib.rs",
+        "bytes": 25097,
+        "sha256": "a6c5c9ba1440bf38e3735ccbb87f26584b1940bcb478745b3fb4039291867bca"
+      },
+      {
+        "path": "src/macros/cfg.rs",
+        "bytes": 17565,
+        "sha256": "07c26bad8a45322fb89df498dd22e1d7a083761155a579d73370510af13a15be"
+      },
+      {
+        "path": "src/task/mod.rs",
+        "bytes": 12139,
+        "sha256": "71d1070436864569aa82e4f1908817690442b06e3852819d1291a78207a017b5"
+      },
+      {
+        "path": "src/task/task_local.rs",
+        "bytes": 14177,
+        "sha256": "72be75ead1802bc3f51d9703f807babe2534fea0944416a6472bc5a00c6eab03"
+      },
+      {
+        "path": "LICENSE",
+        "bytes": 1070,
+        "sha256": "253cd04c6714889df2d32f3f64d669179a1c95c76ac43c40882c52eb06bc3552"
+      }
+    ],
+    "url": "https://static.crates.io/crates/tokio/tokio-1.53.2.crate"
+  },
+  "rust": "1.89.0",
+  "standard": [
+    {
+      "path": "library/std/src/thread/local.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/thread/local.rs",
+      "bytes": 21978,
+      "sha256": "87935d0473cb463bb6d8396a2f7ae70ff0590bce0d5826032094d05e8391bfae",
+      "archive": "rust-1.89-library_std_src_thread_local.rs.gz",
+      "archiveBytes": 5147,
+      "archiveSha256": "8d2f415e8e5809e5e2a00b8405376eaa8e0d09c023926fdfcf916fe2d764d506"
+    },
+    {
+      "path": "library/std/src/sys/thread_local/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/sys/thread_local/mod.rs",
+      "bytes": 7655,
+      "sha256": "cc0695932796bb2997e321abcc30d55efaa710cb5c7badfbc143af84cc71daab",
+      "archive": "rust-1.89-library_std_src_sys_thread_local_mod.rs.gz",
+      "archiveBytes": 2315,
+      "archiveSha256": "7c324eee1f70980517d5414333402004065921b3bd68099d7891910b7f10181a"
+    },
+    {
+      "path": "library/std/src/sys/thread_local/no_threads.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/sys/thread_local/no_threads.rs",
+      "bytes": 3908,
+      "sha256": "c3edc55bf264acd27fe7ba25505e34f267c62400a12afd8a9c241d6e98300887",
+      "archive": "rust-1.89-library_std_src_sys_thread_local_no_threads.rs.gz",
+      "archiveBytes": 1392,
+      "archiveSha256": "f98643e7c34d1ed7bfd5f44f739cfdac3696a5de28f297e5642c6634da9cbf90"
+    },
+    {
+      "path": "library/std/src/sys/thread_local/native/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/sys/thread_local/native/mod.rs",
+      "bytes": 5042,
+      "sha256": "a8759e327a25da24c1265a556eadd1f58d0637e6c130085c051bfec37e2c2a73",
+      "archive": "rust-1.89-library_std_src_sys_thread_local_native_mod.rs.gz",
+      "archiveBytes": 1612,
+      "archiveSha256": "44ec78fe3e65728de86dcd1a38e24d4d8efff3481b5cbb2fb5e8b84e4c4fa308"
+    },
+    {
+      "path": "library/std/src/sys/thread_local/os.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/sys/thread_local/os.rs",
+      "bytes": 6374,
+      "sha256": "50ac7bcbfd1c97783e0ea0e300e96d1741d59cf2b2075d017efc97b241535530",
+      "archive": "rust-1.89-library_std_src_sys_thread_local_os.rs.gz",
+      "archiveBytes": 2272,
+      "archiveSha256": "d4dd49c92b845ec3f64489f3f4b9696ff8fa1a46bb641440b2b9145ffa3d1c3c"
+    },
+    {
+      "path": "library/std/src/thread/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/thread/mod.rs",
+      "bytes": 73664,
+      "sha256": "6819c4883df4f19a6e91ebbc01148ee3024337c168a549583f53fa9bfb82f1ee",
+      "archive": "rust-1.89-library_std_src_thread_mod.rs.gz",
+      "archiveBytes": 20895,
+      "archiveSha256": "1925b6da6bc19388830d5f0c09fb591bafd0f3fcea1e0b2a8fc1b83ca875c6e3"
+    }
+  ],
+  "license": "Tokio MIT; Rust MIT OR Apache-2.0",
+  "namespaceComplete": false,
+  "generatedBehavior": false,
+  "outstandingClosure": [
+    "Actual cfg_if dependency owner, selection and exhaustive branch proof",
+    "Actual Tokio extern/alias binding and standard thread_local call-site owner",
+    "Checked block/expr fragment parsing and forwarding",
+    "Builtin generated attribute owner proof",
+    "Source-sealed recursive nested expansion and scope confinement proof"
+  ]
+}

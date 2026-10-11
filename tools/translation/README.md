@@ -162,6 +162,12 @@ original compressed Rust 1.89 source inputs total about 15 KB. Independent
 rounding boundaries, syntax and refusal cases passed in Node and Bun, together
 with strict TypeScript execution. These checks do not establish complete Router
 parity or floating constant evaluation.
+`source-profiles/declarative` separately retains the exact locked Tokio archive
+and original Rust thread-local macro branch sources. The bounded declarative
+engine preserves captured fragment opacity, original tokens and definition-site
+`$crate` evidence. Its draft source expansions and observed declarations supply
+no macro owner, complete namespace or generated runtime authority. Unsupported
+fragments, ambiguous repetitions and unresolved nested expansions remain explicit.
 
 With Node, Bun and the repository’s TypeScript tooling available:
 
