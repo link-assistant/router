@@ -17,7 +17,7 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
   }
   if(!program)return ()=>null;
   const checked=new Map([...program.declarations].map(([name,entry])=>[name,entry.standardGeneric?{...entry,standardGeneric:{...entry.standardGeneric,arguments:entry.standardGeneric.arguments.map(type=>checker.resolveType(type,entry.modulePath,entry.span))}}:entry]));
-  const nominalTypes=nominalTypeIdentities([...scopes.values()]);
+  const nominalTypes=nominalTypeIdentities([...scopes.values()],modules);
   const implementations=modules.flatMap(module=>extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path}).implementations.map(implementation=>{
     const binding=aliases.get(module.file)?.get(module.path.join('.'))?.get(implementation.typePath?.[0]);
     const actualTarget=implementationTargetPath(implementation,module);

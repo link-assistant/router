@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {sourceItems} from '../rust-structure.mjs';
 import {resolveModuleGraph,translateProject} from '../project.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {extractImplDeclarations,certifyCopyType} from '../impl-resolver.mjs';
@@ -7,7 +9,7 @@ import {nominalTypeIdentities,resolveNominalImplTarget} from '../project-nominal
 import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {macroProvenance} from '../macro-provenance.mjs';
 import {loadJavaScript} from './artifact-loader.mjs';
-function evidence(files){const graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]}),scopes=resolveModuleBindings({modules:graph.modules}).scopes,identities=nominalTypeIdentities(scopes);return {graph,scopes,identities};}
+function evidence(files){const graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]}),scopes=resolveModuleBindings({modules:graph.modules}).scopes,identities=nominalTypeIdentities(scopes,graph.modules);return {graph,scopes,identities};}
 function targets(context){return context.graph.modules.flatMap(module=>extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path}).implementations.map(implementation=>({...implementation,resolvedNominalTarget:resolveNominalImplTarget(implementation,module,context.scopes,context.identities)})));}
 test('opaque fields and generic arguments preserve actual resolved nominal family identities',()=>{
   const files={'src/lib.rs':'mod model; use crate::model::Opaque as Alias; trait Marker{} impl<T> Marker for Alias<T> {}','src/model.rs':'pub struct Opaque<T>{item:T}'};
@@ -46,5 +48,34 @@ test('generic type binders shadow nominal owners before both layout and family r
   }
   for(const header of ['impl<Choice> Marker for crate::Choice {}',"impl<'Choice> Marker for Choice {}",'impl<const Choice: usize> Marker for Choice {}']){
     const context=evidence({'src/lib.rs':'struct Choice; trait Marker{} '+header});assert.deepEqual(targets(context)[0].resolvedNominalTarget?.family,['crate','Choice'],header);
+  }
+});
+
+test('derive expansion preserves only the original nominal definition and not expanded behavior',()=>{
+  const context=evidence({'src/lib.rs':'mod model;','src/model.rs':'#[derive(custom::Expand)] pub struct Opaque<T>{value:T} impl<T> Marker for Opaque<T>{}'});
+  const target=targets(context)[0].resolvedNominalTarget;assert.deepEqual(target.family,['crate','model','Opaque']);assert.ok(target.preservedDefinition.rule.endsWith('#macro.proc.derive.output'));
+  assert.equal(context.scopes.find(scope=>scope.file==='src/model.rs').unresolvedTypeScope,true);
+  for(const prefix of ['#[replace]','#[cfg(test)]','#[cfg_attr(test,derive(Custom))]']){
+    const context=evidence({'src/lib.rs':prefix+' #[derive(Custom)] struct Opaque; impl Marker for Opaque{}'});assert.equal(targets(context)[0].resolvedNominalTarget,null,prefix);
+  }
+  const conditional=evidence({'src/lib.rs':'#![cfg(test)] #[derive(Custom)] struct Opaque; impl Marker for Opaque{}'});assert.equal(targets(conditional)[0].resolvedNominalTarget,null);
+});
+
+test('actual tracked proc-derived definitions supply family evidence while their layouts stay carried',()=>{
+  for(const [file,name] of [['src/cli/management_args.rs','ManagementArgs'],['src/model_contract.rs','ModelAccessError']]){
+    const original=readFileSync(new URL('../../../'+file,import.meta.url),'utf8');
+    const files=file.includes('/cli/')?{'src/lib.rs':'mod cli;','src/cli/mod.rs':'mod management_args;',[file]:original}:{'src/lib.rs':'mod model_contract;',[file]:original};
+    const context=evidence(files),declaration=sourceItems(original).find(item=>item.name===name&&item.term==='struct');
+    const implementation=targets(context).find(item=>item.typePath?.at(-1)===name&&item.traitPath);
+    assert.equal(implementation.resolvedNominalTarget.source,file);assert.deepEqual(implementation.resolvedNominalTarget.span,{start:declaration.start,end:declaration.end});assert.ok(implementation.resolvedNominalTarget.preservedDefinition);
+    const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});assert.ok(result.meta.refused.some(item=>item.file===file&&item.name===name&&item.term==='struct'));
+  }
+});
+
+test('attribute-replaced implementation targets never prove unrelated family identities',()=>{
+  for(const attribute of ['#[replace]','#[cfg_attr(test,replace)]']){
+    const source='struct Other; trait Marker{} '+attribute+' impl Marker for Other{} #[derive(Clone,Copy)] enum Kind{A} impl Kind{fn read(self)->u8{1}} pub fn run(value:Kind)->u8{value.read()}';
+    const context=evidence({'src/lib.rs':source});assert.equal(targets(context)[0].resolvedNominalTarget,null);
+    const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.equal(result.meta.checkedMethods.some(entry=>entry.name==='Kind.read'),false);
   }
 });
