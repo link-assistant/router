@@ -5,6 +5,7 @@ import {sourceItems} from './rust-structure.mjs';
 import {createDeriveDependencyProof,deriveExternalModules,isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {inspectDeriveInput,STANDARD_LAYOUT_DERIVES} from './derive-inputs.mjs';
 import {inertInnerLintItem} from './tool-attributes.mjs';
+import {builtinDefaultDependencyProof} from './derive-builtin-default.mjs';
 export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
@@ -96,12 +97,19 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           if(!owner)throw new TypeError('Derive invocation lacks actual locked macro binding: '+key(invocation.path));
           owners.push({...owner,attributeSpan:invocation.attributeSpan});
         }
-        if(!owners.length)continue;
+        if(!owners.length&&!input.builtinDefault)continue;
         if(!coreOwner)throw new TypeError('Derive error branch has no checked standard core owner');
+        let builtinDefault=null;
+        if(input.builtinDefault) {
+          const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
+          if(ancestors.some(candidate=>candidate.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&['Default','default'].includes(binding.name)))||root.bindings.some(binding=>binding.namespace==='type'&&binding.name==='std'))throw new TypeError('Builtin Default attribute or standard owner is shadowed');
+          const proof=builtinDefaultDependencyProof(dependencies);
+          builtinDefault={...input.builtinDefault,owner:{target:['core','default','Default'],resolution:'closed-standard-attribute-prelude',sourceProfileDigest:proof.digest},dependencyProof:proof};
+        }
         for(const helper of input.attributes.filter(attribute=>attribute.helpers)) {
           if(helper.name==='schemars'&&!owners.some(owner=>owner.target[0]==='schemars')||helper.name==='serde'&&!owners.some(owner=>['serde','schemars'].includes(owner.target[0])))throw new TypeError('Helper attribute lacks an actual declaring derive owner');
         }
-        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:'Successful outputs have one anonymous const group; standard error outputs cannot introduce names. Original data and inert helper syntax remain unchanged.'};
+        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs have one anonymous const group; standard error outputs cannot introduce names. Original data and inert helper syntax remain unchanged.'};
         const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});certificates.set(certificate,{dependencies,input,source:module.source});byId.set(invocationId(module.file,item),certificate);
       } catch(error){diagnostics.push({source:module.file,span:{start:item.start,end:item.end},name:item.name,message:error.message});}
     }

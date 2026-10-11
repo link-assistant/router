@@ -59,7 +59,7 @@
             "end": 2449
           },
           "sha256": "f2de41c24cd20b567e462b18f6574d849095d2373a71522691adb9abfb8231ef",
-          "expectation": "retained-default-helper-refusal"
+          "expectation": "pending-builtin-default-profile-positive"
         }
       ]
     },
@@ -75,14 +75,14 @@
             "end": 1750
           },
           "sha256": "b268173273e23745d19f7e5ee43c1514b1caecff103e54f88b3711da606b1a28",
-          "expectation": "retained-default-helper-refusal"
+          "expectation": "pending-builtin-default-profile-positive"
         }
       ]
     }
   ],
   "obligations": [
     "Pending JS and independently strict-compiled TypeScript proof before positive admission",
-    "Original Default enum helper and all unrelated scope/effect/trait uncertainties remain unsupported",
+    "Generated Default behavior and all unrelated scope/effect/trait uncertainties remain unsupported",
     "Production corpus gains require publisher regeneration, not this fixed fixture inventory"
   ]
 }

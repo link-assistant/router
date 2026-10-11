@@ -1,5 +1,6 @@
 import {itemConfiguration} from './cfg-profile.mjs';
 import {boundedSerdeExprPath} from './derive-helper-paths.mjs';
+import {inspectBuiltinDefaultVariant} from './derive-builtin-default.mjs';
 
 export const STANDARD_LAYOUT_DERIVES=new Set(['Clone','Copy','Debug','Default','PartialEq','Eq','Hash','PartialOrd','Ord']);
 const identifier=token=>token?.type==='ident'&&/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
@@ -74,6 +75,9 @@ export function inspectDeriveInput(item,profile) {
         if(!header||body[1]?.text!=='('||body.at(-1)?.text!==')')throw new TypeError('Unregistered nested derive input');
         attribute.derives=paths(body.slice(2,-1));derives.push(...attribute.derives.map(path=>({path,attributeSpan:attribute.span})));
       } else if(['serde','schemars'].includes(name))attribute.helpers=helper(body,position,item.term);
+      else if(name==='default') {
+        if(position!=='variant'||body.length!==1)throw new TypeError('Builtin default requires a plain enum-variant helper');
+      }
       else if(name==='cfg') {
         if(!header||!condition.attributes.some(entry=>entry.span.start===token.start&&entry.evaluation?.value===true))throw new TypeError('Conditional derive field or variant remains unproved');
       } else if(['doc','allow','warn','deny','forbid','must_use','repr','non_exhaustive'].includes(name)) {
@@ -94,5 +98,7 @@ export function inspectDeriveInput(item,profile) {
     // still owns any source-specific helper/type validation not checked here.
     if(siblings.some(other=>other.span.end===attribute.span.start&&other.helpers.some(a=>attribute.helpers.some(b=>a.key===b.key&&a.key!=='alias'))))throw new TypeError('Duplicate adjacent helper metadata');
   }
-  return {kind:item.term,name:item.name,condition,attributes,derives,generatedImplBehavior:false};
+  const input={kind:item.term,name:item.name,condition,attributes,derives,generatedImplBehavior:false};
+  const builtinDefault=inspectBuiltinDefaultVariant(item,input);
+  return {...input,...(builtinDefault?{builtinDefault}:{})};
 }

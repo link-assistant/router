@@ -147,7 +147,8 @@ code suffices for regeneration; copying existing generated corpora is optional.
 
 `source-profiles/derive` contains the original compressed locked dependency
 sources and Rust core source used by namespace proofs, with their hashes and
-licenses. They are portable compiler source inputs (about 715 KB compressed),
+licenses, including the bounded Rust 1.89 builtin Default expansion profile.
+They are portable compiler source inputs (under 750 KB compressed),
 not installed dependencies. A different manifest or lock leaves these derive
 namespaces unresolved with an explicit unsupported-profile diagnostic; it
 does not grant the registered derive owners or stop unrelated translation.

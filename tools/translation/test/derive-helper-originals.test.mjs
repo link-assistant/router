@@ -54,13 +54,21 @@ test('whole original response affinity selectors preserve canonical tagged route
   });
 });
 
-test('whole original standard-default-helper files keep the independent unsupported layout obligation',()=>{
-  for(const path of ['src/bridge_selection.rs','src/accounts.rs']){
-    const {pin,result}=original(path);
-    for(const method of pin.methods){
-      assert.equal(result.meta.checkedMethods.some(entry=>entry.name===method.owner+'.'+method.name),false);
-      assert.ok(result.meta.refused.some(entry=>entry.file===path&&(entry.name===method.owner||entry.term==='method'&&entry.name.endsWith(method.owner+'.'+method.name))));
-    }
-    assert.equal(result.meta.runtimeParity,false);
+test('whole original standard-default-helper selectors retain bodies and unit layout',async()=>{
+  const bridge=original('src/bridge_selection.rs'),accounts=original('src/accounts.rs');
+  for(const {pin,result}of [bridge,accounts]){
+    for(const method of pin.methods)assert.deepEqual(result.meta.checkedMethods.find(entry=>entry.name===method.owner+'.'+method.name)?.span,method.span);
+    assert.equal(result.meta.runtimeParity,false);assert.ok(result.meta.refused.length);
+    assert.ok(result.meta.deriveNamespaceFootprints.certificates.some(entry=>entry.builtinDefault?.generatedImplBehavior===false));
   }
+  await verifyTypedTargets(expose(bridge.result,[['BridgeModelPolicy','name','originalPolicyName']]),(_api,_result,module)=>{
+    assert.equal(module.originalPolicyName(tag('FirstAdvertised')),'first-advertised');
+    assert.equal(module.originalPolicyName(tag('LastAdvertised')),'last-advertised');
+    assert.throws(()=>module.originalPolicyName(tag('Invented')),TypeError);
+  });
+  await verifyTypedTargets(expose(accounts.result,[['SelectionStrategy','from_str_opt','originalStrategy']]),(_api,_result,module)=>{
+    for(const [value,name]of [['rr','RoundRobin'],[' roundrobin ','RoundRobin'],['WEIGHTED_ROUND_ROBIN','WeightedRoundRobin'],['fillfirst','Priority'],['quota-first','LeastUsed']])assert.deepEqual(module.originalStrategy(value),tag('Some',{field0:tag(name)}));
+    for(const value of ['','unsupported'])assert.deepEqual(module.originalStrategy(value),tag('None'));
+    assert.throws(()=>module.originalStrategy(null),TypeError);
+  });
 });
