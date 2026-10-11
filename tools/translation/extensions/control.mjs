@@ -171,6 +171,7 @@ export class ControlChecker extends StringChecker {
   }
 
   loopEnvironment(env) { return new Map(env).set(LOOP, (env.get(LOOP) ?? 0) + 1); }
+  functionResult(env) { return env.get(RETURN); }
   bindingEnvironment(env, name, type, mutable = false) {
     const names = new Set(env.get(MUTABLE) ?? []);
     if (mutable) names.add(name); else names.delete(name);

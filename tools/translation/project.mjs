@@ -2,7 +2,7 @@
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
-import { IteratorRustParser, checkProgram, emitJavaScript } from './extensions/iterators.mjs';
+import { EffectRustParser, checkProgram, emitJavaScript, effectData } from './extensions/effects.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
@@ -31,7 +31,7 @@ export function resolveModuleGraph({ entry, paths, readSource }) {
       const plain = /^(?:pub(?:\s*\([^)]*\))?\s+)?mod\s+([\p{L}_][\p{L}\p{N}_]*)\s*;\s*$/u.exec(text);
       if (!plain) { diagnostics.push({ file, module: [...path, item.name], kind: 'module', message: 'module attributes or inline body require separate compilation-condition lowering', span: { start: item.start, end: item.end } }); continue; }
       const name = plain[1];
-      const candidates = [`${directory}/${name}.rs`, `${directory}/${name}/mod.rs`].filter(candidate => tracked.has(candidate));
+      const candidates = [posix.normalize(`${directory}/${name}.rs`), posix.normalize(`${directory}/${name}/mod.rs`)].filter(candidate => tracked.has(candidate));
       if (candidates.length !== 1) { diagnostics.push({ file, module: [...path, name], kind: 'module', message: candidates.length ? 'ambiguous module files' : 'missing tracked module file', candidates, span: { start: item.start, end: item.end } }); continue; }
       const target = candidates[0];
       edges.push({ from: file, to: target, module: [...path, name] });
@@ -63,7 +63,7 @@ function flatten(program) {
     if (!node || typeof node !== 'object') return node;
     const result = Object.fromEntries(Object.entries(node).map(([key, value]) => [key, visit(value)]));
     if (node.kind === 'data' && names.has(node.name)) result.name = names.get(node.name);
-    if (node.k === 'call') result.fn = names.get(node.fn) ?? node.fn;
+    if (['call', 'routerFutureCall'].includes(node.k)) result.fn = names.get(node.fn) ?? node.fn;
     if (node.k === 'ctor') result.data = names.get(node.data) ?? node.data;
     return result;
   };
@@ -78,7 +78,7 @@ function declarationProgram(program, root) {
   const needed = new Set();
   const visit = node => {
     if (!node || typeof node !== 'object') return;
-    const names = node.k === 'call' ? [node.fn] : node.k === 'ctor' ? [node.data] : node.kind === 'data' ? [node.name] : [];
+    const names = ['call', 'routerFutureCall'].includes(node.k) ? [node.fn] : node.k === 'ctor' ? [node.data] : node.kind === 'data' ? [node.name] : [];
     for (const name of names) include(name);
     for (const value of Object.values(node)) if (Array.isArray(value)) value.forEach(visit); else visit(value);
   };
@@ -101,7 +101,8 @@ export function translateProject(options) {
     const aliases = new Map();
     for (const item of module.items.filter(item => item.term === 'use')) {
       try {
-        const parser = new IteratorRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
+        const parser = new EffectRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
+        parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio'].includes(item.name)).map(item => item.name)]));
         parser.aliases = aliases;
         parser.modulePath = module.path;
         parser.attributes(); parser.visibility(); parser.use(module.path);
@@ -110,7 +111,8 @@ export function translateProject(options) {
     }
     for (const item of module.items.filter(item => ['fn', 'const', 'enum', 'struct'].includes(item.term) && item.name !== 'main')) {
       try {
-        const parser = new IteratorRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
+        const parser = new EffectRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
+        parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio'].includes(item.name)).map(item => item.name)]));
         parser.aliases = aliases;
         parser.modulePath = module.path;
         parser.attributes(); parser.visibility();
@@ -136,7 +138,7 @@ export function translateProject(options) {
   // Every surviving body must check. Remove an actual failing declaration,
   // then recheck all callers; no parsed signature is a callable implementation.
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
-    try { checked = roundTripProgram(checkProgram({ language: 'Rust', items: tree(active), main: null })); break; }
+    try { checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...tree(active), ...effectData().filter(item => !tree(active).some(entry => entry.name === item.name))], main: null })); break; }
     catch (error) {
       if (!(error instanceof TranslationError)) throw error;
       const owner = active.find(declaration => error.span && declaration.globalSpan.start <= error.span.start && error.span.start <= declaration.globalSpan.end);
@@ -147,7 +149,8 @@ export function translateProject(options) {
   }
   if (!checked) throw new Error('project declaration checking did not converge');
   const target = flatten(checked);
-  const emitted = emitJavaScript(target.program);
+  const runtimeModule = posix.relative(posix.dirname(options.entry.replace(/\.rs$/u,'.mjs')), 'runtime/effects.mjs');
+  const emitted = emitJavaScript(target.program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
   const entries = active.filter(declaration => ['fn', 'const'].includes(declaration.term));
   const targetName = name => emitted.mappings.find(mapping => mapping.source === target.names.get(name)).target;
   const exports = entries.map(declaration => `[${JSON.stringify(declaration.name)}]: ${targetName(declaration.name)}${declaration.term === 'const' ? '()' : ''}`).join(', ');
@@ -156,13 +159,13 @@ export function translateProject(options) {
   const parameterTypes = new Map(entries.map(entry => [targetName(entry.name), target.program.declarations.get(target.names.get(entry.name)).params]));
   const types = entries.map(entry => {
     const own = target.program.declarations.get(target.names.get(entry.name));
-    return `${JSON.stringify(entry.name)}: ${entry.term === 'const' ? tsType(own.ret, dataTypes) : `(${own.params.map(param => `${param.name}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(own.ret, dataTypes)}`}`;
+    return `${JSON.stringify(entry.name)}: ${entry.term === 'const' ? tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes) : `(${own.params.map(param => `${param.name}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes)}`}`;
   }).join('; ');
   const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
   const meta = { schema: 'tracked-rust-project-semantic-meta-v1', status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), encodings: emitted.encodings, assumptions: emitted.assumptions };
-  const executableDeclarations = entries.map(entry => ({ source: entry.file, name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower() {
+  const executableDeclarations = entries.map(entry => ({ source: entry.file, name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower(options = {}) {
     const program = declarationProgram(target.program, target.names.get(entry.name));
-    const emitted = emitJavaScript(program);
+    const emitted = emitJavaScript(program, options);
     const own = program.declarations.get(target.names.get(entry.name));
     const targetMapping = emitted.mappings.find(mapping => mapping.source === own.fullName);
     return { own, program, emitted: { ...emitted, mappings: [...emitted.mappings, { ...targetMapping, source: entry.name.split('.').at(-1) }] } };

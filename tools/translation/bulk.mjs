@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { translateSource, json, PIN, sha256 } from './translate.mjs';
 import { translateProject } from './project.mjs';
+import { effectRuntimeAssets } from './effect-assets.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'packages/javascript/generated/rust-draft', 'packages/typescript/generated/rust-draft', 'tools/translation/projects', 'packages/javascript/generated/rust-project', 'packages/typescript/generated/rust-project'];
 // Sparse workers still translate the complete tracked census. A missing
@@ -26,6 +27,11 @@ export function regenerate({ root, check = false, sources, entries } = {}) {
   root = resolve(root);
   const paths = (sources ?? execFileSync('git', ['ls-files', '-z', '--', '*.rs'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean)).sort();
   const expected = new Map();
+  const assets = effectRuntimeAssets();
+  for (const output of [OUTPUT_ROOTS[1], OUTPUT_ROOTS[2], OUTPUT_ROOTS[4], OUTPUT_ROOTS[5]]) {
+    expected.set(`${output}/runtime/effects.mjs`, assets.javascript);
+    if (output.startsWith('packages/typescript/')) expected.set(`${output}/runtime/effects.d.mts`, assets.declarations);
+  }
   const inventory = [];
   const diagnostics = new Map();
   const coverage = () => ({ topLevelFunctions: 0, executableFunctions: 0, carriedFunctions: 0, refusalCategories: {} });
@@ -76,7 +82,7 @@ export function regenerate({ root, check = false, sources, entries } = {}) {
       }
     }
   }
-  const implementation = ['tools/translation/translate.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/project.mjs', 'tools/translation/semantic-meta.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
+  const implementation = ['tools/translation/translate.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/project.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/monomorphic.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
   const translatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };

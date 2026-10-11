@@ -49,7 +49,7 @@ export class DataRustParser extends ControlRustParser {
       if (c.is('use')) { this.use(path); continue; }
       if (c.is('enum')) { items.push(this.enumItem()); continue; }
       if (c.is('fn') && c.is('main', 1) && path.length === 0) { root.main = this.main(); continue; }
-      if (c.is('fn') || c.is('const')) { items.push(c.is('fn') ? this.fn(path) : this.constItem(path)); continue; }
+      if (c.is('fn') || c.is('const') || c.is('async') && c.is('fn', 1)) { items.push(c.is('const') ? this.constItem(path) : this.fn(path)); continue; }
       throw unsupported(`Rust ${c.peek().value} item`, 'item needs a resolved semantic lowering', span(start, c.peek()));
     }
   }

@@ -1,4 +1,5 @@
 import { RustParser, Checker, JavaScriptEmitter, emitWith } from './core.mjs';
+import { monomorphicTypeName } from '../monomorphic.mjs';
 import { tokenizeRust } from './lexical.mjs';
 import { BOOL, STRING, fixed, fixedBounds, typeKey, array } from '../vendor/meta-language/translation/types.js';
 import { coerce } from '../vendor/meta-language/translation/check.js';
@@ -24,8 +25,7 @@ export class StringRustParser extends RustParser {
   }
 
   genericType(kind, types, span) {
-    const encode = type => type.kind === 'named' ? type.path.join('_') : typeKey(type);
-    const name = `Router${kind}_${types.map(encode).join('_')}`;
+    const name = monomorphicTypeName(kind, types);
     if (!this.genericTypes.has(name)) {
       const ctors = kind === 'Option' ? [{ name: 'None', fields: [] }, { name: 'Some', fields: [{ type: types[0] }] }] : [{ name: 'Ok', fields: [{ type: types[0] }] }, { name: 'Err', fields: [{ type: types[1] }] }];
       this.genericTypes.set(name, { k: 'data', name, ctors, span, generated: 'router-monomorphic-algebraic-type' });

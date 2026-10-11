@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
+import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
-import { parseRust, checkProgram, emitJavaScript } from './extensions/iterators.mjs';
+import { parseRust, checkProgram, emitJavaScript } from './extensions/effects.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { tokenize } from './vendor/meta-language/translation/lexer.js';
 import { roundTripProgram } from './semantic-meta.mjs';
@@ -9,6 +10,7 @@ export const PIN = 'e46e196db5ec34bf13a73b8645aa38d409737e60';
 export const sha256 = text => createHash('sha256').update(text).digest('hex');
 export const json = value => JSON.stringify(value, (_, item) => typeof item === 'bigint' ? { $bigint: item.toString() } : item instanceof Map ? Object.fromEntries(item) : item) + '\n';
 export const tsType = (type, dataTypes = []) => {
+  if (type.kind === 'routerFuture') return `PromiseLike<${tsType(type.value, dataTypes)}>`;
   if (type.kind === 'array') return `ReadonlyArray<${tsType(type.element, dataTypes)}>`;
   if (type.kind === 'data') {
     const definition = dataTypes.find(entry => entry.fullName === type.name);
@@ -25,6 +27,8 @@ function relocate(value, offset) {
 }
 
 export function translateSource(source, path = 'input.rs', { projectDeclarations = [] } = {}) {
+  const runtimeModule = posix.relative(posix.dirname(path), 'runtime/effects.mjs');
+  const emit = program => emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
   let structural;
   let structuralDiagnostic = null;
   try { structural = sourceItems(source); }
@@ -59,7 +63,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     if (item.status === 'preserved') continue;
     try {
       if (!['fn', 'enum', 'struct', 'const'].includes(item.term) || item.name === 'main') throw new TranslationError('unsupported', `draft item ${item.term}: no supported library declaration emission`, { start: 0, end: item.source.length });
-      const surface = parseRust(item.source + '\nfn main() {}\n');
+      const surface = parseRust(item.source + '\nfn main() {}\n', { shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio'].includes(entry.name)).map(entry => entry.name)) });
       const declarations = surface.items.filter(entry => !entry.generated);
       if (declarations.length !== 1 || !['fn', 'data'].includes(declarations[0].k)) throw new TranslationError('unsupported', 'item requires module-level declaration lowering', { start: 0, end: item.source.length });
       item.surface = relocate(declarations[0], item.span.start);
@@ -113,7 +117,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
       const constructors = layout.ctors.map(ctor => ({ k: 'fn', generated: 'router-data-constructor', name: `ml_make_${layout.name}_${ctor.name}`, params: ctor.fields.map((field, index) => ({ name: field.name ?? `field${index}`, type: field.type, span: layout.span })), ret: { kind: 'named', path: [layout.name] }, body: { k: 'app', fn: { k: 'name', path: [layout.name, ctor.name], span: layout.span }, args: ctor.fields.map((field, index) => ({ k: 'name', path: [field.name ?? `field${index}`], span: layout.span })), span: layout.span }, span: layout.span }));
       const support = [...new Map([layout, ...layoutClosure([layout]), ...item.supportTypes].map(type => [type.name, type])).values()];
       const checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...support, ...constructors], main: null }));
-      const emitted = emitJavaScript(checked);
+      const emitted = emit(checked);
       item.status = 'executable';
       const own = checked.declarations.get(layout.name);
       item.semantic = { checkedIR: own, dataTypes: [...checked.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, constructors: constructors.map(ctor => checked.declarations.get(ctor.name)), params: [], returns: { kind: 'data', name: layout.name } };
@@ -128,10 +132,10 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
       const group = closure(item);
       const supportTypes = [...new Map([...group.flatMap(entry => entry.supportTypes), ...layoutClosure(group.map(entry => entry.surface))].map(type => [type.name, type])).values()];
       const checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...group.map(entry => entry.surface), ...supportTypes], main: null }));
-      const emitted = emitJavaScript(checked);
+      const emitted = emit(checked);
       item.status = 'executable';
       const own = checked.declarations.get(item.surface.name);
-      item.semantic = { checkedIR: own, dataTypes: [...checked.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, params: own.params, returns: own.ret };
+      item.semantic = { checkedIR: own, dataTypes: [...checked.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, params: own.params, returns: own.async ? { kind: 'routerFuture', value: own.ret } : own.ret };
       emissions.set(item.name, emitted);
     } catch (error) {
       if (!(error instanceof TranslationError)) throw error;
@@ -143,9 +147,9 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     // A source reached through two crate roots may have different bindings.
     // Keep that ambiguity carried rather than selecting a guessed namespace.
     if (contexts.length !== 1) continue;
-    const context = contexts[0], { own, program, emitted } = context.lower();
+    const context = contexts[0], { own, program, emitted } = context.lower({ runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
     item.status = 'executable'; item.diagnostic = null;
-    item.semantic = { checkedIR: own, dataTypes: [...program.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, params: own.params, returns: own.ret, project: { entry: context.project, declaration: context.qualifiedName } };
+    item.semantic = { checkedIR: own, dataTypes: [...program.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, params: own.params, returns: own.async ? { kind: 'routerFuture', value: own.ret } : own.ret, project: { entry: context.project, declaration: context.qualifiedName } };
     emissions.set(item.name, emitted);
   }
   // A parsed signature is no implementation. Reject every dependent of a
@@ -171,7 +175,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   const executable = items.filter(item => item.status === 'executable');
   const preludes = [...new Set(executable.flatMap(item => emissions.get(item.name).preludes))];
   const definitions = [...new Set(executable.flatMap(item => emissions.get(item.name).definitions))];
-  const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'const fn is lowered for pure runtime calls only; compile-time evaluability is not established', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'portable value results, local scalar mutation, immutable constructors and aborts; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
+  const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges', 'checked standard-library filesystem/environment reads, lazy async futures and identity-error propagation'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'const fn is lowered for pure runtime calls only; compile-time evaluability is not established', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'checked value results, local scalar mutation, immutable constructors, lazy future polling and named host effects; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
   const header = `// Generated draft from ${path}; sha256=${ir.sourceSha256}\n// Carried constructs are data, never runtime parity evidence.\n`;
   const body = [...preludes, ...definitions].join('\n\n');
   const entries = executable.map(item => item.semantic.constructors || item.semantic.project ? item.name : emissions.get(item.name).mappings.find(mapping => mapping.source === item.name)?.target ?? item.name);
@@ -219,8 +223,12 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_router_any: ['Iterable<T>', '(value: T) => boolean'],
     ml_router_all: ['Iterable<T>', '(value: T) => boolean'],
     ml_router_fold: ['Iterable<T>', 'A', '(accumulator: A, value: T) => A'],
+    ml_router_future: ['() => T | PromiseLike<T>'],
+    ml_router_defer: ['(...args: any[]) => T | PromiseLike<T>', 'ReadonlyArray<any>'],
+    ml_router_try: ['{ $: string; field0?: any }', 'boolean'],
+    ml_router_propagated: ['any'],
   };
-  const generics = { ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
+  const generics = { ml_router_future: 'T', ml_router_defer: 'T', ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
   for (let at = 0; at < tokens.length; at++) {
     if (tokens[at].kind !== 'identifier' || tokens[at].value !== 'function') continue;
     const nameAt = at + (tokens[at + 1]?.value === '*' ? 2 : 1);
@@ -239,10 +247,18 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
       const close = tokens.find((token, index) => index > at + 2 && token.value === ')');
       annotations.push({ offset: close.end, text: ': never' });
     }
+    if (['ml_router_future', 'ml_router_defer'].includes(name)) {
+      const close = tokens.find((token, index) => index > nameAt + 1 && token.value === ')');
+      annotations.push({ offset: close.end, text: ': PromiseLike<T>' });
+    }
     if (name === 'ml_router_iter') {
       const close = tokens.find((token, index) => index > nameAt + 1 && token.value === ')');
       annotations.push({ offset: close.end, text: ': ArrayIterator<T>' });
     }
+  }
+  for (let at = 0; at < tokens.length; at++) {
+    if (tokens[at].value === 'let' && tokens[at + 1]?.value === 'pending' && tokens[at + 2]?.value === ';') annotations.push({ offset: tokens[at + 1].end, text: ': Promise<T> | undefined' });
+    if (tokens[at].value === 'catch' && tokens[at + 2]?.value === 'ml_router_error') annotations.push({ offset: tokens[at + 2].end, text: ': any' });
   }
   let typedRuntime = runtime;
   for (const { offset, text } of annotations.sort((a, b) => b.offset - a.offset)) typedRuntime = typedRuntime.slice(0, offset) + text + typedRuntime.slice(offset);

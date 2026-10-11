@@ -32,3 +32,14 @@ adapters, short-circuit consumers, checked sums, scalar for loops and bounded
 primitive integer ranges. Stored
 iterators and escaping/move closures remain refused because consumption and
 capture ownership have not been established.
+
+`effects.mjs` checks explicit standard-library effect contracts and lowers actual
+repository bodies through the same serialized semantic program. Async functions
+return lazy thenables; host arguments bind before polling, and effects run when
+awaited. The `?` operator propagates only matching Option/Result failure layouts;
+unresolved From conversions remain refusals. Generic Node adapters are copied
+into generated packages and imported through relative paths. Rust 2024 unsafe
+environment mutation, escaping futures, cancellation, concurrent borrowing, and
+external runtime scheduling are not established by this contract. Independent
+fixtures check effect order, early return, laziness, scoped capabilities, UTF-8,
+OS errors, domain guards and adapter faults. Runtime parity remains false.

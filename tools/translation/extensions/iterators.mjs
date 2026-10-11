@@ -10,9 +10,11 @@ import { typeError, unsupported } from '../vendor/meta-language/translation/diag
 const USIZE = fixed(64, false);
 const operations = new Set(['iter', 'into_iter', 'map', 'filter', 'take', 'collect', 'count', 'any', 'all', 'fold', 'sum', 'copied', 'cloned']);
 const span = (start, end) => ({ start: start.start, end: end.end });
-const containsExit = node => node && typeof node === 'object' && (['routerReturn', 'routerBreak', 'routerContinue'].includes(node.k) || Object.entries(node).some(([key, value]) => key !== 'type' && (Array.isArray(value) ? value.some(containsExit) : containsExit(value))));
+const containsExit = node => node && typeof node === 'object' && (['routerReturn', 'routerBreak', 'routerContinue', 'routerTry', 'routerAwait'].includes(node.k) || Object.entries(node).some(([key, value]) => key !== 'type' && (Array.isArray(value) ? value.some(containsExit) : containsExit(value))));
 
 export class IteratorRustParser extends DataRustParser {
+  awaitExpression(value, span) { throw unsupported('await expression', 'async needs a checked future contract', span); }
+  tryExpression(value, span) { throw unsupported('? operator', 'error propagation requires constructor conversion semantics', span); }
   expr(path, options = {}) {
     const start = super.expr(path, options);
     const c = this.cursor;
@@ -65,6 +67,7 @@ export class IteratorRustParser extends DataRustParser {
       if (c.eat('[')) { const index = this.expr(path); c.expect(']', 'index'); value = { k: 'routerIndex', object: value, index, span: span(start, c.peek()) }; continue; }
       if (c.eat('.')) {
         const name = c.identifier('field or method');
+        if (name.value === 'await' && !c.is('(')) { value = this.awaitExpression(value, span(start, c.peek())); continue; }
         let explicit = null;
         if (c.eat('::')) {
           if (!['collect', 'sum'].includes(name.value)) throw unsupported('method turbofish', 'only collect/sum result annotations are checked', span(start, c.peek()));
@@ -80,7 +83,7 @@ export class IteratorRustParser extends DataRustParser {
         value = operations.has(name.value) && !(name.value === 'count' && value.k === 'routerStringView') ? { k: 'routerIteratorOperation', op: name.value, object: value, args, explicit, span: span(start, c.peek()) } : this.method(value, name, args, span(start, c.peek()));
         continue;
       }
-      if (c.is('?')) throw unsupported('? operator', 'error propagation requires constructor conversion semantics', start);
+      if (c.eat('?')) { value = this.tryExpression(value, span(start, c.peek())); continue; }
       return value;
     }
   }
