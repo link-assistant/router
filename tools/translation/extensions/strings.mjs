@@ -178,8 +178,18 @@ export class StringRustParser extends RustParser {
 }
 
 export class StringChecker extends Checker {
+  standardConstructor(path,type,scope=[],env=new Map(),span) {
+    const kind=type?.kind==='data'?this.items.get(type.name)?.standardGeneric?.kind:null;
+    if(!['Option','Result'].includes(kind)||!(kind==='Option'?['Some','None']:['Ok','Err']).includes(path.at(-1)))return false;
+    // A resolved source function, constant or constructor keeps its own
+    // meaning. Context can choose an instantiated prelude constructor only
+    // after proving that its actual owner was not another Rust declaration.
+    if(path.length===1&&env.has(path[0])||this.lookup(path,scope,span))return false;
+    if(path.length===1)return true;
+    return path.length===2&&path[0]===kind&&!env.has(kind)&&!this.lookup([kind],scope,span);
+  }
   normalisePattern(pattern, type, span) {
-    if (pattern.k === 'ctor' && type.kind === 'data' && ['Option','Result'].includes(this.items.get(type.name)?.standardGeneric?.kind) && pattern.path.length <= 2 && ['Some', 'None', 'Ok', 'Err'].includes(pattern.path.at(-1))) {
+    if (pattern.k === 'ctor' && this.standardConstructor(pattern.path,type,[],new Map(),span)) {
       pattern = { ...pattern, path: [type.name, pattern.path.at(-1)] };
     }
     return super.normalisePattern(pattern, type, span);
@@ -188,7 +198,7 @@ export class StringChecker extends Checker {
   expr(node, env, path, expected, allowLiteral = false) {
     if (expected?.kind === 'data' && ['Option','Result'].includes(this.items.get(expected.name)?.standardGeneric?.kind)) {
       const callee = node.k === 'app' ? node.fn : node;
-      if (callee.k === 'name' && callee.path.length <= 2 && ['Some', 'None', 'Ok', 'Err'].includes(callee.path.at(-1))) {
+      if (callee.k === 'name' && this.standardConstructor(callee.path,expected,path,env,node.span)) {
         const qualified = { ...callee, path: [expected.name, callee.path.at(-1)] };
         node = node.k === 'app' ? { ...node, fn: qualified } : qualified;
       }

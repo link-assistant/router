@@ -62,3 +62,16 @@ test('overlapping registered imports coalesce once across genuine source depende
  const source=trackedSource(root,path),checked=translateProject({entry:path,paths:[path],readSource:()=>source}),result=translateSource(source,path,{projectDeclarations:checked.executableDeclarations});assert.ok(result.ir.items.some(item=>item.name==='bounded_retry_after'&&item.status==='executable'));strict(result);await loadJavaScript(result.javascript);
  const imported=result.javascript.match(/std_time_duration_from_secs as ml_host_std_time_duration_from_secs/g)??[];assert.equal(imported.length,1);
 });
+
+test('constructor spelling preserves actual source owners, function calls and dependencies',async()=>{
+ const files={'src/lib.rs':'mod foo; pub fn run(value:u8)->Option<u8>{foo::Some(value)}', 'src/foo.rs':'pub fn Some(value:u8)->Option<u8>{Option::Some(value + 1)}'};
+ const checked=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});assert.deepEqual(checked.meta.refused,[]);strict(checked);const api=(await loadJavaScript(checked.javascript)).translated;assert.deepEqual(api.run(1n),tagged('Some',{field0:2n}));assert.throws(()=>api.run(255n),RangeError);
+ const local=project('pub fn Some(value:u8)->Option<u8>{Option::Some(value + 2)} pub fn run(value:u8)->Option<u8>{Some(value)}');assert.deepEqual(local.meta.refused,[]);assert.deepEqual((await loadJavaScript(local.javascript)).translated.run(1n),tagged('Some',{field0:3n}));
+ for(const source of [
+  'enum Fake {None,Some(u8)} pub fn invented(value:u8)->Option<u8>{Fake::Some(value)}',
+  'enum Fake {Err(u8),Ok(u8)} pub fn invented(value:u8)->Result<u8,u8>{Fake::Ok(value)}',
+  'enum Fake {None,Some(u8)} pub fn invented(value:Option<u8>)->u8{match value {Fake::Some(x)=>x,Fake::None=>0}}',
+  'mod foo {pub fn Some(value:u8)->Option<u8>{Option::Some(value+1)}} pub fn invented(value:u8)->Option<u8>{foo::Some(value)}',
+ ]){const result=project(source);assert.equal(result.meta.executable.some(entry=>entry.name==='invented'),false,source);assert.ok(result.meta.refused.length,source);}
+ const refused=translateProject({entry:'src/lib.rs',paths:['src/lib.rs','src/foo.rs'],readSource:path=>path==='src/foo.rs'?'pub fn Some(value:u8)->Option<u8>{missing(value)}':files[path]});assert.equal(refused.meta.executable.some(entry=>entry.name==='run'),false);
+});
