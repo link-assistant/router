@@ -81,6 +81,11 @@ export function sourceCorpusPaths(corpus,root){
   if(!state||state.root!==resolve(root))throw new TypeError('source corpus is unsealed or belongs to another repository root');
   return [...state.paths];
 }
+export function assertSourceCorpusSelection(corpus,root,paths){
+  const expected=sourceCorpusPaths(corpus,root),selected=originalPaths(paths);
+  if(selected.length!==expected.length||selected.some((path,index)=>path!==expected[index]))throw new TypeError('source selection differs from the privately captured original corpus');
+  return expected;
+}
 export function sourceCorpusText(corpus,root,path){
   const state=states.get(corpus);
   if(!state||state.root!==resolve(root)||!state.texts.has(path))throw new TypeError('source corpus is unsealed or the original input is absent');

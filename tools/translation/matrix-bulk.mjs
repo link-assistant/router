@@ -5,7 +5,7 @@ import {existsSync,lstatSync,mkdirSync,readFileSync,writeFileSync} from 'node:fs
 import {join,resolve} from 'node:path';
 import {types as utilTypes} from 'node:util';
 import {compilationMatrixDescription} from './compilation-matrix.mjs';
-import {captureSourceCorpus,sourceCorpusPaths} from './source-corpus.mjs';
+import {captureSourceCorpus,sourceCorpusPaths,assertSourceCorpusSelection} from './source-corpus.mjs';
 import {planRegeneration,validateRegenerationPlan,applyRegenerationPlan} from './bulk.mjs';
 import {json,sha256} from './translate.mjs';
 export const MATRIX_BULK_LIMITS=Object.freeze({entries:16,expectedBytes:1024*1024*1024});
@@ -37,7 +37,7 @@ export function regenerateCompilationMatrix({root,matrix,check=false,sources,ent
   const description=compilationMatrixDescription(matrix);
   const corpus=sourceCorpus??captureSourceCorpus({root,paths:sources??execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean)});
   const paths=sourceCorpusPaths(corpus,root),tracked=new Set(paths);
-  if(sourceCorpus&&sources!==undefined&&JSON.stringify([...sources].sort())!==JSON.stringify(paths))throw new TypeError('matrix sources differ from its privately captured original corpus');
+  if(sourceCorpus&&sources!==undefined)assertSourceCorpusSelection(corpus,root,sources);
   entries=entryPaths(entries??['src/lib.rs','src/main.rs'].filter(path=>tracked.has(path)),tracked);
   const outputPlans=[];let expectedBytes=0;
   // Every profile constructs fresh invocation, binding, type and effect

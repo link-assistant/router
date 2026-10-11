@@ -9,6 +9,8 @@ missing, stale and unexpected paths. Source sets, matrix membership, required
 profiles and translator implementation hashes remain in the inventories.
 No profile-independent executable, complete platform domain or native parity
 is claimed. The reusable translator CLI supports an explicit --profile-matrix
-write or drift-check cycle. Nine newly authored source-corpus and bulk-profile tests are
+write or drift-check cycle. Ten newly authored source-corpus and bulk-profile tests are
 unrun. This source-only draft depends on the pending compilation-matrix helper;
 no compiler, corpus producer, full gate or local Rust build ran on it.
+Sealed plans deeply freeze their inventories, and supplied corpus selections
+are validated as ordinary path data without invoking getters or proxy traps.

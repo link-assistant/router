@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {createCompilationMatrix,DECLARED_FAMILY_PROFILES,compilationMatrixDescription} from '../compilation-matrix.mjs';
 import {captureSourceCorpus,trackedSource} from '../source-corpus.mjs';
-import {regenerate,planRegeneration,validateRegenerationPlan,OUTPUT_ROOTS} from '../bulk.mjs';
+import {regenerate,planRegeneration,validateRegenerationPlan,applyRegenerationPlan,OUTPUT_ROOTS} from '../bulk.mjs';
 import {regenerateCompilationMatrix} from '../matrix-bulk.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -56,6 +56,27 @@ test('profile output requires private matrix and source corpus identities, exact
     for(const changed of [{matrix:structuredClone(selection)},{sourceCorpus:structuredClone(corpus)},{outputPrefix:'../outside'},{compilationProfile:{flags:{test:false,unix:true,windows:false}}}])assert.throws(()=>planRegeneration({root:directory,sourceCorpus:corpus,matrix:selection,compilationProfile:neutral.compilationProfile,outputPrefix:neutral.directory,...changed}),TypeError);
     assert.throws(()=>validateRegenerationPlan({schema:'checked-bulk-output-plan-v1'}),/Unsealed/);
     assert.throws(()=>regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus,entries:['src/absent.rs']}),/original tracked/);
+    let reads=0;const accessor=[];Object.defineProperty(accessor,'0',{enumerable:true,get(){reads++;throw new Error('selection getter');}});
+    const proxy=new Proxy(paths,{get(){reads++;throw new Error('selection trap');}});
+    for(const sources of [accessor,proxy]){
+      assert.throws(()=>planRegeneration({root:directory,sourceCorpus:corpus,sources}),TypeError);
+      assert.throws(()=>regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus,sources}),TypeError);
+    }
+    assert.equal(reads,0);
+    assert.equal(existsSync(join(directory,'profiles')),false);
+  }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+test('a sealed output plan deeply freezes its inventory and the applied receipt',{timeout:30_000},()=>{
+  const directory=root();try{
+    sources(directory);const selection=matrix(),corpus=captureSourceCorpus({root:directory,paths}),neutral=compilationMatrixDescription(selection).profiles.find(member=>member.name==='neutral');
+    const plan=planRegeneration({root:directory,sourceCorpus:corpus,matrix:selection,compilationProfile:neutral.compilationProfile,outputPrefix:neutral.directory});
+    assert.ok(Object.isFrozen(plan.manifest)&&Object.isFrozen(plan.manifest.totals)&&Object.isFrozen(plan.manifest.sources)&&Object.isFrozen(plan.manifest.originalSourceCorpus));
+    assert.throws(()=>{plan.manifest.runtimeParity=true;},TypeError);
+    assert.throws(()=>{plan.manifest.totals.sources=999;},TypeError);
+    assert.throws(()=>{plan.manifest.sources[0].sha256='forged';},TypeError);
+    const receipt=applyRegenerationPlan(plan,{check:true});
+    assert.equal(receipt.manifest.runtimeParity,false);assert.equal(receipt.manifest.totals.sources,paths.length);
     assert.equal(existsSync(join(directory,'profiles')),false);
   }finally{rmSync(directory,{recursive:true,force:true});}
 });

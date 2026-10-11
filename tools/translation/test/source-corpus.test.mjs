@@ -5,7 +5,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {captureSourceCorpus,sourceCorpusPaths,sourceCorpusText,trackedSource,SOURCE_CORPUS_LIMITS} from '../source-corpus.mjs';
+import {captureSourceCorpus,sourceCorpusPaths,sourceCorpusText,assertSourceCorpusSelection,trackedSource,SOURCE_CORPUS_LIMITS} from '../source-corpus.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 function fixture(run){const root=mkdtempSync(join(tmpdir(),'router-source-corpus-'));try{mkdirSync(join(root,'src'));return run(root);}finally{rmSync(root,{recursive:true,force:true});}}
 
@@ -22,6 +22,8 @@ test('private source corpus retains exact complete Rust and Cargo bytes across l
   assert.throws(()=>sourceCorpusText(structuredClone(corpus),root,'src/lib.rs'),/unsealed/);
   assert.throws(()=>sourceCorpusPaths(corpus,join(root,'other')),/another repository/);
   assert.throws(()=>sourceCorpusText(corpus,root,'src/missing.rs'),/absent/);
+  assert.deepEqual(assertSourceCorpusSelection(corpus,root,['src/lib.rs']),['src/lib.rs']);
+  assert.throws(()=>assertSourceCorpusSelection(corpus,root,['src/changed.rs']),/differs/);
 }));
 
 test('source capture rejects path proxies, getters, holes, incidental properties and unsafe names without callbacks',()=>fixture(root=>{
@@ -30,6 +32,9 @@ test('source capture rejects path proxies, getters, holes, incidental properties
   const proxy=new Proxy(['src/lib.rs'],{get(){calls++;throw new Error('trap');},getPrototypeOf(){calls++;throw new Error('trap');}});
   const incidental=['src/lib.rs'];incidental.extra=true;
   for(const paths of [getter,proxy,Array(1),incidental,[],['src/lib.rs','src/lib.rs'],['../lib.rs'],['/src/lib.rs'],['src\\lib.rs'],['src/lib.rs\0'],['src/lib.txt']])assert.throws(()=>captureSourceCorpus({root,paths}),TypeError);
+  assert.equal(calls,0);
+  const corpus=captureSourceCorpus({root,paths:['src/lib.rs']});
+  for(const paths of [getter,proxy,Array(1),incidental,[],['src/lib.rs','src/lib.rs']])assert.throws(()=>assertSourceCorpusSelection(corpus,root,paths),TypeError);
   assert.equal(calls,0);
 }));
 

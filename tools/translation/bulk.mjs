@@ -8,12 +8,16 @@ import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
 import {deriveDependencyProfile} from './derive-dependencies.mjs';
-import {trackedSource,sourceCorpusPaths,sourceCorpusText} from './source-corpus.mjs';
+import {trackedSource,sourceCorpusPaths,sourceCorpusText,assertSourceCorpusSelection} from './source-corpus.mjs';
 import {compilationMatrixDescription} from './compilation-matrix.mjs';
 export {trackedSource} from './source-corpus.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'packages/javascript/generated/rust-draft', 'packages/typescript/generated/rust-draft', 'tools/translation/projects', 'packages/javascript/generated/rust-project', 'packages/typescript/generated/rust-project'];
 const plans=new WeakMap();
+function freezeData(value){
+  if(value&&typeof value==='object'&&!Object.isFrozen(value)){Object.values(value).forEach(freezeData);Object.freeze(value);}
+  return value;
+}
 export const BULK_PLAN_LIMITS=Object.freeze({profileExpectedBytes:512*1024*1024});
 function profilePrefix(input){
   if(input===undefined)return '';
@@ -43,7 +47,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   if(matrix&&!prefix)throw new TypeError('matrix bulk outputs require their isolated member directory');
   const readSource=path=>sourceCorpus?sourceCorpusText(sourceCorpus,root,path):trackedSource(root,path);
   const corpusPaths=sourceCorpus?sourceCorpusPaths(sourceCorpus,root):null;
-  if(corpusPaths&&sources!==undefined&&JSON.stringify([...sources].sort())!==JSON.stringify(corpusPaths))throw new TypeError('bulk source selection differs from the original source corpus');
+  if(corpusPaths&&sources!==undefined)assertSourceCorpusSelection(sourceCorpus,root,sources);
   // Standalone fixture roots without Cargo have no registered derive owner.
   // A real Cargo root must verify every consumed dependency input.
   const deriveProfile=deriveDependencyProfile({manifest:sourceCorpus?readSource('Cargo.toml'):existsSync(join(root,'Cargo.toml'))?readSource('Cargo.toml'):null,lock:sourceCorpus?readSource('Cargo.lock'):existsSync(join(root,'Cargo.lock'))?readSource('Cargo.lock'):null}),deriveDependencies=deriveProfile.proof;
@@ -137,6 +141,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   if(sourceCorpus)manifest.originalSourceCorpus={schema:sourceCorpus.schema,sourceSetSha256:sourceCorpus.sourceSetSha256,sources:sourceCorpus.sources,cargo:sourceCorpus.cargo,totalSourceBytes:sourceCorpus.totalSourceBytes};
   if(prefix)manifest.outputPrefix=prefix;
   if(matrixDescription)manifest.explicitCompilationMatrix={sha256:matrix.sha256,profile:matrixMember.name,profileSha256:matrixMember.sha256,requiredProfiles:matrixDescription.requiredProfiles,selectedProfiles:matrixDescription.profiles.map(member=>({name:member.name,sha256:member.sha256})),platformDomainComplete:false,commonExecutableOutput:false,runtimeParity:false};
+  freezeData(manifest);
   expected.set(`${prefix?prefix+'/':''}parity/rust-source-inventory.json`, json(manifest));
   const expectedBytes=[...expected.values()].reduce((sum,content)=>sum+Buffer.byteLength(content),0);
   if(prefix&&expectedBytes>BULK_PLAN_LIMITS.profileExpectedBytes)throw new TypeError('bulk profile output plan exceeds its 536870912 byte budget');
