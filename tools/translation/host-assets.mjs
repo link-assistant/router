@@ -5,6 +5,7 @@ export function hostRuntimeAssets() {
   const checker=new HostChecker('Rust',[]),program=checker.program({language:'Rust',items:hostData(),main:null});
   const types=program.declarations,aliases=typeScriptAliases(types);
   const files=new Map();
+  files.set('float-runtime.mjs',readFileSync(new URL('./extensions/float-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.mjs',readFileSync(new URL('./extensions/iterator-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.d.mts','export declare function assertImmutableIterator(value: unknown): true;\n');
   for(const file of ['json-runtime.mjs','json-values.mjs','json-parser.mjs','json-numbers.mjs','time-runtime.mjs','vector-runtime.mjs','integer-runtime.mjs','fixed-integer-runtime.mjs','copy-runtime.mjs','fixed-array-runtime.mjs'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
@@ -24,7 +25,7 @@ ${['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','
   files.set('type-layout-runtime.mjs',readFileSync(new URL('./type-layout-runtime.mjs',import.meta.url),'utf8'));
   files.set('json-values.d.mts','export declare function validateJsonNumber(value: unknown): unknown;\nexport declare function validateJsonMap(value: unknown): unknown;\n');
   files.set('type-layout-runtime.d.mts','export declare function validateRustValue(value: unknown, type: unknown, schema: unknown, options?: unknown): true;\n');
-  for(const family of ['json','time','integer']) {
+  for(const family of ['json','time','integer','float']) {
     const declarations=HOST_CONTRACTS.filter(contract=>contract.family===family).map(contract=>`export declare function ${contract.jsExport}(${contract.params.map((type,index)=>`arg${index}: ${typeScriptType(checker.hostType(type,[],{start:0,end:0}),types)}`).join(', ')}): ${typeScriptType(checker.hostType(contract.ret,[],{start:0,end:0}),types)};`).join('\n');
     files.set(family+'-runtime.d.mts',aliases+'\n'+declarations+'\n');
   }

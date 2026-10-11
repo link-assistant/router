@@ -15,6 +15,7 @@ import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
 import {planStandardMethod,completeStandardMethod} from './standard-method-plans.mjs';
 import {rustFixedType} from '../checked-types.mjs';
 import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
+import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
@@ -31,7 +32,7 @@ import {withSourceNamespaceParser} from './source-namespaces.mjs';
 import {withCapturedSourceParser,linkParsedFile,withCheckedSourceLinks,checkedSourceContext,bindCheckedSourceLinks} from './source-links.mjs';
 import {evaluateCheckedConstant,CONSTANT_EVALUATION_PROFILE} from './constant-evaluation.mjs';
 
-export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
+export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
 const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
@@ -193,7 +194,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
       }
     }
     const primitive=rustFixedType(this.cursor.peek().value);if(primitive&&!this.builtinShadow(this.cursor.peek().value)){const token=this.cursor.next();return {...primitive,rustPrimitiveName:token.value};}
-    if(this.cursor.is('f64')&&!this.builtinShadow('f64')){this.cursor.next();return FLOAT;}
+    if(this.cursor.is('f64')&&!this.builtinShadow('f64')){this.cursor.next();return SOURCE_F64;}
     const start=this.cursor.peek(),type=super.type();
     const visit=type=>{if(type.kind==='array')return visit(type.element);if(type.kind==='named'&&(this.shadowedEffectRoots?.has(type.path[0]==='crate'?type.path[1]:type.path[0])||type.path[0]==='crate'&&['std','tokio','serde_json'].includes(type.path[1])))throw unsupported('shadowed host type namespace','requires actual crate type resolution',span(start,this.cursor.peek()));};visit(type);return start.value==='Box'&&!this.builtinShadow('Box')?{...type,rustGenericIdentityUnresolved:true}:type;
   }
@@ -227,6 +228,15 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     }
     let offset=1;const segments=[first.value];while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
     const resolved=this.resolve(segments,path),owner=segments.slice(0,-1),operation=segments.at(-1),fixed=rustFixedType(owner.at(-1));
+    const floatOwner=owner.length===1&&owner[0]==='f64'&&!this.builtinShadow('f64',path)&&this.resolveSourceNamespace(owner,path,'type').join('::')==='f64';
+    if(floatOwner&&primitiveFloatConstant(operation)&&!c.is('(',offset)&&!c.is('::',offset)) {
+      for(let index=0;index<offset;index++)c.next();
+      return {k:'routerPrimitiveFloatConstant',owner:[...owner],name:operation,span:span(first,c.peek())};
+    }
+    if(floatOwner&&primitiveFloatContract(operation)&&c.is('(',offset)) {
+      for(let index=0;index<=offset;index++)c.next();const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','primitive f64 operation');
+      return {k:'routerPrimitiveFloatCall',owner:[...owner],method:operation,args,span:span(first,c.peek())};
+    }
     const fixedItem=owner.length===1&&fixed&&!this.builtinShadow(owner[0],path)&&INHERENT_FIXED_COPY.has(operation);
     const stringItem=segments.length===2&&segments[0]==='str'&&operation==='to_owned'&&!this.builtinShadow('str',path);
     if((fixedItem||stringItem)&&!c.is('(',offset)&&!c.is('::',offset)) {
@@ -249,7 +259,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
       for(let index=0;index<offset;index++)c.next();c.expect('(','standard conversion');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','standard conversion');
       if(args.length!==1)throw typeError('standard conversion requires one argument',span(first,c.peek()));const target=rustFixedType(segments[0]);return {k:'routerBuiltinConversion',operation:segments.join('::'),value:args[0],target:target?{...target,rustPrimitiveName:segments[0]}:null,targetName:segments[0],constEligible:false,span:span(first,c.peek())};
     }
-    const contracts=HOST_CONTRACTS.filter(contract=>pathKey(contract.rustPath)===pathKey(resolved));
+    const contracts=HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(resolved));
     if(!contracts.length)return super.primary(path,options);
     if(!c.is('(',offset)&&!(c.is('::',offset)&&c.is('<',offset+1)))return super.primary(path,options);
     if(resolved[0]==='crate'||this.shadowedEffectRoots?.has(resolved[0]))throw unsupported('shadowed host namespace','requires actual crate resolution',span(first,c.peek()));
@@ -324,13 +334,14 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
     return checked[0];
   }
   application(head,args,env,path,expected,range) {
-    const contracts=head.k==='name'?HOST_CONTRACTS.filter(contract=>pathKey(contract.rustPath)===pathKey(head.path)):[];
+    const contracts=head.k==='name'?HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(head.path)):[];
     return contracts.length?this.hostCall(contracts,args,env,path,expected,range):super.application(head,args,env,path,expected,range);
   }
   expr(node,env,path,expected,allowLiteral=false) {
     let value=this.hostExpression(node,env,path,expected,allowLiteral);
     if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};
     value=this.qualifyOwnershipResult?.(node,value,expected,path)??value;
+    value=qualifyPrimitiveFloatResult(value);
     this.expectedOwnership?.(value.type,expected,path,node.span);
     this.expectedPrimitiveIdentity(value.type,expected,path,node.span);
     return value;
@@ -346,6 +357,12 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
       if(expected?.rustReference||expected?.patternOwnershipRefusal)throw unsupported('floating reference literal','requires actual checked borrowing or promotion',node.span);
       const value=super.expr(node,env,path,expected,allowLiteral);
       return {...value,sourceFloatLiteral:{...source,verified:true}};
+    }
+    if(node.k==='routerPrimitiveFloatConstant')return checkedPrimitiveFloatConstant(node);
+    if(node.k==='routerPrimitiveFloatCall') {
+      const contract=primitiveFloatContract(node.method);
+      if(!contract||node.owner?.join('::')!=='f64')throw typeError('primitive float call has no checked source owner',node.span);
+      const call=this.hostCall([contract],node.args,env,path,expected,node.span);call.args.forEach(arg=>requirePrimitiveFloat(arg,node.span));return call;
     }
     if(node.k==='routerSharedArrayLiteral')return this.sharedArrayBorrow(node,env,path,expected);
     if(node.k==='routerPrimitiveDereference') {
@@ -386,7 +403,12 @@ export class HostChecker extends withCheckedSourceLinks(withSourceLifetimeChecke
       if(node.k==='routerDispatchMethod'&&node.object.k==='routerDispatchMethod'&&node.object.fallback?.k==='routerStringView'&&this.expr(node.object.object,env,path).type.kind==='string')return super.expr(node,env,path,expected,allowLiteral);
       const receiver=this.expr(node.object,env,path),method=node.method??node.op;
       const inherent=this.resolvedMethod(receiver.type,method,'shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
-      const contracts=HOST_CONTRACTS.filter(contract=>contract.kind==='method'&&contract.rustPath.at(-1)===method&&sameType(this.hostType(contract.receiver,path,node.span),receiver.type));
+      if(receiver.type.kind==='float') {
+        const contract=primitiveFloatContract(method);
+        if(contract){requirePrimitiveFloat(receiver,node.span);return this.hostCall([contract],[node.object,...node.args],env,path,expected,node.span);}
+        if(['is_sign_negative','is_sign_positive'].includes(method))throw unsupported('NaN sign observability','requires a separately checked non-NaN receiver refinement',node.span);
+      }
+      const contracts=HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&contract.kind==='method'&&contract.rustPath.at(-1)===method&&sameType(this.hostType(contract.receiver,path,node.span),receiver.type));
       if(contracts.length)return this.hostCall(contracts,[node.object,...node.args],env,path,expected,node.span);
       if(receiver.type.kind==='fixed'&&['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','saturating_mul','min','max','clamp'].includes(method)){
         const borrowed=Boolean(receiver.type.rustReference);let type=receiver.type,object=node.object;
@@ -508,7 +530,7 @@ export class HostEmitter extends EffectEmitter {
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_integer_')))preludes.unshift(`import { createIntegerRuntime as ml_create_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_vec_')))preludes.unshift(`import { createVectorRuntime as ml_create_vector_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'vector-runtime.mjs'))};`);
-    for(const family of ['json','time','integer']) {
+    for(const family of ['json','time','integer','float']) {
       const used=HOST_CONTRACTS.filter(contract=>contract.family===family&&this.hosts.has(contract.id));
       if(used.length)preludes.unshift(`import { ${used.map(contract=>`${contract.jsExport} as ml_host_${contract.id}`).join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,`${family}-runtime.mjs`))};`);
     }
