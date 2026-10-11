@@ -116,6 +116,13 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerStandardSharedReceiver')return borrowed?project(read(node.object),['pointee']):new Set();
+  if(['routerStringLines','routerStringNext','routerStringJoin'].includes(node.k)) {
+    if(node.stringIteratorProof?.profile!=='rust-1.89-borrowed-string-iterators'||node.stringIteratorProof.verified!==true)throw unsupported('string iterator borrow origin','requires its checked standard operation proof',node.span);
+    const value=read(node.object);
+    if(node.k==='routerStringLines')return uniformOrigins(node.type.element,at(value,[]),context);
+    if(node.k==='routerStringNext')return borrowed?uniformOrigins(node.type,at(value,[]),context):new Set();
+    read(node.separator);return new Set(); // join allocates an owned String.
+  }
   if(node.k==='routerLambdaInput')return borrowed?(context.lambdaInputs?.[node.position]??new Set([UNKNOWN])):new Set();
   if(node.k==='routerPrimitiveDereference'&&node.dereferenceProof?.kind==='shared-str-reference-copy')return borrowed?project(read(node.value),['pointee']):new Set();
   if(node.k==='routerIteratorOperation') {

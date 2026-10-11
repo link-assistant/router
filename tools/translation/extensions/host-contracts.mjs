@@ -18,6 +18,7 @@ import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
 import {floatSignObligation,withFloatZeroSignChecker} from './float-zero-refinements.mjs';
 import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,consumeTemporaryStringCallBorrow} from './utf16-fixed-f64.mjs';
+import {checkStringIteratorOperation,requireBorrowedString} from './string-iterators.mjs';
 import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
@@ -153,6 +154,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
   }
   method(object,name,args,range) {
     if(name.value==='encode_utf16')return {k:'routerUtf16Encode',object,args,span:range};
+    if(['lines','next','join'].includes(name.value))return {k:'routerStringIteratorOperation',operation:name.value,object,args,span:range};
     if(name.value!=='parse')return super.method(object,name,args,range);
     return this.instantiatedMethod(object,name,args,null,range);
   }
@@ -250,10 +252,10 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
       return {k:'routerPrimitiveFloatCall',owner:[...owner],method:operation,args,span:span(first,c.peek())};
     }
     const fixedItem=owner.length===1&&fixed&&!this.builtinShadow(owner[0],path)&&INHERENT_FIXED_COPY.has(operation);
-    const stringItem=segments.length===2&&segments[0]==='str'&&operation==='to_owned'&&!this.builtinShadow('str',path);
+    const stringItem=segments.length===2&&segments[0]==='str'&&['to_owned','trim','trim_start','trim_end'].includes(operation)&&!this.builtinShadow('str',path)&&this.resolveSourceNamespace(['str'],path,'type').join('::')==='str';
     if((fixedItem||stringItem)&&!c.is('(',offset)&&!c.is('::',offset)) {
       for(let index=0;index<offset;index++)c.next();
-      return {k:'routerStandardFunctionItem',operation:segments.join('::'),method:operation,...(fixedItem?{ownerType:{...fixed,rustPrimitiveName:owner[0]}}:{}),sourceFunctionItem:{profile:fixedItem?'rust-1.89-primitive-inherent-function-item':'rust-1.89-str-to-owned-function-item',path:resolved,span:span(first,c.peek())},span:span(first,c.peek())};
+      return {k:'routerStandardFunctionItem',operation:segments.join('::'),method:operation,...(fixedItem?{ownerType:{...fixed,rustPrimitiveName:owner[0]}}:{}),sourceFunctionItem:{profile:fixedItem?'rust-1.89-primitive-inherent-function-item':operation==='to_owned'?'rust-1.89-str-to-owned-function-item':'rust-1.89-str-trim-function-item',path:resolved,span:span(first,c.peek())},span:span(first,c.peek())};
     }
     const constructor=resolved.at(-1),kind=this.registeredGenericKind(resolved.slice(0,-1),path,segments[0]);
     if(kind&&(kind==='Option'?['Some','None']:['Ok','Err']).includes(constructor)){
@@ -300,6 +302,10 @@ export class HostChecker extends withCheckedSourceLinks(withFloatZeroSignChecker
       if(node.operation==='str::to_owned') {
         if(types.length!==1||types[0].kind!=='string'||types[0].rustReference||types[0].rustOwnership?.kind!=='borrowed'||types[0].rustOwnership.source!=='str')throw typeError('str::to_owned function item needs its actual borrowed str argument',node.span);
         body={k:'routerStringOwnership',operation:'to_owned',object:args[0],span:node.span};
+      } else if(['str::trim','str::trim_start','str::trim_end'].includes(node.operation)) {
+        if(types.length!==1)throw typeError('str trim function item needs one actual borrowed str argument',node.span);
+        requireBorrowedString(types[0],node.span);
+        body={k:'routerStringOperation',op:node.method,object:args[0],args:[],span:node.span};
       } else {
         if(types.length!==2||types.some(type=>type.rustReference||type.rustOwnership||type.rustPrimitiveName!==node.ownerType.rustPrimitiveName||!sameType(type,node.ownerType)))throw typeError('standard fixed method function item needs actual by-value primitive arguments',node.span);
         body={k:'routerDispatchMethod',method:node.method,object:args[0],args:args.slice(1),span:node.span};
@@ -382,6 +388,11 @@ export class HostChecker extends withCheckedSourceLinks(withFloatZeroSignChecker
       if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
       if(node.args.length)throw typeError('str::encode_utf16 takes no arguments',node.span);
       return checkedUtf16Iterator(object,node.span);
+    }
+    if(node.k==='routerStringIteratorOperation') {
+      const object=this.expr(node.object,env,path),inherent=this.resolvedMethod(object.type,node.operation,'shared');
+      if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
+      return checkStringIteratorOperation(this,node,object,env,path);
     }
     if(node.k==='cast') {
       const target=this.resolveType(node.to,path,node.span);
@@ -496,7 +507,7 @@ export class HostChecker extends withCheckedSourceLinks(withFloatZeroSignChecker
   }
 }
 export class HostEmitter extends EffectEmitter {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_str_lines','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
@@ -526,6 +537,12 @@ export class HostEmitter extends EffectEmitter {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(['routerStringLines','routerStringNext','routerStringJoin'].includes(node.k)) {
+      if(node.stringIteratorProof?.verified!==true||node.stringIteratorProof.profile!=='rust-1.89-borrowed-string-iterators')throw new Error('missing checked standard string iterator proof');
+      this.stringIterators=true;
+      const operation={routerStringLines:'lines',routerStringNext:'next',routerStringJoin:'join'}[node.k];
+      return `ml_str_${operation}(${this.expr(node.object)}${node.separator?', '+this.expr(node.separator):''})`;
+    }
     if(node.k==='routerUtf16Iterator'){this.utf16Runtime=true;return `ml_encode_utf16(${this.expr(node.object)})`;}
     if(node.k==='routerFixedF64Cast'){this.fixedF64Runtime=true;return `ml_fixed_to_f64(${this.expr(node.object)}, ${JSON.stringify(node.sourceType.rustPrimitiveName)})`;}
     if(node.k==='routerTemporaryStringCallBorrow')return this.expr(node.object);
@@ -558,6 +575,7 @@ export class HostEmitter extends EffectEmitter {
   }
   file() {
     const result=super.file(),preludes=[...result.preludes];
+    if(this.stringIterators)preludes.unshift(`import { stringLines as ml_str_lines, stringNext as ml_str_next, stringJoin as ml_str_join } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'string-iterator-runtime.mjs'))};`);
     if(this.utf16Runtime||this.fixedF64Runtime)preludes.unshift(`import { ${[...(this.utf16Runtime?['encodeUtf16 as ml_encode_utf16']:[]),...(this.fixedF64Runtime?['fixedToF64 as ml_fixed_to_f64']:[])].join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'utf16-fixed-f64-runtime.mjs'))};`);
     if(this.fixedArrays)preludes.unshift(`import { copyFixedArray as ml_copy_fixed_array } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-array-runtime.mjs'))};`);
     if(this.copyReceivers)preludes.unshift(`import { assertImmutableCopy as ml_assert_immutable_copy } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);

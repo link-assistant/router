@@ -5,6 +5,8 @@ export function hostRuntimeAssets() {
   const checker=new HostChecker('Rust',[]),program=checker.program({language:'Rust',items:hostData(),main:null});
   const types=program.declarations,aliases=typeScriptAliases(types);
   const files=new Map();
+  files.set('string-iterator-runtime.mjs',readFileSync(new URL('./extensions/string-iterator-runtime.mjs',import.meta.url),'utf8'));
+  files.set('string-iterator-runtime.d.mts',"type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function stringLines(value: string): IterableIterator<string>;\nexport declare function stringNext(value: IterableIterator<string>): RustOption<string>;\nexport declare function stringJoin(values: readonly string[], separator: string): string;\n");
   files.set('utf16-fixed-f64-runtime.mjs',readFileSync(new URL('./extensions/utf16-fixed-f64-runtime.mjs',import.meta.url),'utf8'));
   files.set('utf16-fixed-f64-runtime.d.mts','export declare function encodeUtf16(value: string): IterableIterator<bigint>;\nexport declare function fixedToF64(value: bigint, source: string): number;\n');
   files.set('float-runtime.mjs',readFileSync(new URL('./extensions/float-runtime.mjs',import.meta.url),'utf8'));
