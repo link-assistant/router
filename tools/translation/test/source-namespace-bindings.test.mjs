@@ -52,7 +52,7 @@ test('namespace context restoration is exact even when parsing refuses',()=>{
 
 test('local or parameter collisions carry before they can become module value calls',()=>{
   const parser=configured('fn Option(){} fn Some(){} fn None(){}');
-  for(const declaration of [{params:[{name:'Option'}],body:{k:'unit'}},{params:[],body:{k:'let',name:'Some',body:{k:'unit'}}},{params:[],body:{k:'routerLambda',params:[{name:'None'}],body:{k:'unit'}}}])assert.throws(()=>parser.sourceDeclarationNamespace(declaration,[]),/lexical shadowing/u);
+  for(const declaration of [{params:[{name:'Option'}],body:{k:'unit'}},{params:[],body:{k:'let',name:'Some',body:{k:'unit'}}},{params:[],body:{k:'routerLambda',params:[{name:'None'}],body:{k:'unit'}}}])assert.throws(()=>parser.sourceDeclarationNamespace(declaration,[]),/scope collision/u);
   parser.resolve(['Option'],[]);const result=parser.sourceDeclarationNamespace({params:[{name:'value'}],body:{k:'name',path:['crate','Option']}},[]);assert.equal(result.sourceNamespaceEvidence.source,'src/lib.rs');assert.equal(result.sourceNamespaceEvidence.bindings.find(binding=>binding.name==='Option').namespace,'value');
 });
 
@@ -62,4 +62,13 @@ test('host modules coexist with source values while actual type and module owner
   const host={k:'module',name:'std',items:[]};
   for(const k of ['fn','const'])assert.deepEqual(admittedHostData([host],[{k,name:'std'}]),[host]);
   for(const k of ['module','data'])assert.deepEqual(admittedHostData([host],[{k,name:'std'}]),[]);
+});
+
+
+test('actual function-kind evidence permits lexical precedence and restores outer bindings',()=>{
+  const parser=configured('fn value(){}');
+  assert.equal(parser.sourceNamespaceEvidence.bindings.find(binding=>binding.name==='value').kind,'fn');
+  parser.sourceLexicalScope([{name:'value',span:{start:1,end:6}}],()=>{assert.deepEqual(parser.resolve(['value'],[]),['value']);assert.deepEqual(parser.resolve(['value','member'],[]),['value','member']);});
+  assert.deepEqual(parser.resolve(['value'],[]),['crate','value']);assert.equal(parser.sourceLexicalValues,undefined);
+  assert.throws(()=>parser.sourceLexicalScope([{name:'value'}],()=>{throw new Error('refusal');}),/refusal/u);assert.equal(parser.sourceLexicalValues,undefined);
 });

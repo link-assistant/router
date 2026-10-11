@@ -27,7 +27,7 @@ export function configureParserSourceScope(parser,scope,scopes=[scope],path=scop
   parser.aliases=new Map([[path.join('.'),new Map(evidence.aliases)]]);
   parser.sourceNamespaceAliases=Object.fromEntries(Object.entries(evidence.namespaceAliases).map(([namespace,aliases])=>[namespace,new Map([[path.join('.'),new Map(aliases)]])]));
   parser.sourceNamespaceShadows=evidence.namespaceShadows;
-  parser.sourceNamespaceEvidence={source:scope.file,module:[...scope.path],bindings:scope.bindings.map(binding=>({name:binding.name,namespace:binding.namespace,status:binding.status,target:binding.target?[...binding.target]:null,source:binding.source,sourceSpan:binding.span?{...binding.span}:null}))};
+  parser.sourceNamespaceEvidence={source:scope.file,module:[...scope.path],bindings:scope.bindings.map(binding=>({name:binding.name,namespace:binding.namespace,kind:binding.kind,status:binding.status,target:binding.target?[...binding.target]:null,source:binding.source,sourceSpan:binding.span?{...binding.span}:null}))};
   parser.shadowedPreludeTypes=evidence.shadowedPreludeTypes;parser.shadowedImportedBindings=evidence.shadowedBindings;
   parser.shadowedBuiltinMacros=evidence.shadowedBuiltinMacros;parser.unresolvedImportScope=evidence.unresolvedTypeScope;parser.unresolvedMacroScope=evidence.unresolvedBangMacroScope;parser.unresolvedAttributeMacroScope=evidence.unresolvedAttributeMacroScope;
   return parser;

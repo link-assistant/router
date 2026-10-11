@@ -3,21 +3,75 @@
 import {unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 export function withSourceNamespaceParser(Base) {
   return class extends Base {
+    sourceLexicalScope(bindings,operation,{inherit=true}={}) {
+      const previous=this.sourceLexicalValues;
+      this.sourceLexicalValues=new Map(inherit?previous:[]);
+      try {for(const binding of bindings)this.sourceLexicalBind(binding);return operation();}
+      finally {this.sourceLexicalValues=previous;}
+    }
+    sourceLexicalBind(binding) {
+      const aliases=this.sourceNamespaceAliases?.value?.get((this.modulePath??this.sourceNamespaceEvidence?.module??[]).join('.'));
+      if(aliases?.has(binding.name)) {
+        const original=this.sourceNamespaceEvidence?.bindings.find(item=>item.namespace==='value'&&item.name===binding.name);
+        // Rust patterns cannot shadow imported constructors or constants.
+        // Only an actual resolved function permits this lexical shadowing.
+        if(original?.status!=='resolved'||original.kind!=='fn')throw unsupported('source value alias/local scope collision','requires an actual function binding before checked lexical shadowing',binding.span);
+      }
+      this.sourceLexicalValues?.set(binding.name,binding);
+    }
     sourceDeclarationNamespace(declaration,path) {
       const aliases=this.sourceNamespaceAliases?.value?.get(path.join('.'));
       if(!aliases)return declaration;
-      // The portable parser has no checked lexical alias environment. Carry
-      // collisions rather than turn a parameter/local into a module call.
+      const pattern=node=>{
+        if(!node||typeof node!=='object')return;
+        if(['bind','bindOrCtor'].includes(node.k)&&aliases.has(node.name))throw unsupported('source value alias/local scope collision','pattern bindings require checked lexical activation',node.span??declaration.span);
+        for(const key of ['args','items','alternatives'])for(const child of node[key]??[])pattern(child);
+        for(const field of node.fields??[])pattern(field.pattern);
+      };
       const inspect=node=>{
         if(!node||typeof node!=='object')return;
-        if(typeof node.name==='string'&&aliases.has(node.name))throw unsupported('source value alias/local scope collision','requires checked lexical shadowing before module value resolution',node.span??declaration.span);
-        for(const [name,value]of Object.entries(node))if(!['type','span'].includes(name)){if(Array.isArray(value))for(const child of value)inspect(child);else inspect(value);}
+        if((node.k==='let'&&!node.sourceLexicalBinding||node.k==='routerFor')&&aliases.has(node.name))throw unsupported('source value alias/local scope collision','requires checked lexical activation for this binder',node.span??declaration.span);
+        if(node.pattern)pattern(node.pattern);
+        if(node.k==='match')for(const row of node.rows)for(const child of row.patterns)pattern(child);
+        if(node.k==='routerLambda')for(const parameter of node.params){if(parameter.pattern)pattern(parameter.pattern);else if(aliases.has(parameter.name)&&!node.sourceLexicalParameters?.some(binding=>binding.name===parameter.name))throw unsupported('source value alias/local scope collision','requires original closure parameter activation before lexical shadowing',parameter.span??node.span);}
+        // Names on record fields, field projections and declarations are not
+        // lexical binders. Only the explicit binder nodes above own scopes.
+        for(const [name,value]of Object.entries(node))if(!['type','span','pattern','sourceLexicalBinding'].includes(name)){if(Array.isArray(value))for(const child of value)inspect(child);else inspect(value);}
       };
-      for(const parameter of declaration.params??[])inspect(parameter);inspect(declaration.body);
+      for(const parameter of declaration.params??[])if(aliases.has(parameter.name)&&!this.sourceLexicalValues?.has(parameter.name))throw unsupported('source value alias/local scope collision','requires original parameter activation before lexical shadowing',parameter.span??declaration.span);
+      inspect(declaration.body);
       return {...declaration,sourceNamespaceEvidence:{source:this.sourceNamespaceEvidence.source,module:[...this.sourceNamespaceEvidence.module],unresolvedTypeScope:this.unresolvedImportScope,unresolvedMacroScope:this.unresolvedMacroScope,bindings:[...(this.sourceNamespaceResolvedBindings?.values()??[])]}};
     }
-    fn(path){return this.sourceDeclarationNamespace(super.fn(path),path);}
-    constItem(path){return this.sourceDeclarationNamespace(super.constItem(path),path);}
+    sourceParameterBindings(open,terminator,{annotation=true}={}) {
+      const tokens=this.cursor.tokens,bindings=[];let start=open,depth=0;
+      const add=end=>{
+        const part=tokens.slice(start,end),first=part[0]?.value==='mut'?part[1]:part[0],next=part[part[0]?.value==='mut'?2:1];
+        if(first?.kind==='identifier'&&(next?.value===':'||!annotation&&!next))bindings.push({name:first.value,span:{start:first.start,end:first.end},kind:'source-parameter'});
+      };
+      for(let index=open;index<tokens.length;index++) {
+        const token=tokens[index];
+        if(depth===0&&token.value===terminator){add(index);return bindings;}
+        if(depth===0&&token.value===','){add(index);start=index+1;continue;}
+        if(['(','[','{','<'].includes(token.value))depth++;
+        if([')',']','}','>'].includes(token.value))depth--;
+        if(token.value==='>>')depth-=2;
+      }
+      return [];
+    }
+    fn(path) {
+      const c=this.cursor,modifier=c.is('async')&&c.is('fn',1)?1:0;
+      const bindings=c.is('fn',modifier)&&c.is('(',modifier+2)?this.sourceParameterBindings(c.index+modifier+3,')'):[];
+      return this.sourceLexicalScope(bindings,()=>this.sourceDeclarationNamespace(super.fn(path),path),{inherit:false});
+    }
+    constItem(path){return this.sourceLexicalScope([],()=>this.sourceDeclarationNamespace(super.constItem(path),path),{inherit:false});}
+    block(...args){return this.sourceLexicalScope([],()=>super.block(...args));}
+    letStatement(path) {
+      const binding=super.letStatement(path);
+      // The initializer was parsed in the previous scope. Activate only the
+      // exact ordinary source binder after that parsing has completed.
+      if(binding.name){const proof={name:binding.name,span:{...binding.span},kind:'source-let'};this.sourceLexicalBind(proof);return {...binding,sourceLexicalBinding:proof};}
+      return binding;
+    }
     inSourceNamespace(namespace,operation) {
       const previous=this.sourceResolutionNamespace;this.sourceResolutionNamespace=namespace;
       try{return operation();}finally{this.sourceResolutionNamespace=previous;}
@@ -26,6 +80,7 @@ export function withSourceNamespaceParser(Base) {
       if(!this.sourceNamespaceAliases)return super.resolve(segments,path);
       if(!['type','value','macro'].includes(namespace))throw new TypeError('Source path requires an explicit Rust namespace');
       // A qualified value path walks module/type owners before its value leaf.
+      if(namespace==='value'&&segments.length===1&&this.sourceLexicalValues?.has(segments[0]))return [...segments];
       const ownerNamespace=namespace==='value'&&segments.length>1?'type':namespace;
       const aliases=this.sourceNamespaceAliases[ownerNamespace]?.get(path.join('.'));
       if(aliases?.has(segments[0])) {
@@ -50,6 +105,11 @@ export function withSourceNamespaceParser(Base) {
     expr(...args){return this.inSourceNamespace('value',()=>super.expr(...args));}
     primary(path,options) {
       const c=this.cursor,first=c.peek(),segments=[];
+      if(first.kind==='identifier'&&this.sourceLexicalValues?.has(first.value)&&c.is('(',1))throw unsupported('source lexical callable','requires a checked function-valued local rather than an erased zero-argument call',first);
+      if(c.is('|')||c.is('||')) {
+        const bindings=c.is('|')?this.sourceParameterBindings(c.index+1,'|',{annotation:false}):[];
+        return this.sourceLexicalScope(bindings,()=>{const value=super.primary(path,options);return value.k==='routerLambda'?{...value,sourceLexicalParameters:bindings}:value;});
+      }
       if(first.kind==='identifier') {
         segments.push(first.value);let offset=1;
         while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
