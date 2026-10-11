@@ -90,6 +90,19 @@ function uncertainty(attributes,{moduleAttribute=false}={}) {
   const unknown=attributes.some(attribute=>!harmless.has(attribute.name) && !['cfg','derive','macro_export','macro_use'].includes(attribute.name) && !(attribute.name==='path' && moduleAttribute && attribute.pathLiteral) || attribute.name==='derive' && attribute.tokens.filter(token=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token)).slice(1).some(name=>!standardDerives.has(name)));
   return {type:unknown,macro:unknown || attributes.some(attribute=>attribute.name==='macro_use'),conditional:attributes.some(attribute=>['cfg','cfg_attr'].includes(attribute.name))};
 }
+function nestedExportUncertainty(tokens,start) {
+  // A nested macro_export or procedural attribute can introduce a crate-root
+  // macro. Inspect original attribute tokens, without resolving body scopes or
+  // expanding a macro. Header attributes are handled by the ordinary binder.
+  for(let at=start;at<tokens.length;at++) {
+    const bracket=at+(tokens[at+1]?.text==='!'?2:1);
+    if(tokens[at].type!=='punct'||tokens[at].text!=='#'||tokens[bracket]?.text!=='[')continue;
+    const end=close(tokens,bracket),body=tokens.slice(bracket+1,end);
+    if(body.some(token=>identifier(token)&&token.text==='macro_export')||uncertainty([{name:body[0]?.text,tokens:body.map(token=>token.text)}]).macro)return {start:tokens[at].start,end:tokens[end].end};
+    at=end;
+  }
+  return null;
+}
 function parts(tokens) {
   const output=[];let begin=0,angle=0;
   for(let at=0;at<tokens.length;at++) {
@@ -146,6 +159,8 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
       if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'))continue;
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
+        const nestedExport=nestedExportUncertainty(tokens,head.at);
+        if(nestedExport){scope.baseMacro=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
         const effectiveAttributes=head.attributes.filter(attribute=>!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
         uncertain.conditional ||= scope.configurationCondition==='unknown';

@@ -56,6 +56,11 @@ test('unknown cfg proc expansion selective lists and missing children retain com
   ]){const result=bindings({'src/lib.rs':parent,'src/child.rs':child});assert.equal(root(result).unresolvedMacroScope,true,parent+child);}
   const inactive=bindings({'src/lib.rs':'#[cfg(test)] #[macro_use] mod missing;'});assert.equal(root(inactive).unresolvedMacroScope,false);
   const rootCall=translateProject(options({'src/lib.rs':'mod child; pub fn text()->String{format!("unproved root namespace")}','src/child.rs':'#[derive(custom::Expand)] struct S;'}));assert.equal(rootCall.meta.executable.some(item=>item.name==='text'),false);assert.ok(rootCall.meta.refused.some(item=>item.name==='text'&&/macro format/u.test(item.message)));
+  for(const nested of ['#[macro_export] macro_rules! format {($($t:tt)*)=>{String::from("custom")}}','#[cfg_attr(unix,macro_export)] macro_rules! format {()=>{"custom"}}','#[custom::Expand] struct S;']){
+    const files={'src/lib.rs':'mod child; pub fn text()->String{format!("standard")}','src/child.rs':`pub fn register(){${nested}}`},evidence=bindings(files);
+    assert.equal(root(evidence).unresolvedMacroScope,true);assert.ok(evidence.diagnostics.some(item=>/nested source attribute/u.test(item.message)));
+    const result=translateProject(options(files));assert.equal(result.meta.executable.some(item=>item.name==='text'),false);assert.ok(result.meta.refused.some(item=>item.name==='text'&&/macro format/u.test(item.message)));
+  }
 });
 
 test('custom textual format preserves import order evidence and conservatively refuses prior references',()=>{
