@@ -153,7 +153,13 @@ export function withOwnershipChecker(Base=TextChecker) {
       }
       let operation=value;while(operation.k==='let')operation=operation.body;
       if(operation.k==='routerTextPattern'&&operation.sourceProfile==='checked-str-pattern-v1'&&['trim_start_matches','trim_end_matches','trim_matches'].includes(operation.op))owner=BORROWED_STR;
-      if(owner)value={...value,type:{...value.type,rustOwnership:owner}};
+      if(owner) {
+        const type={...value.type,rustOwnership:owner};
+        // A checked owned result is a new value, not the input's borrowed
+        // string lifetime. Keep reference evidence on actual shared results.
+        if(owner.kind==='owned'&&!type.rustReference)delete type.rustBorrowLifetime;
+        value={...value,type};
+      }
       if(node.k==='str'&&typeof node.value==='string'&&owner?.kind==='borrowed'&&owner.source==='str')value={...value,type:{...value.type,rustBorrowLifetime:{kind:'static',source:'string-literal',span:{...node.span}}}};
       return value;
     }
