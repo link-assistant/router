@@ -33,9 +33,10 @@ test('source-linked integer padding trace exposes exact-rounding versus pinned s
   const theoretical=((1n<<53n)+1n)*5n**768n*(1n<<715n);assert.equal(theoretical,original);
   assert.equal(original+1n>theoretical,true); // Source small_atof chooses b.next_positive().
   const inferredSourceBits=0x3ff0000000000001n,exactBits=roundPositiveRationalBinary64(original,10n**768n);assert.equal(exactBits,0x3ff0000000000000n);assert.notEqual(inferredSourceBits,exactBits);
-  assert.equal(serde_json_roundtrip_from_str(text).field0.field0.field0,1);
+  assert.throws(()=>serde_json_roundtrip_from_str(text),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
   // This is arithmetic/source-inferred evidence. No Rust program or translated
-  // production body is executed; the full4096-digit candidate stays unadmitted.
+  // production body is executed; the769-digit input is a domain refusal, not a
+  // fake Rust syntax error or silent ideal-rounding substitution.
 });
 
 test('all finite binary64 halfway boundaries terminate within768 significant decimal digits',()=>{

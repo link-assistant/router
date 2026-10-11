@@ -7,7 +7,7 @@ import {isJsonMacroSourceProof,jsonMacroOriginalSource} from './json-macro-sourc
 import {proveJsonMacroFeatures,isJsonMacroFeatureProof} from './json-macro-features.mjs';
 const root=new URL('./source-profiles/json-roundtrip/',import.meta.url),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const bytes=readFileSync(new URL('manifest.json',root));
-if(hash(bytes)!=='253d7a8c492fdb6840e024b7641845a69b3808eb00ba241befe4eaef501f3983')throw new TypeError('JSON roundtrip source candidate changed');
+if(hash(bytes)!=='c4e6bcfd34507837dc9b1668e87c9fd830c3e588a4f548f354cb7dd44387447d')throw new TypeError('JSON roundtrip source candidate changed');
 const profile=freezeMacroTree(JSON.parse(bytes)),candidates=new WeakSet();
 export function jsonRoundtripCandidateProfile({dependencies,compilationProfile=null}={}) {
   if(!isJsonMacroSourceProof(dependencies))throw new TypeError('JSON roundtrip needs sealed exact Cargo/source dependencies');
@@ -17,7 +17,7 @@ export function jsonRoundtripCandidateProfile({dependencies,compilationProfile=n
   if(!isJsonMacroFeatureProof(features)||!features.features.includes('float_roundtrip'))throw new TypeError('JSON roundtrip needs actual locked float_roundtrip activation');
   const sources=profile.sources.map(pin=>{const original=jsonMacroOriginalSource(dependencies,'serde_json',pin.path);if(original.bytes!==pin.bytes||original.sha256!==pin.sha256)throw new TypeError('JSON roundtrip original lexical source changed');return pin;});
   const candidate=freezeMacroTree({schema:profile.schema,dependencyDigest:dependencies.digest,sourceProfileSha256:hash(bytes),originalArchiveSha256:profile.lockedArchiveSha256,features,sources,domain:profile.domain,
-    implementationCandidate:true,parseAdmission:false,algorithmEquivalenceVerified:false,namespaceAuthority:false,expansionAuthority:false,applicationEffectCompleteness:false,runtimeParity:false,rustExecution:false,
+    implementationCandidate:true,parseAdmission:false,algorithmEquivalenceVerified:false,sourceBehaviorFidelityVerified:false,namespaceAuthority:false,expansionAuthority:false,applicationEffectCompleteness:false,runtimeParity:false,rustExecution:false,
     remainingSemanticObligations:profile.remainingSemanticObligations,defaultNumericAdapterChanged:false,actualParserGuardChanged:false});
   candidates.add(candidate);return candidate;
 }

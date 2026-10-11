@@ -1,8 +1,9 @@
-// Draft exact rational decimal rounding for the float_roundtrip f64 branch.
+// Separate exact-rational utility and bounded original-lexical reader draft.
 // No Number(decimalText), parseFloat or intermediate decimal floating arithmetic.
 // The bound is an explicit adapter-domain refusal, never a Rust syntax result.
 import {U64_MAX,I64_MIN} from './json-numbers.mjs';
 import {roundPositiveRationalBinary64} from './exact-binary64.mjs';
+import {lexicalConciseFloat64,lexicalTruncatedFloat64,JSON_LEXICAL_MAX_MANTISSA_DIGITS} from './json-roundtrip-lexical.mjs';
 export const JSON_ROUNDTRIP_MAX_DIGITS=4096;
 const SIGN=1n<<63n;
 const digit=byte=>byte>=48&&byte<=57;
@@ -36,12 +37,14 @@ export function parseJsonRoundtripNumber(reader) {
   let digits=String.fromCharCode(first),fractionDigits=0,floating=false;
   const append=byte=>{if(digits.length>=JSON_ROUNDTRIP_MAX_DIGITS)bound('JSON mantissa exceeds the checked roundtrip digit domain');digits+=String.fromCharCode(byte);};
   while(digit(reader.peek()))append(reader.next());
+  const integerDigits=digits;
   if(reader.peek()===46) {
     floating=true;reader.eat();
     while(digit(reader.peek())){append(reader.next());fractionDigits++;}
     if(!fractionDigits)reader.fail(reader.peek()===undefined?'EOF while parsing a value':'invalid number');
   }
   const coefficient=digits.replace(/^0+(?=[0-9])/u,'');
+  if(digits.length>JSON_LEXICAL_MAX_MANTISSA_DIGITS)bound('JSON mantissa exceeds the bounded768-digit original-lexical candidate domain');
   let exponent=0;
   if(reader.peek()===101||reader.peek()===69) {
     floating=true;reader.eat();let positiveExponent=true;
@@ -67,7 +70,9 @@ export function parseJsonRoundtripNumber(reader) {
     const integer=BigInt(coefficient);
     if(positive&&integer<=U64_MAX)return tagged('PosInt',integer);
     if(!positive&&integer>0n&&integer<=-I64_MIN)return tagged('NegInt',-integer);
+    if(integer<=U64_MAX)return tagged('Float',decimalToBinary64(coefficient,0,!positive));
   }
-  try{return tagged('Float',decimalToBinary64(coefficient,exponent-fractionDigits,!positive));}
-  catch(error){if(error?.code==='ERR_JSON_ROUNDTRIP_NUMBER_RANGE')reader.fail('number out of range',false);throw error;}
+  const combined=BigInt(coefficient),value=combined<=U64_MAX?lexicalConciseFloat64(combined,Math.max(-2147483648,Math.min(2147483647,exponent-fractionDigits))):lexicalTruncatedFloat64(integerDigits==='0'?'':integerDigits,digits.slice(integerDigits.length),exponent);
+  if(!Number.isFinite(value))reader.fail('number out of range',false);
+  return tagged('Float',positive?value:-value);
 }

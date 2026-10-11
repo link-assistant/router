@@ -96,7 +96,34 @@ Number::from_str, f32 or arbitrary_precision. Current default behavior remains
 separate. Inputs beyond a future checked bound must be an unsupported domain,
 not fabricated Rust syntax errors or automatically admitted dynamic strings.
 
-No checker/runtime admission is drafted on this incomplete lemma. Constant
+The next source-only implementation now preserves the actual selected lexical
+branch rather than requiring its approximation to equal ideal rounding. It
+keeps upper products, error predicates, actual downward b, negative half-way
+comparison and positive hi64/sticky native rounding. This sidesteps a blanket
+moderate-accuracy theorem while preserving its possible original quirks. The
+reusable source mantissa operation retains the original sticky rule for future
+auditing; JSON inputs exceeding768 raw mantissa digits remain refused.
+
+The bounded bigint proof uses base q=2^B, B in{32,64}. Source scalar product plus
+carry is at most(q-1)^2+(q-1)=q^2-q; a grade-school product with prior result
+limb and carry is at most(q-1)^2+2(q-1)=q^2-1. The actual low/high splitting
+and overflow-return additions preserve this polynomial, with neither wide
+overflow nor lost carry. High64 exports floor(N/2^(length-64)); its sticky bit
+is exactly whether a discarded low limb/bit is nonzero. Source native rounding
+uses that sticky only when the retained bits are halfway, then performs carry
+and overflow adjustment before encoding the binary64 bits.
+
+Positive fallback near overflow has approximately1025bits, at most33 u32 or17
+u64 limbs. Its powers-of-five multiplication remains in scalar chunks under
+the source combined-size threshold64. Negative comparison starts with at most54
+bits and at most about1091 powers of five in this domain. A32-bit1024-power
+case pairs a75-limb cached power with a partial of at most7 limbs; the source
+uneven path splits it into at-most7-limb grade-school products. A64-bit case
+stays in scalar chunks. Original power-table values and these bounded dispatch
+invariants still require focused arithmetic validation before admission; no
+general balanced-Karatsuba or allocation behavior is asserted.
+
+No checker/runtime admission is drafted on these unverified source lemmas. Constant
 source strings could later be conservatively proven in-domain after branch
 closure; unknown input domains remain carried. Scratch/BigInt allocation,
 linked allocator/OOM and drop behavior are still separate application-effect

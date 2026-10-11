@@ -123,11 +123,12 @@
   ],
   "domain": {
     "target": "serde_json::Value f64 deserialization (not f32)",
-    "rounding": "exact rational nearest with ties to even",
-    "maxMantissaDigits": 4096,
+    "rounding": "direct original lexical branch execution; separate ideal exact rational operation",
+    "maxMantissaDigits": 768,
     "maxExponentDigits": 4096,
     "maxInputBytes": 1048576,
-    "resourceBoundFailure": "explicit unsupported adapter-domain RangeError, never fabricated Rust Error"
+    "resourceBoundFailure": "explicit unsupported adapter-domain RangeError, never fabricated Rust Error",
+    "exactStandaloneDecimalOperationMaxDigits": 4096
   },
   "sourceBranchObligations": [
     "de.rs concise/long lexical dispatch, finite range and exponent overflow",
@@ -136,9 +137,9 @@
     "rounding.rs tie-even including subnormal carry and exponent overflow"
   ],
   "remainingSemanticObligations": [
-    "source-inferred 769-digit integer zero-tail sticky counterexample disagrees with full4096-digit exact replacement; no complete admission",
+    "larger769-digit zero-tail input remains domainunsupported; original retained-prefix/sticky operation preserves that source behavior for future expansion",
     "focused mathematical/runtime/default-regression checks are unrun",
-    "source algorithm equivalence requires review of the pinned fast/moderate/fallback branches, not just tests",
+    "direct lexical source fidelity and bounded32/64 limb/power arithmetic remain unverified; no complete ideal-rounding theorem substituted",
     "parser scratch allocation, BigInt and linked allocator/OOM behavior are not a complete application effect contract",
     "complete scalar/callee f32 deserialization and arbitrary_precision/preserve_order remain unsupported",
     "actual checker guard remains authoritative until separately reviewed private feature-directed dispatch is integrated"
@@ -150,5 +151,7 @@
   "applicationEffectCompleteness": false,
   "runtimeParity": false,
   "rustExecution": false,
-  "buildCfgFacts": "original build.rs chooses32 or64 fast_arithmetic exhaustively; both limb math paths require proof, external cfg overrides remain uncertified"
+  "buildCfgFacts": "original build.rs chooses32 or64 fast_arithmetic exhaustively; both limb math paths require proof, external cfg overrides remain uncertified",
+  "implementationMode": "direct pinned fast/moderate/fallback plus native hi64/sticky rounding; UNRUN",
+  "sourceBehaviorFidelityVerified": false
 }

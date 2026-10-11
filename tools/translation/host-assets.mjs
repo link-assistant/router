@@ -23,6 +23,7 @@ export function hostRuntimeAssets() {
   for(const file of ['slice-membership-runtime.mjs','slice-membership-runtime.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
   for(const file of ['json-roundtrip-numbers.mjs','json-roundtrip-numbers.d.mts','json-roundtrip-runtime.mjs','json-roundtrip-runtime.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
   for(const file of ['exact-binary64.mjs','exact-binary64.d.mts'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
+  for(const file of ['json-roundtrip-lexical.mjs','json-roundtrip-cache-source.mjs','json-roundtrip-lexical.d.mts','json-roundtrip-NOTICE.md','json-roundtrip-LICENSE-MIT.txt','json-roundtrip-LICENSE-APACHE.txt'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
   files.set('utf16-fixed-f64-runtime.mjs',readFileSync(new URL('./extensions/utf16-fixed-f64-runtime.mjs',import.meta.url),'utf8'));
   files.set('utf16-fixed-f64-runtime.d.mts','export declare function encodeUtf16(value: string): IterableIterator<bigint>;\nexport declare function fixedToF64(value: bigint, source: string): number;\n');
   files.set('float-runtime.mjs',readFileSync(new URL('./extensions/float-runtime.mjs',import.meta.url),'utf8'));
