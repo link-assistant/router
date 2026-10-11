@@ -12,6 +12,15 @@ const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
 const owned=new Set(['Box','Vec','String','Arc','Rc','Cell','RefCell','UnsafeCell','Mutex','RwLock','Pin','ManuallyDrop','MaybeUninit']);
+// A proof about this block's own exits, never an exit hidden in a nested loop
+// or a value expression. Calls/loops with an unproven never type stay refused.
+function diverges(node) {
+  if(!node)return false;
+  if(['routerReturn','routerBreak','routerContinue'].includes(node.k))return true;
+  if(['if','routerIf'].includes(node.k))return diverges(node.then)&&diverges(node.else)||node.k==='routerIf'&&diverges(node.body);
+  if(['let','routerSet','routerDiscard','routerWhile'].includes(node.k))return diverges(node.body);
+  return false;
+}
 // Preserve provenance erased by the portable Box<T>/&T type encoding. Owned
 // String uses the same portable primitive as &str, but owned String moves
 // require a separate contract; shared string views are the supported scalar.
@@ -39,10 +48,8 @@ export function withPatternControlParser(Base=ControlRustParser) {
       const kind=this.registeredGenericKind(resolved.slice(0,-1),path,written[0]);
       return (kind==='Option'?['Some','None']:kind==='Result'?['Ok','Err']:[]).includes(resolved.at(-1))?kind:null;
     }
-    controlIf(path) {
+    controlPattern(path,first) {
       const c=this.cursor;
-      if(!c.is('if')||!c.is('let',1))return super.controlIf(path);
-      const first=c.next();c.next();
       let pattern;const owners=[];
       try {pattern=parseBindingPattern(c,{resolvePath:(written,location)=>{
         const resolved=this.resolve(written,path),kind=this.registeredPatternOwner(written,resolved,path,location);
@@ -63,7 +70,53 @@ export function withPatternControlParser(Base=ControlRustParser) {
         if(node.fields)node={...node,fields:node.fields.map(field=>({...field,pattern:annotate(field.pattern)}))};
         return node;
       };
-      pattern=annotate(pattern);
+      return annotate(pattern);
+    }
+    letStatement(path) {
+      const c=this.cursor,checkpoint=c.index;
+      // Look only for a structural statement-level else. Ordinary let parsing
+      // remains with the enclosing frontend, including its mutable bindings.
+      let depth=0,hasElse=false;
+      for(let offset=1;offset<c.tokens.length-c.index;offset++) {
+        const value=c.peek(offset).value;
+        if(value===';'&&depth===0)break;
+        if(value==='}'&&depth===0)break;
+        if(value==='else'&&depth===0){hasElse=true;break;}
+        if(['(','[','{'].includes(value))depth++;
+        if([')',']','}'].includes(value))depth--;
+      }
+      if(!hasElse)return super.letStatement(path);
+      if(c.is('mut',1))return super.letStatement(path);
+      const first=c.next(),pattern=this.controlPattern(path,first);
+      const annotation=c.eat(':')?this.type():undefined;
+      c.expect('=','let-else initializer');
+      const begin=c.index,subject=this.expr(path);
+      if(!c.is('else')){c.index=checkpoint;return super.letStatement(path);}
+      if(annotation)throw unsupported('let-else type annotation','requires a separate checked pattern annotation contract',range(first,c.peek()));
+      const initializer=c.tokens.slice(begin,c.index);
+      if(initializer.at(-1)?.value==='}')throw unsupported('let-else brace initializer','Rust requires parentheses around an initializer ending in a brace',subject.span);
+      depth=0;
+      for(const token of initializer) {
+        if(['&&','||'].includes(token.value)&&depth===0)throw unsupported('let-else lazy boolean initializer','Rust requires parentheses around a lazy boolean initializer',subject.span);
+        if(['(','[','{'].includes(token.value))depth++;
+        if([')',']','}'].includes(token.value))depth--;
+      }
+      // LetStatement uses PatternNoTopAlt: parentheses are required around an
+      // or-pattern, unlike the if-let grammar handled by controlIf.
+      const syntax=c.tokens.slice(checkpoint+1,begin-1);depth=0;
+      for(const token of syntax) {
+        if(token.value==='|'&&depth===0)throw unsupported('let-else top-level or-pattern','requires source parentheses',pattern.span);
+        if(['(','[','{'].includes(token.value))depth++;
+        if([')',']','}'].includes(token.value))depth--;
+      }
+      c.next();const otherwise=this.block(path,true);c.expect(';','let-else statement');
+      return {k:'routerLetElse',pattern,subject,else:otherwise,span:range(first,c.peek())};
+    }
+    controlIf(path) {
+      const c=this.cursor;
+      if(!c.is('if')||!c.is('let',1))return super.controlIf(path);
+      const first=c.next();c.next();
+      const pattern=this.controlPattern(path,first);
       c.expect('=','if-let condition');
       let depth=0;
       for(let offset=0;offset<c.tokens.length-c.index;offset++) {
@@ -105,7 +158,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       const owner=actual?.k==='ctor'?actual.data:record?.fullName??(standard?type.name:null);
       const name=actual?.k==='ctor'?actual.name:record?.ctors[0].name??names?.at(-1);
       if(!owner) {
-        if(node.k==='bindOrCtor'&&!actual)return {k:'bind',name:node.name,span:location};
+        if(node.k==='bindOrCtor'&&(!actual||actual.k==='fn'))return {k:'bind',name:node.name,span:location};
         throw typeError(`if-let pattern ${names?.join('::')} has no checked constructor owner`,location);
       }
       if(owner!==type.name)throw typeError(`if-let constructor belongs to ${owner}, not ${type.name}`,location);
@@ -154,10 +207,38 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(test.kind==='always')return {k:'lit',value:true,type:BOOL};
       if(test.kind==='ctor')return {k:'routerPatternTag',object:this.patternProjection(subject,test.projection,{kind:'data',name:test.data}),data:test.data,ctor:test.ctor,type:BOOL};
       if(test.kind==='literal')return {k:'binary',op:'eq',left:this.patternProjection(subject,test.projection,test.type),right:{k:'lit',value:test.value,type:test.type},type:BOOL};
-      if(['and','or'].includes(test.kind))return test.tests.map(test=>this.patternTest(test,subject)).reduce((left,right)=>({k:'binary',op:test.kind,left,right,type:BOOL}));
+      if(['and','or'].includes(test.kind)) {
+        // Plans inspect only a checked immutable subject. Idempotent duplicate
+        // tests can be removed without changing observable evaluation; keeping
+        // them makes TS's narrowed discriminant reject valid duplicate arms.
+        const seen=new Set(),tests=test.tests.filter(test=>{const key=JSON.stringify(test,(_,value)=>typeof value==='bigint'?{$bigint:String(value)}:value);if(seen.has(key))return false;seen.add(key);return true;});
+        return tests.map(test=>this.patternTest(test,subject)).reduce((left,right)=>({k:'binary',op:test.kind,left,right,type:BOOL}));
+      }
       throw typeError('unchecked pattern test plan',subject.span);
     }
     expr(node,env,path,expected,allowLiteral=false) {
+      if(node.k==='routerLetElse') {
+        env=this.contextEnvironment(node,env,expected);
+        if(!diverges(node.else))throw unsupported('let-else divergence','the failure block must have a checked unconditional return, break or continue',node.else.span??node.span);
+        if(containsExit(node.subject))throw unsupported('let-else subject control','nonlocal exits cannot be emitted through a subject value',node.subject.span);
+        const subject=this.expr(node.subject,env,path);
+        this.patternDomain(subject.type,node.span);
+        const pattern=this.patternOwner(node.pattern,subject.type,path,env);
+        const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,node.span),span:node.span});
+        for(const binding of plan.bindings)if(!scalar(binding.type))throw unsupported('let-else aggregate binding','only immutable scalar bindings have a checked ownership contract',binding.span??node.span);
+        let temporary;do{temporary=this.freshName('ml_pattern_');}while(env.has(temporary));
+        const variable={k:'var',name:temporary,type:subject.type,span:node.span};
+        const otherwise=this.expr(node.else,new Map(env),path,UNIT);
+        if(!sameType(otherwise.type,UNIT))throw typeError('let-else failure block must be a diverging statement block',node.span);
+        let inner=new Map(env);
+        for(const binding of plan.bindings)inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
+        let body=this.expr(node.body,inner,path,expected,allowLiteral);
+        body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
+        let condition=this.patternTest(plan.test,variable);
+        if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL},right:condition,type:BOOL};
+        const conditional={k:'routerIf',cond:condition,then:{k:'unit',type:UNIT},else:otherwise,body,type:body.type,span:node.span};
+        return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'let-else',divergence:'checked-exit'}};
+      }
       if(node.k==='let'&&node.type?.patternOwnershipRefusal) {
         env=this.contextEnvironment(node,env,expected);
         if(containsExit(node.value))throw unsupported('control in binding value','nonlocal exits require statement lowering',node.value.span);

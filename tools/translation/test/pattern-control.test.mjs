@@ -123,6 +123,16 @@ test('matched receiver is evaluated exactly once under an explicit synthetic ext
   for(const api of apis){assert.equal(api.once(some(4n)),4n);assert.equal(api.fixture_count(),1);assert.equal(api.once(none),0n);assert.equal(api.fixture_count(),2);}
 });
 
+test('let-else evaluates its matched receiver exactly once before either continuation',async()=>{
+  const preparsed=check('fn shape(value: Option<u8>) -> Option<u8> { value }'),option=preparsed.declarations.get('shape').ret;
+  const externals=[{k:'fn',name:'fixture_read',params:[{name:'value',type:option}],ret:option}];
+  const fixture='let fixture_reads = 0; function fixture_read(value) { fixture_reads += 1; return value; } function fixture_count() { return fixture_reads; }';
+  const {apis,program}=await compile('pub fn once(value:Option<u8>)->u8{let Some(v)=fixture_read(value) else{return 9;};v}',{externals,fixture});
+  assert.equal(program.declarations.get('once').body.value.fn,'fixture_read');
+  assert.equal(program.declarations.get('once').body.patternControl.kind,'let-else');
+  for(const api of apis){assert.equal(api.once(some(4n)),4n);assert.equal(api.fixture_count(),1);assert.equal(api.once(none),9n);assert.equal(api.fixture_count(),2);}
+});
+
 test('aggregate moves, aliases, references, generic patterns and guards remain explicit refusals',()=>{
   for(const source of [
     'fn aggregate(value: Option<Option<u8>>) -> u8 { if let Some(v) = value { 0 } else { 1 } }',
