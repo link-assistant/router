@@ -30,7 +30,7 @@ test('unproved item forms malformed imports attributes and terminators remain re
     'pub mod named','mod ;','mod true;','pub(in unknown) mod named;',
     'use *;','use known::;','use known as;','use known::{one other};',
     '#![unknown] mod named;','#[unknown(call!())] mod named;',
-    'known!(opaque)','known[opaque];','fn unproved(){}','struct Unproved(u8);',
+    'known!(opaque)','pub known! {opaque}','known[opaque];','fn unproved(){}','struct Unproved(u8);',
     'impl Unknown {}','mod nested {let value=7;}',
   ])assert.throws(()=>expandDeclarativeMacro(definition,originalMacroTrees(source)),/does not match/);
 });

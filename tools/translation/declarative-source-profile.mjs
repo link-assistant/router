@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {freezeMacroTree,originalTopLevelMacroInvocations} from './macro-token-trees.mjs';
-import {compileDeclarativeMacro} from './declarative-macros.mjs';
+import {compileDeclarativeMacro,declarativeDefinitionHeader} from './declarative-macros.mjs';
 const directory=new URL('./source-profiles/declarative/',import.meta.url);
 const manifestBytes=readFileSync(new URL('manifest.json',directory));
 export const DECLARATIVE_SOURCE_PROFILE=freezeMacroTree(JSON.parse(manifestBytes));
@@ -94,7 +94,7 @@ export function declarativeStandardInvocations(proof,path) {
 
 function sourceDefinition(proof,source,path,name,owner) {
   const definition=compileDeclarativeMacro(source,{name,owner});
-  definitionOrigins.set(definition,{proof,evidence:freezeMacroTree({source:path,sourceSha256:hash(source),definitionDigest:definition.digest,definitionSpan:definition.definitionSpan,dependencyDigest:proof.digest,sourceVerified:true,callOwnerResolved:false})});
+  definitionOrigins.set(definition,{proof,evidence:freezeMacroTree({source:path,sourceSha256:hash(source),definitionDigest:definition.digest,definitionSpan:definition.definitionSpan,definitionHeader:declarativeDefinitionHeader(definition),dependencyDigest:proof.digest,sourceVerified:true,callOwnerResolved:false})});
   return definition;
 }
 export function declarativeDefinitionSource(proof,definition) {

@@ -312,3 +312,22 @@ export function declarativeExpansionLineage(proof) {
   const state=expansions.get(proof);if(!state)throw new TypeError('Unsealed declarative expansion lineage');
   return freezeMacroTree({definition:state.definition,parent:state.parent,path:state.path,depth:state.depth});
 }
+
+// Declaration headers are exact source evidence; attribute spellings and a
+// public/export annotation never grant their own owner or hygiene semantics.
+export function declarativeDefinitionHeader(definition) {
+  const state=definitions.get(definition);if(!state)throw new TypeError('Unsealed declarative definition header');
+  const trees=state.trees;
+  const body=trees.findIndex(tree=>tree.kind==='group'&&tree.span.start===definition.definitionSpan.start&&tree.span.end===definition.definitionSpan.end);
+  if(body<0)throw new TypeError('Original declaration body is absent from the sealed source');
+  let begin=body-2,kind='macro';
+  if(text(trees[body-3])==='macro_rules'&&text(trees[body-2])==='!'){begin=body-3;kind='macro_rules';}
+  if(text(trees[begin])!==kind||text(trees[body-1])!==definition.name)throw new TypeError('Original macro declaration header differs from its compiled definition');
+  let visibility=null;
+  if(text(trees[begin-1])==='pub'){visibility=syntax(trees[--begin]);}
+  const attributes=[];
+  while(trees[begin-1]?.kind==='group'&&trees[begin-1].delimiter==='['&&text(trees[begin-2])==='#') {
+    const group=trees[begin-1];attributes.unshift({tokens:group.children,sourceSyntax:syntax(trees[begin-2],group),ownerResolved:false});begin-=2;
+  }
+  return freezeMacroTree({sourceSha256:definition.sourceSha256,span:{start:trees[begin].span.start,end:definition.definitionSpan.end},name:definition.name,kind,visibility,attributes,sourceVerified:true,attributeOwnersResolved:false,hygieneVerified:false});
+}

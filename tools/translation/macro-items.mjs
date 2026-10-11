@@ -33,14 +33,14 @@ function useTree(trees,start,depth=0,allowBareGlob=false) {
 export function boundedMacroItem(trees,start,metaEnd,depth=0) {
   if(depth>24)throw new TypeError('Declarative item depth budget exceeded');
   if(trees[start]?.kind==='fragment'&&trees[start].fragment==='item')return start+1;
-  let at=start;
+  let at=start,visible=false;
   while(text(trees[at])==='#') {
     // Inner attributes belong to the enclosing module, never this item.
     const attribute=trees[at+1];
     if(attribute?.kind!=='group'||attribute.delimiter!=='['||metaEnd(attribute.children,0)!==attribute.children.length)return null;at+=2;
   }
   if(text(trees[at])==='pub') {
-    at++;const restriction=trees[at];
+    visible=true;at++;const restriction=trees[at];
     if(restriction?.kind==='group') {
       if(restriction.delimiter!=='(')return null;
       const values=restriction.children;
@@ -61,6 +61,7 @@ export function boundedMacroItem(trees,start,metaEnd,depth=0) {
     }
     return at+1;
   }
+  if(visible)return null;
   // Macro item grammar checks delimiters/terminator but never interprets its
   // arbitrary token-tree input. Closure inspection still owes its expansion.
   if(text(trees[at])==='::')at++;
