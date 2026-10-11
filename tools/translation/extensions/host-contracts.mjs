@@ -1,3 +1,4 @@
+import {itemConfiguration} from '../cfg-profile.mjs';
 import {createHash} from 'node:crypto';
 // Crate contracts select operations by resolved paths and checked value types.
 // They never supply a repository function body or waive a body obligation.
@@ -36,6 +37,25 @@ export function hostData() {
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
 export class HostRustParser extends MethodRustParser {
+  attributes(options={}) {
+    if(!this.compilationProfile)return super.attributes(options);
+    const c=this.cursor,result=[];
+    while(c.is('#')&&c.is('[',1)){
+      const start=c.index;let end=start+2,depth=1;
+      for(;end<c.tokens.length;end++){if(c.tokens[end].value==='[')depth++;if(c.tokens[end].value===']')depth--;if(!depth)break;}
+      if(depth)throw unsupported('configuration attribute','requires a balanced original token group',c.peek());
+      const tokens=c.tokens.slice(start,end+1),condition=itemConfiguration(tokens,this.compilationProfile),name=tokens[2].value;
+      if(['cfg','cfg_attr'].includes(name)){
+        if(condition.status!=='active')throw unsupported('configuration attribute','requires an active checked compilation condition at this exact syntax position',c.peek());
+        c.index=end+1;result.push({kind:'cfg',name,tokens:condition.attributes[0].tokens,span:condition.attributes[0].span,compilationProfile:this.compilationProfile,condition});continue;
+      }
+      const eof={kind:'eof',value:'',start:tokens.at(-1).end,end:tokens.at(-1).end};
+      this.cursor=new c.constructor([...tokens,eof],c.language);
+      try{result.push(...super.attributes(options));if(!this.cursor.atEnd())throw unsupported('attribute','requires complete original attribute parsing',c.peek());}finally{this.cursor=c;}
+      c.index=end+1;
+    }
+    return result;
+  }
   resolve(segments,path) {
     const resolved=super.resolve(segments,path);
     if(this.shadowedImportedBindings?.has(segments[0]) && resolved.length===segments.length && resolved.every((part,index)=>part===segments[index]))return ['crate','ml_unresolved_source_import',...segments];

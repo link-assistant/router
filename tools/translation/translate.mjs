@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { posix } from 'node:path';
-import { sourceItems } from './rust-structure.mjs';
+import { sourceItems,rustTokens } from './rust-structure.mjs';
+import {itemConfiguration} from './cfg-profile.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import { parseRust, checkProgram, emitJavaScript } from './extensions/host-contracts.mjs';
 import {typeScriptType,typeScriptAliases} from './type-layout.mjs';
@@ -88,6 +89,10 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   for (const item of items) {
     if (item.status === 'preserved') continue;
     try {
+      if(sourceScope?.compilationProfile){
+        item.configuration=itemConfiguration(rustTokens(item.source),sourceScope.compilationProfile);
+        if(sourceScope.configurationCondition!=='active'||item.configuration.status!=='active')throw new TranslationError('configuration','source item requires an active checked compilation condition',{start:0,end:item.source.length});
+      }
       if (!['fn', 'enum', 'struct', 'const'].includes(item.term) || item.name === 'main') throw new TranslationError('unsupported', `draft item ${item.term}: no supported library declaration emission`, { start: 0, end: item.source.length });
       const surface = parseRust(item.source + '\nfn main() {}\n', { macroEvidence, sourceScope, shadowedPreludeTypes: new Set(items.filter(entry=>['enum','struct','type','mod'].includes(entry.term)).map(entry=>entry.name)), shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio','serde_json'].includes(entry.name)).map(entry => entry.name)) });
       const declarations = surface.items.filter(entry => !entry.generated);
@@ -122,6 +127,8 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     visit(root);
     return [...found.values()];
   };
+  // Conditional variants can share a source name; their emissions belong to
+  // the exact item identity rather than the name of an inactive sibling.
   const emissions = new Map();
   const layoutClosure = declarations => {
     const found = new Map();
@@ -147,7 +154,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
       item.status = 'executable';
       const own = checked.declarations.get(layout.name);
       item.semantic = { checkedIR: own, dataTypes: [...checked.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, constructors: constructors.map(ctor => checked.declarations.get(ctor.name)), params: [], returns: { kind: 'data', name: layout.name } };
-      emissions.set(item.name, emitted);
+      emissions.set(item, emitted);
     } catch (error) {
       if (!(error instanceof TranslationError)) throw error;
       item.diagnostic = { kind: error.kind, message: error.reason, span: error.span ?? { start: item.span.start, end: item.span.end }, details: error.details };
@@ -162,21 +169,22 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
       item.status = 'executable';
       const own = checked.declarations.get(item.surface.name);
       item.semantic = { checkedIR: own, dataTypes: [...checked.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, params: own.params, returns: own.async ? { kind: 'routerFuture', value: own.ret } : own.ret };
-      emissions.set(item.name, emitted);
+      emissions.set(item, emitted);
     } catch (error) {
       if (!(error instanceof TranslationError)) throw error;
       item.diagnostic = { kind: error.kind, message: error.reason, span: error.span ?? { start: item.span.start, end: item.span.end }, details: error.details };
     }
   }
   for (const item of items.filter(item => ['fn', 'const'].includes(item.term) && (item.status === 'carried'||matchingScopes.length))) {
+    if(item.configuration&&item.configuration.status!=='active'||sourceScope?.compilationProfile&&sourceScope.configurationCondition!=='active')continue;
     const contexts = projectDeclarations.filter(entry => entry.source === path && entry.sourceSha256 === sourceHash && entry.name === item.name && entry.span.start === item.span.start && entry.span.end === item.span.end);
     // A source reached through two crate roots may have different bindings.
     // Keep that ambiguity carried rather than selecting a guessed namespace.
-    if (contexts.length !== 1) {if(matchingScopes.length){item.status='carried';emissions.delete(item.name);item.diagnostic={kind:'module-binding',message:matchingScopes.length>1?'source has ambiguous crate compilation contexts':'body has no checked implementation in its resolved crate scope',span:item.span};}continue;}
+    if (contexts.length !== 1) {if(matchingScopes.length){item.status='carried';emissions.delete(item);item.diagnostic={kind:'module-binding',message:matchingScopes.length>1?'source has ambiguous crate compilation contexts':'body has no checked implementation in its resolved crate scope',span:item.span};}continue;}
     const context = contexts[0];if(sourceScope&&context.project!==sourceScope.project)continue;const { own, program, emitted } = context.lower({ runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
     item.status = 'executable'; item.diagnostic = null;
     item.semantic = { checkedIR: own, dataTypes: [...program.declarations.values()].filter(entry => entry.k === 'data'), encodings: emitted.encodings, assumptions: emitted.assumptions, mappings: emitted.mappings, params: own.params, returns: own.async ? { kind: 'routerFuture', value: own.ret } : own.ret, project: { entry: context.project, declaration: context.qualifiedName } };
-    emissions.set(item.name, emitted);
+    emissions.set(item, emitted);
   }
   // A parsed signature is no implementation. Reject every dependent of a
   // carried function, transitively, before exposing executable definitions.
@@ -199,18 +207,18 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   } while (changed);
   for (const item of items) { delete item.surface; delete item.supportTypes; }
   const executable = items.filter(item => item.status === 'executable');
-  const preludes = mergePreludeImports([...new Set(executable.flatMap(item => emissions.get(item.name).preludes))]);
-  const definitions = [...new Set(executable.flatMap(item => emissions.get(item.name).definitions))];
-  const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges', 'checked standard-library filesystem/environment reads, lazy async futures and identity-error propagation'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'const fn is lowered for pure runtime calls only; compile-time evaluability is not established', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'checked value results, local scalar mutation, immutable constructors, lazy future polling and named host effects; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
+  const preludes = mergePreludeImports([...new Set(executable.flatMap(item => emissions.get(item).preludes))]);
+  const definitions = [...new Set(executable.flatMap(item => emissions.get(item).definitions))];
+  const ir = { schemaVersion: 1, kind: 'router-rust-draft', runtimeParity: false, compilationProfile:sourceScope?.compilationProfile??null, configurationCondition:sourceScope?.configurationCondition??null, sourceLanguage: 'Rust', targetLanguages: ['JavaScript', 'TypeScript'], sourcePath: path, sourceSha256: sha256(source), sourceBytes: Buffer.byteLength(source), translator: { repository: 'link-foundation/meta-language', commit: PIN, structuralFrontend: 'formal-ai lexer with Router opaque-literal extensions', pipeline: 'Rust syntax → serialized/reparsed checked semantic IR → JavaScript/TypeScript', extensions: ['checked Rust strings and scalar domain', 'monomorphic Option/Result and immutable vectors', 'Rust raw literals and ASCII continuation normalization', 'checked mutable scalar control flow and immutable slice indexing', 'module-local immutable records and algebraic constructors', 'lazy typed scalar iterators, contextual closures and bounded integer ranges', 'checked standard-library filesystem/environment reads, lazy async futures and identity-error propagation'] }, semantics: { integerEncoding: 'BigInt with checked fixed-width arithmetic; usize/isize assume 64 bits', assumptions: ['Rust integer arithmetic uses checked overflow behavior (debug/test profile); release wrapping arithmetic is outside this draft contract', 'String case conversion depends on the source and host Unicode tables', 'const fn is lowered for pure runtime calls only; compile-time evaluability is not established', 'Immutable strings encode scalar values; monomorphic tagged values encode Option/Result; vectors/slices are immutable arrays'], observation: 'checked value results, local scalar mutation, immutable constructors, lazy future polling and named host effects; carried items supply no executable behavior' }, counts: { executable: executable.length, executableFunctions: executable.filter(item => item.term === 'fn').length, executableConstants: executable.filter(item => item.term === 'const').length, executableTypes: executable.filter(item => item.semantic.constructors).length, executableConstructors: executable.reduce((sum, item) => sum + (item.semantic.constructors?.length ?? 0), 0), carried: items.filter(item => item.status === 'carried').length, preserved: items.filter(item => item.status === 'preserved').length }, items };
   const header = `// Generated draft from ${path}; sha256=${ir.sourceSha256}\n// Carried constructs are data, never runtime parity evidence.\n`;
   const body = [...preludes, ...definitions].join('\n\n');
   const entries = executable.map(item => item.name);
-  const constructorTarget = (item, ctor) => emissions.get(item.name).mappings.find(mapping => mapping.source === ctor.fullName).target;
+  const constructorTarget = (item, ctor) => emissions.get(item).mappings.find(mapping => mapping.source === ctor.fullName).target;
   const runtimeEntries = entries.map((entry, index) => {
     const item = executable[index];
-    if (item.semantic.project) { const target = emissions.get(item.name).mappings.find(mapping => mapping.source === item.name).target; return `[${JSON.stringify(entry)}]: ${target}${item.term === 'const' ? '()' : ''}`; }
+    if (item.semantic.project) { const target = emissions.get(item).mappings.find(mapping => mapping.source === item.name).target; return `[${JSON.stringify(entry)}]: ${target}${item.term === 'const' ? '()' : ''}`; }
     if (item.semantic.constructors) return `[${JSON.stringify(entry)}]: ${item.term === 'struct' ? constructorTarget(item, item.semantic.constructors[0]) : `Object.freeze({ ${item.semantic.constructors.map((ctor, index) => `[${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}]: ${constructorTarget(item, ctor)}`).join(', ')} })`}`;
-    const target=emissions.get(item.name).mappings.find(mapping=>mapping.source===item.name)?.target??item.name;
+    const target=emissions.get(item).mappings.find(mapping=>mapping.source===item.name)?.target??item.name;
     return `[${JSON.stringify(entry)}]: ${target}${item.term === 'const' ? '()' : ''}`;
   });
   const runtime = `${header}${body}\n\nexport const translated = { ${runtimeEntries.join(', ')} };\nexport const provenance = ${JSON.stringify({ sourcePath: path, sourceSha256: ir.sourceSha256, ...ir.counts, runtimeParity: false })};\n`;
@@ -219,7 +227,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   const types = executable.map((item, index) => `${JSON.stringify(entries[index])}: ${item.semantic.constructors ? item.term === 'struct' ? signature(item.semantic.constructors[0].params, item.semantic.returns) : `Readonly<{ ${item.semantic.constructors.map((ctor, index) => `${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}: ${signature(ctor.params, item.semantic.returns)}`).join('; ')} }>` : item.term === 'const' ? tsType(item.semantic.returns, dataTypes) : signature(item.semantic.params, item.semantic.returns)}`).join('; ');
   const parameterTypes = new Map(executable.flatMap(item => item.semantic.constructors ? item.semantic.constructors.map(ctor => [constructorTarget(item, ctor), ctor.params]) : item.semantic.mappings.filter(mapping => mapping.source === item.name).map(mapping => [mapping.target, item.semantic.params])));
   const returnTypes = new Map();
-  for (const item of executable) for (const signature of emissions.get(item.name).signatures ?? []) { if (signature.target) { parameterTypes.set(signature.target, signature.params); returnTypes.set(signature.target, signature.ret); } }
+  for (const item of executable) for (const signature of emissions.get(item).signatures ?? []) { if (signature.target) { parameterTypes.set(signature.target, signature.params); returnTypes.set(signature.target, signature.ret); } }
   const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes, returnTypes);
   const typescript = typedRuntime.replace('export const translated =', `export const translated: { ${types} } =`);
   return { ir, javascript: runtime, typescript };

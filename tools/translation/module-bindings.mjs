@@ -1,3 +1,4 @@
+import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 // Rust 2018+ binding evidence, not body translation or macro expansion.
 // https://doc.rust-lang.org/reference/items/use-declarations.html
 // https://doc.rust-lang.org/reference/visibility-and-privacy.html
@@ -114,12 +115,14 @@ function collapse(candidates) {
   }).sort((a,b)=>a.namespace===b.namespace?(a.name<b.name?-1:a.name>b.name?1:0):(a.namespace<b.namespace?-1:1));
 }
 
-export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
+export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null}={}) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
+  const profile=compilationProfile(profileInput);
   const scopes=new Map(),containers=new Map(),tasks=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
   for(const module of modules) {
     if(!Array.isArray(module.path) || typeof module.source!=='string' || typeof module.file!=='string')throw new TypeError('Module binding evidence is incomplete');
+    if(module.compilationProfile!==undefined&&JSON.stringify(compilationProfile(module.compilationProfile))!==JSON.stringify(profile))throw new TypeError('Module graph and binding compilation profiles must agree');
     const name=key(canonical(module.path));if(scopes.has(name))throw new TypeError('Duplicate tracked module scope');
     const scope={file:module.file,path:[...module.path],seeds:[],bindings:[],deriveNames:[],unknownType:false,unknownMacro:false,baseType:false,baseMacro:false};
     scopes.set(name,scope);containers.set(name,scope);
@@ -129,10 +132,21 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
     const scope=scopes.get(key(canonical(module.path)));
     let items;
     try {items=module.items??sourceItems(module.source);} catch(error){scope.baseType=scope.baseMacro=true;diagnostic(scope,error.message,{start:0,end:module.source.length});continue;}
+    const innerConditions=(module.allItems??items).filter(item=>tokensOf(item)[0]?.text==='#'&&tokensOf(item)[1]?.text==='!').map(item=>itemConfiguration(tokensOf(item),profile));
+    scope.configurationCondition=module.configurationCondition??(innerConditions.some(item=>item.status==='inactive')?'inactive':innerConditions.some(item=>item.status==='unknown')?'unknown':'active');
+    if(scope.configurationCondition!=='active'){
+      if(scope.configurationCondition==='inactive')continue;
+      scope.baseType=scope.baseMacro=true;
+      const root=scopes.get('crate');if(root)root.baseMacro=true;
+      diagnostic(scope,'inner module compilation condition remains unknown; possible exported macros retain crate uncertainty',{start:0,end:module.source.length});
+    }
     for(const item of items.filter(item=>!item.comment)) {
+      const condition=itemConfiguration(tokensOf(item),profile);if(condition.status==='inactive')continue;
       const span={start:item.start,end:item.end};
+      if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'))continue;
       try {
-        const tokens=tokensOf(item),head=header(tokens,scope.path),uncertain=uncertainty(head.attributes,{moduleAttribute:tokens[head.at]?.text==='mod'});
+        const tokens=tokensOf(item),head=header(tokens,scope.path),effectiveAttributes=head.attributes.filter(attribute=>!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)),uncertain=uncertainty(effectiveAttributes,{moduleAttribute:tokens[head.at]?.text==='mod'});
+        uncertain.conditional ||= scope.configurationCondition==='unknown';
         for(const attribute of head.attributes.filter(attribute=>attribute.name==='derive'))for(const name of attribute.tokens.filter(token=>standardDerives.has(token)))scope.deriveNames.push({name,span:attribute.span});
         scope.baseType ||= uncertain.type;scope.baseMacro ||= uncertain.macro;
         if(uncertain.type || uncertain.macro || uncertain.conditional)diagnostic(scope,'attribute scope requires compilation-condition or procedural expansion evidence',span);
@@ -304,5 +318,5 @@ export function resolveModuleBindings({modules,externalModules=new Map()}={}) {
     if(result.error || task.conditional || !task.glob && result.bindings?.some(binding=>binding.status!=='resolved') || task.glob && (!result.container || result.container===task.scope || result.container.unknownType || result.container.unknownMacro))diagnostic(task.scope,result.error??'use scope completeness, target or compilation condition remains unresolved',task.span,{name:task.name??null,glob:!!task.glob});
     if(!task.glob && result.bindings?.some(binding=>!narrower(task.visibility,binding.visibility)))diagnostic(task.scope,'reexport visibility exceeds the checked target visibility',task.span,{name:task.name});
   }
-  return frozen(structuredClone({version:1,editionProfile:'2018+',scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro})),diagnostics}));
+  return frozen(structuredClone({version:1,compilationProfile:profile,editionProfile:'2018+',scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro})),diagnostics}));
 }

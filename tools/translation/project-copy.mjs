@@ -1,3 +1,4 @@
+import {itemConfiguration} from './cfg-profile.mjs';
 // A layout-only prepass supplies evidence; final project checking still owns
 // every method body and its dependencies. Failed layouts never supply Copy.
 import {HostChecker,hostData} from './extensions/host-contracts.mjs';
@@ -18,7 +19,7 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
   if(!program)return ()=>null;
   const checked=new Map([...program.declarations].map(([name,entry])=>[name,entry.standardGeneric?{...entry,standardGeneric:{...entry.standardGeneric,arguments:entry.standardGeneric.arguments.map(type=>checker.resolveType(type,entry.modulePath,entry.span))}}:entry]));
   const nominalTypes=nominalTypeIdentities([...scopes.values()],modules);
-  const implementations=modules.flatMap(module=>extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path}).implementations.map(implementation=>{
+  const implementations=modules.filter(module=>module.configurationCondition!=='inactive').flatMap(module=>extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path}).implementations.filter(implementation=>itemConfiguration((module.allItems??module.items).find(item=>item.term==='impl'&&item.start===implementation.span.start)?.tokens??[],module.compilationProfile).status!=='inactive').map(implementation=>{
     const binding=aliases.get(module.file)?.get(module.path.join('.'))?.get(implementation.typePath?.[0]);
     const actualTarget=implementationTargetPath(implementation,module);
     const path=actualTarget?(binding?[...binding,...implementation.typePath.slice(1)]:implementation.typePath):null;

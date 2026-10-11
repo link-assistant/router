@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { translateSource, json, PIN, sha256 } from './translate.mjs';
 import { translateProject } from './project.mjs';
+import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
 
@@ -24,8 +25,9 @@ function files(root) {
   return readdirSync(root, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? files(join(root, entry.name)) : [join(root, entry.name)]);
 }
 
-export function regenerate({ root, check = false, sources, entries } = {}) {
+export function regenerate({ root, check = false, sources, entries, compilationProfile:profileInput=PRODUCTION_PROFILE } = {}) {
   root = resolve(root);
+  const profile=compilationProfile(profileInput);
   const paths = (sources ?? execFileSync('git', ['ls-files', '-z', '--', '*.rs'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean)).sort();
   const expected = new Map();
   const assets = effectRuntimeAssets();
@@ -42,7 +44,7 @@ export function regenerate({ root, check = false, sources, entries } = {}) {
   const totals = { sources: paths.length, executable: 0, executableFunctions: 0, executableConstants: 0, executableTypes: 0, executableConstructors: 0, carried: 0, preserved: 0 };
   const projects = [], projectDeclarations = [], projectSourceScopes=[];
   for (const entry of entries ?? ['src/lib.rs', 'src/main.rs'].filter(path => paths.includes(path))) {
-    const result = translateProject({ entry, paths, readSource: path => trackedSource(root, path) });
+    const result = translateProject({ entry, paths, readSource: path => trackedSource(root, path),compilationProfile:profile });
     projectDeclarations.push(...result.executableDeclarations);projectSourceScopes.push(...result.sourceScopes);
     const stem = entry.replace(/\.rs$/u, '');
     const targets = { meta: `${OUTPUT_ROOTS[3]}/${stem}.meta.json`, javascript: `${OUTPUT_ROOTS[4]}/${stem}.mjs`, typescript: `${OUTPUT_ROOTS[5]}/${stem}.ts` };
@@ -85,10 +87,10 @@ export function regenerate({ root, check = false, sources, entries } = {}) {
       }
     }
   }
-  const implementation = ['tools/translation/translate.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/project.mjs', 'tools/translation/project-copy.mjs', 'tools/translation/project-nominal.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/host-assets.mjs', 'tools/translation/type-layout.mjs', 'tools/translation/type-layout-runtime.mjs', 'tools/translation/pattern-bindings.mjs', 'tools/translation/pattern-syntax.mjs', 'tools/translation/monomorphic.mjs', 'tools/translation/macro-provenance.mjs', 'tools/translation/module-bindings.mjs', 'tools/translation/registered-bindings.mjs', 'tools/translation/source-scopes.mjs', 'tools/translation/impl-resolver.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
+  const implementation = ['tools/translation/translate.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/cfg-profile.mjs', 'tools/translation/project.mjs', 'tools/translation/project-copy.mjs', 'tools/translation/project-nominal.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/host-assets.mjs', 'tools/translation/type-layout.mjs', 'tools/translation/type-layout-runtime.mjs', 'tools/translation/pattern-bindings.mjs', 'tools/translation/pattern-syntax.mjs', 'tools/translation/monomorphic.mjs', 'tools/translation/macro-provenance.mjs', 'tools/translation/module-bindings.mjs', 'tools/translation/registered-bindings.mjs', 'tools/translation/source-scopes.mjs', 'tools/translation/impl-resolver.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
   const translatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
-  const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };
+  const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, compilationProfile:profile, compilationProfileScope:'resolved tracked crate contexts; unmatched standalone source conditions remain unknown', translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };
   expected.set('parity/rust-source-inventory.json', json(manifest));
   const failures = [];
   for (const [path, content] of expected) {

@@ -1,3 +1,4 @@
+import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 // Resolve tracked Rust module edges before semantic checking. External crates,
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
@@ -17,35 +18,46 @@ import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './trans
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
 const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
 
-export function resolveModuleGraph({ entry, paths, readSource }) {
+export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
+  const profile=compilationProfile(profileInput);
   const tracked = new Set(paths);
   if (!tracked.has(entry)) throw new Error(`crate entrypoint is not tracked: ${entry}`);
   const modules = [], edges = [], diagnostics = [], visited = new Set();
   let offset = 0;
-  const visit = (file, path, directory) => {
+  const visit = (file, path, directory, parentCondition='active') => {
     const key = path.join('.');
     if (visited.has(key)) throw new Error(`duplicate module path ${key}`);
     visited.add(key);
     const source = readSource(file);
-    const module = { file, path, directory, source, offset, items: [] };
+    const module = { file, path, directory, source, offset, items: [], compilationProfile:profile, inactiveItems:[], configurationEvidence:[] };
     offset += source.length + 1;
     modules.push(module);
-    try { module.items = sourceItems(source).filter(item => !item.comment); }
+    try {
+      module.allItems=sourceItems(source).filter(item=>!item.comment);
+      const inner=module.allItems.filter(item=>item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!').map(item=>itemConfiguration(item.tokens,profile));
+      module.configurationCondition=parentCondition==='inactive'||inner.some(item=>item.status==='inactive')?'inactive':parentCondition==='unknown'||inner.some(item=>item.status==='unknown')?'unknown':'active';
+      module.items=module.allItems.filter(item=>{
+        const condition=itemConfiguration(item.tokens,profile);module.configurationEvidence.push(Object.freeze({span:Object.freeze({start:item.start,end:item.end}),...condition}));
+        if(module.configurationCondition==='inactive'||condition.status==='inactive'){module.inactiveItems.push({span:{start:item.start,end:item.end},condition});return false;}return true;
+      });
+    }
     catch (error) { diagnostics.push({ file, ...diagnostic(error) }); return; }
     for (const item of module.items.filter(item => item.term === 'mod')) {
-      const text = source.slice(item.start, item.end);
-      const plain = /^(?:pub(?:\s*\([^)]*\))?\s+)?mod\s+([\p{L}_][\p{L}\p{N}_]*)\s*;\s*$/u.exec(text);
+      const condition=itemConfiguration(item.tokens,profile);
+      const prefix=condition.status==='active'&&condition.attributes.length&&condition.attributes.every(attribute=>attribute.name==='cfg')?condition.attributes.at(-1).span.end:item.start;
+      const text = source.slice(prefix, item.end);
+      const plain = /^\s*(?:pub(?:\s*\([^)]*\))?\s+)?mod\s+([\p{L}_][\p{L}\p{N}_]*)\s*;\s*$/u.exec(text);
       if (!plain) { diagnostics.push({ file, module: [...path, item.name], kind: 'module', message: 'module attributes or inline body require separate compilation-condition lowering', span: { start: item.start, end: item.end } }); continue; }
       const name = plain[1];
       const candidates = [posix.normalize(`${directory}/${name}.rs`), posix.normalize(`${directory}/${name}/mod.rs`)].filter(candidate => tracked.has(candidate));
       if (candidates.length !== 1) { diagnostics.push({ file, module: [...path, name], kind: 'module', message: candidates.length ? 'ambiguous module files' : 'missing tracked module file', candidates, span: { start: item.start, end: item.end } }); continue; }
       const target = candidates[0];
       edges.push({ from: file, to: target, module: [...path, name] });
-      visit(target, [...path, name], target.endsWith('/mod.rs') ? posix.dirname(target) : target.slice(0, -3));
+      visit(target, [...path, name], target.endsWith('/mod.rs') ? posix.dirname(target) : target.slice(0, -3),module.configurationCondition);
     }
   };
   visit(entry, [], posix.dirname(entry));
-  return { entry, modules, edges, diagnostics };
+  return { entry, modules, edges, diagnostics, compilationProfile:profile };
 }
 
 function tree(declarations) {
@@ -103,11 +115,12 @@ export function translateProject(options) {
   const graph = resolveModuleGraph(options);
   const registeredTypes=[['std','option','Option'],['std','result','Result'],['std','time','Duration'],['serde_json','Value'],['serde_json','Number'],['serde_json','Error'],['serde_json','error','Category'],['std','io','Error'],['std','env','VarError'],['std','ffi','OsString'],['std','num','ParseIntError'],['std','num','IntErrorKind'],['std','time','TryFromFloatSecsError']];
   const externalModules=externalModuleBindings({data:effectData(),contracts:[...HOST_CONTRACTS,...EFFECT_CONTRACTS],extraBindings:[...registeredTypes.map(target=>({name:target.at(-1),namespace:'type',target,kind:['Option','Result','Value','Category','VarError','IntErrorKind'].includes(target.at(-1))?'enum':'struct'})),...['Some','None','Ok','Err'].flatMap(name=>['type','value'].map(namespace=>({name,namespace,target:name==='Some'||name==='None'?['std','option','Option',name]:['std','result','Result',name],kind:'constructor'}))),{name:'FromStr',namespace:'type',target:['std','str','FromStr'],kind:'trait'},{name:'json',namespace:'macro',target:['serde_json','json'],kind:'macro'}]});
-  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules});
+  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[scope.file,scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(module.file),bindingEvidence.scopes,module.path);
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   for (const module of graph.modules) {
+    if(module.configurationCondition==='unknown'){refused.push({file:module.file,term:'module',kind:'unsupported',message:'unknown crate compilation condition',span:{start:0,end:module.source.length}});continue;}
     for (const item of module.items.filter(item => !['fn', 'const', 'enum', 'struct', 'use', 'mod'].includes(item.term) || item.name === 'main')) unloweredItems.push({ source: module.file, module: module.path, name: item.name, term: item.term, span: { start: item.start, end: item.end }, sha256: sha256(module.source.slice(item.start, item.end)), diagnostic: 'declaration needs effect, implementation, entrypoint or macro lowering' });
     const configured=configureSourceScope(new MethodRustParser([]),module),aliases=configured.aliases;
     for (const item of module.items.filter(item => item.term === 'use')) {
@@ -147,8 +160,11 @@ export function translateProject(options) {
   }
   const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes);
   for (const module of graph.modules) {
+    if(module.configurationCondition!=='active')continue;
     const extracted = extractImplDeclarations(module.source, {sourcePath:module.file,modulePath:module.path});
     for (const implementation of extracted.implementations) {
+      const original=(module.allItems??module.items).find(item=>item.term==='impl'&&item.start===implementation.span.start);
+      if(original&&itemConfiguration(original.tokens,graph.compilationProfile).status==='inactive')continue;
       for (const method of implementation.methods) {
         const aliases = moduleAliases.get(module.file)?.get(module.path.join('.'));
         const resolved = aliases?.has(implementation.typePath[0]) ? [...aliases.get(implementation.typePath[0]), ...implementation.typePath.slice(1)] : implementation.typePath;
@@ -211,8 +227,8 @@ export function translateProject(options) {
     return `${JSON.stringify(entry.name)}: ${entry.term === 'const' ? tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes) : `(${own.params.map((param,index) => `${typeParameterName(param.name,index)}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes)}`}`;
   }).join('; ');
   const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
-  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
-  const sourceScopes=graph.modules.map(module=>({source:module.file,sha256:sha256(module.source),project:options.entry,scope:scopes.get(module.file),scopes:bindingEvidence.scopes}));
+  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
+  const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(module.file),scopes:bindingEvidence.scopes}));
   const executableDeclarations = entries.map(entry => ({ source: entry.file, sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source), name: entry.name.split('.').at(-1), span: entry.span, project: options.entry, qualifiedName: entry.name, lower(options = {}) {
     const program = declarationProgram(target.program, target.names.get(entry.name));
     const emitted = emitJavaScript(program, options);
