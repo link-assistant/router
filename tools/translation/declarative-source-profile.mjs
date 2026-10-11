@@ -102,3 +102,13 @@ export function declarativeDefinitionSource(proof,definition) {
   if(!proofs.has(proof)||!origin||origin.proof!==proof)throw new TypeError('Declarative definition does not belong to this sealed source profile');
   return origin.evidence;
 }
+
+export function tokioConfigurationSourceDefinition(proof,name) {
+  const sources=proofs.get(proof);if(!sources||typeof name!=='string'||!/^cfg_[A-Za-z_][A-Za-z0-9_]*$/u.test(name))throw new TypeError('Configuration transcriber requires a sealed source profile and source name');
+  return sourceDefinition(proof,sources.get('tokio/src/macros/cfg.rs'),'tokio/src/macros/cfg.rs',name,['tokio']);
+}
+export function declarativeSourceInvocations(proof,path) {
+  const sources=proofs.get(proof),source=sources?.get(path);
+  if(!source)throw new TypeError('Unsealed declarative source or unregistered module path');
+  return originalTopLevelMacroInvocations(source);
+}

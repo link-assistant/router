@@ -146,3 +146,26 @@ export function proveDeclarativeBranchPartition({dependencies,branches}={}) {
   const result=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});partitions.add(result);return result;
 }
 export function isDeclarativeBranchPartition(value){return !!value&&partitions.has(value);}
+
+// Conditional possibilities retain both branches and their unknown owner.
+// They do not execute cfg_attr or authorize an attribute by its spelling.
+export function declarativeConditionalAttributePossibilities({dependencies,expansion}={}) {
+  const {origin}=sourceFrame(dependencies,expansion),rows=[];
+  for(const attribute of inspectTrees(expansion.trees).attributes) {
+    if(attribute.name!=='cfg_attr')continue;
+    const actual=groupAt(expansion,attribute.path),tokens=formulaTrees(actual.children);
+    if(tokens.length!==2||tokens[1]?.kind!=='group'||tokens[1].delimiter!=='(')throw new TypeError('Conditional attribute requires exact parenthesized meta syntax');
+    const contents=formulaTrees(tokens[1].children),comma=contents.findIndex(tree=>text(tree)===',');
+    if(comma<=0||comma===contents.length-1)throw new TypeError('Conditional attribute requires a predicate and metadata');
+    const formula=conditionFormula({delimiter:'[',children:[{kind:'token',text:'cfg'},{kind:'group',delimiter:'(',children:contents.slice(0,comma)}]});
+    const metadata=[];let start=comma+1;
+    for(let at=start;at<=contents.length;at++)if(at===contents.length||text(contents[at])===',') {
+      const part=contents.slice(start,at);
+      if(part.length)metadata.push(part);else if(at!==contents.length)throw new TypeError('Conditional attribute has an empty metadata entry');
+      start=at+1;
+    }
+    if(!metadata.length)throw new TypeError('Conditional attribute has no metadata');
+    rows.push({path:attribute.path,formula,sourceSyntax:actual.sourceSyntax??null,alternatives:[{predicate:false,attributes:[]},{predicate:true,attributes:metadata}],ownerResolved:false});
+  }
+  return freezeMacroTree({schema:'declarative-conditional-attribute-possibilities-v1',dependencyDigest:dependencies.digest,expansionDigest:expansion.digest,origin,rows,ownerVerified:false,namespaceComplete:false,generatedBehavior:false});
+}

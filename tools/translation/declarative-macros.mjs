@@ -3,11 +3,12 @@
 import {createHash} from 'node:crypto';
 import {originalMacroTrees,macroTreeSource,freezeMacroTree} from './macro-token-trees.mjs';
 import {boundedMacroBlock,boundedMacroExpression} from './macro-fragments.mjs';
+import {boundedMacroItem} from './macro-items.mjs';
 const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const text=tree=>tree?.kind==='token'?tree.text:null;
 const ident=tree=>tree?.kind==='token'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(tree.text);
-const fragments=new Set(['ident','tt','ty','meta','vis','block','expr']);
+const fragments=new Set(['ident','tt','ty','meta','vis','block','expr','item']);
 const forbiddenTypes=new Set('as async await break const continue dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return static struct trait true type unsafe use where while abstract become box do final gen macro override priv try typeof unsized virtual yield'.split(' '));
 const names=nodes=>nodes.flatMap(node=>node.kind==='capture'||node.kind==='variable'?[node.name]:node.children?names(node.children):[]);
 const syntax=(tree,end=tree)=>({sourceSha256:tree.sourceSha256,span:{start:tree.span.start,end:end.span.end},...(tree.sourceFeature?{sourceFeature:tree.sourceFeature}:{})});
@@ -164,6 +165,7 @@ function fragmentEnd(fragment,trees,start) {
     throw new TypeError('Declarative visibility fragment requires checked source restriction');
   }
   if(fragment==='meta')return boundedMeta(trees,start);
+  if(fragment==='item')return boundedMacroItem(trees,start,boundedMeta);
   throw new TypeError('Unchecked declarative fragment kind');
 }
 
