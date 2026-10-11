@@ -46,6 +46,20 @@ test('every JavaScript stage and command is mandatory and cannot skip or ignore 
   }
   fails('javascript-first.yml', workflow => { workflow.jobs.parity.steps.at(-1).run = 'node scripts/check-router-parity.mjs'; }, 'mandatory command');
 });
+test('heavy compiler and acceptance cohorts require two workers and every test file', () => {
+  for (const [id, glob] of [['translation', 'tools/translation/test/*.test.mjs'], ['parity', 'experiments/issue-759/acceptance/*.test.mjs']]) {
+    const command = `node --test --test-concurrency=2 ${glob}`;
+    assert.ok(parse(baseline['javascript-first.yml']).jobs[id].steps.some(step => step.run === command));
+    for (const replacement of [
+      `node --test ${glob}`,
+      `node --test --test-concurrency=3 ${glob}`,
+      `node --test --test-concurrency=2 ${glob.replace('*', 'one')}`,
+      `node --test --test-concurrency=2 --test-name-pattern=only-one ${glob}`,
+    ]) fails('javascript-first.yml', workflow => {
+      workflow.jobs[id].steps.find(step => step.run === command).run = replacement;
+    }, 'mandatory command');
+  }
+});
 test('aggregate rejects partial green, skipped and cancelled stages', () => {
   fails('javascript-first.yml', workflow => { workflow.jobs.complete.needs.pop(); }, 'depend on every');
   fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].run = 'echo success'; }, 'reject skipped');

@@ -130,7 +130,7 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix packages/javascript --ignore-scripts
-      - run: node --test experiments/issue-759/acceptance/*.test.mjs
+      - run: node --test --test-concurrency=2 experiments/issue-759/acceptance/*.test.mjs
       - run: node scripts/check-router-parity.mjs --strict
   translation:
     runs-on: ubuntu-24.04
@@ -151,7 +151,7 @@ jobs:
             const expected = process.env.EXPECTED_SHA;
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
-      - run: node --test tools/translation/test/*.test.mjs
+      - run: node --test --test-concurrency=2 tools/translation/test/*.test.mjs
       - run: node scripts/translate-router.mjs --check
   reverse-translation:
     runs-on: ubuntu-24.04
