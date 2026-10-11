@@ -35101,8 +35101,305 @@
       },
       "status": "All ten workflows terminal. All sixty executable jobs passed; nine embedded deterministic-check deadline errors remain, one strict job has only genuine blockers. All failures retained, no Rust execution.",
       "archivedAtUtc": "2026-10-11T16:10:49.721621+00:00"
+    },
+    {
+      "label": "cycle-7-coherent-source-and-focused-failure-repair-receipts",
+      "cycle": 7,
+      "pack": "52e009acadd03cb89d00a557dddd2cdc4b7e39538161d2bc49d4075a07875b66.tar.gz",
+      "sha256": "52e009acadd03cb89d00a557dddd2cdc4b7e39538161d2bc49d4075a07875b66",
+      "storedBytes": 256516,
+      "members": [
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-combined-merge-bun.log",
+          "bytes": 1494,
+          "sha256": "ab377823f054337b7c10dd589ebbe0281ecfaf5a90b0b0204d7814e38128a7a6"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-combined-merge-node.log",
+          "bytes": 2901,
+          "sha256": "e14a57d6e7a7e6b242066227cbbfabb4640a6a1aca1d92987948715169524f18"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-bun-initial.log",
+          "bytes": 7013,
+          "sha256": "8483ec0a77c59c4b02100b4dedc9c7240757ef35e686af81366bbe71c85f8e5f"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-bun-retry.log",
+          "bytes": 4111,
+          "sha256": "5850e3ebd1a35712833a42a0874cf1042e7c6b1135b053a50d950ae5a9d6912f"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-bun-retry2.log",
+          "bytes": 2273,
+          "sha256": "559ee6d0891cb1f7c0217f42412d14a173cdb52db63f3ccd1f2a468614d480d2"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-bun-retry3.log",
+          "bytes": 210206,
+          "sha256": "c45245c32bd540c5e13f7f17474d238c8e1d82940bab5d9cfa8dbbc0ab8869ef"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-bun-retry4.log",
+          "bytes": 2797,
+          "sha256": "7846620bc884f8468d9f5b8c81359f51b86263eb7bd1322ecc6a07fb2eed85a1"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-candidate-comparison-final.json",
+          "bytes": 58797,
+          "sha256": "ed97347418e6b5b5a553c8e67e5a4f4fac2e244f5e8df30de90f419c1946cada"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-candidate-comparison.json",
+          "bytes": 58741,
+          "sha256": "17540cf9df59e6862e7c58614f9aaf1472b75a6cea7f742ef96d112a66071628"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-final-bun.log",
+          "bytes": 2494,
+          "sha256": "7e6d12fcee23ca3f83d650e5aa07854187f3f77feb270d45e1e0a1a351471a2a"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-final-node.log",
+          "bytes": 3369,
+          "sha256": "fcd9780badd835383f14bf17bbb52bc37db524bb696f93d98feb288b884f58b0"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-final-related-bun.log",
+          "bytes": 5904,
+          "sha256": "950f8028fd41c14efb86582b811797086250b22bf7dd7b2cb4fa390ba3bb1255"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-final-related-node.log",
+          "bytes": 11694,
+          "sha256": "cc2061f93b77f94fd94848ac1fc40903f6cedbcac886b745cd2700a12a0d5876"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-node-initial.log",
+          "bytes": 7174,
+          "sha256": "1502af83e305c05b73fdfadac35a491ecd3c360e46b059850180efe87ec8a524"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-node-retry.log",
+          "bytes": 4955,
+          "sha256": "e8a78d533b95bdc147ae55257095ae70bb58c23f65409929e1d33fb6155e3465"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-node-retry2.log",
+          "bytes": 3009,
+          "sha256": "1d7c7f0a2c2913d143463f4b1849562e6b628664f2e7f5da478b4a62c1682e4f"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-node-retry3.log",
+          "bytes": 4577,
+          "sha256": "4d463343c0f64df6fd0ac92554a71ef6141ff5e7812577412b233e396355f3a0"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-node-retry4.log",
+          "bytes": 3532,
+          "sha256": "a0c86efe4c4b5c9662e787502039fc544d1e739662e30b086e4132c18aa3d2dd"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-related-bun.log",
+          "bytes": 7911,
+          "sha256": "003e7aa57f77ee2a50865ca2c322266f833c42775122f3de7cb086f0f3599b85"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-related-node.log",
+          "bytes": 13068,
+          "sha256": "011f05295a80960f8a95c7bba9bfb2ac2aa4268f2a745e038b0d4b253950aad3"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-source-validation-final.json",
+          "bytes": 84434,
+          "sha256": "c887be9d09cf675da115f3834ffc31de22048854e2a249cb98a1f8f7d4a194c1"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-source-validation.json",
+          "bytes": 110261,
+          "sha256": "37a9e72c446c48669d7117116ab39a0fcc602684222f6f14fbd03b1b536e922b"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-truth-bun.log",
+          "bytes": 438,
+          "sha256": "16eefeb7056d24d1e5a460a1bdbd45f1a8158bcd0e102e1f9b7d1bad236a0989"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-derive-truth-node.log",
+          "bytes": 792,
+          "sha256": "b71f63b3eed015f1d8fbd1329fcc45c946623a99335d6e0748b7c5f70a460be4"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-cohort.json",
+          "bytes": 9846,
+          "sha256": "a84f6612b4dc08a1f20e3b6acf5322c2d9f816765110cdcce062f9784bc95bf3"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-consumer-bun.json",
+          "bytes": 492,
+          "sha256": "52033a759db2cfff9b7ed5cb9d5cc98057ac6aad3d1dd77f5996c6e45b6afff7"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-consumer-bun.log",
+          "bytes": 740,
+          "sha256": "95e9ee8c3b0d28d132b65e71386ea134cb34d94d65d987fac60ba8a084e0c266"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-consumer-node.json",
+          "bytes": 493,
+          "sha256": "2750003b1a0c48f8e795f8d7af6b696135503b48e5f8c056cec26d59682729ed"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-consumer-node.log",
+          "bytes": 1463,
+          "sha256": "f5949104ee0bfa0febfef27402a00ca0c764f858ac32f13df174bc221c72290e"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-consumer.json",
+          "bytes": 1219,
+          "sha256": "7bca9a2765e405ad9ed31c6219dcc6b6f48f3287b38f378149c967e4ee299b0b"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-final-bun.json",
+          "bytes": 1209,
+          "sha256": "663237d370e7fc83f2a3f390d47a4e603c2c583d462efa91d39eaacd9fde73a9"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-final-bun.log",
+          "bytes": 10056,
+          "sha256": "b37c21d786ee6185af001ec5a1b64d0494c408df417b0d02f82b4580663d2e1d"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-final-node.json",
+          "bytes": 1212,
+          "sha256": "cf2aed961e7d1dfe199ffcb0bfa6d9f645f61087f7d7ea4a5955aefd9ce64f43"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-final-node.log",
+          "bytes": 20518,
+          "sha256": "f0f21db974c5859f42004583367e41c064545d00e8df56bf933974171364ce75"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-final.json",
+          "bytes": 2759,
+          "sha256": "1d357b9828f09e56700b3a628ecd836ab4f985a0ab401b6a8ed667be0e30a8c7"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-regressions-bun.json",
+          "bytes": 1216,
+          "sha256": "96e4ab2d7736bece7cfa53732404e83ac27f4afca32192ebe9a2815dbd8d503c"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-regressions-bun.log",
+          "bytes": 114130,
+          "sha256": "a718cbb883721a949dea1c1ddfa02dbd6b21d038af8c86911a1bcb516d72b06d"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-regressions-node.json",
+          "bytes": 1218,
+          "sha256": "37fe320d36f6ada3774304fb059b4270a04326e7908cc34c03f007da098aa5e0"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-regressions-node.log",
+          "bytes": 224840,
+          "sha256": "d180e24c91b1ce51b884d6515603ffe90d1d2f3313e0db3fadf515e2d0cd1c00"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-array-regressions.json",
+          "bytes": 2772,
+          "sha256": "15b94519c7d64ad1b29e2d3f05137ade5a894ec2d1f57a3ae736e2f0f1a51fda"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-arrays-first-semantic-node.json",
+          "bytes": 424,
+          "sha256": "7679bfb3efb64d80fbdc2d6dac7e988380ce02ac8ee230ad5c6b8c39328e66df"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-arrays-first-semantic-node.log",
+          "bytes": 6221,
+          "sha256": "4127e6e828cf6a2adc45054869d49bcb08a01067a3393c1c25461af9ef582b7e"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-arrays-initial-node.json",
+          "bytes": 417,
+          "sha256": "7d53b60a643708177de67837b7865a61e6fc54195be328b2d190dc2ea1d377a6"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-arrays-initial-node.log",
+          "bytes": 1587,
+          "sha256": "6dcdc292cb36bedfc8385f89562b02873a322ddf866ada19d75c518668c32d0b"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-arrays-repaired-node.json",
+          "bytes": 418,
+          "sha256": "c39bf0b52d32916d035f7f423f3b9ac08b945e4c5914f8c37e4b20f177b361eb"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-fixed-arrays-repaired-node.log",
+          "bytes": 1465,
+          "sha256": "7e45907e976c63cf97a085c0ecf44fdd4662fb862f8f14ae657c5d4dd0391a24"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-integrated-source.json",
+          "bytes": 658,
+          "sha256": "2f725139c3699e85b9f2cdf9b89611f649541c926d73fac826b24bd753a66590"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-next-derive-inserted-macro-pins.json",
+          "bytes": 4138,
+          "sha256": "36924a98202af15a886e1767cd2975cb1d7f20aad7906b9409ebf19aa2e2870c"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-next-derive-profile-pins.json",
+          "bytes": 127548,
+          "sha256": "b3f9b40b1b0456c2e7c9386595b417a3b8464d5cc646236ee37b477c6612d751"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-owner-match-iterator-bun.log",
+          "bytes": 13777,
+          "sha256": "c0b4f4733620fbc5e639b4d263a94e3aff05a414f21268bafd831011ddc5f1d9"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-owner-match-iterator-final-bun.log",
+          "bytes": 2696,
+          "sha256": "1157cff9c8907cb41219e202a21ef6c63f64801291de0220d8fd94193eab7b74"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-owner-match-iterator-final-node.log",
+          "bytes": 5218,
+          "sha256": "297a424cf8f1e7a817d67754ce53483a94a249d5391d4101c7515a7f4ccc1f5a"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-owner-match-iterator-node.log",
+          "bytes": 12618,
+          "sha256": "9d70333f6a26d470aabd7426462e8e7941177b1fedf52661595c8e3c6fa1819a"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-owner-match-iterator-repair-bun.log",
+          "bytes": 4523,
+          "sha256": "81552d7b193e4f7d2bb57f73b2a1de595a3236a246f761e35543ff6698414db9"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-owner-match-iterator-repair-node.log",
+          "bytes": 6927,
+          "sha256": "96b76d20288f454bd2d40134425920c0abac8745b1d5138758fe1dd69547ff35"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-subscription-ts-diagnostic.log",
+          "bytes": 1117,
+          "sha256": "a9a07aeb0d08ac0d03615af0459083073354322207bb486f581a3b208d528c1e"
+        },
+        {
+          "path": "cycle-7-focused/router-759-cycle-7-thinking-method-blockers.json",
+          "bytes": 1627,
+          "sha256": "a15229ace7179448a8d9129a76ac8b69e9081359083681045365aa6598da53be"
+        }
+      ],
+      "headSha": "a0053888fff23cfac5b5e6674756eb15e910a3de",
+      "status": "Focused coherent source tests passed; initial failures retained; one fresh bulk producer and full gate remain pending.",
+      "archivedAtUtc": "2026-10-11T16:41:21.696195+00:00"
     }
   ],
-  "totalStoredPackBytes": 14146781,
-  "totalMembers": 6211
+  "totalStoredPackBytes": 14403297,
+  "totalMembers": 6268
 }
