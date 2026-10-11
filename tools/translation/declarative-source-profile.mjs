@@ -8,7 +8,7 @@ import {compileDeclarativeMacro} from './declarative-macros.mjs';
 const directory=new URL('./source-profiles/declarative/',import.meta.url);
 const manifestBytes=readFileSync(new URL('manifest.json',directory));
 export const DECLARATIVE_SOURCE_PROFILE=freezeMacroTree(JSON.parse(manifestBytes));
-const hash=value=>createHash('sha256').update(value).digest('hex'),proofs=new WeakMap();
+const hash=value=>createHash('sha256').update(value).digest('hex'),proofs=new WeakMap(),definitionOrigins=new WeakMap();
 function readMembers(archive) {
   const tar=gunzipSync(archive,{maxOutputLength:32*1024*1024}),members=new Map();let longName=null;
   const string=(header,start,length)=>header.subarray(start,start+length).toString('utf8').split('\0')[0];
@@ -72,22 +72,33 @@ export function loadDeclarativeSourceProof({manifest,lock}) {
 export function taskLocalSourceDefinitions(proof) {
   const sources=proofs.get(proof);if(!sources)throw new TypeError('Unsealed declarative dependency source proof');
   const source=sources.get('tokio/src/task/task_local.rs');
-  return new Map(['task_local','__task_local_inner'].map(name=>[name,compileDeclarativeMacro(source,{name,owner:['tokio']})]));
+  return new Map(['task_local','__task_local_inner'].map(name=>[name,sourceDefinition(proof,source,'tokio/src/task/task_local.rs',name,['tokio'])]));
 }
 export function isDeclarativeSourceProof(value){return !!value&&proofs.has(value);}
 export function standardThreadLocalSourceDefinitions(proof) {
   const sources=proofs.get(proof);if(!sources)throw new TypeError('Unsealed declarative dependency source proof');
   return new Map([
-    ['thread_local',compileDeclarativeMacro(sources.get('rust/library/std/src/thread/local.rs'),{name:'thread_local',owner:['std']})],
-    ...['no_threads','native','os'].map(branch=>[branch,compileDeclarativeMacro(sources.get('rust/library/std/src/sys/thread_local/'+(branch==='native'?'native/mod.rs':branch+'.rs')),{name:'thread_local_inner',owner:['std']})]),
+    ['thread_local',sourceDefinition(proof,sources.get('rust/library/std/src/thread/local.rs'),'rust/library/std/src/thread/local.rs','thread_local',['std'])],
+    ...['no_threads','native','os'].map(branch=>[branch,sourceDefinition(proof,sources.get('rust/library/std/src/sys/thread_local/'+(branch==='native'?'native/mod.rs':branch+'.rs')),'rust/library/std/src/sys/thread_local/'+(branch==='native'?'native/mod.rs':branch+'.rs'),'thread_local_inner',['std'])]),
   ]);
 }
 export function standardCfgIfSourceDefinition(proof) {
   const sources=proofs.get(proof);if(!sources)throw new TypeError('Unsealed declarative dependency source proof');
-  return compileDeclarativeMacro(sources.get('cfg-if/src/lib.rs'),{name:'cfg_if',owner:['cfg_if']});
+  return sourceDefinition(proof,sources.get('cfg-if/src/lib.rs'),'cfg-if/src/lib.rs','cfg_if',['cfg_if']);
 }
 export function declarativeStandardInvocations(proof,path) {
   const sources=proofs.get(proof),source=sources?.get('rust/'+path);
   if(!source)throw new TypeError('Unsealed declarative standard source or unregistered module path');
   return originalTopLevelMacroInvocations(source);
+}
+
+function sourceDefinition(proof,source,path,name,owner) {
+  const definition=compileDeclarativeMacro(source,{name,owner});
+  definitionOrigins.set(definition,{proof,evidence:freezeMacroTree({source:path,sourceSha256:hash(source),definitionDigest:definition.digest,definitionSpan:definition.definitionSpan,dependencyDigest:proof.digest,sourceVerified:true,callOwnerResolved:false})});
+  return definition;
+}
+export function declarativeDefinitionSource(proof,definition) {
+  const origin=definitionOrigins.get(definition);
+  if(!proofs.has(proof)||!origin||origin.proof!==proof)throw new TypeError('Declarative definition does not belong to this sealed source profile');
+  return origin.evidence;
 }

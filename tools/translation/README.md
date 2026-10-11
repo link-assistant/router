@@ -193,3 +193,5 @@ without corresponding execution evidence.
 
 See [extensions/NOTICE.md](extensions/NOTICE.md) for local adaptations and
 [vendor/NOTICE.md](vendor/NOTICE.md) for upstream references and licensing.
+
+The source-only `declarative-closure.mjs` layer records privately checked expansion lineage, original definition provenance, nested calls and generated attributes. Its conditional partition receipts keep unknown cfg atoms symbolic and select no platform. Neither such a receipt nor supplying a pinned transcriber resolves a macro call owner: all namespace and runtime authority remains false until independent ownership, hygiene, attribute and confinement obligations are closed.

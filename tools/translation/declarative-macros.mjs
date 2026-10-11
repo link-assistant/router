@@ -283,7 +283,7 @@ export function expandDeclarativeMacro(definition,input,{steps=16000,repetitions
     const trees=transcribe(rule.output,captures,definition.owner,budget);
     checkOutputBudget(trees);
     const evidence={schema:'bounded-declarative-expansion-v1',definitionDigest:definition.digest,input:inputEvidence,rule:index,trees,ownerVerified:false,namespaceComplete:false,generatedBehavior:false,remainingBudgets:budget};
-    const proof=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});expansions.set(proof,{definition,input,depth});return proof;
+    const proof=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});expansions.set(proof,{definition,input,depth,parent:forwarded?.parent??null,path:forwarded?.path??null});return proof;
   }
   throw new TypeError('Original invocation does not match a checked declarative rule');
 }
@@ -303,4 +303,10 @@ export function declarativeSubInput(proof,path=[]) {
   let trees=proof.trees;
   for(const index of path){const tree=trees[index];if(tree?.kind!=='group')throw new TypeError('Declarative forwarding path does not identify original expanded delimiters');trees=tree.children;}
   forwardedInputs.set(trees,{parent:proof,path:[...path]});return trees;
+}
+
+// Lineage is evidence of actual checked forwarding, never macro path resolution.
+export function declarativeExpansionLineage(proof) {
+  const state=expansions.get(proof);if(!state)throw new TypeError('Unsealed declarative expansion lineage');
+  return freezeMacroTree({definition:state.definition,parent:state.parent,path:state.path,depth:state.depth});
 }
