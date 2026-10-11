@@ -46033,8 +46033,105 @@
       "headSha": "fdee2507643f6c10bf091d24e63d4e2c6f062b74",
       "status": "Local gate retained 442 genuine strict gaps and zero validation errors. Complete remote CI: 60 passed, 20 failed, 42 skipped; eight deterministic-check deadline errors, two honest strict failures, no cancellation or Rust execution.",
       "archivedAtUtc": "2026-10-11T21:18:34.544626+00:00"
+    },
+    {
+      "label": "integrated-profile-cohort-producer-failure",
+      "cycle": 9,
+      "pack": "d9a49070587479dbb28271667c5620c226158fe4525dbf22cb76b3a6dd42e0b9.tar.gz",
+      "sha256": "d9a49070587479dbb28271667c5620c226158fe4525dbf22cb76b3a6dd42e0b9",
+      "storedBytes": 127670,
+      "members": [
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-check-integrated-profile-cohort.py",
+          "bytes": 1966,
+          "sha256": "4e0bfb8a201e0f75f5e12060c0e7ca0673edaf356d563edfd99758dd0112407a"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-cohort-integration-current.json",
+          "bytes": 4207,
+          "sha256": "7f808f97f8fe4f56ef549c0425c55af20ba1fd87e52aaa5dc644724493068fcc"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-generation-d23fb8e04-diagnostic.txt",
+          "bytes": 2153,
+          "sha256": "2b691fff8a6b5eb2a8a8a4570ad03935fe29dc0841eb686a39ef650c5c892e16"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-generation-d23fb8e04-resource-samples.jsonl",
+          "bytes": 528,
+          "sha256": "a7adb07e3e698718ea03e62495d11f7823947a03b32ed13991d379cf6c343681"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-generation-d23fb8e04-time.log",
+          "bytes": 405975,
+          "sha256": "8b18b52070998d6f20b400e7d2847d28b977de54707a4c276dc21cfad6645dcb"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-generation-d23fb8e04.json",
+          "bytes": 773,
+          "sha256": "6657fb2be9827952f4825fadd0bfd508392b2e2f7b3643975babee35d165e138"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-generation-d23fb8e04.log",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-next-verified-source-queue.json",
+          "bytes": 5581,
+          "sha256": "94dc6b24de475e2f9fca86b40e5e9cd58171831ec4e9bc71e352d6284da8d44f"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-producer-launch-guard-rejection.json",
+          "bytes": 360,
+          "sha256": "6a9ce8a8865bb6970992ed1d87fcbfa37aef2d73b0feda30dc8e0190d322ea78"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-profile-cohort-integrated-bun.log",
+          "bytes": 17369,
+          "sha256": "296114be81af00bf3fda126256b9890f7fd54921f7ae730d0bd5f5dddc5a215a"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-profile-cohort-integrated-bun.log.json",
+          "bytes": 937,
+          "sha256": "cc50d270696b611cc0a100dd98ce1258f4e555b33b55ccd1371b8d3964fe0b37"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-profile-cohort-integrated-node.log",
+          "bytes": 24094,
+          "sha256": "88ff7d103ae24d6586432402b19517dedebb1b6c387d95ec3d6af12b69f5caa8"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-profile-cohort-integrated-node.log.json",
+          "bytes": 970,
+          "sha256": "02ca62ba9c1c616d0f92e3f91aa10052bb13e50fe92645f50795f3f440b47a51"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-profile-cohort-integrated.json",
+          "bytes": 2747,
+          "sha256": "49b868f92910cef9d88b50e7d99b1b671d681e99c6f5604cbd9b0a33a9e3007a"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-profile-typecheck-design.json",
+          "bytes": 1451,
+          "sha256": "717b1ae188a739a44f900f2adf7fd0dc1ccf5006f04e71bfd6926c20890592d9"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-timed-producer.py",
+          "bytes": 1976,
+          "sha256": "11afc4930f751d27855414ce324f336bdf0898fe573b595ba1c98f1fd1b3a69b"
+        },
+        {
+          "path": "integrated-profile-cohort-producer-failure/router-759-timed-profile-producer.py",
+          "bytes": 2823,
+          "sha256": "ece5f45bb238f715f056efa935a4b98aebf95d237d12c3b6b6491f0b72812495"
+        }
+      ],
+      "headSha": "d23fb8e045e7424b9699f22b685aa4e297227bfd",
+      "status": "Combined-source68/68Node+Bun passed; canonicalproducer failed74.470s before anywrite; missinglayout namespace scope TypeError; profilegeneration/check/TS/fullgate notstarted.",
+      "archivedAtUtc": "2026-10-11T21:46:48.459469+00:00"
     }
   ],
-  "totalStoredPackBytes": 21639059,
-  "totalMembers": 8371
+  "totalStoredPackBytes": 21766729,
+  "totalMembers": 8388
 }
