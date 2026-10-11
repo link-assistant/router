@@ -1,0 +1,1 @@
+Draft bounded Copy-array repetition as checked meta-language let and array nodes, preserving exactly-once evaluation of non-const operands even for zero elements. Literal usize sizes, actual element ownership, immutable copies, and existing lifetime checks remain required; const-item/block evaluation-count rules and non-Copy repeated elements remain explicit obligations.

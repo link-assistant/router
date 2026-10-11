@@ -48,9 +48,12 @@ Literal source `[T; N]` arrays retain their exact size in semantic meta, runtime
 guards and TypeScript's readonly length type. The checked subset admits scalar,
 borrowed `str` and nested fixed arrays with Copy elements; value boundaries take
 immutable snapshots so JavaScript aliases cannot mutate a returned Rust value.
-Lengths are bounded at 4,096 and total cells at 16,000. Repeat expressions,
-general constant sizes, aggregate references and non-Copy elements retain
-refusals. A source array does not implicitly become a `Vec` or borrowed slice.
+Lengths are bounded at 4,096 and total cells at 16,000. Draft repetition lowers
+non-const operands into a checked let followed by repeated Copy values, preserving
+one evaluation even for zero elements. Const-item/block operands have different
+[evaluation-count rules](https://doc.rust-lang.org/reference/expressions/array-expr.html#array-expressions)
+and retain refusals, as do general constant sizes, aggregate references and
+non-Copy elements. A source array does not implicitly become a `Vec` or borrowed slice.
 
 An unsupported construct retains its exact source and diagnostic. It supplies no
 callable stub. Unsupported dependencies carry their callers, and ambiguous or
