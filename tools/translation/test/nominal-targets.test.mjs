@@ -41,7 +41,7 @@ test('project Copy body remains executable when unrelated generic nominal layout
 });
 
 test('generic type binders shadow nominal owners before both layout and family resolution',()=>{
-  for(const header of ['impl<Choice> Marker for Choice {}','impl<Choice: Marker> Marker for Choice where Choice: Marker {}',"impl<'a, Choice> Marker for Choice {}"]){
+  for(const header of ['impl<Choice> Marker for Choice {}','impl<Choice: Marker> Marker for Choice where Choice: Marker {}',"impl<'a, Choice> Marker for Choice {}",'impl<#[cfg(flag)] Choice> Marker for Choice {}','impl<#[allow(dead_code)] Choice> Marker for Choice {}']){
     const context=evidence({'src/lib.rs':'struct Choice; trait Marker{} '+header});assert.equal(targets(context)[0].resolvedNominalTarget,null,header);
     const source='struct Choice; trait Marker{} '+header+' #[derive(Clone,Copy)] enum Kind{A} impl Kind{fn read(self)->u8{1}} pub fn run(value:Kind)->u8{value.read()}';
     assert.equal(translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source}).meta.checkedMethods.some(entry=>entry.name==='Kind.read'),false,header);

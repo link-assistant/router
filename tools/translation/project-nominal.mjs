@@ -58,6 +58,7 @@ export function implementationTargetPath(implementation,module){
   if(tokens[at]?.text==='<'){
     let parameterStart=true;
     for(;at<tokens.length;at++){
+      if(tokens[at].text==='#')return null; // Attributed binders require profile-aware parameter resolution.
       if(depth===1&&parameterStart){if(tokens[at].type==='ident'&&tokens[at].text!=='const')typeBinders.add(tokens[at].text);parameterStart=false;}
       if(depth===1&&tokens[at].text===',')parameterStart=true;if(tokens[at].text==='<')depth++;if(tokens[at].text==='>')depth--;if(tokens[at].text==='>>')depth-=2;if(depth===0){at++;break;}if(depth<0)return null;}
     if(depth!==0)return null;
