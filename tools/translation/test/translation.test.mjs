@@ -214,7 +214,9 @@ test('all tracked Rust artifacts reconstruct source and all generated JS modules
     const source = trackedSource(root, entry.source);
     assert.equal(ir.items.map(item => item.source).join(''), source, entry.source);
     assert.equal(ir.sourceSha256, sha256(source), entry.source);
-    const module = await import(pathToFileURL(join(root, entry.targets.javascript)));
+    let module;
+    try { module = await import(pathToFileURL(join(root, entry.targets.javascript))); }
+    catch (cause) { throw new Error(`Generated JavaScript failed to load for ${entry.source}: ${entry.targets.javascript}`, { cause }); }
     assert.equal(Object.keys(module.translated).length, entry.executable, entry.source);
     assert.equal(module.provenance.runtimeParity, false);
   }

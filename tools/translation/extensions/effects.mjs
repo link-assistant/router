@@ -135,6 +135,7 @@ function ml_router_propagated(error) { return error && error[ml_router_try_retur
 export class EffectEmitter extends IteratorEmitter {
   constructor(program,state) {super(program,state);this.effects=new Set();this.effectHelpers=new Set();for(const name of ['ml_router_future','ml_router_defer','ml_router_try','ml_router_try_return','ml_router_propagated'])state.reserved.add(name);for(const contract of EFFECT_CONTRACTS)state.reserved.add(`ml_effect_${contract.id}`);}
   fn(entry) {
+    this.temporaries = 0;
     const text=super.fn(entry),open=text.indexOf('{'),prefix=text.slice(0,open+1),body=text.slice(open+1,-1);
     const propagated=contains(entry.body,'routerTry');
     if(propagated)this.effectHelpers.add('try');
@@ -168,4 +169,4 @@ export class EffectEmitter extends IteratorEmitter {
 }
 export const parseRust=(source,{shadowedEffectRoots}={})=>{const parser=new EffectRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;return parser.file();};
 export const checkProgram=surface=>new EffectChecker(surface.language,surface.externals??[]).program(surface);
-export const emitJavaScript=(program,{runtimeModule}={})=>emitWith(program,class extends EffectEmitter {constructor(program,state){super(program,state);this.runtimeModule=runtimeModule;}});
+export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>emitWith(program,class extends EffectEmitter {constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;}});

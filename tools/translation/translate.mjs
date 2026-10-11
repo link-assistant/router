@@ -9,6 +9,7 @@ import { roundTripProgram } from './semantic-meta.mjs';
 export const PIN = 'e46e196db5ec34bf13a73b8645aa38d409737e60';
 export const sha256 = text => createHash('sha256').update(text).digest('hex');
 export const json = value => JSON.stringify(value, (_, item) => typeof item === 'bigint' ? { $bigint: item.toString() } : item instanceof Map ? Object.fromEntries(item) : item) + '\n';
+export const typeParameterName = (name, index) => /^[A-Za-z_$][A-Za-z0-9_$]*$/u.test(name) && !new Set('break case catch class const continue debugger default delete do else enum export extends false finally for function if import in instanceof new null return super switch this throw true try typeof var void while with yield await let static implements interface package private protected public arguments eval'.split(' ')).has(name) ? name : `arg${index}`;
 export const tsType = (type, dataTypes = []) => {
   if (type.kind === 'routerFuture') return `PromiseLike<${tsType(type.value, dataTypes)}>`;
   if (type.kind === 'array') return `ReadonlyArray<${tsType(type.element, dataTypes)}>`;
@@ -29,7 +30,7 @@ function relocate(value, offset) {
 export function translateSource(source, path = 'input.rs', { projectDeclarations = [] } = {}) {
   const runtimeModule = posix.relative(posix.dirname(path), 'runtime/effects.mjs');
   const emit = program => {
-    const emitted = emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
+    const emitted = emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule, reserved: [...candidates.keys(), ...layouts.keys()] });
     return { ...emitted, signatures: [...program.declarations.values()].filter(entry => entry.k === 'fn').map(entry => ({ target: emitted.mappings.find(mapping => mapping.source === entry.fullName)?.target, params: entry.params, ret: entry.async ? { kind: 'routerFuture', value: entry.ret } : entry.ret })) };
   };
   let structural;
@@ -191,7 +192,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   });
   const runtime = `${header}${body}\n\nexport const translated = { ${runtimeEntries.join(', ')} };\nexport const provenance = ${JSON.stringify({ sourcePath: path, sourceSha256: ir.sourceSha256, ...ir.counts, runtimeParity: false })};\n`;
   const dataTypes = [...new Map(executable.flatMap(item => item.semantic.dataTypes.map(entry => [entry.fullName, entry]))).values()];
-  const signature = (params, returns) => `(${params.map(param => `${param.name}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(returns, dataTypes)}`;
+  const signature = (params, returns) => `(${params.map((param, index) => `${typeParameterName(param.name, index)}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(returns, dataTypes)}`;
   const types = executable.map((item, index) => `${JSON.stringify(entries[index])}: ${item.semantic.constructors ? item.term === 'struct' ? signature(item.semantic.constructors[0].params, item.semantic.returns) : `Readonly<{ ${item.semantic.constructors.map((ctor, index) => `${JSON.stringify(item.semantic.checkedIR.ctors[index].name)}: ${signature(ctor.params, item.semantic.returns)}`).join('; ')} }>` : item.term === 'const' ? tsType(item.semantic.returns, dataTypes) : signature(item.semantic.params, item.semantic.returns)}`).join('; ');
   const parameterTypes = new Map(executable.flatMap(item => item.semantic.constructors ? item.semantic.constructors.map(ctor => [constructorTarget(item, ctor), ctor.params]) : item.semantic.mappings.filter(mapping => mapping.source === item.name).map(mapping => [mapping.target, item.semantic.params])));
   const returnTypes = new Map();

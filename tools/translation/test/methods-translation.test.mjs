@@ -88,3 +88,26 @@ test('actual tracked production methods retain independent constructor and ref-u
   assert.equal(refs.is_create({$:'RefUpdate',old:zero,new:ordinary,name:'refs/heads/main'}),true);
   assert.throws(()=>refs.is_delete({$:'RefUpdate',old:ordinary,new:42,name:'refs/heads/main'}),TypeError);
 });
+
+test('shared record helpers have deterministic binders and reserved field labels preserve properties',async()=>{
+  const source='struct Record { new:i32, class:i32 } fn build(left:i32)->Record { Record { new:left,class:left + 1 } } pub fn first(build:i32)->i32 { let record = build_record(build); record.new } fn build_record(value:i32)->Record { build(value) } pub fn second(value:i32)->i32 { let record = build(value); record.class }';
+  const result=translateSource(source);
+  assert.equal(result.ir.counts.executableFunctions,4);strict(result);
+  const api=(await load(result.javascript)).translated;
+  const get=name=>api[Object.keys(api).find(key=>key===name||key===name+'_')];
+  assert.equal(get('first')(7n),7n);assert.equal(get('second')(7n),8n);
+  assert.deepEqual(get('Record')(2n,3n),{$:'Record',new:2n,class:3n});
+});
+
+test('actual tracked sibling closures emit shared helpers once and load',async()=>{
+  const root=fileURLToPath(new URL('../../../',import.meta.url));
+  for(const path of ['src/bridge_response.rs','src/verification.rs']) {
+    const result=translateSource(trackedSource(root,path),path);strict(result);
+    const api=(await load(result.javascript)).translated;
+    const get=name=>api[Object.keys(api).find(key=>key===name||key===name+'_')];
+    if(path.endsWith('bridge_response.rs')) {
+      assert.deepEqual(get('complete')('stop'),{$:'StopSemantics',chat_finish_reason:'stop',response_status:'completed',incomplete_reason:{$:'None'},refusal:false});
+      assert.deepEqual(get('incomplete')('length','max_output_tokens',false),{$:'StopSemantics',chat_finish_reason:'length',response_status:'incomplete',incomplete_reason:{$:'Some',field0:'max_output_tokens'},refusal:false});
+    } else assert.ok(get('AREAS').length>0);
+  }
+});

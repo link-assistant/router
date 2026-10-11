@@ -163,6 +163,9 @@ export class ControlChecker extends StringChecker {
     // The first expression visited for each signature carries the return type.
     // Descendant lexical scopes inherit it, even inside unit statement blocks.
     if (!env.has(RETURN) && expected) {
+      // Fresh binders belong to one function's lexical scope. Their names must
+      // not depend on which sibling bodies happened to check before this one.
+      this.fresh = 0;
       const mutable = this.mutableParameters.get(node) ?? [];
       if (mutable.some(name => !scalar(env.get(name)))) throw unsupported('mutable aggregate parameter', 'aggregate ownership and aliases require a separate runtime contract', node.span);
       env = new Map(env).set(RETURN, expected).set(MUTABLE, new Set(mutable));
