@@ -12,7 +12,14 @@ Unknown OS, feature, cfg_attr and residual target domains remain obligations.
 The helper emits no common executable and changes no bulk path, parity gap,
 production profile, original Rust source or generated artifact.
 
-Seven authored cases, including two complete-original-file hash pins and
+Ten authored cases, including two complete-original-file hash pins and
 namespace/profile segregation, remain unrun while the publisher owns its
 compiler window. The original pair test explicitly retains all other missing
 crate module obligations; it is not a complete-crate coverage claim.
+
+Source-only review followup freezes the complete original graph before any
+namespace composition callback and verifies its source/profile identity.
+Reads are bounded to 20,000 tracked paths, 16 entries, 8 MiB per original file
+and 64 MiB total; an exceeded budget stops before reading subsequent files.
+Profile wrapper/accessor/proxy checks use data descriptors before selection.
+These changes and their mutation/budget negatives are also untested.

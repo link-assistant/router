@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {createCompilationMatrix,compilationMatrixDescription,profileRelativePath,DECLARED_FAMILY_PROFILES} from '../compilation-matrix.mjs';
-import {analyzeCompilationMatrix} from '../profile-graph-evidence.mjs';
+import {analyzeCompilationMatrix,PROFILE_GRAPH_LIMITS} from '../profile-graph-evidence.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const matrix=()=>createCompilationMatrix({profiles:DECLARED_FAMILY_PROFILES});
 const analyze=(files,options={})=>analyzeCompilationMatrix({matrix:matrix(),entries:['src/lib.rs'],paths:Object.keys(files),readSource:path=>files[path],...options});
@@ -42,6 +42,44 @@ test('output paths and context identifiers cannot concatenate distinct profiles'
   assert.throws(()=>analyzeCompilationMatrix({matrix:{...selected},entries:[],paths:[],readSource:()=>''}),/original explicit compilation matrix/);
 });
 
+test('profile selection rejects member accessors and proxies without calling them',()=>{
+  let reads=0;
+  const member=Object.defineProperty({compilationProfile:{flags:{test:false}}},'name',{enumerable:true,get(){reads++;return 'neutral';}});
+  assert.throws(()=>createCompilationMatrix({profiles:[member]}),/data descriptors/);
+  const proxy=new Proxy({name:'neutral',compilationProfile:{flags:{test:false}}},{ownKeys(){reads++;return [];},getPrototypeOf(){reads++;return Object.prototype;},get(){reads++;return undefined;}});
+  assert.throws(()=>createCompilationMatrix({profiles:[proxy]}),/descriptor-only records/);
+  const members=[];Object.defineProperty(members,'0',{enumerable:true,get(){reads++;return DECLARED_FAMILY_PROFILES[0];}});
+  assert.throws(()=>createCompilationMatrix({profiles:members}),/dense data descriptors/);
+  const selection=Object.defineProperty({},'profiles',{enumerable:true,get(){reads++;return DECLARED_FAMILY_PROFILES;}});
+  assert.throws(()=>createCompilationMatrix(selection),/data descriptors/);
+  assert.equal(reads,0);
+});
+
+test('namespace composition sees an immutable complete graph and cannot change source identities',()=>{
+  const files={'src/lib.rs':'pub fn common()->u8{7}'};
+  for(const mutate of [
+    graph=>{graph.entry='src/other.rs';},
+    graph=>{graph.modules[0].path.push('other');},
+    graph=>{graph.modules[0].source='pub fn changed()->u8{9}';},
+    graph=>{graph.modules[0].items[0].name='changed';},
+    graph=>{graph.compilationProfile.flags.unix=true;},
+    graph=>{graph.modules[0].configurationCondition='inactive';},
+  ])assert.throws(()=>analyze(files,{namespaceOptionsForGraph:graph=>{mutate(graph);return {};}}),TypeError);
+  const unchanged=analyze(files,{namespaceOptionsForGraph:graph=>{assert.ok(Object.isFrozen(graph));assert.ok(Object.isFrozen(graph.modules[0].allItems[0].tokens));assert.equal(graph.modules[0].source,files['src/lib.rs']);return {};}});
+  assert.equal(unchanged.results.length,3);
+});
+
+test('path entry and original byte budgets stop reads at the first exceeded bound',()=>{
+  const selected=matrix();let reads=0;
+  const readSource=()=>{reads++;return '';};
+  assert.throws(()=>analyzeCompilationMatrix({matrix:selected,paths:Array.from({length:PROFILE_GRAPH_LIMITS.trackedPaths+1},(_,index)=>`src/file${index}.rs`),entries:['src/file0.rs'],readSource}),/tracked path budget/);assert.equal(reads,0);
+  const paths=Array.from({length:PROFILE_GRAPH_LIMITS.entries+1},(_,index)=>`src/file${index}.rs`);
+  assert.throws(()=>analyzeCompilationMatrix({matrix:selected,paths,entries:paths,readSource}),/entry budget/);assert.equal(reads,0);
+  assert.throws(()=>analyzeCompilationMatrix({matrix:selected,paths:['src/lib.rs','src/z.rs'],entries:['src/lib.rs'],readSource:()=>{reads++;return 'é'.repeat(PROFILE_GRAPH_LIMITS.sourceBytes/2+1);}}),/original source byte budget/);assert.equal(reads,1);
+  reads=0;const many=Array.from({length:10},(_,index)=>`src/file${index}.rs`),source=' '.repeat(PROFILE_GRAPH_LIMITS.sourceBytes);
+  assert.throws(()=>analyzeCompilationMatrix({matrix:selected,paths:many,entries:[many[0]],readSource:()=>{reads++;return source;}}),/total original source byte budget/);assert.equal(reads,9,'the following file is not read after total bytes exceed 64 MiB');
+});
+
 test('conditional macro exports shadow only their own profile and unknown neutral remains open',()=>{
   let reads=0;
   const files={'src/lib.rs':'#[cfg(unix)] mod unix_only; pub fn common()->u8{7}', 'src/unix_only.rs':'#[macro_export] macro_rules! format {()=>{7u8}}'};
@@ -78,7 +116,7 @@ test('whole original Unix module declaration and both full sources remain pinned
   // This bounded original pair intentionally leaves other crate modules
   // unprovided; all missing-module obligations stay visible in every profile.
   const evidence=analyze(files);assert.equal(evidence.sources.length,2);
-  for(const member of evidence.results){assert.ok(member.moduleDiagnostics.some(item=>item.message==='missing tracked module file'));assert.equal(member.runtimeParity,false);}
+  for(const member of evidence.results){assert.ok(member.moduleDiagnostics.some(item=>item.kind==='module'&&item.message.includes('missing tracked module file')));assert.equal(member.runtimeParity,false);}
   assert.equal(result(evidence,'unix-family').modules.some(module=>module.source==='src/unix_listener.rs'),true);
   assert.equal(result(evidence,'windows-family').modules.some(module=>module.source==='src/unix_listener.rs'),false);
 });
