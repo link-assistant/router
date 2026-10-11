@@ -24,7 +24,6 @@ type MLData_526f75746572526573756c745f33375f6e616d65645f373336353732363436353566
 type MLData_526f75746572526573756c745f33385f6e616d65645f3733373436345f37343639366436355f343437353732363137343639366636655f36345f6e616d65645f3733373436345f37343639366436355f353437323739343637323666366434363663366636313734353336353633373334353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 }>;
 type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": null }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
 type MLData_576169744572726f72 = Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": MLData_526f757465724f7074696f6e5f335f753332 }>;
-type MLData_72705f37333734363432653734363936643635326534343735373236313734363936663665 = Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -41,8 +40,6 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/login_pty.rs; sha256=ce27eba647479e2a4f909b90f05de08cd212284797706fe7220e8c56d19ebe22
 // Carried constructs are data, never runtime parity evidence.
-import { std_time_duration_from_millis as ml_host_std_time_duration_from_millis } from "../runtime/time-runtime.mjs";
-
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
 const ml_host_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 = {"schemaVersion":1,"types":{"RouterOption_3_u32":{"kind":"data","name":"RouterOption_3_u32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
@@ -55,10 +52,6 @@ function rp_6c6f67696e5f7074792e5054595f434f4c53(): bigint {
 
 function rp_6c6f67696e5f7074792e5054595f524f5753(): bigint {
   return 60n;
-}
-
-function rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
-  return ml_host_std_time_duration_from_millis(50n);
 }
 
 function ml_make_WaitError_Timeout(): Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> {
@@ -106,5 +99,5 @@ function ml_make_Key_CtrlC(): Readonly<{ readonly "$": "Enter" }> | Readonly<{ r
   return Object.freeze({ $: 'CtrlC' });
 }
 
-export const translated: { "PTY_COLS": bigint; "PTY_ROWS": bigint; "POLL_INTERVAL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }>; "WaitError": Readonly<{ "Timeout": () => Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }>; "ChildExited": (field0: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>) => Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }>; "Key": Readonly<{ "Enter": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }>; "Escape": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }>; "CtrlC": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }> }> } = { ["PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["WaitError"]: Object.freeze({ ["Timeout"]: ml_make_WaitError_Timeout, ["ChildExited"]: ml_make_WaitError_ChildExited }), ["Key"]: Object.freeze({ ["Enter"]: ml_make_Key_Enter, ["Escape"]: ml_make_Key_Escape, ["CtrlC"]: ml_make_Key_CtrlC }) };
-export const provenance = {"sourcePath":"src/login_pty.rs","sourceSha256":"ce27eba647479e2a4f909b90f05de08cd212284797706fe7220e8c56d19ebe22","executable":5,"executableFunctions":0,"executableConstants":3,"executableTypes":2,"executableConstructors":5,"carried":14,"preserved":20,"runtimeParity":false};
+export const translated: { "PTY_COLS": bigint; "PTY_ROWS": bigint; "WaitError": Readonly<{ "Timeout": () => Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }>; "ChildExited": (field0: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>) => Readonly<{ readonly "$": "Timeout" }> | Readonly<{ readonly "$": "ChildExited"; readonly "field0": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }>; "Key": Readonly<{ "Enter": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }>; "Escape": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }>; "CtrlC": () => Readonly<{ readonly "$": "Enter" }> | Readonly<{ readonly "$": "Escape" }> | Readonly<{ readonly "$": "CtrlC" }> }> } = { ["PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["WaitError"]: Object.freeze({ ["Timeout"]: ml_make_WaitError_Timeout, ["ChildExited"]: ml_make_WaitError_ChildExited }), ["Key"]: Object.freeze({ ["Enter"]: ml_make_Key_Enter, ["Escape"]: ml_make_Key_Escape, ["CtrlC"]: ml_make_Key_CtrlC }) };
+export const provenance = {"sourcePath":"src/login_pty.rs","sourceSha256":"ce27eba647479e2a4f909b90f05de08cd212284797706fe7220e8c56d19ebe22","executable":4,"executableFunctions":0,"executableConstants":2,"executableTypes":2,"executableConstructors":5,"carried":15,"preserved":20,"runtimeParity":false};

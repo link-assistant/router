@@ -1,8 +1,8 @@
 {
-  "archiveIndexSha256": "1b1f84b6b4b4dfbbb8de2c50e579e296b744666dd68b06718ee417fb3826663e",
-  "storedPackBytes": 11263703,
-  "members": 5148,
-  "allocatedCaseFileBytes": 477310976,
+  "archiveIndexSha256": "0b77dc02c071d30621fee450b5aba9e2326e22cdd62972019f08691af8a11125",
+  "storedPackBytes": 11270094,
+  "members": 5155,
+  "allocatedCaseFileBytes": 477323264,
   "budgetBytes": 500000000,
   "credentialPatternMatches": [],
   "allPackMembersVerified": true,

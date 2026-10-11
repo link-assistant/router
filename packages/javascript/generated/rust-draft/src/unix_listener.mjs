@@ -43,5 +43,9 @@ const serde_json = {
   },
 };
 
-export const translated = { ["SocketAccess"]: ml_make_SocketAccess_SocketAccess };
-export const provenance = {"sourcePath":"src/unix_listener.rs","sourceSha256":"f2697b44c95c5f9a7aab7d2fc55a03c80360da08b1f987a4caaf4d47fe0441b5","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":1,"carried":16,"preserved":18,"runtimeParity":false};
+function WIDEST_MODE() {
+  return 438n;
+}
+
+export const translated = { ["SocketAccess"]: ml_make_SocketAccess_SocketAccess, ["WIDEST_MODE"]: WIDEST_MODE() };
+export const provenance = {"sourcePath":"src/unix_listener.rs","sourceSha256":"f2697b44c95c5f9a7aab7d2fc55a03c80360da08b1f987a4caaf4d47fe0441b5","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":15,"preserved":18,"runtimeParity":false};

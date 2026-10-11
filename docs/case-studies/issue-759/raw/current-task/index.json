@@ -28589,8 +28589,53 @@
       "status": "Final related eight-file scope passed57/57 in Node and Bun; preceding failures retained. No successful cycle-six producer or publication yet.",
       "reviewedSourceHead": "195ccce1c",
       "archivedAtUtc": "2026-10-11T14:02:42.481169+00:00"
+    },
+    {
+      "label": "cycle-6-successful-producer",
+      "pack": "7fabf3a6b6c39000612cf5922debaff86ebcc9729ffb2dbc4cbc2c706e9f575d.tar.gz",
+      "sha256": "7fabf3a6b6c39000612cf5922debaff86ebcc9729ffb2dbc4cbc2c706e9f575d",
+      "storedBytes": 6391,
+      "members": [
+        {
+          "path": "router-759-census-cycle6.py",
+          "bytes": 3240,
+          "sha256": "0bdd891183d4d94c6f1ce2a3c6d3a5201abe1ba7f4caf60920b0cb659571e446"
+        },
+        {
+          "path": "router-759-cycle-6-corpus-census.json",
+          "bytes": 16297,
+          "sha256": "f4a98ead82bf6217d63f76e33216facb2d0e4a644fc617aa6d27ecbae62a7372"
+        },
+        {
+          "path": "router-759-generated-784553804-integrity.json",
+          "bytes": 4312,
+          "sha256": "23b453858a2b51a0a153e8193b8950145173594b01a2aba6cb39b59acb5de8f2"
+        },
+        {
+          "path": "router-759-generation-784553804-time.log",
+          "bytes": 777,
+          "sha256": "ac4fb511d9cf5a9ee160e74c9008badc7cfef59222b0203cdac09459486bc6b9"
+        },
+        {
+          "path": "router-759-generation-784553804.json",
+          "bytes": 773,
+          "sha256": "3b56c479f562575d9e1f8a30f9081e16836233d1957610cb5ed4683138a7ca37"
+        },
+        {
+          "path": "router-759-generation-784553804.log",
+          "bytes": 1071,
+          "sha256": "f264b85718eab3c3862774179ddce98b7ab2840a295ccae98253f12e26bcbeb7"
+        },
+        {
+          "path": "router-759-timed-producer.py",
+          "bytes": 1976,
+          "sha256": "11afc4930f751d27855414ce324f336bdf0898fe573b595ba1c98f1fd1b3a69b"
+        }
+      ],
+      "sourceHeadSha": "7845538045fce79d7fd7c450878778c69c6bb0d4",
+      "status": "One successful timed804 producer, source and implementation integrity verified. Full seven-stage and CI checks pending."
     }
   ],
-  "totalStoredPackBytes": 11263703,
-  "totalMembers": 5148
+  "totalStoredPackBytes": 11270094,
+  "totalMembers": 5155
 }
