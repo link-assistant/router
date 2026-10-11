@@ -2,7 +2,7 @@
 // caller-supplied namespace/feature assertions are admitted.
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {JSON_TYPES,JSON_CONTRACTS} from './json-contracts.mjs';
-import {jsonMacroParserOriginal,originalJsonMacroCandidate,sealJsonMacroCall,assertJsonMacroCall} from '../json-macro-context.mjs';
+import {jsonMacroParserOriginal,originalJsonMacroCandidate,sealJsonMacroCall,assertJsonMacroCall,assertJsonEmptyArrayCall} from '../json-macro-context.mjs';
 import {parseJsonMacroSyntax} from '../json-macro-syntax.mjs';
 const key=path=>path.join('::');
 const originalTreeSpans=(value,offset)=>Array.isArray(value)?value.map(item=>originalTreeSpans(item,offset)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([name,item])=>[name,name==='span'?{start:item.start+offset,end:item.end+offset}:originalTreeSpans(item,offset)])):value;
@@ -57,14 +57,14 @@ export function withJsonMacroChecker(Base) {return class extends Base {
   expr(node,env,path,expected,allowLiteral=false) {
     if(node.k!=='routerJsonMacro')return super.expr(node,env,path,expected,allowLiteral);
     try{assertJsonMacroCall(node.jsonMacroProof);}catch(error){throw unsupported('json! call proof',error.message,node.span);}
-    const checkTree=tree=>{if(tree.kind==='array')throw unsupported('json! array macro owner','alloc::vec! boxed intrinsic/slice conversion closure remains an explicit prerequisite',node.span);if(tree.kind==='object')tree.entries.forEach(entry=>checkTree(entry.value));};checkTree(node.jsonTree);
+    const checkTree=tree=>{if(tree.kind==='array'){if(tree.items.length)throw unsupported('json! nonempty array allocation effects','boxed storage allocation precedes initialization; linked-crate global allocator/abort effects remain an explicit obligation',tree.span);try{assertJsonEmptyArrayCall(node.jsonMacroProof);}catch(error){throw unsupported('json! empty array owner',error.message,tree.span);}}if(tree.kind==='object')tree.entries.forEach(entry=>checkTree(entry.value));};checkTree(node.jsonTree);
     const type=this.hostType(JSON_TYPES.value,path,node.span),entry=this.items.get(type.name);
     if(!entry||key(entry.hostTypePath??[])!=='serde_json::Value')throw unsupported('json! output layout','requires the actual registered canonical Value declaration',node.span);
     const args=node.args.map(argument=>{
       const checked=this.expr(argument,env,path);if(!checkedPure(checked))throw unsupported('json! interpolation effects','only registered JSON/scalar expressions and checked Option propagation are supported',argument.span);
       return {value:checked,serialization:serializeKind(this,checked.type,argument.span)};
     });
-    return {...node,args,type:{...type,rustSourceType:true},constEligible:false,jsonMacroProof:{...node.jsonMacroProof,checkedInterpolationCount:args.length,serializeOwners:args.map(arg=>arg.serialization),loweringEligible:true,nonlocalFlow:'existing checked routerTry propagation',runtimeParity:false}};
+    return {...node,args,type:{...type,rustSourceType:true},constEligible:false,jsonMacroProof:{...node.jsonMacroProof,checkedInterpolationCount:args.length,serializeOwners:args.map(arg=>arg.serialization),loweringEligible:true,projectionSemanticsOnly:true,applicationEffectCompleteness:false,remainingEffectObligations:['bounded value projection assumes successful memory resources; String/key/Value serialization allocation, linked allocator callbacks, OOM and payload-sensitive drop behavior are not a complete application effect contract'],nonlocalFlow:'existing checked routerTry propagation',runtimeParity:false}};
   }
 };}
 export function withJsonMacroEmitter(Base) {return class extends Base {

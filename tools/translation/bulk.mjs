@@ -125,7 +125,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push('tools/translation/extensions/slice-membership-runtime.d.mts');
   implementation.push('tools/translation/json-capabilities.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/json-capabilities/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/json-capabilities/${name}`));
-  implementation.push(...['json-macro-sources.mjs','json-macro-features.mjs','json-macro-context.mjs','json-macro-syntax.mjs','json-macro-plans.mjs','json-macro-runtime.mjs','json-macro-runtime.d.mts'].map(name=>`tools/translation/${name}`));
+  implementation.push(...['json-macro-sources.mjs','json-macro-features.mjs','json-macro-context.mjs','json-macro-syntax.mjs','json-macro-plans.mjs','json-macro-runtime.mjs','json-macro-runtime.d.mts','json-macro-arrays.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...files(fileURLToPath(new URL('./source-profiles/json-macro/',import.meta.url))).map(path=>path.slice(translatorRoot.length+1)).sort());
   implementation.push(...readdirSync(new URL('./source-profiles/slice-membership/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/slice-membership/${name}`));
   implementation.push(...['derive-quote-meta.mjs','serde-bang-footprints.mjs','serde-serialize-struct-route.mjs','serde-deserialize-bang-footprints.mjs','serde-deserialize-struct-route.mjs','derive-bang-context.mjs'].map(name=>`tools/translation/${name}`));

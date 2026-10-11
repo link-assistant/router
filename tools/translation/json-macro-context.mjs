@@ -13,7 +13,8 @@ import {capturedRustTokenSource} from './extensions/lexical.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {isJsonMacroSourceProof,jsonMacroOriginalSource} from './json-macro-sources.mjs';
 import {proveJsonMacroFeatures,isJsonMacroFeatureProof} from './json-macro-features.mjs';
-import {parseJsonMacroSyntax} from './json-macro-syntax.mjs';
+import {parseJsonMacroSyntax,isOriginalJsonMacroSyntax} from './json-macro-syntax.mjs';
+import {jsonEmptyArraySources,isJsonEmptyArraySources} from './json-macro-arrays.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),root=new URL('./source-profiles/json-macro/standard/',import.meta.url);
 const profileBytes=readFileSync(new URL('manifest.json',root));
 if(hash(profileBytes)!=='4d71ed0cce3a2bbf144dd314362d0b474fa0eb26329231e1be1b369f5c388db6')throw new TypeError('JSON standard conversion source profile changed');
@@ -75,8 +76,11 @@ function proveOwner(snapshot,segments,span) {
 export function sealJsonMacroCall(parser,{segments,start,end,syntax}={}) {
   const snapshot=parsers.get(parser);if(!snapshot)throw new TypeError('JSON macro lowering has no sealed original dependency/module context');
   const original=snapshot.source.slice(start,end),expected=parseJsonMacroSyntax(original);
-  if(!syntax||syntax.source!==expected.source)throw new TypeError('JSON macro syntax differs from original invocation');
+  if(!isOriginalJsonMacroSyntax(syntax)||syntax.source!==expected.source)throw new TypeError('JSON macro syntax differs from private original invocation evidence');
   const span={start:start+snapshot.offset,end:end+snapshot.offset},owner=proveOwner(snapshot,segments,span);
-  const proof=freezeMacroTree({schema:'checked-original-json-macro-call-v1',...owner,originalSource:original,originalSha256:hash(original),file:snapshot.module.file,modulePath:snapshot.module.path,dependencyDigest:snapshot.context.dependencyDigest,featureProfile:snapshot.context.features,macroOwnerResolved:true,sourceInputsVerified:true,namespaceAuthority:false,runtimeParity:false,generatedTraitBehavior:false});calls.set(proof,{snapshot,syntax});return proof;
+  const arrays=[];const inspect=tree=>{if(tree.kind==='array'){arrays.push({span:tree.span,empty:tree.items.length===0});tree.items.forEach(inspect);}else if(tree.kind==='object')tree.entries.forEach(entry=>inspect(entry.value));};inspect(syntax.value);
+  const arraySources=arrays.length?jsonEmptyArraySources(snapshot.facts.dependencies):null;
+  const proof=freezeMacroTree({schema:'checked-original-json-macro-call-v1',...owner,originalSource:original,originalSha256:hash(original),file:snapshot.module.file,modulePath:snapshot.module.path,dependencyDigest:snapshot.context.dependencyDigest,featureProfile:snapshot.context.features,macroOwnerResolved:true,sourceInputsVerified:true,...(arraySources?{arraySources,arrayObligations:arrays.map(array=>({...array,span:{start:span.start+array.span.start,end:span.start+array.span.end},runtimeAvailable:array.empty,obligation:array.empty?'source-closed empty Vec/RawVec branch':'linked-crate allocation/abort effects remain unproved'}))}:{}),namespaceAuthority:false,runtimeParity:false,generatedTraitBehavior:false});calls.set(proof,{snapshot,syntax,arraySources});return proof;
 }
 export function assertJsonMacroCall(proof) {if(!calls.has(proof))throw new TypeError('JSON macro call proof is unsealed or copied');return proof;}
+export function assertJsonEmptyArrayCall(proof) {const facts=calls.get(proof);if(!facts||!isJsonEmptyArraySources(facts.arraySources))throw new TypeError('JSON empty array needs private original standard-source and invocation evidence');return facts.arraySources;}

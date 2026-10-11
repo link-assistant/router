@@ -27,16 +27,31 @@ objects, actual source i64/u64/borrowed-str inputs and canonical immutable Value
 serialization. Existing checked Option/Result propagation retains its original
 nonlocal semantics. Only registered Value get/as_str readers may appear inside
 interpolation; arbitrary calls, effects, custom Serialize/Into, scalar floats,
-dynamic keys, duplicate keys and const use are refused. Macro array syntax is
-parsed for evidence but currently refused because the nested alloc::vec! boxed
-intrinsic/slice conversion owner closure is not certified. Canonical existing
-Value arrays remain covered by their separately pinned Serialize branches.
+dynamic keys, duplicate keys and const use are refused. The array source profile
+adds the original empty alloc::vec! rule: Vec::new constructs zero-capacity RawVec
+with no heap allocation or element drop. Only an original empty macro array may
+use that checked branch. Nonempty array syntax retains its original spans and
+an explicit allocation obligation: the boxed intrinsic allocates before element
+initialization, and caller scopes plus the incoming Cargo feature graph do not
+prove linked global allocator, OOM or abort behavior. Canonical existing Value
+arrays remain covered by their separately pinned Serialize branches.
+
+These are bounded value projection contracts under successful memory-resource
+assumptions, not complete application effect contracts. Existing String/key
+conversion and Value serialization can allocate and have payload-sensitive drop
+behavior; this array draft does not change those adapters or claim that their
+effects match a complete linked Rust application. Checked invocation metadata
+retains applicationEffectCompleteness=false and the remaining obligations.
 
 New helpers/runtime signatures, runtime assets and all consumed source input
 bytes are included in the draft producer fingerprint and portable source bundle.
 Global namespace/expansion authority, generated trait behavior and runtime parity
 remain false. Only a private parser-issued, checked invocation may obtain the
-bounded lowering contract. These hooks and all 19 authored cases are UNRUN; the
+bounded lowering contract. These hooks and all 24 authored cases are UNRUN; the
 whole unchanged bridge child file plus an authored closed root carrier supplies
 12 independent expected tool-choice outcomes for the next serial JS/strict-TS
-window. No production function or corpus admission is claimed before that run.
+window. The additional whole activitypub/codex files retain their unrelated
+namespace, generic, lifetime and allocation prerequisites as negative evidence.
+No production function or corpus admission is claimed before that run. Actual
+root numeric parse admission remains governed by the independent Cargo parser
+capability guard; this future branch must be composed with that guarded baseline.
