@@ -33,7 +33,16 @@ async function runEvidence(evidence) {
       // Full native TS evidence compiles the complete syntax AST and runs the
       // source plus compiled fixtures in both engines (84s observed before
       // its inner timeout repair). Keep actual success mandatory and bounded.
-      const { stdout } = await exec(process.execPath, ['--test','--test-reporter=tap',path], { cwd: root, timeout: 180_000, maxBuffer: 4_194_304 });
+      const started = performance.now(), timeout = 180_000;
+      let stdout;
+      try {
+        ({ stdout } = await exec(process.execPath, ['--test','--test-reporter=tap',path], { cwd: root, timeout, maxBuffer: 4_194_304 }));
+      } catch (error) {
+        // Print the bounded child capture once per cached runner, retaining actual
+        // failed assertions even when several features reference the same test.
+        process.stderr.write(`Evidence subprocess failed: ${evidence.file}\n--- captured stdout ---\n${error.stdout ?? ''}\n--- captured stderr ---\n${error.stderr ?? ''}\n--- end evidence capture ---\n`);
+        throw new Error(`${error.message}; evidence diagnostics: timeoutBudgetMs=${timeout}, elapsedMs=${Math.round(performance.now() - started)}, killed=${error.killed === true}, signal=${error.signal ?? 'none'}, code=${error.code ?? 'none'}`, { cause: error });
+      }
       return new Map([...stdout.matchAll(/^ok \d+ - (.+)$/gm)].filter(match => !match[1].includes('# SKIP')).map(match => [match[1], { success: true }]));
     }
     const module = await import(pathToFileURL(path).href), run = module.runParityFixtures ?? module.runOperationFixtures;
