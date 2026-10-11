@@ -6,11 +6,26 @@ import {coerce} from '../vendor/meta-language/translation/check.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 
 const span=(start,end)=>({start:start.start,end:end.end});
+// Portable widths and scalar encodings are insufficient to intern Rust tuple
+// layouts: usize/u64 and String/&str have different source contracts. Keep
+// source qualifiers in an injective suffix, without location-dependent spans.
+function sourceQualifiers(type) {
+  return {
+    ...(type.rustPrimitiveName?{primitive:type.rustPrimitiveName}:{}),
+    ...(type.patternOwnershipRefusal?{ownership:type.patternOwnershipRefusal}:{}),
+    ...(type.rustReference?{reference:type.rustReference.kind}:{}),
+    ...(type.rustGenericIdentityUnresolved?{unresolved:true}:{}),
+    ...(type.kind==='array'?{element:sourceQualifiers(type.element)}:{}),
+    ...(type.rustStandardGeneric?{generic:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(sourceQualifiers)}}:{}),
+  };
+}
 export class TupleRustParser extends PatternControlRustParser {
   tupleType(fields,location) {
-    const name=monomorphicTypeName('Tuple',fields.map(field=>field.type));
+    const qualifiers=Buffer.from(JSON.stringify(fields.map(field=>sourceQualifiers(field.type))),'utf8').toString('hex');
+    const name=monomorphicTypeName('Tuple',fields.map(field=>field.type))+'_rust_'+qualifiers;
     if(!this.genericTypes.has(name))this.genericTypes.set(name,{k:'data',name,tuple:true,ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:location,generated:'router-tuple-type'});
-    return {kind:'named',path:['crate',name],span:location};
+    const ownership=fields.map(field=>field.type.patternOwnershipRefusal).find(Boolean);
+    return {kind:'named',path:['crate',name],span:location,...(ownership?{patternOwnershipRefusal:ownership}:{})};
   }
   type() {
     const c=this.cursor;if(!c.is('('))return super.type();

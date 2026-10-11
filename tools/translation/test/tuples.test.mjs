@@ -43,6 +43,35 @@ test('tuple layout field syntax survives checked semantic serialization',()=>{
   assert.equal(entry.standardGeneric,undefined);assert.equal(entry.record,undefined);
 });
 
+test('whole programs retain distinct Rust tuple identities after portable type erasure',async()=>{
+  const source='pub fn words(v:(u64,u8))->u64{let(n,_)=v;n} pub fn indexes(v:(usize,u8))->usize{let(n,_)=v;n} pub fn borrowed(v:(&str,bool))->bool{v.1} pub fn owned()->(String,bool){("x".to_string(),true)}';
+  const checked=roundTripProgram(checkProgram(parseRust(source+' fn main(){}')));
+  const layouts=[...checked.declarations.values()].filter(entry=>entry.generated==='router-tuple-type');
+  assert.equal(layouts.length,4);assert.equal(new Set(layouts.map(entry=>entry.fullName)).size,4);
+  assert.equal(checked.declarations.get('words').params[0].type.name===checked.declarations.get('indexes').params[0].type.name,false);
+  assert.equal(checked.declarations.get('owned').ret.patternOwnershipRefusal,'ownership-bearing String type');
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{
+    assert.equal(api.words(tuple(7n,1n)),7n);assert.equal(api.indexes(tuple(9n,2n)),9n);
+    assert.equal(api.borrowed(tuple('😀',true)),true);assert.deepEqual(api.owned(),tuple('x',true));
+  });
+});
+
+test('earlier tuple declarations cannot launder later ownership or primitive identities',()=>{
+  const fixtures=[
+    ['pub fn first(v:(&str,u8))->u8{let(_,n)=v;n}','pub fn bad(v:(String,u8))->u8{let(_,n)=v;n}',/ownership/],
+    ['pub fn first(v:(u64,u8))->u64{let(n,_)=v;n}','pub fn bad(v:(usize,u8))->u64{let(n,_)=v;n}',/primitive integer identities/],
+    ['pub fn first(v:(u64,u8))->u64{v.0}','pub fn bad(v:(usize,u8))->u64{v.0}',/primitive integer identities/],
+    ['pub fn first(v:((&str,bool),u8))->u8{let(_,n)=v;n}','pub fn bad(v:((String,bool),u8))->u8{let(_,n)=v;n}',/ownership/],
+    ['pub fn first(v:((u64,bool),u8))->u64{(v.0).0}','pub fn bad(v:((usize,bool),u8))->u64{(v.0).0}',/primitive integer identities/],
+  ];
+  for(const [first,bad,message] of fixtures)for(const source of [first+bad,bad+first]){
+    assert.throws(()=>checkProgram(parseRust(source+' fn main(){}')),message,source);
+    const result=translateSource(source),item=result.ir.items.find(item=>item.name==='bad');assert.equal(item.status,'carried',source);
+    assert.equal(result.ir.items.map(item=>item.source).join(''),source);
+  }
+});
+
 test('original response content key functions execute unchanged through contextual tuple lowering',async()=>{
   for(const [file,name] of [['responses.rs','stream_content_key'],['anthropic_stream.rs','response_content_key']]) {
     const source=readFileSync(new URL('../../../src/'+file,import.meta.url),'utf8'),item=sourceItems(source).find(item=>item.term==='fn'&&item.name===name);
