@@ -98,9 +98,13 @@ test('word views lower through checked meta to JavaScript and strict TypeScript'
 });
 
 test('fresh word adapters retain item ownership with actual trim function items',{timeout:60_000},async()=>{
-  const result=project('pub fn limited(value:&str)->String{value.split_whitespace().map(str::trim).take(2).collect::<Vec<_>>().join("|")}');
+  const result=project('pub fn limited(value:&str)->String{value.split_whitespace().map(str::trim).take(2).collect::<Vec<_>>().join("|")} pub fn trimmed(value:&str)->&str{value.trim()}');
   assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,api=>{assert.equal(api.limited(' \u0085😀\u3000é third '),'😀|é');assert.equal(api.limited(' \t'),'');assert.equal(api.limited('\uFEFF a b'),'\uFEFF|a');});
+  await verifyTypedTargets(result,api=>{
+    assert.equal(api.limited(' \u0085😀\u3000é third '),'😀|é');assert.equal(api.limited(' \t'),'');assert.equal(api.limited('\uFEFF a b'),'\uFEFF|a');
+    for(const scalar of RUST_WHITESPACE_CODE_UNITS){const separator=String.fromCodePoint(scalar);assert.equal(api.trimmed(separator+'😀'+separator),'😀');}
+    assert.equal(api.trimmed('\uFEFF😀\uFEFF'),'\uFEFF😀\uFEFF');
+  });
 });
 
 test('word next resolves standard Option aliases independently of local source names',{timeout:60_000},async()=>{

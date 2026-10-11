@@ -5,10 +5,11 @@ import {normalizeGeneratedTypeOwner} from './generated-type-owners.mjs';
 import { BOOL, STRING, fixed, fixedBounds, typeKey, array, rustFixedType } from '../checked-types.mjs';
 import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
+import {RUST_WHITESPACE_CODE_UNITS} from './whitespace-data.mjs';
 
-// Unicode White_Space, stable through the pinned Rust 1.99 Unicode tables.
+// One source-generated Rust 1.89 property serves trimming and word views.
 // ECMAScript \s includes BOM and omits NEL, so it cannot encode Rust trim.
-const WHITE_SPACE = '\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000';
+const WHITE_SPACE = RUST_WHITESPACE_CODE_UNITS.map(unit=>'\\u'+unit.toString(16).padStart(4,'0')).join('');
 const MAPS = new Set(['trim', 'trim_start', 'trim_end', 'to_ascii_lowercase', 'to_ascii_uppercase']);
 const TESTS = new Set(['eq_ignore_ascii_case', 'is_empty', 'is_ascii']);
 const USIZE = {...fixed(64, false),rustPrimitiveName:'usize'};
