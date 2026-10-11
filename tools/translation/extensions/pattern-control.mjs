@@ -33,13 +33,37 @@ export function withPatternControlParser(Base=ControlRustParser) {
       const first=this.cursor.index,type=super.type(),tokens=this.cursor.tokens.slice(first,this.cursor.index),reason=ownershipRefusal(tokens);
       return reason?{...type,patternOwnershipRefusal:reason}:type;
     }
+    registeredPatternOwner(written,resolved,path,location) {
+      if(typeof this.registeredGenericKind!=='function')return null;
+      if(this.unresolvedImportScope&&resolved.length===written.length&&resolved.every((name,index)=>name===written[index])&&(['Some','None','Ok','Err'].includes(written[0])||['Option','Result'].includes(written[0])))throw unsupported('unproven standard if-let owner','requires actual source namespace resolution',location);
+      const kind=this.registeredGenericKind(resolved.slice(0,-1),path,written[0]);
+      return (kind==='Option'?['Some','None']:kind==='Result'?['Ok','Err']:[]).includes(resolved.at(-1))?kind:null;
+    }
     controlIf(path) {
       const c=this.cursor;
       if(!c.is('if')||!c.is('let',1))return super.controlIf(path);
       const first=c.next();c.next();
-      let pattern;
-      try {pattern=parseBindingPattern(c,{resolvePath:segments=>this.resolve(segments,path)});}
+      let pattern;const owners=[];
+      try {pattern=parseBindingPattern(c,{resolvePath:(written,location)=>{
+        const resolved=this.resolve(written,path),kind=this.registeredPatternOwner(written,resolved,path,location);
+        owners.push({resolved,kind,span:location});return resolved;
+      }});}
       catch(error){if(error instanceof TranslationError&&c.is('<'))throw unsupported('generic if-let pattern','generic pattern arguments require checked monomorphization',range(first,c.peek()));throw error;}
+      const annotate=node=>{
+        if(['ctor','bindOrCtor','routerRecordPattern'].includes(node.k)) {
+          const names=node.k==='bindOrCtor'?[node.name]:node.path;
+          // The earliest matching source path is this node's own owner, even
+          // through parentheses. Never borrow a nested constructor's proof.
+          const owner=owners.find(owner=>owner.span.start>=node.span.start&&owner.span.end<=node.span.end&&owner.resolved.length===names.length&&owner.resolved.every((name,index)=>name===names[index]));
+          if(owner?.kind)node={...node,registeredGenericOwner:owner.kind};
+        }
+        if(node.args)node={...node,args:node.args.map(annotate)};
+        if(node.alternatives)node={...node,alternatives:node.alternatives.map(annotate)};
+        if(node.items)node={...node,items:node.items.map(annotate)};
+        if(node.fields)node={...node,fields:node.fields.map(field=>({...field,pattern:annotate(field.pattern)}))};
+        return node;
+      };
+      pattern=annotate(pattern);
       c.expect('=','if-let condition');
       let depth=0;
       for(let offset=0;offset<c.tokens.length-c.index;offset++) {
@@ -74,7 +98,9 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(!['ctor','bindOrCtor','routerRecordPattern'].includes(node.k))return node;
       const names=node.k==='bindOrCtor'?[node.name]:node.path;
       const actual=names?this.lookup(names,path,location):null;
-      const standard=names&&typeof this.standardConstructor==='function'&&this.standardConstructor(names,type,path,env,location);
+      const registered=node.registeredGenericOwner;
+      if(registered&&(!['Option','Result'].includes(registered)||entry?.standardGeneric?.kind!==registered||!(registered==='Option'?['Some','None']:['Ok','Err']).includes(names?.at(-1))))throw typeError('registered if-let owner differs from its actual checked generic layout',location);
+      const standard=Boolean(registered)||names&&typeof this.standardConstructor==='function'&&this.standardConstructor(names,type,path,env,location);
       const record=actual?.k==='data'&&actual.record&&actual.ctors.length===1?actual:null;
       const owner=actual?.k==='ctor'?actual.data:record?.fullName??(standard?type.name:null);
       const name=actual?.k==='ctor'?actual.name:record?.ctors[0].name??names?.at(-1);
@@ -85,6 +111,9 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(owner!==type.name)throw typeError(`if-let constructor belongs to ${owner}, not ${type.name}`,location);
       const ctor=entry?.ctors.find(ctor=>ctor.name===name);
       if(!ctor)throw typeError('if-let constructor requires an actual checked layout',location);
+      const named=ctor.ctorStyle==='named';
+      if(node.k==='routerRecordPattern'&&!named)throw unsupported('if-let source record pattern','portable tuple ABI fields are not actual Rust named fields',location);
+      if(node.k!=='routerRecordPattern'&&named)throw unsupported('if-let source tuple pattern','an actual named constructor requires record pattern syntax',location);
       const normalized={...node,k:node.k==='bindOrCtor'?'ctor':node.k,path:[type.name,name],data:type.name,ctor:name};
       if(node.k==='routerRecordPattern') {
         normalized.fields=node.fields.map(field=>{

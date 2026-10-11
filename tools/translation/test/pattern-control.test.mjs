@@ -228,3 +228,47 @@ test('default project frontend executes the unchanged tracked upstream-path func
   assert.deepEqual(result.meta.executable.filter(entry=>entry.term==='fn').map(entry=>entry.name),['resolve_upstream_path']);
   for(const api of await defaultArtifacts(result))for(const [input,expected] of [['/api/services/anthropic/v1/messages','/v1/messages'],['/api/services/bedrock/invoke','/invoke'],['/api/services/vertex/model:rawPredict','/model:rawPredict'],['/api/anthropic/v1/messages','/v1/messages'],['/api/latest/anthropic/v1/messages','/v1/messages'],['/v1/messages','/v1/messages'],['/api/anthropicx','x'],['/api/services/anthropic',''],['','']])assert.equal(api.resolve_upstream_path(input),expected);
 });
+
+
+test('default project if-let uses actual qualified and imported standard generic constructor owners',async()=>{
+  const source='use std::option::Option as O; use std::option::Option::{Some as Present,None as Absent}; use std::result::Result as R; use std::result::Result::{Ok as Success,Err as Failure}; pub fn option(value:O<u8>)->u8{if let O::Some(v)=value{v}else{7}} pub fn absent(value:O<u8>)->bool{if let (Absent)=value{true}else{false}} pub fn nested(value:O<O<u8>>)->u8{if let (Present(Present(v)))=value{v}else{8}} pub fn result(value:R<u8,bool>)->u8{if let Success(v)=value{v}else{9}} pub fn error(value:R<u8,bool>)->bool{if let Failure(v)=value{v}else{false}} pub fn qualified(value:std::option::Option<u8>)->u8{if let std::option::Option::Some(v)=value{v}else{10}}';
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
+  assert.deepEqual(result.meta.refused,[]);assert.deepEqual(result.meta.moduleDiagnostics,[]);assert.equal(result.meta.runtimeParity,false);
+  assert.deepEqual(result.meta.executable.filter(item=>item.term==='fn').map(item=>item.name),['option','absent','nested','result','error','qualified']);
+  for(const api of await defaultArtifacts(result,'src/lib.rs')){
+    assert.equal(api.option(some(5n)),5n);assert.equal(api.option(none),7n);
+    assert.equal(api.absent(none),true);assert.equal(api.absent(some(2n)),false);
+    assert.equal(api.nested(some(some(3n))),3n);assert.equal(api.nested(some(none)),8n);assert.equal(api.nested(none),8n);
+    assert.equal(api.result(tagged('Ok',{field0:4n})),4n);assert.equal(api.result(tagged('Err',{field0:true})),9n);
+    assert.equal(api.error(tagged('Err',{field0:true})),true);assert.equal(api.error(tagged('Err',{field0:false})),false);assert.equal(api.error(tagged('Ok',{field0:1n})),false);
+    assert.equal(api.qualified(some(6n)),6n);assert.equal(api.qualified(none),10n);
+  }
+});
+
+test('if-let preserves local nominal aliases and refuses mismatched standard constructor provenance',async()=>{
+  const source='enum Local { Some(u8), None } use crate::Local as O; pub fn nominal(value:O)->u8{if let O::Some(v)=value{v}else{5}}';
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
+  for(const api of await defaultArtifacts(result,'src/lib.rs')){assert.equal(api.nominal(some(2n)),2n);assert.equal(api.nominal(none),5n);}
+  for(const source of [
+    'pub fn bad(value:Option<u8>)->u8{if let Some {field0:v}=value{v}else{0}}',
+    'use std::option::Option as O; pub fn bad(value:O<u8>)->u8{if let O::Some {field0:v}=value{v}else{0}}',
+    'pub fn bad(value:Option<u8>)->bool{if let None {}=value{true}else{false}}',
+    'struct Pair(u8); pub fn bad(value:Pair)->u8{if let Pair {field0:v}=value{v}else{0}}',
+    'enum Local { A(u8), Empty } pub fn bad(value:Local)->u8{if let Local::A {field0:v}=value{v}else{0}}',
+    'enum Local { A { field0:u8 }, Empty } pub fn bad(value:Local)->u8{if let Local::A(v)=value{v}else{0}}',
+    'enum Local { A {}, Empty } pub fn bad(value:Local)->bool{if let Local::A=value{true}else{false}}',
+    'use std::result::Result::Ok as Present; pub fn bad(value:Option<u8>)->u8{if let Present(v)=value{v}else{0}}',
+    'use std::option::Option::Some as Success; pub fn bad(value:Result<u8,bool>)->u8{if let Success(v)=value{v}else{0}}',
+    'enum Local { Some(u8), None } use std::option::Option::Some as Present; pub fn bad(value:Local)->u8{if let Present(v)=value{v}else{0}}',
+    'use unknown::*; use std::option::Option as O; pub fn bad(value:O<u8>)->u8{if let Some(v)=value{v}else{0}}',
+    'use unknown::*; use std::option::Option as O; pub fn bad(value:O<u8>)->u8{if let Option::Some(v)=value{v}else{0}}',
+    '#[cfg(any())] mod std {} pub fn bad(value:Option<u8>)->u8{if let std::option::Option::Some(v)=value{v}else{0}}',
+  ]){const refused=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.ok(refused.meta.refused.some(item=>item.name==='bad'),source);assert.equal(refused.meta.executable.some(item=>item.name==='bad'),false,source);}
+});
+
+
+test('source named variant metadata supports record patterns even for an ABI-like actual field name',async()=>{
+  const source='enum Local { A { field0:u8 }, Empty } pub fn named(value:Local)->u8{if let Local::A {field0:v}=value{v}else{3}}';
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
+  for(const api of await defaultArtifacts(result,'src/lib.rs')){assert.equal(api.named(tagged('A',{field0:4n})),4n);assert.equal(api.named(tagged('Empty')),3n);}
+});
