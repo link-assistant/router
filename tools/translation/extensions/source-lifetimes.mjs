@@ -103,6 +103,12 @@ function origins(node,env,context,returns,depth=0) {
   if(depth>256)throw unsupported('borrow origin traversal','requires a bounded checked expression graph',context.entry.span);
   const read=(value,scope=env)=>origins(value,scope,context,returns,depth+1);
   const borrowed=hasBorrow(node.type,context);
+  if(node.sourceOwnershipOperation?.operation==='as_str') {
+    const proof=node.sourceOwnershipOperation,receiver=node.sourceOwnershipReceiver;
+    if(proof.profile!=='checked-standard-string-ownership-v1'||proof.verified!==true||!receiver?.type)throw unsupported('String::as_str borrow origin','requires its checked source receiver and registered ownership proof',node.span);
+    const value=read(receiver);
+    return borrowed?uniformOrigins(node.type,at(value,[]),context):new Set();
+  }
   if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
   if(node.k==='routerLambdaInput')return borrowed?(context.lambdaInputs?.[node.position]??new Set([UNKNOWN])):new Set();
   if(node.k==='routerSharedArrayLiteral') {

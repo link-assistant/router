@@ -1,0 +1,1 @@
+Pass the actual expected type and module path through the highest checked ownership boundary. Source borrow analysis follows the checked original receiver of registered String::as_str operations, retaining input origins and refusing unproved local escapes. This hook adds no static lifetime inference or ownership waiver.

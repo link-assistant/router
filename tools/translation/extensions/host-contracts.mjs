@@ -284,7 +284,7 @@ export class HostChecker extends withSourceLifetimeChecker(withSharedArrayBorrow
   expr(node,env,path,expected,allowLiteral=false) {
     let value=this.hostExpression(node,env,path,expected,allowLiteral);
     if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};
-    value=this.qualifyOwnershipResult?.(node,value)??value;
+    value=this.qualifyOwnershipResult?.(node,value,expected,path)??value;
     this.expectedOwnership?.(value.type,expected,path,node.span);
     this.expectedPrimitiveIdentity(value.type,expected,path,node.span);
     return value;
