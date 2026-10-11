@@ -2,6 +2,7 @@
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
+import {macroProvenance} from './macro-provenance.mjs';
 import { HostRustParser as MethodRustParser, checkProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens } from './impl-resolver.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
@@ -96,6 +97,18 @@ function declarationProgram(program, root) {
 
 export function translateProject(options) {
   const graph = resolveModuleGraph(options);
+  const macroEvidence=new Map(graph.modules.map(module=>[module.file,macroProvenance(module.source)]));
+  // Conservatively include every source macro in the crate: expansion and
+  // textual parent-module scope must be resolved before narrower admission.
+  const macroNames=new Set([...macroEvidence.values()].flatMap(evidence=>evidence.shadowedNames));
+  const unresolvedMacroScope=[...macroEvidence.values()].some(evidence=>evidence.unresolvedImportScope);
+  const configureSourceScope=(parser,module)=>{
+    parser.shadowedPreludeTypes=new Set(module.items.filter(item=>['enum','struct','type','mod'].includes(item.term)).map(item=>item.name));
+    parser.shadowedBuiltinMacros=macroNames;
+    parser.shadowedImportedBindings=new Set(macroEvidence.get(module.file).importedNames);
+    parser.unresolvedMacroScope=unresolvedMacroScope;
+    parser.unresolvedImportScope=macroEvidence.get(module.file).unresolvedImportScope;
+  };
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   for (const module of graph.modules) {
     for (const item of module.items.filter(item => !['fn', 'const', 'enum', 'struct', 'use', 'mod'].includes(item.term) || item.name === 'main')) unloweredItems.push({ source: module.file, module: module.path, name: item.name, term: item.term, span: { start: item.start, end: item.end }, sha256: sha256(module.source.slice(item.start, item.end)), diagnostic: 'declaration needs effect, implementation, entrypoint or macro lowering' });
@@ -104,7 +117,7 @@ export function translateProject(options) {
       try {
         const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
         parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
-        parser.shadowedPreludeTypes=new Set(module.items.filter(item=>['enum','struct','type','mod'].includes(item.term)&&['Option','Result'].includes(item.name)).map(item=>item.name));
+        configureSourceScope(parser,module);
         parser.aliases = aliases;
         parser.modulePath = module.path;
         parser.attributes(); parser.visibility(); parser.use(module.path);
@@ -116,7 +129,7 @@ export function translateProject(options) {
       try {
         const parser = new MethodRustParser(tokenizeRust(module.source.slice(item.start, item.end)));
         parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
-        parser.shadowedPreludeTypes=new Set(module.items.filter(item=>['enum','struct','type','mod'].includes(item.term)&&['Option','Result'].includes(item.name)).map(item=>item.name));
+        configureSourceScope(parser,module);
         parser.aliases = aliases;
         parser.modulePath = module.path;
         let surface;
@@ -129,7 +142,7 @@ export function translateProject(options) {
           surface = items[0];
         } else {
           parser.attributes(); parser.visibility();
-          if (parser.cursor.is('const') && parser.cursor.is('fn', 1)) { parser.cursor.next(); surface = parser.fn(module.path); }
+          if (parser.cursor.is('const') && parser.cursor.is('fn', 1)) { const qualifier=parser.cursor.next(),fn=parser.fn(module.path); surface = {...fn,constFunction:true,span:{...fn.span,start:qualifier.start}}; }
           else if (parser.cursor.is('fn') || parser.cursor.is('async')) surface = parser.fn(module.path);
           else if (parser.cursor.is('const')) surface = parser.constItem(module.path);
           else throw new TranslationError('syntax', 'expected original function or constant', parser.cursor.peek());
@@ -154,12 +167,13 @@ export function translateProject(options) {
           const lowered = lowerSharedMethodTokens(method,qualifiedType);
           const parser = new MethodRustParser(lowered.tokens);
           parser.modulePath = module.path;
+          configureSourceScope(parser,module);
           // Methods inherit the module's checked import aliases.
           parser.aliases = moduleAliases.get(module.file) ?? new Map();
           parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
           parser.attributes(); parser.visibility();
-          if (parser.cursor.is('const')) parser.cursor.next();
-          const surface = parser.fn(module.path);
+          const qualifier=parser.cursor.is('const')?parser.cursor.next():null,fn=parser.fn(module.path);
+          const surface = {...fn,...(qualifier?{constFunction:true,span:{...fn.span,start:qualifier.start}}:{})};
           if (!parser.cursor.atEnd()) throw new TranslationError('syntax','unconsumed inherent method tokens',parser.cursor.peek());
           surface.name = `ml_impl_${Buffer.from(qualifiedType.join('.')).toString('hex')}_${Buffer.from(method.name).toString('hex')}`;
           surface.generated = 'router-checked-inherent-method';

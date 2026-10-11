@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { posix } from 'node:path';
 import { sourceItems } from './rust-structure.mjs';
+import {macroProvenance} from './macro-provenance.mjs';
 import { parseRust, checkProgram, emitJavaScript } from './extensions/host-contracts.mjs';
 import {typeScriptType,typeScriptAliases} from './type-layout.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
@@ -46,6 +47,7 @@ function relocate(value, offset) {
 }
 
 export function translateSource(source, path = 'input.rs', { projectDeclarations = [] } = {}) {
+  const macroEvidence=macroProvenance(source);
   const runtimeModule = posix.relative(posix.dirname(path), 'runtime/effects.mjs');
   const emit = program => {
     const emitted = emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule, reserved: [...candidates.keys(), ...layouts.keys()] });
@@ -85,7 +87,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     if (item.status === 'preserved') continue;
     try {
       if (!['fn', 'enum', 'struct', 'const'].includes(item.term) || item.name === 'main') throw new TranslationError('unsupported', `draft item ${item.term}: no supported library declaration emission`, { start: 0, end: item.source.length });
-      const surface = parseRust(item.source + '\nfn main() {}\n', { shadowedPreludeTypes: new Set(items.filter(entry=>['enum','struct','type','mod'].includes(entry.term)&&['Option','Result'].includes(entry.name)).map(entry=>entry.name)), shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio','serde_json'].includes(entry.name)).map(entry => entry.name)) });
+      const surface = parseRust(item.source + '\nfn main() {}\n', { macroEvidence, shadowedPreludeTypes: new Set(items.filter(entry=>['enum','struct','type','mod'].includes(entry.term)).map(entry=>entry.name)), shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio','serde_json'].includes(entry.name)).map(entry => entry.name)) });
       const declarations = surface.items.filter(entry => !entry.generated);
       if (declarations.length !== 1 || !['fn', 'data'].includes(declarations[0].k)) throw new TranslationError('unsupported', 'item requires module-level declaration lowering', { start: 0, end: item.source.length });
       item.surface = relocate(declarations[0], item.span.start);

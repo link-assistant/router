@@ -1,7 +1,7 @@
 import { RustParser, Checker, JavaScriptEmitter, emitWith } from './core.mjs';
 import { monomorphicTypeName } from '../monomorphic.mjs';
 import { tokenizeRust } from './lexical.mjs';
-import { BOOL, STRING, fixed, fixedBounds, typeKey, array } from '../vendor/meta-language/translation/types.js';
+import { BOOL, STRING, fixed, fixedBounds, typeKey, array, rustFixedType } from '../vendor/meta-language/translation/types.js';
 import { coerce } from '../vendor/meta-language/translation/check.js';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 
@@ -25,8 +25,7 @@ export class StringRustParser extends RustParser {
   }
 
   genericType(kind, types, span) {
-    const binding=this.resolve([kind],this.modulePath);
-    if(binding.length!==1||binding[0]!==kind||this.shadowedPreludeTypes?.has(kind))throw unsupported(`shadowed ${kind} generic`, 'the standard prelude type requires actual resolution', span);
+    if(this.builtinShadow(kind))throw unsupported(`shadowed ${kind} generic`, 'the standard prelude type requires actual resolution', span);
     const normalize = type => {
       if (type.kind === 'array') return { ...type, element: normalize(type.element) };
       if (type.kind !== 'named') return type;
@@ -45,15 +44,26 @@ export class StringRustParser extends RustParser {
     return { kind: 'named', path: [name], span };
   }
 
+  builtinShadow(name,path=this.modulePath) {
+    const binding=this.resolve([name],path);
+    return Boolean(this.unresolvedImportScope||this.shadowedPreludeTypes?.has(name)||binding.length!==1||binding[0]!==name);
+  }
+
   type() {
     const c = this.cursor;
     const first = c.peek();
+    if ((['String','Box','bool','f64'].includes(first.value)||rustFixedType(first.value))&&this.builtinShadow(first.value)) {
+      c.next();
+      if(c.is('<'))throw unsupported('shadowed generic type','requires checked source monomorphization',first);
+      return {kind:'named',path:this.resolve([first.value],this.modulePath),span:{start:first.start,end:first.end}};
+    }
     if (c.eat('[')) {
       const element = this.type();
       c.expect(']', 'immutable slice');
       return array(element);
     }
     if (first.value === 'Vec' && c.is('<', 1)) {
+      if(this.builtinShadow('Vec'))throw unsupported('shadowed Vec generic','the standard prelude type requires actual resolution',first);
       c.next(); c.next();
       const element = this.type();
       c.expect('>', 'Vec');
@@ -111,11 +121,16 @@ export class StringRustParser extends RustParser {
       c.expect(']', 'array literal');
       return { k: 'array', items, span: { start: first.start, end: c.peek().start } };
     }
-    if (c.is('String') && c.is('::', 1) && c.is('new', 2) && c.is('(', 3) && c.is(')', 4)) {
+    if(first.kind==='identifier'&&(['String','Vec','Box'].includes(first.value)||rustFixedType(first.value))&&this.builtinShadow(first.value,path)&&c.is('::',1)&&['new','from'].includes(c.peek(2).value)&&c.is('(',3)) {
+      const segments=this.pathSegments('resolved constructor owner');c.expect('(','call');const args=[];
+      while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','call');
+      return {k:'app',fn:{k:'name',path:this.resolve(segments,path),span:{start:first.start,end:first.end}},args,span:{start:first.start,end:c.peek().start}};
+    }
+    if (c.is('String') && !this.shadowedPreludeTypes?.has('String') && this.resolve(['String'],path).join('::')==='String' && c.is('::', 1) && c.is('new', 2) && c.is('(', 3) && c.is(')', 4)) {
       for (let at = 0; at < 5; at++) c.next();
       return { k: 'str', value: '', span: { start: first.start, end: c.peek().start } };
     }
-    if (c.is('Vec') && c.is('::', 1) && c.is('new', 2) && c.is('(', 3) && c.is(')', 4)) {
+    if (c.is('Vec') && !this.shadowedPreludeTypes?.has('Vec') && this.resolve(['Vec'],path).join('::')==='Vec' && c.is('::', 1) && c.is('new', 2) && c.is('(', 3) && c.is(')', 4)) {
       for (let at = 0; at < 5; at++) c.next();
       return { k: 'array', items: [], span: { start: first.start, end: c.peek().start } };
     }
