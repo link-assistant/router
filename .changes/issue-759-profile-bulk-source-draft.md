@@ -29,4 +29,9 @@ original body and preserve integer overflow checks.
 The first repaired 25-file run has 244 passing and one failing case under both
 engines. Its new source-location assertion exposes declaration-local parser
 coordinates; those now relocate once into the complete original file's UTF-16
-coordinates, including inline and external modules. This repair awaits rerun.
+coordinates, including inline and external modules. The following run has
+245 passing and one failing case per engine: its newly authored nested-std
+negative assumption is invalid because the checked custom type is distinct
+from the standard owner. A typed positive now checks that custom layout,
+while an explicitly unsupported unsafe expression checks exact original
+inline/external parser coordinates. The complete scope awaits rerun.

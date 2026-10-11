@@ -9,6 +9,7 @@ import {translateSource} from '../translate.mjs';
 import {regenerate,trackedSource} from '../bulk.mjs';
 import {fileURLToPath} from 'node:url';
 import {loadJavaScript,writeRuntimeAssets} from './artifact-loader.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 const strict=result=>{const dir=mkdtempSync(join(tmpdir(),'router-host-types-'));try{writeRuntimeAssets(dir);writeFileSync(join(dir,'src/module.ts'),result.typescript);execFileSync(process.env.ROUTER_TRANSLATION_TSC ?? 'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--noEmit',join(dir,'src/module.ts')],{encoding:'utf8'});}finally{rmSync(dir,{force:true,recursive:true});}};
 const tagged=($,fields={})=>Object.freeze({$,...fields});
@@ -24,13 +25,22 @@ test('registered JSON paths and function-item callbacks execute checked typed bo
 });
 
 test('declaration parsing refusals keep exact whole-file UTF-16 locations in external and inline modules',()=>{
- const files={'src/lib.rs':'pub mod child; pub mod inline {pub mod std {pub mod time {pub struct Duration {secs:u64,nanos:u32}}} pub fn bad(x:&std::time::Duration)->&std::time::Duration{x}}','src/child.rs':'// Original leading astral character: \u{1d7d8}\n\npub mod std {pub mod time {pub struct Duration {secs:u64,nanos:u32}}}\npub fn bad(x:&std::time::Duration)->&std::time::Duration{x}'};
+ const files={'src/lib.rs':'pub mod child; pub mod inline {pub fn bad()->u8 {unsafe {0}}}','src/child.rs':'// Original leading astral character: \u{1d7d8}\n\npub fn bad()->u8 {unsafe {0}}'};
  const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
  for(const [file,source]of Object.entries(files)){
-  const refusal=result.meta.refused.find(entry=>entry.file===file&&entry.name==='bad');assert.ok(refusal?.message.includes('shadowed host type namespace'));
-  const first=source.indexOf('std::time::Duration',source.indexOf('pub fn bad'));
-  assert.equal(refusal.span.start,first);assert.ok(refusal.span.end<=source.length);assert.ok(source.slice(refusal.span.start,refusal.span.end).startsWith('std::time::Duration'));
+  const refusal=result.meta.refused.find(entry=>entry.file===file&&entry.name==='bad');assert.equal(refusal?.message,'unsafe expression: outside the portable core');
+  const first=source.indexOf('unsafe',source.indexOf('pub fn bad'));
+  assert.deepEqual(refusal.span,{start:first,end:first+'unsafe'.length});assert.equal(source.slice(refusal.span.start,refusal.span.end),'unsafe');
  }
+});
+
+test('a nested source module called std retains its own layout without standard Duration refinement',async()=>{
+ const result=project('pub mod child {pub mod std {pub mod time {pub struct Duration {secs:u64,nanos:u32}}} pub fn identity(value:&std::time::Duration)->&std::time::Duration{value}}');
+ assert.deepEqual(result.meta.refused,[]);
+ await verifyTypedTargets(result,api=>{
+  const value=tagged('Duration',{secs:0n,nanos:4294967295n});assert.equal(api['child.identity'](value),value);
+  assert.throws(()=>api['child.identity'](tagged('Duration',{secs:0n,nanos:4294967296n})),RangeError);
+ });
 });
 test('registered JSON refinements validate parameters even when no JSON operation is called',async()=>{
  const result=project('pub fn identity(value:&serde_json::Value)->&serde_json::Value { value }');assert.deepEqual(result.meta.refused,[]);strict(result);
