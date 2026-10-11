@@ -119,10 +119,17 @@ relative output layout there. Runtime assets use relative imports and are copied
 into generated packages. No additional checkout or Rust build is needed.
 
 To relocate the forward translator, copy `scripts/translate-router.mjs`, the
-top-level `.mjs` files in `tools/translation`, and its `extensions` and `vendor`
+top-level `.mjs` files in `tools/translation`, and its `extensions`, `vendor` and `source-profiles`
 directories, preserving their paths, notices, licenses and upstream lock. Copy
 `fixtures`, `test` and `tsconfig.json` when carrying its validation suite. Source
 code suffices for regeneration; copying existing generated corpora is optional.
+
+`source-profiles/derive` contains the original compressed locked dependency
+sources and Rust core source used by namespace proofs, with their hashes and
+licenses. They are portable compiler source inputs (about 715 KB compressed),
+not installed dependencies. A different manifest or lock leaves these derive
+namespaces unresolved with an explicit unsupported-profile diagnostic; it
+does not grant the registered derive owners or stop unrelated translation.
 
 With Node, Bun and the repository’s TypeScript tooling available:
 

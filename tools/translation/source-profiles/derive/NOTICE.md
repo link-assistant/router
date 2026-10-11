@@ -1,0 +1,5 @@
+These compressed source inputs are compiler proof fixtures, never installed or executed. The archive checksums match Router's Cargo.lock. The manifest records the exact audited source members and dependency/feature identity. Hash verification is mandatory before a certificate is created.
+
+Serde and serde_derive 1.0.229: Copyright (c) 2014 The Rust Project Developers; MIT OR Apache-2.0. Schemars and schemars_derive 1.2.2: MIT, copyright and full license are retained in each original archive. serde_derive_internals 0.30.0, syn 3.0.5, quote 1.0.47 and proc-macro2 1.0.107: MIT OR Apache-2.0; each original archive retains its license files and notices. Rust 1.89.0 core macro source: Copyright The Rust Project Developers, MIT OR Apache-2.0, https://github.com/rust-lang/rust/tree/1.89.0.
+
+The contract concerns the lexical namespace footprint of bounded derive inputs. It does not implement Serde serialization, deserialization, Schemars schemas or any generated trait methods. Unknown inputs and incomplete macro closures remain explicit obligations.

@@ -16,7 +16,10 @@ const sourceRange=span=>Number.isInteger(span?.start)&&Number.isInteger(span?.en
 
 export function standardStringEqualityOperand(value,{declarations}={}) {
   const type=value?.type,span=value?.span;
-  if(type?.kind!=='string'||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return fail(span);
+  const scopedStringBorrow=type?.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str'&&type.rustBorrowingUnresolved==='borrow of owned String'&&type.rustBorrowLifetime?.source==='String::as_str'&&!type.rustReference&&!type.patternOwnershipRefusal;
+  if(type?.kind!=='string'||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved&&!scopedStringBorrow)return fail(span);
+  // PartialEq consumes these checked operands only to produce bool. Keep the
+  // unresolved borrow marker intact so argument/return escape checks still run.
   if(owned(type))return 'String';
   const reference=type.rustReference;
   if(reference) {

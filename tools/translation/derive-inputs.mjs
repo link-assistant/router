@@ -1,0 +1,87 @@
+import {itemConfiguration} from './cfg-profile.mjs';
+
+export const STANDARD_LAYOUT_DERIVES=new Set(['Clone','Copy','Debug','Default','PartialEq','Eq','Hash','PartialOrd','Ord']);
+const identifier=token=>token?.type==='ident'&&/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
+const cases=new Set(['lowercase','UPPERCASE','PascalCase','camelCase','snake_case','SCREAMING_SNAKE_CASE','kebab-case','SCREAMING-KEBAB-CASE']);
+function endOf(tokens,start) {
+  const pairs={'(':')','[':']','{':'}'},stack=[];
+  for(let at=start;at<tokens.length;at++) {
+    if(tokens[at].type!=='punct')continue;
+    if(pairs[tokens[at].text])stack.push(pairs[tokens[at].text]);
+    else if([')',']','}'].includes(tokens[at].text)){if(stack.pop()!==tokens[at].text)throw new TypeError('Unbalanced original derive input');if(!stack.length)return at;}
+  }
+  throw new TypeError('Unterminated original derive input');
+}
+function paths(tokens) {
+  const result=[];let path=[],expectName=true;
+  for(const token of tokens) {
+    if(expectName){if(!identifier(token))throw new TypeError('Unproved derive path');path.push(token.text);expectName=false;}
+    else if(token.text==='::')expectName=true;
+    else if(token.text===','){result.push(path);path=[];expectName=true;}
+    else throw new TypeError('Unproved derive path separator');
+  }
+  if(path.length){if(expectName)throw new TypeError('Incomplete derive path');result.push(path);}
+  if(!result.length)throw new TypeError('Empty derive capability list');return result;
+}
+function literal(token) {
+  if(token?.type!=='string'||!token.text.startsWith('"'))throw new TypeError('Derive helper requires an actual bounded string literal');
+  let value;try{value=JSON.parse(token.text);}catch{throw new TypeError('Unregistered Rust helper literal escape');}
+  if(typeof value!=='string'||value.length>4096)throw new TypeError('Unbounded derive helper literal');return value;
+}
+function helper(body,position,kind) {
+  if(body[1]?.text!=='('||body.at(-1)?.text!==')')throw new TypeError('Unregistered derive helper shape');
+  const values=body.slice(2,-1),entries=[];let at=0;
+  while(at<values.length) {
+    const key=values[at++];if(!identifier(key))throw new TypeError('Unregistered derive helper key');
+    let value=null;if(values[at]?.text==='='){at++;value=literal(values[at++]);}
+    if(['rename','rename_all','alias'].includes(key.text)) {
+      if(value===null||key.text==='rename_all'&&!cases.has(value)||key.text==='alias'&&position==='container')throw new TypeError('Unregistered derive rename metadata');
+    } else if(['default','skip','skip_serializing','skip_deserializing','deny_unknown_fields','untagged'].includes(key.text)) {
+      if(value!==null||key.text==='default'&&position==='container'&&kind!=='struct'||key.text.startsWith('skip')&&position==='container'||['deny_unknown_fields','untagged'].includes(key.text)&&position!=='container'||key.text==='untagged'&&kind!=='enum')throw new TypeError('Invalid bounded derive flag position');
+    } else throw new TypeError('Derive helper requires a separately checked input profile: '+key.text);
+    if(entries.some(entry=>entry.key===key.text)&&key.text!=='alias')throw new TypeError('Duplicate bounded derive helper');
+    entries.push({key:key.text,value});
+    if(at<values.length&&values[at++].text!==',')throw new TypeError('Unregistered derive helper expression');
+  }
+  if(!entries.length)throw new TypeError('Empty bounded derive helper');return entries;
+}
+
+// Checks actual original tokens; this is not a Rust body or trait expansion.
+export function inspectDeriveInput(item,profile) {
+  if(!item||!['struct','enum'].includes(item.term)||!Array.isArray(item.tokens))throw new TypeError('Derive footprint requires an original data declaration');
+  const condition=itemConfiguration(item.tokens,profile);
+  if(condition.status!=='active')throw new TypeError('Derive footprint requires an active original compilation condition');
+  const tokens=item.tokens.filter(token=>token.type!=='comment'),attributes=[],derives=[];let depth=0,header=true,keyword=-1;
+  for(let at=0;at<tokens.length;at++) {
+    const token=tokens[at];
+    if(token.type==='punct'&&token.text==='#') {
+      if(tokens[at+1]?.text!=='[')throw new TypeError('Unregistered inner attribute in derive input');
+      const end=endOf(tokens,at+1),body=tokens.slice(at+2,end),name=body[0]?.text;
+      const position=header?'container':item.term==='enum'&&depth===1?'variant':'field';
+      const attribute={name,position,span:{start:token.start,end:tokens[end].end},tokens:tokens.slice(at,end+1).map(token=>token.text)};
+      if(name==='derive') {
+        if(!header||body[1]?.text!=='('||body.at(-1)?.text!==')')throw new TypeError('Unregistered nested derive input');
+        attribute.derives=paths(body.slice(2,-1));derives.push(...attribute.derives.map(path=>({path,attributeSpan:attribute.span})));
+      } else if(['serde','schemars'].includes(name))attribute.helpers=helper(body,position,item.term);
+      else if(name==='cfg') {
+        if(!header||!condition.attributes.some(entry=>entry.span.start===token.start&&entry.evaluation?.value===true))throw new TypeError('Conditional derive field or variant remains unproved');
+      } else if(['doc','allow','warn','deny','forbid','must_use','repr','non_exhaustive'].includes(name)) {
+        if(name==='doc') {if(body.length!==3||body[1]?.text!=='=')throw new TypeError('Unregistered generated documentation input');literal(body[2]);}
+        if(body.some(entry=>entry.text==='!'||entry.text==='#'))throw new TypeError('Attribute expression expansion remains unproved');
+      } else throw new TypeError('Unknown procedural or helper attribute remains unproved: '+name);
+      attributes.push(attribute);at=end;continue;
+    }
+    if(header&&token.text===item.term){keyword=at;const name=tokens[at+1];if(!identifier(name)||tokens[at+2]?.text==='<'||tokens[at+2]?.text==='where')throw new TypeError('Generic derive headers remain unproved');}
+    if(token.type==='punct'&&['{','('].includes(token.text)){if(keyword>=0)header=false;depth++;}
+    if(token.type==='punct'&&['}',')'].includes(token.text))depth--;
+    if(token.type==='punct'&&['!','#','='].includes(token.text)||token.type==='ident'&&token.text.endsWith('!')||['where','const','extern','macro_rules','macro_export'].includes(token.text))throw new TypeError('Macro, discriminant or generic-const derive input remains unproved');
+  }
+  if(keyword<0||!derives.length)throw new TypeError('Missing original derive invocation');
+  for(const attribute of attributes.filter(attribute=>attribute.helpers)) {
+    const siblings=attributes.filter(other=>other!==attribute&&other.position===attribute.position&&other.span.start<attribute.span.start&&other.helpers);
+    // Attributes on separate fields are not conflated. The pinned expander
+    // still owns any source-specific helper/type validation not checked here.
+    if(siblings.some(other=>other.span.end===attribute.span.start&&other.helpers.some(a=>attribute.helpers.some(b=>a.key===b.key&&a.key!=='alias'))))throw new TypeError('Duplicate adjacent helper metadata');
+  }
+  return {kind:item.term,name:item.name,condition,attributes,derives,generatedImplBehavior:false};
+}

@@ -7,6 +7,7 @@ import { translateProject } from './project.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
+import {deriveDependencyProfile} from './derive-dependencies.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'packages/javascript/generated/rust-draft', 'packages/typescript/generated/rust-draft', 'tools/translation/projects', 'packages/javascript/generated/rust-project', 'packages/typescript/generated/rust-project'];
 // Sparse workers still translate the complete tracked census. A missing
@@ -28,6 +29,9 @@ function files(root) {
 export function regenerate({ root, check = false, sources, entries, compilationProfile:profileInput=PRODUCTION_PROFILE } = {}) {
   root = resolve(root);
   const profile=compilationProfile(profileInput);
+  // Standalone fixture roots without Cargo have no registered derive owner.
+  // A real Cargo root must verify every consumed dependency input.
+  const deriveProfile=deriveDependencyProfile({manifest:existsSync(join(root,'Cargo.toml'))?trackedSource(root,'Cargo.toml'):null,lock:existsSync(join(root,'Cargo.lock'))?trackedSource(root,'Cargo.lock'):null}),deriveDependencies=deriveProfile.proof;
   const paths = (sources ?? execFileSync('git', ['ls-files', '-z', '--', '*.rs'], { cwd: root, encoding: 'utf8' }).split('\0').filter(Boolean)).sort();
   const expected = new Map();
   const assets = effectRuntimeAssets();
@@ -44,7 +48,8 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   const totals = { sources: paths.length, executable: 0, executableFunctions: 0, executableConstants: 0, executableTypes: 0, executableConstructors: 0, carried: 0, preserved: 0 };
   const projects = [], projectDeclarations = [], projectSourceScopes=[];
   for (const entry of entries ?? ['src/lib.rs', 'src/main.rs'].filter(path => paths.includes(path))) {
-    const result = translateProject({ entry, paths, readSource: path => trackedSource(root, path),compilationProfile:profile });
+    const result = translateProject({ entry, paths, readSource: path => trackedSource(root, path),compilationProfile:profile,deriveDependencies });
+    result.meta.deriveDependencyProfile={available:!!deriveDependencies,digest:deriveDependencies?.digest??null,diagnostics:deriveProfile.diagnostics};
     projectDeclarations.push(...result.executableDeclarations);projectSourceScopes.push(...result.sourceScopes);
     const stem = entry.replace(/\.rs$/u, '');
     const targets = { meta: `${OUTPUT_ROOTS[3]}/${stem}.meta.json`, javascript: `${OUTPUT_ROOTS[4]}/${stem}.mjs`, typescript: `${OUTPUT_ROOTS[5]}/${stem}.ts` };
@@ -89,6 +94,10 @@ export function regenerate({ root, check = false, sources, entries, compilationP
   }
   const implementation = ['tools/translation/translate.mjs', 'tools/translation/checked-types.mjs', 'tools/translation/checked-coercions.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/cfg-profile.mjs', 'tools/translation/project.mjs', 'tools/translation/project-copy.mjs', 'tools/translation/project-nominal.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/host-assets.mjs', 'tools/translation/type-layout.mjs', 'tools/translation/type-layout-runtime.mjs', 'tools/translation/pattern-bindings.mjs', 'tools/translation/pattern-syntax.mjs', 'tools/translation/monomorphic.mjs', 'tools/translation/macro-provenance.mjs', 'tools/translation/module-bindings.mjs', 'tools/translation/registered-bindings.mjs', 'tools/translation/source-scopes.mjs', 'tools/translation/impl-resolver.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
   const translatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+  // Namespace authority consumes the exact offline dependency source bytes,
+  // not only descriptors containing their expected digests.
+  implementation.push(...['derive-dependencies.mjs','derive-footprints.mjs','derive-inputs.mjs','derive-layout.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push(...readdirSync(new URL('./source-profiles/derive/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/derive/${name}`));
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, compilationProfile:profile, compilationProfileScope:'resolved tracked crate contexts; unmatched standalone source conditions remain unknown', translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };
   expected.set('parity/rust-source-inventory.json', json(manifest));

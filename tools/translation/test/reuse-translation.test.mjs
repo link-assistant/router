@@ -16,12 +16,14 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
     copyFileSync(join(root,'scripts/translate-router.mjs'),join(bundle,'scripts/translate-router.mjs'));
     for(const name of readdirSync(join(root,'tools/translation')))if(name.endsWith('.mjs'))copyFileSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name));
     for(const name of ['extensions','vendor'])cpSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name),{recursive:true});
+    cpSync(join(root,'tools/translation/source-profiles/derive'),join(bundle,'tools/translation/source-profiles/derive'),{recursive:true});
     for(const path of [bundle,repository])writeFileSync(join(path,'package.json'),'{"type":"module"}\n');
     const source='mod values; mod relay;\npub fn cap(value: u64) -> u64 { if value < 10 { value } else { 10 } }\npub fn identity(value: &serde_json::Value) -> &serde_json::Value { value }\npub fn bounded(value: std::time::Duration) -> std::time::Duration { value.min(std::time::Duration::from_secs(10)) }\npub fn normalize(value: u8) -> u8 { relay::normalize(value) }\n';
     writeFileSync(join(repository,'src/lib.rs'),source);
     writeFileSync(join(repository,'src/values.rs'),'pub const LIMIT:u8=9; pub fn allowed(value:u8)->bool{value<LIMIT}\n');
     writeFileSync(join(repository,'src/relay.rs'),'pub use crate::values::*; pub fn normalize(value:u8)->u8{if allowed(value){value}else{LIMIT}}\n');
     writeFileSync(join(repository,'untracked.rs'),'pub fn invisible() -> bool { true }');
+    writeFileSync(join(repository,'Cargo.toml'),'[package]\nname="independent-fixture"\nversion="0.1.0"\nedition="2024"\n[dependencies]\nserde_json="1"\n');
     execFileSync('git',['init','--quiet'],{cwd:repository,stdio:'pipe'});
     execFileSync('git',['add','--force','src/lib.rs','src/values.rs','src/relay.rs'],{cwd:repository,stdio:'pipe'});
     const script=join(bundle,'scripts/translate-router.mjs');
@@ -29,6 +31,8 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
     const written=run([]),checked=run(['--check']);
     assert.equal(written.sources,3);assert.equal(written.executableFunctions,6);assert.equal(checked.mode,'check');
     assert.equal(written.projects[0].executableFunctions,6);assert.equal(written.projects[0].moduleEdges,2);assert.equal(written.runtimeParity,false);
+    const projectMeta=JSON.parse(readFileSync(join(repository,'tools/translation/projects/src/lib.meta.json'),'utf8'));
+    assert.equal(projectMeta.deriveDependencyProfile.available,false);assert.equal(projectMeta.deriveDependencyProfile.digest,null);assert.equal(projectMeta.deriveDependencyProfile.diagnostics[0].kind,'unsupported-profile');
     const meta=JSON.parse(readFileSync(join(repository,'tools/translation/meta/src/lib.meta.json'),'utf8'));
     assert.equal(meta.items.map(item=>item.source).join(''),source);
     const javascript=join(repository,'packages/javascript/generated/rust-draft/src/lib.mjs');

@@ -184,6 +184,9 @@ export function withOwnershipChecker(Base=TextChecker) {
         }
       }
       if(value.sourceOwnershipOperation?.profile==='checked-standard-string-ownership-v1'&&value.sourceOwnershipOperation.verified&&['to_string','to_owned'].includes(value.sourceOwnershipOperation.operation))owner=OWNED_STRING;
+      // The emitted receiver operation may survive an outer as_str. Qualify
+      // the actual written borrow, without inheriting it through allocations.
+      if(node.k==='routerStringOwnership'&&node.operation==='as_str'&&value.sourceOwnershipOperation?.profile==='checked-standard-string-ownership-v1'&&value.sourceOwnershipOperation.verified&&value.sourceOwnershipOperation.operation==='as_str')owner=BORROWED_STR;
       if(owner) {
         const type={...value.type,rustOwnership:owner};
         // A checked owned result is a new value, not the input's borrowed

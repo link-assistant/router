@@ -5,6 +5,7 @@ import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 // https://doc.rust-lang.org/reference/names/namespaces.html
 import {sourceItems} from './rust-structure.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
+import {deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 const namespaces=['type','value','macro'];
 const identifier=token=>token?.type==='ident' && /^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
 const key=path=>path.join('::');
@@ -130,8 +131,9 @@ function collapse(candidates) {
   }).sort((a,b)=>a.namespace===b.namespace?(a.name<b.name?-1:a.name>b.name?1:0):(a.namespace<b.namespace?-1:1));
 }
 
-export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null}={}) {
+export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null}={}) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
+  if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
   const profile=compilationProfile(profileInput);
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
   const diagnostic=(scope,message,span,extra={})=>{const value={kind:'module-binding',message,source:scope.file,module:[...scope.path],span,...extra};diagnostics.push(value);return value;};
@@ -165,6 +167,15 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
         if(nestedExport){scope.baseMacro=scope.baseBang=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
         const effectiveAttributes=head.attributes.filter(attribute=>!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
+        const deriveCertificate=deriveContext&&['struct','enum'].includes(item.term)?deriveFootprintAt(deriveContext,module,item):null;
+        if(deriveCertificate) {
+          // Only the original invocation is narrowed. The sealed expansion
+          // profile does not prove its bang closure or generated trait bodies.
+          uncertain.type &&= !deriveCertificate.dimensions.typeNamespaceComplete;
+          uncertain.attribute &&= !deriveCertificate.dimensions.attributeMacroComplete;
+          uncertain.bang &&= !deriveCertificate.dimensions.bangMacroComplete;
+          uncertain.macro=uncertain.bang||uncertain.attribute;
+        }
         uncertain.conditional ||= scope.configurationCondition==='unknown';
         for(const attribute of head.attributes.filter(attribute=>attribute.name==='derive'))for(const name of attribute.tokens.filter(token=>standardDerives.has(token)))scope.deriveNames.push({name,span:attribute.span});
         scope.baseType ||= uncertain.type;scope.baseMacro ||= uncertain.macro;scope.baseBang ||= uncertain.bang;scope.baseAttribute ||= uncertain.attribute;
