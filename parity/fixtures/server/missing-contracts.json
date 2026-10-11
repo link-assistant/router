@@ -1,0 +1,19 @@
+{
+  "source": "src/server_router.rs, src/native_service*.rs, src/gemini/native.rs",
+  "status": "partial",
+  "missing": [
+    "durable response/native resource affinity",
+    "native byte-transparent resource APIs and filtering",
+    "service client entitlement and paired Codex carrier",
+    "chat completion/conversation upstream lifecycles",
+    "Gemini request/response/SSE including Code Assist envelope",
+    "Bedrock and Vertex routes",
+    "background and previous/conversation response execution",
+    "WebSocket inference and sideband sessions",
+    "HTTPS and self-signed certificate lifecycle",
+    "admin bootstrap/login/emergency-auth/observability",
+    "listener isolation/management middleware",
+    "ActivityPub/GitHub forwarding",
+    "retry/cooldown/settlement malformed and abort contracts"
+  ]
+}

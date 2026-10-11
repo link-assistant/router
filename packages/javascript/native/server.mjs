@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { ProtocolError, translateRequest, translateResponse, normalizeUsage, projectModels } from './protocols.mjs';
 import { translateStream, monitorNativeStream } from './streams.mjs';
 import { ResponsesStore, responseOwner, normalizeResponseInput } from './responses.mjs';
+import { createNativeService } from './native-service.mjs';
 
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...headers } });
@@ -23,7 +24,7 @@ const protocolOf = candidate => {
   throw new ProtocolError(`Unsupported upstream protocol ${typeof value === 'string' ? value : 'unknown'}`, 501);
 };
 const paths = { chat: 'chat/completions', anthropic: 'messages', responses: 'responses' };
-const serviceOf = path => /^\/api\/services\/(openai|anthropic)\/v1(?:\/|$)/.exec(path)?.[1];
+const serviceOf = path => /^\/api\/services\/(openai|anthropic|codex|qwen|gemini|vertex)(?:\/|$)/.exec(path)?.[1];
 function upstreamURL(base, protocol, endpointPath) {
   let u; try { u = new URL(base); } catch { throw new ProtocolError('Provider base URL is invalid', 500); }
   if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || u.search || u.hash) throw new ProtocolError('Provider base URL must be an HTTP(S) URL without credentials, query or fragment', 500);
@@ -109,6 +110,7 @@ export function createNativeRouter(options = {}) {
     if (pin !== undefined && (typeof pin !== 'string' || !pin)) throw new ProtocolError('Configured service provider pin is invalid', 500);
     return { client, pinnedAccount: claims.account ?? undefined, provider: pin, service, path };
   }
+  const nativeService = createNativeService({core,authorize,routingContext,fetch:upstreamFetch,maxBodyBytes,maxResponseBytes,timeoutMs,affinities:options.affinities ?? core.affinities});
   async function models(request, claims) {
     if ((claims.sub ?? claims.id) && !claims.record) throw new ProtocolError('Durable model authority is unavailable', 403);
     const context = routingContext(request, claims);
@@ -274,21 +276,24 @@ export function createNativeRouter(options = {}) {
     try {
       if (['/health', '/api/health'].includes(path) && request.method === 'GET') response = new Response('ok', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
       else if (path.startsWith('/api/management/')) response = await management(request, path);
-      else if (/^(?:\/v1|\/api\/services\/openai\/v1)\/responses\/[^/]+(?:\/(?:cancel|input_items))?$/.test(path)) {
-        const match = /^(\/v1|\/api\/services\/openai\/v1)\/responses\/([^/]+)(?:\/(cancel|input_items))?$/.exec(path);
+      else if (/^(?:\/v1|\/api\/services\/(?:openai|codex|qwen)\/v1)\/responses\/(?!compact$|input_tokens$)[^/]+(?:\/(?:cancel|input_items))?$/.test(path)) {
+        const match = /^(\/v1|\/api\/services\/(?:openai|codex|qwen)\/v1)\/responses\/([^/]+)(?:\/(cancel|input_items))?$/.exec(path);
         const claims = await authorize(request, false), owner = responseOwner(claims, bearer(request.headers)), id = decodeURIComponent(match[2]);
-        const existing = responseStore.get(match[1], owner, id);
+        let existing; try { existing = responseStore.get(match[1], owner, id); }
+        catch (error) { if (error.status !== 404 || !core.nativeCandidates) throw error; response = await nativeService.fetch(request); }
+        if (existing) {
         await authorize(request, false, existing.model);
         if (!match[3] && request.method === 'GET') response = json(existing);
         else if (!match[3] && request.method === 'DELETE') response = json(responseStore.delete(match[1], owner, id));
         else if (match[3] === 'cancel' && request.method === 'POST') response = json(responseStore.cancel(match[1], owner, id));
         else if (match[3] === 'input_items' && request.method === 'GET') response = json(responseStore.inputItems(match[1], owner, id, new URL(request.url).searchParams));
         else throw new ProtocolError('Route not found', 404);
+        }
       }
-      else if (['/v1/models', '/api/models', '/api/services/openai/v1/models', '/api/services/anthropic/v1/models'].includes(path) && request.method === 'GET') {
+      else if (['/v1/models', '/api/models', ...['openai','anthropic','codex','qwen'].map(service => `/api/services/${service}/v1/models`)].includes(path) && request.method === 'GET') {
         const claims = await authorize(request, false); response = json(projectModels(await models(request, claims), source, new URL(request.url).searchParams));
       }
-      else if (/^(?:\/v1|\/api\/services\/(?:openai|anthropic)\/v1)\/models\/[^/]+$/.test(path) && request.method === 'GET') {
+      else if (/^(?:\/v1|\/api\/services\/(?:openai|anthropic|codex|qwen)\/v1)\/models\/[^/]+$/.test(path) && request.method === 'GET') {
         const id = decodeURIComponent(path.slice(path.lastIndexOf('/') + 1)), claims = await authorize(request, false);
         if (!id || id.length > 512 || /[\/\x00-\x1f\x7f]/.test(id)) throw new ProtocolError('Model not found', 404);
         const model = (await models(request, claims)).find(m => m.id === id);
@@ -296,7 +301,11 @@ export function createNativeRouter(options = {}) {
         const projected = projectModels([model], source).data[0]; if (source === 'anthropic') projected.display_name ??= id;
         response = json(projected);
       }
-      else if (['/v1/chat/completions', '/v1/messages', '/v1/responses', '/api/services/openai/v1/responses', '/api/services/openai/v1/chat/completions', '/api/services/anthropic/v1/messages'].includes(path) && request.method === 'POST') response = await inference(request, source, await boundedJSON(request, maxBodyBytes));
+      else if (['/v1/chat/completions', '/v1/messages', '/v1/responses', ...['openai','codex','qwen'].flatMap(service => [`/api/services/${service}/v1/responses`,`/api/services/${service}/v1/chat/completions`]), '/api/services/anthropic/v1/messages'].includes(path) && request.method === 'POST') {
+        const body = await boundedJSON(request.clone(),maxBodyBytes);
+        response = core.nativeCandidates && source === 'responses' && (body.background || body.conversation || body.previous_response_id) ? await nativeService.fetch(request) : await inference(request,source,body);
+      }
+      else if (/^\/api\/services\/(?:openai|anthropic|codex|qwen)(?:\/|$)/.test(path)) response = await nativeService.fetch(request);
       else throw new ProtocolError('Route not found', 404);
     } catch (error) { counters.failures++; response = errorResponse(error, source); }
     logs.push({ time: started, method: request.method, path, status: response.status, duration_ms: clock() - started }); if (logs.length > 1000) logs.shift();
