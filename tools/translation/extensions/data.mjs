@@ -8,34 +8,64 @@ import { data } from '../vendor/meta-language/translation/types.js';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 
 const span = (start, end) => ({ start: start.start, end: end.end });
+const LAYOUT_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
+const metadata = attributes => ({ rustAttributes: attributes, deriveTraits: attributes.flatMap(attribute => attribute.kind === 'derive' ? attribute.traits : []) });
 export class DataRustParser extends ControlRustParser {
+  attributes({ allowDefault = false } = {}) {
+    const c = this.cursor, attributes = [];
+    while (c.is('#') && c.is('[', 1)) {
+      const index = c.index, start = c.next();
+      if (c.is('derive', 1)) {
+        c.expect('[', 'attribute'); c.expect('derive', 'attribute'); c.expect('(', 'derive');
+        const traits = [];
+        while (!c.is(')')) {
+          const trait = c.identifier('derive');
+          if (!LAYOUT_DERIVES.has(trait.value) && !(allowDefault && trait.value === 'Default')) throw unsupported(`derive(${trait.value})`, 'derive requires a separately checked capability', span(trait, trait));
+          traits.push(trait.value); if (!c.eat(',')) break;
+        }
+        c.expect(')', 'derive'); const end = c.expect(']', 'attribute');
+        attributes.push({ kind: 'derive', traits, span: span(start, end) });
+      } else {
+        // Delegate lint validation to the pinned parser; compilation-changing
+        // attributes and unknown procedural derives retain its refusals.
+        super.attributeBody(start);
+        const tokens = c.tokens.slice(index, c.index);
+        attributes.push({ kind: 'attribute', name: tokens[2].value, tokens: tokens.map(token => token.raw ?? token.value), span: span(start, tokens.at(-1)) });
+      }
+    }
+    return attributes;
+  }
+
   items(root, items, path, done) {
     const c = this.cursor;
     while (!done()) {
-      this.attributes();
+      const attributes = this.attributes({ allowDefault: true });
       const start = c.peek();
       this.modulePath = path;
       this.visibility();
+      if (attributes.some(attribute => attribute.traits?.includes('Default')) && !c.is('struct') && !c.is('enum')) throw unsupported('derive(Default)', 'only the unchanged data layout is registered; generated trait behavior requires separate lowering', span(start, c.peek()));
       if (c.eat('struct')) {
         const name = c.identifier('struct').value;
         if (c.is('<')) throw unsupported('generic struct', 'generic layouts require monomorphization', span(start, c.peek()));
-        const fields = [];
+        const fields = []; let ctorStyle = 'unit';
         if (c.eat('{')) {
+          ctorStyle = 'named';
           while (!c.is('}')) {
-            this.attributes(); this.visibility();
+            const fieldAttributes = this.attributes(); this.visibility();
             const name = c.identifier('field').value;
-            c.expect(':', 'field'); fields.push({ name, type: this.type() });
+            c.expect(':', 'field'); fields.push({ name, type: this.type(), rustAttributes: fieldAttributes });
             if (!c.eat(',')) break;
           }
           c.expect('}', 'struct');
         } else if (c.eat('(')) {
+          ctorStyle = 'tuple';
           while (!c.is(')')) {
-            this.visibility(); fields.push({ name: `field${fields.length}`, type: this.type() });
+            const fieldAttributes = this.attributes(); this.visibility(); fields.push({ name: `field${fields.length}`, type: this.type(), rustAttributes: fieldAttributes });
             if (!c.eat(',')) break;
           }
           c.expect(')', 'tuple struct'); c.expect(';', 'tuple struct');
         } else c.expect(';', 'unit struct');
-        items.push({ k: 'data', name, ctors: [{ name, fields }], record: true, span: span(start, c.peek()) });
+        items.push({ k: 'data', name, ctors: [{ name, fields, ctorStyle }], record: true, ...metadata(attributes), span: span(start, c.peek()) });
         continue;
       }
       if (c.eat('mod')) {
@@ -47,11 +77,31 @@ export class DataRustParser extends ControlRustParser {
         c.expect('}', 'module'); continue;
       }
       if (c.is('use')) { this.use(path); continue; }
-      if (c.is('enum')) { items.push(this.enumItem()); continue; }
+      if (c.is('enum')) { items.push({ ...this.enumItem(), ...metadata(attributes) }); continue; }
       if (c.is('fn') && c.is('main', 1) && path.length === 0) { root.main = this.main(); continue; }
       if (c.is('fn') || c.is('const') || c.is('async') && c.is('fn', 1)) { items.push(c.is('const') ? this.constItem(path) : this.fn(path)); continue; }
       throw unsupported(`Rust ${c.peek().value} item`, 'item needs a resolved semantic lowering', span(start, c.peek()));
     }
+  }
+
+  enumItem() {
+    const c = this.cursor, start = c.next(), name = c.identifier('enum').value;
+    if (c.is('<')) throw unsupported('generic enum', 'type parameters require monomorphization', span(start, c.peek()));
+    c.expect('{', 'enum'); const ctors = [];
+    while (!c.is('}')) {
+      const attributes = this.attributes(), variant = c.identifier('variant'), fields = []; let ctorStyle = 'unit';
+      if (c.eat('(')) {
+        ctorStyle = 'tuple';
+        while (!c.is(')')) {
+          const fieldAttributes = this.attributes();
+          fields.push({ type: this.type(), rustAttributes: fieldAttributes }); if (!c.eat(',')) break;
+        }
+        c.expect(')', 'variant');
+      } else if (c.is('{')) throw unsupported('struct variant', 'named variants require separate construction and pattern lowering', span(variant, c.peek()));
+      else if (c.is('=')) throw unsupported('explicit discriminant', 'discriminant values require a separately checked capability', span(variant, c.peek()));
+      ctors.push({ name: variant.value, fields, ctorStyle, rustAttributes: attributes }); if (!c.eat(',')) break;
+    }
+    c.expect('}', 'enum'); return { k: 'data', name, ctors, span: span(start, c.peek()) };
   }
 
   primary(path, options) {
@@ -99,6 +149,21 @@ export class DataRustParser extends ControlRustParser {
 }
 
 export class DataChecker extends ControlChecker {
+  walk(items, path, visit) {
+    for (const item of items) {
+      if (item.k === 'module') { this.walk(item.items, [...path, item.name], visit); continue; }
+      const entry = this.items.get([...path, item.name].join('.')); visit(item, path, entry);
+      if (item.k !== 'data') continue;
+      // The pinned checker rebuilds constructors with resolved types. Restore
+      // syntax metadata after that visit, before any subsequent body checking.
+      entry.ctors = entry.ctors.map((ctor, index) => ({
+        ...ctor, ...(item.ctors[index].ctorStyle ? { ctorStyle: item.ctors[index].ctorStyle } : {}),
+        ...(item.ctors[index].rustAttributes ? { rustAttributes: item.ctors[index].rustAttributes } : {}),
+        fields: ctor.fields.map((field, fieldIndex) => ({ ...field, ...(item.ctors[index].fields[fieldIndex].rustAttributes ? { rustAttributes: item.ctors[index].fields[fieldIndex].rustAttributes } : {}) })),
+      }));
+    }
+  }
+
   expr(node, env, path, expected, allowLiteral = false) {
     env = this.contextEnvironment(node, env, expected);
     if (node.k === 'routerRecord') {
