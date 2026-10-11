@@ -8,7 +8,7 @@ import { AffinityStore } from './affinities.mjs';
 import { AdminClaim } from './admin.mjs';
 import { NativeLoginManager,nativeCredentialStatus } from './auth-service.mjs';
 import { ManagementAccess } from './management-access.mjs';
-import { EmergencyAuthentication,AuthenticationDiagnostics } from './emergency-auth.mjs';
+import { EmergencyAuthentication,AuthenticationDiagnostics,withAuthenticationScope } from './emergency-auth.mjs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 
@@ -16,7 +16,7 @@ export class RouterCore {
   constructor({ config, storage, clock = () => Math.floor(Date.now()/1000), env = process.env, fetch = globalThis.fetch, oauth = {},management = {} }) {
     this.config = config; this.clock = clock; this.env = env; this.fetch = fetch; this.oauthOptions = oauth; this.contexts = new Map();
     this.emergency = new EmergencyAuthentication({config:config.emergency,clock});this.emergency.start([config.host]);
-    this.diagnostics = new AuthenticationDiagnostics({clock});
+    this.diagnostics = new AuthenticationDiagnostics({clock});this.withAuthenticationScope=withAuthenticationScope;
     this.tokens = new TokenManager({secret:config.token_secret,store:createTokenStore({...config,storage}),clock,emergency:this.emergency,diagnostics:this.diagnostics});
     this.providers = new ProviderStore({dataDir:config.data_dir,secret:config.token_secret,env,records:config.providers,persistent:config.storage_policy !== 'memory'});
     this.accounts = new AccountRouter({config,clock});
