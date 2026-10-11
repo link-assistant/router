@@ -26,6 +26,26 @@ export const HOST_CONTRACTS=[...JSON_CONTRACTS.map(contract=>({...contract,famil
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
 const nonlocalDefault=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(nonlocalDefault):nonlocalDefault(value))));
+export const INTEGER_FROM_PROFILE=Object.freeze({rust:'1.89.0',source:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/num.rs',sha256:'270e0801e5e23cba89fec51eed416be60743034a6f02c5fe64be2e8f2e8ca958',lines:[99,141],identity:{source:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/mod.rs',sha256:'0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab',line:774}});
+const integerFromSources=Object.freeze({u8:[],u16:['u8'],u32:['u8','u16'],u64:['u8','u16','u32'],u128:['u8','u16','u32','u64'],usize:['u8','u16'],i8:[],i16:['i8','u8'],i32:['i8','i16','u8','u16'],i64:['i8','i16','i32','u8','u16','u32'],i128:['i8','i16','i32','i64','u8','u16','u32','u64'],isize:['i8','i16','u8']});
+export const hasIntegerFrom=(source,target)=>Object.hasOwn(integerFromSources,target)&&(source===target||integerFromSources[target].includes(source));
+// Portable widths are runtime domains, not proofs of Rust source type identity.
+// Missing metadata stays missing; contextual literal typing owns inference.
+export function assertRustPrimitiveIdentity(actual,expected,range,{declarations,resolveType=type=>type}={},active=new Set()) {
+  if(!actual||!expected)return;
+  if(actual.kind==='fixed'&&expected.kind==='fixed') {
+    if(actual.rustPrimitiveName&&expected.rustPrimitiveName&&actual.rustPrimitiveName!==expected.rustPrimitiveName)throw typeError('distinct Rust primitive integer identities require an explicit checked cast',range);
+    if((actual.patternOwnershipRefusal??null)!==(expected.patternOwnershipRefusal??null))throw typeError('Rust integer reference ownership differs from the expected value type',range);
+  }
+  if(actual.kind==='array'&&expected.kind==='array')assertRustPrimitiveIdentity(actual.element,expected.element,range,{declarations,resolveType},active);
+  if(actual.kind==='data'&&expected.kind==='data') {
+    const key=actual.name+'|'+expected.name;if(active.has(key))return;active.add(key);
+    const provenance=type=>{const entry=declarations?.get(type.name);return type.rustStandardGeneric??(entry?.standardGeneric?{...entry.standardGeneric,arguments:entry.standardGeneric.arguments.map(argument=>resolveType(argument,entry.modulePath,range))}:null);};
+    const left=provenance(actual),right=provenance(expected);
+    if(left&&right&&left.kind===right.kind&&left.arguments.length===right.arguments.length)for(let index=0;index<left.arguments.length;index++)assertRustPrimitiveIdentity(left.arguments[index],right.arguments[index],range,{declarations,resolveType},active);
+    active.delete(key);
+  }
+}
 export function hostData() {
   const result=[];
   const merge=(target,items,path=[])=>{for(const item of items){
@@ -157,11 +177,11 @@ export class HostRustParser extends withNestedMatchPatternsParser(MethodRustPars
       if(this.shadowedEffectRoots?.has('std'))throw unsupported('shadowed integer error namespace','requires distinct checked standard type provenance',first);
       if(operation==='from_str'&&this.resolve(['FromStr'],path).join('::')!=='std::str::FromStr')throw unsupported('FromStr trait call','requires the actual standard FromStr import',first);
       for(let index=0;index<offset;index++)c.next();c.expect('(','integer operation');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','integer operation');
-      return {k:'routerIntegerAssociated',operation,args,instantiation:fixed,span:span(first,c.peek())};
+      return {k:'routerIntegerAssociated',operation,args,instantiation:{...fixed,rustPrimitiveName:owner.at(-1)},span:span(first,c.peek())};
     }
     if(segments.length===2&&!this.builtinShadow(segments[0],path)&&c.is('(',offset)&&((segments[0]==='Box'&&operation==='new')||(segments[0]==='String'&&operation==='from')||(rustFixedType(segments[0])&&operation==='from'))) {
       for(let index=0;index<offset;index++)c.next();c.expect('(','standard conversion');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','standard conversion');
-      if(args.length!==1)throw typeError('standard conversion requires one argument',span(first,c.peek()));return {k:'routerBuiltinConversion',operation:segments.join('::'),value:args[0],target:rustFixedType(segments[0])??null,targetName:segments[0],constEligible:false,span:span(first,c.peek())};
+      if(args.length!==1)throw typeError('standard conversion requires one argument',span(first,c.peek()));const target=rustFixedType(segments[0]);return {k:'routerBuiltinConversion',operation:segments.join('::'),value:args[0],target:target?{...target,rustPrimitiveName:segments[0]}:null,targetName:segments[0],constEligible:false,span:span(first,c.peek())};
     }
     const contracts=HOST_CONTRACTS.filter(contract=>pathKey(contract.rustPath)===pathKey(resolved));
     if(!contracts.length)return super.primary(path,options);
@@ -202,6 +222,7 @@ export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
         if(instantiation && (!contract.instantiation||!sameType(this.hostType(contract.instantiation,path,range),this.resolveType(instantiation,path,range))))throw typeError('unsupported host generic instantiation',range);
         const values=args.map((arg,index)=>{const type=this.hostType(contract.params[index],path,range);return coerce(this.expr(arg,env,path,type),type,this.language,range);});
         const type=this.hostType(contract.ret,path,range);if(expected && !sameType(type,expected))throw typeError('host operation return type mismatch',range);
+        this.expectedPrimitiveIdentity(type,expected,path,range);
         const resolved=this.instantiations.contracts.has(contract.id)?{...contract,params:contract.params.map(type=>this.hostType(type,path,range)),ret:type,runtimeInstantiation:{...contract.runtimeInstantiation,...(contract.runtimeInstantiation?.validatorType?{validatorType:this.hostType(contract.runtimeInstantiation.validatorType,path,range)}:{})}}:null;
         checked.push({k:'routerHostCall',id:contract.id,args:values,type,span:range,...(resolved?{contract:resolved}:{})});
       }catch(error){if(!(error instanceof TranslationError))throw error;errors.push(error);}
@@ -215,7 +236,16 @@ export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
     return contracts.length?this.hostCall(contracts,args,env,path,expected,range):super.application(head,args,env,path,expected,range);
   }
   expr(node,env,path,expected,allowLiteral=false) {
+    const value=this.hostExpression(node,env,path,expected,allowLiteral);
+    this.expectedPrimitiveIdentity(value.type,expected,path,node.span);
+    return value;
+  }
+  expectedPrimitiveIdentity(actual,expected,path,range) {
+    assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
+  }
+  hostExpression(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
+    if(node.k==='num'&&expected?.kind==='fixed'&&expected.patternOwnershipRefusal)throw unsupported('integer reference literal','a literal needs checked borrowing or promotion, not a portable integer domain',node.span);
     if(node.k==='num'&&node.type?.rustPrimitiveName){
       const value=super.expr(node,env,path,expected,allowLiteral),name=node.type.rustPrimitiveName;
       if(expected?.rustPrimitiveName&&expected.rustPrimitiveName!==name)throw typeError('explicit Rust integer suffix differs from the expected primitive identity',node.span);
@@ -229,7 +259,7 @@ export class HostChecker extends withNestedMatchPatternsChecker(MethodChecker) {
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k)) {
       const value=this.expr(node.value,env,path,node.k==='routerConstObligation'?expected:undefined);
       if(node.operation==='String::from'&&value.type.kind!=='string')throw typeError('String::from requires the actual checked standard string conversion',node.span);
-      if(node.target){if(value.type.kind!=='fixed')throw unsupported('primitive From conversion','requires a checked infallible fixed integer source',node.span);const inputName=value.type.rustPrimitiveName; if(value.type.bits===64&&!inputName)throw unsupported('primitive From source identity','64-bit aliases need actual source type evidence',node.span);if(['usize','isize'].includes(inputName)&&node.targetName!==inputName||['usize','isize'].includes(node.targetName)&&node.targetName!==inputName&&value.type.bits>16)throw unsupported('primitive From pointer conversion','the actual standard conversion trait is not established by equal bit widths',node.span);const input=fixedBounds(value.type),output=fixedBounds(node.target);if(input.min<output.min||input.max>output.max)throw typeError('primitive From conversion is not infallible for the checked source type',node.span);}
+      if(node.target){if(value.type.kind!=='fixed'||value.type.patternOwnershipRefusal||value.type.rustGenericIdentityUnresolved)throw unsupported('primitive From conversion','requires a checked infallible by-value fixed integer source',node.span);const inputName=value.type.rustPrimitiveName;if(!inputName)throw unsupported('primitive From source identity','requires the actual source integer type',node.span);if(!hasIntegerFrom(inputName,node.targetName))throw typeError(`no registered standard From<${inputName}> for ${node.targetName}`,node.span);const input=fixedBounds(value.type),output=fixedBounds(node.target);if(input.min<output.min||input.max>output.max)throw typeError('primitive From conversion is not infallible for the checked source type',node.span);}
       const type=node.operation==='String::from'?{...value.type,patternOwnershipRefusal:'owned String conversion'}:node.target??value.type;if(expected&&!sameType(type,expected))throw typeError('standard conversion return type mismatch',node.span);return {...node,value,type};
     }
     if(['routerIntegerParse','routerIntegerAssociated'].includes(node.k)) {
