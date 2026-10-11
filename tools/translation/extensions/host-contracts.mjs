@@ -209,7 +209,7 @@ export class HostEmitter extends EffectEmitter {
     if(!hasData(param.type)&&param.type.kind!=='float')return super.parameterGuard(param);
     // A helper's guard must depend only on its actual reachable parameter
     // layout, not on unrelated callers in another checked dependency closure.
-    return [...((param.copyReceiver||param.type.kind==='data'&&this.copyTypes.has(param.type.name))?(this.copyReceivers=true,[`ml_assert_immutable_copy(${param.name});`]):[]),this.valueGuard(param.name,param.type)+';'];
+    return [...(this.patternParameterGuards?.(param)??[]),...((param.copyReceiver||param.type.kind==='data'&&this.copyTypes.has(param.type.name))?(this.copyReceivers=true,[`ml_assert_immutable_copy(${param.name});`]):[]),this.valueGuard(param.name,param.type)+';'];
   }
   valueGuard(value,type) {
     const all=valueSchema(this.program.declarations),types={};

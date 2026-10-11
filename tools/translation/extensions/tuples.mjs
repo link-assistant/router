@@ -1,12 +1,12 @@
 // Rust tuple products have their own checked layout, distinct from tuple structs.
-import {ControlRustParser,ControlChecker,ControlEmitter} from './control.mjs';
+import {PatternControlRustParser,PatternControlChecker,PatternControlEmitter} from './pattern-control.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {sameType,UNIT} from '../vendor/meta-language/translation/types.js';
 import {coerce} from '../vendor/meta-language/translation/check.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 
 const span=(start,end)=>({start:start.start,end:end.end});
-export class TupleRustParser extends ControlRustParser {
+export class TupleRustParser extends PatternControlRustParser {
   type() {
     const c=this.cursor;if(!c.is('('))return super.type();
     const start=c.next();if(c.eat(')'))return UNIT;
@@ -43,7 +43,7 @@ export class TupleRustParser extends ControlRustParser {
   }
 }
 
-export class TupleChecker extends ControlChecker {
+export class TupleChecker extends PatternControlChecker {
   expr(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
     if(node.k==='routerTuple') {
@@ -65,6 +65,6 @@ export class TupleChecker extends ControlChecker {
     return super.expr(node,env,path,expected,allowLiteral);
   }
 }
-export class TupleEmitter extends ControlEmitter {
+export class TupleEmitter extends PatternControlEmitter {
   expr(node){if(node.k==='routerTupleField')return `(${this.expr(node.object)})[${JSON.stringify('field'+node.index)}]`;return super.expr(node);}
 }
