@@ -84,32 +84,38 @@ function fallback(integer,fraction,exponent,bits) {
   const parsed=sourceLexicalMantissa(integer,nonzeroFraction),count=parsed.count;
   const leading=fraction.length-nonzeroFraction.length,sci=integer.length===0?sat(sat(exponent-leading)-1):sat(exponent+integer.length-1),scaled=sci+1-count;
   const coefficient=parsed.coefficient;
-  if(scaled>=0)return positiveBigintBits(coefficient,scaled);
+  if(scaled>=0)return {bits:positiveBigintBits(coefficient,scaled),branch:'fallback-positive'};
   // Source bh_extended/small_atof. Preserve the actual chosen lower candidate;
   // even an inaccurate moderate interval cannot silently become ideal rounding.
   const expField=Number(bits>>52n),mant=(bits&FRAC)+(expField?HIDDEN:0n),binary=(expField||1)-1075-1,halfMant=(mant<<1n)+1n;
   let real=coefficient,theory=halfMant*5n**BigInt(-scaled),difference=binary-scaled;
   if(difference>0)theory<<=BigInt(difference);else if(difference<0)real<<=BigInt(-difference);
-  return real>theory?bits+1n:real<theory?bits:(mant&1n)!==0n?bits+1n:bits;
+  return {bits:real>theory?bits+1n:real<theory?bits:(mant&1n)!==0n?bits+1n:bits,branch:'fallback-negative'};
 }
 function checkedParts(integer,fraction,exponent) {
   if(typeof integer!=='string'||typeof fraction!=='string'||!Number.isInteger(exponent)||exponent<-2147483648||exponent>2147483647||! /^(?:[1-9][0-9]*|)$/u.test(integer)||! /^[0-9]*$/u.test(fraction)||!integer.length&&!fraction.length)throw new TypeError('Lexical parts need actual canonical integer/fraction and i32 exponent');
+  if(!/[1-9]/u.test(integer+fraction))throw new TypeError('Truncated lexical input requires a nonzero source coefficient; the reader uses concise parsing for zero');
   if(integer.length+fraction.length>768){const error=new RangeError('JSON mantissa exceeds the bounded768-digit original-lexical candidate domain');error.code='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND';throw error;}
 }
-export function lexicalConciseFloat64(mantissa,exponent) {
+export function lexicalConciseTrace(mantissa,exponent) {
   if(typeof mantissa!=='bigint'||mantissa<0n||mantissa>U64||!Number.isInteger(exponent)||exponent<-2147483648||exponent>2147483647)throw new TypeError('Concise lexical parts need actual u64/i32 values');
-  const direct=fast(mantissa,exponent);if(direct!==null)return direct;
+  const direct=fast(mantissa,exponent);if(direct!==null)return Object.freeze({value:direct,branch:'fast'});
   const {fp,valid}=moderate(mantissa,exponent,false),bits=nativeBits(fp,valid?'nearest':'downward');
-  return number(valid||bits===INF?bits:fallback(String(mantissa),'',exponent,bits));
+  if(valid||bits===INF)return Object.freeze({value:number(bits),branch:bits===INF?'special':'moderate'});
+  const result=fallback(String(mantissa),'',exponent,bits);return Object.freeze({value:number(result.bits),branch:result.branch});
 }
+export function lexicalConciseFloat64(mantissa,exponent){return lexicalConciseTrace(mantissa,exponent).value;}
 export function lexicalModerateTrace(mantissa,exponent,truncated) {
   if(typeof mantissa!=='bigint'||mantissa<0n||mantissa>U64||!Number.isInteger(exponent)||exponent<-2147483648||exponent>2147483647||typeof truncated!=='boolean')throw new TypeError('Moderate trace needs actual u64/i32/bool values');
   const result=moderate(mantissa,exponent,truncated);return Object.freeze({mantissa:result.fp.mant,exponent:result.fp.exp,errors:result.errors??null,accepted:result.valid});
 }
-export function lexicalTruncatedFloat64(integer,fraction,exponent) {
+export function lexicalTruncatedTrace(integer,fraction,exponent) {
   checkedParts(integer,fraction,exponent);fraction=fraction.replace(/0+$/u,'');
   const digits=integer+fraction;let mantissa=0n,consumed=0;
   for(const digit of digits){const next=mantissa*10n+BigInt(digit);if(next>U64)break;mantissa=next;consumed++;}
   const truncated=digits.length-consumed,mantExp=sat(exponent-fraction.length+truncated),{fp,valid}=moderate(mantissa,mantExp,true),bits=nativeBits(fp,valid?'nearest':'downward');
-  return number(valid||bits===INF?bits:fallback(integer,fraction,exponent,bits));
+  if(valid||bits===INF)return Object.freeze({value:number(bits),branch:bits===INF?'special':'moderate'});
+  const result=fallback(integer,fraction,exponent,bits);return Object.freeze({value:number(result.bits),branch:result.branch});
 }
+
+export function lexicalTruncatedFloat64(integer,fraction,exponent){return lexicalTruncatedTrace(integer,fraction,exponent).value;}

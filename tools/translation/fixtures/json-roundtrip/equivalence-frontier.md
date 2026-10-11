@@ -113,10 +113,12 @@ is exactly whether a discarded low limb/bit is nonzero. Source native rounding
 uses that sticky only when the retained bits are halfway, then performs carry
 and overflow adjustment before encoding the binary64 bits.
 
-Positive fallback near overflow has approximately1025bits, at most33 u32 or17
-u64 limbs. Its powers-of-five multiplication remains in scalar chunks under
+A conservative positive fallback bound is1093bits, at most35 u32 or18
+u64 limbs (moderate exponent<=309 and at most20 retained prefix digits). Its powers-of-five multiplication remains in scalar chunks under
 the source combined-size threshold64. Negative comparison starts with at most54
-bits and at most about1091 powers of five in this domain. A32-bit1024-power
+bits and at most1099 powers of five in this domain: a true overflowing u64 prefix
+contains at least19 nonzero-starting digits, so the scaled exponent is at least
+-350+19-768=-1099. Leading fraction zeroes cancel in the exponent/count formula. A32-bit1024-power
 case pairs a75-limb cached power with a partial of at most7 limbs; the source
 uneven path splits it into at-most7-limb grade-school products. A64-bit case
 stays in scalar chunks. Original power-table values and these bounded dispatch
@@ -128,3 +130,12 @@ source strings could later be conservatively proven in-domain after branch
 closure; unknown input domains remain carried. Scratch/BigInt allocation,
 linked allocator/OOM and drop behavior are still separate application-effect
 obligations. Runtime/native parity and complete application effects remain false.
+
+The direct branch witnesses select the same actual runtime paths as the numeric
+APIs; no caller chooses a fallback. The authored normal halfway with concise
+mantissa10000000000000001110/exp-19 witnesses negative comparison. Truncated
+9007199254740993/exp0 has normalized2^63+1024, exact cached10^0, errors18 and
+low11bits1024, so it witnesses positive bigint fallback. These are still UNRUN.
+Zero/all-zero direct truncated inputs are an explicit rejected precondition;
+the source reader selects concise parsing for zero rather than entering bhcomp
+with a trimmed-empty digit slice. No new parser admission follows this evidence.

@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {loadJsonMacroSourceProof,jsonMacroOriginalSource} from '../json-macro-sources.mjs';
 import {JSON_LEXICAL_CACHE_SOURCE,JSON_LEXICAL_CACHE_SOURCE_SHA256} from '../extensions/json-roundtrip-cache-source.mjs';
-import {lexicalConciseFloat64,lexicalTruncatedFloat64,lexicalModerateTrace,sourceLexicalMantissa} from '../extensions/json-roundtrip-lexical.mjs';
+import {lexicalConciseFloat64,lexicalTruncatedFloat64,lexicalModerateTrace,sourceLexicalMantissa,lexicalConciseTrace,lexicalTruncatedTrace} from '../extensions/json-roundtrip-lexical.mjs';
 import {serde_json_roundtrip_from_str} from '../extensions/json-roundtrip-runtime.mjs';
 const root=new URL('../../../',import.meta.url);
 function bits(value){const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,value);return view.getBigUint64(0);}
@@ -13,7 +13,8 @@ test('runtime cache input is the whole exact pinned original source, never manua
   assert.equal(JSON_LEXICAL_CACHE_SOURCE,original.source);assert.equal(JSON_LEXICAL_CACHE_SOURCE_SHA256,original.sha256);assert.equal(createHash('sha256').update(JSON_LEXICAL_CACHE_SOURCE).digest('hex'),original.sha256);
 });
 test('original concise/truncated branch selection retains normal halfways and the truncated-prefix multiply-ten exception',()=>{
-  assert.equal(bits(lexicalConciseFloat64(10000000000000001110n,-19)),0x3ff0000000000000n);
+  const negative=lexicalConciseTrace(10000000000000001110n,-19);assert.equal(negative.branch,'fallback-negative');assert.equal(bits(negative.value),0x3ff0000000000000n);
+  assert.equal(bits(lexicalConciseFloat64(10000000000000001110n,-19)),bits(negative.value));
   const even=((1n<<53n)+1n)*5n**53n,odd=((1n<<53n)+3n)*5n**53n;
   assert.equal(bits(lexicalTruncatedFloat64(String(even),'',-53)),0x3ff0000000000000n);
   assert.equal(bits(lexicalTruncatedFloat64(String(odd),'',-53)),0x3ff0000000000002n);
@@ -24,7 +25,8 @@ test('original concise/truncated branch selection retains normal halfways and th
   const low=(large-4n)&2047n;assert.equal(trace.accepted,!(1015n<low&&low<1033n));
 });
 test('direct positive hi64/sticky and original native rounding retain carry and overflow behavior',()=>{
-  assert.equal(bits(lexicalTruncatedFloat64('9007199254740993','',0)),0x4340000000000000n);
+  const positive=lexicalTruncatedTrace('9007199254740993','',0);assert.equal(positive.branch,'fallback-positive');assert.equal(bits(positive.value),0x4340000000000000n);
+  assert.equal(bits(lexicalTruncatedFloat64('9007199254740993','',0)),bits(positive.value));
   assert.equal(bits(lexicalTruncatedFloat64('9007199254740995','',0)),0x4340000000000002n);
   const overflow=((1n<<54n)-1n)*(1n<<970n);
   assert.equal(bits(lexicalTruncatedFloat64(String(overflow-1n),'',0)),0x7fefffffffffffffn);
@@ -39,6 +41,8 @@ test('reusable source mantissa preserves the known integer zero-tail rule while 
   assert.throws(()=>serde_json_roundtrip_from_str(original+'e-768'),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
   assert.throws(()=>lexicalTruncatedFloat64(String(original),'',-768),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
   assert.throws(()=>sourceLexicalMantissa('1','0'),TypeError);
+  for(const pair of [['','0'],['','000'],['','']])assert.throws(()=>lexicalTruncatedFloat64(...pair,0),TypeError);
+  assert.equal(lexicalConciseFloat64(0n,-2147483648),0);
 });
 test('raw leading integer/fraction zeros count toward the conservative768-digit bound and sign/error positions stay separate',()=>{
   assert.throws(()=>serde_json_roundtrip_from_str('0.'+'0'.repeat(767)+'1'),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
