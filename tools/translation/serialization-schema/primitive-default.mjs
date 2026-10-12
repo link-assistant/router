@@ -20,7 +20,14 @@ export function primitiveFieldDefault(type,dependencies) {
   const selection=pinnedDefaultBody(type.name),original=parsePinnedBody(HostRustParser,selection),syntax=parsedPinnedBodyEvidence(original);
   if(selection.evidence.trait!=='core::default::Default'||selection.evidence.owner!==type.name||selection.method.parameters.length)
     throw new TypeError('Selected Default differs from the actual primitive zero-argument trait method');
-  const checker=new HostChecker('rust',[]),checked=checker.expr(original,new Map(),[],target);
+  // Initialize the real Rust checker through its ordinary program pipeline;
+  // control/borrow/source layers own their private state. Do not patch those
+  // internal maps or bypass them with a portable checker. The empty declaration
+  // registry supplies no caller symbols; body authority remains the privately
+  // parsed original selection above, not this initialization context.
+  const checker=new HostChecker('Rust',[]);
+  checker.program({language:'Rust',items:[],main:null});
+  const checked=checker.expr(original,new Map(),[],target);
   if(checked.k!=='lit'||!sameType(checked.type,target))
     throw new TypeError('Default body needs a separately checked non-literal interpreter');
   checker.expectedPrimitiveIdentity(checked.type,target,[],original.span);
