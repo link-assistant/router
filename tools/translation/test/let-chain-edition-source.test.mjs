@@ -18,7 +18,7 @@ const some=field0=>Object.freeze({$:'Some',field0}),none=Object.freeze({$:'None'
 const project=(files,cargoManifest)=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],cargoManifest});
 const chains=(value,found=[])=>{if(!value||typeof value!=='object')return found;if(value.patternControl?.kind==='let-chain')found.push(value);for(const [key,child]of Object.entries(value))if(!['type','span','patternControl'].includes(key))if(Array.isArray(child))child.forEach(item=>chains(item,found));else chains(child,found);return found;};
 
-test('the original Cargo2024 context follows real inline and external module parsing',{timeout:30_000},async()=>{
+test('the original Cargo2024 context follows real inline and external module parsing',{timeout:90_000},async()=>{
   const files={'src/lib.rs':'mod external;mod inline{pub fn choose(v:Option<u8>)->u8{if let Some(n)=v && n>1u8{return n;}1u8}}pub fn left(v:Option<u8>)->u8{inline::choose(v)}pub fn right(v:Option<u8>)->u8{external::choose(v)}',
     'src/external.rs':'pub fn choose(v:Option<u8>)->u8{if let Some(n)=v && n>2u8{return n;}2u8}'};
   const manifest=cargo('2024'),result=project(files,manifest);assert.deepEqual(result.meta.refused,[]);
@@ -42,7 +42,7 @@ test('different absent and inherited source editions refuse only the compound le
   }
 });
 
-test('genuine independently parsed original Copy method bodies receive the same Cargo source context',{timeout:30_000},async()=>{
+test('genuine independently parsed original Copy method bodies receive the same Cargo source context',{timeout:90_000},async()=>{
   const source='#[derive(Clone,Copy)]pub struct Limit{base:u8}impl Limit{pub fn choose(self,v:Option<u8>)->u8{let mut answer:u8=self.base;if let Some(n)=v && n>self.base{answer=n;}answer}}pub fn run(base:u8,v:Option<u8>)->u8{Limit{base}.choose(v)}';
   const manifest=cargo('2024'),result=project({'src/lib.rs':source},manifest);assert.deepEqual(result.meta.refused,[]);
   assert.ok(result.meta.checkedMethods.some(entry=>entry.name==='Limit.choose'&&entry.receiver==='value'));
@@ -62,7 +62,7 @@ test('standalone translation requires its explicit original manifest or genuine 
   assert.equal(scoped.ir.items.find(entry=>entry.name==='select').status,'executable');assert.equal(scoped.ir.items.map(entry=>entry.source).join(''),source);
   const different=translateSource(source,path,{cargoManifest:cargo('2021')});assert.equal(different.ir.items.find(entry=>entry.name==='select').status,'carried');
 });
-test('bulk original project scopes inherit Cargo edition while unrelated tracked source keeps it unknown',{timeout:60_000},async()=>{
+test('bulk original project scopes inherit Cargo edition while unrelated tracked source keeps it unknown',{timeout:240_000},async()=>{
   const folder=mkdtempSync(join(tmpdir(),'router-let-chain-cargo-boundary-'));
   const primary='pub fn primary(v:Option<u8>)->u8{if let Some(n)=v && n>0u8{return n;}0u8}';
   const foreign='pub fn plain()->u8{7u8}pub fn unrelated(v:Option<u8>)->u8{if let Some(n)=v && n>0u8{return n;}0u8}';

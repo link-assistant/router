@@ -108,7 +108,9 @@ export function captureOriginalCargoEdition(source,{sourcePath='Cargo.toml'}={})
 export const originalCargoEditionEvidence=token=>originals.get(token)?.evidence??null;
 export function configureRustEditionParser(parser,token){
   if(token!==null&&token!==undefined&&!originals.has(token))throw new TypeError('Rust edition parser requires a private original Cargo context');
-  parsers.set(parser,token??null);return parser;
+  const original=token??null;
+  if(parsers.has(parser)&&parsers.get(parser)!==original)throw new TypeError('Rust edition parser cannot replace its original Cargo context');
+  parsers.set(parser,original);return parser;
 }
 export function requireParserEdition(parser,edition,span){
   const record=originals.get(parsers.get(parser));

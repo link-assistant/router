@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {captureOriginalCargoEdition,originalCargoEditionEvidence,configureRustEditionParser,requireParserEdition} from '../cargo-edition-context.mjs';
+import {HostRustParser} from '../extensions/host-contracts.mjs';
+import {tokenizeRust} from '../extensions/lexical.mjs';
+import {standaloneMatchesMacroContext,configureMatchesMacroParser,matchesParserFacts} from '../matches-macro-context.mjs';
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const manifest=edition=>`[package]\nname="fixture"\nversion="0.1.0"\nedition="${edition}"\n`;
 const parserFor=source=>configureRustEditionParser({},captureOriginalCargoEdition(source));
@@ -70,5 +73,31 @@ test('serialized or public edition metadata cannot mint original parser context 
   let calls=0;
   const fake=new Proxy(token,{get(){calls++;throw Error('get');},ownKeys(){calls++;throw Error('keys');},getPrototypeOf(){calls++;throw Error('prototype');},getOwnPropertyDescriptor(){calls++;throw Error('descriptor');}});
   assert.equal(originalCargoEditionEvidence(fake),null);assert.throws(()=>configureRustEditionParser({},fake),/private original Cargo/u);assert.equal(calls,0);
+  const stable='pub fn stable()->u8{7u8}',different=captureOriginalCargoEdition(manifest('2018'));
+  for(const issued of [null,captureOriginalCargoEdition('[package]\nname="unknown"\n'),different,token]){
+    const originalContext=standaloneMatchesMacroContext(stable,{cargoEditionContext:issued});
+    const actual=new HostRustParser(tokenizeRust(stable));configureMatchesMacroParser(actual,originalContext,{file:'src/module.rs'});
+    const frame=matchesParserFacts(actual);assert.equal(frame.facts.cargoEditionContext,issued);
+    assert.equal(configureRustEditionParser(actual,issued),actual);assert.equal(matchesParserFacts(actual),frame);
+    const expected=originalCargoEditionEvidence(issued);
+    const verify=()=>expected?.status==='explicit-package-edition'?assert.equal(requireParserEdition(actual,expected.edition,{start:0,end:stable.length}),expected):assert.throws(()=>requireParserEdition(actual,'2024',{start:0,end:stable.length}),/source crate edition|actual original Cargo/u);
+    verify();
+    for(const replacement of [issued===token?different:token,captureOriginalCargoEdition(manifest('2024'))]){
+      assert.throws(()=>configureRustEditionParser(actual,replacement),/cannot replace its original Cargo context/);
+      assert.equal(matchesParserFacts(actual),frame);assert.equal(frame.facts.cargoEditionContext,issued);verify();
+    }
+    const descriptor=Object.getOwnPropertyDescriptor(frame.facts,'cargoEditionContext');
+    const hostile=new Proxy(token,{get(){calls++;throw Error('get');},ownKeys(){calls++;throw Error('keys');},getPrototypeOf(){calls++;throw Error('prototype');},getOwnPropertyDescriptor(){calls++;throw Error('descriptor');}});
+    for(const replacement of [issued===token?different:token,structuredClone(token),hostile]){
+      Object.defineProperty(frame.facts,'cargoEditionContext',{...descriptor,value:replacement});
+      try{assert.throws(()=>matchesParserFacts(actual),/private issuance|data property/);}finally{Object.defineProperty(frame.facts,'cargoEditionContext',descriptor);}
+      assert.equal(matchesParserFacts(actual),frame);verify();
+    }
+    Object.defineProperty(frame.facts,'cargoEditionContext',{configurable:true,enumerable:true,get(){calls++;return issued;}});
+    try{assert.throws(()=>matchesParserFacts(actual),/private issuance|data property/);}finally{Object.defineProperty(frame.facts,'cargoEditionContext',descriptor);}
+    assert.equal(matchesParserFacts(actual),frame);verify();
+    if(issued!==null){assert.throws(()=>configureRustEditionParser(actual,null),/cannot replace its original Cargo context/);verify();}
+  }
+  assert.equal(calls,0);
   assert.equal(Object.isFrozen(token),true);assert.equal(Object.isFrozen(evidence),true);assert.equal(Object.isFrozen(evidence.declaration),true);
 });
