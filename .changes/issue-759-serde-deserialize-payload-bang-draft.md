@@ -1,4 +1,4 @@
-Source-only, UNVERIFIED draft: lift the actual pinned Serde 1.0.229 default
+Lift the actual pinned Serde 1.0.229 default
 nongeneric named-field Deserialize generator into reusable quote/meta fragments.
 Original field Type tokens, generated field Idents/Lifetimes, identifier visitors,
 sequence/map visitors, missing/duplicate-field branches and source ordering are
@@ -28,6 +28,4 @@ UTF-16 declaration span 1956..2355 and declaration SHA-256
 whole-context case still requires genuine original library/Cargo/parent evidence
 and retains neutral root bang-macro uncertainty.
 
-Eight new cases are authored but UNRUN while the publisher owns the compiler.
-The preceding 12 quote/Serialize cases and 37 CSV/Result/Deref/reverse cases remain
-UNRUN and unchanged. No producer, Rust, compiler, parser or test was invoked.
+The final 103-case source-output and related scope passed in Node and Bun at clean `e1f10dd8d`, with all initial and retry failures retained in `dev/log/issues/759/translator-derive-bang-verification`. No automatic bulk/project activation, generated trait execution, complete runtime parity or Rust execution is claimed.

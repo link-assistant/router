@@ -1,4 +1,4 @@
-Source-only, UNVERIFIED namespace consumer for the selected Serde quote/meta
+Add an optional source-output namespace consumer for the selected Serde quote/meta
 output drafts. A private context builds outputs internally from the original
 sealed derive input and joins every actual invocation owner. It includes both
 Deserialize feature outcomes and independent original/generated attribute owner
@@ -19,10 +19,6 @@ The actual pinned proc_macro_derive registration separately establishes the
 Serde helper declaration.
 
 The optional resolveModuleBindings consumer is not automatically enabled in
-translateProject or bulk generation. Its new transitive implementation modules
-are included explicitly in the census fingerprint. Eight authored integration
-cases cover owner joining, exact helper spans, residual owners, graph/profile
-mutations, item omissions, family isolation and the unchanged complete original
-CatalogRecord source pin. All remain UNRUN along with the prior 20 quote/route
-cases. The separate CSV/Result/Deref/reverse queue remains unchanged and UNRUN.
-No parser, compiler, test, producer or Rust execution occurred.
+translateProject or bulk generation. Its transitive implementation modules are included explicitly in the census fingerprint. Cases cover owner joining, exact helper spans, residual owners, graph/profile mutations, item omissions, family isolation and the unchanged complete original CatalogRecord source pin.
+
+The final 103-case source-output and related scope passed in Node and Bun at clean `e1f10dd8d`, with all initial and retry failures retained in `dev/log/issues/759/translator-derive-bang-verification`. No automatic bulk/project activation, generated trait execution, complete runtime parity or Rust execution is claimed.

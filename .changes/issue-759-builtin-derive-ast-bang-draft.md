@@ -1,4 +1,4 @@
-Source-only, UNVERIFIED builtin derive output draft: retain exact official Rust
+Retain exact official Rust
 1.89.0 Clone, Copy (bounds.rs), Debug, PartialEq, Eq and Hash generators,
 registration, generic types, AST builder/schema and standard Vec::new sources
 as bounded compressed proof inputs with original MIT/Apache licenses. Reuse
@@ -19,13 +19,9 @@ runtime methods, ownership certificate or type/value namespace is granted.
 Other requested owners have source-bearing plans only. Clone simple/full,
 Debug None/Shallow/Full and field-count cases, PartialEq expression recipes,
 Eq type assertions and Hash call statements preserve their actual callbacks
-and conditional outputs. Their typed expression/statement closure remains
-explicitly unproved; consumer residuals remain. SubscriptionProvider's Schemars
+and conditional outputs. Other callback routes remain explicitly unproved; the selected Eq type-only assertion output is covered separately. SubscriptionProvider's Schemars
 and unsupported other outputs likewise remain, and CatalogRecord cannot acquire
 closed scope from the Copy route. Full unchanged parents/Cargo/source pin cases
 are authored, not isolated fabricated positive wrappers.
 
-Eight new cases remain UNRUN, making 36 authored derive cases in this separate
-queue. Existing CSV37 remains unchanged and UNRUN. Official source fetching and
-static archive/text inspection occurred; no Node/Bun, parser/helper execution,
-compiler, tests, producer, Rust, peer replay, integration or push occurred.
+The final 103-case source-output and related scope passed in Node and Bun at clean `e1f10dd8d`, with all initial and retry failures retained in `dev/log/issues/759/translator-derive-bang-verification`. No automatic bulk/project activation, generated trait execution, complete runtime parity or Rust execution is claimed.

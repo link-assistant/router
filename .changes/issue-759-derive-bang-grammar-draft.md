@@ -1,9 +1,8 @@
-Source-only, unverified draft: lift pinned Serde generator quote templates into
+Lift pinned Serde generator quote templates into
 non-executable syntax meta, with bounded checked interpolation, ordered sequences
 and repetitions. Serialize/reparse composed syntax before inspecting bang calls,
 definitions and generated attributes. Preserve complete original member/template
-spans and hashes. The authored inventory expects 330 quote groups in 28 original
-Rust source members; these counts have not yet been checked by the new helper.
+spans and hashes. The checked inventory retains 330 quote groups in 28 original Rust source members.
 
 Initial selected routes cover original nongeneric unit structs and unit enums
 under the actual locked Serde Serialize owner. A private input-context accessor
@@ -31,9 +30,6 @@ The original `RunState` declaration is pinned at UTF-16 135..626 in the complete
 `0e10cb035695fa23bb3fb8c72191a657ac6b04df319694856aceffd3a5a03e96`;
 declaration SHA-256
 `6166fc6655d0e208e8f7e82ba792cf63a3a4f0a1c6912535b6dede552a6fee96`.
-An authored case requests its original library/Cargo namespace context without
-running the separate full semantic translator. All ten new cases are UNRUN.
-No Node, Bun, TSC, checker, graph helper, producer or Rust invocation was made
-while the publisher held the compiler window. Previous CSV/Result/Deref/reverse
-37-case queues remain preserved and unverified. Payload Serialize/Deserialize
-typed-splice closure is the next extension, not an existing capability claim.
+A case verifies its original library/Cargo namespace context without running the separate full semantic translator.
+
+The final 103-case source-output and related scope passed in Node and Bun at clean `e1f10dd8d`, with all initial and retry failures retained in `dev/log/issues/759/translator-derive-bang-verification`. No automatic bulk/project activation, generated trait execution, complete runtime parity or Rust execution is claimed.

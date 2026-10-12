@@ -282,3 +282,14 @@ assertions passed in Node and Bun with JavaScript and strict TypeScript executio
 retains all logs, the Node TAP receipt-reader failure and its independent metadata
 correction. These descriptive runs establish no controlled speedup, new corpus
 census, complete native parity or JavaScript-to-Rust completion.
+
+The optional derive bang-output context composes source-selected Serde and builtin
+quote/AST syntax while retaining genuine original module views and invocation
+identities. It narrows only independently closed per-invocation bang obligations;
+ordinary project/bulk translation does not enable this consumer automatically.
+The 103-case Node/Bun scope passed with complete failed-attempt provenance in
+[the derive verification archive](../../dev/log/issues/759/translator-derive-bang-verification/manifest.json).
+Generated trait behavior, type/value/effect authority and complete runtime parity
+remain separate obligations. CatalogRecord syntax metadata uses a measured
+524,288-byte cap independent of the unchanged 256,000 token-byte, 16,000-cell and
+64-depth limits.
