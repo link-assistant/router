@@ -19,7 +19,7 @@ let parserMethods=null;const cursorMethods=methodSnapshot(TokenCursor.prototype)
 function originalParserMethods(){return parserMethods??=methodSnapshot(HostRustParser.prototype);}
 function assertOriginalMethods(value,prototype,methods,{cursor=false}={}) {
   if(!value||types.isProxy(value)||Object.getPrototypeOf(value)!==prototype)throw new TypeError('Macro fragment parser/cursor must retain its actual source class');
-  const registered=cursor?originalTextCursorGuard(value):null,guard=registered?.baseIs===methods.get('is')?registered.guard:null;
+  const registered=cursor?originalTextCursorGuard(value):null,guard=registered&&registered.baseIs===methods.get('is')?registered.guard:null;
   for(const [name,descriptor]of Object.entries(Object.getOwnPropertyDescriptors(value)))if(!Object.hasOwn(descriptor,'value')||typeof descriptor.value==='function'&&!(name==='is'&&descriptor.value===guard))throw new TypeError('Macro fragment parser/cursor callbacks or accessors are not original source methods');
   for(const [name,method]of methods)if(value[name]!==method&&!(name==='is'&&value[name]===guard))throw new TypeError('Macro fragment parser/cursor method identity changed');
 }
