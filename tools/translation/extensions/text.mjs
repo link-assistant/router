@@ -30,7 +30,7 @@ export class TextRustParser extends FormatRustParser {
   unary(path,options) {
     const token=this.cursor.peek();if(!this.cursor.eat('&'))return super.unary(path,options);
     if(this.cursor.is('mut'))throw unsupported('mutable shared reference','requires separately checked borrowing',token);
-    const value=this.unary(path,{});return {k:'routerTextReference',value,sourceBorrowToken:{value:'&',span:{start:token.start,end:token.end}},span:{start:token.start,end:value.span.end}};
+    const value=this.unary(path,{noStruct:options.noStruct});return {k:'routerTextReference',value,sourceBorrowToken:{value:'&',span:{start:token.start,end:token.end}},span:{start:token.start,end:value.span.end}};
   }
   method(object,name,args,span) {
     if(!METHODS.has(name.value))return super.method(object,name,args,span);

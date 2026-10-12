@@ -83,7 +83,7 @@ test('dereference never grants value coercions aggregate Copy trait Deref or ref
     'pub fn bad(v:&u64)->u64{v.max(1)}',
     'pub fn bad(v:&u64)->u64{v.clamp(0,1)}',
     'pub fn bad(v:&mut u64)->u64{*v}',
-    "pub fn bad<'a>(v:&'a u64)->u64{*v}",
+    "pub fn bad<'a>(v:&'a u64)->u64{v}",
     'pub fn bad(v:&u64)->u64{*(return 1)}',
     'struct u64{value:u8} pub fn bad(v:&u64)->u8{*v}',
     `pub fn bad(v:${'&'.repeat(34)}u64)->u64{v}`,

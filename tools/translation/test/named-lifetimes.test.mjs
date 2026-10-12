@@ -6,6 +6,7 @@ import {translateProject} from '../project.mjs';
 import {HostRustParser,parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
 import {sourceItems} from '../rust-structure.mjs';
+import {parseProgram} from '../semantic-meta.mjs';
 import {linkParsedFile,checkedSourceContext,bindCheckedSourceLinks,checkedSourceEvidence} from '../extensions/source-links.mjs';
 import {verifyCohortTargets} from './cohort-targets.mjs';
 const ORIGINAL_SOURCE_SHA='1eafa26a131345dc3ce171a3ec1cc6833a801a794ecc76d545bca3d96eacf09c';
@@ -17,7 +18,7 @@ const some=field0=>Object.freeze({$:'Some',field0});
 test('actual named shared lifetimes preserve identity and borrow string values',{timeout:30000},async()=>{
   const result=project("pub fn echo<'a>(value:&'a str)->&'a str{value} pub fn local<'a>(value:&'a str)->&'a str{let held:&'a str=value;held}");
   assert.deepEqual(result.meta.refused,[]);
-  const proof=result.meta.checkedSemanticProgram.items.find(item=>item.name==='echo').sourceLifetimeProof;
+  const proof=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get('echo').sourceLifetimeProof;
   assert.equal(proof.params[0][0].identity,proof.outputs[0].identity);
   await verifyCohortTargets(result,api=>{assert.equal(api.echo('Ω😀'),'Ω😀');assert.equal(api.local('leaf'),'leaf');});
 });

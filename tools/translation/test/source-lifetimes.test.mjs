@@ -46,7 +46,7 @@ test('ambiguous elision, static escape and static arguments cannot borrow portab
     'fn needs(v:Option<&\'static str>)->u8{1} pub fn bad(v:&str)->u8{needs(Some(v))}',
     'pub fn bad(v:String)->&\'static str{v.trim()}',
     'pub fn bad(v:Vec<u8>)->Option<&u8>{v.first()}',
-    'pub fn bad<\'a>(v:&\'a str)->&\'a str{v}',
+    'pub fn bad<\'a,\'b>(v:&\'a str)->&\'b str{v}',
   ]){const result=project(source);assert.equal(result.meta.executable.some(entry=>entry.name==='bad'),false,source);assert.ok(result.meta.refused.some(entry=>entry.name==='bad'),source);}
 });
 test('per-use tuple lifetimes cannot inherit a previous portable layout staticness',()=>{

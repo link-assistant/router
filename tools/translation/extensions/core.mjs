@@ -16,7 +16,20 @@ async function exposed(name, replacements) {
   return import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 }
 
-export const { RustParser } = await exposed('rust.js', [['class RustParser {', 'export class RustParser {']]);
+export const { RustParser } = await exposed('rust.js', [
+  ['class RustParser {', 'export class RustParser {'],
+  // Rust excludes unparenthesized record expressions throughout a condition,
+  // including right operands. Nested parentheses/call arguments still start
+  // an ordinary expression; statement parsing flags stay local to the left.
+  ['const right = this.and(path, {});', 'const right = this.and(path, { noStruct: options.noStruct });'],
+  ['const right = this.comparison(path, {});', 'const right = this.comparison(path, { noStruct: options.noStruct });'],
+  ['const right = this.additive(path, {});', 'const right = this.additive(path, { noStruct: options.noStruct });'],
+  ['const right = this.multiplicative(path, {});', 'const right = this.multiplicative(path, { noStruct: options.noStruct });'],
+  ['const right = this.cast(path, {});', 'const right = this.cast(path, { noStruct: options.noStruct });'],
+  ["if (c.eat('-')) {\n      const arg = this.unary(path, {});", "if (c.eat('-')) {\n      const arg = this.unary(path, { noStruct: options.noStruct });"],
+  ["if (c.eat('!')) {\n      const arg = this.unary(path, {});", "if (c.eat('!')) {\n      const arg = this.unary(path, { noStruct: options.noStruct });"],
+  ["return this.unary(path, {});\n    }\n    if (c.eat('*')) return this.unary(path, {});", "return this.unary(path, { noStruct: options.noStruct });\n    }\n    if (c.eat('*')) return this.unary(path, { noStruct: options.noStruct });"],
+]);
 export const { Checker } = await exposed('check.js', [
   ['class Checker {', 'export class Checker {'],
   ["      }));\n    });\n    this.walk(items, path, (item, itemPath, entry) => {\n      if (item.k !== 'fn') return;", "      }));\n    }, 'declaration-types');\n    this.walk(items, path, (item, itemPath, entry) => {\n      if (item.k !== 'fn') return;"],

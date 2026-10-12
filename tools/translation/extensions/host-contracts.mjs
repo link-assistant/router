@@ -170,7 +170,7 @@ export class HostRustParser extends withNamedLifetimeParser(withCapturedSourcePa
   }
   unary(path,options) {
     if(this.cursor.is('&')&&this.cursor.is('[',1)) {
-      const c=this.cursor,start=c.index,first=c.next(),value=this.unary(path,{}),tokens=c.tokens.slice(start,c.index);
+      const c=this.cursor,start=c.index,first=c.next(),value=this.unary(path,{noStruct:options.noStruct}),tokens=c.tokens.slice(start,c.index);
       return {k:'routerSharedArrayLiteral',value,span:{start:first.start,end:tokens.at(-1).end},sourceArrayBorrow:{tokens:tokens.map(token=>({kind:token.kind,value:token.value,span:{start:token.start,end:token.end}}))}};
     }
     if(this.cursor.is('&')&&!this.cursor.is('mut',1)) {
@@ -183,7 +183,7 @@ export class HostRustParser extends withNamedLifetimeParser(withCapturedSourcePa
       return value;
     }
     const first=this.cursor.peek();if(!this.cursor.eat('*'))return super.unary(path,options);
-    const value=this.unary(path,{});return {k:'routerPrimitiveDereference',value,sourceFeature:'explicit-dereference',span:{start:first.start,end:value.span.end}};
+    const value=this.unary(path,{noStruct:options.noStruct});return {k:'routerPrimitiveDereference',value,sourceFeature:'explicit-dereference',span:{start:first.start,end:value.span.end}};
   }
   type(){
     const c=this.cursor,start=c.index,type=this.hostTypeSyntax();
