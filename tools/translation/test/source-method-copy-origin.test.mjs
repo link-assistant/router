@@ -37,7 +37,15 @@ test('genuine checked project origin preserves actual Copy bytes and executes bo
     assert.equal(value.sourceMethodProof.copyAuthority,false);assert.equal(value.sourceMethodProof.runtimeParity,false);originalMethodSemanticFacts(value);
   }
   assert.throws(()=>{field.copyCertificate.verified=false;},TypeError);
-  await verifyTypedTargets(result,api=>{assert.equal(api.ready(api.get(api.make_ready())),true);assert.equal(api.ready(api.get(api.make_waiting())),false);assert.equal(api.ready(api.get({$: 'Holder',value:{$: 'Ready'}})),true);assert.throws(()=>api.get({$: 'Holder',value:{$: 'Unproved'}}),TypeError);});
+  await verifyTypedTargets(result,api=>{
+    assert.equal(api.ready(api.get(api.make_ready())),true);
+    assert.equal(api.ready(api.get(api.make_waiting())),false);
+    const ready=Object.freeze({$: 'Holder',value:Object.freeze({$: 'Ready'})});
+    const unproved=Object.freeze({$: 'Holder',value:Object.freeze({$: 'Unproved'})});
+    assert.equal(api.ready(api.get(ready)),true);
+    assert.throws(()=>api.get(unproved),TypeError);
+    assert.throws(()=>api.ready(api.get({$: 'Holder',value:{$: 'Ready'}})),/Copy receiver requires immutable/);
+  });
 });
 test('public resealed nominal certificates cannot admit an original non-Copy field move',()=>{
   const text='struct Payload{n:u8}struct Holder{value:Payload}impl Holder{fn take(&self)->Payload{self.value}}pub fn bad(v:Holder)->Payload{v.take()}',result=project(text),parsed=parsedOriginal(text);
