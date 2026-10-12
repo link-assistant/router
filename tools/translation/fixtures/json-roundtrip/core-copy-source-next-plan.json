@@ -1,0 +1,54 @@
+{
+  "schema": "original-copy-macro-source-only-plan-v1",
+  "status": "SOURCE-ONLY3new cases UNRUN; generic declarative9+closure4+owner-frontier2 regressions pending",
+  "sourceSha256": "db5d413946a48f816af89e83f99741693d1aaf088633db60c8d372a555ff8809",
+  "sourcePath": "library/core/src/marker.rs",
+  "compressedSourceReused": true,
+  "anchors": [
+    {
+      "name": "marker_impls",
+      "span": {
+        "start": 1686,
+        "end": 2315
+      },
+      "sha256": "22609e5a04eb65a129786e7fdaf3e7ed4a491e314d15f4f867b2179deb3c8ba6"
+    },
+    {
+      "name": "Copy",
+      "span": {
+        "start": 16665,
+        "end": 16704
+      },
+      "sha256": "2df413518cdff4300069f4c1693ed8185bca791fffc3498c1e795bf8a1565c14"
+    },
+    {
+      "name": "CopyShared",
+      "span": {
+        "start": 17653,
+        "end": 17689
+      },
+      "sha256": "b4c8278be6be26d3c83b5a5c52058e078d819b7d726c6581e4b72d7151d3a100"
+    }
+  ],
+  "copyContractVerified": false,
+  "callerMacroOwnerVerified": false,
+  "traitOwnerVerified": false,
+  "namespaceAuthority": false,
+  "parseAdmission": false,
+  "applicationEffectCompleteness": false,
+  "runtimeParity": false,
+  "remaining": "Source macro output is syntax evidence only; actual primitive/lang/trait/Copy/attribute/allocator/whole-reader closure remains unsupported",
+  "followSet": "Generic planned matcher FIRST/nullability includes enclosing repetition re-entry, separators and every nullable exit; unknown capture FIRST is refused.",
+  "pointerTypes": "Actual original raw-pointer type syntax and private multi-token transparent ident/tt forwarding only; opaque ty ASTs, pointer ownership and runtime operations remain unsupported.",
+  "proposedCoherentFocus": {
+    "retainedArithmeticFiles": 8,
+    "retainedArithmeticCases": 43,
+    "newCopyCases": 3,
+    "declarativeRegressionCases": 9,
+    "closureRegressionCases": 4,
+    "ownerFrontierRegressionCases": 2,
+    "totalFiles": 12,
+    "totalCases": 61,
+    "newCasesExecuted": false
+  }
+}

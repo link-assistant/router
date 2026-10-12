@@ -13,6 +13,30 @@ const forbiddenTypes=new Set('as async await break const continue dyn else enum 
 const names=nodes=>nodes.flatMap(node=>node.kind==='capture'||node.kind==='variable'?[node.name]:node.children?names(node.children):[]);
 const syntax=(tree,end=tree)=>({sourceSha256:tree.sourceSha256,span:{start:tree.span.start,end:end.span.end},...(tree.sourceFeature?{sourceFeature:tree.sourceFeature}:{})});
 
+// FOLLOW(ty) is checked on the actual planned matcher, including every
+// nullable exit and separator/re-entry of each enclosing repetition. Unknown
+// fragment FIRST sets are carried; their opaque ASTs are never exposed.
+function assertTypeFollowers(pattern){
+  let cells=32000;const end='end',allowed=new Set(['=>',',','=','|',';',':','>','as','where'].map(value=>'literal:'+value));allowed.add('group:[');allowed.add('group:{');allowed.add(end);
+  const literal=tree=>tree?.kind==='token'?'literal:'+tree.text:tree?.kind==='group'?'group:'+tree.delimiter:'unknown';
+  function first(nodes,start=0,depth=0){
+    if(depth>8)throw new TypeError('Declarative follow-set nesting budget');const result=new Set();for(let at=start;at<nodes.length;at++){
+      if(--cells<0)throw new TypeError('Declarative follow-set cell budget');const node=nodes[at];let values,nullable=false;
+      if(node.kind==='literal')values=[literal(node.tree)];else if(node.kind==='group')values=['group:'+node.delimiter];else if(node.kind==='capture')values=['capture:'+node.fragment];else if(node.kind==='repeat'){const child=first(node.children,0,depth+1);values=[...child].filter(value=>value!==end);nullable=['*','?'].includes(node.operator)||child.has(end);}else values=['unknown'];
+      for(const value of values)result.add(value);if(!nullable)return result;
+    }result.add(end);return result;
+  }
+  const suffix=(nodes,start,outer)=>{const result=first(nodes,start);if(result.delete(end))for(const value of outer)result.add(value);return result;};
+  function check(nodes,outer=new Set([end]),depth=0){
+    if(depth>64)throw new TypeError('Declarative follow-set nesting budget');for(let at=0;at<nodes.length;at++){
+      if(--cells<0)throw new TypeError('Declarative follow-set cell budget');const node=nodes[at],following=suffix(nodes,at+1,outer);
+      if(node.kind==='capture'&&node.fragment==='ty'&&[...following].some(value=>!allowed.has(value)))throw new TypeError('Declarative type fragment has an unproved Rust follow set');
+      if(node.kind==='group')check(node.children,new Set([end]),depth+1);
+      if(node.kind==='repeat'){const next=new Set(following);if(node.operator!=='?'){if(node.separator)next.add(literal(node.separator));else for(const value of first(node.children))if(value!==end)next.add(value);}check(node.children,next,depth+1);}
+    }
+  }check(pattern);
+}
+
 function plan(trees,mode,bindings,depth=0) {
   const result=[];
   for(let at=0;at<trees.length;at++) {
@@ -39,10 +63,6 @@ function plan(trees,mode,bindings,depth=0) {
       if(text(trees[++at])!==':'||!ident(trees[++at]))throw new TypeError('Declarative matcher requires an explicit fragment specifier');
       const fragment=trees[at].text;
       if(!fragments.has(fragment))throw new TypeError('Declarative fragment is outside the checked initial profile: '+fragment);
-      if(fragment==='ty') {
-        const follow=trees[at+1];
-        if(follow&&!(follow.kind==='token'&&['=>',',','=','|',';',':','>','as','where'].includes(follow.text))&&!(follow.kind==='group'&&['[','{'].includes(follow.delimiter)))throw new TypeError('Declarative type fragment has an unproved Rust follow set');
-      }
       if(fragment==='vis') {
         const follow=trees[at+1];
         const capture=text(follow)==='$'&&ident(trees[at+2])&&text(trees[at+3])===':'&&['ident','ty'].includes(text(trees[at+4]));
@@ -75,7 +95,7 @@ export function compileDeclarativeMacro(source,{name,owner=[]}={}) {
   for(let at=0;at<body.children.length;) {
     const matcher=body.children[at++],arrow=body.children[at++],template=body.children[at++];
     if(matcher?.kind!=='group'||text(arrow)!=='=>'||template?.kind!=='group')throw new TypeError('Unproved original declarative rule grammar');
-    const bindings=new Map(),pattern=plan(matcher.children,'matcher',bindings),output=plan(template.children,'template',bindings);
+    const bindings=new Map(),pattern=plan(matcher.children,'matcher',bindings),output=plan(template.children,'template',bindings);assertTypeFollowers(pattern);
     rules.push({pattern,output,bindings:[...bindings],span:{start:matcher.span.start,end:template.span.end}});
     if(at<body.children.length&&![';',','].includes(text(body.children[at++])))throw new TypeError('Unproved declarative rule terminator');
   }
@@ -98,26 +118,28 @@ function opaque(tree,fragment) {return tree?.kind==='fragment'&&tree.fragment===
 function boundedType(trees,start,depth=0) {
   if(depth>24)throw new TypeError('Declarative type fragment budget exceeded');
   if(opaque(trees[start],'ty'))return start+1;
-  const tuple=trees[start];
+  const typeText=tree=>text(transparentTree(tree)),typeIdent=tree=>ident(transparentTree(tree));
+  if(typeText(trees[start])==='*'){if(!['const','mut'].includes(typeText(trees[start+1])))return null;return boundedType(trees,start+2,depth+1);}
+  const tuple=transparentTree(trees[start]);
   if(tuple?.kind==='group'&&tuple.delimiter==='(') {
     let at=0;
-    while(at<tuple.children.length){const end=boundedType(tuple.children,at,depth+1);if(end===null)return null;at=end;if(at<tuple.children.length&&text(tuple.children[at++])!==',')return null;}
+    while(at<tuple.children.length){const end=boundedType(tuple.children,at,depth+1);if(end===null)return null;at=end;if(at<tuple.children.length&&typeText(tuple.children[at++])!==',')return null;}
     return start+1;
   }
-  let at=start;if(text(trees[at])==='::')at++;
+  let at=start;if(typeText(trees[at])==='::')at++;
   for(;;) {
-    if(!ident(trees[at])||forbiddenTypes.has(text(trees[at])))return null;at++;
-    if(text(trees[at])==='<') {
+    if(!typeIdent(trees[at])||forbiddenTypes.has(typeText(trees[at])))return null;at++;
+    if(typeText(trees[at])==='<') {
       at++;let count=0;
       for(;;) {
         const end=boundedType(trees,at,depth+1);if(end===null)return null;at=end;count++;
-        if(text(trees[at])==='>'){at++;break;}
-        if(text(trees[at++])!==',')return null;
-        if(text(trees[at])==='>'){at++;break;}
+        if(typeText(trees[at])==='>'){at++;break;}
+        if(typeText(trees[at++])!==',')return null;
+        if(typeText(trees[at])==='>'){at++;break;}
       }
       if(!count)return null;
     }
-    if(text(trees[at])!=='::')return at;at++;
+    if(typeText(trees[at])!=='::')return at;at++;
   }
 }
 function boundedMeta(trees,start,depth=0) {
@@ -150,7 +172,7 @@ function fragmentEnd(fragment,trees,start) {
   if(fragment==='expr'&&opaque(trees[start],'block'))return start+1;
   const forwarded=trees[start];
   if(forwarded?.kind==='fragment') {
-    if(['ident','tt'].includes(forwarded.fragment)&&forwarded.trees.length===1)return fragmentEnd(fragment,forwarded.trees,0)===1?start+1:null;
+    if(['ident','tt'].includes(forwarded.fragment)&&forwarded.trees.length===1){if(fragment==='ty')return boundedType(trees,start);return fragmentEnd(fragment,forwarded.trees,0)===1?start+1:null;}
     throw new TypeError('Opaque declarative fragments require the same checked fragment kind when forwarded');
   }
   if(fragment==='ident')return ident(trees[start])?start+1:null;
