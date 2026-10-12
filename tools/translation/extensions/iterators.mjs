@@ -1,5 +1,7 @@
 // Lazy, typed scalar iterators. Eager JavaScript Array.map/filter would change
 // panic timing and short circuiting, so iterator adapters use generators.
+// Written for patterns follow https://doc.rust-lang.org/reference/expressions/loop-expr.html#iterator-loops
+// and https://doc.rust-lang.org/reference/patterns.html#reference-patterns.
 import { DataRustParser, DataChecker, DataEmitter } from './data.mjs';
 import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
@@ -76,14 +78,25 @@ export class IteratorRustParser extends DataRustParser {
   forStatement(path) {
     const c = this.cursor;
     const start = c.expect('for', 'iteration');
+    const patternStart=c.index;
     const borrowed = Boolean(c.eat('&'));
     if (borrowed && c.is('mut')) throw unsupported('mutable iteration reference', 'aggregate reference ownership is not lowered', c.peek());
     const mutable = Boolean(c.eat('mut'));
-    const name = c.identifier('iteration binding').value;
+    const patterned=borrowed||c.is('(')||c.is('_')||['true','false'].includes(c.peek().value)||['number','string'].includes(c.peek().kind)||['::','(','{'].includes(c.peek(1).value);
+    if(mutable&&patterned)throw unsupported('mutable iteration pattern','requires separately checked per-binding ownership',span(start,c.peek()));
+    const pattern=patterned?this.controlPattern(path,start):null;
+    let name;
+    if(pattern){
+      this.iterationPatternNames??=new Set(c.tokens.filter(token=>token.kind==='identifier').map(token=>token.value));
+      do{name=`router_for_item_${this.iterationPatternIndex??0}`;this.iterationPatternIndex=(this.iterationPatternIndex??0)+1;}while(this.iterationPatternNames.has(name));
+      this.iterationPatternNames.add(name);
+    }else name=c.identifier('iteration binding').value;
+    const patternTokens=c.tokens.slice(patternStart,c.index);
+    const sourceIterationPattern={profile:'checked-irrefutable-for-pattern-v1',reference:borrowed,mutable,span:span(patternTokens[0],patternTokens.at(-1)),tokens:patternTokens.map(token=>({kind:token.kind,value:token.value,span:span(token,token)}))};
     c.expect('in', 'iteration');
     const object = this.expr(path, { noStruct: true });
     const loopBody = this.block(path, true);
-    return { k: 'routerFor', name, mutable, object, loopBody, span: span(start, c.peek()) };
+    return { k: 'routerFor', name, mutable, object, loopBody, ...(pattern?{pattern}:{}), sourceIterationPattern, span: span(start, c.peek()) };
   }
 
   primary(path, options) {
@@ -228,12 +241,17 @@ export class IteratorChecker extends DataChecker {
       let object = this.expr(node.object, env, path);
       if (object.type.kind === 'array') object = this.expr({ k: 'routerIteratorOperation', op: 'into_iter', object: node.object, args: [], span: node.span }, env, path);
       if (object.type.kind !== 'routerIterator') throw typeError('for needs a supported scalar iterator', node.span);
-      const inner = this.bindingEnvironment(this.loopEnvironment(env), node.name, object.type.element, node.mutable);
-      const loopBody = this.expr(node.loopBody, inner, path, UNIT);
+      // A written reference pattern consumes one actual shared reference;
+      // portable encoding equality alone never turns an owned Item into one.
+      const element=node.sourceIterationPattern?.reference?copyItem(object.type.element,node.sourceIterationPattern.span):object.type.element;
+      const inner = this.bindingEnvironment(this.loopEnvironment(env), node.name, element, node.mutable);
+      const originalBody=node.pattern?{k:'routerLetPattern',pattern:node.pattern,subject:{k:'name',path:[node.name],span:node.sourceIterationPattern.span},body:node.loopBody,span:node.sourceIterationPattern.span}:node.loopBody;
+      const loopBody = this.expr(originalBody, inner, path, UNIT);
       if (!sameType(loopBody.type, UNIT)) throw typeError('for body must evaluate to unit', node.span);
-      const binding = { k: 'let', name: node.name, mutable: node.mutable, value: { k: 'routerLoopInput', type: object.type.element }, body: loopBody, type: UNIT };
+      const referencePattern=node.sourceIterationPattern?.reference?{kind:'checked-shared-reference-pattern-copy',itemType:structuredClone(object.type.element),bindingType:structuredClone(element),sourceSpan:{...node.sourceIterationPattern.span}}:null;
+      const binding = { k: 'let', name: node.name, mutable: node.mutable, value: { k: 'routerLoopInput', type: element, ...(referencePattern?{sourceReferencePattern:referencePattern}:{} ) }, body: loopBody, type: UNIT };
       const body = this.expr(node.body, env, path, expected, allowLiteral);
-      return { k: 'routerFor', object, loopBody: binding, body, type: body.type, span: node.span };
+      return { k: 'routerFor', object, loopBody: binding, body, type: body.type, sourceIterationPattern:structuredClone(node.sourceIterationPattern), span: node.span };
     }
     if (node.k === 'routerLambda') throw unsupported('standalone closure', 'closures need a typed iterator callback context', node.span);
     if (node.k !== 'routerIteratorOperation') return super.expr(node, env, path, expected, allowLiteral);
