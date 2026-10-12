@@ -2,6 +2,7 @@
 // equivalence. This bounded adapter does not manufacture reference lifetimes.
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
 import {rustFixedType} from '../checked-types.mjs';
+import {metadataDigest,ownData,copyMetadata} from './source-links.mjs';
 
 const UNKNOWN='unproved-borrow-origin';
 const key=path=>JSON.stringify(path);
@@ -151,6 +152,20 @@ function sameLocals(left,right,context) {
 
 // Checked IR is interpreted only as origin evidence. Values and bodies are
 // neither evaluated nor rewritten. Unknown operations retain a refusal.
+function sharedPrimitiveMatchBinding(type,owner,ctor,pattern,index,context,span) {
+  const refuse=()=>{throw unsupported('borrowed match field origins','requires separate actual shared field projection evidence',span);};
+  const reference=type.rustReference,proof=copyMetadata(ownData(pattern,'sharedBindingProof')),pointee=reference?.pointee;
+  if(type.kind!=='data'||reference?.kind!=='shared'||pointee?.kind!=='data'||pointee.name!==type.name||pointee.rustReference||pointee.rustGenericIdentityUnresolved||pointee.rustBorrowingUnresolved||owner.tuple||owner.standardGeneric||proof?.kind!=='shared-match-ergonomics'||metadataDigest(proof.pointee)!==metadataDigest(pointee))refuse();
+  const expectedBinds=pattern.binds.filter(name=>name&&name!=='_');
+  if(!Array.isArray(proof.bindings)||proof.bindings.length!==expectedBinds.length||new Set(proof.bindings.map(binding=>binding.name)).size!==proof.bindings.length)refuse();
+  const name=pattern.binds[index],field=ctor.fields[index],matches=proof.bindings.filter(binding=>binding.name===name&&binding.field===field.name);
+  if(matches.length!==1)refuse();
+  const binding=matches[0],declared=context.resolveType(field.type,owner.modulePath,span),primitive=rustFixedType(declared.rustPrimitiveName),borrowed=binding.type,borrow=borrowed?.rustReference;
+  if(declared.kind!=='fixed'||!primitive||declared.bits!==primitive.bits||declared.signed!==primitive.signed||declared.rustReference||declared.rustOwnership||declared.patternOwnershipRefusal||declared.rustGenericIdentityUnresolved||declared.rustBorrowingUnresolved)refuse();
+  if(borrowed?.kind!=='fixed'||borrowed.bits!==declared.bits||borrowed.signed!==declared.signed||borrowed.rustPrimitiveName!==declared.rustPrimitiveName||borrowed.rustSourceType!==true||borrowed.patternOwnershipRefusal!=='shared field place'||borrowed.rustOwnership||borrowed.rustGenericIdentityUnresolved||borrowed.rustBorrowingUnresolved||borrowed.rustBorrowLifetime||borrow?.kind!=='shared'||borrow.source!=='shared-field-projection'||borrow.pointee?.rustReference||metadataDigest(borrow.pointee)!==metadataDigest(declared)||metadataDigest(borrow.sourceReceiverSpan)!==metadataDigest(reference.span)||metadataDigest(borrow.span)!==metadataDigest(proof.span))refuse();
+  return borrowed;
+}
+
 function origins(node,env,context,returns,depth=0) {
   if(!node)return new Set();
   if(depth>256)throw unsupported('borrow origin traversal','requires a bounded checked expression graph',context.entry.span);
@@ -356,7 +371,13 @@ function origins(node,env,context,returns,depth=0) {
         if(type.kind!=='data'||pattern.data!==type.name||!ctor||pattern.binds.length!==ctor.fields.length)throw unsupported('match borrow field origins','requires its actual checked constructor owner and arity',node.span);
         pattern.binds.forEach((name,index)=>{
           if(!name||name==='_')return;
-          if(type.rustReference)throw unsupported('borrowed match field origins','requires separate actual shared field projection evidence',node.span);
+          if(type.rustReference) {
+            const bindingType=sharedPrimitiveMatchBinding(type,owner,ctor,pattern,index,context,node.span);
+            // Borrowing the primitive field retains the receiver's outer
+            // region. Operator dereference still has a nonborrowed result;
+            // this creates no static, Copy-layout or aggregate authority.
+            bind(name,uniformOrigins(bindingType,new Set(at(subject,[])),context));return;
+          }
           if(owner.tuple)bind(name,project(subject,['tuple',index]));
           else if(owner.standardGeneric?.kind==='Option')bind(name,project(subject,['argument',0]));
           else if(owner.standardGeneric?.kind==='Result')bind(name,project(subject,['argument',pattern.ctor==='Err'?1:0]));
