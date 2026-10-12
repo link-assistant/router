@@ -23,6 +23,7 @@ import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,cons
 import {checkStringIteratorOperation,requireBorrowedString} from './string-iterators.mjs';
 import {checkedStringBytes,requireStringBytesProof} from './string-bytes.mjs';
 import {sourceByteLiteral,requireByteLiteral} from './rust-byte-character.mjs';
+import {checkPinnedOptionBody,requirePinnedStandardBody} from './standard-body-checker.mjs';
 import {CSV_STRING_PROFILE,checkCharacterSplit,checkCharacterSplitNext,allocatingStringFunctionItem,checkedAllocatingStringItem,requireCsvEmitterProof} from './csv-strings.mjs';
 import {canonicalResult,checkResultMapError,requireResultIteratorProof} from './result-iterators.mjs';
 import {checkedOptionAsDeref,requireOptionDerefProof} from './option-deref.mjs';
@@ -178,6 +179,7 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
     return {k:'routerIntegerParse',object,args,instantiation,span:range};
   }
   method(object,name,args,range) {
+    if(['unwrap_or','unwrap_or_default'].includes(name.value))return {k:'routerPinnedStandardBodyCall',method:name.value,object,args,span:range};
     if(name.value==='bytes')return {k:'routerStringBytesOperation',object,args,span:range};
     if(name.value==='rfind')return {k:'routerReverseStringFind',object,args,span:range};
     if(name.value==='split')return {k:'routerStringIteratorOperation',operation:'split',object,args,span:range};
@@ -503,6 +505,12 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
       const instance=this.instantiations.integer(type,node.span),operation=node.k==='routerIntegerParse'?'rust_integer_parse':node.operation==='from_str'?'rust_integer_from_str':'rust_integer_from_str_radix';
       return this.hostCall(instance.contracts.filter(contract=>contract.id.startsWith(operation+'_')),(node.object?[node.object,...node.args]:node.args),env,path,expected,node.span,type);
     }
+    if(node.k==='routerPinnedStandardBodyCall'){
+      const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,node.method,'shared');
+      if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
+      if(node.method==='unwrap_or'&&receiver.type.kind==='data'&&this.items.get(receiver.type.name)?.standardGeneric?.kind==='Result')return super.expr({k:'routerAlgebraicOperation',op:'unwrap_or',object:node.object,args:node.args,span:node.span},env,path,expected,allowLiteral);
+      return checkPinnedOptionBody(this,node,receiver,env,path,expected,HostRustParser);
+    }
     if(node.k==='routerHostCall')return this.hostCall(HOST_CONTRACTS.filter(contract=>!contract.requiresRefinement&&(node.id?contract.id===node.id:pathKey(contract.rustPath)===pathKey(node.path))),node.args,env,path,expected,node.span,node.instantiation);
     if(['routerDispatchMethod','routerIteratorOperation'].includes(node.k)) {
       if(node.k==='routerDispatchMethod'&&node.object.k==='routerDispatchMethod'&&node.object.fallback?.k==='routerStringView'&&this.expr(node.object.object,env,path).type.kind==='string')return super.expr(node,env,path,expected,allowLiteral);
@@ -609,6 +617,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(node.k==='routerPinnedStandardBody'){requirePinnedStandardBody(node,HostRustParser);return this.expr(node.body);}
     if(node.sourceByteLiteral)requireByteLiteral(node,true);
     if(node.k==='routerReverseSplitFind'){requireReverseStringProof(node);this.reverseStrings=true;return `ml_reverse_split_find(${this.expr(node.base.object)}, ${JSON.stringify(node.base.delimiter)}, Object.freeze([${node.maps.map(map=>this.expr(map)).join(', ')}]), ${this.expr(node.predicate)})`;}
     if(node.k==='routerOptionAsDeref'){requireOptionDerefProof(node);this.optionDeref=true;return `ml_option_string_as_deref(${this.expr(node.object)})`;}

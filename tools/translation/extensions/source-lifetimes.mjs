@@ -214,6 +214,7 @@ function origins(node,env,context,returns,depth=0) {
     }
     inner.set(node.name,value);return read(node.body,inner);
   }
+  if(node.k==='routerPinnedStandardBody')return read(node.body);
   if(node.k==='routerOrderedArm'){if(node.guard)read(node.guard);return read(node.body);}
   if(node.k==='routerOrderedMatchArms')return union(...node.branches.map(branch=>{read(branch.cond);return read(branch.body);}));
   if(['routerPanic','abort'].includes(node.k)){for(const value of node.args??[])read(value);return new Set();}

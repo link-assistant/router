@@ -176,6 +176,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...readdirSync(new URL('./source-profiles/string-bytes/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/string-bytes/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/cooked-byte-char/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/cooked-byte-char/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/option-deref/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/option-deref/${name}`));
+  implementation.push(...readdirSync(new URL('./source-profiles/standard-method-bodies/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/standard-method-bodies/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/reverse-string-iterators/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/reverse-string-iterators/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/standard-bool/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/standard-bool/${name}`));
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
