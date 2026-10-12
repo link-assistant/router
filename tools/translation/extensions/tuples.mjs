@@ -50,10 +50,12 @@ export class TupleRustParser extends withParameterPatternParser(PatternControlRu
 
   primary(path,options) {
     const c=this.cursor;if(!c.is('(')||c.is(')',1))return super.primary(path,options);
-    const start=c.next(),first=this.expr(path,options);
+    // Parentheses introduce an ordinary expression context, including tuple
+    // elements; the outer condition's record/statement exclusions end here.
+    const start=c.next(),first=this.expr(path);
     if(!c.eat(',')){c.expect(')','parenthesized expression');return first;}
     const items=[first];
-    while(!c.is(')')){items.push(this.expr(path,options));if(!c.eat(','))break;}
+    while(!c.is(')')){items.push(this.expr(path));if(!c.eat(','))break;}
     c.expect(')','tuple expression');return {k:'routerTuple',items,span:span(start,c.peek())};
   }
 }

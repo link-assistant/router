@@ -14,5 +14,11 @@ reading the checked meta envelope through its canonical reader and retaining
 real named-lifetime escape/coercion negatives. The paired retry is pending;
 initial Node/Bun both passed 150/154 with the same four failures preserved.
 
+The first expanded retry passed 157/158 in both engines. Its one new regression
+identified the tuple frontend forwarding the outer condition context inside
+explicit parentheses. Group and tuple elements now use the same ordinary
+expression context as the original vendor parenthesis parser. The assertion
+remains unchanged; final paired verification is pending.
+
 The language rule is documented in the Rust Reference:
 https://doc.rust-lang.org/reference/expressions/if-expr.html#syntax
