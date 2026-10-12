@@ -56,11 +56,8 @@ import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_va
 
 import { serde_json_value_get_string as ml_host_serde_json_value_get_string, serde_json_value_as_str as ml_host_serde_json_value_as_str } from "../../runtime/json-runtime.mjs";
 
-function ml_router_unwrap<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>, fallback: T, option: boolean): T {
-  if (option) {
-    if (value.$ === 'Some') return value.field0;
-  } else if (value.$ === 'Ok') return value.field0;
-  return fallback;
+function ml_router_unexpected(value: any): never {
+  throw new TypeError(`unexpected constructor ${value.$}`);
 }
 
 const ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 = {"schemaVersion":1,"types":{"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
@@ -129,7 +126,22 @@ function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f
 function rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64(record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635, name: string): string {
   ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(record, name), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_8_0); }, "and_then"), "unknown", true);
+  return (() => {
+    const ml_standard_body_1 = ml_host_option_bind(ml_host_serde_json_value_get_string(record, name), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_2_0); }, "and_then");
+    const ml_standard_body_2 = "unknown";
+    switch (ml_standard_body_1.$) {
+      case "None": {
+        return ml_standard_body_2;
+      }
+      case "Some": {
+        const x = ml_standard_body_1.field0;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1);
+      }
+    }
+  })();
 }
 
 export const translated: { "HEADER_PHASE": string; "TURN_PHASE": string; "Provenance": (router_version: string, provider: string) => Readonly<{ readonly "$": "Provenance"; readonly "router_version": string; readonly "provider": string }>; "LoadError": Readonly<{ "Unreadable": (field0: Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }>) => Readonly<{ readonly "$": "Unreadable"; readonly "field0": Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }> | Readonly<{ readonly "$": "MissingHeader" }>; "MissingHeader": () => Readonly<{ readonly "$": "Unreadable"; readonly "field0": Readonly<{ readonly "$": "IoError"; readonly "kind": string; readonly "message": string; readonly "raw_os_error": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> }> | Readonly<{ readonly "$": "MissingHeader" }> }>; "read_provenance": (record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635) => Readonly<{ readonly "$": "Provenance"; readonly "router_version": string; readonly "provider": string }>; "string_field": (record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635, name: string) => string } = { ["HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["Provenance"]: ml_make_Provenance_Provenance, ["LoadError"]: Object.freeze({ ["Unreadable"]: ml_make_LoadError_Unreadable, ["MissingHeader"]: ml_make_LoadError_MissingHeader }), ["read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64 };

@@ -21,11 +21,8 @@ function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => b
   return true;
 }
 
-function ml_router_unwrap<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>, fallback: T, option: boolean): T {
-  if (option) {
-    if (value.$ === 'Some') return value.field0;
-  } else if (value.$ === 'Ok') return value.field0;
-  return fallback;
+function ml_router_unexpected(value: any): never {
+  throw new TypeError(`unexpected constructor ${value.$}`);
 }
 
 import { assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
@@ -52,7 +49,22 @@ function rp_616e7468726f7069635f6272696467652e75736167655f6669656c64(usage: Read
   ml_validate_rust_value(usage, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
   ml_assert_immutable_iterator(keys);
   if (!ml_router_array(keys, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_unwrap(ml_host_option_bind(usage, (u) => { return ml_router_find_map(ml_router_iter(keys, false), (k) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(u, k), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_2_0); }, "and_then"); }); }, "and_then"), 0n, true);
+  return (() => {
+    const ml_standard_body_1 = ml_host_option_bind(usage, (u) => { return ml_router_find_map(ml_router_iter(keys, false), (k) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(u, k), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then"); }); }, "and_then");
+    const ml_standard_body_2 = 0n;
+    switch (ml_standard_body_1.$) {
+      case "None": {
+        return ml_standard_body_2;
+      }
+      case "Some": {
+        const x = ml_standard_body_1.field0;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1);
+      }
+    }
+  })();
 }
 
 export const translated: { "DEFAULT_MAX_TOKENS": bigint; "usage_field": (usage: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>, keys: ReadonlyArray<string>) => bigint } = { ["DEFAULT_MAX_TOKENS"]: rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53(), ["usage_field"]: rp_616e7468726f7069635f6272696467652e75736167655f6669656c64 };

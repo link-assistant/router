@@ -4,11 +4,8 @@ import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } fr
 
 import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
 
-function ml_router_unwrap(value, fallback, option) {
-  if (option) {
-    if (value.$ === 'Some') return value.field0;
-  } else if (value.$ === 'Ok') return value.field0;
-  return fallback;
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
 }
 
 function ml_host_bool_then_some(value, argument) { return value ? Object.freeze({ $: 'Some', field0: argument }) : Object.freeze({ $: 'None' }); }
@@ -81,17 +78,32 @@ function rp_636861745f61646d696e2e4d41585f53455353494f4e53() {
 
 function rp_636861745f61646d696e2e6e6f726d616c697365(word) {
   if (!(typeof word === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(word))) throw new TypeError('argument outside supported Rust value domain');
-  const word_2 = ml_router_unwrap((() => {
-    const ml_text_17 = word;
-    const ml_text_18 = "/";
-    return (ml_text_17.startsWith(ml_text_18)?Object.freeze({ $: 'Some', field0: ml_text_17.slice(ml_text_18.length) }):Object.freeze({ $: 'None' }));
-  })(), word, true);
+  const word_2 = (() => {
+    const ml_standard_body_1 = (() => {
+      const ml_text_3 = word;
+      const ml_text_4 = "/";
+      return (ml_text_3.startsWith(ml_text_4)?Object.freeze({ $: 'Some', field0: ml_text_3.slice(ml_text_4.length) }):Object.freeze({ $: 'None' }));
+    })();
+    const ml_standard_body_2 = word;
+    switch (ml_standard_body_1.$) {
+      case "None": {
+        return ml_standard_body_2;
+      }
+      case "Some": {
+        const x = ml_standard_body_1.field0;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1);
+      }
+    }
+  })();
   const word_3 = ml_host_option_map_or((() => {
-    const ml_text_25 = word_2;
-    const ml_text_26 = "@";
-    return (()=>{const index=ml_text_25.indexOf(ml_text_26);return index<0?Object.freeze({ $: 'None' }):Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: ml_text_25.slice(0,index), field1: ml_text_25.slice(index+ml_text_26.length) }) });})();
-  })(), word_2, (ml_pattern_callback_27) => { ml_pattern_immutable(ml_pattern_callback_27);
-  const name = (ml_pattern_callback_27)["field0"];
+    const ml_text_9 = word_2;
+    const ml_text_10 = "@";
+    return (()=>{const index=ml_text_9.indexOf(ml_text_10);return index<0?Object.freeze({ $: 'None' }):Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: ml_text_9.slice(0,index), field1: ml_text_9.slice(index+ml_text_10.length) }) });})();
+  })(), word_2, (ml_pattern_callback_11) => { ml_pattern_immutable(ml_pattern_callback_11);
+  const name = (ml_pattern_callback_11)["field0"];
   return name; });
   return word_3.toLowerCase();
 }

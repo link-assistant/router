@@ -1,11 +1,8 @@
 type MLData_72705f353236663735373436353732346637303734363936663665356633363566373337343732363936653637 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
 // Generated draft from src/provider_import.rs; sha256=20277b79472978275b615a15b0b8dd99f785cc18a1030337d9f11889d9d045b6
 // Carried constructs are data, never runtime parity evidence.
-function ml_router_unwrap<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>, fallback: T, option: boolean): T {
-  if (option) {
-    if (value.$ === 'Some') return value.field0;
-  } else if (value.$ === 'Ok') return value.field0;
-  return fallback;
+function ml_router_unexpected(value: any): never {
+  throw new TypeError(`unexpected constructor ${value.$}`);
 }
 
 function ml_host_option_bind<T,U>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>, mode:'and_then'): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>;
@@ -15,13 +12,28 @@ function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...
 
 function rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465(value: string): string {
   if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_unwrap(ml_host_option_bind((() => {
-    const ml_text_33 = value;
-    const ml_text_34 = "\"";
-    return (ml_text_33.startsWith(ml_text_34)?Object.freeze({ $: 'Some', field0: ml_text_33.slice(ml_text_34.length) }):Object.freeze({ $: 'None' }));
-  })(), (v) => { const ml_text_35 = v;
-  const ml_text_36 = "\"";
-  return (ml_text_35.endsWith(ml_text_36)?Object.freeze({ $: 'Some', field0: ml_text_35.slice(0,ml_text_35.length-ml_text_36.length) }):Object.freeze({ $: 'None' })); }, "and_then"), value, true);
+  return (() => {
+    const ml_standard_body_1 = ml_host_option_bind((() => {
+      const ml_text_3 = value;
+      const ml_text_4 = "\"";
+      return (ml_text_3.startsWith(ml_text_4)?Object.freeze({ $: 'Some', field0: ml_text_3.slice(ml_text_4.length) }):Object.freeze({ $: 'None' }));
+    })(), (v) => { const ml_text_5 = v;
+    const ml_text_6 = "\"";
+    return (ml_text_5.endsWith(ml_text_6)?Object.freeze({ $: 'Some', field0: ml_text_5.slice(0,ml_text_5.length-ml_text_6.length) }):Object.freeze({ $: 'None' })); }, "and_then");
+    const ml_standard_body_2 = value;
+    switch (ml_standard_body_1.$) {
+      case "None": {
+        return ml_standard_body_2;
+      }
+      case "Some": {
+        const x = ml_standard_body_1.field0;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1);
+      }
+    }
+  })();
 }
 
 export const translated: { "unquote": (value: string) => string } = { ["unquote"]: rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465 };
