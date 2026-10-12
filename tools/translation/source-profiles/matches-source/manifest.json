@@ -1,0 +1,76 @@
+{
+  "schema": "original-rust-standard-matches-source-v1",
+  "rustVersion": "1.89.0",
+  "macroName": "matches",
+  "sources": [
+    {
+      "sourcePath": "library/core/Cargo.toml",
+      "archive": "core-Cargo.toml.gz",
+      "bytes": 1581,
+      "sha256": "96c59a5e3a08eb5510298eb0d3b3d6587d537394abea01bb5e7587a5a48a6bdc",
+      "archiveBytes": 845,
+      "archiveSha256": "b0c7357d4d2e24a5998cc50bfebf05197664b7aa419bf6e9e05bc917635d3510",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/Cargo.toml"
+    },
+    {
+      "sourcePath": "compiler/rustc_builtin_macros/src/standard_library_imports.rs",
+      "archive": "standard-library-imports.rs.gz",
+      "bytes": 2495,
+      "sha256": "b38dc23e80f09a3d6d61fef87ce3a677e24ace3fefe7e75c7a689a84a7daddab",
+      "archiveBytes": 951,
+      "archiveSha256": "20124f5d1a3b096547fc29f8d21fb64541b9b08d77de6e43b881926b4a2cff58",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/standard_library_imports.rs"
+    },
+    {
+      "sourcePath": "library/core/src/macros/mod.rs",
+      "archive": "../derive/rust-core-macros-1.89.0.rs.gz",
+      "bytes": 65222,
+      "sha256": "9a950cfa3735eef653b7f9a6a4701e7b218f9876141701dac72ccb8b8e8d3862",
+      "archiveBytes": 14787,
+      "archiveSha256": "8506fde0d40b33c2336337b7282358b44f09a010434807b6e0e06d7a896ab49e",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/macros/mod.rs"
+    },
+    {
+      "sourcePath": "library/std/src/lib.rs",
+      "archive": "../namespace-standard/rust-std-lib-1.89.0.rs.gz",
+      "bytes": 28184,
+      "sha256": "d070a5abc5138536e274e483181db929cc56d7a4b7a1947a11149f92b2cdc1ea",
+      "archiveBytes": 8934,
+      "archiveSha256": "d0216701dd8c129fb80a7c32ddd025de22d1420090a9fc7219384f06eecce065",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/lib.rs"
+    }
+  ],
+  "licenses": [
+    {
+      "path": "../namespace-standard/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    },
+    {
+      "path": "../namespace-standard/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    }
+  ],
+  "definition": {
+    "sourcePath": "library/core/src/macros/mod.rs",
+    "span": {
+      "start": 16324,
+      "end": 16527,
+      "unit": "UTF-16"
+    },
+    "bytes": 203,
+    "sha256": "35b042c8f112872e6a1e1e61ae758a35299174c54b0c2ca164c918b7e86d5e4f"
+  },
+  "definitionEdition": "2024",
+  "remainingObligations": [
+    "genuine consuming module/call-site macro namespace owner and active configuration",
+    "original expr/pat source parser complete-consumption private captures and Rust 2024 follow sets",
+    "opaque AST projection only through original generated match parser production",
+    "exact definition/call-site span and source-link evidence",
+    "checked pattern binding/borrowing/trait/control domains; const eligibility separately refused"
+  ],
+  "namespaceAuthority": false,
+  "runtimeParity": false,
+  "applicationEffectCompleteness": false
+}
