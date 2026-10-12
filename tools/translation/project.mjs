@@ -1,4 +1,5 @@
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
+import {translationProgressReporter} from './translation-progress.mjs';
 // Resolve tracked Rust module edges before semantic checking. External crates,
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
@@ -201,7 +202,11 @@ function declarationProgram(program, root) {
 }
 
 export function translateProject(options) {
+  const progress=translationProgressReporter(options.progress);
+  progress({stage:'project-graph',state:'start',entry:options.entry});
   const graph = resolveModuleGraph(options);
+  progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
+  progress({stage:'namespace',state:'start',entry:options.entry});
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;
   if(options.jsonMacroDependencies)try{jsonMacroContext=createJsonMacroContext({modules:graph.modules,dependencies:options.jsonMacroDependencies,compilationProfile:graph.compilationProfile});}catch(error){if(!(error instanceof TypeError))throw error;jsonMacroDiagnostic={kind:'unsupported-profile',message:error.message};}
@@ -213,8 +218,12 @@ export function translateProject(options) {
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null});
+  progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
+  let completedModules=0,completedMethods=0;
+  progress({stage:'module-parse',state:'start',entry:options.entry,total:graph.modules.length});
   for (const module of graph.modules) {
+    progress({stage:'module-parse',state:'advance',entry:options.entry,source:module.file,completed:completedModules++,total:graph.modules.length});
     if(module.configurationCondition==='unknown'){refused.push({file:module.file,term:'module',kind:'unsupported',message:'unknown crate compilation condition',span:{start:0,end:module.source.length}});continue;}
     for (const item of module.items.filter(item => !['fn', 'const', 'enum', 'struct', 'use', 'mod'].includes(item.term) || item.name === 'main')) unloweredItems.push({ source: module.file, module: module.path, name: item.name, term: item.term, span: { start: item.start, end: item.end }, sha256: sha256(module.source.slice(item.start, item.end)), diagnostic: 'declaration needs effect, implementation, entrypoint or macro lowering' });
     const configured=configureSourceScope(new MethodRustParser([]),module),aliases=configured.aliases;
@@ -268,6 +277,8 @@ export function translateProject(options) {
       }
     }
   }
+  progress({stage:'module-parse',state:'end',entry:options.entry,completed:completedModules,total:graph.modules.length});
+  progress({stage:'method-parse',state:'start',entry:options.entry});
   const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes),fieldEvidenceBySurface=new Map();
   for (const module of graph.modules) {
     if(module.configurationCondition!=='active')continue;
@@ -276,6 +287,8 @@ export function translateProject(options) {
       const original=(module.allItems??module.items).find(item=>item.term==='impl'&&item.start===implementation.span.start);
       if(original&&itemConfiguration(original.tokens,graph.compilationProfile).status==='inactive')continue;
       for (const method of implementation.methods) {
+        if(completedMethods%32===0)progress({stage:'method-parse',state:'advance',entry:options.entry,source:module.file,completed:completedMethods});
+        completedMethods++;
         const aliases = moduleAliases.get(moduleScopeKey(module))?.get(module.path.join('.'));
         const resolved = aliases?.has(implementation.typePath[0]) ? [...aliases.get(implementation.typePath[0]), ...implementation.typePath.slice(1)] : implementation.typePath;
         const qualifiedType = ['crate','self','super'].includes(resolved[0]) ? resolved : ['crate',...module.path,...resolved];
@@ -325,13 +338,16 @@ export function translateProject(options) {
       }
     }
   }
+  progress({stage:'method-parse',state:'end',entry:options.entry,completed:completedMethods});
   const duplicateNames = new Set(declarations.filter((entry, index) => declarations.findIndex(candidate => candidate.name === entry.name) !== index).map(entry => entry.name));
   for (const entry of declarations.filter(entry => duplicateNames.has(entry.name))) refused.push({ file: entry.file, name: entry.name, term: entry.term, kind: 'ambiguous', message: 'duplicate module-scoped declaration', span: entry.span });
   let active = declarations.filter(entry => !duplicateNames.has(entry.name)), checked;
   // Discard a failed declaration phase and remove its attributed original
   // owners. Opt-in body collection does not return partial IR. Every survivor
   // and caller is checked afresh; post-check proof failures remain ordinary.
+  progress({stage:'semantic-check',state:'start',entry:options.entry,remaining:active.length});
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
+    progress({stage:'semantic-check',state:'advance',entry:options.entry,attempt:attempts,remaining:active.length});
     try { checked = roundTripProgram(checkProjectProgram({ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null },{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true})); break; }
     catch (error) {
       const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
@@ -348,6 +364,8 @@ export function translateProject(options) {
     }
   }
   if (!checked) throw new Error('project declaration checking did not converge');
+  progress({stage:'semantic-check',state:'end',entry:options.entry,remaining:active.length});
+  progress({stage:'target-emit',state:'start',entry:options.entry});
   const target = flatten(checked);
   const runtimeModule = posix.relative(posix.dirname(options.entry.replace(/\.rs$/u,'.mjs')), 'runtime/effects.mjs');
   const emitted = emitJavaScript(target.program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
@@ -365,6 +383,8 @@ export function translateProject(options) {
     return `${JSON.stringify(entry.name)}: ${entry.term === 'const' ? tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes) : `(${own.params.map((param,index) => `${typeParameterName(param.name,index)}: ${tsType(param.type, dataTypes)}`).join(', ')}) => ${tsType(own.async ? {kind:'routerFuture',value:own.ret} : own.ret, dataTypes)}`}`;
   }).join('; ');
   const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
+  progress({stage:'target-emit',state:'end',entry:options.entry});
+  progress({stage:'project-serialize',state:'start',entry:options.entry});
   const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
   if(deriveContext)meta.deriveNamespaceFootprints=deriveContext;
   if(toolContext.certificates.length)meta.toolAttributeFootprints=toolContext;
@@ -389,5 +409,6 @@ export function translateProject(options) {
     const token=fieldEvidenceBySurface.get(entry.surface);if(token)checkedMethodFieldOrigins.set(facade,originalProjectMethodFieldEvidence(token,methodFieldEvidence.get(token).transform));
     return facade;
   });
+  progress({stage:'project-serialize',state:'end',entry:options.entry});
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, sourceScopes };
 }

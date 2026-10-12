@@ -13,6 +13,7 @@ import {trackedSource,sourceCorpusPaths,sourceCorpusText,assertSourceCorpusSelec
 import {compilationMatrixDescription} from './compilation-matrix.mjs';
 export {trackedSource} from './source-corpus.mjs';
 import {jsonMacroDependencyProfile} from './json-macro-sources.mjs';
+import {translationProgressReporter} from './translation-progress.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'packages/javascript/generated/rust-draft', 'packages/typescript/generated/rust-draft', 'tools/translation/projects', 'packages/javascript/generated/rust-project', 'packages/typescript/generated/rust-project'];
 const plans=new WeakMap();
@@ -39,8 +40,10 @@ function files(root) {
   return readdirSync(root, { withFileTypes: true }).flatMap(entry => entry.isDirectory() ? files(join(root, entry.name)) : [join(root, entry.name)]);
 }
 
-export function planRegeneration({ root, sources, entries, compilationProfile:profileInput=PRODUCTION_PROFILE,outputPrefix:prefixInput,sourceCorpus,matrix } = {}) {
+export function planRegeneration({ root, sources, entries, compilationProfile:profileInput=PRODUCTION_PROFILE,outputPrefix:prefixInput,sourceCorpus,matrix,progress:progressInput } = {}) {
   root = resolve(root);
+  const progress=translationProgressReporter(progressInput);
+  progress({stage:'corpus',state:'start'});
   const profile=compilationProfile(profileInput);
   const prefix=profilePrefix(prefixInput),outputRoots=OUTPUT_ROOTS.map(path=>prefix?`${prefix}/${path}`:path);
   const matrixDescription=matrix?compilationMatrixDescription(matrix):null;
@@ -71,8 +74,10 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   const functionCoverage = { scope: 'top-level fn items; nested declarations inside carried enclosing items are excluded', productionPathRule: 'src/ paths excluding names containing tests or test_support', all: coverage(), production: coverage() };
   const totals = { sources: paths.length, executable: 0, executableFunctions: 0, executableConstants: 0, executableTypes: 0, executableConstructors: 0, carried: 0, preserved: 0 };
   const projects = [], projectDeclarations = [], projectSourceScopes=[];
+  progress({stage:'corpus',state:'end',total:paths.length});
   for (const entry of entries ?? ['src/lib.rs', 'src/main.rs'].filter(path => paths.includes(path))) {
-    const result = translateProject({ entry, paths, readSource,compilationProfile:profile,deriveDependencies,jsonParserProfile,jsonMacroDependencies });
+    progress({stage:'project',state:'start',entry});
+    const result = translateProject({ entry, paths, readSource,compilationProfile:profile,deriveDependencies,jsonParserProfile,jsonMacroDependencies,progress:progressInput });
     result.meta.deriveDependencyProfile={available:!!deriveDependencies,digest:deriveDependencies?.digest??null,diagnostics:deriveProfile.diagnostics};
     result.meta.jsonMacroDependencyProfile={available:!!jsonMacroDependencies,digest:jsonMacroDependencies?.digest??null,diagnostics:jsonMacroProfile.diagnostics};
     projectDeclarations.push(...result.executableDeclarations);projectSourceScopes.push(...result.sourceScopes);
@@ -80,8 +85,13 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
     const targets = { meta: `${outputRoots[3]}/${stem}.meta.json`, javascript: `${outputRoots[4]}/${stem}.mjs`, typescript: `${outputRoots[5]}/${stem}.ts` };
     expected.set(targets.meta, json(result.meta)); expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
     projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });
+    progress({stage:'project',state:'end',entry});
   }
+  progress({stage:'standalone',state:'start',total:paths.length});
+  let completedSources=0;
   for (const path of paths) {
+    if(completedSources%32===0)progress({stage:'standalone',state:'advance',source:path,completed:completedSources,total:paths.length});
+    completedSources++;
     if (path.split('/').includes('..') || path.startsWith('/')) throw new Error(`source must be repository relative: ${path}`);
     const source = readSource(path);
     const result = translateSource(source, path, { projectDeclarations,projectSourceScopes,jsonParserProfile });
@@ -117,6 +127,8 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
       }
     }
   }
+  progress({stage:'standalone',state:'end',completed:completedSources,total:paths.length});
+  progress({stage:'fingerprint',state:'start'});
   const implementation = ['tools/translation/translate.mjs', 'tools/translation/checked-types.mjs', 'tools/translation/checked-coercions.mjs', 'tools/translation/rust-structure.mjs', 'tools/translation/bulk.mjs', 'tools/translation/cfg-profile.mjs', 'tools/translation/project.mjs', 'tools/translation/project-copy.mjs', 'tools/translation/project-nominal.mjs', 'tools/translation/semantic-meta.mjs', 'tools/translation/effect-assets.mjs', 'tools/translation/host-assets.mjs', 'tools/translation/type-layout.mjs', 'tools/translation/type-layout-runtime.mjs', 'tools/translation/pattern-bindings.mjs', 'tools/translation/pattern-syntax.mjs', 'tools/translation/monomorphic.mjs', 'tools/translation/macro-provenance.mjs', 'tools/translation/module-bindings.mjs', 'tools/translation/registered-bindings.mjs', 'tools/translation/source-scopes.mjs', 'tools/translation/impl-resolver.mjs', ...readdirSync(new URL('./extensions/', import.meta.url)).filter(name => name.endsWith('.mjs')).map(name => `tools/translation/extensions/${name}`)];
   const translatorRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
   // Namespace authority consumes the exact offline dependency source bytes,
@@ -153,6 +165,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push('tools/translation/compilation-matrix.mjs','tools/translation/matrix-bulk.mjs');
   implementation.push('tools/translation/conditional-attributes.mjs',...readdirSync(new URL('./source-profiles/conditional-attributes/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/conditional-attributes/${name}`));
   implementation.push('scripts/translate-router.mjs');
+  implementation.push('tools/translation/translation-progress.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/module-paths/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/module-paths/${name}`));
   implementation.push(...['namespace-census.mjs','namespace-standard.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...['rust-std-lib-1.89.0.rs.gz','rust-alloc-lib-1.89.0.rs.gz','rust-alloc-fmt-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/namespace-standard/${name}`));
@@ -181,6 +194,8 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...readdirSync(new URL('./source-profiles/reverse-string-iterators/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/reverse-string-iterators/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/standard-bool/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/standard-bool/${name}`));
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
+  progress({stage:'fingerprint',state:'end',total:implementation.length});
+  progress({stage:'plan',state:'start'});
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, compilationProfile:profile, compilationProfileScope:'resolved tracked crate contexts; unmatched standalone source conditions remain unknown', translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };
   if(sourceCorpus)manifest.originalSourceCorpus={schema:sourceCorpus.schema,sourceSetSha256:sourceCorpus.sourceSetSha256,sources:sourceCorpus.sources,cargo:sourceCorpus.cargo,totalSourceBytes:sourceCorpus.totalSourceBytes};
   if(prefix)manifest.outputPrefix=prefix;
@@ -191,7 +206,9 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   if(prefix&&expectedBytes>BULK_PLAN_LIMITS.profileExpectedBytes)throw new TypeError('bulk profile output plan exceeds its 536870912 byte budget');
   const outputs=[...expected].map(([path,content])=>Object.freeze({path,bytes:Buffer.byteLength(content),sha256:sha256(content)}));
   const plan=Object.freeze({schema:'checked-bulk-output-plan-v1',root,outputPrefix:prefix||null,outputRoots:Object.freeze(outputRoots),expectedBytes,outputs:Object.freeze(outputs),manifest});
-  plans.set(plan,{root,prefix,outputRoots,expected,manifest});return plan;
+  plans.set(plan,{root,prefix,outputRoots,expected,manifest});
+  progress({stage:'plan',state:'end',outputs:outputs.length,bytes:expectedBytes});
+  return plan;
 }
 
 export function validateRegenerationPlan(plan){

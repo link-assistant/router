@@ -8,6 +8,7 @@ import {compilationMatrixDescription} from './compilation-matrix.mjs';
 import {captureSourceCorpus,sourceCorpusPaths,assertSourceCorpusSelection} from './source-corpus.mjs';
 import {planRegeneration,validateRegenerationPlan,applyRegenerationPlan} from './bulk.mjs';
 import {json,sha256} from './translate.mjs';
+import {translationProgressReporter} from './translation-progress.mjs';
 export const MATRIX_BULK_LIMITS=Object.freeze({entries:16,expectedBytes:1024*1024*1024});
 
 function entryPaths(input,tracked){
@@ -32,8 +33,9 @@ function manifestPath(root,matrix){
   }
   return relative;
 }
-export function regenerateCompilationMatrix({root,matrix,check=false,sources,entries,sourceCorpus}={}){
+export function regenerateCompilationMatrix({root,matrix,check=false,sources,entries,sourceCorpus,progress:progressInput}={}){
   root=resolve(root);
+  const progress=translationProgressReporter(progressInput);
   const description=compilationMatrixDescription(matrix);
   const corpus=sourceCorpus??captureSourceCorpus({root,paths:sources??execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean)});
   const paths=sourceCorpusPaths(corpus,root),tracked=new Set(paths);
@@ -43,10 +45,12 @@ export function regenerateCompilationMatrix({root,matrix,check=false,sources,ent
   // Every profile constructs fresh invocation, binding, type and effect
   // contexts. All plans finish and all output paths validate before any write.
   for(const member of description.profiles){
-    const plan=planRegeneration({root,sources:paths,entries,compilationProfile:member.compilationProfile,outputPrefix:member.directory,sourceCorpus:corpus,matrix});
+    progress({stage:'profile',state:'start',profile:member.name});
+    const plan=planRegeneration({root,sources:paths,entries,compilationProfile:member.compilationProfile,outputPrefix:member.directory,sourceCorpus:corpus,matrix,progress:progressInput});
     expectedBytes+=plan.expectedBytes;
     if(expectedBytes>MATRIX_BULK_LIMITS.expectedBytes)throw new TypeError('matrix output plans exceed the 1073741824 byte aggregate budget');
     outputPlans.push({member,plan});
+    progress({stage:'profile',state:'end',profile:member.name,outputs:plan.outputs.length,bytes:plan.expectedBytes});
   }
   const implementations=new Set(outputPlans.map(({plan})=>sha256(json(plan.manifest.implementationHashes))));
   if(implementations.size!==1)throw new TypeError('translator implementation changed between matrix profile plans');
