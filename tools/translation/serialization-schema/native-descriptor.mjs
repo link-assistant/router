@@ -25,6 +25,9 @@ export async function produceNativeAffinityDescriptor({root,write=false,applyImp
   root=resolve(root);
   if(applyImport&&!write)fail('Native import application requires explicit artifact write mode');
   const before=readFileSync(join(root,sourceModule));
+  const plan=JSON.parse(readFileSync(new URL('./native-import-plan.json',import.meta.url),'utf8'));
+  const body=before.toString('utf8'),bodyStart=body.indexOf('function freezeSchema');
+  if(bodyStart<0||hash(Buffer.from(body.slice(bodyStart)))!==plan.interpreter_body_sha256)fail('Native schema interpreter differs from the reviewed unchanged body');
   const baseline=await import(pathToFileURL(join(root,sourceModule)).href+'?serializationBaseline='+hash(before));
   const paths=execFileSync('git',['ls-files','-z','--','src/*.rs'],{cwd:root,encoding:'utf8'}).split('\0').filter(Boolean);
   const generated=generateSerializationSchema({root,paths,entry:'src/lib.rs',roots:['crate::response_affinity::AffinityFile'],compilationProfile:{flags:{test:false,unix:true,windows:false}},expectedDescriptor:baseline.affinitySchema,exportName:'affinitySchema'});
@@ -44,7 +47,6 @@ export async function produceNativeAffinityDescriptor({root,write=false,applyImp
   for(const [name,path]of Object.entries(outputs))if(readFileSync(join(root,path),'utf8')!==artifacts[name])fail('Written native schema artifact could not be reopened exactly');
   if(applyImport) {
     execFileSync('git',['apply',fileURLToPath(new URL('./native-import.patch',import.meta.url))],{cwd:root});
-    const plan=JSON.parse(readFileSync(new URL('./native-import-plan.json',import.meta.url),'utf8'));
     if(hash(readFileSync(join(root,sourceModule)))!==plan.planned_native_source_sha256)fail('Native schema import differs from the reviewed interpreter-preserving patch');
   }
   return {checked:true,written:true,outputs,baselineNativeSourceSha256:hash(before),receipt:stable,appliedImport:applyImport};
