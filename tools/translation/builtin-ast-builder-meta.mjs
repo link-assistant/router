@@ -35,25 +35,26 @@ function parameters(fragment){
     return {name,span:span(nodes),syntax:nodes,typeSyntax:nodes.slice(colon+1)};
   });
 }
-function actualImports(profile){
-  const origin=builtinAstOriginal(profile,build),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),result=new Map();
+function actualImports(profile,path){
+  const origin=builtinAstOriginal(profile,path),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),result=new Map();
   for(let at=0;at<roots.length;at++){
     if(roots[at].text==='impl')break;
     if(roots[at].text!=='use')continue;
     let end=at+1;while(end<roots.length&&roots[end].text!==';')end++;
     const nodes=roots.slice(at+1,end);
-    // Only the exact original rustc_ast grouped import can identify a bare AST
-    // constructor. Other imports retain their source path as external inputs.
-    if(nodes[0]?.text==='rustc_ast'&&nodes[1]?.text==='::'&&nodes[2]?.kind==='group'&&nodes[2].delimiter==='{'&&nodes.length===3){
-      for(const row of split(nodes[2].children)){
-        if(row.length===3&&row[0].text==='self'&&row[1].text==='as'&&row[2].text==='ast')result.set('ast',{target:['rustc_ast'],syntax:row,span:span(row)});
-        else if(row.length===1&&ident(row[0]))result.set(row[0].text,{target:['rustc_ast',row[0].text],syntax:row,span:span(row)});
-        else throw new TypeError('Original AST import mapping remains unproved');
+    const group=nodes.at(-1),prefix=group?.kind==='group'?nodes.slice(0,-1):nodes;
+    if(prefix.every((node,index)=>index%2===0?ident(node):node.text==='::')){
+      const target=prefix.filter(node=>node.text!=='::').map(node=>node.text);
+      if(group?.kind==='group'&&group.delimiter==='{')for(const row of split(group.children)){
+        if(row.length===3&&row[0].text==='self'&&row[1].text==='as'&&ident(row[2]))result.set(row[2].text,{target,syntax:nodes,span:span(nodes)});
+        else if(row.length===1&&ident(row[0]))result.set(row[0].text,{target:[...target,row[0].text],syntax:nodes,span:span(nodes)});
+        // Unknown import forms are not projected into constructor ownership.
       }
+      else if(group?.kind!=='group'&&target.length>1)result.set(target.at(-1),{target,syntax:nodes,span:span(nodes)});
     }
     at=end;
   }
-  if(!result.has('ast'))throw new TypeError('Actual original AST namespace alias is unavailable');return result;
+  if(path===build&&!result.has('ast'))throw new TypeError('Actual original AST namespace alias is unavailable');return result;
 }
 function schemaFields(definition){
   const nameAt=definition.syntax.findIndex(node=>node.text==='struct'),body=definition.syntax.slice(nameAt+2).find(node=>node.kind==='group'&&node.delimiter==='{');
@@ -67,8 +68,8 @@ function schemaFields(definition){
 }
 export function createBuiltinAstBuilderMetaCompiler(profile){
   if(!isBuiltinDeriveAstProfile(profile))throw new TypeError('Builder meta requires its sealed original source profile');
-  const state={profile,imports:actualImports(profile),cache:new Map()};
-  const compiler=Object.freeze({compile:name=>compile(state,name),assert:contract=>assertContract(compiler,contract)});
+  const state={profile,cache:new Map()};
+  const compiler=Object.freeze({compile:name=>compile(state,name,build),compileOriginal:(source,name)=>compile(state,name,source),assert:contract=>assertContract(compiler,contract)});
   compilers.set(compiler,state);state.compiler=compiler;return compiler;
 }
 function assertContract(compiler,contract){if(contracts.get(contract)?.compiler!==compiler)throw new TypeError('Builder meta contract belongs to its original compiler');return contract;}
@@ -113,23 +114,27 @@ export function inventoryBuiltinAstCallbackCalls(compiler,fragment){
   const inventory=freeze({...roundTrip,digest:hash(encoded)});callbackInventories.set(inventory,{compiler,fragment});return inventory;
 }
 export const isBuiltinAstCallbackBuilderInventory=value=>!!value&&callbackInventories.has(value);
-function compile(state,name){
+function compile(state,name,sourcePath){
   if(typeof name!=='string'||!/^[_a-zA-Z][_a-zA-Z0-9]*$/u.test(name))throw new TypeError('Actual builder function identifier is required');
-  if(state.cache.has(name))return state.cache.get(name);
+  if(typeof sourcePath!=='string')throw new TypeError('Actual original builder source member is required');
+  builtinAstOriginal(state.profile,sourcePath);const key=sourcePath+'::'+name;
+  if(state.cache.has(key))return state.cache.get(key);
   if(state.cache.size>=bounds.functions)throw new TypeError('Original builder function budget exceeded');
-  const recipe=originalAstFunction(state.profile,build,name),params=parameters(recipe),environment=new Map(params.map(value=>[value.name,{kind:'parameter',parameter:value}]));
+  const imports=actualImports(state.profile,sourcePath),recipe=originalAstFunction(state.profile,sourcePath,name),params=parameters(recipe),environment=new Map(params.map(value=>[value.name,{kind:'parameter',parameter:value}]));
   const body=recipe.syntax.at(-1);if(body?.kind!=='group'||body.delimiter!=='{')throw new TypeError('Original builder body is unavailable');
   const counter={nodes:0},obligations=[],schemas=new Map();
   const provenance=nodes=>({source:recipe.source,sourceSha256:recipe.sourceSha256,span:span(nodes),syntax:nodes});
   function count(depth){if(++counter.nodes>bounds.nodes||depth>bounds.depth)throw new TypeError('Original builder expression budget exceeded');}
   function astOwner(path){
-    const imported=state.imports.get(path[0]);if(!imported)return null;
-    const full=[...imported.target,...path.slice(1)];if(full[0]!=='rustc_ast'||full.length<2)return null;
-    return {path:full.slice(1),imported};
+    const imported=imports.get(path[0]);if(!imported)return null;
+    const full=[...imported.target,...path.slice(1)];
+    if(full[0]==='rustc_ast'&&full.length>=2)return {path:full.slice(1),imported,source:schema};
+    if(full[0]==='rustc_span'&&full[1]==='source_map'&&full.length>=3)return {path:full.slice(2),imported,source:'compiler/rustc_span/src/source_map.rs'};
+    return null;
   }
-  function schemaFor(kind,name){
-    const key=kind+'::'+name;if(schemas.has(key))return schemas.get(key);
-    const original=originalAstDefinition(state.profile,schema,kind,name);schemas.set(key,original);return original;
+  function schemaFor(kind,name,path=schema){
+    const key=path+'::'+kind+'::'+name;if(schemas.has(key))return schemas.get(key);
+    const original=originalAstDefinition(state.profile,path,kind,name);schemas.set(key,original);return original;
   }
   function expression(nodes,depth=0){
     count(depth);if(!nodes.length)throw new TypeError('Original builder expression is empty');
@@ -140,6 +145,7 @@ function compile(state,name){
       if(['true','false'].includes(nodes[0].text))return {tag:'source-literal',value:nodes[0].text,...source};
       obligations.push({kind:'unresolved-value-slot',name:nodes[0].text,span:source.span});return {tag:'unresolved-source-value',name:nodes[0].text,...source};
     }
+    if(nodes.length===1&&nodes[0].type==='number')return {tag:'source-numeric-token',spelling:nodes[0].text,...source};
     if(nodes.length===1&&nodes[0].kind==='group'&&nodes[0].delimiter==='(')return {tag:'source-parentheses',value:expression(nodes[0].children,depth+1),...source};
     const terminal=nodes.at(-1);
     if(terminal.kind==='group'&&terminal.delimiter==='('){
@@ -147,9 +153,13 @@ function compile(state,name){
       if(head.every((node,at)=>at%2===0?ident(node):node.text==='::')){
         const owner=astOwner(parts),args=split(terminal.children).map(value=>expression(value,depth+1));
         if(owner?.path.length===2){
-          const definition=schemaFor('enum',owner.path[0]),variant=astEnumVariant(state.profile,definition,owner.path[1]);
-          if(args.length!==variant.arity)throw new TypeError('Original AST constructor arity disagrees with its schema');
-          return {tag:'positive-ast-enum-constructor',owner:owner.path[0],variant:variant.name,variantSchema:variant,import:owner.imported,args,...source};
+          let definition=null;
+          try{definition=schemaFor('enum',owner.path[0],owner.source);}catch(error){obligations.push({kind:'unresolved-constructor-owner',path:parts,span:source.span,reason:String(error.message)});}
+          if(definition){
+            const variant=astEnumVariant(state.profile,definition,owner.path[1]);
+            if(args.length!==variant.arity)throw new TypeError('Original AST constructor arity disagrees with its schema');
+            return {tag:'positive-ast-enum-constructor',owner:owner.path[0],variant:variant.name,variantSchema:variant,import:owner.imported,args,...source};
+          }
         }
         obligations.push({kind:'external-source-call',path:parts,span:source.span});return {tag:'unresolved-source-call',path:parts,args,...source};
       }
@@ -159,7 +169,7 @@ function compile(state,name){
     if(terminal.kind==='group'&&terminal.delimiter==='{'){
       const head=nodes.slice(0,-1),parts=head.filter(node=>node.text!=='::').map(node=>node.text),owner=astOwner(parts);
       if(!head.every((node,at)=>at%2===0?ident(node):node.text==='::')||owner?.path.length!==1)throw new TypeError('Original builder record owner remains unproved');
-      const definition=schemaFor('struct',owner.path[0]),fields=schemaFields(definition),values=split(terminal.children).map(row=>{
+      const definition=schemaFor('struct',owner.path[0],owner.source),fields=schemaFields(definition),values=split(terminal.children).map(row=>{
         if(!ident(row[0]))throw new TypeError('Original builder record field is unavailable');
         const shorthand=row.length===1;if(!shorthand&&row[1]?.text!==':')throw new TypeError('Original builder record field expression remains unproved');
         const field=fields.find(field=>field.name===row[0].text);if(!field)throw new TypeError('Original builder field does not belong to its actual schema');
@@ -172,7 +182,7 @@ function compile(state,name){
     if(nodes.every((node,at)=>at%2===0?ident(node):node.text==='::')){
       const path=nodes.filter(node=>node.text!=='::').map(node=>node.text),owner=astOwner(path);
       if(owner?.path.length===2){
-        const definition=schemaFor('enum',owner.path[0]),variant=astEnumVariant(state.profile,definition,owner.path[1]);
+        const definition=schemaFor('enum',owner.path[0],owner.source),variant=astEnumVariant(state.profile,definition,owner.path[1]);
         if(variant.arity!==0)throw new TypeError('Original nonunit AST constructor requires arguments');
         return {tag:'positive-ast-enum-constructor',owner:owner.path[0],variant:variant.name,variantSchema:variant,import:owner.imported,args:[],...source};
       }
@@ -191,5 +201,5 @@ function compile(state,name){
   const evidence={schema:'original-ast-builder-contract-meta-v1',profileDigest:state.profile.digest,recipe,parameters:params,statements,result,positiveSchemas:[...schemas.values()].map(schemaReference),unresolved:obligations,sourceExpressionRoundTrip:true,selectedOwnerBangComplete:false,generatedImplBehavior:false,obligations:['actual caller slot categories and transitive builder recipes require independent closure','external source calls/macros cannot be inferred from result types or builder names']};
   const encoded=JSON.stringify(evidence);if(Buffer.byteLength(encoded)>bounds.serializedBytes)throw new TypeError('Original builder metadata byte budget exceeded');
   const roundTrip=JSON.parse(encoded);if(JSON.stringify(roundTrip)!==encoded)throw new TypeError('Original builder structured meta roundtrip changed');
-  const contract=freeze({...roundTrip,digest:hash(encoded)});contracts.set(contract,{compiler:state.compiler,profile:state.profile});state.cache.set(name,contract);return contract;
+  const contract=freeze({...roundTrip,digest:hash(encoded)});contracts.set(contract,{compiler:state.compiler,profile:state.profile});state.cache.set(key,contract);return contract;
 }

@@ -138,8 +138,104 @@
       "archive": "rust-1.89-library_alloc_src_vec_mod.rs.gz",
       "archiveBytes": 31835,
       "archiveSha256": "23c0282775cc91c9405559d55e8bbb5df1b87445e164ae7f9205b7161f434e70"
+    },
+    {
+      "path": "Cargo.lock",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/Cargo.lock",
+      "bytes": 149714,
+      "sha256": "47e4d2ad5e3b87fba150a3cee11a6c657d5d7648be075588e7f3aa9d8a8e847c",
+      "archive": "original-Cargo.lock.gz",
+      "archiveBytes": 33573,
+      "archiveSha256": "a7dd37ec561ba908b8516eecc327854dbeed2acab56dd9a10dd8d88b80204e3b"
+    },
+    {
+      "path": "compiler/rustc_ast/src/ptr.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast/src/ptr.rs",
+      "bytes": 331,
+      "sha256": "8253859648b97ee47aae7ef9a993396407c3e380ab50758485448e8d7268ef1c",
+      "archive": "original-compiler_rustc_ast_src_ptr.rs.gz",
+      "archiveBytes": 248,
+      "archiveSha256": "9fcfcc67d5b404a2177fd060724090ac05fd9344841da8a4a250b91c9a90e979"
+    },
+    {
+      "path": "compiler/rustc_span/src/source_map.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_span/src/source_map.rs",
+      "bytes": 54212,
+      "sha256": "7f8e24554c3c5eee4eeab882fabfb2658842159803031b75cf36e2928c0982b6",
+      "archive": "original-compiler_rustc_span_src_source_map.rs.gz",
+      "archiveBytes": 13708,
+      "archiveSha256": "5de42bde8a45bc04b29487e7ec6378f2ba69dee1e00a643f5a99558d0712bda8"
+    },
+    {
+      "path": "thin-vec-0.2.14/src/lib.rs",
+      "url": "https://static.crates.io/crates/thin-vec/thin-vec-0.2.14.crate",
+      "bytes": 135197,
+      "sha256": "7ad714af3e26b7c88339d7fc59b35171a05b00cad472f7662dd52ead3f9557fb",
+      "archive": "original-thin-vec-0.2.14_src_lib.rs.gz",
+      "archiveBytes": 28345,
+      "archiveSha256": "5bd2e5a85b80a78d09840d88b5da234a4d7ecd5170149e8dbf70ff07aa557495"
+    },
+    {
+      "path": "thin-vec-0.2.14/Cargo.toml",
+      "url": "https://static.crates.io/crates/thin-vec/thin-vec-0.2.14.crate",
+      "bytes": 1304,
+      "sha256": "e2fb105c6ed6245eb7c90f2a06ad735656bba74ea22b6413cfc66a350635c2c4",
+      "archive": "original-thin-vec-0.2.14_Cargo.toml.gz",
+      "archiveBytes": 720,
+      "archiveSha256": "0fed06eb7bfe5a8d9774821978e898c0d8e8b4c2ef82bda2e3b91004968e4a1f"
+    },
+    {
+      "path": "thin-vec-0.2.14/LICENSE-MIT",
+      "url": "https://static.crates.io/crates/thin-vec/thin-vec-0.2.14.crate",
+      "bytes": 1023,
+      "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3",
+      "archive": "original-thin-vec-0.2.14_LICENSE-MIT.gz",
+      "archiveBytes": 619,
+      "archiveSha256": "8a5eddda9f93808335b34a03abef4968118f82a872cd3f7b52cc43d3cf41b497"
+    },
+    {
+      "path": "thin-vec-0.2.14/LICENSE-APACHE",
+      "url": "https://static.crates.io/crates/thin-vec/thin-vec-0.2.14.crate",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "archive": "original-thin-vec-0.2.14_LICENSE-APACHE.gz",
+      "archiveBytes": 3554,
+      "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6"
     }
   ],
   "generatedImplBehavior": false,
-  "scope": "Selected actual builtin derive AST output; other compiler behavior remains unsupported"
+  "scope": "Selected actual builtin derive AST output; other compiler behavior remains unsupported",
+  "builderContainerInputs": {
+    "rustWorkspaceLock": {
+      "source": "Cargo.lock",
+      "sha256": "47e4d2ad5e3b87fba150a3cee11a6c657d5d7648be075588e7f3aa9d8a8e847c",
+      "rustVersion": "1.89.0"
+    },
+    "thinVec": {
+      "package": "thin-vec",
+      "version": "0.2.14",
+      "crateSha256": "144f754d318415ac792f9d69fc87abbbfc043ce2ef041c60f16ad828f638717d",
+      "crateBytes": 35087,
+      "source": "thin-vec-0.2.14/src/lib.rs",
+      "license": "MIT OR Apache-2.0",
+      "featureCompleteness": false,
+      "obligations": [
+        "actual compiler feature selection is not established",
+        "non-gecko static EMPTY_HEADER and gecko external EMPTY_HEADER remain independent source branches"
+      ]
+    },
+    "pointer": {
+      "source": "compiler/rustc_ast/src/ptr.rs",
+      "payloadInput": "actual generic value:T slot passed unchanged to Box::new",
+      "allocationPhaseBehavior": false
+    },
+    "spanned": {
+      "source": "compiler/rustc_span/src/source_map.rs",
+      "record": "Spanned<T>",
+      "payloadInput": "actual generic node:T slot plus original Span",
+      "allocationPhaseBehavior": false
+    },
+    "selectedOwnerBangComplete": false,
+    "generatedImplBehavior": false
+  }
 }
