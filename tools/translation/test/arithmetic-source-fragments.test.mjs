@@ -21,3 +21,8 @@ test('actual duplicate source owners refuse; singleton tuple punctuation survive
   const program=compileArithmeticSourceFragments('fn one(x:u64)->(u64,){(x,)}',['one']);assert.deepEqual(projectArithmeticSource(program,'one',[3n]).value,[3n]);assert.equal(program.privateMetaRoundtrip,true);assert.match(program.checkedMetaSha256,/^[0-9a-f]{64}$/u);
   assert.throws(()=>compileArithmeticSourceFragments('fn one(x:u64)->(u64,){(x,,)}',['one']),/empty separated/);
 });
+
+test('source tail conditionals and mutable reference parameter rebinding preserve actual expression results',()=>{
+  const program=compileArithmeticSourceFragments('fn pick(x:u64)->u64{if x < 2 {x}else if x < 5 {x+1}else{x+2}}',['pick']);assert.equal(projectArithmeticSource(program,'pick',[1n]).value,1n);assert.equal(projectArithmeticSource(program,'pick',[3n]).value,4n);assert.equal(projectArithmeticSource(program,'pick',[6n]).value,8n);
+  const scopes=compileArithmeticSourceFragments('const C:u64=3; fn compare(x:u64)->u64{if x < C {x}else{C}}',['compare']);assert.equal(projectArithmeticSource(scopes,'compare',[7n]).value,3n);
+});

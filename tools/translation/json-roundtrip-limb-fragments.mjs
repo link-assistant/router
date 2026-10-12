@@ -2,7 +2,7 @@
 import {isJsonMacroSourceProof,jsonMacroOriginalSource} from './json-macro-sources.mjs';
 import {compileArithmeticSourceFragments,projectArithmeticSource} from './arithmetic-source-fragments.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
-const candidates=new WeakMap(),paths=['scalar::add','scalar::iadd','scalar::mul','scalar::imul','small::iadd_impl','small::iadd','small::mul','small::imul','small::normalize','large::iadd_impl','large::long_mul','u64_to_hi64_1','u64_to_hi64_2'];
+const candidates=new WeakMap(),paths=['scalar::add','scalar::iadd','scalar::mul','scalar::imul','small::iadd_impl','small::iadd','small::mul','small::imul','small::normalize','large::iadd_impl','large::long_mul','large::karatsuba_split','large::karatsuba_mul','large::karatsuba_uneven_mul','large::karatsuba_mul_fwd','large::imul','u64_to_hi64_1','u64_to_hi64_2'];
 export function compilePinnedJsonLimbFragments(dependencies){
   if(!isJsonMacroSourceProof(dependencies))throw new TypeError('Limb fragments need private original dependencies');
   const math=jsonMacroOriginalSource(dependencies,'serde_json','src/lexical/math.rs'),num=jsonMacroOriginalSource(dependencies,'serde_json','src/lexical/num.rs'),build=jsonMacroOriginalSource(dependencies,'serde_json','build.rs');

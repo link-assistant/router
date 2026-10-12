@@ -7,10 +7,10 @@ import {compilePinnedJsonLimbFragments,isPinnedJsonLimbFragments,projectPinnedJs
 const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),project=(proof,path,args,bits=32)=>projectPinnedJsonLimbFragment(proof,path,args,bits);
 test('original scalar, mutable scalar loop and hi64 function spans become serializable source-derived IR',()=>{
   const input=dependencies(),proof=compilePinnedJsonLimbFragments(input),source=jsonMacroOriginalSource(input,'serde_json','src/lexical/math.rs');
-  assert.equal(isPinnedJsonLimbFragments(proof),true);assert.equal(proof.program.functions.length,13);assert.doesNotThrow(()=>JSON.stringify(proof.program));
+  assert.equal(isPinnedJsonLimbFragments(proof),true);assert.equal(proof.program.functions.length,18);assert.doesNotThrow(()=>JSON.stringify(proof.program));
   for(const fn of proof.program.functions){assert.equal(createHash('sha256').update(source.source.slice(fn.span.start,fn.span.end)).digest('hex'),fn.sha256);assert.equal(source.source.slice(fn.bodySpan.start,fn.bodySpan.end).startsWith('{'),true);}
   const loop=proof.program.functions.find(fn=>fn.name==='small::imul');assert.equal(loop.ir.statements.some(statement=>statement.kind==='for'),true);
-  assert.equal(loop.ir.statements.some(statement=>statement.kind==='if'),true);
+  assert.equal(loop.ir.tail.kind,'conditional');
 });
 test('both original Limb/Wide interpretations retain the maximal wide scalar product and actual mutation',()=>{
   const proof=compilePinnedJsonLimbFragments(dependencies());for(const bits of [32,64]){const q=1n<<BigInt(bits),maximum=q-1n;
@@ -53,5 +53,13 @@ test('original offset-add loop preserves boolean carry propagation beyond an all
     assert.deepEqual(project(proof,'small::iadd_impl',[[m,m],1n,0n],bits).mutations,[[0n,0n,1n]]);
     assert.deepEqual(project(proof,'large::iadd_impl',[[m,m],[1n],0n],bits).mutations[0],[0n,0n,1n]);
     assert.deepEqual(project(proof,'large::iadd_impl',[[1n],[m],1n],bits).mutations[0],[1n,m]);
+  }
+});
+
+test('actual unequal-size source dispatcher reaches source grade-school pieces and refuses general balanced arithmetic',()=>{
+  const proof=compilePinnedJsonLimbFragments(dependencies());for(const bits of [32,64]){const q=1n<<BigInt(bits),left=[1n,2n,3n,4n,5n,6n,7n],right=[];let sourcePower=5n**1024n;while(sourcePower){right.push(sourcePower&(q-1n));sourcePower>>=BigInt(bits);}
+    const result=project(proof,'large::karatsuba_mul_fwd',[left,right],bits),value=limbs=>limbs.reduceRight((n,limb)=>n*q+limb,0n);
+    assert.equal(value(result.value),value(left)*5n**1024n);assert.equal(result.calls.some(call=>call.path==='large::karatsuba_uneven_mul'),true);assert.equal(result.calls.some(call=>call.path==='large::long_mul'),true);
+    assert.throws(()=>project(proof,'large::karatsuba_mul_fwd',[Array(40).fill(1n),Array(40).fill(1n)],bits),/callable absent/);
   }
 });

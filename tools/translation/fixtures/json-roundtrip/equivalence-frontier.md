@@ -179,3 +179,13 @@ outputs independently; the original source functions are not yet executed.
 The sequence model uses at most128 entries and a bounded32-bit index projection;
 physical usize, Vec/iterator/Option owners, borrow aliasing/Drop and allocation
 are not certified. Whole uneven/pow5 dispatch remains a separate source-frontier.
+
+The new source-fragment extension retains original literal scalar constants,
+tail conditional/else-if expressions, mutable source parameters and tuple lets.
+It adds exact karatsuba_split/uneven_mul/mul/fwd and large::imul declarations
+(18 selected source functions), serializes their original branch decisions, and
+records actual selected call counts. The authored unequal-size case reaches
+only original uneven and grade-school source fragments. General balanced
+Karatsuba calls remain absent from the checked model and explicitly refuse;
+no source profile claims its correctness. This is an unrun projection witness,
+not a universal768-domain dispatch proof or resolved trait/runtime contract.
