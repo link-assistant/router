@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {compileArithmeticSourceFragments,projectArithmeticSource,isArithmeticSourceFragments} from '../arithmetic-source-fragments.mjs';
+import {compileDeclarativeMacro,expandDeclarativeMacro} from '../declarative-macros.mjs';
+import {originalMacroTrees} from '../macro-token-trees.mjs';
+import {compileArithmeticSourceFragments,projectArithmeticSource,isArithmeticSourceFragments,compileArithmeticExpansionFragments} from '../arithmetic-source-fragments.mjs';
 test('source block scopes share outer mutable places while branch-local shadow bindings stay local',()=>{
   const source='fn update(x:u64)->u64{let mut total=x;if x != 0 {total=total+1;let total=x;}total}';
   const program=compileArithmeticSourceFragments(source,['update']);assert.equal(projectArithmeticSource(program,'update',[4n]).value,5n);assert.equal(projectArithmeticSource(program,'update',[0n]).value,0n);
@@ -30,4 +32,10 @@ test('source tail conditionals and mutable reference parameter rebinding preserv
 test('actual checked helper bodies take precedence over arithmetic cast spellings',()=>{
   const source='fn as_limb(x:u64)->u64{x+1} fn call(x:u64)->u64{as_limb(x)}',program=compileArithmeticSourceFragments(source,['as_limb','call']);assert.equal(projectArithmeticSource(program,'call',[4n]).value,5n);
   const missing=compileArithmeticSourceFragments('fn call(x:u64)->u64{as_limb(x)}',['call']);assert.throws(()=>projectArithmeticSource(missing,'call',[4n]),/callable absent/);
+});
+
+test('generic private expansion lowering retains original source/capture identity and rejects clones or changed definitions',()=>{
+  const source='trait Read{fn read(self)->u32;} macro_rules! make{($t:ident)=>{impl Read for $t{fn read(self)->u32{self as u32}}}}',proof=expandDeclarativeMacro(compileDeclarativeMacro(source,{name:'make',owner:['fixture']}),originalMacroTrees('u64')),program=compileArithmeticExpansionFragments(source,[proof],['impl::Read::u64::read']);
+  assert.equal(projectArithmeticSource(program,'impl::Read::u64::read',[(1n<<32n)+3n]).value,3n);assert.equal(program.expansionSources[0].ownerVerified,false);assert.equal(program.privateMetaRoundtrip,true);
+  assert.throws(()=>compileArithmeticExpansionFragments(source,[structuredClone(proof)],['impl::Read::u64::read']),/private original/);assert.throws(()=>compileArithmeticExpansionFragments(source+' ',[proof],['impl::Read::u64::read']),/source differs/);assert.throws(()=>compileArithmeticExpansionFragments(source,[proof,proof],['impl::Read::u64::read']),/ambiguous/);
 });
