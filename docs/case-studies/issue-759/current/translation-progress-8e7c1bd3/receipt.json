@@ -1,0 +1,439 @@
+{
+  "schema": "router-759-translation-progress-215-complete-evidence-v1",
+  "recordedUtc": "2026-10-12T17:13:19.787870+00:00",
+  "sourceHead": "8e7c1bd3177e97fe8354afed87ddfbacb90f7dcc",
+  "sourceBaseline": "69ca313dd04c728ea2025947ff5c1f7f92e23a92",
+  "archive": {
+    "path": "docs/case-studies/issue-759/current/translation-progress-8e7c1bd3/complete-focused.tar.xz",
+    "bytes": 121448,
+    "sha256": "4b5db19d024d13ce78fe1d0ce9d9954827698745b593eeb92f1fed85f0f31497",
+    "members": 56,
+    "uncompressedMemberBytes": 1883690
+  },
+  "members": [
+    {
+      "member": "source-drafts/v1/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/draft.patch",
+      "bytes": 24553,
+      "sha256": "09264712d92140bd1de11a6c595a87a6bf56f0a336af51e3f9f71bd997f63062"
+    },
+    {
+      "member": "source-drafts/v1/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/receipt.json",
+      "bytes": 1587,
+      "sha256": "84b6e5d6197e75422501af40d941d4615e6f21d0b439a5e189aa78f33dfb57a0"
+    },
+    {
+      "member": "source-drafts/v1/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/scripts/translate-router.mjs",
+      "bytes": 2065,
+      "sha256": "255d9eafc2b60d4cf5d2251d428f38d2d915dbaae908a844d6b6775082304ea1"
+    },
+    {
+      "member": "source-drafts/v1/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc"
+    },
+    {
+      "member": "source-drafts/v1/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46"
+    },
+    {
+      "member": "source-drafts/v1/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4"
+    },
+    {
+      "member": "source-drafts/v1/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/tools/translation/translation-progress.mjs",
+      "bytes": 1853,
+      "sha256": "4616e0d8a731d55f723050083bd672665d3ce61c98afadf27b4f6b4cf8562365"
+    },
+    {
+      "member": "source-drafts/v2/.changes/issue-759-translation-progress-draft.md",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/.changes/issue-759-translation-progress-draft.md",
+      "bytes": 413,
+      "sha256": "3d076dfe23176ce3d36d12edd226a2cc9c6599cd2c28b16dc99e218975a4a6f5"
+    },
+    {
+      "member": "source-drafts/v2/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/draft.patch",
+      "bytes": 32971,
+      "sha256": "537d8c51fd5388c1fcfed067104cc4a50b1de988d6a7c65474176919426266a5"
+    },
+    {
+      "member": "source-drafts/v2/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/receipt.json",
+      "bytes": 2283,
+      "sha256": "446428e13b4311c06a104ffea85de48ddf38e5225fcefff4a80263ddadd20a8b"
+    },
+    {
+      "member": "source-drafts/v2/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/scripts/translate-router.mjs",
+      "bytes": 2198,
+      "sha256": "f8e867edd366ae8f335b16de1dd2076d34743d658a30700ffff58ac7d8197ea5"
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc"
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46"
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4"
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/test/translation-progress.test.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/test/translation-progress.test.mjs",
+      "bytes": 7604,
+      "sha256": "8c4e99d8a5bb809a28d2402a6ddc7aeafa2267b1ffef71044d5ee1294035255a"
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/translation-progress.mjs",
+      "bytes": 1867,
+      "sha256": "3b04db6aa2dc4207d5cc0f3a2f74965fe9716417b43ecd6fda0feaba97daac75"
+    },
+    {
+      "member": "source-drafts/v3/.changes/issue-759-translation-progress-draft.md",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/.changes/issue-759-translation-progress-draft.md",
+      "bytes": 413,
+      "sha256": "3d076dfe23176ce3d36d12edd226a2cc9c6599cd2c28b16dc99e218975a4a6f5"
+    },
+    {
+      "member": "source-drafts/v3/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/draft.patch",
+      "bytes": 32963,
+      "sha256": "e8da1b5c68b3f30e9cc15bab57a0eea2ce4127ba17a1a0953e4ec2074758e726"
+    },
+    {
+      "member": "source-drafts/v3/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/receipt.json",
+      "bytes": 2529,
+      "sha256": "aae0ecb9c4da15b523323bb9f75ba89b6a4496b378ba4fc54ddad5b25fdfb05a"
+    },
+    {
+      "member": "source-drafts/v3/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/scripts/translate-router.mjs",
+      "bytes": 2198,
+      "sha256": "f8e867edd366ae8f335b16de1dd2076d34743d658a30700ffff58ac7d8197ea5"
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc"
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46"
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4"
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/test/translation-progress.test.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/test/translation-progress.test.mjs",
+      "bytes": 7596,
+      "sha256": "95bb7b714f2666a3af937139eb1df556f86b4ccb5d6d15b741888871d0b0c08e"
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/translation-progress.mjs",
+      "bytes": 1867,
+      "sha256": "3b04db6aa2dc4207d5cc0f3a2f74965fe9716417b43ecd6fda0feaba97daac75"
+    },
+    {
+      "member": "source-drafts/v4/.changes/issue-759-translation-progress-draft.md",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/.changes/issue-759-translation-progress-draft.md",
+      "bytes": 413,
+      "sha256": "3d076dfe23176ce3d36d12edd226a2cc9c6599cd2c28b16dc99e218975a4a6f5"
+    },
+    {
+      "member": "source-drafts/v4/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/draft.patch",
+      "bytes": 33345,
+      "sha256": "7c5047613338355165227774a664bd82d9335402608ff03871c1391c2bc7c6c8"
+    },
+    {
+      "member": "source-drafts/v4/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/receipt.json",
+      "bytes": 2562,
+      "sha256": "4d99c590441afec55af6125a48174c106ab7a6692af5bdb2e1ffcf9a1c7abdee"
+    },
+    {
+      "member": "source-drafts/v4/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/scripts/translate-router.mjs",
+      "bytes": 2198,
+      "sha256": "f8e867edd366ae8f335b16de1dd2076d34743d658a30700ffff58ac7d8197ea5"
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc"
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46"
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4"
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/test/translation-progress.test.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/test/translation-progress.test.mjs",
+      "bytes": 7871,
+      "sha256": "cc7bcfdd9bedbd68c3dec4ad916f2dc54a6a5d1ffcf49afe0b143c8310e2c455"
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/translation-progress.mjs",
+      "bytes": 1970,
+      "sha256": "66ca623f98b7c3df498755cdc1be19615aa2a5ddb76ac8d8752d599e13e69c45"
+    },
+    {
+      "member": "source-drafts/v5/.changes/issue-759-translation-progress-draft.md",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/.changes/issue-759-translation-progress-draft.md",
+      "bytes": 413,
+      "sha256": "3d076dfe23176ce3d36d12edd226a2cc9c6599cd2c28b16dc99e218975a4a6f5"
+    },
+    {
+      "member": "source-drafts/v5/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/draft.patch",
+      "bytes": 35075,
+      "sha256": "a759c910ba45ca4b597c366b8cdcd8e33512dc07c8f57dfdabc08af4ed0c46a6"
+    },
+    {
+      "member": "source-drafts/v5/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/receipt.json",
+      "bytes": 2820,
+      "sha256": "7fc1c05fcf0f43eeaf2f8071ddcd1bc032a45943018a66dd951aae3bb5cf34f3"
+    },
+    {
+      "member": "source-drafts/v5/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/scripts/translate-router.mjs",
+      "bytes": 2198,
+      "sha256": "f8e867edd366ae8f335b16de1dd2076d34743d658a30700ffff58ac7d8197ea5"
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc"
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46"
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4"
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/test/translation-progress.test.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/test/translation-progress.test.mjs",
+      "bytes": 9583,
+      "sha256": "dc2b4755efb5073f8333d7ad25cd006ff30ea8e9a472b15dc0a791fc2706627e"
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/translation-progress.mjs",
+      "bytes": 1970,
+      "sha256": "66ca623f98b7c3df498755cdc1be19615aa2a5ddb76ac8d8752d599e13e69c45"
+    },
+    {
+      "member": "tmp/router-759-progress-own-source-install-v1.json",
+      "originalPath": "/tmp/router-759-progress-own-source-install-v1.json",
+      "bytes": 1601,
+      "sha256": "ddf68affd201bea025fc63362d8df2849a18ee2845a6476fa680873a71b397ae"
+    },
+    {
+      "member": "tmp/router-759-root-progress-69ca-own-head-hydration.json",
+      "originalPath": "/tmp/router-759-root-progress-69ca-own-head-hydration.json",
+      "bytes": 178642,
+      "sha256": "de1cae0689da5034cf81b3818d53f9c877ecbfa848d8839541eeda15beaba20e"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-run-v1.py",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-run-v1.py",
+      "bytes": 6654,
+      "sha256": "d85214a3810cdecd75c93c24c8a84929b94af091331244c720c80fa183761271"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-freeze-v1.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-freeze-v1.json",
+      "bytes": 328335,
+      "sha256": "62168ebd46176c931795173350b7a9357017263e528db5404031af00506428b5"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-plan-v1.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-plan-v1.json",
+      "bytes": 3846,
+      "sha256": "2c4cc1330457adf9bcab8a31458e2c1da2fc21a5ba5a9a487b45a2eccb0b4468"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-node.raw.log",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-node.raw.log",
+      "bytes": 50960,
+      "sha256": "ce7e3df1979ab2ca2053ed1363cf10ad01b3d29b81af4166401f1fcccb313362"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-node-receipt.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-node-receipt.json",
+      "bytes": 4254,
+      "sha256": "5a0ddcf05b45741896c9a5f7072d2bf1f911a8f585e0d4255f0b3af2b70f00db"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-node-inputs.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-node-inputs.json",
+      "bytes": 326389,
+      "sha256": "170efe14bd4a6c6f516f6b0c737ace7745dd789b10a16b48f7aac8a0e89c1017"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-bun.raw.log",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-bun.raw.log",
+      "bytes": 24736,
+      "sha256": "ff2beb8cd66151a6b32a77eeca453a7dfb4373a1e091e825de7167e3e280d4bd"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-bun-receipt.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-bun-receipt.json",
+      "bytes": 4293,
+      "sha256": "d7bdc17ca1945ddd6649eafb241da3796c6e33aa822e4923403fc1cb61312f10"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-bun-inputs.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-bun-inputs.json",
+      "bytes": 326389,
+      "sha256": "170efe14bd4a6c6f516f6b0c737ace7745dd789b10a16b48f7aac8a0e89c1017"
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-complete-source.patch",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-complete-source.patch",
+      "bytes": 37197,
+      "sha256": "b7bffd399b689f9f5b6ae92ec68b9c42e5d549bf8e4137bbb0aa0e572b4bc0d2"
+    },
+    {
+      "member": "tmp/router-759-progress-215-pack-v1.py",
+      "originalPath": "/tmp/router-759-progress-215-pack-v1.py",
+      "bytes": 8996,
+      "sha256": "afc2e91133e62490231939070ec7ae4b7517c8a67ab8b7c3c0b3a288ab61b491"
+    }
+  ],
+  "reopenedAgainstEveryOriginalErrors": [],
+  "pairedInputsCount": 1783,
+  "pairedInputsSha256": "736204592fc62dd762a807d0095ef430598d89e459c9a07d16c519cab14db3fe",
+  "testFiles": 29,
+  "casesPerEngine": 215,
+  "engines": {
+    "node": {
+      "engineVersion": "v20.19.4",
+      "elapsedSeconds": 83.074,
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "tests": 215,
+        "pass": 215,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "sourceInputsUnchanged": true,
+      "passed": true,
+      "resource": {
+        "userCpuSeconds": 124.79446899999999,
+        "systemCpuSeconds": 10.148601999999999,
+        "maximumRecordedChildRss": 209551360,
+        "maximumRecordedChildRssUnit": "bytes on Darwin, KiB on Linux",
+        "rssScope": "RUSAGE_CHILDREN maximum of recorded waited children, includes earlier Git/version children; not aggregate concurrent process-tree RSS",
+        "cpuScope": "RUSAGE_CHILDREN delta around time/engine wrapper execution; accounting of descendants as provided by OS"
+      },
+      "cancellationObservation": "TAP count"
+    },
+    "bun": {
+      "engineVersion": "1.4.3",
+      "elapsedSeconds": 59.833,
+      "exitCode": 0,
+      "timedOut": false,
+      "counts": {
+        "tests": 215,
+        "pass": 215,
+        "fail": 0,
+        "skipped": 0,
+        "cancelled": null,
+        "todo": null
+      },
+      "sourceInputsUnchanged": true,
+      "passed": true,
+      "resource": {
+        "userCpuSeconds": 108.360557,
+        "systemCpuSeconds": 12.586721,
+        "maximumRecordedChildRss": 332791808,
+        "maximumRecordedChildRssUnit": "bytes on Darwin, KiB on Linux",
+        "rssScope": "RUSAGE_CHILDREN maximum of recorded waited children, includes earlier Git/version children; not aggregate concurrent process-tree RSS",
+        "cpuScope": "RUSAGE_CHILDREN delta around time/engine wrapper execution; accounting of descendants as provided by OS"
+      },
+      "cancellationObservation": "Bun exit and unabridged summary; no independent cancellation count"
+    }
+  },
+  "sourceOnlyDrafts": {
+    "versions": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "status": "UNRUN source draft history preserved; only final own source HEAD above is exercised"
+  },
+  "newControls": 4,
+  "newControlCoverage": [
+    "bounded frozen scalar event descriptors with zero hostile callbacks",
+    "full project meta/JavaScript/strict TypeScript byte equality and actual execution",
+    "complete fixture plans byte equality and identical actual TranslationError callback failure without writes",
+    "actual canonical and all three profile fixture CLIs with monotonic stderr, identical stdout/artifact bytes, genuine original cfg identities and check freshness"
+  ],
+  "repositoryCorpusProducersRun": 0,
+  "fixtureProducerObservation": "actual bounded temporary canonical/profile producer/check children exist in four authored diagnostic controls; individual child intervals are not separately measured",
+  "futureCargo413Included": false,
+  "fullGateRuns": 0,
+  "rustBuilds": 0,
+  "runtimeParity": false,
+  "productionPerformanceGainMeasured": false,
+  "limits": [
+    "Focused paired regression verification is not complete Router parity or the seven-stage gate.",
+    "Progress opt-in does not change outputs for the same compiler; introducing the helper changes the compiler fingerprint itself.",
+    "CPU/RSS retain the exact OS accounting scope in engine receipts; no aggregate process-tree peak or disk-cause inference.",
+    "Bun has no independent cancellation counter."
+  ],
+  "originalTemporaryFilesRetained": true
+}
