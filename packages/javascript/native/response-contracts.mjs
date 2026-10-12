@@ -54,3 +54,45 @@ export function responseAffinityStorageError(error) {
   const message = error instanceof Error ? error.message : String(error);
   return Response.json({ error: { type: 'api_error', message: `response affinity is unavailable: ${message}` } }, { status: 503 });
 }
+
+// Conversations are provider-owned resources, including child identities. The
+// source handlers consume opaque bodies; item-list parse failures mean no IDs
+// were captured, rather than replacing the provider's successful body.
+export function conversationContract(method, path) {
+  const match = /^\/api\/services\/(openai|codex|qwen)\/v1\/conversations(?:\/([^/]+)(?:\/(items)(?:\/([^/]+))?)?)?$/.exec(path);
+  if (!match) return null;
+  let id, item;
+  try { id = match[2] === undefined ? undefined : decodeURIComponent(match[2]); item = match[4] === undefined ? undefined : decodeURIComponent(match[4]); }
+  catch { throw new ProtocolError('Conversation resource path contains invalid percent encoding'); }
+  const namespace = `/api/services/${match[1]}/v1/conversations`, itemNamespace = namespace + '/items';
+  const target = id === undefined ? 'create' : !match[3] ? 'conversation' : item === undefined ? 'items' : 'item';
+  const allowed = { create: ['POST'], conversation: ['GET', 'PATCH', 'DELETE'], items: ['GET', 'POST'], item: ['GET', 'DELETE'] };
+  const segment = value => [...Buffer.from(value)].map(byte => byte >= 65 && byte <= 90 || byte >= 97 && byte <= 122 || byte >= 48 && byte <= 57 || [45,46,95,126].includes(byte) ? String.fromCharCode(byte) : '%' + byte.toString(16).toUpperCase().padStart(2,'0')).join('');
+  const forwardPath = namespace + (id === undefined ? '' : '/' + segment(id)) + (match[3] ? '/items' : '') + (item === undefined ? '' : '/' + segment(item));
+  return { namespace, itemNamespace, service: match[1], target, id, item, forwardPath, allowed: allowed[target].includes(method) };
+}
+
+export function conversationNotFound(item = false) {
+  return Response.json({ error: { message: item ? 'Conversation item not found' : 'Conversation not found', type: 'invalid_request_error', param: null, code: item ? 'conversation_item_not_found' : 'conversation_not_found' } }, { status: 404 });
+}
+export function conversationUnsupported() {
+  return Response.json({ error: { type: 'invalid_request_error', message: 'the selected service does not support native Conversations resources' } }, { status: 400 });
+}
+export function conversationMethodNotAllowed() {
+  return Response.json({ error: { type: 'invalid_request_error', message: 'the requested Conversations operation is not supported' } }, { status: 405 });
+}
+export function conversationAffinityError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return Response.json({ error: { type: 'api_error', message: `resource affinity is unavailable: ${message}` } }, { status: 503 });
+}
+export function conversationUpstreamError(message) {
+  return Response.json({ error: { type: 'api_error', message } }, { status: 502 });
+}
+export function conversationIds(raw, list = false) {
+  let document; try { document = JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return []; }
+  const items = list ? Array.isArray(document?.data) ? document.data : [] : [document];
+  return items.map(item => item?.id).filter(id => typeof id === 'string' && id);
+}
+export function validConversationId(id) {
+  return typeof id === 'string' && id.length > 0 && Buffer.byteLength(id) <= 256 && !/[\/\x00-\x1f\x7f-\x9f]/u.test(id);
+}

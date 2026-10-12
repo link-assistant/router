@@ -3,32 +3,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { load, upstream, temporary } from './helpers.mjs';
+import { owner, request, fixture, reply } from './provider-resource-helpers.mjs';
 
 const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
 const { NativeAffinityStore } = await load('packages/javascript/native/native-service.mjs');
 const { createRouterCore } = await load('packages/javascript/native/core.mjs');
 const { AffinityStore } = await load('packages/javascript/native/affinities.mjs');
 const root = '/api/services/openai/v1', namespace = `${root}/responses`;
-const owner = { client_kind: 'codex', principal_id: 'alice' };
-const request = (path, method = 'GET', body, credential = 'alice') => new Request(`http://router.test${path}`, {
-  method, headers: { authorization: `Bearer ${credential}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
-  ...(body === undefined ? {} : { body: typeof body === 'string' ? body : JSON.stringify(body) }), signal: AbortSignal.timeout(5000),
-});
-function fixture(t, endpoints, extra = {}) {
-  const affinities = new NativeAffinityStore();
-  let current = 0;
-  const candidates = endpoints.map((endpoint, index) => ({ provider: `vendor-${index}`, account: `vendor-${index}`, provider_kind: 'openai-compatible', destination_kind: 'stored_provider', protocol: 'chat', base_url: endpoint.origin + '/v1', api_key: `vendor-key-${index}` }));
-  const core = { config: {}, affinities,
-    authenticate: async credential => ({ sub: credential, ...owner, principal_id: credential === 'alice-rotated' ? 'alice' : credential }),
-    nativeCandidates: async context => {
-      const ordered = [candidates[current], ...candidates.filter((_candidate, index) => index !== current)];
-      return context.provider ? ordered.filter(candidate => candidate.provider === context.provider) : ordered;
-    }, ...extra };
-  const app = createNativeRouter({ core }); t.after(() => app.close());
-  return { app, core, affinities, candidates, select: index => { current = index; } };
-}
 const absent = { error: { message: 'Response not found', type: 'invalid_request_error', param: null, code: 'response_not_found' } };
-const reply = (response, value, status = 200) => { response.writeHead(status, { 'content-type': 'application/json' }); response.end(JSON.stringify(value)); };
 
 // Rust: responses_lifecycle.rs::{forward,relay}, resource_capture.rs::capture.
 test('provider background state, owner-scoped retrieval, input cursors and cancellation preserve upstream contracts', async t => {

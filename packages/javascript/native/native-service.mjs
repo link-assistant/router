@@ -4,6 +4,7 @@ import { matchHTTPRoute } from './http-route-contract.mjs';
 import {createHash} from 'node:crypto';
 import {UsageTracker} from './usage.mjs';
 import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict, responseAffinityStorageError } from './response-contracts.mjs';
+import { conversationContract, conversationNotFound, conversationUnsupported, conversationMethodNotAllowed, conversationAffinityError, conversationUpstreamError, conversationIds, validConversationId } from './response-contracts.mjs';
 
 const transport = new Set(['authorization','x-api-key','x-goog-api-key','anthropic-auth-token','proxy-authorization','proxy-authenticate','host','connection','proxy-connection','keep-alive','transfer-encoding','upgrade','te','trailer','content-length','accept-encoding','cookie','chatgpt-account-id','sec-websocket-key','sec-websocket-version','sec-websocket-extensions','sec-websocket-accept']);
 const ingress = new Set(['forwarded','x-real-ip','x-client-ip','x-cluster-client-ip','cf-connecting-ip','true-client-ip','fastly-client-ip','fly-client-ip','x-envoy-external-address','x-azure-clientip','x-appengine-user-ip','cloudfront-viewer-address']);
@@ -68,7 +69,11 @@ const sameDestination = (a,b) => ['provider','account','protocol','base_url','ac
 export class NativeAffinityStore {
   constructor({maxRecords=10000} = {}) { this.records = new Map(); this.maxRecords = maxRecords; }
   key(namespace,owner,id,parent_id) { return JSON.stringify([namespace,typeof owner === 'object' ? [owner.client_kind,owner.principal_id] : owner,id,parent_id ?? null]); }
-  get(namespace,owner,id,parent_id) { return structuredClone(this.records.get(this.key(namespace,owner,id,parent_id)) ?? null); }
+  get(namespace,owner,id,parent_id) {
+    if (parent_id !== undefined) return structuredClone(this.records.get(this.key(namespace,owner,id,parent_id)) ?? null);
+    const matching = this.list(namespace,owner).filter(record => record.id === id);
+    return matching.length === 1 ? matching[0] : null;
+  }
   set(namespace,owner,id,record) {
     const key = this.key(namespace,owner,id,record.parent_id), previous = this.records.get(key);
     if (previous && !sameDestination(previous.destination,record.destination)) throw new ProtocolError('Resource id belongs to another exact account',409);
@@ -81,6 +86,11 @@ export class NativeAffinityStore {
     return this.records.delete(key);
   }
   list(namespace,owner,parent_id) { return [...this.records.values()].filter(r => r.namespace === namespace && this.key(namespace,r.owner,'') === this.key(namespace,owner,'') && (parent_id === undefined || r.parent_id === parent_id)).map(r => structuredClone(r)); }
+  deleteChildren(namespace,owner,parent_id,selected) {
+    let count = 0;
+    for (const record of this.list(namespace,owner,parent_id)) if (sameDestination(record.destination,selected)) { this.records.delete(this.key(namespace,owner,record.id,parent_id)); count++; }
+    return count;
+  }
 }
 function resourceFor(path, method, headers) {
   const backend='/api/services/codex/backend-api';
@@ -121,10 +131,13 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
   async function select(request, claims, service, document, exact) {
     const pathModel = /\/publishers\/anthropic\/models\/([^/:]+)(?:\/count-tokens)?:(?:rawPredict|streamRawPredict)$/.exec(new URL(request.url).pathname)?.[1];
     const context = {...routingContext(request,claims),service,model:document?.model ?? (pathModel ? decodeURIComponent(pathModel) : undefined),protocol:['anthropic','bedrock','vertex'].includes(service) ? 'anthropic' : 'chat'};
-    if (exact && responseContract(request.method,new URL(request.url).pathname)) {
+    if (exact && (responseContract(request.method,new URL(request.url).pathname) || conversationContract(request.method,new URL(request.url).pathname))) {
       context.provider = exact.provider;
       context.resourceDestination = exact;
-      if (exact.destination_kind === 'subscription') context.pinnedAccount = exact.account;
+      // Recorded subscription bindings use logical names (implicit providers
+      // expose "primary"). Core maps those through principalAccountScope;
+      // pinnedAccount instead means a physical account record key.
+      if (exact.destination_kind === 'subscription') context.principalAccount = exact.account;
     }
     const candidates = core.nativeCandidates ? await core.nativeCandidates(context) : context.model ? await core.candidates(context) : [];
     const raw = candidates.find(c => !exact || ['provider','account','base_url'].every(key => exact[key] === destination(c)[key]));
@@ -163,8 +176,23 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       if (service === 'anthropic' && client !== 'claude' || service.startsWith('codex') && client !== 'codex') throw new ProtocolError('Native service requires a credential bound to its official client',403);
       if (service === 'codex-backend' && !request.headers.get('authorization')?.startsWith('Bearer at-')) throw new ProtocolError('Codex backend requires the paired Router-issued at- token',401);
       if (path === '/api/services/openai/v1/realtime/client_secrets') throw new ProtocolError('Router does not expose upstream Realtime client secrets',501);
-      if (service === 'qwen' && path.includes('/conversations')) throw new ProtocolError('Qwen does not support Conversations',501);
+      const conversation = conversationContract(request.method,path);
+      if (conversation?.service === 'qwen') return conversationUnsupported();
       const owner = claims.client_kind && claims.principal_id ? {client_kind:claims.client_kind,principal_id:claims.principal_id} : responseOwner(claims,request.headers.get('authorization') ?? request.headers.get('x-api-key'));
+      let conversationRecord, conversationItem;
+      if (conversation && conversation.target !== 'create') {
+        try {
+          conversationRecord = await affinities.get(conversation.namespace,owner,conversation.id);
+          if (!conversationRecord) return conversationNotFound();
+          if (conversation.target === 'item') {
+            conversationItem = await affinities.get(conversation.itemNamespace,owner,conversation.item);
+            if (!conversationItem || conversationItem.parent_id !== conversation.id || !sameDestination(conversationItem.destination,conversationRecord.destination)) return conversationNotFound(true);
+          }
+        } catch (error) { return conversationAffinityError(error); }
+      }
+      if (conversation && !conversation.allowed) return conversationMethodNotAllowed();
+      const conversationDestination = conversationItem?.destination ?? conversationRecord?.destination;
+      if (conversationDestination?.destination_kind === 'subscription' && (claims.account ?? 'primary') !== conversationDestination.account) return responseNotFound();
       const identityRoute=path === '/api/services/codex/v1/user-auth-credential/whoami' || path === '/api/services/codex/backend-api/wham/accounts/check';
       const tokenId=claims.sub ?? claims.id;
       if(!identityRoute && tokenId && core.tokens?.admit){const admitted=await core.tokens.admit(tokenId,0);if(admitted === false || typeof admitted === 'string' && admitted !== 'admitted')throw new ProtocolError(typeof admitted === 'string'?admitted:'Token budget exceeded',429);}
@@ -177,12 +205,12 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
         return Response.json({error:{type:error.code ?? 'invalid_request_error',message:error.message}},{status:error.status ?? 400});
       }
       if (request.method === 'POST' && /\/(?:responses\/(?:compact|input_tokens)|images\/generations|audio\/speech|alpha\/search)$/.test(path) && (!document || typeof document !== 'object' || Array.isArray(document))) throw new ProtocolError('The native service request body must be a JSON object');
-      if (document?.model) await authorize(request,false,document.model);
+      if (!conversation && document?.model) await authorize(request,false,document.model);
       if (['bedrock','vertex'].includes(service) && (!document || !Array.isArray(document.messages))) throw new ProtocolError('messages must be an array');
-      for (const batch of document?.requests ?? []) if (batch.params?.model) await authorize(request,false,batch.params.model);
-      const resource = resourceFor(path,request.method,request.headers);
+      if (!conversation) for (const batch of document?.requests ?? []) if (batch.params?.model) await authorize(request,false,batch.params.model);
+      const resource = conversation ? null : resourceFor(path,request.method,request.headers);
       if(document?.store === false && resource?.namespace.endsWith('/responses'))resource.create=false;
-      let exact, resourceRecord;
+      let exact = conversationDestination, resourceRecord;
       const bind = record => { if (!record) throw new ProtocolError('Native resource not found',404); if (exact && !sameDestination(exact,record.destination)) throw new ProtocolError('Resources do not share one provider account',409); exact = record.destination; };
       if (resource?.id) {
         resourceRecord = await affinities.get(resource.namespace,owner,resource.id,resource.parent);
@@ -202,7 +230,8 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       const listed = resource?.list ? await affinities.list(resource.namespace,owner,resource.parent) : [];
       if(!resource?.captureList)for (const record of listed) bind(record);
       if(service === 'codex-backend' && document?.file_id && path.startsWith('/api/services/codex/backend-api/public/plugins/workspace'))bind(await affinities.get('/api/services/codex/backend-api/plugin-uploads',owner,document.file_id));
-      const candidate = await select(request,claims,service,document,exact), selected = destination(candidate);
+      const candidate = await select(request,claims,service,conversation ? undefined : document,exact), selected = destination(candidate);
+      if (conversation && !(conversation.service === 'openai' && selected.provider_kind === 'openai-compatible' && selected.destination_kind !== 'subscription' || conversation.service === 'codex' && selected.provider_kind === 'codex' && selected.destination_kind === 'subscription')) return conversationUnsupported();
       if (service === 'openai' && selected.provider_kind !== 'openai-compatible') throw new ProtocolError('Selected provider does not implement native OpenAI resource APIs',503);
       if(path === '/api/services/codex/v1/user-auth-credential/whoami' || path === '/api/services/codex/backend-api/wham/accounts/check') {
         if(!request.headers.get('authorization')?.startsWith('Bearer at-'))throw new ProtocolError('Codex identity requires the paired Router-issued at- token',401);
@@ -218,9 +247,40 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       const timer = setTimeout(() => controller.abort(new Error('Native upstream timeout')),timeoutMs); timer.unref?.();
       const cleanup = () => {clearTimeout(timer);request.signal.removeEventListener('abort',abort);};
       let upstream;
-      try { upstream = await upstreamFetch(nativeURL(selected.base_url,service,path,url.search),{method:request.method,headers:nativeRequestHeaders(request.headers,candidate),...(['GET','HEAD'].includes(request.method) ? {} : {body:bytes}),signal:controller.signal,redirect:'manual'}); }
+      try { upstream = await upstreamFetch(nativeURL(selected.base_url,service,conversation?.forwardPath ?? path,url.search),{method:request.method,headers:nativeRequestHeaders(request.headers,candidate),...(['GET','HEAD'].includes(request.method) ? {} : {body:bytes}),signal:controller.signal,redirect:'manual'}); }
       catch { cleanup(); throw new ProtocolError('Native upstream request failed',502); }
       const headers = nativeResponseHeaders(upstream.headers);
+      if (conversation) {
+        let raw;
+        try { raw = await boundedBytes(upstream,maxBodyBytes); }
+        catch (error) { return conversationUpstreamError(error.status === 413 ? 'upstream response exceeds the proxy limit' : `upstream body read failed: ${error.message ?? String(error)}`); }
+        finally { cleanup(); }
+        const remove = async () => {
+          if (conversation.target === 'item') return affinities.delete(conversation.itemNamespace,owner,conversation.item,conversation.id,conversationItem);
+          await affinities.deleteChildren(conversation.itemNamespace,owner,conversation.id,conversationRecord.destination);
+          return affinities.delete(conversation.namespace,owner,conversation.id,undefined,conversationRecord);
+        };
+        if (conversation.target !== 'create' && [404,410].includes(upstream.status)) {
+          try { await remove(); } catch {}
+          return conversationNotFound(conversation.target === 'item');
+        }
+        if (upstream.ok) {
+          try {
+            if (conversation.target === 'create') {
+              const id = conversationIds(raw)[0];
+              if (!id) return conversationUpstreamError('conversation create response did not contain an id');
+              if (!validConversationId(id)) throw new Error('invalid response id');
+              await affinities.set(conversation.namespace,owner,id,{destination:selected});
+            } else if (conversation.target === 'items') {
+              for (const id of conversationIds(raw,true)) {
+                if (!validConversationId(id)) throw new Error('invalid response id');
+                await affinities.set(conversation.itemNamespace,owner,id,{destination:conversationRecord.destination,parent_id:conversation.id});
+              }
+            } else if (request.method === 'DELETE') await remove();
+          } catch (error) { return conversationAffinityError(error); }
+        }
+        return new Response([204,205,304].includes(upstream.status) ? null : raw,{status:upstream.status,headers});
+      }
       if (responses?.lifecycle && resourceRecord) {
         // Rust's lifecycle relay reads the body before any retirement. This
         // also keeps a failed successful-DELETE body read from losing affinity.

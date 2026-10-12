@@ -41,6 +41,14 @@
     {
       "path": "src/native_service.rs",
       "sha256": "478d8a6cc9a58defd2fb3c3eefeea81846b4499533530d7539ef1c8dbfb11337"
+    },
+    {
+      "path": "src/conversations.rs",
+      "sha256": "9a61690047a137df88531cf815d86dea9c0ea80e8a374db724eadbdd07b2e41d"
+    },
+    {
+      "path": "src/resource_lifecycle_tests.rs",
+      "sha256": "5d4dd7103be604663fbfcb7fd585029f5533d2c84d024cfe9c43b93939eea180"
     }
   ],
   "contracts": [
@@ -80,9 +88,31 @@
       ],
       "remove_if_matches_start_line": 397,
       "record_equality_line": 405
+    },
+    {
+      "source": "src/conversations.rs",
+      "symbols": [
+        "create",
+        "conversation",
+        "items",
+        "item",
+        "read_upstream",
+        "remove_conversation",
+        "list_ids",
+        "resource_not_found",
+        "unsupported",
+        "method_not_allowed"
+      ]
+    },
+    {
+      "source": "src/resource_lifecycle_tests.rs",
+      "symbols": [
+        "conversations_are_native_owner_scoped_and_parent_bound",
+        "native_subscription_response_lifecycle_reuses_the_exact_account"
+      ]
     }
   ],
-  "authored_fixture_count": 16,
+  "authored_fixture_count": 32,
   "authored_fixtures_executed": false,
   "head_source_trace": {
     "rust_handler": "src/responses_lifecycle.rs::forward passes &parts.method unchanged to provider and subscription builders",
@@ -102,5 +132,24 @@
   "retirement_storage_failure_contract": {
     "upstream_404_410": "ignore remove_if_matches error; return response_not_found",
     "successful_delete": "return affinity_storage_error on remove_if_matches error"
+  },
+  "fixture_modules": [
+    {
+      "path": "experiments/issue-759/acceptance/provider-responses.test.mjs",
+      "authored_count": 16,
+      "executed": false
+    },
+    {
+      "path": "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+      "authored_count": 16,
+      "executed": false
+    }
+  ],
+  "conversation_contract_notes": {
+    "child_capture": "sequential original per-ID transactions; earlier successful captures survive later failure",
+    "cleanup": "parent children removed by namespace/parent/owner/destination then full-original parent equality; not an atomic tree generation transaction",
+    "head": "explicit original allowed-method checks exclude HEAD after owner lookup; no route precedence inference",
+    "body_limit": "read_upstream uses max_proxy_request_bytes; native draft uses maxBodyBytes",
+    "subscription_binding": "recorded account is logical principalAccount, not physical pinnedAccount; core maps implicit Codex to primary"
   }
 }
