@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {translateProject} from '../project.mjs';
+import {translateSource} from '../translate.mjs';
 import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {roundTripProgram} from '../semantic-meta.mjs';
 import {checkedSourceContext,bindCheckedSourceLinks} from '../extensions/source-links.mjs';
@@ -18,6 +19,25 @@ test('original boolean expression subjects infer products before exhaustive matc
   const result=project('pub fn choose(a:bool,b:bool)->u8{match(a,b){(true,true)=>1,(true,false)=>2,(false,true)=>3,(false,false)=>4}}');
   assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{for(const [a,b,n]of [[true,true,1n],[true,false,2n],[false,true,3n],[false,false,4n]])assert.equal(api.choose(a,b),n);});
+});
+
+test('per-source bulk lowering retains inferred tuple matches and original project dependency closure',{timeout:60_000},async()=>{
+  const body='pub fn choose(a:bool,b:bool)->u8{match(a,b){(true,true)=>1,(true,false)=>2,(false,true)=>3,(false,false)=>4}}';
+  const verify=api=>{for(const [a,b,n]of [[true,true,1n],[true,false,2n],[false,true,3n],[false,false,4n]])assert.equal(api.choose(a,b),n);};
+  const standalone=translateSource(body,'src/tuple.rs'),item=standalone.ir.items.find(item=>item.name==='choose');
+  assert.equal(item.status,'executable',JSON.stringify(item.diagnostic));
+  assert.ok(item.semantic.dataTypes.some(type=>type.tupleInference));
+  await verifyTypedTargets(standalone,verify);
+  const files={'src/lib.rs':'mod helper;mod route;','src/helper.rs':'pub fn flag(value:bool)->bool{value}',
+    'src/route.rs':'use crate::helper::flag;'+body.replace('match(a,b)','match(flag(a),flag(b))')};
+  const context=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
+  assert.deepEqual(context.meta.refused,[]);
+  const projected=translateSource(files['src/route.rs'],'src/route.rs',{projectDeclarations:context.executableDeclarations,projectSourceScopes:context.sourceScopes});
+  const own=projected.ir.items.find(item=>item.name==='choose');
+  assert.equal(own.status,'executable',JSON.stringify(own.diagnostic));
+  assert.equal(own.semantic.project.declaration,'route.choose');
+  assert.ok(own.semantic.dataTypes.some(type=>type.tupleInference));
+  await verifyTypedTargets(projected,verify);
 });
 
 test('checked suffixes and typed call results infer actual singleton and nested tuple fields',{timeout:60_000},async()=>{
