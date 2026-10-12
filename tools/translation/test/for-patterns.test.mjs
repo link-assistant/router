@@ -36,8 +36,13 @@ test('written shared-reference for patterns bind actual copied primitive items i
   });
 });
 
-test('for tuple and wildcard bindings reuse checked irrefutable layouts without rewriting callback bodies',async()=>{
-  const source='pub fn sum()->u8{let mut total:u8=0;for (left,right) in (0u8..3u8).map(|n|(n,n+1u8)){total+=left+right;}total} pub fn nested()->u8{let mut total:u8=0;for (left,(right,flag)) in (0u8..3u8).map(|n|(n,(n+1u8,true))){if flag{total+=left+right;}}total} pub fn wild()->u8{let mut count:u8=0;for _ in 0u8..4u8{count+=1;}count}';
+test('for tuple, constructor and wildcard bindings reuse checked irrefutable layouts without rewriting callback bodies',async()=>{
+  const source=`struct Wrap(u8); struct Pair{left:u8,right:u8}
+pub fn sum()->u8{let mut total:u8=0;for (left,right) in (0u8..3u8).map(|n|(n,n+1u8)){total+=left+right;}total}
+pub fn nested()->u8{let mut total:u8=0;for (left,(right,flag)) in (0u8..3u8).map(|n|(n,(n+1u8,true))){if flag{total+=left+right;}}total}
+pub fn wrapped()->u8{let mut total:u8=0;for Wrap(n) in (0u8..3u8).map(|n|Wrap(n)){total+=n;}total}
+pub fn record()->u8{let mut total:u8=0;for Pair{left,right} in (0u8..3u8).map(|n|Pair{left:n,right:n+1u8}){total+=left+right;}total}
+pub fn wild()->u8{let mut count:u8=0;for _ in 0u8..4u8{count+=1;}count}`;
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
   const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));
   const loop=find(checked.declarations.get('sum').body,node=>node.k==='routerFor');
@@ -46,7 +51,7 @@ test('for tuple and wildcard bindings reuse checked irrefutable layouts without 
   const binding=find(loop.loopBody,node=>node.patternControl?.kind==='tuple-let');
   assert.equal(binding.patternControl.plan.refutable,false);
   assert.deepEqual(binding.patternControl.plan.bindings.map(binding=>binding.name),['left','right']);
-  await verifyTypedTargets(result,api=>{assert.equal(api.sum(),9n);assert.equal(api.nested(),9n);assert.equal(api.wild(),4n);});
+  await verifyTypedTargets(result,api=>{assert.equal(api.sum(),9n);assert.equal(api.nested(),9n);assert.equal(api.wrapped(),3n);assert.equal(api.record(),9n);assert.equal(api.wild(),4n);});
 });
 
 test('destructured iterator bodies retain lazy overflow timing, loop control and lexical shadowing',async()=>{
