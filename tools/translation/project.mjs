@@ -5,12 +5,10 @@ import { posix } from 'node:path';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {planTrackedModulePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
-import {externalModuleBindings} from './registered-bindings.mjs';
-import {COPY_NAMESPACE_BINDINGS} from './copy-trait-owners.mjs';
-import {STANDARD_NAMESPACE_BINDINGS,STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
+import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
+import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
-import {EFFECT_CONTRACTS} from './extensions/effects-contracts.mjs';
-import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript,HOST_CONTRACTS,hostData as effectData } from './extensions/host-contracts.mjs';
+import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
 import {declarationRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens } from './impl-resolver.mjs';
 import {projectCopyEvidence} from './project-copy.mjs';
@@ -207,8 +205,7 @@ export function translateProject(options) {
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;
   if(options.jsonMacroDependencies)try{jsonMacroContext=createJsonMacroContext({modules:graph.modules,dependencies:options.jsonMacroDependencies,compilationProfile:graph.compilationProfile});}catch(error){if(!(error instanceof TypeError))throw error;jsonMacroDiagnostic={kind:'unsupported-profile',message:error.message};}
-  const registeredTypes=[['std','option','Option'],['std','result','Result'],['std','time','Duration'],['serde_json','Value'],['serde_json','Number'],['serde_json','Error'],['serde_json','error','Category'],['std','io','Error'],['std','env','VarError'],['std','ffi','OsString'],['std','num','ParseIntError'],['std','num','IntErrorKind'],['std','time','TryFromFloatSecsError']];
-  const externalModules=externalModuleBindings({data:effectData(),contracts:[...HOST_CONTRACTS,...EFFECT_CONTRACTS],extraBindings:[...registeredTypes.map(target=>({name:target.at(-1),namespace:'type',target,kind:['Option','Result','Value','Category','VarError','IntErrorKind'].includes(target.at(-1))?'enum':'struct'})),...['Some','None','Ok','Err'].flatMap(name=>['type','value'].map(namespace=>({name,namespace,target:name==='Some'||name==='None'?['std','option','Option',name]:['std','result','Result',name],kind:'constructor'}))),...COPY_NAMESPACE_BINDINGS,...STANDARD_NAMESPACE_BINDINGS,...originalMatchesNamespaceBindings(),{name:'FromStr',namespace:'type',target:['std','str','FromStr'],kind:'trait'},{name:'json',namespace:'macro',target:['serde_json','json'],kind:'macro'}]});
+  const externalModules=registeredStandardHostBindings(originalMatchesNamespaceBindings());
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});

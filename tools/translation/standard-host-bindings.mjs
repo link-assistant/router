@@ -18,6 +18,9 @@ export function registeredStandardHostBindings(extraBindings=[]) {
   return externalModuleBindings({data:profileData(),contracts:[...FLOAT_CONTRACTS,...JSON_CONTRACTS,...TIME_CONTRACTS,...INTEGER_ERROR_CONTRACTS,...EFFECT_CONTRACTS],extraBindings:[
     ...sourceTypes.map(target=>({name:target.at(-1),namespace:'type',target,kind:['Option','Result','Value','Category','VarError','IntErrorKind'].includes(target.at(-1))?'enum':'struct'})),
     ...['Some','None','Ok','Err'].flatMap(name=>['type','value'].map(namespace=>({name,namespace,target:name==='Some'||name==='None'?['std','option','Option',name]:['std','result','Result',name],kind:'constructor'}))),
-    ...COPY_NAMESPACE_BINDINGS,...STANDARD_NAMESPACE_BINDINGS,{name:'FromStr',namespace:'type',target:['std','str','FromStr'],kind:'trait'},...extraBindings,
+    ...COPY_NAMESPACE_BINDINGS,...STANDARD_NAMESPACE_BINDINGS,{name:'FromStr',namespace:'type',target:['std','str','FromStr'],kind:'trait'},
+    // This source macro is bang-only. Every independent source consumer uses
+    // the same partial descriptor; it grants no JSON expansion/runtime proof.
+    {name:'json',namespace:'macro',macroKind:'bang',target:['serde_json','json'],kind:'macro'},...extraBindings,
   ]});
 }

@@ -157,6 +157,27 @@ export function linkProjectDeclaration(parser,entry,semantic,{source,sourcePath,
 // The actual Host admission independently requires the private original-method
 // parse/semantic brand. This low linker records exact source/relocation data;
 // caller-provided public hashes alone cannot satisfy that high admission.
+function methodScopeMismatch(parser,scope,transform,entry,sourcePath,memberSpan) {
+  let difference='complete scope metadata';
+  // Diagnostic only: these parsed bindings never replace the independently
+  // captured owner digest or participate in admission. Native descriptors
+  // avoid invoking a caller getter, proxy trap or overridden Map method.
+  try {
+    const map=ownData(parser,'sourceNamespaceBindingEvidence');
+    if(types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('non-native diagnostic binding map');
+    const original=copyMetadata(mapGet.call(map,transform.modulePath.join('.'))),outer=scope?.bindingEvidence?.bindings;
+    if(Array.isArray(original)&&Array.isArray(outer))for(const expected of original){
+      const actual=outer.find(binding=>binding.name===expected.name&&binding.namespace===expected.namespace);
+      if(!actual){difference=`missing ${expected.namespace} binding ${expected.name}`;break;}
+      if(metadataDigest(actual)!==metadataDigest(expected)){
+        const key=[...new Set([...Object.keys(actual),...Object.keys(expected)])].sort().find(key=>!Object.hasOwn(actual,key)||!Object.hasOwn(expected,key)||metadataDigest(actual[key])!==metadataDigest(expected[key]));
+        difference=`${expected.namespace} binding ${expected.name}.${key??'metadata'}`;break;
+      }
+    }
+  }catch(error){if(!(error instanceof TypeError))throw error;}
+  const path=typeof sourcePath==='string'?sourcePath:'<unproved source path>',name=typeof entry.name==='string'?entry.name:'<unproved method name>';
+  return `method binding scope differs from its independently captured original owner (${JSON.stringify(path.slice(0,256))}:${memberSpan.start}..${memberSpan.end} ${JSON.stringify(name.slice(0,80))}; ${difference.slice(0,160)})`;
+}
 export function linkProjectMethodDeclaration(parser,entry,normalized,semantic,{source,sourcePath,memberSpan,bodySpan,globalOffset=0,scope=null}) {
   if(typeof source!=='string')fail('method requires complete original source text');
   copyMetadata(entry);copyMetadata(normalized);copyMetadata(semantic);
@@ -169,7 +190,7 @@ export function linkProjectMethodDeclaration(parser,entry,normalized,semantic,{s
   const context=originalContext(source),implementation=context.items.find(item=>item.term==='impl'&&item.start===transform.originalImplementationSpan.start&&item.end===transform.originalImplementationSpan.end&&item.start<=memberSpan.start&&memberSpan.end<=item.end);
   if(!implementation)fail('method has no exact enclosing original implementation');
   if(metadataDigest(scope?.compilationProfile??null)!==metadataDigest(transform.owner.compilationProfile))fail('method compilation profile differs from its original source');
-  if(metadataDigest(scope?.bindingEvidence??null)!==transform.owner.scopeMetadataSha256)fail('method binding scope differs from its independently captured original owner');
+  if(metadataDigest(scope?.bindingEvidence??null)!==transform.owner.scopeMetadataSha256)fail(methodScopeMismatch(parser,scope,transform,entry,sourcePath,memberSpan));
   verifyRelocatedSyntax(normalized,semantic,globalOffset);
   const evidence={schemaVersion:1,sourceAssociationKind:'original-inherent-token-transform',sourcePath,sourceBytes:context.sourceBytes,sourceSha256:context.sourceSha256,declarationSpan:copyMetadata(memberSpan),declarationSha256:hash(source.slice(memberSpan.start,memberSpan.end)),bodySpan:copyMetadata(bodySpan),bodySha256:hash(source.slice(bodySpan.start,bodySpan.end)),checkedSpan:copyMetadata(semantic.span),sourceOffset:globalOffset,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic),originalMethodTransformSha256:metadataDigest(transform)};
   linked.set(semantic,freeze(evidence));return true;

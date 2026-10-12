@@ -23,7 +23,7 @@ const mapEntries=Map.prototype.entries;
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
 function namespaceDigest(parser){const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');return metadataDigest(['type','value','macro'].map(namespace=>[namespace,nativeEntries(ownData(aliases,namespace)).map(([path,map])=>[path,nativeEntries(map)])]));}
 export function originalMatchesNamespaceBindings(){const profile=standardProfile??=loadStandardMatchesSourceProfile();return ['std','core'].map(root=>Object.freeze({name:profile.name,namespace:'macro',macroKind:'bang',target:[root,profile.name],kind:'macro',originalNamespaceDigest:profile.digest}));}
-function standardExternal(){return registeredStandardHostBindings([...originalMatchesNamespaceBindings(),{name:'json',namespace:'macro',macroKind:'bang',target:['serde_json','json'],kind:'macro'}]);}
+function standardExternal(){return registeredStandardHostBindings(originalMatchesNamespaceBindings());}
 
 export function createMatchesMacroContext({modules,compilationProfile=null,deriveDependencies=null}={}) {
   const profile=standardProfile??=loadStandardMatchesSourceProfile(),snapshot=captureOriginalMacroModules({modules,compilationProfile}),original=originalMacroModules(snapshot),external=standardExternal();
