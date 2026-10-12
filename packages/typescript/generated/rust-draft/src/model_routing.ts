@@ -22,6 +22,7 @@ type MLData_526f75746572526573756c745f31375f727573745f6f776e65645f7665635f75385f
 type MLData_526f75746572526573756c745f33375f6e616d65645f37333635373236343635356636613733366636655f353636313663373536355f33375f6e616d65645f37333635373236343635356636613733366636655f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_73657264655f6a736f6e2e4572726f72 }>;
 type MLData_526f75746572526573756c745f33385f6e616d65645f3733373436345f37343639366436355f343437353732363137343639366636655f36345f6e616d65645f3733373436345f37343639366436355f353437323739343637323666366434363663366636313734353336353633373334353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 }>;
 type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": null }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
+type MLData_72705f373337353632373336333732363937303734363936663665326537343739373036353733326535333735363237333633373236393730373436393666366535303732366637363639363436353732 = Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "Qwen" }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -38,6 +39,37 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/model_routing.rs; sha256=e5a7479d421e89d650c22682fc7ff8b0b32067cd7af9dc5fc7b421a02bf39e3f
 // Carried constructs are data, never runtime parity evidence.
+import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
+
+function ml_router_unexpected(value: any): never {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
+
+const ml_host_value_schema_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 = {"schemaVersion":1,"types":{"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e50726f7669646572":{"kind":"data","name":"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e50726f7669646572","ctors":[{"name":"Claude","fields":[]},{"name":"Codex","fields":[]},{"name":"Gemini","fields":[]},{"name":"Qwen","fields":[]}]}}};
+
+const ml_host_value_refinements_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 = new Map([]);
+
+function rp_6d6f64656c5f726f7574696e672e70726f76696465725f6f776e6572(provider: Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "Qwen" }>): string {
+  ml_validate_rust_value(provider, {"kind":"data","name":"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e50726f7669646572"}, ml_host_value_schema_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3, { refinements: ml_host_value_refinements_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 });
+  switch (provider.$) {
+    case "Claude": {
+      return "anthropic";
+    }
+    case "Codex": {
+      return "openai";
+    }
+    case "Gemini": {
+      return "google";
+    }
+    case "Qwen": {
+      return "qwen";
+    }
+    default: {
+      return ml_router_unexpected(provider);
+    }
+  }
+}
+
 function ml_make_ProviderHealthState_Starting(): Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> {
   return Object.freeze({ $: 'Starting' });
 }
@@ -74,5 +106,5 @@ const serde_json = {
   },
 };
 
-export const translated: { "ProviderHealthState": Readonly<{ "Starting": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>; "Healthy": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>; "Degraded": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> }> } = { ["ProviderHealthState"]: Object.freeze({ ["Starting"]: ml_make_ProviderHealthState_Starting, ["Healthy"]: ml_make_ProviderHealthState_Healthy, ["Degraded"]: ml_make_ProviderHealthState_Degraded }) };
-export const provenance = {"sourcePath":"src/model_routing.rs","sourceSha256":"e5a7479d421e89d650c22682fc7ff8b0b32067cd7af9dc5fc7b421a02bf39e3f","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":72,"preserved":74,"runtimeParity":false};
+export const translated: { "provider_owner": (provider: Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "Qwen" }>) => string; "ProviderHealthState": Readonly<{ "Starting": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>; "Healthy": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }>; "Degraded": () => Readonly<{ readonly "$": "Starting" }> | Readonly<{ readonly "$": "Healthy" }> | Readonly<{ readonly "$": "Degraded" }> }> } = { ["provider_owner"]: rp_6d6f64656c5f726f7574696e672e70726f76696465725f6f776e6572, ["ProviderHealthState"]: Object.freeze({ ["Starting"]: ml_make_ProviderHealthState_Starting, ["Healthy"]: ml_make_ProviderHealthState_Healthy, ["Degraded"]: ml_make_ProviderHealthState_Degraded }) };
+export const provenance = {"sourcePath":"src/model_routing.rs","sourceSha256":"e5a7479d421e89d650c22682fc7ff8b0b32067cd7af9dc5fc7b421a02bf39e3f","executable":2,"executableFunctions":1,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":71,"preserved":74,"runtimeParity":false};

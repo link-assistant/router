@@ -6,6 +6,18 @@ const ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e32
 
 const ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d = new Map([]);
 
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
+
+const ml_host_value_schema_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 = {"schemaVersion":1,"types":{"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e50726f7669646572":{"kind":"data","name":"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e50726f7669646572","ctors":[{"name":"Claude","fields":[]},{"name":"Codex","fields":[]},{"name":"Gemini","fields":[]},{"name":"Qwen","fields":[]}]}}};
+
+const ml_host_value_refinements_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 = new Map([]);
+
+const ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = new Map([]);
+
 import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_validate_json_map } from "../runtime/json-values.mjs";
 
 import { serde_json_value_get_string as ml_host_serde_json_value_get_string, serde_json_value_as_str as ml_host_serde_json_value_as_str, serde_json_value_as_array as ml_host_serde_json_value_as_array } from "../runtime/json-runtime.mjs";
@@ -103,6 +115,56 @@ function ml_make_ProviderCapabilities_ProviderCapabilities(temperature, top_p, s
   return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: temperature, ["top_p"]: top_p, ["stop_sequences"]: stop_sequences, ["output_token_limit"]: output_token_limit, ["reasoning"]: reasoning, ["web_search"]: web_search, ["web_fetch"]: web_fetch });
 }
 
+function rp_6361706162696c69746965732e737562736372697074696f6e(provider, _model) {
+  ml_validate_rust_value(provider, {"kind":"data","name":"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e50726f7669646572"}, ml_host_value_schema_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3, { refinements: ml_host_value_refinements_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 });
+  ml_validate_rust_value(_model, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  switch (provider.$) {
+    case "Claude": {
+      const ml_record1 = Object.freeze({ $: 'Unknown' });
+      const ml_record2 = Object.freeze({ $: 'Native' });
+      const ml_record3 = Object.freeze({ $: 'Native' });
+      const ml_record4 = Object.freeze({ $: 'Native' });
+      const ml_record5 = Object.freeze({ $: 'Native' });
+      const ml_record6 = Object.freeze({ $: 'Native' });
+      const ml_record7 = Object.freeze({ $: 'Native' });
+      return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record1, ["top_p"]: ml_record2, ["stop_sequences"]: ml_record3, ["output_token_limit"]: ml_record4, ["reasoning"]: ml_record5, ["web_search"]: ml_record6, ["web_fetch"]: ml_record7 });
+    }
+    case "Codex": {
+      const ml_record8 = Object.freeze({ $: 'Unsupported' });
+      const ml_record9 = Object.freeze({ $: 'Unsupported' });
+      const ml_record10 = Object.freeze({ $: 'Emulated' });
+      const ml_record11 = Object.freeze({ $: 'Emulated' });
+      const ml_record12 = Object.freeze({ $: 'Native' });
+      const ml_record13 = Object.freeze({ $: 'Native' });
+      const ml_record14 = Object.freeze({ $: 'Unsupported' });
+      return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record8, ["top_p"]: ml_record9, ["stop_sequences"]: ml_record10, ["output_token_limit"]: ml_record11, ["reasoning"]: ml_record12, ["web_search"]: ml_record13, ["web_fetch"]: ml_record14 });
+    }
+    case "Gemini": {
+      const ml_record15 = Object.freeze({ $: 'Native' });
+      const ml_record16 = Object.freeze({ $: 'Native' });
+      const ml_record17 = Object.freeze({ $: 'Native' });
+      const ml_record18 = Object.freeze({ $: 'Native' });
+      const ml_record19 = Object.freeze({ $: 'Native' });
+      const ml_record20 = Object.freeze({ $: 'Unsupported' });
+      const ml_record21 = Object.freeze({ $: 'Unsupported' });
+      return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record15, ["top_p"]: ml_record16, ["stop_sequences"]: ml_record17, ["output_token_limit"]: ml_record18, ["reasoning"]: ml_record19, ["web_search"]: ml_record20, ["web_fetch"]: ml_record21 });
+    }
+    case "Qwen": {
+      const ml_record22 = Object.freeze({ $: 'Native' });
+      const ml_record23 = Object.freeze({ $: 'Native' });
+      const ml_record24 = Object.freeze({ $: 'Native' });
+      const ml_record25 = Object.freeze({ $: 'Native' });
+      const ml_record26 = Object.freeze({ $: 'Native' });
+      const ml_record27 = Object.freeze({ $: 'Unsupported' });
+      const ml_record28 = Object.freeze({ $: 'Unsupported' });
+      return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record22, ["top_p"]: ml_record23, ["stop_sequences"]: ml_record24, ["output_token_limit"]: ml_record25, ["reasoning"]: ml_record26, ["web_search"]: ml_record27, ["web_fetch"]: ml_record28 });
+    }
+    default: {
+      return ml_router_unexpected(provider);
+    }
+  }
+}
+
 function rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365(tools, forced) {
 try {
   ml_assert_immutable_iterator(tools);
@@ -132,5 +194,5 @@ try {
 } catch (ml_router_error) { if (ml_router_propagated(ml_router_error)) return ml_router_error.value; throw ml_router_error; }
 }
 
-export const translated = { ["Capability"]: Object.freeze({ ["Native"]: ml_make_Capability_Native, ["Emulated"]: ml_make_Capability_Emulated, ["Unsupported"]: ml_make_Capability_Unsupported, ["Unknown"]: ml_make_Capability_Unknown }), ["ProviderCapabilities"]: ml_make_ProviderCapabilities_ProviderCapabilities, ["unsatisfiable_forced_tool_choice"]: rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365 };
-export const provenance = {"sourcePath":"src/capabilities.rs","sourceSha256":"7a8bb8a76288590bbc9d556b77d4415cd513837a45d88edb278dc5c6b7b6b222","executable":3,"executableFunctions":1,"executableConstants":0,"executableTypes":2,"executableConstructors":5,"carried":12,"preserved":16,"runtimeParity":false};
+export const translated = { ["Capability"]: Object.freeze({ ["Native"]: ml_make_Capability_Native, ["Emulated"]: ml_make_Capability_Emulated, ["Unsupported"]: ml_make_Capability_Unsupported, ["Unknown"]: ml_make_Capability_Unknown }), ["ProviderCapabilities"]: ml_make_ProviderCapabilities_ProviderCapabilities, ["subscription"]: rp_6361706162696c69746965732e737562736372697074696f6e, ["unsatisfiable_forced_tool_choice"]: rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365 };
+export const provenance = {"sourcePath":"src/capabilities.rs","sourceSha256":"7a8bb8a76288590bbc9d556b77d4415cd513837a45d88edb278dc5c6b7b6b222","executable":4,"executableFunctions":2,"executableConstants":0,"executableTypes":2,"executableConstructors":5,"carried":11,"preserved":16,"runtimeParity":false};
