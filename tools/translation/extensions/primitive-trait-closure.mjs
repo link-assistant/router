@@ -77,7 +77,9 @@ function traitHeader(pin,item,{allowGenerics=false,localProfile=null,local=false
   const members=sourceItems(pin.source.slice(tokens[at].end,tokens.at(-1).start));
   const memberHeads=new Map(members.filter(member=>!member.comment).map(member=>[member,originalDeclarationHeader(member)]));
   if([...memberHeads].some(([member,head])=>!head||!['fn','const','type'].includes(head.kind)||member.term!==head.kind))fail('trait contains a member namespace producer or unproved item');
-  if([...memberHeads.values()].some(head=>head.kind==='fn'&&head.name==='from'))fail('alternative trait declares its own from member');
+  // Functions and associated constants share Rust's value namespace.
+  // A type member has its separate namespace and cannot establish a value.
+  if([...memberHeads.values()].some(head=>['fn','const'].includes(head.kind)&&head.name==='from'))fail('alternative trait declares its own from value member');
   const memberConditions=[];
   if(local)for(const member of members.filter(member=>!member.comment)){
     const condition=itemConfiguration(member.tokens,localProfile);

@@ -88,6 +88,8 @@ export function originalDeclarationHeader(item,owner=[]) {
   let nameAt=at+1;if(kind==='static'&&tokens[nameAt]?.text==='mut')nameAt++;
   const named=!['impl','use'].includes(kind),name=tokens[nameAt];
   if(named&&!identifier(name))return null;
+  if(kind==='fn'&&!['(','<'].includes(tokens[nameAt+1]?.text))return null;
+  if(['const','static'].includes(kind)&&tokens[nameAt+1]?.text!==':')return null;
   return frozen({kind,name:named?name.text:null,keywordSpan:{start:keyword.start,end:keyword.end},
     ...(named?{nameSpan:{start:name.start,end:name.end},rawIdentifier:name.rawIdentifier===true}:{}),namespaceAuthority:false});
 }
