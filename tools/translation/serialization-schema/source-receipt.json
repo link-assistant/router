@@ -63,9 +63,11 @@
     "tools/translation/source-module-views.mjs",
     "tools/translation/derive-inputs.mjs",
     "tools/translation/cfg-profile.mjs",
-    "tools/translation/source-profiles/derive/manifest.json"
+    "tools/translation/source-profiles/derive/manifest.json",
+    "tools/translation/source-scopes.mjs",
+    "tools/translation/extensions/source-namespaces.mjs"
   ],
-  "authored_tests": 15,
+  "authored_tests": 17,
   "future_checks": [
     "paired focused Node/Bun14 initial inventories",
     "actual original7 descriptor equality",
@@ -73,5 +75,6 @@
     "native descriptor replacement only after checked equality",
     "prior149 runtime regression after replacement"
   ],
-  "literal_profile": "Bounded common Rust/JSON string escapes only; JSON-only Unicode, backspace, form-feed and slash escapes refuse"
+  "literal_profile": "Bounded common Rust/JSON string escapes only; JSON-only Unicode, backspace, form-feed and slash escapes refuse",
+  "field_visibility": "Production configureParserSourceScope/resolveSourceNamespace; private roots are introspectable, written field references obey consuming module privacy and checked alias suffix policies"
 }

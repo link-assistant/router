@@ -103,3 +103,15 @@ test('generation compares the actual projection before offering any native repla
 test('JSON-only escapes cannot bless Rust-invalid serde helper names',()=>{
   for(const escape of ['\\u0041','\\b','\\f','\\/'])fixture(imports+'#[derive(Serialize,Deserialize)] enum Record { #[serde(rename="'+escape+'")] Value }',options=>assert.throws(()=>projected(options),/Rust helper literal escape|Unproved|unproved/));
 });
+
+test('written field paths obey consuming-module privacy while public reexports retain their checked private target route',()=>{
+  const hidden='mod left { mod hidden { use serde::{Serialize,Deserialize}; #[derive(Serialize,Deserialize)] pub struct Secret { pub value:i64 } } pub use hidden::Secret as Visible; }';
+  const consumer=route=>'mod right { use serde::{Serialize,Deserialize}; #[derive(Serialize,Deserialize)] pub struct Record { pub value:'+route+' } }';
+  fixture(hidden+consumer('crate::left::hidden::Secret'),options=>assert.throws(()=>projected(options,['crate::right::Record']),/inaccessible/));
+  fixture(hidden+consumer('crate::left::Visible'),options=>{const descriptor=projected(options,['crate::right::Record']);assert.equal(descriptor.Record.fields[0].type,'Secret');assert.equal(descriptor.Secret.source,'lib.rs::Secret');});
+  fixture(hidden,options=>assert.equal(projected(options,['crate::left::hidden::Secret']).Secret.fields[0].type,'i64'));
+});
+test('public reexport aliases do not grant visibility to a new private written suffix',()=>{
+  const source='mod left { mod hidden { pub mod bridge { use serde::{Serialize,Deserialize}; #[derive(Serialize,Deserialize)] struct Secret { value:i64 } } } pub use hidden::bridge as Visible; } mod right { use serde::{Serialize,Deserialize}; #[derive(Serialize,Deserialize)] pub struct Record { value:crate::left::Visible::Secret } }';
+  fixture(source,options=>assert.throws(()=>projected(options,['crate::right::Record']),/inaccessible/));
+});

@@ -8,8 +8,13 @@ import { resolveModuleBindings } from '../module-bindings.mjs';
 import { originalSourceModuleItems } from '../source-module-views.mjs';
 import { inspectDeriveInput } from '../derive-inputs.mjs';
 import { compilationProfile } from '../cfg-profile.mjs';
+import { configureParserSourceScope } from '../source-scopes.mjs';
+import { withSourceNamespaceParser } from '../extensions/source-namespaces.mjs';
 
 const contexts = new WeakMap();
+// Reuse the production namespace walk and original visibility/reexport maps;
+// no expression/body parser or synthetic binding table is introduced here.
+const SourceNamespaceResolver=withSourceNamespaceParser(class {});
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const key = path => path.join('::');
 export const SERIALIZATION_LIMITS = Object.freeze({ types: 128, fields: 1024, variants: 1024, typeDepth: 16, metaBytes: 4 * 1024 * 1024 });
@@ -33,7 +38,7 @@ export function captureSerializationContext({ root, paths, entry = 'src/lib.rs',
   const {source:caseBody,...caseSource}=caseInput;
   const dependencyEvidence={schema:dependencies.schema,manifestSha256:dependencies.manifestSha256,lockSha256:dependencies.lockSha256,sourceProfileSha256:dependencies.sourceProfileSha256,edition:dependencies.edition,rustVersion:dependencies.rustVersion,features:dependencies.features,packages:dependencies.packages,standardCore:dependencies.standardCore};
   const description = freeze({ schema: 'original-serialization-context-v1', entry, compilationProfile: profile, sourceSetSha256: corpus.sourceSetSha256, sources: corpus.sources, cargo: corpus.cargo, dependenciesDigest: dependencies.digest, caseSource, dependencyEvidence, runtimeAuthority: false, generatedTraitBehavior: false });
-  contexts.set(description, { corpus, graph, modules, scopes, derive, dependencies });
+  contexts.set(description, { corpus, graph, modules, scopes, derive, dependencies, namespaceResolvers:new Map() });
   return description;
 }
 export const isSerializationContext = context => !!context && contexts.has(context);
@@ -56,13 +61,6 @@ function head(tokens) {
 }
 const span = tokens => ({ start:tokens[0].start, end:tokens.at(-1).end, unit:'utf16' });
 function attributes(input,tokens) { const bounds=span(tokens); return input.attributes.filter(attribute=>attribute.span.start>=bounds.start && attribute.span.end<=bounds.end); }
-function ownerPath(value,module) {
-  const segments=value.split('::');
-  if(segments[0]==='crate') return segments;
-  if(segments[0]==='self') return ['crate',...module.path,...segments.slice(1)];
-  if(segments[0]==='super') { const parent=[...module.path];let at=0;while(segments[at]==='super') { if(!parent.length) refuse('Type path escapes original crate',module); parent.pop();at++; } return ['crate',...parent,...segments.slice(at)]; }
-  return ['crate',...module.path,...segments];
-}
 function resolvePath(s,module,path,allowPrelude=false) {
   const segments=path.split('::'), current=s.scopes.get(key(['crate',...module.path]));
   if(!current || current.configurationCondition!=='active') refuse('Original type scope has no active checked module',module);
@@ -71,23 +69,28 @@ function resolvePath(s,module,path,allowPrelude=false) {
     if(current.bindings.some(binding=>binding.name===path && binding.namespace==='type') || current.unresolvedTypeScope) refuse('Prelude serialization type is shadowed or unresolved: '+path,module);
     return { owner:'rust-prelude::'+path, primitive:path };
   }
-  let canonical=ownerPath(path,module), scope=s.scopes.get(key(canonical.slice(0,-1)));
-  // First source alias may name a module or a reexport, retaining its real owner.
-  if(!['crate','self','super'].includes(segments[0])) {
-    const aliases=current.bindings.filter(binding=>binding.namespace==='type' && binding.name===segments[0]);
-    if(aliases.length!==1 || aliases[0].status!=='resolved') refuse('Type alias is unresolved or ambiguous: '+path,module);
-    canonical=[...aliases[0].target,...segments.slice(1)];scope=s.scopes.get(key(canonical.slice(0,-1)));
+  const scopeKey=key(['crate',...module.path]);
+  let resolver=s.namespaceResolvers.get(scopeKey);
+  if(!resolver) {
+    resolver=new SourceNamespaceResolver();resolver.cursor={peek:()=>null};
+    configureParserSourceScope(resolver,current,[...s.scopes.values()],module.path);
+    s.namespaceResolvers.set(scopeKey,resolver);
   }
-  if(!scope || scope.unresolvedTypeScope) refuse('Qualified serialization type scope remains unresolved: '+key(canonical),module);
-  const candidates=scope.bindings.filter(binding=>binding.namespace==='type' && binding.name===canonical.at(-1));
-  if(candidates.length!==1 || candidates[0].status!=='resolved') refuse('Qualified serialization type has no unique original owner: '+path,module);
-  return { owner:key(candidates[0].target), primitive:null };
+  // Keep each occurrence's route evidence independent of prior field walks.
+  resolver.sourceNamespaceResolvedBindings=new Map();
+  const canonical=resolver.resolveSourceNamespace(segments,module.path,'type');
+  if(!Array.isArray(canonical)||canonical[0]!=='crate'||canonical.some(part=>part.startsWith('ml_'))) refuse('Written serialization type is inaccessible or has no checked original source route: '+path,module);
+  const ownerScope=s.scopes.get(key(canonical.slice(0,-1)));
+  if(!ownerScope || ownerScope.unresolvedTypeScope) refuse('Qualified serialization type scope remains unresolved: '+key(canonical),module);
+  const candidates=ownerScope.bindings.filter(binding=>binding.namespace==='type' && binding.name===canonical.at(-1));
+  if(candidates.length!==1 || candidates[0].status!=='resolved' || key(candidates[0].target)!==key(canonical)) refuse('Qualified serialization type has no unique original owner: '+path,module);
+  return { owner:key(canonical), primitive:null, routeBindings:[...resolver.sourceNamespaceResolvedBindings.values()] };
 }
 function typeReference(s,module,tokens,depth=0) {
   if(depth>SERIALIZATION_LIMITS.typeDepth || !tokens.length) refuse('Serialization type nesting exceeds checked grammar',module,tokens.length?span(tokens):null);
   let at=0, names=[];
   while(at<tokens.length) { const token=tokens[at++];if(token.type!=='ident' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(token.text)) refuse('Unsupported serialization type syntax',module,span(tokens));names.push(token.text);if(tokens[at]?.text!=='::')break;at++; }
-  const written=names.join('::'), resolution=resolvePath(s,module,written,true), evidence={written,owner:resolution.owner,span:span(tokens)};
+  const written=names.join('::'), resolution=resolvePath(s,module,written,true), evidence={written,owner:resolution.owner,span:span(tokens),...(resolution.routeBindings?{routeBindings:resolution.routeBindings}:{})};
   if(at===tokens.length) {
     if(['Vec','Option'].includes(resolution.primitive)) refuse('Generic serialization constructor lacks its element type',module,span(tokens));
     return {...evidence,kind:resolution.primitive?'primitive':'named',...(resolution.primitive?{name:resolution.primitive}:{})};
