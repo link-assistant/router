@@ -37,7 +37,7 @@ test('genuine checked project origin preserves actual Copy bytes and executes bo
     assert.equal(value.sourceMethodProof.copyAuthority,false);assert.equal(value.sourceMethodProof.runtimeParity,false);originalMethodSemanticFacts(value);
   }
   assert.throws(()=>{field.copyCertificate.verified=false;},TypeError);
-  await verifyTypedTargets(result,api=>{assert.equal(api.ready(api.get(api.make_ready())),true);assert.equal(api.ready(api.get(api.make_waiting())),false);assert.throws(()=>api.get({$: 'Holder',value:{$: 'Ready'}}),TypeError);});
+  await verifyTypedTargets(result,api=>{assert.equal(api.ready(api.get(api.make_ready())),true);assert.equal(api.ready(api.get(api.make_waiting())),false);assert.equal(api.ready(api.get({$: 'Holder',value:{$: 'Ready'}})),true);assert.throws(()=>api.get({$: 'Holder',value:{$: 'Unproved'}}),TypeError);});
 });
 test('public resealed nominal certificates cannot admit an original non-Copy field move',()=>{
   const text='struct Payload{n:u8}struct Holder{value:Payload}impl Holder{fn take(&self)->Payload{self.value}}pub fn bad(v:Holder)->Payload{v.take()}',result=project(text),parsed=parsedOriginal(text);
