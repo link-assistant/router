@@ -35,7 +35,10 @@ test('all fixed-width scalar owners retain exact original namespace identities i
   });
 });
 test('late scalar type masks and unknown glob owners cannot impersonate standard primitive visitors',()=>{
-  for(const tail of ['type bool=u8;','type u64=i64;','use missing::*;'])fixture(record('enabled:bool,count:u64')+tail,captured=>assert.throws(()=>checked(captured),/shadowed|unresolved|glob/));
+  for(const tail of ['type bool=u8;','type u64=i64;'])fixture(record('enabled:bool,count:u64')+tail,captured=>assert.throws(()=>checked(captured),/shadowed|unresolved/));
+  // The unresolved glob also invalidates unqualified derive owner authority,
+  // so this source guard must refuse before the primitive field walk.
+  fixture(record('enabled:bool,count:u64')+'use missing::*;',captured=>assert.throws(()=>checked(captured),/Actual locked serde::Serialize\/serde::Deserialize owners are unproved/));
   for(const type of ['usize','isize','f32','f64','u128'])fixture(record('value:'+type),captured=>assert.throws(()=>checked(captured),/no checked original source route/));
 });
 test('fixed-width visitors preserve signed and unsigned bounds and wide JSON identity without IEEE rounding',()=>{
@@ -135,5 +138,23 @@ test('bulk-generated JS and TS retain the exact one-way callable inventory rathe
 test('changing original derives changes only the actually proven generated and callable directions',()=>{
   for(const [derive,direction]of [['Serialize','serialize'],['Deserialize','deserialize'],['Serialize,Deserialize','both']])fixture('#[derive('+derive+')]enum Record{Ready}',captured=>{
     const codec=createSerializationCodec(checked(captured,'crate::Record',direction));assert.equal(typeof codec.serialize,direction==='deserialize'?'undefined':'function');assert.equal(typeof codec.deserialize,direction==='serialize'?'undefined':'function');
+  });
+});
+
+test('compact and separated nested Vec closers produce the same real generic codec behavior',()=>{
+  for(const spelling of ['Vec<Vec<u64>>','Vec<Vec<u64> >'])fixture(record('values:'+spelling),captured=>{
+    const codec=createSerializationCodec(checked(captured)),value={values:[[18446744073709551615n],[]]};
+    assert.equal(codec.serialize(value),'{"values":[[18446744073709551615],[]]}');
+    assert.equal(codec.deserialize('{"values":[[18446744073709551615],[]]}').values[0][0],18446744073709551615n);
+    assert.throws(()=>codec.deserialize('{"values":[[18446744073709551616]]}'),/bounds/);
+  });
+});
+test('malformed generic closers and braced expression shifts never grant a supported data descriptor',()=>{
+  for(const type of ['Vec<Vec<u8>','Vec<Vec<u8>>>','Vec<u8>>','Vec<{8 >> 1}>'])assert.throws(()=>fixture(record('value:'+type),captured=>checked(captured)));
+  // This extractor walks only actual data declarations. The original function
+  // shift remains outside its layout authority and is never split or emitted.
+  fixture(record('value:u8')+'fn shifted(value:u8)->u8{value >> 1}',captured=>{
+    const codec=createSerializationCodec(checked(captured));assert.equal(codec.serialize({value:255}),'{"value":255}');
+    assert.equal(codec.deserialize('{"value":255}').value,255);assert.equal(codec.runtimeAuthority,false);
   });
 });

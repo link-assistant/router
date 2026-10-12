@@ -61,6 +61,24 @@ function head(tokens) {
 }
 const span = tokens => ({ start:tokens[0].start, end:tokens.at(-1).end, unit:'utf16' });
 function attributes(input,tokens) { const bounds=span(tokens); return input.attributes.filter(attribute=>attribute.span.start>=bounds.start && attribute.span.end<=bounds.end); }
+function dataLayoutTokens(module,tokens) {
+  const result=[],pending=[],pairs={'[':']','(':')','{':'}','<':'>'};
+  for(const token of tokens) {
+    // Rust's type grammar consumes a joint >> as two closes only when two
+    // nested generic lists are pending. Preserve each original character span.
+    // A shift inside a braced expression has } on top and stays one token;
+    // unsupported const expressions still fail the bounded type grammar.
+    if(token.text==='>>'&&pending.at(-1)==='>'&&pending.at(-2)==='>') {
+      if(module.source.slice(token.start,token.end)!=='>>')refuse('Joint generic closer lacks exact original token bytes',module,span([token]));
+      for(let index=0;index<2;index++){result.push({...token,text:'>',start:token.start+index,end:token.start+index+1});pending.pop();}
+      continue;
+    }
+    result.push(token);
+    if(pairs[token.text])pending.push(pairs[token.text]);
+    else if(token.text===pending.at(-1))pending.pop();
+  }
+  return result;
+}
 function resolvePath(s,module,path,allowPrelude=false) {
   const segments=path.split('::'), current=s.scopes.get(key(['crate',...module.path]));
   if(!current || current.configurationCondition!=='active') refuse('Original type scope has no active checked module',module);
@@ -110,7 +128,7 @@ function declaration(s,owner,direction) {
   const item=items[0], certificate=deriveFootprintAt(s.derive,module,item);
   const required=direction==='both'?['serde::Serialize','serde::Deserialize']:[direction==='serialize'?'serde::Serialize':'serde::Deserialize'];
   if(!certificate || !required.every(target=>certificate.owners.some(value=>key(value.target)===target))) refuse('Actual locked '+required.join('/')+' owners are unproved: '+owner,module,{start:item.start,end:item.end});
-  const input=inspectDeriveInput(item,module.compilationProfile),tokens=item.tokens.filter(token=>token.type!=='comment'),at=head(tokens);
+  const input=inspectDeriveInput(item,module.compilationProfile),tokens=dataLayoutTokens(module,item.tokens.filter(token=>token.type!=='comment')),at=head(tokens);
   // The shared footprint grammar confines helper input, but JSON-only escapes
   // must not make invalid Rust literals executable descriptor metadata.
   for(const attribute of input.attributes) for(const text of attribute.tokens.filter(token=>token.startsWith('"'))) {

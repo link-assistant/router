@@ -34,11 +34,12 @@ owner coverage. The full original attributes, qualified owners, source hashes
 and spans remain in the immutable verified bulk inventory. The classification
 records actual locked Serde 1.0.229 implementation and derive branch identities.
 
-This draft's 16 added observable cases exercise fixed-width limits, JSON
+This draft's 18 added observable cases exercise fixed-width limits, JSON
 lexemes, exact callable directions, dependency-direction refusal, unchanged
 scope masks, original Router report and OAuth DTOs, Option map/sequence policies,
-source drift and unsupported hooks. They are unrun until Gate grants a frozen
-paired engine scope. Existing verified registry artifacts are preserved and
+source drift and unsupported hooks. Initial47 completed45/47 in both engines; complete failure evidence is retained
+before this generic closer/fixture repair. The repaired49 scope is unrun until
+Gate grants a new frozen paired engine scope. Existing verified registry artifacts are preserved and
 are intentionally not regenerated in this source-only branch. Production
 imports remain unchanged. Bounded descriptor behavior does not establish
 generated trait bodies, whole Serde behavior or whole-router runtime parity.

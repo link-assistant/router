@@ -7,9 +7,9 @@
   "productionImportsChanged": false,
   "nativeRuntimeFilesChanged": false,
   "persistentArtifactFilesChanged": false,
-  "authoredNewCases": 16,
+  "authoredNewCases": 18,
   "proposedInitialScope": {
-    "casesPerEngine": 47,
+    "casesPerEngine": 49,
     "files": [
       "tools/translation/serialization-schema/bulk.test.mjs",
       "tools/translation/serialization-schema/serialization-schema.test.mjs",
@@ -19,7 +19,7 @@
     "bunAuthoredTimeoutMs": 15000,
     "engineTimeoutSeconds": 180
   },
-  "futureCoherentRuntimeCasesAfterFrozenProducer": 196,
+  "futureCoherentRuntimeCasesAfterFrozenProducer": 198,
   "firstRefusalClassification": {
     "fixedWidthScalarRoots": 36,
     "bothDirectionFirstRefusals": 53,
@@ -31,8 +31,8 @@
   "inputs": [
     {
       "file": "tools/translation/serialization-schema/extract.mjs",
-      "bytes": 18754,
-      "sha256": "30a0f2903bdba2856d211ba0d49036dba866e2d09fd4a2bc27d4ebdb9e13373b"
+      "bytes": 19763,
+      "sha256": "e1b43a9b4bd66f158743b8954f58470a7347b5ca04bada6e8572dac76423869f"
     },
     {
       "file": "tools/translation/serialization-schema/meta.mjs",
@@ -66,13 +66,13 @@
     },
     {
       "file": "tools/translation/serialization-schema/scalars-direction.test.mjs",
-      "bytes": 12130,
-      "sha256": "8f0282430f458764c629f25e9250971943752e4b58de6e9100447b92d766fa7b"
+      "bytes": 13788,
+      "sha256": "ed74250f1dabf6ce4b56dabf037c5f4d51105b9313a037a3267d437560c4ef64"
     },
     {
       "file": "tools/translation/serialization-schema/SCALARS-DIRECTIONS.md",
-      "bytes": 2992,
-      "sha256": "134f01751d63f438f58eaa7d824c3a7902e5f4220a3bed9f377c4b80d61ee3d0"
+      "bytes": 3134,
+      "sha256": "8cce112c09f620877caf2213c80ce034cc19cd8450ee6dcc88e978f579caa6b5"
     },
     {
       "file": "tools/translation/serialization-schema/refusal-classification.json",
@@ -81,5 +81,8 @@
     }
   ],
   "runtimeAuthority": false,
-  "generatedTraitBehavior": false
+  "generatedTraitBehavior": false,
+  "initial47EvidenceHead": "267ca70de87dba673887e51d4a2458b73ff2d2d7",
+  "draftTestsRun": false,
+  "repair": "Joint >> split only for two pending type generic closers with exact original byte/UTF16 spans, no shift-expression or opaque grammar promotion. Unknown glob fixture retains earlier actual derive-authority refusal."
 }
