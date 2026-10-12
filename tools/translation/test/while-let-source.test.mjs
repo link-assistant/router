@@ -6,6 +6,7 @@ import {gunzipSync} from 'node:zlib';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
+import {withPatternControlChecker} from '../extensions/pattern-control.mjs';
 import {WHILE_LET_PROFILE,requireSourceWhileLet} from '../extensions/while-let-source.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
@@ -35,6 +36,14 @@ test('literal and irrefutable while patterns keep original success and zero-iter
 test('nested actual standard Result Option and tuple patterns bind each successful body scope',async()=>{
   const source='fn at(index:u8)->Result<Option<(u8,bool)>,u8>{if index<3u8{Ok(Some((index,true)))}else{Err(0u8)}} pub fn total()->u8{let mut index:u8=0;let mut total:u8=0;while let Ok(Some((value,true)))=at(index){total+=value;index+=1u8;}total}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),node=find(checked.declarations.get('total').body,node=>node.patternControl?.kind==='while-let');
+  const {plan,subjectType}=node.patternControl,binding=plan.bindings[0],Checker=withPatternControlChecker(class{}),checker=new Checker();checker.items=checked.declarations;
+  const subject={k:'var',name:'actual_subject',type:subjectType,span:node.span};
+  assert.equal(checker.patternProjection(subject,binding.projection,binding.type,plan.projectionPaths).type.kind,'fixed');
+  assert.deepEqual(plan.projectionPaths.map(path=>path.projection),[[],['field0'],['field0','field0'],['field0','field0']]);
+  for(const mutate of [paths=>{paths[0].ctor='Err';},paths=>{paths[0].data='fake.Result';},paths=>{paths[0].type={kind:'fixed',bits:8,signed:false};},paths=>{paths.length=0;}]) {
+    const paths=structuredClone(plan.projectionPaths);mutate(paths);assert.throws(()=>checker.patternProjection(subject,binding.projection,binding.type,paths),error=>['type','unsupported'].includes(error.kind));
+  }
   await verifyTypedTargets(result,api=>assert.equal(api.total(),3n));
 });
 

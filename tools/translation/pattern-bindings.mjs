@@ -9,7 +9,7 @@ const equalProjection=(left,right)=>left.length === right.length && left.every((
 const scalar=value=>typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value);
 export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
   if(!(declarations instanceof Map))throw new TypeError('Pattern checking requires the actual checked declaration Map');
-  const active=new Set(),fallbackSpan=span ?? pattern?.span;
+  const active=new Set(),projectionPaths=[],fallbackSpan=span ?? pattern?.span;
   function checkedType(current,location) {
     if(current?.kind === 'array')return {...current,element:checkedType(current.element,location)};
     if(current?.kind === 'data'){if(declarations.get(current.name)?.k !== 'data')throw typeError(`unresolved pattern layout ${current.name}`,location);return current;}
@@ -61,6 +61,10 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
     const ctor=entry.ctors.find(candidate=>candidate.name === name);
     if(!ctor)throw typeError(`${type.name} has no constructor ${name ?? '(unspecified)'}`,location);
     const fields=ctor.fields.map((field,index)=>({...field,name:field.name ?? `field${index}`,type:checkedType(field.type,location)}));
+    const child=(pattern,field)=>{
+      projectionPaths.push({projection:[...projection],data:type.name,ctor:name,field:field.name,type:field.type});
+      return visit(pattern,field.type,[...projection,field.name]);
+    };
     let children;
     if(record) {
       if(!Array.isArray(node.fields))throw typeError('record pattern has no named field list',location);
@@ -69,7 +73,7 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
         if(names.has(field.name))throw typeError(`duplicate record pattern field ${field.name}`,field.span ?? location);names.add(field.name);
         const declared=fields.find(candidate=>candidate.name === field.name);
         if(!declared)throw typeError(`${type.name}::${name} has no field ${field.name}`,field.span ?? location);
-        return visit(field.pattern ?? {k:'bind',name:field.name,span:field.span},declared.type,[...projection,declared.name]);
+        return child(field.pattern ?? {k:'bind',name:field.name,span:field.span},declared);
       });
       if(!node.rest && names.size !== fields.length)throw typeError(`record pattern names ${names.size} of ${fields.length} fields without rest`,location);
     } else {
@@ -77,7 +81,7 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
       if(!tuple && !fields.every((field,index)=>field.name === `field${index}`))throw unsupported('tuple constructor pattern','named-field layout requires a record pattern',location);
       const patterns=tuple?node.items:node.args ?? node.patterns ?? node.binds?.map(name=>({k:'bind',name})) ?? [];
       if(!Array.isArray(patterns) || patterns.length !== fields.length)throw typeError(`${name} pattern names ${patterns?.length ?? 0} of ${fields.length} fields`,location);
-      children=patterns.map((child,index)=>visit(child,fields[index].type,[...projection,fields[index].name]));
+      children=patterns.map((pattern,index)=>child(pattern,fields[index]));
     }
     const refutable=entry.ctors.length !== 1 || children.some(child=>child.refutable);
     const tagTest=entry.ctors.length === 1?always():{kind:'ctor',data:type.name,ctor:name,projection:[...projection]};
@@ -156,5 +160,5 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
     return result;
   }
   const {refutable,bindings,test}=visit(pattern,type);
-  return {refutable,bindings,test,diagnostics:[]};
+  return {refutable,bindings,test,projectionPaths,diagnostics:[]};
 }

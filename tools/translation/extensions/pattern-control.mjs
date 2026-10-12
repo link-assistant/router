@@ -295,25 +295,32 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(type.kind!=='data'||active.has(type.name))return false;
       active.add(type.name);const entry=this.items.get(type.name),result=entry?.ctors.some(ctor=>ctor.fields.some(field=>this.sharedPatternView(field.type,active)))??false;active.delete(type.name);return result;
     }
-    patternProjection(subject,projection,targetType) {
+    patternProjection(subject,projection,targetType,projectionPaths) {
       let value=subject;
       for(const [index,field] of projection.entries()) {
         const entry=this.items.get(value.type.name),fields=entry?.ctors.flatMap(ctor=>ctor.fields.filter(candidate=>candidate.name===field))??[];
         const final=index===projection.length-1;
-        const wanted=final&&targetType?targetType:fields[0]?.type;
-        if(!wanted||!fields.some(candidate=>sameType(candidate.type,wanted))||!final&&fields.some(candidate=>!sameType(candidate.type,wanted)))throw unsupported('conditional field projection','different intermediate layouts require case-specific projections',subject.span);
-        // The final type comes from the checked planner's selected constructor,
-        // binding or literal; another variant's same-named field cannot change it.
+        const paths=projectionPaths?.filter(path=>path.field===field&&isDeepStrictEqual(path.projection,projection.slice(0,index)));
+        const selected=paths?.map(path=>{
+          const actual=entry?.ctors.find(ctor=>ctor.name===path.ctor)?.fields.find(candidate=>candidate.name===field);
+          if(path.data!==value.type.name||!actual||!sameType(actual.type,path.type))throw typeError('pattern projection path differs from its actual selected constructor',subject.span);
+          return actual;
+        });
+        const wanted=final&&targetType?targetType:selected?.[0]?.type??fields[0]?.type;
+        if(!wanted||!fields.some(candidate=>sameType(candidate.type,wanted))||(selected?(!selected.length||selected.some(candidate=>!sameType(candidate.type,wanted))):!final&&fields.some(candidate=>!sameType(candidate.type,wanted))))throw unsupported('conditional field projection','different intermediate layouts require case-specific projections',subject.span);
+        // Each path comes from the planner's actual selected constructor. Its
+        // ordered tag tests precede projections; unrelated variants do not
+        // supply intermediate types, and divergent or-paths stay refused.
         value={k:'routerPatternProjection',object:value,field,type:wanted,span:subject.span};
       }
       return value;
     }
-    patternTest(test,subject) {
+    patternTest(test,subject,projectionPaths) {
       if(test.kind==='always')return {k:'lit',value:true,type:BOOL};
-      if(test.kind==='ctor')return {k:'routerPatternTag',object:this.patternProjection(subject,test.projection,{kind:'data',name:test.data}),data:test.data,ctor:test.ctor,type:BOOL};
-      if(test.kind==='literal')return {k:'binary',op:'eq',left:this.patternProjection(subject,test.projection,test.type),right:{k:'lit',value:test.value,type:test.type},type:BOOL};
+      if(test.kind==='ctor')return {k:'routerPatternTag',object:this.patternProjection(subject,test.projection,{kind:'data',name:test.data},projectionPaths),data:test.data,ctor:test.ctor,type:BOOL};
+      if(test.kind==='literal')return {k:'binary',op:'eq',left:this.patternProjection(subject,test.projection,test.type,projectionPaths),right:{k:'lit',value:test.value,type:test.type},type:BOOL};
       if(test.kind==='integerRange') {
-        const left=this.patternProjection(subject,test.projection,test.type),bound=value=>({k:'lit',value,type:test.type});
+        const left=this.patternProjection(subject,test.projection,test.type,projectionPaths),bound=value=>({k:'lit',value,type:test.type});
         return {k:'binary',op:'and',left:{k:'binary',op:'ge',left,right:bound(test.lower),type:BOOL},right:{k:'binary',op:'le',left,right:bound(test.upper),type:BOOL},type:BOOL};
       }
       if(['and','or'].includes(test.kind)) {
@@ -321,7 +328,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
         // tests can be removed without changing observable evaluation; keeping
         // them makes TS's narrowed discriminant reject valid duplicate arms.
         const seen=new Set(),tests=test.tests.filter(test=>{const key=JSON.stringify(test,(_,value)=>typeof value==='bigint'?{$bigint:String(value)}:value);if(seen.has(key))return false;seen.add(key);return true;});
-        return tests.map(test=>this.patternTest(test,subject)).reduce((left,right)=>({k:'binary',op:test.kind,left,right,type:BOOL}));
+        return tests.map(test=>this.patternTest(test,subject,projectionPaths)).reduce((left,right)=>({k:'binary',op:test.kind,left,right,type:BOOL}));
       }
       throw typeError('unchecked pattern test plan',subject.span);
     }
@@ -353,7 +360,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
         let name;do{name=this.freshName('ml_pattern_callback_');}while(env.has(name)||names.has(name));
         parameters.push({name,type,plan,span:param.span});
         const variable={k:'var',name,type,span:param.span};
-        bindings.push(...plan.bindings.map(binding=>({name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),span:binding.span??param.span})));
+        bindings.push(...plan.bindings.map(binding=>({name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),span:binding.span??param.span})));
       }
       let body=this.expr(node.body,inner,path,expected);if(expected)body=coerce(body,expected,this.language,node.span);
       checkCallbackCaptures(body,env,names,node.span);
@@ -407,7 +414,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
         let inner=new Map(env);
         for(const binding of plan.bindings)inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
         let body=this.expr(node.body,inner,path,expected,allowLiteral);
-        body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
+        body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
         if(subject.type.kind==='data')body={k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},body,type:body.type,span:node.span};
         return {k:'let',name:temporary,value:subject,body,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'tuple-let'}};
       }
@@ -427,8 +434,8 @@ export function withPatternControlChecker(Base=ControlChecker) {
         let inner=new Map(env);
         for(const binding of plan.bindings)inner=this.bindingEnvironment(inner,binding.name,binding.type,false);
         let body=this.expr(node.body,inner,path,expected,allowLiteral);
-        body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
-        let condition=this.patternTest(plan.test,variable);
+        body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
+        let condition=this.patternTest(plan.test,variable,plan.projectionPaths);
         if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL},right:condition,type:BOOL};
         const conditional={k:'routerIf',cond:condition,then:{k:'unit',type:UNIT},else:otherwise,body,type:body.type,span:node.span};
         return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'let-else',divergence:'checked-exit'}};
@@ -466,8 +473,8 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(otherwise.type.kind==='literal')otherwise=this.expr(node.else,new Map(env),path,then.type);
       const resultType=statement?UNIT:expected??then.type;
       then=coerce(then,resultType,this.language,node.span);otherwise=coerce(otherwise,resultType,this.language,node.span);
-      then=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type),body,mutable:false,type:body.type,span:binding.span??node.span}),then);
-      let condition=this.patternTest(plan.test,variable);
+      then=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??node.span}),then);
+      let condition=this.patternTest(plan.test,variable,plan.projectionPaths);
       if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},right:condition,type:BOOL};
       const conditional={k:node.k,cond:condition,then,else:otherwise,type:resultType,span:node.span};
       if(statement){conditional.body=this.expr(node.body,env,path,expected,allowLiteral);conditional.type=conditional.body.type;}

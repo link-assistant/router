@@ -9,5 +9,10 @@ subject inside each loop iteration around the original body. Only the existing
 checked immutable scalar/shared-view/algebraic pattern domain is proposed.
 Owned/mutable/Drop effects and let chains are not inferred from this source pin.
 
-This source-only draft and its authored cases remain UNRUN. No producer, corpus
-gain, const authority or complete namespace/trait/runtime parity is claimed.
+The initial frozen 3dca23c0 cohort passed 181/183 cases in each engine:
+all 175 prior regressions and six of eight new while-let cases. Nested
+Result/Option/tuple projection and a same-file constant identity control failed
+in both. A coherent source repair now carries each actual selected constructor
+through the generic pattern plan and includes actual constants in per-file
+function closure selection. Its full paired retry remains UNRUN. No producer,
+corpus gain, const authority or complete namespace/trait/runtime parity is claimed.

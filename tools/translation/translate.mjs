@@ -119,7 +119,8 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   }
   const surfaceNames = node => {
     if (!node || typeof node !== 'object') return [];
-    return [...(node.k === 'name' && node.path?.length === 1 ? node.path : []), ...Object.values(node).flatMap(surfaceNames)];
+    const constantPattern=['bind','bindOrCtor'].includes(node.k)&&candidates.get(node.name)?.surface.constant;
+    return [...(node.k === 'name' && node.path?.length === 1 ? node.path : constantPattern?[node.name]:[]), ...Object.values(node).flatMap(surfaceNames)];
   };
   const closure = root => {
     const found = new Map();
