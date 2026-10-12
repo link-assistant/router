@@ -5,6 +5,7 @@ import {itemConfiguration} from './cfg-profile.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import { parseRust, checkProgram, emitJavaScript } from './extensions/host-contracts.mjs';
 import {standaloneMatchesMacroContext} from './matches-macro-context.mjs';
+import {captureOriginalCargoEdition} from './cargo-edition-context.mjs';
 import {typeScriptType,typeScriptAliases} from './type-layout.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { tokenize } from './vendor/meta-language/translation/lexer.js';
@@ -50,7 +51,7 @@ function relocate(value, offset) {
   return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, ['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof'].includes(key)?item:key === 'span' && item ? { start: item.start + offset, end: item.end + offset } : relocate(item, offset)]));
 }
 
-export function translateSource(source, path = 'input.rs', { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile } = {}) {
+export function translateSource(source, path = 'input.rs', { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest } = {}) {
   const macroEvidence=macroProvenance(source),sourceHash=sha256(source);
   const matchingScopes=projectSourceScopes.filter(entry=>entry.source===path&&entry.sha256===sourceHash&&(!entry.sourceView||entry.sourceView.modulePath.length===0));
   const sourceScope=matchingScopes.length===1?matchingScopes[0]:null;
@@ -88,7 +89,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   }
   if (offset < source.length) append(offset, source.length);
   let standaloneOriginalContext=null,standaloneContextError=null;
-  if(!sourceScope)try{standaloneOriginalContext=standaloneMatchesMacroContext(source,{file:path});}catch(error){standaloneContextError=error;}
+  if(!sourceScope)try{standaloneOriginalContext=standaloneMatchesMacroContext(source,{file:path,cargoEditionContext:cargoManifest===undefined||cargoManifest===null?null:captureOriginalCargoEdition(cargoManifest)});}catch(error){standaloneContextError=error;}
   const candidates = new Map();
   const layouts = new Map();
   const ambiguous = new Set();

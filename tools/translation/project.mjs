@@ -30,6 +30,7 @@ import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
 import {createMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved} from './matches-macro-context.mjs';
+import {captureOriginalCargoEdition,originalCargoEditionEvidence} from './cargo-edition-context.mjs';
 
 // Only the actual original-source project pipeline can issue this identity.
 // Public JSON digests/certificates are integrity data, never its authority.
@@ -204,6 +205,7 @@ function declarationProgram(program, root) {
 export function translateProject(options) {
   const progress=translationProgressReporter(options.progress);
   progress({stage:'project-graph',state:'start',entry:options.entry});
+  const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest);
   const graph = resolveModuleGraph(options);
   progress({stage:'project-graph',state:'end',entry:options.entry,total:graph.modules.length});
   progress({stage:'namespace',state:'start',entry:options.entry});
@@ -217,7 +219,7 @@ export function translateProject(options) {
   const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
-  const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null});
+  const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
   let completedModules=0,completedMethods=0;
@@ -392,6 +394,7 @@ export function translateProject(options) {
   if(jsonMacroDiagnostic)meta.jsonMacroDiagnostic=jsonMacroDiagnostic;
   meta.jsonParserProfile=jsonParserProfile;
   meta.matchesMacroContext=matchesMacroContext;
+  meta.originalCargoEditionInput=originalCargoEditionEvidence(cargoEditionContext);
   const sourceScopes=graph.modules.map(module=>Object.freeze({source:module.file,module:[...module.path],sourceView:module.sourceView,sha256:sha256(module.source),project:options.entry,compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition,configurationEvidence:Object.freeze([...module.configurationEvidence]),scope:scopes.get(moduleScopeKey(module)),scopes:bindingEvidence.scopes,jsonParserProfile,matchesMacroContext}));
   const lowerDeclaration=(entry,name)=>function(lowerOptions={}) {
     const program=declarationProgram(target.program,target.names.get(entry.name));

@@ -17,6 +17,7 @@ import {originalMethodMember} from './impl-resolver.mjs';
 import {originalMethodTransformFacts,originalMethodParserTokenFacts} from './source-method-transforms.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
 import {itemConfiguration,compilationProfile as normalizeProfile} from './cfg-profile.mjs';
+import {originalCargoEditionEvidence,configureRustEditionParser} from './cargo-edition-context.mjs';
 const contexts=new WeakMap(),immutableContexts=new WeakMap(),parsers=new WeakMap(),issuedFrames=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
 let standardProfile=null;
 const mapEntries=Map.prototype.entries;
@@ -26,7 +27,7 @@ function namespaceDigest(parser){const aliases=ownData(parser,'sourceNamespaceAl
 // Publicly exposed context wrappers remain untrusted mutable surfaces.
 function immutableContext(context,facts){
   const issued=immutableContexts.get(context);
-  if(!issued||facts!==issued.facts||['modules','evidence','profile','compilationProfile'].some(key=>ownData(facts,key)!==issued[key]))throw new TypeError('Matches context immutable roots differ from their private issuance');
+  if(!issued||facts!==issued.facts||['modules','evidence','profile','compilationProfile','cargoEditionContext'].some(key=>ownData(facts,key)!==issued[key]))throw new TypeError('Matches context immutable roots differ from their private issuance');
   return issued;
 }
 // Configure sites alone bind these original fields. The exposed frame remains
@@ -65,22 +66,23 @@ function originalOwnerHashes(issued,module,scope){
 export function originalMatchesNamespaceBindings(){const profile=standardProfile??=loadStandardMatchesSourceProfile();return ['std','core'].map(root=>Object.freeze({name:profile.name,namespace:'macro',macroKind:'bang',target:[root,profile.name],kind:'macro',originalNamespaceDigest:profile.digest}));}
 function standardExternal(){return registeredStandardHostBindings(originalMatchesNamespaceBindings());}
 
-export function createMatchesMacroContext({modules,compilationProfile=null,deriveDependencies=null}={}) {
+export function createMatchesMacroContext({modules,compilationProfile=null,deriveDependencies=null,cargoEditionContext=null}={}) {
+  if(cargoEditionContext!==null&&!originalCargoEditionEvidence(cargoEditionContext))throw new TypeError('Matches source context requires private original Cargo edition evidence');
   const profile=standardProfile??=loadStandardMatchesSourceProfile(),snapshot=captureOriginalMacroModules({modules,compilationProfile}),original=originalMacroModules(snapshot),external=standardExternal();
   const deriveContext=deriveDependencies?createDeriveFootprintContext({modules:original.modules,dependencies:deriveDependencies,externalModules:external,compilationProfile:original.compilationProfile}):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):external;
   const toolContext=createToolAttributeContext({modules:original.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:original.compilationProfile});
   const evidence=freezeMacroTree(resolveModuleBindings({modules:original.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:original.compilationProfile}));
   const certificate=freezeMacroTree({schema:'original-standard-matches-call-context-v1',profileDigest:profile.digest,compilationProfile:original.compilationProfile,originalModules:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source),sourceViewDigest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition})),namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
-  const facts={...original,profile,evidence};
+  const facts={...original,profile,evidence,cargoEditionContext};
   contexts.set(certificate,facts);
-  immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap()}));
+  immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,cargoEditionContext,moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap()}));
   return certificate;
 }
 export const isMatchesMacroContext=value=>!!value&&contexts.has(value);
-export function standaloneMatchesMacroContext(source,{file='src/module.rs',compilationProfile=null}={}) {
+export function standaloneMatchesMacroContext(source,{file='src/module.rs',compilationProfile=null,cargoEditionContext=null}={}) {
   const captured=captureSourceModuleViews({source,sourcePath:file,compilationProfile});
-  return createMatchesMacroContext({modules:captured.views.map(sourceView=>({file,path:[...sourceView.modulePath],source,sourceView,compilationProfile,configurationCondition:sourceView.configurationCondition})),compilationProfile});
+  return createMatchesMacroContext({modules:captured.views.map(sourceView=>({file,path:[...sourceView.modulePath],source,sourceView,compilationProfile,configurationCondition:sourceView.configurationCondition})),compilationProfile,cargoEditionContext});
 }
 export function configureMatchesMacroParser(parser,context,{file,modulePath=[],offset=0,allowEmptyMainCarrier=false}={}) {
   const facts=contexts.get(context),captured=capturedRustTokenSource(parser.cursor.tokens);
@@ -97,6 +99,7 @@ export function configureMatchesMacroParser(parser,context,{file,modulePath=[],o
   // The legacy use parser may update its working alias table. The genuine
   // namespace maps consumed by source resolution stay separate and sealed.
   parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));
+  configureRustEditionParser(parser,facts.cargoEditionContext);
   recordParserFrame(parser,{context,facts,module,offset,sourceLength:source.length,captured,tokens:parser.cursor.tokens,namespaceDigest:namespaceDigest(parser)});return parser;
 }
 export function matchesParserFacts(parser) {
@@ -206,6 +209,7 @@ export function configureMatchesMethodParser(parser,context,method) {
   if(!module||module.source!==captured.source||module.sourceView!==captured.sourceView||JSON.stringify(normalizeProfile(captured.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Matches method parser changed its full original view/profile');
   configureParserSourceScope(parser,namespace.scope,namespace.scopes,namespace.modulePath);parser.modulePath=[...namespace.modulePath];
   parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));
+  configureRustEditionParser(parser,facts.cargoEditionContext);
   recordParserFrame(parser,{context,facts,module,offset:0,sourceLength:module.source.length,captured,tokens:parser.cursor.tokens,methodTransform:captured.proof,namespaceDigest:namespaceDigest(parser)});
   return parser;
 }
