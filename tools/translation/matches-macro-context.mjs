@@ -136,3 +136,13 @@ export function originalMethodNamespaceOwner(context,method) {
   if(nominal.visibility?.kind!=='public'&&nominal.visibility?.path&&!nominal.visibility.path.every((part,index)=>consumer[index]===part))throw new TypeError('Original method nominal owner is inaccessible from its source module');
   return freezeMacroTree({schema:'original-method-namespace-owner-v1',file:module.file,modulePath:module.path,sourceSha256:hash(module.source),sourceViewDigest:module.sourceView.digest,compilationProfile:facts.compilationProfile,owner:route,originalSpan:method.span,originalImplementationSpan:original.implementationSpan,scopeSha256:hash(JSON.stringify(scope)),namespaceAuthority:false,copyAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
 }
+
+// Read-only original facts. A caller cannot register a scope or turn copied
+// owner metadata into this context. High consumers recheck the member issuer.
+export function originalMethodParserNamespace(context,method) {
+  originalMethodNamespaceOwner(context,method);
+  const facts=contexts.get(context),original=originalMethodMember(method);
+  const scope=facts.evidence.scopes.find(scope=>scope.file===original.sourcePath&&JSON.stringify(scope.path)===JSON.stringify(original.modulePath));
+  if(!scope)throw new TypeError('Original method parser has no actual module scope');
+  return Object.freeze({scope,scopes:facts.evidence.scopes,modulePath:original.modulePath,compilationProfile:facts.compilationProfile});
+}

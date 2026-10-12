@@ -49,6 +49,8 @@ import {withJsonMacroParser,withJsonMacroChecker,withJsonMacroEmitter} from './j
 import {configureJsonMacroParser} from '../json-macro-context.mjs';
 import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
 import {standaloneMatchesMacroContext,configureMatchesMacroParser,configureMatchesParserFromSourceScope,originalMatchesImport} from '../matches-macro-context.mjs';
+import {originalMethodSnapshot} from '../original-parser-identity.mjs';
+import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 
 export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -320,6 +322,14 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
+// Capture original methods when the actual source class is defined, before a
+// caller can replace a prototype and have a lazy first-use guard endorse it.
+// Arrays/rows are immutable; exposing a frozen Map would still allow set().
+const originalHostParserIdentity=Object.freeze({
+  parserMethods:Object.freeze([...originalMethodSnapshot(HostRustParser.prototype)].map(row=>Object.freeze(row))),
+  cursorMethods:Object.freeze([...originalMethodSnapshot(TokenCursor.prototype)].map(row=>Object.freeze(row))),
+});
+export function originalHostParserIdentitySnapshot(){return originalHostParserIdentity;}
 export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalCollection(withCheckedSourceLinks(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
