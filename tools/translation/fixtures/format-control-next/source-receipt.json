@@ -67,6 +67,21 @@
       },
       "bodySha256": "d6a4da9fe5dadfc9949ea88d8a3d2aeffe2c921d438f91a4f1a8d01e29341acb",
       "runtimeExecutionVerified": false
+    },
+    {
+      "name": "make_format_args",
+      "span": {
+        "start": 6299,
+        "end": 25203,
+        "unit": "utf16"
+      },
+      "sha256": "64e7821721fdf4cc702bce7f1264c4739cb60dac7e66d6dde84b10f44872ce2d",
+      "bodySpan": {
+        "start": 6455,
+        "end": 25203
+      },
+      "bodySha256": "24eb3d2f1f8f89eb95cadde5b670f24301dbc4436e250455d9b4d642915b02b8",
+      "runtimeExecutionVerified": false
     }
   ],
   "newPaths": [
@@ -98,7 +113,10 @@
     "Compiler opaque AST/token/span and ExtCtxt/parser/builder execution",
     "Generic/UFCS/cast/array-repeat/update/modifier/inner-item syntax",
     "Original formatted argument tuple/borrow lifetime/trait dispatch",
-    "Allocator/OOM/I/O/application/native effect completeness"
+    "Allocator/OOM/I/O/application/native effect completeness",
+    "Full Rust grammar/typechecking (symbolic token grammar only)",
+    "Short-circuit skip/taken behavior and residual/return target execution",
+    "Actual lexical bindings, branch scopes and assignment operand evaluation order"
   ],
   "flags": {
     "typedCompilerIRChecked": false,
@@ -109,6 +127,73 @@
     "runtimeParity": false,
     "allocatorEffectsVerified": false,
     "ioEffectsVerified": false,
-    "additionalDeclarationsAdmitted": 0
+    "additionalDeclarationsAdmitted": 0,
+    "rustGrammarValidated": false
+  },
+  "controlOperatorSource": {
+    "manifest": "source-profiles/builtin-derive-bang/manifest.json",
+    "manifestSha256": "ed900c72967bb27cfe540be7f19f2cc4d52f82e9a601b76bae162f09e9829d51",
+    "source": {
+      "path": "compiler/rustc_ast/src/ast.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast/src/ast.rs",
+      "bytes": 128914,
+      "sha256": "115db8af9bbd5230088173343ee8321ca9af51fc14d921edf59d9a0b109e0217",
+      "archive": "rust-1.89-compiler_rustc_ast_src_ast.rs.gz",
+      "archiveBytes": 31890,
+      "archiveSha256": "db6d3221b23c958dc1d1252ed30e195074dae781cb793ee7e3b2726053fa5c6b"
+    },
+    "sourceBytesVerified": 128914,
+    "sourceSha256Verified": "115db8af9bbd5230088173343ee8321ca9af51fc14d921edf59d9a0b109e0217",
+    "originalMethods": [
+      {
+        "signature": "pub fn is_lazy(&self)",
+        "span": {
+          "start": 30777,
+          "end": 30869,
+          "unit": "utf16"
+        },
+        "sha256": "ff44a9c50eee76c966d6a3bec88b3aecc01bc99b484c57228e338b7e5924b593",
+        "originalText": "pub fn is_lazy(&self) -> bool {\n        matches!(self, BinOpKind::And | BinOpKind::Or)\n    }"
+      },
+      {
+        "signature": "pub fn precedence(&self)",
+        "span": {
+          "start": 30875,
+          "end": 31417,
+          "unit": "utf16"
+        },
+        "sha256": "6e5f50993d06b81c49812c4b1911e8b965dbb2b73aece4ddb070824b0bf0e61c",
+        "originalText": "pub fn precedence(&self) -> ExprPrecedence {\n        use BinOpKind::*;\n        match *self {\n            Mul | Div | Rem => ExprPrecedence::Product,\n            Add | Sub => ExprPrecedence::Sum,\n            Shl | Shr => ExprPrecedence::Shift,\n            BitAnd => ExprPrecedence::BitAnd,\n            BitXor => ExprPrecedence::BitXor,\n            BitOr => ExprPrecedence::BitOr,\n            Lt | Gt | Le | Ge | Eq | Ne => ExprPrecedence::Compare,\n            And => ExprPrecedence::LAnd,\n            Or => ExprPrecedence::LOr,\n        }\n    }"
+      },
+      {
+        "signature": "pub fn fixity(&self)",
+        "span": {
+          "start": 31423,
+          "end": 31712,
+          "unit": "utf16"
+        },
+        "sha256": "e9553f4a959262176dc1ff609618489efd2e372be606df2512587cf9a67ab8ed",
+        "originalText": "pub fn fixity(&self) -> Fixity {\n        use BinOpKind::*;\n        match self {\n            Eq | Ne | Lt | Le | Gt | Ge => Fixity::None,\n            Add | Sub | Mul | Div | Rem | And | Or | BitXor | BitAnd | BitOr | Shl | Shr => {\n                Fixity::Left\n            }\n        }\n    }"
+      }
+    ],
+    "namespaceAuthority": false,
+    "compilerExecutionVerified": false,
+    "newArchiveBytes": 0
+  },
+  "sourceReview": {
+    "base": "29b85b7f4",
+    "engineAttempts": 0,
+    "authoredCases": 6,
+    "originalPinnedFunctionCases": 4,
+    "callerSyntaxOrUnsupportedControlCases": 2,
+    "repairs": [
+      "Preserve original parenthesized group span separately from child expression",
+      "Preserve original adjacent compound punctuation components; do not join across spaces/comments",
+      "Separate bitwise precedences and preserve one non-associative comparison level",
+      "Refuse unparenthesized comparison chains and continue labels/values not covered by grammar",
+      "Record unresolved lexical/branch bindings, conditional RHS evaluation, try/return targets and assignment evaluation order",
+      "Strengthen complete original body-span/hash and clone/public digest rejection assertions"
+    ],
+    "noFormatterCallerAdmission": true
   }
 }

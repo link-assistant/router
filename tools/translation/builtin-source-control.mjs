@@ -7,8 +7,11 @@ import {isFormatCallbackDataflow} from './format-builtin-dataflow.mjs';
 const states=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
 const word=node=>node?.kind==='token'?node.text:null;
 const name=node=>node?.kind==='token'&&node.type==='ident'&&/^(?:r#)?[\p{L}_][\p{L}\p{N}_]*$/u.test(node.text);
-const precedence={'||':1,'&&':2,'==':3,'!=':3,'<':4,'<=':4,'>':4,'>=':4,'|':5,'^':5,'&':6,'<<':7,'>>':7,'+':8,'-':8,'*':9,'/':9,'%':9};
-const flags={compilerHandlerOwnerResolved:false,sourceSemanticClosureVerified:false,typedCompilerIRChecked:false,executable:false,traitSelectionVerified:false,allocatorEffectsVerified:false,ioEffectsVerified:false,namespaceAuthority:false,runtimeParity:false};
+// Original BinOpKind::precedence/fixity separates bitwise groups and gives
+// every comparison one non-associative precedence (pinned ast.rs).
+const precedence={'||':1,'&&':2,'==':3,'!=':3,'<':3,'<=':3,'>':3,'>=':3,'|':4,'^':5,'&':6,'<<':7,'>>':7,'+':8,'-':8,'*':9,'/':9,'%':9};
+const comparison=operation=>['==','!=','<','<=','>','>='].includes(operation);
+const flags={compilerHandlerOwnerResolved:false,sourceSemanticClosureVerified:false,typedCompilerIRChecked:false,rustGrammarValidated:false,executable:false,traitSelectionVerified:false,allocatorEffectsVerified:false,ioEffectsVerified:false,namespaceAuthority:false,runtimeParity:false};
 const range=nodes=>({start:nodes[0]?.span.start??0,end:nodes.at(-1)?.span.end??0});
 function split(nodes,separator=',') {
   if(!nodes.length)return [];
@@ -21,7 +24,7 @@ function split(nodes,separator=',') {
 function expressionTokens(nodes) {
   const result=[];
   for(let at=0;at<nodes.length;at++){const first=nodes[at],second=nodes[at+1];
-    if(first?.kind==='token'&&second?.kind==='token'&&first.span.end===second.span.start&&(word(first)==='>'&&word(second)==='>'||word(first)==='.'&&word(second)==='.')){result.push({...first,text:word(first)+word(second),span:{start:first.span.start,end:second.span.end}});at++;}else result.push(first);
+    if(first?.kind==='token'&&second?.kind==='token'&&first.type==='punct'&&second.type==='punct'&&first.sourceSha256===second.sourceSha256&&first.span.end===second.span.start&&(word(first)==='>'&&word(second)==='>'||word(first)==='.'&&word(second)==='.')){result.push({...first,text:word(first)+word(second),span:{start:first.span.start,end:second.span.end},originalPunctuation:[first,second]});at++;}else result.push(first);
   }
   return result;
 }
@@ -40,7 +43,7 @@ class ControlParser {
   conditional(start){if(++this.budget.conditionals>64){this.budget.conditionals--;throw new TypeError('Source control conditional depth exceeds its finite bound');}
     try{const condition=this.condition(),then=this.blockGroup();let otherwise=null;
       if(this.take('else'))otherwise=this.take('if')?this.conditional(this.at-1):this.blockGroup();
-      return this.node('if',start,{condition,then,otherwise});
+      return this.node('if',start,{condition,then,otherwise,branchBindingVerified:false});
     }finally{this.budget.conditionals--;}
   }
   matching(start){const subject=this.condition(),group=this.group('{'),arms=[];
@@ -49,11 +52,15 @@ class ControlParser {
       const pattern=tokens.slice(0,arrow),guardAt=pattern.findIndex(token=>word(token)==='if');
       arms.push({pattern:this.pattern(guardAt<0?pattern:pattern.slice(0,guardAt)),guard:guardAt<0?null:this.expressionAll(pattern.slice(guardAt+1)),value:this.expressionAll(tokens.slice(arrow+1)),sourceSpan:range(tokens)});
     }
-    if(!arms.length)throw new TypeError('Source control match has no original arms');return this.node('match',start,{subject,arms,exhaustivenessVerified:false});
+    if(!arms.length)throw new TypeError('Source control match has no original arms');return this.node('match',start,{subject,arms,armBindingVerified:false,exhaustivenessVerified:false});
   }
   expression(minimum=0){if(++this.budget.expressions>64){this.budget.expressions--;throw new TypeError('Source control expression depth exceeds its finite bound');}
     try{const start=this.at;let value=this.primary();
-      for(;;){const operation=word(this.current()),level=precedence[operation];if(level===undefined||level<minimum)break;this.at++;value=this.node('binary',start,{operation,left:value,right:this.expression(level+1),operatorOwnerResolved:false});}
+      for(;;){const operation=word(this.current()),level=precedence[operation];if(level===undefined||level<minimum)break;
+        if(comparison(operation)&&value.kind==='binary'&&comparison(value.operation))throw new TypeError('Source control comparisons require original parentheses rather than a comparison chain');
+        const operatorToken=this.nodes[this.at++],right=this.expression(level+1),lazy=operation==='&&'||operation==='||';
+        value=this.node('binary',start,{operation,operatorToken,left:value,right,operatorOwnerResolved:false,evaluationOrderVerified:false,...(lazy?{rightEvaluation:operation==='&&'?'conditional-on-left-true':'conditional-on-left-false',shortCircuitSemanticsVerified:false}:{})});
+      }
       return value;
     }finally{this.budget.expressions--;}
   }
@@ -65,11 +72,14 @@ class ControlParser {
     else if(raw==='loop')value=this.node('loop',start,{body:this.blockGroup(),terminationVerified:false});
     else if(raw==='for'){const beginning=this.at;while(this.at<this.nodes.length&&word(this.current())!=='in')this.at++;const pattern=this.pattern(this.nodes.slice(beginning,this.at));this.need('in');const iterable=this.condition(),body=this.blockGroup();value=this.node('for',start,{pattern,iterable,body,iteratorOwnerResolved:false});}
     else if(raw==='let'){const beginning=this.at;while(this.at<this.nodes.length&&word(this.current())!=='=')this.at++;const pattern=this.pattern(this.nodes.slice(beginning,this.at));this.need('=');value=this.node('condition-let',start,{pattern,value:this.expression(3),chainBindingVerified:false});}
-    else if(['return','break','continue'].includes(raw)){const empty=this.at===this.nodes.length||[',',';'].includes(word(this.current()));value=this.node(raw,start,{value:empty?null:this.expression(),exitScopeVerified:false});}
+    else if(['return','break','continue'].includes(raw)){const empty=this.at===this.nodes.length||[',',';'].includes(word(this.current()));
+      if(raw==='continue'&&!empty)throw new TypeError('Source control continue labels/values require additional original grammar');
+      value=this.node(raw,start,{value:empty?null:this.expression(),exitScopeVerified:false});
+    }
     else if(['!','-','*','&'].includes(raw)){const mutable=raw==='&'&&this.take('mut');value=this.node('unary',start,{operation:raw,mutable,value:this.expression(10),operatorOwnerResolved:false});}
     else if(raw==='|'||raw==='||'){const beginning=this.at;if(raw==='|'){while(this.at<this.nodes.length&&word(this.current())!=='|')this.at++;this.need('|');}const parameters=raw==='||'?[]:this.nodes.slice(beginning,this.at-1);value=this.node('closure',start,{parameterTokens:parameters,body:this.expression(),captureSemanticsVerified:false});}
     else if(node?.kind==='group'&&node.delimiter==='{')value=this.node('block-expression',start,{body:this.blockGroup(node)});
-    else if(node?.kind==='group'&&node.delimiter==='('){const parts=split(node.children),trailingComma=word(node.children.at(-1))===',';value=parts.length===1&&!trailingComma?this.expressionAll(parts[0]):this.node('tuple',start,{items:parts.map(part=>this.expressionAll(part)),trailingComma});}
+    else if(node?.kind==='group'&&node.delimiter==='('){const parts=split(node.children),trailingComma=word(node.children.at(-1))===',';value=parts.length===1&&!trailingComma?this.node('parenthesized',start,{value:this.expressionAll(parts[0])}):this.node('tuple',start,{items:parts.map(part=>this.expressionAll(part)),trailingComma});}
     else if(node?.kind==='group'&&node.delimiter==='[')value=this.node('array',start,{items:split(node.children).map(part=>this.expressionAll(part)),allocationVerified:false});
     else if(raw==='true'||raw==='false'||['string','char','number'].includes(node?.type))value=this.node('literal',start,{sourceLiteralKind:raw==='true'||raw==='false'?'bool':node.type,raw,sourceLiteral:node});
     else if(name(node)){const path=[raw];while(this.take('::')){if(!name(this.current()))throw new TypeError('Source control generic/qualified type arguments require additional source grammar');path.push(word(this.nodes[this.at++]));}
@@ -85,7 +95,7 @@ class ControlParser {
       if(this.current()?.delimiter==='('){const group=this.group('(');value=this.node('call',start,{callee:value,arguments:split(group.children).map(tokens=>this.expressionAll(tokens)),calleeOwnerResolved:false});}
       else if(this.current()?.delimiter==='['){const group=this.group('[');value=this.node('index',start,{object:value,index:this.expressionAll(group.children),indexContractVerified:false});}
       else if(this.take('.')){const field=this.nodes[this.at++];if(!name(field)&&!/^[0-9]+$/u.test(word(field)??''))throw new TypeError('Source control member requires an original field identifier');value=this.node('field',start,{object:value,name:word(field),fieldOwnerResolved:false});}
-      else if(this.take('?'))value=this.node('try',start,{value,residualOwnerResolved:false});
+      else if(this.take('?'))value=this.node('try',start,{value,residualOwnerResolved:false,exitScopeVerified:false});
       else break;
     }
     return value;
@@ -95,16 +105,16 @@ class ControlParser {
       if(this.take('let')){
         const beginning=this.at;while(this.at<this.nodes.length&&!['=',';'].includes(word(this.current())))this.at++;
         const pattern=this.pattern(this.nodes.slice(beginning,this.at));this.need('=');const initializer=this.expression();let otherwise=null;
-        if(this.take('else'))otherwise=this.blockGroup();this.need(';');statements.push(this.node('let',start,{pattern,initializer,otherwise,initializerBeforeBinding:true,divergenceVerified:false}));continue;
+        if(this.take('else'))otherwise=this.blockGroup();this.need(';');statements.push(this.node('let',start,{pattern,initializer,otherwise,initializerBeforeBinding:true,bindingSemanticsVerified:false,divergenceVerified:false}));continue;
       }
       const value=this.expression();
-      if(['=','+=','-=','*=','/=','%=','|=','&=','^='].includes(word(this.current()))){const operation=word(this.nodes[this.at++]),right=this.expression();this.need(';');statements.push(this.node('assign',start,{target:value,operation,value:right,placeOwnerResolved:false}));}
+      if(['=','+=','-=','*=','/=','%=','|=','&=','^='].includes(word(this.current()))){const operation=word(this.nodes[this.at++]),right=this.expression();this.need(';');statements.push(this.node('assign',start,{target:value,operation,value:right,placeOwnerResolved:false,evaluationOrderVerified:false}));}
       else if(this.take(';'))statements.push(this.node('expression-statement',start,{value}));
       else if(this.at===this.nodes.length){tail=value;break;}
       else if(['if','match','while','for','loop','block-expression'].includes(value.kind))statements.push(this.node('expression-statement',start,{value}));
       else throw new TypeError('Source control expression is not followed by its original statement delimiter');
     }
-    return {kind:'control-block',statements,tail};
+    return {kind:'control-block',statements,tail,lexicalScopeVerified:false};
   }
 }
 function projectBody(bodyTree) {
