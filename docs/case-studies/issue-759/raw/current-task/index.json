@@ -46448,8 +46448,65 @@
       "headSha": "7c94be63223699955f30a8230bd8627bb0cbf77c",
       "status": "canonical-pass-retained-login-both-runtime-fail-matrix-held",
       "archivedAtUtc": "2026-10-12T00:38:38.769264+00:00"
+    },
+    {
+      "label": "current-canonical-generic-owner-cc509126e",
+      "cycle": 16,
+      "pack": "9c989c847eb5f0902d47ddff84aeedf24be1629bb5ba857e8cfd77353364d2df.tar.gz",
+      "sha256": "9c989c847eb5f0902d47ddff84aeedf24be1629bb5ba857e8cfd77353364d2df",
+      "storedBytes": 9659,
+      "members": [
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-census-cc509126e.json",
+          "bytes": 47247,
+          "sha256": "a773cf598ff3f02a0885acb46a708bc9affdb2de72982cf45094f412ee29083a"
+        },
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-census-vs-first-owner-repair-cc509126e.json",
+          "bytes": 16585,
+          "sha256": "25085dd6c08707525082a8c21cd2fa6e4fb873b1db1a541faade54ec8f506294"
+        },
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-generated-cc509126e-integrity.json",
+          "bytes": 4311,
+          "sha256": "87e3a0f2431482a204d5d1fa71ad334a4056c666c59eb2b1770404ed97d4a9ca"
+        },
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-generation-cc509126e-time.log",
+          "bytes": 777,
+          "sha256": "273ea101e74ae8b6e69de38f72223ff4d8fadbd454ba5679faebfccd705bc733"
+        },
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-generation-cc509126e.json",
+          "bytes": 775,
+          "sha256": "b719f64bf27c1beba81f35af130c8f32105281fb767a6da5802a7a97a56d7c5c"
+        },
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-generation-cc509126e.log",
+          "bytes": 1072,
+          "sha256": "941b7f5449a2938a5ce716d9d833d81c49ca838e73c01ca9436d037296472f2b"
+        },
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-retained-login-b9b5920bd-bun.log",
+          "bytes": 452,
+          "sha256": "8dd7e99013b86802353d43ca975b3b24fcc4ad2a86f3db816e35796210df275f"
+        },
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-retained-login-b9b5920bd-node.log",
+          "bytes": 808,
+          "sha256": "a7b1a7361e295495d81352ca2e7ca1351b6a6cbf18b7fd9f0af5cb1d803989bc"
+        },
+        {
+          "path": "current-canonical-generic-owner-cc509126e/router-759-retained-login-b9b5920bd.json",
+          "bytes": 1085,
+          "sha256": "e87945e23286b6a9416286d3ba899f8b3f275fdcef8afbfe2f35a495a121067a"
+        }
+      ],
+      "headSha": "b9b5920bd025b6c5b590e630c6b247e92137638a",
+      "status": "canonical-and-unchanged-original-regression-pass-profiles-fullgate-pending",
+      "archivedAtUtc": "2026-10-12T01:02:41.900776+00:00"
     }
   ],
-  "totalStoredPackBytes": 25154321,
-  "totalMembers": 8442
+  "totalStoredPackBytes": 25163980,
+  "totalMembers": 8451
 }
