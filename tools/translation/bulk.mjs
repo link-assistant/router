@@ -124,6 +124,8 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...readdirSync(new URL('./source-profiles/json-capabilities/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/json-capabilities/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/slice-membership/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/slice-membership/${name}`));
   implementation.push(...['derive-quote-meta.mjs','serde-bang-footprints.mjs','serde-serialize-struct-route.mjs','serde-deserialize-bang-footprints.mjs','serde-deserialize-struct-route.mjs','derive-bang-context.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push(...['builtin-derive-ast-meta.mjs','builtin-derive-bang-footprints.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push(...readdirSync(new URL('./source-profiles/builtin-derive-bang/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/builtin-derive-bang/${name}`));
   implementation.push('tools/translation/copy-trait-owners.mjs');
   implementation.push('tools/translation/source-module-views.mjs');
   implementation.push('tools/translation/module-paths.mjs');

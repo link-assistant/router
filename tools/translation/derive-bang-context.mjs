@@ -6,6 +6,7 @@ import {sourceItems} from './rust-structure.mjs';
 import {deriveFootprintSourceContext,deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 import {proveSerdeSerializeBangFootprint,assertSerdeSerializeBangFootprint} from './serde-bang-footprints.mjs';
 import {proveSerdeDeserializeBangFootprint,assertSerdeDeserializeBangFootprint} from './serde-deserialize-bang-footprints.mjs';
+import {hasBuiltinDeriveBangRoute,proveBuiltinDeriveBangFootprint,assertBuiltinDeriveBangFootprint} from './builtin-derive-bang-footprints.mjs';
 const contexts=new WeakMap(),certificates=new WeakMap(),cachedContexts=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -29,6 +30,14 @@ export function createDeriveBangContext({deriveContext}={}){
       const owners=input.owners.filter(owner=>pathKey(owner.path)===pathKey(invocation.path)&&owner.attributeSpan.start===invocation.attributeSpan.start&&owner.attributeSpan.end===invocation.attributeSpan.end);
       // Input footprint intentionally omits standard builtin owners. That is
       // not evidence of empty output: their bang route stays independently open.
+      if(owners.length===0&&invocation.path.length===1&&hasBuiltinDeriveBangRoute(invocation.path[0])){
+        try{
+          const proof=assertBuiltinDeriveBangFootprint(proveBuiltinDeriveBangFootprint({context:deriveContext,certificate:input,invocation}),deriveContext,input,invocation);
+          if(proof.selectedOwnerBangComplete!==true)throw new TypeError('Builtin selected output remains incomplete');
+          selected.push({invocation,owner:{path:invocation.path,attributeSpan:invocation.attributeSpan,target:proof.owner.target,source:'original-standard-owner+pinned-builtin-registration'},proof,builtin:true});
+        }catch(error){residual.push({...invocation,reason:error.message});}
+        continue;
+      }
       if(owners.length!==1){residual.push({...invocation,reason:'actual derive output owner is absent/ambiguous in the selected sealed registry'});continue;}
       const owner=owners[0],route=routes.get(owner.target.join('::'));
       if(!route){residual.push({...invocation,target:owner.target,reason:'actual derive owner has no selected bang-output route'});continue;}
@@ -40,7 +49,7 @@ export function createDeriveBangContext({deriveContext}={}){
       }catch(error){residual.push({...invocation,target:owner.target,reason:error.message});}
     }
     const allOwnersProven=actual.length>0&&selected.length===actual.length&&residual.length===0;
-    const evidence={schema:'original-invocation-bang-output-v1',source:input.source,sourceSha256:input.sourceSha256,span:input.span,itemSha256:input.itemSha256,inputCertificateDigest:input.digest,dependenciesDigest:input.dependenciesDigest,compilationProfile:input.compilationProfile,actualOwners:actual,selectedOwners:selected.map(({invocation,owner,proof})=>({invocation,target:owner.target,proofDigest:proof.digest,attributeOwnersDigest:hash(JSON.stringify(proof.attributeOwners)),fixedMacroDigest:hash(JSON.stringify(proof.fixedMacro)),...(proof.outputs?{featureOutputDigests:proof.outputs.map(output=>({feature:output.feature,digest:output.outputGrammarDigest}))}:{outputGrammarDigest:proof.outputGrammarDigest})})),residualOwners:residual,dimensions:{bangMacroComplete:allOwnersProven,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false};
+    const evidence={schema:'original-invocation-bang-output-v1',source:input.source,sourceSha256:input.sourceSha256,span:input.span,itemSha256:input.itemSha256,inputCertificateDigest:input.digest,dependenciesDigest:input.dependenciesDigest,compilationProfile:input.compilationProfile,actualOwners:actual,selectedOwners:selected.map(({invocation,owner,proof,builtin})=>({invocation,target:owner.target,proofDigest:proof.digest,attributeOwnersDigest:hash(JSON.stringify(proof.attributeOwners)),...(builtin?{astOutputSink:proof.slotProofs.outputKind}:{fixedMacroDigest:hash(JSON.stringify(proof.fixedMacro))}),...(proof.outputs?{featureOutputDigests:proof.outputs.map(output=>({feature:output.feature,digest:output.outputGrammarDigest}))}:{...(proof.outputGrammarDigest?{outputGrammarDigest:proof.outputGrammarDigest}:{})})})),residualOwners:residual,dimensions:{bangMacroComplete:allOwnersProven,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false};
     const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});rows.push(certificate);
     if(allOwnersProven){byId.set(id(input.source,input.span),certificate);certificates.set(certificate,{deriveContext,input,selected});}
     else diagnostics.push({kind:'derive-bang-output',source:input.source,span:input.span,name:input.name,message:'original derive invocation retains unproved output owners',residualOwners:residual});
@@ -77,7 +86,7 @@ export function deriveBangOutputAt(context,deriveContext,module,item){
   const certificate=state.byId.get(id(module.file,{start:item.start,end:item.end}));if(!certificate)return null;
   const sealed=certificates.get(certificate),input=deriveFootprintAt(deriveContext,module,item);
   if(!sealed||input!==sealed.input||item.term!==input.kind||item.name!==input.name||certificate.sourceSha256!==hash(module.source)||certificate.itemSha256!==hash(module.source.slice(item.start,item.end)))throw new TypeError('Bang output no longer matches its original invocation');
-  for(const selected of sealed.selected)routes.get(selected.owner.target.join('::')).assert(selected.proof,deriveContext,input);
+  for(const selected of sealed.selected)if(selected.builtin)assertBuiltinDeriveBangFootprint(selected.proof,deriveContext,input,selected.invocation);else routes.get(selected.owner.target.join('::')).assert(selected.proof,deriveContext,input);
   return certificate;
 }
 export function deriveBangHelperAttributeAt(context,deriveContext,module,item,span){

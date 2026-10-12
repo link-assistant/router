@@ -1,0 +1,88 @@
+// Original Rust compiler AST construction recipes, never generated trait bodies.
+import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {isDeriveDependencyProof} from './derive-dependencies.mjs';
+import {originalMacroTrees} from './macro-token-trees.mjs';
+const root=new URL('./source-profiles/builtin-derive-bang/',import.meta.url);
+const profileBytes=readFileSync(new URL('manifest.json',root));
+const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+const hash=value=>createHash('sha256').update(value).digest('hex');
+export const BUILTIN_DERIVE_AST_PROFILE=freeze(JSON.parse(profileBytes));
+const profiles=new WeakMap(),cached=new WeakMap(),fragments=new WeakMap();
+const identifier=tree=>tree?.kind==='token'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(tree.text);
+export function builtinDeriveAstSourceProfile(dependencies){
+  if(!isDeriveDependencyProof(dependencies)||dependencies.rustVersion!==BUILTIN_DERIVE_AST_PROFILE.rustVersion)throw new TypeError('Builtin AST source requires sealed matching Rust dependencies');
+  if(cached.has(dependencies))return cached.get(dependencies);
+  const sources=new Map();
+  for(const entry of BUILTIN_DERIVE_AST_PROFILE.sources){
+    const packed=readFileSync(new URL(entry.archive,root));
+    if(packed.length!==entry.archiveBytes||hash(packed)!==entry.archiveSha256)throw new TypeError('Builtin AST archive checksum mismatch');
+    const bytes=gunzipSync(packed,{maxOutputLength:300000});
+    if(bytes.length!==entry.bytes||hash(bytes)!==entry.sha256)throw new TypeError('Builtin AST original source checksum mismatch');
+    sources.set(entry.path,freeze({...entry,source:bytes.toString('utf8')}));
+  }
+  const evidence={schema:'sealed-builtin-derive-ast-source-v1',dependenciesDigest:dependencies.digest,rustVersion:dependencies.rustVersion,sourceProfileSha256:hash(profileBytes),sources:BUILTIN_DERIVE_AST_PROFILE.sources,generatedImplBehavior:false};
+  const profile=freeze({...evidence,digest:hash(JSON.stringify(evidence))});profiles.set(profile,{dependencies,sources,functions:new Map()});cached.set(dependencies,profile);return profile;
+}
+export const isBuiltinDeriveAstProfile=value=>!!value&&profiles.has(value);
+export function builtinAstOriginal(profile,path){const state=profiles.get(profile),source=state?.sources.get(path);if(!source)throw new TypeError('Unsealed or missing builtin AST source');return source;}
+export function originalAstFunction(profile,path,name,sourceContains=null){
+  const state=profiles.get(profile);if(!state)throw new TypeError('Unsealed builtin AST function inventory');
+  if(sourceContains!==null&&(typeof sourceContains!=='string'||!sourceContains.length||sourceContains.length>256))throw new TypeError('Original AST overload selector exceeds its bounded source profile');
+  const key=path+'::'+name+'::'+(sourceContains??'');if(state.functions.has(key))return state.functions.get(key);
+  const origin=builtinAstOriginal(profile,path),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),matches=[];
+  function visit(nodes){
+    for(let at=0;at<nodes.length;at++){
+      if(nodes[at].text==='fn'&&identifier(nodes[at+1])&&nodes[at+1].text===name){
+        let end=at+2;while(end<nodes.length&&!(nodes[end].kind==='group'&&nodes[end].delimiter==='{')&&nodes[end].text!==';')end++;
+        if(nodes[end]?.kind==='group'&&nodes[end].delimiter==='{'){
+          const span={start:nodes[at].span.start,end:nodes[end].span.end};
+          if(sourceContains===null||origin.source.slice(span.start,span.end).includes(sourceContains))matches.push({nodes:nodes.slice(at,end+1),span});
+        }
+      }
+      if(nodes[at].kind==='group')visit(nodes[at].children);
+    }
+  }visit(roots);
+  if(matches.length!==1)throw new TypeError('Original builtin AST function is not unique: '+key);
+  const {nodes,span}=matches[0],encoded=JSON.stringify(nodes),syntax=JSON.parse(encoded);
+  if(JSON.stringify(syntax)!==encoded)throw new TypeError('Builtin AST source semantic roundtrip changed syntax');
+  const evidence={schema:'original-ast-function-meta-v1',source:path,sourceSha256:origin.sha256,span,sha256:hash(origin.source.slice(span.start,span.end)),syntax,syntaxSha256:hash(encoded),semanticSyntaxRoundTrip:true,generatedImplBehavior:false};
+  const fragment=freeze({...evidence,digest:hash(JSON.stringify(evidence))});fragments.set(fragment,{profile,origin});state.functions.set(key,fragment);return fragment;
+}
+export function assertOriginalAstFunction(profile,fragment){if(fragments.get(fragment)?.profile!==profile)throw new TypeError('Unsealed original AST construction fragment');return fragment;}
+export function astFragmentText(fragment){if(!fragments.has(fragment))throw new TypeError('Unsealed AST source fragment');const state=fragments.get(fragment);return state.origin.source.slice(fragment.span.start,fragment.span.end);}
+export function originalAstDefinition(profile,path,kind,name){
+  const origin=builtinAstOriginal(profile,path),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),matches=[];
+  function visit(nodes){for(let at=0;at<nodes.length;at++){
+    if(nodes[at].text===kind&&nodes[at+1]?.text===name){let end=at+2;while(end<nodes.length&&!(nodes[end].kind==='group'&&nodes[end].delimiter==='{')&&nodes[end].text!==';')end++;if(nodes[end]?.kind==='group'&&nodes[end].delimiter==='{')matches.push(nodes.slice(at,end+1));}
+    if(nodes[at].kind==='group')visit(nodes[at].children);
+  }}visit(roots);
+  if(matches.length!==1)throw new TypeError('Original AST schema definition is not unique: '+kind+' '+name);
+  const syntax=JSON.parse(JSON.stringify(matches[0])),span={start:syntax[0].span.start,end:syntax.at(-1).span.end};
+  const evidence={schema:'original-ast-schema-meta-v1',source:path,sourceSha256:origin.sha256,span,sha256:hash(origin.source.slice(span.start,span.end)),syntax,syntaxSha256:hash(JSON.stringify(syntax)),semanticSyntaxRoundTrip:true,generatedImplBehavior:false};
+  const fragment=freeze({...evidence,digest:hash(JSON.stringify(evidence))});fragments.set(fragment,{profile,origin});return fragment;
+}
+
+// Extract an actual named Rust struct literal, retaining every source field.
+// Field expression meta remains syntax until a route discharges its typed slots.
+export function astStructLiteral(profile,fragment,name){
+  assertOriginalAstFunction(profile,fragment);const candidates=[];
+  function visit(nodes){for(let at=0;at<nodes.length;at++){
+    if(nodes[at].text===name&&nodes[at+1]?.kind==='group'&&nodes[at+1].delimiter==='{')candidates.push(nodes[at+1]);
+    if(nodes[at].kind==='group')visit(nodes[at].children);
+  }}visit(fragment.syntax);
+  if(candidates.length!==1)throw new TypeError('Original AST struct recipe is not unique: '+name);
+  const group=candidates[0],fields=[];let at=0;
+  while(at<group.children.length){
+    const member=group.children[at++];if(!identifier(member)||fields.some(field=>field.name===member.text))throw new TypeError('AST source recipe field is not unique');
+    const explicit=group.children[at]?.text===':';if(explicit)at++;
+    const start=at;let angle=0;
+    if(explicit)for(;at<group.children.length;at++){const node=group.children[at];if(node.text==='<')angle++;if(node.text==='>')angle--;if(node.text===','&&angle===0)break;}
+    const expression=explicit?group.children.slice(start,at):[member];
+    if(!expression.length||angle)throw new TypeError('AST source recipe field expression remains unresolved');
+    fields.push({name:member.text,span:member.span,expression});if(group.children[at]?.text===',')at++;
+  }
+  return freeze({schema:'original-ast-struct-recipe-v1',source:fragment.source,sourceSha256:fragment.sourceSha256,span:group.span,fragmentDigest:fragment.digest,name,fields,generatedImplBehavior:false});
+}
+export const astSyntaxText=nodes=>nodes.map(node=>node.kind==='group'?node.delimiter+astSyntaxText(node.children)+({'(':')','[':']','{':'}'}[node.delimiter]):node.text).join(' ');

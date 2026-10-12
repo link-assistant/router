@@ -1,0 +1,1 @@
+Original Rust 1.89.0 source inputs, Copyright The Rust Project Developers, MIT OR Apache-2.0. Original LICENSE-MIT and LICENSE-APACHE are retained as compressed inputs. Each member has independently checked original and archive digests. These sources are never compiled or installed; future output proofs concern only bang namespace construction, not trait implementation behavior.
