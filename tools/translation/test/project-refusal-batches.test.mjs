@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {parseRust,checkProgram,checkProjectProgram} from '../extensions/host-contracts.mjs';
 import {declarationRefusals} from '../extensions/declaration-refusals.mjs';
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
-import {translateProject} from '../project.mjs';
+import {translateProject,originalProjectDeclarationRefusalRange} from '../project.mjs';
 import {serializeProgram} from '../semantic-meta.mjs';
 import {verifyCohortTargets} from './cohort-targets.mjs';
 const project=files=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
@@ -62,6 +62,11 @@ test('generated generic layouts keep ordinary refusals and sealed batches cannot
   assert.equal(declarationRefusals(forged),null);assert.equal(reads,0);
   const genuine=failure(()=>checkProjectProgram(parseRust('pub fn bad(value:Missing)->u8{0} fn main(){}')));
   assert.ok(declarationRefusals(genuine));assert.equal(declarationRefusals({...genuine}),null);
+  const item=parseRust(source).items.find(entry=>entry.generated);
+  assert.ok(item);
+  const traps={get(){reads++;throw new Error('must not read caller fields');},getPrototypeOf(){reads++;throw new Error('must not inspect caller prototype');},ownKeys(){reads++;throw new Error('must not enumerate caller');}};
+  for(const value of [item,structuredClone(item),new Proxy(item,traps),Object.defineProperty({},'generated',{get(){reads++;return item.generated;}})])assert.equal(originalProjectDeclarationRefusalRange(value,[]),null);
+  assert.equal(reads,0);
 });
 
 test('successful signature phases do not bypass original constant evaluation or local lifetime checks',()=>{
@@ -75,9 +80,14 @@ test('successful signature phases do not bypass original constant evaluation or 
 });
 
 test('a bulk set of independent missing source types cannot leak unchecked declarations into targets',{timeout:30000},async()=>{
-  const source=Array.from({length:128},(_,index)=>`pub fn bad${index}(value:Missing${index})->u8{0}`).join(' ')+' pub fn good()->u8{11}';
-  const result=project({'src/lib.rs':source});
-  assert.equal(result.meta.refused.length,128);assert.equal(new Set(result.meta.refused.map(entry=>entry.name)).size,128);
+  const ordinary=Array.from({length:128},(_,index)=>`pub fn bad${index}(value:Missing${index})->u8{0}`).join(' ');
+  const generic=Array.from({length:64},(_,index)=>`pub fn option${index}(value:Option<OptionMissing${index}>)->u8{0} pub fn result${index}(value:Result<ResultMissing${index},u8>)->u8{0} pub fn tuple${index}(value:(TupleMissing${index},u8))->u8{0}`).join(' ');
+  const source=ordinary+' '+generic+' pub fn good()->u8{11}',events=[];
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,progress:event=>events.push(event)});
+  assert.equal(result.meta.refused.length,512);assert.equal(new Set(result.meta.refused.map(entry=>entry.name)).size,512);
+  const layouts=events.filter(event=>event.stage==='semantic-refusal'&&event.declaration.startsWith('Router'));
+  assert.equal(layouts.length,192);assert.ok(layouts.every(event=>event.phase==='declaration-types'&&event.attempt===0));
+  assert.ok(events.filter(event=>event.stage==='semantic-refusal').every(event=>event.phase==='declaration-types'));
   assert.deepEqual(result.meta.executable.map(entry=>entry.name),['good']);
   await verifyCohortTargets(result,api=>{assert.deepEqual(Object.keys(api),['good']);assert.equal(api.good(),11n);});
 });

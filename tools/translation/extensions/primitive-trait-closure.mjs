@@ -5,7 +5,7 @@ import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {sourceItems} from '../rust-structure.mjs';
 import {itemConfiguration,isInertConditionalAttribute} from '../cfg-profile.mjs';
-import {originalUseDeclarationLeaves} from '../module-bindings.mjs';
+import {originalUseDeclarationLeaves,originalDeclarationHeader} from '../module-bindings.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {COPY_TRAIT_OWNER_PROFILE} from '../copy-trait-owners.mjs';
 import {originalPrimitiveNamespaceSources} from './primitive-namespace-sources.mjs';
@@ -55,8 +55,9 @@ function coreDeclaration(path,seen=new Set()){
   if(candidates.length!==1)fail('standard trait requires a unique original named reexport');
   const result=coreDeclaration(candidates[0].path,new Set(seen));return {...result,route:[{source:pin.path,sourceSha256:pin.sha256,span:{start:candidates[0].item.start,end:candidates[0].item.end}},...result.route]};
 }
-function traitHeader(pin,item,{allowGenerics=false,localProfile=null,local=false}={}){
-  const tokens=significant(item),begin=tokens.findIndex(token=>token.text==='trait');if(begin<0||tokens[begin+1]?.text!==item.name)fail('original trait header differs');
+function traitHeader(pin,item,{allowGenerics=false,localProfile=null,local=false,ownerPath=[]}={}){
+  const head=originalDeclarationHeader(item,ownerPath),tokens=significant(item),begin=head?tokens.findIndex(token=>token.start===head.keywordSpan.start):-1;
+  if(head?.kind!=='trait'||head.name!==item.name||begin<0||tokens[begin+1]?.text!==item.name)fail('original trait header differs');
   let at=begin+2;
   if(tokens[at]?.text==='<'){
     if(!allowGenerics)fail('local generic trait method scope remains unproved');let depth=0;
@@ -74,8 +75,9 @@ function traitHeader(pin,item,{allowGenerics=false,localProfile=null,local=false
   }
   if(tokens[at]?.text!=='{'||tokens.at(-1)?.text!=='}')fail('trait aliases or incomplete trait bodies remain unproved');
   const members=sourceItems(pin.source.slice(tokens[at].end,tokens.at(-1).start));
-  if(members.some(member=>!member.comment&&!['fn','const','type'].includes(member.term)))fail('trait contains a member namespace producer or unproved item');
-  if(members.some(member=>member.term==='fn'&&member.name==='from'))fail('alternative trait declares its own from member');
+  const memberHeads=new Map(members.filter(member=>!member.comment).map(member=>[member,originalDeclarationHeader(member)]));
+  if([...memberHeads].some(([member,head])=>!head||!['fn','const','type'].includes(head.kind)||member.term!==head.kind))fail('trait contains a member namespace producer or unproved item');
+  if([...memberHeads.values()].some(head=>head.kind==='fn'&&head.name==='from'))fail('alternative trait declares its own from member');
   const memberConditions=[];
   if(local)for(const member of members.filter(member=>!member.comment)){
     const condition=itemConfiguration(member.tokens,localProfile);
@@ -83,9 +85,9 @@ function traitHeader(pin,item,{allowGenerics=false,localProfile=null,local=false
     // both alternatives of an unresolved cfg. This does not select a target
     // or grant conditional member availability. Attribute producers still fail.
     if(condition.diagnostics.length||condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&!['cfg','doc','allow','warn','deny','forbid','inline','cold','track_caller','must_use','deprecated'].includes(attribute.name)))fail('local trait member namespace is unproved: '+item.name+'.'+member.name+' ('+condition.status+'/'+condition.attributes.map(attribute=>attribute.name).join(',')+')');
-    memberConditions.push({name:member.name??null,status:condition.status,attributes:condition.attributes.map(attribute=>({name:attribute.name,tokens:attribute.tokens})),availabilitySelected:false});
+    memberConditions.push({name:memberHeads.get(member).name,status:condition.status,attributes:condition.attributes.map(attribute=>({name:attribute.name,tokens:attribute.tokens})),availabilitySelected:false});
   }
-  return {clauses,evidence:{name:item.name,source:pin.path,sourceSha256:pin.sha256,originalSpan:{start:item.start,end:item.end},fromMemberAbsent:true,originalMemberNames:members.filter(member=>!member.comment).map(member=>({kind:member.term,name:member.name??null})),memberConditions}};
+  return {clauses,evidence:{name:item.name,source:pin.path,sourceSha256:pin.sha256,originalSpan:{start:item.start,end:item.end},fromMemberAbsent:true,originalMemberNames:[...memberHeads.values()].map(head=>({kind:head.kind,name:head.name})),memberConditions}};
 }
 function reference(tokens){
   const open=tokens.findIndex(token=>token.text==='<'),head=open<0?tokens:tokens.slice(0,open),path=[];
@@ -105,7 +107,7 @@ export function originalCoreTraitClosure(path,seen=new Set()){
   const key=path.join('::');if(seen.has(key)||seen.size>=32)fail('standard supertrait closure is cyclic or over its bound');seen.add(key);if(coreProofs.has(key))return coreProofs.get(key);
   const selected=coreDeclaration(path);
   if(same(selected.owner,['core','convert'])&&selected.item.name==='From')return {sameOriginalFrom:primitiveFromNamespace(),originalSpan:{start:selected.item.start,end:selected.item.end},source:selected.pin.path,sourceSha256:selected.pin.sha256,wholeTraitAuthority:false,runtimeParity:false};
-  const shape=traitHeader(selected.pin,selected.item,{allowGenerics:true}),supertraits=shape.clauses.map(tokens=>{
+  const shape=traitHeader(selected.pin,selected.item,{allowGenerics:true,ownerPath:selected.owner}),supertraits=shape.clauses.map(tokens=>{
     const ref=reference(tokens),path=ref.path.length===1?coreName(selected.owner,ref.path[0]):normalize(ref.path,selected.owner);
     return {...ref,closure:originalCoreTraitClosure(path,new Set(seen))};
   });
@@ -147,6 +149,6 @@ export function originalLocalTraitClosure(facts,owner,item,seen=new Set()){
   if(!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope||scope.unresolvedAttributeMacroScope||itemConfiguration(item.tokens,facts.evidence.compilationProfile).status!=='active')fail('local trait owner namespace or condition is unproved');
   const ancestors=facts.modules.filter(module=>module.path.every((part,index)=>owner.path[index]===part));
   if(ancestors.some(module=>originalSourceModuleItems(module).some(item=>item.tokens[1]?.text==='!'&&significant(item).some(token=>['no_core','no_implicit_prelude'].includes(token.text)))))fail('local supertrait prelude is disabled');
-  const shape=traitHeader({path:owner.file,source:owner.source,sha256:hash(owner.source)},item,{local:true,localProfile:facts.evidence.compilationProfile}),supertraits=shape.clauses.map(tokens=>{const ref=reference(tokens);return {...ref,closure:localReference(facts,owner,ref.path,new Set(seen))};});
+  const shape=traitHeader({path:owner.file,source:owner.source,sha256:hash(owner.source)},item,{local:true,localProfile:facts.evidence.compilationProfile,ownerPath:owner.path}),supertraits=shape.clauses.map(tokens=>{const ref=reference(tokens);return {...ref,closure:localReference(facts,owner,ref.path,new Set(seen))};});
   return {...shape.evidence,supertraits,wholeTraitAuthority:false,runtimeParity:false};
 }

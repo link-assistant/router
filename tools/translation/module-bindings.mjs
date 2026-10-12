@@ -67,6 +67,30 @@ function header(tokens,owner) {
   }
   return {at,attributes,visibility};
 }
+// Syntax only: the keyword must begin the actual declaration after its
+// attributes/visibility. A keyword inside a bang producer is not its header.
+export function originalDeclarationHeader(item,owner=[]) {
+  const tokens=tokensOf(item),parsed=header(tokens,owner);let at=parsed.at;
+  const begin=at;
+  if(tokens[at]?.text==='default')at++;
+  if(tokens[at]?.text==='const')at++;
+  if(tokens[at]?.text==='async')at++;
+  if(tokens[at]?.text==='unsafe')at++;
+  if(tokens[at]?.text==='extern'){at++;if(tokens[at]?.type==='string')at++;}
+  if(tokens[at]?.text!=='fn'){
+    at=begin;
+    if(tokens[at]?.text==='unsafe')at++;
+    if(tokens[at]?.text==='auto')at++;
+    if(tokens[at]?.text!=='trait')at=begin;
+  }
+  const keyword=tokens[at],kind=keyword?.text;
+  if(!['fn','const','static','struct','union','enum','type','mod','trait','impl','use'].includes(kind))return null;
+  let nameAt=at+1;if(kind==='static'&&tokens[nameAt]?.text==='mut')nameAt++;
+  const named=!['impl','use'].includes(kind),name=tokens[nameAt];
+  if(named&&!identifier(name))return null;
+  return frozen({kind,name:named?name.text:null,keywordSpan:{start:keyword.start,end:keyword.end},
+    ...(named?{nameSpan:{start:name.start,end:name.end},rawIdentifier:name.rawIdentifier===true}:{}),namespaceAuthority:false});
+}
 function leaves(tokens,start) {
   let at=start;const output=[];
   const eat=text=>tokens[at]?.text===text?tokens[at++]:null;

@@ -18,10 +18,10 @@ import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
 import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './translate.mjs';
-import {linkProjectDeclaration,linkProjectMethodDeclaration,copyMetadata,metadataDigest} from './extensions/source-links.mjs';
+import {linkProjectDeclaration,linkProjectMethodDeclaration,originalParsedDeclarationEvidence,copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {createOriginalMethodTokenTransform,originalMethodTransformFacts} from './source-method-transforms.mjs';
 import {parseOriginalMethodTransform,originalMethodParsedFacts} from './source-method-parser.mjs';
-import {originalMethodSemantic,relocateOriginalMethodSemantic} from './source-method-admission.mjs';
+import {originalMethodSemantic,relocateOriginalMethodSemantic,originalMethodRefusalRange} from './source-method-admission.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
@@ -35,6 +35,28 @@ import {captureOriginalCargoEdition,originalCargoEditionEvidence} from './cargo-
 // Only the actual original-source project pipeline can issue this identity.
 // Public JSON digests/certificates are integrity data, never its authority.
 const methodFieldEvidence=new WeakMap(),checkedMethodFieldOrigins=new WeakMap();
+const declarationRanges=new WeakMap();
+function originalParentRange(surface,path){
+  const method=originalMethodRefusalRange(surface,path);if(method)return method;
+  const source=originalParsedDeclarationEvidence(surface);if(!source)return null;
+  return {start:source.declarationSpan.start+source.sourceOffset,end:source.declarationSpan.end+source.sourceOffset};
+}
+function captureDeclarationRange(surface,module,range){
+  const actual=originalParentRange(surface,module.path);
+  if(!actual||actual.start!==range.start||actual.end!==range.end)return null;
+  const state=Object.freeze({parent:surface,parentPath:Object.freeze([...module.path]),path:Object.freeze([...module.path]),range:Object.freeze({...actual}),digest:metadataDigest(surface)});
+  declarationRanges.set(surface,state);return state;
+}
+// Read-only refusal attribution from the actual project parser. Generated
+// flags, copied source hashes and caller objects cannot issue this identity.
+export function originalProjectDeclarationRefusalRange(surface,path){
+  const state=declarationRanges.get(surface);if(!state)return null;
+  const actualPath=copyMetadata(path);
+  if(!Array.isArray(actualPath)||actualPath.length!==state.path.length||actualPath.some((part,index)=>part!==state.path[index]))return null;
+  const actual=originalParentRange(state.parent,state.parentPath);
+  if(!actual||actual.start!==state.range.start||actual.end!==state.range.end||metadataDigest(surface)!==state.digest)throw new TypeError('Original project refusal source/layout changed after parser capture');
+  return state.range;
+}
 function issueMethodFieldEvidence(parsed,fields) {
   const capture=originalMethodParsedFacts(parsed),transform=capture.transform;
   originalMethodTransformFacts(transform);copyMetadata(fields);
@@ -152,15 +174,23 @@ function tree(declarations) {
   return root.items;
 }
 
-function captureGenericDeclarations(declarations,parser,module,globalSpan,offset){
+function captureGenericDeclarations(declarations,parser,module,globalSpan,offset,parent){
   const origin={file:module.file,path:[...module.path]};
+  const association=declarationRanges.get(parent);
   for(const type of parser.genericTypes.values()){
     const previous=declarations.find(candidate=>candidate.name===type.name&&candidate.path.length===0);
     if(previous){
       if(previous.term==='generated-type'&&!previous.sourceModuleOrigins.some(candidate=>moduleScopeKey(candidate)===moduleScopeKey(origin)))previous.sourceModuleOrigins.push(origin);
       continue;
     }
-    declarations.push({file:module.file,path:[],sourceModuleOrigins:[origin],name:type.name,term:'generated-type',globalSpan,surface:relocate(type,offset)});
+    const surface=relocate(type,offset);
+    // This private call receives layouts from the real original-source parser,
+    // never a caller Map. Only known factories with an exact original parent
+    // and an unchanged complete layout receive a refusal range; not checked IR.
+    if(association&&type.k==='data'&&['router-monomorphic-algebraic-type','router-tuple-type'].includes(type.generated)){
+      declarationRanges.set(surface,Object.freeze({...association,path:Object.freeze([]),digest:metadataDigest(surface)}));
+    }
+    declarations.push({file:module.file,path:[],sourceModuleOrigins:[origin],name:type.name,term:'generated-type',globalSpan,surface});
   }
 }
 
@@ -269,8 +299,9 @@ export function translateProject(options) {
         const base = module.offset + item.start;
         const semantic=relocate(surface,base);
         linkProjectDeclaration(parser,surface,semantic,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:module.offset,path:module.path,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
+        captureDeclarationRange(semantic,module,{start:base,end:module.offset+item.end});
         declarations.push({ file: module.file, path: module.path, name: [...module.path, item.name].join('.'), term: item.term, span: { start: item.start, end: item.end }, globalSpan: { start: base, end: module.offset + item.end }, surface: semantic });
-        captureGenericDeclarations(declarations,parser,module,{start:base,end:module.offset+item.end},base);
+        captureGenericDeclarations(declarations,parser,module,{start:base,end:module.offset+item.end},base,semantic);
       } catch (error) {
         if (!(error instanceof TranslationError)) throw error;
         const refusal=diagnostic(error);
@@ -336,8 +367,9 @@ export function translateProject(options) {
           if(fieldEvidence)fieldEvidenceBySurface.set(semantic,fieldEvidence);
           if(!originalParsed&&certificate)semantic.impl.copyCertificate=certificate;
           if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
+          if(originalParsed)captureDeclarationRange(semantic,module,globalSpan);
           declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic});
-          captureGenericDeclarations(declarations,parser,module,globalSpan,module.offset);
+          captureGenericDeclarations(declarations,parser,module,globalSpan,module.offset,semantic);
         } catch(error) {if(!(error instanceof TranslationError))throw error;refused.push({file:module.file,name:display,term:'method',...diagnostic(error)});}
       }
     }
@@ -359,7 +391,7 @@ export function translateProject(options) {
       const owners=new Set();
       for(const failure of failures) {
         const cause=failure.error;
-        const owner=active.find(declaration=>cause.span&&declaration.globalSpan.start<=cause.span.start&&cause.span.start<declaration.globalSpan.end);
+        const owner=active.find(declaration=>(!failure.name||failure.name===declaration.name)&&cause.span&&declaration.globalSpan.start<=cause.span.start&&cause.span.start<declaration.globalSpan.end);
         if(!owner||failure.name&&failure.name!==owner.name)throw new Error(`unattributed project semantic refusal: ${cause.reason}`,{cause});
         if(owners.has(owner))continue;
         owners.add(owner);refused.push({file:owner.file,name:owner.name,term:owner.term,...diagnostic(cause)});

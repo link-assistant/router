@@ -2,6 +2,7 @@
 // returns checked IR; callers discard this checker and recheck the survivors.
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 import {originalMethodRefusalRange} from '../source-method-admission.mjs';
+import {originalProjectDeclarationRefusalRange} from '../project.mjs';
 const collectors=new WeakMap(),batches=new WeakMap();
 function failedPhase(errors) {
   const error=new Error('Original declaration phase contains semantic refusals');
@@ -30,11 +31,11 @@ export function withDeclarationRefusalCollection(Base) {return class extends Bas
     try {return super.visitDeclaration(item,path,entry,visit,phase);}
     catch(error) {
       if(!(error instanceof TranslationError))throw error;
-      const methodRange=originalMethodRefusalRange(item,path),source=methodRange??item.span,range=error.span;
+      const methodRange=originalMethodRefusalRange(item,path),projectRange=originalProjectDeclarationRefusalRange(item,path),source=methodRange??projectRange??item.span,range=error.span;
       // Generated/host declarations without actual ranges and unattributed
       // errors keep the ordinary first-failure behavior. Internal exceptions
       // are never converted into unsupported source declarations.
-      if(item.generated&&!methodRange||!['data','fn'].includes(item.k)||body&&(item.k!=='fn'||item.impl&&!methodRange)||
+      if(item.generated&&!methodRange&&!projectRange||!['data','fn'].includes(item.k)||body&&(item.k!=='fn'||item.impl&&!methodRange)||
         !source||!range||!Number.isSafeInteger(source.start)||!Number.isSafeInteger(source.end)||
         !Number.isSafeInteger(range.start)||!Number.isSafeInteger(range.end)||
         source.start<0||source.end<source.start||range.end<range.start||range.start<source.start||range.end>source.end)throw error;

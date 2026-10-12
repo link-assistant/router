@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {sourceItems,rustTokens} from '../rust-structure.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
-import {originalUseDeclarationLeaves} from '../module-bindings.mjs';
+import {originalUseDeclarationLeaves,originalDeclarationHeader} from '../module-bindings.mjs';
 import {originalPrimitiveNamespaceSources,PRIMITIVE_NAMESPACE_SOURCE_PROFILE} from './primitive-namespace-sources.mjs';
 import {originalCorePreludeRootSource} from './core-prelude-source.mjs';
 import {itemConfiguration,isInertConditionalAttribute} from '../cfg-profile.mjs';
@@ -134,7 +134,8 @@ function conditionalModuleNames(facts,owner){
   // Arbitrary attribute/bang producers and foreign declarations still refuse.
   return originalSourceModuleItems(owner).every(item=>{
     if(item.comment)return true;
-    if(!['fn','const','static','struct','union','enum','type','mod','trait','impl','use'].includes(item.term))return false;
+    const head=originalDeclarationHeader(item,owner.path);
+    if(!head||head.kind!==item.term)return false;
     const condition=itemConfiguration(item.tokens,facts.evidence.compilationProfile);
     return condition.diagnostics.length===0&&condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','doc','allow','warn','deny','forbid','inline','cold','must_use','deprecated','track_caller'].includes(attribute.name));
   });
@@ -146,8 +147,9 @@ function localRole(facts,module,segments,depth=0){
   const owner=facts.modules.find(candidate=>same(candidate.path,path.slice(0,-1)));if(!owner)return null;
   const scope=facts.evidence.scopes.find(scope=>scope.file===owner.file&&same(scope.path,owner.path));
   if(!scope||!conditionalModuleNames(facts,owner))return null;
-  const name=path.at(-1),items=originalSourceModuleItems(owner),declared=items.filter(item=>item.name===name&&nonTraits.has(item.term));
-  const competing=items.some(item=>item.term==='trait'&&item.name===name);if(competing)return null;
+  const name=path.at(-1),items=originalSourceModuleItems(owner),heads=new Map(items.filter(item=>!item.comment).map(item=>[item,originalDeclarationHeader(item,owner.path)]));
+  const declared=items.filter(item=>heads.get(item)?.name===name&&nonTraits.has(heads.get(item)?.kind));
+  const competing=[...heads.values()].some(head=>head?.kind==='trait'&&head.name===name);if(competing)return null;
   const roles=[];if(declared.length===1)roles.push({kind:declared[0].term,source:owner.file,sourceSha256:hash(owner.source),span:{start:declared[0].start,end:declared[0].end}});
   for(const item of items.filter(item=>item.term==='use'&&publicItem(item))){
     for(const leaf of originalUseDeclarationLeaves(item,owner.path)){
@@ -163,7 +165,8 @@ function localRole(facts,module,segments,depth=0){
 export function originalNonTraitImportRole(facts,consumer,binding){
   if(binding.status==='ambiguous'||!binding.span||binding.source!==consumer.file)return null;
   const item=originalSourceModuleItems(consumer).find(item=>item.start===binding.span.start&&item.end===binding.span.end);if(!item)return null;
-  if(binding.via==='declaration'&&item.name===binding.name&&nonTraits.has(item.term))return {kind:item.term,source:consumer.file,sourceSha256:hash(consumer.source),span:{start:item.start,end:item.end}};
+  const head=originalDeclarationHeader(item,consumer.path);
+  if(binding.via==='declaration'&&head?.name===binding.name&&head.kind===item.term&&nonTraits.has(head.kind))return {kind:head.kind,source:consumer.file,sourceSha256:hash(consumer.source),span:{start:item.start,end:item.end}};
   if(item.term!=='use')return null;
   const candidates=originalUseDeclarationLeaves(item,consumer.path).filter(leaf=>!leaf.glob&&leaf.name===binding.name);if(candidates.length!==1)return null;
   const role=localRole(facts,consumer,candidates[0].segments);return role?{...role,originalImport:{source:consumer.file,sourceSha256:hash(consumer.source),span:{start:item.start,end:item.end},segments:candidates[0].segments},conditionalAvailabilityRetained:true,namespaceComplete:false,runtimeParity:false}:null;
