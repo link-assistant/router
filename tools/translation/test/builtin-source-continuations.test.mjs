@@ -14,7 +14,7 @@ test('both original format callbacks reach their actual source tail call and lit
   assert.equal(input.sourceSha256,'c996ad70339e2915897ddd4e3aed4ed11f6e168e9e7d5562fc7139c45dc6a4ea');
   for(const [name,newline]of [['expand_format_args',false],['expand_format_args_nl',true]]){
     const program=pinned(proof,name),projection=projectBuiltinControlContinuations(program,operands),fn=program.function;
-    assert.equal(program.pinnedCompilerFunctionVerified,true);assert.deepEqual(program.parameters.map(param=>param.name),['cx','sp','tts']);
+    assert.equal(program.pinnedCompilerFunctionVerified,true);assert.deepEqual(program.parameters.map(param=>param.name),['ecx','sp','tts']);
     assert.equal(createHash('sha256').update(input.source.slice(fn.bodySpan.start,fn.bodySpan.end)).digest('hex'),fn.bodySha256);
     assert.equal(projection.result.status,'frontier');assert.equal(projection.result.obligation,'original-callee-owner-and-effects');
     assert.deepEqual(projection.result.callee,{kind:'written-source-callee',path:['expand_format_args_impl']});assert.deepEqual(projection.result.arguments,[...operands,newline]);
@@ -26,7 +26,7 @@ test('original compiler parse body stops at its actual parser method before trea
   const proof=loadPinnedFormatSourceStages(),program=pinned(proof,'parse_args'),operands=program.parameters.map(param=>({kind:'opaque-'+param.name})),projection=projectBuiltinControlContinuations(program,operands);
   assert.equal(program.function.span.start,2808);assert.equal(projection.result.status,'frontier');assert.equal(projection.result.obligation,'original-callee-owner-and-effects');
   assert.equal(projection.result.callee.kind,'source-member-callee');assert.equal(projection.result.callee.name,'new_parser_from_tts');
-  assert.equal(projection.result.callee.receiver.kind,'opaque-cx');assert.equal(projection.callbackInvocations,0);
+  assert.equal(projection.result.callee.receiver.kind,'opaque-ecx');assert.equal(projection.callbackInvocations,0);
   assert.ok(projection.result.sourceSpan.start>=program.function.bodySpan.start);assert.ok(projection.result.sourceSpan.end<=program.function.bodySpan.end);
   assert.ok(program.nodes.some(node=>node.kind==='match'));assert.ok(program.nodes.some(node=>node.kind==='while'));
 });

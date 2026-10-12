@@ -1,0 +1,96 @@
+{
+  "schema": "source-only-formatter-candidate-call-frames-plan-v1",
+  "preservedCheckpoint": "c60b36acd6dfa454fc5addab0e7f08166b9ce018",
+  "inputs": [
+    {
+      "sourcePath": "compiler/rustc_builtin_macros/src/format.rs",
+      "sourceBytes": 39952,
+      "sourceSha256": "c996ad70339e2915897ddd4e3aed4ed11f6e168e9e7d5562fc7139c45dc6a4ea",
+      "compressedBytes": 9557,
+      "compressedSha256": "40da921172000ffd2cdd3a938caa08ba1ec026de6dbe9516c6416b32619adca4"
+    },
+    {
+      "sourcePath": "compiler/rustc_parse_format/src/lib.rs",
+      "sourceBytes": 35564,
+      "sourceSha256": "d2f014b090b8cac635f1fe57c2ea28f0af6bfbcf35c2268a2c93939baa53c204",
+      "compressedBytes": 8244,
+      "compressedSha256": "e0ecf6244fec99d6e65335f43f70ac02333db0f12567ff237de8cdadeb62d92e"
+    }
+  ],
+  "implementation": {
+    "path": "tools/translation/builtin-source-call-frames.mjs",
+    "bytes": 9282,
+    "sha256": "4e7c64bf9e88cb1bafa43b599428cd4bc91e88cf4df3353900a5096b9ab28d2f"
+  },
+  "tests": [
+    {
+      "path": "tools/translation/test/builtin-source-control.test.mjs",
+      "bytes": 10197,
+      "sha256": "52c80e53d3c4fbdba8339a2a80e3587f31a675aa91a5294d114bf86df198a420",
+      "authoredCases": 6
+    },
+    {
+      "path": "tools/translation/test/builtin-source-continuations.test.mjs",
+      "bytes": 9061,
+      "sha256": "835a56c5eb2cb923f687c32196282c41712581b074cb50790dc4a9fdfca733b5",
+      "authoredCases": 7
+    },
+    {
+      "path": "tools/translation/test/builtin-source-call-frames.test.mjs",
+      "bytes": 7792,
+      "sha256": "53da70459bface0d7bbf8d0efa3228f33eaf6a548c334af671e9cdf64b078fb8",
+      "authoredCases": 6
+    }
+  ],
+  "authoredCases": 19,
+  "executionStatus": "UNRUN",
+  "sourceInspectionOnly": true,
+  "fixtureCorrection": {
+    "oldSpelling": "cx",
+    "originalSpelling": "ecx",
+    "callbackParameterSpan": {
+      "start": 39614,
+      "end": 39617
+    },
+    "callbackParameterLine": 1034,
+    "parseArgsParameterSpan": {
+      "start": 2826,
+      "end": 2829
+    },
+    "sourceSha256": "c996ad70339e2915897ddd4e3aed4ed11f6e168e9e7d5562fc7139c45dc6a4ea",
+    "failedEngineAttempt": false
+  },
+  "actualOriginalFirstFrontier": {
+    "function": "expand_format_args_impl",
+    "sourceLine": 1013,
+    "writtenCall": "ecx.with_def_site_ctxt(sp)",
+    "mustPrecede": "parse_args(ecx, sp, tts)",
+    "ownerAndHygieneClosureVerified": false
+  },
+  "nextSourceOwners": [
+    "actual imported ExtCtxt method definition and macro definition-site hygiene",
+    "actual ExtCtxt.new_parser_from_tts and rustc_parse parser/cursor definitions",
+    "complete source-derived expr/pattern grammar and standard trait/layout obligations",
+    "actual builder/Arguments ABI and primitive formatter joins",
+    "original attributes/configuration/registration/macro caller owners",
+    "allocator/OOM/Drop/I/O effects and caller return/residual continuations"
+  ],
+  "existingPinnedInputsReused": true,
+  "newSourceArchives": 0,
+  "productionHooksChanged": false,
+  "originalRustChanged": false,
+  "producerFingerprintChanged": false,
+  "enginesRun": false,
+  "parserProbeRun": false,
+  "producerRun": false,
+  "rustRun": false,
+  "namespaceAuthority": false,
+  "sourceSemanticClosureVerified": false,
+  "typedCompilerIRChecked": false,
+  "executable": false,
+  "traitSelectionVerified": false,
+  "allocatorEffectsVerified": false,
+  "ioEffectsVerified": false,
+  "runtimeParity": false,
+  "additionalCallerAdmissions": 0
+}
