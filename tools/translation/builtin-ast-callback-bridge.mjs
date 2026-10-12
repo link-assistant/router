@@ -1,6 +1,7 @@
 // Source-linked callback arguments into actual builder result meta. This is a
 // partial generator program, not handwritten trait output or runtime behavior.
 import {createHash} from 'node:crypto';
+import {sealBuiltinSourceMeta} from './builtin-source-meta.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
 import {planBuiltinDeriveBangOutput} from './builtin-derive-bang-footprints.mjs';
 import {boundedInput} from './serde-bang-footprints.mjs';
@@ -120,8 +121,7 @@ export function createBuiltinDeriveAstCallbackBridge({context,certificate,invoca
     originalInput:input,originalEntry:plan.entry,conditionalSourcePlans:plan.conditionalOutputs,callbacks,builderContracts:[...recipes.values()],methodBodyMeta:{sourceConstructor:method,parameters:methodParameters,record:fn,associatedRecord:assoc,associatedAlias:alias,callbackBodyInputs:callbacks.map(value=>value.callbackDigest),bindingStatus:'actual callback-to-BlockOrExpr body/control join remains unproved'},implementationMeta:{sourceConstructor:sink,record:impl,schemas:originals.map(schemaReference),bindingStatus:'actual generic method/associated-list flow remains unproved'},diagnostics,
     selectedOwnerBangComplete:false,generatedImplBehavior:false,allocationPhaseBehavior:false,featureCompleteness:false,
     obligations:['actual caller field expression/loop/pattern domains remain independent requirements','all original conditional outcomes are retained without selecting Copy/fmt configuration','Option/prelude and empty attribute/container owners remain open','method body control joins and implementation lists are not replaced with placeholders']};
-  const encoded=JSON.stringify(evidence);if(Buffer.byteLength(encoded)>524288)throw new TypeError('Callback bridge metadata byte budget exceeded');
-  const result=freeze({...JSON.parse(encoded),digest:hash(encoded)});bridges.set(result,{context,certificate,invocation:freeze(JSON.parse(JSON.stringify(invocation)))});return result;
+  const result=sealBuiltinSourceMeta(evidence);bridges.set(result,{context,certificate,invocation:freeze(JSON.parse(JSON.stringify(invocation)))});return result;
 }
 export function assertBuiltinDeriveAstCallbackBridge(value,context,certificate,invocation){const state=bridges.get(value);if(!state||state.context!==context||state.certificate!==certificate||JSON.stringify(state.invocation)!==JSON.stringify(invocation))throw new TypeError('Callback bridge requires its original source invocation');return value;}
 export const isBuiltinDeriveAstCallbackBridge=value=>!!value&&bridges.has(value);

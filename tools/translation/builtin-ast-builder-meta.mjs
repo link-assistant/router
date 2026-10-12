@@ -2,6 +2,7 @@
 // Constructor identity comes from the pinned AST schema, never a return type.
 // External calls and source-stage macros remain explicit open obligations.
 import {createHash} from 'node:crypto';
+import {sealBuiltinSourceMeta} from './builtin-source-meta.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
 import {builtinAstOriginal,isBuiltinDeriveAstProfile,originalAstFunction,assertOriginalAstFunction,originalAstDefinition,astEnumVariant,astSyntaxText} from './builtin-derive-ast-meta.mjs';
 const build='compiler/rustc_expand/src/build.rs',schema='compiler/rustc_ast/src/ast.rs';
@@ -115,9 +116,7 @@ export function inventoryBuiltinAstCallbackCalls(compiler,fragment){
   // apply only to the actual body and do not reject that original declaration.
   visit(fragment.syntax.at(-1).children);
   const evidence={schema:'original-builtin-callback-builder-map-v1',profileDigest:state.profile.digest,callback:fragment,receiver:{parameter:receiver,import:imports[0]},calls,shadowSites,receiverLexicalClosure:shadowSites.length===0,sourceSyntaxRoundTrip:true,selectedOwnerBangComplete:false,generatedImplBehavior:false,obligations:['caller values and every selected branch need checked slot/statement closure','closure/local receiver shadows require actual lexical binding proof','unsupported builder recipes remain explicit; no callback substitution']};
-  const encoded=JSON.stringify(evidence);if(Buffer.byteLength(encoded)>bounds.serializedBytes)throw new TypeError('Original callback metadata byte budget exceeded');
-  const roundTrip=JSON.parse(encoded);if(JSON.stringify(roundTrip)!==encoded)throw new TypeError('Original callback mapping roundtrip changed');
-  const inventory=freeze({...roundTrip,digest:hash(encoded)});callbackInventories.set(inventory,{compiler,fragment});return inventory;
+  const inventory=sealBuiltinSourceMeta(evidence);callbackInventories.set(inventory,{compiler,fragment});return inventory;
 }
 export const isBuiltinAstCallbackBuilderInventory=value=>!!value&&callbackInventories.has(value);
 export function builtinAstCallbackInventoryOriginal(compiler,inventory){

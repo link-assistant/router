@@ -138,7 +138,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...readdirSync(new URL('./source-profiles/slice-membership/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/slice-membership/${name}`));
   implementation.push(...['derive-quote-meta.mjs','serde-bang-footprints.mjs','serde-serialize-struct-route.mjs','serde-deserialize-bang-footprints.mjs','serde-deserialize-struct-route.mjs','derive-bang-context.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...['builtin-derive-ast-meta.mjs','builtin-derive-bang-footprints.mjs','builtin-eq-ast-route.mjs'].map(name=>`tools/translation/${name}`));
-  implementation.push('tools/translation/builtin-ast-builder-meta.mjs');
+  implementation.push('tools/translation/builtin-source-meta.mjs','tools/translation/builtin-ast-builder-meta.mjs');
   implementation.push('tools/translation/builtin-ast-container-inputs.mjs');
   implementation.push(...['builtin-ast-caller-environments.mjs','builtin-ast-callback-bridge.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...['builtin-ast-source-substitution.mjs','builtin-ast-field-construction.mjs','builtin-vec-remove-plan.mjs','builtin-parsed-field-values.mjs'].map(name=>`tools/translation/${name}`));

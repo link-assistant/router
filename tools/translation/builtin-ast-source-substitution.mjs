@@ -110,7 +110,14 @@ function compile(stage,state,fragment){
         const path=head.filter(value=>value.text!=='::').map(value=>value.text),resolved=owner(path);
         if(path.length===1&&env.has(path[0]))return unknown('source-callable-slot',nodes,{callee:expression(head,env,depth+1),args});
         if(!env.has(path[0])&&resolved?.path.length===2&&resolved.source==='compiler/rustc_ast/src/ast.rs'){
-          const definition=schema('enum',resolved.path[0],resolved.source),variant=astEnumVariant(state.profile,definition,resolved.path[1]);
+          let definition;
+          try{definition=schema('enum',resolved.path[0],resolved.source);}catch(error){
+            if(/budget exceeded/u.test(String(error.message)))throw error;
+            // A source module path such as ptr::P is not an enum merely because
+            // its written path has two segments. Keep actual import/call inputs.
+            return unknown('source-function-call',nodes,{path,args,import:resolved.import,ownerReason:String(error.message)});
+          }
+          const variant=astEnumVariant(state.profile,definition,resolved.path[1]);
           if(args.length!==variant.arity)throw new TypeError('Original AST constructor arity mismatch');
           return {tag:'original-positive-enum',schema:variant,args,import:resolved.import,...source};
         }

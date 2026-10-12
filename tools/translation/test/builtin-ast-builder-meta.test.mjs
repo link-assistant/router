@@ -10,6 +10,7 @@ import {planBuiltinDeriveBangOutput} from '../builtin-derive-bang-footprints.mjs
 import {resolveModuleGraph} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
+import {encodeBuiltinSourceMeta,decodeBuiltinSourceMeta,sealBuiltinSourceMeta} from '../builtin-source-meta.mjs';
 const root=new URL('../../../',import.meta.url);
 const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
 const profile=builtinDeriveAstSourceProfile(dependencies),compiler=createBuiltinAstBuilderMetaCompiler(profile);
@@ -83,7 +84,7 @@ test('actual remaining callbacks retain unproved builder cases and all source ca
 
 test('complete original provider/catalog inputs preserve both Clone callbacks without a Copy spelling inference',{timeout:60_000},()=>{
   // Authentic complete source graph only; never request the semantic .result.
-  const original=originalCsvContext(),graph=resolveModuleGraph({entry:'src/lib.rs',paths:original.inputs.map(row=>row.path),readSource:original.source,compilationProfile:PRODUCTION_PROFILE});
+  const original=originalCsvContext(),graph=resolveModuleGraph({entry:'src/lib.rs',paths:original.inputs.sources.map(row=>row.source),readSource:original.source,compilationProfile:PRODUCTION_PROFILE});
   const context=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE});
   for(const [name,path,sourceSha256,span] of [
     ['SubscriptionProvider','src/subscription/types.rs','74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26',{start:105,end:639}],
@@ -98,4 +99,19 @@ test('complete original provider/catalog inputs preserve both Clone callbacks wi
     assert.ok(callbacks.some(value=>value.calls.some(call=>call.method==='expr_struct')));
     assert.ok(callbacks.every(value=>value.selectedOwnerBangComplete===false&&value.generatedImplBehavior===false));
   }
+});
+
+// Shared storage preserves all original metadata and independently bounds it.
+test('source metadata sharing preserves exact scopes and refuses cycles, dangling refs and independent limits',()=>{
+  const original={source:'actual/original.rs',scope:['outer','inner'],span:{start:12,end:34},syntax:[{kind:'token',text:'actual',span:{start:12,end:18}}]};
+  const payload={left:original,right:structuredClone(original)},encoded=encodeBuiltinSourceMeta(payload),decoded=decodeBuiltinSourceMeta(encoded);
+  assert.deepEqual(decoded,payload);assert.equal(decoded.left,decoded.right);assert.ok(Object.isFrozen(decoded.left.syntax));
+  assert.equal(encodeBuiltinSourceMeta(decoded),encoded);
+  assert.notEqual(sealBuiltinSourceMeta(payload).digest,sealBuiltinSourceMeta({...payload,right:{...original,scope:['other']}}).digest);
+  const forged=JSON.parse(encoded);forged.root={r:forged.table.length};assert.throws(()=>decodeBuiltinSourceMeta(JSON.stringify(forged)),/Dangling|cyclic/);
+  const cyclic={};cyclic.next=cyclic;assert.throws(()=>encodeBuiltinSourceMeta(cyclic),/cycle/);
+  const selfTable={schema:'builtin-source-meta-sharing-v1',fieldNames:['next'],table:[['o',[[0,{r:0}]]]],root:{r:0}};assert.throws(()=>decodeBuiltinSourceMeta(JSON.stringify(selfTable)),/cyclic/);
+  let deep=null;for(let i=0;i<66;i++)deep={next:deep};assert.throws(()=>encodeBuiltinSourceMeta(deep),/depth budget/);
+  assert.throws(()=>encodeBuiltinSourceMeta(Array.from({length:16001},(_,i)=>({index:i}))),/cell budget/);
+  assert.throws(()=>encodeBuiltinSourceMeta({source:'x'.repeat(524288)}),/byte budget/);
 });

@@ -9,13 +9,14 @@ const frames=new WeakMap();
 const ident=node=>node?.kind==='token'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(node.text);
 const span=nodes=>({start:nodes[0].span.start,end:nodes.at(-1).span.end});
 export function splitBuiltinCallerSyntax(nodes){
-  const rows=[];let start=0,angle=0;
+  const rows=[];let start=0,angle=0,closureHeader=false;
   for(let at=0;at<=nodes.length;at++){
+    if(nodes[at]?.text==='|'&&(closureHeader||at===start||at===start+1&&nodes[start]?.text==='move'))closureHeader=!closureHeader;
     if(nodes[at]?.text==='<')angle++;if(nodes[at]?.text==='>')angle--;
     if(angle<0)throw new TypeError('Caller argument angle syntax remains unproved');
-    if(at===nodes.length||nodes[at]?.text===','&&!angle){if(at>start)rows.push(nodes.slice(start,at));start=at+1;}
+    if(at===nodes.length||nodes[at]?.text===','&&!angle&&!closureHeader){if(at>start)rows.push(nodes.slice(start,at));start=at+1;}
   }
-  if(angle)throw new TypeError('Caller argument generic syntax remains unproved');return rows;
+  if(angle||closureHeader)throw new TypeError('Caller argument generic/closure syntax remains unproved');return rows;
 }
 export function createBuiltinAstCallerEnvironments(compiler,profile,inventory){
   const fragment=builtinAstCallbackInventoryOriginal(compiler,inventory),parameters=builtinAstFunctionSourceParameters(profile,fragment);

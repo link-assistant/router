@@ -87,7 +87,7 @@ test('original input bounds and unresolved field syntax cannot become namespace/
 });
 
 test('complete unchanged provider/catalog inputs retain actual fields and both resolver callback routes',{timeout:60_000},()=>{
-  const original=originalCsvContext(),graph=resolveModuleGraph({entry:'src/lib.rs',paths:original.inputs.map(row=>row.path),readSource:original.source,compilationProfile:PRODUCTION_PROFILE}),context=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE});
+  const original=originalCsvContext(),graph=resolveModuleGraph({entry:'src/lib.rs',paths:original.inputs.sources.map(row=>row.source),readSource:original.source,compilationProfile:PRODUCTION_PROFILE}),context=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE});
   for(const [source,name,sha,fields] of [
     ['src/subscription/types.rs','SubscriptionProvider','74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26',0],
     ['src/model_catalog.rs','CatalogRecord','2972dab979148c9b1deb3ec2cfb4e2800e8445585044d93c629e83538be01ed5',8],
