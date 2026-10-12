@@ -323,8 +323,9 @@ test('successful provider DELETE reports exact affinity-storage error when retir
   assert.equal(service.requests.length, 2);
 });
 
-test('public Web HEAD preserves lifecycle status and headers while stripping successful and error bodies', async t => {
+test('public Web HEAD forwards the original method and preserves lifecycle status and headers with empty bodies', async t => {
   const service = await upstream(t, (observed, response) => {
+    assert.equal(observed.method, 'HEAD');
     response.setHeader('x-request-id', 'head-lifecycle-proof');
     return reply(response, { id: 'head-resource', status: 'queued', marker: 'body exists upstream' }, observed.path.includes('/missing') ? 410 : 200);
   });
@@ -333,15 +334,21 @@ test('public Web HEAD preserves lifecycle status and headers while stripping suc
   for (const id of ['head-resource', 'missing-head']) affinities.set(namespace, owner, id, { destination });
   const head = await app.fetch(request(`${namespace}/head-resource`, 'HEAD'));
   assert.equal(head.status, 200); assert.equal(head.headers.get('x-request-id'), 'head-lifecycle-proof'); assert.equal(await head.text(), '');
+  const inputs = await app.fetch(request(`${namespace}/head-resource/input_items?limit=2&order=asc`, 'HEAD'));
+  assert.equal(inputs.status, 200); assert.equal(await inputs.text(), '');
+  assert.equal(service.requests.at(-1).path, '/v1/responses/head-resource/input_items?limit=2&order=asc');
   const missing = await app.fetch(request(`${namespace}/missing-head`, 'HEAD'));
   assert.equal(missing.status, 404); assert.equal(await missing.text(), '');
   const foreign = await app.fetch(request(`${namespace}/head-resource`, 'HEAD', undefined, 'bob'));
   assert.equal(foreign.status, 404); assert.equal(await foreign.text(), '');
-  assert.equal(service.requests.length, 2);
+  const health = await app.fetch(request('/health', 'HEAD'));
+  assert.equal(health.status, 200); assert.equal(await health.text(), '');
+  assert.equal(service.requests.length, 3);
+  assert.deepEqual(service.requests.map(observed => observed.method), ['HEAD', 'HEAD', 'HEAD']);
 });
 
-test('network HEAD reaches the public dispatcher and exposes no provider lifecycle body', async t => {
-  const service = await upstream(t, (_observed, response) => { response.setHeader('x-request-id', 'network-head-proof'); reply(response, { id: 'network-head', status: 'completed', upstream_only: 'body' }); });
+test('network HEAD reaches the provider as HEAD and exposes no lifecycle body through the public dispatcher', async t => {
+  const service = await upstream(t, (observed, response) => { assert.equal(observed.method, 'HEAD'); response.setHeader('x-request-id', 'network-head-proof'); reply(response, { id: 'network-head', status: 'completed', upstream_only: 'body' }); });
   const { app, affinities, candidates } = fixture(t, [service]);
   const destination = { provider: candidates[0].provider, account: candidates[0].account, protocol: 'openai', provider_kind: 'openai-compatible', destination_kind: 'stored_provider', base_url: candidates[0].base_url };
   affinities.set(namespace, owner, 'network-head', { destination });
@@ -349,4 +356,5 @@ test('network HEAD reaches the public dispatcher and exposes no provider lifecyc
   const response = await fetch(`http://127.0.0.1:${app.address.port}${namespace}/network-head`, { method: 'HEAD', headers: { authorization: 'Bearer alice' }, signal: AbortSignal.timeout(5000) });
   assert.equal(response.status, 200); assert.equal(response.headers.get('x-request-id'), 'network-head-proof'); assert.equal(await response.text(), '');
   assert.equal(service.requests.length, 1);
+  assert.equal(service.requests[0].method, 'HEAD');
 });

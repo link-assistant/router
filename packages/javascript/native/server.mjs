@@ -357,6 +357,9 @@ export function createNativeRouter(options = {}) {
     } catch (error) { await settle(); throw error; }
   }
   async function handle(request) {
+    // Local computed handlers use GET dispatch for HEAD, but a native relay
+    // must forward the original method as Rust's lifecycle/native handlers do.
+    const nativeRequest=request;
     const incomingMethod=request.method;
     const head=request.method === 'HEAD';
     if(head){const original=request;request=new Request(original,{method:'GET'});if(peers.has(original))peers.set(request,peers.get(original));}
@@ -405,13 +408,13 @@ export function createNativeRouter(options = {}) {
       }
       else if (service === 'bedrock' || service === 'vertex' && path.includes('/publishers/anthropic/')) {
         if(service === 'vertex' && !/\/publishers\/anthropic\/models\/[^/:]+(?:(?::(?:rawPredict|streamRawPredict))|(?:\/count-tokens:rawPredict))$/.test(path))throw new ProtocolError('Route not found',404);
-        response=await nativeService.fetch(request);
+        response=await nativeService.fetch(nativeRequest);
       }
       else if (/^(?:\/v1|\/api\/services\/(?:openai|codex|qwen)\/v1)\/responses\/(?!compact$|input_tokens$)[^/]+(?:\/(?:cancel|input_items))?$/.test(path)) {
         const match = /^(\/v1|\/api\/services\/(?:openai|codex|qwen)\/v1)\/responses\/([^/]+)(?:\/(cancel|input_items))?$/.exec(path);
         const claims = await authorize(request, false), owner = responseOwner(claims, bearer(request.headers)), id = decodeURIComponent(match[2]);
         let existing; try { existing = responseStore.get(match[1], owner, id); }
-        catch (error) { if (error.status !== 404 || !core.nativeCandidates) throw error; response = await nativeService.fetch(request); }
+        catch (error) { if (error.status !== 404 || !core.nativeCandidates) throw error; response = await nativeService.fetch(nativeRequest); }
         if (existing) {
         await authorize(request, false, existing.model);
         if (!match[3] && request.method === 'GET') response = json(existing);
@@ -434,9 +437,9 @@ export function createNativeRouter(options = {}) {
       }
       else if (['/v1/chat/completions', '/v1/messages', '/v1/responses', ...['openai','codex','qwen'].flatMap(service => [`/api/services/${service}/v1/responses`,`/api/services/${service}/v1/chat/completions`]), '/api/services/anthropic/v1/messages'].includes(path) && request.method === 'POST') {
         const body = await boundedJSON(request.clone(),maxBodyBytes);
-        response = core.nativeCandidates && source === 'responses' && /^\/api\/services\/(?:openai|codex)\/v1\/responses$/.test(path) ? await nativeService.fetch(request) : await inference(request,source,body);
+        response = core.nativeCandidates && source === 'responses' && /^\/api\/services\/(?:openai|codex)\/v1\/responses$/.test(path) ? await nativeService.fetch(nativeRequest) : await inference(request,source,body);
       }
-      else if (/^\/api\/services\/(?:openai|anthropic|codex|qwen)(?:\/|$)/.test(path)) response = await nativeService.fetch(request);
+      else if (/^\/api\/services\/(?:openai|anthropic|codex|qwen)(?:\/|$)/.test(path)) response = await nativeService.fetch(nativeRequest);
       else throw new ProtocolError('Route not found', 404);
       }
     } catch (error) {

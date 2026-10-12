@@ -37,6 +37,10 @@
     {
       "path": "src/api_error.rs",
       "sha256": "1afefa01a39e711dff5893b9490b4963fbcb53a5c626693b8b5657276232de6a"
+    },
+    {
+      "path": "src/native_service.rs",
+      "sha256": "478d8a6cc9a58defd2fb3c3eefeea81846b4499533530d7539ef1c8dbfb11337"
     }
   ],
   "contracts": [
@@ -81,10 +85,19 @@
   "authored_fixture_count": 16,
   "authored_fixtures_executed": false,
   "head_source_trace": {
-    "rust_handler": "src/responses_lifecycle.rs::forward passes parts.method unchanged",
+    "rust_handler": "src/responses_lifecycle.rs::forward passes &parts.method unchanged to provider and subscription builders",
+    "rust_native_relay": "src/native_service.rs::forward clones request.method() for forwarding",
     "rust_route": "src/server_router.rs get(responses_lifecycle::retrieve)",
-    "native_dispatch": "packages/javascript/native/server.mjs handle normalizes HEAD to GET then strips body; listen/public fetch share dispatch",
-    "upstream_method_equivalence_verified": false
+    "native_dispatch": "packages/javascript/native/server.mjs handle preserves original Request for nativeService.fetch; local handlers use HEAD-to-GET normalization; outer response body strip remains; listen/public fetch share dispatch",
+    "authored_assertions": [
+      "outbound HEAD retrieval/input_items/missing lifecycle",
+      "outbound HEAD real HTTP",
+      "empty body/status/headers on both public surfaces",
+      "foreign owner denial without upstream",
+      "computed health HEAD without upstream"
+    ],
+    "upstream_method_equivalence_verified": false,
+    "route_precedence_changed": false
   },
   "retirement_storage_failure_contract": {
     "upstream_404_410": "ignore remove_if_matches error; return response_not_found",

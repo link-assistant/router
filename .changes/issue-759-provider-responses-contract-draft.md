@@ -67,20 +67,24 @@ distinction: a 404/410 retirement error is ignored and the exact missing-respons
 envelope is returned; a successful DELETE retirement error returns the original
 503 `api_error` envelope. Two injected failing-store cases cover those branches.
 
-HEAD call path is explicitly traced in existing source: network `listen` and
-public `fetch` both reach `server.mjs::handle`, which rewrites HEAD to GET before
-dispatch and strips the resulting body after response/error construction. Thus
-the internal service's lifecycle bytes cannot escape those public HEAD surfaces.
-Two further cases cover successful, missing and foreign-owner public Web HEAD,
-and real network HEAD with preserved status/request ID and an empty body.
+HEAD call path is explicitly traced in source: network `listen` and public
+`fetch` both reach `server.mjs::handle`. The minimal follow-up preserves its
+original request for every native-service forwarding call. Local computed
+handlers retain GET normalization; the outer response body strip remains after
+response/error construction. Existing socket peer metadata stays attached to
+the original request and is also copied to the normalized local request.
 
-This establishes only the authored HEAD body contract. The current native
-dispatcher sends GET upstream for HEAD; original `responses_lifecycle.rs::forward`
-passes the request's `parts.method` to the upstream builder unchanged, while
-`server_router.rs` installs the lifecycle handler through `get(...)`. No HEAD
-method-routing or route-precedence change is included without a coordinated
-audit of the pinned Axum routing implementation. These new cases do not claim
-that upstream-method equivalence has been verified.
+This matches the original method forwarding stages:
+`responses_lifecycle.rs::forward` passes `&parts.method` to provider/subscription
+builders, and `native_service.rs::forward` clones `request.method()` for forwarding.
+Two existing cases now assert actual outbound HEAD on successful and missing
+retrieval, input-item retrieval with its query, and real network HEAD. They retain
+foreign-owner denial, empty bodies and response headers. A local health HEAD
+assertion preserves computed GET dispatch without making an upstream request.
+
+No route matching or precedence change is included, and no Axum precedence claim
+is made. HEAD runtime equivalence remains unverified until the gate executes
+these authored assertions in its exclusive engine window.
 
 Remaining source-level limitations outside this batch: reactive subscription 401
 refresh and bridge execution controls need their own coordinated audits. Existing
