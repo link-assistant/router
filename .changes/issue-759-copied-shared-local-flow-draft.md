@@ -12,7 +12,12 @@ now have separate JavaScript and strict TypeScript behavior assertions.
 The second repair passed 257 of 258 checks in both engines; its preserved
 failure showed a missing unit coercion for semicolonless match statements.
 That source coercion is repaired without changing the negative assertion.
-The next 28/36-file retry is UNRUN.
+The third repair passed all 258 focused cases on both engines. Its broader
+36-file pair completed 317 of 318 on both engines; the sole failure was an
+outdated slice-membership diagnostic span fixture. A fixture-only successor
+passed all 263 cases across 29 files in both engines without changing compiler
+implementation bytes. Complete logs for all twelve attempts, including both
+full failures, are retained; no same-head full 318-case pass is claimed.
 
 New behavior cases cover zero iterations,
 short circuits, false conditions, exits under lexical shadows, nested tuple
