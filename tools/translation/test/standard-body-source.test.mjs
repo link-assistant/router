@@ -134,3 +134,18 @@ test('actual computed str signatures support split and prefix Default without pr
   await verifyTypedTargets(result,api=>{assert.equal(api.part('first"second'),'first');assert.equal(api.part(''),'');assert.equal(api.prefix('prefix'),'fix');assert.equal(api.prefix('other'),'');});
   for(const source of ['type u8=bool;pub fn masked(value:&str)->Vec<u8>{value.bytes().collect()}','type str=bool;pub fn masked(value:Option<&str>)->&str{value.unwrap_or_default()}']){const result=translateSource(source);assert.equal(result.ir.items.find(item=>item.name==='masked').status,'carried');assert.equal(result.ir.items.map(item=>item.source).join(''),source);}
 });
+
+test('owned allocations retain the original borrowed standard body beneath the conversion',async()=>{
+  const source='pub fn prefix(value:&str)->String{value.strip_prefix("Ω").unwrap_or("fallback").to_string()}pub fn split(value:&str)->String{value.split(\'"\').next().unwrap_or_default().to_string()}pub fn repeated(value:&str)->String{value.strip_suffix("😀").unwrap_or("fallback").to_string().to_string()}';
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));
+  for(const entry of [...program.declarations.values()].filter(entry=>entry.k==='fn')){
+    const allocation=find(entry.body,node=>node.k==='toString');assert.ok(allocation);assert.equal(allocation.type.rustOwnership.source,'String');assert.equal(allocation.constEligible,false);
+    const body=find(allocation.arg,node=>node.k==='routerPinnedStandardBody');assert.ok(body);assert.equal(body.type.rustOwnership.source,'str');requirePinnedStandardBody(body,HostRustParser,{Checker:HostChecker,program});
+    assert.equal(allocation.type.rustBorrowLifetime,undefined);assert.equal(allocation.type.rustStandardSignature,undefined);
+  }
+  await verifyTypedTargets(result,api=>{assert.equal(api.prefix('Ω😀'),'😀');assert.equal(api.prefix('other'),'fallback');assert.equal(api.split('first"second'),'first');assert.equal(api.split(''),'');assert.equal(api.repeated('Ω😀'),'Ω');assert.equal(api.repeated('other'),'fallback');});
+  for(const source of ['pub fn bad(value:&str)->&str{value.strip_prefix("Ω").unwrap_or("fallback").to_string()}','pub const fn bad(value:&str)->String{value.to_string()}']){
+    const result=translateSource(source);assert.equal(result.ir.items.find(item=>item.name==='bad').status,'carried');assert.equal(result.ir.items.map(item=>item.source).join(''),source);
+  }
+});

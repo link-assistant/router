@@ -178,17 +178,18 @@ export function withOwnershipChecker(Base=TextChecker) {
       }
       let operation=value;while(operation.k==='let')operation=operation.body;
       if(operation.k==='routerTextPattern'&&operation.sourceProfile==='checked-str-pattern-v1'&&['trim_start_matches','trim_end_matches','trim_matches'].includes(operation.op))owner=BORROWED_STR;
-      // Upstream may return its string argument unchanged. The outer written
-      // to_string still allocates String even when the receiver is a trim.
+      // The written allocation owns a new result. Its checked receiver keeps
+      // its own borrowed type, lifetime and original source-body proof.
       if(node.k==='toString') {
         owner=OWNED_STRING;
-        value={...value,sourceOwnershipOperation:{profile:'checked-standard-string-ownership-v1',verified:true,operation:'to_string',receiverType:structuredClone(value.type),span:{...node.span}}};
-        if(value.type.rustReference) {
-          const reference=value.type.rustReference;
+        if(value.k!=='toString'||!value.arg)throw unsupported('string allocation receiver','requires an explicit checked conversion and its actual receiver',node.span);
+        const receiverType=value.arg.type;
+        if(receiverType.rustReference) {
+          const reference=receiverType.rustReference;
           if(reference.kind!=='shared'||reference.pointee?.kind!=='string'||reference.pointee.rustReference||reference.pointee.rustOwnership?.source!=='String')throw unsupported('string Display autodereference','requires one actual checked standard String pointee',node.span);
-          const type={...value.type};delete type.rustReference;delete type.patternOwnershipRefusal;delete type.rustBorrowingUnresolved;
-          value={...value,type};
         }
+        const type={...value.type,rustSourceType:true};delete type.rustReference;delete type.rustBorrowingUnresolved;delete type.rustStandardSignature;
+        value={...value,type,constEligible:false,sourceOwnershipOperation:{profile:'checked-standard-string-ownership-v1',verified:true,operation:'to_string',receiverType:structuredClone(receiverType),span:{...node.span}}};
       }
       if(value.sourceOwnershipOperation?.profile==='checked-standard-string-ownership-v1'&&value.sourceOwnershipOperation.verified&&['to_string','to_owned'].includes(value.sourceOwnershipOperation.operation))owner=OWNED_STRING;
       // The emitted receiver operation may survive an outer as_str. Qualify

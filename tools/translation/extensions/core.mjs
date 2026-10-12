@@ -32,6 +32,9 @@ export const { RustParser } = await exposed('rust.js', [
 ]);
 export const { Checker } = await exposed('check.js', [
   ['class Checker {', 'export class Checker {'],
+  // Keep the actual checked receiver beneath its written conversion. Returning
+  // it directly lets later ownership layers overwrite an inner source proof.
+  ["if (arg.type.kind === 'string') return arg;", "if (arg.type.kind === 'string') return { k: 'toString', arg, type: STRING, span: node.span };"],
   ["      }));\n    });\n    this.walk(items, path, (item, itemPath, entry) => {\n      if (item.k !== 'fn') return;", "      }));\n    }, 'declaration-types');\n    this.walk(items, path, (item, itemPath, entry) => {\n      if (item.k !== 'fn') return;"],
   ['      entry.ret = this.resolveType(item.ret, itemPath, item.span);\n    });', "      entry.ret = this.resolveType(item.ret, itemPath, item.span);\n    }, 'declaration-types');"],
   ['    });\n    const build = (list, listPath) =>', "    }, 'declaration-bodies');\n    const build = (list, listPath) =>"],

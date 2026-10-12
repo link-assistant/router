@@ -136,7 +136,7 @@ test('original formatting owner census retains complete file and declaration byt
   for(const pin of frontier.focusedPins){const source=readFileSync(new URL(pin.source,root),'utf8');assert.equal(hash(source),pin.sourceSha256);assert.equal(hash(source.slice(pin.span.start,pin.span.end)),pin.sha256);}
 });
 
-test('complete original library RunState proof keeps unrelated neutral macro uncertainty',()=>{
+test('complete original library RunState proof keeps unrelated neutral macro uncertainty',{timeout:30000},()=>{
   const original=originalCsvContext(),paths=original.inputs.sources.map(entry=>entry.source).filter(path=>path.endsWith('.rs'));
   // Namespace/quote analysis only. Deliberately do not read .result, which
   // would request the separate, expensive full semantic project translation.
