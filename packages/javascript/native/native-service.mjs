@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {UsageTracker} from './usage.mjs';
 import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict, responseAffinityStorageError } from './response-contracts.mjs';
 import { conversationContract, conversationNotFound, conversationUnsupported, conversationMethodNotAllowed, conversationAffinityError, conversationUpstreamError, conversationIds, validConversationId } from './response-contracts.mjs';
+import { captureSseId, captureJsonId, captureLocationId, resourceCaptureError } from './response-contracts.mjs';
 
 const transport = new Set(['authorization','x-api-key','x-goog-api-key','anthropic-auth-token','proxy-authorization','proxy-authenticate','host','connection','proxy-connection','keep-alive','transfer-encoding','upgrade','te','trailer','content-length','accept-encoding','cookie','chatgpt-account-id','sec-websocket-key','sec-websocket-version','sec-websocket-extensions','sec-websocket-accept']);
 const ingress = new Set(['forwarded','x-real-ip','x-client-ip','x-cluster-client-ip','cf-connecting-ip','true-client-ip','fastly-client-ip','fly-client-ip','x-envoy-external-address','x-azure-clientip','x-appengine-user-ip','cloudfront-viewer-address']);
@@ -32,26 +33,37 @@ export async function boundedBytes(request, limit) {
   } finally { reader.releaseLock(); }
   return Buffer.concat(parts,length);
 }
+const captureFailure = (status,message) => Object.assign(new ProtocolError(message,status),{resourceCapture:true});
+async function recordCapturedResource(affinities,namespace,owner,id,selected,model) {
+  try {
+    if (!validConversationId(id)) throw new Error('invalid response id');
+    await affinities.set(namespace,owner,id,{destination:selected,model});
+  } catch (error) { throw captureFailure(503,`could not persist resource ownership: ${error.message ?? String(error)}`); }
+}
 async function captureNativeStream(upstream,{namespace,owner,selected,affinities,model,cleanup,controller,limit=1024*1024}) {
-  const reader=upstream.body.getReader(),chunks=[],decoder=new TextDecoder();let buffer='',bytes=0,id;
+  if (!upstream.body) {cleanup();throw captureFailure(502,'stored stream ended before exposing a resource id');}
+  const reader=upstream.body.getReader(),chunks=[];let framed=Buffer.alloc(0),bytes=0,id;
   try {
     while(!id) {
-      const {done,value}=await reader.read();if(done)throw new ProtocolError('Stored stream ended before a resource id was supplied',502);
-      chunks.push(value);bytes+=value.byteLength;if(bytes>limit)throw new ProtocolError('Stored stream id prefix exceeds limit',502);
-      buffer=(buffer+decoder.decode(value,{stream:true})).replace(/\r\n/g,'\n');
-      let end;
-      while((end=buffer.indexOf('\n\n'))>=0 && !id) {
-        const block=buffer.slice(0,end);buffer=buffer.slice(end+2);
-        const data=block.split('\n').filter(line=>line.startsWith('data:')).map(line=>line.slice(5).replace(/^ /,'')).join('\n');if(!data || data === '[DONE]')continue;
-        let event;try{event=JSON.parse(data);}catch{throw new ProtocolError('Stored stream contains malformed JSON',502);}
-        id=event.response?.id ?? event.id;
-        if(id && (typeof id !== 'string' || id.length>512))throw new ProtocolError('Stored stream contains an invalid resource id',502);
+      const {done,value}=await reader.read();if(done)throw captureFailure(502,'stored stream ended before exposing a resource id');
+      chunks.push(value);bytes+=value.byteLength;framed=Buffer.concat([framed,value]);
+      for (;;) {
+        const crlf=framed.indexOf('\r\n\r\n'),lf=framed.indexOf('\n\n');
+        const end=crlf>=0 && (lf<0 || crlf<=lf) ? crlf : lf;
+        if (end<0) break;
+        const separator=end===crlf ? 4 : 2;
+        const block=framed.subarray(0,end).toString('utf8');framed=framed.subarray(end+separator);
+        id=captureSseId(block);if(id)break;
       }
+      // Original ordering: search every complete block in the current chunk
+      // before checking the still-unidentified prefix's accumulated size.
+      if(!id && bytes>limit)throw captureFailure(502,'stored stream did not expose a bounded resource id');
     }
-    await affinities.set(namespace,owner,id,{destination:selected,model});
-  }catch(error){controller.abort(error);cleanup();await reader.cancel().catch(()=>{});reader.releaseLock();throw error;}
+    await recordCapturedResource(affinities,namespace,owner,id,selected,model);
+  }catch(error){controller.abort(error);cleanup();await reader.cancel().catch(()=>{});reader.releaseLock();throw error.resourceCapture ? error : captureFailure(502,`upstream stream failed: ${error.message ?? String(error)}`);}
+  const prefix=Buffer.concat(chunks,bytes);chunks.length=0;framed=Buffer.alloc(0);
   let initial=true;
-  return new ReadableStream({async pull(c){try{if(initial){initial=false;for(const chunk of chunks)c.enqueue(chunk);chunks.length=0;return;}const {done,value}=await reader.read();if(done){cleanup();reader.releaseLock();c.close();}else c.enqueue(value);}catch(error){cleanup();c.error(error);}},async cancel(reason){controller.abort(reason);cleanup();await reader.cancel(reason);reader.releaseLock();}});
+  return new ReadableStream({async pull(c){try{if(initial){initial=false;c.enqueue(prefix);return;}const {done,value}=await reader.read();if(done){cleanup();reader.releaseLock();c.close();}else c.enqueue(value);}catch(error){cleanup();reader.releaseLock();c.error(error);}},async cancel(reason){controller.abort(reason);cleanup();try{await reader.cancel(reason);}finally{reader.releaseLock();}}});
 }
 export function nativeURL(base, service, pathname, search = '') {
   let url; try { url = new URL(base); } catch { throw new ProtocolError('Native provider base URL is invalid',503); }
@@ -307,9 +319,24 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
         const measured=new ReadableStream({async pull(c){try{const {done,value}=await reader.read();if(done){await settle();reader.releaseLock();c.close();}else{usage.feed(value);c.enqueue(value);}}catch(error){await settle();c.error(error);}},async cancel(reason){await settle();await reader.cancel(reason);reader.releaseLock();}});
         upstream=new Response(measured,{status:upstream.status,headers:upstream.headers});
       }
-      if(resource?.create && resource.namespace.endsWith('/responses') && upstream.ok && upstream.headers.get('content-type')?.includes('text/event-stream') && upstream.body) {
-        const stream=await captureNativeStream(upstream,{namespace:resource.namespace,owner,selected,affinities,model:document?.model,cleanup,controller});
-        return new Response(stream,{status:upstream.status,headers});
+      if(resource?.create && resource.namespace.endsWith('/responses') && upstream.ok) {
+        try {
+          if(upstream.headers.get('content-type')?.toLowerCase().includes('text/event-stream')) {
+            const stream=await captureNativeStream(upstream,{namespace:resource.namespace,owner,selected,affinities,model:document?.model,cleanup,controller});
+            return new Response(stream,{status:upstream.status,headers});
+          }
+          let raw;
+          try { raw=await boundedBytes(upstream,Math.min(maxResponseBytes,32*1024*1024)); }
+          catch (error) { throw captureFailure(502,`stored response is too large: ${error.message ?? String(error)}`); }
+          finally { cleanup(); }
+          const id=captureJsonId(raw) ?? captureLocationId(headers);
+          if(!id)throw captureFailure(502,'stored response did not include a resource id');
+          await recordCapturedResource(affinities,resource.namespace,owner,id,selected,document?.model);
+          return new Response([204,205,304].includes(upstream.status) ? null : raw,{status:upstream.status,headers});
+        } catch (error) {
+          if(!error.resourceCapture)throw error;
+          return resourceCaptureError(error.status,error.message);
+        }
       }
       if (resource && (resource.create || resource.list) && upstream.ok) {
         let raw; try { raw = await boundedBytes(upstream,maxResponseBytes); } finally { cleanup(); }

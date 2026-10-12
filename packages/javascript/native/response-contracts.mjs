@@ -96,3 +96,52 @@ export function conversationIds(raw, list = false) {
 export function validConversationId(id) {
   return typeof id === 'string' && id.length > 0 && Buffer.byteLength(id) <= 256 && !/[\/\x00-\x1f\x7f-\x9f]/u.test(id);
 }
+
+// resource_capture.rs reads each SSE data line independently. Presence of a
+// root id takes precedence even when its value is unusable; malformed lines
+// are ignored while the bounded prefix waits for another resource identity.
+function captureJsonValue(text) {
+  let value; try { value = JSON.parse(text); } catch { return undefined; }
+  // serde_json constructs Rust UTF-8 Strings, so isolated UTF-16 surrogate
+  // escapes are not usable JSON even in otherwise unused metadata or keys.
+  const scalar = string => {
+    for (let index=0;index<string.length;index++) {
+      const unit=string.charCodeAt(index);
+      if(unit>=0xd800 && unit<=0xdbff) { const next=string.charCodeAt(++index);if(!(next>=0xdc00 && next<=0xdfff))return false; }
+      else if(unit>=0xdc00 && unit<=0xdfff)return false;
+    }
+    return true;
+  };
+  const pending=[value];
+  while(pending.length) {
+    const current=pending.pop();
+    if(typeof current==='number' && !Number.isFinite(current))return undefined;
+    if(typeof current==='string' && !scalar(current))return undefined;
+    if(current && typeof current==='object') for(const [key,child] of Object.entries(current)) {
+      if(!scalar(key))return undefined;pending.push(child);
+    }
+  }
+  return value;
+}
+export function captureSseId(block) {
+  for (const line of block.split(/\r?\n/)) {
+    if (!line.startsWith('data:')) continue;
+    const payload = line.slice(5).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu,'');
+    const value = captureJsonValue(payload);
+    const id = value && typeof value === 'object' && Object.hasOwn(value,'id') ? value.id : value?.response?.id;
+    if (typeof id === 'string' && id) return id;
+  }
+}
+export function captureJsonId(raw, fields = ['id']) {
+  let value; try { value = captureJsonValue(new TextDecoder('utf-8',{fatal:true}).decode(raw)); } catch { return undefined; }
+  return fields.map(field => value?.[field]).find(id => typeof id === 'string' && id);
+}
+export function captureLocationId(headers) {
+  const location = headers.get('location');
+  if (!location) return undefined;
+  const path = location.split('?')[0].replace(/\/+$/,'');
+  return path.split('/').at(-1) || undefined;
+}
+export function resourceCaptureError(status, message) {
+  return Response.json({ error: { message, type: 'api_error', param: null, code: null } }, { status });
+}

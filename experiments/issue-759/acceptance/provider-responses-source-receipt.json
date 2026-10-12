@@ -49,6 +49,14 @@
     {
       "path": "src/resource_lifecycle_tests.rs",
       "sha256": "5d4dd7103be604663fbfcb7fd585029f5533d2c84d024cfe9c43b93939eea180"
+    },
+    {
+      "path": "src/sse.rs",
+      "sha256": "c15e23127a0c780f344929514e5fc37a8f2fee4d20aeeec5a9b3f459372d3066"
+    },
+    {
+      "path": "src/bridge_controls.rs",
+      "sha256": "c4d0d6520eccf550be920e521860681172ffca2dc028fde5187434429d1f7b81"
     }
   ],
   "contracts": [
@@ -108,11 +116,37 @@
       "source": "src/resource_lifecycle_tests.rs",
       "symbols": [
         "conversations_are_native_owner_scoped_and_parent_bound",
-        "native_subscription_response_lifecycle_reuses_the_exact_account"
+        "native_subscription_response_lifecycle_reuses_the_exact_account",
+        "sse_identity_is_durable_before_the_success_response_is_returned"
+      ]
+    },
+    {
+      "source": "src/resource_capture.rs",
+      "symbols": [
+        "capture_with_json_fields",
+        "capture_stream",
+        "sse_id",
+        "location_id",
+        "record_context",
+        "affinity_error",
+        "openai_error"
+      ]
+    },
+    {
+      "source": "src/sse.rs",
+      "symbols": [
+        "push_blocks",
+        "find_separator"
+      ]
+    },
+    {
+      "source": "src/bridge_controls.rs",
+      "symbols": [
+        "validate_responses"
       ]
     }
   ],
-  "authored_fixture_count": 32,
+  "authored_fixture_count": 42,
   "authored_fixtures_executed": false,
   "head_source_trace": {
     "rust_handler": "src/responses_lifecycle.rs::forward passes &parts.method unchanged to provider and subscription builders",
@@ -143,6 +177,11 @@
       "path": "experiments/issue-759/acceptance/provider-conversations.test.mjs",
       "authored_count": 16,
       "executed": false
+    },
+    {
+      "path": "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+      "authored_count": 10,
+      "executed": false
     }
   ],
   "conversation_contract_notes": {
@@ -151,5 +190,12 @@
     "head": "explicit original allowed-method checks exclude HEAD after owner lookup; no route precedence inference",
     "body_limit": "read_upstream uses max_proxy_request_bytes; native draft uses maxBodyBytes",
     "subscription_binding": "recorded account is logical principalAccount, not physical pinnedAccount; core maps implicit Codex to primary"
+  },
+  "capture_contract_notes": {
+    "architecture": "provider-owned background execution/cancel; Anthropic bridge synchronous-only refusal; no local worker",
+    "ordering": "search complete blocks in current transport chunk before rejecting still-unidentified prefix over1MiB",
+    "visibility": "persist owner affinity before exposing successful response or buffered bytes",
+    "failed_capture": "502/503 api_error envelope with param/code null",
+    "scope": "representative bounded observable contracts, not universal serde_json/depth/numeric precision or Rust runtime proof"
   }
 }
