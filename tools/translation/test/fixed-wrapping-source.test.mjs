@@ -100,9 +100,9 @@ test('original locked wide-add high-word function preserves exact carry using it
   assert.equal(stage.configuration.authority,false);assert.equal(stage.formatterEquivalence,false);
 });
 
-test('actual original umul192_hi128 retains next bool-to-integer obligation instead of a superficial callable',async()=>{
+test('actual original umul192_hi128 retains remaining namespace record derive and cfg obligations',async()=>{
   const stage=original();assert.equal(stage.translationFailure,null);const api=(await loadJavaScript(emitNumericSourceStage(stage).javascript)).translated;
   assert.equal(Object.hasOwn(api,'umul192_hi128'),false);
-  const carry=project('pub fn carry(value:bool)->u64{u64::from(value)}');assert.equal(carry.meta.executable.some(entry=>entry.name==='carry'),false);assert.equal(carry.meta.refused.some(entry=>/fixed integer source/.test(entry.message)),true);
+  const carry=project('pub fn carry(value:bool)->u64{u64::from(value)}'),converted=(await loadJavaScript(carry.javascript)).translated;assert.equal(converted.carry(true),1n);assert.equal(converted.carry(false),0n);
   assert.equal(stage.unsafeMemory,false);assert.equal(stage.runtimeParity,false);assert.equal(stage.formatterEquivalence,false);
 });

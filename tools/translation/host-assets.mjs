@@ -31,6 +31,8 @@ export function hostRuntimeAssets() {
   files.set('iterator-runtime.mjs',readFileSync(new URL('./extensions/iterator-runtime.mjs',import.meta.url),'utf8'));
   files.set('iterator-runtime.d.mts','export declare function assertImmutableIterator(value: unknown): true;\n');
   for(const file of ['json-runtime.mjs','json-values.mjs','json-parser.mjs','json-numbers.mjs','time-runtime.mjs','vector-runtime.mjs','integer-runtime.mjs','fixed-integer-runtime.mjs','copy-runtime.mjs','fixed-array-runtime.mjs'])files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));
+  files.set('primitive-bool-from-runtime.mjs',readFileSync(new URL('./extensions/primitive-bool-from-runtime.mjs',import.meta.url),'utf8'));
+  files.set('primitive-bool-from-runtime.d.mts','export declare function primitiveBoolFrom(value:boolean): bigint;\n');
   files.set('fixed-array-runtime.d.mts',"export declare function copyFixedArray<T, N extends number>(value: ReadonlyArray<T>, type: Readonly<{kind:'array';rustFixedArray:Readonly<{length:N}>;element:unknown}>): ReadonlyArray<T> & { readonly length:N };\n");
   files.set('copy-runtime.d.mts','export declare function assertImmutableCopy(value: unknown): true;\n');
   files.set('vector-runtime.d.mts',`type RustOption<T> = Readonly<{ $: 'None' }> | Readonly<{ $: 'Some'; field0: T }>;
