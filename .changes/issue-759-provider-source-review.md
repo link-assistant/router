@@ -54,3 +54,9 @@ resource-contract cases.
 Validation performed: source inspection, Python source hash/declaration-count
 audit and `git diff --check` only. No Node/Bun/TypeScript/parser/helper/probe,
 producer, Rust build or push occurred during this review.
+
+## Focused executable checkpoint
+
+At clean replay `db1a1bc1973ea8e2496c07c68abe59b9a47bbbb8`, the three provider acceptance files passed 42/42 on Node (11.800 s wall) and Bun (10.030 s). The separate native-core/native-service/native-server regressions passed 63/63 on Node (23.793 s) and Bun (19.749 s). Both pairs retained the exact HEAD and all captured source input hashes; bounded temporary stores were empty at cleanup. `experiments/issue-759/acceptance/provider-verification.json` records commands, exact inputs, raw artifact hashes and resource receipts. No tests were skipped, no engines overlapped, and no source repairs were needed.
+
+The earlier UNRUN descriptions above are historical draft checkpoints. This focused run does not establish universal Rust parity, and no Rust build, generated meta/TypeScript validation or promotion flag was executed/changed. The typed affinity-file schema/lexical i64 extension is a separate subsequent draft and is excluded from these receipts.
