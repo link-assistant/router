@@ -5,7 +5,7 @@ import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {originalMethodMember,originalMethodLowering} from './impl-resolver.mjs';
 import {originalMethodNamespaceOwner} from './matches-macro-context.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
-const transforms=new WeakMap(),tokensToTransforms=new WeakMap();
+const transforms=new WeakMap(),tokensToTransforms=new WeakMap(),parserTokenCopies=new WeakMap();
 const canonical=path=>path[0]==='crate'?path.slice(1):path;
 const equal=(a,b)=>metadataDigest(a)===metadataDigest(b);
 const mappedToken=(token,offset)=>({...token,start:token.start+offset,end:token.end+offset});
@@ -46,15 +46,32 @@ export function createOriginalMethodTokenTransform(context,method,lowered) {
   }
   if(!equal(expected,lowered.tokens))throw new TypeError('Issued method tokens differ from the complete original generic self/Self transform');
   const proof=freezeMacroTree({schema:'original-method-token-transform-v1',sourcePath:member.sourcePath,modulePath:member.modulePath,sourceViewDigest:member.sourceView.digest,sourceSha256:owner.sourceSha256,memberDigest:member.methodDigest,originalMemberSpan:method.span,originalBodySpan:method.bodySpan,originalImplementationSpan:member.implementationSpan,originalTokenDigest:metadataDigest(original),transformedTokenDigest:metadataDigest(lowered.tokens),owner,receiver,receiverMode:lowering.mode,copyCertificateDigest:lowering.copyCertificate?.digest??null,map,operations,originalTokenTransformVerified:true,parsedSourceAssociation:false,copyAuthority:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
-  transforms.set(proof,{context,method,member,lowered,original,source,proof,tokenDigest:metadataDigest(lowered.tokens)});tokensToTransforms.set(lowered.tokens,proof);return proof;
+  transforms.set(proof,Object.freeze({context,method,member,lowered,original,source,proof,tokenDigest:metadataDigest(lowered.tokens)}));tokensToTransforms.set(lowered.tokens,proof);return proof;
 }
 export const isOriginalMethodTokenTransform=proof=>!!proof&&transforms.has(proof);
 export function originalMethodTransformFacts(proof) {
   const state=transforms.get(proof);if(!state)throw new TypeError('Original method token transform is unsealed or copied');
   originalMethodLowering(state.lowered);originalMethodMember(state.method);
   if(metadataDigest(state.lowered.tokens)!==state.tokenDigest)throw new TypeError('Original method transformed tokens changed');
+  if(metadataDigest(state.original)!==state.proof.originalTokenDigest)throw new TypeError('Original method tokenizer source tokens changed');
   originalMethodNamespaceOwner(state.context,state.method);
   return state;
 }
 export function originalMethodTransformForTokens(tokens){const proof=tokensToTransforms.get(tokens);if(!proof)return null;originalMethodTransformFacts(proof);return proof;}
 export function originalMethodTokenTransformSnapshot(proof){return freezeMacroTree(copyMetadata(originalMethodTransformFacts(proof).proof));}
+
+// The parser gets its own issued token array: the legitimate && split cannot
+// mutate the lowerer's exact source map. Copies made by callers are unbranded.
+export function originalMethodParserTokens(proof) {
+  const state=originalMethodTransformFacts(proof),tokens=copyMetadata(state.lowered.tokens);
+  parserTokenCopies.set(tokens,Object.freeze({proof,expected:freezeMacroTree(copyMetadata(tokens))}));return tokens;
+}
+export function originalMethodParserTokenFacts(tokens) {
+  const issued=parserTokenCopies.get(tokens);if(!issued)throw new TypeError('Original method parser token array is copied or unissued');
+  const state=originalMethodTransformFacts(issued.proof),actual=copyMetadata(tokens);let at=0;
+  for(const expected of issued.expected){const first=actual[at++];if(equal(first,expected))continue;const second=actual[at++];
+    if(expected.value!=='&&'||expected.end!==expected.start+2||!equal(first,{...expected,value:'&',end:expected.start+1})||!equal(second,{...expected,value:'&',start:expected.start+1}))throw new TypeError('Original method parser changed its exact transformed token stream');
+  }
+  if(at!==actual.length)throw new TypeError('Original method parser inserted or removed source tokens');
+  return Object.freeze({proof:issued.proof,source:state.member.source,sourcePath:state.member.sourcePath,modulePath:state.member.modulePath,sourceView:state.member.sourceView,compilationProfile:state.member.compilationProfile,originalMemberSpan:state.method.span,originalBodySpan:state.method.bodySpan,transform:state.proof});
+}

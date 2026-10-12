@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {captureSourceModuleViews} from '../source-module-views.mjs';
 import {extractImplDeclarations,lowerSharedMethodTokens} from '../impl-resolver.mjs';
-import {createMatchesMacroContext} from '../matches-macro-context.mjs';
-import {createOriginalMethodTokenTransform} from '../source-method-transforms.mjs';
+import {createMatchesMacroContext,configureMatchesMethodParser,proveOriginalMatchesCall} from '../matches-macro-context.mjs';
+import {createOriginalMethodTokenTransform,originalMethodParserTokens} from '../source-method-transforms.mjs';
 import {parseOriginalMethodTransform,originalMethodParsedFacts} from '../source-method-parser.mjs';
 import {HostRustParser,originalHostParserIdentitySnapshot} from '../extensions/host-contracts.mjs';
 function fixture(source,path=[]) {
@@ -29,6 +29,7 @@ test('original inline static Self return and construction parse without a member
 });
 test('public transformed snapshots and copied parse records cannot issue or reconstruct private AST proof',()=>{
   const row=fixture('struct Counter{value:u8}impl Counter{fn read(&self)->u8{self.value}}'),result=parseOriginalMethodTransform(row.transform);
+  assert.ok(Object.isFrozen(originalMethodParsedFacts(result)));assert.throws(()=>{originalMethodParsedFacts(result).digest='resealed';},TypeError);
   assert.throws(()=>parseOriginalMethodTransform(structuredClone(row.transform)),/unsealed|copied/);
   assert.throws(()=>originalMethodParsedFacts(structuredClone(result)),/unsealed|fabricated/);
   assert.throws(()=>originalMethodParsedFacts({entry:result.entry,proof:result.proof}),/unsealed|fabricated/);
@@ -43,4 +44,19 @@ test('changed parser callbacks and transformed tokens are denied before a privat
 test('original method macro calls remain carried until the transformed opaque AST context is genuinely linked',()=>{
   const row=fixture('enum Mode{On,Off}impl Mode{fn is_on(&self)->bool{matches!(self,Self::On)}}');
   assert.throws(()=>parseOriginalMethodTransform(row.transform),/private source association|original.*context|genuine.*parser|source.*capture/i);
+});
+test('transformed caller frames prove only the exact original invocation inside the member body',()=>{
+  const source='enum Mode{On,Off}impl Mode{fn is_on(&self)->bool{matches!(self,Self::On)}}fn other()->bool{matches!(true,true)}',row=fixture(source),parser=new HostRustParser(originalMethodParserTokens(row.transform));
+  configureMatchesMethodParser(parser,row.context,row.method);
+  const start=source.indexOf('matches!'),end=source.indexOf(')}',start)+1,proof=proveOriginalMatchesCall(parser,{segments:['matches'],start,end});
+  assert.equal(proof.originalInvocation,'matches!(self,Self::On)');assert.deepEqual(proof.originalSpan,{start,end});assert.equal(proof.macroOwnerResolved,true);assert.equal(proof.runtimeParity,false);
+  const other=source.lastIndexOf('matches!');assert.throws(()=>proveOriginalMatchesCall(parser,{segments:['matches'],start:other,end:source.indexOf(')}',other)+1}),/member body/);
+  assert.throws(()=>configureMatchesMethodParser(new HostRustParser(structuredClone(parser.cursor.tokens)),row.context,row.method),/copied|unissued/);
+});
+test('actual method caller frames retain original macro shadows and incompatible full views',()=>{
+  const row=fixture('macro_rules! matches{($e:expr,$p:pat)=>{false}}enum Mode{On,Off}impl Mode{fn is_on(&self)->bool{matches!(self,Self::On)}}'),parser=new HostRustParser(originalMethodParserTokens(row.transform));
+  configureMatchesMethodParser(parser,row.context,row.method);
+  const source=row.method.source,start=row.method.span.start+source.indexOf('matches!'),end=row.method.span.start+source.indexOf(')}',source.indexOf('matches!'))+1;
+  assert.throws(()=>proveOriginalMatchesCall(parser,{segments:['matches'],start,end}),/not its original standard macro owner|actual.*scopes|shadow/);
+  const other=fixture('enum Mode{On,Off}impl Mode{fn is_on(&self)->bool{true}}');assert.throws(()=>configureMatchesMethodParser(parser,other.context,row.method),/identity differs|another original/);
 });

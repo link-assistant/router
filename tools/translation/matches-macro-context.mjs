@@ -14,6 +14,7 @@ import {loadStandardMatchesSourceProfile,isStandardMatchesSourceProfile} from '.
 import {freezeMacroTree,originalMacroInvocation} from './macro-token-trees.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import {originalMethodMember} from './impl-resolver.mjs';
+import {originalMethodTransformFacts,originalMethodParserTokenFacts} from './source-method-transforms.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
 import {itemConfiguration,compilationProfile as normalizeProfile} from './cfg-profile.mjs';
 const contexts=new WeakMap(),parsers=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
@@ -56,7 +57,8 @@ export function configureMatchesMacroParser(parser,context,{file,modulePath=[],o
 }
 export function matchesParserFacts(parser) {
   const facts=parsers.get(parser);
-  if(!facts||parser.cursor.tokens!==facts.tokens||capturedRustTokenSource(facts.tokens)!==facts.captured||JSON.stringify(normalizeProfile(parser.compilationProfile??null))!==JSON.stringify(facts.facts.compilationProfile)||JSON.stringify(parser.modulePath??[])!==JSON.stringify(facts.module.path)||namespaceDigest(parser)!==facts.namespaceDigest)throw new TypeError('Matches parser lost its original private source association');
+  const captured=facts?.methodTransform?originalMethodParserTokenFacts(facts.tokens):facts?capturedRustTokenSource(facts.tokens):null;
+  if(!facts||parser.cursor.tokens!==facts.tokens||(facts.methodTransform?captured.proof!==facts.methodTransform:captured!==facts.captured)||JSON.stringify(normalizeProfile(parser.compilationProfile??null))!==JSON.stringify(facts.facts.compilationProfile)||JSON.stringify(parser.modulePath??[])!==JSON.stringify(facts.module.path)||namespaceDigest(parser)!==facts.namespaceDigest)throw new TypeError('Matches parser lost its original private source association');
   return facts;
 }
 function resolvedMacroPath(state,segments) {
@@ -88,6 +90,7 @@ export function originalMatchesImport(parser,segments) {
 export function proveOriginalMatchesCall(parser,{segments,start,end}={}) {
   const state=matchesParserFacts(parser),{facts,module}=state;
   if(!Array.isArray(segments)||!segments.length||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start||end>state.sourceLength)throw new TypeError('Matches call escapes its original source slice');
+  if(state.methodTransform&&(start<state.captured.originalBodySpan.start||end>state.captured.originalBodySpan.end))throw new TypeError('Matches method call escapes its exact original member body');
   const source=state.captured.source.slice(start,end),invocation=originalMacroInvocation(source);
   if(JSON.stringify(invocation.path)!==JSON.stringify(segments)||!state.tokens.some(token=>token.start===start&&['identifier','macro'].includes(token.kind))||!state.tokens.some(token=>token.end===end&&[')',']','}'].includes(token.value)))throw new TypeError('Matches proof differs from actual original invocation tokens/path');
   const enclosing=originalSourceModuleItems(module).filter(item=>item.start<=start+state.offset&&item.end>=end+state.offset);
@@ -145,4 +148,15 @@ export function originalMethodParserNamespace(context,method) {
   const scope=facts.evidence.scopes.find(scope=>scope.file===original.sourcePath&&JSON.stringify(scope.path)===JSON.stringify(original.modulePath));
   if(!scope)throw new TypeError('Original method parser has no actual module scope');
   return Object.freeze({scope,scopes:facts.evidence.scopes,modulePath:original.modulePath,compilationProfile:facts.compilationProfile});
+}
+
+export function configureMatchesMethodParser(parser,context,method) {
+  const captured=originalMethodParserTokenFacts(parser.cursor.tokens),transform=originalMethodTransformFacts(captured.proof),namespace=originalMethodParserNamespace(context,method),facts=contexts.get(context);
+  if(transform.context!==context||transform.method!==method)throw new TypeError('Matches method parser has another original source transform/member context');
+  const module=facts.modules.find(module=>module.file===captured.sourcePath&&JSON.stringify(module.path)===JSON.stringify(captured.modulePath));
+  if(!module||module.source!==captured.source||module.sourceView!==captured.sourceView||JSON.stringify(normalizeProfile(captured.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Matches method parser changed its full original view/profile');
+  configureParserSourceScope(parser,namespace.scope,namespace.scopes,namespace.modulePath);parser.modulePath=[...namespace.modulePath];
+  parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));
+  parsers.set(parser,{context,facts,module,offset:0,sourceLength:module.source.length,captured,tokens:parser.cursor.tokens,methodTransform:captured.proof,namespaceDigest:namespaceDigest(parser)});
+  return parser;
 }
