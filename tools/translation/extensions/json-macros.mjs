@@ -8,10 +8,14 @@ const key=path=>path.join('::');
 const originalTreeSpans=(value,offset)=>Array.isArray(value)?value.map(item=>originalTreeSpans(item,offset)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([name,item])=>[name,name==='span'?{start:item.start+offset,end:item.end+offset}:originalTreeSpans(item,offset)])):value;
 export function withJsonMacroParser(Base) {return class extends Base {
   primary(path,options) {
-    const c=this.cursor,first=c.peek();if(first.kind!=='identifier')return super.primary(path,options);
-    const segments=[first.value];let bang=c.index+1;
-    while(c.tokens[bang]?.value==='::'&&c.tokens[bang+1]?.kind==='identifier'){segments.push(c.tokens[bang+1].value);bang+=2;}
-    if(c.tokens[bang]?.value!=='!'||!originalJsonMacroCandidate(this,segments))return super.primary(path,options);
+    const c=this.cursor,first=c.peek();if(!['identifier','macro'].includes(first.kind))return super.primary(path,options);
+    // The original lexer retains an adjacent bang in a single macro token;
+    // whitespace-separated bangs remain punctuation. Keep both source forms,
+    // including a qualified path whose last segment is the macro token.
+    const segments=[first.value];let tail=c.index;
+    while(c.tokens[tail]?.kind==='identifier'&&c.tokens[tail+1]?.value==='::'&&['identifier','macro'].includes(c.tokens[tail+2]?.kind)){tail+=2;segments.push(c.tokens[tail].value);}
+    const attached=c.tokens[tail]?.kind==='macro',bang=attached?tail:tail+1;
+    if(!attached&&c.tokens[bang]?.value!=='!'||!originalJsonMacroCandidate(this,segments))return super.primary(path,options);
     const original=jsonMacroParserOriginal(this);if(!original)throw unsupported('json! context','requires actual sealed dependency/features and original module scope',first);
     const opening=c.tokens[bang+1],pairs={'(':')','[':']','{':'}'},stack=[];let last=bang+1;
     if(!pairs[opening?.value])throw typeError('JSON macro needs an actual original delimiter',opening);

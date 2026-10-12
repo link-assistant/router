@@ -188,3 +188,33 @@ test('all original pinned task-local invocations use actual locked transcribers 
     assert.ok(proof.outstandingClosure.some(obligation=>obligation.includes('cfg_if')));
   }
 });
+
+
+test('literal-only optional punctuation consumes source without inventing a capture axis',()=>{
+  const definition=compile('macro_rules! example {($name:ident $(,)?)=>{$name};}');
+  for(const input of ['value','value,']) {
+    const result=expandDeclarativeMacro(definition,originalMacroTrees(input));
+    assert.equal(render(result),'value');assert.equal(result.namespaceComplete,false);
+  }
+  assert.throws(()=>expandDeclarativeMacro(definition,originalMacroTrees('value,,')),/does not match/);
+  assert.throws(()=>compile('macro_rules! example {($()*)=>{};}'),/consuming original source sequence/);
+  const noCapture=compile('macro_rules! example {($(,)*)=>{LITERAL};}');
+  assert.throws(()=>expandDeclarativeMacro(noCapture,originalMacroTrees(',,,,'),{repetitions:2}),/budget/);
+  const ambiguous=compile('macro_rules! example {($(,)* ,)=>{};}');
+  assert.throws(()=>expandDeclarativeMacro(ambiguous,originalMacroTrees(',')),/ambiguous/);
+});
+
+test('grouped optional bounds prove disjoint lookahead while overlapping and nullable suffixes refuse',()=>{
+  const definition=compile('macro_rules! example {($({$($bound:tt)*})? $type:ty)=>{$type};}');
+  for(const input of ['u64','{T:Copy} *const T']) {
+    const result=expandDeclarativeMacro(definition,originalMacroTrees(input));
+    assert.equal(result.trees[0].kind,'fragment');assert.equal(result.trees[0].fragment,'ty');
+    assert.equal(result.ownerVerified,false);assert.equal(result.generatedBehavior,false);
+  }
+  // Parentheses can start both a grouped prefix and a tuple type. Looking
+  // through a nullable suffix must also retain the later possible identifier.
+  for(const matcher of ['$(( $bound:ident ))? $type:ty','$($name:ident)* $(,)? ending']) {
+    const definition=compile('macro_rules! example {('+matcher+')=>{};}');
+    assert.throws(()=>expandDeclarativeMacro(definition,originalMacroTrees(matcher.startsWith('$((')?'(T) u64':'ending')),/ambiguous/);
+  }
+});

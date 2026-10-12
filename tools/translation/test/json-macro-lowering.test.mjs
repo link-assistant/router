@@ -122,3 +122,14 @@ test('actual unknown/inactive view conditions and procedural ancestors cannot be
     assert.throws(()=>sealJsonMacroCall(parser,{segments:['json'],start,end,syntax:parseJsonMacroSyntax(body.slice(start,end))}),/unknown|resolved original bang|owner|actual locked|configuration condition/);
   }
 });
+
+
+test('original attached and separated bang tokens retain qualified and aliased JSON owners in both targets',async()=>{
+  const source='use serde_json::{Value,json as literal}; pub fn adjacent()->Value{serde_json::json!({"owner":"qualified"})} pub fn separated()->Value{serde_json::json ! ({"owner":"qualified-spaced"})} pub fn alias()->Value{literal!({"owner":"alias"})} pub fn alias_spaced()->Value{literal ! ({"owner":"alias-spaced"})}';
+  const result=project(source);assert.equal(result.meta.refused.some(item=>['adjacent','separated','alias','alias_spaced'].includes(item.name)),false);
+  await verifyTypedTargets(result,api=>{for(const [name,owner] of [['adjacent','qualified'],['separated','qualified-spaced'],['alias','alias'],['alias_spaced','alias-spaced']])assert.deepEqual(native(api[name]()),{owner});});
+  const nodes=collect(result.meta.checkedSemanticProgram.program,node=>node.k==='routerJsonMacro');
+  assert.equal(nodes.length,4);
+  for(const node of nodes){assert.equal(source.slice(node.span.start,node.span.end),node.jsonMacroProof.originalSource);assert.equal(node.jsonMacroProof.macroOwnerResolved,true);assert.equal(node.jsonMacroProof.runtimeParity,false);assert.equal(node.jsonMacroProof.applicationEffectCompleteness,false);}
+  for(const source of ['mod serde_json {} pub fn rejected()->serde_json::Value{serde_json::json ! (null)}','use serde_json::{Value,json as literal}; macro_rules! literal{()=>{false}} pub fn rejected()->Value{literal ! (null)}'])assert.equal(project(source).meta.executable.some(item=>item.name==='rejected'),false);
+});

@@ -14,7 +14,7 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
     const bundle=join(directory,'source-bundle'),repository=join(directory,'destination');
     mkdirSync(join(bundle,'scripts'),{recursive:true});mkdirSync(join(bundle,'tools/translation'),{recursive:true});mkdirSync(join(repository,'src'),{recursive:true});
     copyFileSync(join(root,'scripts/translate-router.mjs'),join(bundle,'scripts/translate-router.mjs'));
-    for(const name of readdirSync(join(root,'tools/translation')))if(name.endsWith('.mjs'))copyFileSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name));
+    for(const name of readdirSync(join(root,'tools/translation')))if(name.endsWith('.mjs')||name.endsWith('.d.mts'))copyFileSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name));
     for(const name of ['extensions','vendor'])cpSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name),{recursive:true});
     cpSync(join(root,'tools/translation/source-profiles'),join(bundle,'tools/translation/source-profiles'),{recursive:true});
     for(const path of [bundle,repository])writeFileSync(join(path,'package.json'),'{"type":"module"}\n');

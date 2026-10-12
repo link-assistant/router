@@ -22,7 +22,7 @@ test('actual builtin callbacks automatically become checked symbolic tail forwar
 test('non-forwarding compiler branches retain def-site context, retry/error paths and original operand syntax',()=>{
   const proof=loadPinnedFormatSourceStages(),flow=compileFormatCallbackDataflow(proof,compiler,'expand_format_args_impl');
   assert.ok(flow.function.controlTokens.some(token=>token.text==='return'));assert.ok(flow.function.calls.some(call=>call.writtenPath.includes('with_def_site_ctxt')));assert.ok(flow.bodyTree.children.length);
-  assert.throws(()=>compileFormatCallbackForwarder(flow),/single tail forwarding/);assert.equal(flow.sourceSemanticClosureVerified,false);
+  assert.throws(()=>compileFormatCallbackForwarder(flow),{name:'TypeError',message:'Callback binder is outside the simple source forwarding grammar'});assert.equal(flow.sourceSemanticClosureVerified,false);
   const roundtrip=JSON.parse(JSON.stringify(flow));assert.equal(isFormatCallbackDataflow(roundtrip),false);assert.throws(()=>compileFormatCallbackForwarder(roundtrip),/private original/);
   const forwarded=compileFormatCallbackForwarder(compileFormatCallbackDataflow(proof,compiler,'expand_format_args'));assert.throws(()=>applyFormatCallbackForwarder(structuredClone(forwarded),[]),/Unsealed/);assert.throws(()=>applyFormatCallbackForwarder(forwarded,[{}]),/arity\/domain/);
   let reads=0;const hostile={get source(){reads++;return 'fake';}};assert.throws(()=>applyFormatCallbackForwarder(forwarded,[hostile,{},{}]),/accessors/);assert.equal(reads,0);assert.throws(()=>applyFormatCallbackForwarder(forwarded,[{toJSON(){throw new Error('must not execute');}},{},{}]),/serialization callbacks/);

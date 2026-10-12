@@ -37,6 +37,46 @@ function assertTypeFollowers(pattern){
   }check(pattern);
 }
 
+// Conservative FIRST/nullability over the actual matcher grammar. A grouped
+// token tree consumes its delimiter even when its children are empty. Opaque
+// fragments remain nonterminals: their interiors never enter this analysis.
+function matcherFirst(nodes,depth=0,budget={cells:32000}) {
+  if(depth>8)throw new TypeError('Declarative lookahead nesting budget');
+  const starts=[];
+  for(const node of nodes) {
+    if(--budget.cells<0)throw new TypeError('Declarative lookahead cell budget');
+    if(node.kind==='repeat') {
+      const child=matcherFirst(node.children,depth+1,budget);starts.push(...child.starts);
+      if(['*','?'].includes(node.operator)||child.nullable)continue;
+    } else {
+      starts.push(node);
+      if(node.kind==='capture'&&node.fragment==='vis')continue;
+    }
+    return {starts,nullable:false};
+  }
+  return {starts,nullable:true};
+}
+function matcherStartsOverlap(left,right) {
+  if(left.kind==='capture'&&right.kind!=='capture')return matcherStartsOverlap(right,left);
+  if(left.kind==='literal'&&right.kind==='literal')return text(left.tree)===text(right.tree);
+  if(left.kind==='group'&&right.kind==='group')return left.delimiter===right.delimiter;
+  if(left.kind==='literal'&&right.kind==='group'||left.kind==='group'&&right.kind==='literal')return false;
+  if(right.kind==='capture') {
+    if(left.kind==='capture')return true;
+    if(['tt','expr','item','block'].includes(right.fragment)) {
+      if(right.fragment==='block')return left.kind==='group'&&left.delimiter==='{';
+      return true;
+    }
+    if(left.kind==='group')return right.fragment==='ty'&&['(','['].includes(left.delimiter);
+    if(left.kind==='literal') {
+      if(right.fragment==='vis')return text(left.tree)==='pub';
+      if(['ident','meta'].includes(right.fragment))return ident(left.tree);
+      if(right.fragment==='ty')return ident(left.tree)||['&','*','!','::','<'].includes(text(left.tree));
+    }
+  }
+  return true;
+}
+
 function plan(trees,mode,bindings,depth=0) {
   const result=[];
   for(let at=0;at<trees.length;at++) {
@@ -49,7 +89,7 @@ function plan(trees,mode,bindings,depth=0) {
         if(!['*','+','?'].includes(operator)){separator=trees[at];operator=text(trees[++at]);}
         if(!['*','+','?'].includes(operator)||separator&&(!text(separator)||operator==='?'))throw new TypeError('Unproved declarative repetition separator or operator');
         const children=plan(next.children,mode,bindings,depth+1);
-        if(mode==='matcher'&&!names(children).length)throw new TypeError('Declarative repetition requires consuming source captures');
+        if(mode==='matcher'&&!names(children).length&&matcherFirst(children).nullable)throw new TypeError('Declarative repetition requires a consuming original source sequence');
         result.push({kind:'repeat',children,separator,operator,sourceSyntax:syntax(tree,trees[at])});continue;
       }
       if(!ident(next))throw new TypeError('Declarative metavariable needs an original identifier');
@@ -117,7 +157,7 @@ function transparentTree(tree) {
 function opaque(tree,fragment) {return tree?.kind==='fragment'&&tree.fragment===fragment;}
 function boundedType(trees,start,depth=0) {
   if(depth>24)throw new TypeError('Declarative type fragment budget exceeded');
-  if(opaque(trees[start],'ty'))return start+1;
+  if(opaque(transparentTree(trees[start]),'ty'))return start+1;
   const typeText=tree=>text(transparentTree(tree)),typeIdent=tree=>ident(transparentTree(tree));
   if(typeText(trees[start])==='*'){if(!['const','mut'].includes(typeText(trees[start+1])))return null;return boundedType(trees,start+2,depth+1);}
   const tuple=transparentTree(trees[start]);
@@ -226,7 +266,8 @@ function matchSequence(nodes,trees,start,captures,budget,indices=[]) {
       at=end;continue;
     }
     if(node.kind==='repeat') {
-      if(index<nodes.length-1&&node.children[0]?.kind!=='literal')throw new TypeError('Declarative repetition lookahead may be locally ambiguous');
+      const repeatedFirst=matcherFirst(node.children),followingFirst=matcherFirst(nodes.slice(index+1));
+      if(repeatedFirst.starts.some(left=>followingFirst.starts.some(right=>matcherStartsOverlap(left,right))))throw new TypeError('Declarative repetition lookahead may be locally ambiguous');
       let count=0;
       for(const name of names(node.children))captureArray(captures,name,indices);
       for(;;) {
