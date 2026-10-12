@@ -9,6 +9,9 @@ of 256 checks in both engines, preserving all six failures. The next source
 repair carries only exact statement matches into unit joins and specializes
 actual immutable constructor locals at emission. Two former valid refusals
 now have separate JavaScript and strict TypeScript behavior assertions.
+The second repair passed 257 of 258 checks in both engines; its preserved
+failure showed a missing unit coercion for semicolonless match statements.
+That source coercion is repaired without changing the negative assertion.
 The next 28/36-file retry is UNRUN.
 
 New behavior cases cover zero iterations,

@@ -253,6 +253,7 @@ export class ControlChecker extends StringChecker {
         statementMatches.add(node.value);
         try {value=this.expr(node.value,env,path,node.statementMatchUnit?UNIT:undefined);}
         finally {statementMatches.delete(node.value);}
+        if(node.statementMatchUnit)value=coerce(value,UNIT,this.language,node.span);
       } else value=checkValue(node.value);
       const body = checkNext(node.body);
       return { k: node.k, value, body, ...(statementMatch?{statementMatch:true}:{}), type: body.type, span: node.span };
