@@ -58,8 +58,8 @@ test('opaque serde hooks retain exact attributes and source coordinates in the c
 test('unproved aliases, source shadows and unknown conditions cannot disappear from discovery or unlock generation',()=>{
   for(const source of [serde+'type String=i64;#[derive(Serialize,Deserialize)]struct Row{value:String}',serde+'#[cfg(unknown)]#[derive(Serialize,Deserialize)]struct Row{value:i64}',serde+'use missing::*;#[derive(Serialize,Deserialize)]struct Row{value:i64}'])fixture(source,captured=>{const bulk=draftBulkSerialization(captured);assert.equal(bulk.supported.length,0);assert.ok(bulk.refused.some(entry=>entry.owner==='crate::Row'));});
 });
-test('manual trait implementations and serializer-only owners are explicit unproved obligations',()=>{
-  fixture(serde+'#[derive(Serialize)]enum OneWay{Value}struct Manual;impl Serialize for Manual{}',captured=>{const bulk=draftBulkSerialization(captured);assert.ok(bulk.refused.find(entry=>entry.owner==='crate::OneWay'));assert.equal(bulk.discovery.manualTraitImplementations.length,1);assert.match(bulk.discovery.manualTraitImplementations[0].headerTokens.join(' '),/Serialize for Manual/);});
+test('manual trait implementations remain unproved while actual serializer-only owners retain exactly one direction',()=>{
+  fixture(serde+'#[derive(Serialize)]enum OneWay{Value}struct Manual;impl Serialize for Manual{}',captured=>{const bulk=draftBulkSerialization(captured);assert.deepEqual(bulk.supported.find(entry=>entry.owner==='crate::OneWay').directions,{serialize:true,deserialize:false});assert.equal(bulk.discovery.manualTraitImplementations.length,1);assert.match(bulk.discovery.manualTraitImplementations[0].headerTokens.join(' '),/Serialize for Manual/);});
 });
 test('public reexports preserve actual dependency owners while inaccessible field routes refuse in bulk',()=>{
   const source='mod left{mod hidden{'+serde+'#[derive(Serialize,Deserialize)]pub struct Secret{value:i64}}pub use hidden::Secret as Visible;}mod right{'+serde+'#[derive(Serialize,Deserialize)]pub struct Good{value:crate::left::Visible}#[derive(Serialize,Deserialize)]pub struct Bad{value:crate::left::hidden::Secret}}';

@@ -21,7 +21,7 @@ export function parseSerializationMeta(text, context) {
   while(pending.length){const [node,depth]=pending.pop();if(++count>20000||depth>64)throw new SerializationRefusal('Serialization metadata structural budget exceeded');if(node&&typeof node==='object')for(const child of Object.values(node))pending.push([child,depth+1]);}
   if(text !== canonicalSerializationMeta(supplied)+'\n') throw new SerializationRefusal('Serialization metadata requires canonical keys/fields without duplicate entries');
   if(!supplied || supplied.schema !== 'original-serialization-meta-v1') throw new SerializationRefusal('Unknown serialization metadata schema');
-  const original = extractSerializationSchema(context, { roots:supplied.roots });
+  const original = extractSerializationSchema(context, { roots:supplied.roots, direction:supplied.direction??'both' });
   if(canonicalSerializationMeta(supplied) !== canonicalSerializationMeta(original)) throw new SerializationRefusal('Serialization metadata differs from its original source/namespace/dependency context');
   checked.add(original);return original;
 }

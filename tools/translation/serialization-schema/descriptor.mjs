@@ -54,9 +54,10 @@ export function projectSerializationDescriptor(input) {
       const optional=field.type.kind==='option', name=renamed(field.name,entries,rule,'field');
       if(emitted.has(name))refuse('Renamed field collision');emitted.add(name);
       if(optional) {
-        if(field.type.owner!=='rust-prelude::Option'||value(entries,'skip_serializing_if')!=='Option::is_none')refuse('Optional omission lacks the checked standard Option::is_none identity');
+        const skip=value(entries,'skip_serializing_if');
+        if(field.type.owner!=='rust-prelude::Option'||skip!==null&&skip!=='Option::is_none')refuse('Optional omission lacks the checked standard Option::is_none identity');
       } else if(entries.some(entry=>['default','skip_serializing_if'].includes(entry.key)))refuse('Non-Option default/omission requires a separate descriptor runtime');
-      return {name,type:projectType(optional?field.type.type:field.type),optional};
+      return {name,type:projectType(optional?field.type.type:field.type),optional,...(optional&&value(entries,'skip_serializing_if')===null?{omitNone:false}:{}),...(optional&&!entries.some(entry=>entry.key==='default')?{sequenceDefault:false}:{})};
     });
   }
   for(const type of meta.types) {

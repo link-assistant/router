@@ -1,0 +1,85 @@
+{
+  "schema": "serialization-scalar-directions-source-draft-v1",
+  "baseVerifiedEvidenceHead": "ee840f6e5001b2a60b53895b2806d0a5761a6695",
+  "baseGeneratedArtifactHead": "289561be2db3767d6be40aacde9ad6c6375add20",
+  "sourceOnly": true,
+  "testsRun": false,
+  "productionImportsChanged": false,
+  "nativeRuntimeFilesChanged": false,
+  "persistentArtifactFilesChanged": false,
+  "authoredNewCases": 16,
+  "proposedInitialScope": {
+    "casesPerEngine": 47,
+    "files": [
+      "tools/translation/serialization-schema/bulk.test.mjs",
+      "tools/translation/serialization-schema/serialization-schema.test.mjs",
+      "tools/translation/serialization-schema/scalars-direction.test.mjs"
+    ],
+    "nodeConcurrency": 1,
+    "bunAuthoredTimeoutMs": 15000,
+    "engineTimeoutSeconds": 180
+  },
+  "futureCoherentRuntimeCasesAfterFrozenProducer": 196,
+  "firstRefusalClassification": {
+    "fixedWidthScalarRoots": 36,
+    "bothDirectionFirstRefusals": 53,
+    "countMeaning": "First-reason count, not promised transitive support; supersedes preliminary chat estimate51"
+  },
+  "originalSourceProof": "Exact Cargo229 source archives and member/branch hashes in refusal-classification.json; no adjacent source versions substituted",
+  "runtimeScope": "Privately checked metadata factory; generic bounded descriptor reader/writer and only proven direction callables. No per-record target body templates",
+  "unsupported": "Pointer-sized/floating/128-bit types, missing trait directions, recursive/borrowed ownership, opaque defaults and non-Option defaults, nested Option ABI and opaque helpers retain refusals",
+  "inputs": [
+    {
+      "file": "tools/translation/serialization-schema/extract.mjs",
+      "bytes": 18754,
+      "sha256": "30a0f2903bdba2856d211ba0d49036dba866e2d09fd4a2bc27d4ebdb9e13373b"
+    },
+    {
+      "file": "tools/translation/serialization-schema/meta.mjs",
+      "bytes": 2535,
+      "sha256": "f72bec4cc988ad642d7bd2ce6259f0bf5566f9de20993962fa09682939cd08fb"
+    },
+    {
+      "file": "tools/translation/serialization-schema/descriptor.mjs",
+      "bytes": 7215,
+      "sha256": "25b8475e3a325bdd519e60cc49762b3996dd4138ce75eb6180c559ccfac1ca2b"
+    },
+    {
+      "file": "tools/translation/serialization-schema/bulk.mjs",
+      "bytes": 9295,
+      "sha256": "920fe76a346f3e92976561951871da8d4dfaca2c6463941cf97000f09ef9bbfd"
+    },
+    {
+      "file": "tools/translation/serialization-schema/bulk.test.mjs",
+      "bytes": 11922,
+      "sha256": "d1bb985f3dcbd0493d0987e86281ee4a1a708dceaa8cad99378318b4f2cde4e7"
+    },
+    {
+      "file": "tools/translation/serialization-schema/serialization-schema.test.mjs",
+      "bytes": 12722,
+      "sha256": "d4d31a9681b8847b547cc7ac21deff442364f69e1ce9370865679492d49e47d9"
+    },
+    {
+      "file": "tools/translation/serialization-schema/runtime.mjs",
+      "bytes": 7849,
+      "sha256": "91101bec544739151a5d9aadd5356684e20118b0fbef6268faa1dd5962920b03"
+    },
+    {
+      "file": "tools/translation/serialization-schema/scalars-direction.test.mjs",
+      "bytes": 12130,
+      "sha256": "8f0282430f458764c629f25e9250971943752e4b58de6e9100447b92d766fa7b"
+    },
+    {
+      "file": "tools/translation/serialization-schema/SCALARS-DIRECTIONS.md",
+      "bytes": 2992,
+      "sha256": "134f01751d63f438f58eaa7d824c3a7902e5f4220a3bed9f377c4b80d61ee3d0"
+    },
+    {
+      "file": "tools/translation/serialization-schema/refusal-classification.json",
+      "bytes": 123921,
+      "sha256": "1bde375738e3187ee5317ab08455ca436b807e4b89b696dc6a9213401f705254"
+    }
+  ],
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false
+}

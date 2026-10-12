@@ -31,9 +31,11 @@ export function draftBulkSerialization(context) {
       continue;
     }
     try {
-      const meta=parseSerializationMeta(serializeSerializationMeta(context,{roots:[candidate.owner]}),context);
+      const directions=candidate.serdeOwners.map(value=>value.target.join('::'));
+      const direction=directions.includes('serde::Serialize')&&directions.includes('serde::Deserialize')?'both':directions.includes('serde::Serialize')?'serialize':'deserialize';
+      const meta=parseSerializationMeta(serializeSerializationMeta(context,{roots:[candidate.owner],direction}),context);
       cycle(meta);projectSerializationDescriptor(meta);
-      supported.push({owner:candidate.owner,source:candidate.source,sourceSha256:candidate.sourceSha256,itemSha256:candidate.itemSha256,span:candidate.span,meta,status:'supported-bounded-layout',runtimeAuthority:false});
+      supported.push({owner:candidate.owner,source:candidate.source,sourceSha256:candidate.sourceSha256,itemSha256:candidate.itemSha256,span:candidate.span,meta,directions:{serialize:direction!=='deserialize',deserialize:direction!=='serialize'},status:'supported-bounded-layout',runtimeAuthority:false});
     } catch(error) {refused.push(refusal(candidate,error));}
   }
   const value=freeze({schema:'original-bulk-serialization-meta-v1',sourceSetSha256:discovery.sourceSetSha256,compilationProfile:discovery.compilationProfile,dependenciesDigest:discovery.dependenciesDigest,discovery,supported,refused,excluded,scope:'Original configured module graph; outside-graph files and manual implementations are explicitly unproved',obligations:['No generated serde trait bodies are lowered','Supported layouts do not establish whole-source or runtime parity','Recursive/ownership/custom hook closures remain refused'],runtimeAuthority:false,generatedTraitBehavior:false});
@@ -53,7 +55,7 @@ export function emitBulkSerializationRegistry(bulk,{language='javascript'}={}) {
     const meta=parseSerializationMeta(canonicalSerializationMeta(entry.meta)+'\n',context);
     return emitSerializationDescriptor(meta,{language,exportName:'schema_'+index});
   });
-  const entries=bulk.supported.map((entry,index)=>'['+JSON.stringify(entry.owner)+']:{root:'+JSON.stringify(entry.meta.types.find(type=>type.owner===entry.owner).name)+',schema:schema_'+index+'}');
+  const entries=bulk.supported.map((entry,index)=>'['+JSON.stringify(entry.owner)+']:{root:'+JSON.stringify(entry.meta.types.find(type=>type.owner===entry.owner).name)+',directions:'+JSON.stringify(entry.directions)+',schema:schema_'+index+'}');
   const text=fragments.join('\n')+'\nexport const serializationSchemas = {'+entries.join(',')+'}'+(language==='typescript'?' as const':'')+';\n';
   if(Buffer.byteLength(text)>BULK_LIMITS.outputBytes)throw new SerializationRefusal('Bulk schema registry exceeds bounded output size');return text;
 }

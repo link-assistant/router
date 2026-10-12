@@ -74,7 +74,7 @@ test('source-defined String and aliases cannot impersonate a prelude serializati
   for(const declaration of ['#[derive(Serialize,Deserialize)] struct String { inner:i64 }','type String = i64;'])fixture(imports+declaration+'\n#[derive(Serialize,Deserialize)] struct Record { value:String }',options=>assert.throws(()=>projected(options),/shadowed|unresolved|owner/));
 });
 test('Option shadow and unsupported helpers are explicit refusals',()=>{
-  for(const body of ['#[serde(default="make_value")] value:i64','#[serde(with="custom")] value:String','#[serde(flatten)] value:String','#[serde(skip_serializing_if="custom")] value:Option<String>','value:Option<String>'])fixture(record(body),options=>assert.throws(()=>projected(options),SerializationRefusal));
+  for(const body of ['#[serde(default="make_value")] value:i64','#[serde(with="custom")] value:String','#[serde(flatten)] value:String','#[serde(skip_serializing_if="custom")] value:Option<String>'])fixture(record(body),options=>assert.throws(()=>projected(options),SerializationRefusal));
 });
 test('generic collection and field defaults retain the bounded original Option/Vec identities',()=>{
   fixture(record('items: Vec<i64>, #[serde(default,skip_serializing_if="Option::is_none")] note:Option<String>'),options=>assert.deepEqual(plain(projected(options).Record.fields),[{name:'items',type:{kind:'vec',type:'i64'},optional:false},{name:'note',type:'String',optional:true}]));

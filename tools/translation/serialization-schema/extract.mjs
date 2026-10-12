@@ -65,7 +65,7 @@ function resolvePath(s,module,path,allowPrelude=false) {
   const segments=path.split('::'), current=s.scopes.get(key(['crate',...module.path]));
   if(!current || current.configurationCondition!=='active') refuse('Original type scope has no active checked module',module);
   if(current.unresolvedImports.some(entry=>entry.glob)) refuse('Unproved glob may shadow a serialization type',module);
-  if(allowPrelude && segments.length===1 && ['String','Vec','Option','i64','u32'].includes(path)) {
+  if(allowPrelude && segments.length===1 && ['String','Vec','Option','bool','i8','i16','i32','i64','u8','u16','u32','u64'].includes(path)) {
     if(current.bindings.some(binding=>binding.name===path && binding.namespace==='type') || current.unresolvedTypeScope) refuse('Prelude serialization type is shadowed or unresolved: '+path,module);
     return { owner:'rust-prelude::'+path, primitive:path };
   }
@@ -103,12 +103,13 @@ function fields(s,module,tokens,input) {
   const rows=groups(tokens);if(rows.length>SERIALIZATION_LIMITS.fields)refuse('Serialization field budget exceeded',module);
   return rows.map(row=>{ const at=head(row);if(row[at]?.type!=='ident'||row[at+1]?.text!==':')refuse('Only named original serialization fields are projected',module,span(row));return {name:row[at].text,span:span(row),attributes:attributes(input,row),type:typeReference(s,module,row.slice(at+2))}; });
 }
-function declaration(s,owner) {
+function declaration(s,owner,direction) {
   const parts=owner.split('::'),module=s.modules.get(key(parts.slice(0,-1)));if(!module)refuse('Reachable serialization owner is not an original tracked module: '+owner);
   const items=originalSourceModuleItems(module).filter(item=>['struct','enum'].includes(item.term)&&item.name===parts.at(-1));
   if(items.length!==1)refuse('Serialization owner does not identify one original data declaration: '+owner,module);
   const item=items[0], certificate=deriveFootprintAt(s.derive,module,item);
-  if(!certificate || !['serde::Serialize','serde::Deserialize'].every(target=>certificate.owners.some(value=>key(value.target)===target))) refuse('Actual locked Serialize/Deserialize owners are unproved: '+owner,module,{start:item.start,end:item.end});
+  const required=direction==='both'?['serde::Serialize','serde::Deserialize']:[direction==='serialize'?'serde::Serialize':'serde::Deserialize'];
+  if(!certificate || !required.every(target=>certificate.owners.some(value=>key(value.target)===target))) refuse('Actual locked '+required.join('/')+' owners are unproved: '+owner,module,{start:item.start,end:item.end});
   const input=inspectDeriveInput(item,module.compilationProfile),tokens=item.tokens.filter(token=>token.type!=='comment'),at=head(tokens);
   // The shared footprint grammar confines helper input, but JSON-only escapes
   // must not make invalid Rust literals executable descriptor metadata.
@@ -123,12 +124,13 @@ function declaration(s,owner) {
   const rows=groups(tokens.slice(at+3,-1));if(rows.length>SERIALIZATION_LIMITS.variants)refuse('Serialization variant budget exceeded',module);
   return {...common,variants:rows.map(row=>{const first=head(row),name=row[first];if(name?.type!=='ident')refuse('Serialization variant needs an original identifier',module,span(row));let layout='unit',members=[];if(first+1<row.length){if(row[first+1].text!=='{'||matching(row,first+1)!==row.length-1)refuse('Tuple/discriminant variant requires a separately proven projection',module,span(row));layout='struct';members=fields(s,module,row.slice(first+2,-1),input);}return {name:name.text,span:span(row),attributes:attributes(input,row).filter(attribute=>attribute.position==='variant'),layout,fields:members};})};
 }
-export function extractSerializationSchema(context,{roots}={}) {
+export function extractSerializationSchema(context,{roots,direction='both'}={}) {
+  if(!['both','serialize','deserialize'].includes(direction))refuse('Serialization direction must have an actual checked trait identity');
   const s=state(context);if(!Array.isArray(roots)||!roots.length||roots.some(value=>typeof value!=='string'||!/^crate(?:::[A-Za-z_][A-Za-z0-9_]*)+$/.test(value)))refuse('Roots must be explicit original crate-qualified data types');
   const queue=[...new Set(roots)],types=[];const seen=new Set();
   function reachable(type){if(type.kind==='named')queue.push(type.owner);if(type.type)reachable(type.type);}
-  while(queue.length){const owner=queue.shift();if(seen.has(owner))continue;seen.add(owner);if(seen.size>SERIALIZATION_LIMITS.types)refuse('Reachable serialization type budget exceeded');const value=declaration(s,owner);types.push(value);for(const member of value.fields??value.variants.flatMap(variant=>variant.fields))reachable(member.type);}
-  const meta={schema:'original-serialization-meta-v1',context:{entry:context.entry,compilationProfile:context.compilationProfile,sourceSetSha256:context.sourceSetSha256,dependenciesDigest:context.dependenciesDigest,dependencyEvidence:context.dependencyEvidence,caseSource:context.caseSource,cargo:context.cargo},roots:[...new Set(roots)],types:types.sort((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:0),obligations:['Bounded data layout projection only; custom serializers, generated traits and whole-crate runtime parity remain unproved'],runtimeAuthority:false,generatedTraitBehavior:false};
+  while(queue.length){const owner=queue.shift();if(seen.has(owner))continue;seen.add(owner);if(seen.size>SERIALIZATION_LIMITS.types)refuse('Reachable serialization type budget exceeded');const value=declaration(s,owner,direction);types.push(value);for(const member of value.fields??value.variants.flatMap(variant=>variant.fields))reachable(member.type);}
+  const meta={schema:'original-serialization-meta-v1',...(direction!=='both'?{direction}:{}),context:{entry:context.entry,compilationProfile:context.compilationProfile,sourceSetSha256:context.sourceSetSha256,dependenciesDigest:context.dependenciesDigest,dependencyEvidence:context.dependencyEvidence,caseSource:context.caseSource,cargo:context.cargo},roots:[...new Set(roots)],types:types.sort((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:0),obligations:['Bounded data layout projection only; custom serializers, generated traits and whole-crate runtime parity remain unproved'],runtimeAuthority:false,generatedTraitBehavior:false};
   return freeze(meta);
 }
 
