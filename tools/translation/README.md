@@ -196,6 +196,17 @@ Unicode case mapping depends on source and host tables. Alternate serde_json
 features require a separately validated profile. Rust differential execution
 remains gated on the JavaScript checks.
 
+Pinned Rust 1.89 Option `unwrap_or`/`unwrap_or_default` bodies and primitive
+Default macro expansions now pass through the ordinary shared checker and
+JavaScript/strict TypeScript emitter. Source selection, original body rechecking,
+actual receiver ownership and parameter evaluation order are retained. At
+implementation commit `2bf7c3c3d`, both engines passed the 261-case focused suite
+and the unchanged 262-case original-source regression suite.
+[Complete attempt evidence](../../docs/case-studies/issue-759/current/source-standard-bodies-2bf7c3c3/README.md)
+retains earlier failures and source fingerprints. Complete core namespaces,
+custom/derived Default, destruction, mutable borrowed-local flow and corpus
+admissions remain separate obligations; no Rust build ran.
+
 ## Reuse and validation
 
 For another Git repository, run:

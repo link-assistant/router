@@ -13,7 +13,17 @@ The bounded specialization requires an actual canonical Option with a checked
 scalar or borrowed str payload, checks each original body through the shared
 frontend and preserves source parameter evaluation order. Result unwrap_or
 retains its existing bounded contract without source-body promotion. All
-source-body checks and target execution remain UNRUN, and original corpus
-admissions remain unproved. This draft does not close the
-core namespace, authorize custom or derived Default implementations, prove
-destruction semantics or translate the complete core library.
+source-body checks and JavaScript/strict TypeScript target execution are
+verified by paired Node and Bun cohorts at implementation commit
+`2bf7c3c3d18ae9f96b253119352b4d2a9b3243f5`. The focused 31-file cohort
+passes 261 cases in each engine; the unchanged original 31-file regression
+cohort passes 262 cases in each engine and includes the complete original CSV
+source closure.
+[Complete attempt evidence](../../../../docs/case-studies/issue-759/current/source-standard-bodies-2bf7c3c3/README.md)
+retains every earlier failed attempt, raw log, source fingerprint and private
+diagnostic probe.
+
+Canonical/profile corpus admissions remain unproved by these focused tests.
+This profile does not close the core namespace, authorize custom or derived
+Default implementations, prove destruction semantics, admit mutable borrowed
+locals or translate the complete core library. No Rust build ran.
