@@ -1,7 +1,7 @@
 Drafted generic Rust `for` pattern translation through checked meta-language to
 JavaScript and TypeScript. Written reference patterns retain their original
 tokens and require an actual shared reference item before the existing primitive
-Copy contract can bind its pointee. Tuple and wildcard patterns reuse the checked
+Copy contract can bind its pointee. Tuple, unit and wildcard patterns reuse the checked
 irrefutable binding planner; iterator and callback bodies remain unchanged.
 Constructor syntax preserves original tokens, while nominal iterable moves stay
 refused. Generated input names avoid original identifiers. Mapped anonymous

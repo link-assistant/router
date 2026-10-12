@@ -39,6 +39,7 @@ test('written shared-reference for patterns bind actual copied primitive items i
 test('for tuple and wildcard bindings reuse checked irrefutable layouts without rewriting callback bodies',async()=>{
   const source=`pub fn sum()->u8{let mut total:u8=0;for (left,right) in (0u8..3u8).map(|n|(n,n+1u8)){total+=left+right;}total}
 pub fn nested()->u8{let mut total:u8=0;for (left,(right,flag)) in (0u8..3u8).map(|n|(n,(n+1u8,true))){if flag{total+=left+right;}}total}
+pub fn units()->u8{let mut count:u8=0;for () in (0u8..3u8).map(|_|()){count+=1;}count}
 pub fn wild()->u8{let mut count:u8=0;for _ in 0u8..4u8{count+=1;}count}`;
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
   const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));
@@ -48,7 +49,7 @@ pub fn wild()->u8{let mut count:u8=0;for _ in 0u8..4u8{count+=1;}count}`;
   const binding=find(loop.loopBody,node=>node.patternControl?.kind==='tuple-let');
   assert.equal(binding.patternControl.plan.refutable,false);
   assert.deepEqual(binding.patternControl.plan.bindings.map(binding=>binding.name),['left','right']);
-  await verifyTypedTargets(result,api=>{assert.equal(api.sum(),9n);assert.equal(api.nested(),9n);assert.equal(api.wild(),4n);});
+  await verifyTypedTargets(result,api=>{assert.equal(api.sum(),9n);assert.equal(api.nested(),9n);assert.equal(api.units(),3n);assert.equal(api.wild(),4n);});
 });
 
 test('constructor loop syntax preserves original tokens while nominal iterator moves remain carried',()=>{
