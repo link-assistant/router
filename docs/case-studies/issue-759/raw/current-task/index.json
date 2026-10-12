@@ -46381,8 +46381,75 @@
       "headSha": "c45eef46960a8ddf54da26639045ad7868ee1aaa",
       "status": "All7 terminal:793 forward tests791pass2fail; strict442gaps0errors; canonical/matrix checks not reached; no publication/Rust/stamp",
       "archivedAtUtc": "2026-10-12T00:13:24.573616+00:00"
+    },
+    {
+      "label": "current-public-reexport-canonical-528827656",
+      "cycle": 16,
+      "pack": "f5ef8e065329fc39c130cda6f1eced281bcdc05f64d449d190c31c9690cb6342.tar.gz",
+      "sha256": "f5ef8e065329fc39c130cda6f1eced281bcdc05f64d449d190c31c9690cb6342",
+      "storedBytes": 13829,
+      "members": [
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-census-528827656.json",
+          "bytes": 48329,
+          "sha256": "b60c53e9cbedbb97be060eb6e7649f1ef232ae1e3ac628ad3602f052b7ebb361"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-census-vs-prerepair-528827656.json",
+          "bytes": 18681,
+          "sha256": "e9e2cd4f34ebe77b789d64c62402c14e1ab6f08eafcd8813ad99847e880127b3"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-current-retained-login-focused.py",
+          "bytes": 1637,
+          "sha256": "f2f61cd485f412178bae2957ff32c0a342c65dc5abb37ce26ba546c91744c2bc"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-generated-528827656-integrity.json",
+          "bytes": 4311,
+          "sha256": "b1b5f1e20aacb0599fcd9544e68cb561c2babd999ab73b9f258eb0897e7b9cb9"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-generation-528827656-time.log",
+          "bytes": 777,
+          "sha256": "5725f6dbfaa2555de7892ad6482b7dd87a4de956689be2c88556bd8b95724889"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-generation-528827656.json",
+          "bytes": 775,
+          "sha256": "0b6fa19a61b248f7efa8436b46d65179534bf299a9ba2a687561ccc05f44c0bb"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-generation-528827656.log",
+          "bytes": 1072,
+          "sha256": "63bb27d198bd33b6b31e45b5f2d453f02450b302ff2e7f21c7fc22cc41b6452c"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-login-provider-current-evidence-528827656.json",
+          "bytes": 22280,
+          "sha256": "893a003466c27df614caabf528f34b759688717ad918ab3f11f48642a55adfdd"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-retained-login-7c94be632-bun.log",
+          "bytes": 1810,
+          "sha256": "b705b1274784cc02c94e010bbb40e6fbc7074c7e096a4a20f92a72ef28595393"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-retained-login-7c94be632-node.log",
+          "bytes": 1779,
+          "sha256": "4c865050bac9a1adc3fe14c7e058608d5046346de4a735ece6bc04e315e1e8a0"
+        },
+        {
+          "path": "current-public-reexport-canonical-528827656/router-759-retained-login-7c94be632.json",
+          "bytes": 1087,
+          "sha256": "9872a5c863dfcbc0d974ef045c5ef6d03e7a3b2f9c13f61109a838c04d626518"
+        }
+      ],
+      "headSha": "7c94be63223699955f30a8230bd8627bb0cbf77c",
+      "status": "canonical-pass-retained-login-both-runtime-fail-matrix-held",
+      "archivedAtUtc": "2026-10-12T00:38:38.769264+00:00"
     }
   ],
-  "totalStoredPackBytes": 25140492,
-  "totalMembers": 8431
+  "totalStoredPackBytes": 25154321,
+  "totalMembers": 8442
 }
