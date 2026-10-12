@@ -146,7 +146,7 @@ export async function runParityFixtures() {
         else if(row.contract==='native-audio-bytes'){assert.deepEqual(bytes,audio);assert.equal(response.headers.get('content-type'),'audio/wav');}
         else {
           assert.match(response.headers.get('content-type') ?? '',/json/);const data=JSON.parse(text);
-          if(row.status >= 400)assert.equal(data.error?.message ?? data.message,row.errorMessage,`${row.route}: exact configured error contract`);
+          if(row.status >= 400){assert.equal(data.error?.message ?? data.message,row.errorMessage,`${row.route}: exact configured error contract`);if(row.errorBody)assert.deepEqual(data,row.errorBody,`${row.route}: exact resource error envelope`);}
           else assertSuccess(row.contract,data,{core,issued,cancelled:()=>cancelled});
         }
         if(row.contract==='token-revoke' || row.contract==='token-rotate-client')assert.equal((await core.tokens.get(issued.id)).revoked,true);
