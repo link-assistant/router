@@ -443,6 +443,12 @@ function origins(node,env,context,returns,depth=0) {
     }
     return borrowed?object:new Set();
   }
+  if(node.k==='routerTupleField') {
+    const value=read(node.object),type=node.object.type,entry=type.kind==='data'?context.declarations.get(type.name):null;
+    if(!entry?.tuple||entry.generated!=='router-tuple-type'||entry.ctors.length!==1||!Number.isSafeInteger(node.index)||node.index<0||!entry.ctors[0].fields[node.index])throw unsupported('tuple borrow field origins','requires its actual checked anonymous constructor and field index',node.span);
+    if(type.rustReference)throw unsupported('borrowed tuple field origins','requires separate actual shared aggregate field projection evidence',node.span);
+    return borrowed?project(value,['tuple',node.index]):new Set();
+  }
   if(['routerPatternProjection','routerTupleProjection','routerDataField'].includes(node.k)) {
     const value=read(node.object),entry=node.object.type.kind==='data'?context.declarations.get(node.object.type.name):null;
     if(!borrowed)return new Set();

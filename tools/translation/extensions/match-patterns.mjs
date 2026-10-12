@@ -2,10 +2,10 @@
 // The existing matrix compiler retains first-arm priority and exhaustiveness.
 import {planPattern} from '../pattern-bindings.mjs';
 import {BOOL} from '../checked-types.mjs';
+import {immutableBinding} from './pattern-control.mjs';
 import {hasOrderedMatchGuard,parseOrderedMatch,checkOrderedMatch} from './ordered-matches.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 const LIMIT=256;
-const scalar=type=>['fixed','bool','string','unit','nat','int','float'].includes(type.kind)&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved;
 const originalTokens=tokens=>tokens.map(token=>({kind:token.kind,value:token.value,start:token.start,end:token.end,...(token.suffix?{suffix:token.suffix}:{}),...(token.raw?{raw:token.raw}:{})}));
 const evidenceTokens=tokens=>tokens.map(({start,end,...token})=>({...token,span:{start,end}}));
 function cleanPattern(node) {
@@ -164,14 +164,14 @@ export function withNestedMatchPatternsChecker(Base) {
         const matrix=matrixPattern(pattern,subject.type,this.items);
         validateAlternativeBindings(matrix,subject.type,this,path,row.span);
         const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,row.span),span:row.span});
-        for(const binding of plan.bindings)if(!scalar(binding.type)||binding.type.kind==='fixed'&&!binding.type.rustPrimitiveName)throw unsupported('nested match binding ownership','only immutable scalar bindings with actual Rust primitive identities are checked',binding.span??row.span);
+        for(const binding of plan.bindings)if(!immutableBinding(binding.type,this)||binding.type.kind==='fixed'&&!binding.type.rustPrimitiveName)throw unsupported('nested match binding ownership','requires immutable scalars/shared references or actual anonymous Copy products; source integer identities remain required',binding.span??row.span);
         validateLiterals(matrix,subject.type,this.items);
         const alternatives=distribute(matrix);
         if(rows.length+alternatives.length>LIMIT)throw unsupported('nested match alternatives','exceeds the checked whole-match expansion bound',row.span);
         rows.push(...alternatives.map(pattern=>({...row,patterns:[pattern]})));
         evidence.push({sourcePattern:source,plan,expandedRows:alternatives.length,span:row.span});
       }
-      const metadata={kind:'nested-match-alternatives',subjectType:subject.type,rows:evidence,expandedRows:rows.length,expansionBound:LIMIT,guards:'refused',bindingProfile:'immutable-scalars'};
+      const metadata={kind:'nested-match-alternatives',subjectType:subject.type,rows:evidence,expandedRows:rows.length,expansionBound:LIMIT,guards:'refused',bindingProfile:'immutable-source-copy-bindings'};
       (this.nestedMatchEvidence??=new WeakMap()).set(node,metadata);
       const subjectNode={k:'routerNestedMatchSubject',value:node.scrutinees[0],span:node.span};
       return super.compileMatch({...node,scrutinees:[subjectNode],rows},env,path);

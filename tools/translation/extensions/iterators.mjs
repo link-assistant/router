@@ -174,8 +174,8 @@ export class IteratorRustParser extends DataRustParser {
         }
         const args = [];
         while (!c.is(')')) { args.push(this.expr(path)); if (!c.eat(',')) break; }
-        c.expect(')', 'method');
-        value = operations.has(name.value) && !(name.value === 'count' && (value.k === 'routerStringView' || value.k === 'routerDispatchMethod' && value.fallback?.k === 'routerStringView')) ? { k: 'routerIteratorOperation', op: name.value, object: value, args, explicit, span: span(start, c.peek()) } : explicit?this.instantiatedMethod(value,name,args,explicit,span(start,c.peek())):this.method(value, name, args, span(start, c.peek()));
+        const close=c.expect(')', 'method'),location={start:value.span.start,end:close.end};
+        value = operations.has(name.value) && !(name.value === 'count' && (value.k === 'routerStringView' || value.k === 'routerDispatchMethod' && value.fallback?.k === 'routerStringView')) ? { k: 'routerIteratorOperation', op: name.value, object: value, args, explicit, span: location } : explicit?this.instantiatedMethod(value,name,args,explicit,location):this.method(value, name, args, location);
         continue;
       }
       if (c.eat('?')) { value = this.tryExpression(value, span(start, c.peek())); continue; }

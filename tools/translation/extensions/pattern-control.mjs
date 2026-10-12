@@ -14,11 +14,16 @@ import {sourceWhileLetCondition,requireSourceWhileLet} from './while-let-source.
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
-function immutableBinding(type,checker,active=new Set()) {
-  if(type.rustGenericIdentityUnresolved)return false;
+export function immutableBinding(type,checker,active=new Set()) {
+  if(type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||active.size>=32)return false;
   if(type.rustReference)return type.rustReference.kind==='shared'&&Boolean(type.rustReference.pointee);
   if(scalar(type))return !type.patternOwnershipRefusal&&type.rustOwnership?.kind!=='owned';
   const entry=type.kind==='data'?checker.items.get(type.name):null,profile=type.rustStandardGeneric??entry?.standardGeneric;
+  if(entry?.tuple&&entry.generated==='router-tuple-type'&&entry.ctors.length===1&&!active.has(type.name)) {
+    active.add(type.name);
+    const result=entry.ctors[0].fields.every(field=>immutableBinding(checker.resolveType(field.type,entry.modulePath,entry.span),checker,active));
+    active.delete(type.name);return result;
+  }
   if(!entry||!['Option','Result'].includes(entry.standardGeneric?.kind)||profile?.kind!==entry.standardGeneric.kind||active.has(type.name))return false;
   active.add(type.name);const result=profile.arguments.every(argument=>immutableBinding(checker.resolveType(argument,entry.modulePath,entry.span),checker,active));active.delete(type.name);return result;
 }

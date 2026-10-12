@@ -104,11 +104,12 @@ export class ControlRustParser extends StringRustParser {
         continue;
       }
       if (c.eat(';')) {
-        statements.push(expr.k === 'if' ? { ...expr, k: 'routerIf' } : { k: 'routerDiscard', value: expr, span: expr.span });
+        statements.push(expr.k === 'if' ? { ...expr, k: 'routerIf' } : { k: 'routerDiscard', value: expr, ...(['match','routerOrderedMatch'].includes(expr.k)?{statementMatch:true,statementMatchUnit:false}:{}), span: expr.span });
         continue;
       }
       if (c.is('}')) { tail = expr; break; }
       if (expr.k === 'if') { statements.push({ ...expr, k: 'routerIf' }); continue; }
+      if (['match','routerOrderedMatch'].includes(expr.k)) { statements.push({k:'routerDiscard',value:expr,statementMatch:true,statementMatchUnit:true,span:expr.span});continue; }
       throw this.fail('expected semicolon or final block value');
     }
     const close = c.expect('}', 'block');
@@ -216,7 +217,7 @@ export class ControlChecker extends StringChecker {
       if (!returns) throw typeError('return needs a known function result', node.span);
       const value = coerce(checkValue(node.value, returns), returns, this.language, node.span);
       // Still check unreachable continuation; it must not conceal a refusal.
-      const body = checkNext(node.body);
+      const body = this.expr(node.body,env,path,undefined,allowLiteral);
       return { k: node.k, value, body, type: expected ?? returns, span: node.span };
     }
     if (node.k === 'routerBreak' || node.k === 'routerContinue') {
@@ -241,9 +242,10 @@ export class ControlChecker extends StringChecker {
     }
     if (node.k === 'routerDiscard') {
       // Calls are pure only after their entire dependency closure is checked.
-      const value = checkValue(node.value);
+      const statementMatch=node.statementMatch===true&&['match','routerOrderedMatch'].includes(node.value.k);
+      const value = statementMatch?this.expr(node.value,env,path,node.statementMatchUnit?UNIT:undefined):checkValue(node.value);
       const body = checkNext(node.body);
-      return { k: node.k, value, body, type: body.type, span: node.span };
+      return { k: node.k, value, body, ...(statementMatch?{statementMatch:true}:{}), type: body.type, span: node.span };
     }
     if (node.k === 'routerIndex') {
       const object = checkValue(node.object);
@@ -262,19 +264,83 @@ export class ControlChecker extends StringChecker {
 
 const indent = lines => lines.map(line => '  ' + line);
 export class ControlEmitter extends StringEmitter {
+  fn(entry) {
+    const previous=this.controlStatementNames;this.controlStatementNames=null;
+    try{return super.fn(entry);}finally{this.controlStatementNames=previous;}
+  }
+  collectControlNames(node) {
+    if(!this.controlStatementNames) {
+      const names=this.controlStatementNames=new Set();
+      const collect=value=>{
+        if(!value||typeof value!=='object')return;
+        if(typeof value.name==='string')names.add(value.name);
+        for(const name of value.binds??[])if(typeof name==='string')names.add(name);
+        for(const [key,child]of Object.entries(value))if(!['type','span','patternControl'].includes(key))if(Array.isArray(child))child.forEach(collect);else collect(child);
+      };
+      collect(node);
+    }
+  }
+  controlTemporary(prefix,node) {
+    this.collectControlNames(node);
+    let name;do{name=prefix+(++this.temporaries);}while(this.controlStatementNames.has(name)||this.state.reserved.has(name));
+    this.controlStatementNames.add(name);return name;
+  }
   statements(node, unit = false) {
+    // Collect names from the already renamed whole function before any
+    // statement match adds a temporary inside an existing lexical scope.
+    this.collectControlNames(node);
     if (node.k === 'unit') return unit ? [] : ['return null;'];
     if (node.k === 'let') return [`${node.mutable ? 'let' : 'const'} ${node.name} = ${this.expr(node.value)};`, ...this.statements(node.body, unit)];
     if (node.k === 'routerSet') return [`${this.expr(node.target)} = ${this.expr(node.value)};`, ...this.statements(node.body, unit)];
     if (node.k === 'routerReturn') return [`return ${this.expr(node.value)};`];
     if (node.k === 'routerBreak') return ['break;'];
     if (node.k === 'routerContinue') return ['continue;'];
-    if (node.k === 'routerDiscard') return [`${this.expr(node.value)};`, ...this.statements(node.body, unit)];
+    if (node.k === 'routerDiscard') return [...(node.statementMatch?this.statements(node.value,true):[`${this.expr(node.value)};`]), ...this.statements(node.body, unit)];
     if (node.k === 'routerWhile') return [`while (${this.expr(node.cond)}) {`, ...indent(this.statements(node.loopBody, true)), '}', ...this.statements(node.body, unit)];
     if (node.k === 'routerIf') return [`if (${this.expr(node.cond)}) {`, ...indent(this.statements(node.then, true)), '} else {', ...indent(this.statements(node.else, true)), '}', ...this.statements(node.body, unit)];
     if (node.k === 'if') return [`if (${this.expr(node.cond)}) {`, ...indent(this.statements(node.then, unit)), '} else {', ...indent(this.statements(node.else, unit)), '}'];
+    if (node.k==='match'&&unit)return this.discardedMatchStatements(node);
+    if (node.k==='routerOrderedMatchArms'&&unit)return this.discardedOrderedMatchStatements(node);
     if (unit) return [`${this.expr(node)};`];
     return super.statements(node);
+  }
+
+  discardedMatchStatements(node) {
+    // Statement arms share the surrounding loop/function. A switch would
+    // capture Rust break; a value IIFE would capture return or continue.
+    const subject=this.controlTemporary('ml_discard_match_',node),lines=[`const ${subject} = ${this.expr(node.scrutinee)};`];
+    const entry=node.scrutinee.type.kind==='data'?this.program.declarations.get(node.scrutinee.type.name):null;
+    let first=true,terminal=false;
+    for(const arm of node.cases) {
+      const pattern=arm.pattern,binds=[];let condition;
+      if(pattern.k==='wild'||pattern.k==='bind'){condition=null;if(pattern.k==='bind')binds.push(`const ${pattern.name} = ${subject};`);}
+      else if(pattern.k==='natZero')condition=`${subject} === 0n`;
+      else if(pattern.k==='natSucc'){condition=`${subject} !== 0n`;binds.push(`const ${pattern.name} = ${subject} - 1n;`);}
+      else if(pattern.k==='ctor') {
+        const ctor=entry?.ctors.find(value=>value.name===pattern.ctor);
+        if(!ctor||pattern.binds.length!==ctor.fields.length)throw new Error('discarded match requires its actual checked constructor');
+        condition=`${subject}.$ === ${JSON.stringify(ctor.name)}`;
+        pattern.binds.forEach((name,index)=>{if(name&&name!=='_')binds.push(`const ${name} = ${subject}[${JSON.stringify(ctor.fields[index].name)}];`);});
+      } else throw unsupported('discarded match pattern','requires an actual checked constructor or normalized scalar case',node.span);
+      if(terminal)throw new Error('discarded match has a case after its checked fallback');
+      lines.push(condition?`${first?'if':'else if'} (${condition}) {`:first?'{':'else {',...indent([...binds,...this.statements(arm.body,true)]),'}');
+      first=false;if(condition===null)terminal=true;
+    }
+    if(!terminal)lines.push('else { throw new TypeError("unexpected checked match constructor"); }');
+    return lines;
+  }
+
+  discardedOrderedMatchStatements(node) {
+    const label=this.controlTemporary('ml_discard_ordered_match_',node),lines=[`${label}: {`];
+    for(const branch of node.branches) {
+      const selected=[];let arm=branch.body;
+      while(arm.k==='let'){selected.push(`const ${arm.name} = ${this.expr(arm.value)};`);arm=arm.body;}
+      if(arm.k!=='routerOrderedArm')throw new Error('discarded ordered match requires its actual checked arm');
+      const body=[...this.statements(arm.body,true),`break ${label};`];
+      if(arm.guard)selected.push(`if (${this.expr(arm.guard)}) {`,...indent(body),'}');else selected.push(...body);
+      lines.push(`  if (${this.expr(branch.cond)}) {`,...indent(indent(selected)),'  }');
+    }
+    return [...lines,'  throw new Error("unreachable exhaustive ordered statement match");','}'];
   }
 
   expr(node) {

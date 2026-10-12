@@ -133,3 +133,29 @@ test('a false while condition retains its actual borrowed writes before skipping
   const result=project(`pub fn condition(value:&str,run:bool)->&str{let mut current:&str="fixed";while {current=value;run}{current="fixed";break;}current}`);assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{assert.equal(api.condition('Ω',false),'Ω');assert.equal(api.condition('Ω',true),'fixed');});
 });
+
+test('discarded constructor match statements keep enclosing break continue and return targets',async()=>{
+  const source=`pub fn stop(value:Option<u8>,mut count:u8)->u8{let mut current:u8=0u8;while count>0u8{count-=1u8;match value{Some(n)=>{current=n;break;},None=>{current+=1u8;continue;}}current=9u8;}current}pub fn returned(value:Option<u8>)->u8{match value{Some(n)=>{return n;},None=>{}}9u8}pub fn discard(flag:bool)->u8{match flag{true=>1u8,false=>2u8};7u8}`;
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  const none=Object.freeze({$:'None'}),some=field0=>Object.freeze({$:'Some',field0});
+  await verifyTypedTargets(result,api=>{for(const count of [0n,1n,3n]){assert.equal(api.stop(none,count),count);assert.equal(api.stop(some(7n),count),count===0n?0n:7n);}assert.equal(api.returned(some(5n)),5n);assert.equal(api.returned(none),9n);assert.equal(api.discard(true),7n);assert.equal(api.discard(false),7n);});
+  const invalid=project('pub fn bad(flag:bool)->u8{match flag{true=>1u8,false=>2u8}7u8}');assert.ok(invalid.meta.refused.some(entry=>entry.name==='bad'));
+});
+
+test('ordered guarded statement matches retain lazy guard selection and enclosing loop exits',async()=>{
+  const source=`pub fn stop(value:Option<u8>,mut count:u8)->u8{let mut current:u8=0u8;while count>0u8{count-=1u8;match value{Some(n) if n>0u8=>{current=n;break;},Some(_)=>{current+=1u8;continue;},None=>{break;}}current=9u8;}current}`;
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  const none=Object.freeze({$:'None'}),some=field0=>Object.freeze({$:'Some',field0});
+  await verifyTypedTargets(result,api=>{for(const count of [0n,1n,3n]){assert.equal(api.stop(none,count),0n);assert.equal(api.stop(some(0n),count),count);assert.equal(api.stop(some(7n),count),count===0n?0n:7n);}});
+});
+
+test('anonymous copied product binders retain nested borrowed leaves and hostile input guards',async()=>{
+  const result=project('pub fn first(value:((&str,),u8))->&str{match value{(inner,_)=>inner.0}}');assert.deepEqual(result.meta.refused,[]);
+  const tuple=(...fields)=>Object.freeze({$:'Tuple',...Object.fromEntries(fields.map((value,index)=>['field'+index,value]))});
+  await verifyTypedTargets(result,api=>{assert.equal(api.first(tuple(tuple('Ω'),7n)),'Ω');let reads=0;const hostile=Object.freeze({$:'Tuple',get field0(){reads++;return 'Ω';}});assert.throws(()=>api.first(tuple(hostile,7n)),TypeError);assert.equal(reads,0);});
+  refused('pub fn bad(value:((String,),u8))->u8{match value{(inner,n)=>n}}',/ownership/);
+  const invalid=project('struct Owned{value:String}pub fn bad(value:(Owned,u8))->u8{match value{(inner,n)=>n}}');assert.ok(invalid.meta.refused.some(entry=>entry.name==='bad'));
+  refused('pub fn bad(value:&str)->&\'static str{return value;}',/escaping source borrow/);
+  refused('pub fn bad(value:&str)->&\'static str{let mut current:&\'static str="fixed";return current;current=value;}',/static source parameter/);
+  const unreachable=project('pub fn bad(value:&str)->&str{return value;let ignored=unknown();value}');assert.ok(unreachable.meta.refused.some(entry=>entry.name==='bad'));
+});
