@@ -10,6 +10,7 @@ import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 import {canonicalResult,resultCollectionContext,checkResultMapItem,checkResultCollect} from './result-iterators.mjs';
 import {checkedScalarEnumerate,requireScalarEnumerate,hasNextBasedEnumerate} from './scalar-enumerate.mjs';
+import {checkedReversedRange,requireReversedRange,hasNextBasedReversedRange} from './reversed-ranges.mjs';
 
 // Iterator::count and size-taking adapters use the actual Rust usize type,
 // even on a profile whose portable integer width also represents u64.
@@ -19,7 +20,7 @@ export const STANDARD_ITERATOR_ITEM_PROFILE=Object.freeze({id:'rust-1.89-scalar-
   Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/iterator.rs',sha256:'d57130b6a4d3f18f8d28fedf5bd953da80492e2f809813ecd3dba0b3276b99ab',lines:Object.freeze([892,895,3417,3465])}),
   Object.freeze({url:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/accum.rs',sha256:'5d04c4da341f5a96aa9605ab1624a4e9bc745bd14b3b870fd683544b03291566',lines:Object.freeze([70,149])}),
 ])});
-const operations = new Set(['iter', 'into_iter', 'map', 'filter', 'take', 'collect', 'count', 'any', 'all', 'fold', 'sum', 'copied', 'cloned','find_map','filter_map','find','flatten','enumerate']);
+const operations = new Set(['iter', 'into_iter', 'map', 'filter', 'take', 'collect', 'count', 'any', 'all', 'fold', 'sum', 'copied', 'cloned','find_map','filter_map','find','flatten','enumerate','rev']);
 function sharedItem(type,span,source) {
   const result={...type,rustSourceType:true,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:structuredClone(type),source,span:{...span}}};
   if(type.rustOwnership?.kind==='owned')result.rustOwnership={kind:'borrowed',source:type.rustOwnership.source};
@@ -284,7 +285,9 @@ export class IteratorChecker extends DataChecker {
     }
     if (object.type.kind !== 'routerIterator') throw typeError(`${op} requires a supported iterator`, node.span);
     if(hasNextBasedEnumerate(object)&&!['map','filter','take','enumerate'].includes(op))throw unsupported('Iterator::enumerate specialized consumption','requires the actual terminal/fold/count implementation; the current profile only lowers forward next-based for loops and adapters',node.span);
+    if(hasNextBasedReversedRange(object)&&!['map','filter','take','enumerate'].includes(op))throw unsupported('Iterator::rev specialized consumption','requires the actual terminal/backward implementation; this profile only lowers forward next-based for loops and adapters',node.span);
     const element = object.type.element;
+    if(op==='rev')return checkedReversedRange(node,object);
     if(op==='enumerate')return checkedScalarEnumerate(this,node,object,USIZE);
     const callback=(node,types,expected)=>typeof this.hostLambda==='function'?this.hostLambda(node,types,env,path,expected,{source:'iterator',receiverType:object.type}):this.lambda(node,types,env,path,expected,{source:'iterator',receiverType:object.type});
     if(['find_map','filter_map'].includes(op)) {
@@ -355,6 +358,7 @@ export class IteratorChecker extends DataChecker {
 
 const HELPERS = {
   range: 'function* ml_router_range(start, end, inclusive) { for (let value = start; value < end || inclusive && value === end;) { yield value; if (value === end) return; value += 1n; } }',
+  rev: 'function* ml_router_reverse_range(start, end, inclusive, retreat) { if (inclusive) { let exhausted = false; if (start > end) return; while (!exhausted) { const value = end; if (start < end) end = retreat(end); else exhausted = true; yield value; } return; } while (start < end) { end = retreat(end); yield end; } }',
   iter: 'function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }',
   map: 'function* ml_router_map(values, transform) { for (const value of values) yield transform(value); }',
   enumerate: 'function* ml_router_enumerate(values, advance) { let count = 0n; for (const value of values) { const index = count; count = advance(count); yield Object.freeze({ $: "Tuple", field0: index, field1: value }); } }',
@@ -406,6 +410,11 @@ export class IteratorEmitter extends DataEmitter {
       return `(${params.join(', ')}) => { ${this.statements(body).join('\n')} }`;
     }
     if (node.k !== 'routerIteratorOperation') return super.expr(node);
+    if(node.op==='rev') {
+      requireReversedRange(node);this.iteratorHelpers.add('rev');
+      const range=node.object;
+      return `ml_router_reverse_range(${this.expr(range.start)}, ${this.expr(range.end)}, ${range.inclusive}, value => ${this.checked('(value - 1n)',range.type.element,'sub')})`;
+    }
     const object = this.expr(node.object);
     if(node.op==='iter'){this.iteratorImmutability=true;this.iteratorHelpers.add('iter');return `ml_router_iter(${object}, ${node.type.element.kind==='data'})`;}
     if(node.op==='enumerate'){

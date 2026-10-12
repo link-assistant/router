@@ -256,6 +256,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_router_array: ['ReadonlyArray<any>', '(value: any) => boolean'],
     ml_router_iter: ['ReadonlyArray<T>','boolean'],
     ml_router_range: ['bigint', 'bigint', 'boolean'],
+    ml_router_reverse_range: ['bigint', 'bigint', 'boolean', '(value: bigint) => bigint'],
     ml_router_enumerate: ['Iterable<T>', '(count: bigint) => bigint'],
     ml_router_map: ['Iterable<T>', '(value: T) => U'],
     ml_router_filter: ['Iterable<T>', '(value: T) => boolean'],

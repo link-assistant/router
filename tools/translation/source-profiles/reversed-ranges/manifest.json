@@ -1,0 +1,90 @@
+{
+  "profile": "rust-1.89-fresh-fixed-range-rev-next-v1",
+  "rust": "1.89.0",
+  "constEligible": false,
+  "namespaceComplete": false,
+  "advancedMethodsComplete": false,
+  "sources": [
+    {
+      "file": "core-rev.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/adapters/rev.rs",
+      "gitBlobSha": "06ab15d5e900d28876348a892d366c6a170a0456",
+      "bytes": 3667,
+      "sha256": "427749f41bae3187c6a5500107514a4a8b43266d326940100d17ae14b4765c76",
+      "compressedSha256": "182dfa096ace24189d4d6e93dd23dfde1cc28e9a22b284e57610961bccfd238d",
+      "lines": [
+        26,
+        28,
+        30,
+        33,
+        34
+      ]
+    },
+    {
+      "file": "core-range.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/range.rs",
+      "gitBlobSha": "9e43d5688cecc5fb523d6fae2200b3cfc143448c",
+      "bytes": 47165,
+      "sha256": "7d5786221245987c467f6504ed59a1185a561f26258024acb9a65bf4f03dea22",
+      "compressedSha256": "27f0509c6804d6dda67e479543b95986b98d27dd06c97e269ce51eaeb316e0c6",
+      "lines": [
+        17,
+        762,
+        806,
+        807,
+        809,
+        810,
+        969,
+        971,
+        972,
+        1155,
+        1202,
+        1203,
+        1206,
+        1209,
+        1210,
+        1212,
+        1213,
+        1346,
+        1348,
+        1349
+      ]
+    },
+    {
+      "file": "core-ops-range.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/ops/range.rs",
+      "gitBlobSha": "1935268cda8918d5594c5cb16df13fae977a8f41",
+      "bytes": 38843,
+      "sha256": "c070f37e43e4e688a7b5a26eb23e7c6c5ab761b07b41475dfd0a5e54175cbd40",
+      "compressedSha256": "47f6b2717e577b591a7af6ad3d45f9b00beed6b7334977fbf7db5d65320dc462",
+      "lines": [
+        378,
+        379,
+        545,
+        546
+      ]
+    },
+    {
+      "file": "../whitespace-iterators/iterator-trait.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/iter/traits/iterator.rs",
+      "bytes": 138915,
+      "sha256": "d57130b6a4d3f18f8d28fedf5bd953da80492e2f809813ecd3dba0b3276b99ab",
+      "compressedSha256": "4fd197a902bffa96b81e1c83dbaa7d9b6ff471aa69fe34dda47a179f3d75de82"
+    }
+  ],
+  "evaluationOrder": [
+    "evaluate-original-start-and-end-once-left-to-right",
+    "Rev-next-delegates-to-Range-next-back",
+    "select-actual-fixed-TrustedStep-specialization",
+    "check-original-empty-and-start-end-order",
+    "update-original-end-or-inclusive-exhaustion-before-yield",
+    "yield-original-fixed-Item"
+  ],
+  "supportedConsumption": "fresh bounded standard fixed-integer Range or RangeInclusive, through forward next-based for loops and map/filter/take/enumerate adapters",
+  "limitations": [
+    "stored, borrowed, custom and non-fixed range owners",
+    "reversing other adapters or iterators",
+    "terminal fold/count/nth/sum/collect and backward specialization",
+    "complete trait, namespace, feature, allocation and runtime parity"
+  ]
+}
