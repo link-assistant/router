@@ -2,6 +2,7 @@
 // https://doc.rust-lang.org/reference/lifetime-elision.html
 import {STRING} from '../checked-types.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {isPlainSourceIdentifier} from '../module-paths.mjs';
 
 const frames=new WeakMap();
 const range=(first,last)=>({start:first.start,end:last.end});
@@ -13,8 +14,8 @@ function declarations(cursor) {
   const first=cursor.tokens[at],names=[],tokens=[first];at++;
   while(cursor.tokens[at]?.value!=='>') {
     const quote=cursor.tokens[at++],name=cursor.tokens[at++];
-    if(quote?.value!=="'"||name?.kind!=='identifier')throw unsupported('generic function','generic signatures require monomorphization',range(first,name??quote??first));
-    if(['static','_'].includes(name.value)||names.includes(name.value))throw typeError('Lifetime parameters require distinct nonreserved source names',range(quote,name));
+    if(quote?.value!=="'"||name?.kind!=='identifier'||quote.end!==name.start)throw unsupported('generic function','requires contiguous original named lifetime tokens or separately checked monomorphization',range(first,name??quote??first));
+    if(!isPlainSourceIdentifier(name.value)||names.includes(name.value))throw typeError('Lifetime parameters require distinct nonreserved source names',range(quote,name));
     names.push(name.value);tokens.push(quote,name);
     if(names.length>32)throw unsupported('named lifetime binders','exceeds the checked 32-parameter bound',range(first,name));
     if(cursor.tokens[at]?.value==='>')break;
@@ -44,9 +45,11 @@ export function withNamedLifetimeParser(Base) {return class extends Base {
   }
   namedSourceReferenceType() {
     const c=this.cursor,start=c.index,first=c.peek();
-    if(!c.is('&')||!c.is("'",1)||c.peek(2).value==='static')return null;
+    if(!c.is('&')||!c.is("'",1))return null;
     const frame=frames.get(this),name=c.peek(2);
-    if(name.kind!=='identifier'||!frame?.names.includes(name.value))throw unsupported('named reference lifetime','requires a declared lifetime in this actual free function',range(first,name));
+    if(name.kind!=='identifier'||c.peek(1).end!==name.start)throw unsupported('source reference lifetime','requires contiguous original apostrophe and lifetime name tokens',range(first,name));
+    if(name.value==='static')return null;
+    if(!frame?.names.includes(name.value))throw unsupported('named reference lifetime','requires a contiguous declared lifetime in this actual free function',range(first,name));
     c.next();c.next();c.next();
     if(c.is('mut'))throw unsupported('mutable reference','mutation is outside the portable core',range(first,c.peek()));
     const depth=this.referenceTypeDepth??0,ownershipDepth=this.ownershipReferenceDepth??0;

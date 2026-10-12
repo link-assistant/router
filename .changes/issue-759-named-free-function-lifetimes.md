@@ -11,9 +11,15 @@ unknown glob scopes cannot gain those operations from spelling alone. Captured
 function signatures seal binder names, spans and tokens before source linking
 and after semantic checking; changing that metadata invalidates source evidence.
 
-This is a source-only future draft: all eleven authored cases are UNRUN, no parser
+This is a source-only future draft: all fourteen authored cases are UNRUN, no parser
 probe, target compilation, producer, complete gate or Rust build has executed.
 The original OpenAI model function is an exact-source syntax fixture, with no
 whole-corpus gain, trait dispatch, native equivalence or complete parity claim.
 See the Rust Reference's function lifetime rules:
 https://doc.rust-lang.org/reference/lifetime-elision.html
+
+Source-only lexical review additionally reuses the existing pinned Rust 1.89
+strict/reserved identifier selection, checks contiguous quote/name coordinates,
+and preserves weak contextual names. Static references receive the same token
+adjacency check; whitespace before the apostrophe remains valid. The lexical
+rules are documented at https://doc.rust-lang.org/reference/tokens.html#lifetimes-and-loop-labels.

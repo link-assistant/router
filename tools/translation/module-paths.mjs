@@ -32,6 +32,9 @@ const plans=new WeakSet(),identifier=/^[\p{XID_Start}_][\p{XID_Continue}_]*$/u;
 const asciiIdentifier=/^[A-Za-z_][A-Za-z0-9_]*$/u,forbiddenRawNames=new Set(['_','crate','self','Self','super']);
 const actualIdentifier=name=>typeof name==='string'&&name!=='_'&&identifier.test(name)&&name.normalize('NFC')===name;
 const plainIdentifier=name=>actualIdentifier(name)&&!keywords.has(name);
+// Reuse the pinned compiler-derived strict/reserved keyword selection. The
+// conservative 2021/2024 profile leaves weak contextual names available.
+export const isPlainSourceIdentifier=plainIdentifier;
 const fail=message=>{throw new TypeError('Tracked module path: '+message);};
 function canonicalPath(value,{directory=false}={}){
   if(typeof value!=='string'||Buffer.byteLength(value)>MODULE_PATH_PROFILE.limits.pathBytes||value.includes('\\')||value.includes('\0')||value.includes(':')||posix.isAbsolute(value))fail('requires a bounded repository-relative POSIX path');

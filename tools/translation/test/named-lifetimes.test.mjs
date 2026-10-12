@@ -91,6 +91,34 @@ test('value-only str names preserve actual primitive named string borrows',{time
   await verifyCohortTargets(result,api=>{assert.equal(api.str(),7n);assert.equal(api.echo('Ω😀'),'Ω😀');});
 });
 
+test('named lifetime tokens refuse strict reserved keywords and split apostrophe names',()=>{
+  for(const name of ['self','Self','super','crate','fn','async','await','dyn','gen','try','abstract','const']){
+    const source=`pub fn bad<'${name}>(value:&'${name} str)->&'${name} str{value}`,result=project(source);
+    assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);
+    assert.ok(result.meta.refused.some(item=>item.name==='bad'&&/nonreserved source names/.test(item.message)),source);
+  }
+  for(const source of ["pub fn bad<' a>(value:&'a str)->&'a str{value}","pub fn bad<'a>(value:&' a str)->&'a str{value}","pub fn bad<'a>(value:&'/*split*/a str)->&'a str{value}"]){
+    const result=project(source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);
+    assert.ok(result.meta.refused.some(item=>item.name==='bad'&&/contiguous/.test(item.message)),source);
+  }
+});
+
+test('weak contextual lifetime names remain original binders in both targets',{timeout:30000},async()=>{
+  const result=project("pub fn pair<'union,'raw>(first:&'union str,second:&'raw str)->(&'union str,&'raw str){(first,second)}");
+  assert.deepEqual(result.meta.refused,[]);
+  await verifyCohortTargets(result,api=>assert.deepEqual(api.pair('a','b'),Object.freeze({$:'Tuple',field0:'a',field1:'b'})));
+});
+
+test('static references require one lifetime token while ampersand spacing remains valid',{timeout:30000},async()=>{
+  for(const source of ["pub fn bad()->&' static str{\"fixed\"}","pub fn bad()->&'/*split*/static str{\"fixed\"}","pub fn bad(value:&' static u64)->u64{*value}"]){
+    const result=project(source);assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);
+    assert.ok(result.meta.refused.some(item=>item.name==='bad'&&/contiguous/.test(item.message)),source);
+  }
+  const result=project("pub fn text()->& 'static str{\"fixed\"} pub fn input(value:& /*space*/ 'static u64)->& 'static u64{value}");
+  assert.deepEqual(result.meta.refused,[]);
+  await verifyCohortTargets(result,api=>{assert.equal(api.text(),'fixed');assert.equal(api.input(9n),9n);});
+});
+
 test('original lifetime binders stay sealed before source linking and after semantic checking',()=>{
   const source="fn echo<'a>(value:&'a str)->&'a str{value}fn main(){}";
   const parser=new HostRustParser(tokenizeRust(source)),surface=parser.file();
