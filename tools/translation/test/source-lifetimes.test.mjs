@@ -56,12 +56,12 @@ test('per-use tuple lifetimes cannot inherit a previous portable layout staticne
   }
 });
 test('mutable borrowed bindings cannot retain stale initializer lifetime origins',()=>{
-  for(const source of [
-    'pub fn bad(v:&str)->&\'static str{let mut x:&str="fixed";x=v;x}',
-    'pub fn bad(mut v:&str)->&\'static str{v="fixed";v}',
-    'pub fn bad(v:&u64)->&\'static u64{let mut x:&u64=v;x=v;x}',
-    'pub fn bad(mut v:&\'static str)->&\'static str{v="fixed";v}',
-  ]){const result=project(source);assert.ok(result.meta.refused.some(entry=>entry.name==='bad'&&/mutable borrowed/.test(entry.message)),source);}
+  for(const [source,diagnostic] of [
+    ['pub fn bad(v:&str)->&\'static str{let mut x:&str="fixed";x=v;x}',/escaping source borrow/],
+    ['pub fn bad(mut v:&str)->&\'static str{v="fixed";v}',/mutable borrowed parameter/],
+    ['pub fn bad(v:&u64)->&\'static u64{let mut x:&u64=v;x=v;x}',/escaping source borrow/],
+    ['pub fn bad(mut v:&\'static str)->&\'static str{v="fixed";v}',/mutable borrowed parameter/],
+  ]){const result=project(source);const entry=result.meta.refused.find(entry=>entry.name==='bad');assert.ok(entry,source);assert.match(entry.message,diagnostic,source);}
   assert.deepEqual(project('pub fn count(mut n:u8)->u8{n=n+1;n}').meta.refused,[]);
 });
 test('mixed tuple leaves retain their distinct input and static origins',{timeout:30_000},async()=>{

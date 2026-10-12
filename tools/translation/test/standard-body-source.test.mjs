@@ -100,10 +100,10 @@ test('checked meta retains original method and Default input identities and refu
   const file=translateSource(source,'src/lib.rs',{projectDeclarations:result.executableDeclarations,projectSourceScopes:result.sourceScopes});assert.equal(file.ir.items.map(item=>item.source).join(''),source);assert.equal(file.ir.counts.executableFunctions,1);
 });
 
-test('untouched full Router caller retains its independent mutable borrowed-local refusal',()=>{
+test('untouched full Router caller uses checked copied shared-local flow without source rewriting',()=>{
   const complete=readFileSync(new URL('../../../src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='contains_inline_zero_after_oid');assert.ok(item);
   const source=complete.slice(item.start,item.end),result=translateSource(source,'src/github_proxy.rs');assert.equal(result.ir.items.map(item=>item.source).join(''),source);
-  const caller=result.ir.items.find(item=>item.name==='contains_inline_zero_after_oid');assert.equal(caller.status,'carried');assert.match(JSON.stringify(caller.diagnostic),/mutable borrowed local/u);
+  const caller=result.ir.items.find(item=>item.name==='contains_inline_zero_after_oid');assert.equal(caller.status,'executable');assert.equal(result.ir.counts.executableFunctions,1);
 });
 
 const stripped=value=>Array.isArray(value)?value.map(stripped):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([key])=>!['span','type','patternControl'].includes(key)).map(([key,item])=>[key,stripped(item)])):typeof value==='bigint'?value.toString():value;

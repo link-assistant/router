@@ -1,6 +1,7 @@
 // Function elision and return origins are proof obligations, not value-domain
 // equivalence. This bounded adapter does not manufacture reference lifetimes.
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
+import {rustFixedType} from '../checked-types.mjs';
 
 const UNKNOWN='unproved-borrow-origin';
 const key=path=>JSON.stringify(path);
@@ -102,12 +103,60 @@ function checkStaticArguments(signature,args,range) {
   }
 }
 
+// These locals rebind copied shared references; they do not mutate pointees or
+// move an owned aggregate. The ordinary checker still proves every assignment.
+function copiedBorrowLocal(type) {
+  if(!type||!['string','fixed','bool'].includes(type.kind))return false;
+  let leaf=type,depth=0;
+  while(leaf.rustReference) {
+    const reference=leaf.rustReference;
+    if(++depth>32||reference.kind!=='shared'||!reference.pointee||reference.pointee.kind!==leaf.kind||leaf.rustGenericIdentityUnresolved||leaf.rustBorrowingUnresolved)return false;
+    leaf=reference.pointee;
+  }
+  if(leaf.rustGenericIdentityUnresolved||leaf.rustBorrowingUnresolved)return false;
+  if(leaf.kind==='fixed'){const actual=rustFixedType(leaf.rustPrimitiveName);return depth>0&&actual?.bits===leaf.bits&&actual.signed===leaf.signed;}
+  if(leaf.kind==='bool')return depth>0&&leaf.rustSourceType===true;
+  const owner=leaf.rustOwnership;
+  return Boolean(owner&&(owner.kind==='borrowed'&&owner.source==='str'||depth>0&&owner.kind==='owned'&&owner.source==='String'));
+}
+
+function checkLocalBorrow(value,type,context,span) {
+  if(!type)return;
+  const regions=sourceBorrowRegions(type,context);
+  checkStaticArguments({params:[regions]},[value],span);
+  for(const region of regions)if(namedKind(region.kind)) {
+    const identity=namedIdentity(context.entry,region.kind,region.span),actual=at(value,region.path);
+    if(!actual.size||[...actual].some(origin=>origin!=='static'&&origin!==identity))throw typeError('A named local borrow requires its actual function lifetime origin on every write',span);
+  }
+}
+
+function propagateLocals(target,source,context,excluded=null) {
+  for(const name of context.mutableBorrowLocals.keys())if(name!==excluded&&source.has(name))target.set(name,source.get(name));
+}
+function joinLocals(target,states,context) {
+  for(const name of context.mutableBorrowLocals.keys())target.set(name,union(...states.map(state=>state.get(name)??new Set([UNKNOWN]))));
+}
+function sameOrigins(left,right) {
+  if(left.size!==right.size||[...left].some(origin=>!right.has(origin)))return false;
+  if(Boolean(left.leaves)!==Boolean(right.leaves))return false;
+  if(left.leaves) {
+    if(left.leaves.size!==right.leaves.size)return false;
+    for(const [path,values] of left.leaves){const other=right.leaves.get(path);if(!other||values.size!==other.size||[...values].some(origin=>!other.has(origin)))return false;}
+  }
+  return true;
+}
+function sameLocals(left,right,context) {
+  return [...context.mutableBorrowLocals.keys()].every(name=>sameOrigins(left.get(name)??new Set([UNKNOWN]),right.get(name)??new Set([UNKNOWN])));
+}
+
 // Checked IR is interpreted only as origin evidence. Values and bodies are
 // neither evaluated nor rewritten. Unknown operations retain a refusal.
 function origins(node,env,context,returns,depth=0) {
   if(!node)return new Set();
   if(depth>256)throw unsupported('borrow origin traversal','requires a bounded checked expression graph',context.entry.span);
+  if(++context.borrowFlowBudget.steps>100000)throw unsupported('borrow origin flow budget','requires a bounded finite copied-reference analysis',node.span??context.entry.span);
   const read=(value,scope=env)=>origins(value,scope,context,returns,depth+1);
+  const readCallback=(value,lambdaInputs)=>origins(value,new Map(env),{...context,lambdaInputs,callbackCapturedBorrowLocals:new Set(context.mutableBorrowLocals.values())},returns,depth+1);
   const borrowed=hasBorrow(node.type,context);
   if(node.k==='routerTemporaryStringCallBorrow') {
     read(node.object);
@@ -120,11 +169,14 @@ function origins(node,env,context,returns,depth=0) {
     const value=read(receiver);
     return borrowed?uniformOrigins(node.type,at(value,[]),context):new Set();
   }
-  if(node.k==='var')return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
+  if(node.k==='var') {
+    if(borrowed&&context.callbackCapturedBorrowLocals?.has(context.mutableBorrowLocals.get(node.name)))throw unsupported('mutable borrowed callback capture read','requires its execution interval and original capture borrow flow',node.span??context.entry.span);
+    return borrowed?(env.get(node.name)??new Set([UNKNOWN])):new Set();
+  }
   if(node.k==='routerStandardSharedReceiver')return borrowed?project(read(node.object),['pointee']):new Set();
   if(node.k==='routerReverseSplitFind'){
     if(node.reverseStringProof?.profile!=='rust-1.89-reverse-scalar-character-split'||node.reverseStringProof.verified!==true)throw unsupported('reverse Split borrow origin','requires its actual checked double-ended profile',node.span);
-    const values=read(node.object);origins(node.predicate.binding,env,{...context,lambdaInputs:[values]},returns,depth+1);
+    const values=read(node.object);readCallback(node.predicate.binding,[values]);
     return borrowed?prefix(values,['argument',0]):new Set();
   }
   if(node.k==='routerOptionAsDeref'){
@@ -136,7 +188,7 @@ function origins(node,env,context,returns,depth=0) {
     if(proof?.profile!=='rust-1.89-checked-result-collection'||proof.verified!==true)throw unsupported('Result iterator borrow origin','requires the actual checked standard Result pipeline',node.span);
     const value=read(node.object);
     if(node.k==='routerResultMapErr'){
-      const called=origins(node.callback.binding,env,{...context,lambdaInputs:[project(value,['argument',1])]},returns,depth+1);
+      const called=readCallback(node.callback.binding,[project(value,['argument',1])]);
       return borrowed?union(prefix(project(value,['argument',0]),['argument',0]),prefix(called,['argument',1])):new Set();
     }
     return borrowed?union(prefix(project(value,['argument',0]),['argument',0,'element']),prefix(project(value,['argument',1]),['argument',1])):new Set();
@@ -156,13 +208,35 @@ function origins(node,env,context,returns,depth=0) {
     read(node.separator);return new Set(); // join allocates an owned String.
   }
   if(node.k==='routerLambdaInput')return borrowed?(context.lambdaInputs?.[node.position]??new Set([UNKNOWN])):new Set();
+  if(node.k==='routerLoopInput') {
+    let value=context.loopInputOrigins??new Set([UNKNOWN]);
+    if(node.sourceReferencePattern) {
+      if(node.sourceReferencePattern.kind!=='checked-shared-reference-pattern-copy'||node.sourceReferencePattern.itemType?.rustReference?.kind!=='shared')throw unsupported('loop item borrow projection','requires the actual checked shared reference pattern',node.span??context.entry.span);
+      value=project(value,['pointee']);
+    }
+    return borrowed?value:new Set();
+  }
   if(node.k==='routerPrimitiveDereference'&&node.dereferenceProof?.kind==='shared-str-reference-copy')return borrowed?project(read(node.value),['pointee']):new Set();
   if(node.k==='routerIteratorOperation') {
     const values=read(node.object),operation=node.op;
     const element=node.type.kind==='routerIterator'?node.type.element:null;
-    if(operation==='iter')return element?uniformOrigins(element,at(values,[]),context):new Set();
+    if(operation==='iter') {
+      const proof=node.sourceIteratorProof,receiver=node.object.type,copy=node.sourceIteratorCopy,item=copy?.itemType??element;
+      if(!element||receiver?.kind!=='array'||proof?.profile!=='rust-1.89-scalar-iterator-items'||!['iter','into_iter'].includes(proof.operation))throw unsupported('iterator item borrow origins','requires its actual checked source iterator profile',node.span);
+      let result;
+      if(proof.borrowed) {
+        if(item?.rustReference?.kind!=='shared'||!item.rustReference.pointee)throw unsupported('iterator item borrow origins','requires its inserted actual shared reference',node.span);
+        const stored=receiver.rustReference?['pointee','element']:['element'];
+        result=leafOrigins(new Map(sourceBorrowRegions(item,context).map(region=>[key(region.path),region.path.length===0?(receiver.rustReference?at(values,[]):new Set([UNKNOWN])):region.path[0]==='pointee'?at(values,[...stored,...region.path.slice(1)]):new Set([UNKNOWN])])));
+      } else result=project(values,['element']);
+      if(copy) {
+        if(copy.profile!=='rust-1.89-scalar-iterator-items'||!['copied','cloned'].includes(copy.operation)||copy.itemType?.rustReference?.kind!=='shared')throw unsupported('copied iterator borrow origins','requires its actual shared Item copy profile',node.span);
+        result=project(result,['pointee']);
+      }
+      return result;
+    }
     if(['map','filter','find_map','filter_map','find','any','all'].includes(operation)) {
-      const callback=node.args[0],called=origins(callback.binding,env,{...context,lambdaInputs:[values]},returns,depth+1);
+      const callback=node.args[0],called=readCallback(callback.binding,[values]);
       if(operation==='find_map')return borrowed?called:new Set();
       if(operation==='find')return borrowed?prefix(values,['argument',0]):new Set();
       if(operation==='filter_map')return project(called,['argument',0]);
@@ -172,7 +246,16 @@ function origins(node,env,context,returns,depth=0) {
     if(operation==='flatten')return element?uniformOrigins(element,new Set(values),context):new Set();
     if(operation==='fold') {
       const initial=read(node.args[0]),callback=node.args[1];
-      return origins(callback.binding,env,{...context,lambdaInputs:[initial,values]},returns,depth+1);
+      if(!borrowed)return readCallback(callback.binding,[initial,values]);
+      const cells=sourceBorrowRegions(node.type,context).length,limit=1+cells*context.borrowOriginUniverse.size;
+      let accumulated=initial;
+      for(let step=0;step<limit;step++) {
+        const next=union(initial,accumulated,readCallback(callback.binding,[accumulated,values]));
+        if([...next].some(origin=>!context.borrowOriginUniverse.has(origin)))throw unsupported('borrowed fold origin domain','requires actual finite input or static identities',node.span);
+        if(sameOrigins(next,accumulated)){context.borrowFlowBudget.fixedPoints++;return next;}
+        accumulated=next;
+      }
+      throw unsupported('borrowed fold fixed point','requires convergence of the actual checked accumulator leaves',node.span);
     }
     for(const value of node.args)read(value);
     return ['copied','cloned','take','collect'].includes(operation)?values:new Set();
@@ -202,28 +285,108 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='lit'&&typeof node.value==='string'&&node.type?.rustBorrowLifetime?.source==='string-literal'&&node.type.rustBorrowLifetime.kind==='static')return staticOrigin();
   if(node.k==='let') {
-    if(node.mutable&&hasBorrow(node.value.type,context))throw unsupported('mutable borrowed local','the lifetime profile requires immutable borrow bindings',node.span??context.entry.span);
     const value=read(node.value),inner=new Map(env);
-    if(node.sourceBindingLifetimeType&&!emptyBorrowValue(node.value,context)) {
-      const regions=sourceBorrowRegions(node.sourceBindingLifetimeType,context);
-      checkStaticArguments({params:[regions]},[value],node.span??context.entry.span);
-      for(const region of regions)if(namedKind(region.kind)) {
-        const identity=namedIdentity(context.entry,region.kind,region.span),actual=at(value,region.path);
-        if(!actual.size||[...actual].some(origin=>origin!=='static'&&origin!==identity))throw typeError('A named local borrow requires its actual function lifetime origin',node.span??context.entry.span);
-      }
+    if(node.sourceBindingLifetimeType&&!emptyBorrowValue(node.value,context))checkLocalBorrow(value,node.sourceBindingLifetimeType,context,node.span??context.entry.span);
+    const mutableBorrowLocals=new Map(context.mutableBorrowLocals);
+    mutableBorrowLocals.delete(node.name); // A shadow never writes its outer local.
+    if(node.mutable&&hasBorrow(node.value.type,context)) {
+      if(!copiedBorrowLocal(node.value.type))throw unsupported('mutable borrowed local','requires a checked copied shared scalar reference or borrowed str binding',node.span??context.entry.span);
+      mutableBorrowLocals.set(node.name,{type:node.value.type,writtenType:node.sourceBindingLifetimeType??null});
+      context.borrowFlowBudget.mutableBindings++;
     }
-    inner.set(node.name,value);return read(node.body,inner);
+    inner.set(node.name,value);
+    const exitStart=context.loopExitStates?.length??0;
+    const result=origins(node.body,inner,{...context,mutableBorrowLocals},returns,depth+1);
+    // An exit captures outer bindings, never a same-named lexical shadow.
+    for(const state of context.loopExitStates?.slice(exitStart)??[])if(env.has(node.name))state.set(node.name,env.get(node.name));else state.delete(node.name);
+    propagateLocals(env,inner,context,node.name);return result;
   }
   if(node.k==='routerPinnedStandardBody')return read(node.body);
   if(node.k==='routerOrderedArm'){if(node.guard)read(node.guard);return read(node.body);}
-  if(node.k==='routerOrderedMatchArms')return union(...node.branches.map(branch=>{read(branch.cond);return read(branch.body);}));
-  if(['routerPanic','abort'].includes(node.k)){for(const value of node.args??[])read(value);return new Set();}
-  if(['if','routerIf'].includes(node.k)){read(node.cond);const branches=union(read(node.then),read(node.else));return node.k==='routerIf'?union(branches,read(node.body)):branches;}
-  if(node.k==='match') {
-    const subject=read(node.scrutinee);
-    return union(...node.cases.map(arm=>{const inner=new Map(env);for(const name of arm.pattern.binds??[])if(name)inner.set(name,subject);return read(arm.body,inner);}));
+  if(node.k==='routerOrderedMatchArms') {
+    const states=[],values=node.branches.map(branch=>{const inner=new Map(env);read(branch.cond,inner);const value=read(branch.body,inner);states.push(inner);return value;});
+    joinLocals(env,states,context);return union(...values);
   }
-  if(node.k==='routerReturn') {const value=read(node.value);returns.push({value,node:node.value});return new Set();}
+  if(['routerPanic','abort'].includes(node.k)){for(const value of node.args??[])read(value);return new Set();}
+  if(node.k==='routerSet') {
+    const value=read(node.value),target=node.target;
+    if(target?.k!=='var')throw unsupported('borrow assignment target','requires an actual checked local variable',node.span??context.entry.span);
+    if(hasBorrow(target.type,context)) {
+      const binding=context.mutableBorrowLocals.get(target.name);
+      if(!binding||!copiedBorrowLocal(target.type))throw unsupported('mutable borrowed assignment','requires its checked copied-reference local binding',node.span??context.entry.span);
+      if(context.callbackCapturedBorrowLocals?.has(binding))throw unsupported('mutable borrowed callback capture','requires separate lazy callback execution and capture lifetime flow',node.span??context.entry.span);
+      checkLocalBorrow(value,binding.writtenType,context,node.span??context.entry.span);
+      env.set(target.name,value);
+    }
+    return read(node.body);
+  }
+  if(['if','routerIf'].includes(node.k)) {
+    read(node.cond);const then=new Map(env),otherwise=new Map(env);
+    const branches=union(read(node.then,then),read(node.else,otherwise));joinLocals(env,[then,otherwise],context);
+    return node.k==='routerIf'?union(branches,read(node.body)):branches;
+  }
+  if(['routerWhile','routerFor'].includes(node.k)) {
+    const loopInputOrigins=node.k==='routerFor'?read(node.object):null;
+    const initial=new Map(env),state=new Map(env);
+    const cells=[...context.mutableBorrowLocals.values()].reduce((sum,binding)=>sum+sourceBorrowRegions(binding.type,context).length,0);
+    const limit=1+cells*context.borrowOriginUniverse.size;
+    let converged=false;
+    for(let step=0;step<limit;step++) {
+      const iteration=new Map(state),loopExitStates=[],loopContext={...context,loopInputOrigins,loopExitStates};
+      if(node.k==='routerWhile'){origins(node.cond,iteration,loopContext,returns,depth+1);loopExitStates.push(new Map(iteration));origins(node.loopBody,iteration,loopContext,returns,depth+1);}
+      else origins(node.loopBody,iteration,loopContext,returns,depth+1);
+      const next=new Map(state);joinLocals(next,[initial,state,iteration,...loopExitStates],context);
+      for(const name of context.mutableBorrowLocals.keys())if([...(next.get(name)??[])].some(origin=>!context.borrowOriginUniverse.has(origin)))throw unsupported('borrow loop origin domain','requires a finite actual signature origin or static source identity',node.span??context.entry.span);
+      if(sameLocals(state,next,context)){converged=true;propagateLocals(env,next,context);break;}
+      propagateLocals(state,next,context);
+    }
+    if(!converged)throw unsupported('borrow loop fixed point','requires convergence of the finite copied-reference origin domain',node.span??context.entry.span);
+    context.borrowFlowBudget.fixedPoints++;
+    return read(node.body);
+  }
+  if(node.k==='match') {
+    const subject=read(node.scrutinee),states=[];
+    const values=node.cases.map(arm=>{
+      const inner=new Map(env),mutableBorrowLocals=new Map(context.mutableBorrowLocals),pattern=arm.pattern;
+      const shadows=[],exitStart=context.loopExitStates?.length??0;
+      const bind=(name,value)=>{if(name&&name!=='_'){shadows.push(name);inner.set(name,value);mutableBorrowLocals.delete(name);}};
+      if(pattern.k==='bind'||pattern.k==='natSucc')bind(pattern.name,subject);
+      else if(pattern.k==='ctor') {
+        const type=node.scrutinee.type,owner=context.declarations.get(type.name),ctor=owner?.ctors.find(value=>value.name===pattern.ctor);
+        if(type.kind!=='data'||pattern.data!==type.name||!ctor||pattern.binds.length!==ctor.fields.length)throw unsupported('match borrow field origins','requires its actual checked constructor owner and arity',node.span);
+        pattern.binds.forEach((name,index)=>{
+          if(!name||name==='_')return;
+          if(type.rustReference)throw unsupported('borrowed match field origins','requires separate actual shared field projection evidence',node.span);
+          if(owner.tuple)bind(name,project(subject,['tuple',index]));
+          else if(owner.standardGeneric?.kind==='Option')bind(name,project(subject,['argument',0]));
+          else if(owner.standardGeneric?.kind==='Result')bind(name,project(subject,['argument',pattern.ctor==='Err'?1:0]));
+          else {
+            const field=context.resolveType(ctor.fields[index].type,owner.modulePath,node.span),regions=sourceBorrowRegions(field,context);
+            bind(name,regions.length&&regions.every(region=>region.kind==='static')?uniformOrigins(field,new Set(['static']),context):regions.length?uniformOrigins(field,new Set([UNKNOWN]),context):new Set());
+          }
+        });
+      }
+      const value=origins(arm.body,inner,{...context,mutableBorrowLocals},returns,depth+1),state=new Map(env);
+      for(const exit of context.loopExitStates?.slice(exitStart)??[])for(const name of shadows)if(env.has(name))exit.set(name,env.get(name));else exit.delete(name);
+      propagateLocals(state,inner,{...context,mutableBorrowLocals});states.push(state);return value;
+    });
+    joinLocals(env,states,context);return union(...values);
+  }
+  if(node.k==='routerReturn') {
+    const value=read(node.value),existing=returns.find(returned=>returned.node===node.value);
+    if(existing)existing.value=union(existing.value,value);else returns.push({value,node:node.value});
+    if(node.body)origins(node.body,new Map(env),{...context,loopExitStates:[]},[],depth+1);
+    return new Set();
+  }
+  if(node.k==='routerBreak'||node.k==='routerContinue') {
+    context.loopExitStates?.push(new Map(env));
+    if(node.body)origins(node.body,new Map(env),{...context,loopExitStates:[]},[],depth+1);
+    return new Set();
+  }
+  if(node.k==='binary'&&['and','or'].includes(node.op)) {
+    read(node.left);const skipped=new Map(env),taken=new Map(env);read(node.right,taken);
+    joinLocals(env,[skipped,taken],context);return new Set();
+  }
   if(node.k==='call') {
     const arguments_=node.args.map(value=>read(value)),signature=context.signatures.get(node.fn);
     if(!signature) return borrowed?new Set([UNKNOWN]):new Set();
@@ -253,7 +416,7 @@ function origins(node,env,context,returns,depth=0) {
     }
     const payload=project(subject,['argument',0]),fallback=node.defaultValue?read(node.defaultValue):new Set();
     const callback=node.callback;
-    const called=callback?origins(callback.binding,env,{...context,lambdaInputs:Array.from({length:callback.arity},()=>payload)},returns,depth+1):new Set();
+    const called=callback?readCallback(callback.binding,Array.from({length:callback.arity},()=>payload)):new Set();
     if(!borrowed)return new Set();
     if(node.operation==='result_ok')return prefix(payload,['argument',0]);
     if(['option_map','bool_then'].includes(node.operation))return prefix(called,['argument',0]);
@@ -311,8 +474,8 @@ function origins(node,env,context,returns,depth=0) {
 function emptyBorrowValue(node,context) {
   if(!node)return false;
   if(node.k==='array'&&node.type?.rustFixedArray?.length===0&&node.items.length===0&&node.fixedArrayProof?.verified&&node.fixedArrayProof.syntax!=='repeat')return true;
-  if(['routerReturn','routerPanic','abort'].includes(node.k))return true;
-  if(node.k==='let'||node.k==='routerDiscard')return emptyBorrowValue(node.body,context);
+  if(['routerReturn','routerBreak','routerContinue','routerPanic','abort'].includes(node.k))return true;
+  if(['let','routerDiscard','routerSet','routerWhile','routerFor','routerIf'].includes(node.k))return emptyBorrowValue(node.body,context);
   if(node.k==='if')return emptyBorrowValue(node.then,context)&&emptyBorrowValue(node.else,context);
   if(node.k==='match')return node.cases.every(arm=>emptyBorrowValue(arm.body,context));
   if(node.k==='ctor') {
@@ -343,13 +506,14 @@ export function withSourceLifetimeChecker(Base) {
       for(const entry of program.declarations.values())if(entry.k==='fn') {
         if(entry.params.some(param=>mutableParameters.get(entry.fullName)?.includes(param.name)&&hasBorrow(param.type,context)))throw unsupported('mutable borrowed parameter','the lifetime profile requires immutable borrow bindings',entry.span);
         const signature=signatures.get(entry.fullName),env=new Map(entry.params.map((param,index)=>[param.name,leafOrigins(new Map(signature.params[index].map(region=>[key(region.path),new Set([region.identity])]))) ]));
-        const returns=[],result=origins(entry.body,env,{...context,entry,signatures,hostContracts:this.sourceLifetimeHostContracts},returns);
+        const borrowFlowBudget={steps:0,mutableBindings:0,fixedPoints:0},borrowOriginUniverse=new Set(['static',UNKNOWN,...signature.params.flat().map(region=>region.identity)]);
+        const returns=[],result=origins(entry.body,env,{...context,entry,signatures,hostContracts:this.sourceLifetimeHostContracts,mutableBorrowLocals:new Map(),borrowOriginUniverse,borrowFlowBudget},returns);
         if(signature.outputs.length)for(const {value:actual,node} of [...returns,{value:result,node:entry.body}]) {
           if(!actual.size&&!emptyBorrowValue(node,context))throw unsupported('escaping source borrow','the checked returned value has no proven borrow origin or empty borrowed variant',entry.span);
           for(const output of signature.outputs)for(const origin of at(actual,output.path))if(origin!=='static'&&origin!==output.identity)throw unsupported('escaping source borrow','the checked returned leaf lacks a proven input or static lifetime origin',entry.span);
         }
         const leaves=value=>[...(value.leaves??[])].map(([path,origins])=>({path:JSON.parse(path),origins:[...origins].sort()}));
-        entry.sourceLifetimeProof={...signature,returnOrigins:[...union(result,...returns.map(returned=>returned.value))].sort(),returnLeaves:leaves(result),explicitReturnLeaves:returns.map(returned=>({span:returned.node.span??entry.span,leaves:leaves(returned.value)}))};
+        entry.sourceLifetimeProof={...signature,returnOrigins:[...union(result,...returns.map(returned=>returned.value))].sort(),returnLeaves:leaves(result),explicitReturnLeaves:returns.map(returned=>({span:returned.node.span??entry.span,leaves:leaves(returned.value)})),...(borrowFlowBudget.mutableBindings?{copiedLocalFlow:{profile:'finite-copied-shared-local-origins-v1',steps:borrowFlowBudget.steps,fixedPoints:borrowFlowBudget.fixedPoints,originDomain:[...borrowOriginUniverse].sort(),mutablePointeeAccess:false,mutableParameterSupport:false}}:{})};
       }
       return program;
     }
