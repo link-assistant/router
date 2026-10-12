@@ -31,7 +31,8 @@ test('original create_fields self_expr is the actual source-local remove(0), not
 
 test('actual field access constructor derives its Field variant and receiver from original source schemas',()=>{
   const {program,result}=route('create_struct_field_access_fields');
-  const fields=collect(program.tree,value=>value.tag==='original-positive-enum'&&value.schema.name==='Field');assert.equal(fields.length,1);
+  const initializer=program.slots.find(value=>value.name==='field_expr'&&value.kind==='local').value;
+  const fields=collect(initializer,value=>value.tag==='original-positive-enum'&&value.schema.name==='Field');assert.equal(fields.length,1);
   assert.equal(fields[0].schema.source,'compiler/rustc_ast/src/ast.rs');assert.equal(fields[0].schema.arity,2);
   assert.equal(fields[0].args[0].method,'clone');assert.equal(fields[0].args[1].method,'unwrap_or_else');
   const built=collect(result.tree,value=>value.tag==='source-substituted-builder-result');assert.ok(built.length);
@@ -49,7 +50,7 @@ test('packed mutation preserves both actual slot versions and an unselected join
 });
 
 test('actual empty fallback closure retains capture and source hygiene requirements',()=>{
-  const {program}=route('create_struct_field_access_fields'),closures=collect(program.tree,value=>value.tag==='source-closure'&&value.parameters.length===0);assert.equal(closures.length,1);
+  const {program}=route('create_struct_field_access_fields'),initializer=program.slots.find(value=>value.name==='field_expr'&&value.kind==='local').value,closures=collect(initializer,value=>value.tag==='source-closure'&&value.parameters.length===0);assert.equal(closures.length,1);
   const index=program.slots.find(value=>value.name==='i');assert.ok(closures[0].capturedSlots.includes(index.id));
   const calls=collect(closures[0].body,value=>value.kind==='source-function-call'&&value.path.join('::')==='Ident::from_str_and_span');assert.equal(calls.length,1);
   assert.equal(calls[0].args[0].value.method,'to_string');assert.equal(calls[0].args[1].member,'span');
@@ -58,7 +59,8 @@ test('actual empty fallback closure retains capture and source hygiene requireme
 
 test('pattern route retains actual mk_pattern_ident and format path rather than manufactured names',()=>{
   const {program,result}=route('create_struct_pattern_fields');
-  assert.ok(collect(program.tree,value=>value.kind==='source-method-call'&&value.method==='mk_pattern_ident').length);
+  const initializer=program.slots.find(value=>value.name==='ident'&&value.kind==='local').value;
+  assert.ok(collect(initializer,value=>value.kind==='source-method-call'&&value.method==='mk_pattern_ident').length);
   assert.ok(collect(result.tree,value=>value.tag==='source-slot-substitution').length);
   const actual=route('mk_pattern_ident');assert.ok(actual.program.obligations.some(value=>value.kind==='source-expression-grammar'));
   assert.equal(result.selectedOwnerBangComplete,false);assert.equal(result.generatedImplBehavior,false);

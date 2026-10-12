@@ -39,7 +39,7 @@ export function createBuiltinDeriveAstCallbackBridge({context,certificate,invoca
       const receiver=receiverSyntax.length===1?bindings.get(receiverSyntax[0].text):null;
       if(receiver?.receiverOwner){
         try{return bind(compiler.compile(method),args,{tag:'caller-context-slot',bindingId:receiver.id,owner:receiver.receiverOwner,...callerSource(fragment,receiverSyntax)},[],depth+1);}
-        catch(error){if(error instanceof PayloadBudgetError)throw error;diagnostics.push({kind:'nested-source-builder',source:source.source,span:source.span,reason:String(error.message)});}
+        catch(error){if(error instanceof PayloadBudgetError||/budget exceeded/u.test(String(error.message)))throw error;diagnostics.push({kind:'nested-source-builder',source:source.source,span:source.span,reason:String(error.message)});}
       }
       return {tag:'unproved-caller-method',method,receiver:argument(fragment,receiverSyntax,frame,bindings,depth+1),args,...source};
     }
@@ -80,7 +80,7 @@ export function createBuiltinDeriveAstCallbackBridge({context,certificate,invoca
           if(target?.[0]?.startsWith('rustc_')&&target.length>2){
             const member='compiler/'+target[0]+'/src/'+target.slice(1,-1).join('/')+'.rs';
             try{return bind(compiler.compileOriginal(member,target.at(-1)),actualArgs,null,path,level+1);}
-            catch(error){if(error instanceof PayloadBudgetError)throw error;diagnostics.push({kind:'transitive-source-function',source:node.source,span:node.span,target,reason:String(error.message)});}
+            catch(error){if(error instanceof PayloadBudgetError||/budget exceeded/u.test(String(error.message)))throw error;diagnostics.push({kind:'transitive-source-function',source:node.source,span:node.span,target,reason:String(error.message)});}
           }
           return {tag:'unproved-source-call',path:node.path,import:node.import,args:actualArgs,...origin};
         }
@@ -88,7 +88,7 @@ export function createBuiltinDeriveAstCallbackBridge({context,certificate,invoca
       }
     }
     let result;
-    try{result=project(contract.result,depth+1);}catch(error){if(error instanceof PayloadBudgetError)throw error;diagnostics.push({kind:'builder-result',source:contract.recipe.source,span:contract.recipe.span,reason:String(error.message)});result={tag:'unproved-builder-result',contractDigest:contract.digest,reason:String(error.message)};}
+    try{result=project(contract.result,depth+1);}catch(error){if(error instanceof PayloadBudgetError||/budget exceeded/u.test(String(error.message)))throw error;diagnostics.push({kind:'builder-result',source:contract.recipe.source,span:contract.recipe.span,reason:String(error.message)});result={tag:'unproved-builder-result',contractDigest:contract.digest,reason:String(error.message)};}
     return {tag:'source-builder-result',contractDigest:contract.digest,parameterBindings:parameters.map((value,index)=>({parameter:value,argument:args[index]})),receiver,result};
   }
   for(const fragment of plan.callbackRecipes){
@@ -101,10 +101,10 @@ export function createBuiltinDeriveAstCallbackBridge({context,certificate,invoca
         const args=frame.argumentsSyntax.map(value=>argument(fragment,value,frame,bindings));
         if(!receiver?.receiverOwner)return {call:frame.call.span,controlPath:frame.controlPath,args,result:{tag:'unproved-caller-receiver',bindingId:frame.receiverId}};
         try{return {call:frame.call.span,controlPath:frame.controlPath,args,result:bind(compiler.compile(frame.call.method),args,{tag:'caller-context-slot',bindingId:receiver.id,owner:receiver.receiverOwner},[],0)};}
-        catch(error){if(error instanceof PayloadBudgetError)throw error;return {call:frame.call.span,controlPath:frame.controlPath,args,result:{tag:'unproved-call-builder',reason:String(error.message)}};}
+        catch(error){if(error instanceof PayloadBudgetError||/budget exceeded/u.test(String(error.message)))throw error;return {call:frame.call.span,controlPath:frame.controlPath,args,result:{tag:'unproved-call-builder',reason:String(error.message)}};}
       });
       callbacks.push({source:fragment.source,span:fragment.span,callbackDigest:fragment.digest,environment,payloads});
-    }catch(error){if(error instanceof PayloadBudgetError)throw error;callbacks.push({source:fragment.source,span:fragment.span,callbackDigest:fragment.digest,unproved:String(error.message)});}
+    }catch(error){if(error instanceof PayloadBudgetError||/budget exceeded/u.test(String(error.message)))throw error;callbacks.push({source:fragment.source,span:fragment.span,callbackDigest:fragment.digest,unproved:String(error.message)});}
   }
   // Actual generic constructor recipes around the still-open callback bodies.
   // Their fields are retained rather than replaced with handwritten Rust impls.
@@ -121,7 +121,7 @@ export function createBuiltinDeriveAstCallbackBridge({context,certificate,invoca
     selectedOwnerBangComplete:false,generatedImplBehavior:false,allocationPhaseBehavior:false,featureCompleteness:false,
     obligations:['actual caller field expression/loop/pattern domains remain independent requirements','all original conditional outcomes are retained without selecting Copy/fmt configuration','Option/prelude and empty attribute/container owners remain open','method body control joins and implementation lists are not replaced with placeholders']};
   const encoded=JSON.stringify(evidence);if(Buffer.byteLength(encoded)>524288)throw new TypeError('Callback bridge metadata byte budget exceeded');
-  const result=freeze({...JSON.parse(encoded),digest:hash(encoded)});bridges.set(result,{context,certificate,invocation});return result;
+  const result=freeze({...JSON.parse(encoded),digest:hash(encoded)});bridges.set(result,{context,certificate,invocation:freeze(JSON.parse(JSON.stringify(invocation)))});return result;
 }
 export function assertBuiltinDeriveAstCallbackBridge(value,context,certificate,invocation){const state=bridges.get(value);if(!state||state.context!==context||state.certificate!==certificate||JSON.stringify(state.invocation)!==JSON.stringify(invocation))throw new TypeError('Callback bridge requires its original source invocation');return value;}
 export const isBuiltinDeriveAstCallbackBridge=value=>!!value&&bridges.has(value);

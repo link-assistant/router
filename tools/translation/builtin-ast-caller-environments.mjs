@@ -129,7 +129,13 @@ export function createBuiltinAstCallerEnvironments(compiler,profile,inventory){
         const {contract,...call}=actual;
         calls.set(actual.span.start,{call,receiverId:receiver?.id??null,environment:[...environment.values()].map(value=>value.id),controlPath:path,argumentsSyntax:splitBuiltinCallerSyntax(argumentsSyntax),receiverSourceOwner:receiver?.receiverOwner??null});
       }
-      if(node.kind==='group')visit(node.children,new Map(environment),path,depth+1);
+      if(node.kind==='group'){
+        const child=new Map(environment);
+        // Actual iterator-call arguments can begin with their own closure.
+        // Activate its lexical parameters before visiting that original body.
+        if(node.delimiter==='('&&node.children[0]?.text==='|')visitExpression(node.children,child,path,depth+1);
+        else visit(node.children,child,path,depth+1);
+      }
     }
   }
   visit(fragment.syntax.at(-1).children,root);

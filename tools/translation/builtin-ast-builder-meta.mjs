@@ -105,7 +105,7 @@ export function inventoryBuiltinAstCallbackCalls(compiler,fragment){
       if(node.text===receiver.name&&(nodes[at-1]?.text==='let'||nodes[at+1]?.text===':'))shadowSites.push(node.span);
       if(node.text===receiver.name&&nodes[at+1]?.text==='.'&&ident(nodes[at+2])&&nodes[at+3]?.kind==='group'&&nodes[at+3].delimiter==='('){
         const method=nodes[at+2].text,syntax=nodes.slice(at,at+4);let contract=null,refusal=null;
-        try{contract=compiler.compile(method);}catch(error){refusal=String(error.message);}
+        try{contract=compiler.compile(method);}catch(error){if(/budget exceeded/u.test(String(error.message)))throw error;refusal=String(error.message);}
         calls.push({source:fragment.source,sourceSha256:fragment.sourceSha256,span:span(syntax),syntax,method,contractDigest:contract?.digest??null,contract,refusal});
       }
       if(node.kind==='group')visit(node.children,depth+1);
@@ -164,7 +164,7 @@ function compile(state,name,sourcePath){
         const owner=astOwner(parts),args=split(terminal.children).map(value=>expression(value,depth+1));
         if(owner?.path.length===2){
           let definition=null;
-          try{definition=schemaFor('enum',owner.path[0],owner.source);}catch(error){obligations.push({kind:'unresolved-constructor-owner',path:parts,span:source.span,reason:String(error.message)});}
+          try{definition=schemaFor('enum',owner.path[0],owner.source);}catch(error){if(/budget exceeded/u.test(String(error.message)))throw error;obligations.push({kind:'unresolved-constructor-owner',path:parts,span:source.span,reason:String(error.message)});}
           if(definition){
             const variant=astEnumVariant(state.profile,definition,owner.path[1]);
             if(args.length!==variant.arity)throw new TypeError('Original AST constructor arity disagrees with its schema');

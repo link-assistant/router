@@ -25,6 +25,9 @@ test('actual typed Clone closure receiver has a fresh identity rather than its e
   const {frames}=sourceFrames('clone.rs','cs_clone'),root=frames.declarations.find(value=>value.kind==='function-parameter'&&value.name==='cx'),closure=frames.declarations.find(value=>value.kind==='closure-parameter'&&value.name==='cx');
   assert.ok(root);assert.ok(closure);assert.notEqual(closure.id,root.id);assert.deepEqual(closure.receiverOwner.target,['rustc_expand','base','ExtCtxt']);
   const localCall=frames.calls.find(value=>value.call.method==='expr_call_global');assert.equal(localCall.receiverId,closure.id);
+  const fieldSlots=frames.declarations.filter(value=>value.kind==='closure-parameter'&&value.name==='field');
+  assert.ok(fieldSlots.length>=2,'Actual map closure field binds independently of the typed subcall closure field');
+  assert.equal(new Set(fieldSlots.map(value=>value.id)).size,fieldSlots.length);
   assert.equal(frames.selectedOwnerBangComplete,false);assert.ok(frames.obligations.some(value=>value.kind==='unproved-arm-pattern'));
 });
 
@@ -70,6 +73,9 @@ test('private caller/bridge identities reject cloned payloads altered invocation
   assert.equal(isBuiltinDeriveAstCallbackBridge(structuredClone(bridge)),false);
   assert.throws(()=>assertBuiltinDeriveAstCallbackBridge(bridge,args.context,args.certificate,{path:['Clone'],attributeSpan:{start:0,end:1}}),/original source invocation/);
   assert.throws(()=>createBuiltinDeriveAstCallbackBridge({...args,certificate:structuredClone(args.certificate)}),/sealed/);
+  const originalInvocation=structuredClone(args.invocation);args.invocation.path[0]='Debug';
+  assert.throws(()=>assertBuiltinDeriveAstCallbackBridge(bridge,args.context,args.certificate,args.invocation),/original source invocation/);
+  assert.equal(assertBuiltinDeriveAstCallbackBridge(bridge,args.context,args.certificate,originalInvocation),bridge);
 });
 
 test('original input bounds and unresolved field syntax cannot become namespace/runtime completeness',()=>{
