@@ -14,5 +14,10 @@ all 175 prior regressions and six of eight new while-let cases. Nested
 Result/Option/tuple projection and a same-file constant identity control failed
 in both. A coherent source repair now carries each actual selected constructor
 through the generic pattern plan and includes actual constants in per-file
-function closure selection. Its full paired retry remains UNRUN. No producer,
+function closure selection. Its frozen 2fa254ac0 retry passed 182/183 in each engine: all eight
+while-let cases and proof controls passed. The only failure was an older
+negative expectation for a valid Result tuple let-else, now supported by the
+generic selected projection. That unchanged original Rust fixture now has
+explicit JS/strict-TS success, error-variant and malformed-ABI controls. The
+complete twenty-file 184-case final retry remains UNRUN. No producer,
 corpus gain, const authority or complete namespace/trait/runtime parity is claimed.

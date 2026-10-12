@@ -87,6 +87,23 @@ test('ordinary tuple destructuring checks immutable and actual product domains b
   }
 });
 
+test('selected Result tuple projections retain an unrelated scalar error payload',async()=>{
+  const source='fn bad(value:Result<(u8,bool),bool>)->u8{let Ok((n,_))=value else{return 0;};n}';
+  const {result,checked}=compiled(source),plan=checked.declarations.get('bad').body.patternControl.plan;
+  assert.deepEqual(plan.projectionPaths.map(path=>path.projection),[[],['field0'],['field0']]);
+  assert.equal(result.ir.items.map(item=>item.source).join(''),source);
+  for(const api of await artifacts(result)) {
+    assert.equal(api.bad(tag('Ok',{field0:tuple(255n,true)})),255n);
+    assert.equal(api.bad(tag('Ok',{field0:tuple(0n,false)})),0n);
+    assert.equal(api.bad(tag('Err',{field0:true})),0n);assert.equal(api.bad(tag('Err',{field0:false})),0n);
+    assert.throws(()=>api.bad(tag('Err',{field0:tuple(7n,true)})),TypeError);
+    assert.throws(()=>api.bad(tag('Ok',{field0:tag('Tuple',{field0:7n})})),TypeError);
+    assert.throws(()=>api.bad({$:'Ok',field0:tuple(7n,true)}),TypeError);
+    let reads=0;const proxy=new Proxy(tag('Ok',{field0:tuple(7n,true)}),{get(){reads++;},ownKeys(){reads++;return[];},getOwnPropertyDescriptor(){reads++;},getPrototypeOf(){reads++;return null;}});
+    assert.throws(()=>api.bad(proxy),TypeError);assert.equal(reads,0);
+  }
+});
+
 test('source tuple patterns refuse forged ABI fields, refutable lets and unresolved ownership',()=>{
   for(const source of [
     'fn bad(value:Option<(&str,&str)>)->Option<&str>{let (left,_)=value?;Some(left)}',
@@ -107,6 +124,5 @@ test('source tuple patterns refuse forged ABI fields, refutable lets and unresol
     'fn bad(value:(u8,u8))->u8{let (n,_):(u8,u8)=value;n}',
     'fn bad(value:(u8,u8))->u8{let (n,_)=(if true{return 1;}else{value});n}',
     'fn bad(value:Option<(u8,u8)>)->u8{let Some((n,_))=value else{return 0;};missing}',
-    'fn bad(value:Result<(u8,bool),bool>)->u8{let Ok((n,_))=value else{return 0;};n}',
   ])refuse(source);
 });
