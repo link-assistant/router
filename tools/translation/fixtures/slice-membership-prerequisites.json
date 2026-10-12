@@ -25,9 +25,23 @@
     "kind": "unsupported",
     "message": "borrowed string slice membership: requires actual standard slice/Vec/fixed-array source ownership, &str elements and one checked &&str argument; custom equality and other borrow adjustments remain unsupported",
     "span": {
-      "start": 278,
-      "end": 292
+      "start": 277,
+      "end": 291
     }
   },
-  "reason": "Initial checking reached the shared aggregate Copy/lifetime prerequisite; the corrected planner explicitly excludes shared fixed arrays and now rejects the membership call earlier. Neither path admits the function."
+  "reason": "Initial checking reached the shared aggregate Copy/lifetime prerequisite; the corrected planner explicitly excludes shared fixed arrays and now rejects the membership call earlier. Neither path admits the function.",
+  "receiverSpanRepair": {
+    "previousRefusal": {
+      "file": "src/lib.rs",
+      "name": "borrowed_fixed",
+      "term": "fn",
+      "kind": "unsupported",
+      "message": "borrowed string slice membership: requires actual standard slice/Vec/fixed-array source ownership, &str elements and one checked &&str argument; custom equality and other borrow adjustments remain unsupported",
+      "span": {
+        "start": 278,
+        "end": 292
+      }
+    },
+    "basis": "Complete original receiver through the actual closing parenthesis; original source and source/body hashes unchanged"
+  }
 }

@@ -1,0 +1,3 @@
+Correct the retained slice-membership refusal fixture to cover its complete original receiver call, and independently derive the asserted span from the unchanged source. Preserve the previous refusal and original source/body hashes.
+
+The unchanged compiler implementation at `9b03d825da8949d6107301eb4a80100d8c941788` passed all 258 focused cases on Node and Bun. Both broader 36-file runs completed with 317 of 318 passing; their sole failure was this outdated fixture span. The repaired 29-file, 263-case scope is pending verification. These focused results do not establish full corpus translation or runtime parity. No local Rust build was run.

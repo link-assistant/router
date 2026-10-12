@@ -96,6 +96,13 @@ test('owned elements arbitrary references custom methods const effects and escap
   assert.equal(hash(prerequisite.source),prerequisite.sourceSha256);
   const {start,end}=prerequisite.initialRefusal.span;
   assert.equal(hash(prerequisite.source.slice(start,end)),prerequisite.bodySha256);
+  const receiverCall='v.contains(&n)';
+  const functionStart=prerequisite.source.indexOf('fn borrowed_fixed');
+  assert.ok(functionStart>=0);
+  const receiverStart=prerequisite.source.indexOf(receiverCall,functionStart);
+  assert.ok(receiverStart>functionStart);
+  assert.deepEqual(prerequisite.currentRefusal.span,{start:receiverStart,end:receiverStart+receiverCall.length});
+  assert.equal(prerequisite.source.slice(prerequisite.currentRefusal.span.start,prerequisite.currentRefusal.span.end),receiverCall);
   const retained=project(prerequisite.source);
   assert.deepEqual(retained.meta.refused.filter(entry=>entry.name==='borrowed_fixed'),[prerequisite.currentRefusal]);
   assert.equal(retained.meta.executable.some(entry=>entry.name==='borrowed_fixed'),false);
