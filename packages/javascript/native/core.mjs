@@ -93,7 +93,13 @@ export class RouterCore {
       'codex-backend':['codex'],qwen:['qwen'],gemini:['gemini'],vertex:['vertex','vertex-ai'],bedrock:['bedrock']};
     if (!kinds[service]) throw new RouterError('invalid_argument','Unknown native service');
     const providers = (await this.providers.resolve()).filter(provider => kinds[service].includes(provider.kind));
-    const configured = this.config.services?.[service]?.provider ?? (service === 'openai' ? this.config.openai_compatible_provider_name : undefined);
+    // Resource lifecycle and known continuations resolve their recorded exact
+    // destination independently of the current default, as Rust pin_state and
+    // forward_stored_provider do. This is an internal affinity-store context,
+    // never a provider override read from the client request body.
+    const recorded = context.resourceDestination;
+    if (recorded && (!['stored_provider','subscription'].includes(recorded.destination_kind) || recorded.provider !== context.provider)) throw new RouterError('invalid_argument','Invalid recorded resource destination');
+    const configured = recorded ? undefined : this.config.services?.[service]?.provider ?? (service === 'openai' ? this.config.openai_compatible_provider_name : undefined);
     const selected = providers.filter(provider => (!context.provider || context.provider === provider.name || context.provider === (provider.kind === 'anthropic' ? 'claude' : provider.kind)) &&
       (!configured || provider.name === configured) && (!context.client || provider.supported_clients.includes(context.client)));
     if (!selected.length) throw new RouterError('native_provider_unavailable','Native service provider is unavailable',503);

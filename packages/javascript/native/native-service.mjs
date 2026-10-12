@@ -3,6 +3,7 @@ import { responseOwner } from './responses.mjs';
 import { matchHTTPRoute } from './http-route-contract.mjs';
 import {createHash} from 'node:crypto';
 import {UsageTracker} from './usage.mjs';
+import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict } from './response-contracts.mjs';
 
 const transport = new Set(['authorization','x-api-key','x-goog-api-key','anthropic-auth-token','proxy-authorization','proxy-authenticate','host','connection','proxy-connection','keep-alive','transfer-encoding','upgrade','te','trailer','content-length','accept-encoding','cookie','chatgpt-account-id','sec-websocket-key','sec-websocket-version','sec-websocket-extensions','sec-websocket-accept']);
 const ingress = new Set(['forwarded','x-real-ip','x-client-ip','x-cluster-client-ip','cf-connecting-ip','true-client-ip','fastly-client-ip','fly-client-ip','x-envoy-external-address','x-azure-clientip','x-appengine-user-ip','cloudfront-viewer-address']);
@@ -74,7 +75,11 @@ export class NativeAffinityStore {
     if (!previous && this.records.size >= this.maxRecords) throw new ProtocolError('Resource affinity storage is full',507);
     this.records.set(key,{...structuredClone(record),namespace,owner,id});
   }
-  delete(namespace,owner,id,parent_id) { this.records.delete(this.key(namespace,owner,id,parent_id)); }
+  delete(namespace,owner,id,parent_id,expected) {
+    const key = this.key(namespace,owner,id,parent_id), record = this.records.get(key);
+    if (!record || expected && !sameDestination(record.destination,expected.destination ?? expected)) return false;
+    return this.records.delete(key);
+  }
   list(namespace,owner,parent_id) { return [...this.records.values()].filter(r => r.namespace === namespace && this.key(namespace,r.owner,'') === this.key(namespace,owner,'') && (parent_id === undefined || r.parent_id === parent_id)).map(r => structuredClone(r)); }
 }
 function resourceFor(path, method, headers) {
@@ -116,6 +121,11 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
   async function select(request, claims, service, document, exact) {
     const pathModel = /\/publishers\/anthropic\/models\/([^/:]+)(?:\/count-tokens)?:(?:rawPredict|streamRawPredict)$/.exec(new URL(request.url).pathname)?.[1];
     const context = {...routingContext(request,claims),service,model:document?.model ?? (pathModel ? decodeURIComponent(pathModel) : undefined),protocol:['anthropic','bedrock','vertex'].includes(service) ? 'anthropic' : 'chat'};
+    if (exact && responseContract(request.method,new URL(request.url).pathname)) {
+      context.provider = exact.provider;
+      context.resourceDestination = exact;
+      if (exact.destination_kind === 'subscription') context.pinnedAccount = exact.account;
+    }
     const candidates = core.nativeCandidates ? await core.nativeCandidates(context) : context.model ? await core.candidates(context) : [];
     const raw = candidates.find(c => !exact || ['provider','account','base_url'].every(key => exact[key] === destination(c)[key]));
     if (!raw) throw new ProtocolError(exact ? 'The native resource exact account is unavailable' : 'Native service provider is unavailable',503);
@@ -160,18 +170,35 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       if(!identityRoute && tokenId && core.tokens?.admit){const admitted=await core.tokens.admit(tokenId,0);if(admitted === false || typeof admitted === 'string' && admitted !== 'admitted')throw new ProtocolError(typeof admitted === 'string'?admitted:'Token budget exceeded',429);}
       const bytes = await boundedBytes(request,maxBodyBytes);
       let document; try { document = bytes.length ? JSON.parse(Buffer.from(bytes).toString('utf8')) : undefined; } catch { /* opaque multipart/binary bodies are forwarded */ }
+      const responses = responseContract(request.method,path);
+      try { validateResponseCreate(responses,document); }
+      catch (error) {
+        if (!(error instanceof ProtocolError)) throw error;
+        return Response.json({error:{type:error.code ?? 'invalid_request_error',message:error.message}},{status:error.status ?? 400});
+      }
       if (request.method === 'POST' && /\/(?:responses\/(?:compact|input_tokens)|images\/generations|audio\/speech|alpha\/search)$/.test(path) && (!document || typeof document !== 'object' || Array.isArray(document))) throw new ProtocolError('The native service request body must be a JSON object');
       if (document?.model) await authorize(request,false,document.model);
       if (['bedrock','vertex'].includes(service) && (!document || !Array.isArray(document.messages))) throw new ProtocolError('messages must be an array');
       for (const batch of document?.requests ?? []) if (batch.params?.model) await authorize(request,false,batch.params.model);
       const resource = resourceFor(path,request.method,request.headers);
       if(document?.store === false && resource?.namespace.endsWith('/responses'))resource.create=false;
-      let exact;
+      let exact, resourceRecord;
       const bind = record => { if (!record) throw new ProtocolError('Native resource not found',404); if (exact && !sameDestination(exact,record.destination)) throw new ProtocolError('Resources do not share one provider account',409); exact = record.destination; };
-      if (resource?.id) bind(await affinities.get(resource.namespace,owner,resource.id,resource.parent));
+      if (resource?.id) {
+        resourceRecord = await affinities.get(resource.namespace,owner,resource.id,resource.parent);
+        if (!resourceRecord && responses?.lifecycle) return responseNotFound();
+        bind(resourceRecord);
+        if (responses?.lifecycle && resourceRecord.destination.destination_kind === 'subscription' && (claims.account ?? 'primary') !== resourceRecord.destination.account) return responseNotFound();
+      }
       if (resource?.parent) bind(await affinities.get(resource.namespace.replace(/\/(?:items|versions)$/,''),owner,resource.parent));
-      if (document?.previous_response_id) bind(await affinities.get(path.replace(/\/responses(?:\/.*)?$/,'/responses'),owner,document.previous_response_id));
-      if (document?.conversation) bind(await affinities.get(path.replace(/\/responses(?:\/.*)?$/,'/conversations'),owner,typeof document.conversation === 'string' ? document.conversation : document.conversation.id));
+      for (const reference of responseReferences(responses,document)) {
+        const record = await affinities.get(reference.namespace,owner,reference.id);
+        if (!record && reference.allowMissing) continue;
+        if (!record) return responseReferenceMissing();
+        if (responses?.create && record.destination.destination_kind === 'subscription' && (claims.account ?? 'primary') !== record.destination.account) return responseNotFound();
+        if (exact && !sameDestination(exact,record.destination)) return responseReferenceConflict();
+        bind(record);
+      }
       const listed = resource?.list ? await affinities.list(resource.namespace,owner,resource.parent) : [];
       if(!resource?.captureList)for (const record of listed) bind(record);
       if(service === 'codex-backend' && document?.file_id && path.startsWith('/api/services/codex/backend-api/public/plugins/workspace'))bind(await affinities.get('/api/services/codex/backend-api/plugin-uploads',owner,document.file_id));
@@ -194,6 +221,20 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       try { upstream = await upstreamFetch(nativeURL(selected.base_url,service,path,url.search),{method:request.method,headers:nativeRequestHeaders(request.headers,candidate),...(['GET','HEAD'].includes(request.method) ? {} : {body:bytes}),signal:controller.signal,redirect:'manual'}); }
       catch { cleanup(); throw new ProtocolError('Native upstream request failed',502); }
       const headers = nativeResponseHeaders(upstream.headers);
+      if (responses?.lifecycle && resourceRecord) {
+        // Rust's lifecycle relay reads the body before any retirement. This
+        // also keeps a failed successful-DELETE body read from losing affinity.
+        let raw;
+        try { raw = await boundedBytes(upstream,maxResponseBytes); }
+        catch { throw new ProtocolError('Upstream lifecycle body could not be read within the response limit',502); }
+        finally { cleanup(); }
+        if ([404,410].includes(upstream.status)) {
+          await affinities.delete(resource.namespace,owner,resource.id,resource.parent,resourceRecord);
+          return responseNotFound();
+        }
+        if (resource.remove && upstream.ok) await affinities.delete(resource.namespace,owner,resource.id,resource.parent,resourceRecord);
+        return new Response([204,205,304].includes(upstream.status) ? null : raw,{status:upstream.status,headers});
+      }
       const tracksUsage=/\/(?:responses(?:\/compact)?|images\/(?:generations|edits|variations)|audio\/(?:speech|transcriptions|translations)|alpha\/search)$/.test(path);
       if(tracksUsage && tokenId && core.tokens?.settle && upstream.body) {
         const usage=new UsageTracker({maxBytes:maxResponseBytes}),reader=upstream.body.getReader();let settled=false;

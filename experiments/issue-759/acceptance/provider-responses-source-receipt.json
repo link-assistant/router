@@ -1,0 +1,73 @@
+{
+  "base": "e0b405361ed24f9eedb035b1dec84a6047e845c1",
+  "validation": "source-only; no executable parity evidence",
+  "sources": [
+    {
+      "path": "src/proxy_openai_resource.rs",
+      "sha256": "1eafa26a131345dc3ce171a3ec1cc6833a801a794ecc76d545bca3d96eacf09c"
+    },
+    {
+      "path": "src/proxy_openai.rs",
+      "sha256": "c449a0b413246bc1f0b75e12b2b1638e6fbfcbd09877237ad4c462806d9cf3a9"
+    },
+    {
+      "path": "src/responses_lifecycle.rs",
+      "sha256": "93395af7d4894f332f2b1443f0c36bdc73f89640ec3b4b8753d7f70d8f251d3b"
+    },
+    {
+      "path": "src/native_service_resources.rs",
+      "sha256": "335509c73af26192c00cb49f8cadd6e31be523f2b223482c8ee2378130aa94d0"
+    },
+    {
+      "path": "src/native_service_tests_resources.rs",
+      "sha256": "2e8496501016d2e3097223841253be2031c6e432177f275a285131a7be377a50"
+    },
+    {
+      "path": "src/response_affinity.rs",
+      "sha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41"
+    },
+    {
+      "path": "src/resource_capture.rs",
+      "sha256": "897136aaa5c146ef01219581665b0fa88299ea66af865ed1fe368f0625399d35"
+    }
+  ],
+  "contracts": [
+    {
+      "source": "src/proxy_openai_resource.rs",
+      "symbols": [
+        "state_for_previous_response"
+      ]
+    },
+    {
+      "source": "src/responses_lifecycle.rs",
+      "symbols": [
+        "forward",
+        "forward_stored_provider",
+        "forward_subscription",
+        "relay",
+        "response_not_found"
+      ]
+    },
+    {
+      "source": "src/native_service_resources.rs",
+      "symbols": [
+        "response_references",
+        "referenced_response_affinity"
+      ]
+    },
+    {
+      "source": "src/native_service_tests_resources.rs",
+      "symbols": [
+        "responses_helpers_pin_native_compaction_to_existing_state"
+      ]
+    },
+    {
+      "source": "src/response_affinity.rs",
+      "symbols": [
+        "remove_if_matches"
+      ]
+    }
+  ],
+  "authored_fixture_count": 11,
+  "authored_fixtures_executed": false
+}
