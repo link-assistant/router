@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
-import {createDeriveFootprintContext,deriveFootprintExternalModules,deriveFootprintSourceContext} from '../derive-footprints.mjs';
-import {createDeriveBangContext,isDeriveBangContext} from '../derive-bang-context.mjs';
+import {createDeriveFootprintContext,deriveFootprintExternalModules,deriveFootprintSourceContext,deriveFootprintOriginalModule} from '../derive-footprints.mjs';
+import {createDeriveBangContext,isDeriveBangContext,deriveBangModules,deriveBangOutputAt} from '../derive-bang-context.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {parserSourceScope} from '../source-scopes.mjs';
 import {compilationProfile,PRODUCTION_PROFILE} from '../cfg-profile.mjs';
@@ -82,9 +82,9 @@ test('cloned contexts and source/profile/external/module mutations cannot consum
 
 test('supplied parsed item subsets cannot erase original sibling declarations',()=>{
   const input=setup('#[derive(serde::Serialize)] pub struct Payload; mod absent;'),context=createDeriveBangContext(input);
-  const before=resolve(input,context),after=resolve({...input,modules:input.modules.map(module=>({...module,items:[],allItems:[]}))},context);
-  assert.equal(model(before).unresolvedBangMacroScope,true);assert.equal(model(after).unresolvedBangMacroScope,true);
-  assert.ok(after.diagnostics.some(diagnostic=>diagnostic.message.includes('module target has no unconditional tracked body')));
+  const before=resolve(input,context);assert.equal(model(before).unresolvedBangMacroScope,true);
+  assert.throws(()=>resolve({...input,modules:input.modules.map(module=>({...module,items:[],allItems:[]}))},context),/item carrier changed/);
+  assert.ok(before.diagnostics.some(diagnostic=>diagnostic.message.includes('module target has no unconditional tracked body')));
 });
 
 test('neutral and explicit family contexts never borrow each other or erase unknown conditions',()=>{
@@ -107,4 +107,32 @@ test('complete unchanged original library keeps omitted standard owners and unre
   assert.equal(record.dimensions.bangMacroComplete,false);assert.ok(record.residualOwners.some(owner=>owner.path[0]==='Debug'));
   const bindings=resolve(input,context);assert.equal(bindings.scopes.find(scope=>scope.path.length===0).unresolvedBangMacroScope,true);
   assert.equal(deriveFootprintSourceContext(deriveContext).modules.length,graph.modules.length);
+});
+
+
+// Source-only composition cases. Genuine graph views, not re-sealed copies.
+test('same-file sibling derive output routes retain private original views and scoped items',()=>{
+  const source='pub mod first{#[derive(Copy,Eq,serde::Serialize)]pub struct Payload{value:u8}}pub mod second{#[derive(serde::Serialize,serde::Deserialize)]pub struct Payload{value:String}}';
+  const graph=resolveModuleGraph({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
+  const deriveContext=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),externalModules=deriveFootprintExternalModules(deriveContext),input={modules:graph.modules,deriveContext,externalModules,compilationProfile:PRODUCTION_PROFILE};
+  const context=createDeriveBangContext(input);assert.equal(context.certificates.length,2);assert.ok(context.certificates.every(value=>value.dimensions.bangMacroComplete));
+  const snapshots=deriveBangModules(context,input);assert.equal(snapshots.length,3);
+  const aliases={...input,modules:input.modules.map(module=>({...module}))};assert.equal(deriveBangModules(context,aliases),snapshots,'A plain carrier aliases the SAME genuine view; it does not mint source authority');
+  for(const module of graph.modules){const actual=snapshots.find(value=>value.path.join('.')===module.path.join('.'));assert.equal(actual.sourceView,module.sourceView);assert.equal(actual.source,source);assert.deepEqual(actual.items.map(value=>[value.start,value.end,value.name]),module.items.map(value=>[value.start,value.end,value.name]));}
+  for(const certificate of deriveContext.certificates){const module=graph.modules.find(value=>value.path.join('.')===certificate.module.join('.')),item=module.items.find(value=>value.start===certificate.span.start);assert.equal(deriveFootprintOriginalModule(deriveContext,certificate).sourceView,module.sourceView);assert.ok(deriveBangOutputAt(context,deriveContext,module,item));const sibling=graph.modules.find(value=>value.path.length&&value!==module);assert.equal(deriveBangOutputAt(context,deriveContext,sibling,item),null);}
+  assert.equal(resolve(input,context).scopes.find(value=>value.path.join('.')==='first').unresolvedBangMacroScope,false);
+  assert.equal(resolve(input,context).scopes.find(value=>value.path.join('.')==='second').unresolvedBangMacroScope,false);
+});
+
+test('bang consumer rejects replaced views/keys/source/profile and cannot omit scoped unknown siblings',()=>{
+  const source='pub mod first{#[derive(Copy,Eq,serde::Serialize)]pub struct Payload{value:u8}mod absent;}pub mod second{pub struct Other;}';
+  const graph=resolveModuleGraph({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE}),deriveContext=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE});
+  const input={modules:graph.modules,deriveContext,externalModules:deriveFootprintExternalModules(deriveContext),compilationProfile:PRODUCTION_PROFILE},context=createDeriveBangContext(input),first=graph.modules.find(value=>value.path.join('.')==='first'),other=graph.modules.find(value=>value.path.join('.')==='second');
+  for(const change of [{sourceView:structuredClone(first.sourceView)},{sourceView:other.sourceView},{moduleScopeKey:'forged'},{items:first.items.map(item=>({...item,name:'Changed'}))},{source:source+' '},{compilationProfile:{flags:{test:true}}}])assert.throws(()=>deriveBangModules(context,{...input,modules:input.modules.map(module=>module===first?{...module,...change}:module)}),/changed|profile|view/);
+  const withoutView={...first};delete withoutView.sourceView;assert.throws(()=>deriveBangModules(context,{...input,modules:input.modules.map(module=>module===first?withoutView:module)}),/changed/);
+  const suppliedEmpty={...input,modules:input.modules.map(module=>({...module,items:[],allItems:[]}))};
+  assert.throws(()=>resolve(suppliedEmpty,context),/item carrier changed/);
+  const result=resolve(input,context);assert.equal(result.scopes.find(value=>value.path.join('.')==='first').unresolvedBangMacroScope,true);assert.ok(result.diagnostics.some(value=>value.message.includes('module target has no unconditional tracked body')));
+  const original=deriveFootprintSourceContext(deriveContext);assert.equal(original.modules.find(value=>value.path.join('.')==='first').sourceView,first.sourceView);
+  assert.throws(()=>deriveFootprintOriginalModule(deriveContext,structuredClone(deriveContext.certificates[0])),/sealed/);
 });

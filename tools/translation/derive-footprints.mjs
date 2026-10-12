@@ -117,7 +117,11 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
   }
   const evidence={schema:'derive-footprint-context-v1',dependenciesDigest:dependencies.digest,compilationProfile:profile,sources:moduleHashes,certificates:[...byId.values()],diagnostics};
   const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});
-  const originalModules=freeze(modules.map(module=>({file:module.file,path:[...module.path],source:module.source,compilationProfile:profile,...(module.configurationCondition?{configurationCondition:module.configurationCondition}:{})})));
+  const originalModules=freeze(modules.map(module=>{
+    const allItems=originalSourceModuleItems(module),items=module.configurationCondition==='inactive'?[]:allItems.filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive');
+    return {file:module.file,path:[...module.path],moduleScopeKey:moduleScopeKey(module),source:module.source,compilationProfile:profile,items,allItems,
+      ...(Object.hasOwn(module,'sourceView')?{sourceView:module.sourceView}:{}),...(module.configurationCondition?{configurationCondition:module.configurationCondition}:{})};
+  }));
   const originalExternal=new Map([...external].map(([path,table])=>[path,freeze(structuredClone(table))]));
   contexts.set(context,{byId,external:originalExternal,dependencies,originalModules});return context;
 }
@@ -141,6 +145,16 @@ export function deriveFootprintOriginalContext(context,certificate){
   const state=contexts.get(context);
   if(!state||![...state.byId.values()].includes(certificate))throw new TypeError('Derive output requires its original sealed input context');
   return {modules:state.originalModules,dependencies:state.dependencies,externalModules:new Map(state.external),compilationProfile:context.compilationProfile};
+}
+// Select the exact private scoped original for this genuine invocation. A
+// whole-file SHA alone cannot choose among sibling inline module views.
+export function deriveFootprintOriginalModule(context,certificate){
+  const state=contexts.get(context),sealed=certificates.get(certificate);
+  if(!state||!sealed||![...state.byId.values()].includes(certificate))throw new TypeError('Derive output requires its original sealed input context');
+  const candidates=state.originalModules.filter(module=>module.file===certificate.source&&JSON.stringify(module.path)===JSON.stringify(certificate.module));
+  if(candidates.length!==1||candidates[0].sourceView!==sealed.sourceView||hash(candidates[0].source)!==certificate.sourceSha256)throw new TypeError('Derive output original scoped module changed');
+  const module=candidates[0],item=originalSourceModuleItems(module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end);
+  if(!item||deriveFootprintAt(context,module,item)!==certificate)throw new TypeError('Derive output original scoped invocation changed');return module;
 }
 // Complete authentic source context, not a caller-supplied declaration subset.
 // Consumers still need separate output proofs for each actual derive owner.

@@ -2,7 +2,7 @@
 // namespace confinement; Serialize behavior and generated impls stay unlowered.
 import {createHash} from 'node:crypto';
 import {deriveDependencySource} from './derive-dependencies.mjs';
-import {deriveFootprintOriginalContext} from './derive-footprints.mjs';
+import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {macroBindingAffects,macroScopeUncertain} from './macro-subnamespaces.mjs';
 import {sourceItems} from './rust-structure.mjs';
@@ -84,9 +84,7 @@ export function emptySerdeMacro(dependencies){
 }
 
 export function proveSerdeSerializeBangFootprint({context,certificate}={}){
-  const original=deriveFootprintOriginalContext(context,certificate),modules=original.modules.filter(module=>module.file===certificate.source&&hash(module.source)===certificate.sourceSha256);
-  if(modules.length!==1)throw new TypeError('Selected route has no unique matching original whole module');
-  const module=modules[0];
+  const original=deriveFootprintOriginalContext(context,certificate),module=deriveFootprintOriginalModule(context,certificate);
   const source=module.source.slice(certificate.span.start,certificate.span.end);
   if(hash(source)!==certificate.itemSha256)throw new TypeError('Selected route original input bytes have changed');
   const input=boundedInput(certificate,source),dependencies=original.dependencies;

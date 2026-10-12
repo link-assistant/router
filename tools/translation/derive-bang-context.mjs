@@ -2,7 +2,7 @@
 // Output owners are joined here; executable traits and other dimensions are not.
 import {createHash} from 'node:crypto';
 import {compilationProfile} from './cfg-profile.mjs';
-import {sourceItems} from './rust-structure.mjs';
+import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {deriveFootprintSourceContext,deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 import {proveSerdeSerializeBangFootprint,assertSerdeSerializeBangFootprint} from './serde-bang-footprints.mjs';
 import {proveSerdeDeserializeBangFootprint,assertSerdeDeserializeBangFootprint} from './serde-deserialize-bang-footprints.mjs';
@@ -10,9 +10,9 @@ import {hasBuiltinDeriveBangRoute,proveBuiltinDeriveBangFootprint,assertBuiltinD
 const contexts=new WeakMap(),certificates=new WeakMap(),cachedContexts=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
-const id=(source,span)=>source+':'+span.start+':'+span.end;
+const id=(module,span)=>moduleScopeKey(module)+':'+span.start+':'+span.end;
 const pathKey=path=>JSON.stringify(path);
-const moduleKey=module=>JSON.stringify([module.file,module.path]);
+const moduleKey=moduleScopeKey;
 const tables=external=>JSON.stringify([...external].sort(([a],[b])=>a<b?-1:a>b?1:0));
 const routes=new Map([
   ['serde::Serialize',{prove:proveSerdeSerializeBangFootprint,assert:assertSerdeSerializeBangFootprint}],
@@ -49,15 +49,15 @@ export function createDeriveBangContext({deriveContext}={}){
       }catch(error){residual.push({...invocation,target:owner.target,reason:error.message});}
     }
     const allOwnersProven=actual.length>0&&selected.length===actual.length&&residual.length===0;
-    const evidence={schema:'original-invocation-bang-output-v1',source:input.source,sourceSha256:input.sourceSha256,span:input.span,itemSha256:input.itemSha256,inputCertificateDigest:input.digest,dependenciesDigest:input.dependenciesDigest,compilationProfile:input.compilationProfile,actualOwners:actual,selectedOwners:selected.map(({invocation,owner,proof,builtin})=>({invocation,target:owner.target,proofDigest:proof.digest,attributeOwnersDigest:hash(JSON.stringify(proof.attributeOwners)),...(builtin?{astOutputSink:proof.slotProofs.outputKind}:{fixedMacroDigest:hash(JSON.stringify(proof.fixedMacro))}),...(proof.outputs?{featureOutputDigests:proof.outputs.map(output=>({feature:output.feature,digest:output.outputGrammarDigest}))}:{...(proof.outputGrammarDigest?{outputGrammarDigest:proof.outputGrammarDigest}:{})})})),residualOwners:residual,dimensions:{bangMacroComplete:allOwnersProven,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false};
+    const evidence={schema:'original-invocation-bang-output-v1',source:input.source,sourceSha256:input.sourceSha256,module:input.module,sourceViewDigest:input.sourceViewDigest,span:input.span,itemSha256:input.itemSha256,inputCertificateDigest:input.digest,dependenciesDigest:input.dependenciesDigest,compilationProfile:input.compilationProfile,actualOwners:actual,selectedOwners:selected.map(({invocation,owner,proof,builtin})=>({invocation,target:owner.target,proofDigest:proof.digest,attributeOwnersDigest:hash(JSON.stringify(proof.attributeOwners)),...(builtin?{astOutputSink:proof.slotProofs.outputKind}:{fixedMacroDigest:hash(JSON.stringify(proof.fixedMacro))}),...(proof.outputs?{featureOutputDigests:proof.outputs.map(output=>({feature:output.feature,digest:output.outputGrammarDigest}))}:{...(proof.outputGrammarDigest?{outputGrammarDigest:proof.outputGrammarDigest}:{})})})),residualOwners:residual,dimensions:{bangMacroComplete:allOwnersProven,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false};
     const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});rows.push(certificate);
-    if(allOwnersProven){byId.set(id(input.source,input.span),certificate);certificates.set(certificate,{deriveContext,input,selected});}
+    if(allOwnersProven){byId.set(id({file:input.source,path:input.module},input.span),certificate);certificates.set(certificate,{deriveContext,input,selected});}
     else diagnostics.push({kind:'derive-bang-output',source:input.source,span:input.span,name:input.name,message:'original derive invocation retains unproved output owners',residualOwners:residual});
   }
-  const evidence={schema:'sealed-derive-bang-context-v1',deriveContextDigest:deriveContext.digest,dependenciesDigest:original.dependencies.digest,compilationProfile:original.compilationProfile,sources:original.modules.map(module=>({source:module.file,module:module.path,sha256:hash(module.source),configurationCondition:module.configurationCondition??null})),certificates:rows,diagnostics,generatedImplBehavior:false,scopeWideCompleteness:false};
+  const evidence={schema:'sealed-derive-bang-context-v1',deriveContextDigest:deriveContext.digest,dependenciesDigest:original.dependencies.digest,compilationProfile:original.compilationProfile,sources:original.modules.map(module=>({source:module.file,module:module.path,sha256:hash(module.source),configurationCondition:module.configurationCondition??null,sourceViewDigest:module.sourceView?.digest??null,moduleScopeKey:moduleScopeKey(module)})),certificates:rows,diagnostics,generatedImplBehavior:false,scopeWideCompleteness:false};
   // Retain parsed item snapshots only for this optional consumer, not every
   // baseline derive context. One immutable original context shares this work.
-  const canonicalModules=freeze(original.modules.map(module=>{const allItems=sourceItems(module.source);return {...module,items:allItems,allItems};}));
+  const canonicalModules=original.modules; // Private snapshots retain genuine scoped source views/items.
   const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{deriveContext,original,canonicalModules,byId,moduleSnapshots:new Map(original.modules.map(module=>[moduleKey(module),module])),externalDigest:hash(tables(original.externalModules))});cachedContexts.set(deriveContext,context);return context;
 }
 export const isDeriveBangContext=value=>!!value&&contexts.has(value);
@@ -65,6 +65,11 @@ export const isDeriveBangContext=value=>!!value&&contexts.has(value);
 // Consume the exact complete original graph/profile/external composition.
 // Return genuine parsed snapshots, preventing supplied item subsets from
 // discarding unrelated unknown macros before the normal binding walk.
+function validateItemCarrier(module,original){
+  // The authoritative original scoped selection remains private. An omitted
+  // carrier is harmless; a provided carrier cannot erase/retype its items.
+  for(const name of ['items','allItems'])if(Object.hasOwn(module,name)&&JSON.stringify(module[name])!==JSON.stringify(original[name]))throw new TypeError('Bang original scoped item carrier changed');
+}
 export function deriveBangModules(context,{deriveContext,modules,externalModules,compilationProfile:profileInput}){
   const state=contexts.get(context);
   if(!state||state.deriveContext!==deriveContext||!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Bang context requires its original complete source composition');
@@ -73,17 +78,18 @@ export function deriveBangModules(context,{deriveContext,modules,externalModules
   const seen=new Set();
   for(const module of modules){
     const key=moduleKey(module),actual=state.moduleSnapshots.get(key);
-    if(!actual||seen.has(key)||module.source!==actual.source||(module.configurationCondition??null)!==(actual.configurationCondition??null))throw new TypeError('Bang context original module/path/source/condition changed');
-    if(module.compilationProfile!==undefined&&JSON.stringify(compilationProfile(module.compilationProfile))!==JSON.stringify(context.compilationProfile))throw new TypeError('Bang module compilation profile changed');seen.add(key);
+    if(!actual||seen.has(key)||module.source!==actual.source||(module.configurationCondition??null)!==(actual.configurationCondition??null)||module.sourceView!==actual.sourceView||Object.hasOwn(module,'sourceView')!==Object.hasOwn(actual,'sourceView')||module.moduleScopeKey!==undefined&&module.moduleScopeKey!==actual.moduleScopeKey)throw new TypeError('Bang context original module/path/source/condition changed');
+    if(module.compilationProfile!==undefined&&JSON.stringify(compilationProfile(module.compilationProfile))!==JSON.stringify(context.compilationProfile))throw new TypeError('Bang module compilation profile changed');originalSourceModuleItems(module);validateItemCarrier(module,actual);seen.add(key);
   }
   return state.canonicalModules;
 }
 export function deriveBangOutputAt(context,deriveContext,module,item){
   const state=contexts.get(context);if(!state||state.deriveContext!==deriveContext)throw new TypeError('Unsealed or unrelated bang output context');
   const actualModule=state.moduleSnapshots.get(moduleKey(module));
-  if(!actualModule||actualModule.source!==module.source||(actualModule.configurationCondition??null)!==(module.configurationCondition??null))throw new TypeError('Bang invocation original module identity changed');
+  if(!actualModule||actualModule.source!==module.source||(actualModule.configurationCondition??null)!==(module.configurationCondition??null)||module.sourceView!==actualModule.sourceView||Object.hasOwn(module,'sourceView')!==Object.hasOwn(actualModule,'sourceView')||module.moduleScopeKey!==undefined&&module.moduleScopeKey!==actualModule.moduleScopeKey)throw new TypeError('Bang invocation original module identity changed');
   if(module.compilationProfile!==undefined&&JSON.stringify(compilationProfile(module.compilationProfile))!==JSON.stringify(context.compilationProfile))throw new TypeError('Bang invocation source profile changed');
-  const certificate=state.byId.get(id(module.file,{start:item.start,end:item.end}));if(!certificate)return null;
+  validateItemCarrier(module,actualModule);
+  const certificate=state.byId.get(id(module,{start:item.start,end:item.end}));if(!certificate)return null;
   const sealed=certificates.get(certificate),input=deriveFootprintAt(deriveContext,module,item);
   if(!sealed||input!==sealed.input||item.term!==input.kind||item.name!==input.name||certificate.sourceSha256!==hash(module.source)||certificate.itemSha256!==hash(module.source.slice(item.start,item.end)))throw new TypeError('Bang output no longer matches its original invocation');
   for(const selected of sealed.selected)if(selected.builtin)assertBuiltinDeriveBangFootprint(selected.proof,deriveContext,input,selected.invocation);else routes.get(selected.owner.target.join('::')).assert(selected.proof,deriveContext,input);

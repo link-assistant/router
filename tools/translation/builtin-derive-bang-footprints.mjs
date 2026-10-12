@@ -1,7 +1,7 @@
 // Bounded actual builtin generator routes. Copy and Eq close source-selected associated
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
-import {deriveFootprintOriginalContext} from './derive-footprints.mjs';
+import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
 import {attributeOwners} from './serde-bang-footprints.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal,originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText} from './builtin-derive-ast-meta.mjs';
@@ -24,9 +24,9 @@ function originalInput(context,certificate,invocation){
   if(!invocation||invocation.path.length!==1||!routes.has(invocation.path[0])||!actual.some(value=>JSON.stringify(value)===JSON.stringify(invocation)))throw new TypeError('Builtin output requires one exact original standard derive invocation');
   // This private input certificate checked standardOwner against actual macro
   // bindings; a bare name is not independently a builtin output certificate.
-  const matching=original.modules.filter(module=>module.file===certificate.source&&hash(module.source)===certificate.sourceSha256);
-  if(matching.length!==1||hash(matching[0].source.slice(certificate.span.start,certificate.span.end))!==certificate.itemSha256)throw new TypeError('Builtin route original whole source/declaration changed');
-  return {...original,context,module:matching[0],invocation,name:invocation.path[0]};
+  const module=deriveFootprintOriginalModule(context,certificate);
+  if(hash(module.source.slice(certificate.span.start,certificate.span.end))!==certificate.itemSha256)throw new TypeError('Builtin route original whole source/declaration changed');
+  return {...original,context,module,invocation,name:invocation.path[0]};
 }
 export function planBuiltinDeriveBangOutput({context,certificate,invocation}={}){
   const original=originalInput(context,certificate,invocation),route=routes.get(original.name),profile=builtinDeriveAstSourceProfile(original.dependencies);

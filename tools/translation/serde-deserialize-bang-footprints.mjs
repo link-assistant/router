@@ -2,7 +2,7 @@
 // deserialize_in_place feature configurations. No namespace hook consumes it.
 import {createHash} from 'node:crypto';
 import {deriveDependencySource} from './derive-dependencies.mjs';
-import {deriveFootprintOriginalContext} from './derive-footprints.mjs';
+import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler,inspectQuoteFragment} from './derive-quote-meta.mjs';
 import {originalFunction,selectedTemplate,boundedInput,attributeOwners,emptySerdeMacro} from './serde-bang-footprints.mjs';
 import {liftSerdeDeserializeStructRoutes,liftSerdeDeserializeInPlaceRoute} from './serde-deserialize-struct-route.mjs';
@@ -12,9 +12,7 @@ const proofs=new WeakMap(),inventories=new WeakMap();
 
 export function proveSerdeDeserializeBangFootprint({context,certificate}={}){
   const original=deriveFootprintOriginalContext(context,certificate);
-  const matches=original.modules.filter(module=>module.file===certificate.source&&hash(module.source)===certificate.sourceSha256);
-  if(matches.length!==1)throw new TypeError('Deserialize route requires its unique complete original source module');
-  const module=matches[0],source=module.source.slice(certificate.span.start,certificate.span.end);
+  const module=deriveFootprintOriginalModule(context,certificate),source=module.source.slice(certificate.span.start,certificate.span.end);
   if(hash(source)!==certificate.itemSha256)throw new TypeError('Original Deserialize input bytes changed');
   const input=boundedInput(certificate,source,'Deserialize',['deny_unknown_fields']);
   if(input.style!=='named-struct')throw new TypeError('Default Deserialize route currently requires actual named fields');
