@@ -697,12 +697,26 @@
     }
   ],
   "archive": {
-    "file": "router-759-string-bytes-74aab6e1.tar.gz",
-    "bytes": 1565401,
-    "sha256": "41f55cfe0d851d24cf98a3791101e3b983861f62769cddeed85a76eaac49dfd0",
+    "file": "router-759-string-bytes-74aab6e1.tar.xz",
+    "bytes": 122268,
+    "sha256": "5bf876af74ecde85d8097acaa4654f55adb02fbb0d323fc47b580fd03862df69",
     "members": 31,
     "hardlinks": 4,
-    "reopenedHashErrors": 0
+    "reopenedHashErrors": 0,
+    "compressionHistory": {
+      "originalGitCommit": "a5342cd07b112a75cab6f4236e078d3598c785a5",
+      "originalGitBlob": "26a372c1d29a20d91bf6e5d48a4b4dcc67e4db58",
+      "originalFile": "router-759-string-bytes-74aab6e1.tar.gz",
+      "originalBytes": 1565401,
+      "originalSha256": "41f55cfe0d851d24cf98a3791101e3b983861f62769cddeed85a76eaac49dfd0",
+      "originalReceiptSha256": "a814463f0d71e6f5e75eea48dcf4d8bee5f1e014aa2a51e9b096ab7a2fb8b9a0",
+      "uncompressedTarBytes": 5744640,
+      "uncompressedTarSha256": "d668691b20d9d807b077eac860655abaa9d88dc094f2cff370e7622832e34ae4",
+      "sameTarBytes": true,
+      "all31MembersReverified": true,
+      "xzPreset": 6,
+      "logicalBytesSaved": 1443133
+    }
   },
   "members": [
     {
