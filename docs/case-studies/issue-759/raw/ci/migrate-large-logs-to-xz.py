@@ -37,7 +37,7 @@ def migrate(task):
         with (m.ROOT/'.disk-budget.lock').open('a') as lock:
             fcntl.flock(lock,fcntl.LOCK_EX);state_path=m.ROOT/'.disk-budget-state.json';state=json.loads(state_path.read_text())
             old.unlink();state['ci_bytes']-=old_size+stale_size;state['ci_allocated_bytes']-=old_allocated+stale_allocated;state_path.write_text(json.dumps(state,indent=2)+'\n')
-        with (m.ROOT/'log-compression-migrations.jsonl').open('a') as f:f.write(json.dumps(row)+'\n')
+        with gzip.open(m.ROOT/'log-compression-migrations.jsonl.gz','at') as f:f.write(json.dumps(row)+'\n')
         records.append(row)
     return row
 tasks=[]

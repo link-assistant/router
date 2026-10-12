@@ -38,8 +38,16 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs; sha256=9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76
 // Carried constructs are data, never runtime parity evidence.
-function FILE_EXTENSIONS(): ReadonlyArray<string> {
-  return Object.freeze(Object.freeze([".rs", ".md"]));
+function ml_make_LineStatus_WithinLimit(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
+  return Object.freeze({ $: 'WithinLimit' });
+}
+
+function ml_make_LineStatus_Warning(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
+  return Object.freeze({ $: 'Warning' });
+}
+
+function ml_make_LineStatus_Violation(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
+  return Object.freeze({ $: 'Violation' });
 }
 
 const std = {
@@ -66,21 +74,5 @@ const serde_json = {
   },
 };
 
-function EXCLUDE_PATTERNS(): ReadonlyArray<string> {
-  return Object.freeze(Object.freeze(["target", ".git", "node_modules"]));
-}
-
-function ml_make_LineStatus_WithinLimit(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
-  return Object.freeze({ $: 'WithinLimit' });
-}
-
-function ml_make_LineStatus_Warning(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
-  return Object.freeze({ $: 'Warning' });
-}
-
-function ml_make_LineStatus_Violation(): Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> {
-  return Object.freeze({ $: 'Violation' });
-}
-
-export const translated: { "FILE_EXTENSIONS": ReadonlyArray<string>; "EXCLUDE_PATTERNS": ReadonlyArray<string>; "LineStatus": Readonly<{ "WithinLimit": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Warning": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Violation": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> }> } = { ["FILE_EXTENSIONS"]: FILE_EXTENSIONS(), ["EXCLUDE_PATTERNS"]: EXCLUDE_PATTERNS(), ["LineStatus"]: Object.freeze({ ["WithinLimit"]: ml_make_LineStatus_WithinLimit, ["Warning"]: ml_make_LineStatus_Warning, ["Violation"]: ml_make_LineStatus_Violation }) };
-export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs","sourceSha256":"9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76","executable":3,"executableFunctions":0,"executableConstants":2,"executableTypes":1,"executableConstructors":3,"carried":28,"preserved":31,"runtimeParity":false};
+export const translated: { "LineStatus": Readonly<{ "WithinLimit": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Warning": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }>; "Violation": () => Readonly<{ readonly "$": "WithinLimit" }> | Readonly<{ readonly "$": "Warning" }> | Readonly<{ readonly "$": "Violation" }> }> } = { ["LineStatus"]: Object.freeze({ ["WithinLimit"]: ml_make_LineStatus_WithinLimit, ["Warning"]: ml_make_LineStatus_Warning, ["Violation"]: ml_make_LineStatus_Violation }) };
+export const provenance = {"sourcePath":"docs/case-studies/issue-759/raw/sources/rust-ai-driven-development-pipeline-template/files/scripts/check-file-size.rs","sourceSha256":"9f1a5475031bc1772f95620356ac3233ed488cadc07fecf5ae1778a95d8eaa76","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":3,"carried":30,"preserved":31,"runtimeParity":false};

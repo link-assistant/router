@@ -63,7 +63,7 @@ def fetch(endpoint, path, binary=False):
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     if BUDGET_EXHAUSTED.is_set() and binary:
         with LOCK:
-            with (ROOT/'source-manifest.jsonl').open('a') as f: f.write(json.dumps({'endpoint':'https://api.github.com/'+endpoint,'retrieved_at':timestamp,'path':str(path.relative_to(ROOT)),'status':'not_downloaded_evidence_budget_exhausted'})+'\n')
+            with gzip.open(ROOT/'source-manifest.jsonl.gz','at') as f: f.write(json.dumps({'endpoint':'https://api.github.com/'+endpoint,'retrieved_at':timestamp,'path':str(path.relative_to(ROOT)),'status':'not_downloaded_evidence_budget_exhausted'})+'\n')
         return None
     retries=[]
     for retry in range(5):
@@ -96,7 +96,7 @@ def fetch(endpoint, path, binary=False):
         item['sha256'] = hashlib.sha256(path.read_bytes()).hexdigest()
     with LOCK:
         MANIFEST.append(item)
-        with (ROOT/'source-manifest.jsonl').open('a') as f: f.write(json.dumps(item)+'\n')
+        with gzip.open(ROOT/'source-manifest.jsonl.gz','at') as f: f.write(json.dumps(item)+'\n')
     return value
 
 def paginate(endpoint, directory, name, key=None):

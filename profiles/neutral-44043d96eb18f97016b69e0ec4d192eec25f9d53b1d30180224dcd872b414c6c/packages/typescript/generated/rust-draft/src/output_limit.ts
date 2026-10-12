@@ -65,7 +65,7 @@ function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';f
 function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>boolean, mode:'is_some_and'): boolean;
 function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...values: any[]) => any, mode: string) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
-import { stringLines as ml_str_lines, stringNext as ml_str_next, stringJoin as ml_str_join } from "../runtime/string-iterator-runtime.mjs";
+import { stringLines as ml_str_lines, stringWhitespace as ml_str_split_whitespace, stringNext as ml_str_next, stringJoin as ml_str_join } from "../runtime/string-iterator-runtime.mjs";
 
 function* ml_router_filter_map<T, U>(values: Iterable<T>, transform: (value: T) => Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>): IterableIterator<U> { for (const value of values) { const result = transform(value); if (result.$ === "Some") yield result.field0; } }
 
@@ -142,7 +142,7 @@ function rp_6f75747075745f6c696d69742e646174615f7061796c6f6164(block: string): R
     })();
     const ml_text_80 = "data:";
     return (ml_text_79.startsWith(ml_text_80)?Object.freeze({ $: 'Some', field0: ml_text_79.slice(ml_text_80.length) }):Object.freeze({ $: 'None' }));
-  })(), (ml_standard_callback_80_0) => { return (ml_standard_callback_80_0).replace(/^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/gu, ''); }); })), "\n");
+  })(), (ml_standard_callback_80_0) => { return (ml_standard_callback_80_0).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+/gu, ''); }); })), "\n");
   return ml_host_bool_then_some(!(payload.length === 0), payload);
 }
 

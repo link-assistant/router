@@ -1,4 +1,5 @@
 import {types} from 'node:util';
+import {isRustWhitespaceCodeUnit} from './whitespace-data.mjs';
 const codeUnit=Function.call.bind(String.prototype.charCodeAt);
 const slice=Function.call.bind(String.prototype.slice);
 const cursors=new WeakMap();
@@ -14,25 +15,39 @@ export function requireScalarString(value) {
   }
   return value;
 }
+function cursorFor(step){
+  let advances=0;
+  const advance=()=>{advances++;return step();};
+  const iterator=Object.freeze({next:advance,[Symbol.iterator](){return this;}});
+  cursors.set(iterator,{advance,get advances(){return advances;},consumed:false});return iterator;
+}
 export function stringLines(value) {
   requireScalarString(value);
-  let at=0,advances=0;
-  const advance=()=>{
-    advances++;
+  let at=0;
+  return cursorFor(()=>{
     if(at>=value.length)return {done:true,value:undefined};
     const start=at;
     while(at<value.length&&codeUnit(value,at)!==10)at++;
     let end=at;
     if(at<value.length){at++;if(end>start&&codeUnit(value,end-1)===13)end--;}
     return {done:false,value:slice(value,start,end)};
-  };
-  const iterator=Object.freeze({next:advance,[Symbol.iterator](){return this;}});
-  cursors.set(iterator,{advance,get advances(){return advances;},consumed:false});return iterator;
+  });
+}
+export function stringWhitespace(value){
+  requireScalarString(value);
+  let at=0;
+  return cursorFor(()=>{
+    while(at<value.length&&isRustWhitespaceCodeUnit(codeUnit(value,at)))at++;
+    if(at>=value.length)return {done:true,value:undefined};
+    const start=at;
+    while(at<value.length&&!isRustWhitespaceCodeUnit(codeUnit(value,at)))at++;
+    return {done:false,value:slice(value,start,at)};
+  });
 }
 export function stringNext(value) {
   // WeakMap lookup reads no caller property, including proxy traps.
   const cursor=cursors.get(value);
-  if(!cursor||cursor.consumed||cursor.advances!==0)throw new TypeError('next requires one fresh private checked line cursor');
+  if(!cursor||cursor.consumed||cursor.advances!==0)throw new TypeError('next requires one fresh private checked str cursor');
   cursor.consumed=true;
   const result=cursor.advance();return result.done?none:Object.freeze({$:'Some',field0:result.value});
 }

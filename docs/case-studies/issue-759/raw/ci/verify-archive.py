@@ -28,7 +28,7 @@ for manifest in ROOT.rglob('*manifest.json*'):
   expected=entry.get('decoded_sha256',entry.get('scrubbed_content_sha256'))
   if expected and expected!=digest.hexdigest():errors.append({'path':entry['path'],'error':'decoded_sha256_mismatch'})
   counts[p.suffix]+=1
-for line in (ROOT/'metadata-compression-provenance.jsonl').open():
+for line in gzip.open(ROOT/'metadata-compression-provenance.jsonl.gz','rt'):
  entry=json.loads(line);p=ROOT/entry['stored_path'];counts['metadata_migration_receipts']+=1
  if not p.exists():errors.append({'path':entry['stored_path'],'error':'missing_migrated_metadata'});continue
  update=updates.get(entry['stored_path'])

@@ -18,6 +18,6 @@ for manifest in list(m.ROOT.glob('*--*/runs/*/attempt-*/expanded-log-manifest.js
             path.unlink();state['ci_bytes']-=len(raw)
             if 'ci_allocated_bytes' in state:state['ci_allocated_bytes']-=allocated
             state_path.write_text(json.dumps(state,indent=2)+'\n')
-            with (m.ROOT/'metadata-compression-provenance.jsonl').open('a') as output:output.write(json.dumps(item)+'\n')
+            with gzip.open(m.ROOT/'metadata-compression-provenance.jsonl.gz','at') as output:output.write(json.dumps(item)+'\n')
         count+=1;saved+=len(raw)-len(packed)
 print(json.dumps({'compressed_completed_metadata_files':count,'bytes_saved':saved}))

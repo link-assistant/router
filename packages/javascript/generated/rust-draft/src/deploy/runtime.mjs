@@ -15,6 +15,16 @@ const ml_host_value_schema_6cda2b703e08fb8b8766349c5c03f01c1448dddb9ec13fa281352
 
 const ml_host_value_refinements_6cda2b703e08fb8b8766349c5c03f01c1448dddb9ec13fa2813520f59b8614b1 = new Map([]);
 
+import { stringLines as ml_str_lines, stringWhitespace as ml_str_split_whitespace, stringNext as ml_str_next, stringJoin as ml_str_join } from "../../runtime/string-iterator-runtime.mjs";
+
+function ml_router_collect(values) { return Object.freeze(Array.from(values)); }
+
+import { stringSplitCharacter as ml_csv_split, stringSplitNext as ml_csv_split_next, allocateStringItem as ml_csv_allocate } from "../../runtime/csv-string-runtime.mjs";
+
+function* ml_router_map(values, transform) { for (const value of values) yield transform(value); }
+
+function* ml_router_filter(values, predicate) { for (const value of values) if (predicate(value)) yield value; }
+
 function ml_make_ContainerState_Absent() {
   return Object.freeze({ $: 'Absent' });
 }
@@ -67,6 +77,16 @@ function ml_make_Docker_Docker() {
   return Object.freeze({ $: "Docker" });
 }
 
+function rp_6465706c6f792e72756e74696d652e636f6d70616374(text) {
+  if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_str_join(ml_router_collect(ml_str_split_whitespace(text)), " ");
+}
+
+function rp_6465706c6f792e72756e74696d652e70617273655f6e616d6573(rendered) {
+  if (!(typeof rendered === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(rendered))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_collect(ml_router_map(ml_router_filter(ml_router_map(ml_str_lines(rendered), (ml_standard_callback_28_0) => { return (ml_standard_callback_28_0).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''); }), (name) => { return !(name.length === 0); }), (ml_standard_callback_29_0) => { return ml_csv_allocate(ml_standard_callback_29_0); }));
+}
+
 function rp_6465706c6f792e72756e74696d652e69735f616273656e74(error) {
   if (!(typeof error === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(error))) throw new TypeError('argument outside supported Rust value domain');
   const lowered = (error).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
@@ -85,5 +105,5 @@ function rp_6465706c6f792e72756e74696d652e69735f616273656e74(error) {
   })());
 }
 
-export const translated = { ["ContainerState"]: Object.freeze({ ["Absent"]: ml_make_ContainerState_Absent, ["Running"]: ml_make_ContainerState_Running, ["Stopped"]: ml_make_ContainerState_Stopped }), ["RunSpec"]: ml_make_RunSpec_RunSpec, ["Docker"]: ml_make_Docker_Docker, ["is_absent"]: rp_6465706c6f792e72756e74696d652e69735f616273656e74 };
-export const provenance = {"sourcePath":"src/deploy/runtime.rs","sourceSha256":"f532645841e7f32dc2d9f01cdeb9b75eae721f593e29b1a866065269bd09ad04","executable":4,"executableFunctions":1,"executableConstants":0,"executableTypes":3,"executableConstructors":5,"carried":11,"preserved":16,"runtimeParity":false};
+export const translated = { ["ContainerState"]: Object.freeze({ ["Absent"]: ml_make_ContainerState_Absent, ["Running"]: ml_make_ContainerState_Running, ["Stopped"]: ml_make_ContainerState_Stopped }), ["RunSpec"]: ml_make_RunSpec_RunSpec, ["Docker"]: ml_make_Docker_Docker, ["compact"]: rp_6465706c6f792e72756e74696d652e636f6d70616374, ["parse_names"]: rp_6465706c6f792e72756e74696d652e70617273655f6e616d6573, ["is_absent"]: rp_6465706c6f792e72756e74696d652e69735f616273656e74 };
+export const provenance = {"sourcePath":"src/deploy/runtime.rs","sourceSha256":"f532645841e7f32dc2d9f01cdeb9b75eae721f593e29b1a866065269bd09ad04","executable":6,"executableFunctions":3,"executableConstants":0,"executableTypes":3,"executableConstructors":5,"carried":9,"preserved":16,"runtimeParity":false};
