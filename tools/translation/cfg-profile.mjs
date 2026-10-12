@@ -47,7 +47,7 @@ export function itemConfiguration(tokens,profile){
     if(name==='cfg_attr'){
       try{
         const input=inspectConditionalAttribute(tokens.slice(body,end)),predicate=evaluateConfiguration(input.predicate,profile);
-        const inert=predicate.diagnostics.length===0&&input.inertDeadCodeLint;
+        const inert=predicate.diagnostics.length===0&&input.inertBuiltinLint;
         const expansion=predicate.value===false?'absent':inert?'inert-lint-alternatives':'unresolved';
         evaluation={value:expansion==='unresolved'?null:true,predicate,expansion,inputs:input.attributes,profile:CONDITIONAL_ATTRIBUTE_PROFILE,configurationSelected:predicate.value!==null,diagnostics:expansion==='unresolved'?[...predicate.diagnostics,{message:'active or unknown cfg_attr expansion requires checked attribute transformation',span:range(tokens.slice(begin,at))}]:[]};
       }catch(error){evaluation={value:null,diagnostics:[{message:error.message,span:range(tokens.slice(begin,at))}]};}

@@ -15,6 +15,7 @@ import {hasSourceLetChain,parseSourceLetChain,requireSourceLetChain} from './let
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
+const KNOWN_CONSTRUCTORS=Symbol('checked immutable constructor locals');
 export function immutableBinding(type,checker,active=new Set()) {
   if(type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||active.size>=32)return false;
   if(type.rustReference)return type.rustReference.kind==='shared'&&Boolean(type.rustReference.pointee);
@@ -244,6 +245,11 @@ export function withPatternControlParser(Base=ControlRustParser) {
 
 export function withPatternControlChecker(Base=ControlChecker) {
   return class extends Base {
+    bindingConstructorEnvironment(env,name,value,mutable){
+      const facts=new Map(env.get(KNOWN_CONSTRUCTORS)??[]);facts.delete(name);
+      if(!mutable&&value.k==='ctor')facts.set(name,{data:value.data,ctor:value.ctor});
+      return new Map(env).set(KNOWN_CONSTRUCTORS,facts);
+    }
     #checkedLetChain(node,env,path,expected,allowLiteral){
       env=this.contextEnvironment(node,env,expected);
       if(node.k!=='routerIf'&&!sameType(expected??{},UNIT))throw unsupported('value-producing let chain','requires a separately checked result join; only unit statement chains are admitted',node.span);
@@ -266,7 +272,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       const lower=(index,inner,continuation)=>{
         if(index===node.cond.clauses.length){
           const then=coerce(this.expr(node.then,inner,path,UNIT,allowLiteral),UNIT,this.language,node.span);
-          return {k:'routerSet',target:flagValue(),value:{k:'bool',value:true,type:BOOL,span:node.span},body:then,type:UNIT,span:node.span};
+          return {k:'routerSet',target:flagValue(),value:{k:'lit',value:true,type:BOOL,span:node.span},body:then,type:UNIT,span:node.span};
         }
         const clause=node.cond.clauses[index];
         if(containsExit(clause.subject))throw unsupported('let-chain subject control','nonlocal exits require their own statement lowering',clause.subject.span);
@@ -281,6 +287,10 @@ export function withPatternControlChecker(Base=ControlChecker) {
         const temporary=fresh('ml_pattern_chain_'),variable={k:'var',name:temporary,type:subject.type,span:clause.span};
         let bound=new Map(inner);for(const binding of plan.bindings)bound=this.bindingEnvironment(bound,binding.name,binding.type,false);
         let then=lower(index+1,bound,unit());
+        // Check the complete continuation above even when its source pattern
+        // cannot match a genuinely checked immutable constructor initializer.
+        const known=clause.subject.k==='name'&&clause.subject.path.length===1?inner.get(KNOWN_CONSTRUCTORS)?.get(clause.subject.path[0]):null;
+        if(known?.data===subject.type.name&&pattern.k==='ctor'&&known.ctor!==pattern.ctor)return {k:'let',name:temporary,value:subject,body:continuation,mutable:false,type:continuation.type,span:clause.span,patternControl:{plan,subjectType:subject.type,kind:'let-chain-clause',impossibleKnownConstructor:known.ctor}};
         then=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??clause.span}),then);
         let cond=this.patternTest(plan.test,variable,plan.projectionPaths);
         if(subject.type.kind==='data')cond={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},right:cond,type:BOOL};
@@ -288,7 +298,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
         return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:conditional.type,span:clause.span,patternControl:{plan,subjectType:subject.type,kind:'let-chain-clause'}};
       };
       const body=lower(0,new Map(env),fallback);
-      return {k:'let',name:flag,value:{k:'bool',value:false,type:BOOL,span:node.cond.span},body,mutable:true,type:body.type,span:node.span,constEligible:false,patternControl:{kind:'let-chain',sourceCondition:structuredClone(node.cond.sourceCondition),subjectType:BOOL}};
+      return {k:'let',name:flag,value:{k:'lit',value:false,type:BOOL,span:node.cond.span},body,mutable:true,type:body.type,span:node.span,constEligible:false,patternControl:{kind:'let-chain',sourceCondition:structuredClone(node.cond.sourceCondition),subjectType:BOOL}};
     }
     resolveType(type,path,span) {
       const resolved=super.resolveType(type,path,span);

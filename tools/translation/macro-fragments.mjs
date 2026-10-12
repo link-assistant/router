@@ -45,6 +45,9 @@ export function boundedMacroExpression(trees,start,typeEnd,depth=0) {
   if(path)while(text(trees[at])==='::') {
     if(!identifier(trees[at+1])||reserved.has(text(trees[at+1])))return null;at+=2;
   }
+  // A macro invocation is one syntactic expression with opaque balanced TT
+  // input. Capturing it proves no expansion, callee or runtime behavior.
+  if(path&&text(trees[at])==='!')return trees[at+1]?.kind==='group'?at+2:null;
   // Calling a literal is a trait obligation outside this syntactic profile.
   if(path&&trees[at]?.kind==='group'&&trees[at].delimiter==='(') {
     if(!tupleEnd(trees[at],typeEnd,depth+1))return null;at++;

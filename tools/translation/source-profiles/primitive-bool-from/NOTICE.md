@@ -45,3 +45,10 @@ include actual f64 to_bits/from_bits, generic trait instantiation, signed/contro
 casts, tables/indexing, shortest-decimal/tie selection, target/SIMD/assembly and
 unsafe byte/UTF8 output. Value Float, actual float_roundtrip decode, full trait,
 whole-core, native parity and parser admission flags remain unchanged/false.
+
+The integrated repair retains every original manifest pin and adds the complete
+Rust 1.89 core crate root in core-root-profile.json. Its explicit
+#[prelude_import] route supplies From to convert/num.rs; the original numeric
+module contains no use super::{From,TryFrom} declaration. The new compressed
+root, SHA-256 and Git blob identity are independently checked. Original
+licenses are reused. This namespace evidence does not translate the whole core.

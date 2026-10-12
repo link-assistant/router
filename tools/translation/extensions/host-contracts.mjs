@@ -1,5 +1,7 @@
 import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs';
 import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasSourceFixedFrom} from './primitive-from-source.mjs';
+import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,requirePrimitiveOperator} from './primitive-operators.mjs';
+import {sourcePrimitiveAlias} from './primitive-type-aliases.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
 import {iteratorReceiverExpected} from './iterators.mjs';
 import {itemConfiguration} from '../cfg-profile.mjs';
@@ -125,6 +127,7 @@ export function hostData() {
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
 export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser))))))) {
+  comparison(path,options){return parsePrimitiveComparison(this,path,options);}
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
   genericType(kind,types,range){const type=super.genericType(kind,types,range),entry=this.genericTypes.get(type.path.at(-1));return {...type,rustStandardGeneric:{kind,arguments:structuredClone(entry.standardGeneric.arguments)}};}
   attributes(options={}) {
@@ -243,6 +246,10 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
     }
     if(first.kind==='identifier'){
       const segments=[first.value];let offset=1;while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
+      if(this.builtinShadow(first.value)){
+        const alias=sourcePrimitiveAlias(this,segments,{start:first.start,end:c.peek(offset-1).end});
+        if(alias){for(let index=0;index<offset;index++)c.next();return alias;}
+      }
       const kind=this.registeredGenericKind(segments);
       if(kind&&(c.is('<',offset)||c.is('::',offset)&&c.is('<',offset+1))){
         for(let index=0;index<offset;index++)c.next();c.eat('::');c.expect('<','registered standard generic');const types=[this.type()];if(kind==='Result'){c.expect(',','Result');types.push(this.type());}c.expect('>','registered standard generic');
@@ -436,6 +443,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
+    if(node.k==='routerPrimitiveShift')return checkedPrimitiveShift(this,node,env,path,expected);
     if(node.k==='routerReverseStringFind'){
       const object=this.expr(node.object,env,path),inherent=this.resolvedMethod(object.type,'rfind','shared');
       if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
@@ -484,6 +492,13 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     if(node.k==='cast') {
       const target=this.resolveType(node.to,path,node.span);
       if(target.kind==='float')return checkedFixedF64Cast(this.expr(node.arg,env,path),target,node.span);
+      if(target.kind==='fixed'&&/^([iu])(8|16|32|64|128)$/u.test(target.rustPrimitiveName??'')){
+        const value=this.expr(node.arg,env,path);
+        if(value.type.kind==='fixed'&&/^([iu])(8|16|32|64|128)$/u.test(value.type.rustPrimitiveName??'')){
+          const input=fixedBounds(value.type),output=fixedBounds(target);
+          if(input.min<output.min||input.max>output.max)return checkedPrimitiveCast(value,target,node.span);
+        }
+      }
     }
     if(node.k==='routerPrimitiveFloatConstant')return checkedPrimitiveFloatConstant(node);
     if(node.k==='routerPrimitiveFloatCall') {
@@ -611,15 +626,15 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     const program=super.program(surface);
     const sourceContext=checkedSourceContext(program);
     program.items.push(...this.instantiations.items);
-    const forbidden=(node,seen=new Set())=>{
+    const forbidden=(node,seen=new Set(),runtimeConstFunction=false)=>{
       if(!node||typeof node!=='object')return false;
       if(node.k==='routerAlgebraicOperation'&&node.op==='unwrap_or'||node.k==='routerStringOperation')return true;
-      if(node.constEligible===false||['routerEffectCall','routerFutureCall','routerAwait','routerOptionCallback','routerFor','routerIteratorOperation'].includes(node.k))return true;
+      if(node.constEligible===false&&!(runtimeConstFunction&&node.patternControl?.kind==='let-chain')||['routerEffectCall','routerFutureCall','routerAwait','routerOptionCallback','routerFor','routerIteratorOperation'].includes(node.k))return true;
       if(node.k==='routerHostCall'&&!(node.contract??HOST_CONTRACTS.find(contract=>contract.id===node.id))?.constEligible)return true;
       if(['call','routerFutureCall'].includes(node.k)&&!seen.has(node.fn)){seen.add(node.fn);const entry=program.declarations.get(node.fn);if(!entry||!entry.constant&&!entry.constFunction||forbidden(entry.body,seen))return true;}
-      return Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(item=>forbidden(item,seen)):forbidden(value,seen)));
+      return Object.entries(node).some(([key,value])=>!['type','patternControl'].includes(key)&&(Array.isArray(value)?value.some(item=>forbidden(item,seen,runtimeConstFunction)):forbidden(value,seen,runtimeConstFunction)));
     };
-    for(const entry of program.declarations.values())if((entry.constant||entry.constFunction)&&forbidden(entry.body))throw unsupported('non-const host operation','pure does not imply Rust const eligibility',entry.span);
+    for(const entry of program.declarations.values())if((entry.constant||entry.constFunction)&&forbidden(entry.body,new Set(),!entry.constant&&entry.constFunction))throw unsupported('non-const host operation','pure does not imply Rust const eligibility',entry.span);
     const sourceLinks=bindCheckedSourceLinks(program,sourceContext,{targetProfile:CONSTANT_EVALUATION_PROFILE});
     for(const entry of program.declarations.values())if(entry.constant){
       const result=evaluateCheckedConstant(program,entry.fullName,{sourceLinks,contracts:new Map(HOST_CONTRACTS.map(contract=>[contract.id,contract]))});
@@ -630,7 +645,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
   }
 }
 export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from','ml_integer_cast','ml_integer_shift'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
@@ -660,6 +675,12 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
   expr(node) {
+    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift'].includes(node.k)){
+      const proof=requirePrimitiveOperator(node);this.primitiveOperators=true;
+      this.state.encode('rust-primitive-integer-operators','Actual by-value primitive integer cast and shift nodes, exact two-complement BigInt ABI and checked shift counts; no trait or pointer authority.');
+      if(node.k==='routerPrimitiveIntegerCast')return `ml_integer_cast(${this.expr(node.value)}, ${node.value.type.bits}, ${node.value.type.signed}, ${node.type.bits}, ${node.type.signed})`;
+      return `ml_integer_shift(${this.expr(node.left)}, ${this.expr(node.right)}, ${node.type.bits}, ${node.type.signed}, ${node.right.type.bits}, ${node.right.type.signed}, ${JSON.stringify(proof.operation)})`;
+    }
     if(node.k==='routerPinnedStandardBody'){requirePinnedStandardBody(node,HostRustParser,{Checker:HostChecker,program:this.program});return this.expr(node.body);}
     if(node.sourceByteLiteral)requireByteLiteral(node,true);
     if(node.k==='routerReverseSplitFind'){requireReverseStringProof(node);this.reverseStrings=true;return `ml_reverse_split_find(${this.expr(node.base.object)}, ${JSON.stringify(node.base.delimiter)}, Object.freeze([${node.maps.map(map=>this.expr(map)).join(', ')}]), ${this.expr(node.predicate)})`;}
@@ -716,6 +737,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   }
   file() {
     const result=super.file(),preludes=[...result.preludes];
+    if(this.primitiveOperators)preludes.unshift(`import { integerCast as ml_integer_cast, integerShift as ml_integer_shift } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'primitive-operator-runtime.mjs'))};`);
     if(this.primitiveBoolFrom)preludes.unshift(`import { primitiveBoolFrom as ml_primitive_bool_from } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'primitive-bool-from-runtime.mjs'))};`);
     if(this.stringIterators)preludes.unshift(`import { stringLines as ml_str_lines, stringWhitespace as ml_str_split_whitespace, stringNext as ml_str_next, stringJoin as ml_str_join } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'string-iterator-runtime.mjs'))};`);
     if(this.csvStrings)preludes.unshift(`import { stringSplitCharacter as ml_csv_split, stringSplitNext as ml_csv_split_next, allocateStringItem as ml_csv_allocate } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'csv-string-runtime.mjs'))};`);

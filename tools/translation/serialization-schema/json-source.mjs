@@ -85,7 +85,7 @@ function selectMethod(input,selection,features) {
   if(owners.length!==1)throw new TypeError('External trait requires one exact original impl owner');
   const owner=owners[0],t=tokens(owner),open=t.find(token=>token.text==='{'),close=t.at(-1);
   if(!open||close.text!=='}')throw new TypeError('External impl needs its complete original body');
-  const candidates=sourceItems(input.source.slice(open.end,close.start)).filter(item=>item.term==='fn'&&item.name===selection.method&&itemConfiguration(item.tokens,compilationProfile({flags:{test:false},values:{feature:features}})).status==='active');
+  const candidates=sourceItems(input.source.slice(open.end,close.start)).filter(item=>item.term==='fn'&&item.name===selection.method&&itemConfiguration(item.tokens,compilationProfile({flags:{test:false},values:{feature:features},closedKeys:['feature']})).status==='active');
   if(candidates.length!==1)throw new TypeError('External trait requires one actual feature-selected method');
   const member=candidates[0],mt=tokens(member),body=mt.find(token=>token.text==='{'),end=mt.at(-1),start=open.end+member.start;
   if(!body||end.text!=='}')throw new TypeError('External method needs its complete original body');
@@ -110,7 +110,7 @@ export function captureJsonSerializationSources({manifest,lock,deriveDependencie
     if(decl.length!==1)throw new TypeError('External JSON type needs its one original declaration');
     const layout=originalLayout(decl[0]),localLayouts=[];
     for(const field of layout.fields??[])if(field.typeTokens.length===1) {
-      const name=field.typeTokens[0],items=sourceItems(input.source).filter(item=>['struct','enum'].includes(item.term)&&item.name===name&&itemConfiguration(item.tokens,compilationProfile({flags:{test:false},values:{feature:features.features}})).status==='active');
+      const name=field.typeTokens[0],items=sourceItems(input.source).filter(item=>['struct','enum'].includes(item.term)&&item.name===name&&itemConfiguration(item.tokens,compilationProfile({flags:{test:false},values:{feature:features.features},closedKeys:['feature']})).status==='active');
       if(items.length>1)throw new TypeError('External local representation has ambiguous original owners');
       if(items.length===1)localLayouts.push({qualifiedOwner:[...type.declaration.qualifiedOwner.slice(0,-1),name],span:{start:items[0].start,end:items[0].end,unit:'utf16'},sha256:hash(input.source.slice(items[0].start,items[0].end)),layout:originalLayout(items[0])});
     }

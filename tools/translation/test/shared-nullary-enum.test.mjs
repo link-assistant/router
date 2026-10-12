@@ -86,7 +86,7 @@ test('payload empty-tuple record conditional and unproved receiver shapes remain
   ]){const result=project({'src/lib.rs':original});assert.equal(result.meta.checkedMethods.some(row=>row.name==='Mode.bad'),false,original);assert.equal(result.meta.executable.some(row=>row.name==='bad'),false,original);assert.ok(result.meta.refused.length,original);}
 });
 test('original linked enum evidence denies cloned resealed accessor and proxy layouts without calls',()=>{
-  const surface=parseRust('pub enum Mode{On,Off}'),entry=surface.items.find(item=>item.k==='data'),evidence=originalParsedDeclarationEvidence(entry);assert.ok(evidence);assert.ok(Object.isFrozen(evidence));
+  const surface=parseRust('pub enum Mode{On,Off}fn main(){}'),entry=surface.items.find(item=>item.k==='data'),evidence=originalParsedDeclarationEvidence(entry);assert.ok(evidence);assert.ok(Object.isFrozen(evidence));
   let callbacks=0;const proxy=new Proxy(entry,{get(){callbacks++;throw Error('get');},ownKeys(){callbacks++;throw Error('keys');},getPrototypeOf(){callbacks++;throw Error('prototype');},getOwnPropertyDescriptor(){callbacks++;throw Error('descriptor');}});
   assert.equal(originalParsedDeclarationEvidence(proxy),null);assert.equal(originalParsedDeclarationEvidence(structuredClone(entry)),null);
   const previous=Object.getOwnPropertyDescriptor(entry,'ctors');Object.defineProperty(entry,'ctors',{configurable:true,enumerable:true,get(){callbacks++;return [];}});
@@ -116,7 +116,7 @@ test('original linked enum evidence denies cloned resealed accessor and proxy la
   assert.equal(callbacks,0);
 });
 test('raw public method and enum metadata cannot mint a private shared receiver admission',()=>{
-  let callbacks=0;const surface=parseRust('pub enum Mode{On,Off}pub fn probe(v:&Mode)->bool{matches!(v,Mode::On)}');
+  let callbacks=0;const surface=parseRust('pub enum Mode{On,Off}pub fn probe(v:&Mode)->bool{matches!(v,Mode::On)}fn main(){}');
   const fn=surface.items.find(item=>item.k==='fn');fn.sourceMethodProof={schema:'original-method-semantic-source-v1',copyAuthority:false};
   assert.throws(()=>new HostChecker('Rust',[]).program(surface),/copied|unsealed|fabricated/);
   const cloned=structuredClone(surface);Object.defineProperty(cloned.items[1],'sourceMethodProof',{enumerable:true,get(){callbacks++;return fn.sourceMethodProof;}});

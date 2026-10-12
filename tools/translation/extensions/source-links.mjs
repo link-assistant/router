@@ -122,7 +122,7 @@ function originalContext(source) {
 function relocatedSyntax(value,offset) {
   if(Array.isArray(value))return value.map(item=>relocatedSyntax(item,offset));
   if(!value||typeof value!=='object')return value;
-  return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof'].includes(key)?item:key==='span'&&item?{start:item.start+offset,end:item.end+offset}:relocatedSyntax(item,offset)]));
+  return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof'].includes(key)?item:['span','subjectSyntaxSpan','patternSpan'].includes(key)&&item?{start:item.start+offset,end:item.end+offset}:relocatedSyntax(item,offset)]));
 }
 function verifyRelocatedSyntax(entry,semantic,offset) {
   if(!Number.isSafeInteger(offset)||offset<0)fail('source relocation requires an exact nonnegative offset');

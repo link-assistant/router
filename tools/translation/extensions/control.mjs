@@ -205,7 +205,8 @@ export class ControlChecker extends StringChecker {
       if (node.mutable && !scalar(value.type)) throw unsupported('mutable aggregate', 'mutable aggregate ownership and aliases need a separate runtime contract', node.span);
       const mutable = new Set(env.get(MUTABLE) ?? []);
       if (node.mutable) mutable.add(node.name); else mutable.delete(node.name);
-      const inner = new Map(env).set(node.name, value.type).set(MUTABLE, mutable);
+      let inner = new Map(env).set(node.name, value.type).set(MUTABLE, mutable);
+      inner=this.bindingConstructorEnvironment?.(inner,node.name,value,node.mutable??false)??inner;
       const body = checkNext(node.body, inner);
       return { k: 'let', name: node.name, value, body, mutable: node.mutable ?? false, type: body.type, span: node.span };
     }

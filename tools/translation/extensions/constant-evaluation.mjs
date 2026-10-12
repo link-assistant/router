@@ -3,9 +3,10 @@
 import {createHash} from 'node:crypto';
 import {types as utilTypes} from 'node:util';
 import {copyMetadata,snapshotMap,ownData,checkedSourceEvidence,metadataDigest,ordinal} from './source-links.mjs';
+import {requirePrimitiveOperator} from './primitive-operators.mjs';
 
 export const CONSTANT_EVALUATION_PROFILE=Object.freeze({schemaVersion:1,rustVersion:'1.89.0',pointerBits:64,
-  arithmetic:'checked fixed integers',casts:'value-preserving fixed ranges only',shifts:'unsupported',
+  arithmetic:'checked fixed integers',casts:'value-preserving fixed ranges and checked primitive two-complement as',shifts:'checked actual primitive shifts with count overflow',
   arithmeticSource:'https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/ops/arith.rs',
   arithmeticSha256:'3a4a38939d509b4df7b5942a5e7fc7e1bd60e7d122b0ee48eda3b650b462d09b',
   timeSource:'https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/time.rs',
@@ -64,6 +65,8 @@ function children(node) {
     case 'let':return [node.value,node.body];
     case 'if':return [node.cond,node.then,node.else];
     case 'binary':return [node.left,node.right];
+    case 'routerPrimitiveIntegerShift':return [node.left,node.right];
+    case 'routerPrimitiveIntegerCast':return [node.value];
     case 'unary':case 'cast':return [node.arg];
     case 'ctor':case 'call':case 'routerHostCall':return node.args;
     case 'array':return node.items;
@@ -158,6 +161,7 @@ class Evaluator {
       if(arm.pattern.k==='ctor'){this.layout(arm.pattern.data);if(node.scrutinee?.type?.name!==arm.pattern.data)refuse('constant match constructor owner differs from its checked subject',node);}
     }
     if(node.k==='routerSharedArrayLiteral'&&!node.arrayBorrowProof?.verified)refuse('constant array reference requires its separate source borrow proof',node);
+    if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift'].includes(node.k))requirePrimitiveOperator(node);
     const operands=children(node);if(!Array.isArray(operands))refuse('constant operands must be a checked array',node);
     for(const operand of operands)this.eligibleNode(operand,depth+1);
   }
@@ -208,6 +212,16 @@ class Evaluator {
         refuse('constant unary operation has no checked scalar semantics',node);break;
       }
       case 'binary':return this.binary(node,env,depth);
+      case 'routerPrimitiveIntegerCast':{
+        requirePrimitiveOperator(node);const value=this.evaluate(node.value,env,depth+1);
+        return result(node.type.signed?BigInt.asIntN(node.type.bits,value.value):BigInt.asUintN(node.type.bits,value.value));
+      }
+      case 'routerPrimitiveIntegerShift':{
+        const proof=requirePrimitiveOperator(node),left=this.evaluate(node.left,env,depth+1),right=this.evaluate(node.right,env,depth+1);
+        if(right.value<0n||right.value>=BigInt(node.type.bits))panic('constant primitive shift count overflow',node);
+        const value=proof.operation==='<<'?left.value<<right.value:left.value>>right.value;
+        return result(node.type.signed?BigInt.asIntN(node.type.bits,value):BigInt.asUintN(node.type.bits,value));
+      }
       case 'cast':{
         const arg=this.evaluate(node.arg,env,depth+1),from=bounds(arg.type),to=bounds(node.to);
         if(node.flavor!=='exact'||from.min<to.min||from.max>to.max||arg.type.rustReference||node.to.rustReference)refuse('constant cast needs proven value-preserving fixed ranges',node);

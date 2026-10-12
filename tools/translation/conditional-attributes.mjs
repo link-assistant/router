@@ -61,5 +61,6 @@ export function inspectConditionalAttribute(body){
   const attributes=parts.slice(1);
   for(const entry of attributes){if(!entry.length)throw new TypeError('Conditional attribute has an empty input');argument(entry);}
   const inertDeadCodeLint=attributes.length>0&&attributes.every(entry=>['allow(dead_code)','allow(dead_code,)'].includes(entry.map(text).join('')));
-  return {predicate:parts[0],inertDeadCodeLint,attributes:attributes.map(entry=>({tokens:entry.map(text),span:{start:entry[0].start,end:entry.at(-1).end}}))};
+  const inertBuiltinLint=attributes.length>0&&attributes.every(entry=>/^allow\((dead_code|unused_mut|unused_variables),?\)$/u.test(entry.map(text).join('')));
+  return {predicate:parts[0],inertDeadCodeLint,inertBuiltinLint,attributes:attributes.map(entry=>({tokens:entry.map(text),span:{start:entry[0].start,end:entry.at(-1).end}}))};
 }

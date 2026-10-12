@@ -9,6 +9,7 @@ import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 import {deriveBangModules,deriveBangOutputAt,deriveBangHelperAttributeAt,isDeriveBangContext} from './derive-bang-context.mjs';
 import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
+import {builtinInnerSourceItem} from './inner-source-attributes.mjs';
 const namespaces=['type','value','macro'];
 const identifier=token=>token?.type==='ident' && /^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
 const key=path=>path.join('::');
@@ -172,6 +173,8 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
       if(tokensOf(item)[1]?.text==='!'&&condition.status==='active'&&condition.attributes.every(attribute=>attribute.name==='cfg'||isInertConditionalAttribute(attribute)))continue;
       const innerLint=inertInnerLintItem(item,module.source,module.sourceView,profile);
       if(innerLint){scope.innerBuiltinNames.push(...innerLint.attributes.map(attribute=>({name:attribute.name,span:attribute.span})));continue;}
+      const innerBuiltin=builtinInnerSourceItem(item,module.source,module.sourceView,profile);
+      if(innerBuiltin){scope.innerBuiltinNames.push({name:innerBuiltin.name,span:innerBuiltin.span});continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
         const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveBangContext&&deriveBangHelperAttributeAt(deriveBangContext,deriveContext,module,item,span));

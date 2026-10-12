@@ -9,6 +9,7 @@ import {originalTopLevelMacroInvocations,originalMacroTreeText} from '../macro-t
 import {tokenizeRust} from './lexical.mjs';
 import {rustFixedType,fixedBounds} from '../checked-types.mjs';
 import {metadataDigest} from './source-links.mjs';
+import {ORIGINAL_CORE_PRELUDE_ROOT} from './core-prelude-source.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const root=new URL('../source-profiles/primitive-bool-from/',import.meta.url),manifestBytes=readFileSync(new URL('manifest.json',root));
@@ -22,13 +23,13 @@ export const PRIMITIVE_FROM_SOURCE_PROFILE=freeze({rust:manifest.rust,schema:man
 function standardPrelude(){
   if(prelude)return prelude;const input=sources(),trait=input.get('library/core/src/convert/mod.rs'),traits=sourceItems(trait.source).filter(item=>item.term==='trait'&&item.name==='From');if(traits.length!==1)throw new TypeError('Original From trait owner is absent or ambiguous');
   const words=texts(traits[0].tokens),fn=words.indexOf('fn');if(!same(words.slice(fn,fn+11),['fn','from','(','value',':','T',')','->','Self',';','}'])||words[fn-1]==='const')throw new TypeError('Original From requires its non-const by-value trait member');
-  const num=input.get('library/core/src/convert/num.rs'),numWords=texts(rustTokens(num.source));if(!numWords.join('').includes('usesuper::{From,TryFrom};')||!texts(rustTokens(trait.source)).join('').includes('modnum;'))throw new TypeError('Original numeric From impl does not use the actual parent trait');
+  if(!texts(rustTokens(trait.source)).join('').includes('modnum;')||ORIGINAL_CORE_PRELUDE_ROOT.importPath.join('::')!=='core::prelude::rust_2024')throw new TypeError('Original numeric From impl does not have its actual core prelude route');
   const core=input.get('library/core/src/prelude/v1.rs'),std=input.get('library/std/src/prelude/v1.rs');for(const original of [core,std])if(!texts(rustTokens(original.source)).join('').includes('pubusecrate::convert::{AsMut,AsRef,From,Into};'))throw new TypeError('Original common prelude From reexport differs');
   if(!texts(rustTokens(input.get('library/std/src/lib.rs').source)).join('').includes('pubusecore::convert;'))throw new TypeError('Original std From does not share the core trait');
   const editions=[];for(const family of ['core','std']){
     const original=input.get('library/'+family+'/src/prelude/mod.rs');for(const edition of ['2015','2018','2021','2024']){const modules=sourceItems(original.source).filter(item=>item.term==='mod'&&item.name==='rust_'+edition);if(modules.length!==1||!texts(modules[0].tokens).join('').includes('pubusesuper::v1::*;'))throw new TypeError('Original common From prelude needs every supported edition route');editions.push({family,edition,sourceSha256:original.sha256,originalSpan:{start:modules[0].start,end:modules[0].end}});}
   }
-  prelude=freeze({trait:['core','convert','From'],traitSource:trait.path,traitSourceSha256:trait.sha256,originalSpan:{start:traits[0].start,end:traits[0].end},constTraitCall:false,commonPreludeEditions:editions,callerCargoEditionInferred:false,wholeTraitAuthority:false});return prelude;
+  prelude=freeze({trait:['core','convert','From'],traitSource:trait.path,traitSourceSha256:trait.sha256,originalSpan:{start:traits[0].start,end:traits[0].end},coreCratePrelude:ORIGINAL_CORE_PRELUDE_ROOT,constTraitCall:false,commonPreludeEditions:editions,callerCargoEditionInferred:false,wholeTraitAuthority:false});return prelude;
 }
 function primitive(type,{input=false}={}){
   if(input&&type?.kind==='bool'&&(type.rustPrimitiveName===undefined||type.rustPrimitiveName==='bool')&&!type.rustReference&&!type.rustOwnership&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved)return {kind:'bool'};

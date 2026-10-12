@@ -38,7 +38,7 @@ export function withCheckedMethodCopyReceivers(Base) {return class extends Base 
 function relocate(value,offset) {
   if(Array.isArray(value))return value.map(item=>relocate(item,offset));
   if(!value||typeof value!=='object')return value;
-  return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,opaque.has(key)?item:key==='span'&&item?{start:item.start+offset,end:item.end+offset}:relocate(item,offset)]));
+  return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,opaque.has(key)?item:['span','subjectSyntaxSpan','patternSpan'].includes(key)&&item?{start:item.start+offset,end:item.end+offset}:relocate(item,offset)]));
 }
 export function originalMethodSemantic(parsed,options={}) {
   if(!options||typeof options!=='object'||types.isProxy(options)||![Object.prototype,null].includes(Object.getPrototypeOf(options)))throw new TypeError('Original method semantic options require non-proxy ordinary metadata');

@@ -29,7 +29,7 @@ export function inspectPrimitiveIdentityFromSource(source){
   if(owners.length!==1)throw new TypeError('Identity From requires one actual generic impl');
   const owner=owners[0],tokens=owner.tokens.filter(t=>t.type!=='comment'),begin=tokens.findIndex(t=>t.text==='impl'),open=tokens.findIndex((t,i)=>i>begin&&t.text==='{');
   if(!same(words(tokens.slice(0,begin)),['#','[','stable','(','feature','=','"rust1"',',','since','=','"1.0.0"',')',']'])||!same(words(tokens.slice(begin,open)),['impl','<','T','>','From','<','T','>','for','T']))throw new TypeError('Identity From original attributes, generic binder or source conditions differ');
-  const bodyOffset=tokens[open].end,members=sourceItems(source.slice(bodyOffset,tokens.at(-1).start));
+  const bodyOffset=tokens[open].end,members=sourceItems(source.slice(bodyOffset,tokens.at(-1).start)).filter(item=>item.term!=='comment');
   if(members.length!==1||members[0].term!=='fn'||members[0].name!=='from')throw new TypeError('Identity From requires its sole actual original member');
   const member=members[0],mt=member.tokens.filter(t=>t.type!=='comment'),fn=mt.findIndex(t=>t.text==='fn');
   if(!same(words(mt.slice(0,fn)),['#','[','inline','(','always',')',']'])||!same(words(mt.slice(fn)),['fn','from','(','t',':','T',')','->','T','{','t','}']))throw new TypeError('Identity From original non-const member body or attributes differ');

@@ -65,7 +65,7 @@ export function originalProjectMethodFieldEvidence(value,transform) {
 }
 
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
-const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'||key==='sourceParameterPatterns'||key==='sourceParameterPattern'||key==='sourcePattern'||key==='constantEvaluationProof'||key==='deriveNamespaceProof'||key==='toolAttributeProof'||key==='jsonMacroProof'||key==='sourceMatchesProof'||key==='pinnedStandardBodyProof'||key==='sourceMethodProof'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
+const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'||key==='sourceParameterPatterns'||key==='sourceParameterPattern'||key==='sourcePattern'||key==='constantEvaluationProof'||key==='deriveNamespaceProof'||key==='toolAttributeProof'||key==='jsonMacroProof'||key==='sourceMatchesProof'||key==='pinnedStandardBodyProof'||key==='sourceMethodProof'?value:['span','subjectSyntaxSpan','patternSpan'].includes(key) && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
@@ -357,7 +357,7 @@ export function translateProject(options) {
       const owners=new Set();
       for(const failure of failures) {
         const cause=failure.error;
-        const owner=active.find(declaration=>cause.span&&declaration.globalSpan.start<=cause.span.start&&cause.span.start<=declaration.globalSpan.end);
+        const owner=active.find(declaration=>cause.span&&declaration.globalSpan.start<=cause.span.start&&cause.span.start<declaration.globalSpan.end);
         if(!owner||failure.name&&failure.name!==owner.name)throw new Error(`unattributed project semantic refusal: ${cause.reason}`,{cause});
         if(owners.has(owner))continue;
         owners.add(owner);refused.push({file:owner.file,name:owner.name,term:owner.term,...diagnostic(cause)});

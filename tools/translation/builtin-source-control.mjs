@@ -37,7 +37,7 @@ class ControlParser {
   child(nodes){return new ControlParser(nodes,this.budget,this.depth+1);}
   blockGroup(group=this.group('{')){return {...this.child(group.children).block(),sourceSpan:group.span};}
   node(kind,start,fields={}){if(--this.budget.cells<0)throw new TypeError('Source control cell bound exhausted');return {kind,...fields,sourceSpan:range(this.nodes.slice(start,this.at))};}
-  expressionAll(nodes){const parser=this.child(nodes),result=parser.expression();if(parser.at!==parser.nodes.length)throw new TypeError('Source control expression leaves original tokens');return result;}
+  expressionAll(nodes){const parser=this.child(nodes),result=parser.expression();if(parser.at!==parser.nodes.length)throw new TypeError('Source control expression leaves original tokens at '+parser.current()?.span.start+' ('+String(word(parser.current())).slice(0,64)+')');return result;}
   condition(){const before=this.records;this.records=false;try{return this.expression();}finally{this.records=before;}}
   pattern(nodes){if(!nodes.length)throw new TypeError('Source control pattern is empty');return {kind:'original-pattern-obligation',tokens:nodes,sourceSpan:range(nodes),bindingSemanticsVerified:false,constructorOwnerResolved:false};}
   conditional(start){if(++this.budget.conditionals>64){this.budget.conditionals--;throw new TypeError('Source control conditional depth exceeds its finite bound');}
@@ -47,10 +47,15 @@ class ControlParser {
     }finally{this.budget.conditionals--;}
   }
   matching(start){const subject=this.condition(),group=this.group('{'),arms=[];
-    for(const tokens of split(group.children)){
-      const arrow=tokens.findIndex(token=>word(token)==='=>');if(arrow<1)throw new TypeError('Source match arm lacks its original pattern/arrow');
-      const pattern=tokens.slice(0,arrow),guardAt=pattern.findIndex(token=>word(token)==='if');
-      arms.push({pattern:this.pattern(guardAt<0?pattern:pattern.slice(0,guardAt)),guard:guardAt<0?null:this.expressionAll(pattern.slice(guardAt+1)),value:this.expressionAll(tokens.slice(arrow+1)),sourceSpan:range(tokens)});
+    const parser=this.child(group.children);
+    while(parser.at<parser.nodes.length){
+      const begin=parser.at;let arrow=begin;
+      while(arrow<parser.nodes.length&&word(parser.nodes[arrow])!=='=>')arrow++;
+      if(arrow===begin||arrow===parser.nodes.length)throw new TypeError('Source match arm lacks its original pattern/arrow');
+      const pattern=parser.nodes.slice(begin,arrow),guardAt=pattern.findIndex(token=>word(token)==='if');parser.at=arrow+1;
+      const value=parser.expression(),end=parser.at;
+      if(!parser.take(',')&&parser.at<parser.nodes.length&&!['block-expression','if','match'].includes(value.kind))throw new TypeError('Source match arm requires its original comma');
+      arms.push({pattern:this.pattern(guardAt<0?pattern:pattern.slice(0,guardAt)),guard:guardAt<0?null:this.expressionAll(pattern.slice(guardAt+1)),value,sourceSpan:range(parser.nodes.slice(begin,end))});
     }
     if(!arms.length)throw new TypeError('Source control match has no original arms');return this.node('match',start,{subject,arms,armBindingVerified:false,exhaustivenessVerified:false});
   }

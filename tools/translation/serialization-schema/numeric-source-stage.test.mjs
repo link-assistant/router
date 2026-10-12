@@ -66,8 +66,14 @@ test('generic signed arithmetic shifts and branch order agree on independently a
 });
 
 test('checked semantic meta and separately compiled strict TS execute the same genuine primitive source',async()=>{
-  const stage=generic('pub fn wide(x:u64,y:u64)->u128{x as u128*y as u128}pub fn branch(x:i64)->i64{if x<0{x>>4}else{x}}'),emitted=outputs(stage);
-  await verifyTypedTargets({...emitted,meta:{entry:'src/lib.rs'}},api=>{assert.equal(api.wide(max64,max64),max64*max64);assert.equal(api.branch(-17n),-2n);assert.equal(api.branch(9n),9n);},{childTimeoutMs:30000});
+  const stage=generic('pub fn wide(x:u64,y:u64)->u128{x as u128*y as u128}pub fn branch(x:i64)->i64{if x<0{x>>4}else{x}}pub fn left(x:u8,count:i16)->u8{x<<count}pub fn residue(x:i128)->u8{x as u8}pub fn signed_residue(x:u128)->i8{x as i8}const HIGH:u8=(257u16 as u8)<<2;'),emitted=outputs(stage);
+  await verifyTypedTargets({...emitted,meta:{entry:'src/lib.rs'}},api=>{
+    assert.equal(api.wide(max64,max64),max64*max64);assert.equal(api.branch(-17n),-2n);assert.equal(api.branch(9n),9n);
+    assert.equal(api.left(255n,1n),254n);assert.equal(api.left(1n,7n),128n);assert.equal(api.left(255n,0n),255n);
+    for(const count of [-1n,8n,100n])assert.throws(()=>api.left(1n,count),RangeError);
+    assert.equal(api.residue(-1n),255n);assert.equal(api.residue((1n<<100n)+7n),7n);
+    assert.equal(api.signed_residue(255n),-1n);assert.equal(api.signed_residue(128n),-128n);assert.equal(api.HIGH,4n);
+  },{childTimeoutMs:30000});
   const document=JSON.parse(emitted.meta);assert.equal(document.meta.checkedSemanticProgram.schema,'checked-rust-semantic-meta-v1');assert.equal(document.meta.targetSemanticProgram.schema,'checked-rust-semantic-meta-v1');
 });
 

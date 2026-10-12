@@ -98,7 +98,7 @@ test('pinned Duration::from_millis keeps exact u64 normalization without scaling
   }
 });
 
-test('only exact value-preserving fixed casts are admitted; shifts stay unsupported',()=>{
+test('unproved cast and shift nodes cannot acquire primitive constant semantics',()=>{
   const U16=fixed(16),cast={k:'cast',arg:lit(255),from:U8,to:U16,type:U16,flavor:'exact'};
   assert.equal(scalar(cast,'const ROOT:u16=255u8 as u16;').value.$integer,'255');
   assert.equal(scalar({...cast,arg:lit(256,U16),from:U16,to:U8,type:U8},'const ROOT:u8=256u16 as u8;').status,'unsupported');

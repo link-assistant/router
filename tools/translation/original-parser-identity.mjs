@@ -5,11 +5,13 @@ const entries=Map.prototype.entries,get=Map.prototype.get,has=Map.prototype.has,
 const fail=message=>{throw new TypeError('Original parser/cursor '+message);};
 function reflectionTarget(value){if(!value||!['object','function'].includes(typeof value)||types.isProxy(value))fail('source class changed');return value;}
 function methodDescriptor(prototype,name){
+  let found;
   for(let current=prototype,depth=0;current;current=Object.getPrototypeOf(current)){
     reflectionTarget(current);if(++depth>64)fail('prototype chain exceeds its finite identity bound');
     const descriptor=Object.getOwnPropertyDescriptor(current,name);
-    if(descriptor){if(!Object.hasOwn(descriptor,'value'))fail('method identity changed: accessor');return descriptor;}
+    if(descriptor&&!found){if(!Object.hasOwn(descriptor,'value'))fail('method identity changed: accessor');found=descriptor;}
   }
+  if(found)return found;
   fail('method identity changed: missing original method');
 }
 export function originalMethodSnapshot(prototype) {

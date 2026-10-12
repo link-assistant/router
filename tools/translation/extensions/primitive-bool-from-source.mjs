@@ -18,7 +18,11 @@ const fail=message=>{throw new TypeError('Primitive bool From namespace: '+messa
 export function capturePrimitiveBoolFromScope(parser,target,start){
   requireOriginalFromNamespaceCallbacks(parser);
   const state=matchesParserFacts(parser),facts=state.facts,consumer=state.module,scope=facts.evidence.scopes.find(scope=>scope.file===consumer.file&&same(scope.path,consumer.path)),ancestors=facts.evidence.scopes.filter(parent=>parent.path.every((name,index)=>consumer.path[index]===name));
-  if(!scope||ancestors.some(parent=>parent.configurationCondition!=='active'||parent.unresolvedTypeScope!==false||parent.unresolvedBangMacroScope!==false||parent.unresolvedAttributeMacroScope!==false))fail('original active type/bang/attribute scopes are unproved');
+  // Associated trait lookup consumes type/attribute scopes. An exported bang
+  // macro name in an unselected child cannot shadow a trait unless invoked;
+  // actual invocations/declarations in this member are rejected below, while
+  // top-level expansions retain their independent type-scope uncertainty.
+  if(!scope||ancestors.some(parent=>parent.configurationCondition!=='active'||parent.unresolvedTypeScope!==false||parent.unresolvedAttributeMacroScope!==false))fail('original active type/attribute scopes are unproved');
   if(!Number.isSafeInteger(start)||start<0||start>=state.sourceLength||!state.tokens.some(token=>token.start===start&&token.kind==='identifier'))fail('call point escapes its original source tokens');
   const enclosing=originalSourceModuleItems(consumer).filter(item=>item.start<=state.offset+start&&item.end>state.offset+start);
   for(const item of enclosing){

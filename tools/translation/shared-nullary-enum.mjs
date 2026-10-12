@@ -128,7 +128,7 @@ export function withSharedNullaryEnumChecker(Base) {return class extends Base {
       if(!['ctor','bindOrCtor'].includes(pattern.k))fail(pattern.span);
       const names=pattern.k==='bindOrCtor'?[pattern.name]:pattern.path,actual=this.lookup(names,path,pattern.span);
       if(actual?.k!=='ctor'||actual.data!==type.name||!context.declaration.ctors.some(ctor=>ctor.name===actual.name&&ctor.ctorStyle==='unit'&&ctor.fields.length===0)||(pattern.args??[]).length||pattern.registeredGenericOwner)fail(pattern.span);
-      return {...pattern,k:'ctor',path:[type.name,actual.name],data:type.name,ctor:actual.name,args:[]};
+      return {...pattern,k:'ctor',path:[...type.name.split('.'),actual.name],data:type.name,ctor:actual.name,args:[]};
     };
     return normalize(node);
   }

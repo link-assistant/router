@@ -115,10 +115,8 @@ function plan(trees,mode,bindings,depth=0,sourceFragments=null) {
         const typeStart=follow?.kind==='group'&&['(','['].includes(follow.delimiter)||['&','*','!','::','<'].includes(text(follow));
         if(follow&&!capture&&!typeStart&&text(follow)!==','&&!(ident(follow)&&follow.text!=='priv'))throw new TypeError('Declarative visibility fragment has an unproved Rust follow set');
       }
-      if(fragment==='expr') {
-        const follow=trees[at+1];
-        if(follow&&!['=>',',',';'].includes(text(follow)))throw new TypeError('Declarative expression fragment has an unproved Rust follow set');
-      }
+      // Complete nullable/repetition FOLLOW sets are checked on the planned
+      // matcher by assertTypeFollowers; one raw '$' is not its following token.
       if(bindings.has(next.text))throw new TypeError('Duplicate declarative matcher variable');
       bindings.set(next.text,{fragment,depth});result.push({kind:'capture',name:next.text,fragment,depth,sourceSyntax:syntax(tree,trees[at])});continue;
     }

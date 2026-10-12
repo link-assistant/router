@@ -140,6 +140,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...['derive-dependencies.mjs','derive-footprints.mjs','derive-helper-paths.mjs','derive-builtin-default.mjs','derive-inputs.mjs','derive-layout.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push('tools/translation/extensions/slice-membership-runtime.d.mts');
   implementation.push('tools/translation/cargo-edition-context.mjs');
+  implementation.push('tools/translation/inner-source-attributes.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/let-chains/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/let-chains/${name}`));
   implementation.push('tools/translation/json-capabilities.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/json-capabilities/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/json-capabilities/${name}`));

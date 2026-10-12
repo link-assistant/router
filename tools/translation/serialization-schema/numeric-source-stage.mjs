@@ -58,8 +58,13 @@ export function captureNumericFormatterSources({manifest,lock,consumerArchive,fo
   const blocks=lock.split(/^\[\[package\]\]\s*$/m).slice(1),selected=name=>blocks.filter(block=>new RegExp('^name = "'+name+'"$','m').test(block));
   for(const pin of [p.consumer,p.formatter]){const rows=selected(pin.name);if(rows.length!==1||!rows[0].includes('version = "'+pin.version+'"')||!rows[0].includes('checksum = "'+pin.sha256+'"')||!rows[0].includes('source = "'+pin.source+'"'))throw new TypeError('Cargo formatter package owner differs');}
   if(!selected(p.consumer.name)[0].match(/^dependencies = \[[\s\S]*?^\]/m)?.[0].includes('"'+p.formatter.name+'"'))throw new TypeError('Cargo consumer does not select the formatter');
+  const formatterCargo=formatter.get('Cargo.toml'),consumerCargo=consumer.get('Cargo.toml');
+  const optional=formatterCargo.source.match(/^\[dependencies\.no-panic\]\nversion = "0\.1\.36"\noptional = true\s*$/m);
+  const formatterFeaturesClosed=!!optional&&!/^\[features\]/m.test(formatterCargo.source)&&!selected('no-panic').length&&!selected(p.formatter.name)[0].includes('"no-panic"')&&!consumerCargo.source.includes('zmij/');
+  if(!formatterFeaturesClosed)throw new TypeError('Original formatter optional feature closure requires further Cargo evidence');
+  const formatterFeatureSelection=freeze({features:[],closedKeys:['feature'],formatterCargoSha256:formatterCargo.sha256,consumerCargoSha256:consumerCargo.sha256,lockSha256:p.lockSha256,optionalDependency:'no-panic',optionalDependencyAbsentFromLock:true,targetBuildConfiguration:false});
   const evidence=freeze({schema:'original-locked-numeric-source-inputs-v1',profileSha256:hash(profileBytes),manifestSha256:p.manifestSha256,lockSha256:p.lockSha256,packages:[p.consumer,p.formatter].map(({name,version,sha256,bytes,members})=>({name,version,archiveSha256:sha256,archiveBytes:bytes,members})),consumerMethod:selection,consumerFeatures:features,formatterAlgorithm:'Schubfach/yy-derived original Rust implementation; no target implementation substituted',buildScript:{...formatter.get('build.rs'),executionAvailable:false,configurationAuthority:false},...authority()});
-  sourceContexts.set(evidence,{consumer,formatter});return evidence;
+  sourceContexts.set(evidence,{consumer,formatter,formatterFeatureSelection});return evidence;
 }
 export function numericSourceInputsFromFiles({manifest,lock,consumerArchiveURL,formatterArchiveURL}={}) {
   const p=NUMERIC_SOURCE_STAGE_PROFILE;
@@ -91,7 +96,8 @@ export function compileOriginalRustSourceStages({entry,sources,candidateConfigur
 export function compileNumericSourceStages(context,{candidateConfiguration=null}={}) {
   const sources=sourceContexts.get(context);if(!sources)throw new TypeError('Numeric stages require private captured original inputs');
   const files=new Map([...sources.formatter].filter(([path])=>path.startsWith('src/')&&path.endsWith('.rs')).map(([path,input])=>[path,input.source]));
-  return compileOriginalStage({entry:NUMERIC_SOURCE_STAGE_PROFILE.formatterEntry,files,inputEvidence:context,candidateConfiguration});
+  const selection=sources.formatterFeatureSelection;
+  return compileOriginalStage({entry:NUMERIC_SOURCE_STAGE_PROFILE.formatterEntry,files,inputEvidence:freeze({...context,formatterFeatureSelection:selection}),candidateConfiguration:candidateConfiguration??{flags:{test:false},values:{feature:selection.features},closedKeys:selection.closedKeys}});
 }
 export function emitNumericSourceStage(stage) {
   const proof=stages.get(stage);if(!proof||proof.fingerprint!==hash(JSON.stringify(stage)))throw new TypeError('Numeric emission requires the private unmodified original stage');

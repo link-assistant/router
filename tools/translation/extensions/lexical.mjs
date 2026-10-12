@@ -110,9 +110,13 @@ export function tokenizeRust(source) {
   }
   // Preserve source qualification, including const fn. Eligibility is checked
   // by the semantic frontend rather than erased during lexical normalization.
-  const tokens=parsed.tokens.map(token => {
+  const tokens=parsed.tokens.flatMap(token => {
     const start=starts[token.start]??source.length,end=ends[token.end-1]??source.length,character=characters.get(start),number=numbers.get(start);
     if(number&&number.end===end)return {...token,...number,start,end};
+    // Rust permits the joint punctuation `>=` to close a generic type and
+    // introduce its initializer. Keep both original coordinates; expression
+    // parsing rejoins only the adjacent written comparison punctuators.
+    if(token.kind==='punct'&&token.value==='>=')return [{...token,value:'>',start,end:start+1},{...token,value:'=',start:start+1,end}];
     return character&&character.end===end?{...token,kind:'rustChar',value:character.value,raw:character.raw,start,end}:{...token,start,end};
   });
   tokenSources.set(tokens,Object.freeze({source,tokens:tokenSnapshot(tokens)}));
