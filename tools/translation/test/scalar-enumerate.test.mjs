@@ -99,6 +99,8 @@ test('borrowed aggregate, nominal, equal-width and specialized consumption oblig
     'pub fn bad()->usize{let mut total:usize=0;for n in (0u8..2u8).enumerate().map(|(index,index)|index){total+=n;}total}',
     'pub fn bad()->usize{let mut captured:usize=0;for n in (0u8..2u8).enumerate().map(|(index,_)|{captured+=index;captured}){captured+=n;}captured}',
     'pub fn bad()->usize{let mut total:usize=0;for n in (0u8..2u8).enumerate().map(|(index,true)|index){total+=n;}total}',
+    'const LIMIT:usize=0;pub fn bad()->usize{let mut total:usize=0;for n in (0u8..2u8).enumerate().map(|(LIMIT,_)|LIMIT){total+=n;}total}',
+    'const LIMIT:usize=0;pub fn bad()->usize{let mut total:usize=0;for n in (0usize..2usize).map(|LIMIT|LIMIT){total+=n;}total}',
   ]){
     const result=translateSource(source),item=result.ir.items.find(item=>item.name==='bad');
     assert.equal(item.status,'carried',source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);

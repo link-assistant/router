@@ -208,6 +208,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       return type?.patternOwnershipRefusal?{...resolved,patternOwnershipRefusal:type.patternOwnershipRefusal}:resolved;
     }
     patternOwner(node,type,path,env) {
+      if(['bind','bindOrCtor'].includes(node.k)&&this.lookup([node.name],path,node.span)?.constant)throw unsupported('constant binding pattern','requires its actual checked value and irrefutability; a source constant cannot become a fresh binding',node.span);
       if(type.rustReference) {
         if(node.k==='wild'||node.k==='bind')return node;
         if(node.k==='bindOrCtor') {const actual=this.lookup([node.name],path,node.span);if(!actual||actual.k==='fn')return {k:'bind',name:node.name,span:node.span};}

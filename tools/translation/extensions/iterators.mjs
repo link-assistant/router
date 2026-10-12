@@ -218,6 +218,7 @@ export class IteratorChecker extends DataChecker {
     }
     let inner = new Map(env);
     node.params.forEach((param, index) => {
+      if(this.lookup([param.name],path,param.span)?.constant)throw unsupported('callback constant pattern','requires actual checked constant-pattern irrefutability; a source constant cannot become a fresh parameter',param.span);
       if(param.type) {
         const declared=this.resolveType(param.type,path,param.span);
         if(!sameType(declared,argumentTypes[index]))throw typeError('callback parameter type differs from iterator element',param.span);
