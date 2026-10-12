@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
-import {copyFileSync,cpSync,mkdirSync,mkdtempSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs';
+import {cpSync,mkdirSync,mkdtempSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -12,12 +12,10 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
   const directory=mkdtempSync(join(tmpdir(),'router-translator-reuse-'));
   try {
     const bundle=join(directory,'source-bundle'),repository=join(directory,'destination');
-    mkdirSync(join(bundle,'scripts'),{recursive:true});mkdirSync(join(bundle,'tools/translation'),{recursive:true});mkdirSync(join(repository,'src'),{recursive:true});
-    copyFileSync(join(root,'scripts/translate-router.mjs'),join(bundle,'scripts/translate-router.mjs'));
-    for(const name of readdirSync(join(root,'tools/translation')))if(name.endsWith('.mjs')||name.endsWith('.d.mts'))copyFileSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name));
-    for(const name of ['extensions','vendor'])cpSync(join(root,'tools/translation',name),join(bundle,'tools/translation',name),{recursive:true});
-    cpSync(join(root,'tools/translation/source-profiles'),join(bundle,'tools/translation/source-profiles'),{recursive:true});
-    for(const path of [bundle,repository])writeFileSync(join(path,'package.json'),'{"type":"module"}\n');
+    mkdirSync(join(repository,'src'),{recursive:true});
+    const exported=JSON.parse(execFileSync(process.execPath,[join(root,'scripts/export-router-translator.mjs'),'--output',bundle],{encoding:'utf8',timeout:120000,maxBuffer:1024*1024}));
+    assert.equal(exported.runtimeParity,false);assert.equal(exported.schema,'committed-offline-rust-meta-translator-bundle-v1');
+    writeFileSync(join(repository,'package.json'),'{"type":"module"}\n');
     const source='mod values; mod relay;\npub fn cap(value: u64) -> u64 { if value < 10 { value } else { 10 } }\npub fn identity(value: &serde_json::Value) -> &serde_json::Value { value }\npub fn bounded(value: std::time::Duration) -> std::time::Duration { value.min(std::time::Duration::from_secs(10)) }\npub fn normalize(value: u8) -> u8 { relay::normalize(value) }\n';
     writeFileSync(join(repository,'src/lib.rs'),source);
     writeFileSync(join(repository,'src/values.rs'),'pub const LIMIT:u8=9; pub fn allowed(value:u8)->bool{value<LIMIT}\n');
