@@ -5,9 +5,9 @@
   "engines_run": false,
   "producer_run": false,
   "production_imports_changed": false,
-  "authored_bulk_tests": 12,
-  "initial_scope_tests": 29,
-  "full_regression_scope_tests": 178,
+  "authored_bulk_tests": 14,
+  "initial_scope_tests": 31,
+  "full_regression_scope_tests": 180,
   "owner_discovery": "privately captured original module graph and locked serde owner certificates, no owner-name list",
   "refusal_inventory": "all data declaration partitions plus manual trait headers, graph diagnostics and every input file coverage",
   "whole_trait_or_runtime_authority": false,
@@ -34,5 +34,7 @@
       "sha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
       "bytes": 124800
     }
-  ]
+  ],
+  "prior29_verified_head": "d2eabadc1fcb6d79d1955de2415ad07cbf5c0ce3",
+  "added_original_scope_controls": "Late String/Vec aliases and a post-DTO import through a private target public reexport preserve full original consuming scope"
 }

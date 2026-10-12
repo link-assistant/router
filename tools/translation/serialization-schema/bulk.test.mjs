@@ -74,3 +74,14 @@ test('changed source is rejected even when a forged inventory retains its prior 
 test('external modules, inactive original owners and outside-graph source files retain honest coverage boundaries',()=>{
   fixture('mod data;#[cfg(test)]mod tests;',captured=>{const bulk=draftBulkSerialization(captured);assert.ok(bulk.supported.find(entry=>entry.owner==='crate::data::State'));assert.ok(bulk.discovery.sourceCoverage.find(entry=>entry.source==='src/tests.rs'&&entry.status==='outside-reviewed-entry-graph'));assert.equal(bulk.discovery.graphDiagnostics.length,0);},{'src/data.rs':serde+'#[derive(Serialize,Deserialize)]pub enum State{Ready}','src/tests.rs':serde+'#[derive(Serialize,Deserialize)]enum OnlyTest{Testing}'});
 });
+
+test('post-DTO primitive aliases retain whole-file String and Vec masks rather than inheriting fragment preludes',()=>{
+  for(const [field,alias]of [['value:String','type String=i64;'],['values:Vec<i64>','type Vec<T>=T;']]) {
+    fixture(serde+'#[derive(Serialize,Deserialize)]struct Row{'+field+'}',captured=>assert.ok(draftBulkSerialization(captured).supported.find(entry=>entry.owner==='crate::Row')));
+    fixture(serde+'#[derive(Serialize,Deserialize)]struct Row{'+field+'}'+alias,captured=>{const bulk=draftBulkSerialization(captured),row=bulk.refused.find(entry=>entry.owner==='crate::Row');assert.ok(row);assert.match(row.diagnostic.message,/shadowed|unresolved/);assert.equal(bulk.supported.some(entry=>entry.owner==='crate::Row'),false);});
+  }
+});
+test('post-DTO reexport import masks the primitive while a checked qualified route retains its real private target',()=>{
+  const source=serde+'#[derive(Serialize,Deserialize)]struct Masked{value:String}#[derive(Serialize,Deserialize)]struct Qualified{value:crate::catalog::Exported}mod catalog{mod hidden{'+serde+'#[derive(Serialize,Deserialize)]pub struct Text{value:i64}}pub use hidden::Text as Exported;}use catalog::Exported as String;';
+  fixture(source,captured=>{const bulk=draftBulkSerialization(captured);assert.ok(bulk.refused.find(entry=>entry.owner==='crate::Masked'));const good=bulk.supported.find(entry=>entry.owner==='crate::Qualified');assert.ok(good);assert.equal(good.meta.types.find(entry=>entry.owner==='crate::Qualified').fields[0].type.owner,'crate::catalog::hidden::Text');assert.ok(good.meta.types.find(entry=>entry.owner==='crate::catalog::hidden::Text'));});
+});
