@@ -1,6 +1,6 @@
 {
   "schema": "original-bigint-source-ir-next-helper-plan-v1",
-  "status": "source-only storage and Math forwarding helpers implemented; seven new cases UNRUN; whole-reader/default ownership and allocation closure remain unsupported",
+  "status": "source IR storage/Math forwarding/core slice AsRef coherent seven-file39 focus passes both Node/Bun; whole-reader/default ownership/allocation still unsupported",
   "archiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
   "declarations": [
     {
@@ -171,9 +171,11 @@
     "newStorageCases": 4,
     "newForwardingCases": 3,
     "totalAuthoredCases": 39,
-    "newCasesExecuted": false,
+    "newCasesExecuted": true,
     "authorityGranted": false,
-    "newReferenceCases": 2
+    "newReferenceCases": 2,
+    "finalPassBoth": 39,
+    "evidence": "source-ir-initial-final-39/receipt.json"
   },
   "privateContextExtension": "Private WeakMap data/callee/associated contexts are extended only with actual matching source seals; serialized public records and clones are denied.",
   "referenceSource": {
