@@ -140,6 +140,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...['builtin-derive-ast-meta.mjs','builtin-derive-bang-footprints.mjs','builtin-eq-ast-route.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push('tools/translation/builtin-ast-builder-meta.mjs');
   implementation.push('tools/translation/builtin-ast-container-inputs.mjs');
+  implementation.push(...['builtin-ast-caller-environments.mjs','builtin-ast-callback-bridge.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/builtin-derive-bang/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/builtin-derive-bang/${name}`));
   implementation.push('tools/translation/copy-trait-owners.mjs');
   implementation.push('tools/translation/source-module-views.mjs');

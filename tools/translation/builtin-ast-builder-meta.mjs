@@ -30,9 +30,10 @@ function parameters(fragment){
   return split(args.children).map(nodes=>{
     if(astSyntaxText(nodes)==='& self')return {name:'self',span:span(nodes),syntax:nodes,receiver:true};
     const colon=nodes.findIndex(node=>node.text===':');
-    if(colon<1||nodes.slice(0,colon).filter(ident).length!==1)throw new TypeError('Builder parameter binding pattern remains unproved');
-    const name=nodes.slice(0,colon).find(ident).text;
-    return {name,span:span(nodes),syntax:nodes,typeSyntax:nodes.slice(colon+1)};
+    const names=nodes.slice(0,colon).filter(ident).filter(node=>node.text!=='mut');
+    if(colon<1||names.length!==1)throw new TypeError('Builder parameter binding pattern remains unproved');
+    const name=names[0].text;
+    return {name,span:span(nodes),syntax:nodes,typeSyntax:nodes.slice(colon+1),mutable:nodes.slice(0,colon).some(node=>node.text==='mut')};
   });
 }
 function actualImports(profile,path){
@@ -114,6 +115,10 @@ export function inventoryBuiltinAstCallbackCalls(compiler,fragment){
   const inventory=freeze({...roundTrip,digest:hash(encoded)});callbackInventories.set(inventory,{compiler,fragment});return inventory;
 }
 export const isBuiltinAstCallbackBuilderInventory=value=>!!value&&callbackInventories.has(value);
+export function builtinAstCallbackInventoryOriginal(compiler,inventory){
+  const state=callbackInventories.get(inventory);if(!state||state.compiler!==compiler)throw new TypeError('Caller environment requires its original private callback inventory');return state.fragment;
+}
+export function builtinAstFunctionSourceParameters(profile,fragment){assertOriginalAstFunction(profile,fragment);return freeze(parameters(fragment));}
 function compile(state,name,sourcePath){
   if(typeof name!=='string'||!/^[_a-zA-Z][_a-zA-Z0-9]*$/u.test(name))throw new TypeError('Actual builder function identifier is required');
   if(typeof sourcePath!=='string')throw new TypeError('Actual original builder source member is required');
@@ -161,7 +166,7 @@ function compile(state,name,sourcePath){
             return {tag:'positive-ast-enum-constructor',owner:owner.path[0],variant:variant.name,variantSchema:variant,import:owner.imported,args,...source};
           }
         }
-        obligations.push({kind:'external-source-call',path:parts,span:source.span});return {tag:'unresolved-source-call',path:parts,args,...source};
+        obligations.push({kind:'external-source-call',path:parts,span:source.span});return {tag:'unresolved-source-call',path:parts,import:imports.get(parts[0])??null,args,...source};
       }
       if(head.length===3&&head[0].text==='self'&&head[1].text==='.'&&ident(head[2]))return {tag:'original-builder-call',method:head[2].text,receiver:environment.get('self'),args:split(terminal.children).map(value=>expression(value,depth+1)),...source};
       throw new TypeError('Original builder call syntax remains unproved: '+astSyntaxText(head));
