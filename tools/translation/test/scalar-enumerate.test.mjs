@@ -11,6 +11,7 @@ import {rustFixedType} from '../checked-types.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
+const sourceUsize={...rustFixedType('usize'),rustPrimitiveName:'usize'};
 function find(node,predicate){
   if(!node||typeof node!=='object')return null;
   if(predicate(node))return node;
@@ -97,9 +98,9 @@ test('full original source pins and evaluation receipts survive meta round trips
   const operation=find(parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get('value').body,node=>node.k==='routerIteratorOperation'&&node.op==='enumerate');
   assert.deepEqual(operation.sourceIteratorEnumerate.evaluationOrder,['upstream-next','copy-original-count','checked-usize-increment','yield-original-index-and-item']);
   assert.equal(operation.sourceIteratorEnumerate.namespaceComplete,false);assert.equal(operation.sourceIteratorEnumerate.advancedMethodsComplete,false);
-  requireScalarEnumerate(operation,rustFixedType('usize'));
+  requireScalarEnumerate(operation,sourceUsize);
   const forged=structuredClone(operation);forged.sourceIteratorEnumerate.evaluationOrder.reverse();
-  assert.throws(()=>requireScalarEnumerate(forged,rustFixedType('usize')),/missing actual checked/u);
+  assert.throws(()=>requireScalarEnumerate(forged,sourceUsize),/missing actual checked/u);
   for(const mutate of [
     node=>{node.sourceIteratorEnumerate.namespaceComplete=true;},
     node=>{node.sourceIteratorEnumerate.advancedMethodsComplete=true;},
@@ -108,6 +109,6 @@ test('full original source pins and evaluation receipts survive meta round trips
     node=>{node.sourceIteratorEnumerate.tupleType.patternOwnershipRefusal='borrowed tuple';},
   ]){
     const altered=structuredClone(operation);mutate(altered);
-    assert.throws(()=>requireScalarEnumerate(altered,rustFixedType('usize')),/missing actual checked/u);
+    assert.throws(()=>requireScalarEnumerate(altered,sourceUsize),/missing actual checked/u);
   }
 });
