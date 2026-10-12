@@ -17,11 +17,31 @@ import {originalMethodMember} from './impl-resolver.mjs';
 import {originalMethodTransformFacts,originalMethodParserTokenFacts} from './source-method-transforms.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
 import {itemConfiguration,compilationProfile as normalizeProfile} from './cfg-profile.mjs';
-const contexts=new WeakMap(),parsers=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
+const contexts=new WeakMap(),immutableContexts=new WeakMap(),parsers=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
 let standardProfile=null;
 const mapEntries=Map.prototype.entries;
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
 function namespaceDigest(parser){const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');return metadataDigest(['type','value','macro'].map(namespace=>[namespace,nativeEntries(ownData(aliases,namespace)).map(([path,map])=>[path,nativeEntries(map)])]));}
+// Only the actual producer's recursively frozen roots qualify for reuse.
+// Publicly exposed context wrappers remain untrusted mutable surfaces.
+function immutableContext(context,facts){
+  const issued=immutableContexts.get(context);
+  if(!issued||facts!==issued.facts||['modules','evidence','profile','compilationProfile'].some(key=>ownData(facts,key)!==issued[key]))throw new TypeError('Matches context immutable roots differ from their private issuance');
+  return issued;
+}
+function originalOwnerHashes(issued,module,scope){
+  if(!issued.moduleHashes.has(module)||!issued.scopes.has(scope))throw new TypeError('Matches owner hashes require the actual issued module and scope');
+  let scopeHashes=issued.scopeHashes.get(scope);
+  if(!scopeHashes){
+    // Keep the original full metadata shape/cycle/depth/cell/byte validation.
+    // A cache hit is safe only because the validated issued scope is deeply
+    // frozen. Mutable members, parser evidence, tokens and Maps never enter.
+    const scopeMetadataSha256=metadataDigest(scope);
+    scopeHashes=Object.freeze({scopeSha256:hash(JSON.stringify(scope)),scopeMetadataSha256});
+    issued.scopeHashes.set(scope,scopeHashes);
+  }
+  return {...scopeHashes,sourceSha256:issued.moduleHashes.get(module)};
+}
 export function originalMatchesNamespaceBindings(){const profile=standardProfile??=loadStandardMatchesSourceProfile();return ['std','core'].map(root=>Object.freeze({name:profile.name,namespace:'macro',macroKind:'bang',target:[root,profile.name],kind:'macro',originalNamespaceDigest:profile.digest}));}
 function standardExternal(){return registeredStandardHostBindings(originalMatchesNamespaceBindings());}
 
@@ -32,7 +52,10 @@ export function createMatchesMacroContext({modules,compilationProfile=null,deriv
   const toolContext=createToolAttributeContext({modules:original.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:original.compilationProfile});
   const evidence=freezeMacroTree(resolveModuleBindings({modules:original.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:original.compilationProfile}));
   const certificate=freezeMacroTree({schema:'original-standard-matches-call-context-v1',profileDigest:profile.digest,compilationProfile:original.compilationProfile,originalModules:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source),sourceViewDigest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition})),namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
-  contexts.set(certificate,{...original,profile,evidence});return certificate;
+  const facts={...original,profile,evidence};
+  contexts.set(certificate,facts);
+  immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap()}));
+  return certificate;
 }
 export const isMatchesMacroContext=value=>!!value&&contexts.has(value);
 export function standaloneMatchesMacroContext(source,{file='src/module.rs',compilationProfile=null}={}) {
@@ -125,6 +148,7 @@ export class OriginalMethodOwnerUnproved extends TypeError {}
 export function originalMethodNamespaceOwner(context,method) {
   const facts=contexts.get(context),original=originalMethodMember(method);
   if(!facts)throw new TypeError('Original method owner requires its private module context');
+  const issued=immutableContext(context,facts);
   const module=facts.modules.find(module=>module.file===original.sourcePath&&JSON.stringify(module.path)===JSON.stringify(original.modulePath));
   if(!module||module.source!==original.source||module.sourceView!==original.sourceView||JSON.stringify(normalizeProfile(original.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Original method source/module/view/profile identity differs');
   const scope=facts.evidence.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),ancestors=facts.evidence.scopes.filter(scope=>scope.path.every((part,index)=>module.path[index]===part));
@@ -138,7 +162,8 @@ export function originalMethodNamespaceOwner(context,method) {
   if(!nominal||nominal.status!=='resolved'||!['struct','enum'].includes(nominal.kind)||nominal.via!=='declaration'||JSON.stringify(nominal.target)!==JSON.stringify(route))throw new OriginalMethodOwnerUnproved('Original method owner needs its actual declared nominal type');
   const consumer=module.path;
   if(nominal.visibility?.kind!=='public'&&nominal.visibility?.path&&!nominal.visibility.path.every((part,index)=>consumer[index]===part))throw new TypeError('Original method nominal owner is inaccessible from its source module');
-  return freezeMacroTree({schema:'original-method-namespace-owner-v1',file:module.file,modulePath:module.path,sourceSha256:hash(module.source),sourceViewDigest:module.sourceView.digest,compilationProfile:facts.compilationProfile,owner:route,originalSpan:method.span,originalImplementationSpan:original.implementationSpan,scopeSha256:hash(JSON.stringify(scope)),scopeMetadataSha256:metadataDigest(scope),namespaceAuthority:false,copyAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
+  const hashes=originalOwnerHashes(issued,module,scope);
+  return freezeMacroTree({schema:'original-method-namespace-owner-v1',file:module.file,modulePath:module.path,sourceSha256:hashes.sourceSha256,sourceViewDigest:module.sourceView.digest,compilationProfile:facts.compilationProfile,owner:route,originalSpan:method.span,originalImplementationSpan:original.implementationSpan,scopeSha256:hashes.scopeSha256,scopeMetadataSha256:hashes.scopeMetadataSha256,namespaceAuthority:false,copyAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
 }
 
 // Read-only original facts. A caller cannot register a scope or turn copied
