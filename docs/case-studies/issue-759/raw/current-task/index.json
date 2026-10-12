@@ -46349,8 +46349,40 @@
       "headSha": "03b4e53822adfebae30076b0303c3dc2ab874399",
       "status": "canonical producer, real full804 three-profile producer, profile freshness and three independent strict TypeScript checks passed; complete seven-stage gate pending",
       "archivedAtUtc": "2026-10-11T23:31:09.725578+00:00"
+    },
+    {
+      "label": "complete-failed-seven-stage-gate-c45eef46",
+      "cycle": 9,
+      "pack": "5b87e738cf6f8979679943cde44a26543fbcacc591cb692f337662bd4a4c24eb.tar.gz",
+      "sha256": "5b87e738cf6f8979679943cde44a26543fbcacc591cb692f337662bd4a4c24eb",
+      "storedBytes": 62954,
+      "members": [
+        {
+          "path": "complete-failed-seven-stage-gate-c45eef46/router-759-complete-failure-inventory-c45eef46.json",
+          "bytes": 7804,
+          "sha256": "6642d9f464b7d7e95f6a64b730a9bbd0403c02c1fbaa49d4d81f7d7349949276"
+        },
+        {
+          "path": "complete-failed-seven-stage-gate-c45eef46/router-759-final-preflight-c45eef46-resource-samples.jsonl",
+          "bytes": 1758,
+          "sha256": "030e9691920c2bac043dc6bc1c0fb21ac27722a222d4cd1ffe8f2fb7747717ac"
+        },
+        {
+          "path": "complete-failed-seven-stage-gate-c45eef46/router-759-final-preflight-c45eef46.json",
+          "bytes": 1977,
+          "sha256": "a5c53844254680a0ae7c73c7486f664b06f98ea4296d059c8374ef9f70ac5249"
+        },
+        {
+          "path": "complete-failed-seven-stage-gate-c45eef46/router-759-final-preflight-c45eef46.log",
+          "bytes": 294054,
+          "sha256": "7d9cea150455530765e04c545b13e174ba88cf29563cb12393627689fbbb2946"
+        }
+      ],
+      "headSha": "c45eef46960a8ddf54da26639045ad7868ee1aaa",
+      "status": "All7 terminal:793 forward tests791pass2fail; strict442gaps0errors; canonical/matrix checks not reached; no publication/Rust/stamp",
+      "archivedAtUtc": "2026-10-12T00:13:24.573616+00:00"
     }
   ],
-  "totalStoredPackBytes": 25077538,
-  "totalMembers": 8427
+  "totalStoredPackBytes": 25140492,
+  "totalMembers": 8431
 }
