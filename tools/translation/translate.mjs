@@ -47,7 +47,7 @@ export function mergePreludeImports(preludes) {
 function relocate(value, offset) {
   if (Array.isArray(value)) return value.map(item => relocate(item, offset));
   if (!value || typeof value !== 'object') return value;
-  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, key === 'span' && item ? { start: item.start + offset, end: item.end + offset } : relocate(item, offset)]));
+  return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, ['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof'].includes(key)?item:key === 'span' && item ? { start: item.start + offset, end: item.end + offset } : relocate(item, offset)]));
 }
 
 export function translateSource(source, path = 'input.rs', { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile } = {}) {

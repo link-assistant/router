@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
@@ -62,15 +63,20 @@ test('parameter patterns refuse invalid bindings, refutable domains and unproved
   }
 });
 
-test('out-of-line parameter patterns preserve original evidence and linked spans through both targets',async()=>{
-  const declaration='pub const fn sum((left,right):(u8,u8))->u8{left+right}',child='const PAD:u8=0;\n'+declaration+'\npub const VALUE:u8=sum((2,3));';
+test('out-of-line parameter patterns preserve original evidence and source spans through both targets',async()=>{
+  const constSource='pub const fn sum((left,right):(u8,u8))->u8{left+right}pub const VALUE:u8=sum((2,3));';
+  const limited=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>constSource});
+  assert.ok(limited.meta.refused.some(item=>item.name==='VALUE'&&/constant evaluation: constant control or operation is outside the bounded checked profile/.test(item.message)));
+  assert.equal(limited.meta.executable.some(item=>item.name==='VALUE'),false);
+  const declaration='pub fn sum((left,right):(u8,u8))->u8{left+right}',child='const PAD:u8=0;\n'+declaration;
   const files={'src/lib.rs':'mod external;pub fn run()->u8{external::sum((2,3))}','src/external.rs':child};
   const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});assert.deepEqual(result.meta.refused,[]);
   const original=parseRust(declaration+' fn main(){}').items.find(entry=>entry.name==='sum'),checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));
   const sum=checked.declarations.get('external.sum'),emitted=[...target.declarations.values()].find(entry=>entry.sourceParameterPatterns&&entry.impl===undefined);
   assert.deepEqual(sum.sourceParameterPatterns,original.sourceParameterPatterns);assert.deepEqual(sum.sourceParameterPatterns.bindings[0].pattern,original.params[0].sourceParameterPattern);
   assert.deepEqual(emitted.sourceParameterPatterns,sum.sourceParameterPatterns);
-  const link=checked.declarations.get('external.VALUE').constantEvaluationProof.resolution.find(entry=>entry.name==='external.sum').source;
-  assert.equal(link.sourcePath,'src/external.rs');assert.deepEqual(link.declarationSpan,{start:child.indexOf(declaration),end:child.indexOf(declaration)+declaration.length});
-  await verifyTypedTargets(result,api=>{assert.equal(api.run(),5n);assert.equal(api['external.sum'](tuple(3n,4n)),7n);assert.equal(api['external.VALUE'],5n);});
+  const originalDeclaration=result.meta.executable.find(item=>item.name==='external.sum');
+  assert.equal(originalDeclaration.source,'src/external.rs');assert.deepEqual(originalDeclaration.span,{start:child.indexOf(declaration),end:child.indexOf(declaration)+declaration.length});
+  assert.equal(result.meta.sources.find(item=>item.source==='src/external.rs').sha256,createHash('sha256').update(child).digest('hex'));
+  await verifyTypedTargets(result,api=>{assert.equal(api.run(),5n);assert.equal(api['external.sum'](tuple(3n,4n)),7n);});
 });
