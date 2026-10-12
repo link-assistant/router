@@ -1,0 +1,553 @@
+{
+  "schema": "serde-alias-default-completion-validation-v1",
+  "verifiedEngineHead": "556ffe307692329c905de9218177d6e8e716bfab",
+  "generatedArtifactHead": "2021ff3468c3bbcaf704a5d0fc1d7e2063d40836",
+  "producerBase": "efacfdcc92ef9ee122437b8ff7acce0f986cb35e",
+  "producerRepeated": false,
+  "producerSeconds": 4.042,
+  "exactFourOutputMutationSet": true,
+  "allOriginalInputsUnchangedByProducer": true,
+  "outputs": [
+    {
+      "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json",
+      "bytes": 3951005,
+      "sha256": "0bcbc32192a155974a0c977fcf503fcbf333871661f8261a4b4387968ac6cf21"
+    },
+    {
+      "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.mjs",
+      "bytes": 63566,
+      "sha256": "6a773cdac2b547097d7e73f50925bb65d8f40bafb2c431d5d530872b0cc00c6a"
+    },
+    {
+      "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.ts",
+      "bytes": 64286,
+      "sha256": "81b5d990fdf225cfec24ff325e5a3a1c2aa6e07af070bf82de8d83f05f47365d"
+    },
+    {
+      "file": "tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json",
+      "bytes": 908060,
+      "sha256": "bcc08eb2d8827fca2e827f5151084fa77bd99c02aa639130c45d84836994cf54"
+    }
+  ],
+  "outputTotalBytes": 4986917,
+  "sourceOwnerInventory": {
+    "supported": 79,
+    "directions": {
+      "both": 49,
+      "serialize-only": 9,
+      "deserialize-only": 21
+    },
+    "refused": 462,
+    "refusedWithActualSerdeOwner": 71,
+    "refusedWithoutActualSerdeOwner": 391,
+    "excluded": 134,
+    "manualTraitHeadersUnproved": 170,
+    "sourceCoverageFiles": 558,
+    "sourceSetSha256": "4d05b7f90885b0377f1909b3cecc704ba563a7fb0ca3c3ab5b3912f46591aa93",
+    "dependencyDigest": "0291457e0018c166cb68e568b9e09e523f276d5db73f6b6d1a6940f4c2ed2654"
+  },
+  "supportedQualifiedOwnerDirections": {
+    "crate::account_limits::LimitStatus": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::account_limits::Pause": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::account_limits::PauseKind": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::account_routing_policy::ErrorAction": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::admin::AdminStatus": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::admin::CredentialKind": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::admin_api::ConfirmRequest": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::admin_api::TtlRequest": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::auth::DeviceAuthorizationResponse": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::auth::TokenResponse": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::capabilities::AdaptiveThinkingEvidence": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::claude_auth::PendingLogin": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::claude_auth::TokenResponse": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::client_lifecycle::backup::Entry": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::client_lifecycle::backup::StoreRecord": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::client_lifecycle::maintenance::Plan": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::client_policy::ClientProtocol": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::clients::analysis::ConfigSource": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::clients::analysis::OwnershipState": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::clients::catalog::ClaudeModelCapabilities": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::clients::catalog::RouterClientCapabilities": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::clients::credentials::ManagedCredential": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::clients::credentials::TokenSource": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::codex_loopback_bridge::PersistentState": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::codex_remote_control::EnrollmentIdentity": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::codex_remote_control::EnrollmentRecord": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::codex_remote_control::StoreFile": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::codex_remote_control::StoredEnrollment": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::credential_recovery_store::RecoveryRecord": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::credential_status::CredentialAcceptanceReport": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::credential_status::CredentialAcceptanceState": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::deploy_local::inventory::Run": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::deploy_local::inventory::RunState": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::deploy_local::service::Manager": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::deploy_local::state::Active": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::deploy_local::state::Host": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::deploy_local::state::Phase": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::deploy_local::state::PreviousKind": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::deploy_local::state::Transaction": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::github_proxy::PolicyEffect": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::login::LoginStatus": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::login_api::BeginLoginRequest": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::login_api::SubmitCodeRequest": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::managed_server::PersistedServer": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::metrics::TokenUsage": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::model_contract::ModelAccessError": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::model_contract::ModelRouteScope": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::model_contract::ModelSelectorKind": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::model_contract::ServedModelError": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::oauth::ClaudeCredentials": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::oauth::OAuthBlock": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::operation_reports::BackupVerificationReport": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::operation_reports::Check": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::operation_reports::ModelRecommendation": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::operation_reports::ProviderHealth": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::operation_reports::ServerSelection": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::operation_reports::TunnelStatusReport": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::provider_acceptance::ProviderProvisionFailureKind": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::provider_acceptance::ProviderProvisionOutcome": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::provider_acceptance::ProviderProvisionResponse": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::providers::ProviderKind": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::providers::ProviderUpsert": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::providers::RedactedProviderRecord": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::refresh::RefreshResponse": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::response_affinity::AffinityDestination": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::response_affinity::AffinityFile": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::response_affinity::ResponseAffinity": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::response_affinity::ResponseNamespace": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::response_affinity::ResponseOwner": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::routing_api::RoutingSettings": {
+      "deserialize": false,
+      "serialize": true
+    },
+    "crate::subscription::ClaudeBlock": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::subscription::CodexTokens": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::subscription::RawCredentials": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::subscription::types::SubscriptionProvider": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::subscription::types::SubscriptionToken": {
+      "deserialize": true,
+      "serialize": true
+    },
+    "crate::token_admin::IssueTokenRequest": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::token_admin::RevokeTokenRequest": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::token_admin::RotateClientTokenRequest": {
+      "deserialize": true,
+      "serialize": false
+    },
+    "crate::token_admin::RotateTokenRequest": {
+      "deserialize": true,
+      "serialize": false
+    }
+  },
+  "validation": {
+    "results": [
+      {
+        "engine": "artifact-check",
+        "command": [
+          "node",
+          "tools/translation/serialization-schema/bulk.mjs",
+          "--check"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 4.018,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      },
+      {
+        "engine": "descriptor-tsc",
+        "command": [
+          "node",
+          "tools/translation/serialization-schema/check-bulk-typescript.mjs"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 0.348,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      },
+      {
+        "engine": "node",
+        "command": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "tools/translation/serialization-schema/bulk.test.mjs",
+          "tools/translation/serialization-schema/serialization-schema.test.mjs",
+          "tools/translation/serialization-schema/scalars-direction.test.mjs",
+          "tools/translation/serialization-schema/aliases-defaults.test.mjs",
+          "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+          "experiments/issue-759/acceptance/affinity-file.test.mjs",
+          "experiments/issue-759/acceptance/provider-responses.test.mjs",
+          "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+          "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+          "packages/javascript/test/native-core.test.mjs",
+          "packages/javascript/test/native-service.test.mjs",
+          "packages/javascript/test/native-server.test.mjs",
+          "packages/javascript/test/native-storage.test.mjs"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 30.454,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": [],
+        "authoredCases": 213,
+        "passed": 213,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "engine": "bun",
+        "command": [
+          "bun",
+          "test",
+          "--timeout",
+          "15000",
+          "tools/translation/serialization-schema/bulk.test.mjs",
+          "tools/translation/serialization-schema/serialization-schema.test.mjs",
+          "tools/translation/serialization-schema/scalars-direction.test.mjs",
+          "tools/translation/serialization-schema/aliases-defaults.test.mjs",
+          "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+          "experiments/issue-759/acceptance/affinity-file.test.mjs",
+          "experiments/issue-759/acceptance/provider-responses.test.mjs",
+          "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+          "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+          "packages/javascript/test/native-core.test.mjs",
+          "packages/javascript/test/native-service.test.mjs",
+          "packages/javascript/test/native-server.test.mjs",
+          "packages/javascript/test/native-storage.test.mjs"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 18.849,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": [],
+        "authoredCases": 213,
+        "passed": 213,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "actualInputCount": 1323,
+    "immutableInputsHeadStatus": true,
+    "beforeStatus": "?? packages/javascript/node_modules",
+    "afterStatus": "?? packages/javascript/node_modules",
+    "allStageTemporaryBytesZero": true
+  },
+  "hydration": {
+    "receipt": "exact-head-ts-helper-hydration.json",
+    "sha256": "93a90c14536c836361a49acbdfd51bba18ae7be5dd84683f1e8ec9c371f6bb87",
+    "note": "Two missing exactHEAD helpers were materialized before retry; actual initial and corrected input ledgers remain separately retained."
+  },
+  "preservedInitialEvidence": [
+    {
+      "commit": "6353e7151",
+      "archive": "aliases-defaults-initial-raws.tar.gz",
+      "bytes": 278110,
+      "sha256": "1082d001b8d00d412133e847aec38a31afd88ce28584c4bdcbb4c08e5935aa38",
+      "completeRawMembers": 8
+    },
+    {
+      "commit": "efacfdcc9",
+      "archive": "aliases-defaults-repair-raws.tar.gz",
+      "bytes": 221632,
+      "sha256": "8fadd2ca2627fc5a691bbcc38505ebecc5470c4cf35407910ccfaf91ef4fd1e7",
+      "completeRawMembers": 7
+    },
+    {
+      "commit": "556ffe307",
+      "archive": "aliases-defaults-staged-initial-raws.tar.gz",
+      "bytes": 408684,
+      "sha256": "13af18f23498c2d36126f50841e01abfbbea82ab9fdcc1058919cda3dabce6e2",
+      "completeRawMembers": 15
+    }
+  ],
+  "rawArchive": {
+    "file": "aliases-defaults-completion-raws.tar.gz",
+    "bytes": 206589,
+    "sha256": "0092d77ace19261bc7638f69e2dc46de4105cf3fd994fede4a505736f8fd296d",
+    "deterministicCompression": true,
+    "reopenedExactMembers": {
+      "artifact-check.log": {
+        "bytes": 499,
+        "sha256": "048e24487f5c638b4d0a9e9a5ac7ef44bccac90eaf0e80887da709ed93580920"
+      },
+      "bun.log": {
+        "bytes": 23663,
+        "sha256": "6856eb1605e3f34dc9cd55cbd5b76af1bbbcaede8315437459457dc7e3df2b2d"
+      },
+      "descriptor-tsc.log": {
+        "bytes": 270,
+        "sha256": "4feb26d987dd470d4f5e10f1b8615b1c322df340239e9e00287afc348381d3c3"
+      },
+      "exact-head-ts-helper-hydration.json": {
+        "bytes": 801,
+        "sha256": "93a90c14536c836361a49acbdfd51bba18ae7be5dd84683f1e8ec9c371f6bb87"
+      },
+      "frozen-validation-plan.json": {
+        "bytes": 2031,
+        "sha256": "d50b4725cfedf7b0d4fa10695d06b574ab5314cda45be4421fde609dcb9e9939"
+      },
+      "gate-initial213-archive-check.json": {
+        "bytes": 2700,
+        "sha256": "f86888e797bd839807fb33f2ac059749ebfd5e0f48eacee38f77246028146c83"
+      },
+      "gate-initial64-archive-check.json": {
+        "bytes": 3237,
+        "sha256": "f25276b4d9933c4b04349efc1de2154d92865c124935123e98719c90c0071e1a"
+      },
+      "harness.py": {
+        "bytes": 6745,
+        "sha256": "afbd5281c186a8dc094755c5e278875fe52deacfd762b745ecb781d28455969f"
+      },
+      "inputs.json": {
+        "bytes": 162113,
+        "sha256": "e940b3b1897cd49bc9ba9ebb1bc125cc55ebd1a7f35cc94e828aab54e39a25d5"
+      },
+      "node.log": {
+        "bytes": 50538,
+        "sha256": "617648001a9d1831aec339b60bc6a576fd08e52b050c6aa27cae94b21b69f78c"
+      },
+      "preserved-initial-evidence-ledger.json": {
+        "bytes": 955,
+        "sha256": "3f848404bd4edb571882ddf3e3b89782843b5f7d2e6bd8511914be2225982494"
+      },
+      "receipt.json": {
+        "bytes": 326055,
+        "sha256": "69f9db3cdb45ce6e770988b2f0ece93702de5f6d7d1977d5f26776f00d2b09fa"
+      }
+    }
+  },
+  "productionImportsChanged": false,
+  "runtimeSourceRepairsAfterProducer": false,
+  "noPerOwnerValueTableOrTargetFunctionTemplate": true,
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false,
+  "rustCompiled": false,
+  "enginesReleased": true
+}
