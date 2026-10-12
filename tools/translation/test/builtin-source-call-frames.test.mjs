@@ -20,10 +20,10 @@ test('actual format callbacks transfer original arguments and stop at definition
   for(const flag of flags){assert.equal(frames[flag],false,flag);assert.equal(result[flag],false,flag);}
  }
 });
-test('actual parser creation remains an imported receiver obligation with original argument and body evidence',()=>{
+test('actual parse frame retains the first constructor obligation and the later parser receiver evidence',()=>{
  const proof=loadPinnedFormatSourceStages(),frames=captureBuiltinSourceCallFrames(proof,compiler),row=frames.functions.find(row=>row.name==='parse_args');assert.ok(row.projectable);
- const result=projectBuiltinSourceCallFrames(frames,'parse_args',inputs);assert.equal(result.frames.length,1);assert.equal(result.terminal.sourceProjection.callee.name,'new_parser_from_tts');
- assert.equal(result.terminal.sourceProjection.callee.kind,'source-member-callee');assert.equal(result.terminal.sourceProjection.callee.receiver.kind,'opaque-ExtCtxt');assert.equal(result.terminal.obligation,'original-imported-or-qualified-callee-owner');assert.equal(result.callbackInvocations,0);
+ const result=projectBuiltinSourceCallFrames(frames,'parse_args',inputs);assert.equal(result.frames.length,1);assert.deepEqual(result.terminal.sourceProjection.callee,{kind:'written-source-callee',path:['FormatArguments','new']});
+ assert.deepEqual(result.terminal.sourceProjection.arguments,[]);assert.equal(result.terminal.obligation,'original-imported-or-qualified-callee-owner');assert.equal(result.callbackInvocations,0);
 });
 test('actual Parser consume member stages only the same exact original impl and stops at unproved conditional pattern grammar',()=>{
  const proof=loadPinnedFormatSourceStages(),source=formatSourceStageInput(proof,parser),frames=captureBuiltinSourceCallFrames(proof,parser),result=projectBuiltinSourceCallFrames(frames,'consume',[{kind:'opaque-Parser'}, {kind:'opaque-char'}]);

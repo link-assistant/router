@@ -81,7 +81,8 @@ export function parsePrimitiveFromBody(Parser,selection){
   const body=entry.body;if(body.k!=='cast'||body.arg.k!=='name'||!same(body.arg.path,['small'])||!samePrimitive(body.to,selection.target))throw new TypeError('Original From body needs its separately parsed primitive cast');
   const inputBounds=selection.input.kind==='bool'?{min:0n,max:1n}:fixedBounds(selection.input),targetBounds=fixedBounds(selection.target);
   if(inputBounds.min<targetBounds.min||inputBounds.max>targetBounds.max)throw new TypeError('Original From cast is not infallible across its actual primitive domains');
-  const checkedOperation=selection.input.kind==='bool'?{kind:'primitive-bool-to-fixed',target:selection.target,input:'actual by-value bool',falseResidue:'0',trueResidue:'1'}:{kind:'primitive-fixed-infallible-cast',input:selection.input,target:selection.target,inputBounds,targetBounds};
+  const decimalBounds=bounds=>({min:bounds.min.toString(),max:bounds.max.toString()});
+  const checkedOperation=selection.input.kind==='bool'?{kind:'primitive-bool-to-fixed',target:selection.target,input:'actual by-value bool',falseResidue:'0',trueResidue:'1'}:{kind:'primitive-fixed-infallible-cast',input:selection.input,target:selection.target,inputBounds:decimalBounds(inputBounds),targetBounds:decimalBounds(targetBounds)};
   const proof=freeze({selection,parsedMemberSha256:metadataDigest(entry),checkedOperation,constTraitCall:false});bodies.set(proof,{entry,digest:metadataDigest(entry)});return proof;
 }
 export function requirePrimitiveFromBody(proof,input,target){const state=bodies.get(proof);if(!state||state.digest!==metadataDigest(state.entry)||proof.selection!==pinnedPrimitiveFrom(input,target))throw new TypeError('Primitive From needs its private unmodified original parsed body');return proof;}

@@ -58,6 +58,7 @@ export function compileBuiltinControlContinuations(control) {
       case 'if':row.condition=child(source.condition);row.then=child(source.then);row.otherwise=source.otherwise?child(source.otherwise):null;break;
       case 'while':row.condition=child(source.condition);row.body=child(source.body);break;
       case 'loop':row.body=child(source.body);break;
+      case 'block-expression':row.body=child(source.body);break;
       case 'assign':row.target=child(source.target);row.operation=source.operation;row.value=child(source.value);break;
       case 'tuple':case 'array':row.items=source.items.map(child);row.trailingComma=source.trailingComma??false;break;
       default:row.originalObligation=source;row.requiresOriginalRule=source.kind;
@@ -84,7 +85,10 @@ export function projectBuiltinControlContinuations(program,inputs=[]) {
   if(!Array.isArray(values)||values.length!==program.parameters.length)throw new TypeError('Original source continuation input arity differs from its original signature');
   let serialized;try{serialized=JSON.stringify(values);}catch{throw new TypeError('Source continuation inputs require inert serializable metadata');}
   if(metadataDigest(values)!==metadataDigest(JSON.parse(serialized)))throw new TypeError('Source continuation input metadata changes under serialization');
-  const env=new Map(program.parameters.map((param,index)=>[param.name,{value:values[index],mutable:param.mutable}])),trace=[];let remaining=32000;
+  // Descriptor validation above precedes this ordinary JSON snapshot. Projection
+  // results retain serializable metadata without exposing caller-owned objects.
+  const snapshot=JSON.parse(serialized);
+  const env=new Map(program.parameters.map((param,index)=>[param.name,{value:snapshot[index],mutable:param.mutable}])),trace=[];let remaining=32000;
   const frontier=(node,obligation,details={})=>({status:'frontier',obligation,node:node.id,sourceSpan:node.sourceSpan,...details});
   function boolean(value,node){if(typeof value!=='boolean')return frontier(node,'actual-boolean-domain',{value});return normal(value);}
   function value(id,env,loopDepth=0){
@@ -99,6 +103,7 @@ export function projectBuiltinControlContinuations(program,inputs=[]) {
       case 'literal':return n.literalKind==='bool'?normal(n.raw==='true'):frontier(n,'original-literal-decoder',{literal:n.originalLiteral});
       case 'written-path':return n.path.length===1&&env.has(n.path[0])?normal(env.get(n.path[0]).value):frontier(n,'original-source-name-owner',{path:n.path});
       case 'parenthesized':return child(n.value);
+      case 'block-expression':return child(n.body);
       case 'expression-statement':{const result=child(n.value);return result.status==='value'?normal(unit()):result;}
       case 'let':{
         const initializer=child(n.initializer);if(initializer.status!=='value')return initializer;

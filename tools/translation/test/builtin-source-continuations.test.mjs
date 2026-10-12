@@ -22,11 +22,11 @@ test('both original format callbacks reach their actual source tail call and lit
     for(const flag of flags){assert.equal(program[flag],false,flag);assert.equal(projection[flag],false,flag);}
   }
 });
-test('original compiler parse body stops at its actual parser method before treating ExtCtxt as a host object',()=>{
+test('original compiler parse body stops at its first constructor before the later parser method',()=>{
   const proof=loadPinnedFormatSourceStages(),program=pinned(proof,'parse_args'),operands=program.parameters.map(param=>({kind:'opaque-'+param.name})),projection=projectBuiltinControlContinuations(program,operands);
   assert.equal(program.function.span.start,2808);assert.equal(projection.result.status,'frontier');assert.equal(projection.result.obligation,'original-callee-owner-and-effects');
-  assert.equal(projection.result.callee.kind,'source-member-callee');assert.equal(projection.result.callee.name,'new_parser_from_tts');
-  assert.equal(projection.result.callee.receiver.kind,'opaque-ecx');assert.equal(projection.callbackInvocations,0);
+  assert.deepEqual(projection.result.callee,{kind:'written-source-callee',path:['FormatArguments','new']});assert.deepEqual(projection.result.arguments,[]);assert.equal(projection.callbackInvocations,0);
+  assert.ok(program.nodes.some(node=>node.kind==='field'&&node.name==='new_parser_from_tts'));
   assert.ok(projection.result.sourceSpan.start>=program.function.bodySpan.start);assert.ok(projection.result.sourceSpan.end<=program.function.bodySpan.end);
   assert.ok(program.nodes.some(node=>node.kind==='match'));assert.ok(program.nodes.some(node=>node.kind==='while'));
 });

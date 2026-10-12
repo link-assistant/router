@@ -12,6 +12,7 @@ const verifyTypedTargets=(result,verify)=>verifyActualTypedTargets(result,verify
 const CARGO_2024='[package]\nname="let-chain-fixture"\nversion="0.1.0"\nedition="2024"\n';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:CARGO_2024});
 const some=field0=>Object.freeze({$:'Some',field0}),none=Object.freeze({$:'None'});
+const tuple=(...fields)=>Object.freeze({$:'Tuple',...Object.fromEntries(fields.map((value,index)=>['field'+index,value]))});
 const ok=field0=>Object.freeze({$:'Ok',field0}),err=field0=>Object.freeze({$:'Err',field0});
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const requireRefusal=source=>{const result=project(source);assert.equal(result.meta.executable.some(entry=>entry.name==='bad'),false,source);assert.ok(result.meta.refused.some(entry=>entry.name==='bad'),source);};
@@ -79,7 +80,8 @@ test('nested tuple and scalar irrefutable patterns use existing actual projectio
   const source='pub fn product(value:Option<(u8,(u8,u8))>)->u8{if let Some((a,(b,c)))=value && a<b && let sum=b+c{return sum;}0u8}pub fn literal(value:&str)->bool{let mut answer:bool=false;if let "Ω"=value && true{answer=true;}answer}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{
-    assert.equal(api.product(some(Object.freeze([1n,Object.freeze([2n,3n])]))),5n);assert.equal(api.product(some(Object.freeze([3n,Object.freeze([2n,3n])]))),0n);assert.equal(api.product(none),0n);
+    assert.equal(api.product(some(tuple(1n,tuple(2n,3n)))),5n);assert.equal(api.product(some(tuple(3n,tuple(2n,3n)))),0n);assert.equal(api.product(none),0n);
+    assert.throws(()=>api.product(some(Object.freeze([1n,Object.freeze([2n,3n])]))),/data constructor cannot be an array/u);
     assert.equal(api.literal('Ω'),true);assert.equal(api.literal('ω'),false);
   });
 });
@@ -160,9 +162,15 @@ test('known original Some and None clauses check unreachable bodies and omit imp
   requireRefusal('pub fn bad()->u8{let subject:Option<u8>=None;if let Some(v)=subject && true{return unknown(v);}7u8}');
 });
 
-test('the unchanged original upstream URL caller retains remaining format obligations and full source',()=>{
+test('the unchanged original upstream URL caller translates through meta and both typed targets',async()=>{
   const complete=readFileSync(new URL('../../../src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='upstream_url');assert.ok(item);
   const original=complete.slice(item.start,item.end);assert.match(original,/&& let Some\(root\)/u);
   const result=translateSource(original,'src/github_proxy.rs',{cargoManifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8')});assert.equal(result.ir.items.map(entry=>entry.source).join(''),original);assert.equal(result.ir.sourceSha256,hash(original));
-  const retained=result.ir.items.find(entry=>entry.name==='upstream_url');assert.equal(retained.status,'carried');assert.ok(retained.diagnostic);assert.equal(retained.source,original);
+  const retained=result.ir.items.find(entry=>entry.name==='upstream_url');assert.equal(retained.status,'executable');assert.equal(retained.source,original);
+  const checked=translateProject({entry:'src/github_proxy.rs',paths:['src/github_proxy.rs'],readSource:()=>original,cargoManifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8')});assert.deepEqual(checked.meta.refused,[]);
+  await verifyTypedTargets(checked,api=>{
+    assert.equal(api.upstream_url('https://enterprise.example/api/v3','/graphql'),'https://enterprise.example/api/graphql');
+    assert.equal(api.upstream_url('https://api.github.com','/graphql'),'https://api.github.com/graphql');
+    assert.equal(api.upstream_url('https://enterprise.example/api/v3','/repos/a/b'),'https://enterprise.example/api/v3/repos/a/b');
+  });
 });
