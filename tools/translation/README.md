@@ -23,13 +23,17 @@ Run the same command with `--check` to reject stale, missing or unexpected outpu
 without writing files. Regeneration runs JavaScript; it requires no Rust build,
 network request or package installation.
 
-The source-only whitespace iterator draft includes a reproducible table lift:
+The whitespace iterator draft includes a reproducible table lift:
 `node tools/translation/generate-whitespace-data.mjs --check` verifies the original
 Rust 1.89 archive inputs, lifts the Unicode property into data meta, reparses it
 and compares the emitted JavaScript table and meta artifact. Omit `--check` to
 write those two artifacts. This bounded property lift uses no Rust build or host
 whitespace regex; it grants no crate namespace or complete runtime authority.
-The expected artifacts and 15 focused cases are authored but still unrun.
+The 24-file focused batch, including 15 new cases and the complete Unicode scalar
+table check, passes all 144 cases in Node and Bun at `f42be70a`. The
+[paired evidence](../../docs/case-studies/issue-759/current/source-whitespace-f42be70a/README.md)
+retains the initial two diagnostic expectation failures and complete repaired runs.
+Full-corpus gains and complete runtime parity still need independent verification.
 The borrowed `str` identity guard also refuses source type/import shadows and
 unresolved type scopes before the inherited parser can apply its shortcut.
 
@@ -133,23 +137,38 @@ success alone does not prove constant-name resolution, constructor style,
 irrefutability, copying, moves or borrows. Those obligations must be established
 at each frontend integration point.
 
-The source-only tuple/unit match draft sends original structural patterns through
+The tuple/unit match draft sends original structural patterns through
 that planner before normalizing anonymous products to the existing matrix ABI.
 Unit becomes a wildcard only after its actual unit type is checked. Original
 patterns remain in checked and reparsed target metadata; source identity,
 immutable scalar bindings, first-arm priority, exhaustiveness and finite
-Cartesian bounds remain mandatory. Its 13 authored cases are unrun; the two
-pinned whole-file frontiers claim no corpus gain.
+Cartesian bounds remain mandatory. Its 13 new cases pass in the combined focused
+batch; the two pinned whole-file frontiers claim no corpus gain.
 
-A separately queued source-only inference draft derives contextual-free tuple
+The inference draft derives contextual-free tuple
 layouts from actual checked bool, unit and Rust fixed-integer fields, including
 recursive scalar products. It shares the contextual tuple name encoding,
 retains primitive identities, adds inferred layouts to the checked semantic
-tree and preserves source-order field expressions. Its eight authored cases are
-unrun. Unspecified integer defaults, borrows, owned fields, nominal fields,
+tree and preserves source-order field expressions. Nine new cases, including
+per-file bulk emission with actual project declarations and source scopes, pass
+with the tuple matches in the 26-file batch: 194 cases in both Node and Bun at
+`fe422f75`, with no skips. The
+[paired evidence](../../docs/case-studies/issue-759/current/source-tuples-fe422f75/README.md)
+retains all initial failures and the finite per-fixture timeout repair.
+Unspecified integer defaults, borrows, owned fields, nominal fields,
 floats and mutable aggregates remain refusals; char Pattern and enclosing
 namespace closure still require additional contracts. Bounds are 32 fields,
 32 levels, 16,000 validation cells, 1,024 new layouts and 8,192-byte names.
+
+The project checker batches independent original data-layout and function-signature
+type refusals before any body becomes checked IR. It discards the failed checker,
+removes the exact owners and checks every survivor and caller again. Body errors,
+generated declarations, missing attribution and internal errors keep their
+ordinary behavior; lifetime, constant and source-proof obligations remain
+mandatory. All 155 cases in the 18-file Node and Bun batch pass at `39277c56`.
+The [paired evidence](../../docs/case-studies/issue-759/current/source-declaration-refusals-39277c56/README.md)
+retains complete inputs and logs. This focused result claims no measured producer
+speedup, whole-corpus gain or complete gate success.
 
 Unbounded generics, arbitrary trait implementations, aggregate mutation,
 unresolved derives/macros, ambiguous imports, compilation conditions and
