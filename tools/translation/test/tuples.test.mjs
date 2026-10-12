@@ -98,7 +98,7 @@ test('tuple arity, projection ownership and mutable products stay source-bearing
     'pub fn bad(v:(u8,bool))->u8{v.0u8}',
     'struct Pair(u8,bool); pub fn bad(v:Pair)->u8{v.0}',
     'pub fn bad(mut v:(u8,bool))->u8{v.0}',
-    'pub fn bad()->u8{let v=(1u8,true);v.0}',
+    'pub fn bad()->u8{let v=(1,true);v.0}',
     'pub fn bad(v:(Box<u8>,bool))->u8{v.0}',
     'pub fn bad(v:(Vec<u8>,bool))->u8{v.0}',
   ]) {

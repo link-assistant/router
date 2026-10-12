@@ -1,7 +1,7 @@
 // Rust tuple products have their own checked layout, distinct from tuple structs.
 import {PatternControlRustParser,PatternControlChecker,PatternControlEmitter} from './pattern-control.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
-import {sameType,UNIT} from '../checked-types.mjs';
+import {sameType,UNIT,rustFixedType} from '../checked-types.mjs';
 import {normalizeGeneratedTypeOwner} from './generated-type-owners.mjs';
 import {coerce} from '../checked-coercions.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
@@ -22,10 +22,13 @@ function sourceQualifiers(type) {
     ...(type.rustStandardGeneric?{generic:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(sourceQualifiers)}}:{}),
   };
 }
+function tupleName(fields) {
+  const qualifiers=Buffer.from(JSON.stringify(fields.map(field=>sourceQualifiers(field.type))),'utf8').toString('hex');
+  return monomorphicTypeName('Tuple',fields.map(field=>field.type))+'_rust_'+qualifiers;
+}
 export class TupleRustParser extends withParameterPatternParser(PatternControlRustParser) {
   tupleType(fields,location) {
-    const qualifiers=Buffer.from(JSON.stringify(fields.map(field=>sourceQualifiers(field.type))),'utf8').toString('hex');
-    const name=monomorphicTypeName('Tuple',fields.map(field=>field.type))+'_rust_'+qualifiers;
+    const name=tupleName(fields);
     if(!this.genericTypes.has(name))this.genericTypes.set(name,{k:'data',name,tuple:true,ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:location,generated:'router-tuple-type'});
     const ownership=fields.map(field=>field.type.patternOwnershipRefusal).find(Boolean);
     return {kind:'named',path:['crate',name],rustGeneratedTypeOwner:{name,generated:'router-tuple-type'},span:location,...(ownership?{patternOwnershipRefusal:ownership}:{})};
@@ -56,9 +59,53 @@ export class TupleRustParser extends withParameterPatternParser(PatternControlRu
 }
 
 export class TupleChecker extends PatternControlChecker {
+  program(surface) {
+    this.inferredTupleLayouts=new Map();
+    const program=super.program(surface);
+    // The upstream checker builds the item tree from surface declarations.
+    // Types inferred while checking bodies also belong in the serialized tree.
+    program.items.push(...this.inferredTupleLayouts.values());
+    return program;
+  }
+  inferredTupleField(type,location,depth,active,verified,budget) {
+    if(--budget.cells<0||depth>32||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('inferred tuple ownership','requires bounded immutable by-value scalar fields or checked products of those fields',location);
+    if(['bool','unit'].includes(type.kind))return;
+    if(type.kind==='fixed') {
+      const primitive=rustFixedType(type.rustPrimitiveName);
+      if(!primitive||!sameType(primitive,type))throw unsupported('inferred tuple integer identity','requires an actual checked Rust primitive; no integer default or portable-width identity is invented',location);
+      return;
+    }
+    const entry=type.kind==='data'?this.items.get(type.name):null;
+    if(!entry?.tuple||entry.generated!=='router-tuple-type'||entry.ctors.length!==1||active.has(type.name))throw unsupported('inferred tuple field','requires a checked scalar or anonymous tuple, without nominal or borrowed owner erasure',location);
+    if(verified.has(type.name))return;
+    active.add(type.name);for(const field of entry.ctors[0].fields)this.inferredTupleField(field.type,location,depth+1,active,verified,budget);active.delete(type.name);verified.add(type.name);
+  }
+  inferTuple(args,location) {
+    if(args.length<1||args.length>32)throw unsupported('inferred tuple arity','requires one to thirty-two actual checked fields',location);
+    const active=new Set(),verified=new Set(),budget={cells:16000};
+    for(const argument of args)this.inferredTupleField(argument.type,location,0,active,verified,budget);
+    const fields=args.map((argument,index)=>({name:'field'+index,type:argument.type})),name=tupleName(fields);
+    if(Buffer.byteLength(name)>8192)throw unsupported('inferred tuple identity budget','the source-qualified product name exceeds the checked bound',location);
+    let entry=this.items.get(name);
+    if(entry) {
+      const actual=entry.ctors?.[0]?.fields;
+      if(!entry.tuple||entry.generated!=='router-tuple-type'||entry.ctors.length!==1||actual.length!==fields.length||actual.some((field,index)=>field.name!==fields[index].name||!sameType(field.type,fields[index].type)||JSON.stringify(sourceQualifiers(field.type))!==JSON.stringify(sourceQualifiers(fields[index].type))))throw typeError('inferred tuple has a conflicting actual source-qualified layout',location);
+    }else {
+      if(this.inferredTupleLayouts.size>=1024)throw unsupported('inferred tuple layout budget','a source program exceeds the checked product bound',location);
+      this.declare([{k:'data',name,tuple:true,generated:'router-tuple-type',ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:location,tupleInference:{kind:'checked-scalar-expression-product',sourceSpan:location,fieldTypes:fields.map(field=>structuredClone(field.type)),defaultedFields:false}}],[]);
+      entry=this.items.get(name);this.inferredTupleLayouts.set(name,entry);
+    }
+    return {entry,type:{kind:'data',name:entry.fullName,rustGeneratedTypeOwner:{name,generated:'router-tuple-type'},rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))}};
+  }
   expr(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
     if(node.k==='routerTuple') {
+      if(!expected) {
+        // Check the original field expressions once, in source order. A
+        // later result context never supplies missing Rust field identities.
+        const args=node.items.map(item=>this.expr(item,env,path,undefined,true)),{entry,type}=this.inferTuple(args,node.span);
+        return {k:'ctor',data:entry.fullName,ctor:entry.ctors[0].name,args,type,span:node.span,tupleInference:{kind:'checked-scalar-expression-product',fieldTypes:args.map(argument=>structuredClone(argument.type)),defaultedFields:false}};
+      }
       if(expected?.kind==='named')expected=this.resolveType(expected,path,node.span);
       const entry=expected?.kind==='data'?this.items.get(expected.name):null;
       if(!entry?.tuple || entry.generated!=='router-tuple-type' || entry.ctors.length!==1)throw unsupported('tuple expression','requires an actual checked tuple product from a contextual type',node.span);

@@ -1,0 +1,3 @@
+Draft automatic Rust tuple expression typing from checked bool, unit, named primitive integers and recursively checked scalar tuple fields. Intern source-qualified products in the checked declaration graph, preserve field evaluation order, and serialize inferred layout evidence through the shared meta-language path for JavaScript and TypeScript.
+
+Eight new cases are authored and unrun while the publisher owns the full check run. Borrowed, owned, nominal, floating-point, unspecified integer and mutable products retain refusals. No original Router function gain, full parity, native Rust equivalence or green gate is claimed.

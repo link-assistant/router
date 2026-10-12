@@ -138,9 +138,18 @@ that planner before normalizing anonymous products to the existing matrix ABI.
 Unit becomes a wildcard only after its actual unit type is checked. Original
 patterns remain in checked and reparsed target metadata; source identity,
 immutable scalar bindings, first-arm priority, exhaustiveness and finite
-Cartesian bounds remain mandatory. Its 13 authored cases are unrun. Computed
-tuple literals without an actual contextual product and char Pattern still need
-additional contracts; the two pinned whole-file frontiers claim no corpus gain.
+Cartesian bounds remain mandatory. Its 13 authored cases are unrun; the two
+pinned whole-file frontiers claim no corpus gain.
+
+A separately queued source-only inference draft derives contextual-free tuple
+layouts from actual checked bool, unit and Rust fixed-integer fields, including
+recursive scalar products. It shares the contextual tuple name encoding,
+retains primitive identities, adds inferred layouts to the checked semantic
+tree and preserves source-order field expressions. Its eight authored cases are
+unrun. Unspecified integer defaults, borrows, owned fields, nominal fields,
+floats and mutable aggregates remain refusals; char Pattern and enclosing
+namespace closure still require additional contracts. Bounds are 32 fields,
+32 levels, 16,000 validation cells, 1,024 new layouts and 8,192-byte names.
 
 Unbounded generics, arbitrary trait implementations, aggregate mutation,
 unresolved derives/macros, ambiguous imports, compilation conditions and
