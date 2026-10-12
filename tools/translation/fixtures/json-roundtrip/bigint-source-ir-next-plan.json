@@ -170,9 +170,17 @@
     "previouslyVerifiedArithmeticCases": 30,
     "newStorageCases": 4,
     "newForwardingCases": 3,
-    "totalAuthoredCases": 37,
+    "totalAuthoredCases": 39,
     "newCasesExecuted": false,
-    "authorityGranted": false
+    "authorityGranted": false,
+    "newReferenceCases": 2
   },
-  "privateContextExtension": "Private WeakMap data/callee/associated contexts are extended only with actual matching source seals; serialized public records and clones are denied."
+  "privateContextExtension": "Private WeakMap data/callee/associated contexts are extended only with actual matching source seals; serialized public records and clones are denied.",
+  "referenceSource": {
+    "path": "library/core/src/convert/mod.rs",
+    "sha256": "0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab",
+    "selected": "impl::AsRef::slice_T::as_ref",
+    "archiveReused": true,
+    "traitOwnerVerified": false
+  }
 }
