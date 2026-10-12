@@ -35,3 +35,5 @@ export function compilePinnedJsonNumericArithmetic(dependencies){
 }
 export const isPinnedJsonNumericArithmetic=value=>!!value&&arithmeticStates.has(value);
 export function projectPinnedJsonIntegerCast(candidate,from,to,value){const program=arithmeticStates.get(candidate);if(!program||!integerNames.includes(from)||!integerNames.includes(to))throw new TypeError('Integer cast projection needs a private original bounded source candidate');return projectArithmeticSource(program,'impl::AsPrimitive::'+from+'::as_'+to,[value]);}
+
+export function pinnedJsonNumericArithmeticProgram(candidate){const program=arithmeticStates.get(candidate);if(!program)throw new TypeError('Unsealed original numeric arithmetic candidate');return program;}

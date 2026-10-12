@@ -13,6 +13,7 @@ export function jsonRoundtripCandidateProfile({dependencies,compilationProfile=n
   if(!isJsonMacroSourceProof(dependencies))throw new TypeError('JSON roundtrip needs sealed exact Cargo/source dependencies');
   if(dependencies.profileSha256!==profile.jsonMacroSourceProfileSha256||!dependencies.packages.some(entry=>entry.name==='serde_json'&&entry.version===profile.version&&entry.archiveSha256===profile.lockedArchiveSha256))throw new TypeError('JSON roundtrip needs its exact original source profile and locked archive identity');
   if(compilationProfile?.values?.feature?.length)throw new TypeError('JSON roundtrip has no command-line Cargo feature override proof');
+  if(compilationProfile?.values?.fast_arithmetic?.length)throw new TypeError('JSON roundtrip has no externally injected fast_arithmetic cfg proof');
   const features=proveJsonMacroFeatures(dependencies);
   if(!isJsonMacroFeatureProof(features)||!features.features.includes('float_roundtrip'))throw new TypeError('JSON roundtrip needs actual locked float_roundtrip activation');
   const sources=profile.sources.map(pin=>{const original=jsonMacroOriginalSource(dependencies,'serde_json',pin.path);if(original.bytes!==pin.bytes||original.sha256!==pin.sha256)throw new TypeError('JSON roundtrip original lexical source changed');return pin;});

@@ -7,7 +7,7 @@ import {compilePinnedJsonLimbFragments,isPinnedJsonLimbFragments,projectPinnedJs
 const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),project=(proof,path,args,bits=32)=>projectPinnedJsonLimbFragment(proof,path,args,bits);
 test('original scalar, mutable scalar loop and hi64 function spans become serializable source-derived IR',()=>{
   const input=dependencies(),proof=compilePinnedJsonLimbFragments(input),source=jsonMacroOriginalSource(input,'serde_json','src/lexical/math.rs');
-  assert.equal(isPinnedJsonLimbFragments(proof),true);assert.equal(proof.program.functions.length,27);assert.doesNotThrow(()=>JSON.stringify(proof.program));
+  assert.equal(isPinnedJsonLimbFragments(proof),true);assert.equal(proof.program.functions.length,29);assert.doesNotThrow(()=>JSON.stringify(proof.program));
   for(const fn of proof.program.functions){assert.equal(createHash('sha256').update(source.source.slice(fn.span.start,fn.span.end)).digest('hex'),fn.sha256);assert.equal(source.source.slice(fn.bodySpan.start,fn.bodySpan.end).startsWith('{'),true);}
   const loop=proof.program.functions.find(fn=>fn.name==='small::imul');assert.equal(loop.ir.statements.some(statement=>statement.kind==='for'),true);
   assert.equal(loop.ir.tail.kind,'conditional');
@@ -91,4 +91,12 @@ test('original receiver and generic-constant provenance survive serialization wi
   assert.equal(proof.associatedSource.items.length,4);assert.equal(proof.associatedSource.privateMetaRoundtrip,true);assert.equal(proof.numericExpansions.generatedBehaviorVerified,false);
   assert.equal(proof.program.functions.find(fn=>fn.name==='nonzero').generics[0].bound,'Integer');assert.equal(proof.program.sourceBehaviorFidelityVerified,false);
   assert.throws(()=>project(proof,'impl::Hi64::u32::hi64_1',[[1n<<32n]],32),RangeError);
+});
+
+test('original math helpers call actual expanded AsCast/AsPrimitive IR and retain exact locked feature context',()=>{
+  const proof=compilePinnedJsonLimbFragments(dependencies());assert.equal(proof.cargoSourceContext.features.unifiedFeatureClosureVerified,true);assert.equal(proof.cargoSourceContext.features.features.includes('float_roundtrip'),true);assert.equal(proof.cargoSourceContext.parseAdmission,false);
+  for(const bits of [32,64]){const q=1n<<BigInt(bits),result=project(proof,'scalar::mul',[q-1n,q-1n,q-1n],bits);assert.deepEqual(result.value,[0n,q-1n]);assert.equal(result.calleeSourceBindingProjected,true);assert.equal(result.calls.some(row=>row.path==='as_limb'),true);assert.equal(result.calls.some(row=>row.path==='impl::AsCast::u'+bits+'::as_cast'),true);assert.equal(result.calls.some(row=>row.path.startsWith('impl::AsPrimitive::')),true);}
+  assert.throws(()=>compilePinnedJsonLimbFragments(dependencies(),{compilationProfile:{values:{feature:['unproved']}}}),/override proof/);
+  assert.throws(()=>compilePinnedJsonLimbFragments(dependencies(),{compilationProfile:{values:{fast_arithmetic:['32']}}}),/externally injected/);
+  for(const variant of proof.sourceDataPrograms)assert.equal(variant.program.calleeSources[0].ownerVerified,false);
 });

@@ -26,6 +26,10 @@ function walk(nodes,source,scope,result){
       let end=i+1;while(end<nodes.length&&text(nodes[end])!==';')end++;const parts=nodes.slice(i+1,end),path=parts.filter((_,index)=>index%2===0).map(text),valid=parts.length%2===1&&parts.every((node,index)=>index%2?text(node)==='::':identifier(text(node))||text(node)==='*');
       const span={start:nodes[i].span.start,end:nodes[end]?.span.end??source.length};result.imports.push({scope,path,syntaxSupported:valid,glob:path.at(-1)==='*',span,sha256:hash(source.slice(span.start,span.end))});i=end;continue;
     }
+    if(text(nodes[i])==='type'&&identifier(text(nodes[i+1]))&&text(nodes[i+2])==='='){
+      let end=i+3;while(end<nodes.length&&text(nodes[end])!==';')end++;if(end===nodes.length)throw new TypeError('Source alias is unterminated');const span={start:nodes[i].span.start,end:nodes[end].span.end};let type=null,diagnostic=null;try{type=dataType(nodes.slice(i+3,end));if(type.kind!=='uint')throw new TypeError('Source alias is not a literal unsigned primitive');}catch(error){diagnostic=error.message;}
+      result.aliases.push({scope,name:text(nodes[i+1]),type,diagnostic,attributes:precedingAttributes(nodes,i),span,sha256:hash(source.slice(span.start,span.end)),ownerVerified:false});i=end;continue;
+    }
     if(text(nodes[i])!=='const'||!identifier(text(nodes[i+1]))||text(nodes[i+2])!==':')continue;
     let equal=i+3;while(equal<nodes.length&&!['=',';'].includes(text(nodes[equal])))equal++;if(text(nodes[equal])!=='=')continue;let end=equal+1;while(end<nodes.length&&text(nodes[end])!==';')end++;if(end===nodes.length)throw new TypeError('Source constant is unterminated');
     const typeNodes=nodes.slice(i+3,equal),valueNodes=nodes.slice(equal+1,end),span={start:nodes[i].span.start,end:nodes[end].span.end},attributes=precedingAttributes(nodes,i);
@@ -37,7 +41,7 @@ function walk(nodes,source,scope,result){
 }
 export function compileArithmeticSourceData(source,modulePath){
   if(!Array.isArray(modulePath)||!modulePath.length||modulePath.length>16||modulePath.some(part=>!identifier(part)))throw new TypeError('Source data needs a bounded explicit projection module path');
-  const result={declarations:[],imports:[]};walk(originalMacroTrees(source),source,modulePath,result);
+  const result={declarations:[],imports:[],aliases:[]};walk(originalMacroTrees(source),source,modulePath,result);
   const issued={schema:'original-arithmetic-literal-data-v1',modulePath,sourceSha256:hash(source),...result,projectionOnly:true,namespaceComplete:false,typeOwnerVerified:false,attributeOwnerVerified:false,parseAdmission:false};
   const encoded=JSON.stringify(issued),data=freezeMacroTree({...JSON.parse(encoded),checkedMetaSha256:hash(encoded),privateMetaRoundtrip:true});seals.add(data);return data;
 }
