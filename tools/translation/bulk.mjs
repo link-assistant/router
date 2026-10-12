@@ -95,7 +95,9 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
     completedSources++;
     if (path.split('/').includes('..') || path.startsWith('/')) throw new Error(`source must be repository relative: ${path}`);
     const source = readSource(path);
-    const result = translateSource(source, path, { projectDeclarations,projectSourceScopes,jsonParserProfile,cargoManifest });
+    // Only genuine captured project scopes inherit this crate's edition.
+    // Unmatched scripts, experiments and archived sources keep it unknown.
+    const result = translateSource(source, path, { projectDeclarations,projectSourceScopes,jsonParserProfile });
     const stem = path.replace(/\.rs$/u, '');
     const targets = { meta: `${outputRoots[0]}/${stem}.meta.json`, javascript: `${outputRoots[1]}/${stem}.mjs`, typescript: `${outputRoots[2]}/${stem}.ts` };
     expected.set(targets.meta, json(result.ir));

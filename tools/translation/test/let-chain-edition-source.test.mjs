@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join,dirname} from 'node:path';
+import {planRegeneration,applyRegenerationPlan} from '../bulk.mjs';
+import {captureSourceCorpus} from '../source-corpus.mjs';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
@@ -55,4 +61,32 @@ test('standalone translation requires its explicit original manifest or genuine 
   const original=project({[path]:source},manifest),scoped=translateSource(source,path,{projectSourceScopes:original.sourceScopes,projectDeclarations:original.executableDeclarations});
   assert.equal(scoped.ir.items.find(entry=>entry.name==='select').status,'executable');assert.equal(scoped.ir.items.map(entry=>entry.source).join(''),source);
   const different=translateSource(source,path,{cargoManifest:cargo('2021')});assert.equal(different.ir.items.find(entry=>entry.name==='select').status,'carried');
+});
+test('bulk original project scopes inherit Cargo edition while unrelated tracked source keeps it unknown',{timeout:60_000},async()=>{
+  const folder=mkdtempSync(join(tmpdir(),'router-let-chain-cargo-boundary-'));
+  const primary='pub fn primary(v:Option<u8>)->u8{if let Some(n)=v && n>0u8{return n;}0u8}';
+  const foreign='pub fn plain()->u8{7u8}pub fn unrelated(v:Option<u8>)->u8{if let Some(n)=v && n>0u8{return n;}0u8}';
+  const files={'Cargo.toml':cargo('2024'),'src/lib.rs':primary,'archive/foreign.rs':foreign};
+  try{
+    for(const [path,source]of Object.entries(files)){mkdirSync(dirname(join(folder,path)),{recursive:true});writeFileSync(join(folder,path),source);}
+    execFileSync('git',['init','--quiet'],{cwd:folder,stdio:'pipe',timeout:30_000});
+    execFileSync('git',['add','--',...Object.keys(files)],{cwd:folder,stdio:'pipe',timeout:30_000});
+    const paths=execFileSync('git',['ls-files','-z','--','*.rs'],{cwd:folder,encoding:'utf8',timeout:30_000}).split('\0').filter(Boolean);
+    assert.deepEqual(paths,['archive/foreign.rs','src/lib.rs']);
+    const corpus=captureSourceCorpus({root:folder,paths}),plan=planRegeneration({root:folder,sourceCorpus:corpus});
+    assert.equal(plan.manifest.projects.length,1);assert.equal(plan.manifest.projects[0].entry,'src/lib.rs');
+    assert.equal(plan.manifest.projects[0].executableFunctions,1);
+    assert.deepEqual(applyRegenerationPlan(plan).failures,[]);
+    const readTarget=(path,key)=>readFileSync(join(folder,plan.manifest.sources.find(item=>item.source===path).targets[key]),'utf8');
+    const original=JSON.parse(readTarget('src/lib.rs','meta')),unrelated=JSON.parse(readTarget('archive/foreign.rs','meta'));
+    assert.equal(original.items.find(item=>item.name==='primary').status,'executable');
+    assert.equal(unrelated.items.find(item=>item.name==='plain').status,'executable');
+    const carried=unrelated.items.find(item=>item.name==='unrelated');assert.equal(carried.status,'carried');
+    assert.match(carried.diagnostic.message,/source crate edition|original Cargo/u);
+    assert.equal(unrelated.items.map(item=>item.source).join(''),foreign);assert.equal(unrelated.sourceSha256,hash(foreign));
+    for(const [path,verify]of [['src/lib.rs',api=>{assert.equal(api.primary(some(9n)),9n);assert.equal(api.primary(none),0n);}],['archive/foreign.rs',api=>{assert.equal(api.plain(),7n);assert.equal('unrelated' in api,false);}]]){
+      await verifyTypedTargets({meta:{entry:path},javascript:readTarget(path,'javascript'),typescript:readTarget(path,'typescript')},verify);
+    }
+    assert.deepEqual(applyRegenerationPlan(plan,{check:true}).failures,[]);
+  }finally{rmSync(folder,{recursive:true,force:true});}
 });
