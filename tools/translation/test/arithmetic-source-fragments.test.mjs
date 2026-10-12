@@ -26,3 +26,8 @@ test('source tail conditionals and mutable reference parameter rebinding preserv
   const program=compileArithmeticSourceFragments('fn pick(x:u64)->u64{if x < 2 {x}else if x < 5 {x+1}else{x+2}}',['pick']);assert.equal(projectArithmeticSource(program,'pick',[1n]).value,1n);assert.equal(projectArithmeticSource(program,'pick',[3n]).value,4n);assert.equal(projectArithmeticSource(program,'pick',[6n]).value,8n);
   const scopes=compileArithmeticSourceFragments('const C:u64=3; fn compare(x:u64)->u64{if x < C {x}else{C}}',['compare']);assert.equal(projectArithmeticSource(scopes,'compare',[7n]).value,3n);
 });
+
+test('actual checked helper bodies take precedence over arithmetic cast spellings',()=>{
+  const source='fn as_limb(x:u64)->u64{x+1} fn call(x:u64)->u64{as_limb(x)}',program=compileArithmeticSourceFragments(source,['as_limb','call']);assert.equal(projectArithmeticSource(program,'call',[4n]).value,5n);
+  const missing=compileArithmeticSourceFragments('fn call(x:u64)->u64{as_limb(x)}',['call']);assert.throws(()=>projectArithmeticSource(missing,'call',[4n]),/callable absent/);
+});

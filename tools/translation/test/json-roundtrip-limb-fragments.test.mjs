@@ -7,7 +7,7 @@ import {compilePinnedJsonLimbFragments,isPinnedJsonLimbFragments,projectPinnedJs
 const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),project=(proof,path,args,bits=32)=>projectPinnedJsonLimbFragment(proof,path,args,bits);
 test('original scalar, mutable scalar loop and hi64 function spans become serializable source-derived IR',()=>{
   const input=dependencies(),proof=compilePinnedJsonLimbFragments(input),source=jsonMacroOriginalSource(input,'serde_json','src/lexical/math.rs');
-  assert.equal(isPinnedJsonLimbFragments(proof),true);assert.equal(proof.program.functions.length,18);assert.doesNotThrow(()=>JSON.stringify(proof.program));
+  assert.equal(isPinnedJsonLimbFragments(proof),true);assert.equal(proof.program.functions.length,19);assert.doesNotThrow(()=>JSON.stringify(proof.program));
   for(const fn of proof.program.functions){assert.equal(createHash('sha256').update(source.source.slice(fn.span.start,fn.span.end)).digest('hex'),fn.sha256);assert.equal(source.source.slice(fn.bodySpan.start,fn.bodySpan.end).startsWith('{'),true);}
   const loop=proof.program.functions.find(fn=>fn.name==='small::imul');assert.equal(loop.ir.statements.some(statement=>statement.kind==='for'),true);
   assert.equal(loop.ir.tail.kind,'conditional');
@@ -61,5 +61,15 @@ test('actual unequal-size source dispatcher reaches source grade-school pieces a
     const result=project(proof,'large::karatsuba_mul_fwd',[left,right],bits),value=limbs=>limbs.reduceRight((n,limb)=>n*q+limb,0n);
     assert.equal(value(result.value),value(left)*5n**1024n);assert.equal(result.calls.some(call=>call.path==='large::karatsuba_uneven_mul'),true);assert.equal(result.calls.some(call=>call.path==='large::long_mul'),true);
     assert.throws(()=>project(proof,'large::karatsuba_mul_fwd',[Array(40).fill(1n),Array(40).fill(1n)],bits),/callable absent/);
+  }
+});
+
+test('actual source power-five body binds original literal tables and preserves both word dispatch paths',()=>{
+  const proof=compilePinnedJsonLimbFragments(dependencies());for(const bits of [32,64]){const q=1n<<BigInt(bits),read=limbs=>limbs.reduceRight((n,limb)=>n*q+limb,0n);
+    for(const exponent of [0n,1n,27n,1024n,1099n]){const result=project(proof,'small::imul_pow5',[[q-1n],exponent],bits);assert.equal(read(result.mutations[0]),(q-1n)*5n**exponent);assert.equal(result.sourceDataBindingProjected,true);assert.equal(result.parseAdmission,false);
+      if(exponent===1099n)assert.equal(result.calls.some(call=>call.path==='large::karatsuba_uneven_mul'),bits===32);
+    }
+    const half=(1n<<54n)-1n,limbs=[];let copy=half;while(copy){limbs.push(copy&(q-1n));copy>>=BigInt(bits);}const maximum=project(proof,'small::imul_pow5',[limbs,1099n],bits);assert.equal(read(maximum.mutations[0]),half*5n**1099n);
+    assert.throws(()=>project(proof,'small::imul_pow5',[[1n],1100n],bits),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
   }
 });

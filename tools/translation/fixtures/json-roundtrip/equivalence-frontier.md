@@ -119,8 +119,8 @@ the source combined-size threshold64. Negative comparison starts with at most54
 bits and at most1099 powers of five in this domain: a true overflowing u64 prefix
 contains at least19 nonzero-starting digits, so the scaled exponent is at least
 -350+19-768=-1099. Leading fraction zeroes cancel in the exponent/count formula. A32-bit1024-power
-case pairs a75-limb cached power with a partial of at most7 limbs; the source
-uneven path splits it into at-most7-limb grade-school products. A64-bit case
+case pairs a75-limb cached power with a partial of at most8 limbs; the source
+uneven path splits it into at-most8-limb grade-school products. A64-bit case
 stays in scalar chunks. Original power-table values and these bounded dispatch
 invariants still require focused arithmetic validation before admission; no
 general balanced-Karatsuba or allocation behavior is asserted.
@@ -189,3 +189,16 @@ only original uneven and grade-school source fragments. General balanced
 Karatsuba calls remain absent from the checked model and explicitly refuse;
 no source profile claims its correctness. This is an unrun projection witness,
 not a universal768-domain dispatch proof or resolved trait/runtime contract.
+
+The next source-only unit retains the complete original small::imul_pow5 body
+as generic return/cast/xor/compound-shift/import IR. Its constants are compiled
+from unchanged literal/reference arrays and source use/cfg paths, with matching
+private entry byte identity. Both original word-size tables are separate bound
+program contexts; public cloned data/programs cannot recreate the seal. The
+authored powers0/1/27/1024/1099 and maximum54-bit-half coefficient have independent
+mathematical expectations, still UNRUN. The bounded power API rejects n>1099 as
+an unsupported projection domain. Data imports/word-cfg projection do not
+certify actual attribute, namespace, casts, Vec/iterator, platform or macro owners.
+With n<=1099, low exponent bits below1024 can total75, so the maximal54-bit
+partial takes at most8 u32 limbs (correcting the earlier7-limb estimate).
+General balanced Karatsuba remains an explicit unsupported source branch.
