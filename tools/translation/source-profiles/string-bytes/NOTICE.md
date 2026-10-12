@@ -20,5 +20,9 @@ in both engines; six failures exposed raw-number/checked-literal proof staging,
 and one global-name fixture contradicted the preserved reserved-prefix refusal.
 The corrected pair passed 208/209 in each engine; the one remaining authored
 fixture expected the wrong panic text. Its assertion now requires the actual
-RangeError name and exact message. The final 209-case retry remains UNRUN;
-no producer, corpus gain, Rust build or full parity claim.
+RangeError name and exact message. Final 24-file checks pass all 209 cases in
+both engines at source head 74aab6e1881348f61ad721f8e89ecf104bf483fb, including
+JavaScript execution and strict TypeScript targets. All four complete pairs
+and original failure evidence are retained under
+docs/case-studies/issue-759/current/source-string-bytes-74aab6e1/.
+No producer, corpus gain, Rust build or full parity claim.
