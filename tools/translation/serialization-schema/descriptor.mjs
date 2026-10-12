@@ -79,7 +79,7 @@ export function projectSerializationDescriptor(input) {
         const metadata=helpers(variant.attributes,tag!==null?['rename']:['rename','alias']);
         const name=renamed(variant.name,metadata,rule,'variant');if(namesSeen.has(name))refuse('Renamed enum variant collision');namesSeen.add(name);
         if(tag!==null) {
-          const fields=projectFields(variant.fields,null);if(fields.some(field=>field.name===tag))refuse('Internal tag conflicts with a named field');
+          const fields=projectFields(variant.fields,null);if(fields.some(field=>field.name===tag||field.aliases?.includes(tag)))refuse('Internal tag conflicts with a named field or its alias');
           tagged[name]={kind:'struct',source:source+'::'+variant.name,fields};
         } else {variants.push(name);for(const entry of metadata.filter(value=>value.key==='alias')) {if(Object.hasOwn(aliases,entry.value))refuse('Alias collision');aliases[entry.value]=name;} }
       }

@@ -25,7 +25,7 @@ export function primitiveFieldDefault(type,dependencies) {
     throw new TypeError('Default body needs a separately checked non-literal interpreter');
   checker.expectedPrimitiveIdentity(checked.type,target,[],original.span);
   const value=checked.value;
-  if(target.kind==='bool'?typeof value!=='boolean':typeof value!=='string'||!/^-(?:0|[1-9]\d*)$|^(?:0|[1-9]\d*)$/.test(value))
+  if(target.kind==='bool'?typeof value!=='boolean':typeof value!=='string'||!(/^-?(?:0|[1-9]\d*)$/).test(value))
     throw new TypeError('Checked Default literal has no exact descriptor representation');
   return {
     schema:'original-primitive-field-default-v1',owner:type.owner,

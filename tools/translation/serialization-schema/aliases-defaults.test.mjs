@@ -52,6 +52,7 @@ test('ambiguous cross-field aliases remain source-bearing refusals instead of gu
     assert.throws(()=>projectSerializationDescriptor(checked(captured)),/alias collides/);
     const refused=draftBulkSerialization(captured).refused.find(entry=>entry.owner==='crate::Record');assert.match(refused.diagnostic.message,/alias collides/);
   });
+  fixture('#[derive(Serialize,Deserialize)]#[serde(tag="kind")]enum Record{First{#[serde(default,alias="kind")]value:bool}}',captured=>assert.throws(()=>projectSerializationDescriptor(checked(captured)),/Internal tag conflicts/));
 });
 test('bare primitive defaults use checked original Rust bodies for missing map and sequence fields',()=>{
   const types=['bool','i8','i16','i32','i64','u8','u16','u32','u64'];
