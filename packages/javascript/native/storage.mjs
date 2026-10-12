@@ -129,10 +129,11 @@ export function encodeLino(value, level = 0) {
   const entries = Object.entries(value);
   return `(\n${entries.map(([key, v]) => `${indent}${key} ${encodeLino(v, level + 1)}`).join('\n')}${entries.length ? '\n' : ''}${close})`;
 }
-export function decodeLino(text, {integer,scalar:unquotedScalar,escaped,object:makeObject} = {}) {
+export function decodeLino(text, {integer,scalar:unquotedScalar,escaped,object:makeObject,whitespace} = {}) {
   let i = 0;
   const firstKeys=new WeakMap();
-  const skip = () => { while (text[i] === ' ' || text[i] === '\t' || text[i] === '\r') i++; };
+  const space=character=>whitespace?whitespace(character):/\s/.test(character??'');
+  const skip = () => { while (i<text.length && (whitespace ? text[i]!=='\n' && space(text[i]) : text[i] === ' ' || text[i] === '\t' || text[i] === '\r')) i++; };
   function scalar(raw, quoted = false) {
     if (quoted) return raw;
     if (unquotedScalar) return unquotedScalar(raw);
@@ -217,13 +218,13 @@ export function decodeLino(text, {integer,scalar:unquotedScalar,escaped,object:m
       throw new Error('Unclosed Lino string');
     }
     const start = i;
-    while (i < text.length && !/[\s()]/.test(text[i])) i++;
+    while (i < text.length && !space(text[i]) && !/[()]/.test(text[i])) i++;
     if (i === start) throw new Error('Invalid Links Notation input');
     return scalar(text.slice(start, i));
   }
-  while (/\s/.test(text[i] ?? '') && i < text.length) i++;
+  while (i < text.length && space(text[i])) i++;
   const result = value();
-  while (/\s/.test(text[i] ?? '') && i < text.length) i++;
+  while (i < text.length && space(text[i])) i++;
   if (i !== text.length) throw new Error('Trailing Links Notation data');
   return result;
 }

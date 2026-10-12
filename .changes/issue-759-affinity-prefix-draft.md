@@ -1,0 +1,7 @@
+# Original UTF8 and format-prefix preservation draft
+
+This separate source-only delta follows verified runtime `6cdbb8f17` and evidence `b2080a546`, which remain immutable. Rust file/string conversion preserves U+FEFF; default Web TextDecoder behavior removes it. The affinity file reader and marked escaped/base64 string reader now use fatal UTF8 decoding with `ignoreBOM:true`, preserving the bytes as original Rust does. JSON capture and Conversation identity decoders receive the same narrow correction so a leading BOM cannot fabricate usable JSON, while literal BOM inside quoted ID data survives.
+
+Affinity format detection uses original Rust White_Space, including NEL and excluding BOM. The generic Lino reader gains one optional whitespace callback for original leading/trailing/token whitespace; default callers retain prior behavior and LF remains a row delimiter. The typed caller uses the pinned Rust1.89 Unicode16 property profile already retained by the shared whitespace tooling.
+
+Nine meaningful new cases cover preserved-BOM file refusal, valid NEL Lino prefixes/token gaps, Unicode-prefix JSON refusal, quoted/escaped/base64 IDs, unchanged default codec behavior, provider JSON Location fallback, Conversation create/list behavior, and SSE payload identity ordering. ALL NINE ARE UNRUN. Wire bodies are compared as bytes so Fetch text decoding cannot erase the condition under test. No engine, parser helper, producer, TS/meta/Rust generation or push occurred for this draft.

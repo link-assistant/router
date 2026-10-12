@@ -29,6 +29,8 @@ const SAFE_MIN = BigInt(Number.MIN_SAFE_INTEGER), SAFE_MAX = BigInt(Number.MAX_S
 const pairs = new WeakMap();
 class JsonNumber { constructor(raw) { this.raw = raw; } }
 function fail(message) { throw new Error(message); }
+// Pinned Rust 1.89 Unicode White_Space (same original table as whitespace-data.mjs).
+const rustWhitespace=character=>typeof character==='string' && /^[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]$/u.test(character);
 export function exactInteger(value, minimum = I64_MIN, maximum = I64_MAX) {
   if (typeof value === 'number' && !Number.isSafeInteger(value) || !['number','bigint'].includes(typeof value)) fail('expected an exact integer');
   const integer = BigInt(value);
@@ -182,7 +184,8 @@ export function validateAffinityValue(value,type='AffinityFile',{legacy=false}={
   return apply(value,type);
 }
 export function decodeAffinityFile(text) {
-  const legacy=/^(?:\{|\[)/.test(text.trimStart());
+  let prefix=0;while(prefix<text.length && rustWhitespace(text[prefix]))prefix++;
+  const legacy=text[prefix]==='{' || text[prefix]==='[';
   const value=legacy?lexicalJson(text):decodeLino(text,{scalar:raw=>{
     if(raw==='null')return null;
     if(raw==='true' || raw==='false')return raw==='true';
@@ -194,6 +197,6 @@ export function decodeAffinityFile(text) {
     }
     if(/[.eE]/.test(raw) && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(raw))return Number.isFinite(Number(raw))?new JsonNumber(raw):null;
     return raw;
-  },escaped:bytes=>new TextDecoder('utf-8',{fatal:true}).decode(bytes),object:entries=>Object.fromEntries(entries)});
+  },escaped:bytes=>new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes),object:entries=>Object.fromEntries(entries),whitespace:rustWhitespace});
   return validateAffinityValue(value,'AffinityFile',{legacy});
 }

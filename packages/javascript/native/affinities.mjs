@@ -75,7 +75,7 @@ export class AffinityStore {
   async load() {
     if (!this.persistent) return validateAffinityValue({version:1,records:structuredClone(this.records)});
     let source;
-    try { source = new TextDecoder('utf-8',{fatal:true}).decode(await readFile(this.path)); }
+    try { source = new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await readFile(this.path)); }
     catch (error) {
       if(error.code === 'ENOENT') return {version:1,records:[]};
       throw new RouterError('invalid_storage',`response-affinity storage failed: ${error.message}`,503);
