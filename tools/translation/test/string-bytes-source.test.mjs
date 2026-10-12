@@ -44,7 +44,7 @@ test('byte callbacks retain real shared filter arguments, scalar maps and checke
 test('lazy byte transforms stop before later arithmetic panics and respect zero take',async()=>{
   const source='pub fn empty(value:&str)->Vec<u8>{value.bytes().map(|byte|byte+255u8).take(0).collect()}pub fn first(value:&str)->bool{value.bytes().all(|byte|if byte==b\'1\'{false}else{20u8/(byte-byte)>0u8})}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,api=>{assert.deepEqual(api.empty('😀later'),[]);assert.equal(api.first('1😀'),false);assert.equal(api.first(''),true);assert.throws(()=>api.first('0'),/division by zero/u);});
+  await verifyTypedTargets(result,api=>{assert.deepEqual(api.empty('😀later'),[]);assert.equal(api.first('1😀'),false);assert.equal(api.first(''),true);assert.throws(()=>api.first('0'),{name:'RangeError',message:'attempt to divide by zero'});});
 });
 
 test('written byte receiver effects occur once while actual callbacks short circuit',async()=>{

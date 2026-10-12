@@ -18,5 +18,7 @@ or full runtime authority is promoted. Initial paired 21-file checks passed
 exposed byte-character parsing. Expanded 24-file repair checks passed 202/209
 in both engines; six failures exposed raw-number/checked-literal proof staging,
 and one global-name fixture contradicted the preserved reserved-prefix refusal.
-That coherent correction and 209-case retry remain UNRUN; no producer, corpus
-gain, Rust build or full parity claim.
+The corrected pair passed 208/209 in each engine; the one remaining authored
+fixture expected the wrong panic text. Its assertion now requires the actual
+RangeError name and exact message. The final 209-case retry remains UNRUN;
+no producer, corpus gain, Rust build or full parity claim.
