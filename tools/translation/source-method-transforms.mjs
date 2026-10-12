@@ -75,3 +75,4 @@ export function originalMethodParserTokenFacts(tokens) {
   if(at!==actual.length)throw new TypeError('Original method parser inserted or removed source tokens');
   return Object.freeze({proof:issued.proof,source:state.member.source,sourcePath:state.member.sourcePath,modulePath:state.member.modulePath,sourceView:state.member.sourceView,compilationProfile:state.member.compilationProfile,originalMemberSpan:state.method.span,originalBodySpan:state.method.bodySpan,transform:state.proof});
 }
+export function originalMethodParserTokenContext(tokens){return parserTokenCopies.has(tokens)?originalMethodParserTokenFacts(tokens):null;}

@@ -41,9 +41,13 @@ test('changed parser callbacks and transformed tokens are denied before a privat
   state.parser.fn=()=>result.entry;assert.throws(()=>originalMethodParsedFacts(result),/callbacks|identity/);delete state.parser.fn;
   state.parser.cursor.tokens.find(token=>token.value==='value').value='other';assert.throws(()=>originalMethodParsedFacts(result),/token stream/);
 });
-test('original method macro calls remain carried until the transformed opaque AST context is genuinely linked',()=>{
+test('actual original method macro tokens project through genuine transformed opaque ASTs',()=>{
   const row=fixture('enum Mode{On,Off}impl Mode{fn is_on(&self)->bool{matches!(self,Self::On)}}');
-  assert.throws(()=>parseOriginalMethodTransform(row.transform),/private source association|original.*context|genuine.*parser|source.*capture/i);
+  const result=parseOriginalMethodTransform(row.transform),body=result.entry.body;
+  assert.equal(body.k,'routerOrderedMatch');assert.equal(body.constEligible,false);
+  assert.equal(body.sourceMacro.sourceMatchesProof.call.originalInvocation,'matches!(self,Self::On)');
+  assert.equal(body.sourceMacro.sourceMatchesProof.originalRuleInterpreted,true);assert.equal(body.sourceMacro.sourceMatchesProof.opaqueAstProjectionChecked,true);
+  assert.equal(body.rows[0].pattern.path.join('::'),'crate::Mode::On');originalMethodParsedFacts(result);
 });
 test('transformed caller frames prove only the exact original invocation inside the member body',()=>{
   const source='enum Mode{On,Off}impl Mode{fn is_on(&self)->bool{matches!(self,Self::On)}}fn other()->bool{matches!(true,true)}',row=fixture(source),parser=new HostRustParser(originalMethodParserTokens(row.transform));
