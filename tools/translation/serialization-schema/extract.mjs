@@ -1,0 +1,123 @@
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+import { captureSourceCorpus, sourceCorpusPaths, sourceCorpusText } from '../source-corpus.mjs';
+import { resolveModuleGraph } from '../project.mjs';
+import { loadDeriveDependencyProof, deriveDependencySource } from '../derive-dependencies.mjs';
+import { createDeriveFootprintContext, deriveFootprintAt, deriveFootprintExternalModules } from '../derive-footprints.mjs';
+import { resolveModuleBindings } from '../module-bindings.mjs';
+import { originalSourceModuleItems } from '../source-module-views.mjs';
+import { inspectDeriveInput } from '../derive-inputs.mjs';
+import { compilationProfile } from '../cfg-profile.mjs';
+
+const contexts = new WeakMap();
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+const key = path => path.join('::');
+export const SERIALIZATION_LIMITS = Object.freeze({ types: 128, fields: 1024, variants: 1024, typeDepth: 16, metaBytes: 4 * 1024 * 1024 });
+export function freeze(value) { if(value && typeof value === 'object') { for(const child of Object.values(value)) freeze(child); Object.freeze(value); } return value; }
+export class SerializationRefusal extends TypeError {
+  constructor(message, source = null, span = null) { super(message); this.name = 'SerializationRefusal'; this.diagnostic = { kind: 'serialization-schema-refusal', message, source, span }; }
+}
+const refuse = (message, module, span) => { throw new SerializationRefusal(message, module?.file ?? null, span ?? null); };
+
+// Callers cannot manufacture a source/namespace certificate by copying its JSON.
+export function captureSerializationContext({ root, paths, entry = 'src/lib.rs', compilationProfile: input = null } = {}) {
+  root = resolve(root);
+  const corpus = captureSourceCorpus({ root, paths }), profile = compilationProfile(input);
+  const graph = resolveModuleGraph({ entry, paths: sourceCorpusPaths(corpus, root), readSource: path => sourceCorpusText(corpus, root, path), compilationProfile: profile });
+  const dependencies = loadDeriveDependencyProof({ manifest: sourceCorpusText(corpus, root, 'Cargo.toml'), lock: sourceCorpusText(corpus, root, 'Cargo.lock') });
+  const derive = createDeriveFootprintContext({ modules: graph.modules, dependencies, compilationProfile: profile });
+  const bindings = resolveModuleBindings({ modules: graph.modules, externalModules: deriveFootprintExternalModules(derive), deriveContext: derive, compilationProfile: profile });
+  const modules = new Map(graph.modules.map(module => [key(['crate', ...module.path]), module]));
+  const scopes = new Map(bindings.scopes.map(scope => [key(['crate', ...scope.path]), scope]));
+  const caseInput=deriveDependencySource(dependencies,'serde_derive','src/internals/case.rs');
+  const {source:caseBody,...caseSource}=caseInput;
+  const dependencyEvidence={schema:dependencies.schema,manifestSha256:dependencies.manifestSha256,lockSha256:dependencies.lockSha256,sourceProfileSha256:dependencies.sourceProfileSha256,edition:dependencies.edition,rustVersion:dependencies.rustVersion,features:dependencies.features,packages:dependencies.packages,standardCore:dependencies.standardCore};
+  const description = freeze({ schema: 'original-serialization-context-v1', entry, compilationProfile: profile, sourceSetSha256: corpus.sourceSetSha256, sources: corpus.sources, cargo: corpus.cargo, dependenciesDigest: dependencies.digest, caseSource, dependencyEvidence, runtimeAuthority: false, generatedTraitBehavior: false });
+  contexts.set(description, { corpus, graph, modules, scopes, derive, dependencies });
+  return description;
+}
+export const isSerializationContext = context => !!context && contexts.has(context);
+function state(context) { const value = contexts.get(context); if(!value) throw new SerializationRefusal('Unsealed original serialization context'); return value; }
+function matching(tokens, at) {
+  const pairs = { '[':']', '(':')', '{':'}', '<':'>' }, stack = [];
+  for(let index=at; index<tokens.length; index++) { const token=tokens[index].text; if(pairs[token]) stack.push(pairs[token]); else if([']',')','}','>'].includes(token)) { if(stack.pop()!==token) throw new SerializationRefusal('Unbalanced original declaration delimiters'); if(!stack.length) return index; } }
+  throw new SerializationRefusal('Unterminated original declaration');
+}
+function groups(tokens) {
+  const rows=[]; let begin=0;
+  for(let at=0;at<tokens.length;at++) { if(['[','(','{','<'].includes(tokens[at].text)) at=matching(tokens,at); else if(tokens[at].text===',') { if(at>begin) rows.push(tokens.slice(begin,at)); begin=at+1; } }
+  if(begin<tokens.length) rows.push(tokens.slice(begin)); return rows;
+}
+function head(tokens) {
+  let at=0;
+  while(tokens[at]?.text==='#') { if(tokens[at+1]?.text!=='[') throw new SerializationRefusal('Unproved data attribute syntax'); at=matching(tokens,at+1)+1; }
+  if(tokens[at]?.text==='pub') { at++; if(tokens[at]?.text==='(') at=matching(tokens,at)+1; }
+  return at;
+}
+const span = tokens => ({ start:tokens[0].start, end:tokens.at(-1).end, unit:'utf16' });
+function attributes(input,tokens) { const bounds=span(tokens); return input.attributes.filter(attribute=>attribute.span.start>=bounds.start && attribute.span.end<=bounds.end); }
+function ownerPath(value,module) {
+  const segments=value.split('::');
+  if(segments[0]==='crate') return segments;
+  if(segments[0]==='self') return ['crate',...module.path,...segments.slice(1)];
+  if(segments[0]==='super') { const parent=[...module.path];let at=0;while(segments[at]==='super') { if(!parent.length) refuse('Type path escapes original crate',module); parent.pop();at++; } return ['crate',...parent,...segments.slice(at)]; }
+  return ['crate',...module.path,...segments];
+}
+function resolvePath(s,module,path,allowPrelude=false) {
+  const segments=path.split('::'), current=s.scopes.get(key(['crate',...module.path]));
+  if(!current || current.configurationCondition!=='active') refuse('Original type scope has no active checked module',module);
+  if(current.unresolvedImports.some(entry=>entry.glob)) refuse('Unproved glob may shadow a serialization type',module);
+  if(allowPrelude && segments.length===1 && ['String','Vec','Option','i64','u32'].includes(path)) {
+    if(current.bindings.some(binding=>binding.name===path && binding.namespace==='type') || current.unresolvedTypeScope) refuse('Prelude serialization type is shadowed or unresolved: '+path,module);
+    return { owner:'rust-prelude::'+path, primitive:path };
+  }
+  let canonical=ownerPath(path,module), scope=s.scopes.get(key(canonical.slice(0,-1)));
+  // First source alias may name a module or a reexport, retaining its real owner.
+  if(!['crate','self','super'].includes(segments[0])) {
+    const aliases=current.bindings.filter(binding=>binding.namespace==='type' && binding.name===segments[0]);
+    if(aliases.length!==1 || aliases[0].status!=='resolved') refuse('Type alias is unresolved or ambiguous: '+path,module);
+    canonical=[...aliases[0].target,...segments.slice(1)];scope=s.scopes.get(key(canonical.slice(0,-1)));
+  }
+  if(!scope || scope.unresolvedTypeScope) refuse('Qualified serialization type scope remains unresolved: '+key(canonical),module);
+  const candidates=scope.bindings.filter(binding=>binding.namespace==='type' && binding.name===canonical.at(-1));
+  if(candidates.length!==1 || candidates[0].status!=='resolved') refuse('Qualified serialization type has no unique original owner: '+path,module);
+  return { owner:key(candidates[0].target), primitive:null };
+}
+function typeReference(s,module,tokens,depth=0) {
+  if(depth>SERIALIZATION_LIMITS.typeDepth || !tokens.length) refuse('Serialization type nesting exceeds checked grammar',module,tokens.length?span(tokens):null);
+  let at=0, names=[];
+  while(at<tokens.length) { const token=tokens[at++];if(token.type!=='ident' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(token.text)) refuse('Unsupported serialization type syntax',module,span(tokens));names.push(token.text);if(tokens[at]?.text!=='::')break;at++; }
+  const written=names.join('::'), resolution=resolvePath(s,module,written,true), evidence={written,owner:resolution.owner,span:span(tokens)};
+  if(at===tokens.length) {
+    if(['Vec','Option'].includes(resolution.primitive)) refuse('Generic serialization constructor lacks its element type',module,span(tokens));
+    return {...evidence,kind:resolution.primitive?'primitive':'named',...(resolution.primitive?{name:resolution.primitive}:{})};
+  }
+  if(tokens[at]?.text!=='<' || matching(tokens,at)!==tokens.length-1 || !['Vec','Option'].includes(resolution.primitive)) refuse('Only proven Option/Vec type applications are projected',module,span(tokens));
+  const args=groups(tokens.slice(at+1,-1));if(args.length!==1) refuse('Serialization constructor arity is unsupported',module,span(tokens));
+  return {...evidence,kind:resolution.primitive==='Vec'?'vec':'option',type:typeReference(s,module,args[0],depth+1)};
+}
+function fields(s,module,tokens,input) {
+  const rows=groups(tokens);if(rows.length>SERIALIZATION_LIMITS.fields)refuse('Serialization field budget exceeded',module);
+  return rows.map(row=>{ const at=head(row);if(row[at]?.type!=='ident'||row[at+1]?.text!==':')refuse('Only named original serialization fields are projected',module,span(row));return {name:row[at].text,span:span(row),attributes:attributes(input,row),type:typeReference(s,module,row.slice(at+2))}; });
+}
+function declaration(s,owner) {
+  const parts=owner.split('::'),module=s.modules.get(key(parts.slice(0,-1)));if(!module)refuse('Reachable serialization owner is not an original tracked module: '+owner);
+  const items=originalSourceModuleItems(module).filter(item=>['struct','enum'].includes(item.term)&&item.name===parts.at(-1));
+  if(items.length!==1)refuse('Serialization owner does not identify one original data declaration: '+owner,module);
+  const item=items[0], certificate=deriveFootprintAt(s.derive,module,item);
+  if(!certificate || !['serde::Serialize','serde::Deserialize'].every(target=>certificate.owners.some(value=>key(value.target)===target))) refuse('Actual locked Serialize/Deserialize owners are unproved: '+owner,module,{start:item.start,end:item.end});
+  const input=inspectDeriveInput(item,module.compilationProfile),tokens=item.tokens.filter(token=>token.type!=='comment'),at=head(tokens);
+  if(tokens[at]?.text!==item.term||tokens[at+1]?.text!==item.name||tokens[at+2]?.text!=='{'||matching(tokens,at+2)!==tokens.length-1)refuse('Tuple/newtype/generic/discriminant serialization declaration is unsupported',module,{start:item.start,end:item.end});
+  const common={owner,name:item.name,source:module.file,sourceSha256:hash(module.source),span:{start:item.start,end:item.end,unit:'utf16'},itemSha256:hash(module.source.slice(item.start,item.end)),attributes:input.attributes,derives:input.derives,deriveCertificateDigest:certificate.digest,kind:item.term};
+  if(item.term==='struct')return {...common,fields:fields(s,module,tokens.slice(at+3,-1),input)};
+  const rows=groups(tokens.slice(at+3,-1));if(rows.length>SERIALIZATION_LIMITS.variants)refuse('Serialization variant budget exceeded',module);
+  return {...common,variants:rows.map(row=>{const first=head(row),name=row[first];if(name?.type!=='ident')refuse('Serialization variant needs an original identifier',module,span(row));let layout='unit',members=[];if(first+1<row.length){if(row[first+1].text!=='{'||matching(row,first+1)!==row.length-1)refuse('Tuple/discriminant variant requires a separately proven projection',module,span(row));layout='struct';members=fields(s,module,row.slice(first+2,-1),input);}return {name:name.text,span:span(row),attributes:attributes(input,row).filter(attribute=>attribute.position==='variant'),layout,fields:members};})};
+}
+export function extractSerializationSchema(context,{roots}={}) {
+  const s=state(context);if(!Array.isArray(roots)||!roots.length||roots.some(value=>typeof value!=='string'||!/^crate(?:::[A-Za-z_][A-Za-z0-9_]*)+$/.test(value)))refuse('Roots must be explicit original crate-qualified data types');
+  const queue=[...new Set(roots)],types=[];const seen=new Set();
+  function reachable(type){if(type.kind==='named')queue.push(type.owner);if(type.type)reachable(type.type);}
+  while(queue.length){const owner=queue.shift();if(seen.has(owner))continue;seen.add(owner);if(seen.size>SERIALIZATION_LIMITS.types)refuse('Reachable serialization type budget exceeded');const value=declaration(s,owner);types.push(value);for(const member of value.fields??value.variants.flatMap(variant=>variant.fields))reachable(member.type);}
+  const meta={schema:'original-serialization-meta-v1',context:{entry:context.entry,compilationProfile:context.compilationProfile,sourceSetSha256:context.sourceSetSha256,dependenciesDigest:context.dependenciesDigest,dependencyEvidence:context.dependencyEvidence,caseSource:context.caseSource,cargo:context.cargo},roots:[...new Set(roots)],types:types.sort((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:0),obligations:['Bounded data layout projection only; custom serializers, generated traits and whole-crate runtime parity remain unproved'],runtimeAuthority:false,generatedTraitBehavior:false};
+  return freeze(meta);
+}
