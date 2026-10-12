@@ -27,10 +27,13 @@ export function hasNextBasedEnumerate(node){
 export function checkedScalarEnumerate(checker,node,object,indexType){
   if(object.type.kind!=='routerIterator'||typeof checker.inferTuple!=='function')throw unsupported('Iterator::enumerate','requires an actual checked iterator and bounded inferred product layout',node.span);
   if(indexType.rustPrimitiveName!=='usize'||indexType.bits!==manifest.usizeBits||indexType.signed||indexType.rustReference||indexType.rustGenericIdentityUnresolved)throw unsupported('Iterator::enumerate index','requires the original by-value usize of the selected checked-overflow profile',node.span);
-  // inferTuple validates every original Item field, retaining references,
-  // nominal owners and ownership-bearing fields as unresolved requirements.
+  // The narrow reference pair keeps its actual shared scalar Item; ordinary
+  // products retain the existing by-value validator. Neither path invents
+  // aggregate moves, mutable references or a copied pointee.
   const itemType=object.type.element;
-  const {entry,type}=checker.inferTuple([{type:indexType},{type:itemType}],node.span);
+  const {entry,type}=itemType.rustReference
+    ?checker.inferSharedScalarIteratorPair(indexType,itemType,node.span)
+    :checker.inferTuple([{type:indexType},{type:itemType}],node.span);
   return {k:'routerIteratorOperation',op:'enumerate',object,args:[],type:{kind:'routerIterator',element:type},span:node.span,constEligible:false,
     sourceIteratorEnumerate:{profile:manifest.profile,operation:'next',indexType:structuredClone(indexType),itemType:structuredClone(itemType),tupleType:structuredClone(type),tupleConstructor:entry.ctors[0].name,sourceInputs:manifest.sources.map(({url,sha256})=>({url,sha256})),evaluationOrder:[...manifest.evaluationOrder],advancedMethodsComplete:false,namespaceComplete:false}};
 }

@@ -27,9 +27,9 @@
     "checked-usize-increment",
     "yield-original-index-and-item"
   ],
-  "supportedConsumption": "forward next-based immutable scalar/product iterator adapters",
+  "supportedConsumption": "forward next-based immutable scalar/product iterator adapters, preserving actual shared scalar Items",
   "limitations": [
-    "borrowed or nominal tuple fields",
+    "borrowed aggregate, mutable, owned or nominal tuple fields",
     "custom Iterator owners",
     "Drop/allocation/feature closure",
     "nth/advance/backward/unchecked/fold-specialized methods",

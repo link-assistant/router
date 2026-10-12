@@ -8,6 +8,7 @@ import {typeError,unsupported} from '../vendor/meta-language/translation/diagnos
 import {withParameterPatternParser} from './parameter-patterns.mjs';
 
 const span=(start,end)=>({start:start.start,end:end.end});
+const SHARED_ITERATOR_PAIR=Symbol('checked-source-shared-scalar-iterator-pair');
 // Portable widths and scalar encodings are insufficient to intern Rust tuple
 // layouts: usize/u64 and String/&str have different source contracts. Keep
 // source qualifiers in an injective suffix, without location-dependent spans.
@@ -69,7 +70,13 @@ export class TupleChecker extends PatternControlChecker {
     program.items.push(...this.inferredTupleLayouts.values());
     return program;
   }
-  inferredTupleField(type,location,depth,active,verified,budget) {
+  inferredTupleField(type,location,depth,active,verified,budget,referenceContext) {
+    if(referenceContext?.token===SHARED_ITERATOR_PAIR&&depth===0&&type===referenceContext.itemType) {
+      const reference=type.rustReference,pointee=reference?.pointee;
+      if(--budget.cells<0||reference?.kind!=='shared'||!pointee||!['fixed','bool'].includes(pointee.kind)||type.rustOwnership||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||type.patternOwnershipRefusal!=='shared source reference')throw unsupported('inferred iterator tuple reference','requires the actual checked immutable scalar Item; no aggregate, mutable or owned field is inferred',location);
+      this.inferredTupleField(pointee,location,depth+1,active,verified,budget);
+      return;
+    }
     if(--budget.cells<0||depth>32||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('inferred tuple ownership','requires bounded immutable by-value scalar fields or checked products of those fields',location);
     if(['bool','unit'].includes(type.kind))return;
     if(type.kind==='fixed') {
@@ -82,10 +89,14 @@ export class TupleChecker extends PatternControlChecker {
     if(verified.has(type.name))return;
     active.add(type.name);for(const field of entry.ctors[0].fields)this.inferredTupleField(field.type,location,depth+1,active,verified,budget);active.delete(type.name);verified.add(type.name);
   }
-  inferTuple(args,location) {
+  inferSharedScalarIteratorPair(indexType,itemType,location) {
+    if(indexType.rustPrimitiveName!=='usize'||!itemType.rustReference)throw unsupported('inferred iterator tuple','requires the actual by-value usize index and shared scalar Item',location);
+    return this.inferTuple([{type:indexType},{type:itemType}],location,{token:SHARED_ITERATOR_PAIR,itemType});
+  }
+  inferTuple(args,location,referenceContext) {
     if(args.length<1||args.length>32)throw unsupported('inferred tuple arity','requires one to thirty-two actual checked fields',location);
     const active=new Set(),verified=new Set(),budget={cells:16000};
-    for(const argument of args)this.inferredTupleField(argument.type,location,0,active,verified,budget);
+    for(const argument of args)this.inferredTupleField(argument.type,location,0,active,verified,budget,referenceContext);
     const fields=args.map((argument,index)=>({name:'field'+index,type:argument.type})),name=tupleName(fields);
     if(Buffer.byteLength(name)>8192)throw unsupported('inferred tuple identity budget','the source-qualified product name exceeds the checked bound',location);
     let entry=this.items.get(name);
@@ -94,7 +105,7 @@ export class TupleChecker extends PatternControlChecker {
       if(!entry.tuple||entry.generated!=='router-tuple-type'||entry.ctors.length!==1||actual.length!==fields.length||actual.some((field,index)=>field.name!==fields[index].name||!sameType(field.type,fields[index].type)||JSON.stringify(sourceQualifiers(field.type))!==JSON.stringify(sourceQualifiers(fields[index].type))))throw typeError('inferred tuple has a conflicting actual source-qualified layout',location);
     }else {
       if(this.inferredTupleLayouts.size>=1024)throw unsupported('inferred tuple layout budget','a source program exceeds the checked product bound',location);
-      this.declare([{k:'data',name,tuple:true,generated:'router-tuple-type',ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:location,tupleInference:{kind:'checked-scalar-expression-product',sourceSpan:location,fieldTypes:fields.map(field=>structuredClone(field.type)),defaultedFields:false}}],[]);
+      this.declare([{k:'data',name,tuple:true,generated:'router-tuple-type',ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:location,tupleInference:{kind:referenceContext?.token===SHARED_ITERATOR_PAIR?'checked-source-shared-scalar-iterator-pair':'checked-scalar-expression-product',sourceSpan:location,fieldTypes:fields.map(field=>structuredClone(field.type)),defaultedFields:false}}],[]);
       entry=this.items.get(name);this.inferredTupleLayouts.set(name,entry);
     }
     return {entry,type:{kind:'data',name:entry.fullName,rustGeneratedTypeOwner:{name,generated:'router-tuple-type'},rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))}};

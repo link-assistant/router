@@ -46,9 +46,35 @@ test('enumerate reuses bounded inferred anonymous products and copied source pri
   await verifyTypedTargets(result,api=>{assert.equal(api.products(),9n);assert.equal(api.copied(Object.freeze([1n,2n,3n])),9n);assert.equal(api.copied(Object.freeze([])),0n);});
 });
 
-test('borrowed, nominal, equal-width and specialized consumption obligations remain original carried source',()=>{
+test('enumerate preserves actual shared primitive Items without copying their pointees',async()=>{
+  const source='pub fn shared(values:&[u8])->usize{let mut total:usize=0;for (index,value) in values.iter().enumerate(){total+=index+usize::from(*value);}total} pub fn flags(values:&[bool])->usize{let mut total:usize=0;for (index,flag) in values.iter().enumerate(){if *flag{total+=index;}}total}';
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));
+  const operation=find(checked.declarations.get('shared').body,node=>node.k==='routerIteratorOperation'&&node.op==='enumerate');
+  assert.equal(operation.sourceIteratorEnumerate.itemType.rustReference.kind,'shared');
+  assert.equal(operation.sourceIteratorEnumerate.itemType.rustReference.pointee.rustPrimitiveName,'u8');
+  const tuple=checked.declarations.get(operation.type.element.name);
+  assert.equal(tuple.tupleInference.kind,'checked-source-shared-scalar-iterator-pair');
+  assert.deepEqual(tuple.ctors[0].fields[1].type,operation.sourceIteratorEnumerate.itemType);
+  await verifyTypedTargets(result,api=>{assert.equal(api.shared(Object.freeze([1n,2n,3n])),9n);assert.equal(api.shared(Object.freeze([])),0n);assert.equal(api.flags(Object.freeze([true,false,true])),2n);});
+});
+
+test('shared primitive Items cannot become owned values or authorize escaping/specialized consumption',()=>{
   for(const source of [
-    'pub fn bad(values:&[u8])->usize{let mut total:usize=0;for (index,value) in values.iter().enumerate(){total+=index;}total}',
+    'pub fn bad(values:&[u8])->u8{let mut total:u8=0;for (_,value) in values.iter().enumerate(){total=value;}total}',
+    'pub fn bad(values:&mut [u8])->usize{let mut total:usize=0;for (index,_) in values.iter().enumerate(){total+=index;}total}',
+    'pub fn bad(values:&[u8])->usize{let mut total:usize=0;for &(index,_) in values.iter().enumerate(){total+=index;}total}',
+    'pub fn bad(values:&[u8])->Vec<(usize,&u8)>{values.iter().enumerate().collect()}',
+    'pub fn bad(values:&[u8])->usize{values.iter().enumerate().count()}',
+  ]){
+    const result=translateSource(source),item=result.ir.items.find(item=>item.name==='bad');
+    assert.equal(item.status,'carried',source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);
+  }
+});
+
+test('borrowed aggregate, nominal, equal-width and specialized consumption obligations remain original carried source',()=>{
+  for(const source of [
+    'pub fn bad(values:&[(u8,u8)])->usize{let mut total:usize=0;for (index,value) in values.iter().enumerate(){total+=index;}total}',
     'struct Boxed(u8);pub fn bad()->usize{let mut total:usize=0;for (index,_) in (0u8..2u8).map(|n|Boxed(n)).enumerate(){total+=index;}total}',
     'pub fn bad()->u64{let mut total:u64=0;for (index,_) in (0u8..2u8).enumerate(){total+=index;}total}',
     'pub fn bad()->usize{(0u8..2u8).enumerate().count()}',
