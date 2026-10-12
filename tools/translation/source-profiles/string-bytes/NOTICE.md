@@ -15,6 +15,8 @@ cursors, custom Deref/receivers, reverse/specialized terminals, ownership
 escapes and const execution require independent proofs. No namespace, trait
 or full runtime authority is promoted. Initial paired 21-file checks passed
 188/192 in each engine, with all 184 prior cases passing. The four new failures
-exposed byte-character parsing. Its source-qualified repair and two extra
-domain/proof cases remain UNRUN; no producer, corpus gain, Rust build or full
-parity claim.
+exposed byte-character parsing. Expanded 24-file repair checks passed 202/209
+in both engines; six failures exposed raw-number/checked-literal proof staging,
+and one global-name fixture contradicted the preserved reserved-prefix refusal.
+That coherent correction and 209-case retry remain UNRUN; no producer, corpus
+gain, Rust build or full parity claim.

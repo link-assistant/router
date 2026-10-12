@@ -9,7 +9,7 @@ import {parseProgram} from '../semantic-meta.mjs';
 import {STRING_BYTES_PROFILE,requireStringBytesProof} from '../extensions/string-bytes.mjs';
 import {stringBytes} from '../extensions/string-bytes-runtime.mjs';
 import {decodeRustByteCharacter,requireByteLiteral} from '../extensions/rust-byte-character.mjs';
-import {parseRust,checkProgram,emitJavaScript} from '../extensions/host-contracts.mjs';
+import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 function find(node,predicate) {
@@ -61,8 +61,7 @@ test('actual custom bytes methods use their source owner before standard receive
   const source='struct Counter{n:u8}impl Counter{fn bytes(&self,offset:u8)->u8{self.n+offset}}pub fn custom(n:u8)->u8{Counter{n}.bytes(2u8)}pub fn collision(value:&str)->usize{let ml_string_bytes:u8=7;value.bytes().count()}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{assert.equal(api.custom(5n),7n);assert.equal(api.collision('Ω'),2n);});
-  const direct=emitJavaScript(checkProgram(parseRust('fn ml_string_bytes(value:u8)->u8{value}fn count(value:&str)->usize{value.bytes().count()}fn main(){}')));
-  assert.match(direct.text,/stringBytes as ml_string_bytes_2/u);
+  assert.throws(()=>checkProgram(parseRust('fn ml_string_bytes(value:u8)->u8{value}fn count(value:&str)->usize{value.bytes().count()}fn main(){}')),/reserved identifier/u);
 });
 
 test('actual cooked byte literals retain primitive u8 high bytes escapes casts and checked meta',async()=>{
@@ -71,6 +70,7 @@ test('actual cooked byte literals retain primitive u8 high bytes escapes casts a
   await verifyTypedTargets(result,api=>{assert.equal(api.high(),255n);assert.equal(api.escapes(),19n);assert.equal(api.wide(),255n);assert.equal(api.letter(),65n);assert.equal(api.edge(),255n);assert.equal(api.high_byte('😀'),true);assert.equal(api.high_byte('A'),false);});
   const node=find(parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get('high').body,node=>node.sourceByteLiteral);
   requireByteLiteral(node,true);assert.equal(node.sourceByteLiteral.raw,String.raw`b'\xFF'`);
+  assert.equal(node.k,'lit');assert.throws(()=>requireByteLiteral({...node,k:'num'},true),/byte character proof/u);
   for(const mutate of [node=>{node.value='0';},node=>{node.type.bits=16;},node=>{node.sourceByteLiteral.raw="b'A'";},node=>{node.sourceByteLiteral.span.end++;},node=>{node.sourceByteLiteral.sourceInputs[0].sha256='0'.repeat(64);},node=>{node.sourceByteLiteral.namespaceComplete=true;},node=>{node.sourceByteLiteral.verified=false;}]){const altered=structuredClone(node);mutate(altered);assert.throws(()=>requireByteLiteral(altered,true),/byte character proof/u);}
 });
 
