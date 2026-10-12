@@ -10,6 +10,7 @@ import { inspectDeriveInput } from '../derive-inputs.mjs';
 import { compilationProfile, itemConfiguration } from '../cfg-profile.mjs';
 import { configureParserSourceScope } from '../source-scopes.mjs';
 import { withSourceNamespaceParser } from '../extensions/source-namespaces.mjs';
+import { primitiveFieldDefault } from './primitive-default.mjs';
 
 const contexts = new WeakMap();
 // Reuse the production namespace walk and original visibility/reexport maps;
@@ -119,7 +120,15 @@ function typeReference(s,module,tokens,depth=0) {
 }
 function fields(s,module,tokens,input) {
   const rows=groups(tokens);if(rows.length>SERIALIZATION_LIMITS.fields)refuse('Serialization field budget exceeded',module);
-  return rows.map(row=>{ const at=head(row);if(row[at]?.type!=='ident'||row[at+1]?.text!==':')refuse('Only named original serialization fields are projected',module,span(row));return {name:row[at].text,span:span(row),attributes:attributes(input,row),type:typeReference(s,module,row.slice(at+2))}; });
+  return rows.map(row=>{
+    const at=head(row);if(row[at]?.type!=='ident'||row[at+1]?.text!==':')refuse('Only named original serialization fields are projected',module,span(row));
+    const field={name:row[at].text,span:span(row),attributes:attributes(input,row),type:typeReference(s,module,row.slice(at+2))};
+    const bareDefault=field.attributes.some(attribute=>attribute.name==='serde'&&attribute.helpers?.some(helper=>helper.key==='default'&&helper.value===null));
+    if(bareDefault&&field.type.kind==='primitive'&&/^(?:bool|[iu](?:8|16|32|64))$/.test(field.type.name)) {
+      try{field.defaultProof=primitiveFieldDefault(field.type,s.dependencies);}catch(error){refuse('Original primitive Default body is unproved: '+error.message,module,field.span);}
+    }
+    return field;
+  });
 }
 function declaration(s,owner,direction) {
   const parts=owner.split('::'),module=s.modules.get(key(parts.slice(0,-1)));if(!module)refuse('Reachable serialization owner is not an original tracked module: '+owner);

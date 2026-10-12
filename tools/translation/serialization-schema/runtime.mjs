@@ -109,11 +109,15 @@ export function createSerializationCodec(input,{root}={}) {
         if(value.length>spec.fields.length)fail('Invalid struct sequence length');
         value.forEach((child,index)=>selected.set(spec.fields[index].name,child));
       } else for(const [key,child]of entries(value)) {
-        scalarString(key);if(!spec.fields.some(field=>field.name===key))continue;
-        if(selected.has(key))fail('Duplicate field '+key);selected.set(key,child);
+        scalarString(key);const field=spec.fields.find(field=>field.name===key||!encoding&&field.aliases?.includes(key));if(!field)continue;
+        if(selected.has(field.name))fail('Duplicate field '+field.name);selected.set(field.name,child);
       }
       for(const field of spec.fields) {
         if(!selected.has(field.name)) {
+          if(!encoding&&field.default?.kind==='primitive') {
+            const literal=typeof field.default.value==='string'?new JsonNumber(field.default.value):field.default.value;
+            output[field.name]=apply(literal,field.type,false,depth+1);continue;
+          }
           if(field.optional&&(!Array.isArray(value)||encoding||field.sequenceDefault!==false)){if(field.omitNone===false)output[field.name]=null;continue;}
           fail('Missing field '+field.name);
         }

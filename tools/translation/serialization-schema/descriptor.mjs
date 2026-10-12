@@ -47,17 +47,25 @@ export function projectSerializationDescriptor(input) {
     refuse('Nested Option requires a separately proven descriptor ABI');
   }
   function projectFields(fields, rule) {
-    const emitted=new Set();
+    const emitted=new Set(),accepted=new Map();
     return fields.map(field=>{
-      const entries=helpers(field.attributes,['rename','default','skip_serializing_if']);
+      const entries=helpers(field.attributes,['rename','alias','default','skip_serializing_if']);
       if(entries.some(entry=>entry.key==='default' && entry.value!==null))refuse('Custom serde default function remains opaque');
       const optional=field.type.kind==='option', name=renamed(field.name,entries,rule,'field');
       if(emitted.has(name))refuse('Renamed field collision');emitted.add(name);
+      const aliases=[...new Set(entries.filter(entry=>entry.key==='alias').map(entry=>entry.value))].filter(alias=>alias!==name);
+      for(const spelling of [name,...aliases]) {
+        if(typeof spelling!=='string')refuse('Field alias requires its actual original string spelling');
+        if(accepted.has(spelling))refuse('Field alias collides with another canonical field or alias');accepted.set(spelling,name);
+      }
       if(optional) {
         const skip=value(entries,'skip_serializing_if');
         if(field.type.owner!=='rust-prelude::Option'||skip!==null&&skip!=='Option::is_none')refuse('Optional omission lacks the checked standard Option::is_none identity');
-      } else if(entries.some(entry=>['default','skip_serializing_if'].includes(entry.key)))refuse('Non-Option default/omission requires a separate descriptor runtime');
-      return {name,type:projectType(optional?field.type.type:field.type),optional,...(optional&&value(entries,'skip_serializing_if')===null?{omitNone:false}:{}),...(optional&&!entries.some(entry=>entry.key==='default')?{sequenceDefault:false}:{})};
+      } else {
+        if(entries.some(entry=>entry.key==='skip_serializing_if'))refuse('Non-Option omission requires a separately checked original predicate');
+        if(entries.some(entry=>entry.key==='default')&&!field.defaultProof)refuse('Non-Option default requires a separately checked original Default body');
+      }
+      return {name,type:projectType(optional?field.type.type:field.type),optional,...(aliases.length?{aliases}:{}),...(field.defaultProof?{default:{kind:'primitive',value:field.defaultProof.checkedLiteral.value}}:{}),...(optional&&value(entries,'skip_serializing_if')===null?{omitNone:false}:{}),...(optional&&!entries.some(entry=>entry.key==='default')?{sequenceDefault:false}:{})};
     });
   }
   for(const type of meta.types) {

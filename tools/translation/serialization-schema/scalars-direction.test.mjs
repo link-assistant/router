@@ -103,7 +103,7 @@ test('only checked Option omission helpers remove None fields from serialization
   fixture(record('#[serde(skip_serializing_if="opaque")]note:Option<String>'),captured=>assert.throws(()=>projectSerializationDescriptor(checked(captured)),/Option::is_none/));
 });
 test('nested Option, opaque defaults and non-Option default functions remain explicit refusals',()=>{
-  for(const fields of ['value:Option<Option<u8>>','#[serde(default="make_value")]value:u8','#[serde(default)]value:bool','#[serde(with="custom")]value:u8'])fixture(record(fields),captured=>assert.throws(()=>projectSerializationDescriptor(checked(captured)),/Nested Option|opaque|default|separate|profile/));
+  for(const fields of ['value:Option<Option<u8>>','#[serde(default="make_value")]value:u8','#[serde(default)]value:String','#[serde(with="custom")]value:u8'])fixture(record(fields),captured=>assert.throws(()=>projectSerializationDescriptor(checked(captured)),/Nested Option|opaque|default|separate|profile/));
 });
 test('actual original ServerSelection and TunnelStatusReport run through the shared scalar and nullable descriptor consumer',()=>{
   const selection=createSerializationCodec(checked(context(),'crate::operation_reports::ServerSelection'));
