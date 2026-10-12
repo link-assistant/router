@@ -63,7 +63,7 @@ test('the full translation stage runs every fixture with bounded test-file concu
     const files=Array.from({length:4},(_,index)=>path.join(directory,`${index}.test.mjs`)),trace=path.join(directory,'trace.jsonl');
     for(const file of files)fs.writeFileSync(file,`import test from 'node:test'; import {appendFileSync} from 'node:fs'; test('bounded worker',async()=>{const record=event=>appendFileSync(${JSON.stringify(trace)},JSON.stringify({event,pid:process.pid})+${JSON.stringify(String.fromCharCode(10))});record('start');await new Promise(resolve=>setTimeout(resolve,100));record('end');});`);
     const command=stages.find(([name])=>name==='translation')[1][0].split(' ');
-    assert.equal(command.shift(),'node');assert.equal(command.pop(),'tools/translation/test/*.test.mjs');
+    assert.equal(command.shift(),'node');assert.equal(command.pop(),'tools/translation/serialization-schema/*.test.mjs');assert.equal(command.pop(),'tools/translation/test/*.test.mjs');
     const environment={...process.env};delete environment.NODE_TEST_CONTEXT;
     execFileSync(process.execPath,[...command,...files],{encoding:'utf8',timeout:10000,env:environment});
     const active=new Set();let started=0,peak=0;

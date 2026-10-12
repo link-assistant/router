@@ -48,7 +48,7 @@ test('every JavaScript stage and command is mandatory and cannot skip or ignore 
   fails('javascript-first.yml', workflow => { workflow.jobs.parity.steps.at(-1).run = 'node scripts/check-router-parity.mjs'; }, 'mandatory command');
 });
 test('heavy compiler and acceptance cohorts require two workers and every test file', () => {
-  for (const [id, glob] of [['translation', 'tools/translation/test/*.test.mjs'], ['parity', 'experiments/issue-759/acceptance/*.test.mjs']]) {
+  for (const [id, glob] of [['translation', 'tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'], ['parity', 'experiments/issue-759/acceptance/*.test.mjs']]) {
     const command = `node --test --test-concurrency=2 ${glob}`;
     assert.ok(parse(baseline['javascript-first.yml']).jobs[id].steps.some(step => step.run === command));
     for (const replacement of [
@@ -142,4 +142,16 @@ test('parity job covers three sequential acceptance checkers and the final check
   const three = parityCheckBudgets({ features: [...synthetic.features, { evidence: [{ file: 'test/c.mjs', test: 'e' }] }] }, '/router');
   assert.equal(three.checkerMs - two.checkerMs, 180_000);
   assert.equal(three.ciParityMs - two.ciParityMs, 720_000);
+});
+
+test('native and source-discovered schema freshness and strict TS are mandatory', () => {
+  for (const command of [
+    'node tools/translation/serialization-schema/native-descriptor.mjs --check',
+    'node tools/translation/serialization-schema/check-descriptor-typescript.mjs',
+    'node tools/translation/serialization-schema/bulk.mjs --check',
+    'node tools/translation/serialization-schema/check-bulk-typescript.mjs',
+  ]) {
+    assert.ok(parse(baseline['javascript-first.yml']).jobs.typescript.steps.some(step => step.run === command));
+    fails('javascript-first.yml', workflow => { workflow.jobs.typescript.steps = workflow.jobs.typescript.steps.filter(step => step.run !== command); }, 'mandatory command');
+  }
 });
