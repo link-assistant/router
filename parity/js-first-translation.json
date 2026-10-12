@@ -760,10 +760,10 @@
     },
     {
       "path": "packages/javascript/native/affinities.mjs",
-      "sha256": "6ba54d37740e6d36524a5f9d6d7361833e1d0829be9448dd23b1bd12a0faf582",
-      "sourceItems": 13,
+      "sha256": "8a101d57de4ba2ec7267533348bb774c8798e0668924793d4bb97a932e773e6d",
+      "sourceItems": 17,
       "translatedItems": 0,
-      "unsupportedItems": 13,
+      "unsupportedItems": 17,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -780,17 +780,27 @@
           "message": "no definition",
           "span": {
             "start": 34,
-            "end": 162,
+            "end": 78,
             "encoding": "utf16"
           },
-          "example": "import { transactionalWrite, recoverTransactionalWrite, decodeLino, encodeLino, readOptional, serialized } from './storage.mjs';"
+          "example": "import { readFile } from 'node:fs/promises';"
         },
         {
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 163,
-            "end": 232,
+            "start": 79,
+            "end": 181,
+            "encoding": "utf16"
+          },
+          "example": "import { transactionalWrite, recoverTransactionalWrite, encodeLino, serialized } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 182,
+            "end": 251,
             "encoding": "utf16"
           },
           "example": "import { rustLockPath, withAdvisoryFileLock } from './file-lock.mjs';"
@@ -799,18 +809,28 @@
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 233,
-            "end": 276,
+            "start": 252,
+            "end": 295,
             "encoding": "utf16"
           },
           "example": "import { RouterError } from './tokens.mjs';"
         },
         {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 296,
+            "end": 429,
+            "encoding": "utf16"
+          },
+          "example": "import { decodeAffinityFile, validateAffinityValue, exactInteger, integerABI, affinityExpiry, U64_MAX } from './affinity-schema.mjs';"
+        },
+        {
           "kind": "collection",
           "message": "arrays and objects are outside portable-pure-v1",
           "span": {
-            "start": 278,
-            "end": 705,
+            "start": 431,
+            "end": 858,
             "encoding": "utf16"
           },
           "example": "const resourceNames = {responses:'responses','chat/completions':'chat',conversations:'conversations', 'conversations/items':'conversation_items','realtime/calls':'realtime_calls',f"
@@ -819,8 +839,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 706,
-            "end": 1537,
+            "start": 859,
+            "end": 1690,
             "encoding": "utf16"
           },
           "example": "export function affinityNamespace(namespace) { if (typeof namespace !== 'string' || !namespace) throw new RouterError('invalid_argument','Resource namespace is required'); const co"
@@ -829,8 +849,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 1538,
-            "end": 1698,
+            "start": 1691,
+            "end": 1851,
             "encoding": "utf16"
           },
           "example": "function validId(value) { return typeof value === 'string' && value.length > 0 && Buffer.byteLength(value) <= 256 && !/[\\/\\x00-\\x1f\\x7f-\\x9f]/u.test(value); }"
@@ -839,8 +859,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 1699,
-            "end": 2102,
+            "start": 1852,
+            "end": 2255,
             "encoding": "utf16"
           },
           "example": "function ownerValue(owner) { if (typeof owner === 'object' && owner !== null && typeof owner.client_kind === 'string' && owner.client_kind.trim() && typeof owner.principal_id === '"
@@ -849,8 +869,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 2103,
-            "end": 2229,
+            "start": 2256,
+            "end": 2382,
             "encoding": "utf16"
           },
           "example": "function sameOwner(left, right) { return left.client_kind === right.client_kind && left.principal_id === right.principal_id; }"
@@ -859,8 +879,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 2230,
-            "end": 3456,
+            "start": 2383,
+            "end": 3655,
             "encoding": "utf16"
           },
           "example": "function destinationValue(destination) { if (!destination || typeof destination.base_url !== 'string') throw new RouterError('invalid_argument','Resource destination is required');"
@@ -869,8 +889,18 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 3457,
-            "end": 3814,
+            "start": 3656,
+            "end": 3759,
+            "encoding": "utf16"
+          },
+          "example": "function persistedProviderKind(kind) { return kind === 'z.ai-coding-plan' ? 'zai-coding-plan' : kind; }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3760,
+            "end": 4117,
             "encoding": "utf16"
           },
           "example": "function sameDestination(left, right) { return left.kind === right.kind && left.base_url === right.base_url && (left.kind === 'stored_provider' ? left.name === right.name && left.p"
@@ -879,8 +909,18 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 3815,
-            "end": 4453,
+            "start": 4118,
+            "end": 4897,
+            "encoding": "utf16"
+          },
+          "example": "function matchesExpectedRecord(record, expected) { if (!sameDestination(record.destination,destinationValue(expected.destination ?? expected))) return false; // Rust remove_if_matc"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4898,
+            "end": 5601,
             "encoding": "utf16"
           },
           "example": "function view(record) { if (!record) return null; const value = record.destination; return {...structuredClone(record),id:record.response_id,destination:value.kind === 'stored_prov"
@@ -889,11 +929,249 @@
           "kind": "class",
           "message": "a class is outside portable-pure-v1",
           "span": {
-            "start": 4527,
-            "end": 9974,
+            "start": 5675,
+            "end": 12779,
             "encoding": "utf16"
           },
-          "example": "export class AffinityStore { constructor({dataDir,persistent = true,clock = () => Math.floor(Date.now()/1000),ttl = 30*24*3600,maxRecords = 10000}) { if (!Number.isSafeInteger(ttl)"
+          "example": "export class AffinityStore { constructor({dataDir,persistent = true,clock = () => Math.floor(Date.now()/1000),ttl = 30*24*3600,maxRecords = 10000}) { try { exactInteger(ttl,1n,U64_"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/affinity-schema-descriptor.mjs",
+      "sha256": "2fd934d7a25e5d34f14807d89c021422f3b05336d3da450833c9b32d01441aa0",
+      "sourceItems": 1,
+      "translatedItems": 0,
+      "unsupportedItems": 1,
+      "diagnostics": [
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 99,
+            "end": 2905,
+            "encoding": "utf16"
+          },
+          "example": "export const affinitySchema = {[\"ProviderKind\"]:{[\"kind\"]:\"enum\",[\"source\"]:\"providers.rs::ProviderKind\",[\"variants\"]:[\"openai-compatible\",\"lefine\",\"zai-coding-plan\"],[\"aliases\"]:{"
+        }
+      ]
+    },
+    {
+      "path": "packages/javascript/native/affinity-schema.mjs",
+      "sha256": "1b1b7347d1aa596d0551adfa4f95b386ceb7472e0fe32c6ca4f4a08f47ba977b",
+      "sourceItems": 21,
+      "translatedItems": 0,
+      "unsupportedItems": 21,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 43,
+            "encoding": "utf16"
+          },
+          "example": "import { decodeLino } from './storage.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 119,
+            "end": 185,
+            "encoding": "utf16"
+          },
+          "example": "import { affinitySchema } from './affinity-schema-descriptor.mjs';"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 186,
+            "end": 212,
+            "encoding": "utf16"
+          },
+          "example": "export { affinitySchema };"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 213,
+            "end": 363,
+            "encoding": "utf16"
+          },
+          "example": "function freezeSchema(node) { if(node && typeof node==='object') {for(const child of Object.values(node))freezeSchema(child);Object.freeze(node);} }"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program",
+          "span": {
+            "start": 364,
+            "end": 393,
+            "encoding": "utf16"
+          },
+          "example": "freezeSchema(affinitySchema);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the literal 1n",
+          "span": {
+            "start": 394,
+            "end": 482,
+            "encoding": "utf16"
+          },
+          "example": "export const I64_MIN = -(1n << 63n), I64_MAX = (1n << 63n)-1n, U64_MAX = (1n << 64n)-1n;"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: BigInt",
+          "span": {
+            "start": 483,
+            "end": 576,
+            "encoding": "utf16"
+          },
+          "example": "const SAFE_MIN = BigInt(Number.MIN_SAFE_INTEGER), SAFE_MAX = BigInt(Number.MAX_SAFE_INTEGER);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
+          "span": {
+            "start": 577,
+            "end": 605,
+            "encoding": "utf16"
+          },
+          "example": "const pairs = new WeakMap();"
+        },
+        {
+          "kind": "class",
+          "message": "a class is outside portable-pure-v1",
+          "span": {
+            "start": 606,
+            "end": 663,
+            "encoding": "utf16"
+          },
+          "example": "class JsonNumber { constructor(raw) { this.raw = raw; } }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 664,
+            "end": 716,
+            "encoding": "utf16"
+          },
+          "example": "function fail(message) { throw new Error(message); }"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
+          "span": {
+            "start": 803,
+            "end": 970,
+            "encoding": "utf16"
+          },
+          "example": "const rustWhitespace=character=>typeof character==='string' && /^[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]$/u.test(character);"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 971,
+            "end": 1325,
+            "encoding": "utf16"
+          },
+          "example": "export function exactInteger(value, minimum = I64_MIN, maximum = I64_MAX) { if (typeof value === 'number' && !Number.isSafeInteger(value) || !['number','bigint'].includes(typeof va"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1326,
+            "end": 1434,
+            "encoding": "utf16"
+          },
+          "example": "export function integerABI(value) { return value >= SAFE_MIN && value <= SAFE_MAX ? Number(value) : value; }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1435,
+            "end": 1720,
+            "encoding": "utf16"
+          },
+          "example": "export function affinityExpiry(now, ttl) { now = exactInteger(now); ttl = exactInteger(ttl,1n,U64_MAX); // Duration.as_secs() is converted/clipped BEFORE saturating addition. const"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1721,
+            "end": 2155,
+            "encoding": "utf16"
+          },
+          "example": "function scalarString(value) { if (typeof value !== 'string') fail('expected a string'); for (let i=0;i<value.length;i++) { const unit=value.charCodeAt(i); if (unit>=0xd800 && unit"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2156,
+            "end": 2355,
+            "encoding": "utf16"
+          },
+          "example": "function entries(value) { if (!value || typeof value!=='object' || Array.isArray(value) || value instanceof JsonNumber) fail('expected a map'); return pairs.get(value) ?? Object.en"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2590,
+            "end": 4702,
+            "encoding": "utf16"
+          },
+          "example": "function lexicalJson(text) { let offset=0, root, assigned=false; const stack=[]; const whitespace=()=>{while(/[\\x20\\t\\r\\n]/.test(text[offset]??'') && offset<text.length) offset++;}"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 4704,
+            "end": 5248,
+            "encoding": "utf16"
+          },
+          "example": "function integer(value,type) { const min=type==='u32'?0n:I64_MIN,max=type==='u32'?4294967295n:I64_MAX; if(value instanceof JsonNumber) { // Pinned serde_json treats negative zero a"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5249,
+            "end": 5748,
+            "encoding": "utf16"
+          },
+          "example": "function buffered(value,depth,legacy) { if(typeof value==='string')scalarString(value); else if(value instanceof JsonNumber) {if(!Number.isFinite(Number(value.raw)))fail('number ou"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5749,
+            "end": 8363,
+            "encoding": "utf16"
+          },
+          "example": "export function validateAffinityValue(value,type='AffinityFile',{legacy=false}={}) { function apply(value,type,depth=1) { if(type==='String')return scalarString(value); if(type==='"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8364,
+            "end": 9482,
+            "encoding": "utf16"
+          },
+          "example": "export function decodeAffinityFile(text) { let prefix=0;while(prefix<text.length && rustWhitespace(text[prefix]))prefix++; const legacy=text[prefix]==='{' || text[prefix]==='['; co"
         }
       ]
     },
@@ -2298,7 +2576,7 @@
     },
     {
       "path": "packages/javascript/native/core.mjs",
-      "sha256": "e50f17cfcb15104a0381135a42e4626a1bd3ba2c22006335e876483728a55406",
+      "sha256": "ae0ca7f55d1e5dfdcff7835b59013fe146d4529eaf251b3d7199ec632c3c62a8",
       "sourceItems": 23,
       "translatedItems": 0,
       "unsupportedItems": 23,
@@ -2438,7 +2716,7 @@
           "message": "a class is outside portable-pure-v1",
           "span": {
             "start": 895,
-            "end": 14102,
+            "end": 14700,
             "encoding": "utf16"
           },
           "example": "export class RouterCore { constructor({ config, storage, clock = () => Math.floor(Date.now()/1000), env = process.env, fetch = globalThis.fetch, oauth = {},management = {} }) { thi"
@@ -2447,8 +2725,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 14103,
-            "end": 14374,
+            "start": 14701,
+            "end": 14972,
             "encoding": "utf16"
           },
           "example": "export async function createOperationContext(baseCore,{configOverrides = {},env,cwd = process.cwd(),signal} = {}) { env = {...baseCore.env,...env}; const core = await baseCore.with"
@@ -2457,8 +2735,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 14375,
-            "end": 14789,
+            "start": 14973,
+            "end": 15532,
             "encoding": "utf16"
           },
           "example": "export async function createRouterCore(options = {}) { const config = await loadConfig(options); const core = new RouterCore({...options,config}); // Resolve persisted provider cat"
@@ -2467,8 +2745,8 @@
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 14790,
-            "end": 14864,
+            "start": 15533,
+            "end": 15607,
             "encoding": "utf16"
           },
           "example": "export { TokenManager, RouterError, codexTokenAlias } from './tokens.mjs';"
@@ -2477,8 +2755,8 @@
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 14865,
-            "end": 14939,
+            "start": 15608,
+            "end": 15682,
             "encoding": "utf16"
           },
           "example": "export { loadConfig, normalizeConfig, ProviderStore } from './config.mjs';"
@@ -2487,8 +2765,8 @@
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 14940,
-            "end": 14991,
+            "start": 15683,
+            "end": 15734,
             "encoding": "utf16"
           },
           "example": "export { nativeConfigOptions } from './config.mjs';"
@@ -2497,8 +2775,8 @@
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 14992,
-            "end": 15109,
+            "start": 15735,
+            "end": 15852,
             "encoding": "utf16"
           },
           "example": "export { MemoryTokenStore, TextTokenStore, BinaryTokenStore, DualTokenStore, createTokenStore } from './storage.mjs';"
@@ -2507,8 +2785,8 @@
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 15110,
-            "end": 15159,
+            "start": 15853,
+            "end": 15902,
             "encoding": "utf16"
           },
           "example": "export { AffinityStore } from './affinities.mjs';"
@@ -2517,8 +2795,8 @@
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 15160,
-            "end": 15207,
+            "start": 15903,
+            "end": 15950,
             "encoding": "utf16"
           },
           "example": "export { AccountRouter } from './accounts.mjs';"
@@ -2527,8 +2805,8 @@
           "kind": "no-definition",
           "message": "no definition",
           "span": {
-            "start": 15209,
-            "end": 15326,
+            "start": 15952,
+            "end": 16069,
             "encoding": "utf16"
           },
           "example": "export { OAuthManager, CredentialFileStore, ClaudeLogin, importCredential, executeAuthOperation } from './oauth.mjs';"
@@ -4385,10 +4663,10 @@
     },
     {
       "path": "packages/javascript/native/native-service.mjs",
-      "sha256": "83864b4878fcc22669c8c7c02716c10a070132a63f39cdbbb4f745dc60d20d70",
-      "sourceItems": 19,
+      "sha256": "36ece5d3f3d097c6c1a5d2d4b7a441c7b4e314175535c7ed553891f2291f7b88",
+      "sourceItems": 24,
       "translatedItems": 0,
-      "unsupportedItems": 19,
+      "unsupportedItems": 24,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -4441,11 +4719,41 @@
           "example": "import {UsageTracker} from './usage.mjs';"
         },
         {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 240,
+            "end": 445,
+            "encoding": "utf16"
+          },
+          "example": "import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict, responseAffinityStorageError } from '."
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 446,
+            "end": 679,
+            "encoding": "utf16"
+          },
+          "example": "import { conversationContract, conversationNotFound, conversationUnsupported, conversationMethodNotAllowed, conversationAffinityError, conversationUpstreamError, conversationIds, v"
+        },
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 680,
+            "end": 792,
+            "encoding": "utf16"
+          },
+          "example": "import { captureSseId, captureJsonId, captureLocationId, resourceCaptureError } from './response-contracts.mjs';"
+        },
+        {
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: new",
           "span": {
-            "start": 241,
-            "end": 637,
+            "start": 794,
+            "end": 1190,
             "encoding": "utf16"
           },
           "example": "const transport = new Set(['authorization','x-api-key','x-goog-api-key','anthropic-auth-token','proxy-authorization','proxy-authenticate','host','connection','proxy-connection','ke"
@@ -4454,8 +4762,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: new",
           "span": {
-            "start": 638,
-            "end": 892,
+            "start": 1191,
+            "end": 1445,
             "encoding": "utf16"
           },
           "example": "const ingress = new Set(['forwarded','x-real-ip','x-client-ip','x-cluster-client-ip','cf-connecting-ip','true-client-ip','fastly-client-ip','fly-client-ip','x-envoy-external-addres"
@@ -4464,8 +4772,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: new",
           "span": {
-            "start": 893,
-            "end": 1043,
+            "start": 1446,
+            "end": 1596,
             "encoding": "utf16"
           },
           "example": "const responseCredentials = new Set(['authorization','x-api-key','x-goog-api-key','anthropic-auth-token','set-cookie','cookie','chatgpt-account-id']);"
@@ -4474,8 +4782,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
-            "start": 1044,
-            "end": 1166,
+            "start": 1597,
+            "end": 1719,
             "encoding": "utf16"
           },
           "example": "const connectionNames = headers => new Set((headers.get('connection') ?? '').split(',').map(v => v.trim().toLowerCase()));"
@@ -4484,8 +4792,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 1167,
-            "end": 1936,
+            "start": 1720,
+            "end": 2489,
             "encoding": "utf16"
           },
           "example": "export function nativeRequestHeaders(incoming, candidate) { const headers = new Headers(), nominated = connectionNames(incoming); for (const [name,value] of incoming) if (!transpor"
@@ -4494,8 +4802,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 1937,
-            "end": 2499,
+            "start": 2490,
+            "end": 3052,
             "encoding": "utf16"
           },
           "example": "export function nativeResponseHeaders(incoming) { const headers = new Headers(), nominated = connectionNames(incoming); const hop = new Set(['connection','proxy-connection','keep-a"
@@ -4504,28 +4812,48 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 2500,
-            "end": 2984,
+            "start": 3053,
+            "end": 3537,
             "encoding": "utf16"
           },
           "example": "export async function boundedBytes(request, limit) { if (!request.body) return new Uint8Array(); const reader = request.body.getReader(), parts = []; let length = 0; try { for (;;)"
         },
         {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "span": {
+            "start": 3538,
+            "end": 3653,
+            "encoding": "utf16"
+          },
+          "example": "const captureFailure = (status,message) => Object.assign(new ProtocolError(message,status),{resourceCapture:true});"
+        },
+        {
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 2985,
-            "end": 4837,
+            "start": 3654,
+            "end": 4021,
             "encoding": "utf16"
           },
-          "example": "async function captureNativeStream(upstream,{namespace,owner,selected,affinities,model,cleanup,controller,limit=1024*1024}) { const reader=upstream.body.getReader(),chunks=[],decod"
+          "example": "async function recordCapturedResource(affinities,namespace,owner,id,selected,model) { try { if (!validConversationId(id)) throw new Error('invalid response id'); await affinities.s"
+        },
+        {
+          "kind": "async",
+          "message": "async functions and await are outside portable-pure-v1",
+          "span": {
+            "start": 4022,
+            "end": 6042,
+            "encoding": "utf16"
+          },
+          "example": "async function captureNativeStream(upstream,{namespace,owner,selected,affinities,model,cleanup,controller,limit=1024*1024}) { if (!upstream.body) {cleanup();throw captureFailure(50"
         },
         {
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 4838,
-            "end": 5833,
+            "start": 6043,
+            "end": 7038,
             "encoding": "utf16"
           },
           "example": "export function nativeURL(base, service, pathname, search = '') { let url; try { url = new URL(base); } catch { throw new ProtocolError('Native provider base URL is invalid',503); "
@@ -4534,8 +4862,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
-            "start": 5834,
-            "end": 6467,
+            "start": 7039,
+            "end": 7672,
             "encoding": "utf16"
           },
           "example": "const destination = c => ({provider:c.destination_kind === 'subscription' ? c.provider_kind : typeof c.provider === 'string' ? c.provider : c.provider?.name,account:c.destination_k"
@@ -4544,8 +4872,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
           "span": {
-            "start": 6468,
-            "end": 6626,
+            "start": 7673,
+            "end": 7831,
             "encoding": "utf16"
           },
           "example": "const sameDestination = (a,b) => ['provider','account','protocol','base_url','account_id','provider_kind','destination_kind'].every(key => a[key] === b[key]);"
@@ -4554,8 +4882,8 @@
           "kind": "class",
           "message": "a class is outside portable-pure-v1",
           "span": {
-            "start": 6627,
-            "end": 7926,
+            "start": 7832,
+            "end": 9786,
             "encoding": "utf16"
           },
           "example": "export class NativeAffinityStore { constructor({maxRecords=10000} = {}) { this.records = new Map(); this.maxRecords = maxRecords; } key(namespace,owner,id,parent_id) { return JSON."
@@ -4564,8 +4892,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 7927,
-            "end": 11301,
+            "start": 9787,
+            "end": 13161,
             "encoding": "utf16"
           },
           "example": "function resourceFor(path, method, headers) { const backend='/api/services/codex/backend-api'; if(path === backend+'/public/plugins/workspace/upload-url' && method === 'POST')retur"
@@ -4574,8 +4902,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
-            "start": 11397,
-            "end": 26822,
+            "start": 13257,
+            "end": 36189,
             "encoding": "utf16"
           },
           "example": "export function createNativeService({core,authorize,routingContext,fetch:upstreamFetch=globalThis.fetch,maxBodyBytes=4*1024*1024,maxResponseBytes=32*1024*1024,timeoutMs=120000,affi"
@@ -6534,6 +6862,225 @@
       ]
     },
     {
+      "path": "packages/javascript/native/response-contracts.mjs",
+      "sha256": "09feb4c2763d15abcd6c7a630ca7bb708dc13150469d0106a20d40ad91b9d40e",
+      "sourceItems": 21,
+      "translatedItems": 0,
+      "unsupportedItems": 21,
+      "diagnostics": [
+        {
+          "kind": "no-definition",
+          "message": "no definition",
+          "span": {
+            "start": 0,
+            "end": 48,
+            "encoding": "utf16"
+          },
+          "example": "import { ProtocolError } from './protocols.mjs';"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 272,
+            "end": 875,
+            "encoding": "utf16"
+          },
+          "example": "export function responseContract(method, path) { const match = /^(\\/api\\/services\\/(openai|codex|qwen)\\/v1|\\/v1)\\/responses(?:\\/(.*))?$/.exec(path); if (!match) return null; const "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 877,
+            "end": 1547,
+            "encoding": "utf16"
+          },
+          "example": "export function validateResponseCreate(contract, document) { if (!contract?.create) return; if (!document || typeof document !== 'object' || Array.isArray(document)) throw new Prot"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 1549,
+            "end": 2545,
+            "encoding": "utf16"
+          },
+          "example": "export function responseReferences(contract, document) { if (!contract || !document || typeof document !== 'object') return []; const references = []; if ((contract.create || contr"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2547,
+            "end": 2744,
+            "encoding": "utf16"
+          },
+          "example": "export function responseNotFound() { return Response.json({ error: { message: 'Response not found', type: 'invalid_request_error', param: null, code: 'response_not_found' } }, { st"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2746,
+            "end": 2933,
+            "encoding": "utf16"
+          },
+          "example": "export function responseReferenceMissing() { return Response.json({ error: { type: 'not_found_error', message: 'the referenced response resource is unavailable' } }, { status: 404 "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 2935,
+            "end": 3149,
+            "encoding": "utf16"
+          },
+          "example": "export function responseReferenceConflict() { return Response.json({ error: { type: 'invalid_request_error', message: 'the referenced response resources do not share one provider a"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3151,
+            "end": 3412,
+            "encoding": "utf16"
+          },
+          "example": "export function responseAffinityStorageError(error) { const message = error instanceof Error ? error.message : String(error); return Response.json({ error: { type: 'api_error', mes"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 3644,
+            "end": 5041,
+            "encoding": "utf16"
+          },
+          "example": "export function conversationContract(method, path) { const match = /^\\/api\\/services\\/(openai|codex|qwen)\\/v1\\/conversations(?:\\/([^/]+)(?:\\/(items)(?:\\/([^/]+))?)?)?$/.exec(path);"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
+          "span": {
+            "start": 5043,
+            "end": 5342,
+            "encoding": "utf16"
+          },
+          "example": "export function conversationNotFound(item = false) { return Response.json({ error: { message: item ? 'Conversation item not found' : 'Conversation not found', type: 'invalid_reques"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5343,
+            "end": 5556,
+            "encoding": "utf16"
+          },
+          "example": "export function conversationUnsupported() { return Response.json({ error: { type: 'invalid_request_error', message: 'the selected service does not support native Conversations reso"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5557,
+            "end": 5761,
+            "encoding": "utf16"
+          },
+          "example": "export function conversationMethodNotAllowed() { return Response.json({ error: { type: 'invalid_request_error', message: 'the requested Conversations operation is not supported' } "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 5762,
+            "end": 6020,
+            "encoding": "utf16"
+          },
+          "example": "export function conversationAffinityError(error) { const message = error instanceof Error ? error.message : String(error); return Response.json({ error: { type: 'api_error', messag"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6021,
+            "end": 6159,
+            "encoding": "utf16"
+          },
+          "example": "export function conversationUpstreamError(message) { return Response.json({ error: { type: 'api_error', message } }, { status: 502 }); }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6160,
+            "end": 6523,
+            "encoding": "utf16"
+          },
+          "example": "export function conversationIds(raw, list = false) { let document; try { document = captureJsonValue(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw)); } catch { re"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6524,
+            "end": 6688,
+            "encoding": "utf16"
+          },
+          "example": "export function validConversationId(id) { return typeof id === 'string' && id.length > 0 && Buffer.byteLength(id) <= 256 && !/[\\/\\x00-\\x1f\\x7f-\\x9f]/u.test(id); }"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 6921,
+            "end": 7940,
+            "encoding": "utf16"
+          },
+          "example": "function captureJsonValue(text) { let value; try { value = JSON.parse(text); } catch { return undefined; } // serde_json constructs Rust UTF-8 Strings, so isolated UTF-16 surrogate"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 7941,
+            "end": 8502,
+            "encoding": "utf16"
+          },
+          "example": "export function captureSseId(block) { for (const line of block.split(/\\r?\\n/)) { if (!line.startsWith('data:')) continue; const payload = line.slice(5).replace(/^[\\u0009-\\u000d\\u00"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8503,
+            "end": 8786,
+            "encoding": "utf16"
+          },
+          "example": "export function captureJsonId(raw, fields = ['id']) { let value; try { value = captureJsonValue(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw)); } catch { return "
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 8787,
+            "end": 9016,
+            "encoding": "utf16"
+          },
+          "example": "export function captureLocationId(headers) { const location = headers.get('location'); if (!location) return undefined; const path = location.split('?')[0].replace(/\\/+$/,''); retu"
+        },
+        {
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "span": {
+            "start": 9017,
+            "end": 9178,
+            "encoding": "utf16"
+          },
+          "example": "export function resourceCaptureError(status, message) { return Response.json({ error: { message, type: 'api_error', param: null, code: null } }, { status }); }"
+        }
+      ]
+    },
+    {
       "path": "packages/javascript/native/responses.mjs",
       "sha256": "9fca0b3b9f93dbc34bdd8aa5f28b952ffed27f8135ac7d032953d23be5ce0f13",
       "sourceItems": 6,
@@ -6653,7 +7200,7 @@
     },
     {
       "path": "packages/javascript/native/server.mjs",
-      "sha256": "20353bdb93a140abc5a56c202c0c71c335c984d63e873a84db39a317d17290a2",
+      "sha256": "6e928aa7f9d2ac7e31f3ae21497fb4d74b4010e726c410b2fe45cfa51da11b72",
       "sourceItems": 38,
       "translatedItems": 0,
       "unsupportedItems": 38,
@@ -7023,7 +7570,7 @@
           "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 7555,
-            "end": 48757,
+            "end": 48971,
             "encoding": "utf16"
           },
           "example": "export function createNativeRouter(options = {}) { const { core, authenticate, fetch: suppliedFetch = globalThis.fetch, clock = Date.now, maxBodyBytes = 4 * 1024 * 1024, maxRespons"
@@ -7032,8 +7579,8 @@
           "kind": "async",
           "message": "async functions and await are outside portable-pure-v1",
           "span": {
-            "start": 48758,
-            "end": 49035,
+            "start": 48972,
+            "end": 49249,
             "encoding": "utf16"
           },
           "example": "export async function startNativeServer(options = {}) { const core = options.core ?? await (await import('./core.mjs')).createRouterCore(options); const router = createNativeRouter"
@@ -7042,7 +7589,7 @@
     },
     {
       "path": "packages/javascript/native/storage.mjs",
-      "sha256": "68e638bf69fdc75d2eebd9a6d448c86cab53afff2467189e81469b1fda181a6b",
+      "sha256": "6e98bc9ee612fb45d1b321986eacbe4055656897f8ac8256a797422f2e618da1",
       "sourceItems": 27,
       "translatedItems": 0,
       "unsupportedItems": 27,
@@ -7212,7 +7759,7 @@
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
             "start": 6057,
-            "end": 7021,
+            "end": 7081,
             "encoding": "utf16"
           },
           "example": "export function encodeLino(value, level = 0) { if (typeof value === 'string') { if (/[\\x00-\\x08\\x0b-\\x1f\\x7f]/.test(value)) { const escaped = value.replace(/[%\\x00-\\x08\\x0b-\\x1f\\x7"
@@ -7221,18 +7768,18 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 7022,
-            "end": 10115,
+            "start": 7082,
+            "end": 12631,
             "encoding": "utf16"
           },
-          "example": "export function decodeLino(text) { let i = 0; const skip = () => { while (text[i] === ' ' || text[i] === '\\t' || text[i] === '\\r') i++; }; function scalar(raw, quoted = false) { if"
+          "example": "export function decodeLino(text, {integer,scalar:unquotedScalar,escaped,object:makeObject,whitespace} = {}) { let i = 0; const firstKeys=new WeakMap(); const space=character=>white"
         },
         {
           "kind": "collection",
           "message": "arrays and objects are outside portable-pure-v1",
           "span": {
-            "start": 10117,
-            "end": 10340,
+            "start": 12633,
+            "end": 12856,
             "encoding": "utf16"
           },
           "example": "const strings = ['max_requests', 'used_requests', 'max_tokens', 'used_tokens', 'reserved_tokens', 'rate_limit_per_minute', 'rate_window_started_at', 'rate_window_requests', 'slidin"
@@ -7241,8 +7788,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 10341,
-            "end": 10889,
+            "start": 12857,
+            "end": 13405,
             "encoding": "utf16"
           },
           "example": "export function encodeTokenRecords(records) { const values = records.slice().sort((a,b) => a.id.localeCompare(b.id)).map(record => { const value = { ...record }; for (const field o"
@@ -7251,8 +7798,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 10890,
-            "end": 12166,
+            "start": 13406,
+            "end": 14682,
             "encoding": "utf16"
           },
           "example": "export function decodeTokenRecords(text) { if (!text.trim()) return []; const root = decodeLino(text); if (root.type !== 'RouterState' || root.subtype !== 'TokenStore' || !Array.is"
@@ -7261,8 +7808,8 @@
           "kind": "class",
           "message": "a class is outside portable-pure-v1",
           "span": {
-            "start": 12167,
-            "end": 12946,
+            "start": 14683,
+            "end": 15462,
             "encoding": "utf16"
           },
           "example": "export class MemoryTokenStore { constructor(records = []) { this.records = new Map(records.map(r => [r.id, structuredClone(r)])); this.key = {}; } async transaction(operation) { re"
@@ -7271,8 +7818,8 @@
           "kind": "class",
           "message": "a class is outside portable-pure-v1",
           "span": {
-            "start": 12947,
-            "end": 13962,
+            "start": 15463,
+            "end": 16478,
             "encoding": "utf16"
           },
           "example": "export class TextTokenStore extends MemoryTokenStore { constructor(path) { super(); this.path = path; } // Refresh under the native process lock before every mutation; read access "
@@ -7281,8 +7828,8 @@
           "kind": "class",
           "message": "a class is outside portable-pure-v1",
           "span": {
-            "start": 13963,
-            "end": 14732,
+            "start": 16479,
+            "end": 17248,
             "encoding": "utf16"
           },
           "example": "export class BinaryTokenStore extends MemoryTokenStore { constructor(path) { super(); this.path = path; } async transaction(operation) { return serialized(this.path,() => withAdvis"
@@ -7291,8 +7838,8 @@
           "kind": "untyped",
           "message": "a parameter or result without a JSDoc number, boolean or string type: none",
           "span": {
-            "start": 14733,
-            "end": 15375,
+            "start": 17249,
+            "end": 17891,
             "encoding": "utf16"
           },
           "example": "export function mergeSaferRecord(current,other) { current.revoked ||= other.revoked; for (const field of ['used_requests','used_tokens','reserved_tokens']) current[field] = Math.ma"
@@ -7301,8 +7848,8 @@
           "kind": "class",
           "message": "a class is outside portable-pure-v1",
           "span": {
-            "start": 15376,
-            "end": 17970,
+            "start": 17892,
+            "end": 20486,
             "encoding": "utf16"
           },
           "example": "export class DualTokenStore extends MemoryTokenStore { constructor(dataDir) { super(); this.path = join(dataDir,'tokens.transaction.lock'); this.journal = join(dataDir,'tokens.tran"
@@ -7311,8 +7858,8 @@
           "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
-            "start": 17971,
-            "end": 18622,
+            "start": 20487,
+            "end": 21138,
             "encoding": "utf16"
           },
           "example": "export function createTokenStore({ storage_policy = 'memory', data_dir = '.', storage } = {}) { if (storage) return storage; if (['memory','mem','none'].includes(storage_policy)) r"
