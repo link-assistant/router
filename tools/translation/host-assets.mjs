@@ -5,6 +5,8 @@ export function hostRuntimeAssets() {
   const checker=new HostChecker('Rust',[]),program=checker.program({language:'Rust',items:hostData(),main:null});
   const types=program.declarations,aliases=typeScriptAliases(types);
   const files=new Map();
+  files.set('string-bytes-runtime.mjs',readFileSync(new URL('./extensions/string-bytes-runtime.mjs',import.meta.url),'utf8'));
+  files.set('string-bytes-runtime.d.mts','export declare function stringBytes(value: string): IterableIterator<bigint>;\n');
   files.set('reverse-string-runtime.mjs',readFileSync(new URL('./extensions/reverse-string-runtime.mjs',import.meta.url),'utf8'));
   files.set('reverse-string-runtime.d.mts',"type RustOption<T> = Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;\nexport declare function reverseFindCharacterSplit(value: string, delimiter: string, maps: ReadonlyArray<(value:string)=>string>, predicate:(value:string)=>boolean): RustOption<string>;\n");
   files.set('option-deref-runtime.mjs',readFileSync(new URL('./extensions/option-deref-runtime.mjs',import.meta.url),'utf8'));

@@ -21,6 +21,7 @@ import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant
 import {floatSignObligation,withFloatZeroSignChecker} from './float-zero-refinements.mjs';
 import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,consumeTemporaryStringCallBorrow} from './utf16-fixed-f64.mjs';
 import {checkStringIteratorOperation,requireBorrowedString} from './string-iterators.mjs';
+import {checkedStringBytes,requireStringBytesProof} from './string-bytes.mjs';
 import {CSV_STRING_PROFILE,checkCharacterSplit,checkCharacterSplitNext,allocatingStringFunctionItem,checkedAllocatingStringItem,requireCsvEmitterProof} from './csv-strings.mjs';
 import {canonicalResult,checkResultMapError,requireResultIteratorProof} from './result-iterators.mjs';
 import {checkedOptionAsDeref,requireOptionDerefProof} from './option-deref.mjs';
@@ -172,6 +173,7 @@ export class HostRustParser extends withNamedLifetimeParser(withCapturedSourcePa
     return {k:'routerIntegerParse',object,args,instantiation,span:range};
   }
   method(object,name,args,range) {
+    if(name.value==='bytes')return {k:'routerStringBytesOperation',object,args,span:range};
     if(name.value==='rfind')return {k:'routerReverseStringFind',object,args,span:range};
     if(name.value==='split')return {k:'routerStringIteratorOperation',operation:'split',object,args,span:range};
     if(name.value==='encode_utf16')return {k:'routerUtf16Encode',object,args,span:range};
@@ -420,6 +422,12 @@ export class HostChecker extends withDeclarationRefusalCollection(withCheckedSou
     }
     if(node.k==='routerPreparedStringCallBorrow')return consumeTemporaryStringCallBorrow(node);
     if(node.k==='routerTemporaryStringBorrow')throw unsupported('temporary String source borrow','only an actual checked ordinary scalar-returning &str call may consume it',node.span);
+    if(node.k==='routerStringBytesOperation') {
+      const object=this.expr(node.object,env,path),inherent=this.resolvedMethod(object.type,'bytes','shared');
+      if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
+      if(node.args.length)throw typeError('str::bytes takes no arguments',node.span);
+      return checkedStringBytes(object,node.span);
+    }
     if(node.k==='routerUtf16Encode') {
       const object=this.expr(node.object,env,path),inherent=this.resolvedMethod(object.type,'encode_utf16','shared');
       if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
@@ -559,7 +567,7 @@ export class HostChecker extends withDeclarationRefusalCollection(withCheckedSou
   }
 }
 export class HostEmitter extends EffectEmitter {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
@@ -607,6 +615,7 @@ export class HostEmitter extends EffectEmitter {
       const operation={routerStringLines:'lines',routerStringWords:'split_whitespace',routerStringNext:'next',routerStringJoin:'join'}[node.k];
       return `ml_str_${operation}(${this.expr(node.object)}${node.separator?', '+this.expr(node.separator):''})`;
     }
+    if(node.k==='routerStringBytes'){requireStringBytesProof(node);this.stringBytesRuntime=true;return `ml_string_bytes(${this.expr(node.object)})`;}
     if(node.k==='routerUtf16Iterator'){this.utf16Runtime=true;return `ml_encode_utf16(${this.expr(node.object)})`;}
     if(node.k==='routerFixedF64Cast'){this.fixedF64Runtime=true;return `ml_fixed_to_f64(${this.expr(node.object)}, ${JSON.stringify(node.sourceType.rustPrimitiveName)})`;}
     if(node.k==='routerTemporaryStringCallBorrow')return this.expr(node.object);
@@ -644,6 +653,7 @@ export class HostEmitter extends EffectEmitter {
     if(this.resultIterators)preludes.unshift(`import { collectResult as ml_result_collect, mapResultError as ml_result_map_err } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'result-iterator-runtime.mjs'))};`);
     if(this.optionDeref)preludes.unshift(`import { optionStringAsDeref as ml_option_string_as_deref } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'option-deref-runtime.mjs'))};`);
     if(this.reverseStrings)preludes.unshift(`import { reverseFindCharacterSplit as ml_reverse_split_find } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'reverse-string-runtime.mjs'))};`);
+    if(this.stringBytesRuntime)preludes.unshift(`import { stringBytes as ml_string_bytes } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'string-bytes-runtime.mjs'))};`);
     if(this.utf16Runtime||this.fixedF64Runtime)preludes.unshift(`import { ${[...(this.utf16Runtime?['encodeUtf16 as ml_encode_utf16']:[]),...(this.fixedF64Runtime?['fixedToF64 as ml_fixed_to_f64']:[])].join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'utf16-fixed-f64-runtime.mjs'))};`);
     if(this.fixedArrays)preludes.unshift(`import { copyFixedArray as ml_copy_fixed_array } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-array-runtime.mjs'))};`);
     if(this.copyReceivers)preludes.unshift(`import { assertImmutableCopy as ml_assert_immutable_copy } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);

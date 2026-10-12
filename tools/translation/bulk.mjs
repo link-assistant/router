@@ -154,6 +154,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...readdirSync(new URL('./source-profiles/scalar-enumerate/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/scalar-enumerate/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/reversed-ranges/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/reversed-ranges/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/while-let/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/while-let/${name}`));
+  implementation.push(...readdirSync(new URL('./source-profiles/string-bytes/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/string-bytes/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/option-deref/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/option-deref/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/reverse-string-iterators/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/reverse-string-iterators/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/standard-bool/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/standard-bool/${name}`));

@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "profile": "rust-1.89-borrowed-str-bytes-u8",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "file": "../utf16-fixed-f64/core-str-mod.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/mod.rs",
+      "bytes": 109322,
+      "sha256": "c4d2f7564389d6007eb62f287a0efdda865a7133ec0a7d47d66be581794ac416",
+      "compressedSha256": "5c41e64ff9a819e50600e8db67f4738c0f5ef805eae3946cfdfa3aa139deb6f0",
+      "gitBlobSha": "3b9b9809c8584f41a991a6ebfeb7014eca447f7e",
+      "anchors": [
+        {
+          "startLine": 1115,
+          "endLine": 1117,
+          "text": "    pub fn bytes(&self) -> Bytes<'_> {\n        Bytes(self.as_bytes().iter().copied())\n    }"
+        },
+        {
+          "startLine": 474,
+          "endLine": 477,
+          "text": "    pub const fn as_bytes(&self) -> &[u8] {\n        // SAFETY: const sound because we transmute two types with the same layout\n        unsafe { mem::transmute(self) }\n    }"
+        }
+      ]
+    },
+    {
+      "file": "../utf16-fixed-f64/core-str-iter.rs.gz",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/str/iter.rs",
+      "bytes": 48918,
+      "sha256": "07f8dd0655c57a3da5b620fae00ba06b2957d17d119a870253b762b9e51e7122",
+      "compressedSha256": "39ce57a49956bc3ff6edf3008da87050e92a957e4c38f4d59ac182cf720a5665",
+      "gitBlobSha": "425c4eaee28ee7c1bd1cde9ef201db24c3d24376",
+      "anchors": [
+        {
+          "startLine": 287,
+          "endLine": 296,
+          "text": "pub struct Bytes<'a>(pub(super) Copied<slice::Iter<'a, u8>>);\n\n#[stable(feature = \"rust1\", since = \"1.0.0\")]\nimpl Iterator for Bytes<'_> {\n    type Item = u8;\n\n    #[inline]\n    fn next(&mut self) -> Option<u8> {\n        self.0.next()\n    }"
+        }
+      ]
+    }
+  ],
+  "item": "u8",
+  "receiver": "actual borrowed str",
+  "sourceForwarding": [
+    "str::bytes constructs Bytes(self.as_bytes().iter().copied())",
+    "Bytes stores Copied<slice::Iter<u8>>",
+    "Bytes::Iterator Item=u8 and next forwards its copied byte item"
+  ],
+  "constEligible": false,
+  "namespaceComplete": false,
+  "traitComplete": false,
+  "runtimeParity": false,
+  "runtimeObservation": "UTF8 byte values, written receiver evaluation order and lazy next-based scalar adapters; no standard-library allocation/performance equivalence claim"
+}
