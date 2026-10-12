@@ -7,7 +7,7 @@ import { createDeriveFootprintContext, deriveFootprintAt, deriveFootprintExterna
 import { resolveModuleBindings } from '../module-bindings.mjs';
 import { originalSourceModuleItems } from '../source-module-views.mjs';
 import { inspectDeriveInput } from '../derive-inputs.mjs';
-import { compilationProfile } from '../cfg-profile.mjs';
+import { compilationProfile, itemConfiguration } from '../cfg-profile.mjs';
 import { configureParserSourceScope } from '../source-scopes.mjs';
 import { withSourceNamespaceParser } from '../extensions/source-namespaces.mjs';
 
@@ -130,4 +130,36 @@ export function extractSerializationSchema(context,{roots}={}) {
   while(queue.length){const owner=queue.shift();if(seen.has(owner))continue;seen.add(owner);if(seen.size>SERIALIZATION_LIMITS.types)refuse('Reachable serialization type budget exceeded');const value=declaration(s,owner);types.push(value);for(const member of value.fields??value.variants.flatMap(variant=>variant.fields))reachable(member.type);}
   const meta={schema:'original-serialization-meta-v1',context:{entry:context.entry,compilationProfile:context.compilationProfile,sourceSetSha256:context.sourceSetSha256,dependenciesDigest:context.dependenciesDigest,dependencyEvidence:context.dependencyEvidence,caseSource:context.caseSource,cargo:context.cargo},roots:[...new Set(roots)],types:types.sort((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:0),obligations:['Bounded data layout projection only; custom serializers, generated traits and whole-crate runtime parity remain unproved'],runtimeAuthority:false,generatedTraitBehavior:false};
   return freeze(meta);
+}
+
+// Full original graph discovery is private-context-backed. Unknown derives,
+// data scopes and manual trait impls remain source-bearing obligations rather
+// than disappearing because a spelling did not match a seven-type list.
+export function discoverSerializationCorpus(context) {
+  const s=state(context), declarations=[],manualTraitImplementations=[];
+  for(const module of s.graph.modules) for(const item of originalSourceModuleItems(module)) {
+    if(!['struct','enum','impl'].includes(item.term))continue;
+    const tokens=item.tokens.filter(token=>token.type!=='comment');
+    const attributes=[];
+    for(let at=0;at<tokens.length;at++)if(tokens[at].text==='#'&&tokens[at+1]?.text==='[') {
+      const end=matching(tokens,at+1);attributes.push({name:tokens[at+2]?.text,span:{start:tokens[at].start,end:tokens[end].end,unit:'utf16'},tokens:tokens.slice(at,end+1).map(token=>token.text)});at=end;
+    }
+    const evidence={source:module.file,module:[...module.path],sourceSha256:hash(module.source),itemSha256:hash(module.source.slice(item.start,item.end)),span:{start:item.start,end:item.end,unit:'utf16'},attributes};
+    if(item.term==='impl') {
+      const body=tokens.findIndex(token=>token.text==='{'),header=tokens.slice(0,body<0?tokens.length:body);
+      if(header.some(token=>token.text==='for'))manualTraitImplementations.push({...evidence,headerTokens:header.map(token=>token.text),status:'unproved-manual-trait-implementation',obligation:'Manual trait bodies are not lowered or inferred as serde behavior'});
+      continue;
+    }
+    const owner=key(['crate',...module.path,item.name]),scope=s.scopes.get(key(['crate',...module.path]));
+    const condition=itemConfiguration(item.tokens,module.compilationProfile);
+    const configurationStatus=module.configurationCondition==='inactive'||condition.status==='inactive'?'inactive':module.configurationCondition!=='active'||condition.status!=='active'?'unknown':'active';
+    const active=configurationStatus==='active'&&module.items.some(candidate=>candidate.start===item.start&&candidate.end===item.end);
+    let certificate=null,diagnostic=null;
+    if(active)try{certificate=deriveFootprintAt(s.derive,module,item);}catch(error){diagnostic=error.diagnostic??{kind:'serialization-owner-refusal',message:error.message,source:module.file,span:evidence.span};}
+    const owners=certificate?.owners??[],serdeOwners=owners.filter(owner=>['serde::Serialize','serde::Deserialize'].includes(key(owner.target)));
+    const hasDerive=attributes.some(attribute=>attribute.name==='derive'),hasSerdeHelpers=attributes.some(attribute=>attribute.name==='serde');
+    const status=configurationStatus==='inactive'?'inactive-original-configuration':!active?'unproved-original-scope':serdeOwners.length?'actual-locked-serde-owner':hasDerive||hasSerdeHelpers?'unproved-derived-or-helper-owner':'no-derived-serde-invocation';
+    declarations.push({...evidence,owner,name:item.name,kind:item.term,status,configurationStatus,condition,scopeTypeUnresolved:scope?.unresolvedTypeScope??true,serdeOwners:serdeOwners.map(owner=>({path:owner.path,target:owner.target,source:owner.source,dependencyDigest:owner.dependencyDigest})),...(certificate?{deriveCertificateDigest:certificate.digest}:{}),...(diagnostic?{diagnostic}:{}),...(status==='unproved-derived-or-helper-owner'?{diagnostic:s.derive.diagnostics.find(value=>value.source===module.file&&value.span.start===item.start)??{kind:'serialization-owner-refusal',message:'Original derive/helper owner has no certified layout footprint',source:module.file,span:evidence.span}}:{})});
+  }
+  return freeze({schema:'original-serialization-discovery-v1',sourceSetSha256:context.sourceSetSha256,compilationProfile:context.compilationProfile,dependenciesDigest:context.dependenciesDigest,declarations:declarations.sort((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:a.span.start-b.span.start),manualTraitImplementations,graphDiagnostics:s.graph.diagnostics,sourceCoverage:context.sources.map(source=>({...source,modules:s.graph.modules.filter(module=>module.file===source.source).map(module=>['crate',...module.path].join('::')),status:s.graph.modules.some(module=>module.file===source.source)?'original-module-views-accounted':'outside-reviewed-entry-graph',runtimeAuthority:false})),runtimeAuthority:false,generatedTraitBehavior:false});
 }
