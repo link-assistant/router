@@ -52,10 +52,10 @@ test('fixed macro stage refuses pointer and generic reflexive proof requests wit
   for(const [input,target]of [['u8','usize'],['u16','usize'],['i8','isize'],['i16','isize'],['u8','isize'],['usize','usize'],['isize','isize'],['u64','u64']]){assert.throws(()=>pinnedPrimitiveFrom(type(input),type(target)),/excludes pointer and generic identity/);assert.equal(hasSourceFixedFrom(input,target),false);assert.equal(hasIntegerFrom(input,target),true);}
 });
 
-test('legacy unconditional pointer and reflexive positive callers remain executable and explicitly unpromoted',async()=>{
+test('legacy unconditional pointer callers remain executable while fixed reflexive gains separate original body proof',async()=>{
   const cases=[['u8','usize',255n],['u16','usize',65535n],['i8','isize',-128n],['i16','isize',-32768n],['u8','isize',255n],['usize','usize',9n],['isize','isize',-9n],['u64','u64',9n]];
   const result=project(cases.map(([input,target],index)=>`pub fn legacy_${index}(value:${input})->${target}{${target}::from(value)}`).join(' '));assert.deepEqual(result.meta.refused,[]);
-  const api=(await loadJavaScript(result.javascript)).translated;for(const [index,[,,value]]of cases.entries())assert.equal(api['legacy_'+index](value),value);assert.equal(find(result.meta.checkedSemanticProgram,node=>node.k==='routerPrimitiveFixedFrom'),null);
+  const api=(await loadJavaScript(result.javascript)).translated;for(const [index,[,,value]]of cases.entries())assert.equal(api['legacy_'+index](value),value);assert.equal(find(result.meta.checkedSemanticProgram,node=>node.k==='routerPrimitiveFixedFrom'),null);const identity=find(result.meta.checkedSemanticProgram,node=>node.k==='routerPrimitiveIdentityFrom');assert.notEqual(identity,null);assert.equal(identity.type.rustPrimitiveName,'u64');assert.equal(identity.sourcePrimitiveIdentityFromBody.selection.wholeTraitAuthority,false);
 });
 
 test('retained bool public APIs and actual bool caller targets preserve their existing body operation',async()=>{

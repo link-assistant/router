@@ -1,3 +1,4 @@
+import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs';
 import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasSourceFixedFrom} from './primitive-from-source.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
 import {iteratorReceiverExpected} from './iterators.mjs';
@@ -315,9 +316,9 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
       for(let index=0;index<offset;index++)c.next();c.expect('(','integer operation');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','integer operation');
       return {k:'routerIntegerAssociated',operation,args,instantiation:{...fixed,rustPrimitiveName:owner.at(-1)},span:span(first,c.peek())};
     }
-    if(segments.length===2&&!this.builtinShadow(segments[0],path)&&c.is('(',offset)&&((segments[0]==='Box'&&operation==='new')||(segments[0]==='String'&&operation==='from')||(rustFixedType(segments[0])&&operation==='from'))) {
+    if(segments.length===2&&!this.builtinShadow(segments[0],path)&&c.is('(',offset)&&((segments[0]==='Box'&&operation==='new')||(segments[0]==='String'&&operation==='from')||((rustFixedType(segments[0])||segments[0]==='bool')&&operation==='from'))) {
       for(let index=0;index<offset;index++)c.next();c.expect('(','standard conversion');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','standard conversion');
-      if(args.length!==1)throw typeError('standard conversion requires one argument',span(first,c.peek()));const target=rustFixedType(segments[0]),targetType=target?{...target,rustPrimitiveName:segments[0]}:null;let sourceBoolFromScope=null,sourceBoolFromRefusal=null;
+      if(args.length!==1)throw typeError('standard conversion requires one argument',span(first,c.peek()));const target=rustFixedType(segments[0]),targetType=target?{...target,rustPrimitiveName:segments[0]}:segments[0]==='bool'?{kind:'bool',rustPrimitiveName:'bool'}:null;let sourceBoolFromScope=null,sourceBoolFromRefusal=null;
       if(targetType){try{sourceBoolFromScope=capturePrimitiveBoolFromScope(this,targetType,first.start);}catch(error){if(!(error instanceof TypeError))throw error;sourceBoolFromRefusal=error.message;}}
       return {k:'routerBuiltinConversion',operation:segments.join('::'),value:args[0],target:targetType,targetName:segments[0],sourceBoolFromScope,sourceBoolFromRefusal,constEligible:false,span:span(first,c.peek())};
     }
@@ -512,6 +513,13 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k)) {
       const value=this.expr(node.value,env,path,node.k==='routerConstObligation'?expected:undefined);
       if(node.operation==='String::from'&&value.type.kind!=='string')throw typeError('String::from requires the actual checked standard string conversion',node.span);
+      if(node.target&&((node.target.kind==='bool'&&value.type.kind==='bool')||(node.target.kind==='fixed'&&value.type.kind==='fixed'&&/^[iu](8|16|32|64|128)$/u.test(node.targetName)&&value.type.rustPrimitiveName===node.targetName))){
+        if(node.sourceBoolFromRefusal)throw unsupported('primitive identity From namespace',node.sourceBoolFromRefusal,node.span);
+        let caller,body;try{caller=requirePrimitiveBoolFromScope(node.sourceBoolFromScope,node.target);body=parsePrimitiveIdentityFromBody(HostRustParser,this,pinnedPrimitiveIdentityFrom(value.type));requirePrimitiveIdentityFromBody(body,value.type);}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('primitive identity From source',error.message,node.span);}
+        this.expectedPrimitiveIdentity(node.target,expected,path,node.span);
+        return {k:'routerPrimitiveIdentityFrom',value,type:node.target,sourceCallerTraitScope:caller,sourcePrimitiveIdentityFromBody:body,constEligible:false,span:node.span};
+      }
+      if(node.target?.kind==='bool')throw unsupported('primitive bool identity From argument','requires the same actual by-value bool identity',node.span);
       if(node.target&&value.type.kind==='bool'){
         if(value.type.rustReference||value.type.rustOwnership||value.type.patternOwnershipRefusal||value.type.rustGenericIdentityUnresolved)throw unsupported('primitive bool From argument','requires an actual by-value bool; references and unresolved ownership remain refused',node.span);
         if(node.sourceBoolFromRefusal)throw unsupported('primitive bool From namespace',node.sourceBoolFromRefusal,node.span);
@@ -688,6 +696,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(node.k==='routerStandardSharedReceiver')return this.expr(node.object);
     if(node.k==='routerSharedArrayLiteral'){if(!node.arrayBorrowProof?.verified)throw new Error('missing checked shared array origin proof');return `Object.freeze(${this.expr(node.value)})`;}
     if(node.k==='routerPrimitiveDereference')return this.expr(node.value);
+    if(node.k==='routerPrimitiveIdentityFrom'){requirePrimitiveIdentityFromEvidence(node.sourcePrimitiveIdentityFromBody,node.value.type);requirePrimitiveBoolFromScope(node.sourceCallerTraitScope,node.type);if(node.type.kind!==node.value.type.kind||node.type.rustPrimitiveName!==(node.value.type.kind==='bool'?'bool':node.value.type.rustPrimitiveName)||node.constEligible!==false)throw new Error('missing checked original generic identity From operation');this.state.encode('original-primitive-identity-from','Actual generic From<T> for T member, privately bound original T/Self, explicit primitive Sized assumption and original caller trait scope; pointer identities remain legacy and unpromoted.');return this.expr(node.value);}
     if(node.k==='routerPrimitiveFixedFrom'){if(node.value.type.kind!=='fixed'||node.value.type.rustReference||node.type.kind!=='fixed'||node.sourcePrimitiveFromBody?.checkedOperation?.kind!=='primitive-fixed-infallible-cast'||node.sourcePrimitiveFromBody.constTraitCall!==false)throw new Error('missing checked original fixed From operation');this.state.encode('original-primitive-fixed-from','Complete actual primitive From macro invocation/member, shared original caller trait scope, infallible typed cast and exact BigInt value; pointer/generic identity remains legacy and unpromoted.');return this.expr(node.value);}
     if(node.k==='routerPrimitiveBoolFrom'){if(node.value.type.kind!=='bool'||node.value.type.rustReference||node.type.kind!=='fixed'||node.sourcePrimitiveBoolFromBody?.constTraitCall!==false)throw new Error('missing checked original Boolean From operation');this.primitiveBoolFrom=true;this.state.encode('original-primitive-bool-from','Actual non-const From<bool> macro member, private original caller trait scope and exact boolean ABI; no generic trait or numeric formatter authority.');return `ml_primitive_bool_from(${this.expr(node.value)})`;}
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k))return this.expr(node.value);

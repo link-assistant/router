@@ -88,3 +88,7 @@ export function hasSourceFixedFrom(inputName,targetName){
   if(!fixedName(inputName)||!fixedName(targetName)||inputName===targetName)return false;
   return originalFixedFromInvocations().some(call=>call.input===inputName&&call.target===targetName);
 }
+
+// Read-only pinned originals; these do not issue body or caller authority.
+export const primitiveFromPinnedSource=path=>{const source=sources().get(path);if(!source)throw new TypeError('Unknown pinned primitive From source');return freeze({...source});};
+export const primitiveFromNamespace=()=>standardPrelude();
