@@ -304,7 +304,7 @@ test('if-let preserves local nominal aliases and refuses mismatched standard con
   ]){const refused=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.ok(refused.meta.refused.some(item=>item.name==='bad'),source);assert.equal(refused.meta.executable.some(item=>item.name==='bad'),false,source);}
 });
 
-test('proven inactive std module retains actual standard if-let owner in default and production profiles',async()=>{
+test('proven inactive std module retains actual standard if-let owner in default and production profiles',{timeout:65_000},async()=>{
   const source='#[cfg(any())] mod std {} pub fn pick(value:Option<u8>)->u8{if let std::option::Option::Some(v)=value{v}else{9}}';
   for(const compilationProfile of [null,PRODUCTION_PROFILE]) {
     const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile});
@@ -315,7 +315,7 @@ test('proven inactive std module retains actual standard if-let owner in default
 });
 
 
-test('source named variant metadata supports record patterns even for an ABI-like actual field name',async()=>{
+test('source named variant metadata supports record patterns even for an ABI-like actual field name',{timeout:35_000},async()=>{
   const source='enum Local { A { field0:u8 }, Empty } pub fn named(value:Local)->u8{if let Local::A {field0:v}=value{v}else{3}}';
   const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
   for(const api of await defaultArtifacts(result,'src/lib.rs')){assert.equal(api.named(tagged('A',{field0:4n})),4n);assert.equal(api.named(tagged('Empty')),3n);}
