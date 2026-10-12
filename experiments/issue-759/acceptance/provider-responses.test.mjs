@@ -78,7 +78,11 @@ test('malformed continuation selectors and non-JSON Responses creates never disp
   const { app } = fixture(t, [service]);
   for (const previous_response_id of [null, '', 7, false, {}, []]) {
     const response = await app.fetch(request(namespace, 'POST', { model: 'm', input: 'x', previous_response_id }));
-    assert.equal(response.status, 400); assert.match((await response.json()).error.message, /previous_response_id/);
+    assert.equal(response.status, 400); assert.deepEqual(await response.json(), { error: { type: 'invalid_request_error', message: 'previous_response_id must be a non-empty string' } });
+  }
+  for (const model of ['', null, 7, []]) {
+    const response = await app.fetch(request(namespace, 'POST', { model, input: 'x' }));
+    assert.equal(response.status, 400); assert.deepEqual(await response.json(), { error: { type: 'model_required', message: 'request model must be a non-empty exact catalog id' } });
   }
   for (const body of ['{invalid', '[]', 'null', '"scalar"', '{}']) assert.equal((await app.fetch(request(namespace, 'POST', body))).status, 400);
   assert.equal(service.requests.length, 0);

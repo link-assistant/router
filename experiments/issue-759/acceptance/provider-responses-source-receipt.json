@@ -197,5 +197,26 @@
     "visibility": "persist owner affinity before exposing successful response or buffered bytes",
     "failed_capture": "502/503 api_error envelope with param/code null",
     "scope": "representative bounded observable contracts, not universal serde_json/depth/numeric precision or Rust runtime proof"
+  },
+  "source_review_notes": {
+    "executed": false,
+    "corrections": [
+      "Responses invalid selector/create API type maps to invalid_request_error; model_required remains distinct",
+      "conversation root/list ID parse shares capture checked UTF8/scalar/nonfinite domain"
+    ],
+    "packaging": "native/portable included by existing package files; no new dependency/export required",
+    "prerequisites": [
+      "integrated source tree or ROUTER_ACCEPTANCE_ROOT pointing to gate",
+      "Node>=20 and existing AJV/TOML dependency tree",
+      "Python3 advisory-lock adapter",
+      "loopback access and bounded writable temporary directories"
+    ],
+    "focused_fixture_count": 42,
+    "unproved_store_boundaries": [
+      "typed persisted row/schema validation",
+      "wide i64 affinity lifetimes",
+      "serde_json recursion/precision",
+      "subscription reactive refresh"
+    ]
   }
 }

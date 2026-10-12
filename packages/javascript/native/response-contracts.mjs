@@ -89,7 +89,7 @@ export function conversationUpstreamError(message) {
   return Response.json({ error: { type: 'api_error', message } }, { status: 502 });
 }
 export function conversationIds(raw, list = false) {
-  let document; try { document = JSON.parse(Buffer.from(raw).toString('utf8')); } catch { return []; }
+  let document; try { document = captureJsonValue(new TextDecoder('utf-8',{fatal:true}).decode(raw)); } catch { return []; }
   const items = list ? Array.isArray(document?.data) ? document.data : [] : [document];
   return items.map(item => item?.id).filter(id => typeof id === 'string' && id);
 }

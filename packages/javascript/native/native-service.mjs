@@ -214,7 +214,7 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       try { validateResponseCreate(responses,document); }
       catch (error) {
         if (!(error instanceof ProtocolError)) throw error;
-        return Response.json({error:{type:error.code ?? 'invalid_request_error',message:error.message}},{status:error.status ?? 400});
+        return Response.json({error:{type:error.code === 'model_required' ? 'model_required' : 'invalid_request_error',message:error.message}},{status:error.status ?? 400});
       }
       if (request.method === 'POST' && /\/(?:responses\/(?:compact|input_tokens)|images\/generations|audio\/speech|alpha\/search)$/.test(path) && (!document || typeof document !== 'object' || Array.isArray(document))) throw new ProtocolError('The native service request body must be a JSON object');
       if (!conversation && document?.model) await authorize(request,false,document.model);

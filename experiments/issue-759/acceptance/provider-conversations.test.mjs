@@ -67,10 +67,11 @@ test('successful item lists relay malformed/non-array documents unchanged and ca
   const service = await upstream(t, (_observed, response) => { response.writeHead(200, { 'content-type': 'application/json' }); response.end(body); });
   const { app, affinities, candidates } = fixture(t, [service]);
   affinities.set(root, owner, 'parent', { destination: destination(candidates[0]) });
-  for (const raw of ['{invalid', '{"data":"opaque","vendor":true}', '{"data":[null,{},7,{"id":""},{"id":8},{"id":"captured"}]}']) {
+  const invalidUtf8 = Buffer.concat([Buffer.from('{"data":[{"id":"invalid-utf8","unused":"'), Buffer.from([255]), Buffer.from('"}]}')]);
+  for (const raw of ['{invalid', '{"data":"opaque","vendor":true}', '{"data":[{"id":"invalid-surrogate","unused":"\\ud800"}]}', '{"data":[{"id":"invalid-overflow","unused":1e400}]}', invalidUtf8, '{"data":[null,{},7,{"id":""},{"id":8},{"id":"captured"}]}']) {
     body = raw;
     const response = await app.fetch(request(root + '/parent/items'));
-    assert.equal(response.status, 200); assert.equal(await response.text(), raw);
+    assert.equal(response.status, 200); assert.deepEqual(Buffer.from(await response.arrayBuffer()), Buffer.from(raw));
   }
   assert.ok(affinities.get(children, owner, 'captured'));
   assert.equal(affinities.list(children, owner).length, 1);
@@ -250,6 +251,9 @@ test('create identity and storage failures follow original502/503 policies witho
   const { app } = fixture(t, [service], { affinities });
   const missingId = await app.fetch(request(root, 'POST', {}));
   assert.equal(missingId.status, 502); assert.deepEqual(await missingId.json(), { error: { type: 'api_error', message: 'conversation create response did not contain an id' } });
+  value = { id: 'surrogate-parent', unused: '\ud800' };
+  const malformedId = await app.fetch(request(root, 'POST', {}));
+  assert.equal(malformedId.status, 502); assert.deepEqual(await malformedId.json(), { error: { type: 'api_error', message: 'conversation create response did not contain an id' } });
   value = { id: 'new-parent', object: 'conversation' };
   const storage = await app.fetch(request(root, 'POST', {}));
   assert.equal(storage.status, 503); assert.deepEqual(await storage.json(), { error: { type: 'api_error', message: 'resource affinity is unavailable: conversation recording unavailable' } });
