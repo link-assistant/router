@@ -65,12 +65,13 @@
     "tools/translation/cfg-profile.mjs",
     "tools/translation/source-profiles/derive/manifest.json"
   ],
-  "authored_tests": 14,
+  "authored_tests": 15,
   "future_checks": [
     "paired focused Node/Bun14 initial inventories",
     "actual original7 descriptor equality",
     "shared generated TS strict validation",
     "native descriptor replacement only after checked equality",
     "prior149 runtime regression after replacement"
-  ]
+  ],
+  "literal_profile": "Bounded common Rust/JSON string escapes only; JSON-only Unicode, backspace, form-feed and slash escapes refuse"
 }

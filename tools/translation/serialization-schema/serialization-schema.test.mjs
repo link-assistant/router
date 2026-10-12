@@ -99,3 +99,7 @@ test('generation compares the actual projection before offering any native repla
   const generated=generateSerializationSchema(options);assert.equal(generated.comparedExistingProjection,true);assert.equal(generated.runtimeAuthority,false);assert.match(generated.javascript,/export const affinitySchema/);
   assert.throws(()=>generateSerializationSchema({...options,expectedDescriptor:{}}),/differs from the actual existing manual/);
 });
+
+test('JSON-only escapes cannot bless Rust-invalid serde helper names',()=>{
+  for(const escape of ['\\u0041','\\b','\\f','\\/'])fixture(imports+'#[derive(Serialize,Deserialize)] enum Record { #[serde(rename="'+escape+'")] Value }',options=>assert.throws(()=>projected(options),/Rust helper literal escape|Unproved|unproved/));
+});

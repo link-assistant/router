@@ -107,6 +107,13 @@ function declaration(s,owner) {
   const item=items[0], certificate=deriveFootprintAt(s.derive,module,item);
   if(!certificate || !['serde::Serialize','serde::Deserialize'].every(target=>certificate.owners.some(value=>key(value.target)===target))) refuse('Actual locked Serialize/Deserialize owners are unproved: '+owner,module,{start:item.start,end:item.end});
   const input=inspectDeriveInput(item,module.compilationProfile),tokens=item.tokens.filter(token=>token.type!=='comment'),at=head(tokens);
+  // The shared footprint grammar confines helper input, but JSON-only escapes
+  // must not make invalid Rust literals executable descriptor metadata.
+  for(const attribute of input.attributes) for(const text of attribute.tokens.filter(token=>token.startsWith('"'))) {
+    for(let index=1;index<text.length-1;index++) if(text[index]==='\\') {
+      if(!['\\','"','n','r','t'].includes(text[++index])) refuse('Rust helper literal escape lacks a checked serialization spelling',module,attribute.span);
+    }
+  }
   if(tokens[at]?.text!==item.term||tokens[at+1]?.text!==item.name||tokens[at+2]?.text!=='{'||matching(tokens,at+2)!==tokens.length-1)refuse('Tuple/newtype/generic/discriminant serialization declaration is unsupported',module,{start:item.start,end:item.end});
   const common={owner,name:item.name,source:module.file,sourceSha256:hash(module.source),span:{start:item.start,end:item.end,unit:'utf16'},itemSha256:hash(module.source.slice(item.start,item.end)),attributes:input.attributes,derives:input.derives,deriveCertificateDigest:certificate.digest,kind:item.term};
   if(item.term==='struct')return {...common,fields:fields(s,module,tokens.slice(at+3,-1),input)};
