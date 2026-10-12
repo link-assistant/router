@@ -161,8 +161,10 @@ function sharedPrimitiveMatchBinding(type,owner,ctor,pattern,index,context,span)
   const name=pattern.binds[index],field=ctor.fields[index],matches=proof.bindings.filter(binding=>binding.name===name&&binding.field===field.name);
   if(matches.length!==1)refuse();
   const binding=matches[0],declared=context.resolveType(field.type,owner.modulePath,span),primitive=rustFixedType(declared.rustPrimitiveName),borrowed=binding.type,borrow=borrowed?.rustReference;
+  const syntax=copyMetadata(ownData(field,'rustTypeSyntax'));
+  if(!Array.isArray(syntax)||!syntax.length||syntax.some(token=>typeof token!=='string'))refuse();
   if(declared.kind!=='fixed'||!primitive||declared.bits!==primitive.bits||declared.signed!==primitive.signed||declared.rustReference||declared.rustOwnership||declared.patternOwnershipRefusal||declared.rustGenericIdentityUnresolved||declared.rustBorrowingUnresolved)refuse();
-  if(borrowed?.kind!=='fixed'||borrowed.bits!==declared.bits||borrowed.signed!==declared.signed||borrowed.rustPrimitiveName!==declared.rustPrimitiveName||borrowed.rustSourceType!==true||borrowed.patternOwnershipRefusal!=='shared field place'||borrowed.rustOwnership||borrowed.rustGenericIdentityUnresolved||borrowed.rustBorrowingUnresolved||borrowed.rustBorrowLifetime||borrow?.kind!=='shared'||borrow.source!=='shared-field-projection'||borrow.pointee?.rustReference||metadataDigest(borrow.pointee)!==metadataDigest(declared)||metadataDigest(borrow.sourceReceiverSpan)!==metadataDigest(reference.span)||metadataDigest(borrow.span)!==metadataDigest(proof.span))refuse();
+  if(borrowed?.kind!=='fixed'||borrowed.bits!==declared.bits||borrowed.signed!==declared.signed||borrowed.rustPrimitiveName!==declared.rustPrimitiveName||borrowed.rustSourceType!==true||borrowed.patternOwnershipRefusal!=='shared source reference'||borrowed.rustOwnership||borrowed.rustGenericIdentityUnresolved||borrowed.rustBorrowingUnresolved||borrowed.rustBorrowLifetime||borrow?.kind!=='shared'||borrow.source!=='shared-field-projection'||borrow.pointee?.rustReference||metadataDigest(borrow.pointee)!==metadataDigest(declared)||metadataDigest(borrow.sourceReceiverSpan)!==metadataDigest(reference.span)||metadataDigest(borrow.span)!==metadataDigest(proof.span))refuse();
   return borrowed;
 }
 

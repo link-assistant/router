@@ -17,6 +17,8 @@ test('actual shared primitive constructor fields retain receiver origins through
  const result=project(source);assert.deepEqual(result.meta.refused,[]);assert.ok(result.meta.checkedMethods.some(method=>method.name==='Amount.borrow'));
  const program=checked(result),method=[...program.declarations.values()].find(entry=>entry.impl?.method==='borrow');
  assert.equal(method.sourceLifetimeProof.outputs[0].identity,'input:0:[]');assert.deepEqual(method.sourceLifetimeProof.returnOrigins,['input:0:[]']);assert.equal(sharedPattern(program).sharedBindingProof.kind,'shared-match-ergonomics');
+ const binding=sharedPattern(program).sharedBindingProof.bindings[0].type;
+ assert.equal(binding.patternOwnershipRefusal,'shared source reference');assert.equal(binding.rustReference.kind,'shared');assert.equal(binding.rustReference.source,'shared-field-projection');assert.equal(binding.rustReference.pointee.rustPrimitiveName,'i32');assert.equal(binding.rustReference.pointee.rustReference,undefined);
  await verifyTypedTargets(result,api=>{const amount=Object.freeze({$:'Amount',field0:7n});assert.equal(api.plus(7n),12n);assert.equal(api.read(amount),7n);assert.equal(api.borrowed(amount),7n);assert.throws(()=>api.plus(2147483647n),RangeError);});
 });
 test('shared primitive field evidence grants no static escape scalar move owned receiver or aggregate reference origin',()=>{
@@ -48,7 +50,9 @@ test('missing forged getter and proxy match field evidence never bypass actual d
   pattern=>{pattern.sharedBindingProof.bindings[0].type.rustReference.sourceReceiverSpan.end++;},
   pattern=>{pattern.sharedBindingProof.bindings[0].type.rustReference.pointee.rustReference={kind:'shared',pointee:{kind:'fixed',bits:32,signed:true,rustPrimitiveName:'i32'}};},
   pattern=>{pattern.sharedBindingProof.bindings[0].type=null;},
+  pattern=>{pattern.sharedBindingProof.bindings[0].type.patternOwnershipRefusal='shared field place';},
  ]){const program=checked(result),pattern=sharedPattern(program);mutate(pattern);assert.throws(()=>validate(program));}
+ for(const syntax of [[],null,['i32',0]]){const program=checked(result),declaration=[...program.declarations.values()].find(entry=>entry.k==='data'&&entry.ctors.some(ctor=>ctor.name==='Amount'));declaration.ctors.find(ctor=>ctor.name==='Amount').fields[0].rustTypeSyntax=syntax;assert.throws(()=>validate(program));}
  for(const mode of ['getter','proxy']){let calls=0;const program=checked(result),pattern=sharedPattern(program);
   if(mode==='getter')Object.defineProperty(pattern,'sharedBindingProof',{get(){calls++;throw new Error('untrusted getter');},enumerable:true});
   else pattern.sharedBindingProof=new Proxy({}, {get(){calls++;throw new Error('untrusted get');},ownKeys(){calls++;throw new Error('untrusted keys');}});

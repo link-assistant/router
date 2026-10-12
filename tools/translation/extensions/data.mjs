@@ -224,6 +224,10 @@ export class DataChecker extends withStandardStringEqualityChecker(TextChecker) 
     const entry=this.items.get(pointee.name),ctor=entry.ctors.find(ctor=>ctor.name===checked.ctor),bindings=[];
     for(const [index,name]of checked.binds.entries())if(name) {
       const field=ctor.fields[index],borrowed=this.sharedFieldType(field.type,type,span);
+      // A proven primitive pattern place is the same shared reference type as
+      // a written &T. Retain its actual field projection and receiver origin.
+      const primitive=field.type.kind==='fixed'?rustFixedType(field.type.rustPrimitiveName):null;
+      if(primitive&&field.type.bits===primitive.bits&&field.type.signed===primitive.signed&&!field.type.rustReference&&!field.type.rustOwnership&&!field.type.patternOwnershipRefusal&&!field.type.rustGenericIdentityUnresolved&&!field.type.rustBorrowingUnresolved&&this.sharedFieldCopy(field,ctor,pointee,span)?.kind==='source-fixed-copy')borrowed.patternOwnershipRefusal='shared source reference';
       env.set(name,borrowed);bindings.push({name,field:field.name,type:borrowed});
     }
     return {...checked,sharedBindingProof:{kind:'shared-match-ergonomics',pointee,bindings,span}};
