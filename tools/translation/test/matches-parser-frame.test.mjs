@@ -43,11 +43,13 @@ test('ordinary and genuine transformed frames preserve original rule execution i
   }
   const carriedSource=member+ordinary+'pub fn on(v:&Mode)->bool{v.is_on()}pub fn make_on()->Mode{Mode::On}pub fn make_off()->Mode{Mode::Off}';
   assert.equal(hash(carriedSource),'f9418cd4c97560e8808aef755645b3d92516a3deacc10be21ae2874f45d0d35f');
+  // The lossless private-parser-frame-218 history retains the former exact
+  // 71..79 refusal. This source-only successor checks that same full source
+  // through the separate private discriminant-only receiver profile.
   const carried=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>carriedSource,compilationProfile:PRODUCTION_PROFILE});
-  assert.equal(carried.meta.checkedMethods.some(row=>row.name==='Mode.is_on'),false);
-  const refusal=carried.meta.refused.find(row=>row.term==='method');assert.ok(refusal);
-  assert.equal(refusal.message,'shared aggregate pattern: only a checked reference binder or wildcard is lowered; nested borrowed destructuring requires another profile');
-  assert.deepEqual(refusal.span,{start:71,end:79});assert.equal(carriedSource.slice(refusal.span.start,refusal.span.end),'Self::On');assert.equal(carried.meta.executable.some(row=>row.name==='on'),false);
+  assert.equal(carried.meta.checkedMethods.some(row=>row.name==='Mode.is_on'&&row.receiver==='shared'),true);
+  assert.deepEqual(carried.meta.refused,[]);assert.equal(carriedSource.slice(71,79),'Self::On');assert.equal(carried.meta.executable.some(row=>row.name==='on'),true);
+  await verifyTypedTargets(carried,api=>{assert.equal(api.on(api.make_on()),true);assert.equal(api.on(api.make_off()),false);},{childTimeoutMs:30000});
   // Reuse the complete, already checked source fixture without rewriting any
   // member body or manufacturing a target ABI. The original Mode stays above.
   const original=readFileSync(new URL('./source-method-project.test.mjs',import.meta.url),'utf8');

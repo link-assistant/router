@@ -213,6 +213,14 @@ export function linkedSourceContext(surface) {
   const visit=(items,path=[])=>{for(const entry of items){if(entry.k==='module')visit(entry.items,[...path,entry.name]);else {const evidence=linked.get(entry);if(evidence){if(evidence.parsedSurfaceSha256!==metadataDigest(entry))fail('parsed declaration changed after source capture');result.set([...path,entry.name].join('.'),evidence);}}}};
   visit(surface.items);const token=Object.freeze({schemaVersion:1,kind:'private-parser-source-context'});capturedContexts.set(token,result);return token;
 }
+// Read-only access to an existing private parser association. Checking the
+// WeakMap first rejects public clones/proxies without inspecting their fields.
+// The digest is integrity after issuance, never a caller authority mechanism.
+export function originalParsedDeclarationEvidence(entry) {
+  const evidence=linked.get(entry);if(!evidence)return null;
+  if(evidence.parsedSurfaceSha256!==metadataDigest(entry))fail('original parsed declaration changed after source capture');
+  return evidence;
+}
 // Only a successful compiler check associates a program with its captured
 // parser context. External checked-looking IR cannot mint a bound certificate.
 export function withCheckedSourceLinks(Base) {return class extends Base {

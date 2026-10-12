@@ -163,6 +163,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...readdirSync(new URL('./source-profiles/builtin-derive-bang/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/builtin-derive-bang/${name}`));
   implementation.push(...['matches-source-profile.mjs','source-macro-fragments.mjs','original-macro-module-context.mjs','matches-macro-context.mjs','matches-source-bridge.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...['source-method-transforms.mjs','source-method-parser.mjs','source-method-admission.mjs','original-parser-identity.mjs','standard-host-bindings.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push('tools/translation/shared-nullary-enum.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/matches-source/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/matches-source/${name}`));
   implementation.push('tools/translation/copy-trait-owners.mjs');
   implementation.push('tools/translation/source-module-views.mjs');

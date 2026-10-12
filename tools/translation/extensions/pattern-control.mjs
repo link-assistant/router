@@ -298,6 +298,8 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(['bind','bindOrCtor'].includes(node.k)&&this.lookup([node.name],path,node.span)?.constant)throw unsupported('constant binding pattern','requires its actual checked value and irrefutability; a source constant cannot become a fresh binding',node.span);
       if(type.rustReference) {
         if(node.k==='wild'||node.k==='bind')return node;
+        const nullary=this.sharedNullaryPatternOwner?.(node,type,path,env);
+        if(nullary)return nullary;
         if(node.k==='bindOrCtor') {const actual=this.lookup([node.name],path,node.span);if(!actual||actual.k==='fn')return {k:'bind',name:node.name,span:node.span};}
         throw unsupported('shared aggregate pattern','only a checked reference binder or wildcard is lowered; nested borrowed destructuring requires another profile',node.span);
       }
