@@ -21,6 +21,7 @@ export const { Checker } = await exposed('check.js', [
   ['class Checker {', 'export class Checker {'],
   ["      }));\n    });\n    this.walk(items, path, (item, itemPath, entry) => {\n      if (item.k !== 'fn') return;", "      }));\n    }, 'declaration-types');\n    this.walk(items, path, (item, itemPath, entry) => {\n      if (item.k !== 'fn') return;"],
   ['      entry.ret = this.resolveType(item.ret, itemPath, item.span);\n    });', "      entry.ret = this.resolveType(item.ret, itemPath, item.span);\n    }, 'declaration-types');"],
+  ['    });\n    const build = (list, listPath) =>', "    }, 'declaration-bodies');\n    const build = (list, listPath) =>"],
   ['  walk(items, path, visit) {', '  walk(items, path, visit, phase = null) {'],
   ['if (item.k === \'module\') this.walk(item.items, [...path, item.name], visit);', 'if (item.k === \'module\') this.walk(item.items, [...path, item.name], visit, phase);'],
   ['else visit(item, path, this.items.get([...path, item.name].join(\'.\')));', 'else this.visitDeclaration(item, path, this.items.get([...path, item.name].join(\'.\')), visit, phase);'],

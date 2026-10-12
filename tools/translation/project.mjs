@@ -272,11 +272,11 @@ export function translateProject(options) {
   const duplicateNames = new Set(declarations.filter((entry, index) => declarations.findIndex(candidate => candidate.name === entry.name) !== index).map(entry => entry.name));
   for (const entry of declarations.filter(entry => duplicateNames.has(entry.name))) refused.push({ file: entry.file, name: entry.name, term: entry.term, kind: 'ambiguous', message: 'duplicate module-scoped declaration', span: entry.span });
   let active = declarations.filter(entry => !duplicateNames.has(entry.name)), checked;
-  // Discard a failed type phase and remove its independent original owners.
-  // Body failures remain ordinary single refusals. Recheck every surviving
-  // body and caller; no parsed signature is a callable implementation.
+  // Discard a failed declaration phase and remove its attributed original
+  // owners. Opt-in body collection does not return partial IR. Every survivor
+  // and caller is checked afresh; post-check proof failures remain ordinary.
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
-    try { checked = roundTripProgram(checkProjectProgram({ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null },{jsonParserProfile})); break; }
+    try { checked = roundTripProgram(checkProjectProgram({ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null },{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true})); break; }
     catch (error) {
       const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
       if(!failures)throw error;
