@@ -10,6 +10,7 @@ Seven authored cases remain unrun. Actual shared primitive Items retain their
 reference and source-qualified pointee inside a private, bounded tuple inference
 path, reusing existing immutable binding and source lifetime checks. They do not
 become copied values. Ordinary inferred products still reject reference fields.
+The original no-method-generic and zero-argument signature stays enforced.
 Borrowed aggregate/nominal/ownership-bearing products,
 advanced Iterator methods, other usize/overflow profiles and complete runtime
 parity remain unproved. No engine, generation, corpus gain or Rust build is

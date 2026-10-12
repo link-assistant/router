@@ -25,6 +25,7 @@ export function hasNextBasedEnumerate(node){
 }
 
 export function checkedScalarEnumerate(checker,node,object,indexType){
+  if(node.explicit)throw unsupported('Iterator::enumerate generic arguments','the pinned Iterator::enumerate has no method type parameters',node.span);
   if(object.type.kind!=='routerIterator'||typeof checker.inferTuple!=='function')throw unsupported('Iterator::enumerate','requires an actual checked iterator and bounded inferred product layout',node.span);
   if(indexType.rustPrimitiveName!=='usize'||indexType.bits!==manifest.usizeBits||indexType.signed||indexType.rustReference||indexType.rustGenericIdentityUnresolved)throw unsupported('Iterator::enumerate index','requires the original by-value usize of the selected checked-overflow profile',node.span);
   // The narrow reference pair keeps its actual shared scalar Item; ordinary

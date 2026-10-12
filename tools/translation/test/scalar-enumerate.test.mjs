@@ -77,6 +77,8 @@ test('borrowed aggregate, nominal, equal-width and specialized consumption oblig
     'pub fn bad(values:&[(u8,u8)])->usize{let mut total:usize=0;for (index,value) in values.iter().enumerate(){total+=index;}total}',
     'struct Boxed(u8);pub fn bad()->usize{let mut total:usize=0;for (index,_) in (0u8..2u8).map(|n|Boxed(n)).enumerate(){total+=index;}total}',
     'pub fn bad()->u64{let mut total:u64=0;for (index,_) in (0u8..2u8).enumerate(){total+=index;}total}',
+    'pub fn bad()->usize{let mut total:usize=0;for (index,_) in (0u8..2u8).enumerate::<u8>(){total+=index;}total}',
+    'pub fn bad()->usize{let mut total:usize=0;for (index,_) in (0u8..2u8).enumerate(1u8){total+=index;}total}',
     'pub fn bad()->usize{(0u8..2u8).enumerate().count()}',
     'pub fn bad()->usize{(0u8..2u8).enumerate().map(|(index,_)|index).sum()}',
     'pub fn bad()->usize{(0u8..2u8).enumerate().take(1usize).fold(0usize,|sum,(index,_)|sum+index)}',
