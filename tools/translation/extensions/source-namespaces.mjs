@@ -14,7 +14,8 @@ function resolvedPath(parser,target,scope,namespace) {
   return target;
 }
 export function originalSourceTypeOwner(parser,type,scope) {
-  const key=ownerKey(type,scope),owner=key&&sourceTypeOwners.get(parser)?.get(key);
+  const key=ownerKey(type,scope),state=sourceTypeOwners.get(parser);
+  const owner=key&&state?.aliases===parser.sourceNamespaceAliases&&state.owners.get(key);
   return owner?[...owner]:null;
 }
 export function withSourceNamespaceParser(Base) {
@@ -153,9 +154,10 @@ export function withSourceNamespaceParser(Base) {
       const type=super.type(),proof=resolvedPaths.get(type.path),scope=this.modulePath??[];
       const key=ownerKey(type,scope);
       if(key&&proof?.parser===this&&proof.scope.length===scope.length&&proof.scope.every((part,index)=>part===scope[index])&&proof.target.length===type.path.length&&proof.target.every((part,index)=>part===type.path[index])) {
-        let owners=sourceTypeOwners.get(this);if(!owners){owners=new Map();sourceTypeOwners.set(this,owners);}
-        if(!owners.has(key)&&owners.size>=8192)throw unsupported('source type route evidence','exceeds its bounded original occurrence count',type.span);
-        owners.set(key,[...proof.target]);
+        let state=sourceTypeOwners.get(this);
+        if(!state||state.aliases!==this.sourceNamespaceAliases){state={aliases:this.sourceNamespaceAliases,owners:new Map()};sourceTypeOwners.set(this,state);}
+        if(!state.owners.has(key)&&state.owners.size>=8192)throw unsupported('source type route evidence','exceeds its bounded original occurrence count',type.span);
+        state.owners.set(key,[...proof.target]);
       }
       return type;
     });}

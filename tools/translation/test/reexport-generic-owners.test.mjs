@@ -26,10 +26,13 @@ test('nested Result Option and tuple metadata copies retain the same original pu
   await verifyCohortTargets(result,js=>{assert.deepEqual(js.echo(value),value);assert.deepEqual(js.echo(none),none);});
 });
 
-test('arrays and shared reference pointees preserve checked public type owners',{timeout:30000},async()=>{
-  const source=api+'pub fn echo(value:Option<[api::Mode;1]>)->Option<[api::Mode;1]>{value} pub fn borrow(value:Option<&api::Mode>)->Option<&api::Mode>{value}';
+test('shared reference pointees preserve public owners while nominal fixed arrays retain their Copy obligation',{timeout:30000},async()=>{
+  const source=api+'pub fn borrow(value:Option<&api::Mode>)->Option<&api::Mode>{value}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
-  await verifyCohortTargets(result,js=>{const modes=some(Object.freeze([tag('Ready')]));assert.deepEqual(js.echo(modes),modes);const borrowed=some(tag('Paused'));assert.deepEqual(js.borrow(borrowed),borrowed);});
+  await verifyCohortTargets(result,js=>{const borrowed=some(tag('Paused'));assert.deepEqual(js.borrow(borrowed),borrowed);});
+  const array=project(api+'pub fn echo(value:Option<[api::Mode;1]>)->Option<[api::Mode;1]>{value}');
+  assert.ok(array.meta.refused.some(entry=>entry.name==='echo'&&/checked scalar or borrowed-str Copy profile/.test(entry.message)));
+  assert.equal(array.meta.executable.some(entry=>entry.name==='echo'),false);
 });
 
 test('complete original out-of-line imports retain public enum owners during generic layout construction',{timeout:30000},async()=>{
@@ -50,9 +53,10 @@ test('an earlier valid public type occurrence does not authorize a later written
 });
 
 test('canonical normalization evidence is private to the original parser occurrence and consuming scope',()=>{
-  const source=api+'pub fn typed(value:api::Mode)->u8{0}',options={entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source};
+  const declaration='pub fn typed(value:api::Mode)->u8{0}fn main(){}';
+  const source=api+declaration,options={entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source};
   const graph=resolveModuleGraph(options),bindings=resolveModuleBindings({modules:graph.modules,compilationProfile:graph.compilationProfile});
-  const scope=bindings.scopes.find(scope=>scope.path.length===0),parser=new HostRustParser(tokenizeRust(source));
+  const scope=bindings.scopes.find(scope=>scope.path.length===0),parser=new HostRustParser(tokenizeRust(declaration));
   configureParserSourceScope(parser,scope,bindings.scopes,[]);
   const surface=parser.file(),type=surface.items.find(item=>item.name==='typed').params[0].type;
   assert.deepEqual(originalSourceTypeOwner(parser,type,[]),['crate','api','hidden','Mode']);
@@ -61,6 +65,8 @@ test('canonical normalization evidence is private to the original parser occurre
   assert.equal(originalSourceTypeOwner(parser,type,['other']),null);
   assert.equal(originalSourceTypeOwner(parser,{...type,span:{start:type.span.start+1,end:type.span.end+1}},[]),null);
   assert.equal(originalSourceTypeOwner(parser,{...type,path:['crate','api','hidden','Other']},[]),null);
-  type.path=['crate','api','hidden','Other'];
-  assert.throws(()=>checkProgram(linkParsedFile(parser,surface,source)),/changed before original source linking|changed after source capture/);
+  const original=structuredClone(type);type.path=['crate','api','hidden','Other'];
+  assert.throws(()=>checkProgram(linkParsedFile(parser,surface,declaration)),/changed before original source linking|changed after source capture/);
+  configureParserSourceScope(parser,scope,bindings.scopes,[]);
+  assert.equal(originalSourceTypeOwner(parser,original,[]),null,'A new namespace configuration revokes the earlier occurrence evidence');
 });
