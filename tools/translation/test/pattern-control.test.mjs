@@ -160,7 +160,7 @@ test('nested immutable Copy Option binders execute both targets and reject hosti
   }
 });
 
-test('aggregate moves, aliases, references, generic patterns and guards remain explicit refusals',()=>{
+test('aggregate moves, aliases, references, generic patterns and value-producing guards remain explicit refusals',()=>{
   for(const source of [
     'fn aggregate(value: Option<Vec<u8>>) -> u8 { if let Some(v) = value { 0 } else { 1 } }',
     'fn conversion(value: &str) -> u8 { let owned: String = value.to_string(); if let text = owned { 0 } else { 1 } }',

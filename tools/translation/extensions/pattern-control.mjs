@@ -11,6 +11,7 @@ import {TranslationError,typeError,unsupported} from '../vendor/meta-language/tr
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {isDeepStrictEqual} from 'node:util';
 import {sourceWhileLetCondition,requireSourceWhileLet} from './while-let-source.mjs';
+import {hasSourceLetChain,parseSourceLetChain,requireSourceLetChain} from './let-chain-source.mjs';
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
@@ -185,6 +186,12 @@ export function withPatternControlParser(Base=ControlRustParser) {
     }
     controlIf(path) {
       const c=this.cursor;
+      if(c.is('if')&&hasSourceLetChain(c)){
+        const cond=parseSourceLetChain(this,path,'if'),first={start:cond.span.start};
+        const then=this.block(path,true);
+        const otherwise=c.eat('else')?c.is('if')?this.controlIf(path):this.block(path,true):{k:'unit',span:range(first,c.peek())};
+        return {k:'if',cond,then,else:otherwise,span:range(first,c.peek())};
+      }
       if(!c.is('if')||!c.is('let',1))return super.controlIf(path);
       const first=c.next();c.next();
       const pattern=this.controlPattern(path,first);
@@ -205,6 +212,12 @@ export function withPatternControlParser(Base=ControlRustParser) {
     }
     whileStatement(path) {
       const c=this.cursor;
+      if(c.is('while')&&hasSourceLetChain(c)){
+        const cond=parseSourceLetChain(this,path,'while'),first={start:cond.span.start};
+        const then=this.block(path,true),span=range(first,c.peek()),unit=()=>({k:'unit',span:{...span}});
+        const loopBody={k:'routerIf',cond,then,else:{k:'routerBreak',body:unit(),span},body:unit(),span};
+        return {k:'routerWhile',cond:{k:'bool',value:true,span:{start:first.start,end:first.start+5}},loopBody,span};
+      }
       if(!c.is('while')||!c.is('let',1))return super.whileStatement(path);
       const begin=c.index,first=c.next();c.next();
       const pattern=this.controlPattern(path,first);
@@ -231,6 +244,52 @@ export function withPatternControlParser(Base=ControlRustParser) {
 
 export function withPatternControlChecker(Base=ControlChecker) {
   return class extends Base {
+    #checkedLetChain(node,env,path,expected,allowLiteral){
+      env=this.contextEnvironment(node,env,expected);
+      if(node.k!=='routerIf'&&!sameType(expected??{},UNIT))throw unsupported('value-producing let chain','requires a separately checked result join; only unit statement chains are admitted',node.span);
+      const unit=()=>({k:'unit',type:UNIT,span:node.span});
+      const reserved=new Set([...env.keys()].filter(key=>typeof key==='string')),pending=[node];let fuel=100000;
+      while(pending.length){
+        if(!fuel--)throw unsupported('let-chain binding budget','requires bounded original lexical names',node.span);
+        const current=pending.pop();if(!current||typeof current!=='object')continue;
+        if(typeof current.name==='string')reserved.add(current.name);
+        if(Array.isArray(current.path))for(const name of current.path)if(typeof name==='string')reserved.add(name);
+        for(const [key,value]of Object.entries(current))if(!['type','span','sourceCondition','patternControl'].includes(key)){
+          if(Array.isArray(value))pending.push(...value);else if(value&&typeof value==='object')pending.push(value);
+        }
+      }
+      const fresh=prefix=>{let name;do{name=this.freshName(prefix);}while(reserved.has(name));reserved.add(name);return name;};
+      const flag=fresh('ml_let_chain_'),flagValue=()=>({k:'var',name:flag,type:BOOL,span:node.span});
+      const otherwise=coerce(this.expr(node.else,new Map(env),path,UNIT,allowLiteral),UNIT,this.language,node.span);
+      const next=node.k==='routerIf'?this.expr(node.body,new Map(env),path,expected,allowLiteral):unit();
+      const fallback={k:'routerIf',cond:{k:'unary',op:'not',arg:flagValue(),type:BOOL,span:node.span},then:otherwise,else:unit(),body:next,type:next.type,span:node.span};
+      const lower=(index,inner,continuation)=>{
+        if(index===node.cond.clauses.length){
+          const then=coerce(this.expr(node.then,inner,path,UNIT,allowLiteral),UNIT,this.language,node.span);
+          return {k:'routerSet',target:flagValue(),value:{k:'bool',value:true,type:BOOL,span:node.span},body:then,type:UNIT,span:node.span};
+        }
+        const clause=node.cond.clauses[index];
+        if(containsExit(clause.subject))throw unsupported('let-chain subject control','nonlocal exits require their own statement lowering',clause.subject.span);
+        if(clause.kind==='bool'){
+          const cond=coerce(this.expr(clause.subject,inner,path,BOOL),BOOL,this.language,clause.span);
+          return {k:'routerIf',cond,then:lower(index+1,new Map(inner),unit()),else:unit(),body:continuation,type:continuation.type,span:clause.span};
+        }
+        const subject=this.expr(clause.subject,inner,path);this.patternDomain(subject.type,clause.span);
+        const pattern=this.patternOwner(clause.pattern,subject.type,path,inner);
+        const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,clause.span),span:clause.span});
+        for(const binding of plan.bindings)if(!immutableBinding(binding.type,this))throw unsupported('let-chain aggregate binding','requires checked immutable scalar/shared-reference or standard Copy algebraic bindings',binding.span??clause.span);
+        const temporary=fresh('ml_pattern_chain_'),variable={k:'var',name:temporary,type:subject.type,span:clause.span};
+        let bound=new Map(inner);for(const binding of plan.bindings)bound=this.bindingEnvironment(bound,binding.name,binding.type,false);
+        let then=lower(index+1,bound,unit());
+        then=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??clause.span}),then);
+        let cond=this.patternTest(plan.test,variable,plan.projectionPaths);
+        if(subject.type.kind==='data')cond={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},right:cond,type:BOOL};
+        const conditional={k:'routerIf',cond,then,else:unit(),body:continuation,type:continuation.type,span:clause.span};
+        return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:conditional.type,span:clause.span,patternControl:{plan,subjectType:subject.type,kind:'let-chain-clause'}};
+      };
+      const body=lower(0,new Map(env),fallback);
+      return {k:'let',name:flag,value:{k:'bool',value:false,type:BOOL,span:node.cond.span},body,mutable:true,type:body.type,span:node.span,constEligible:false,patternControl:{kind:'let-chain',sourceCondition:structuredClone(node.cond.sourceCondition),subjectType:BOOL}};
+    }
     resolveType(type,path,span) {
       const resolved=super.resolveType(type,path,span);
       return type?.patternOwnershipRefusal?{...resolved,patternOwnershipRefusal:type.patternOwnershipRefusal}:resolved;
@@ -456,6 +515,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
         const body=this.expr(node.body,this.bindingEnvironment(env,node.name,retained.type,node.mutable??false),path,expected,allowLiteral);
         return {k:'let',name:node.name,value:retained,body,mutable:node.mutable??false,type:body.type,span:node.span};
       }
+      if(['if','routerIf'].includes(node.k)&&node.cond?.k==='routerLetChainCondition')return this.#checkedLetChain(node,env,path,expected,allowLiteral);
       if(!['if','routerIf'].includes(node.k)||node.cond?.k!=='routerPatternCondition') {
         const value=super.expr(node,env,path,expected,allowLiteral);
         if(value.type.kind==='string'&&(node.k==='toString'||node.k==='routerStringOperation'&&['to_ascii_lowercase','to_ascii_uppercase'].includes(node.op)))return {...value,type:{...value.type,patternOwnershipRefusal:'owned String conversion'}};
@@ -525,6 +585,7 @@ export function withPatternControlEmitter(Base=ControlEmitter) {
     }
     statements(node,unit=false) {
       if(node.patternControl?.kind==='while-let')requireSourceWhileLet(node);
+      if(node.patternControl?.kind==='let-chain')requireSourceLetChain(node);
       if(node.k==='let'&&node.value.k==='routerControlInitializer') {
         const label=`ml_control_exit_${this.controlLabels=(this.controlLabels??0)+1}`,previous=this.controlValueTarget;
         this.controlValueTarget={name:node.name,label};
