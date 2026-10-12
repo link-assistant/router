@@ -25,9 +25,9 @@ function sharedItem(type,span,source) {
   delete result.rustBorrowLifetime;
   return result;
 }
-function copyItem(type,span) {
+function copyItem(type,span,operation='copied/cloned') {
   const reference=type.rustReference,pointee=reference?.pointee;
-  if(reference?.kind!=='shared'||!pointee)throw typeError('copied/cloned requires actual shared reference iterator items',span);
+  if(reference?.kind!=='shared'||!pointee)throw typeError(`${operation} requires actual shared reference iterator items`,span);
   const primitive=pointee.kind==='fixed'?rustFixedType(pointee.rustPrimitiveName):null;
   const scalar=primitive&&primitive.bits===pointee.bits&&primitive.signed===pointee.signed||pointee.kind==='bool'||pointee.kind==='string'&&pointee.rustOwnership?.kind==='borrowed'&&pointee.rustOwnership.source==='str';
   if(!pointee.rustReference&&(!scalar||pointee.rustGenericIdentityUnresolved))throw unsupported('iterator scalar Copy/Clone','requires an actual checked standard primitive or shared-reference Copy item',span);
@@ -243,7 +243,7 @@ export class IteratorChecker extends DataChecker {
       if (object.type.kind !== 'routerIterator') throw typeError('for needs a supported scalar iterator', node.span);
       // A written reference pattern consumes one actual shared reference;
       // portable encoding equality alone never turns an owned Item into one.
-      const element=node.sourceIterationPattern?.reference?copyItem(object.type.element,node.sourceIterationPattern.span):object.type.element;
+      const element=node.sourceIterationPattern?.reference?copyItem(object.type.element,node.sourceIterationPattern.span,'for reference pattern'):object.type.element;
       const inner = this.bindingEnvironment(this.loopEnvironment(env), node.name, element, node.mutable);
       const originalBody=node.pattern?{k:'routerLetPattern',pattern:node.pattern,subject:{k:'name',path:[node.name],span:node.sourceIterationPattern.span},body:node.loopBody,span:node.sourceIterationPattern.span}:node.loopBody;
       const loopBody = this.expr(originalBody, inner, path, UNIT);
