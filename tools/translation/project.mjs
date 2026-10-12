@@ -19,21 +19,24 @@ import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
 import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './translate.mjs';
-import {linkProjectDeclaration} from './extensions/source-links.mjs';
+import {linkProjectDeclaration,linkProjectMethodDeclaration} from './extensions/source-links.mjs';
+import {createOriginalMethodTokenTransform} from './source-method-transforms.mjs';
+import {parseOriginalMethodTransform,originalMethodParsedFacts} from './source-method-parser.mjs';
+import {originalMethodSemantic,relocateOriginalMethodSemantic} from './source-method-admission.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
 import {createToolAttributeContext} from './tool-attributes.mjs';
 import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
-import {createMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings} from './matches-macro-context.mjs';
+import {createMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved} from './matches-macro-context.mjs';
 
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
 const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'||key==='constantEvaluationProof'||key==='deriveNamespaceProof'||key==='toolAttributeProof'||key==='jsonMacroProof'||key==='sourceMatchesProof'||key==='pinnedStandardBodyProof'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -251,16 +254,26 @@ export function translateProject(options) {
         if (!method.loweringReady && !certificate) {refused.push({file:module.file,name:display,term:'method',span:method.span,kind:'unsupported',message:method.diagnostics.map(item=>item.message).join('; '),...(copyProof?{copyDiagnostics:copyProof.diagnostics}: {})});continue;}
         try {
           const lowered = certificate ? lowerCopyMethodTokens(method,certificate.type,certificate) : lowerSharedMethodTokens(method,qualifiedType);
-          const parser = new MethodRustParser(lowered.tokens);
+          let transform=null;
+          // A closed original owner can acquire source association. Existing
+          // independent method checking remains available without that claim;
+          // its unconfigured original macro route still refuses explicitly.
+          try{transform=createOriginalMethodTokenTransform(matchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
+          let originalParsed=null;
+          if(transform){try{originalParsed=parseOriginalMethodTransform(transform);}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
+          const parser = originalParsed?originalMethodParsedFacts(originalParsed).parser:new MethodRustParser(lowered.tokens);
+          if(!originalParsed){
           parser.modulePath = module.path;
           configureSourceScope(parser,module);
           // Methods inherit the module's checked import aliases.
           parser.aliases = moduleAliases.get(moduleScopeKey(module)) ?? new Map();
           parser.shadowedEffectRoots = new Set(graph.modules.flatMap(entry => [...entry.path.filter(name => ['std', 'tokio','serde_json'].includes(name)), ...entry.items.filter(item => item.term === 'mod' && ['std', 'tokio','serde_json'].includes(item.name)).map(item => item.name)]));
           parser.attributes(); parser.visibility();
-          const qualifier=parser.cursor.is('const')?parser.cursor.next():null,fn=parser.fn(module.path);
-          const surface = {...fn,...(qualifier?{constFunction:true,span:{...fn.span,start:qualifier.start}}:{})};
+          }
+          const qualifier=!originalParsed&&parser.cursor.is('const')?parser.cursor.next():null,fn=originalParsed?.entry??parser.fn(module.path);
+          const surface = originalParsed?originalMethodSemantic(originalParsed,{fieldCertificates:lowered.sharedReceiverSource?copyEvidence.fieldCertificates?.(qualifiedType,module,method.receiverSpan)??[]:[]}):{...fn,...(qualifier?{constFunction:true,span:{...fn.span,start:qualifier.start}}:{})};
           if (!parser.cursor.atEnd()) throw new TranslationError('syntax','unconsumed inherent method tokens',parser.cursor.peek());
+          if(!originalParsed){
           surface.name = `ml_impl_${Buffer.from(qualifiedType.join('.')).toString('hex')}_${Buffer.from(method.name).toString('hex')}`;
           surface.generated = 'router-checked-inherent-method';
           if(lowered.sharedReceiverSource) {
@@ -269,8 +282,12 @@ export function translateProject(options) {
             surface.params[0].type={...type,rustReference:{...type.rustReference,pointee:{...type.rustReference.pointee,rustSharedReceiverSource:lowered.sharedReceiverSource,rustSharedFieldCopies:copyEvidence.fieldCertificates?.(qualifiedType,module,method.receiverSpan)??[]}}};
           }
           surface.impl = {type:{kind:'named',path:qualifiedType},method:method.name,receiver:method.receiver,receiverName:lowered.receiverName,...(lowered.sharedReceiverSource?{sharedReceiverSource:lowered.sharedReceiverSource}:{}),...(certificate?{copyCertificate:certificate}:{}),rewrites:lowered.rewrites,assumptions:lowered.assumptions};
+          }
           const globalSpan = {start:module.offset+method.span.start,end:module.offset+method.span.end};
-          declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:(()=>{const value=relocate(surface,module.offset);if(certificate)value.impl.copyCertificate=certificate;return value;})()});
+          const semantic=originalParsed?relocateOriginalMethodSemantic(surface,module.offset):relocate(surface,module.offset);
+          if(!originalParsed&&certificate)semantic.impl.copyCertificate=certificate;
+          if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
+          declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic});
           captureGenericDeclarations(declarations,parser,module,globalSpan,module.offset);
         } catch(error) {if(!(error instanceof TranslationError))throw error;refused.push({file:module.file,name:display,term:'method',...diagnostic(error)});}
       }

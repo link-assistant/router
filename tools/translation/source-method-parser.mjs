@@ -20,6 +20,7 @@ export function parseOriginalMethodTransform(transform) {
   const state=originalMethodTransformFacts(transform),namespace=originalMethodParserNamespace(state.context,state.method),tokens=originalMethodParserTokens(transform);
   const parser=new HostRustParser(tokens);identity(parser);
   configureMatchesMethodParser(parser,state.context,state.method);
+  parser.shadowedEffectRoots=new Set(namespace.shadowedEffectRoots);
   const namespaceDigest=metadataDigest(parser.sourceNamespaceEvidence),attributes=parser.attributes(),visibility=parser.visibility();
   const qualifier=parser.cursor.is('const')?parser.cursor.next():null;
   const entry=parser.fn(namespace.modulePath);

@@ -121,23 +121,24 @@ export function configureMatchesParserFromSourceScope(parser,sourceScope) {
 
 // A source member can inherit only an actual nominal type owner. This does not
 // certify Copy, method dispatch, attributes, macro expansion or body effects.
+export class OriginalMethodOwnerUnproved extends TypeError {}
 export function originalMethodNamespaceOwner(context,method) {
   const facts=contexts.get(context),original=originalMethodMember(method);
   if(!facts)throw new TypeError('Original method owner requires its private module context');
   const module=facts.modules.find(module=>module.file===original.sourcePath&&JSON.stringify(module.path)===JSON.stringify(original.modulePath));
   if(!module||module.source!==original.source||module.sourceView!==original.sourceView||JSON.stringify(normalizeProfile(original.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Original method source/module/view/profile identity differs');
   const scope=facts.evidence.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),ancestors=facts.evidence.scopes.filter(scope=>scope.path.every((part,index)=>module.path[index]===part));
-  if(!scope||ancestors.some(scope=>scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.unresolvedAttributeMacroScope!==false))throw new TypeError('Original method nominal owner has unresolved source type/attribute scope');
+  if(!scope||ancestors.some(scope=>scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.unresolvedAttributeMacroScope!==false))throw new OriginalMethodOwnerUnproved('Original method nominal owner has unresolved source type/attribute scope');
   let route=[...method.typePath],binding;
   if(route[0]==='self')route=['crate',...module.path,...route.slice(1)];
   else if(route[0]==='super'){const parent=[...module.path];let at=0;while(route[at]==='super'){if(!parent.length)throw new TypeError('Original method owner escapes crate modules');parent.pop();at++;}route=['crate',...parent,...route.slice(at)];}
-  else if(route[0]!=='crate'){binding=scope.bindings.find(binding=>binding.namespace==='type'&&binding.name===route[0]);if(!binding||binding.status!=='resolved')throw new TypeError('Original method owner has no resolved actual type binding');route=[...binding.target,...route.slice(1)];}
-  if(route[0]!=='crate')throw new TypeError('Original inherent method owner is not a source crate nominal type');
+  else if(route[0]!=='crate'){binding=scope.bindings.find(binding=>binding.namespace==='type'&&binding.name===route[0]);if(!binding||binding.status!=='resolved')throw new OriginalMethodOwnerUnproved('Original method owner has no resolved actual type binding');route=[...binding.target,...route.slice(1)];}
+  if(route[0]!=='crate')throw new OriginalMethodOwnerUnproved('Original inherent method owner is not a source crate nominal type');
   const owner=facts.evidence.scopes.find(scope=>JSON.stringify(scope.path)===JSON.stringify(route.slice(1,-1))),nominal=owner?.bindings.find(binding=>binding.namespace==='type'&&binding.name===route.at(-1));
-  if(!nominal||nominal.status!=='resolved'||!['struct','enum'].includes(nominal.kind)||nominal.via!=='declaration'||JSON.stringify(nominal.target)!==JSON.stringify(route))throw new TypeError('Original method owner needs its actual declared nominal type');
+  if(!nominal||nominal.status!=='resolved'||!['struct','enum'].includes(nominal.kind)||nominal.via!=='declaration'||JSON.stringify(nominal.target)!==JSON.stringify(route))throw new OriginalMethodOwnerUnproved('Original method owner needs its actual declared nominal type');
   const consumer=module.path;
   if(nominal.visibility?.kind!=='public'&&nominal.visibility?.path&&!nominal.visibility.path.every((part,index)=>consumer[index]===part))throw new TypeError('Original method nominal owner is inaccessible from its source module');
-  return freezeMacroTree({schema:'original-method-namespace-owner-v1',file:module.file,modulePath:module.path,sourceSha256:hash(module.source),sourceViewDigest:module.sourceView.digest,compilationProfile:facts.compilationProfile,owner:route,originalSpan:method.span,originalImplementationSpan:original.implementationSpan,scopeSha256:hash(JSON.stringify(scope)),namespaceAuthority:false,copyAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
+  return freezeMacroTree({schema:'original-method-namespace-owner-v1',file:module.file,modulePath:module.path,sourceSha256:hash(module.source),sourceViewDigest:module.sourceView.digest,compilationProfile:facts.compilationProfile,owner:route,originalSpan:method.span,originalImplementationSpan:original.implementationSpan,scopeSha256:hash(JSON.stringify(scope)),scopeMetadataSha256:metadataDigest(scope),namespaceAuthority:false,copyAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
 }
 
 // Read-only original facts. A caller cannot register a scope or turn copied
@@ -147,7 +148,8 @@ export function originalMethodParserNamespace(context,method) {
   const facts=contexts.get(context),original=originalMethodMember(method);
   const scope=facts.evidence.scopes.find(scope=>scope.file===original.sourcePath&&JSON.stringify(scope.path)===JSON.stringify(original.modulePath));
   if(!scope)throw new TypeError('Original method parser has no actual module scope');
-  return Object.freeze({scope,scopes:facts.evidence.scopes,modulePath:original.modulePath,compilationProfile:facts.compilationProfile});
+  const shadowedEffectRoots=Object.freeze([...new Set(facts.modules.flatMap(module=>[...module.path.filter(name=>['std','tokio','serde_json'].includes(name)),...originalSourceModuleItems(module).filter(item=>item.term==='mod'&&['std','tokio','serde_json'].includes(item.name)).map(item=>item.name)]))]);
+  return Object.freeze({scope,scopes:facts.evidence.scopes,modulePath:original.modulePath,compilationProfile:facts.compilationProfile,shadowedEffectRoots});
 }
 
 export function configureMatchesMethodParser(parser,context,method) {

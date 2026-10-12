@@ -51,6 +51,7 @@ import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
 import {standaloneMatchesMacroContext,configureMatchesMacroParser,configureMatchesParserFromSourceScope,originalMatchesImport} from '../matches-macro-context.mjs';
 import {originalMethodSnapshot} from '../original-parser-identity.mjs';
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
+import {validateOriginalMethodAssociations} from '../source-method-admission.mjs';
 
 export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -573,6 +574,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     return super.expr(node,env,path,expected,allowLiteral);
   }
   program(surface) {
+    validateOriginalMethodAssociations(surface);
     this.floatSignObligations=false;
     const program=super.program(surface);
     const sourceContext=checkedSourceContext(program);

@@ -122,7 +122,7 @@ function originalContext(source) {
 function relocatedSyntax(value,offset) {
   if(Array.isArray(value))return value.map(item=>relocatedSyntax(item,offset));
   if(!value||typeof value!=='object')return value;
-  return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,['copyCertificate','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof'].includes(key)?item:key==='span'&&item?{start:item.start+offset,end:item.end+offset}:relocatedSyntax(item,offset)]));
+  return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,['copyCertificate','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof'].includes(key)?item:key==='span'&&item?{start:item.start+offset,end:item.end+offset}:relocatedSyntax(item,offset)]));
 }
 function verifyRelocatedSyntax(entry,semantic,offset) {
   if(!Number.isSafeInteger(offset)||offset<0)fail('source relocation requires an exact nonnegative offset');
@@ -153,6 +153,26 @@ export function linkProjectDeclaration(parser,entry,semantic,{source,sourcePath,
   const result=attach(temporary,entry,semantic,{source,sourcePath,itemSpan,offset:0,path,scope});
   if(result){const evidence=linked.get(semantic);linked.set(semantic,freeze({...evidence,sourceOffset:globalOffset}));}
   return result;
+}
+// The actual Host admission independently requires the private original-method
+// parse/semantic brand. This low linker records exact source/relocation data;
+// caller-provided public hashes alone cannot satisfy that high admission.
+export function linkProjectMethodDeclaration(parser,entry,normalized,semantic,{source,sourcePath,memberSpan,bodySpan,globalOffset=0,scope=null}) {
+  if(typeof source!=='string')fail('method requires complete original source text');
+  copyMetadata(entry);copyMetadata(normalized);copyMetadata(semantic);
+  ({sourcePath,memberSpan,bodySpan,globalOffset,scope}=copyMetadata({sourcePath,memberSpan,bodySpan,globalOffset,scope}));
+  const record=parsed.get(parser)?.find(record=>record.entry===entry);
+  if(!record||record.syntaxSha256!==metadataDigest(parsedSyntax(entry)))fail('method requires unchanged captured parser body/signature');
+  const marker=ownData(semantic,'sourceMethodProof'),transform=ownData(ownData(marker,'parse'),'transform');
+  if(marker.schema!=='original-method-semantic-source-v1'||transform.sourcePath!==sourcePath||transform.sourceSha256!==hash(source)||metadataDigest(transform.originalMemberSpan)!==metadataDigest(memberSpan)||metadataDigest(transform.originalBodySpan)!==metadataDigest(bodySpan))fail('method source differs from its exact original transform');
+  if(!Number.isSafeInteger(memberSpan.start)||!Number.isSafeInteger(memberSpan.end)||memberSpan.start<0||memberSpan.end>source.length||memberSpan.end<=memberSpan.start||bodySpan.start<memberSpan.start||bodySpan.end>memberSpan.end||metadataDigest(record.bodySpan)!==metadataDigest(bodySpan))fail('method body escapes its captured original member');
+  const context=originalContext(source),implementation=context.items.find(item=>item.term==='impl'&&item.start===transform.originalImplementationSpan.start&&item.end===transform.originalImplementationSpan.end&&item.start<=memberSpan.start&&memberSpan.end<=item.end);
+  if(!implementation)fail('method has no exact enclosing original implementation');
+  if(metadataDigest(scope?.compilationProfile??null)!==metadataDigest(transform.owner.compilationProfile))fail('method compilation profile differs from its original source');
+  if(metadataDigest(scope?.bindingEvidence??null)!==transform.owner.scopeMetadataSha256)fail('method binding scope differs from its independently captured original owner');
+  verifyRelocatedSyntax(normalized,semantic,globalOffset);
+  const evidence={schemaVersion:1,sourceAssociationKind:'original-inherent-token-transform',sourcePath,sourceBytes:context.sourceBytes,sourceSha256:context.sourceSha256,declarationSpan:copyMetadata(memberSpan),declarationSha256:hash(source.slice(memberSpan.start,memberSpan.end)),bodySpan:copyMetadata(bodySpan),bodySha256:hash(source.slice(bodySpan.start,bodySpan.end)),checkedSpan:copyMetadata(semantic.span),sourceOffset:globalOffset,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic),originalMethodTransformSha256:metadataDigest(transform)};
+  linked.set(semantic,freeze(evidence));return true;
 }
 export function linkParsedFile(parser,surface,source,{sourcePath='<standalone>',scope=null}={}) {
   const visit=(items,path=[])=>{for(const entry of items){if(entry.k==='module')visit(entry.items,[...path,entry.name]);else if(!entry.generated)attach(parser,entry,entry,{source,sourcePath,path,scope});}};

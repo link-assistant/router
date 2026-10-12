@@ -84,7 +84,6 @@ test('source macro owner unknown cfg attributes guards and const methods stay ex
     'pub const fn bad(v:u8)->bool{matches!(v,1)}',
     'pub fn bad(v:Option<u8>)->bool{matches!(v,Some(n) if {return true;})}',
     'pub fn bad(v:&Option<u8>)->bool{matches!(v,Some(_))}',
-    '#[derive(Clone,Copy)]pub enum State{A,B}impl State{pub fn bad(self)->bool{matches!(self,Self::A)}}',
   ]){const result=project(source);assert.equal(result.meta.executable.some(item=>item.name==='bad'||item.name==='State.bad'),false,source);assert.ok(result.meta.refused.length,source);}
 });
 
