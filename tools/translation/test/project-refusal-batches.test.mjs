@@ -90,4 +90,17 @@ test('a bulk set of independent missing source types cannot leak unchecked decla
   assert.ok(events.filter(event=>event.stage==='semantic-refusal').every(event=>event.phase==='declaration-types'));
   assert.deepEqual(result.meta.executable.map(entry=>entry.name),['good']);
   await verifyCohortTargets(result,api=>{assert.deepEqual(Object.keys(api),['good']);assert.equal(api.good(),11n);});
+  // A real original type alias with an unresolved target cannot issue nominal
+  // method ownership. Its privately extracted members still have exact ranges
+  // for refusing signatures/layouts, without admitting any method or macro.
+  const files={'src/lib.rs':'pub mod broken;pub fn call_removed()->u8{broken::Args::bad0(0)}pub fn good()->u8{13}',
+    'src/broken.rs':'pub type Args=MissingOwner;impl Args{'+Array.from({length:32},(_,index)=>`pub fn bad${index}(&self)->Option<Missing${index}>{None}`).join(' ')+'}'};
+  const partialEvents=[],partial=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],progress:event=>partialEvents.push(event)});
+  const signatureFailures=partialEvents.filter(event=>event.stage==='semantic-refusal'&&event.declaration.startsWith('broken.ml_impl_'));
+  const layoutFailures=partialEvents.filter(event=>event.stage==='semantic-refusal'&&event.declaration.startsWith('RouterOption_'));
+  assert.equal(signatureFailures.length,32);assert.ok(signatureFailures.every(event=>event.phase==='declaration-types'&&event.attempt===1));
+  assert.equal(layoutFailures.length,32);assert.ok(layoutFailures.every(event=>event.phase==='declaration-types'&&event.attempt===0));
+  assert.equal(partial.meta.refused.length,65);assert.ok(partial.meta.refused.some(entry=>entry.name==='call_removed'));
+  assert.deepEqual(partial.checkedMethodDeclarations,[]);assert.deepEqual(partial.meta.executable.map(entry=>entry.name),['good']);
+  await verifyCohortTargets(partial,api=>{assert.deepEqual(Object.keys(api),['good']);assert.equal(api.good(),13n);});
 });

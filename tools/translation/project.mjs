@@ -11,7 +11,7 @@ import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
 import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
 import {declarationRefusals} from './extensions/declaration-refusals.mjs';
-import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens } from './impl-resolver.mjs';
+import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
 import {projectCopyEvidence} from './project-copy.mjs';
 import {admittedHostData} from './extensions/source-namespaces.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
@@ -47,13 +47,26 @@ function captureDeclarationRange(surface,module,range){
   const state=Object.freeze({parent:surface,parentPath:Object.freeze([...module.path]),path:Object.freeze([...module.path]),range:Object.freeze({...actual}),digest:metadataDigest(surface)});
   declarationRanges.set(surface,state);return state;
 }
+function captureStructuralMethodRange(surface,method,lowered,module,range){
+  const original=originalMethodMember(method),lowering=originalMethodLowering(lowered);
+  if(lowering.method!==method||lowering.original!==original||original.source!==module.source||original.sourcePath!==module.file||original.sourceView!==module.sourceView||original.modulePath.length!==module.path.length||original.modulePath.some((part,index)=>part!==module.path[index]))throw new TypeError('Structural method refusal differs from its actual original member/lowering');
+  const actual={start:method.span.start+module.offset,end:method.span.end+module.offset};
+  if(actual.start!==range.start||actual.end!==range.end||surface.k!=='fn'||surface.span.start<actual.start||surface.span.end>actual.end)throw new TypeError('Structural method refusal exceeds its exact original source range');
+  const digest=metadataDigest(surface),structural=Object.freeze({method,lowered,original,offset:module.offset,parentDigest:digest});
+  declarationRanges.set(surface,Object.freeze({parent:surface,parentPath:Object.freeze([...module.path]),path:Object.freeze([...module.path]),range:Object.freeze(actual),digest,structural}));
+}
 // Read-only refusal attribution from the actual project parser. Generated
 // flags, copied source hashes and caller objects cannot issue this identity.
 export function originalProjectDeclarationRefusalRange(surface,path){
   const state=declarationRanges.get(surface);if(!state)return null;
   const actualPath=copyMetadata(path);
   if(!Array.isArray(actualPath)||actualPath.length!==state.path.length||actualPath.some((part,index)=>part!==state.path[index]))return null;
-  const actual=originalParentRange(state.parent,state.parentPath);
+  let actual;
+  if(state.structural){
+    const origin=state.structural,lowering=originalMethodLowering(origin.lowered);
+    if(lowering.method!==origin.method||lowering.original!==origin.original||metadataDigest(state.parent)!==origin.parentDigest)throw new TypeError('Structural method refusal original lowering or parsed parent changed');
+    actual={start:origin.method.span.start+origin.offset,end:origin.method.span.end+origin.offset};
+  }else actual=originalParentRange(state.parent,state.parentPath);
   if(!actual||actual.start!==state.range.start||actual.end!==state.range.end||metadataDigest(surface)!==state.digest)throw new TypeError('Original project refusal source/layout changed after parser capture');
   return state.range;
 }
@@ -339,7 +352,7 @@ export function translateProject(options) {
           try{transform=createOriginalMethodTokenTransform(matchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
           let originalParsed=null;
           if(transform){try{originalParsed=parseOriginalMethodTransform(transform);}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
-          const parser = originalParsed?originalMethodParsedFacts(originalParsed).parser:new MethodRustParser(lowered.tokens);
+          const parser = originalParsed?originalMethodParsedFacts(originalParsed).parser:new MethodRustParser(copyMetadata(lowered.tokens));
           if(!originalParsed){
           parser.modulePath = module.path;
           configureSourceScope(parser,module);
@@ -368,6 +381,7 @@ export function translateProject(options) {
           if(!originalParsed&&certificate)semantic.impl.copyCertificate=certificate;
           if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
           if(originalParsed)captureDeclarationRange(semantic,module,globalSpan);
+          else captureStructuralMethodRange(semantic,method,lowered,module,globalSpan);
           declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic});
           captureGenericDeclarations(declarations,parser,module,globalSpan,module.offset,semantic);
         } catch(error) {if(!(error instanceof TranslationError))throw error;refused.push({file:module.file,name:display,term:'method',...diagnostic(error)});}
