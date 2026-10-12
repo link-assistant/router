@@ -63,6 +63,8 @@ test('actual custom bytes methods use their source owner before standard receive
 
 test('byte source profile refuses unproved ownership cursor reuse references reverse and const scope',()=>{
   for(const source of [
+    'pub fn bad(value:&str)->usize{value.bytes(1u8).count()}',
+    'pub fn bad(value:&str)->usize{value.bytes::<u8>().count()}',
     'pub fn bad(value:String)->usize{value.bytes().count()}',
     'pub fn bad(value:&String)->usize{value.bytes().count()}',
     'pub fn bad()->usize{String::from("x").bytes().count()}',
