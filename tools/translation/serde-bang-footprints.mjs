@@ -15,22 +15,22 @@ const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).for
 const proofs=new WeakMap(),cachedInventories=new WeakMap(),cachedAttributeBindings=new WeakMap();
 const identifier=tree=>tree?.kind==='token'&&tree.type==='ident'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(tree.text);
 const syntaxText=nodes=>nodes.map(node=>node.tag==='slot'?'#'+node.name:node.tag==='repeat'?'#('+syntaxText(node.nodes)+')'+(node.separator?.text??'')+node.quantifier:node.tag==='group'?node.delimiter+syntaxText(node.nodes)+({'(':')','[':']','{':'}'}[node.delimiter]):node.text).join(' ');
-function originalFunction(dependencies,path,name){
-  const origin=deriveDependencySource(dependencies,'serde_derive',path),items=sourceItems(origin.source).filter(item=>item.term==='fn'&&item.name===name);
+export function originalFunction(dependencies,path,name,predicate=()=>true){
+  const origin=deriveDependencySource(dependencies,'serde_derive',path),items=sourceItems(origin.source).filter(item=>item.term==='fn'&&item.name===name&&predicate(origin.source.slice(item.start,item.end)));
   if(items.length!==1)throw new TypeError('Selected generator function is not unique: '+path+'::'+name);
   const item=items[0];return {source:path,sourceSha256:origin.sha256,span:{start:item.start,end:item.end},sha256:hash(origin.source.slice(item.start,item.end)),text:origin.source.slice(item.start,item.end)};
 }
-function selectedTemplate(inventory,definition,predicate){
+export function selectedTemplate(inventory,definition,predicate){
   const member=inventory.members.find(member=>member.source===definition.source);
   const matches=member?.quotes.filter(template=>template.span.start>=definition.span.start&&template.span.end<=definition.span.end&&predicate(syntaxText(template.syntax)))??[];
   if(matches.length!==1)throw new TypeError('Selected source quote is not unique: '+definition.source);
   return matches[0];
 }
-function boundedInput(certificate,source){
-  if(certificate.owners.filter(owner=>owner.target.join('::')==='serde::Serialize').length!==1)throw new TypeError('This selected route requires one actual locked Serialize owner');
+export function boundedInput(certificate,source,owner='Serialize',allowedHelpers=['rename','rename_all','alias']){
+  if(certificate.owners.filter(value=>value.target.join('::')==='serde::'+owner).length!==1)throw new TypeError('This selected route requires one actual locked '+owner+' owner');
   for(const attribute of certificate.attributes){
     if(!['derive','serde','doc','allow','warn','deny','forbid','must_use','non_exhaustive'].includes(attribute.name)&&!(attribute.name==='default'&&certificate.builtinDefault))throw new TypeError('Selected route retains attribute behavior: '+attribute.name);
-    if(attribute.helpers?.some(helper=>!['rename','rename_all','alias'].includes(helper.key)))throw new TypeError('Selected route excludes helper branches with fields, custom calls or token-stream payloads');
+    if(attribute.helpers?.some(helper=>!allowedHelpers.includes(helper.key)))throw new TypeError('Selected route excludes helper branches with fields, custom calls or token-stream payloads');
   }
   const trees=originalMacroTrees(source),keyword=trees.findIndex(tree=>tree.text===certificate.kind),name=trees[keyword+1];
   if(keyword<0||!identifier(name)||name.text!==certificate.name)throw new TypeError('Selected route requires its actual original nongeneric data name');
@@ -63,7 +63,7 @@ function boundedInput(certificate,source){
   if(!variants.length||variants.length>128)throw new TypeError('Selected unit enum variant count exceeds its bounded route');
   return {style:'unit-enum',name:{name:name.text,span:name.span},variants};
 }
-function attributeOwners(original,certificate,names){
+export function attributeOwners(original,certificate,names){
   let bindings=cachedAttributeBindings.get(original.context);
   if(!bindings){bindings=resolveModuleBindings({...original,deriveContext:original.context});cachedAttributeBindings.set(original.context,bindings);}
   const selected=bindings.scopes.filter(scope=>scope.file===certificate.source&&scope.path.length===original.module.path.length&&scope.path.every((part,index)=>part===original.module.path[index]));
@@ -73,7 +73,7 @@ function attributeOwners(original,certificate,names){
   for(const name of names)if(ancestors.some(scope=>scope.bindings.some(binding=>binding.name===name&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Generated builtin attribute is shadowed: '+name);
   return {names:[...names].sort(),scopes:ancestors.map(scope=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,unresolvedAttributeMacroScope:scope.unresolvedAttributeMacroScope})),bindingsDigest:hash(JSON.stringify(bindings)),compilationProfile:original.compilationProfile};
 }
-function emptySerdeMacro(dependencies){
+export function emptySerdeMacro(dependencies){
   const origin=deriveDependencySource(dependencies,'serde','src/lib.rs'),items=sourceItems(origin.source).filter(item=>item.term==='macro_rules!'&&item.name==='__require_serde_not_serde_core');
   if(items.length!==1)throw new TypeError('Pinned Serde fixed empty macro is absent or ambiguous');
   const item=items[0],text=origin.source.slice(item.start,item.end);

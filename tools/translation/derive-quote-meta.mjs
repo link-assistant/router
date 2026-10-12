@@ -4,6 +4,7 @@
 import {createHash} from 'node:crypto';
 import {DERIVE_SOURCE_PROFILE,deriveDependencySource,isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {rustTokens} from './rust-structure.mjs';
+import {originalMacroTrees} from './macro-token-trees.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const inventories=new WeakMap(),templates=new WeakMap();
@@ -107,9 +108,42 @@ export function createQuoteFragmentCompiler(inventory){
     const result=freeze({schema:'checked-generator-fragment-v1',syntax,provenance,generatedImplBehavior:false});fragments.set(result,{inventory});return result;
   };
   const token=(text,tokenType,provenance)=>{
-    if(tokenType==='ident'&&!/^[_\p{L}][_\p{L}\p{N}]*$/u.test(text)||tokenType==='number'&&!/^\d+$/u.test(text)||!['ident','string','number'].includes(tokenType))throw new TypeError('Generator leaf does not have a bounded token category');
+    if(tokenType==='ident'&&!/^[_\p{L}][_\p{L}\p{N}]*$/u.test(text)||tokenType==='number'&&!/^\d+$/u.test(text)||tokenType==='lifetime'&&!/^'[_\p{L}][_\p{L}\p{N}]*$/u.test(text)||!['ident','string','number','lifetime','byte-string'].includes(tokenType))throw new TypeError('Generator leaf does not have a bounded token category');
     if(tokenType==='string'){let value;try{value=JSON.parse(text);}catch{throw new TypeError('Generator string leaf must remain a literal token');}if(typeof value!=='string'||value.length>4096)throw new TypeError('Generator string leaf exceeds its literal profile');}
+    if(tokenType==='byte-string'&&!/^b"(?:[\x20-\x21\x23-\x5b\x5d-\x7e]|\\(?:[\\"nrt0]|x[\da-fA-F]{2}))*"$/u.test(text))throw new TypeError('Generator byte string must remain a bounded Rust literal token');
+    if(text.length>8192)throw new TypeError('Generator leaf exceeds its token byte profile');
     return seal([{tag:'token',text,tokenType}],provenance);
+  };
+  const sourceType=(source,provenance)=>{
+    if(typeof source!=='string'||Buffer.byteLength(source)>4096)throw new TypeError('Original syn Type source exceeds its bounded grammar');
+    const roots=originalMacroTrees(source,{maxBytes:4096,maxTokens:512,maxDepth:32});
+    const identifier=node=>node?.kind==='token'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(node.text)&&!['impl','dyn','fn','const','macro','where','extern','Self','mut'].includes(node.text);
+    const lifetime=node=>/^'[_\p{L}][_\p{L}\p{N}]*$/u.test(node?.text??'');
+    function type(nodes,start=0,depth=0){
+      if(depth>32)throw new TypeError('Original syn Type recursion exceeds its profile');let at=start;
+      if(nodes[at]?.text==='&'){at++;if(lifetime(nodes[at]))at++;if(nodes[at]?.text==='mut')at++;return type(nodes,at,depth+1);}
+      const node=nodes[at];
+      if(node?.kind==='group'){
+        if(!['(','['].includes(node.delimiter))throw new TypeError('Original syn Type excludes executable groups');
+        let inner=0;const children=node.children;
+        if(node.delimiter==='['){inner=type(children,0,depth+1);if(children[inner]?.text===';'){inner++;if(!/^\d+$/u.test(children[inner]?.text??''))throw new TypeError('Array Type requires a literal length');inner++;}}
+        else while(inner<children.length){inner=type(children,inner,depth+1);if(inner<children.length&&children[inner++]?.text!==',')throw new TypeError('Tuple Type separator is unresolved');}
+        if(inner!==children.length)throw new TypeError('Original syn Type has trailing group syntax');return at+1;
+      }
+      if(nodes[at]?.text==='::')at++;
+      if(!identifier(nodes[at]))throw new TypeError('Original syn Type requires a named, reference or product leaf');at++;
+      while(true){
+        if(nodes[at]?.text==='<'){
+          at++;if(nodes[at]?.text==='>')throw new TypeError('Original Type has empty generic arguments');
+          while(true){at=lifetime(nodes[at])?at+1:type(nodes,at,depth+1);if(nodes[at]?.text===','){at++;if(nodes[at]?.text==='>')break;}else break;}
+          if(nodes[at++]?.text!=='>')throw new TypeError('Original syn Type generic arguments remain unresolved');
+        }
+        if(nodes[at]?.text!=='::')break;at++;if(!identifier(nodes[at]))throw new TypeError('Original syn Type path segment is unresolved');at++;
+      }return at;
+    }
+    if(type(roots)!==roots.length)throw new TypeError('Original syn Type has unproved trailing syntax');
+    const lift=nodes=>nodes.map(node=>node.kind==='group'?{tag:'group',delimiter:node.delimiter,nodes:lift(node.children),span:node.span}:{tag:'token',text:node.text,tokenType:lifetime(node)?'lifetime':node.type,span:node.span});
+    return seal(lift(roots),{...provenance,category:'original syn::Type',sourceSha256:hash(source)});
   };
   function instantiate(template,bindings,provenance){
     if(!templates.has(template)||!state.all.includes(template)||!(bindings instanceof Map))throw new TypeError('Generator route requires a genuine template and checked bindings');
@@ -143,7 +177,16 @@ export function createQuoteFragmentCompiler(inventory){
   // This compiler is a trusted source-profile implementation, not a binder
   // certificate API. The final route still must verify every original binding,
   // output macro owner and generated attribute before returning authority.
-  return Object.freeze({token,empty:provenance=>seal([],provenance),instantiate,sequence:(values,provenance)=>{
+  return Object.freeze({token,sourceType,byteString:(value,provenance)=>{
+    if(typeof value!=='string'||Buffer.byteLength(value)>4096||/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(value))throw new TypeError('Literal::byte_string requires bounded original Unicode scalar bytes');
+    const text='b"'+[...Buffer.from(value,'utf8')].map(byte=>'\\x'+byte.toString(16).padStart(2,'0')).join('')+'"';
+    // Bytes are a single literal token, including quotes/backslashes/non-ASCII
+    // source names; they can never become attributes or executable syntax.
+    return seal([{tag:'token',text,tokenType:'byte-string'}],provenance);
+  },empty:provenance=>seal([],provenance),instantiate,genericLifetimes:(values,provenance)=>{
+    if(!Array.isArray(values)||!values.length||values.length>16||values.some(value=>!fragments.has(value)||fragments.get(value).inventory!==inventory||value.syntax.length!==1||value.syntax[0].tokenType!=='lifetime'))throw new TypeError('Generic lifetime parameters require checked Lifetime leaves');
+    const syntax=[{tag:'token',text:'<',tokenType:'punct'}];values.forEach((value,index)=>{if(index)syntax.push({tag:'token',text:',',tokenType:'punct'});syntax.push(...value.syntax);});syntax.push({tag:'token',text:'>',tokenType:'punct'});return seal(syntax,provenance);
+  },sequence:(values,provenance)=>{
     if(!Array.isArray(values)||values.length>128||values.some(value=>!fragments.has(value)||fragments.get(value).inventory!==inventory))throw new TypeError('Generator repetition requires bounded ordered checked values');
     const result=freeze({schema:'checked-generator-sequence-v1',length:values.length,provenance});sequences.set(result,{inventory,values:[...values]});return result;
   },join:(values,provenance)=>{
