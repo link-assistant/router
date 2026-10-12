@@ -105,7 +105,7 @@ export function bindArithmeticSourceData(program,entryModulePath,modules){
   const keys=modules.map(module=>module.modulePath.join('::'));if(new Set(keys).size!==keys.length)throw new TypeError('Arithmetic source module owner is ambiguous');
   const entry=modules.find(module=>module.modulePath.join('::')===entryModulePath.join('::'));if(!entry||entry.sourceSha256!==program.sourceSha256)throw new TypeError('Arithmetic source/data entry identity differs');
   const issued={...program,sourceDataContext:{entryModulePath,modules,projectionOnly:true,namespaceComplete:false,typeOwnerVerified:false,attributeOwnerVerified:false}},encoded=JSON.stringify(issued),bound=freezeMacroTree({...JSON.parse(encoded),checkedMetaSha256:hash(encoded)});
-  seals.add(bound);dataContexts.set(bound,{entryModulePath:[...entryModulePath],modules});return bound;
+  seals.add(bound);dataContexts.set(bound,{entryModulePath:[...entryModulePath],modules:Object.freeze([...modules])});return bound;
 }
 
 export function bindArithmeticAssociatedSource(program,associated){
@@ -128,9 +128,9 @@ function actual(value){value=deref(value);if(!['uint','literal','bool'].includes
 function promoted(value,other){value=deref(value);return value.kind==='literal'&&other?.kind==='uint'?uint(value.value,other.bits):value;}
 export function projectArithmeticSource(program,path,input,{limbBits=32,stepBudget=100000}={}){
   if(!isArithmeticSourceFragments(program)||![32,64].includes(limbBits)||!Number.isSafeInteger(stepBudget)||stepBudget<=0||stepBudget>1000000)throw new TypeError('Arithmetic projection requires private source program and bounded32/64 model');
-  const dataContext=dataContexts.get(program),calleeSources=calleeContexts.get(program)??[],allFunctions=[...program.functions.map(fn=>({...fn,sourceModulePath:dataContext?[...dataContext.entryModulePath,...fn.path]:fn.path})),...calleeSources.flatMap(row=>row.program.functions.map(fn=>({...fn,sourceModulePath:[...row.modulePath,...fn.path]})))],definitions=new Map(allFunctions.map(fn=>[fn.name,fn])),mutations=[],types={Limb:limbBits,Wide:limbBits*2,u32:32,u64:64,u128:128,usize:32,};let steps=0;const calls=new Map(),dataCache=new Map(),dataActive=new Set(),associated=associatedContexts.get(program),frames=[];
+  const dataContext=dataContexts.get(program),calleeSources=calleeContexts.get(program)??[],allFunctions=[...program.functions.map(fn=>({...fn,sourceModulePath:dataContext?[...dataContext.entryModulePath,...fn.path]:fn.path})),...calleeSources.flatMap(row=>row.program.functions.map(fn=>({...fn,sourceModulePath:[...row.modulePath,...fn.path]})))],definitions=new Map(allFunctions.map(fn=>[fn.name,fn])),mutations=[],types={Limb:limbBits,Wide:limbBits*2,u32:32,u64:64,u128:128,usize:32,};let steps=0;const calls=new Map(),dataCache=new Map(),dataActive=new Set(),associated=associatedContexts.get(program),frames=[],aliasCache=new Map(),visibleModuleCache=new Map();
   const step=()=>{if(++steps>stepBudget)throw new RangeError('Arithmetic projection step bound');};
-  function sourceBits(name,fn=frames.at(-1)){if(dataContext&&['Limb','Wide'].includes(name)){const rows=declarations([name],dataContext.entryModulePath,new Set(),'aliases');if(rows.length!==1||rows[0].diagnostic||rows[0].type?.kind!=='uint'||!['u32','u64','u128'].includes(rows[0].type.source)||types[rows[0].type.source]!==types[name])throw new TypeError('Actual source word alias is absent, ambiguous or differs from this projection');return types[rows[0].type.source];}return types[name]??fn?.projectionGenericBits?.[name]??(fn?.generics.some(generic=>generic.name===name)?limbBits:undefined);}
+  function sourceBits(name,fn=frames.at(-1)){if(dataContext&&['Limb','Wide'].includes(name)){if(aliasCache.has(name))return aliasCache.get(name);const rows=declarations([name],dataContext.entryModulePath,new Set(),'aliases');if(rows.length!==1||rows[0].diagnostic||rows[0].type?.kind!=='uint'||!['u32','u64','u128'].includes(rows[0].type.source)||types[rows[0].type.source]!==types[name])throw new TypeError('Actual source word alias is absent, ambiguous or differs from this projection');const bits=types[rows[0].type.source];aliasCache.set(name,bits);return bits;}return types[name]??fn?.projectionGenericBits?.[name]??(fn?.generics.some(generic=>generic.name===name)?limbBits:undefined);}
   const cast=(value,name)=>{const bits=sourceBits(name);if(!bits)throw new TypeError('Arithmetic alias is unproved');return uint(actual(value)&((1n<<BigInt(bits))-1n),bits);};
   function readonlyCell(value){return {kind:'ref',get:()=>value,set:()=>{throw new TypeError('Arithmetic source constant is readonly');}};}
   function cell(value){let current=value;return {kind:'ref',get:()=>current,set:value=>{current=value;}};}
@@ -146,9 +146,10 @@ export function projectArithmeticSource(program,path,input,{limbBits=32,stepBudg
     }
     return [...new Set(result)];
   }
-  function sourceVisibleModules(scope,seen=new Set()){
-    if(!dataContext)return new Set([scope.join('::')]);const key=scope.join('::');if(seen.has(key))return new Set();if(seen.size>=64)throw new RangeError('Arithmetic imported implementation scope budget');seen.add(key);const result=new Set([key]);
-    for(const imported of dataContext.modules.flatMap(module=>module.imports).filter(row=>row.scope.join('::')===key&&row.syntaxSupported&&row.glob))for(const target of sourceVisibleModules(relative(imported.path.slice(0,-1),scope),seen))result.add(target);return result;
+  function sourceVisibleModules(scope){
+    const root=scope.join('::');if(visibleModuleCache.has(root))return visibleModuleCache.get(root);const result=new Set(),pending=[scope];
+    while(pending.length){const current=pending.pop(),key=current.join('::');if(result.has(key))continue;if(result.size>=64)throw new RangeError('Arithmetic imported implementation scope budget');result.add(key);if(dataContext)for(const imported of dataContext.modules.flatMap(module=>module.imports).filter(row=>row.scope.join('::')===key&&row.syntaxSupported&&row.glob))pending.push(relative(imported.path.slice(0,-1),current));}
+    visibleModuleCache.set(root,result);return result;
   }
 
   function dataValue(path,scope){const rows=declarations(path,scope);if(rows.length!==1)throw new TypeError('Source constant owner is absent or ambiguous');const row=rows[0],key=[...row.scope,row.name].join('::');if(row.diagnostic||!row.type||!row.value)throw new TypeError('Source constant has an unresolved literal/type obligation');if(dataCache.has(key))return dataCache.get(key);if(dataActive.has(key)||dataActive.size>=32)throw new RangeError('Source constant reference cycle/budget');dataActive.add(key);const value=dataChecked(dataExpression(row.value,row.type,row.scope),row.type);dataActive.delete(key);dataCache.set(key,value);return value;}

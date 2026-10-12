@@ -19,7 +19,7 @@ test('ambiguous constants, mismatched original bytes/types and custom source att
 });
 test('original source imports resolve graph constants without clearing external namespace or macro uncertainty',()=>{
   const source='use super::data::*; fn read()->u32{A}',program=compileArithmeticSourceFragments(source,['read']),data=compileArithmeticSourceData(source,entry),external=compileArithmeticSourceData('const A:u32=9;',['pkg','data']);
-  const bound=bindArithmeticSourceData(program,entry,[data,external]);assert.equal(projectArithmeticSource(bound,'read',[]).value,9n);assert.equal(bound.sourceDataContext.namespaceComplete,false);assert.equal(bound.sourceOwnerVerified,false);assert.equal(bound.parseAdmission,false);
+  const modules=[data,external],bound=bindArithmeticSourceData(program,entry,modules);modules.pop();assert.equal(projectArithmeticSource(bound,'read',[]).value,9n);assert.equal(bound.sourceDataContext.namespaceComplete,false);assert.equal(bound.sourceOwnerVerified,false);assert.equal(bound.parseAdmission,false);
   assert.throws(()=>bindArithmeticSourceData(program,entry,[data,data]),/ambiguous/);
 });
 
