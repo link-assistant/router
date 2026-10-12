@@ -7,6 +7,9 @@ mandatory. Generated layouts and internal/unattributed exceptions retain ordinar
 first-failure behavior. Pinned vendor bytes remain unchanged; seven exact anchors
 expose phase and declaration visitor hooks in the local class adapter.
 
-Eight new behavioral cases are authored and UNRUN while the publisher owns the
-compiler. No corpus producer, canonical/profile regeneration, runtime parity gain,
-performance improvement or Rust verification is claimed by this source draft.
+The 18-file focused batch, including eight new behavioral cases, passes all 155
+cases in both Node and Bun with no skips at clean source head 39277c5611. Complete
+logs, input manifests and helper bytes are archived under the current declaration
+refusal case study. No corpus producer, canonical/profile regeneration, runtime
+parity gain, performance improvement or Rust verification is claimed by this
+focused batch.
