@@ -62,6 +62,13 @@ export class ControlRustParser extends StringRustParser {
     throw unsupported('for loop', 'iterator borrowing and range lowering require a typed iterator contract', this.cursor.peek());
   }
 
+  whileStatement(path) {
+    const c=this.cursor,start=c.peek(),kind=c.next().value;
+    const cond=kind==='loop'?{k:'bool',value:true,span:range(start,start)}:this.expr(path,{noStruct:true});
+    const loopBody=this.block(path,true);
+    return {k:'routerWhile',cond,loopBody,span:range(start,c.peek())};
+  }
+
   block(path, statement = false) {
     const c = this.cursor;
     const open = c.expect('{', 'block');
@@ -82,10 +89,7 @@ export class ControlRustParser extends StringRustParser {
         c.next(); statements.push({ k: kind === 'break' ? 'routerBreak' : 'routerContinue', span: range(start, c.peek()) }); continue;
       }
       if (c.is('while') || c.is('loop')) {
-        const kind = c.next().value;
-        const cond = kind === 'loop' ? { k: 'bool', value: true, span: range(start, start) } : this.expr(path, { noStruct: true });
-        const loopBody = this.block(path, true);
-        statements.push({ k: 'routerWhile', cond, loopBody, span: range(start, c.peek()) });
+        statements.push(this.whileStatement(path));
         continue;
       }
       if (c.is('for')) { statements.push(this.forStatement(path)); continue; }

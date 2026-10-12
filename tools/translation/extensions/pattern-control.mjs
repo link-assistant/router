@@ -10,6 +10,7 @@ import {coerce} from '../checked-coercions.mjs';
 import {TranslationError,typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {isDeepStrictEqual} from 'node:util';
+import {sourceWhileLetCondition,requireSourceWhileLet} from './while-let-source.mjs';
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
@@ -196,6 +197,28 @@ export function withPatternControlParser(Base=ControlRustParser) {
       const then=this.block(path,true);
       const otherwise=c.eat('else')?c.is('if')?this.controlIf(path):this.block(path,true):{k:'unit',span:range(first,c.peek())};
       return {k:'if',cond:{k:'routerPatternCondition',subject,pattern,span:range(first,c.peek())},then,else:otherwise,span:range(first,c.peek())};
+    }
+    whileStatement(path) {
+      const c=this.cursor;
+      if(!c.is('while')||!c.is('let',1))return super.whileStatement(path);
+      const begin=c.index,first=c.next();c.next();
+      const pattern=this.controlPattern(path,first);
+      c.expect('=','while-let condition');
+      let depth=0;
+      for(let offset=0;offset<c.tokens.length-c.index;offset++) {
+        const token=c.peek(offset);
+        if(!['punct','identifier'].includes(token.kind))continue;
+        if(token.value==='{'&&depth===0)break;
+        if(token.value==='&&'&&depth===0)throw unsupported('while-let chain or guard','requires separate checked let-chain scope and short-circuit control',range(first,token));
+        if(['(','['].includes(token.value))depth++;
+        if([')',']'].includes(token.value))depth--;
+      }
+      const subject=this.expr(path,{noStruct:true}),conditionSpan={start:first.start,end:c.peek().start};
+      const sourceCondition=sourceWhileLetCondition(c.tokens.slice(begin,c.index),pattern,subject,conditionSpan);
+      const then=this.block(path,true),span=range(first,c.peek());
+      const unit=()=>({k:'unit',span:{...span}});
+      const loopBody={k:'routerIf',cond:{k:'routerPatternCondition',subject,pattern,sourceWhileLet:sourceCondition,span:conditionSpan},then,else:{k:'routerBreak',body:unit(),span},body:unit(),span};
+      return {k:'routerWhile',cond:{k:'bool',value:true,span:range(first,first)},loopBody,span};
     }
     ifExpr(path) {return this.controlIf(path);}
   };
@@ -448,7 +471,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:this.sharedPatternView(subject.type)},right:condition,type:BOOL};
       const conditional={k:node.k,cond:condition,then,else:otherwise,type:resultType,span:node.span};
       if(statement){conditional.body=this.expr(node.body,env,path,expected,allowLiteral);conditional.type=conditional.body.type;}
-      return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:conditional.type,span:node.span,patternControl:{plan,subjectType:subject.type}};
+      return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:conditional.type,span:node.span,patternControl:{plan,subjectType:subject.type,...(node.cond.sourceWhileLet?{kind:'while-let',sourceCondition:structuredClone(node.cond.sourceWhileLet)}:{})}};
     }
   };
 }
@@ -488,6 +511,7 @@ export function withPatternControlEmitter(Base=ControlEmitter) {
       return {...result,preludes:[...fresh,...result.preludes],text:[...fresh,result.text].join('\n')};
     }
     statements(node,unit=false) {
+      if(node.patternControl?.kind==='while-let')requireSourceWhileLet(node);
       if(node.k==='let'&&node.value.k==='routerControlInitializer') {
         const label=`ml_control_exit_${this.controlLabels=(this.controlLabels??0)+1}`,previous=this.controlValueTarget;
         this.controlValueTarget={name:node.name,label};
