@@ -8,5 +8,8 @@ Ordinary checking and the default direct project checker retain first body error
 the bulk project path enables the bounded collection, with an explicit false
 option for comparison. Pinned vendor bytes remain unchanged.
 
-Eight authored cases are UNRUN. This source-only draft claims no measured speedup,
-corpus gain, complete JavaScript gate, native parity or Rust verification.
+Eight new cases passed within the full 182-case focused Node/Bun batch. The
+unchanged complete-original-context regression also passed all nine assertions
+in both engines. Preserve the failed Node receipt-reader record and its separate
+TAP metadata correction. No controlled speedup, corpus gain, complete JavaScript
+gate, native parity or Rust verification is claimed.

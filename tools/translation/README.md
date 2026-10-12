@@ -270,3 +270,15 @@ See [extensions/NOTICE.md](extensions/NOTICE.md) for local adaptations and
 The source-only `declarative-closure.mjs` layer records privately checked expansion lineage, original definition provenance, nested calls and generated attributes. Its conditional partition receipts keep unknown cfg atoms symbolic and select no platform. Neither such a receipt nor supplying a pinned transcriber resolves a macro call owner: all namespace and runtime authority remains false until independent ownership, hygiene, attribute and confinement obligations are closed.
 
 `derive-success-frontier.mjs` inventories written quote templates from the original locked Serde generator sources for a narrower nonempty unit-enum candidate. Its sealed evidence records splices, generated attributes and the fixed empty macro expansion without choosing generator branches or resolving call owners. This module is not consumed by the binder; every namespace dimension and generated-trait authority remains false.
+
+The bulk project checker additionally collects bounded semantic refusals from
+independent original free-function bodies, discards the failed checker, then
+checks every survivor and caller again. Ordinary checking retains first-error
+behavior; `collectIndependentBodies: false` selects that comparison in a bulk
+project. Methods, generated declarations, constants and post-check proofs retain
+ordinary handling. All 182 focused cases and nine unchanged-original-context
+assertions passed in Node and Bun with JavaScript and strict TypeScript execution.
+[Complete body-refusal evidence](../../docs/case-studies/issue-759/current/source-body-refusals-ed3ab766/README.md)
+retains all logs, the Node TAP receipt-reader failure and its independent metadata
+correction. These descriptive runs establish no controlled speedup, new corpus
+census, complete native parity or JavaScript-to-Rust completion.
