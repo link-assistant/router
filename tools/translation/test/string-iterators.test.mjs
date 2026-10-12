@@ -127,7 +127,7 @@ for(const [path,sourceHash,name,start,end,declarationHash]of pins)test(`complete
   // Missing original module/import evidence cannot be waived to execute a
   // convenient isolated function. These whole files stay explicitly carried.
   if(path==='src/storage.rs'||path==='src/responses.rs'){
-    const expected=path==='src/storage.rs'?'unknown type String':'shadowed Vec generic: the standard prelude type requires actual resolution';
+    const expected='shadowed borrowed str type: requires actual standard primitive identity in the source type namespace';
     const refusal=result.meta.refused.find(item=>item.name===name);assert.ok(refusal,name);assert.equal(refusal.message,expected);assert.equal(result.meta.executable.some(item=>item.name===name),false);assert.equal(result.meta.runtimeParity,false);return;
   }
   const checked=result.meta.executable.find(item=>item.term==='fn'&&item.name===name);assert.ok(checked,name);assert.deepEqual(checked.span,{start,end});assert.equal(result.meta.runtimeParity,false);
