@@ -201,6 +201,33 @@
       "archive": "original-thin-vec-0.2.14_LICENSE-APACHE.gz",
       "archiveBytes": 3554,
       "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/item.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/parser/item.rs",
+      "bytes": 138843,
+      "sha256": "072e9ef9c2554296643fdb16102462b5d15b8255e39142a9d697e03d6a9240c2",
+      "archive": "rust-1.89-compiler_rustc_parse_src_parser_item.rs.gz",
+      "archiveBytes": 29991,
+      "archiveSha256": "7a825544f645089aa9c3f872e89f40fced2e8c32bb1429b24b8fd046bf6ad659"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/ty.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/parser/ty.rs",
+      "bytes": 54238,
+      "sha256": "6d24d479fa505e77182e784acdade0ec736b980aca5c3193a7638f99f5d624a3",
+      "archive": "rust-1.89-compiler_rustc_parse_src_parser_ty.rs.gz",
+      "archiveBytes": 12884,
+      "archiveSha256": "15511c019e85fbf0a5b48964fdd4ba269191e36292eeb7adc14c5ef419d91b52"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/parser/mod.rs",
+      "bytes": 64389,
+      "sha256": "88e79af509064c441a88eb1b60facbfb50f8024dc0bcbf139a01a1902d111d59",
+      "archive": "../declarative/rust-1.89-compiler_rustc_parse_src_parser_mod.rs.gz",
+      "archiveBytes": 16588,
+      "archiveSha256": "1ac31573ac1590fbff8c7508572ba21fb139f257d8a7cc5f94b382949d937f05"
     }
   ],
   "generatedImplBehavior": false,

@@ -28,7 +28,7 @@ function parameters(fragment){
   const fn=fragment.syntax.findIndex(node=>node.text==='fn'),args=fragment.syntax.slice(fn+2).find(node=>node.kind==='group'&&node.delimiter==='(');
   if(!args)throw new TypeError('Original builder parameter syntax is missing');
   return split(args.children).map(nodes=>{
-    if(astSyntaxText(nodes)==='& self')return {name:'self',span:span(nodes),syntax:nodes,receiver:true};
+    if(['& self','& mut self'].includes(astSyntaxText(nodes)))return {name:'self',span:span(nodes),syntax:nodes,receiver:true,mutable:astSyntaxText(nodes)==='& mut self'};
     const colon=nodes.findIndex(node=>node.text===':');
     const names=nodes.slice(0,colon).filter(ident).filter(node=>node.text!=='mut');
     if(colon<1||names.length!==1)throw new TypeError('Builder parameter binding pattern remains unproved');

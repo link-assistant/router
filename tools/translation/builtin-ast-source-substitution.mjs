@@ -85,12 +85,14 @@ function compile(stage,state,fragment){
           for(const member of members){const slot=binding(member[0].text,member,'open-closure-pattern-binding');params.push(slot.id);child.set(slot.name,slot);}
           obligations.push({kind:'closure-pattern-input-domain',source:fragment.source,span:row[0].span});continue;
         }
-        if(names.length!==1||row.some(value=>value.kind==='group'))return unknown('closure-binding-pattern',nodes);
+        const header=colon<0?row:row.slice(0,colon),simpleHeader=header.length===1&&ident(header[0])||header.length===2&&header[0].text==='mut'&&ident(header[1]);
+        if(names.length!==1||!simpleHeader||row.some(value=>value.kind==='group'))return unknown('closure-binding-pattern',nodes);
         const slot=binding(names[0].text,row,'closure-parameter',colon<0?[]:row.slice(colon+1),null,row.some(value=>value.text==='mut'));params.push(slot.id);child.set(slot.name,slot);
       }
       return {tag:'source-closure',parameters:params,capturedSlots:[...env.values()].map(value=>value.id),body:expression(nodes.slice(lastBar+1),child,depth+1),...source};
     }
     const tail=nodes.at(-1);
+    if(tail.text==='?')return {tag:'original-source-try',value:expression(nodes.slice(0,-1),env,depth+1),...source,tryOwnerEstablished:false};
     if(tail.delimiter==='('){
       const head=nodes.slice(0,-1),args=splitBuiltinCallerSyntax(tail.children).map(row=>expression(row,env,depth+1));
       if(head.length>=3&&head.at(-2).text==='.'&&ident(head.at(-1))){
@@ -121,7 +123,15 @@ function compile(stage,state,fragment){
       if(head.every((value,at)=>at%2===0?ident(value):value.text==='::')){
         const path=head.filter(value=>value.text!=='::').map(value=>value.text),resolved=owner(path);
         if(!env.has(path[0])&&resolved?.path.length===1){
-          let definition;try{definition=schema('struct',resolved.path[0],resolved.source);}catch(error){if(/budget exceeded/u.test(String(error.message)))throw error;return unknown('record-source-owner',nodes,{reason:String(error.message)});}
+          let definition;try{definition=schema('struct',resolved.path[0],resolved.source);}catch(error){
+            if(/budget exceeded/u.test(String(error.message)))throw error;
+            const fields=splitBuiltinCallerSyntax(tail.children).map(row=>{
+              if(!ident(row[0])||row.length>1&&row[1]?.text!==':')throw new TypeError('Unresolved original record field syntax remains open');
+              return {name:row[0].text,span:row[0].span,value:expression(row.length===1?row:row.slice(2),env,depth+1)};
+            });
+            if(new Set(fields.map(value=>value.name)).size!==fields.length)throw new TypeError('Unresolved original record repeats source fields');
+            return unknown('record-source-owner',nodes,{name:resolved.path[0],fields,reason:String(error.message)});
+          }
           const fields=fieldsOf(definition),values=splitBuiltinCallerSyntax(tail.children).map(row=>{
             const actual=fields.find(value=>value.name===row[0]?.text);if(!actual)throw new TypeError('Original source constructor field absent from actual schema');
             if(row.length>1&&row[1]?.text!==':')throw new TypeError('Original source constructor initializer unsupported');
