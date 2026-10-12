@@ -8,12 +8,12 @@ import {join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
-test('source-only relocated bulk translator regenerates a separate tracked repository and executes both targets',async()=>{
+test('source-only relocated bulk translator regenerates a separate tracked repository and executes both targets',{timeout:600000},async()=>{
   const directory=mkdtempSync(join(tmpdir(),'router-translator-reuse-'));
   try {
     const bundle=join(directory,'source-bundle'),repository=join(directory,'destination');
     mkdirSync(join(repository,'src'),{recursive:true});
-    const exported=JSON.parse(execFileSync(process.execPath,[join(root,'scripts/export-router-translator.mjs'),'--output',bundle],{encoding:'utf8',timeout:120000,maxBuffer:1024*1024}));
+    const exported=JSON.parse(execFileSync(process.execPath,[join(root,'scripts/export-router-translator.mjs'),'--output',bundle],{encoding:'utf8',timeout:180000,maxBuffer:1024*1024}));
     assert.equal(exported.runtimeParity,false);assert.equal(exported.schema,'committed-offline-rust-meta-translator-bundle-v1');
     writeFileSync(join(repository,'package.json'),'{"type":"module"}\n');
     const source='mod values; mod relay;\npub fn cap(value: u64) -> u64 { if value < 10 { value } else { 10 } }\npub fn identity(value: &serde_json::Value) -> &serde_json::Value { value }\npub fn bounded(value: std::time::Duration) -> std::time::Duration { value.min(std::time::Duration::from_secs(10)) }\npub fn normalize(value: u8) -> u8 { relay::normalize(value) }\n';
@@ -22,11 +22,14 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
     writeFileSync(join(repository,'src/relay.rs'),'pub use crate::values::*; pub fn normalize(value:u8)->u8{if allowed(value){value}else{LIMIT}}\n');
     writeFileSync(join(repository,'untracked.rs'),'pub fn invisible() -> bool { true }');
     writeFileSync(join(repository,'Cargo.toml'),'[package]\nname="independent-fixture"\nversion="0.1.0"\nedition="2024"\n[dependencies]\nserde_json="1"\n');
-    execFileSync('git',['init','--quiet'],{cwd:repository,stdio:'pipe'});
-    execFileSync('git',['add','--force','src/lib.rs','src/values.rs','src/relay.rs'],{cwd:repository,stdio:'pipe'});
+    execFileSync('git',['init','--quiet'],{cwd:repository,timeout:10000,stdio:'pipe'});
+    execFileSync('git',['add','--force','src/lib.rs','src/values.rs','src/relay.rs'],{cwd:repository,timeout:10000,stdio:'pipe'});
     const script=join(bundle,'scripts/translate-router.mjs');
-    const run=extra=>JSON.parse(execFileSync(process.execPath,[script,'--root',repository,...extra],{encoding:'utf8',maxBuffer:1024*1024}));
+    const run=(extra,entrypoint=script)=>JSON.parse(execFileSync(process.execPath,[entrypoint,'--root',repository,...extra],{encoding:'utf8',timeout:30000,maxBuffer:1024*1024}));
     const written=run([]),checked=run(['--check']);
+    const inventory=join(repository,'parity/rust-source-inventory.json');
+    const relocatedInventory=JSON.parse(readFileSync(inventory,'utf8')),relocatedHashes=relocatedInventory.implementationHashes;
+    const relocatedArtifacts=new Map([...relocatedInventory.sources,...relocatedInventory.projects].flatMap(row=>Object.values(row.targets)).map(path=>[path,readFileSync(join(repository,path))]));
     assert.equal(written.sources,3);assert.equal(written.executableFunctions,6);assert.equal(checked.mode,'check');
     assert.equal(written.projects[0].executableFunctions,6);assert.equal(written.projects[0].moduleEdges,2);assert.equal(written.runtimeParity,false);
     const projectMeta=JSON.parse(readFileSync(join(repository,'tools/translation/projects/src/lib.meta.json'),'utf8'));
@@ -38,14 +41,14 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
     const js=await import(pathToFileURL(javascript));
     const generated=join(repository,'packages/typescript/generated'),draft=join(generated,'rust-draft'),project=join(generated,'rust-project'),compiled=join(repository,'compiled');
     const args=['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',generated,'--outDir',compiled,...['lib','values','relay'].map(name=>join(draft,'src/'+name+'.ts')),join(project,'src/lib.ts')];
-    if(process.env.ROUTER_TRANSLATION_TSC)execFileSync(process.env.ROUTER_TRANSLATION_TSC,args,{stdio:'pipe'});
+    if(process.env.ROUTER_TRANSLATION_TSC)execFileSync(process.env.ROUTER_TRANSLATION_TSC,args,{timeout:30000,stdio:'pipe'});
     else {
       const require=createRequire(join(root,'packages/javascript/package.json'));
       let compiler;
       try {compiler=require.resolve('typescript/bin/tsc');}
       catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;}
-      if(compiler)execFileSync(process.execPath,[compiler,...args],{stdio:'pipe'});
-      else execFileSync('tsc',args,{stdio:'pipe'});
+      if(compiler)execFileSync(process.execPath,[compiler,...args],{timeout:30000,stdio:'pipe'});
+      else execFileSync('tsc',args,{timeout:30000,stdio:'pipe'});
     }
     for(const tree of ['rust-draft','rust-project'])cpSync(join(generated,tree,'runtime'),join(compiled,tree,'runtime'),{recursive:true});
     const ts=await import(pathToFileURL(join(compiled,'rust-draft/src/lib.js')));
@@ -86,5 +89,11 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
       try {assert.throws(()=>run(['--check']),/Standard namespace source archive checksum mismatch/);}
       finally {writeFileSync(archive,original);}
     }
+    // Execute and tamper-check the relocated outputs before the source CLI
+    // can replace any receiving artifact. Then compare every artifact byte.
+    run([],join(root,'scripts/translate-router.mjs'));
+    const sourceHashes=JSON.parse(readFileSync(inventory,'utf8')).implementationHashes;
+    assert.deepEqual(Object.entries(relocatedHashes),Object.entries(sourceHashes));
+    for(const [path,bytes]of relocatedArtifacts)assert.ok(readFileSync(join(repository,path)).equals(bytes),path);
   } finally {rmSync(directory,{recursive:true,force:true});}
 });

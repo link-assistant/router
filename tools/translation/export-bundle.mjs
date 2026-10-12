@@ -16,7 +16,14 @@ const selected=path=>{
   if(relative==='check-typescript-fixtures.mjs')return false;
   return !relative.includes('/')&&/\.(?:mjs|d\.mts)$/u.test(relative)||['extensions/','vendor/','source-profiles/'].some(prefix=>relative.startsWith(prefix));
 };
-const git=(root,args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',timeout:TRANSLATOR_EXPORT_LIMITS.gitMilliseconds,maxBuffer:TRANSLATOR_EXPORT_LIMITS.gitOutputBytes,stdio:['ignore','pipe','pipe']});
+const git=(root,args,input)=>{
+  // Export never borrows an inherited repository, index, object store or config
+  // override. In particular, its fresh compiler index cannot mutate the source
+  // index or the receiving application's index through GIT_INDEX_FILE.
+  const env=Object.fromEntries(Object.entries(process.env).filter(([name])=>!name.startsWith('GIT_')));
+  env.GIT_CONFIG_NOSYSTEM='1';env.GIT_CONFIG_GLOBAL='/dev/null';
+  return execFileSync('git',args,{cwd:root,env,input,encoding:'utf8',timeout:TRANSLATOR_EXPORT_LIMITS.gitMilliseconds,maxBuffer:TRANSLATOR_EXPORT_LIMITS.gitOutputBytes,stdio:[input===undefined?'ignore':'pipe','pipe','pipe']});
+};
 function committedInputs(root){
   const head=git(root,['rev-parse','--verify','HEAD']).trim();
   if(!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/u.test(head))throw new TypeError('Translator export requires a complete committed source HEAD');
@@ -86,6 +93,20 @@ function outputPath(destination,path){
     try{mkdirSync(directory);}catch(error){if(error.code!=='EEXIST')throw error;}
   }
 }
+function compilerIndex(destination,inputs,objectFormat){
+  // This unborn repository only enumerates the copied compiler closure. It has
+  // no source HEAD, target sources, namespace facts or runtime-parity authority.
+  git(destination,['init','--quiet','--template=','--object-format='+objectFormat]);
+  const blobs=git(destination,['hash-object','-w','--stdin-paths','--no-filters'],inputs.map(row=>row.path).join('\n')+'\n').trim().split('\n');
+  if(JSON.stringify(blobs)!==JSON.stringify(inputs.map(row=>row.gitBlob)))throw new TypeError('Translator export compiler objects differ from the original committed bytes');
+  // Explicit original modes and object IDs avoid attributes, filters and CRLF
+  // normalization that git add could apply to the copied original sources.
+  git(destination,['update-index','-z','--index-info'],inputs.map(row=>`${row.mode} ${row.gitBlob}\t${row.path}\0`).join(''));
+  const actual=git(destination,['ls-files','--stage','-z']).split('\0').filter(Boolean);
+  const expected=inputs.map(row=>`${row.mode} ${row.gitBlob} 0\t${row.path}`);
+  if(JSON.stringify(actual)!==JSON.stringify(expected))throw new TypeError('Translator export compiler index differs from the original committed inventory');
+  for(const row of inputs)originalBytes(destination,row);
+}
 export function exportTranslatorBundle({sourceRoot=fileURLToPath(new URL('../../',import.meta.url)),output}={}){
   const root=realpathSync(resolve(sourceRoot)),destination=freshDestination(root,output),before=committedInputs(root),copies=[];
   let totalBytes=0;
@@ -98,11 +119,12 @@ export function exportTranslatorBundle({sourceRoot=fileURLToPath(new URL('../../
   if(JSON.stringify(before)!==JSON.stringify(after))throw new TypeError('Translator export HEAD or source index changed during collection');
   for(const row of copies)if(!originalBytes(root,row).equals(row.bytes))throw new TypeError('Translator export source changed during collection');
   const inputs=copies.map(({path,mode,gitBlob,bytes,sha256})=>({path,mode,gitBlob,bytes:bytes.length,sha256}));
-  const manifest={schema:'committed-offline-rust-meta-translator-bundle-v1',sourceHead:before.head,sourceInventorySha256:sha256(Buffer.from(JSON.stringify(inputs))),files:inputs.length,totalSourceBytes:totalBytes,inputs,entrypoint:'scripts/translate-router.mjs',runtimeParity:false,scope:'Complete selected committed forward compiler, vendored meta-language, extensions, original-source profiles and licenses; generated outputs, the repository fixture checker and test evidence are excluded.'};
+  const manifest={schema:'committed-offline-rust-meta-translator-bundle-v1',sourceHead:before.head,sourceInventorySha256:sha256(Buffer.from(JSON.stringify(inputs))),files:inputs.length,totalSourceBytes:totalBytes,inputs,entrypoint:'scripts/translate-router.mjs',compilerIndex:{kind:'fresh-unborn-enumeration',objectFormat:before.head.length===40?'sha1':'sha256',sourceHeadPresent:false,namespaceAuthority:false},runtimeParity:false,scope:'Complete selected committed forward compiler, vendored meta-language, extensions, original-source profiles and licenses; generated outputs, the repository fixture checker and test evidence are excluded.'};
   // Preflight completes before creating any destination. wx refuses overwrites.
   mkdirSync(destination,{mode:0o755});
   for(const row of copies)writeFileSync(outputPath(destination,row.path),row.bytes,{flag:'wx',mode:row.mode==='100755'?0o755:0o644});
   writeFileSync(outputPath(destination,'package.json'),'{"type":"module","private":true}\n',{flag:'wx'});
+  compilerIndex(destination,inputs,manifest.compilerIndex.objectFormat);
   if(JSON.stringify(before)!==JSON.stringify(committedInputs(root)))throw new TypeError('Translator export HEAD or source index changed during output');
   for(const row of copies)if(!originalBytes(root,row).equals(row.bytes))throw new TypeError('Translator export source changed during output');
   writeFileSync(outputPath(destination,'translator-bundle.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx'});

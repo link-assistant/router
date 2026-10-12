@@ -22,7 +22,7 @@ function fixture(){
 }
 function withFixture(operation){const row=fixture();try{return operation(row);}finally{rmSync(row.directory,{recursive:true,force:true});}}
 
-test('complete committed offline compiler exports deterministically with full source/license bytes',()=>{
+test('complete committed offline compiler exports deterministically with full source/license bytes',{timeout:360000},()=>{
   const directory=mkdtempSync(join(tmpdir(),'router-translator-export-real-'));
   try{
     const first=exportTranslatorBundle({sourceRoot:root,output:join(directory,'first')}),second=exportTranslatorBundle({sourceRoot:root,output:join(directory,'second')});
@@ -31,6 +31,12 @@ test('complete committed offline compiler exports deterministically with full so
     assert.equal(first.manifest.files,first.manifest.inputs.length);
     assert.equal(first.manifest.totalSourceBytes,first.manifest.inputs.reduce((sum,row)=>sum+row.bytes,0));
     assert.equal(first.manifest.sourceInventorySha256,sha(Buffer.from(JSON.stringify(first.manifest.inputs))));
+    assert.deepEqual(first.manifest.compilerIndex,{kind:'fresh-unborn-enumeration',objectFormat:first.manifest.sourceHead.length===40?'sha1':'sha256',sourceHeadPresent:false,namespaceAuthority:false});
+    for(const bundle of [first,second]){
+      assert.throws(()=>git(bundle.destination,['rev-parse','--verify','HEAD']));
+      assert.equal(git(bundle.destination,['ls-files','--stage','-z']).toString(),bundle.manifest.inputs.map(row=>`${row.mode} ${row.gitBlob} 0\t${row.path}\0`).join(''));
+      assert.equal(git(bundle.destination,['ls-files','--others','-z','--','tools/translation/source-profiles']).toString(),'');
+    }
     for(const row of first.manifest.inputs){
       const original=readFileSync(join(root,row.path)),copied=readFileSync(join(first.destination,row.path));
       assert.ok(copied.equals(original),row.path);assert.equal(copied.length,row.bytes);assert.equal(sha(copied),row.sha256);
@@ -42,6 +48,22 @@ test('complete committed offline compiler exports deterministically with full so
     assert.equal(first.manifest.inputs.some(row=>row.path==='tools/translation/check-typescript-fixtures.mjs'),false);
   }finally{rmSync(directory,{recursive:true,force:true});}
 });
+
+test('export isolates inherited Git overrides and preserves both unrelated indices',{timeout:180000},()=>withFixture(row=>{
+  const sourceIndex=join(row.source,'.git/index'),originalIndex=readFileSync(sourceIndex),foreignIndex=join(row.directory,'foreign-index');
+  writeFileSync(foreignIndex,'unrelated index sentinel\n');const foreignBytes=readFileSync(foreignIndex);
+  const overrides={GIT_DIR:join(row.directory,'absent-git'),GIT_WORK_TREE:row.directory,GIT_INDEX_FILE:foreignIndex,GIT_COMMON_DIR:join(row.directory,'absent-common'),GIT_OBJECT_DIRECTORY:join(row.directory,'absent-objects'),GIT_ALTERNATE_OBJECT_DIRECTORIES:join(row.directory,'absent-alternates'),GIT_CONFIG_COUNT:'1',GIT_CONFIG_KEY_0:'core.autocrlf',GIT_CONFIG_VALUE_0:'true'};
+  const original=Object.fromEntries(Object.keys(overrides).map(name=>[name,process.env[name]]));
+  try{
+    Object.assign(process.env,overrides);
+    const exported=exportTranslatorBundle({sourceRoot:row.source,output:row.output});
+    assert.equal(exported.manifest.inputs.length,row.paths.length);
+    assert.ok(readFileSync(sourceIndex).equals(originalIndex));assert.ok(readFileSync(foreignIndex).equals(foreignBytes));
+    for(const input of exported.manifest.inputs)assert.ok(readFileSync(join(row.output,input.path)).equals(readFileSync(join(row.source,input.path))));
+  }finally{for(const [name,value]of Object.entries(original)){if(value===undefined)delete process.env[name];else process.env[name]=value;}}
+  assert.throws(()=>git(row.output,['rev-parse','--verify','HEAD']));
+  assert.equal(git(row.output,['ls-files','--stage','-z']).toString().split('\0').filter(Boolean).length,row.paths.length);
+}));
 
 test('working compiler byte corruption refuses export before destination creation',()=>withFixture(row=>{
   writeFileSync(join(row.source,row.paths[1]),'changed source\n');
