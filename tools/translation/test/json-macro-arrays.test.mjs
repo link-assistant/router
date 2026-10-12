@@ -38,12 +38,12 @@ test('empty arrays and literal-key nested empty arrays execute both targets unde
 });
 
 test('nonempty syntax retains original array spans and allocator obligation without executable admission',()=>{
-  const source='use serde_json::{Value,json}; pub fn rejected()->Value{json!([true,{"empty":[]}])}',context=createJsonMacroContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies:dependencies(),compilationProfile:PRODUCTION_PROFILE});
+  const source='use serde_json::{Value,json}; pub fn rejected()->Value{json!([true,{"empty":[]}])} fn main(){}',context=createJsonMacroContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies:dependencies(),compilationProfile:PRODUCTION_PROFILE});
   const parsed=parseRust(source,{jsonMacroContext:context,jsonMacroModule:{file:'src/lib.rs'}}),node=collect(parsed,item=>item.k==='routerJsonMacro')[0];assert.ok(node);
   const proof=assertJsonMacroCall(node.jsonMacroProof);assert.equal(assertJsonEmptyArrayCall(proof).emptyArrayContractAvailable,true);
   assert.deepEqual(proof.arrayObligations.map(entry=>({text:source.slice(entry.span.start,entry.span.end),available:entry.runtimeAvailable})),[{text:'[true,{"empty":[]}]',available:false},{text:'[]',available:true}]);
   assert.throws(()=>assertJsonEmptyArrayCall(structuredClone(proof)),/private/);
-  const parser=configureJsonMacroParser(new HostRustParser(tokenizeRust(source)),context,{file:'src/lib.rs'}),start=source.indexOf('json!'),end=source.lastIndexOf(')')+1;
+  const parser=configureJsonMacroParser(new HostRustParser(tokenizeRust(source)),context,{file:'src/lib.rs'}),{start,end}=node.span;
   const copiedSyntax=structuredClone(parseJsonMacroSyntax(source.slice(start,end)));copiedSyntax.value.items=[];
   assert.throws(()=>sealJsonMacroCall(parser,{segments:['json'],start,end,syntax:copiedSyntax}),/private original/);
   const result=project(source);assert.equal(result.meta.executable.some(item=>item.name==='rejected'),false);

@@ -94,7 +94,7 @@ test('same-file JSON sibling aliases retain genuine original views and execute d
 
 test('same-file local macro shadow remains refused without leaking into an unrelated sibling JSON owner',async()=>{
   const source='mod left {use serde_json::{Value,json};pub fn sample()->Value{json!({"side":"left"})}} mod right {use serde_json::Value;macro_rules! json{($($tt:tt)*)=>{false}}pub fn rejected()->Value{json!(null)}}',result=project(source);
-  assert.equal(result.meta.executable.some(item=>item.name==='right.rejected'),false);assert.equal(result.meta.refused.some(item=>item.name==='right.rejected'),true);assert.equal(result.meta.executable.some(item=>item.name==='left.sample'),true);
+  assert.equal(result.meta.executable.some(item=>item.name==='right.rejected'),false);assert.equal(result.meta.refused.some(item=>item.name==='rejected'&&item.module?.join('.')==='right'&&item.term==='fn'&&/resolved original bang|actual locked|owner|shadow/u.test(item.message)),true);assert.equal(result.meta.executable.some(item=>item.name==='left.sample'),true);
   await verifyTypedTargets(result,api=>{assert.deepEqual(native(api['left.sample']()),{side:'left'});assert.equal(api['right.rejected'],undefined);});
 });
 
@@ -129,7 +129,12 @@ test('original attached and separated bang tokens retain qualified and aliased J
   const result=project(source);assert.equal(result.meta.refused.some(item=>['adjacent','separated','alias','alias_spaced'].includes(item.name)),false);
   await verifyTypedTargets(result,api=>{for(const [name,owner] of [['adjacent','qualified'],['separated','qualified-spaced'],['alias','alias'],['alias_spaced','alias-spaced']])assert.deepEqual(native(api[name]()),{owner});});
   const nodes=collect(result.meta.checkedSemanticProgram.program,node=>node.k==='routerJsonMacro');
-  assert.equal(nodes.length,4);
-  for(const node of nodes){assert.equal(source.slice(node.span.start,node.span.end),node.jsonMacroProof.originalSource);assert.equal(node.jsonMacroProof.macroOwnerResolved,true);assert.equal(node.jsonMacroProof.runtimeParity,false);assert.equal(node.jsonMacroProof.applicationEffectCompleteness,false);}
+  const occurrences=new Map();
+  for(const node of nodes){
+    const proof=node.jsonMacroProof;assert.equal(source.slice(node.span.start,node.span.end),proof.originalSource);assert.deepEqual(node.span,proof.originalSpan);assert.equal(proof.macroOwnerResolved,true);assert.equal(proof.runtimeParity,false);assert.equal(proof.applicationEffectCompleteness,false);
+    const identity=JSON.stringify([proof.file,proof.modulePath,proof.originalSpan,proof.resolved]);
+    if(occurrences.has(identity))assert.deepEqual(proof,occurrences.get(identity));else occurrences.set(identity,proof);
+  }
+  assert.equal(occurrences.size,4);assert.equal(new Set([...occurrences.values()].map(proof=>proof.originalSha256)).size,4);
   for(const source of ['mod serde_json {} pub fn rejected()->serde_json::Value{serde_json::json ! (null)}','use serde_json::{Value,json as literal}; macro_rules! literal{()=>{false}} pub fn rejected()->Value{literal ! (null)}'])assert.equal(project(source).meta.executable.some(item=>item.name==='rejected'),false);
 });
