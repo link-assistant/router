@@ -2,12 +2,13 @@
 // This executes the bounded substitution stage, never the Rust generator, and
 // cannot close mutation/control/container/hygiene or trait behavior obligations.
 import {createHash} from 'node:crypto';
+import {originalMacroTrees} from './macro-token-trees.mjs';
 import {builtinAstOriginal,assertOriginalAstFunction,originalAstDefinition,astEnumVariant,astSyntaxText} from './builtin-derive-ast-meta.mjs';
 import {createBuiltinAstBuilderMetaCompiler,builtinAstSourceImports,builtinAstFunctionSourceParameters} from './builtin-ast-builder-meta.mjs';
 import {splitBuiltinCallerSyntax} from './builtin-ast-caller-environments.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
-const stages=new WeakMap(),programs=new WeakMap(),results=new WeakMap();
+const stages=new WeakMap(),programs=new WeakMap(),results=new WeakMap(),applications=new WeakMap();
 const limits=Object.freeze({nodes:16000,depth:64,bytes:524288,contracts:128});
 const ident=node=>node?.kind==='token'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(node.text);
 const sourceOf=(fragment,nodes)=>({source:fragment.source,sourceSha256:fragment.sourceSha256,span:{start:nodes[0].span.start,end:nodes.at(-1).span.end},syntax:nodes});
@@ -27,7 +28,7 @@ export function createBuiltinAstSourceSubstitution(profile){
   // Lookup validates the sealed profile before any source expression is used.
   builtinAstOriginal(profile,'compiler/rustc_ast/src/ast.rs');
   const state={profile,compiler:createBuiltinAstBuilderMetaCompiler(profile),cache:new Map()};
-  const stage=Object.freeze({compile:fragment=>compile(stage,state,fragment),substitute:program=>substitute(stage,state,program),assert:value=>assertBuiltinAstSourceSubstitution(value,stage)});
+  const stage=Object.freeze({compile:fragment=>compile(stage,state,fragment),substitute:program=>substitute(stage,state,program),applyClosure:(caller,callee,callStart)=>applyClosure(stage,state,caller,callee,callStart),assert:value=>assertBuiltinAstSourceSubstitution(value,stage)});
   stages.set(stage,state);return stage;
 }
 export function assertBuiltinAstSourceSubstitution(value,stage){if(results.get(value)?.stage!==stage)throw new TypeError('Substitution requires its original private source stage');return value;}
@@ -175,7 +176,7 @@ function compile(stage,state,fragment){
   const program=seal({schema:'original-source-lexical-substitution-program-v1',fragment:reference(fragment),parameters,slots,tree,positiveSchemas:[...schemas.values()].map(reference),obligations,sourceSyntaxRoundTrip:true,selectedOwnerBangComplete:false,generatedImplBehavior:false});
   programs.set(program,{stage,fragment,builderContracts});state.cache.set(fragment,program);return program;
 }
-function substitute(stage,state,program){
+function substitute(stage,state,program,{root=program.tree,overrides=new Map()}={}){
   const privateProgram=programs.get(program);if(privateProgram?.stage!==stage)throw new TypeError('Substitution program requires its original private source stage');
   const slots=new Map(program.slots.map(value=>[value.id,value]));let count=0;
   function visit(node,stack=[],depth=0){
@@ -183,6 +184,10 @@ function substitute(stage,state,program){
     if(!node||typeof node!=='object')return node;
     if(Array.isArray(node))return node.map(value=>visit(value,stack,depth+1));
     if(node.tag==='lexical-slot'){
+      if(overrides.has(node.slotId)){
+        const bound=overrides.get(node.slotId);
+        return {tag:'applied-original-closure-slot',slotId:node.slotId,source:node.source,sourceSha256:node.sourceSha256,span:node.span,declaredTypeSyntax:bound.declaredTypeSyntax,value:visit(bound.value,stack,depth+1),typeResolutionEstablished:false};
+      }
       const slot=slots.get(node.slotId);if(!slot)throw new TypeError('Original substitution lexical slot disappeared');
       if(stack.includes(slot.id))throw new TypeError('Original substitution lexical cycle');
       return {tag:'source-slot-substitution',slotId:slot.id,kind:slot.kind,typeSyntax:slot.typeSyntax,source:node.source,sourceSha256:node.sourceSha256,span:node.span,value:slot.value?visit(slot.value,[...stack,slot.id],depth+1):{tag:'original-caller-input-slot',slotId:slot.id,source:slot.source,span:slot.span,syntax:slot.syntax}};
@@ -223,5 +228,93 @@ function substitute(stage,state,program){
     }
     return {tag:'source-substituted-builder-result',contractDigest:contract.digest,source:source.source,span:source.span,result:project(contract.result,depth+1)};
   }
-  const tree=visit(program.tree),result=seal({schema:'original-source-ast-substitution-result-v1',programDigest:program.digest,fragment:program.fragment,tree,selectedOwnerBangComplete:false,generatedImplBehavior:false,mutationControlEstablished:false,optionOwnerEstablished:false,allocationPhaseBehavior:false});results.set(result,{stage,program});return result;
+  const tree=visit(root),result=seal({schema:'original-source-ast-substitution-result-v1',programDigest:program.digest,fragment:program.fragment,tree,selectedOwnerBangComplete:false,generatedImplBehavior:false,mutationControlEstablished:false,optionOwnerEstablished:false,allocationPhaseBehavior:false});results.set(result,{stage,program});return result;
 }
+
+// Closure application is constructed from two authentic source programs and
+// their actual call site. No user-provided value/substitution map is accepted.
+function applyClosure(stage,state,caller,callee,callStart){
+  const callerState=programs.get(caller),calleeState=programs.get(callee);
+  if(callerState?.stage!==stage||calleeState?.stage!==stage)throw new TypeError('Closure application requires privately paired original source programs');
+  if(!Number.isSafeInteger(callStart)||callStart<0)throw new TypeError('Closure application requires its exact original call span');
+  const nameAt=calleeState.fragment.syntax.findIndex(value=>value.text==='fn'),name=calleeState.fragment.syntax[nameAt+1]?.text;
+  const sites=nodesMatching(caller.tree,value=>value.tag==='open-source-expression'&&value.kind==='source-method-call'&&value.method===name&&value.span.start===callStart);
+  if(sites.length!==1)throw new TypeError('Original method closure call site is absent or ambiguous');
+  const site=sites[0],callerOwner=sourceImplOwner(state.profile,callerState.fragment),calleeOwner=sourceImplOwner(state.profile,calleeState.fragment);
+  if(callerOwner.source!==calleeOwner.source||callerOwner.span.start!==calleeOwner.span.start||callerOwner.span.end!==calleeOwner.span.end)throw new TypeError('Original closure caller/callee do not share their actual source impl');
+  if(site.receiver.tag!=='lexical-slot')throw new TypeError('Original closure method receiver is not its lexical self slot');
+  const receiver=caller.slots.find(value=>value.id===site.receiver.slotId);
+  if(receiver?.name!=='self'||receiver.kind!=='parameter')throw new TypeError('Original closure method receiver is not source self');
+  const params=callee.parameters.filter(value=>!value.receiver);
+  if(params.length!==site.args.length)throw new TypeError('Original closure method source argument count differs');
+  const candidates=site.args.map((value,index)=>({value,index})).filter(row=>row.value.tag==='source-closure');
+  if(candidates.length!==1)throw new TypeError('Original method call requires one actual closure argument');
+  const {value:closure,index}=candidates[0],parameter=params[index];
+  if(parameter.typeSyntax.length!==1||!ident(parameter.typeSyntax[0]))throw new TypeError('Original callback parameter requires a direct source generic bound');
+  const bound=sourceFnBound(calleeState.fragment,parameter.typeSyntax[0].text),parameterSlot=callee.slots.find(value=>value.kind==='parameter'&&value.name===parameter.name);
+  if(!parameterSlot)throw new TypeError('Original callback source parameter slot disappeared');
+  const invocations=nodesMatching({tree:callee.tree,initializers:callee.slots.map(value=>value.value).filter(Boolean)},value=>value.tag==='open-source-expression'&&value.kind==='source-callable-slot'&&value.callee?.tag==='lexical-slot'&&value.callee.slotId===parameterSlot.id);
+  if(invocations.length!==1)throw new TypeError('Original callback application source is absent or ambiguous');
+  const invoke=invocations[0];
+  if(invoke.args.length!==bound.arguments.length||closure.parameters.length!==bound.arguments.length)throw new TypeError('Original callback/closure/Fn bound arity differs');
+  const callerSlots=new Map(caller.slots.map(value=>[value.id,value])),overrides=new Map(),bindings=[];
+  for(let at=0;at<closure.parameters.length;at++){
+    const slot=callerSlots.get(closure.parameters[at]);
+    if(slot?.kind!=='closure-parameter'||slot.mutable)throw new TypeError('Original callback closure binding pattern/mutation remains open');
+    const argument=substitute(stage,state,callee,{root:invoke.args[at]});
+    overrides.set(slot.id,{value:argument.tree,declaredTypeSyntax:bound.arguments[at]});
+    bindings.push({closureSlot:slot.id,closureSource:reference(slot),sourceArgument:invoke.args[at],argument,declaredTypeSyntax:bound.arguments[at],typeResolutionEstablished:false});
+  }
+  const captures=closure.capturedSlots.map(id=>{
+    const slot=callerSlots.get(id);if(!slot)throw new TypeError('Original closure capture disappeared');
+    return {slotId:id,kind:slot.kind,source:slot.source,span:slot.span,mutable:slot.mutable,captureModeEstablished:false};
+  });
+  const body=substitute(stage,state,caller,{root:closure.body,overrides});
+  const result=seal({schema:'original-source-closure-application-meta-v1',callerProgramDigest:caller.digest,calleeProgramDigest:callee.digest,sourceCall:{source:site.source,sourceSha256:site.sourceSha256,span:site.span},sourceOwner:callerOwner,
+    callbackParameter:{name:parameter.name,span:parameter.span,typeSyntax:parameter.typeSyntax},callbackBound:bound,sourceApplication:{source:invoke.source,span:invoke.span},bindings,captures,declaredReturnBodyMeta:body,
+    selectedOwnerBangComplete:false,generatedImplBehavior:false,sourceMethodOwnershipEstablished:false,fnTraitOwnerEstablished:false,typeResolutionEstablished:false,mutationControlEstablished:false,
+    obligations:['method and Fn trait resolution remain source-owner obligations','closure argument field/Span/Ident types retain their actual source expected syntax, not resolved AST values','captured mutation, local functions, source control selection and returned container domains remain open']});
+  applications.set(result,{stage,caller,callee});return result;
+}
+function nodesMatching(root,predicate){
+  const matches=[];let cells=0;
+  function visit(value,depth=0){
+    if(++cells>limits.nodes||depth>limits.depth)throw new TypeError('Original closure source traversal budget exceeded');
+    if(!value||typeof value!=='object')return;if(predicate(value))matches.push(value);
+    for(const [key,child]of Object.entries(value))if(!['syntax','schema','recipe','import','typeSyntax','sourceBinding','original'].includes(key))if(Array.isArray(child))child.forEach(value=>visit(value,depth+1));else visit(child,depth+1);
+  }
+  visit(root);return matches;
+}
+function sourceImplOwner(profile,fragment){
+  // Read the exact sealed original member using the existing lexical source
+  // trees. This identifies containment, not an emitted impl/type permission.
+  const source=builtinAstOriginal(profile,fragment.source),owners=[];
+  function visit(nodes){for(let at=0;at<nodes.length;at++){
+    if(nodes[at].text==='impl'){
+      let end=at+1;while(end<nodes.length&&nodes[end].delimiter!=='{'&&nodes[end].text!==';')end++;
+      if(nodes[end]?.delimiter==='{'&&nodes[end].span.start<fragment.span.start&&nodes[end].span.end>=fragment.span.end)owners.push({source:fragment.source,sourceSha256:source.sha256,span:{start:nodes[at].span.start,end:nodes[end].span.end},header:nodes.slice(at,end)});
+    }
+    if(nodes[at].kind==='group')visit(nodes[at].children);
+  }}
+  visit(originalMacroTrees(source.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}));
+  if(owners.length!==1)throw new TypeError('Original function impl containment is not unique');return freeze(owners[0]);
+}
+function sourceFnBound(fragment,name){
+  const nodes=fragment.syntax,where=nodes.findIndex(value=>value.text==='where'),matches=[];
+  if(where<0)throw new TypeError('Original callback Fn bound is missing');
+  for(let at=where+1;at<nodes.length;at++)if(nodes[at].text===name&&nodes[at+1]?.text===':'&&nodes[at+2]?.text==='Fn'&&nodes[at+3]?.delimiter==='('){
+    let end=at+4,angle=0;
+    if(nodes[end]?.text!=='->')throw new TypeError('Original callback declared return syntax is missing');end++;
+    const start=end;
+    for(;end<nodes.length;end++){
+      if(nodes[end].text==='<')angle++;if(nodes[end].text==='>')angle--;
+      if(angle<0)throw new TypeError('Original callback return type delimiter differs');
+      if(!angle&&(nodes[end].text===','||nodes[end].delimiter==='{'))break;
+    }
+    if(angle||end===start)throw new TypeError('Original callback declared return type remains open');
+    matches.push({source:fragment.source,sourceSha256:fragment.sourceSha256,span:{start:nodes[at].span.start,end:nodes[end-1].span.end},syntax:nodes.slice(at,end),arguments:splitBuiltinCallerSyntax(nodes[at+3].children),returnTypeSyntax:nodes.slice(start,end)});
+  }
+  if(matches.length!==1)throw new TypeError('Original callback Fn bound is absent or ambiguous');return freeze(matches[0]);
+}
+export function assertBuiltinAstClosureApplication(value,stage,caller,callee){const state=applications.get(value);if(!state||state.stage!==stage||state.caller!==caller||state.callee!==callee)throw new TypeError('Closure application requires its original source programs');return value;}
+export const isBuiltinAstClosureApplication=value=>!!value&&applications.has(value);
