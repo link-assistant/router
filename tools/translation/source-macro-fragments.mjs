@@ -1,6 +1,7 @@
 // Original source AST capture only. An actual macro owner and typed expansion
 // must be proved separately; a syntactic fragment is never runtime authority.
 import {HostRustParser} from './extensions/host-contracts.mjs';
+import {originalTextCursorGuard} from './extensions/text.mjs';
 import {TokenCursor} from './vendor/meta-language/translation/lexer.js';
 import {types} from 'node:util';
 import {isStandardMatchesSourceProfile,standardMatchesOriginalDefinition} from './matches-source-profile.mjs';
@@ -16,15 +17,16 @@ function methodSnapshot(prototype) {
 // declarative engine and Host parser share a module dependency cycle.
 let parserMethods=null;const cursorMethods=methodSnapshot(TokenCursor.prototype);
 function originalParserMethods(){return parserMethods??=methodSnapshot(HostRustParser.prototype);}
-function assertOriginalMethods(value,prototype,methods) {
+function assertOriginalMethods(value,prototype,methods,{cursor=false}={}) {
   if(!value||types.isProxy(value)||Object.getPrototypeOf(value)!==prototype)throw new TypeError('Macro fragment parser/cursor must retain its actual source class');
-  for(const descriptor of Object.values(Object.getOwnPropertyDescriptors(value)))if(!Object.hasOwn(descriptor,'value')||typeof descriptor.value==='function')throw new TypeError('Macro fragment parser/cursor callbacks or accessors are not original source methods');
-  for(const [name,method]of methods)if(value[name]!==method)throw new TypeError('Macro fragment parser/cursor method identity changed');
+  const registered=cursor?originalTextCursorGuard(value):null,guard=registered?.baseIs===methods.get('is')?registered.guard:null;
+  for(const [name,descriptor]of Object.entries(Object.getOwnPropertyDescriptors(value)))if(!Object.hasOwn(descriptor,'value')||typeof descriptor.value==='function'&&!(name==='is'&&descriptor.value===guard))throw new TypeError('Macro fragment parser/cursor callbacks or accessors are not original source methods');
+  for(const [name,method]of methods)if(value[name]!==method&&!(name==='is'&&value[name]===guard))throw new TypeError('Macro fragment parser/cursor method identity changed');
 }
 
 const flags={macroOwnerResolved:false,namespaceAuthority:false,runtimeAuthority:false,applicationEffectCompleteness:false};
 export function createOriginalMacroFragmentContext(parser,input,{sourceStart,modulePath=parser?.modulePath??[],definitionProfile=null}={}) {
-  assertOriginalMethods(parser,HostRustParser.prototype,originalParserMethods());assertOriginalMethods(parser.cursor,TokenCursor.prototype,cursorMethods);
+  assertOriginalMethods(parser,HostRustParser.prototype,originalParserMethods());assertOriginalMethods(parser.cursor,TokenCursor.prototype,cursorMethods,{cursor:true});
   const source=parser instanceof HostRustParser&&capturedRustTokenSource(parser.cursor.tokens),original=macroTreeSource(input);
   if(!source||!original||!Number.isSafeInteger(sourceStart)||sourceStart<0||source.source.slice(sourceStart,sourceStart+original.source.length)!==original.source)throw new TypeError('Macro fragments require genuine parser tokens and exact original invocation bytes');
   if(!Array.isArray(modulePath)||modulePath.length>64||modulePath.some(part=>typeof part!=='string')||JSON.stringify(modulePath)!==JSON.stringify(parser.modulePath??[]))throw new TypeError('Macro fragment context differs from the actual parser module');
@@ -37,7 +39,7 @@ export function parseOriginalMacroFragment(context,fragment,input,start) {
   const state=contexts.get(context);
   if(!state||state.input!==input||!['expr','pat'].includes(fragment)||!Number.isSafeInteger(start)||start<0||start>=input.length)throw new TypeError('Unsealed or mismatched original macro fragment request');
   const {parser,tokens,modulePath}=state,c=parser.cursor;
-  assertOriginalMethods(parser,HostRustParser.prototype,originalParserMethods());assertOriginalMethods(c,TokenCursor.prototype,cursorMethods);
+  assertOriginalMethods(parser,HostRustParser.prototype,originalParserMethods());assertOriginalMethods(c,TokenCursor.prototype,cursorMethods,{cursor:true});
   if(c.tokens!==tokens||JSON.stringify(parser.modulePath??[])!==JSON.stringify(modulePath)||capturedRustTokenSource(tokens)!==state.source)throw new TypeError('Original macro fragment parser identity changed');
   const first=input[start],tokenStart=first.span.start+context.sourceStart;
   const index=tokens.findIndex(token=>token.start===tokenStart);

@@ -14,13 +14,16 @@ const TRIMS=new Set(['trim_start_matches','trim_end_matches','trim_matches']);
 const METHODS=new Map([['starts_with',1],['ends_with',1],['contains',1],['replace',2],['replacen',3],...Array.from([...SPLITS,...STRIPS,...TRIMS],method=>[method,1])]);
 const USIZE={...fixed(64,false),rustPrimitiveName:'usize'};
 const exits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(exits):exits(value))));
+const originalCursorGuards=new WeakMap();
+export const originalTextCursorGuard=cursor=>originalCursorGuards.get(cursor)??null;
 export class TextRustParser extends FormatRustParser {
   constructor(tokens) {
     super(tokens);
     // A decoded literal payload is never a Rust delimiter or keyword, even
     // when its value is ")", "&", "let" or another syntax spelling.
-    const is=this.cursor.is.bind(this.cursor);
+    const baseIs=this.cursor.is,is=baseIs.bind(this.cursor);
     this.cursor.is=(value,offset=0)=>!['string','rustChar'].includes(this.cursor.peek(offset).kind)&&is(value,offset);
+    originalCursorGuards.set(this.cursor,Object.freeze({guard:this.cursor.is,baseIs}));
   }
   primary(path,options) {
     const token=this.cursor.peek();if(token.kind==='rustChar'){this.cursor.next();return {k:'routerPatternChar',value:token.value,raw:token.raw,span:{start:token.start,end:token.end}};}

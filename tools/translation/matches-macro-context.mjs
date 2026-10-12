@@ -25,9 +25,10 @@ const mapEntries=Map.prototype.entries;
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
 function namespaceDigest(parser){const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');return metadataDigest(['type','value','macro'].map(namespace=>[namespace,nativeEntries(ownData(aliases,namespace)).map(([path,map])=>[path,nativeEntries(map)])]));}
 export function originalMatchesNamespaceBindings(){const profile=standardProfile??=loadStandardMatchesSourceProfile();return ['std','core'].map(root=>Object.freeze({name:profile.name,namespace:'macro',macroKind:'bang',target:[root,profile.name],kind:'macro',originalNamespaceDigest:profile.digest}));}
-const collectTypes=(items,path=[],result=[])=>{for(const item of items){if(item.k==='module')collectTypes(item.items,[...path,item.name],result);else if(item.k==='data')result.push([...path,item.name]);}return result;};
 function standardExternal(profile) {
-  const types=collectTypes(hostData());
+  // Canonical source types from the existing project host registry. Private
+  // monomorphic ABI layouts in hostData are never external Rust owners.
+  const types=[['std','option','Option'],['std','result','Result'],['std','time','Duration'],['serde_json','Value'],['serde_json','Number'],['serde_json','Error'],['serde_json','error','Category'],['std','io','Error'],['std','env','VarError'],['std','ffi','OsString'],['std','num','ParseIntError'],['std','num','IntErrorKind'],['std','time','TryFromFloatSecsError']];
   return externalModuleBindings({data:hostData(),contracts:[...HOST_CONTRACTS,...EFFECT_CONTRACTS],extraBindings:[...types.map(target=>({name:target.at(-1),namespace:'type',target,kind:['Option','Result','Value','Category','VarError','IntErrorKind'].includes(target.at(-1))?'enum':'struct'})),
     ...['Some','None','Ok','Err'].flatMap(name=>['type','value'].map(namespace=>({name,namespace,target:name==='Some'||name==='None'?['std','option','Option',name]:['std','result','Result',name],kind:'constructor'}))),
     ...COPY_NAMESPACE_BINDINGS,...STANDARD_NAMESPACE_BINDINGS,

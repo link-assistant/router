@@ -13,6 +13,7 @@ test('actual source expression and pattern productions capture complete original
   const pattern=parseOriginalMacroFragment(context,'pat',input,subject.end+1);
   assert.equal(pattern.capture.ast.k,'or');assert.equal(input[pattern.end].text,'if');
   const guard=parseOriginalMacroFragment(context,'expr',input,pattern.end+1);assert.equal(guard.end,input.length);assert.equal(guard.capture.ast.k,'binary');
+  const literal=setup('matches!("}",Some(n))'),literalCapture=parseOriginalMacroFragment(literal.context,'expr',literal.input,0);assert.equal(literalCapture.capture.ast.value,'}');assert.equal(literalCapture.end,1);
   assert.equal(originalMacroFragmentAst(context,pattern.capture),pattern.capture.ast);assert.equal(isOriginalMacroAstFragment(pattern.capture),true);assert.equal(Object.isFrozen(pattern.capture.trees),true);
   for(const key of ['macroOwnerResolved','namespaceAuthority','runtimeAuthority','applicationEffectCompleteness'])assert.equal(pattern.capture[key],false,key);
 });
@@ -23,6 +24,8 @@ test('clones different sources parser module mutation and source intervals canno
   assert.throws(()=>createOriginalMacroFragmentContext(first.parser,originalMacroInvocation('matches!(other,Some(n))').trees,{sourceStart:0}),/exact original/);
   assert.throws(()=>createOriginalMacroFragmentContext(first.parser,first.input,{sourceStart:0,modulePath:['invented']}),/actual parser module/);
   const forged=setup('matches!(value,Some(n))');forged.parser.expr=()=>({k:'bool',value:true});assert.throws(()=>parseOriginalMacroFragment(forged.context,'expr',forged.input,0),/callbacks|method identity/);
+  for(const edit of [cursor=>{cursor.is=()=>true;},cursor=>{cursor.is=second.parser.cursor.is;},cursor=>{cursor.peek=()=>({kind:'identifier',value:'forged'});}]){const altered=setup('matches!(value,Some(n))');edit(altered.parser.cursor);assert.throws(()=>parseOriginalMacroFragment(altered.context,'expr',altered.input,0),/callbacks|method identity/);}
+  let reads=0;const getter=setup('matches!(value,Some(n))');Object.defineProperty(getter.parser.cursor,'is',{get(){reads++;return ()=>true;}});assert.throws(()=>parseOriginalMacroFragment(getter.context,'expr',getter.input,0),/callbacks|accessors/);assert.equal(reads,0);
   first.parser.modulePath=['changed'];assert.throws(()=>parseOriginalMacroFragment(first.context,'expr',first.input,0),/identity changed/);
 });
 test('unproved expression and pattern grammar keeps original parser refusals',()=>{
