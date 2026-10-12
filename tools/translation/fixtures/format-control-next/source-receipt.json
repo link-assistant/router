@@ -1,0 +1,114 @@
+{
+  "schema": "original-builtin-source-control-draft-receipt-v1",
+  "status": "SOURCE_ONLY_UNRUN",
+  "sourceBase": "e6da968017a72896e93305d1ebf55b63aff1bde2",
+  "sourceProfile": {
+    "manifest": "source-profiles/format-arguments/manifest.json",
+    "manifestSha256": "42f5415bf35c84c59eb7e6710551d44fa3c2eb7c1c0f03e314de58a3f423f6fc",
+    "sourcePath": "compiler/rustc_builtin_macros/src/format.rs",
+    "sourceSha256": "c996ad70339e2915897ddd4e3aed4ed11f6e168e9e7d5562fc7139c45dc6a4ea",
+    "sourceBytes": 39952,
+    "input": "compiler-rustc_builtin_macros-src-format.rs.gz",
+    "compressedSha256": "40da921172000ffd2cdd3a938caa08ba1ec026de6dbe9516c6416b32619adca4",
+    "licenseInputs": [
+      {
+        "input": "../copy-standard/LICENSE-MIT",
+        "bytes": 1068,
+        "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+      },
+      {
+        "input": "../copy-standard/LICENSE-APACHE",
+        "bytes": 9723,
+        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+      }
+    ]
+  },
+  "originalFunctions": [
+    {
+      "name": "parse_args",
+      "span": {
+        "start": 2808,
+        "end": 6297,
+        "unit": "utf16"
+      },
+      "sha256": "d66d5d2d37454cf5deec51b67da50e7fe377c958fcafdb904feaef02da938ad9",
+      "bodySpan": {
+        "start": 2900,
+        "end": 6297
+      },
+      "bodySha256": "756d9f689daec5b5023d5a620fec17ad05d3555b8468dd63081f821ccd7d2456"
+    },
+    {
+      "name": "expand_format_args",
+      "sourceSpan": {
+        "start": 39582,
+        "end": 39759,
+        "unit": "utf16"
+      },
+      "sourceSha256": "e8c264dc4d5fe7636d963e6063486ddd95f5e52f7b7c5f48af8986275d51050c",
+      "bodySpan": {
+        "start": 39707,
+        "end": 39759
+      },
+      "bodySha256": "1f7677a6647ed80ed474256d5a938a337f8614e0784bb93861528e9cdedb30f9",
+      "runtimeExecutionVerified": false
+    },
+    {
+      "name": "expand_format_args_impl",
+      "sourceSpan": {
+        "start": 38768,
+        "end": 39569,
+        "unit": "utf16"
+      },
+      "sourceSha256": "026c65eb30decbfe320f4a19413afcde7d1c07dedc06aec593e528904419428f",
+      "bodySpan": {
+        "start": 38916,
+        "end": 39569
+      },
+      "bodySha256": "d6a4da9fe5dadfc9949ea88d8a3d2aeffe2c921d438f91a4f1a8d01e29341acb",
+      "runtimeExecutionVerified": false
+    }
+  ],
+  "newPaths": [
+    "builtin-source-control.mjs",
+    "test/builtin-source-control.test.mjs"
+  ],
+  "authoredCases": 6,
+  "engineAttempts": 0,
+  "grammar": [
+    "original let/let-else patterns retained as obligations",
+    "if and let-chain source control",
+    "match subject/arms/guards preserving original order",
+    "while/for/loop with unproved termination/iterator owners",
+    "return/break/continue with unproved exit scope",
+    "calls/fields/records/tuple trailing commas/closures/try/unary/binary source nodes",
+    "original opaque macro token trees never expanded as ordinary expressions"
+  ],
+  "bounds": {
+    "sourceTreesMaxTokens": 16000,
+    "sourceTreesMaxDepth": 64,
+    "sourceControlMaxCells": 32000,
+    "nestedExpressionFrames": 64,
+    "nestedConditionalFrames": 64,
+    "childParserDepth": 64
+  },
+  "explicitRemaining": [
+    "Actual source namespace/callee/handler and compiler record layouts",
+    "Pattern resolution, let-chain binding and divergence semantics",
+    "Compiler opaque AST/token/span and ExtCtxt/parser/builder execution",
+    "Generic/UFCS/cast/array-repeat/update/modifier/inner-item syntax",
+    "Original formatted argument tuple/borrow lifetime/trait dispatch",
+    "Allocator/OOM/I/O/application/native effect completeness"
+  ],
+  "flags": {
+    "typedCompilerIRChecked": false,
+    "sourceSemanticClosureVerified": false,
+    "compilerHandlerOwnerResolved": false,
+    "namespaceAuthority": false,
+    "executable": false,
+    "runtimeParity": false,
+    "allocatorEffectsVerified": false,
+    "ioEffectsVerified": false,
+    "additionalDeclarationsAdmitted": 0
+  }
+}

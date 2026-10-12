@@ -1,0 +1,136 @@
+// Generic original Rust control syntax -> private serialized symbolic IR.
+// This lifts control/dataflow, not ExtCtxt, AST builders, traits or effects.
+import {createHash} from 'node:crypto';
+import {originalMacroTrees,freezeMacroTree} from './macro-token-trees.mjs';
+import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
+import {isFormatCallbackDataflow} from './format-builtin-dataflow.mjs';
+const states=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
+const word=node=>node?.kind==='token'?node.text:null;
+const name=node=>node?.kind==='token'&&node.type==='ident'&&/^(?:r#)?[\p{L}_][\p{L}\p{N}_]*$/u.test(node.text);
+const precedence={'||':1,'&&':2,'==':3,'!=':3,'<':4,'<=':4,'>':4,'>=':4,'|':5,'^':5,'&':6,'<<':7,'>>':7,'+':8,'-':8,'*':9,'/':9,'%':9};
+const flags={compilerHandlerOwnerResolved:false,sourceSemanticClosureVerified:false,typedCompilerIRChecked:false,executable:false,traitSelectionVerified:false,allocatorEffectsVerified:false,ioEffectsVerified:false,namespaceAuthority:false,runtimeParity:false};
+const range=nodes=>({start:nodes[0]?.span.start??0,end:nodes.at(-1)?.span.end??0});
+function split(nodes,separator=',') {
+  if(!nodes.length)return [];
+  const rows=[];let start=0;
+  for(let at=0;at<=nodes.length;at++)if(at===nodes.length||word(nodes[at])===separator){const row=nodes.slice(start,at);if(!row.length){if(at===nodes.length&&start===at)break;throw new TypeError('Source control has an empty separated operand');}rows.push(row);start=at+1;}
+  return rows;
+}
+// TT punctuation remains original. Rejoin only adjacent source punctuators
+// needed by this expression grammar; never expose opaque macro fragments.
+function expressionTokens(nodes) {
+  const result=[];
+  for(let at=0;at<nodes.length;at++){const first=nodes[at],second=nodes[at+1];
+    if(first?.kind==='token'&&second?.kind==='token'&&first.span.end===second.span.start&&(word(first)==='>'&&word(second)==='>'||word(first)==='.'&&word(second)==='.')){result.push({...first,text:word(first)+word(second),span:{start:first.span.start,end:second.span.end}});at++;}else result.push(first);
+  }
+  return result;
+}
+class ControlParser {
+  constructor(nodes,budget,depth=0){if(depth>64)throw new TypeError('Source control depth exceeds its finite bound');this.nodes=expressionTokens(nodes);this.at=0;this.budget=budget;this.depth=depth;this.records=true;}
+  current(){return this.nodes[this.at];}
+  take(value){if(word(this.current())===value){this.at++;return true;}return false;}
+  need(value){if(!this.take(value))throw new TypeError('Source control requires original '+value);}
+  group(delimiter){const node=this.nodes[this.at++];if(node?.kind!=='group'||node.delimiter!==delimiter)throw new TypeError('Source control requires original '+delimiter+' group');return node;}
+  child(nodes){return new ControlParser(nodes,this.budget,this.depth+1);}
+  blockGroup(group=this.group('{')){return {...this.child(group.children).block(),sourceSpan:group.span};}
+  node(kind,start,fields={}){if(--this.budget.cells<0)throw new TypeError('Source control cell bound exhausted');return {kind,...fields,sourceSpan:range(this.nodes.slice(start,this.at))};}
+  expressionAll(nodes){const parser=this.child(nodes),result=parser.expression();if(parser.at!==parser.nodes.length)throw new TypeError('Source control expression leaves original tokens');return result;}
+  condition(){const before=this.records;this.records=false;try{return this.expression();}finally{this.records=before;}}
+  pattern(nodes){if(!nodes.length)throw new TypeError('Source control pattern is empty');return {kind:'original-pattern-obligation',tokens:nodes,sourceSpan:range(nodes),bindingSemanticsVerified:false,constructorOwnerResolved:false};}
+  conditional(start){if(++this.budget.conditionals>64){this.budget.conditionals--;throw new TypeError('Source control conditional depth exceeds its finite bound');}
+    try{const condition=this.condition(),then=this.blockGroup();let otherwise=null;
+      if(this.take('else'))otherwise=this.take('if')?this.conditional(this.at-1):this.blockGroup();
+      return this.node('if',start,{condition,then,otherwise});
+    }finally{this.budget.conditionals--;}
+  }
+  matching(start){const subject=this.condition(),group=this.group('{'),arms=[];
+    for(const tokens of split(group.children)){
+      const arrow=tokens.findIndex(token=>word(token)==='=>');if(arrow<1)throw new TypeError('Source match arm lacks its original pattern/arrow');
+      const pattern=tokens.slice(0,arrow),guardAt=pattern.findIndex(token=>word(token)==='if');
+      arms.push({pattern:this.pattern(guardAt<0?pattern:pattern.slice(0,guardAt)),guard:guardAt<0?null:this.expressionAll(pattern.slice(guardAt+1)),value:this.expressionAll(tokens.slice(arrow+1)),sourceSpan:range(tokens)});
+    }
+    if(!arms.length)throw new TypeError('Source control match has no original arms');return this.node('match',start,{subject,arms,exhaustivenessVerified:false});
+  }
+  expression(minimum=0){if(++this.budget.expressions>64){this.budget.expressions--;throw new TypeError('Source control expression depth exceeds its finite bound');}
+    try{const start=this.at;let value=this.primary();
+      for(;;){const operation=word(this.current()),level=precedence[operation];if(level===undefined||level<minimum)break;this.at++;value=this.node('binary',start,{operation,left:value,right:this.expression(level+1),operatorOwnerResolved:false});}
+      return value;
+    }finally{this.budget.expressions--;}
+  }
+  primary(){const start=this.at,node=this.nodes[this.at++],raw=word(node);let value;
+    if(['unsafe','async','move','yield','await','const','ref'].includes(raw))throw new TypeError('Source control modifier requires additional source grammar: '+raw);
+    if(raw==='if')value=this.conditional(start);
+    else if(raw==='match')value=this.matching(start);
+    else if(raw==='while'){const condition=this.condition(),body=this.blockGroup();value=this.node('while',start,{condition,body,terminationVerified:false});}
+    else if(raw==='loop')value=this.node('loop',start,{body:this.blockGroup(),terminationVerified:false});
+    else if(raw==='for'){const beginning=this.at;while(this.at<this.nodes.length&&word(this.current())!=='in')this.at++;const pattern=this.pattern(this.nodes.slice(beginning,this.at));this.need('in');const iterable=this.condition(),body=this.blockGroup();value=this.node('for',start,{pattern,iterable,body,iteratorOwnerResolved:false});}
+    else if(raw==='let'){const beginning=this.at;while(this.at<this.nodes.length&&word(this.current())!=='=')this.at++;const pattern=this.pattern(this.nodes.slice(beginning,this.at));this.need('=');value=this.node('condition-let',start,{pattern,value:this.expression(3),chainBindingVerified:false});}
+    else if(['return','break','continue'].includes(raw)){const empty=this.at===this.nodes.length||[',',';'].includes(word(this.current()));value=this.node(raw,start,{value:empty?null:this.expression(),exitScopeVerified:false});}
+    else if(['!','-','*','&'].includes(raw)){const mutable=raw==='&'&&this.take('mut');value=this.node('unary',start,{operation:raw,mutable,value:this.expression(10),operatorOwnerResolved:false});}
+    else if(raw==='|'||raw==='||'){const beginning=this.at;if(raw==='|'){while(this.at<this.nodes.length&&word(this.current())!=='|')this.at++;this.need('|');}const parameters=raw==='||'?[]:this.nodes.slice(beginning,this.at-1);value=this.node('closure',start,{parameterTokens:parameters,body:this.expression(),captureSemanticsVerified:false});}
+    else if(node?.kind==='group'&&node.delimiter==='{')value=this.node('block-expression',start,{body:this.blockGroup(node)});
+    else if(node?.kind==='group'&&node.delimiter==='('){const parts=split(node.children),trailingComma=word(node.children.at(-1))===',';value=parts.length===1&&!trailingComma?this.expressionAll(parts[0]):this.node('tuple',start,{items:parts.map(part=>this.expressionAll(part)),trailingComma});}
+    else if(node?.kind==='group'&&node.delimiter==='[')value=this.node('array',start,{items:split(node.children).map(part=>this.expressionAll(part)),allocationVerified:false});
+    else if(raw==='true'||raw==='false'||['string','char','number'].includes(node?.type))value=this.node('literal',start,{sourceLiteralKind:raw==='true'||raw==='false'?'bool':node.type,raw,sourceLiteral:node});
+    else if(name(node)){const path=[raw];while(this.take('::')){if(!name(this.current()))throw new TypeError('Source control generic/qualified type arguments require additional source grammar');path.push(word(this.nodes[this.at++]));}
+      value=this.node('written-path',start,{path,ownerResolved:false});
+      if(this.take('!')){const arguments_=this.nodes[this.at++];if(arguments_?.kind!=='group')throw new TypeError('Source macro requires its original delimiter');value=this.node('opaque-macro',start,{path,arguments:arguments_,macroOwnerResolved:false,expansionVerified:false});}
+      else if(this.records&&this.current()?.delimiter==='{'){const group=this.group('{'),fields=split(group.children).map(tokens=>{
+        if(tokens.length===1&&name(tokens[0]))return {kind:'shorthand',name:word(tokens[0]),tokens};
+        if(name(tokens[0])&&word(tokens[1])===':')return {kind:'field',name:word(tokens[0]),value:this.expressionAll(tokens.slice(2)),tokens};
+        throw new TypeError('Source record field/update/attribute requires additional source grammar');
+      });value=this.node('record',start,{path,fields,layoutOwnerResolved:false});}
+    }else throw new TypeError('Source control prefix requires additional source grammar: '+String(raw));
+    for(;;){
+      if(this.current()?.delimiter==='('){const group=this.group('(');value=this.node('call',start,{callee:value,arguments:split(group.children).map(tokens=>this.expressionAll(tokens)),calleeOwnerResolved:false});}
+      else if(this.current()?.delimiter==='['){const group=this.group('[');value=this.node('index',start,{object:value,index:this.expressionAll(group.children),indexContractVerified:false});}
+      else if(this.take('.')){const field=this.nodes[this.at++];if(!name(field)&&!/^[0-9]+$/u.test(word(field)??''))throw new TypeError('Source control member requires an original field identifier');value=this.node('field',start,{object:value,name:word(field),fieldOwnerResolved:false});}
+      else if(this.take('?'))value=this.node('try',start,{value,residualOwnerResolved:false});
+      else break;
+    }
+    return value;
+  }
+  block(){const statements=[];let tail=null;
+    while(this.at<this.nodes.length){const start=this.at;
+      if(this.take('let')){
+        const beginning=this.at;while(this.at<this.nodes.length&&!['=',';'].includes(word(this.current())))this.at++;
+        const pattern=this.pattern(this.nodes.slice(beginning,this.at));this.need('=');const initializer=this.expression();let otherwise=null;
+        if(this.take('else'))otherwise=this.blockGroup();this.need(';');statements.push(this.node('let',start,{pattern,initializer,otherwise,initializerBeforeBinding:true,divergenceVerified:false}));continue;
+      }
+      const value=this.expression();
+      if(['=','+=','-=','*=','/=','%=','|=','&=','^='].includes(word(this.current()))){const operation=word(this.nodes[this.at++]),right=this.expression();this.need(';');statements.push(this.node('assign',start,{target:value,operation,value:right,placeOwnerResolved:false}));}
+      else if(this.take(';'))statements.push(this.node('expression-statement',start,{value}));
+      else if(this.at===this.nodes.length){tail=value;break;}
+      else if(['if','match','while','for','loop','block-expression'].includes(value.kind))statements.push(this.node('expression-statement',start,{value}));
+      else throw new TypeError('Source control expression is not followed by its original statement delimiter');
+    }
+    return {kind:'control-block',statements,tail};
+  }
+}
+function projectBody(bodyTree) {
+  const budget={cells:32000,expressions:0,conditionals:0};let ir=null,diagnostics=[];
+  try{ir={...new ControlParser(bodyTree.children,budget).block(),sourceSpan:bodyTree.span};}
+  catch(error){if(!(error instanceof TypeError))throw error;diagnostics=[{code:'ERR_BUILTIN_SOURCE_CONTROL_UNSUPPORTED',reason:error.message,sourceSpan:bodyTree.span}];}
+  return {ir,diagnostics};
+}
+function issue(value,privateFacts) {
+  const text=JSON.stringify(copyMetadata(value)),reparsed=JSON.parse(text);
+  if(metadataDigest(value)!==metadataDigest(reparsed))throw new TypeError('Original source control metadata roundtrip changed');
+  const result=freezeMacroTree({...reparsed,privateMetaRoundtrip:true,checkedMetaSha256:hash(text)});states.set(result,Object.freeze(privateFacts));return result;
+}
+export function compileSymbolicControlSyntax(source) {
+  const trees=originalMacroTrees(source);if(trees.length!==1||trees[0].delimiter!=='{')throw new TypeError('Source control input must be one complete original body');
+  const body=trees[0],projected=projectBody(body);
+  return issue({schema:'original-symbolic-control-syntax-v1',sourceSha256:hash(source),source,bodyTree:body,...projected,controlSyntaxProjected:projected.ir!==null,pinnedCompilerFunctionVerified:false,...flags},{inputKind:'caller-source-syntax',source});
+}
+export function compileBuiltinSourceControl(dataflow) {
+  if(!isFormatCallbackDataflow(dataflow))throw new TypeError('Builtin source control requires a private pinned original compiler function');
+  const {function:fn,bodyTree}=dataflow;
+  if(bodyTree.sourceSha256!==fn.bodySha256||bodyTree.span.start!==fn.bodySpan.start||bodyTree.span.end!==fn.bodySpan.end)throw new TypeError('Builtin source control body differs from its original function');
+  const projected=projectBody(bodyTree);
+  return issue({schema:'original-builtin-source-control-v1',sourcePath:dataflow.sourcePath,sourceSha256:dataflow.sourceSha256,function:{name:fn.name,span:fn.span,sha256:fn.sha256,signatureTokens:fn.signatureTokens,bodySpan:fn.bodySpan,bodySha256:fn.bodySha256},enclosingOriginalItem:dataflow.enclosingOriginalItem,bodyTree,...projected,controlSyntaxProjected:projected.ir!==null,pinnedCompilerFunctionVerified:true,...flags},{inputKind:'pinned-source-function',dataflow});
+}
+export const isBuiltinSourceControl=value=>!!value&&states.has(value)&&value.schema==='original-builtin-source-control-v1';
+export function builtinSourceControlFacts(value) {
+  const facts=states.get(value);if(!facts)throw new TypeError('Original source control is copied, unsealed or caller fabricated');return facts;
+}
