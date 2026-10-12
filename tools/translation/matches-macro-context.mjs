@@ -17,7 +17,7 @@ import {originalMethodMember} from './impl-resolver.mjs';
 import {originalMethodTransformFacts,originalMethodParserTokenFacts} from './source-method-transforms.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
 import {itemConfiguration,compilationProfile as normalizeProfile} from './cfg-profile.mjs';
-const contexts=new WeakMap(),immutableContexts=new WeakMap(),parsers=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
+const contexts=new WeakMap(),immutableContexts=new WeakMap(),parsers=new WeakMap(),issuedFrames=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
 let standardProfile=null;
 const mapEntries=Map.prototype.entries;
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
@@ -29,6 +29,26 @@ function immutableContext(context,facts){
   if(!issued||facts!==issued.facts||['modules','evidence','profile','compilationProfile'].some(key=>ownData(facts,key)!==issued[key]))throw new TypeError('Matches context immutable roots differ from their private issuance');
   return issued;
 }
+// Configure sites alone bind these original fields. The exposed frame remains
+// mutable so consumers cannot mistake its own recomputable digest for issuance.
+function recordParserFrame(parser,frame){
+  immutableContext(frame.context,frame.facts);
+  const fields=Object.freeze({...frame}),keys=Object.freeze(Reflect.ownKeys(fields));
+  const descriptors=Object.freeze(Object.fromEntries(keys.map(key=>[key,Object.freeze(Object.getOwnPropertyDescriptor(frame,key))])));
+  parsers.set(parser,frame);issuedFrames.set(frame,Object.freeze({parser,fields,keys,descriptors}));
+}
+function originalParserFrame(frame){
+  const issued=issuedFrames.get(frame);
+  if(!issued||parsers.get(issued.parser)!==frame||Object.getPrototypeOf(frame)!==Object.prototype)throw new TypeError('Matches parser frame differs from its private issuance');
+  const keys=Reflect.ownKeys(frame);
+  if(keys.length!==issued.keys.length||keys.some(key=>!issued.keys.includes(key))||issued.keys.some(key=>{
+    const actual=Object.getOwnPropertyDescriptor(frame,key),expected=issued.descriptors[key];
+    return !actual||!('value'in actual)||actual.value!==expected.value||actual.enumerable!==expected.enumerable||actual.writable!==expected.writable||actual.configurable!==expected.configurable;
+  }))throw new TypeError('Matches parser frame fields differ from their private issuance');
+  immutableContext(issued.fields.context,issued.fields.facts);
+  return frame;
+}
+function parserFrame(parser){const frame=parsers.get(parser);return frame?originalParserFrame(frame):null;}
 function originalOwnerHashes(issued,module,scope){
   if(!issued.moduleHashes.has(module)||!issued.scopes.has(scope))throw new TypeError('Matches owner hashes require the actual issued module and scope');
   let scopeHashes=issued.scopeHashes.get(scope);
@@ -65,6 +85,7 @@ export function standaloneMatchesMacroContext(source,{file='src/module.rs',compi
 export function configureMatchesMacroParser(parser,context,{file,modulePath=[],offset=0,allowEmptyMainCarrier=false}={}) {
   const facts=contexts.get(context),captured=capturedRustTokenSource(parser.cursor.tokens);
   if(!facts||!captured||!Number.isSafeInteger(offset)||offset<0)throw new TypeError('Matches parser requires private original context and tokenizer source');
+  immutableContext(context,facts);
   const module=facts.modules.find(module=>module.file===file&&JSON.stringify(module.path)===JSON.stringify(modulePath));
   if(!module)throw new TypeError('Matches parser module is outside its original context');
   let source=captured.source;
@@ -76,10 +97,10 @@ export function configureMatchesMacroParser(parser,context,{file,modulePath=[],o
   // The legacy use parser may update its working alias table. The genuine
   // namespace maps consumed by source resolution stay separate and sealed.
   parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));
-  parsers.set(parser,{context,facts,module,offset,sourceLength:source.length,captured,tokens:parser.cursor.tokens,namespaceDigest:namespaceDigest(parser)});return parser;
+  recordParserFrame(parser,{context,facts,module,offset,sourceLength:source.length,captured,tokens:parser.cursor.tokens,namespaceDigest:namespaceDigest(parser)});return parser;
 }
 export function matchesParserFacts(parser) {
-  const facts=parsers.get(parser);
+  const facts=parserFrame(parser);
   const captured=facts?.methodTransform?originalMethodParserTokenFacts(facts.tokens):facts?capturedRustTokenSource(facts.tokens):null;
   if(!facts||parser.cursor.tokens!==facts.tokens||(facts.methodTransform?captured.proof!==facts.methodTransform:captured!==facts.captured)||JSON.stringify(normalizeProfile(parser.compilationProfile??null))!==JSON.stringify(facts.facts.compilationProfile)||JSON.stringify(parser.modulePath??[])!==JSON.stringify(facts.module.path)||namespaceDigest(parser)!==facts.namespaceDigest)throw new TypeError('Matches parser lost its original private source association');
   return facts;
@@ -101,12 +122,12 @@ function resolvedMacroPath(state,segments) {
   return {path,binding:first};
 }
 export function sourceMatchesCandidate(parser,segments) {
-  const state=parsers.get(parser);if(!state)return segments.at(-1)==='matches';
+  const state=parserFrame(parser);if(!state)return segments.at(-1)==='matches';
   const resolved=resolvedMacroPath(state,segments).path;
   return segments.at(-1)===state.facts.profile.name||resolved&&['std','core'].some(root=>resolved.join('::')===root+'::'+state.facts.profile.name);
 }
 export function originalMatchesImport(parser,segments) {
-  const state=parsers.get(parser);if(!state||segments.length<2)return false;
+  const state=parserFrame(parser);if(!state||segments.length<2)return false;
   const resolved=resolvedMacroPath(state,segments).path;
   return !!resolved&&['std','core'].some(root=>resolved.join('::')===root+'::'+state.facts.profile.name);
 }
@@ -126,13 +147,14 @@ export function proveOriginalMatchesCall(parser,{segments,start,end}={}) {
   if(segments.length===1&&ancestors.some(parent=>parent!==scope&&parent.bindings.some(binding=>binding.namespace==='macro'&&binding.name===segments[0]&&binding.target?.join('::')!==resolved.join('::'))))throw new TypeError('Matches call has an original ancestor textual macro shadow');
   if(segments.length>1&&!binding&&ancestors.some(parent=>parent.bindings.some(binding=>binding.namespace==='type'&&binding.name===segments[0]&&binding.target?.join('::')!==segments[0])))throw new TypeError('Matches qualified root is shadowed in original source');
   const proof=freezeMacroTree({schema:'original-standard-matches-call-v1',file:module.file,modulePath:module.path,sourceViewDigest:module.sourceView.digest,sourceScopeSha256:hash(JSON.stringify(scope)),compilationProfile:facts.compilationProfile,originalSpan:{start:start+state.offset,end:end+state.offset},sourceSha256:hash(module.source),originalInvocation:source,originalInvocationSha256:hash(source),written:segments,resolved,profileDigest:facts.profile.digest,macroOwnerResolved:true,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false,constEligible:false});
-  calls.set(proof,{state,start,end});return proof;
+  calls.set(proof,Object.freeze({state,start,end}));return proof;
 }
-export function originalMatchesCallFacts(proof){const facts=calls.get(proof);if(!facts)throw new TypeError('Unsealed original matches call');return facts;}
+export function originalMatchesCallFacts(proof){const facts=calls.get(proof);if(!facts)throw new TypeError('Unsealed original matches call');originalParserFrame(facts.state);return facts;}
 
 export function configureMatchesParserFromSourceScope(parser,sourceScope) {
   const context=sourceScope?.matchesMacroContext;if(!isMatchesMacroContext(context))throw new TypeError('Source-scope matches context is absent or not genuine');
-  const facts=contexts.get(context),module=facts.modules.find(module=>module.file===sourceScope.source&&JSON.stringify(module.path)===JSON.stringify(sourceScope.module));
+  const facts=contexts.get(context);immutableContext(context,facts);
+  const module=facts.modules.find(module=>module.file===sourceScope.source&&JSON.stringify(module.path)===JSON.stringify(sourceScope.module));
   if(!module||module.sourceView!==sourceScope.sourceView||JSON.stringify(normalizeProfile(sourceScope.compilationProfile))!==JSON.stringify(facts.compilationProfile)||sourceScope.configurationCondition!==(module.configurationCondition??module.sourceView.configurationCondition))throw new TypeError('Source-scope matches context differs from its original view/profile/condition');
   const captured=capturedRustTokenSource(parser.cursor.tokens),suffix='\nfn main() {}\n';
   if(!captured)throw new TypeError('Matches source scope has no original tokenizer');
@@ -184,6 +206,6 @@ export function configureMatchesMethodParser(parser,context,method) {
   if(!module||module.source!==captured.source||module.sourceView!==captured.sourceView||JSON.stringify(normalizeProfile(captured.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Matches method parser changed its full original view/profile');
   configureParserSourceScope(parser,namespace.scope,namespace.scopes,namespace.modulePath);parser.modulePath=[...namespace.modulePath];
   parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));
-  parsers.set(parser,{context,facts,module,offset:0,sourceLength:module.source.length,captured,tokens:parser.cursor.tokens,methodTransform:captured.proof,namespaceDigest:namespaceDigest(parser)});
+  recordParserFrame(parser,{context,facts,module,offset:0,sourceLength:module.source.length,captured,tokens:parser.cursor.tokens,methodTransform:captured.proof,namespaceDigest:namespaceDigest(parser)});
   return parser;
 }
