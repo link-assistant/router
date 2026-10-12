@@ -3,6 +3,7 @@
 import {copyMetadata,metadataDigest,ownData} from './extensions/source-links.mjs';
 import {types} from 'node:util';
 import {typeError} from './vendor/meta-language/translation/diagnostics.js';
+import {originalProjectMethodFieldEvidence} from './project.mjs';
 import {originalMethodParsedFacts} from './source-method-parser.mjs';
 import {originalMethodTransformFacts} from './source-method-transforms.mjs';
 import {originalMethodLowering} from './impl-resolver.mjs';
@@ -40,11 +41,13 @@ function relocate(value,offset) {
   return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,opaque.has(key)?item:key==='span'&&item?{start:item.start+offset,end:item.end+offset}:relocate(item,offset)]));
 }
 export function originalMethodSemantic(parsed,options={}) {
-  const supplied=originalMetadataCopy(options);
-  if(Object.keys(supplied).some(key=>key!=='fieldCertificates'))throw new TypeError('Original method semantic options do not supply source/ownership authority');
-  const fieldCertificates=supplied.fieldCertificates??[];
-  if(!Array.isArray(fieldCertificates))throw new TypeError('Original method field certificates require an actual data array');
+  if(!options||typeof options!=='object'||types.isProxy(options)||![Object.prototype,null].includes(Object.getPrototypeOf(options)))throw new TypeError('Original method semantic options require non-proxy ordinary metadata');
+  const descriptors=Object.getOwnPropertyDescriptors(options);
+  for(const key of Reflect.ownKeys(descriptors))if(typeof key!=='string'||!Object.hasOwn(descriptors[key],'value')||!descriptors[key].enumerable)throw new TypeError('Original method semantic options cannot contain accessors, hidden or symbol properties');
+  if(Object.keys(descriptors).some(key=>key!=='fieldEvidence'))throw new TypeError('Original method semantic options do not accept caller fieldCertificates or ownership authority');
   const capture=originalMethodParsedFacts(parsed),state=originalMethodTransformFacts(capture.transform),lowering=originalMethodLowering(state.lowered),surface=copyMetadata(capture.entry);
+  const fieldEvidence=descriptors.fieldEvidence?.value;
+  const fieldCertificates=fieldEvidence===undefined?[]:originalProjectMethodFieldEvidence(fieldEvidence,capture.transform).fields;
   const qualifiedType=state.lowered.typePath;
   surface.name=`ml_impl_${Buffer.from(qualifiedType.join('.')).toString('hex')}_${Buffer.from(state.method.name).toString('hex')}`;
   surface.generated='router-checked-inherent-method';
@@ -58,11 +61,12 @@ export function originalMethodSemantic(parsed,options={}) {
   }else if(fieldCertificates.length)throw new TypeError('Original static/consuming method has no shared receiver field annotations');
   surface.impl={type:{kind:'named',path:[...qualifiedType]},method:state.method.name,receiver:state.method.receiver,receiverName:state.lowered.receiverName,...(state.lowered.sharedReceiverSource?{sharedReceiverSource:copyMetadata(state.lowered.sharedReceiverSource)}:{}),...(lowering.copyCertificate?{copyCertificate:originalMetadataCopy(lowering.copyCertificate)}:{}),rewrites:copyMetadata(state.lowered.rewrites),assumptions:copyMetadata(state.lowered.assumptions)};
   surface.sourceMethodProof=freezeMacroTree({schema:'original-method-semantic-source-v1',parse:parsed.proof,originalTokenTransformVerified:true,originalHostParseVerified:true,checkedSourceAssociation:false,copyAuthority:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
-  semantics.set(surface,Object.freeze({parsed,transform:capture.transform,offset:0,relocated:false,digest:metadataDigest(surface)}));return surface;
+  semantics.set(surface,Object.freeze({parsed,transform:capture.transform,fieldEvidence,offset:0,relocated:false,digest:metadataDigest(surface)}));return surface;
 }
 export function originalMethodSemanticFacts(surface) {
   const state=semantics.get(surface);if(!state)throw new TypeError('Original method semantic source is copied, unsealed or caller fabricated');
   originalMethodParsedFacts(state.parsed);originalMethodTransformFacts(state.transform);
+  if(state.fieldEvidence!==undefined)originalProjectMethodFieldEvidence(state.fieldEvidence,state.transform);
   if(metadataDigest(surface)!==state.digest)throw new TypeError('Original method semantic body/signature/decorations changed');
   return state;
 }

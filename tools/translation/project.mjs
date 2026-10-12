@@ -19,10 +19,11 @@ import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
 import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './translate.mjs';
-import {linkProjectDeclaration,linkProjectMethodDeclaration} from './extensions/source-links.mjs';
-import {createOriginalMethodTokenTransform} from './source-method-transforms.mjs';
+import {linkProjectDeclaration,linkProjectMethodDeclaration,copyMetadata,metadataDigest} from './extensions/source-links.mjs';
+import {createOriginalMethodTokenTransform,originalMethodTransformFacts} from './source-method-transforms.mjs';
 import {parseOriginalMethodTransform,originalMethodParsedFacts} from './source-method-parser.mjs';
 import {originalMethodSemantic,relocateOriginalMethodSemantic} from './source-method-admission.mjs';
+import {freezeMacroTree} from './macro-token-trees.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
 import {createToolAttributeContext} from './tool-attributes.mjs';
@@ -30,6 +31,38 @@ import {configureToolAttributes} from './tool-attribute-layout.mjs';
 import {actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createJsonMacroContext,configureJsonMacroParser} from './json-macro-context.mjs';
 import {createMatchesMacroContext,configureMatchesMacroParser,originalMatchesNamespaceBindings,OriginalMethodOwnerUnproved} from './matches-macro-context.mjs';
+
+// Only the actual original-source project pipeline can issue this identity.
+// Public JSON digests/certificates are integrity data, never its authority.
+const methodFieldEvidence=new WeakMap(),checkedMethodFieldOrigins=new WeakMap();
+function issueMethodFieldEvidence(parsed,fields) {
+  const capture=originalMethodParsedFacts(parsed),transform=capture.transform;
+  originalMethodTransformFacts(transform);copyMetadata(fields);
+  const clone=node=>{
+    if(!node||typeof node!=='object')return node;
+    const descriptors=Object.getOwnPropertyDescriptors(node);
+    if(Array.isArray(node))return Array.from({length:descriptors.length.value},(_,index)=>clone(descriptors[String(index)].value));
+    return Object.fromEntries(Object.keys(descriptors).map(key=>[key,clone(descriptors[key].value)]));
+  };
+  const frozenFields=freezeMacroTree(clone(fields)),token=Object.freeze({schema:'original-project-method-field-evidence-v1'});
+  const facts=Object.freeze({token,transform,fields:frozenFields});
+  methodFieldEvidence.set(token,Object.freeze({parsed,transform,facts,fieldDigest:metadataDigest(frozenFields),parsedDigest:capture.digest}));return token;
+}
+// Read-only real facade inspection supports source revalidation. Cloned
+// facades, fake tokens and proxy/getter objects fail private identity first.
+export function originalProjectMethodFieldEvidence(value,transform) {
+  if(transform===undefined){
+    const origin=checkedMethodFieldOrigins.get(value);
+    if(!origin)throw new TypeError('Original project method field facade is copied, unissued or caller fabricated');
+    return originalProjectMethodFieldEvidence(origin.token,origin.transform);
+  }
+  const state=methodFieldEvidence.get(value);
+  if(!state)throw new TypeError('Original project method field evidence is copied, unissued or caller fabricated');
+  if(state.transform!==transform)throw new TypeError('Original project method field evidence belongs to another genuine transform');
+  const capture=originalMethodParsedFacts(state.parsed);originalMethodTransformFacts(transform);
+  if(capture.transform!==transform||capture.digest!==state.parsedDigest||metadataDigest(state.facts.fields)!==state.fieldDigest)throw new TypeError('Original project method field source/signature/prepass evidence changed');
+  return state.facts;
+}
 
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
 const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'||key==='sourceParameterPatterns'||key==='sourceParameterPattern'||key==='sourcePattern'||key==='constantEvaluationProof'||key==='deriveNamespaceProof'||key==='toolAttributeProof'||key==='jsonMacroProof'||key==='sourceMatchesProof'||key==='pinnedStandardBodyProof'||key==='sourceMethodProof'?value:key === 'span' && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
@@ -238,7 +271,7 @@ export function translateProject(options) {
       }
     }
   }
-  const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes);
+  const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes),fieldEvidenceBySurface=new Map();
   for (const module of graph.modules) {
     if(module.configurationCondition!=='active')continue;
     const extracted = extractImplDeclarations(module.source, {sourcePath:module.file,modulePath:module.path,sourceView:module.sourceView,compilationProfile:module.compilationProfile});
@@ -271,7 +304,8 @@ export function translateProject(options) {
           parser.attributes(); parser.visibility();
           }
           const qualifier=!originalParsed&&parser.cursor.is('const')?parser.cursor.next():null,fn=originalParsed?.entry??parser.fn(module.path);
-          const surface = originalParsed?originalMethodSemantic(originalParsed,{fieldCertificates:lowered.sharedReceiverSource?copyEvidence.fieldCertificates?.(qualifiedType,module,method.receiverSpan)??[]:[]}):{...fn,...(qualifier?{constFunction:true,span:{...fn.span,start:qualifier.start}}:{})};
+          const fieldEvidence=originalParsed?issueMethodFieldEvidence(originalParsed,lowered.sharedReceiverSource?copyEvidence.fieldCertificates?.(qualifiedType,module,method.receiverSpan)??[]:[]):null;
+          const surface = originalParsed?originalMethodSemantic(originalParsed,{fieldEvidence}):{...fn,...(qualifier?{constFunction:true,span:{...fn.span,start:qualifier.start}}:{})};
           if (!parser.cursor.atEnd()) throw new TranslationError('syntax','unconsumed inherent method tokens',parser.cursor.peek());
           if(!originalParsed){
           surface.name = `ml_impl_${Buffer.from(qualifiedType.join('.')).toString('hex')}_${Buffer.from(method.name).toString('hex')}`;
@@ -285,6 +319,7 @@ export function translateProject(options) {
           }
           const globalSpan = {start:module.offset+method.span.start,end:module.offset+method.span.end};
           const semantic=originalParsed?relocateOriginalMethodSemantic(surface,module.offset):relocate(surface,module.offset);
+          if(fieldEvidence)fieldEvidenceBySurface.set(semantic,fieldEvidence);
           if(!originalParsed&&certificate)semantic.impl.copyCertificate=certificate;
           if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
           declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic});
@@ -353,7 +388,9 @@ export function translateProject(options) {
   // not append a synthetic Rust wrapper or count a method as a source fn.
   const checkedMethodDeclarations=methods.map(entry=>{
     const own=checked.declarations.get(entry.name),name=entry.surface.impl.method;
-    return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name,term:'method',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:structuredClone({params:own.params,ret:own.ret}),lower:lowerDeclaration(entry,name)});
+    const facade=Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name,term:'method',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,name)});
+    const token=fieldEvidenceBySurface.get(entry.surface);if(token)checkedMethodFieldOrigins.set(facade,originalProjectMethodFieldEvidence(token,methodFieldEvidence.get(token).transform));
+    return facade;
   });
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, sourceScopes };
 }

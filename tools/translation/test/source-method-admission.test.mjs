@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {captureSourceModuleViews} from '../source-module-views.mjs';
-import {extractImplDeclarations,lowerSharedMethodTokens,certifyCopyType,validCopyCertificate} from '../impl-resolver.mjs';
+import {extractImplDeclarations,lowerSharedMethodTokens} from '../impl-resolver.mjs';
 import {createMatchesMacroContext} from '../matches-macro-context.mjs';
 import {createOriginalMethodTokenTransform} from '../source-method-transforms.mjs';
 import {parseOriginalMethodTransform} from '../source-method-parser.mjs';
@@ -20,10 +20,7 @@ test('only the fixed generic ABI decorations and one source relocation attach to
   assert.equal(semantic.span.start,surface.span.start+100);assert.equal(semantic.sourceMethodProof,surface.sourceMethodProof);
   assert.equal(originalMethodSemanticFacts(semantic).offset,100);validateOriginalMethodAssociations({items:[{k:'module',name:'child',items:[semantic]}]});
   assert.throws(()=>relocateOriginalMethodSemantic(semantic,100),/one exact/);assert.equal(surface.sourceMethodProof.copyAuthority,false);
-  const type={kind:'fixed',bits:8,signed:false,rustPrimitiveName:'u8'},certificate=certifyCopyType(type,{declarations:new Map(),implementations:[],macroProvenance:{shadowedNames:[],importedNames:[],unresolvedImportScope:false}});
-  assert.equal(validCopyCertificate(certificate,type),true);
-  const annotated=originalMethodSemantic(row.parsed,{fieldCertificates:[{ctor:'Counter',field:'value',copyCertificate:certificate}]}),moved=relocateOriginalMethodSemantic(annotated,120);
-  for(const value of [annotated,moved]){const evidence=value.params[0].type.rustReference.pointee.rustSharedFieldCopies[0].copyCertificate;assert.equal(JSON.stringify(evidence),JSON.stringify(certificate));assert.equal(validCopyCertificate(evidence,type),true);}
+  assert.throws(()=>originalMethodSemantic(row.parsed,{fieldCertificates:[]}),/caller fieldCertificates/);
 });
 test('copied resealed and body substituted semantic methods cannot mint parsed source association',()=>{
   const row=fixture('struct Counter{value:u8}impl Counter{fn read(&self)->u8{self.value}}'),surface=originalMethodSemantic(row.parsed),copy=structuredClone(surface);
