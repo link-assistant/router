@@ -13,7 +13,10 @@ these extra proof controls. The frozen repair passed 182/183 in both engines, in
 while-let cases. Its only failure was an old unsupported expectation for a
 valid tuple let-else; that unchanged Rust body now has a positive runtime
 fixture with unrelated error payload and malformed-ABI controls. The complete
-184-case paired final retry remains UNRUN.
+184-case final pair passed in Node and Bun at frozen 20eddea9c, including
+strict TypeScript execution. All six full raw logs, source input manifests,
+harnesses, failure inventories and resource receipts are preserved losslessly
+in the verified compact archive.
 Mutable borrows, owned aggregate bindings,
 stored cursors, unproved Drop semantics, let chains and labelled/value controls
 retain their existing refusals. No producer, corpus gain or full parity is claimed.

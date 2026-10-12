@@ -19,5 +19,8 @@ while-let cases and proof controls passed. The only failure was an older
 negative expectation for a valid Result tuple let-else, now supported by the
 generic selected projection. That unchanged original Rust fixture now has
 explicit JS/strict-TS success, error-variant and malformed-ABI controls. The
-complete twenty-file 184-case final retry remains UNRUN. No producer,
+complete twenty-file 184-case final pair passed in both Node and Bun at
+20eddea9c, including strict TypeScript execution. All initial/retry/final raw
+logs and source identities are preserved in the compact focused evidence
+archive. This does not establish a full gate or corpus gain. No producer,
 corpus gain, const authority or complete namespace/trait/runtime parity is claimed.
