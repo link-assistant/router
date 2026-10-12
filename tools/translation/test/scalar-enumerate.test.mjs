@@ -72,4 +72,14 @@ test('full original source pins and evaluation receipts survive meta round trips
   requireScalarEnumerate(operation,rustFixedType('usize'));
   const forged=structuredClone(operation);forged.sourceIteratorEnumerate.evaluationOrder.reverse();
   assert.throws(()=>requireScalarEnumerate(forged,rustFixedType('usize')),/missing actual checked/u);
+  for(const mutate of [
+    node=>{node.sourceIteratorEnumerate.namespaceComplete=true;},
+    node=>{node.sourceIteratorEnumerate.advancedMethodsComplete=true;},
+    node=>{node.sourceIteratorEnumerate.indexType.rustPrimitiveName='u64';},
+    node=>{const item=node.sourceIteratorEnumerate.itemType;item.rustReference={kind:'shared',pointee:structuredClone(item)};},
+    node=>{node.sourceIteratorEnumerate.tupleType.patternOwnershipRefusal='borrowed tuple';},
+  ]){
+    const altered=structuredClone(operation);mutate(altered);
+    assert.throws(()=>requireScalarEnumerate(altered,rustFixedType('usize')),/missing actual checked/u);
+  }
 });

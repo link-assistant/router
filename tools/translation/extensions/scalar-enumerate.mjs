@@ -3,7 +3,7 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
-import {sameType} from '../checked-types.mjs';
+import {isDeepStrictEqual} from 'node:util';
 import {unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 
 const root=new URL('../source-profiles/scalar-enumerate/',import.meta.url);
@@ -37,5 +37,5 @@ export function checkedScalarEnumerate(checker,node,object,indexType){
 
 export function requireScalarEnumerate(node,indexType){
   const receipt=node.sourceIteratorEnumerate;
-  if(node.op!=='enumerate'||node.object?.type?.kind!=='routerIterator'||node.args.length!==0||node.constEligible!==false||receipt?.profile!==manifest.profile||receipt.operation!=='next'||receipt.tupleConstructor!=='Tuple'||!sameType(receipt.indexType,indexType)||receipt.indexType.rustPrimitiveName!=='usize'||receipt.indexType.rustReference||!sameType(receipt.itemType,node.object.type.element)||!sameType(receipt.tupleType,node.type.element)||JSON.stringify(receipt.sourceInputs)!==JSON.stringify(manifest.sources.map(({url,sha256})=>({url,sha256})))||JSON.stringify(receipt.evaluationOrder)!==JSON.stringify(manifest.evaluationOrder))throw new Error('missing actual checked scalar Enumerate next profile');
+  if(node.op!=='enumerate'||node.object?.type?.kind!=='routerIterator'||node.args.length!==0||node.constEligible!==false||receipt?.profile!==manifest.profile||receipt.operation!=='next'||receipt.tupleConstructor!=='Tuple'||receipt.advancedMethodsComplete!==false||receipt.namespaceComplete!==false||!isDeepStrictEqual(receipt.indexType,indexType)||receipt.indexType.rustPrimitiveName!=='usize'||receipt.indexType.rustReference||!isDeepStrictEqual(receipt.itemType,node.object.type.element)||!isDeepStrictEqual(receipt.tupleType,node.type.element)||JSON.stringify(receipt.sourceInputs)!==JSON.stringify(manifest.sources.map(({url,sha256})=>({url,sha256})))||JSON.stringify(receipt.evaluationOrder)!==JSON.stringify(manifest.evaluationOrder))throw new Error('missing actual checked scalar Enumerate next profile');
 }
