@@ -52,7 +52,12 @@ export function withNamedLifetimeParser(Base) {return class extends Base {
     const depth=this.referenceTypeDepth??0,ownershipDepth=this.ownershipReferenceDepth??0;
     if(depth>=32)throw unsupported('shared reference type nesting','exceeds the checked depth bound',first);
     let pointee;
-    if(c.is('str')) {c.next();pointee=STRING;}
+    if(c.is('str')) {
+      // This shortcut bypasses the ordinary ownership parser. Resolve the
+      // actual type namespace before granting primitive string semantics.
+      if(typeof this.builtinShadow!=='function'||this.builtinShadow('str',this.modulePath))throw unsupported('shadowed borrowed str type','requires actual standard primitive identity in the source type namespace',range(first,c.peek()));
+      c.next();pointee=STRING;
+    }
     else {
       this.referenceTypeDepth=depth+1;this.ownershipReferenceDepth=ownershipDepth+1;
       try {pointee=this.type();}

@@ -71,6 +71,25 @@ test('undeclared names bounds generics mutation and forged syntax retain refusal
   assert.throws(()=>checkProgram(surface),/source capture|source binder|source function binder/);
 });
 
+test('named str borrows require primitive type identity despite nominal imports or unknown scopes',()=>{
+  for(const prefix of [
+    'pub struct str{pub value:u8}',
+    'mod owner{pub struct Kind{pub value:u8}} use owner::Kind as str;',
+    'use unknown::str;',
+    'use unknown::*;',
+  ]) {
+    const source=prefix+" pub fn bad<'a>(value:&'a str)->&'a str{value}",result=project(source);
+    assert.equal(result.meta.executable.some(item=>item.name==='bad'),false,source);
+    assert.ok(result.meta.refused.some(item=>item.name==='bad'&&/shadowed borrowed str type/.test(item.message)),source);
+  }
+});
+
+test('value-only str names preserve actual primitive named string borrows',{timeout:30000},async()=>{
+  const result=project("pub fn str()->u8{7} pub fn echo<'a>(value:&'a str)->&'a str{value}");
+  assert.deepEqual(result.meta.refused,[]);
+  await verifyCohortTargets(result,api=>{assert.equal(api.str(),7n);assert.equal(api.echo('Ω😀'),'Ω😀');});
+});
+
 test('original OpenAI model function retains its complete named lifetime syntax',()=>{
   const source=readFileSync(new URL('../../../src/proxy_openai_resource.rs',import.meta.url),'utf8');
   assert.equal(createHash('sha256').update(source).digest('hex'),ORIGINAL_SOURCE_SHA);
