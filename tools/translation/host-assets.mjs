@@ -1,3 +1,4 @@
+import {jsonRetentionRuntimeAssets} from './json-retention-runtime-assets.mjs';
 import {readFileSync} from 'node:fs';
 import {hostData,HostChecker,HOST_CONTRACTS} from './extensions/host-contracts.mjs';
 import {typeScriptAliases,typeScriptType} from './type-layout.mjs';
@@ -59,5 +60,6 @@ ${['checked_add','checked_sub','checked_mul','saturating_add','saturating_sub','
     try{files.set(file,readFileSync(new URL('./extensions/'+file,import.meta.url),'utf8'));}
     catch(error){if(error.code!=='ENOENT')throw error;}
   }
+  for(const [path,content] of jsonRetentionRuntimeAssets())files.set(path,content);
   return files;
 }
