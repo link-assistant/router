@@ -15,3 +15,9 @@ test('serialized arithmetic fragments carry source evidence and cannot manufactu
   const program=compileArithmeticSourceFragments('fn high(x:u64)->u64{x>>1}',['high']);assert.equal(isArithmeticSourceFragments(program),true);assert.equal(isArithmeticSourceFragments(JSON.parse(JSON.stringify(program))),false);assert.throws(()=>projectArithmeticSource(JSON.parse(JSON.stringify(program)),'high',[2n]),/private source/);
   const result=projectArithmeticSource(program,'high',[2n]);assert.equal(result.value,1n);assert.equal(result.projectionOnly,true);assert.equal(result.parseAdmission,false);assert.equal(result.sourceBehaviorFidelityVerified,false);
 });
+
+test('actual duplicate source owners refuse; singleton tuple punctuation survives private meta roundtrip',()=>{
+  assert.throws(()=>compileArithmeticSourceFragments('fn a(x:u64)->u64{x} fn a(x:u64)->u64{x+1}',['a']),/ambiguous/);
+  const program=compileArithmeticSourceFragments('fn one(x:u64)->(u64,){(x,)}',['one']);assert.deepEqual(projectArithmeticSource(program,'one',[3n]).value,[3n]);assert.equal(program.privateMetaRoundtrip,true);assert.match(program.checkedMetaSha256,/^[0-9a-f]{64}$/u);
+  assert.throws(()=>compileArithmeticSourceFragments('fn one(x:u64)->(u64,){(x,,)}',['one']),/empty separated/);
+});

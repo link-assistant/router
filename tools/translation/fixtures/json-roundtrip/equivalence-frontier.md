@@ -168,3 +168,14 @@ allocation/abort and custom architecture/compiler configuration. The private
 source wrapper cannot be cloned to grant authority. It provides actual source
 recurrence progress and independently stated mathematical outputs, without
 authorizing the parser or claiming production Router function execution.
+
+The following unrun extension mechanically selects13 original functions, adding
+small::mul/normalize/iadd_impl/iadd, scalar::add/iadd and large::iadd_impl/long_mul.
+Generic source syntax now retains vector/slice indexing, tuple/ref loop patterns,
+iter/zip/enumerate, while/else and compound assignments. The grade-school body
+and its scalar/offset-carry recurrences are original-source IR, not a rewritten
+numeric kernel. Two additional authored cases state complete product and carry
+outputs independently; the original source functions are not yet executed.
+The sequence model uses at most128 entries and a bounded32-bit index projection;
+physical usize, Vec/iterator/Option owners, borrow aliasing/Drop and allocation
+are not certified. Whole uneven/pow5 dispatch remains a separate source-frontier.

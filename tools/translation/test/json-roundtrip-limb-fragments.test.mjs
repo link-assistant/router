@@ -7,7 +7,7 @@ import {compilePinnedJsonLimbFragments,isPinnedJsonLimbFragments,projectPinnedJs
 const root=new URL('../../../',import.meta.url),dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),project=(proof,path,args,bits=32)=>projectPinnedJsonLimbFragment(proof,path,args,bits);
 test('original scalar, mutable scalar loop and hi64 function spans become serializable source-derived IR',()=>{
   const input=dependencies(),proof=compilePinnedJsonLimbFragments(input),source=jsonMacroOriginalSource(input,'serde_json','src/lexical/math.rs');
-  assert.equal(isPinnedJsonLimbFragments(proof),true);assert.equal(proof.program.functions.length,5);assert.doesNotThrow(()=>JSON.stringify(proof.program));
+  assert.equal(isPinnedJsonLimbFragments(proof),true);assert.equal(proof.program.functions.length,13);assert.doesNotThrow(()=>JSON.stringify(proof.program));
   for(const fn of proof.program.functions){assert.equal(createHash('sha256').update(source.source.slice(fn.span.start,fn.span.end)).digest('hex'),fn.sha256);assert.equal(source.source.slice(fn.bodySpan.start,fn.bodySpan.end).startsWith('{'),true);}
   const loop=proof.program.functions.find(fn=>fn.name==='small::imul');assert.equal(loop.ir.statements.some(statement=>statement.kind==='for'),true);
   assert.equal(loop.ir.statements.some(statement=>statement.kind==='if'),true);
@@ -39,4 +39,19 @@ test('source model seals, scalar domains and descriptor guards cannot grant orig
   let reads=0;const vector=[1n];Object.defineProperty(vector,0,{get(){reads++;return 1n;}});assert.throws(()=>project(proof,'small::imul',[vector,1n]),/own scalar data/);assert.equal(reads,0);
   const proxy=new Proxy([1n],{get(){reads++;throw Error('read');}});assert.throws(()=>project(proof,'small::imul',[proxy,1n]),/vector domain/);assert.equal(reads,0);
   for(const key of ['sourceOwnerVerified','sourceLoopFidelityVerified','hi64StickyEquivalenceVerified','boundedDispatchVerified','parseAdmission','namespaceAuthority','applicationEffectCompleteness','runtimeParity'])assert.equal(proof[key],false,key);
+});
+
+test('original grade-school body uses emitted source slice/zip/enumerate/carry recurrences in both word models',()=>{
+  const proof=compilePinnedJsonLimbFragments(dependencies());for(const bits of [32,64]){const q=1n<<BigInt(bits),m=q-1n,result=project(proof,'large::long_mul',[[m,m],[m,m]],bits);assert.deepEqual(result.value,[1n,0n,q-2n,m]);
+    const value=result.value.reduceRight((n,limb)=>n*q+limb,0n);assert.equal(value,(q*q-1n)**2n);
+    assert.deepEqual(project(proof,'large::long_mul',[[1n,0n,1n],[1n,1n]],bits).value,[1n,1n,1n,1n]);
+    assert.throws(()=>project(proof,'large::long_mul',[[1n],[]],bits),/index bound/);
+  }
+});
+test('original offset-add loop preserves boolean carry propagation beyond an all-max prefix',()=>{
+  const proof=compilePinnedJsonLimbFragments(dependencies());for(const bits of [32,64]){const q=1n<<BigInt(bits),m=q-1n;
+    assert.deepEqual(project(proof,'small::iadd_impl',[[m,m],1n,0n],bits).mutations,[[0n,0n,1n]]);
+    assert.deepEqual(project(proof,'large::iadd_impl',[[m,m],[1n],0n],bits).mutations[0],[0n,0n,1n]);
+    assert.deepEqual(project(proof,'large::iadd_impl',[[1n],[m],1n],bits).mutations[0],[1n,m]);
+  }
 });
