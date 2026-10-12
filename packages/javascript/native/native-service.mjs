@@ -225,14 +225,20 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
       let exact = conversationDestination, resourceRecord;
       const bind = record => { if (!record) throw new ProtocolError('Native resource not found',404); if (exact && !sameDestination(exact,record.destination)) throw new ProtocolError('Resources do not share one provider account',409); exact = record.destination; };
       if (resource?.id) {
-        resourceRecord = await affinities.get(resource.namespace,owner,resource.id,resource.parent);
+        try { resourceRecord = await affinities.get(resource.namespace,owner,resource.id,resource.parent); }
+        catch(error) { if(responses?.lifecycle)return responseAffinityStorageError(error);throw error; }
         if (!resourceRecord && responses?.lifecycle) return responseNotFound();
         bind(resourceRecord);
         if (responses?.lifecycle && resourceRecord.destination.destination_kind === 'subscription' && (claims.account ?? 'primary') !== resourceRecord.destination.account) return responseNotFound();
       }
       if (resource?.parent) bind(await affinities.get(resource.namespace.replace(/\/(?:items|versions)$/,''),owner,resource.parent));
       for (const reference of responseReferences(responses,document)) {
-        const record = await affinities.get(reference.namespace,owner,reference.id);
+        let record;
+        try { record = await affinities.get(reference.namespace,owner,reference.id); }
+        catch(error) {
+          if(responses?.create)return responseAffinityStorageError(error);
+          return Response.json({error:{type:'api_error',message:'resource affinity is unavailable'}},{status:503});
+        }
         if (!record && reference.allowMissing) continue;
         if (!record) return responseReferenceMissing();
         if (responses?.create && record.destination.destination_kind === 'subscription' && (claims.account ?? 'primary') !== record.destination.account) return responseNotFound();

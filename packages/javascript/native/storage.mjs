@@ -122,19 +122,23 @@ export function encodeLino(value, level = 0) {
     return quote(value);
   }
   if (value === null || typeof value === 'boolean') return String(value);
+  if (typeof value === 'bigint') return value.toString(10);
   if (typeof value === 'number') { if (!Number.isSafeInteger(value)) throw new Error('Storage numbers must be safe integers'); return String(value); }
   const indent = '  '.repeat(level + 1), close = '  '.repeat(level);
   if (Array.isArray(value)) return value.length ? `(\n${value.map(v => indent + encodeLino(v, level + 1)).join('\n')}\n${close})` : '()';
   const entries = Object.entries(value);
   return `(\n${entries.map(([key, v]) => `${indent}${key} ${encodeLino(v, level + 1)}`).join('\n')}${entries.length ? '\n' : ''}${close})`;
 }
-export function decodeLino(text) {
+export function decodeLino(text, {integer,scalar:unquotedScalar,escaped,object:makeObject} = {}) {
   let i = 0;
+  const firstKeys=new WeakMap();
   const skip = () => { while (text[i] === ' ' || text[i] === '\t' || text[i] === '\r') i++; };
   function scalar(raw, quoted = false) {
     if (quoted) return raw;
+    if (unquotedScalar) return unquotedScalar(raw);
     if (raw === 'null') return null;
     if (raw === 'true' || raw === 'false') return raw === 'true';
+    if (integer && /^[+-]?\d+$/.test(raw)) return integer(raw);
     if (/^-?\d+$/.test(raw)) { const n = Number(raw); if (!Number.isSafeInteger(n)) throw new Error('Unsafe storage integer'); return n; }
     return raw;
   }
@@ -142,31 +146,58 @@ export function decodeLino(text) {
     skip();
     if (text[i] === '(') {
       i++; skip();
-      const rows = []; let row = [], multiline = false;
+      const rows = [], quotedRows=[],keyRows=[]; let row = [], quotedRow=[],keyRow=[], multiline = false;
       while (i < text.length && text[i] !== ')') {
-        if (text[i] === '\n') { multiline = true; if (row.length) rows.push(row); row = []; i++; skip(); continue; }
-        row.push(value()); skip();
+        if (text[i] === '\n') { multiline = true; if (row.length) {rows.push(row);quotedRows.push(quotedRow);keyRows.push(keyRow);} row = [];quotedRow=[];keyRow=[]; i++; skip(); continue; }
+        const start=i,quoted=['"',"'",'`'].includes(text[i]);quotedRow.push(quoted);
+        const child=value();row.push(child);
+        keyRow.push(quoted || text[start]==='(' ? typeof child==='string'?child:null : text.slice(start,i));
+        skip();
       }
       if (text[i++] !== ')') throw new Error('Unclosed Links Notation container');
-      if (row.length) rows.push(row);
-      if (rows.length === 1 && rows[0][0] === 'escaped' && rows[0].length === 2) {
+      if (row.length) {rows.push(row);quotedRows.push(quotedRow);keyRows.push(keyRow);}
+      if (rows.length === 1 && rows[0][0] === 'escaped' && rows[0].length === 2 && (!escaped || !quotedRows[0][0] && quotedRows[0][1])) {
+        if(escaped) {
+          const source=Buffer.from(rows[0][1],'utf8'),bytes=[];
+          for(let offset=0;offset<source.length;offset++) {
+            if(source[offset]!==37) {bytes.push(source[offset]);continue;}
+            const hex=source.subarray(offset+1,offset+3).toString('ascii');
+            if(hex.length!==2 || !/^(?:[0-9A-Fa-f]{2}|\+[0-9A-Fa-f])$/.test(hex))throw new Error('Invalid escaped UTF8 byte');
+            bytes.push(Number.parseInt(hex,16));offset+=2;
+          }
+          return escaped(Buffer.from(bytes));
+        }
         return rows[0][1].replace(/(?:%[0-9A-Fa-f]{2})+/g, run => Buffer.from(run.replaceAll('%', ''), 'hex').toString('utf8'));
       }
-      if (rows.length === 1 && rows[0][0] === 'o:') {
+      if(escaped && rows.length===1 && rows[0][0]==='base64' && rows[0].length===2 && !quotedRows[0][0] && quotedRows[0][1]) {
+        const payload=rows[0][1];
+        if(!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(payload))throw new Error('Invalid base64 string');
+        const bytes=Buffer.from(payload,'base64');
+        if(bytes.toString('base64')!==payload)throw new Error('Invalid base64 trailing bits');
+        return escaped(bytes);
+      }
+      if (rows.length === 1 && rows[0][0] === 'o:' && (!makeObject || !quotedRows[0][0])) {
         const object = Object.create(null);
+        const collected=[];
         for (const pair of rows[0].slice(1)) {
           const entries = Array.isArray(pair) ? [pair] : Object.entries(pair);
           if (entries.length !== 1 || entries[0].length !== 2) throw new Error('Invalid Lino object pair');
-          object[entries[0][0]] = entries[0][1];
+          const key=makeObject && Array.isArray(pair)?firstKeys.get(pair):entries[0][0];
+          if(makeObject && typeof key!=='string')throw new Error('Invalid Lino object key');
+          collected.push([key,entries[0][1]]);object[entries[0][0]] = entries[0][1];
         }
+        if(makeObject)return makeObject(collected);
         return object;
       }
+      if(makeObject && multiline && rows.every((row,index)=>row.length===2 && typeof keyRows[index][0]==='string'))return makeObject(rows.map((row,index)=>[keyRows[index][0],row[1]]));
       if (multiline && rows.every(r => r.length === 2 && typeof r[0] === 'string')) {
         const object = Object.create(null);
         for (const [key, v] of rows) { if (Object.hasOwn(object, key)) throw new Error('Duplicate Lino key'); object[key] = v; }
         return object;
       }
-      return rows.flat();
+      const list=rows.flat();
+      if(rows.length===1)firstKeys.set(list,keyRows[0][0]);
+      return list;
     }
     if (text[i] === '"' || text[i] === "'" || text[i] === '`') {
       const delimiter = text[i]; let count = 0;

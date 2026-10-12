@@ -1,7 +1,9 @@
 import { join } from 'node:path';
-import { transactionalWrite, recoverTransactionalWrite, decodeLino, encodeLino, readOptional, serialized } from './storage.mjs';
+import { readFile } from 'node:fs/promises';
+import { transactionalWrite, recoverTransactionalWrite, encodeLino, serialized } from './storage.mjs';
 import { rustLockPath, withAdvisoryFileLock } from './file-lock.mjs';
 import { RouterError } from './tokens.mjs';
+import { decodeAffinityFile, validateAffinityValue, exactInteger, integerABI, affinityExpiry, U64_MAX } from './affinity-schema.mjs';
 
 const resourceNames = {responses:'responses','chat/completions':'chat',conversations:'conversations',
   'conversations/items':'conversation_items','realtime/calls':'realtime_calls',files:'files',
@@ -29,15 +31,16 @@ function ownerValue(owner) {
 function sameOwner(left, right) { return left.client_kind === right.client_kind && left.principal_id === right.principal_id; }
 function destinationValue(destination) {
   if (!destination || typeof destination.base_url !== 'string') throw new RouterError('invalid_argument','Resource destination is required');
-  if (destination.kind === 'stored_provider') return {kind:destination.kind,name:destination.name,provider_kind:destination.provider_kind,base_url:destination.base_url};
+  if (destination.kind === 'stored_provider') return {kind:destination.kind,name:destination.name,provider_kind:persistedProviderKind(destination.provider_kind),base_url:destination.base_url};
   if (destination.kind === 'subscription') return {kind:destination.kind,provider:destination.provider,account:destination.account,
     ...(destination.upstream_account_id != null ? {upstream_account_id:destination.upstream_account_id} : {}),base_url:destination.base_url};
   if (destination.destination_kind === 'stored_provider' || ['openai-compatible','lefine','z.ai-coding-plan'].includes(destination.provider_kind ?? destination.kind)) {
-    return {kind:'stored_provider',name:destination.provider,provider_kind:destination.provider_kind ?? destination.kind,base_url:destination.base_url};
+    return {kind:'stored_provider',name:destination.provider,provider_kind:persistedProviderKind(destination.provider_kind ?? destination.kind),base_url:destination.base_url};
   }
   return {kind:'subscription',provider:destination.oauth_provider ?? destination.provider_kind ?? destination.provider,account:destination.account,
     ...(destination.account_id != null ? {upstream_account_id:destination.account_id} : {}),base_url:destination.base_url};
 }
+function persistedProviderKind(kind) { return kind === 'z.ai-coding-plan' ? 'zai-coding-plan' : kind; }
 function sameDestination(left, right) {
   return left.kind === right.kind && left.base_url === right.base_url && (left.kind === 'stored_provider'
     ? left.name === right.name && left.provider_kind === right.provider_kind
@@ -57,32 +60,62 @@ function view(record) {
   if (!record) return null;
   const value = record.destination;
   return {...structuredClone(record),id:record.response_id,destination:value.kind === 'stored_provider'
-    ? {provider:value.name,account:value.name,protocol:'openai',provider_kind:value.provider_kind,destination_kind:value.kind,base_url:value.base_url}
+    ? {provider:value.name,account:value.name,protocol:'openai',provider_kind:value.provider_kind === 'zai-coding-plan' ? 'z.ai-coding-plan' : value.provider_kind,destination_kind:value.kind,base_url:value.base_url}
     : {provider:value.provider,account:value.account,protocol:value.provider === 'claude' ? 'anthropic' : 'responses',
       provider_kind:value.provider,destination_kind:value.kind,base_url:value.base_url,...(value.upstream_account_id != null ? {account_id:value.upstream_account_id} : {})}};
 }
 /** Resource ownership uses Rust's versioned links-notation document. */
 export class AffinityStore {
   constructor({dataDir,persistent = true,clock = () => Math.floor(Date.now()/1000),ttl = 30*24*3600,maxRecords = 10000}) {
-    if (!Number.isSafeInteger(ttl) || ttl <= 0 || !Number.isSafeInteger(maxRecords) || maxRecords <= 0) throw new RouterError('invalid_config','Affinity TTL and capacity must be positive');
+    try { exactInteger(ttl,1n,U64_MAX); } catch { throw new RouterError('invalid_config','response-affinity TTL and capacity must be non-zero'); }
+    try { maxRecords=integerABI(exactInteger(maxRecords,1n,U64_MAX)); } catch { throw new RouterError('invalid_config','response-affinity TTL and capacity must be non-zero'); }
     this.path = join(dataDir,'response-affinities.lino'); this.persistent = persistent;
     this.clock = clock; this.ttl = ttl; this.maxRecords = maxRecords; this.records = [];
   }
-  async transaction(operation) {
+  async load() {
+    if (!this.persistent) return validateAffinityValue({version:1,records:structuredClone(this.records)});
+    let source;
+    try { source = new TextDecoder('utf-8',{fatal:true}).decode(await readFile(this.path)); }
+    catch (error) {
+      if(error.code === 'ENOENT') return {version:1,records:[]};
+      throw new RouterError('invalid_storage',`response-affinity storage failed: ${error.message}`,503);
+    }
+    let file;
+    try { file=decodeAffinityFile(source); }
+    catch (error) { throw new RouterError('invalid_storage',`response-affinity document is invalid: ${error.message}`,503); }
+    if(file.version!==1)throw new RouterError('invalid_storage',`unsupported response-affinity document version ${file.version}`,503);
+    return file;
+  }
+  async verify() { return this.transaction(() => undefined,{prune:false}); }
+  async transaction(operation,{prune=true,now:givenNow}={}) {
     const execute = async () => {
-      if (this.persistent) await recoverTransactionalWrite(this.path);
-      const source = this.persistent ? await readOptional(this.path,null) : null;
-      const file = source == null ? {version:1,records:structuredClone(this.records)} : source.trimStart().startsWith('{') ? JSON.parse(source) : decodeLino(source);
-      if (file.version !== 1 || !Array.isArray(file.records)) throw new RouterError('invalid_storage','Unsupported response-affinity document',500);
+      if (this.persistent) {
+        try { await recoverTransactionalWrite(this.path); }
+        catch(error) { throw new RouterError('invalid_storage',`response-affinity storage failed: ${error.message}`,503); }
+      }
+      const file = await this.load();
       const oldLength = file.records.length;
-      file.records = file.records.filter(record => record.expires_at > this.clock());
-      const state = {records:file.records,changed:file.records.length !== oldLength};
+      let now;
+      if(prune) {
+        now=exactInteger(givenNow ?? this.clock());
+        file.records=file.records.filter(record=>exactInteger(record.expires_at)>now);
+      }
+      const state = {records:file.records,changed:file.records.length !== oldLength,now};
       const result = await operation(state);
-      if (state.changed && this.persistent) await transactionalWrite(this.path,encodeLino({version:1,records:state.records}));
+      if (state.changed && this.persistent) {
+        try { await transactionalWrite(this.path,encodeLino(validateAffinityValue({version:1,records:state.records}))); }
+        catch(error) { throw new RouterError('invalid_storage',`response-affinity storage failed: ${error.message}`,503); }
+      }
       this.records = state.records;
       return structuredClone(result);
     };
-    return serialized(this.path,() => this.persistent ? withAdvisoryFileLock(rustLockPath(this.path),execute) : execute());
+    return serialized(this.path,async () => {
+      try { return await (this.persistent ? withAdvisoryFileLock(rustLockPath(this.path),execute) : execute()); }
+      catch(error) {
+        if(error instanceof RouterError || !error.code)throw error;
+        throw new RouterError('invalid_storage',`response-affinity storage failed: ${error.message}`,503);
+      }
+    });
   }
   async get(namespace,owner,id,parentId) {
     if (!validId(id) || parentId != null && !validId(parentId)) return null;
@@ -96,24 +129,27 @@ export class AffinityStore {
   }
   async set(namespace,owner,id,{destination,parent_id,model} = {}) {
     if (!validId(id) || parent_id != null && !validId(parent_id)) throw new RouterError('invalid_argument','Invalid resource id');
-    owner = ownerValue(owner); namespace = affinityNamespace(namespace); destination = destinationValue(destination);
+    owner = ownerValue(owner); namespace = affinityNamespace(namespace); destination = validateAffinityValue(destinationValue(destination),'AffinityDestination');
+    const requestedNow=exactInteger(this.clock());
     return this.transaction(state => {
       const existing = state.records.find(record => record.namespace === namespace && record.response_id === id && sameOwner(record.owner,owner) && (record.parent_id ?? null) === (parent_id ?? null));
       if (existing) {
         if (!sameDestination(existing.destination,destination)) throw new RouterError('affinity_collision','Resource id is bound to another upstream',409);
+        // Original Existing returns before flush, including any in-memory prune.
+        state.changed=false;
         return view(existing);
       }
-      const now = this.clock();
-      const record = {namespace,response_id:id,owner,destination,...(parent_id != null ? {parent_id} : {}),created_at:now,expires_at:now+this.ttl};
+      const now = integerABI(state.now);
+      const record = validateAffinityValue({namespace,response_id:id,owner,destination,...(parent_id != null ? {parent_id} : {}),created_at:now,expires_at:affinityExpiry(now,this.ttl)},'ResponseAffinity');
       // Model is request metadata; Rust's persistent destination identity does not contain it.
       if (model != null) Object.defineProperty(record,'model',{value:model,enumerable:false});
       state.records.push(record); state.changed = true;
       if (state.records.length > this.maxRecords) {
-        state.records.sort((left,right) => left.created_at-right.created_at);
+        state.records.sort((left,right) => left.created_at<right.created_at ? -1 : left.created_at>right.created_at ? 1 : 0);
         state.records.splice(0,state.records.length-this.maxRecords);
       }
       return view(record);
-    });
+    },{now:requestedNow});
   }
   async delete(namespace,owner,id,parentOrExpected,expected) {
     owner = ownerValue(owner); namespace = affinityNamespace(namespace);
@@ -125,7 +161,7 @@ export class AffinityStore {
         expected && !matchesExpectedRecord(record,expected));
       state.changed ||= state.records.length !== oldLength;
       return state.records.length !== oldLength;
-    });
+    },{prune:false});
   }
   async list(namespace,owner,parentId) {
     owner = ownerValue(owner); namespace = affinityNamespace(namespace);
@@ -139,6 +175,6 @@ export class AffinityStore {
       state.records = state.records.filter(record => record.namespace !== namespace || record.parent_id !== parentId || !sameOwner(record.owner,owner) || !sameDestination(record.destination,destination));
       state.changed ||= state.records.length !== oldLength;
       return oldLength-state.records.length;
-    });
+    },{prune:false});
   }
 }

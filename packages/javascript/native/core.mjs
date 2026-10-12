@@ -184,6 +184,8 @@ export async function createRouterCore(options = {}) {
   const providers = await core.providers.resolve();
   core.accounts = new AccountRouter({config:{...config,providers},clock:core.clock});
   await core.accounts.load();
+  // Rust open_with_limits validates the existing typed affinity file before use.
+  if (core.affinities?.verify) await core.affinities.verify();
   return core;
 }
 export { TokenManager, RouterError, codexTokenAlias } from './tokens.mjs';
