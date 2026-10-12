@@ -57,6 +57,11 @@ function actualImports(profile,path){
   }
   if(path===build&&!result.has('ast'))throw new TypeError('Actual original AST namespace alias is unavailable');return result;
 }
+// Original import identities for the source substitution stage; no caller table.
+export function builtinAstSourceImports(profile,path){
+  if(!isBuiltinDeriveAstProfile(profile))throw new TypeError('Original source imports require a sealed profile');
+  return freeze([...actualImports(profile,path)].map(([name,value])=>({name,...value})));
+}
 function schemaFields(definition){
   const nameAt=definition.syntax.findIndex(node=>node.text==='struct'),body=definition.syntax.slice(nameAt+2).find(node=>node.kind==='group'&&node.delimiter==='{');
   if(!body)throw new TypeError('AST builder requires a named original struct schema');
