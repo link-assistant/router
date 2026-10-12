@@ -312,7 +312,13 @@ export class IteratorChecker extends DataChecker {
       const transform = callback(node.args[0], [op==='filter'?sharedItem(element,node.span,'Iterator::filter'):element], op === 'filter' ? BOOL : itemExpected?.element);
       const result = op === 'map' ? transform.type.result : element;
       if(op==='map'&&canonicalResult(this,result,path,node.span,false))return {k:'routerIteratorOperation',op,object,args:[transform],type:{kind:'routerIterator',element:result},resultIteratorProof:checkResultMapItem(this,result,itemExpected,path,node.span),span:node.span};
-      if (!['fixed', 'bool', 'string'].includes(result.kind)) throw unsupported('mapped iterator result', 'only scalar iterator values have a checked contract', node.span);
+      if (!['fixed', 'bool', 'string'].includes(result.kind)) {
+        const entry=result.kind==='data'?this.items.get(result.name):null;
+        if(!entry?.tuple||entry.generated!=='router-tuple-type')throw unsupported('mapped iterator result','requires a checked scalar or bounded anonymous scalar product',node.span);
+        // Reuse the actual tuple layout and primitive identities. Nominal
+        // moves, borrowed products and ownership-bearing fields stay refused.
+        this.inferredTupleField(result,node.span,0,new Set(),new Set(),{cells:16000});
+      }
       return { k: 'routerIteratorOperation', op, object, args: [transform], type: { kind: 'routerIterator', element: result }, span: node.span };
     }
     if (op === 'take') {
