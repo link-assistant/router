@@ -65,9 +65,11 @@
       "source": "src/response_affinity.rs",
       "symbols": [
         "remove_if_matches"
-      ]
+      ],
+      "remove_if_matches_start_line": 397,
+      "record_equality_line": 405
     }
   ],
-  "authored_fixture_count": 11,
+  "authored_fixture_count": 12,
   "authored_fixtures_executed": false
 }

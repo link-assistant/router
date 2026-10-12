@@ -43,6 +43,16 @@ function sameDestination(left, right) {
     ? left.name === right.name && left.provider_kind === right.provider_kind
     : left.provider === right.provider && left.account === right.account && left.upstream_account_id === right.upstream_account_id);
 }
+function matchesExpectedRecord(record, expected) {
+  if (!sameDestination(record.destination,destinationValue(expected.destination ?? expected))) return false;
+  // Rust remove_if_matches compares ResponseAffinity itself, including lifetime
+  // and owner fields. A view returned by get() carries those original fields;
+  // a later identical destination with a different lifetime is another record.
+  if (!Object.hasOwn(expected,'response_id')) return true;
+  return record.namespace === affinityNamespace(expected.namespace) && record.response_id === expected.response_id &&
+    sameOwner(record.owner,expected.owner) && (record.parent_id ?? null) === (expected.parent_id ?? null) &&
+    record.created_at === expected.created_at && record.expires_at === expected.expires_at;
+}
 function view(record) {
   if (!record) return null;
   const value = record.destination;
@@ -112,7 +122,7 @@ export class AffinityStore {
     return this.transaction(state => {
       const oldLength = state.records.length;
       state.records = state.records.filter(record => record.namespace !== namespace || record.response_id !== id || !sameOwner(record.owner,owner) || parentId !== undefined && record.parent_id !== parentId ||
-        expected && !sameDestination(record.destination,destinationValue(expected.destination ?? expected)));
+        expected && !matchesExpectedRecord(record,expected));
       state.changed ||= state.records.length !== oldLength;
       return state.records.length !== oldLength;
     });

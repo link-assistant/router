@@ -7,6 +7,7 @@ import { load, upstream, temporary } from './helpers.mjs';
 const { createNativeRouter } = await load('packages/javascript/native/server.mjs');
 const { NativeAffinityStore } = await load('packages/javascript/native/native-service.mjs');
 const { createRouterCore } = await load('packages/javascript/native/core.mjs');
+const { AffinityStore } = await load('packages/javascript/native/affinities.mjs');
 const root = '/api/services/openai/v1', namespace = `${root}/responses`;
 const owner = { client_kind: 'codex', principal_id: 'alice' };
 const request = (path, method = 'GET', body, credential = 'alice') => new Request(`http://router.test${path}`, {
@@ -254,4 +255,38 @@ test('a truncated successful DELETE body leaves its exact response binding avail
   const retry = await app.fetch(request(`${namespace}/delete-read-failure`));
   assert.equal(retry.status, 200); assert.equal((await retry.json()).id, 'delete-read-failure');
   assert.equal(service.requests.length, 3);
+});
+
+test('late gone response preserves a recreated persistent record on the same destination with a new lifetime', async t => {
+  let release, started, count = 0, now = 1_800_000_000;
+  const began = new Promise(resolve => { started = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  t.after(() => release());
+  const directory = await temporary(t);
+  const service = await upstream(t, async (_observed, response) => {
+    if (++count === 1) { started(); await gate; return reply(response, {}, 410); }
+    return reply(response, { id: 'same-destination-race', status: 'queued', replacement_marker: true });
+  });
+  const affinities = new AffinityStore({ dataDir: directory, persistent: true, clock: () => now });
+  const { app, candidates } = fixture(t, [service], { affinities });
+  const destination = { provider: candidates[0].provider, account: candidates[0].account, protocol: 'openai', provider_kind: 'openai-compatible', destination_kind: 'stored_provider', base_url: candidates[0].base_url };
+  const id = 'same-destination-race';
+  await affinities.set(namespace, owner, id, { destination });
+  const original = await affinities.get(namespace, owner, id);
+  const pending = app.fetch(request(`${namespace}/${id}`));
+  try {
+    await began;
+    await affinities.delete(namespace, owner, id);
+    now += 1;
+    await affinities.set(namespace, owner, id, { destination });
+  } finally { release(); }
+  assert.equal((await pending).status, 404);
+  const reopened = new AffinityStore({ dataDir: directory, persistent: true, clock: () => now });
+  const replacement = await reopened.get(namespace, owner, id);
+  assert.ok(replacement);
+  assert.equal(replacement.created_at, original.created_at + 1);
+  assert.equal(replacement.expires_at, original.expires_at + 1);
+  const next = await app.fetch(request(`${namespace}/${id}`));
+  assert.equal(next.status, 200); assert.equal((await next.json()).replacement_marker, true);
+  assert.equal(service.requests.length, 2);
 });

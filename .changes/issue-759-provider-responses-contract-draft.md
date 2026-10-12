@@ -20,12 +20,15 @@ normalized to Rust's exact response-not-found envelope for all lifecycle methods
 successful deletion preserves its upstream body. Conditional removal protects a
 replacement binding to a different destination from a late upstream result.
 
-Eleven new acceptance cases observe loopback HTTP bytes, provider identity,
+Twelve new acceptance cases observe loopback HTTP bytes, provider identity,
 queued/in-progress/cancelled resources, owner and namespace isolation, token
 rotation, known and legacy continuation routing, malformed selectors, helper
 reference conflicts, successful/error deletion, truncated body failure, and
 destination replacement races. One combines the real core, token authority,
 text affinity persistence, restart, changed default, and changed recorded URL.
+Another holds a lifecycle request open while a persistent record is removed and
+recreated on the same destination with a later lifetime. Its late 410 must leave
+the replacement available after reopening the store.
 
 Original source identities are recorded in
 `experiments/issue-759/acceptance/provider-responses-source-receipt.json`.
@@ -53,8 +56,12 @@ Bounded proposed verification: run only
 the existing native service/core suites in the gate's scheduled window. Preserve
 canonical/profile receipts and existing seven-stage evidence before regeneration.
 
-Remaining source-level limitations outside this batch: persistent affinity
-retirement currently compares destination identity rather than Rust's complete
-record generation; reactive subscription 401 refresh and bridge execution controls
-need their own coordinated audits. Existing unsupported translated background and
-continuation behavior remains explicit.
+The follow-up conditional retirement hook compares the complete original Rust
+record identity: namespace, owner, ID, parent, destination, creation and expiry.
+It preserves a replacement with a different lifetime even on the same destination.
+It does not invent a generation nonce: two records identical in every original
+field remain equal under Rust's actual `remove_if_matches` contract.
+
+Remaining source-level limitations outside this batch: reactive subscription 401
+refresh and bridge execution controls need their own coordinated audits. Existing
+unsupported translated background and continuation behavior remains explicit.
