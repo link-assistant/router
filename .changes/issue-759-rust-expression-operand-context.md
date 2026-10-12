@@ -11,14 +11,15 @@ record contexts, enum syntax with unproved equality still refused, and invalid
 unparenthesized records. The original OpenAI function's full body, source hash
 and span assertions remain. Three existing fixture errors are corrected by
 reading the checked meta envelope through its canonical reader and retaining
-real named-lifetime escape/coercion negatives. The paired retry is pending;
-initial Node/Bun both passed 150/154 with the same four failures preserved.
+real named-lifetime escape/coercion negatives. Initial Node/Bun both passed
+150/154 with the same four failures preserved.
 
 The first expanded retry passed 157/158 in both engines. Its one new regression
 identified the tuple frontend forwarding the outer condition context inside
 explicit parentheses. Group and tuple elements now use the same ordinary
 expression context as the original vendor parenthesis parser. The assertion
-remains unchanged; final paired verification is pending.
+remains unchanged. The final 24-file batch passes 158/158 in both engines at
+43e478789, with every initial/retry raw log retained in the complete archive.
 
 The language rule is documented in the Rust Reference:
 https://doc.rust-lang.org/reference/expressions/if-expr.html#syntax

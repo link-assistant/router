@@ -161,14 +161,29 @@ namespace closure still require additional contracts. Bounds are 32 fields,
 32 levels, 16,000 validation cells, 1,024 new layouts and 8,192-byte names.
 
 The project checker batches independent original data-layout and function-signature
-type refusals before any body becomes checked IR. It discards the failed checker,
-removes the exact owners and checks every survivor and caller again. Body errors,
-generated declarations, missing attribution and internal errors keep their
-ordinary behavior; lifetime, constant and source-proof obligations remain
+type refusals before any body becomes checked IR. Bulk projects additionally
+collect independently attributed original free-function body errors after the
+signature phase. The failed checker is discarded, exact owners are removed and
+every survivor and caller is checked again. Methods, constants, generated
+declarations, missing attribution and internal errors keep ordinary handling;
+lifetime, constant and source-proof obligations remain
 mandatory. All 155 cases in the 18-file Node and Bun batch pass at `39277c56`.
 The [paired evidence](../../docs/case-studies/issue-759/current/source-declaration-refusals-39277c56/README.md)
 retains complete inputs and logs. This focused result claims no measured producer
-speedup, whole-corpus gain or complete gate success.
+speedup, whole-corpus gain or complete gate success. The
+[body evidence](../../docs/case-studies/issue-759/current/source-body-refusals-ed3ab766/README.md)
+also retains 182 focused and nine original-source cases in each engine.
+
+Actual lifetime-only free-function binders retain original names, spans and
+tokens, checked shared-reference identities and every contributing call-input
+constraint. Primitive str identity, local/return origins, reserved names and
+lifetime token adjacency stay checked. Condition syntax retains record exclusions
+through operands while explicit parentheses/call arguments use ordinary contexts.
+Fourteen new lifetime and four context cases pass within the 24-file, 158-case
+Node/Bun batch at `43e478789`; the
+[complete evidence](../../docs/case-studies/issue-759/current/source-named-lifetimes-43e47878/README.md)
+retains both failed phases. The unchanged OpenAI function verifies full syntax;
+provider trait dispatch and full original graph execution remain separate.
 
 Unbounded generics, arbitrary trait implementations, aggregate mutation,
 unresolved derives/macros, ambiguous imports, compilation conditions and

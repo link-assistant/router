@@ -13,9 +13,11 @@ and after semantic checking; changing that metadata invalidates source evidence.
 
 The first paired 23-file batch passed 150/154 cases in both Node and Bun.
 It retained four failures: one original condition-parsing bug and three stale
-test assumptions. Those corrections and four condition-context regressions are
-authored; their complete paired verification is pending. No producer, complete
-gate or Rust build has executed for this draft.
+test assumptions. The expanded retry retained one additional grouping failure.
+All failures and corrections remain in the complete compact evidence; the final
+24-file batch passes 158/158 in both engines at 43e478789. All fourteen named
+cases and four condition-context regressions pass. No producer, complete gate
+or Rust build has executed for this draft.
 The original OpenAI model function is an exact-source syntax fixture, with no
 whole-corpus gain, trait dispatch, native equivalence or complete parity claim.
 See the Rust Reference's function lifetime rules:
