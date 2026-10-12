@@ -2,6 +2,7 @@
 // occurs in an inline or out-of-line module. Permission comes from the parser's
 // actual declaration table, never a Router* spelling or a prefix heuristic.
 import {typeError} from '../vendor/meta-language/translation/diagnostics.js';
+import {originalSourceTypeOwner} from './source-namespaces.mjs';
 const GENERATED=new Set(['router-monomorphic-algebraic-type','router-tuple-type']);
 export function normalizeGeneratedTypeOwner(parser,type,scope=parser.modulePath,span=type.span) {
   let result=type;
@@ -13,7 +14,7 @@ export function normalizeGeneratedTypeOwner(parser,type,scope=parser.modulePath,
   const original=type.path,name=original.at(-1),entry=parser.genericTypes?.get(name);
   const owner=type.rustGeneratedTypeOwner;
   if(owner?.name===name&&owner.generated===entry?.generated&&(original.length===1||original.length===2&&original[0]==='crate')&&entry?.k==='data'&&entry.name===name&&GENERATED.has(entry.generated))return {...result,path:['crate',name]};
-  let path=parser.resolve(original,scope);
+  let path=originalSourceTypeOwner(parser,type,scope)??parser.resolve(original,scope);
   if(path[0]==='self')path=['crate',...scope,...path.slice(1)];
   else if(path[0]==='super') {
     let up=0;while(path[up]==='super')up++;

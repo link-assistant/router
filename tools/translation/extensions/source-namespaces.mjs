@@ -1,6 +1,22 @@
 // Checked module bindings retain Rust's distinct type/value/macro namespaces.
 // No source rewriting or callable/type implementation is inferred here.
 import {unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+// Canonical paths are results of resolving an original written type route.
+// Normalizing a generated Option/Result/tuple must not resolve that result as
+// another written path. Copies retain the exact source occurrence, while a
+// different parser, source span or consuming scope cannot borrow its route.
+const resolvedPaths=new WeakMap(),sourceTypeOwners=new WeakMap();
+const ownerKey=(type,scope)=>type?.kind==='named'&&Array.isArray(type.path)&&type.path.every(part=>typeof part==='string')&&
+  Number.isSafeInteger(type.span?.start)&&Number.isSafeInteger(type.span?.end)&&type.span.start>=0&&type.span.end>=type.span.start&&
+  Array.isArray(scope)&&scope.every(part=>typeof part==='string')?JSON.stringify([scope,type.span.start,type.span.end,type.path]):null;
+function resolvedPath(parser,target,scope,namespace) {
+  if(namespace==='type'&&target[0]==='crate'&&!target.some(part=>part.startsWith('ml_')))resolvedPaths.set(target,{parser,scope:[...scope],target:[...target]});
+  return target;
+}
+export function originalSourceTypeOwner(parser,type,scope) {
+  const key=ownerKey(type,scope),owner=key&&sourceTypeOwners.get(parser)?.get(key);
+  return owner?[...owner]:null;
+}
 export function withSourceNamespaceParser(Base) {
   return class extends Base {
     sourceLexicalScope(bindings,operation,{inherit=true}={}) {
@@ -91,6 +107,7 @@ export function withSourceNamespaceParser(Base) {
         return binding;
       };
       const checkedTarget=(binding,target)=>binding?.status==='resolved'&&target?.[0]==='crate'&&binding.target?.length===target.length&&binding.target.every((part,index)=>part===target[index]);
+      const finish=target=>resolvedPath(this,target,path,namespace);
       const initialTarget=aliases?.get(segments[0]),initialBinding=initialTarget?record(segments[0],path,ownerNamespace):null;
       let resolved=initialTarget?[...initialTarget,...segments.slice(1)]:[...segments];
       if(['self','super'].includes(resolved[0])){
@@ -112,7 +129,7 @@ export function withSourceNamespaceParser(Base) {
         if(seen.has(key))throw unsupported('source qualified path','cyclic source namespace alias',this.cursor.peek?.());
         seen.add(key);
         const ownerNamespace=remaining.length===1?namespace:'type',map=this.sourceNamespaceAliases[ownerNamespace]?.get(prefix.join('.'));
-        if(!map?.has(remaining[0]))return ['crate',...prefix,...remaining];
+        if(!map?.has(remaining[0]))return finish(['crate',...prefix,...remaining]);
         const target=map.get(remaining[0]),binding=record(remaining[0],prefix,ownerNamespace);
         const tail=remaining.slice(1),ordinary=['crate',...prefix,remaining[0]];
         if(target.length===ordinary.length&&target.every((part,index)=>part===ordinary[index])){prefix.push(remaining[0]);remaining=tail;continue;}
@@ -121,7 +138,7 @@ export function withSourceNamespaceParser(Base) {
         else {prefix=[];remaining=[...target.slice(1),...tail];}
       }
       if(remaining.length)throw unsupported('source qualified path','source namespace alias walk exceeds its bound',this.cursor.peek?.());
-      return ['crate',...prefix];
+      return finish(['crate',...prefix]);
     }
     resolve(segments,path) {
       const namespace=this.sourcePatternResolution&&this.cursor.is('{')?'type':this.sourceResolutionNamespace??'value';
@@ -132,7 +149,16 @@ export function withSourceNamespaceParser(Base) {
       const type=this.sourceNamespaceAliases.type?.get(path.join('.'))?.get(name),value=this.sourceNamespaceAliases.value?.get(path.join('.'))?.get(name);
       return Boolean(type&&type.length<=target.length&&type.every((part,index)=>part===target[index])||value&&value.length===target.length+1&&value.slice(0,-1).every((part,index)=>part===target[index])&&['Some','None','Ok','Err'].includes(value.at(-1)));
     }
-    type(){return this.inSourceNamespace('type',()=>super.type());}
+    type(){return this.inSourceNamespace('type',()=>{
+      const type=super.type(),proof=resolvedPaths.get(type.path),scope=this.modulePath??[];
+      const key=ownerKey(type,scope);
+      if(key&&proof?.parser===this&&proof.scope.length===scope.length&&proof.scope.every((part,index)=>part===scope[index])&&proof.target.length===type.path.length&&proof.target.every((part,index)=>part===type.path[index])) {
+        let owners=sourceTypeOwners.get(this);if(!owners){owners=new Map();sourceTypeOwners.set(this,owners);}
+        if(!owners.has(key)&&owners.size>=8192)throw unsupported('source type route evidence','exceeds its bounded original occurrence count',type.span);
+        owners.set(key,[...proof.target]);
+      }
+      return type;
+    });}
     genericType(...args){return this.inSourceNamespace('type',()=>super.genericType(...args));}
     builtinShadow(...args){return this.inSourceNamespace('type',()=>super.builtinShadow(...args));}
     expr(...args){return this.inSourceNamespace('value',()=>super.expr(...args));}
