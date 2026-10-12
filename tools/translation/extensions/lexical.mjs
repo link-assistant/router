@@ -4,6 +4,7 @@ import { TranslationError } from '../vendor/meta-language/translation/diagnostic
 import {decodeRustCharacter} from './rust-character.mjs';
 import {decodeRustInteger} from './rust-number.mjs';
 import {decodeRustFloat,isRustFloatToken} from './rust-float.mjs';
+import {decodeRustByteCharacter} from './rust-byte-character.mjs';
 import {types} from 'node:util';
 
 // Only this tokenizer creates the original-byte association. The returned
@@ -41,6 +42,13 @@ export function tokenizeRust(source) {
   const originalTokens=rustTokens(source);
   for (let index=0;index<originalTokens.length;index++) {
     let token=originalTokens[index];
+    const character=originalTokens[index+1];
+    if(token.type==='ident'&&token.text==='b'&&character?.type==='string'&&character.text.startsWith("'")&&character.start===token.end){
+      const end=character.end,raw=source.slice(token.start,end),suffix=originalTokens[index+2];
+      if(suffix?.start===end&&['ident','number'].includes(suffix.type))throw new TranslationError('syntax','Rust byte character literals do not accept a suffix',{start:token.start,end:suffix.end});
+      numbers.set(token.start,{...decodeRustByteCharacter(raw,{start:token.start,end}),end});
+      replacements.push({start:token.start,end,text:'0'});index++;continue;
+    }
     if(token.type==='number'){
       // Rust's trailing decimal point cannot precede '.', '_' or XID_Start.
       // Consume only an adjacent actual dot; ranges and method calls stay intact.

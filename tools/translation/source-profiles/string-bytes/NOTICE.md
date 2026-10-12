@@ -13,5 +13,8 @@ The standard UTF8 primitive bridge is source-inferred lowering, not an
 automatically compiled complete core/str/Iterator implementation. Stored
 cursors, custom Deref/receivers, reverse/specialized terminals, ownership
 escapes and const execution require independent proofs. No namespace, trait
-or full runtime authority is promoted. Source-only draft and cases UNRUN;
-no producer, corpus gain, Rust build or full parity claim.
+or full runtime authority is promoted. Initial paired 21-file checks passed
+188/192 in each engine, with all 184 prior cases passing. The four new failures
+exposed byte-character parsing. Its source-qualified repair and two extra
+domain/proof cases remain UNRUN; no producer, corpus gain, Rust build or full
+parity claim.

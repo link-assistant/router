@@ -8,6 +8,8 @@ import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {STRING_BYTES_PROFILE,requireStringBytesProof} from '../extensions/string-bytes.mjs';
 import {stringBytes} from '../extensions/string-bytes-runtime.mjs';
+import {decodeRustByteCharacter,requireByteLiteral} from '../extensions/rust-byte-character.mjs';
+import {parseRust,checkProgram,emitJavaScript} from '../extensions/host-contracts.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 function find(node,predicate) {
@@ -59,6 +61,24 @@ test('actual custom bytes methods use their source owner before standard receive
   const source='struct Counter{n:u8}impl Counter{fn bytes(&self,offset:u8)->u8{self.n+offset}}pub fn custom(n:u8)->u8{Counter{n}.bytes(2u8)}pub fn collision(value:&str)->usize{let ml_string_bytes:u8=7;value.bytes().count()}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{assert.equal(api.custom(5n),7n);assert.equal(api.collision('Ω'),2n);});
+  const direct=emitJavaScript(checkProgram(parseRust('fn ml_string_bytes(value:u8)->u8{value}fn count(value:&str)->usize{value.bytes().count()}fn main(){}')));
+  assert.match(direct.text,/stringBytes as ml_string_bytes_2/u);
+});
+
+test('actual cooked byte literals retain primitive u8 high bytes escapes casts and checked meta',async()=>{
+  const source=String.raw`const EDGE:u8=b'\xFF';pub fn high()->u8{b'\xFF'}pub fn escapes()->u8{b'\n'+b'\t'}pub fn wide()->u16{b'\xFF' as u16}pub const fn letter()->u8{b'A'}pub fn edge()->u8{EDGE}pub fn high_byte(value:&str)->bool{value.bytes().any(|byte|byte==b'\x80')}`;
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{assert.equal(api.high(),255n);assert.equal(api.escapes(),19n);assert.equal(api.wide(),255n);assert.equal(api.letter(),65n);assert.equal(api.edge(),255n);assert.equal(api.high_byte('😀'),true);assert.equal(api.high_byte('A'),false);});
+  const node=find(parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get('high').body,node=>node.sourceByteLiteral);
+  requireByteLiteral(node,true);assert.equal(node.sourceByteLiteral.raw,String.raw`b'\xFF'`);
+  for(const mutate of [node=>{node.value='0';},node=>{node.type.bits=16;},node=>{node.sourceByteLiteral.raw="b'A'";},node=>{node.sourceByteLiteral.span.end++;},node=>{node.sourceByteLiteral.sourceInputs[0].sha256='0'.repeat(64);},node=>{node.sourceByteLiteral.namespaceComplete=true;},node=>{node.sourceByteLiteral.verified=false;}]){const altered=structuredClone(node);mutate(altered);assert.throws(()=>requireByteLiteral(altered,true),/byte character proof/u);}
+});
+
+test('byte literal source domains reject Unicode escapes direct nonASCII extra chars suffixes and coercion',()=>{
+  const span={start:4,end:11};
+  for(const [raw,value]of [[String.raw`b'\x00'`,0],[String.raw`b'\x7f'`,127],[String.raw`b'\x80'`,128],[String.raw`b'\xFF'`,255],[String.raw`b'\0'`,0],[String.raw`b'\n'`,10],[String.raw`b'\r'`,13],[String.raw`b'\t'`,9],[String.raw`b'\\'`,92],[String.raw`b'\''`,39],[String.raw`b'\"'`,34],["b'A'",65]])assert.equal(decodeRustByteCharacter(raw,span).value,String(value));
+  for(const raw of ["b'é'","b'😀'",String.raw`b'\u{41}'`,String.raw`b'\xF'`,String.raw`b'\x0g'`,String.raw`b'\q'`,"b'ab'","b''","b'\n'","'A'"])assert.throws(()=>decodeRustByteCharacter(raw,span),/valid single cooked/u);
+  for(const source of [String.raw`pub fn bad()->u8{b'A'u8}`,"pub fn bad()->u8{b 'A'}","pub fn bad()->u8{b/*gap*/'A'}","pub fn bad()->u16{b'A'}","pub fn bad(value:u16)->bool{value==b'A'}","pub fn bad()->&u8{&b'A'}"]){const result=translateSource(source);assert.equal(result.ir.items.find(item=>item.name==='bad').status,'carried',source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);}
 });
 
 test('byte source profile refuses unproved ownership cursor reuse references reverse and const scope',()=>{
