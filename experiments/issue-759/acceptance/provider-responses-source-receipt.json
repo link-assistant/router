@@ -29,6 +29,14 @@
     {
       "path": "src/resource_capture.rs",
       "sha256": "897136aaa5c146ef01219581665b0fa88299ea66af865ed1fe368f0625399d35"
+    },
+    {
+      "path": "src/server_router.rs",
+      "sha256": "0a30a4cdce5fe3ed72f1f9e3a2008517858888e8c7b6f08130aa01aac69d6c64"
+    },
+    {
+      "path": "src/api_error.rs",
+      "sha256": "1afefa01a39e711dff5893b9490b4963fbcb53a5c626693b8b5657276232de6a"
     }
   ],
   "contracts": [
@@ -70,6 +78,16 @@
       "record_equality_line": 405
     }
   ],
-  "authored_fixture_count": 12,
-  "authored_fixtures_executed": false
+  "authored_fixture_count": 16,
+  "authored_fixtures_executed": false,
+  "head_source_trace": {
+    "rust_handler": "src/responses_lifecycle.rs::forward passes parts.method unchanged",
+    "rust_route": "src/server_router.rs get(responses_lifecycle::retrieve)",
+    "native_dispatch": "packages/javascript/native/server.mjs handle normalizes HEAD to GET then strips body; listen/public fetch share dispatch",
+    "upstream_method_equivalence_verified": false
+  },
+  "retirement_storage_failure_contract": {
+    "upstream_404_410": "ignore remove_if_matches error; return response_not_found",
+    "successful_delete": "return affinity_storage_error on remove_if_matches error"
+  }
 }

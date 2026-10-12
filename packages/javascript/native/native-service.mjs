@@ -3,7 +3,7 @@ import { responseOwner } from './responses.mjs';
 import { matchHTTPRoute } from './http-route-contract.mjs';
 import {createHash} from 'node:crypto';
 import {UsageTracker} from './usage.mjs';
-import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict } from './response-contracts.mjs';
+import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict, responseAffinityStorageError } from './response-contracts.mjs';
 
 const transport = new Set(['authorization','x-api-key','x-goog-api-key','anthropic-auth-token','proxy-authorization','proxy-authenticate','host','connection','proxy-connection','keep-alive','transfer-encoding','upgrade','te','trailer','content-length','accept-encoding','cookie','chatgpt-account-id','sec-websocket-key','sec-websocket-version','sec-websocket-extensions','sec-websocket-accept']);
 const ingress = new Set(['forwarded','x-real-ip','x-client-ip','x-cluster-client-ip','cf-connecting-ip','true-client-ip','fastly-client-ip','fly-client-ip','x-envoy-external-address','x-azure-clientip','x-appengine-user-ip','cloudfront-viewer-address']);
@@ -229,10 +229,15 @@ export function createNativeService({core,authorize,routingContext,fetch:upstrea
         catch { throw new ProtocolError('Upstream lifecycle body could not be read within the response limit',502); }
         finally { cleanup(); }
         if ([404,410].includes(upstream.status)) {
-          await affinities.delete(resource.namespace,owner,resource.id,resource.parent,resourceRecord);
+          // Rust treats this cleanup as best-effort: a store error cannot turn
+          // an upstream missing response into an availability error.
+          try { await affinities.delete(resource.namespace,owner,resource.id,resource.parent,resourceRecord); } catch {}
           return responseNotFound();
         }
-        if (resource.remove && upstream.ok) await affinities.delete(resource.namespace,owner,resource.id,resource.parent,resourceRecord);
+        if (resource.remove && upstream.ok) {
+          try { await affinities.delete(resource.namespace,owner,resource.id,resource.parent,resourceRecord); }
+          catch (error) { return responseAffinityStorageError(error); }
+        }
         return new Response([204,205,304].includes(upstream.status) ? null : raw,{status:upstream.status,headers});
       }
       const tracksUsage=/\/(?:responses(?:\/compact)?|images\/(?:generations|edits|variations)|audio\/(?:speech|transcriptions|translations)|alpha\/search)$/.test(path);

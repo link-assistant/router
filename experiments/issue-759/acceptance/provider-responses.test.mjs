@@ -290,3 +290,63 @@ test('late gone response preserves a recreated persistent record on the same des
   assert.equal(next.status, 200); assert.equal((await next.json()).replacement_marker, true);
   assert.equal(service.requests.length, 2);
 });
+
+// Rust responses_lifecycle.rs::relay explicitly ignores removal failure for
+// missing resources, but surfaces it after a successful provider deletion.
+test('upstream 404 and 410 remain exact response-not-found when affinity retirement fails', async t => {
+  const service = await upstream(t, (observed, response) => reply(response, { upstream_detail: 'not part of the public error' }, observed.path.includes('gone') ? 410 : 404));
+  const affinities = new NativeAffinityStore();
+  affinities.delete = async () => { throw new Error('simulated retirement storage failure'); };
+  const { app, candidates } = fixture(t, [service], { affinities });
+  const destination = { provider: candidates[0].provider, account: candidates[0].account, protocol: 'openai', provider_kind: 'openai-compatible', destination_kind: 'stored_provider', base_url: candidates[0].base_url };
+  for (const [id, method, suffix] of [['missing', 'GET', ''], ['gone', 'GET', ''], ['gone-cancel', 'POST', '/cancel'], ['missing-delete', 'DELETE', '']]) {
+    affinities.set(namespace, owner, id, { destination });
+    const response = await app.fetch(request(`${namespace}/${id}${suffix}`, method));
+    assert.equal(response.status, 404); assert.deepEqual(await response.json(), absent);
+    assert.ok(affinities.get(namespace, owner, id));
+  }
+  assert.equal(service.requests.length, 4);
+});
+
+test('successful provider DELETE reports exact affinity-storage error when retirement cannot commit', async t => {
+  const service = await upstream(t, (observed, response) => reply(response, observed.method === 'DELETE' ? { id: 'delete-storage-failure', object: 'response.deleted', deleted: true } : { id: 'delete-storage-failure', status: 'completed' }));
+  const affinities = new NativeAffinityStore();
+  affinities.delete = async () => { throw new Error('simulated retirement storage failure'); };
+  const { app, candidates } = fixture(t, [service], { affinities });
+  const destination = { provider: candidates[0].provider, account: candidates[0].account, protocol: 'openai', provider_kind: 'openai-compatible', destination_kind: 'stored_provider', base_url: candidates[0].base_url };
+  affinities.set(namespace, owner, 'delete-storage-failure', { destination });
+  const response = await app.fetch(request(`${namespace}/delete-storage-failure`, 'DELETE'));
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: { type: 'api_error', message: 'response affinity is unavailable: simulated retirement storage failure' } });
+  assert.ok(affinities.get(namespace, owner, 'delete-storage-failure'));
+  assert.equal((await app.fetch(request(`${namespace}/delete-storage-failure`))).status, 200);
+  assert.equal(service.requests.length, 2);
+});
+
+test('public Web HEAD preserves lifecycle status and headers while stripping successful and error bodies', async t => {
+  const service = await upstream(t, (observed, response) => {
+    response.setHeader('x-request-id', 'head-lifecycle-proof');
+    return reply(response, { id: 'head-resource', status: 'queued', marker: 'body exists upstream' }, observed.path.includes('/missing') ? 410 : 200);
+  });
+  const { app, affinities, candidates } = fixture(t, [service]);
+  const destination = { provider: candidates[0].provider, account: candidates[0].account, protocol: 'openai', provider_kind: 'openai-compatible', destination_kind: 'stored_provider', base_url: candidates[0].base_url };
+  for (const id of ['head-resource', 'missing-head']) affinities.set(namespace, owner, id, { destination });
+  const head = await app.fetch(request(`${namespace}/head-resource`, 'HEAD'));
+  assert.equal(head.status, 200); assert.equal(head.headers.get('x-request-id'), 'head-lifecycle-proof'); assert.equal(await head.text(), '');
+  const missing = await app.fetch(request(`${namespace}/missing-head`, 'HEAD'));
+  assert.equal(missing.status, 404); assert.equal(await missing.text(), '');
+  const foreign = await app.fetch(request(`${namespace}/head-resource`, 'HEAD', undefined, 'bob'));
+  assert.equal(foreign.status, 404); assert.equal(await foreign.text(), '');
+  assert.equal(service.requests.length, 2);
+});
+
+test('network HEAD reaches the public dispatcher and exposes no provider lifecycle body', async t => {
+  const service = await upstream(t, (_observed, response) => { response.setHeader('x-request-id', 'network-head-proof'); reply(response, { id: 'network-head', status: 'completed', upstream_only: 'body' }); });
+  const { app, affinities, candidates } = fixture(t, [service]);
+  const destination = { provider: candidates[0].provider, account: candidates[0].account, protocol: 'openai', provider_kind: 'openai-compatible', destination_kind: 'stored_provider', base_url: candidates[0].base_url };
+  affinities.set(namespace, owner, 'network-head', { destination });
+  await app.listen({ host: '127.0.0.1', port: 0 });
+  const response = await fetch(`http://127.0.0.1:${app.address.port}${namespace}/network-head`, { method: 'HEAD', headers: { authorization: 'Bearer alice' }, signal: AbortSignal.timeout(5000) });
+  assert.equal(response.status, 200); assert.equal(response.headers.get('x-request-id'), 'network-head-proof'); assert.equal(await response.text(), '');
+  assert.equal(service.requests.length, 1);
+});

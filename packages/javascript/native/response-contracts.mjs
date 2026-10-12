@@ -49,3 +49,8 @@ export function responseReferenceMissing() {
 export function responseReferenceConflict() {
   return Response.json({ error: { type: 'invalid_request_error', message: 'the referenced response resources do not share one provider account' } }, { status: 409 });
 }
+
+export function responseAffinityStorageError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return Response.json({ error: { type: 'api_error', message: `response affinity is unavailable: ${message}` } }, { status: 503 });
+}
