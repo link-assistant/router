@@ -151,6 +151,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push('tools/translation/generate-whitespace-data.mjs');
   implementation.push(...readdirSync(new URL('./source-profiles/csv-strings/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/csv-strings/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/result-iterators/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/result-iterators/${name}`));
+  implementation.push(...readdirSync(new URL('./source-profiles/scalar-enumerate/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/scalar-enumerate/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/option-deref/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/option-deref/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/reverse-string-iterators/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/reverse-string-iterators/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/standard-bool/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/standard-bool/${name}`));
