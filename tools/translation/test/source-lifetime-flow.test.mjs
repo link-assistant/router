@@ -159,3 +159,10 @@ test('anonymous copied product binders retain nested borrowed leaves and hostile
   refused('pub fn bad(value:&str)->&\'static str{let mut current:&\'static str="fixed";return current;current=value;}',/static source parameter/);
   const unreachable=project('pub fn bad(value:&str)->&str{return value;let ignored=unknown();value}');assert.ok(unreachable.meta.refused.some(entry=>entry.name==='bad'));
 });
+
+test('statement match temporaries avoid actual renamed formals even when every formal is unused',async()=>{
+  const occupied=Array.from({length:24},(_,index)=>'ml_discard_match_'+(index+1));
+  const source='pub fn collision('+occupied.map(name=>name+':u8').join(',')+')->u8{let value:Option<u8> = Some(1u8);match value{Some(n)=>{let ignored:u8=n;},None=>{}}7u8}';
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{assert.equal(api.collision(...occupied.map(()=>0n)),7n);});
+});

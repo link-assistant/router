@@ -4,7 +4,7 @@ written lifetime constraints and explicit lazy mutable-capture refusals.
 
 The initial 24-file cohort passed 215 of 220 checks in both Node and Bun,
 with five preserved failures in four source-span, product-binding, explicit
-return and discarded-match families. The generic repairs and three added
+return and discarded-match families. The generic repairs and four added
 behavior cases are UNRUN; the expanded 28/36-file retry is pending.
 
 New behavior cases cover zero iterations,

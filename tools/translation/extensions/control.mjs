@@ -6,6 +6,7 @@ import { tokenizeRust } from './lexical.mjs';
 import { BOOL, UNIT, fixed, sameType } from '../checked-types.mjs';
 import { coerce } from '../checked-coercions.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
+import {Scope} from '../vendor/meta-language/translation/ir.js';
 
 const MUTABLE = Symbol('mutable scalar locals');
 const RETURN = Symbol('function return type');
@@ -265,12 +266,14 @@ export class ControlChecker extends StringChecker {
 const indent = lines => lines.map(line => '  ' + line);
 export class ControlEmitter extends StringEmitter {
   fn(entry) {
-    const previous=this.controlStatementNames;this.controlStatementNames=null;
-    try{return super.fn(entry);}finally{this.controlStatementNames=previous;}
+    const previous=this.controlStatementNames,previousParameters=this.controlParameterNames;
+    const scope=new Scope(this.state.ident,this.state.localReserved());
+    this.controlParameterNames=new Set(entry.params.map(param=>scope.fresh(param.name)));this.controlStatementNames=null;
+    try{return super.fn(entry);}finally{this.controlStatementNames=previous;this.controlParameterNames=previousParameters;}
   }
   collectControlNames(node) {
     if(!this.controlStatementNames) {
-      const names=this.controlStatementNames=new Set();
+      const names=this.controlStatementNames=new Set(this.controlParameterNames??[]);
       const collect=value=>{
         if(!value||typeof value!=='object')return;
         if(typeof value.name==='string')names.add(value.name);
