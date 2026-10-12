@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
+import { evidenceTimeoutMs, translationTimeoutMs } from './parity-check-budgets.mjs';
 const exec = promisify(execFile), root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifest = JSON.parse(await readFile(resolve(root, 'parity/router-features.json'), 'utf8'));
 const catalog = JSON.parse(await readFile(resolve(root, 'packages/javascript/catalog.json'), 'utf8'));
@@ -33,7 +34,7 @@ async function runEvidence(evidence) {
       // Full native TS evidence compiles the complete syntax AST and runs the
       // source plus compiled fixtures in both engines (84s observed before
       // its inner timeout repair). Keep actual success mandatory and bounded.
-      const started = performance.now(), timeout = 180_000;
+      const started = performance.now(), timeout = evidenceTimeoutMs;
       let stdout;
       try {
         ({ stdout } = await exec(process.execPath, ['--test','--test-reporter=tap',path], { cwd: root, timeout, maxBuffer: 4_194_304 }));
@@ -129,10 +130,10 @@ try {
   for (const source of tracked) if (!seen.has(source)) throw new Error(`Missing tracked Rust source: ${source}`);
   for (const [kind, total] of Object.entries(totals)) if (translation.totals?.[kind] !== total) throw new Error(`Translation total mismatch: ${kind}`);
   // Run the deterministic translator's check mode to reject edited/stale generated artifacts.
-  // All ten cycle-eight same-head standalone checks passed in 300–498 seconds.
-  // Eight embedded checks were killed at 360 seconds. Preserve the full exact
-  // comparison and allow a bounded ten-minute completion window.
-  const translationTimeoutMs = 600_000, translationStarted = performance.now();
+  // Cycle nine standalone canonical checks reached 752 seconds; seven
+  // embedded 600-second checks were killed. Preserve the complete comparison
+  // within a finite 1200-second window and budget every outer caller separately.
+  const translationStarted = performance.now();
   try {
     await exec(process.execPath, ['scripts/translate-router.mjs','--check'], { cwd: root, timeout: translationTimeoutMs, maxBuffer: 4_194_304 });
   } catch (error) {

@@ -113,9 +113,11 @@ jobs:
       - run: node scripts/build-js-first-ui.mjs
   parity:
     runs-on: ubuntu-24.04
-    # Observed acceptance reached 1133s. Its three checker calls may each use an
-    # additional 240s; add the 840s canonical checker and 60s setup: 2753s total.
-    timeout-minutes: 50
+    # Four complete checkers: three sequential acceptance assertions plus the
+    # final strict command. Include every unique 180s evidence runner, 1200s
+    # canonical comparison per checker, inventory/fixtures and other acceptance.
+    # The structural audit verifies this bound against the current manifest.
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -137,9 +139,8 @@ jobs:
       - run: node scripts/check-router-parity.mjs --strict
   translation:
     runs-on: ubuntu-24.04
-    # The explicit three-profile check measured 1595.5s. Prior completed CI
-    # needed up to 498s for the canonical check and 98s for tests. Retain every
-    # command, with room for the expanded suite and checkout/setup.
+    # Cycle nine forward/canonical steps reached 719s/752s; the separate matrix
+    # stage prevents their sum exhausting a shared 60-minute job.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -159,6 +160,27 @@ jobs:
           "
       - run: node --test --test-concurrency=2 tools/translation/test/*.test.mjs
       - run: node scripts/translate-router.mjs --check
+  profile-matrix:
+    runs-on: ubuntu-24.04
+    # Completed cycle-nine matrix checks reached 2166s. Keep a finite independent
+    # 60-minute window, the same immutable SHA and unconditional failure.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.sha }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '20'
+      - name: Verify immutable source commit
+        env:
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          node --input-type=module -e "
+            import {execFileSync} from 'node:child_process';
+            const expected = process.env.EXPECTED_SHA;
+            if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
+          "
       - run: node scripts/translate-router.mjs --profile-matrix --check
   reverse-translation:
     runs-on: ubuntu-24.04
@@ -186,7 +208,7 @@ jobs:
     name: JavaScript fully green
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    needs: [lint, node-tests, bun-tests, typescript, parity, translation, reverse-translation]
+    needs: [lint, node-tests, bun-tests, typescript, parity, translation, profile-matrix, reverse-translation]
     if: ${{ always() }}
     steps:
       - name: Require every stage to succeed
@@ -195,7 +217,7 @@ jobs:
         run: |
           node --input-type=module -e "
             const stages = Object.values(JSON.parse(process.env.STAGE_RESULTS));
-            if (stages.length !== 7 || stages.some(stage => stage.result !== 'success')) {
+            if (stages.length !== 8 || stages.some(stage => stage.result !== 'success')) {
               console.error('JavaScript gate rejected:', process.env.STAGE_RESULTS);
               process.exit(1);
             }

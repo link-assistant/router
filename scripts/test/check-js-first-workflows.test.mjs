@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import { auditWorkflows, guarded } from '../check-js-first-workflows.mjs';
+import { parityCheckBudgets } from '../parity-check-budgets.mjs';
 const require = createRequire(new URL('../ci/package.json', import.meta.url));
 const { parse, stringify } = require('yaml');
 const directory = new URL('../../.github/workflows/', import.meta.url);
@@ -35,7 +36,7 @@ test('obscured cargo and Docker commands still require a gate because every runn
   fails('release.yml', workflow => { workflow.jobs.test.if = 'always()'; }, 'success dependency missing');
 });
 test('every JavaScript stage and command is mandatory and cannot skip or ignore failures', () => {
-  for (const id of ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'reverse-translation']) {
+  for (const id of ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation']) {
     fails('javascript-first.yml', workflow => { delete workflow.jobs[id]; }, 'stage missing');
     for (const condition of ['false', false, '', 0, null]) {
       fails('javascript-first.yml', workflow => { workflow.jobs[id].if = condition; }, 'stage missing');
@@ -66,7 +67,7 @@ test('aggregate rejects partial green, skipped and cancelled stages', () => {
 });
 test('independent profile freshness and strict TypeScript cannot be removed or replaced by canonical checks', () => {
   for (const [stage, command, substitute] of [
-    ['translation', 'node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --check'],
+    ['profile-matrix', 'node scripts/translate-router.mjs --profile-matrix --check', 'node scripts/translate-router.mjs --check'],
     ['typescript', 'node scripts/check-profile-typescript.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json'],
   ]) {
     assert.ok(parse(baseline['javascript-first.yml']).jobs[stage].steps.some(step => step.run === command));
@@ -114,4 +115,31 @@ test('verifier comments, substituted result data and conditional aggregation can
   fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].env.STAGE_RESULTS = '{"fake":{"result":"success"}}'; }, 'unconditional reviewed program');
   for (const condition of [false, 'false', null, 0, '']) fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].if = condition; }, 'unconditional reviewed program');
   fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0]['continue-on-error'] = true; }, 'unconditional reviewed program');
+});
+
+test('profile matrix has an independent immutable job and the aggregate rejects its cancellation', () => {
+  const jobs = parse(baseline['javascript-first.yml']).jobs;
+  assert.equal(jobs['profile-matrix']['timeout-minutes'], 60);
+  assert.ok(!jobs.translation.steps.some(step => step.run?.includes('--profile-matrix')));
+  assert.ok(jobs.complete.needs.includes('profile-matrix'));
+  fails('javascript-first.yml', workflow => { workflow.jobs.complete.needs = workflow.jobs.complete.needs.filter(id => id !== 'profile-matrix'); }, 'depend on every');
+  fails('javascript-first.yml', workflow => { workflow.jobs['profile-matrix'].steps[0].with.ref = 'main'; }, 'inputs.sha');
+  fails('javascript-first.yml', workflow => { workflow.jobs.complete.steps[0].run = workflow.jobs.complete.steps[0].run.replace('stages.length !== 8', 'stages.length !== 7'); }, 'unconditional reviewed program');
+});
+
+test('parity job covers three sequential acceptance checkers and the final checker', () => {
+  const manifest = JSON.parse(fs.readFileSync(new URL('../../parity/router-features.json', import.meta.url)));
+  const budget = parityCheckBudgets(manifest, '/router');
+  const minutes = parse(baseline['javascript-first.yml']).jobs.parity['timeout-minutes'];
+  assert.ok(minutes * 60_000 >= budget.ciParityMs, JSON.stringify(budget));
+  fails('javascript-first.yml', workflow => { workflow.jobs.parity['timeout-minutes'] = Math.floor(budget.ciParityMs / 60_000) - 1; }, 'deadline cannot contain');
+  const synthetic = { features: [{ evidence: [
+    { file: 'test/a.mjs', test: 'a' }, { file: 'test/../test/a.mjs', test: 'b' },
+    { file: 'test/b.mjs', test: 'c' }, { file: 'test/fixture.mjs', fixture: 'd' },
+  ] }] };
+  const two = parityCheckBudgets(synthetic, '/router');
+  assert.equal(two.evidenceFiles.length, 2);
+  const three = parityCheckBudgets({ features: [...synthetic.features, { evidence: [{ file: 'test/c.mjs', test: 'e' }] }] }, '/router');
+  assert.equal(three.checkerMs - two.checkerMs, 180_000);
+  assert.equal(three.ciParityMs - two.ciParityMs, 720_000);
 });

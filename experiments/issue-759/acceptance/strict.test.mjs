@@ -4,13 +4,15 @@ import { mkdir, readFile, readdir, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { repository, temporary } from './helpers.mjs';
+import { parityCheckBudgets } from '../../../scripts/parity-check-budgets.mjs';
+const proofManifest = JSON.parse(await readFile(join(repository, 'parity/router-features.json')));
+const checkerTimeoutMs = parityCheckBudgets(proofManifest, repository).checkerMs;
 
 const run = script => new Promise(resolve => {
-  // The complete checker contains separately bounded native TS evidence and
-  // deterministic translation (180 and 600 seconds), plus native lifecycle/HTTP
-  // fixtures. Bound the entire sequence with a further 60 seconds for fixtures.
-  // The actual strict checker and every rejection assertion remain mandatory.
-  const started = performance.now(), timeout = 840_000;
+  // Each complete checker includes all distinct native test evidence runners,
+  // its canonical comparison and inventory/fixture overhead. Keep all three
+  // sequential rejection assertions; no failed proof is substituted or skipped.
+  const started = performance.now(), timeout = checkerTimeoutMs;
   execFile(process.execPath, [script, '--strict'], { timeout, maxBuffer: 1_048_576 }, (error, stdout, stderr) => resolve({ status: error ? error.code : 0, output: stdout + stderr + (error?.killed ? `\nChecker exceeded acceptance deadline (budget=${timeout}ms, elapsed=${Math.round(performance.now()-started)}ms).` : '') }));
 });
 async function isolatedChecker(t, edit) {

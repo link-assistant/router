@@ -6,9 +6,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { parityCheckBudgets } from './parity-check-budgets.mjs';
 const require = createRequire(new URL('./ci/package.json', import.meta.url));
 const { parseDocument } = require('yaml');
-export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'reverse-translation'];
+export const STAGES = ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'];
 const success = (id) => `needs.${id}.result == 'success'`;
 // Compare executable reviewed programs, rather than finding reassuring words
 // in comments or strings that a no-op verifier could carry.
@@ -20,7 +21,7 @@ const shaVerifier = normalizeProgram(`node --input-type=module -e "
 "`);
 const aggregateVerifier = normalizeProgram(`node --input-type=module -e "
   const stages = Object.values(JSON.parse(process.env.STAGE_RESULTS));
-  if (stages.length !== 7 || stages.some(stage => stage.result !== 'success')) {
+  if (stages.length !== 8 || stages.some(stage => stage.result !== 'success')) {
     console.error('JavaScript gate rejected:', process.env.STAGE_RESULTS);
     process.exit(1);
   }
@@ -67,7 +68,8 @@ export function auditWorkflows(sources) {
       'bun-tests': ['npm run native:test:bun --prefix packages/javascript'],
       typescript: ['npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node --test tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test --test-concurrency=2 experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
-      translation: ['node scripts/translate-router.mjs --check', 'node scripts/translate-router.mjs --profile-matrix --check', 'node --test --test-concurrency=2 tools/translation/test/*.test.mjs'],
+      translation: ['node scripts/translate-router.mjs --check', 'node --test --test-concurrency=2 tools/translation/test/*.test.mjs'],
+      'profile-matrix': ['node scripts/translate-router.mjs --profile-matrix --check'],
       'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node --test tools/translation/js-to-rust/test/translator.test.mjs'],
     };
     for (const id of STAGES) {
@@ -84,6 +86,8 @@ export function auditWorkflows(sources) {
       if (['bun-tests', 'typescript'].includes(id) && !(job?.steps ?? []).some(step => step.uses === 'oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6' && step.with?.['bun-version'] === '1.4.3')) errors.push(`${gateName}/${id}: required pinned Bun runtime missing`);
       if (!(job?.steps ?? []).some(step => step.uses?.startsWith('actions/checkout@'))) errors.push(`${gateName}/${id}: immutable checkout missing`);
     }
+    const manifest = JSON.parse(fs.readFileSync(new URL('../parity/router-features.json', import.meta.url), 'utf8'));
+    if (!(gate.jobs?.parity?.['timeout-minutes'] * 60_000 >= parityCheckBudgets(manifest, '/router').ciParityMs)) errors.push(`${gateName}/parity: deadline cannot contain all four bounded checker calls and acceptance overhead`);
     const aggregate = gate.jobs?.complete;
     if (!aggregate || JSON.stringify([...dependencies(aggregate)].sort()) !== JSON.stringify([...STAGES].sort()) || aggregate.if !== '${{ always() }}' || aggregate['continue-on-error']) errors.push(`${gateName}/complete: must depend on every JavaScript stage`);
     const aggregateSteps = aggregate?.steps ?? [];
