@@ -12,8 +12,6 @@ import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {parseRust} from '../extensions/host-contracts.mjs';
 import {copyMetadata,relocateSourceLink} from '../extensions/source-links.mjs';
-import {standaloneMatchesMacroContext} from '../matches-macro-context.mjs';
-import {captureOriginalCargoEdition} from '../cargo-edition-context.mjs';
 import {verifyTypedTargets as verifyActualTypedTargets} from './typed-targets.mjs';
 const verifyTypedTargets=(result,verify)=>verifyActualTypedTargets(result,verify,{childTimeoutMs:30_000});
 const cargo=edition=>`[package]\nname="edition-fixture"\nversion="0.1.0"\nedition="${edition}"\n`;
@@ -72,8 +70,7 @@ test('standalone translation requires its explicit original manifest or genuine 
   }
   // The verifier still rejects changed executable pattern coordinates even
   // when the declaration and original Cargo source association are genuine.
-  const context=standaloneMatchesMacroContext(declaration,{file:path,cargoEditionContext:captureOriginalCargoEdition(manifest)});
-  const entry=parseRust(declaration+'\nfn main(){}',{standaloneSourceContext:{context,file:path,offset:0}}).items.find(item=>item.name==='select');
+  const entry=parseRust(declaration+'\nfn main() {}\n',{cargoManifest:manifest}).items.find(item=>item.name==='select');
   for(const key of ['subjectSyntaxSpan','patternSpan']){
     const changed=copyMetadata(entry);let edits=0;
     const corrupt=node=>{if(!node||typeof node!=='object')return;for(const [name,value]of Object.entries(node))if(name===key&&value){value.start++;edits++;}else if(Array.isArray(value))value.forEach(corrupt);else corrupt(value);};
