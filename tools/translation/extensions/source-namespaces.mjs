@@ -15,7 +15,7 @@ function resolvedPath(parser,target,scope,namespace) {
 }
 export function originalSourceTypeOwner(parser,type,scope) {
   const key=ownerKey(type,scope),state=sourceTypeOwners.get(parser);
-  const owner=key&&state?.aliases===parser.sourceNamespaceAliases&&state.owners.get(key);
+  const owner=key&&state&&state.aliases===parser.sourceNamespaceAliases&&state.owners.get(key);
   return owner?[...owner]:null;
 }
 export function withSourceNamespaceParser(Base) {
