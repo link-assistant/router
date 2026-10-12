@@ -1,6 +1,7 @@
 // Source-coordinate implementation extraction for checked method lowering.
 // Extraction is structural evidence; only later checked bodies are executable.
 import {sourceItems} from './rust-structure.mjs';
+import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {tokenizeRust} from './extensions/lexical.mjs';
 import {fixedArrayCopyCells,FIXED_ARRAY_PROFILE} from './extensions/fixed-arrays.mjs';
@@ -9,6 +10,10 @@ import {TranslationError} from './vendor/meta-language/translation/diagnostics.j
 import {createHash} from 'node:crypto';
 import {typeKey} from './checked-types.mjs';
 import {nonCopyTraitOwner} from './copy-trait-owners.mjs';
+
+const originalMethodMembers=new WeakMap(),originalMethodLowerings=new WeakMap();
+export function originalMethodMember(method){const state=originalMethodMembers.get(method);if(!state||metadataDigest(method)!==state.methodDigest)throw new TypeError('Method source member is unsealed, copied or changed');return state;}
+export function originalMethodLowering(lowered){const state=originalMethodLowerings.get(lowered);if(!state||metadataDigest(lowered)!==state.loweredDigest)throw new TypeError('Method token lowering is unsealed, copied or changed');originalMethodMember(state.method);return state;}
 
 const range = tokens => ({start:tokens[0]?.start ?? 0,end:tokens.at(-1)?.end ?? 0});
 const significant = tokens => tokens.filter(token=>token.type !== 'comment');
@@ -133,6 +138,7 @@ export function extractImplDeclarations(source,{sourcePath=null,modulePath=[],so
         tokens:all,signatureTokens:members.slice(fnAt,open),bodyTokens,receiverSpan:receiver.tokens.length ? range(receiver.tokens) : null,
         typePath:implementation.typePath,traitPath:implementation.traitPath,modulePath:[...modulePath],attributes:methodHead.attributes,
         diagnostics:[...obligations,...methodObligations],loweringReady:!obligations.length && !methodObligations.length};
+      if(sourceView!==undefined)originalMethodMembers.set(method,Object.freeze({source,sourcePath,modulePath:Object.freeze([...modulePath]),sourceView,compilationProfile,implementationSpan:Object.freeze({...implementation.span}),methodDigest:metadataDigest(method)}));
       implementation.methods.push(method);at=end+1;
     }
   }
@@ -166,8 +172,10 @@ function lowerMethodTokens(method,typePath,mode,certificate=null) {
     return [token];
   });
   const sharedReceiverSource=method.receiver==='shared'?{kind:'shared',span:{...method.receiverSpan},tokens:method.signatureTokens.filter(token=>token.start>=method.receiverSpan.start&&token.end<=method.receiverSpan.end).map(token=>({kind:token.type,value:token.text,span:{start:token.start,end:token.end}}))}:null;
-  return {tokens,rewrites,receiver:method.receiver,receiverName:method.receiver ? freshName : null,typePath:[...typePath],...(sharedReceiverSource?{sharedReceiverSource}:{}),
+  const lowered={tokens,rewrites,receiver:method.receiver,receiverName:method.receiver ? freshName : null,typePath:[...typePath],...(sharedReceiverSource?{sharedReceiverSource}:{}),
     assumptions:mode === 'copy' ? certificate.obligations : ['Shared receiver syntax and pointee identity remain checked; scalar field reads require Copy evidence, and ownership, mutation, consuming receivers, trait dispatch and unsafe operations retain their own frontend obligations.']};
+  if(originalMethodMembers.has(method)){const original=originalMethodMember(method);originalMethodLowerings.set(lowered,Object.freeze({method,original,mode,copyCertificate:certificate?copyMetadata(certificate):null,loweredDigest:metadataDigest(lowered)}));}
+  return lowered;
 }
 
 const frozen=value=>{if(value && typeof value==='object'){for(const child of Object.values(value))frozen(child);Object.freeze(value);}return value;};
@@ -286,5 +294,7 @@ export function lowerCopyMethodTokens(method,resolvedType,certificate) {
   if(!Array.isArray(method.diagnostics) || method.diagnostics.length!==1 || method.diagnostics[0].message!==consumingReceiver || method.diagnostics[0].kind!=='unsupported' || method.diagnostics[0].span?.start!==method.receiverSpan?.start || method.diagnostics[0].span?.end!==method.receiverSpan?.end)refuse('method obligations remain beyond the checked Copy receiver');
   if(resolvedType.kind!=='data')refuse('inherent by-value lowering currently requires a named algebraic Copy type');
   const lowered=lowerMethodTokens(method,resolvedType.name.split('.'),'copy',certificate);
-  return {...lowered,copyCertificate:certificate,discharged:[method.diagnostics[0]]};
+  const result={...lowered,copyCertificate:certificate,discharged:[method.diagnostics[0]]},original=originalMethodLowerings.get(lowered);
+  if(original)originalMethodLowerings.set(result,Object.freeze({...original,loweredDigest:metadataDigest(result)}));
+  return result;
 }
