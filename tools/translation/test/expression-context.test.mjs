@@ -24,6 +24,11 @@ test('condition operands keep uppercase source constants through boolean arithme
 });
 
 test('explicit parentheses and call arguments retain original record construction in conditions',{timeout:30000},async()=>{
+  // Nominal tuple inference remains a separate obligation. Both element
+  // positions nevertheless have an ordinary Rust delimiter syntax context.
+  for(const [tuple,field] of [['(Item{value:v},1u8)',1],['(1u8,Item{value:v})',0]]){
+    assert.doesNotThrow(()=>parseRust(`struct Item{value:u8} fn syntax(v:u8)->u8{if ${tuple}.${field}==1u8{0}else{1}} fn main(){}`));
+  }
   const result=project('struct Item{value:u8} fn read(value:Item)->u8{value.value}'
     +'pub fn grouped(v:u8)->u8{if (Item{value:v}).value==2u8{3}else{4}}'
     +'pub fn argument(v:u8)->u8{if read(Item{value:v})==2u8{3}else{4}}');
