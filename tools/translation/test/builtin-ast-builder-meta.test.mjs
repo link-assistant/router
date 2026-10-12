@@ -105,12 +105,12 @@ test('complete original provider/catalog inputs preserve both Clone callbacks wi
 test('source metadata sharing preserves exact scopes and refuses cycles, dangling refs and independent limits',()=>{
   const original={source:'actual/original.rs',scope:['outer','inner'],span:{start:12,end:34},syntax:[{kind:'token',text:'actual',span:{start:12,end:18}}]};
   const payload={left:original,right:structuredClone(original)},encoded=encodeBuiltinSourceMeta(payload),decoded=decodeBuiltinSourceMeta(encoded);
-  assert.deepEqual(decoded,payload);assert.equal(decoded.left,decoded.right);assert.ok(Object.isFrozen(decoded.left.syntax));
+  assert.deepEqual(decoded,payload);assert.deepEqual(decodeBuiltinSourceMeta(encodeBuiltinSourceMeta({signed:-128,real:-0.5})),{signed:-128,real:-0.5});assert.equal(decoded.left,decoded.right);assert.ok(Object.isFrozen(decoded.left.syntax));
   assert.equal(encodeBuiltinSourceMeta(decoded),encoded);
   assert.notEqual(sealBuiltinSourceMeta(payload).digest,sealBuiltinSourceMeta({...payload,right:{...original,scope:['other']}}).digest);
-  const forged=JSON.parse(encoded);forged.root={r:forged.table.length};assert.throws(()=>decodeBuiltinSourceMeta(JSON.stringify(forged)),/Dangling|cyclic/);
+  const forged=JSON.parse(encoded);forged.root=-forged.table.length-1;assert.throws(()=>decodeBuiltinSourceMeta(JSON.stringify(forged)),/Dangling|cyclic/);
   const cyclic={};cyclic.next=cyclic;assert.throws(()=>encodeBuiltinSourceMeta(cyclic),/cycle/);
-  const selfTable={schema:'builtin-source-meta-sharing-v1',fieldNames:['next'],table:[['o',[[0,{r:0}]]]],root:{r:0}};assert.throws(()=>decodeBuiltinSourceMeta(JSON.stringify(selfTable)),/cyclic/);
+  const selfTable={schema:'builtin-source-meta-sharing-v1',fieldNames:['next'],table:[['o',[[0,-1]]]],root:-1};assert.throws(()=>decodeBuiltinSourceMeta(JSON.stringify(selfTable)),/cyclic/);
   let deep=null;for(let i=0;i<66;i++)deep={next:deep};assert.throws(()=>encodeBuiltinSourceMeta(deep),/depth budget/);
   assert.throws(()=>encodeBuiltinSourceMeta(Array.from({length:16001},(_,i)=>({index:i}))),/cell budget/);
   assert.throws(()=>encodeBuiltinSourceMeta({source:'x'.repeat(524288)}),/byte budget/);
