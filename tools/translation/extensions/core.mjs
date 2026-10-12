@@ -17,7 +17,15 @@ async function exposed(name, replacements) {
 }
 
 export const { RustParser } = await exposed('rust.js', [['class RustParser {', 'export class RustParser {']]);
-export const { Checker } = await exposed('check.js', [['class Checker {', 'export class Checker {']]);
+export const { Checker } = await exposed('check.js', [
+  ['class Checker {', 'export class Checker {'],
+  ["      }));\n    });\n    this.walk(items, path, (item, itemPath, entry) => {\n      if (item.k !== 'fn') return;", "      }));\n    }, 'declaration-types');\n    this.walk(items, path, (item, itemPath, entry) => {\n      if (item.k !== 'fn') return;"],
+  ['      entry.ret = this.resolveType(item.ret, itemPath, item.span);\n    });', "      entry.ret = this.resolveType(item.ret, itemPath, item.span);\n    }, 'declaration-types');"],
+  ['  walk(items, path, visit) {', '  walk(items, path, visit, phase = null) {'],
+  ['if (item.k === \'module\') this.walk(item.items, [...path, item.name], visit);', 'if (item.k === \'module\') this.walk(item.items, [...path, item.name], visit, phase);'],
+  ['else visit(item, path, this.items.get([...path, item.name].join(\'.\')));', 'else this.visitDeclaration(item, path, this.items.get([...path, item.name].join(\'.\')), visit, phase);'],
+  ['  resolveType(type, path, span) {', '  visitDeclaration(item, path, entry, visit, phase) { return visit(item, path, entry); }\n\n  resolveType(type, path, span) {'],
+]);
 export const { JavaScriptEmitter, emitJavaScript: emitWith } = await exposed('emit-javascript.js', [
   ['class JavaScriptEmitter {', 'export class JavaScriptEmitter {'],
   ["new EmitState(program, 'JavaScript', ident, KEYWORDS,", "new EmitState(program, 'JavaScript', ident, new Set(KEYWORDS),"],

@@ -258,10 +258,10 @@ export class DataChecker extends withStandardStringEqualityChecker(TextChecker) 
     return super.application(head, args, env, path, expected, range);
   }
 
-  walk(items, path, visit) {
+  walk(items, path, visit, phase = null) {
     for (const item of items) {
-      if (item.k === 'module') { this.walk(item.items, [...path, item.name], visit); continue; }
-      const entry = this.items.get([...path, item.name].join('.')); visit(item, path, entry);
+      if (item.k === 'module') { this.walk(item.items, [...path, item.name], visit, phase); continue; }
+      const entry = this.items.get([...path, item.name].join('.')); this.visitDeclaration(item, path, entry, visit, phase);
       if (item.k !== 'data') continue;
       // The pinned checker rebuilds constructors with resolved types. Restore
       // syntax metadata after that visit, before any subsequent body checking.

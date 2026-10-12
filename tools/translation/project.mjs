@@ -10,7 +10,8 @@ import {COPY_NAMESPACE_BINDINGS} from './copy-trait-owners.mjs';
 import {STANDARD_NAMESPACE_BINDINGS,STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
 import {EFFECT_CONTRACTS} from './extensions/effects-contracts.mjs';
-import { HostRustParser as MethodRustParser, checkProgram, emitJavaScript,HOST_CONTRACTS,hostData as effectData } from './extensions/host-contracts.mjs';
+import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript,HOST_CONTRACTS,hostData as effectData } from './extensions/host-contracts.mjs';
+import {declarationRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens } from './impl-resolver.mjs';
 import {projectCopyEvidence} from './project-copy.mjs';
 import {admittedHostData} from './extensions/source-namespaces.mjs';
@@ -271,16 +272,23 @@ export function translateProject(options) {
   const duplicateNames = new Set(declarations.filter((entry, index) => declarations.findIndex(candidate => candidate.name === entry.name) !== index).map(entry => entry.name));
   for (const entry of declarations.filter(entry => duplicateNames.has(entry.name))) refused.push({ file: entry.file, name: entry.name, term: entry.term, kind: 'ambiguous', message: 'duplicate module-scoped declaration', span: entry.span });
   let active = declarations.filter(entry => !duplicateNames.has(entry.name)), checked;
-  // Every surviving body must check. Remove an actual failing declaration,
-  // then recheck all callers; no parsed signature is a callable implementation.
+  // Discard a failed type phase and remove its independent original owners.
+  // Body failures remain ordinary single refusals. Recheck every surviving
+  // body and caller; no parsed signature is a callable implementation.
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
-    try { checked = roundTripProgram(checkProgram({ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null },{jsonParserProfile})); break; }
+    try { checked = roundTripProgram(checkProjectProgram({ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null },{jsonParserProfile})); break; }
     catch (error) {
-      if (!(error instanceof TranslationError)) throw error;
-      const owner = active.find(declaration => error.span && declaration.globalSpan.start <= error.span.start && error.span.start <= declaration.globalSpan.end);
-      if (!owner) throw new Error(`unattributed project semantic refusal: ${error.reason}`,{cause:error});
-      refused.push({ file: owner.file, name: owner.name, term: owner.term, ...diagnostic(error) });
-      active = active.filter(declaration => declaration !== owner);
+      const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
+      if(!failures)throw error;
+      const owners=new Set();
+      for(const failure of failures) {
+        const cause=failure.error;
+        const owner=active.find(declaration=>cause.span&&declaration.globalSpan.start<=cause.span.start&&cause.span.start<=declaration.globalSpan.end);
+        if(!owner||failure.name&&failure.name!==owner.name)throw new Error(`unattributed project semantic refusal: ${cause.reason}`,{cause});
+        if(owners.has(owner))continue;
+        owners.add(owner);refused.push({file:owner.file,name:owner.name,term:owner.term,...diagnostic(cause)});
+      }
+      active=active.filter(declaration=>!owners.has(declaration));
     }
   }
   if (!checked) throw new Error('project declaration checking did not converge');

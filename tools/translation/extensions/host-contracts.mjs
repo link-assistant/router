@@ -35,6 +35,7 @@ import {withSourceNamespaceParser} from './source-namespaces.mjs';
 import {withCapturedSourceParser,linkParsedFile,withCheckedSourceLinks,checkedSourceContext,bindCheckedSourceLinks} from './source-links.mjs';
 import {evaluateCheckedConstant,CONSTANT_EVALUATION_PROFILE} from './constant-evaluation.mjs';
 import {DEFAULT_JSON_PARSER_PROFILE,configureJsonCapabilities,assertJsonParserCapability} from '../json-capabilities.mjs';
+import {withDeclarationRefusalCollection,checkCollectedDeclarationTypes} from './declaration-refusals.mjs';
 
 export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -284,7 +285,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     return {k:'routerHostCall',path:resolved,args,instantiation,span:span(first,c.peek())};
   }
 }
-export class HostChecker extends withCheckedSourceLinks(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker))))))) {
+export class HostChecker extends withDeclarationRefusalCollection(withCheckedSourceLinks(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
@@ -620,4 +621,5 @@ export class HostEmitter extends EffectEmitter {
 }
 export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);return linkParsedFile(parser,parser.file(),source,{scope:{macroEvidence,sourceScope:sourceScope?.scope??null,compilationProfile:sourceScope?.compilationProfile??null,configurationCondition:sourceScope?.configurationCondition??null}});};
 export const checkProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checker.program(surface);program.jsonParserProfile=jsonParserProfile;return program;};
+export const checkProjectProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checkCollectedDeclarationTypes(checker,surface);program.jsonParserProfile=jsonParserProfile;return program;};
 export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>emitWith(program,class extends HostEmitter{constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;}});
