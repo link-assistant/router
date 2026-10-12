@@ -10,6 +10,10 @@ import {captureSourceCorpus} from '../source-corpus.mjs';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
+import {parseRust} from '../extensions/host-contracts.mjs';
+import {copyMetadata,relocateSourceLink} from '../extensions/source-links.mjs';
+import {standaloneMatchesMacroContext} from '../matches-macro-context.mjs';
+import {captureOriginalCargoEdition} from '../cargo-edition-context.mjs';
 import {verifyTypedTargets as verifyActualTypedTargets} from './typed-targets.mjs';
 const verifyTypedTargets=(result,verify)=>verifyActualTypedTargets(result,verify,{childTimeoutMs:30_000});
 const cargo=edition=>`[package]\nname="edition-fixture"\nversion="0.1.0"\nedition="${edition}"\n`;
@@ -53,14 +57,29 @@ test('genuine independently parsed original Copy method bodies receive the same 
   const other=project({'src/lib.rs':source},cargo('2021'));assert.equal(other.meta.checkedMethods.some(entry=>entry.name==='Limit.choose'),false);assert.equal(other.meta.executable.some(entry=>entry.name==='run'),false);
 });
 
-test('standalone translation requires its explicit original manifest or genuine captured project scope',()=>{
-  const source='pub fn select(v:Option<u8>)->u8{if let Some(n)=v && n>0u8{return n;}0u8}',path='src/lib.rs',manifest=cargo('2024');
+test('standalone translation requires its explicit original manifest or genuine captured project scope',{timeout:90_000},async()=>{
+  const declaration='pub fn select(v:Option<u8>)->u8{if let Some(n)=v && n>0u8{return n;}0u8}',prefix='// é 😀\npub fn plain()->u8{7u8}\n',source=prefix+declaration,path='src/lib.rs',manifest=cargo('2024');
   const unknown=translateSource(source,path);assert.equal(unknown.ir.items.find(entry=>entry.name==='select').status,'carried');
   assert.equal(unknown.ir.items.map(entry=>entry.source).join(''),source);assert.equal(unknown.ir.sourceSha256,hash(source));
   const explicit=translateSource(source,path,{cargoManifest:manifest});assert.equal(explicit.ir.items.find(entry=>entry.name==='select').status,'executable');
   const original=project({[path]:source},manifest),scoped=translateSource(source,path,{projectSourceScopes:original.sourceScopes,projectDeclarations:original.executableDeclarations});
   assert.equal(scoped.ir.items.find(entry=>entry.name==='select').status,'executable');assert.equal(scoped.ir.items.map(entry=>entry.source).join(''),source);
   const different=translateSource(source,path,{cargoManifest:cargo('2021')});assert.equal(different.ir.items.find(entry=>entry.name==='select').status,'carried');
+  for(const result of [explicit,scoped]){
+    assert.equal(result.ir.sourceSha256,hash(source));assert.equal(result.ir.items.map(entry=>entry.source).join(''),source);
+    const item=result.ir.items.find(entry=>entry.name==='select');assert.equal(item.span.start,prefix.length);assert.equal(item.span.byteStart,Buffer.byteLength(prefix));
+    await verifyTypedTargets(result,api=>{assert.equal(api.plain(),7n);assert.equal(api.select(some(9n)),9n);assert.equal(api.select(some(0n)),0n);assert.equal(api.select(none),0n);});
+  }
+  // The verifier still rejects changed executable pattern coordinates even
+  // when the declaration and original Cargo source association are genuine.
+  const context=standaloneMatchesMacroContext(declaration,{file:path,cargoEditionContext:captureOriginalCargoEdition(manifest)});
+  const entry=parseRust(declaration+'\nfn main(){}',{standaloneSourceContext:{context,file:path,offset:0}}).items.find(item=>item.name==='select');
+  for(const key of ['subjectSyntaxSpan','patternSpan']){
+    const changed=copyMetadata(entry);let edits=0;
+    const corrupt=node=>{if(!node||typeof node!=='object')return;for(const [name,value]of Object.entries(node))if(name===key&&value){value.start++;edits++;}else if(Array.isArray(value))value.forEach(corrupt);else corrupt(value);};
+    corrupt(changed);assert.ok(edits>0,key);
+    assert.throws(()=>relocateSourceLink(entry,changed,{source:declaration,sourcePath:path,itemSpan:{start:0,end:declaration.length}}),/semantic declaration differs/);
+  }
 });
 test('bulk original project scopes inherit Cargo edition while unrelated tracked source keeps it unknown',{timeout:240_000},async()=>{
   const folder=mkdtempSync(join(tmpdir(),'router-let-chain-cargo-boundary-'));
