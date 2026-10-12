@@ -16,14 +16,22 @@ const proofs=new WeakMap(),cachedInventories=new WeakMap(),cachedAttributeBindin
 const identifier=tree=>tree?.kind==='token'&&tree.type==='ident'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(tree.text);
 const syntaxText=nodes=>nodes.map(node=>node.tag==='slot'?'#'+node.name:node.tag==='repeat'?'#('+syntaxText(node.nodes)+')'+(node.separator?.text??'')+node.quantifier:node.tag==='group'?node.delimiter+syntaxText(node.nodes)+({'(':')','[':']','{':'}'}[node.delimiter]):node.text).join(' ');
 export function originalFunction(dependencies,path,name,predicate=()=>true){
-  const origin=deriveDependencySource(dependencies,'serde_derive',path),items=sourceItems(origin.source).filter(item=>item.term==='fn'&&item.name===name&&predicate(origin.source.slice(item.start,item.end)));
+  const origin=deriveDependencySource(dependencies,'serde_derive',path),roots=sourceItems(origin.source),definitions=[...roots];
+  // Generator methods are real source functions inside actual impl items, not
+  // emitted quote bodies. Preserve original absolute positions and attributes.
+  for(const implementation of roots.filter(item=>item.term==='impl')){
+    const open=implementation.tokens.find(token=>token.type==='punct'&&token.text==='{'),close=implementation.tokens.at(-1);
+    if(!open||close?.text!=='}')throw new TypeError('Original generator impl function boundary remains unresolved');
+    definitions.push(...sourceItems(origin.source.slice(open.end,close.start)).map(item=>({...item,start:item.start+open.end,end:item.end+open.end})));
+  }
+  const items=definitions.filter(item=>item.term==='fn'&&item.name===name&&predicate(origin.source.slice(item.start,item.end)));
   if(items.length!==1)throw new TypeError('Selected generator function is not unique: '+path+'::'+name);
   const item=items[0];return {source:path,sourceSha256:origin.sha256,span:{start:item.start,end:item.end},sha256:hash(origin.source.slice(item.start,item.end)),text:origin.source.slice(item.start,item.end)};
 }
 export function selectedTemplate(inventory,definition,predicate){
   const member=inventory.members.find(member=>member.source===definition.source);
   const matches=member?.quotes.filter(template=>template.span.start>=definition.span.start&&template.span.end<=definition.span.end&&predicate(syntaxText(template.syntax)))??[];
-  if(matches.length!==1)throw new TypeError('Selected source quote is not unique: '+definition.source);
+  if(matches.length!==1)throw new TypeError('Selected source quote is not unique: '+definition.source+'@'+definition.span.start+'..'+definition.span.end+' ('+matches.length+' matches)');
   return matches[0];
 }
 export function boundedInput(certificate,source,owner='Serialize',allowedHelpers=['rename','rename_all','alias']){

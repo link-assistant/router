@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof,deriveDependencySource} from '../derive-dependencies.mjs';
 import {createDeriveFootprintContext} from '../derive-footprints.mjs';
 import {inventoryDeriveQuoteMeta,isDeriveQuoteMeta,createQuoteFragmentCompiler,inspectQuoteFragment} from '../derive-quote-meta.mjs';
-import {proveSerdeSerializeBangFootprint,isSerdeSerializeBangFootprint} from '../serde-bang-footprints.mjs';
+import {proveSerdeSerializeBangFootprint,isSerdeSerializeBangFootprint,originalFunction,selectedTemplate} from '../serde-bang-footprints.mjs';
 import {resolveModuleGraph} from '../project.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
@@ -151,4 +151,18 @@ test('complete original library RunState proof keeps unrelated neutral macro unc
   const binding=resolveModuleBindings({modules:graph.modules,compilationProfile:PRODUCTION_PROFILE,deriveContext:input});
   assert.equal(binding.scopes.find(scope=>scope.path.length===0).unresolvedBangMacroScope,true);
   assert.ok(graph.diagnostics.some(diagnostic=>original.source(diagnostic.file).slice(diagnostic.span.start,diagnostic.span.end).includes('unix_listener')));
+});
+
+
+test('typed fragment metadata normalization retains separate token/cell/depth limits',()=>{
+  const inventory=inventoryDeriveQuoteMeta(dependencies),compiler=createQuoteFragmentCompiler(inventory),leaf=compiler.sourceType('u8',{source:'budget-type-leaf'});
+  // Repeated original source spans increase serialized evidence while actual
+  // token spelling stays small; no runtime/certificate authority is granted.
+  assert.doesNotThrow(()=>compiler.roundTrip(compiler.join(Array(5000).fill(leaf),{role:'bounded source metadata positive'})));
+  assert.throws(()=>compiler.join(Array(10000).fill(leaf),{role:'metadata bound'}),/metadata-byte budget/);
+  const long=compiler.token('x'.repeat(4096),'ident',{role:'bounded identifier leaf'});
+  assert.throws(()=>compiler.join(Array(63).fill(long),{role:'token spelling bound'}),/token-byte budget/);
+  assert.throws(()=>compiler.join(Array(16001).fill(leaf),{role:'cell bound'}),/value budget/);
+  const definition=originalFunction(dependencies,'src/de.rs','deserialize_seq'),wrapper=selectedTemplate(inventory,definition,text=>text.startsWith('#type_path ('));
+  let value=compiler.token('X','ident',{role:'grammar-only name'});assert.throws(()=>{for(let depth=0;depth<70;depth++)value=compiler.instantiate(wrapper,new Map([['type_path',compiler.token('X','ident',{role:'source tuple constructor slot'})],['vars',compiler.sequence([value],{role:'one source argument'})]]),{role:'original wrapper depth bound'});},/depth budget/);
 });

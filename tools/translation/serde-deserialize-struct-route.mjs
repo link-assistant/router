@@ -20,7 +20,7 @@ export function liftSerdeDeserializeStructRoutes({inventory,compiler,input,defin
   const fields=input.fields.map((field,index)=>({field,name:leaf('__field'+index,'ident','pinned field_i source-ordered Ident'),member:leaf(field.name,'ident','original syn::Member::Named'),literal:leaf(JSON.stringify(field.name),'string','default field Name literal'),type:field.typeFragment}));
   const thisValue=emit(generated,text=>text.trim()==='__Field',{},'original generated field enum owner');
   const deny=input.denyUnknownFields;
-  const fallthrough=deny?emit(identifier,text=>text.includes('unknown_field'),shared,'actual deny_unknown_fields fallthrough'):emit(fieldHelper,text=>text.includes('Ok ( __Field :: __ignore )'),shared,'default !flatten && !deny unknown field fallthrough');
+  const fallthrough=deny?emit(identifier,text=>text.includes('unknown_field'),shared,'actual deny_unknown_fields fallthrough'):emit(fieldHelper,text=>text.trim()==='_serde :: #private :: Ok (__Field :: __ignore)',shared,'default !flatten && !deny unknown field fallthrough');
   const ignore=deny?none:emit(fieldHelper,text=>text.trim()==='__ignore ,',{},'default ignored field variant');
   const mapping=(row,bytes)=>{
     const scope=bounded(identifier,bytes?'let bytes_mapping':'let str_mapping',bytes?'let expecting':'let bytes_mapping');
@@ -35,7 +35,7 @@ export function liftSerdeDeserializeStructRoutes({inventory,compiler,input,defin
   const fieldVisitor=emit(generated,text=>text.includes('enum __Field'),{...shared,lifetime:none,field_idents:seq(fields.map(row=>row.name),'original fields identifiers'),ignore_variant:ignore,visitor_impl:visitorImpl},'default nonflatten field identifier enum and visitors');
   const missingExpression=row=>{
     const func=emit(missing,text=>text.includes('de :: missing_field'),shared,'default missing field function path');
-    return emit(missing,text=>text.trim()==='#func ( #name ) ?', {func,name:row.literal},'default expr_is_missing with no custom/default helper');
+    return emit(missing,text=>text.trim()==='#func (#name) ?', {func,name:row.literal},'default expr_is_missing with no custom/default helper');
   };
   const missingSequence=(index,expectation)=>emit(missingSeq,text=>text.includes('invalid_length'),{...shared,index:leaf(String(index),'number','actual index_in_seq'),expecting:expectation},'original missing sequence element error');
   const seqExpectation=leaf(JSON.stringify('struct '+input.name.name+' with '+fields.length+' element'+(fields.length===1?'':'s')),'string','actual deserialize_seq expected element count literal');
@@ -43,7 +43,7 @@ export function liftSerdeDeserializeStructRoutes({inventory,compiler,input,defin
     const letValues=fields.map(row=>emit(map,text=>text.startsWith('let mut #name :'),{...shared,name:row.name,field_ty:row.type},'default field typed Option storage'));
     const valueArms=fields.map(row=>{
       const func=emit(map,text=>text.trim()==='_serde :: de :: MapAccess :: next_value :: < #field_ty >',{field_ty:row.type},'original next_value generic actual field Type');
-      const visit=emit(map,text=>text.trim()==='#func ( & mut __map ) ?', {func},'default checked source next_value expression');
+      const visit=emit(map,text=>text.trim()==='#func (& mut __map) ?', {func},'default checked source next_value expression');
       return emit(map,text=>text.startsWith('__Field :: #name =>'),{...shared,name:row.name,deser_name:row.literal,visit},'default duplicate-field guarded value arm');
     });
     const ignored=deny?none:emit(map,text=>text.startsWith('_ =>')&&text.includes('IgnoredAny'),{},'default unknown-field consume arm');
@@ -56,7 +56,7 @@ export function liftSerdeDeserializeStructRoutes({inventory,compiler,input,defin
   const normalSeq=()=>{
     const values=fields.map((row,index)=>{
       const func=emit(sequence,text=>text.trim()==='_serde :: de :: SeqAccess :: next_element :: < #field_ty >',{field_ty:row.type},'original next_element actual field Type');
-      const visit=emit(sequence,text=>text.trim()==='#func ( & mut __seq ) ?',{func},'default next sequence element');
+      const visit=emit(sequence,text=>text.trim()==='#func (& mut __seq) ?',{func},'default next sequence element');
       return emit(sequence,text=>text.startsWith('let #var = match'),{...shared,var:row.name,visit,value_if_none:missingSequence(index,seqExpectation)},'default sequence binding with original missing error');
     });
     const result=emit(sequence,text=>text.startsWith('#type_path {'),{type_path:ident,names:seq(fields.map(row=>row.member),'actual original Member order'),vars:seq(fields.map(row=>row.name),'actual field variable order')},'default source named struct sequence result');

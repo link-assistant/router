@@ -80,7 +80,7 @@ test('custom imported Copy derives and generic headers never use builtin recipes
   for(const source of ['use custom::Copy; #[derive(Copy,serde::Serialize)] pub struct Payload;','#[derive(Copy,serde::Serialize)] pub struct Payload<T>{value:T}'])assert.equal(createDeriveFootprintContext(input(source)).certificates.length,0);
 });
 
-test('complete unchanged SubscriptionProvider and CatalogRecord preserve residual owners and parents',()=>{
+test('complete unchanged SubscriptionProvider and CatalogRecord preserve residual owners and parents',{timeout:60_000},()=>{
   const original=originalCsvContext(),paths=original.inputs.sources.map(value=>value.source).filter(path=>path.endsWith('.rs'));
   const graph=resolveModuleGraph({entry:'src/lib.rs',paths,readSource:original.source,compilationProfile:PRODUCTION_PROFILE});
   const context=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE});

@@ -10,10 +10,10 @@ export function liftSerdeNamedStructRoute({inventory,compiler,input,sourceOffset
   if(first<0||end<0)throw new TypeError('Default nonremote member branch is not source-bounded');
   const nonremote={...member,span:{start:member.span.start+first,end:member.span.start+end}};
   const memberTemplate=select(inventory,nonremote,text=>text.trim()==='& #self_var . #member');
-  const fieldTemplate=select(inventory,visitor,text=>text.includes('#func ( & mut __serde_state , #key_expr , #field_expr )'));
-  const functionTemplates=inventory.members.find(entry=>entry.source==='src/ser.rs').quotes.filter(template=>template.macro==='quote_spanned'&&template.syntax.map(node=>node.text).join(' ')==='_serde :: ser :: SerializeStruct :: serialize_field');
-  if(functionTemplates.length!==1)throw new TypeError('StructTrait::SerializeStruct field-call source is not unique');
-  const func=inst(functionTemplates[0],{},'pinned StructTrait::SerializeStruct.serialize_field');
+  const fieldTemplate=select(inventory,visitor,text=>text.trim()==='#func (& mut __serde_state , #key_expr , #field_expr) ? ;');
+  const fieldFunction=definition('src/ser.rs','serialize_field');
+  if(!fieldFunction.text.includes('StructTrait::SerializeStruct =>'))throw new TypeError('Original SerializeStruct field trait branch changed');
+  const func=inst(select(inventory,fieldFunction,text=>text.trim()==='_serde :: ser :: SerializeStruct :: serialize_field'),{},'actual StructTrait::SerializeStruct.serialize_field method branch');
   const fields=input.fields.map(field=>{
     const fieldMember=leaf(field.name,'ident','original syn::Member::Named');
     const value=inst(memberTemplate,{self_var:leaf('self','ident','nonremote Parameters.self_var'),member:fieldMember},'nonpacked shared field expression');

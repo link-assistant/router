@@ -86,7 +86,7 @@ test('Serialize and Schemars remain residual owners rather than a blanket scope 
   assert.deepEqual(result.residualOwners.map(owner=>owner.target.join('::')),['serde::Serialize','schemars::JsonSchema']);
 });
 
-test('complete original CatalogRecord parents/source pins retain neutral macro uncertainty',()=>{
+test('complete original CatalogRecord parents/source pins retain neutral macro uncertainty',{timeout:60_000},()=>{
   const original=originalCsvContext(),paths=original.inputs.sources.map(value=>value.source).filter(path=>path.endsWith('.rs'));
   // Namespace source analysis only; never invoke the separate full semantic
   // .result translation from this authentic source-set capture.

@@ -99,12 +99,13 @@ export function quoteMetaOriginal(template){const state=templates.get(template);
 
 // The route compiler owns these bindings; callers cannot assert a fragment's
 // category by putting a string such as "Ident" next to arbitrary tokens.
+export const GENERATOR_FRAGMENT_LIMITS=Object.freeze({cells:16000,depth:64,tokenBytes:256000,metadataBytes:524288});
 const fragments=new WeakMap(),sequences=new WeakMap();
 export function createQuoteFragmentCompiler(inventory){
   const state=inventories.get(inventory);if(!state)throw new TypeError('Unsealed generator quote inventory');
   const seal=(syntax,provenance)=>{
-    let cells=0;const count=(nodes,depth=0)=>{if(depth>64)throw new TypeError('Generator fragment depth budget exceeded');for(const node of nodes){if(++cells>16000)throw new TypeError('Generator fragment value budget exceeded');if(node.nodes)count(node.nodes,depth+1);}};count(syntax);
-    if(Buffer.byteLength(JSON.stringify(syntax))>256000)throw new TypeError('Generator fragment byte budget exceeded');
+    let cells=0,tokenBytes=0;const count=(nodes,depth=0)=>{if(depth>GENERATOR_FRAGMENT_LIMITS.depth)throw new TypeError('Generator fragment depth budget exceeded');for(const node of nodes){if(++cells>GENERATOR_FRAGMENT_LIMITS.cells)throw new TypeError('Generator fragment value budget exceeded');tokenBytes+=node.tag==='token'?Buffer.byteLength(node.text):node.tag==='group'?2:0;if(tokenBytes>GENERATOR_FRAGMENT_LIMITS.tokenBytes)throw new TypeError('Generator fragment token-byte budget exceeded');if(node.nodes)count(node.nodes,depth+1);}};count(syntax);
+    const encodedBytes=Buffer.byteLength(JSON.stringify(syntax));if(encodedBytes>GENERATOR_FRAGMENT_LIMITS.metadataBytes)throw new TypeError('Generator fragment metadata-byte budget exceeded ('+encodedBytes+' bytes, '+cells+' cells)');
     const result=freeze({schema:'checked-generator-fragment-v1',syntax,provenance,generatedImplBehavior:false});fragments.set(result,{inventory});return result;
   };
   const token=(text,tokenType,provenance)=>{

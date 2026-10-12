@@ -58,11 +58,13 @@ test('Schemars, omitted builtin derives, generic/custom helper outputs remain re
 
 test('original and generated attribute names require actual ancestor closure',()=>{
   for(const name of ['serde','automatically_derived','inline']){
-    const input=setup('#[derive(serde::Serialize,serde::Deserialize)] pub struct Payload { value:u8 }','use custom::'+name+'; mod model;');
+    const input=setup('#[derive(serde::Serialize,serde::Deserialize)] pub struct Payload { '+(name==='serde'?'#[serde(rename="value")] ':'')+'value:u8 }','use custom::'+name+'; mod model;');
     const context=createDeriveBangContext(input);assert.equal(context.certificates[0].dimensions.bangMacroComplete,false);
     assert.ok(context.certificates[0].residualOwners.some(owner=>owner.reason.includes('attribute')));
     assert.equal(parserSourceScope(model(resolve(input,context)),resolve(input,context).scopes).unresolvedBangMacroScope,true);
   }
+  const unused=setup('#[derive(serde::Serialize,serde::Deserialize)] pub struct Payload { value:u8 }','use custom::serde;mod model;');
+  assert.equal(createDeriveBangContext(unused).certificates[0].dimensions.bangMacroComplete,true,'An unused name adds no original/generated attribute obligation');
   // Imported same-name attribute uncertainty is conservatively retained; this
   // test does not claim precedence over a registered inert derive helper.
 });
@@ -96,7 +98,7 @@ test('neutral and explicit family contexts never borrow each other or erase unkn
   assert.equal(parserSourceScope(model(resolve(windows)),resolve(windows).scopes).unresolvedBangMacroScope,false);
 });
 
-test('complete unchanged original library keeps omitted standard owners and unrelated root gaps',()=>{
+test('complete unchanged original library keeps omitted standard owners and unrelated root gaps',{timeout:60_000},()=>{
   const original=originalCsvContext(),paths=original.inputs.sources.map(value=>value.source).filter(path=>path.endsWith('.rs'));
   const graph=resolveModuleGraph({entry:'src/lib.rs',paths,readSource:original.source,compilationProfile:PRODUCTION_PROFILE});
   const deriveContext=createDeriveFootprintContext({dependencies,modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});

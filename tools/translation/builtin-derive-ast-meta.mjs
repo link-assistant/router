@@ -71,7 +71,11 @@ export function astStructLiteral(profile,fragment,name){
   function visit(nodes){for(let at=0;at<nodes.length;at++){
     if(nodes[at].text===name&&nodes[at+1]?.kind==='group'&&nodes[at+1].delimiter==='{')candidates.push(nodes[at+1]);
     if(nodes[at].kind==='group')visit(nodes[at].children);
-  }}visit(fragment.syntax);
+  }}
+  // A return type such as `-> ast::Stmt` is followed by the function body,
+  // not a Stmt literal. Inspect executable recipe syntax inside that body.
+  const body=fragment.syntax.at(-1);if(fragment.schema!=='original-ast-function-meta-v1'||body?.kind!=='group'||body.delimiter!=='{')throw new TypeError('AST literal recipe requires its original function body');
+  visit(body.children);
   if(candidates.length!==1)throw new TypeError('Original AST struct recipe is not unique: '+name);
   const group=candidates[0],fields=[];let at=0;
   while(at<group.children.length){
