@@ -42,6 +42,13 @@ test('direct private canonical paths and excessive reexport visibility remain so
 });
 
 test('reexport canonical targets retain actual source value and type namespace distinctions',{timeout:60_000},async()=>{
-  const source='mod api{mod hidden{pub struct Mode{pub value:u8}pub fn Mode()->u8{13}}pub use hidden::Mode;}pub fn typed(v:api::Mode)->u8{v.value}pub fn called()->u8{api::Mode()}';
+  const source='mod api{mod hidden{pub mod types{pub struct Mode{pub value:u8}}pub mod values{pub fn Mode()->u8{13}}}pub use hidden::types::Mode;pub use hidden::values::Mode;}pub fn typed(v:api::Mode)->u8{v.value}pub fn called()->u8{api::Mode()}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);await verifyTypedTargets(result,js=>{assert.equal(js.typed(Object.freeze({$:'Mode',value:3n})),3n);assert.equal(js.called(),13n);});
+});
+
+test('an actual shared canonical name in type and value namespaces retains its separate backend obligation',()=>{
+  const source='mod api{mod hidden{pub struct Mode{pub value:u8}pub fn Mode()->u8{13}}pub use hidden::Mode;}pub fn typed(v:api::Mode)->u8{v.value}pub fn called()->u8{api::Mode()}';
+  const result=project(source);
+  assert.equal(result.meta.refused.filter(item=>item.name==='api.hidden.Mode'&&item.message==='duplicate module-scoped declaration').length,2);
+  for(const name of ['typed','called']){assert.ok(result.meta.refused.some(item=>item.name===name));assert.equal(result.meta.executable.some(item=>item.name===name),false);}
 });
