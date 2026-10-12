@@ -70,6 +70,18 @@ export function originalMethodSemanticFacts(surface) {
   if(metadataDigest(surface)!==state.digest)throw new TypeError('Original method semantic body/signature/decorations changed');
   return state;
 }
+// Refusal attribution does not issue checked IR or ownership authority. Only
+// an unchanged privately parsed method supplies its exact original range;
+// mutable bodies, signatures, tokens and field evidence are rechecked here.
+export function originalMethodRefusalRange(surface,path) {
+  if(!semantics.has(surface))return null;
+  const state=originalMethodSemanticFacts(surface),origin=originalMethodTransformFacts(state.transform);
+  const actualPath=copyMetadata(path);
+  if(!Array.isArray(actualPath)||actualPath.length!==origin.member.modulePath.length||actualPath.some((part,index)=>part!==origin.member.modulePath[index]))return null;
+  const start=origin.method.span.start+state.offset,end=origin.method.span.end+state.offset;
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start)throw new TypeError('Original method refusal range exceeds its actual source coordinates');
+  return Object.freeze({start,end});
+}
 export function relocateOriginalMethodSemantic(surface,offset) {
   const state=originalMethodSemanticFacts(surface);
   if(!Number.isSafeInteger(offset)||offset<0||state.relocated)throw new TypeError('Original method source relocation requires one exact nonnegative module offset');
