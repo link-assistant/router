@@ -51,7 +51,7 @@ import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
 import {standaloneMatchesMacroContext,configureMatchesMacroParser,configureMatchesParserFromSourceScope,originalMatchesImport} from '../matches-macro-context.mjs';
 import {originalMethodSnapshot} from '../original-parser-identity.mjs';
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
-import {validateOriginalMethodAssociations} from '../source-method-admission.mjs';
+import {validateOriginalMethodAssociations,withCheckedMethodCopyReceivers} from '../source-method-admission.mjs';
 
 export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -331,7 +331,7 @@ const originalHostParserIdentity=Object.freeze({
   cursorMethods:Object.freeze([...originalMethodSnapshot(TokenCursor.prototype)].map(row=>Object.freeze(row))),
 });
 export function originalHostParserIdentitySnapshot(){return originalHostParserIdentity;}
-export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalCollection(withCheckedSourceLinks(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker))))))))) {
+export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalCollection(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
@@ -579,7 +579,6 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     const program=super.program(surface);
     const sourceContext=checkedSourceContext(program);
     program.items.push(...this.instantiations.items);
-    for(const entry of program.declarations.values())if(entry.impl?.receiver==='value'&&entry.impl.copyCertificate?.verified){const param=entry.params.find(param=>param.name===entry.impl.receiverName);if(!param)throw typeError('missing checked Copy receiver',entry.span);param.copyReceiver=true;}
     const forbidden=(node,seen=new Set())=>{
       if(!node||typeof node!=='object')return false;
       if(node.k==='routerAlgebraicOperation'&&node.op==='unwrap_or'||node.k==='routerStringOperation')return true;

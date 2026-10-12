@@ -2,19 +2,45 @@
 // public JSON digest cannot mint this private parsed-source association.
 import {copyMetadata,metadataDigest,ownData} from './extensions/source-links.mjs';
 import {types} from 'node:util';
+import {typeError} from './vendor/meta-language/translation/diagnostics.js';
 import {originalMethodParsedFacts} from './source-method-parser.mjs';
 import {originalMethodTransformFacts} from './source-method-transforms.mjs';
 import {originalMethodLowering} from './impl-resolver.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 const semantics=new WeakMap();
-const opaque=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','sourceMethodProof']);
+const opaque=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof']);
+// Validation rejects callbacks/proxies before this descriptor-only clone. Keep
+// original property order: Copy evidence uses its original JSON byte order.
+function originalMetadataCopy(value) {
+  copyMetadata(value);
+  const copy=node=>{
+    if(!node||typeof node!=='object')return node;
+    const descriptors=Object.getOwnPropertyDescriptors(node);
+    if(Array.isArray(node))return Array.from({length:descriptors.length.value},(_,index)=>copy(descriptors[String(index)].value));
+    return Object.fromEntries(Object.keys(descriptors).map(key=>[key,copy(descriptors[key].value)]));
+  };
+  return copy(value);
+}
+// Source links capture the complete checked signature after this existing
+// emitter annotation, not before a later Host program mutation.
+export function withCheckedMethodCopyReceivers(Base) {return class extends Base {
+  program(surface) {
+    const program=super.program(surface);
+    for(const entry of program.declarations.values())if(entry.impl?.receiver==='value'&&entry.impl.copyCertificate?.verified){
+      const parameter=entry.params.find(param=>param.name===entry.impl.receiverName);
+      if(!parameter)throw typeError('missing checked Copy receiver',entry.span);
+      parameter.copyReceiver=true;
+    }
+    return program;
+  }
+};}
 function relocate(value,offset) {
   if(Array.isArray(value))return value.map(item=>relocate(item,offset));
   if(!value||typeof value!=='object')return value;
   return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,opaque.has(key)?item:key==='span'&&item?{start:item.start+offset,end:item.end+offset}:relocate(item,offset)]));
 }
 export function originalMethodSemantic(parsed,options={}) {
-  const supplied=copyMetadata(options);
+  const supplied=originalMetadataCopy(options);
   if(Object.keys(supplied).some(key=>key!=='fieldCertificates'))throw new TypeError('Original method semantic options do not supply source/ownership authority');
   const fieldCertificates=supplied.fieldCertificates??[];
   if(!Array.isArray(fieldCertificates))throw new TypeError('Original method field certificates require an actual data array');
@@ -30,7 +56,7 @@ export function originalMethodSemantic(parsed,options={}) {
     const fields=fieldCertificates;
     surface.params[0].type={...type,rustReference:{...type.rustReference,pointee:{...type.rustReference.pointee,rustSharedReceiverSource:copyMetadata(state.lowered.sharedReceiverSource),rustSharedFieldCopies:fields}}};
   }else if(fieldCertificates.length)throw new TypeError('Original static/consuming method has no shared receiver field annotations');
-  surface.impl={type:{kind:'named',path:[...qualifiedType]},method:state.method.name,receiver:state.method.receiver,receiverName:state.lowered.receiverName,...(state.lowered.sharedReceiverSource?{sharedReceiverSource:copyMetadata(state.lowered.sharedReceiverSource)}:{}),...(lowering.copyCertificate?{copyCertificate:copyMetadata(lowering.copyCertificate)}:{}),rewrites:copyMetadata(state.lowered.rewrites),assumptions:copyMetadata(state.lowered.assumptions)};
+  surface.impl={type:{kind:'named',path:[...qualifiedType]},method:state.method.name,receiver:state.method.receiver,receiverName:state.lowered.receiverName,...(state.lowered.sharedReceiverSource?{sharedReceiverSource:copyMetadata(state.lowered.sharedReceiverSource)}:{}),...(lowering.copyCertificate?{copyCertificate:originalMetadataCopy(lowering.copyCertificate)}:{}),rewrites:copyMetadata(state.lowered.rewrites),assumptions:copyMetadata(state.lowered.assumptions)};
   surface.sourceMethodProof=freezeMacroTree({schema:'original-method-semantic-source-v1',parse:parsed.proof,originalTokenTransformVerified:true,originalHostParseVerified:true,checkedSourceAssociation:false,copyAuthority:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
   semantics.set(surface,Object.freeze({parsed,transform:capture.transform,offset:0,relocated:false,digest:metadataDigest(surface)}));return surface;
 }

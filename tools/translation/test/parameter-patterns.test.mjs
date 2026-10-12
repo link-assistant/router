@@ -61,3 +61,16 @@ test('parameter patterns refuse invalid bindings, refutable domains and unproved
     assert.equal(item.status,'carried',source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   }
 });
+
+test('out-of-line parameter patterns preserve original evidence and linked spans through both targets',async()=>{
+  const declaration='pub const fn sum((left,right):(u8,u8))->u8{left+right}',child='const PAD:u8=0;\n'+declaration+'\npub const VALUE:u8=sum((2,3));';
+  const files={'src/lib.rs':'mod external;pub fn run()->u8{external::sum((2,3))}','src/external.rs':child};
+  const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});assert.deepEqual(result.meta.refused,[]);
+  const original=parseRust(declaration+' fn main(){}').items.find(entry=>entry.name==='sum'),checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));
+  const sum=checked.declarations.get('external.sum'),emitted=[...target.declarations.values()].find(entry=>entry.sourceParameterPatterns&&entry.impl===undefined);
+  assert.deepEqual(sum.sourceParameterPatterns,original.sourceParameterPatterns);assert.deepEqual(sum.sourceParameterPatterns.bindings[0].pattern,original.params[0].sourceParameterPattern);
+  assert.deepEqual(emitted.sourceParameterPatterns,sum.sourceParameterPatterns);
+  const link=checked.declarations.get('external.VALUE').constantEvaluationProof.resolution.find(entry=>entry.name==='external.sum').source;
+  assert.equal(link.sourcePath,'src/external.rs');assert.deepEqual(link.declarationSpan,{start:child.indexOf(declaration),end:child.indexOf(declaration)+declaration.length});
+  await verifyTypedTargets(result,api=>{assert.equal(api.run(),5n);assert.equal(api['external.sum'](tuple(3n,4n)),7n);assert.equal(api['external.VALUE'],5n);});
+});

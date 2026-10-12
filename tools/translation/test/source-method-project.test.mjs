@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {parseProgram} from '../semantic-meta.mjs';
 const project=files=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
 test('complete static/shared method bodies use the original rule in JavaScript and strict TypeScript',{timeout:30000},async()=>{
   const source='pub struct Counter{value:u8}impl Counter{pub fn make(value:u8)->Self{Self{value}}pub fn small(&self)->bool{matches!(self.value,1 | 2)}}pub fn run(value:u8)->bool{Counter::make(value).small()}';
@@ -13,6 +14,8 @@ test('original consumed Copy method keeps its independent certificate and both-t
   const source='#[derive(Clone,Copy)]pub enum State{A,B}impl State{pub fn bad(self)->bool{matches!(self,Self::A)}}pub fn run(value:State)->bool{value.bad()}pub fn a()->State{State::A}pub fn b()->State{State::B}';
   const result=project({'src/lib.rs':source});assert.ok(result.meta.executable.some(item=>item.name==='run'));
   assert.ok(result.meta.checkedMethods.some(item=>item.name==='State.bad'&&item.receiver==='value'));
+  const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),method=[...checked.declarations.values()].find(entry=>entry.impl?.method==='bad');
+  assert.equal(method.params.find(param=>param.name===method.impl.receiverName).copyReceiver,true);assert.equal(method.sourceMethodProof.copyAuthority,false);
   await verifyTypedTargets(result,api=>{assert.equal(api.run(api.a()),true);assert.equal(api.run(api.b()),false);assert.throws(()=>api.run({$: 'State',tag:'A'}),TypeError);});
 });
 test('same-file inline and external members preserve their own full original views and module offsets',{timeout:30000},async()=>{
