@@ -1,10 +1,13 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=fcb7fbce4ddd5e935e23f09187da8f5f79fa7240bbcfdce3282ecd8f042284b9; dynamic any annotations are explicit draft gaps.
+// Meta sha256=bed99553ccf905c87700958497ede32630e435dc077720f1038a0194592401e0; dynamic any annotations are explicit draft gaps.
 import { ProtocolError } from "./protocols.js";
 import { responseOwner } from "./responses.js";
 import { matchHTTPRoute } from "./http-route-contract.js";
 import { createHash } from 'node:crypto';
 import { UsageTracker } from "./usage.js";
+import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict, responseAffinityStorageError } from "./response-contracts.js";
+import { conversationContract, conversationNotFound, conversationUnsupported, conversationMethodNotAllowed, conversationAffinityError, conversationUpstreamError, conversationIds, validConversationId } from "./response-contracts.js";
+import { captureSseId, captureJsonId, captureLocationId, resourceCaptureError } from "./response-contracts.js";
 const transport: any = new (Set as any)(['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-auth-token', 'proxy-authorization', 'proxy-authenticate', 'host', 'connection', 'proxy-connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'te', 'trailer', 'content-length', 'accept-encoding', 'cookie', 'chatgpt-account-id', 'sec-websocket-key', 'sec-websocket-version', 'sec-websocket-extensions', 'sec-websocket-accept']);
 const ingress: any = new (Set as any)(['forwarded', 'x-real-ip', 'x-client-ip', 'x-cluster-client-ip', 'cf-connecting-ip', 'true-client-ip', 'fastly-client-ip', 'fly-client-ip', 'x-envoy-external-address', 'x-azure-clientip', 'x-appengine-user-ip', 'cloudfront-viewer-address']);
 const responseCredentials: any = new (Set as any)(['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-auth-token', 'set-cookie', 'cookie', 'chatgpt-account-id']);
@@ -53,54 +56,64 @@ export async function boundedBytes(request?: any, limit?: any): Promise<any> {
     }
     return (Buffer as any).concat(parts, length);
 }
+const captureFailure: any = (status?: any, message?: any): any => (Object as any).assign(new (ProtocolError as any)(message, status), { resourceCapture: true });
+async function recordCapturedResource(affinities?: any, namespace?: any, owner?: any, id?: any, selected?: any, model?: any): Promise<void> {
+    try {
+        if (!validConversationId(id))
+            throw new (Error as any)('invalid response id');
+        await (affinities.set as any)(namespace, owner, id, { destination: selected, model });
+    }
+    catch (error: any) {
+        throw captureFailure(503, `could not persist resource ownership: ${error.message ?? String(error)}`);
+    }
+}
 async function captureNativeStream(upstream: any, { namespace, owner, selected, affinities, model, cleanup, controller, limit = 1024 * 1024 }: any): Promise<any> {
-    const reader: any = upstream.body.getReader(), chunks: any = [], decoder: any = new (TextDecoder as any)();
-    let buffer: any = '', bytes: any = 0, id: any;
+    if (!upstream.body) {
+        cleanup();
+        throw captureFailure(502, 'stored stream ended before exposing a resource id');
+    }
+    const reader: any = upstream.body.getReader(), chunks: any = [];
+    let framed: any = (Buffer as any).alloc(0), bytes: any = 0, id: any;
     try {
         while (!id) {
             const { done, value }: any = await reader.read();
             if (done)
-                throw new (ProtocolError as any)('Stored stream ended before a resource id was supplied', 502);
+                throw captureFailure(502, 'stored stream ended before exposing a resource id');
             chunks.push(value);
             (bytes as any) += value.byteLength;
-            if (bytes > limit)
-                throw new (ProtocolError as any)('Stored stream id prefix exceeds limit', 502);
-            (buffer as any) = (buffer + decoder.decode(value, { stream: true })).replace(/\r\n/g, '\n');
-            let end: any;
-            while (((end as any) = buffer.indexOf('\n\n')) >= 0 && !id) {
-                const block: string = buffer.slice(0, end);
-                (buffer as any) = buffer.slice(end + 2);
-                const data: string = block.split('\n').filter((line?: any): boolean => line.startsWith('data:')).map((line?: any): string => line.slice(5).replace(/^ /, '')).join('\n');
-                if (!data || data === '[DONE]')
-                    continue;
-                let event: any;
-                try {
-                    (event as any) = (JSON as any).parse(data);
-                }
-                catch {
-                    throw new (ProtocolError as any)('Stored stream contains malformed JSON', 502);
-                }
-                (id as any) = (event as any).response?.id ?? (event as any).id;
-                if (id && (typeof id !== 'string' || id.length > 512))
-                    throw new (ProtocolError as any)('Stored stream contains an invalid resource id', 502);
+            (framed as any) = (Buffer as any).concat([framed, value]);
+            for (;;) {
+                const crlf: number = framed.indexOf('\r\n\r\n'), lf: number = framed.indexOf('\n\n');
+                const end: number = crlf >= 0 && (lf < 0 || crlf <= lf) ? crlf : lf;
+                if (end < 0)
+                    break;
+                const separator: number = end === crlf ? 4 : 2;
+                const block: string = framed.subarray(0, end).toString('utf8');
+                (framed as any) = framed.subarray(end + separator);
+                (id as any) = captureSseId(block);
+                if (id)
+                    break;
             }
+            if (!id && bytes > limit)
+                throw captureFailure(502, 'stored stream did not expose a bounded resource id');
         }
-        await (affinities.set as any)(namespace, owner, id, { destination: selected, model });
+        await recordCapturedResource(affinities, namespace, owner, id, selected, model);
     }
     catch (error: any) {
         (controller.abort as any)(error);
         cleanup();
         await (reader.cancel().catch as any)((): void => { });
         reader.releaseLock();
-        throw error;
+        throw error.resourceCapture ? error : captureFailure(502, `upstream stream failed: ${error.message ?? String(error)}`);
     }
+    const prefix: any = (Buffer as any).concat(chunks, bytes);
+    chunks.length = 0;
+    (framed as any) = (Buffer as any).alloc(0);
     let initial: any = true;
     return new (ReadableStream as any)({ async pull(c?: any): Promise<void> { try {
             if (initial) {
                 (initial as any) = false;
-                for (const chunk of chunks as any)
-                    c.enqueue(chunk);
-                chunks.length = 0;
+                c.enqueue(prefix);
                 return;
             }
             const { done, value }: any = await reader.read();
@@ -114,8 +127,14 @@ async function captureNativeStream(upstream: any, { namespace, owner, selected, 
         }
         catch (error: any) {
             cleanup();
+            reader.releaseLock();
             c.error(error);
-        } }, async cancel(reason?: any): Promise<void> { (controller.abort as any)(reason); cleanup(); await (reader.cancel as any)(reason); reader.releaseLock(); } });
+        } }, async cancel(reason?: any): Promise<void> { (controller.abort as any)(reason); cleanup(); try {
+            await (reader.cancel as any)(reason);
+        }
+        finally {
+            reader.releaseLock();
+        } } });
 }
 export function nativeURL(base?: any, service?: any, pathname?: any, search: any = ''): any {
     let url: any;
@@ -149,7 +168,12 @@ export class NativeAffinityStore {
     declare records: any;
     constructor({ maxRecords = 10000 }: any = {}) { this.records = new (Map as any)(); this.maxRecords = maxRecords; }
     key(namespace?: any, owner?: any, id?: any, parent_id?: any): string { return (JSON as any).stringify([namespace, typeof owner === 'object' ? [owner.client_kind, owner.principal_id] : owner, id, parent_id ?? null]); }
-    get(namespace?: any, owner?: any, id?: any, parent_id?: any): any { return structuredClone(this.records.get(this.key(namespace, owner, id, parent_id)) ?? null); }
+    get(namespace?: any, owner?: any, id?: any, parent_id?: any): any {
+        if (parent_id !== undefined)
+            return structuredClone(this.records.get(this.key(namespace, owner, id, parent_id)) ?? null);
+        const matching: any = this.list(namespace, owner).filter((record?: any): boolean => record.id === id);
+        return matching.length === 1 ? (matching as any)[0] : null;
+    }
     set(namespace?: any, owner?: any, id?: any, record?: any): void {
         const key: string = this.key(namespace, owner, id, record.parent_id), previous: any = this.records.get(key);
         if (previous && !sameDestination(previous.destination, record.destination))
@@ -158,8 +182,22 @@ export class NativeAffinityStore {
             throw new (ProtocolError as any)('Resource affinity storage is full', 507);
         this.records.set(key, { ...structuredClone(record), namespace, owner, id });
     }
-    delete(namespace?: any, owner?: any, id?: any, parent_id?: any): void { this.records.delete(this.key(namespace, owner, id, parent_id)); }
+    delete(namespace?: any, owner?: any, id?: any, parent_id?: any, expected?: any): boolean {
+        const key: string = this.key(namespace, owner, id, parent_id), record: any = this.records.get(key);
+        if (!record || expected && !sameDestination(record.destination, expected.destination ?? expected))
+            return false;
+        return this.records.delete(key);
+    }
     list(namespace?: any, owner?: any, parent_id?: any): any { return [...this.records.values()].filter((r?: any): boolean => r.namespace === namespace && this.key(namespace, r.owner, '') === this.key(namespace, owner, '') && (parent_id === undefined || r.parent_id === parent_id)).map((r?: any): any => structuredClone(r)); }
+    deleteChildren(namespace?: any, owner?: any, parent_id?: any, selected?: any): number {
+        let count: any = 0;
+        for (const record of this.list(namespace, owner, parent_id) as any)
+            if (sameDestination(record.destination, selected)) {
+                this.records.delete(this.key(namespace, owner, record.id, parent_id));
+                count++;
+            }
+        return count;
+    }
 }
 function resourceFor(path?: any, method?: any, headers?: any): any {
     const backend: string = '/api/services/codex/backend-api';
@@ -211,6 +249,12 @@ export function createNativeService({ core, authorize, routingContext, fetch: up
     async function select(request?: any, claims?: any, service?: any, document?: any, exact?: any): Promise<any> {
         const pathModel: any = /\/publishers\/anthropic\/models\/([^/:]+)(?:\/count-tokens)?:(?:rawPredict|streamRawPredict)$/.exec(new (URL as any)(request.url).pathname)?.[1];
         const context: any = { ...(routingContext as any)(request, claims), service, model: document?.model ?? (pathModel ? decodeURIComponent(pathModel) : undefined), protocol: ['anthropic', 'bedrock', 'vertex'].includes(service) ? 'anthropic' : 'chat' };
+        if (exact && (responseContract(request.method, new (URL as any)(request.url).pathname) || conversationContract(request.method, new (URL as any)(request.url).pathname))) {
+            context.provider = exact.provider;
+            context.resourceDestination = exact;
+            if (exact.destination_kind === 'subscription')
+                context.principalAccount = exact.account;
+        }
         const candidates: any = core.nativeCandidates ? await (core.nativeCandidates as any)(context) : context.model ? await (core.candidates as any)(context) : [];
         const raw: any = (candidates.find as any)((c?: any): boolean => !exact || ['provider', 'account', 'base_url'].every((key?: any): boolean => (exact as any)[key] === (destination(c) as any)[key]));
         if (!raw)
@@ -267,9 +311,31 @@ export function createNativeService({ core, authorize, routingContext, fetch: up
                 throw new (ProtocolError as any)('Codex backend requires the paired Router-issued at- token', 401);
             if (path === '/api/services/openai/v1/realtime/client_secrets')
                 throw new (ProtocolError as any)('Router does not expose upstream Realtime client secrets', 501);
-            if (service === 'qwen' && path.includes('/conversations'))
-                throw new (ProtocolError as any)('Qwen does not support Conversations', 501);
+            const conversation: any = conversationContract(request.method, path);
+            if (conversation?.service === 'qwen')
+                return conversationUnsupported();
             const owner: any = claims.client_kind && claims.principal_id ? { client_kind: claims.client_kind, principal_id: claims.principal_id } : responseOwner(claims, (request.headers.get as any)('authorization') ?? (request.headers.get as any)('x-api-key'));
+            let conversationRecord: any, conversationItem: any;
+            if (conversation && conversation.target !== 'create') {
+                try {
+                    (conversationRecord as any) = await (affinities.get as any)(conversation.namespace, owner, conversation.id);
+                    if (!conversationRecord)
+                        return conversationNotFound();
+                    if (conversation.target === 'item') {
+                        (conversationItem as any) = await (affinities.get as any)(conversation.itemNamespace, owner, conversation.item);
+                        if (!conversationItem || (conversationItem as any).parent_id !== conversation.id || !sameDestination((conversationItem as any).destination, (conversationRecord as any).destination))
+                            return conversationNotFound(true);
+                    }
+                }
+                catch (error: any) {
+                    return conversationAffinityError(error);
+                }
+            }
+            if (conversation && !conversation.allowed)
+                return conversationMethodNotAllowed();
+            const conversationDestination: any = (conversationItem as any)?.destination ?? (conversationRecord as any)?.destination;
+            if (conversationDestination?.destination_kind === 'subscription' && (claims.account ?? 'primary') !== conversationDestination.account)
+                return responseNotFound();
             const identityRoute: boolean = path === '/api/services/codex/v1/user-auth-credential/whoami' || path === '/api/services/codex/backend-api/wham/accounts/check';
             const tokenId: any = claims.sub ?? claims.id;
             if (!identityRoute && tokenId && core.tokens?.admit) {
@@ -283,37 +349,78 @@ export function createNativeService({ core, authorize, routingContext, fetch: up
                 (document as any) = bytes.length ? (JSON as any).parse((Buffer as any).from(bytes).toString('utf8')) : undefined;
             }
             catch { }
+            const responses: any = responseContract(request.method, path);
+            try {
+                validateResponseCreate(responses, document);
+            }
+            catch (error: any) {
+                if (!(error instanceof ProtocolError))
+                    throw error;
+                return (Response as any).json({ error: { type: error.code === 'model_required' ? 'model_required' : 'invalid_request_error', message: error.message } }, { status: error.status ?? 400 });
+            }
             if (request.method === 'POST' && /\/(?:responses\/(?:compact|input_tokens)|images\/generations|audio\/speech|alpha\/search)$/.test(path) && (!document || typeof document !== 'object' || (Array as any).isArray(document)))
                 throw new (ProtocolError as any)('The native service request body must be a JSON object');
-            if ((document as any)?.model)
+            if (!conversation && (document as any)?.model)
                 await (authorize as any)(request, false, (document as any).model);
             if (['bedrock', 'vertex'].includes(service) && (!document || !(Array as any).isArray((document as any).messages)))
                 throw new (ProtocolError as any)('messages must be an array');
-            for (const batch of (document as any)?.requests ?? [] as any)
-                if (batch.params?.model)
-                    await (authorize as any)(request, false, batch.params.model);
-            const resource: any = resourceFor(path, request.method, request.headers);
+            if (!conversation)
+                for (const batch of (document as any)?.requests ?? [] as any)
+                    if (batch.params?.model)
+                        await (authorize as any)(request, false, batch.params.model);
+            const resource: any = conversation ? null : resourceFor(path, request.method, request.headers);
             if ((document as any)?.store === false && resource?.namespace.endsWith('/responses'))
                 resource.create = false;
-            let exact: any;
+            let exact: any = conversationDestination, resourceRecord: any;
             const bind: any = (record?: any): void => { if (!record)
                 throw new (ProtocolError as any)('Native resource not found', 404); if (exact && !sameDestination(exact, record.destination))
                 throw new (ProtocolError as any)('Resources do not share one provider account', 409); (exact as any) = record.destination; };
-            if (resource?.id)
-                bind(await (affinities.get as any)(resource.namespace, owner, resource.id, resource.parent));
+            if (resource?.id) {
+                try {
+                    (resourceRecord as any) = await (affinities.get as any)(resource.namespace, owner, resource.id, resource.parent);
+                }
+                catch (error: any) {
+                    if (responses?.lifecycle)
+                        return responseAffinityStorageError(error);
+                    throw error;
+                }
+                if (!resourceRecord && responses?.lifecycle)
+                    return responseNotFound();
+                bind(resourceRecord);
+                if (responses?.lifecycle && (resourceRecord as any).destination.destination_kind === 'subscription' && (claims.account ?? 'primary') !== (resourceRecord as any).destination.account)
+                    return responseNotFound();
+            }
             if (resource?.parent)
                 bind(await (affinities.get as any)((resource.namespace.replace as any)(/\/(?:items|versions)$/, ''), owner, resource.parent));
-            if ((document as any)?.previous_response_id)
-                bind(await (affinities.get as any)(path.replace(/\/responses(?:\/.*)?$/, '/responses'), owner, (document as any).previous_response_id));
-            if ((document as any)?.conversation)
-                bind(await (affinities.get as any)(path.replace(/\/responses(?:\/.*)?$/, '/conversations'), owner, typeof (document as any).conversation === 'string' ? (document as any).conversation : (document as any).conversation.id));
+            for (const reference of responseReferences(responses, document) as any) {
+                let record: any;
+                try {
+                    (record as any) = await (affinities.get as any)(reference.namespace, owner, reference.id);
+                }
+                catch (error: any) {
+                    if (responses?.create)
+                        return responseAffinityStorageError(error);
+                    return (Response as any).json({ error: { type: 'api_error', message: 'resource affinity is unavailable' } }, { status: 503 });
+                }
+                if (!record && reference.allowMissing)
+                    continue;
+                if (!record)
+                    return responseReferenceMissing();
+                if (responses?.create && (record as any).destination.destination_kind === 'subscription' && (claims.account ?? 'primary') !== (record as any).destination.account)
+                    return responseNotFound();
+                if (exact && !sameDestination(exact, (record as any).destination))
+                    return responseReferenceConflict();
+                bind(record);
+            }
             const listed: any = resource?.list ? await (affinities.list as any)(resource.namespace, owner, resource.parent) : [];
             if (!resource?.captureList)
                 for (const record of listed as any)
                     bind(record);
             if (service === 'codex-backend' && (document as any)?.file_id && path.startsWith('/api/services/codex/backend-api/public/plugins/workspace'))
                 bind(await (affinities.get as any)('/api/services/codex/backend-api/plugin-uploads', owner, (document as any).file_id));
-            const candidate: any = await select(request, claims, service, document, exact), selected: any = destination(candidate);
+            const candidate: any = await select(request, claims, service, conversation ? undefined : document, exact), selected: any = destination(candidate);
+            if (conversation && !(conversation.service === 'openai' && selected.provider_kind === 'openai-compatible' && selected.destination_kind !== 'subscription' || conversation.service === 'codex' && selected.provider_kind === 'codex' && selected.destination_kind === 'subscription'))
+                return conversationUnsupported();
             if (service === 'openai' && selected.provider_kind !== 'openai-compatible')
                 throw new (ProtocolError as any)('Selected provider does not implement native OpenAI resource APIs', 503);
             if (path === '/api/services/codex/v1/user-auth-credential/whoami' || path === '/api/services/codex/backend-api/wham/accounts/check') {
@@ -338,13 +445,91 @@ export function createNativeService({ core, authorize, routingContext, fetch: up
             const cleanup: any = (): void => { clearTimeout(timer); (request.signal.removeEventListener as any)('abort', abort); };
             let upstream: any;
             try {
-                (upstream as any) = await upstreamFetch(nativeURL(selected.base_url, service, path, url.search), { method: request.method, headers: nativeRequestHeaders(request.headers, candidate), ...(['GET', 'HEAD'].includes(request.method) ? {} : { body: bytes }), signal: controller.signal, redirect: 'manual' });
+                (upstream as any) = await upstreamFetch(nativeURL(selected.base_url, service, conversation?.forwardPath ?? path, url.search), { method: request.method, headers: nativeRequestHeaders(request.headers, candidate), ...(['GET', 'HEAD'].includes(request.method) ? {} : { body: bytes }), signal: controller.signal, redirect: 'manual' });
             }
             catch {
                 cleanup();
                 throw new (ProtocolError as any)('Native upstream request failed', 502);
             }
             const headers: any = nativeResponseHeaders(upstream.headers);
+            if (conversation) {
+                let raw: any;
+                try {
+                    (raw as any) = await boundedBytes(upstream, maxBodyBytes);
+                }
+                catch (error: any) {
+                    return conversationUpstreamError(error.status === 413 ? 'upstream response exceeds the proxy limit' : `upstream body read failed: ${error.message ?? String(error)}`);
+                }
+                finally {
+                    cleanup();
+                }
+                const remove: any = async (): Promise<any> => {
+                    if (conversation.target === 'item')
+                        return (affinities.delete as any)(conversation.itemNamespace, owner, conversation.item, conversation.id, conversationItem);
+                    await (affinities.deleteChildren as any)(conversation.itemNamespace, owner, conversation.id, (conversationRecord as any).destination);
+                    return (affinities.delete as any)(conversation.namespace, owner, conversation.id, undefined, conversationRecord);
+                };
+                if (conversation.target !== 'create' && [404, 410].includes(upstream.status)) {
+                    try {
+                        await remove();
+                    }
+                    catch { }
+                    return conversationNotFound(conversation.target === 'item');
+                }
+                if (upstream.ok) {
+                    try {
+                        if (conversation.target === 'create') {
+                            const id: any = (conversationIds(raw) as any)[0];
+                            if (!id)
+                                return conversationUpstreamError('conversation create response did not contain an id');
+                            if (!validConversationId(id))
+                                throw new (Error as any)('invalid response id');
+                            await (affinities.set as any)(conversation.namespace, owner, id, { destination: selected });
+                        }
+                        else if (conversation.target === 'items') {
+                            for (const id of conversationIds(raw, true) as any) {
+                                if (!validConversationId(id))
+                                    throw new (Error as any)('invalid response id');
+                                await (affinities.set as any)(conversation.itemNamespace, owner, id, { destination: (conversationRecord as any).destination, parent_id: conversation.id });
+                            }
+                        }
+                        else if (request.method === 'DELETE')
+                            await remove();
+                    }
+                    catch (error: any) {
+                        return conversationAffinityError(error);
+                    }
+                }
+                return new (Response as any)([204, 205, 304].includes(upstream.status) ? null : raw, { status: upstream.status, headers });
+            }
+            if (responses?.lifecycle && resourceRecord) {
+                let raw: any;
+                try {
+                    (raw as any) = await boundedBytes(upstream, maxResponseBytes);
+                }
+                catch {
+                    throw new (ProtocolError as any)('Upstream lifecycle body could not be read within the response limit', 502);
+                }
+                finally {
+                    cleanup();
+                }
+                if ([404, 410].includes(upstream.status)) {
+                    try {
+                        await (affinities.delete as any)(resource.namespace, owner, resource.id, resource.parent, resourceRecord);
+                    }
+                    catch { }
+                    return responseNotFound();
+                }
+                if (resource.remove && upstream.ok) {
+                    try {
+                        await (affinities.delete as any)(resource.namespace, owner, resource.id, resource.parent, resourceRecord);
+                    }
+                    catch (error: any) {
+                        return responseAffinityStorageError(error);
+                    }
+                }
+                return new (Response as any)([204, 205, 304].includes(upstream.status) ? null : raw, { status: upstream.status, headers });
+            }
             const tracksUsage: boolean = /\/(?:responses(?:\/compact)?|images\/(?:generations|edits|variations)|audio\/(?:speech|transcriptions|translations)|alpha\/search)$/.test(path);
             if (tracksUsage && tokenId && core.tokens?.settle && upstream.body) {
                 const usage: any = new (UsageTracker as any)({ maxBytes: maxResponseBytes }), reader: any = upstream.body.getReader();
@@ -369,9 +554,33 @@ export function createNativeService({ core, authorize, routingContext, fetch: up
                     } }, async cancel(reason?: any): Promise<void> { await settle(); await reader.cancel(reason); reader.releaseLock(); } });
                 (upstream as any) = new (Response as any)(measured, { status: upstream.status, headers: upstream.headers });
             }
-            if (resource?.create && (resource.namespace.endsWith as any)('/responses') && upstream.ok && upstream.headers.get('content-type')?.includes('text/event-stream') && upstream.body) {
-                const stream: any = await captureNativeStream(upstream, { namespace: resource.namespace, owner, selected, affinities, model: (document as any)?.model, cleanup, controller });
-                return new (Response as any)(stream, { status: upstream.status, headers });
+            if (resource?.create && (resource.namespace.endsWith as any)('/responses') && upstream.ok) {
+                try {
+                    if (upstream.headers.get('content-type')?.toLowerCase().includes('text/event-stream')) {
+                        const stream: any = await captureNativeStream(upstream, { namespace: resource.namespace, owner, selected, affinities, model: (document as any)?.model, cleanup, controller });
+                        return new (Response as any)(stream, { status: upstream.status, headers });
+                    }
+                    let raw: any;
+                    try {
+                        (raw as any) = await boundedBytes(upstream, (Math as any).min(maxResponseBytes, 32 * 1024 * 1024));
+                    }
+                    catch (error: any) {
+                        throw captureFailure(502, `stored response is too large: ${error.message ?? String(error)}`);
+                    }
+                    finally {
+                        cleanup();
+                    }
+                    const id: any = captureJsonId(raw) ?? captureLocationId(headers);
+                    if (!id)
+                        throw captureFailure(502, 'stored response did not include a resource id');
+                    await recordCapturedResource(affinities, resource.namespace, owner, id, selected, (document as any)?.model);
+                    return new (Response as any)([204, 205, 304].includes(upstream.status) ? null : raw, { status: upstream.status, headers });
+                }
+                catch (error: any) {
+                    if (!error.resourceCapture)
+                        throw error;
+                    return resourceCaptureError(error.status, error.message);
+                }
             }
             if (resource && (resource.create || resource.list) && upstream.ok) {
                 let raw: any;

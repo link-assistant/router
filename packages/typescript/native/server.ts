@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=07ae423f0dab9701eb03abf2066b053c5905e6e2d4b57f4e25b33f018144a47f; dynamic any annotations are explicit draft gaps.
+// Meta sha256=036333cc19833b596cb9ab6e976870e01cbcd60013a13ed71f6b2e0390310d36; dynamic any annotations are explicit draft gaps.
 import { createServer } from 'node:http';
 import { createServer as createHTTPSServer } from 'node:https';
 import { lstat, readFile } from 'node:fs/promises';
@@ -597,6 +597,7 @@ export function createNativeRouter(options: any = {}): any {
         }
     }
     async function handle(request?: any): Promise<any> {
+        const nativeRequest: any = request;
         const incomingMethod: any = (request as any).method;
         const head: boolean = (request as any).method === 'HEAD';
         if (head) {
@@ -685,7 +686,7 @@ export function createNativeRouter(options: any = {}): any {
                 else if (service === 'bedrock' || service === 'vertex' && path.includes('/publishers/anthropic/')) {
                     if (service === 'vertex' && !/\/publishers\/anthropic\/models\/[^/:]+(?:(?::(?:rawPredict|streamRawPredict))|(?:\/count-tokens:rawPredict))$/.test(path))
                         throw new (ProtocolError as any)('Route not found', 404);
-                    (response as any) = await nativeService.fetch(request);
+                    (response as any) = await nativeService.fetch(nativeRequest);
                 }
                 else if (/^(?:\/v1|\/api\/services\/(?:openai|codex|qwen)\/v1)\/responses\/(?!compact$|input_tokens$)[^/]+(?:\/(?:cancel|input_items))?$/.test(path)) {
                     const match: any = /^(\/v1|\/api\/services\/(?:openai|codex|qwen)\/v1)\/responses\/([^/]+)(?:\/(cancel|input_items))?$/.exec(path);
@@ -697,7 +698,7 @@ export function createNativeRouter(options: any = {}): any {
                     catch (error: any) {
                         if (error.status !== 404 || !core.nativeCandidates)
                             throw error;
-                        (response as any) = await nativeService.fetch(request);
+                        (response as any) = await nativeService.fetch(nativeRequest);
                     }
                     if (existing) {
                         await authorize(request, false, (existing as any).model);
@@ -731,10 +732,10 @@ export function createNativeRouter(options: any = {}): any {
                 }
                 else if (['/v1/chat/completions', '/v1/messages', '/v1/responses', ...['openai', 'codex', 'qwen'].flatMap((service?: any): Array<string> => [`/api/services/${service}/v1/responses`, `/api/services/${service}/v1/chat/completions`]), '/api/services/anthropic/v1/messages'].includes(path) && (request as any).method === 'POST') {
                     const body: any = await boundedJSON((request as any).clone(), maxBodyBytes);
-                    (response as any) = core.nativeCandidates && source === 'responses' && /^\/api\/services\/(?:openai|codex)\/v1\/responses$/.test(path) ? await nativeService.fetch(request) : await inference(request, source, body);
+                    (response as any) = core.nativeCandidates && source === 'responses' && /^\/api\/services\/(?:openai|codex)\/v1\/responses$/.test(path) ? await nativeService.fetch(nativeRequest) : await inference(request, source, body);
                 }
                 else if (/^\/api\/services\/(?:openai|anthropic|codex|qwen)(?:\/|$)/.test(path))
-                    (response as any) = await nativeService.fetch(request);
+                    (response as any) = await nativeService.fetch(nativeRequest);
                 else
                     throw new (ProtocolError as any)('Route not found', 404);
             }

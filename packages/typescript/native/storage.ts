@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=ba2d547602205f313f85e76a2b6256b6bf2ad0377694eed4eefd45116d7fe320; dynamic any annotations are explicit draft gaps.
+// Meta sha256=4655dfbced70d3c974a4c02869a63a046b9dbd69817b6b2223a5b20321808101; dynamic any annotations are explicit draft gaps.
 import { mkdir, open, readFile, rename, unlink, rm, stat } from 'node:fs/promises';
 import { dirname, basename, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -238,6 +238,8 @@ export function encodeLino(value?: any, level: any = 0): any {
     }
     if (value === null || typeof value === 'boolean')
         return String(value);
+    if (typeof value === 'bigint')
+        return value.toString(10);
     if (typeof value === 'number') {
         if (!(Number as any).isSafeInteger(value))
             throw new (Error as any)('Storage numbers must be safe integers');
@@ -249,17 +251,23 @@ export function encodeLino(value?: any, level: any = 0): any {
     const entries: any = (Object as any).entries(value);
     return `(\n${entries.map(([key, v]: any): any => `${indent}${key} ${encodeLino(v, level + 1)}`).join('\n')}${entries.length ? '\n' : ''}${close})`;
 }
-export function decodeLino(text?: any): any {
+export function decodeLino(text?: any, { integer, scalar: unquotedScalar, escaped, object: makeObject, whitespace }: any = {}): any {
     let i: any = 0;
-    const skip: any = (): void => { while ((text as any)[i] === ' ' || (text as any)[i] === '\t' || (text as any)[i] === '\r')
+    const firstKeys: any = new (WeakMap as any)();
+    const space: any = (character?: any): any => whitespace ? (whitespace as any)(character) : /\s/.test(character ?? '');
+    const skip: any = (): void => { while (i < text.length && (whitespace ? (text as any)[i] !== '\n' && space((text as any)[i]) : (text as any)[i] === ' ' || (text as any)[i] === '\t' || (text as any)[i] === '\r'))
         i++; };
     function scalar(raw?: any, quoted: any = false): any {
         if (quoted)
             return raw;
+        if (unquotedScalar)
+            return (unquotedScalar as any)(raw);
         if (raw === 'null')
             return null;
         if (raw === 'true' || raw === 'false')
             return raw === 'true';
+        if (integer && /^[+-]?\d+$/.test(raw))
+            return (integer as any)(raw);
         if (/^-?\d+$/.test(raw)) {
             const n: number = Number(raw);
             if (!(Number as any).isSafeInteger(n))
@@ -273,38 +281,83 @@ export function decodeLino(text?: any): any {
         if ((text as any)[i] === '(') {
             i++;
             skip();
-            const rows: any = [];
-            let row: any = [], multiline: any = false;
+            const rows: any = [], quotedRows: any = [], keyRows: any = [];
+            let row: any = [], quotedRow: any = [], keyRow: any = [], multiline: any = false;
             while (i < text.length && (text as any)[i] !== ')') {
                 if ((text as any)[i] === '\n') {
                     (multiline as any) = true;
-                    if (row.length)
+                    if (row.length) {
                         rows.push(row);
+                        quotedRows.push(quotedRow);
+                        keyRows.push(keyRow);
+                    }
                     (row as any) = [];
+                    (quotedRow as any) = [];
+                    (keyRow as any) = [];
                     i++;
                     skip();
                     continue;
                 }
-                row.push(value());
+                const start: number = i, quoted: boolean = ['"', "'", '`'].includes((text as any)[i]);
+                quotedRow.push(quoted);
+                const child: any = value();
+                row.push(child);
+                keyRow.push(quoted || (text as any)[start] === '(' ? typeof child === 'string' ? child : null : (text.slice as any)(start, i));
                 skip();
             }
             if ((text as any)[i++] !== ')')
                 throw new (Error as any)('Unclosed Links Notation container');
-            if (row.length)
+            if (row.length) {
                 rows.push(row);
-            if (rows.length === 1 && ((rows as any)[0] as any)[0] === 'escaped' && (rows as any)[0].length === 2) {
+                quotedRows.push(quotedRow);
+                keyRows.push(keyRow);
+            }
+            if (rows.length === 1 && ((rows as any)[0] as any)[0] === 'escaped' && (rows as any)[0].length === 2 && (!escaped || !((quotedRows as any)[0] as any)[0] && ((quotedRows as any)[0] as any)[1])) {
+                if (escaped) {
+                    const source: any = (Buffer as any).from(((rows as any)[0] as any)[1], 'utf8'), bytes: any = [];
+                    for (let offset: any = 0; offset < source.length; offset++) {
+                        if ((source as any)[offset] !== 37) {
+                            bytes.push((source as any)[offset]);
+                            continue;
+                        }
+                        const hex: any = ((source.subarray as any)(offset + 1, offset + 3).toString as any)('ascii');
+                        if (hex.length !== 2 || !/^(?:[0-9A-Fa-f]{2}|\+[0-9A-Fa-f])$/.test(hex))
+                            throw new (Error as any)('Invalid escaped UTF8 byte');
+                        bytes.push((Number as any).parseInt(hex, 16));
+                        (offset as any) += 2;
+                    }
+                    return (escaped as any)((Buffer as any).from(bytes));
+                }
                 return (((rows as any)[0] as any)[1].replace as any)(/(?:%[0-9A-Fa-f]{2})+/g, (run?: any): string => (Buffer as any).from((run.replaceAll as any)('%', ''), 'hex').toString('utf8'));
             }
-            if (rows.length === 1 && ((rows as any)[0] as any)[0] === 'o:') {
+            if (escaped && rows.length === 1 && ((rows as any)[0] as any)[0] === 'base64' && (rows as any)[0].length === 2 && !((quotedRows as any)[0] as any)[0] && ((quotedRows as any)[0] as any)[1]) {
+                const payload: any = ((rows as any)[0] as any)[1];
+                if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(payload))
+                    throw new (Error as any)('Invalid base64 string');
+                const bytes: any = (Buffer as any).from(payload, 'base64');
+                if (bytes.toString('base64') !== payload)
+                    throw new (Error as any)('Invalid base64 trailing bits');
+                return (escaped as any)(bytes);
+            }
+            if (rows.length === 1 && ((rows as any)[0] as any)[0] === 'o:' && (!makeObject || !((quotedRows as any)[0] as any)[0])) {
                 const object: any = (Object as any).create(null);
+                const collected: any = [];
                 for (const pair of (rows as any)[0].slice(1) as any) {
                     const entries: any = (Array as any).isArray(pair) ? [pair] : (Object as any).entries(pair);
                     if (entries.length !== 1 || (entries as any)[0].length !== 2)
                         throw new (Error as any)('Invalid Lino object pair');
+                    const key: any = makeObject && (Array as any).isArray(pair) ? firstKeys.get(pair) : ((entries as any)[0] as any)[0];
+                    if (makeObject && typeof key !== 'string')
+                        throw new (Error as any)('Invalid Lino object key');
+                    collected.push([key, ((entries as any)[0] as any)[1]]);
                     (object as any)[((entries as any)[0] as any)[0]] = ((entries as any)[0] as any)[1];
                 }
+                if (makeObject)
+                    return (makeObject as any)(collected);
                 return object;
             }
+            if (makeObject && multiline && rows.every((row?: any, index?: any): boolean => row.length === 2 && typeof ((keyRows as any)[index] as any)[0] === 'string'))
+                return (makeObject as any)(rows.map((row?: any, index?: any): any => [((keyRows as any)[index] as any)[0], (row as any)[1]]));
             if (multiline && rows.every((r?: any): boolean => r.length === 2 && typeof (r as any)[0] === 'string')) {
                 const object: any = (Object as any).create(null);
                 for (const [key, v] of rows as any) {
@@ -314,7 +367,10 @@ export function decodeLino(text?: any): any {
                 }
                 return object;
             }
-            return rows.flat();
+            const list: any = rows.flat();
+            if (rows.length === 1)
+                firstKeys.set(list, ((keyRows as any)[0] as any)[0]);
+            return list;
         }
         if ((text as any)[i] === '"' || (text as any)[i] === "'" || (text as any)[i] === '`') {
             const delimiter: any = (text as any)[i];
@@ -355,16 +411,16 @@ export function decodeLino(text?: any): any {
             throw new (Error as any)('Unclosed Lino string');
         }
         const start: number = i;
-        while (i < text.length && !/[\s()]/.test((text as any)[i]))
+        while (i < text.length && !space((text as any)[i]) && !/[()]/.test((text as any)[i]))
             i++;
         if (i === start)
             throw new (Error as any)('Invalid Links Notation input');
         return scalar((text.slice as any)(start, i));
     }
-    while (/\s/.test((text as any)[i] ?? '') && i < text.length)
+    while (i < text.length && space((text as any)[i]))
         i++;
     const result: any = value();
-    while (/\s/.test((text as any)[i] ?? '') && i < text.length)
+    while (i < text.length && space((text as any)[i]))
         i++;
     if (i !== text.length)
         throw new (Error as any)('Trailing Links Notation data');

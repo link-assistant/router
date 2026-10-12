@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=1c03409b2bea60893e8b56c4c9bf8dec71c79dce9112984b222adf6fe88f9451; dynamic any annotations are explicit draft gaps.
+// Meta sha256=4273b7cf0cd162d1b3101de116f19f4289f27e68d5c94547518cf2a02d296d92; dynamic any annotations are explicit draft gaps.
 import { loadConfig, ProviderStore, nativeConfigEnvironment } from "./config.js";
 import { createTokenStore } from "./storage.js";
 import { TokenManager, RouterError } from "./tokens.js";
@@ -130,7 +130,10 @@ export class RouterCore {
         if (!(kinds as any)[service])
             throw new (RouterError as any)('invalid_argument', 'Unknown native service');
         const providers: any = (await this.providers.resolve()).filter((provider?: any): any => ((kinds as any)[service].includes as any)(provider.kind));
-        const configured: any = this.config.services?.[service]?.provider ?? (service === 'openai' ? this.config.openai_compatible_provider_name : undefined);
+        const recorded: any = context.resourceDestination;
+        if (recorded && (!['stored_provider', 'subscription'].includes(recorded.destination_kind) || recorded.provider !== context.provider))
+            throw new (RouterError as any)('invalid_argument', 'Invalid recorded resource destination');
+        const configured: any = recorded ? undefined : this.config.services?.[service]?.provider ?? (service === 'openai' ? this.config.openai_compatible_provider_name : undefined);
         const selected: any = providers.filter((provider?: any): any => (!context.provider || context.provider === provider.name || context.provider === (provider.kind === 'anthropic' ? 'claude' : provider.kind)) &&
             (!configured || provider.name === configured) && (!context.client || (provider.supported_clients.includes as any)(context.client)));
         if (!selected.length)
@@ -235,6 +238,8 @@ export async function createRouterCore(options: any = {}): Promise<any> {
     const providers: any = await core.providers.resolve();
     core.accounts = new (AccountRouter as any)({ config: { ...config, providers }, clock: core.clock });
     await core.accounts.load();
+    if (core.affinities?.verify)
+        await core.affinities.verify();
     return core;
 }
 export { TokenManager, RouterError, codexTokenAlias } from "./tokens.js";
