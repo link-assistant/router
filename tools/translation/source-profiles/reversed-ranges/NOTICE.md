@@ -10,6 +10,8 @@ RangeInclusive construction sets exhausted=false. These exact source paths
 provide the proposed checked meta transition for a fresh fixed-integer range;
 no custom trait owner or adapter reversal is inferred.
 
-This source-only profile is unrun. Full namespace, trait, advanced consumption,
-allocation and runtime parity remain unproved. No producer or corpus gain is
-claimed. All original range endpoints and for-loop/callback bodies are retained.
+The initial 19-file/175-case pair passed 174 cases under each engine. Its sole
+failure used the test helper's result argument as the effects runtime; the
+corrected endpoint-order fixture awaits retry. Full namespace, trait, advanced
+consumption, allocation and runtime parity remain unproved. No producer or
+corpus gain is claimed. Original range endpoints and loop/callback bodies remain.

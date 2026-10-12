@@ -51,7 +51,7 @@ test('reversed source next adapters preserve lazy callbacks enumeration and orig
 test('original endpoint effects occur once each in source left-to-right order',async()=>{
   const source='fn mark(path:&str)->bool{std::fs::read_to_string(path).is_ok()} fn lower()->u8{let ignored=mark("start");0} fn upper()->u8{let ignored=mark("end");3} pub fn observed()->u8{let mut total:u8=0;for n in (lower()..upper()).rev(){total+=n;}total}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,(api,{withEffectCapabilities})=>{
+  await verifyTypedTargets(result,(api,_result,_module,{effects:{withEffectCapabilities}})=>{
     const calls=[];const value=withEffectCapabilities({fs:{sync:{readFileSync(path){calls.push(path);return new Uint8Array();}}}},()=>api.observed());
     assert.equal(value,3n);assert.deepEqual(calls,['start','end']);
   });

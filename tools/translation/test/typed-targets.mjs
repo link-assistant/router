@@ -24,9 +24,10 @@ export async function verifyTypedTargets(result,verify,{childTimeoutMs}={}) {
     execFileSync(process.env.ROUTER_TRANSLATION_TSC??'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,typescript],childOptions);
     cpSync(join(directory,'runtime'),join(compiled,'runtime'),{recursive:true});
     if(entry===undefined)symlinkSync('../runtime',join(compiled,'src/runtime'),'dir');
-    for(const path of [javascript,join(compiled,relative+'.js')]) {
+    for(const [path,runtimeRoot] of [[javascript,directory],[join(compiled,relative+'.js'),compiled]]) {
       const module=await import(pathToFileURL(path));
-      await verify(module.translated,result,module);
+      const effects=await import(pathToFileURL(join(runtimeRoot,'runtime/effects.mjs')));
+      await verify(module.translated,result,module,{effects});
     }
   } finally {rmSync(directory,{recursive:true,force:true});}
 }
