@@ -1,14 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {DEFAULT_JSON_PARSER_PROFILE,actualJsonCapabilityProfile} from '../json-capabilities.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const tagged=($,field0)=>Object.freeze({$,...(field0===undefined?{}:{field0})});
-test('standard JSON contracts retain borrowed readers and owned String and Vec serialization',async()=>{
+test('explicit standalone default JSON contracts retain borrowed readers and owned String and Vec serialization',async()=>{
   const source='pub fn text(v:&serde_json::Value)->Option<&str>{v.as_str()} pub fn selected(v:&serde_json::Value)->Option<&serde_json::Value>{v.get("a")} pub fn values(v:&serde_json::Value)->Option<&Vec<serde_json::Value>>{v.as_array()} pub fn count(v:&serde_json::Value)->Option<usize>{v.as_object().map(|m|m.len())} pub fn encoded(v:&serde_json::Value)->Result<String,serde_json::Error>{serde_json::to_string(v)} pub fn bytes(v:&serde_json::Value)->Result<Vec<u8>,serde_json::Error>{serde_json::to_vec(v)} pub fn display(v:&serde_json::Error)->String{v.to_string()}';
   const parsed=source+' pub fn parse_text(v:&str)->Result<serde_json::Value,serde_json::Error>{serde_json::from_str(v)} pub fn parse_bytes(v:&[u8])->Result<serde_json::Value,serde_json::Error>{serde_json::from_slice(v)}';
-  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>parsed});assert.deepEqual(result.meta.refused,[]);
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>parsed,jsonParserProfile:DEFAULT_JSON_PARSER_PROFILE});assert.deepEqual(result.meta.refused,[]);assert.equal(result.meta.jsonParserProfile.kind,'explicit-registered-standalone-default-profile');
   await verifyTypedTargets(result,api=>{
     const text=tagged('String','Ω'),entries=Object.freeze([Object.freeze({$:'MapEntry',key:'a',value:text})]),object=tagged('Object',Object.freeze({$:'Map',entries}));
     const values=Object.freeze([text]),array=tagged('Array',values);
@@ -43,4 +46,16 @@ test('Option map_or joins actual owned strings across distinct checked construct
   const source='pub fn choose(v:Option<bool>)->String{v.map_or(String::from("default"),|flag|if flag{format!("yes")}else{"no".to_string()})}';
   const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
   await verifyTypedTargets(result,api=>{assert.equal(api.choose(tagged('None')),'default');assert.equal(api.choose(tagged('Some',true)),'yes');assert.equal(api.choose(tagged('Some',false)),'no');});
+});
+
+test('valid borrowed parse signatures retain missing and actual float_roundtrip profile refusals independently of ownership',()=>{
+  const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
+  const actual=actualJsonCapabilityProfile({manifest,lock,compilationProfile:PRODUCTION_PROFILE});assert.equal(actual.kind,'actual-locked-Cargo-profile');assert.equal(actual.features.includes('float_roundtrip'),true);assert.equal(actual.parseAvailable,false);
+  const source='pub fn reader(v:&serde_json::Value)->Option<&str>{v.as_str()} pub fn parse_text(v:&str)->Result<serde_json::Value,serde_json::Error>{serde_json::from_str(v)} pub fn parse_bytes(v:&[u8])->Result<serde_json::Value,serde_json::Error>{serde_json::from_slice(v)}';
+  for(const profile of [undefined,actual]){
+    const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,...(profile?{jsonParserProfile:profile}:{})});
+    assert.equal(result.meta.executable.some(item=>item.name==='reader'),true);assert.deepEqual(result.meta.refused.map(item=>item.name).sort(),['parse_bytes','parse_text']);
+    assert.equal(result.meta.jsonParserProfile.kind,profile?'actual-locked-Cargo-profile':'actual-Cargo-profile-unavailable');
+    for(const item of result.meta.refused){assert.equal(item.kind,'unsupported');assert.equal(item.file,'src/lib.rs');assert.match(item.message,profile?/float_roundtrip/:/exact original Cargo manifest\/lock/);assert.match(source.slice(item.span.start,item.span.end),/serde_json::from_(str|slice)/);}
+  }
 });
