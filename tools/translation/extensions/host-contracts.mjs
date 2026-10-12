@@ -1,7 +1,9 @@
+import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasSourceFixedFrom} from './primitive-from-source.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
 import {iteratorReceiverExpected} from './iterators.mjs';
 import {itemConfiguration} from '../cfg-profile.mjs';
 import {createHash} from 'node:crypto';
+import {types as nodeTypes} from 'node:util';
 // Crate contracts select operations by resolved paths and checked value types.
 // They never supply a repository function body or waive a body obligation.
 import {MethodRustParser,MethodChecker} from './methods.mjs';
@@ -83,8 +85,10 @@ export function sharedBooleanPointee(type,range) {
   return pointee;
 }
 export const INTEGER_FROM_PROFILE=Object.freeze({rust:'1.89.0',source:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/num.rs',sha256:'270e0801e5e23cba89fec51eed416be60743034a6f02c5fe64be2e8f2e8ca958',lines:[99,141],identity:{source:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/mod.rs',sha256:'0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab',line:774}});
-const integerFromSources=Object.freeze({u8:[],u16:['u8'],u32:['u8','u16'],u64:['u8','u16','u32'],u128:['u8','u16','u32','u64'],usize:['u8','u16'],i8:[],i16:['i8','u8'],i32:['i8','i16','u8','u16'],i64:['i8','i16','i32','u8','u16','u32'],i128:['i8','i16','i32','i64','u8','u16','u32','u64'],isize:['i8','i16','u8']});
-export const hasIntegerFrom=(source,target)=>Object.hasOwn(integerFromSources,target)&&(source===target||integerFromSources[target].includes(source));
+// Stage1 leaves these five pointer conversions and reflexive primitives at
+// their existing legacy admission; no new pointer/domain/blanket proof is given.
+const legacyPointerFromSources=Object.freeze({usize:['u8','u16'],isize:['i8','i16','u8']});
+export const hasIntegerFrom=(source,target)=>/^[iu](8|16|32|64|128)$/u.test(source)&&/^[iu](8|16|32|64|128)$/u.test(target)&&source!==target?hasSourceFixedFrom(source,target):source===target&&!!rustFixedType(target)||Object.hasOwn(legacyPointerFromSources,target)&&legacyPointerFromSources[target].includes(source);
 // Portable widths are runtime domains, not proofs of Rust source type identity.
 // Missing metadata stays missing; contextual literal typing owns inference.
 export function assertRustPrimitiveIdentity(actual,expected,range,{declarations,resolveType=type=>type}={},active=new Set()) {
@@ -515,6 +519,13 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
         this.expectedPrimitiveIdentity(node.target,expected,path,node.span);
         return {k:'routerPrimitiveBoolFrom',value,type:node.target,sourceBoolFromScope:caller,sourcePrimitiveBoolFromBody:body,constEligible:false,span:node.span};
       }
+      if(node.target&&value.type.kind==='fixed'&&/^[iu](8|16|32|64|128)$/u.test(value.type.rustPrimitiveName)&&/^[iu](8|16|32|64|128)$/u.test(node.targetName)&&value.type.rustPrimitiveName!==node.targetName){
+        if(value.type.rustReference||value.type.rustOwnership||value.type.patternOwnershipRefusal||value.type.rustGenericIdentityUnresolved||value.type.rustBorrowingUnresolved)throw unsupported('primitive fixed From argument','requires an actual by-value primitive domain',node.span);
+        if(node.sourceBoolFromRefusal)throw unsupported('primitive fixed From namespace',node.sourceBoolFromRefusal,node.span);
+        let caller,body;try{caller=requirePrimitiveBoolFromScope(node.sourceBoolFromScope,node.target);body=parsePrimitiveFromBody(HostRustParser,pinnedPrimitiveFrom(value.type,node.target));requirePrimitiveFromBody(body,value.type,node.target);}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('primitive fixed From source',error.message,node.span);}
+        this.expectedPrimitiveIdentity(node.target,expected,path,node.span);
+        return {k:'routerPrimitiveFixedFrom',value,type:node.target,sourceCallerTraitScope:caller,sourcePrimitiveFromBody:body,constEligible:false,span:node.span};
+      }
       if(node.target){if(value.type.kind!=='fixed'||value.type.patternOwnershipRefusal||value.type.rustGenericIdentityUnresolved)throw unsupported('primitive From conversion','requires a checked infallible by-value fixed integer source',node.span);const inputName=value.type.rustPrimitiveName;if(!inputName)throw unsupported('primitive From source identity','requires the actual source integer type',node.span);if(!hasIntegerFrom(inputName,node.targetName))throw typeError(`no registered standard From<${inputName}> for ${node.targetName}`,node.span);const input=fixedBounds(value.type),output=fixedBounds(node.target);if(input.min<output.min||input.max>output.max)throw typeError('primitive From conversion is not infallible for the checked source type',node.span);}
       const type=node.operation==='String::from'?{...value.type,patternOwnershipRefusal:'owned String conversion'}:node.target??value.type;if(expected&&!sameType(type,expected))throw typeError('standard conversion return type mismatch',node.span);return {...node,value,type};
     }
@@ -677,6 +688,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(node.k==='routerStandardSharedReceiver')return this.expr(node.object);
     if(node.k==='routerSharedArrayLiteral'){if(!node.arrayBorrowProof?.verified)throw new Error('missing checked shared array origin proof');return `Object.freeze(${this.expr(node.value)})`;}
     if(node.k==='routerPrimitiveDereference')return this.expr(node.value);
+    if(node.k==='routerPrimitiveFixedFrom'){if(node.value.type.kind!=='fixed'||node.value.type.rustReference||node.type.kind!=='fixed'||node.sourcePrimitiveFromBody?.checkedOperation?.kind!=='primitive-fixed-infallible-cast'||node.sourcePrimitiveFromBody.constTraitCall!==false)throw new Error('missing checked original fixed From operation');this.state.encode('original-primitive-fixed-from','Complete actual primitive From macro invocation/member, shared original caller trait scope, infallible typed cast and exact BigInt value; pointer/generic identity remains legacy and unpromoted.');return this.expr(node.value);}
     if(node.k==='routerPrimitiveBoolFrom'){if(node.value.type.kind!=='bool'||node.value.type.rustReference||node.type.kind!=='fixed'||node.sourcePrimitiveBoolFromBody?.constTraitCall!==false)throw new Error('missing checked original Boolean From operation');this.primitiveBoolFrom=true;this.state.encode('original-primitive-bool-from','Actual non-const From<bool> macro member, private original caller trait scope and exact boolean ABI; no generic trait or numeric formatter authority.');return `ml_primitive_bool_from(${this.expr(node.value)})`;}
     if(['routerConstObligation','routerBuiltinConversion'].includes(node.k))return this.expr(node.value);
     if(node.k==='routerStandardMethod'){this.standardMethods=true;return `ml_host_${node.operation}(${this.expr(node.value)}${node.argument?', '+this.expr(node.argument):''}${node.defaultValue?', '+this.expr(node.defaultValue):''}${node.callback?', '+this.expr(node.callback):''})`;}
@@ -734,6 +746,22 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     preludes.push(...this.instantiations.values());
     return {...result,preludes,text:[...preludes,...result.definitions].join('\n\n')};
   }
+}
+// Definition-time identities authenticate namespace callbacks without requiring
+// a cursor prototype: bounded clause cursors retain their original token array.
+const FROM_CALLBACK_NAMES=['builtinShadow','resolveSourceNamespace','resolve','inSourceNamespace','registeredGenericKind','hasResolvedSourceAlias'];
+const FROM_CALLBACK_ROOTS=[];
+for(let prototype=HostRustParser.prototype;prototype&&prototype!==Object.prototype;prototype=Object.getPrototypeOf(prototype))FROM_CALLBACK_ROOTS.push(Object.freeze({prototype,parent:Object.getPrototypeOf(prototype),descriptors:Object.freeze(Object.fromEntries(FROM_CALLBACK_NAMES.map(name=>[name,Object.getOwnPropertyDescriptor(prototype,name)])))}));
+function sameCallbackDescriptor(actual,expected){return actual===undefined&&expected===undefined||!!actual&&!!expected&&actual.value===expected.value&&actual.get===expected.get&&actual.set===expected.set&&actual.configurable===expected.configurable&&actual.enumerable===expected.enumerable&&actual.writable===expected.writable;}
+export function requireOriginalFromNamespaceCallbacks(parser){
+  const fail=()=>{throw new TypeError('Primitive From namespace callbacks lost their original private source association with actual Host definitions');};
+  if(!parser||nodeTypes.isProxy(parser))fail();
+  let current=parser;
+  while(current!==HostRustParser.prototype){
+    if(!current||nodeTypes.isProxy(current)||FROM_CALLBACK_NAMES.some(name=>Object.hasOwn(current,name)))fail();current=Object.getPrototypeOf(current);
+  }
+  for(const root of FROM_CALLBACK_ROOTS){if(nodeTypes.isProxy(root.prototype)||Object.getPrototypeOf(root.prototype)!==root.parent||FROM_CALLBACK_NAMES.some(name=>!sameCallbackDescriptor(Object.getOwnPropertyDescriptor(root.prototype,name),root.descriptors[name])))fail();}
+  return parser;
 }
 export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope,standaloneSourceContext,jsonMacroContext,jsonMacroModule,cargoManifest}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);if(jsonMacroContext)configureJsonMacroParser(parser,jsonMacroContext,jsonMacroModule);if(sourceScope?.matchesMacroContext)configureMatchesParserFromSourceScope(parser,sourceScope);else if(!sourceScope){if(standaloneSourceContext)configureMatchesMacroParser(parser,standaloneSourceContext.context,{file:standaloneSourceContext.file,offset:standaloneSourceContext.offset,allowEmptyMainCarrier:true});else{const context=standaloneMatchesMacroContext(source,{compilationProfile:parser.compilationProfile??null,cargoEditionContext:cargoManifest===undefined||cargoManifest===null?null:captureOriginalCargoEdition(cargoManifest)});configureMatchesMacroParser(parser,context,{file:'src/module.rs'});}}return linkParsedFile(parser,parser.file(),source,{scope:{macroEvidence,sourceScope:sourceScope?.scope??null,compilationProfile:sourceScope?.compilationProfile??null,configurationCondition:sourceScope?.configurationCondition??null}});};
 export const checkProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checker.program(surface);program.jsonParserProfile=jsonParserProfile;return program;};
