@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {captureSourceModuleViews} from '../source-module-views.mjs';
+import {registeredStandardHostBindings} from '../standard-host-bindings.mjs';
 import {extractImplDeclarations,lowerSharedMethodTokens,originalMethodMember,originalMethodLowering} from '../impl-resolver.mjs';
 import {createMatchesMacroContext} from '../matches-macro-context.mjs';
 import {createOriginalMethodTokenTransform,isOriginalMethodTokenTransform,originalMethodTransformFacts,originalMethodTransformForTokens,originalMethodTokenTransformSnapshot} from '../source-method-transforms.mjs';
@@ -11,6 +12,7 @@ function fixture(source,path=[]) {
 }
 test('genuine original shared member and every self/Self output token keep exact source lineage',()=>{
   const row=fixture('pub struct Counter{value:u8}impl Counter{pub fn read(&self)->u8{let text="Self self";self.value}}'),proof=createOriginalMethodTokenTransform(row.context,row.method,row.lowered),state=originalMethodTransformFacts(proof);
+  const external=registeredStandardHostBindings();assert.ok([...external.values()].every(table=>table.complete===false));assert.ok(external.has('std::option'));assert.equal([...external.keys()].some(path=>path.startsWith('Router')),false);
   assert.equal(isOriginalMethodTokenTransform(proof),true);assert.equal(originalMethodTransformForTokens(row.lowered.tokens),proof);assert.equal(state.method,row.method);
   assert.equal(row.source.slice(proof.originalMemberSpan.start,proof.originalMemberSpan.end),row.method.source);assert.equal(row.source.slice(proof.originalBodySpan.start,proof.originalBodySpan.end),'{let text="Self self";self.value}');
   assert.equal(proof.map.length,row.lowered.tokens.length);assert.ok(proof.operations.some(operation=>operation.kind==='shared-receiver-parameter'));assert.ok(proof.operations.some(operation=>operation.kind==='receiver-use'));

@@ -1,18 +1,14 @@
 // Per-call proof from genuine original module views. No caller-closed flags or
 // external namespace tables are accepted as authority.
 import {createHash} from 'node:crypto';
+import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {types} from 'node:util';
 import {metadataDigest,ownData} from './extensions/source-links.mjs';
 import {captureOriginalMacroModules,originalMacroModules} from './original-macro-module-context.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
-import {externalModuleBindings} from './registered-bindings.mjs';
-import {COPY_NAMESPACE_BINDINGS} from './copy-trait-owners.mjs';
-import {STANDARD_NAMESPACE_BINDINGS} from './namespace-standard.mjs';
 import {createDeriveFootprintContext,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {createToolAttributeContext} from './tool-attributes.mjs';
-import {HOST_CONTRACTS,hostData} from './extensions/host-contracts.mjs';
-import {EFFECT_CONTRACTS} from './extensions/effects-contracts.mjs';
 import {capturedRustTokenSource} from './extensions/lexical.mjs';
 import {loadStandardMatchesSourceProfile,isStandardMatchesSourceProfile} from './matches-source-profile.mjs';
 import {freezeMacroTree,originalMacroInvocation} from './macro-token-trees.mjs';
@@ -26,19 +22,10 @@ const mapEntries=Map.prototype.entries;
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
 function namespaceDigest(parser){const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');return metadataDigest(['type','value','macro'].map(namespace=>[namespace,nativeEntries(ownData(aliases,namespace)).map(([path,map])=>[path,nativeEntries(map)])]));}
 export function originalMatchesNamespaceBindings(){const profile=standardProfile??=loadStandardMatchesSourceProfile();return ['std','core'].map(root=>Object.freeze({name:profile.name,namespace:'macro',macroKind:'bang',target:[root,profile.name],kind:'macro',originalNamespaceDigest:profile.digest}));}
-function standardExternal(profile) {
-  // Canonical source types from the existing project host registry. Private
-  // monomorphic ABI layouts in hostData are never external Rust owners.
-  const types=[['std','option','Option'],['std','result','Result'],['std','time','Duration'],['serde_json','Value'],['serde_json','Number'],['serde_json','Error'],['serde_json','error','Category'],['std','io','Error'],['std','env','VarError'],['std','ffi','OsString'],['std','num','ParseIntError'],['std','num','IntErrorKind'],['std','time','TryFromFloatSecsError']];
-  return externalModuleBindings({data:hostData(),contracts:[...HOST_CONTRACTS,...EFFECT_CONTRACTS],extraBindings:[...types.map(target=>({name:target.at(-1),namespace:'type',target,kind:['Option','Result','Value','Category','VarError','IntErrorKind'].includes(target.at(-1))?'enum':'struct'})),
-    ...['Some','None','Ok','Err'].flatMap(name=>['type','value'].map(namespace=>({name,namespace,target:name==='Some'||name==='None'?['std','option','Option',name]:['std','result','Result',name],kind:'constructor'}))),
-    ...COPY_NAMESPACE_BINDINGS,...STANDARD_NAMESPACE_BINDINGS,
-    {name:'FromStr',namespace:'type',target:['std','str','FromStr'],kind:'trait'},
-    ...originalMatchesNamespaceBindings(),{name:'json',namespace:'macro',macroKind:'bang',target:['serde_json','json'],kind:'macro'},
-  ]});
-}
+function standardExternal(){return registeredStandardHostBindings([...originalMatchesNamespaceBindings(),{name:'json',namespace:'macro',macroKind:'bang',target:['serde_json','json'],kind:'macro'}]);}
+
 export function createMatchesMacroContext({modules,compilationProfile=null,deriveDependencies=null}={}) {
-  const profile=standardProfile??=loadStandardMatchesSourceProfile(),snapshot=captureOriginalMacroModules({modules,compilationProfile}),original=originalMacroModules(snapshot),external=standardExternal(profile);
+  const profile=standardProfile??=loadStandardMatchesSourceProfile(),snapshot=captureOriginalMacroModules({modules,compilationProfile}),original=originalMacroModules(snapshot),external=standardExternal();
   const deriveContext=deriveDependencies?createDeriveFootprintContext({modules:original.modules,dependencies:deriveDependencies,externalModules:external,compilationProfile:original.compilationProfile}):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):external;
   const toolContext=createToolAttributeContext({modules:original.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:original.compilationProfile});
