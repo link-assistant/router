@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
@@ -11,6 +12,7 @@ import {trackedSource} from '../bulk.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {fileURLToPath} from 'node:url';
 import {loadJavaScript as load,writeRuntimeAssets} from './artifact-loader.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
 const project=files=>translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
 function strict(result) {
   const directory=mkdtempSync(join(tmpdir(),'router-checked-methods-'));
@@ -100,15 +102,32 @@ test('shared record helpers have deterministic binders and reserved field labels
   assert.deepEqual(get('Record')(2n,3n),{$:'Record',new:2n,class:3n});
 });
 
-test('actual tracked sibling closures emit shared helpers once and load',async()=>{
+test('actual tracked sibling closures load while whole verification retains namespace obligations',{timeout:30000},async()=>{
   const root=fileURLToPath(new URL('../../../',import.meta.url));
   for(const path of ['src/bridge_response.rs','src/verification.rs']) {
-    const result=translateSource(trackedSource(root,path),path);strict(result);
+    const source=trackedSource(root,path),result=translateSource(source,path);strict(result);
+    assert.equal(result.ir.items.map(item=>item.source).join(''),source);
     const api=(await load(result.javascript)).translated;
     const get=name=>api[Object.keys(api).find(key=>key===name||key===name+'_')];
     if(path.endsWith('bridge_response.rs')) {
       assert.deepEqual(get('complete')('stop'),{$:'StopSemantics',chat_finish_reason:'stop',response_status:'completed',incomplete_reason:{$:'None'},refusal:false});
       assert.deepEqual(get('incomplete')('length','max_output_tokens',false),{$:'StopSemantics',chat_finish_reason:'length',response_status:'incomplete',incomplete_reason:{$:'Some',field0:'max_output_tokens'},refusal:false});
-    } else assert.ok(get('AREAS').length>0);
+      await verifyTypedTargets(result,target=>{
+        const pick=name=>target[Object.keys(target).find(key=>key===name||key===name+'_')];
+        assert.deepEqual(pick('complete')('stop'),{$:'StopSemantics',chat_finish_reason:'stop',response_status:'completed',incomplete_reason:{$:'None'},refusal:false});
+        assert.deepEqual(pick('incomplete')('length','max_output_tokens',false),{$:'StopSemantics',chat_finish_reason:'length',response_status:'incomplete',incomplete_reason:{$:'Some',field0:'max_output_tokens'},refusal:false});
+      });
+    } else {
+      assert.equal(createHash('sha256').update(source).digest('hex'),'839dc354baff84b057fd6ec5c84d1f52d9dd4e0ed657843626a500425ef2ffa4');
+      for(const [name,term,start,end]of [['Run','struct',812,824],['Area','struct',1073,1085],['tests','fn',1272,1284],['unit','fn',1426,1438]]){
+        const item=result.ir.items.find(item=>item.name===name&&item.term===term);
+        assert.equal(item.status,'carried');assert.match(item.diagnostic.message,/shadowed borrowed str type: requires actual standard primitive identity/);assert.deepEqual(item.diagnostic.span,{start,end});
+      }
+      const areas=result.ir.items.find(item=>item.name==='AREAS');assert.equal(areas.status,'carried');assert.match(areas.diagnostic.message,/unproven standard constructor owner: requires actual source namespace resolution/);assert.deepEqual(areas.diagnostic.span,{start:2751,end:2755});assert.equal(source.slice(2751,2755),'None');assert.equal(get('AREAS'),undefined);
+      const full=translateProject({entry:path,paths:[path],readSource:()=>source}),scope=full.meta.bindingEvidence.scopes.find(scope=>scope.file===path&&scope.path.length===0);
+      assert.equal(full.meta.executable.some(item=>item.name==='AREAS'),false);assert.equal(full.meta.runtimeParity,false);
+      for(const key of ['unresolvedTypeScope','unresolvedBangMacroScope','unresolvedAttributeMacroScope'])assert.equal(scope[key],true,key);
+      for(const [start,end]of [[129,339],[246,305],[24612,24669]])assert.ok(scope.unresolvedImports.some(item=>item.span?.start===start&&item.span?.end===end),`${start}..${end}`);
+    }
   }
 });
