@@ -76,13 +76,26 @@ export function parseStandardMatches(parser,token,path) {
   try {const parsed=parseOriginalMatchesCandidate(parser,path);if(!parsed)throw unsupported('matches! owner','requires its actual original source macro context',token);return parsed;}
   catch(error){c.index=previous;throw error;}
 }
-function alternatives(pattern,depth=0) {
+function alternatives(pattern,checker,type,path,depth=0) {
   if(depth>128)throw unsupported('ordered match pattern','exceeds the checked pattern depth',pattern.span);
   if(pattern.k==='or') {
-    const result=[];for(const child of pattern.alternatives){result.push(...alternatives(child,depth+1));if(result.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked expansion bound',pattern.span);}return result;
+    const result=[];for(const child of pattern.alternatives){result.push(...alternatives(child,checker,type,path,depth+1));if(result.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked expansion bound',pattern.span);}return result;
   }
-  if(pattern.k==='ctor') {
-    let products=[[]];for(const child of pattern.args){const parts=alternatives(child,depth+1);if(products.length*parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked product bound',pattern.span);products=products.flatMap(prefix=>parts.map(part=>[...prefix,part]));}return products.map(args=>({...pattern,args}));
+  if(pattern.k==='ctor'||pattern.k==='routerTuplePattern') {
+    const entry=type.kind==='data'?checker.items.get(type.name):null,tuple=pattern.k==='routerTuplePattern';
+    if(tuple&&(!entry?.tuple||entry.ctors.length!==1||entry.ctors[0].ctorStyle!=='tuple'))throw unsupported('ordered tuple pattern','requires its actual checked anonymous tuple constructor',pattern.span);
+    const ctor=tuple?entry.ctors[0]:entry?.ctors.find(ctor=>ctor.name===pattern.ctor),children=tuple?pattern.items:pattern.args;
+    if(!ctor||!Array.isArray(children)||ctor.fields.length!==children.length||!tuple&&pattern.data!==type.name)throw typeError('ordered constructor expansion differs from its checked source layout',pattern.span);
+    let products=[[]];for(const [index,child]of children.entries()) {
+      const fieldType=checker.resolveType(ctor.fields[index].type,path,pattern.span),parts=alternatives(child,checker,fieldType,path,depth+1);
+      if(products.length*parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked product bound',pattern.span);
+      products=products.flatMap(prefix=>parts.map(part=>[...prefix,part]));
+    }
+    // Vendor exhaustiveness consumes constructor rows. This checked meta
+    // projection uses only the planner-verified actual anonymous tuple layout;
+    // original tuple syntax remains intact in sourcePattern/shared plan evidence.
+    const owner=tuple?{...pattern,k:'ctor',path:[type.name,ctor.name],data:type.name,ctor:ctor.name}:pattern;
+    return products.map(args=>({...owner,args}));
   }
   if(!['wild','bind','numLit','boolLit','strLit','routerIntegerRangePattern'].includes(pattern.k))throw unsupported('ordered match source pattern',`${pattern.k} requires another checked pattern profile`,pattern.span);
   return [pattern];
@@ -108,7 +121,7 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
     const pattern=checker.patternOwner(row.pattern,subject.type,path,env),shared=plan(checker,pattern,subject.type,path,row.span);
     literalIdentities(pattern,subject.type,checker,path,row.span);
     for(const binding of shared.bindings)if(!scalar(binding.type)||binding.type.kind==='fixed'&&!binding.type.rustPrimitiveName)throw unsupported('ordered match binding ownership','requires actual immutable scalar source identities',binding.span??row.span);
-    const parts=alternatives(pattern);
+    const parts=alternatives(pattern,checker,subject.type,path);
     if(attempts.length+parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked whole-match bound',row.span);
     for(const part of parts) {
       const bindingPlan=plan(checker,part,subject.type,path,row.span);let inner=new Map(env);
