@@ -90,6 +90,19 @@ test('refutable, repeated, mutable and ownership-bearing pattern bindings retain
   }
 });
 
+test('actual constant and unit-constructor names cannot become fresh scalar iteration binders',()=>{
+  for(const source of [
+    'const LIMIT:u8=1;pub fn bad()->u8{for LIMIT in 0u8..3u8{}0}',
+    'const LIMIT:u8=1;pub fn bad()->u8{for (LIMIT,_) in (0u8..3u8).map(|n|(n,true)){}0}',
+    'const LIMIT:u8=1;pub fn bad(values:&[u8])->u8{for &LIMIT in values{}0}',
+    'enum Choice{End,More}pub fn bad()->u8{for Choice::End in 0u8..3u8{}0}',
+  ]){
+    const result=project(source);
+    assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);
+    assert.ok(!result.executableDeclarations.some(item=>item.name==='bad'),source);
+  }
+});
+
 test('source pattern tokens survive checked semantic meta round trips and per-file bulk selection',async()=>{
   const source='pub fn sum()->u8{let mut total:u8=0;for (left, _) in (0u8..3u8).map(|n|(n,true)){total+=left;}total}';
   const checked=roundTripProgram(checkProgram(parseRust(source+' fn main(){}')));

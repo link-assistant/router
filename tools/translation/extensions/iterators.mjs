@@ -63,6 +63,11 @@ function readonlyElement(checker,type,span,depth=0) {
 }
 const span = (start, end) => ({ start: start.start, end: end.end });
 const containsExit = node => node && typeof node === 'object' && (['routerReturn', 'routerBreak', 'routerContinue', 'routerTry', 'routerAwait'].includes(node.k) || Object.entries(node).some(([key, value]) => key !== 'type' && (Array.isArray(value) ? value.some(containsExit) : containsExit(value))));
+function rejectUnloweredForConstant(checker,pattern,path,depth=0){
+  if(depth>128)throw unsupported('for pattern owner budget','requires a bounded actual source pattern',pattern.span);
+  if(['bind','bindOrCtor'].includes(pattern.k)&&checker.lookup([pattern.name],path,pattern.span)?.constant)throw unsupported('for constant pattern','requires its actual checked constant value and irrefutability; a constant name cannot become an iteration binder',pattern.span);
+  for(const child of [...(pattern.args??[]),...(pattern.items??[]),...(pattern.alternatives??[]),...(pattern.fields??[]).map(field=>field.pattern)])rejectUnloweredForConstant(checker,child,path,depth+1);
+}
 
 export class IteratorRustParser extends DataRustParser {
   awaitExpression(value, span) { throw unsupported('await expression', 'async needs a checked future contract', span); }
@@ -239,6 +244,11 @@ export class IteratorChecker extends DataChecker {
       return { k: 'routerRange', start, end, inclusive: node.inclusive, type: { kind: 'routerIterator', element: start.type }, span: node.span };
     }
     if (node.k === 'routerFor') {
+      if(node.pattern)rejectUnloweredForConstant(this,node.pattern,path);
+      else {
+        const actual=this.lookup([node.name],path,node.sourceIterationPattern.span);
+        if(actual?.constant||actual?.k==='ctor')throw unsupported('for binding owner','requires its actual constant or constructor pattern; a resolved source value cannot become a fresh iteration binder',node.sourceIterationPattern.span);
+      }
       let object = this.expr(node.object, env, path);
       if (object.type.kind === 'array') object = this.expr({ k: 'routerIteratorOperation', op: 'into_iter', object: node.object, args: [], span: node.span }, env, path);
       if (object.type.kind !== 'routerIterator') throw typeError('for needs a supported scalar iterator', node.span);
