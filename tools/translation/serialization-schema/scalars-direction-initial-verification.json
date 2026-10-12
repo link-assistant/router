@@ -1,0 +1,121 @@
+{
+  "schema": "scalar-direction-initial-verification-v1",
+  "head": "8adc8641a41a7a260ddd28ec84e14a707b4bafd9",
+  "scope": [
+    "tools/translation/serialization-schema/bulk.test.mjs",
+    "tools/translation/serialization-schema/serialization-schema.test.mjs",
+    "tools/translation/serialization-schema/scalars-direction.test.mjs"
+  ],
+  "authoredCasesPerEngine": 47,
+  "inputCount": 1141,
+  "immutableInputs": true,
+  "results": [
+    {
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "tools/translation/serialization-schema/scalars-direction.test.mjs"
+      ],
+      "exit_code": 1,
+      "timed_out": false,
+      "wall_seconds": 17.439,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ]
+    },
+    {
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "15000",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs",
+        "tools/translation/serialization-schema/scalars-direction.test.mjs"
+      ],
+      "exit_code": 1,
+      "timed_out": false,
+      "wall_seconds": 10.283,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ]
+    }
+  ],
+  "perEngineInventory": {
+    "pass": 45,
+    "fail": 2,
+    "skip": 0,
+    "timeouts": 0
+  },
+  "allFailures": [
+    {
+      "name": "late scalar type masks and unknown glob owners cannot impersonate standard primitive visitors",
+      "actual": "Unknown glob refuses actual derive authority before field type projection",
+      "classification": "Fixture diagnostic expects a later refusal than the source-authority guard; refusal itself is correct"
+    },
+    {
+      "name": "nested Option, opaque defaults and non-Option default functions remain explicit refusals",
+      "actual": "Unbalanced original declaration delimiters for compact joint >>",
+      "classification": "Generic type-closer token gap; retain nested Option unsupported ABI while repairing nested Vec grammar"
+    }
+  ],
+  "productionImportsChanged": false,
+  "artifactsRegenerated": false,
+  "archive": {
+    "file": "scalars-direction-initial-raws.tar.gz",
+    "bytes": 170752,
+    "sha256": "b4abe31b45ea176a6f5895fe10bac39d909be1c77a9dffd43c88b81f0d8ee025",
+    "members": [
+      {
+        "file": "run/bun.log",
+        "bytes": 13304,
+        "sha256": "8b0c5e611ff5b17d735d61c2ed4a225b5befc177a8a737d5e7b7de471c3164e7",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/harness.py",
+        "bytes": 5174,
+        "sha256": "229a0f14c18e5ea29e71723d4eb7cd20c7351c245adfb1fa65273ecd6b3ab883",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/inputs.json",
+        "bytes": 135377,
+        "sha256": "dcf5ecdbe821b29708397aebbff081fccc025844828dc12027e61205b7bf1a32",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/node.log",
+        "bytes": 17451,
+        "sha256": "aac236155ad6eb54466d48a9f1e70273b8b0ac70cdcc30ea36dba4ed3e437be3",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/receipt.json",
+        "bytes": 271319,
+        "sha256": "a60880c4a7977235bb02146b687393c40a7c3838827ceb03afbbd009dc55b3d0",
+        "reopened_verified": true
+      },
+      {
+        "file": "runner/plan.json",
+        "bytes": 647,
+        "sha256": "ca1db1c8b6f23307198cb997987094f67a5176d988bc87857fae389f9d31c1a6",
+        "reopened_verified": true
+      },
+      {
+        "file": "runner/run.py",
+        "bytes": 5174,
+        "sha256": "229a0f14c18e5ea29e71723d4eb7cd20c7351c245adfb1fa65273ecd6b3ab883",
+        "reopened_verified": true
+      }
+    ]
+  },
+  "runtimeAuthority": false
+}
