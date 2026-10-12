@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {captureSourceModuleViews} from '../source-module-views.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
@@ -12,6 +14,7 @@ import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const ordinary='pub fn probe(v:u8)->bool{matches!(v,1 | 2)}';
 const member='pub enum Mode{On,Off}impl Mode{pub fn is_on(&self)->bool{matches!(self,Self::On)}}';
+const hash=value=>createHash('sha256').update(value).digest('hex');
 function fixture(method=false){
   const source=method?member:ordinary,sourceView=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}).views[0];
   const context=createMatchesMacroContext({modules:[{file:'src/lib.rs',path:[],source,sourceView,compilationProfile:PRODUCTION_PROFILE}],compilationProfile:PRODUCTION_PROFILE});
@@ -38,10 +41,22 @@ test('ordinary and genuine transformed frames preserve original rule execution i
     assert.equal(matchesParserFacts(row.parser),row.frame);assert.equal(sourceMatchesCandidate(row.parser,['matches']),true);assert.equal(originalMatchesImport(row.parser,['std','matches']),true);
     assert.equal(originalMatchesCallFacts(row.call).state,row.frame);assert.equal(row.call.originalInvocation,row.source.slice(row.request.start,row.request.end));assert.equal(row.call.namespaceAuthority,false);assert.equal(row.call.runtimeParity,false);
   }
-  const source=member+ordinary+'pub fn on(v:&Mode)->bool{v.is_on()}pub fn make_on()->Mode{Mode::On}pub fn make_off()->Mode{Mode::Off}';
-  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
-  assert.ok(result.meta.checkedMethods.some(row=>row.name==='Mode.is_on'&&row.receiver==='shared'));assert.ok(result.meta.executable.some(row=>row.name==='probe'));
-  await verifyTypedTargets(result,api=>{assert.equal(api.on(api.make_on()),true);assert.equal(api.on(api.make_off()),false);for(const [v,expected]of [[0n,false],[1n,true],[2n,true],[255n,false]])assert.equal(api.probe(v),expected);},{childTimeoutMs:30000});
+  const carriedSource=member+ordinary+'pub fn on(v:&Mode)->bool{v.is_on()}pub fn make_on()->Mode{Mode::On}pub fn make_off()->Mode{Mode::Off}';
+  assert.equal(hash(carriedSource),'f9418cd4c97560e8808aef755645b3d92516a3deacc10be21ae2874f45d0d35f');
+  const carried=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>carriedSource,compilationProfile:PRODUCTION_PROFILE});
+  assert.equal(carried.meta.checkedMethods.some(row=>row.name==='Mode.is_on'),false);
+  const refusal=carried.meta.refused.find(row=>row.term==='method');assert.ok(refusal);
+  assert.equal(refusal.message,'shared aggregate pattern: only a checked reference binder or wildcard is lowered; nested borrowed destructuring requires another profile');
+  assert.deepEqual(refusal.span,{start:71,end:79});assert.equal(carriedSource.slice(refusal.span.start,refusal.span.end),'Self::On');assert.equal(carried.meta.executable.some(row=>row.name==='on'),false);
+  // Reuse the complete, already checked source fixture without rewriting any
+  // member body or manufacturing a target ABI. The original Mode stays above.
+  const original=readFileSync(new URL('./source-method-project.test.mjs',import.meta.url),'utf8');
+  assert.equal(hash(original),'4bf726a884a64cdda0ead81c39ad182207bf048137adcaa100e4e8f7e6197254');
+  const sources=[...original.matchAll(/const source='(pub struct Counter\{value:u8\}impl Counter\{pub fn make[^']*)';/g)];assert.equal(sources.length,1);
+  const counter=sources[0][1];assert.equal(hash(counter),'fb334b2ccd6375e8bca63fee12912403284687d54d4ef41f4edc6bedf9c98780');
+  const source=counter+ordinary,result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
+  assert.ok(result.meta.checkedMethods.some(row=>row.name==='Counter.small'&&row.receiver==='shared'));assert.ok(result.meta.executable.some(row=>row.name==='probe'));assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{for(const [v,expected]of [[0n,false],[1n,true],[2n,true],[255n,false]]){assert.equal(api.run(v),expected);assert.equal(api.probe(v),expected);}},{childTimeoutMs:30000});
 });
 test('warmed ordinary and method frames cannot reseal their digest mode spans or original reference fields',()=>{
   for(const row of [fixture(),fixture(true)]){
