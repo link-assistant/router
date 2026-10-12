@@ -1,6 +1,6 @@
 {
   "schema": "original-bigint-source-ir-next-helper-plan-v1",
-  "status": "source-only storage helper implemented; four new cases UNRUN; Math default/whole-reader integration remains future",
+  "status": "source-only storage and Math forwarding helpers implemented; seven new cases UNRUN; whole-reader/default ownership and allocation closure remain unsupported",
   "archiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
   "declarations": [
     {
@@ -160,5 +160,19 @@
   "parseAdmission": false,
   "applicationEffectCompleteness": false,
   "runtimeParity": false,
-  "rustExecution": false
+  "rustExecution": false,
+  "forwardingSelections": [
+    "trait::Math::hi64",
+    "trait::Math::imul_pow5",
+    "trait::Math::from_u64"
+  ],
+  "coherentRegressionPlan": {
+    "previouslyVerifiedArithmeticCases": 30,
+    "newStorageCases": 4,
+    "newForwardingCases": 3,
+    "totalAuthoredCases": 37,
+    "newCasesExecuted": false,
+    "authorityGranted": false
+  },
+  "privateContextExtension": "Private WeakMap data/callee/associated contexts are extended only with actual matching source seals; serialized public records and clones are denied."
 }

@@ -1,11 +1,12 @@
 // Original Bigint storage procedures, still a mathematical source projection.
 import {isJsonMacroSourceProof,jsonMacroOriginalSource} from './json-macro-sources.mjs';
-import {compileArithmeticSourceFragments,bindArithmeticSourceData,bindArithmeticRecordSource,projectArithmeticSource} from './arithmetic-source-fragments.mjs';
+import {compileArithmeticSourceFragments,bindArithmeticSourceData,bindArithmeticRecordSource,extendArithmeticSourceData,extendArithmeticCalleeSource,projectArithmeticSource} from './arithmetic-source-fragments.mjs';
 import {compileArithmeticSourceData} from './arithmetic-source-data.mjs';
 import {compileArithmeticRecordSource} from './arithmetic-record-source.mjs';
 import {jsonRoundtripCandidateProfile} from './json-roundtrip-capabilities.mjs';
+import {compilePinnedJsonLimbFragments,pinnedJsonLimbSourceProgram} from './json-roundtrip-limb-fragments.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
-const states=new WeakMap(),paths=['impl::Default::Bigint::default','impl::Math::Bigint::data','impl::Math::Bigint::data_mut'];
+const states=new WeakMap(),forwardStates=new WeakMap(),forwardPaths=['trait::Math::hi64','trait::Math::imul_pow5','trait::Math::from_u64'],paths=['impl::Default::Bigint::default','impl::Math::Bigint::data','impl::Math::Bigint::data_mut'];
 export function compilePinnedJsonStorageFragments(dependencies){
   if(!isJsonMacroSourceProof(dependencies))throw new TypeError('Storage fragments need private pinned dependencies');const cargoSourceContext=jsonRoundtripCandidateProfile({dependencies}),original=jsonMacroOriginalSource(dependencies,'serde_json','src/lexical/bignum.rs'),math=jsonMacroOriginalSource(dependencies,'serde_json','src/lexical/math.rs'),modulePath=['lexical','bignum'];
   const sourceProgram=compileArithmeticSourceFragments(original.source,paths),recordSource=compileArithmeticRecordSource(original.source,modulePath),program=bindArithmeticRecordSource(bindArithmeticSourceData(sourceProgram,modulePath,[compileArithmeticSourceData(original.source,modulePath),compileArithmeticSourceData(math.source,['lexical','math'])]),[recordSource]);
@@ -13,3 +14,10 @@ export function compilePinnedJsonStorageFragments(dependencies){
 }
 export const isPinnedJsonStorageFragments=value=>!!value&&states.has(value);
 export function projectPinnedJsonStorageFragment(candidate,path,args,limbBits=32){const program=states.get(candidate);if(!program||!paths.includes(path))throw new TypeError('Unsealed original storage source candidate');return projectArithmeticSource(program,path,args,{limbBits});}
+
+export function compilePinnedJsonStorageForwarding(dependencies){
+  const storage=compilePinnedJsonStorageFragments(dependencies),limbs=compilePinnedJsonLimbFragments(dependencies,{additionalPaths:forwardPaths}),original=jsonMacroOriginalSource(dependencies,'serde_json','src/lexical/bignum.rs'),math=jsonMacroOriginalSource(dependencies,'serde_json','src/lexical/math.rs'),variants=new Map();
+  for(const bits of [32,64]){const limbProgram=pinnedJsonLimbSourceProgram(limbs,bits),source=compileArithmeticSourceData(original.source,['lexical','bignum']);let program=extendArithmeticSourceData(limbProgram,[source]);program=extendArithmeticCalleeSource(program,[{modulePath:['lexical','bignum'],program:storage.sourceProgram}]);program=bindArithmeticRecordSource(program,[storage.recordSource]);variants.set(bits,program);}
+  const candidate=freezeMacroTree({schema:'original-Math-Bigint-forwarding-source-ir-v1',sources:[original,math].map(({path,sha256})=>({path,sha256})),storage,limbs,variants:[...variants].map(([bits,program])=>({bits,program})),projectionOnly:true,sourceBehaviorFidelityVerified:false,traitOwnerVerified:false,borrowContractVerified:false,copyContractVerified:false,allocatorContractVerified:false,parseAdmission:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false,remainingObligations:[...storage.remainingObligations,'Math record/getter and Hi64 forwarding are mathematical source-call selection only, not verified trait/coercion/AsRef owners']});forwardStates.set(candidate,variants);return candidate;
+}
+export function projectPinnedJsonStorageForwarding(candidate,path,args,limbBits=32){const program=forwardStates.get(candidate)?.get(limbBits);if(!program||!forwardPaths.includes(path))throw new TypeError('Unsealed original storage forwarding candidate');if(path==='trait::Math::imul_pow5'&&(!Array.isArray(args)||typeof args[1]!=='bigint'||args[1]<0n||args[1]>1099n)){const error=new RangeError('Original power forwarding exceeds the bounded1099 exponent projection');error.code='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND';throw error;}return projectArithmeticSource(program,path,args,{limbBits});}
