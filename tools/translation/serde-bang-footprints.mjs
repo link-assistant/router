@@ -9,6 +9,7 @@ import {sourceItems} from './rust-structure.mjs';
 import {originalMacroTrees,originalMacroInvocation} from './macro-token-trees.mjs';
 import {compileDeclarativeMacro,expandDeclarativeMacro} from './declarative-macros.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler,inspectQuoteFragment} from './derive-quote-meta.mjs';
+import {liftSerdeNamedStructRoute} from './serde-serialize-struct-route.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const proofs=new WeakMap(),cachedInventories=new WeakMap(),cachedAttributeBindings=new WeakMap();
@@ -34,8 +35,22 @@ function boundedInput(certificate,source){
   const trees=originalMacroTrees(source),keyword=trees.findIndex(tree=>tree.text===certificate.kind),name=trees[keyword+1];
   if(keyword<0||!identifier(name)||name.text!==certificate.name)throw new TypeError('Selected route requires its actual original nongeneric data name');
   if(certificate.kind==='struct'){
-    if(trees[keyword+2]?.text!==';'||keyword+3!==trees.length)throw new TypeError('Selected struct route requires the original unit layout');
-    return {style:'unit-struct',name:{name:name.text,span:name.span},variants:[]};
+    if(trees[keyword+2]?.text===';'&&keyword+3===trees.length)return {style:'unit-struct',name:{name:name.text,span:name.span},variants:[]};
+    const body=trees[keyword+2];
+    if(body?.kind!=='group'||body.delimiter!=='{'||keyword+3!==trees.length)throw new TypeError('Selected struct route requires unit or original named fields');
+    const fields=[];let at=0;
+    while(at<body.children.length){
+      while(body.children[at]?.text==='#'&&body.children[at+1]?.kind==='group'&&body.children[at+1].delimiter==='[')at+=2;
+      if(body.children[at]?.text==='pub'){at++;if(body.children[at]?.kind==='group'&&body.children[at].delimiter==='(')at++;}
+      const field=body.children[at++];
+      if(!identifier(field)||fields.some(previous=>previous.name===field.text)||body.children[at++]?.text!==':')throw new TypeError('Named Serialize field requires its original member identity');
+      const begin=at;let angle=0;
+      for(;at<body.children.length;at++){const token=body.children[at];if(token.text==='<')angle++;if(token.text==='>')angle--;if(angle<0)throw new TypeError('Named field generic grammar is unbalanced');if(token.text===','&&angle===0)break;}
+      if(angle||begin===at)throw new TypeError('Named field source type is incomplete');
+      fields.push({name:field.text,span:field.span,typeSpan:{start:body.children[begin].span.start,end:body.children[at-1].span.end}});if(body.children[at]?.text===',')at++;
+    }
+    if(fields.length>128)throw new TypeError('Selected named struct field count exceeds its bounded route');
+    return {style:'named-struct',name:{name:name.text,span:name.span},variants:[],fields};
   }
   if(certificate.kind!=='enum'||trees[keyword+2]?.kind!=='group'||trees[keyword+2].delimiter!=='{'||keyword+3!==trees.length)throw new TypeError('Selected enum route requires an original nongeneric unit enum');
   const nodes=trees[keyword+2].children,variants=[];let at=0;
@@ -100,7 +115,9 @@ export function proveSerdeSerializeBangFootprint({context,certificate}={}){
   // proof concerns the token category, not serialized trait output behavior.
   const typeName=leaf(JSON.stringify(input.name.name),'string','Name::to_tokens always emits a string literal');
   let body;
-  if(input.style==='unit-struct'){
+  if(input.style==='named-struct'){
+    body=liftSerdeNamedStructRoute({inventory,compiler,input,sourceOffset:certificate.span.start,definition,select:selectedTemplate,inst,leaf,empty,typeName,privateIdent,bindingProofs,branchProofs});
+  }else if(input.style==='unit-struct'){
     const unit=definition('src/ser.rs','serialize_unit_struct');
     const template=selectedTemplate(inventory,unit,text=>text.includes('serialize_unit_struct'));
     body=inst(template,{type_name:typeName},'Style::Unit serializer expression');

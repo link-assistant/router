@@ -63,9 +63,25 @@ test('other actual derive invocations keep the joined bang dimension incomplete'
   assert.equal(schema.dimensions.bangMacroComplete,false);assert.deepEqual(schema.residualOwners[0].target,['schemars','JsonSchema']);
 });
 
-test('payloads and helper-controlled generator routes remain explicit obligations',()=>{
+test('default named payloads lift actual member/name field splices without generated trait authority',()=>{
+  const result=proof('#[derive(serde::Serialize)] pub struct State { pub values:Vec<(String,u64)>, #[serde(rename="#[macro_export]")] value:u8 }');
+  assert.equal(result.inputStyle,'named-struct');assert.equal(result.selectedOwnerBangComplete,true);
+  assert.equal(result.generatedImplBehavior,false);assert.equal(result.semanticSyntaxRoundTrip,true);
+  assert.deepEqual(result.outputObservation.definitions,[]);assert.deepEqual(result.outputObservation.macroExports,[]);
+  assert.ok(result.branchProofs.some(branch=>branch.predicate.startsWith('!flatten')));
+  const member=result.bindingProofs.find(binding=>binding.binding==='Member::Named');
+  assert.deepEqual(member.fields.map(field=>field.name),['values','value']);
+});
+
+test('named payload empty field sequence retains the original nonmutating length branch',()=>{
+  const result=proof('#[derive(serde::Serialize)] pub struct State {}');
+  assert.equal(result.inputStyle,'named-struct');assert.equal(result.selectedOwnerBangComplete,true);
+  assert.deepEqual(result.bindingProofs.find(binding=>binding.binding==='Member::Named').fields,[]);
+});
+
+test('unselected payload and helper-controlled generator routes remain explicit obligations',()=>{
   for(const source of [
-    '#[derive(serde::Serialize)] pub struct State { value:u8 }',
+    '#[derive(serde::Serialize)] pub struct State(u8);',
     '#[derive(serde::Serialize)] pub enum State { Item(u8) }',
     '#[derive(serde::Serialize)] #[serde(tag="kind")] pub enum State { First }',
     '#[derive(serde::Serialize)] pub enum State { #[serde(skip)] First }',
