@@ -16,6 +16,9 @@ const span=nodes=>({start:nodes[0].span.start,end:nodes.at(-1).span.end});
 const schemaReference=value=>({source:value.source,sourceSha256:value.sourceSha256,span:value.span,sha256:value.sha256,digest:value.digest,syntaxSha256:value.syntaxSha256});
 class PayloadBudgetError extends TypeError {}
 export function createBuiltinDeriveAstCallbackBridge({context,certificate,invocation}={}){
+  // The original output plan freezes its metadata; snapshot caller input before
+  // that boundary so freshness assertions still compare against a stable value.
+  if(invocation)invocation=freeze(JSON.parse(JSON.stringify(invocation)));
   const plan=planBuiltinDeriveBangOutput({context,certificate,invocation});
   const original=deriveFootprintOriginalContext(context,certificate),module=deriveFootprintOriginalModule(context,certificate);
   const text=module.source.slice(certificate.span.start,certificate.span.end);

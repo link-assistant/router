@@ -1,6 +1,7 @@
 // Exact lexical caller frames for original compiler callback syntax. Unknown
 // patterns/control joins remain source-bearing obligations, never empty slots.
 import {createHash} from 'node:crypto';
+import {sealBuiltinSourceMeta} from './builtin-source-meta.mjs';
 import {builtinAstCallbackInventoryOriginal,builtinAstFunctionSourceParameters} from './builtin-ast-builder-meta.mjs';
 import {astSyntaxText} from './builtin-derive-ast-meta.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -146,8 +147,7 @@ export function createBuiltinAstCallerEnvironments(compiler,profile,inventory){
     obligations.push({kind:'unproved-call-frame',source:actual.source,span:actual.span});
   }
   const evidence={schema:'original-builtin-caller-environments-v1',callbackDigest:fragment.digest,source:fragment.source,sourceSha256:fragment.sourceSha256,declarations,controls,calls:[...calls.values()],obligations,selectedOwnerBangComplete:false,generatedImplBehavior:false};
-  const encoded=JSON.stringify(evidence);if(Buffer.byteLength(encoded)>524288)throw new TypeError('Caller environment metadata byte budget exceeded');
-  const result=freeze({...JSON.parse(encoded),digest:hash(encoded)});frames.set(result,{compiler,profile,inventory,fragment});return result;
+  const result=sealBuiltinSourceMeta(evidence);frames.set(result,{compiler,profile,inventory,fragment});return result;
 }
 export function assertBuiltinAstCallerEnvironments(value,compiler,inventory){const state=frames.get(value);if(!state||state.compiler!==compiler||state.inventory!==inventory)throw new TypeError('Caller frames require their original private callback');return value;}
 export const isBuiltinAstCallerEnvironments=value=>!!value&&frames.has(value);

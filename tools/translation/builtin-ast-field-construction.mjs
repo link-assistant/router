@@ -1,6 +1,7 @@
 // Source-qualified generic FieldInfo construction and its actual callback slots.
 // No field-access Rust template, generated impl, or namespace grant is emitted.
 import {createHash} from 'node:crypto';
+import {sealBuiltinSourceMeta} from './builtin-source-meta.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
 import {planBuiltinDeriveBangOutput} from './builtin-derive-bang-footprints.mjs';
 import {boundedInput} from './serde-bang-footprints.mjs';
@@ -47,9 +48,7 @@ export function createBuiltinDeriveFieldAstBridge({context,certificate,invocatio
     callbackSources:plan.callbackRecipes.map(fragment=>({source:fragment.source,sourceSha256:fragment.sourceSha256,span:fragment.span,digest:fragment.digest})),
     selectedOwnerBangComplete:false,generatedImplBehavior:false,fieldAstInputEstablished:false,mutationControlEstablished:false,optionOwnerEstablished:false,allocationPhaseBehavior:false,featureCompleteness:false,
     obligations:['actual FieldDef/Ident/Span input conversion and hygiene remain open','mk_exprs lexical application is retained; Fn/type owners, ordered selflike inputs and remove(0) bounds remain open','packed field mutation/control selection and unproved pattern bindings remain open','Option/prelude and empty ThinVec/attribute ownership remain open','local named functions do not gain enclosing captures','original callbacks/method bodies and every resolver branch must be joined separately']};
-  const encoded=JSON.stringify(evidence);if(Buffer.byteLength(encoded)>524288)throw new TypeError('Field AST bridge metadata byte budget exceeded');
-  const copy=JSON.parse(encoded);if(JSON.stringify(copy)!==encoded)throw new TypeError('Field AST bridge semantic roundtrip changed');
-  const result=freeze({...copy,digest:hash(encoded)});proofs.set(result,{context,certificate,invocation:freeze(JSON.parse(JSON.stringify(invocation)))});return result;
+  const result=sealBuiltinSourceMeta(evidence);proofs.set(result,{context,certificate,invocation:freeze(JSON.parse(JSON.stringify(invocation)))});return result;
 }
 export function assertBuiltinDeriveFieldAstBridge(value,context,certificate,invocation){const state=proofs.get(value);if(!state||state.context!==context||state.certificate!==certificate||JSON.stringify(state.invocation)!==JSON.stringify(invocation))throw new TypeError('Field AST bridge requires its original private invocation');return value;}
 export const isBuiltinDeriveFieldAstBridge=value=>!!value&&proofs.has(value);
