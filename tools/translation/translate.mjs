@@ -4,6 +4,7 @@ import { sourceItems,rustTokens } from './rust-structure.mjs';
 import {itemConfiguration} from './cfg-profile.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import { parseRust, checkProgram, emitJavaScript } from './extensions/host-contracts.mjs';
+import {standaloneMatchesMacroContext} from './matches-macro-context.mjs';
 import {typeScriptType,typeScriptAliases} from './type-layout.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
 import { tokenize } from './vendor/meta-language/translation/lexer.js';
@@ -86,6 +87,8 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     offset = item.end;
   }
   if (offset < source.length) append(offset, source.length);
+  let standaloneOriginalContext=null,standaloneContextError=null;
+  if(!sourceScope)try{standaloneOriginalContext=standaloneMatchesMacroContext(source,{file:path});}catch(error){standaloneContextError=error;}
   const candidates = new Map();
   const layouts = new Map();
   const ambiguous = new Set();
@@ -97,7 +100,8 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
         if(sourceScope.configurationCondition!=='active'||item.configuration.status!=='active')throw new TranslationError('configuration','source item requires an active checked compilation condition',{start:0,end:item.source.length});
       }
       if (!['fn', 'enum', 'struct', 'const'].includes(item.term) || item.name === 'main') throw new TranslationError('unsupported', `draft item ${item.term}: no supported library declaration emission`, { start: 0, end: item.source.length });
-      const surface = parseRust(item.source + '\nfn main() {}\n', { macroEvidence, sourceScope, shadowedPreludeTypes: new Set(items.filter(entry=>['enum','struct','type','mod'].includes(entry.term)).map(entry=>entry.name)), shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio','serde_json'].includes(entry.name)).map(entry => entry.name)) });
+      if(standaloneContextError)throw standaloneContextError;
+      const surface = parseRust(item.source + '\nfn main() {}\n', { macroEvidence, sourceScope, standaloneSourceContext:standaloneOriginalContext?{context:standaloneOriginalContext,file:path,offset:item.span.start}:null, shadowedPreludeTypes: new Set(items.filter(entry=>['enum','struct','type','mod'].includes(entry.term)).map(entry=>entry.name)), shadowedEffectRoots: new Set(items.filter(entry => entry.term === 'mod' && ['std', 'tokio','serde_json'].includes(entry.name)).map(entry => entry.name)) });
       const declarations = surface.items.filter(entry => !entry.generated);
       if (declarations.length !== 1 || !['fn', 'data'].includes(declarations[0].k)) throw new TranslationError('unsupported', 'item requires module-level declaration lowering', { start: 0, end: item.source.length });
       item.surface = relocate(declarations[0], item.span.start);

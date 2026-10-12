@@ -7,7 +7,7 @@ import {resolveModuleBindings} from './module-bindings.mjs';
 import {macroBindingAffects,macroScopeUncertain} from './macro-subnamespaces.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {originalMacroTrees,originalMacroInvocation} from './macro-token-trees.mjs';
-import {compileDeclarativeMacro,expandDeclarativeMacro} from './declarative-macros.mjs';
+import {compileDeclarativeMacro,expandDeclarativeMacro} from './declarative-token-macros.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler,inspectQuoteFragment} from './derive-quote-meta.mjs';
 import {liftSerdeNamedStructRoute} from './serde-serialize-struct-route.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');

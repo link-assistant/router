@@ -7,7 +7,8 @@ import {sourceItems} from '../rust-structure.mjs';
 import {translateProject} from '../project.mjs';
 import {translateSource} from '../translate.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
-import {HostRustParser} from '../extensions/host-contracts.mjs';
+import {HostRustParser,HostChecker,emitJavaScript} from '../extensions/host-contracts.mjs';
+import {spawnSync} from 'node:child_process';
 import {pinnedOptionBody,pinnedDefaultBody,parsePinnedBody,parsedPinnedBodyEvidence,STANDARD_BODY_SOURCE_PROFILE} from '../extensions/standard-body-source.mjs';
 import {requirePinnedStandardBody} from '../extensions/standard-body-checker.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
@@ -103,4 +104,33 @@ test('untouched full Router caller retains its independent mutable borrowed-loca
   const complete=readFileSync(new URL('../../../src/github_proxy.rs',import.meta.url),'utf8'),item=sourceItems(complete).find(item=>item.name==='contains_inline_zero_after_oid');assert.ok(item);
   const source=complete.slice(item.start,item.end),result=translateSource(source,'src/github_proxy.rs');assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   const caller=result.ir.items.find(item=>item.name==='contains_inline_zero_after_oid');assert.equal(caller.status,'carried');assert.match(JSON.stringify(caller.diagnostic),/mutable borrowed local/u);
+});
+
+const stripped=value=>Array.isArray(value)?value.map(stripped):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([key])=>!['span','type','patternControl'].includes(key)).map(([key,item])=>[key,stripped(item)])):typeof value==='bigint'?value.toString():value;
+const rewriteDigest=node=>{node.pinnedStandardBodyProof.checkedBodyDigest=createHash('sha256').update(JSON.stringify(stripped(node.body))).digest('hex');};
+
+test('recomputed public checksums cannot replace original standard match behavior or real references',()=>{
+  const result=project('pub fn chosen(value:Option<u8>)->u8{value.unwrap_or(9u8)}'),program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));
+  const node=find([...program.declarations.values()].find(item=>item.k==='fn').body,item=>item.k==='routerPinnedStandardBody');
+  requirePinnedStandardBody(node,HostRustParser,{Checker:HostChecker,program});
+  for(const mutate of [
+    altered=>{altered.body.body.body={k:'lit',value:3n,type:structuredClone(altered.type)};},
+    altered=>{const match=find(altered.body,item=>item.k==='match');match.cases.reverse();},
+    altered=>{const match=find(altered.body,item=>item.k==='match');match.cases[0].pattern.data='rp_'+Buffer.from('UnrelatedOption').toString('hex');},
+    altered=>{const match=find(altered.body,item=>item.k==='match');match.cases[0].body={k:'lit',value:7n,type:structuredClone(altered.type)};},
+  ]){const altered=structuredClone(node);mutate(altered);rewriteDigest(altered);assert.throws(()=>requirePinnedStandardBody(altered,HostRustParser,{Checker:HostChecker,program}),/body|specialization/);}
+});
+
+test('serialized meta reconstructs standard bodies in a fresh process with no issuance cache',()=>{
+  const result=project('pub fn empty(value:Option<u8>)->u8{value.unwrap_or_default()}');
+  const module=new URL('../extensions/host-contracts.mjs',import.meta.url).href,meta=new URL('../semantic-meta.mjs',import.meta.url).href;
+  const script=`import {emitJavaScript} from ${JSON.stringify(module)};import {parseProgram} from ${JSON.stringify(meta)};let input='';for await(const chunk of process.stdin)input+=chunk;const result=emitJavaScript(parseProgram(input));if(!result.text.includes('function'))throw new Error('missing actual emitted function');`;
+  const child=spawnSync('node',['--input-type=module','-e',script],{input:JSON.stringify(result.meta.targetSemanticProgram),encoding:'utf8',timeout:20000,maxBuffer:2*1024*1024});
+  assert.equal(child.error,undefined);assert.equal(child.status,0,child.stderr);
+});
+
+test('actual computed str signatures support split and prefix Default without promoting portable strings',async()=>{
+  const result=project('pub fn part(value:&str)->&str{value.split(\'"\').next().unwrap_or_default()}pub fn prefix(value:&str)->&str{value.strip_prefix("pre").unwrap_or_default()}');assert.deepEqual(result.meta.refused,[]);
+  await verifyTypedTargets(result,api=>{assert.equal(api.part('first"second'),'first');assert.equal(api.part(''),'');assert.equal(api.prefix('prefix'),'fix');assert.equal(api.prefix('other'),'');});
+  for(const source of ['type u8=bool;pub fn masked(value:&str)->Vec<u8>{value.bytes().collect()}','type str=bool;pub fn masked(value:Option<&str>)->&str{value.unwrap_or_default()}']){const result=translateSource(source);assert.equal(result.ir.items.find(item=>item.name==='masked').status,'carried');assert.equal(result.ir.items.map(item=>item.source).join(''),source);}
 });

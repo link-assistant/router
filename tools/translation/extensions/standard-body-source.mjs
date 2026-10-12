@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {sourceItems} from '../rust-structure.mjs';
-import {compileDeclarativeMacro,expandDeclarativeMacro} from '../declarative-macros.mjs';
+import {compileDeclarativeMacro,expandDeclarativeMacro} from '../declarative-token-macros.mjs';
 import {originalTopLevelMacroInvocations,originalMacroTreeText} from '../macro-token-trees.mjs';
 import {tokenizeRust} from './lexical.mjs';
 

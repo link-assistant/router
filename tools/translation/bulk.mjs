@@ -160,7 +160,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   implementation.push(...['rust-marker-1.89.0.rs.gz','rust-fmt-1.89.0.rs.gz','rust-path-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/copy-standard/${name}`));
   implementation.push(...['rust-lexer-1.89.0.rs.gz','rust-dec2flt-1.89.0.rs.gz'].map(name=>`tools/translation/source-profiles/floating-standard/${name}`));
   implementation.push('tools/translation/derive-success-frontier.mjs');
-  implementation.push(...['macro-token-trees.mjs','macro-fragments.mjs','macro-items.mjs','declarative-macros.mjs','declarative-source-profile.mjs','declarative-closure.mjs','declarative-owner-frontier.mjs'].map(name=>`tools/translation/${name}`));
+  implementation.push(...['macro-token-trees.mjs','macro-fragments.mjs','macro-items.mjs','declarative-macros.mjs','declarative-macro-engine.mjs','declarative-token-macros.mjs','declarative-source-profile.mjs','declarative-closure.mjs','declarative-owner-frontier.mjs'].map(name=>`tools/translation/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/declarative/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/declarative/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/derive/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/derive/${name}`));
   implementation.push(...readdirSync(new URL('./source-profiles/primitive-float/',import.meta.url)).sort().map(name=>`tools/translation/source-profiles/primitive-float/${name}`));
