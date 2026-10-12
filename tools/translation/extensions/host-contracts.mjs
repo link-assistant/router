@@ -59,6 +59,17 @@ export function sharedFixedPointee(type,range) {
   if(reference?.kind!=='shared'||!pointee||leaf?.kind!=='fixed'||!primitive||primitive.bits!==leaf.bits||primitive.signed!==leaf.signed||leaf.patternOwnershipRefusal||leaf.rustGenericIdentityUnresolved)throw unsupported('shared primitive dereference','requires an actual checked shared reference to a by-value standard fixed integer',range);
   return pointee;
 }
+export function sharedBooleanPointee(type,range) {
+  const reference=type?.rustReference,pointee=reference?.pointee;
+  let leaf=type,depth=0;
+  while(leaf?.rustReference) {
+    const next=leaf.rustReference.pointee;
+    if(++depth>32||leaf.rustReference.kind!=='shared'||leaf.kind!=='bool'||leaf.rustOwnership||leaf.rustGenericIdentityUnresolved||leaf.rustBorrowingUnresolved||leaf.patternOwnershipRefusal!=='shared source reference'||!next||next.kind!=='bool')throw unsupported('shared boolean dereference','requires a bounded actual checked shared boolean reference chain',range);
+    leaf=next;
+  }
+  if(reference?.kind!=='shared'||!pointee||leaf?.kind!=='bool'||leaf.rustOwnership||leaf.patternOwnershipRefusal||leaf.rustGenericIdentityUnresolved||leaf.rustBorrowingUnresolved)throw unsupported('shared boolean dereference','requires an actual checked shared reference to a by-value standard bool',range);
+  return pointee;
+}
 export const INTEGER_FROM_PROFILE=Object.freeze({rust:'1.89.0',source:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/num.rs',sha256:'270e0801e5e23cba89fec51eed416be60743034a6f02c5fe64be2e8f2e8ca958',lines:[99,141],identity:{source:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/convert/mod.rs',sha256:'0b05be0bc9c7d92d788abd6817d648b4479ed6e29ffe24cfd6879e09ee9fbdab',line:774}});
 const integerFromSources=Object.freeze({u8:[],u16:['u8'],u32:['u8','u16'],u64:['u8','u16','u32'],u128:['u8','u16','u32','u64'],usize:['u8','u16'],i8:[],i16:['i8','u8'],i32:['i8','i16','u8','u16'],i64:['i8','i16','i32','u8','u16','u32'],i128:['i8','i16','i32','i64','u8','u16','u32','u64'],isize:['i8','i16','u8']});
 export const hasIntegerFrom=(source,target)=>Object.hasOwn(integerFromSources,target)&&(source===target||integerFromSources[target].includes(source));
@@ -442,6 +453,7 @@ export class HostChecker extends withDeclarationRefusalCollection(withCheckedSou
       if(nonlocalDefault(node.value))throw unsupported('dereference control','nonlocal exits require separately checked statement lowering',node.span);
       const value=this.expr(node.value,env,path),reference=value.type.rustReference,pointee=reference?.pointee;
       if(value.type.kind==='string'&&reference?.kind==='shared'&&pointee?.kind==='string'&&pointee.rustOwnership?.kind==='borrowed'&&pointee.rustOwnership.source==='str'&&!pointee.rustGenericIdentityUnresolved)return {...node,value,type:pointee,dereferenceProof:{kind:'shared-str-reference-copy',reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};
+      if(value.type.kind==='bool')return {...node,value,type:sharedBooleanPointee(value.type,node.span),dereferenceProof:{kind:'shared-bool-copy',reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};
       const type=sharedFixedPointee(value.type,node.span);
       return {...node,value,type,dereferenceProof:{kind:'shared-fixed-copy',primitiveName:type.rustPrimitiveName,reference:structuredClone(value.type.rustReference),sourceFeature:node.sourceFeature,span:node.span}};
     }

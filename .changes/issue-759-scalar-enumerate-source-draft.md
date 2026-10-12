@@ -6,12 +6,17 @@ The emitter requires exact source-qualified type receipts and retained incomplet
 namespace/advanced-method flags; portable type equality cannot erase a reference
 or grant a broader contract during meta round trips.
 
-Seven authored cases remain unrun. Actual shared primitive Items retain their
+The first paired focused attempts exposed TypeScript helper annotations, tuple
+Iterator callback ownership, explicit boolean dereferences and a missing tracked
+generated fixture. Their complete failed evidence is retained. Repairs reuse
+the existing checked pattern planner for by-value scalar products and preserve
+actual shared bool reference chains. The paired repair run remains pending.
+Actual shared primitive Items retain their
 reference and source-qualified pointee inside a private, bounded tuple inference
 path, reusing existing immutable binding and source lifetime checks. They do not
 become copied values. Ordinary inferred products still reject reference fields.
 The original no-method-generic and zero-argument signature stays enforced.
 Borrowed aggregate/nominal/ownership-bearing products,
 advanced Iterator methods, other usize/overflow profiles and complete runtime
-parity remain unproved. No engine, generation, corpus gain or Rust build is
-claimed by this source-only draft.
+parity remain unproved. No generation, corpus gain, complete gate or Rust build
+is claimed by these focused drafts.

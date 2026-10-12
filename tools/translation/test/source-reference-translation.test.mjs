@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import {translateProject} from '../project.mjs';
-import {parseRust,checkProgram,sharedFixedPointee} from '../extensions/host-contracts.mjs';
+import {parseRust,checkProgram,sharedFixedPointee,sharedBooleanPointee} from '../extensions/host-contracts.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 async function both(result,assertions) {
@@ -51,6 +51,18 @@ test('explicit fixed primitive dereferences and inherent receiver copies execute
   });
   const checked=checkProgram(parseRust('pub fn read(v:&u64)->u64{*v} fn main(){}')).declarations.get('read').body;
   assert.equal(checked.k,'routerPrimitiveDereference');assert.equal(checked.dereferenceProof.kind,'shared-fixed-copy');assert.equal(checked.dereferenceProof.primitiveName,'u64');assert.equal(checked.type.rustReference,undefined);
+});
+test('actual shared boolean dereferences preserve reference depth and checked bool Copy',{timeout:30_000},async()=>{
+  const source='pub fn read(v:&bool)->bool{*v} pub fn nested(v:&&bool)->bool{**v} fn identity(v:&bool)->&bool{v} pub fn negate(v:&bool)->bool{!*identity(v)}';
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  await both(result,api=>{for(const value of [false,true]){assert.equal(api.read(value),value);assert.equal(api.nested(value),value);assert.equal(api.negate(value),!value);}for(const value of [0,1,null,{}])assert.throws(()=>api.read(value),TypeError);});
+  const checked=checkProgram(parseRust(source+' fn main(){}')).declarations.get('read').body;
+  assert.equal(checked.dereferenceProof.kind,'shared-bool-copy');
+  assert.equal(checked.type.kind,'bool');assert.equal(checked.type.rustReference,undefined);
+  const value={kind:'bool',rustSourceType:true},reference={...value,patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:value}},range={start:1,end:3};
+  assert.equal(sharedBooleanPointee(reference,range),value);
+  for(const type of [value,{...reference,rustReference:{kind:'mutable',pointee:value}},{...reference,rustReference:{kind:'shared',pointee:{kind:'fixed',bits:8,signed:false,rustPrimitiveName:'u8'}}},{...reference,rustGenericIdentityUnresolved:true},{...reference,rustReference:{kind:'shared',pointee:{...value,rustBorrowingUnresolved:true}}}])assert.throws(()=>sharedBooleanPointee(type,range),error=>error.kind==='unsupported'&&error.span.start===1);
+  for(const input of ['pub fn bad(v:bool)->bool{*v}','pub fn bad(v:&mut bool)->bool{*v}','pub fn bad(v:&bool)->bool{v}','pub fn bad(v:&bool)->&bool{*v}',`pub fn bad(v:${'&'.repeat(34)}bool)->bool{${'*'.repeat(34)}v}`])assert.ok(project(input).meta.refused.some(item=>item.name==='bad'),input);
 });
 test('receiver and operand effects remain once each in original evaluation order',{timeout:30_000},async()=>{
   const source='fn mark(path:&str)->bool{std::fs::read_to_string(path).is_ok()} fn receiver(v:&u64)->&u64{let ignored=mark("receiver");v} fn operand()->u64{let ignored=mark("operand");2} pub fn observed(v:&u64)->u64{receiver(v).saturating_add(operand())}';

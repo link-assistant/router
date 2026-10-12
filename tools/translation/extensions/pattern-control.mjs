@@ -9,6 +9,7 @@ import {BOOL,UNIT,sameType} from '../checked-types.mjs';
 import {coerce} from '../checked-coercions.mjs';
 import {TranslationError,typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
+import {isDeepStrictEqual} from 'node:util';
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
@@ -301,9 +302,16 @@ export function withPatternControlChecker(Base=ControlChecker) {
       throw typeError('unchecked pattern test plan',subject.span);
     }
     patternLambda(node,argumentTypes,env,path,expected,context) {
-      if(context?.source!=='standard-option'||context.receiverType?.patternOwnershipRefusal)throw unsupported('tuple callback argument ownership','requires an actual by-value standard Option payload; erased iterator/reference inputs are unproven',node.span);
-      const receiver=context.receiverType?.kind==='data'?this.items.get(context.receiverType.name):null;
-      if(receiver?.standardGeneric?.kind!=='Option'||argumentTypes.length!==1||!sameType(this.resolveType(receiver.standardGeneric.arguments[0],receiver.modulePath,node.span),argumentTypes[0]))throw typeError('tuple callback argument differs from the actual checked Option payload',node.span);
+      const iterator=context?.source==='iterator';
+      if(!['standard-option','iterator'].includes(context?.source)||context.receiverType?.patternOwnershipRefusal||context.receiverType?.rustReference)throw unsupported('tuple callback argument ownership','requires an actual by-value standard Option payload or checked scalar-product Iterator Item; erased reference inputs are unproven',node.span);
+      if(iterator) {
+        if(context.receiverType?.kind!=='routerIterator'||argumentTypes.length!==1||!isDeepStrictEqual(context.receiverType.element,argumentTypes[0]))throw typeError('tuple callback argument differs from the actual checked Iterator Item',node.span);
+        if(typeof this.inferredTupleField!=='function')throw unsupported('tuple Iterator callback','requires the actual bounded anonymous-product checker',node.span);
+        this.inferredTupleField(argumentTypes[0],node.span,0,new Set(),new Set(),{cells:16000});
+      } else {
+        const receiver=context.receiverType?.kind==='data'?this.items.get(context.receiverType.name):null;
+        if(receiver?.standardGeneric?.kind!=='Option'||argumentTypes.length!==1||!sameType(this.resolveType(receiver.standardGeneric.arguments[0],receiver.modulePath,node.span),argumentTypes[0]))throw typeError('tuple callback argument differs from the actual checked Option payload',node.span);
+      }
       const payload=argumentTypes[0].kind==='data'?this.items.get(argumentTypes[0].name):null;
       if(!payload?.tuple||payload.generated!=='router-tuple-type')throw unsupported('tuple callback payload','requires an actual anonymous tuple product, not a named aggregate or erased array',node.span);
       let inner=new Map(env),parameters=[],bindings=[],names=new Set();
@@ -325,14 +333,15 @@ export function withPatternControlChecker(Base=ControlChecker) {
       }
       let body=this.expr(node.body,inner,path,expected);if(expected)body=coerce(body,expected,this.language,node.span);
       checkCallbackCaptures(body,env,names,node.span);
-      if(!scalar(body.type)||body.type.patternOwnershipRefusal)throw unsupported('tuple callback result ownership','only immutable scalar callback results have a checked contract',node.span);
+      if(iterator)this.inferredTupleField(body.type,node.span,0,new Set(),new Set(),{cells:16000});
+      else if(!scalar(body.type)||body.type.patternOwnershipRefusal)throw unsupported('tuple callback result ownership','only immutable scalar callback results have a checked contract',node.span);
       const result=body.type;
       body=bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type:result}),body);
       for(const param of parameters.toReversed()) {
         body={k:'routerDiscard',value:{k:'routerPatternImmutable',object:{k:'var',name:param.name,type:param.type,span:param.span},type:BOOL},body,type:result,span:param.span};
         body={k:'let',name:param.name,value:{k:'routerLambdaInput',position:parameters.indexOf(param),type:param.type},body,mutable:false,type:result,span:param.span};
       }
-      return {k:'routerLambda',binding:body,arity:parameters.length,type:{kind:'routerCallback',result},span:node.span,patternControl:{kind:'tuple-callback',parameters:parameters.map(param=>({type:param.type,plan:param.plan})),ownership:'checked-by-value-option'}};
+      return {k:'routerLambda',binding:body,arity:parameters.length,type:{kind:'routerCallback',result},span:node.span,patternControl:{kind:'tuple-callback',parameters:parameters.map(param=>({type:param.type,plan:param.plan})),ownership:iterator?'checked-by-value-scalar-product-iterator':'checked-by-value-option'}};
     }
     expr(node,env,path,expected,allowLiteral=false) {
       if(node.k==='match'&&containsExit(node)) {
