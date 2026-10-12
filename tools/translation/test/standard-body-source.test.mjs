@@ -149,3 +149,16 @@ test('owned allocations retain the original borrowed standard body beneath the c
     const result=translateSource(source);assert.equal(result.ir.items.find(item=>item.name==='bad').status,'carried');assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   }
 });
+
+test('actual borrowed trim signatures survive fresh reverse pipelines into original Option bodies',async()=>{
+  const source='pub fn chosen(header:&str)->&str{header.split(\',\').map(str::trim).rfind(|part|!part.is_empty()).unwrap_or("")}pub fn default(header:&str)->&str{header.split(\',\').map(str::trim_start).rfind(|part|!part.is_empty()).unwrap_or_default()}pub fn owned(header:&str)->String{header.split(\',\').map(str::trim).rfind(|part|!part.is_empty()).unwrap_or("").to_string()}';
+  const result=project(source);assert.deepEqual(result.meta.refused,[]);
+  const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));
+  for(const entry of [...program.declarations.values()].filter(entry=>entry.k==='fn')){
+    const body=find(entry.body,node=>node.k==='routerPinnedStandardBody');assert.ok(body);assert.equal(body.type.rustStandardSignature.kind,'borrowed-str');requirePinnedStandardBody(body,HostRustParser,{Checker:HostChecker,program});
+  }
+  await verifyTypedTargets(result,api=>{for(const [value,want]of [['',''],[', ,',''],['first, Ω , ','Ω'],['first,\u0085','first'],['first,\uFEFF','\uFEFF']]){assert.equal(api.chosen(value),want);assert.equal(api.owned(value),want);}assert.equal(api.default('first, Ω '),'Ω ');assert.equal(api.default(', ,'),'');});
+  for(const source of ['pub fn bad(header:String)->&str{header.trim().split(\',\').map(str::trim).rfind(|part|!part.is_empty()).unwrap_or("")}','type str=bool;pub fn bad(header:&str)->&str{header.trim().split(\',\').map(str::trim).rfind(|part|!part.is_empty()).unwrap_or("")}']){
+    const result=translateSource(source);assert.equal(result.ir.items.find(item=>item.name==='bad').status,'carried');assert.equal(result.ir.items.map(item=>item.source).join(''),source);
+  }
+});
