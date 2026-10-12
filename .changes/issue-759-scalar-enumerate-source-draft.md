@@ -14,7 +14,9 @@ actual shared bool reference chains. Both repair attempts passed 167 of 167
 focused tests. Source review then identified an original constant-name binding
 gap; original checked constants now retain their unresolved pattern obligation
 instead of becoming fresh tuple or ordinary callback binders. The paired final
-run remains pending.
+run passed all 167 focused tests on the same unchanged source SHA with no skips
+or timeouts. Complete initial, repair and final evidence is archived; this does
+not establish complete corpus translation or runtime parity.
 Actual shared primitive Items retain their
 reference and source-qualified pointee inside a private, bounded tuple inference
 path, reusing existing immutable binding and source lifetime checks. They do not
