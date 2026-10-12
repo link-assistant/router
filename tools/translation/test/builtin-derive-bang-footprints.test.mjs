@@ -46,9 +46,9 @@ test('actual original struct/enum routes share the verified Copy sink without tr
   ]){const proof=proveBuiltinDeriveBangFootprint(selected(source));assert.equal(proof.selectedOwnerBangComplete,true);assert.equal(proof.generatedImplBehavior,false,'Even invalid Copy implementations do not become callable/ownership certificates');}
 });
 
-test('callback routes preserve all original source recipes and conditional options but stay unclosed',()=>{
+test('remaining value callback routes preserve all original recipes and options but stay unclosed',()=>{
   const args=selected('#[derive(Clone,Debug,Copy,PartialEq,Eq,Hash,serde::Serialize)] pub enum Payload { A,B }');
-  for(const name of ['Clone','Debug','PartialEq','Eq','Hash']){
+  for(const name of ['Clone','Debug','PartialEq','Hash']){
     const plan=planBuiltinDeriveBangOutput({...args,invocation:{...args.invocation,path:[name]}});
     assert.equal(isBuiltinDeriveBangPlan(plan),true);assert.equal(plan.closed,false);assert.equal(plan.generatedImplBehavior,false);
     assert.ok(plan.callbackRecipes.length);assert.ok(plan.conditionalOutputs.length);
@@ -90,7 +90,56 @@ test('complete unchanged SubscriptionProvider and CatalogRecord preserve residua
   const proof=proveBuiltinDeriveBangFootprint({context,certificate:provider,invocation:{path:['Copy'],attributeSpan:attribute.span}});assert.equal(proof.selectedOwnerBangComplete,true);
   const record=context.certificates.find(value=>value.source==='src/model_catalog.rs'&&value.name==='CatalogRecord');assert.ok(record);
   assert.equal(record.sourceSha256,'2972dab979148c9b1deb3ec2cfb4e2800e8445585044d93c629e83538be01ed5');assert.deepEqual(record.span,{start:1956,end:2355});assert.equal(record.itemSha256,'3a3ce14fae59aa072caeee14af08b6e3810b15caccb661c9165ccab3dc43132a');
+  const recordAttribute=record.attributes.find(value=>value.derives?.some(path=>path[0]==='Eq'));
+  const eq=proveBuiltinDeriveBangFootprint({context,certificate:record,invocation:{path:['Eq'],attributeSpan:recordAttribute.span}});assert.equal(eq.selectedOwnerBangComplete,true);assert.equal(eq.route.typedSource.fields.length,8);assert.equal(eq.generatedImplBehavior,false);
+  const providerEq=proveBuiltinDeriveBangFootprint({context,certificate:provider,invocation:{path:['Eq'],attributeSpan:attribute.span}});assert.equal(providerEq.route.typedSource.inputStyle,'unit-enum');assert.equal(providerEq.route.typedSource.assertionCount.maximum,0);
   const outputs=createDeriveBangContext({deriveContext:context});
   const providerOutput=outputs.certificates.find(value=>value.source===provider.source&&value.span.start===provider.span.start);assert.equal(providerOutput.dimensions.bangMacroComplete,false);assert.ok(providerOutput.residualOwners.some(owner=>owner.target?.[0]==='schemars'));
   assert.equal(outputs.certificates.find(value=>value.source===record.source&&value.span.start===record.span.start).dimensions.bangMacroComplete,false);
+});
+
+// Additional future Eq bridge cases, all UNRUN, no generated trait execution.
+test('Eq callback traces original type-only Local/Stmt/Block/Fn/Impl constructors',()=>{
+  const args=selected('#[derive(Eq,serde::Serialize)] pub struct Payload { one:u8,two:u8,other:Option<&\'static str> }','Eq');
+  const proof=proveBuiltinDeriveBangFootprint(args),route=proof.route;
+  assert.equal(proof.selectedOwnerBangComplete,true);assert.equal(proof.generatedImplBehavior,false);
+  assert.equal(route.typedSource.fields.length,3);assert.equal(route.typedSource.assertionCount.maximum,3);
+  assert.equal(route.constructionFlow.statement.kind,'LocalKind::Decl');assert.equal(route.constructionFlow.statement.initializerCount,0);
+  assert.equal(route.constructionFlow.block.optionalExpression,'None from original new_stmts');
+  assert.equal(route.constructionFlow.associatedItem.kind,'AssocItemKind::Fn');
+  assert.equal(route.constructionFlow.associatedItem.genericBounds,0);assert.equal(route.constructionFlow.associatedItem.nonselfArguments,0);
+  assert.ok(route.recipes.every(value=>value.semanticSyntaxRoundTrip));assert.ok(route.positiveSchemas.every(value=>value.semanticSyntaxRoundTrip));
+  assert.ok(route.typedSource.fields.every(value=>value.semanticSyntaxRoundTrip));
+  assert.equal(route.positiveVariants.find(value=>value.owner==='LocalKind').arity,0);assert.equal(route.positiveVariants.find(value=>value.owner==='AssocItemKind').name,'Fn');
+  assert.equal(route.typedSource.fields[0].sourceSha256,hash('u8'));
+  assert.deepEqual(route.constructionFlow.constantBranches,['Const::Yes','Const::No']);
+});
+
+test('unit Eq fieldless routes close without enabling other builtin owners or traits',()=>{
+  for(const source of ['#[derive(Eq,serde::Serialize)] pub struct Payload;','#[derive(Eq,serde::Serialize)] pub enum Payload { A,B }']){
+    const args=selected(source,'Eq'),proof=proveBuiltinDeriveBangFootprint(args);assert.equal(proof.route.typedSource.assertionCount.maximum,0);
+    const output=createDeriveBangContext({deriveContext:args.context});assert.equal(output.certificates[0].dimensions.bangMacroComplete,true);assert.equal(output.generatedImplBehavior,false);
+  }
+  const args=selected('#[derive(Clone,Eq,serde::Serialize)] pub struct Payload;','Eq');
+  assert.equal(createDeriveBangContext({deriveContext:args.context}).certificates[0].dimensions.bangMacroComplete,false);
+});
+
+test('Eq cloned field Type macros and nested conditional fields retain output obligations',()=>{
+  for(const source of [
+    '#[derive(Eq,serde::Serialize)] pub struct Payload { value:generated!() }',
+    '#[derive(Eq,serde::Serialize)] pub struct Payload { #[cfg(flag)] value:u8 }',
+    '#[derive(Eq,serde::Serialize)] pub enum Payload { A(u8) }',
+  ]){
+    const context=createDeriveFootprintContext(input(source)),certificate=context.certificates[0];
+    if(certificate){const attribute=certificate.attributes.find(value=>value.derives?.some(path=>path[0]==='Eq'));assert.throws(()=>proveBuiltinDeriveBangFootprint({context,certificate,invocation:{path:['Eq'],attributeSpan:attribute.span}}));}
+    assert.equal(createDeriveBangContext({deriveContext:context}).certificates.some(value=>value.dimensions.bangMacroComplete),false);
+  }
+});
+
+test('Eq per-invocation proofs retain exact original field spans and private ownership',()=>{
+  const source='#[derive(Eq,serde::Serialize)] pub struct Payload { value:String }',args=selected(source,'Eq'),proof=proveBuiltinDeriveBangFootprint(args);
+  const field=proof.route.typedSource.fields[0];assert.equal(source.slice(field.span.start,field.span.end),'String');
+  assert.equal(proof.dimensions.typeNamespaceComplete,false);assert.equal(proof.dimensions.valueNamespaceComplete,false);
+  assert.equal(isBuiltinDeriveBangFootprint(structuredClone(proof)),false);
+  assert.throws(()=>proveBuiltinDeriveBangFootprint({...args,invocation:{...args.invocation,attributeSpan:{start:1,end:2}}}),/exact original/);
 });

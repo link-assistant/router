@@ -86,3 +86,31 @@ export function astStructLiteral(profile,fragment,name){
   return freeze({schema:'original-ast-struct-recipe-v1',source:fragment.source,sourceSha256:fragment.sourceSha256,span:group.span,fragmentDigest:fragment.digest,name,fields,generatedImplBehavior:false});
 }
 export const astSyntaxText=nodes=>nodes.map(node=>node.kind==='group'?node.delimiter+astSyntaxText(node.children)+({'(':')','[':']','{':'}'}[node.delimiter]):node.text).join(' ');
+
+// Positive enum variant schema lifted from the original AST definition. This
+// records constructor arity/typed source slots, rather than an absence of MacCall.
+export function astEnumVariant(profile,definition,name){
+  assertOriginalAstFunction(profile,definition);
+  const keyword=definition.syntax.findIndex(node=>node.text==='enum');
+  if(keyword<0)throw new TypeError('AST variant requires an original enum schema');
+  const body=definition.syntax.slice(keyword+2).find(node=>node.kind==='group'&&node.delimiter==='{');
+  if(!body)throw new TypeError('Original AST enum schema body is missing');
+  const rows=[];let at=0;
+  while(at<body.children.length){
+    while(body.children[at]?.text==='#'&&body.children[at+1]?.kind==='group'&&body.children[at+1].delimiter==='[')at+=2;
+    const ident=body.children[at++];if(!identifier(ident))throw new TypeError('Original AST enum variant identity is unresolved');
+    const begin=at;let angle=0;
+    for(;at<body.children.length;at++){const node=body.children[at];if(node.text==='<')angle++;if(node.text==='>')angle--;if(node.text===','&&!angle)break;}
+    const tail=body.children.slice(begin,at);if(angle||tail.length>1)throw new TypeError('Original AST variant fields require a direct tuple/named schema');
+    const group=tail[0];if(group&&(!(group.kind==='group')||!['(','{'].includes(group.delimiter)))throw new TypeError('Original AST variant discriminant remains unproved');
+    const fields=[];if(group){let from=0,depth=0;for(let index=0;index<=group.children.length;index++){
+      const node=group.children[index];if(node?.text==='<')depth++;if(node?.text==='>')depth--;
+      if(index===group.children.length||node?.text===','&&!depth){if(index>from)fields.push(group.children.slice(from,index));from=index+1;}
+    }if(depth)throw new TypeError('Original AST schema generic field syntax is unbalanced');}
+    rows.push({name:ident.text,span:{start:ident.span.start,end:group?.span.end??ident.span.end},style:group?.delimiter==='{'?'named':group?'tuple':'unit',fields});
+    if(body.children[at]?.text===',')at++;
+  }
+  const matches=rows.filter(row=>row.name===name);if(matches.length!==1)throw new TypeError('Original positive AST variant is absent/ambiguous: '+name);
+  const evidence={schema:'original-positive-ast-variant-v1',source:definition.source,sourceSha256:definition.sourceSha256,definitionDigest:definition.digest,...matches[0],arity:matches[0].fields.length,semanticSyntaxRoundTrip:true,generatedImplBehavior:false};
+  return freeze({...evidence,digest:hash(JSON.stringify(evidence))});
+}

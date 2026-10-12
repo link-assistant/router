@@ -27,7 +27,7 @@ export function selectedTemplate(inventory,definition,predicate){
   return matches[0];
 }
 export function boundedInput(certificate,source,owner='Serialize',allowedHelpers=['rename','rename_all','alias']){
-  if(certificate.owners.filter(value=>value.target.join('::')==='serde::'+owner).length!==1)throw new TypeError('This selected route requires one actual locked '+owner+' owner');
+  if(owner!==null&&certificate.owners.filter(value=>value.target.join('::')==='serde::'+owner).length!==1)throw new TypeError('This selected route requires one actual locked '+owner+' owner');
   for(const attribute of certificate.attributes){
     if(!['derive','serde','doc','allow','warn','deny','forbid','must_use','non_exhaustive'].includes(attribute.name)&&!(attribute.name==='default'&&certificate.builtinDefault))throw new TypeError('Selected route retains attribute behavior: '+attribute.name);
     if(attribute.helpers?.some(helper=>!allowedHelpers.includes(helper.key)))throw new TypeError('Selected route excludes helper branches with fields, custom calls or token-stream payloads');

@@ -1,7 +1,8 @@
-// Bounded actual builtin generator routes. Copy closes its empty associated
+// Bounded actual builtin generator routes. Copy and Eq close source-selected associated
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
 import {deriveFootprintOriginalContext} from './derive-footprints.mjs';
+import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
 import {attributeOwners} from './serde-bang-footprints.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal,originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText} from './builtin-derive-ast-meta.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -41,6 +42,11 @@ export function planBuiltinDeriveBangOutput({context,certificate,invocation}={})
 export const isBuiltinDeriveBangPlan=value=>!!value&&plans.has(value);
 export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}={}){
   const plan=planBuiltinDeriveBangOutput({context,certificate,invocation}),state=plans.get(plan);
+  if(state.original.name==='Eq'){
+    const route=liftBuiltinEqAstRoute({...state,original:state.original}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','coverage','Eq',...certificate.attributes.map(attribute=>attribute.name)]));
+    const evidence={schema:'builtin-eq-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,bodyCallbacksEvaluated:1,associatedKind:'AssocItemKind::Fn',statementKind:'LocalKind::Decl',initializerCount:0},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['Eq and AssertParamIsEq trait validity/implementation behavior is not admitted','other original derive owners retain separate output proofs','unrelated source scopes and conditional modules stay independent']};
+    const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
+  }
   if(state.original.name!=='Copy')throw new TypeError('Builtin '+state.original.name+' retains typed callback/conditional AST output obligations (plan '+plan.digest+')');
   const {profile,original,entry}=state,descriptor=astStructLiteral(profile,entry,'TraitDef');
   const field=name=>descriptor.fields.find(field=>field.name===name);
