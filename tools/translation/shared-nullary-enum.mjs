@@ -12,13 +12,18 @@ import {originalTextCursorGuard} from './extensions/text.mjs';
 import {assertOriginalParserIdentity} from './original-parser-identity.mjs';
 import {configureMatchesMacroParser,matchesParserFacts} from './matches-macro-context.mjs';
 const checkers=new WeakMap(),mapGet=Map.prototype.get;
-const equal=(a,b)=>metadataDigest(a)===metadataDigest(b);
+const equal=(a,b)=>{
+  // Enum syntax omits record/tuple rather than spelling false. Undefined has
+  // no JSON hash input; every supplied metadata value still gets validation.
+  if(a===undefined||b===undefined){if(a!==undefined)metadataDigest(a);if(b!==undefined)metadataDigest(b);return a===b;}
+  return metadataDigest(a)===metadataDigest(b);
+};
 const canonical=path=>path[0]==='crate'?path.slice(1):path;
 const fail=span=>{throw typeError('shared nullary pattern differs from its original receiver or complete enum layout',span);};
 function prototypeMethods(prototype,methods) {
   for(const [name,method]of methods) {
-    let current=prototype,descriptor;
-    while(current&&!descriptor){if(types.isProxy(current))throw new TypeError('Original enum parser prototype is a proxy');descriptor=Object.getOwnPropertyDescriptor(current,name);if(!descriptor)current=Object.getPrototypeOf(current);}
+    let current=prototype,descriptor,depth=0;
+    while(current&&!descriptor){if(++depth>64)throw new TypeError('Original enum parser prototype lookup exceeds its bounded source profile');if(types.isProxy(current))throw new TypeError('Original enum parser prototype is a proxy');descriptor=Object.getOwnPropertyDescriptor(current,name);if(!descriptor)current=Object.getPrototypeOf(current);}
     if(!descriptor||!Object.hasOwn(descriptor,'value')||descriptor.value!==method)throw new TypeError('Original enum parser/cursor method identity changed');
   }
 }

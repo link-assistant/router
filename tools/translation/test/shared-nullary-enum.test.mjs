@@ -29,6 +29,9 @@ test('the complete historical Mode source now checks only a shared discriminant 
   assert.ok(result.meta.checkedMethods.some(row=>row.name==='Mode.is_on'&&row.receiver==='shared'));
   assert.equal(result.meta.runtimeParity,false);assert.equal(result.meta.sources[0].sha256,hash(source));
   const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),method=[...checked.declarations.values()].find(entry=>entry.impl?.method==='is_on');
+  const originalEnum=checked.declarations.get('Mode');
+  assert.equal(Object.hasOwn(originalEnum,'record'),false);assert.equal(Object.hasOwn(originalEnum,'tuple'),false);
+  assert.equal(originalEnum.record,undefined);assert.equal(originalEnum.tuple,undefined);
   assert.equal(method.params[0].type.rustReference.kind,'shared');assert.equal(method.params[0].type.rustReference.pointee.name,'Mode');
   assert.equal(method.impl.copyCertificate,undefined);assert.equal(method.params[0].copyReceiver,undefined);assert.equal(method.sourceMethodProof.copyAuthority,false);
   assert.equal(find(method.body,node=>node.k==='routerPatternProjection'),null);
@@ -106,6 +109,10 @@ test('original linked enum evidence denies cloned resealed accessor and proxy la
   const descriptor=Object.getOwnPropertyDescriptor(HostRustParser.prototype,'enumItem');
   Object.defineProperty(HostRustParser.prototype,'enumItem',{configurable:true,value(){callbacks++;return forged;}});
   try{assert.throws(()=>new HostChecker('Rust',[]).program({language:'Rust',items:[forged,semantic],main:null}),/identity|changed/);}finally{if(descriptor)Object.defineProperty(HostRustParser.prototype,'enumItem',descriptor);else delete HostRustParser.prototype.enumItem;}
+  const parent=Object.getPrototypeOf(HostRustParser.prototype);let tail=parent;
+  for(let depth=0;depth<64;depth++)tail=Object.create(tail);
+  Object.setPrototypeOf(HostRustParser.prototype,tail);
+  try{assert.throws(()=>new HostChecker('Rust',[]).program({language:'Rust',items:[forged,semantic],main:null}),/bound|depth/);}finally{Object.setPrototypeOf(HostRustParser.prototype,parent);}
   assert.equal(callbacks,0);
 });
 test('raw public method and enum metadata cannot mint a private shared receiver admission',()=>{
