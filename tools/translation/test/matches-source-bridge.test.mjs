@@ -104,6 +104,6 @@ test('nested Result Option tuple projections use actual selected constructor pat
 test('full tracked production context remains pinned with unrelated namespace and method transform obligations',()=>{
   const pins=JSON.parse(readFileSync(new URL('../fixtures/matches-source-originals/provenance.json',import.meta.url),'utf8'));
   for(const pin of pins.records){const source=readFileSync(new URL('../../../'+pin.path,import.meta.url),'utf8');assert.equal(hash(source),pin.sourceSha256);assert.equal(hash(source.slice(pin.originalSpan.start,pin.originalSpan.end)),pin.declarationSha256);assert.equal(pin.productionAdmissionClaim,false);
-    const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source});assert.equal(result.meta.executable.some(item=>item.name===pin.name),false);assert.ok(result.meta.refused.length);assert.equal(pin.runtimeParity,false);
+    const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source});assert.equal(result.meta.executable.some(item=>item.name===pin.name),false);if(pin.name==='ModelSelectorKind.permits_resolution')assert.equal(result.meta.checkedMethods.some(item=>item.name===pin.name),false);assert.ok(result.meta.refused.length);assert.equal(pin.runtimeParity,false);
   }
 });
