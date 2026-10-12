@@ -142,7 +142,7 @@ export function requirePinnedStandardBody(node,Parser,{Checker,program}={}){
   // This actual canonical layout is the sole data dependency of the selected
   // original Option body. Its checked payload and constructor identities are
   // revalidated rather than reconstructed from public proof claims.
-  checker.declare([{...structuredClone(entry),name:entry.fullName}],[]);
+  checker.program({language:checker.language,items:[{...structuredClone(entry),name:entry.fullName}],main:null});
   const {payload,owner}=optionPayload(checker,bindings[0].value.type,[],node.span);
   if(owner!==proof.owner||!sameType(payload,node.type))throw new Error('standard body actual payload differs from its source owner');
   for(const binding of bindings.slice(1)){

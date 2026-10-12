@@ -121,10 +121,13 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
       item.diagnostic = { kind: error.kind, message: error.reason, span: error.span ? { start: item.span.start + error.span.start, end: Math.min(item.span.end, item.span.start + error.span.end) } : { start: item.span.start, end: item.span.end }, details: error.details };
     }
   }
+  // Whole-source namespace resolution qualifies actual root declarations.
+  // Only the actual crate root can feed this standalone root-item closure.
+  const rootName=path=>Array.isArray(path)?path.length===1?path[0]:path[0]==='crate'&&path.length===2?path[1]:null:null;
   const surfaceNames = node => {
     if (!node || typeof node !== 'object') return [];
     const constantPattern=['bind','bindOrCtor'].includes(node.k)&&candidates.get(node.name)?.surface.constant;
-    return [...(node.k === 'name' && node.path?.length === 1 ? node.path : constantPattern?[node.name]:[]), ...Object.values(node).flatMap(surfaceNames)];
+    return [...(node.k === 'name' && rootName(node.path) ? [rootName(node.path)] : constantPattern?[node.name]:[]), ...Object.values(node).flatMap(surfaceNames)];
   };
   const closure = root => {
     const found = new Map();
@@ -143,7 +146,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
     const found = new Map();
     const visit = node => {
       if (!node || typeof node !== 'object') return;
-      const names = node.kind === 'named' ? [node.path.at(-1)] : ['routerRecord', 'name'].includes(node.k) ? [node.path?.[0]] : [];
+      const names = node.kind === 'named' ? [rootName(node.path)] : ['routerRecord', 'name'].includes(node.k) ? [rootName(node.path)??(node.path?.[0]==='crate'&&node.path.length===3?node.path[1]:node.path?.length===2?node.path[0]:null)] : [];
       for (const name of names) if (layouts.has(name) && !found.has(name)) {
         const item = layouts.get(name); found.set(name, item.surface); visit(item.surface);
         item.supportTypes.forEach(type => { if (!found.has(type.name)) { found.set(type.name, type); visit(type); } });

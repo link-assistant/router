@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {isDeepStrictEqual} from 'node:util';
 import {rustFixedType} from '../checked-types.mjs';
+import {SOURCE_STR} from './source-contract-types.mjs';
 import {unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 const root=new URL('../source-profiles/string-bytes/',import.meta.url);
 const manifest=JSON.parse(readFileSync(new URL('manifest.json',root),'utf8'));
@@ -17,7 +18,7 @@ for(const source of manifest.sources) {
 }
 const inputs=()=>manifest.sources.map(({url,sha256})=>({url,sha256}));
 const item=()=>({...rustFixedType('u8'),rustPrimitiveName:'u8',rustSourceType:true});
-const borrowed=type=>type?.kind==='string'&&type.rustSourceType===true&&!type.rustReference&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved&&!type.patternOwnershipRefusal&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str';
+const borrowed=type=>type?.kind==='string'&&(type.rustSourceType===true||isDeepStrictEqual(type.rustStandardSignature,SOURCE_STR.rustStandardSignature))&&!type.rustReference&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved&&!type.patternOwnershipRefusal&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str';
 export const STRING_BYTES_PROFILE=Object.freeze({id:manifest.profile,rust:manifest.rust,item:'u8',constEligible:false,namespaceComplete:false,traitComplete:false});
 export function checkedStringBytes(object,span) {
   if(!borrowed(object.type))throw unsupported('str::bytes source receiver','requires actual checked borrowed str; custom/Deref/owned or erased-reference receivers need separate contracts',span);
