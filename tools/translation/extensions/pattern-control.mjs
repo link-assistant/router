@@ -1,6 +1,6 @@
 // Structural if-let lowering over checked Rust layouts. Vendor source, bodies
 // and shared frontend integration are unchanged; Data may adopt these classes.
-import {ControlRustParser,ControlChecker,ControlEmitter} from './control.mjs';
+import {ControlRustParser,ControlChecker,ControlEmitter,checkingStatementMatch} from './control.mjs';
 import {emitWith} from './core.mjs';
 import {tokenizeRust} from './lexical.mjs';
 import {parseBindingPattern} from '../pattern-syntax.mjs';
@@ -383,6 +383,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(node.k==='match'&&containsExit(node)) {
         env=this.contextEnvironment(node,env,expected);
         if(node.scrutinees.length!==1||containsExit(node.scrutinees[0]))throw unsupported('return-valued match subject','requires one ordinary once-evaluated subject',node.span);
+        if(checkingStatementMatch(node)&&(expected&&sameType(expected,UNIT)||node.rows.some(row=>containsExit(row.body)&&row.body.k!=='routerReturn')))return super.expr(node,env,path,expected??UNIT,allowLiteral);
         if(node.rows.some(row=>containsExit(row.body)&&row.body.k!=='routerReturn'))throw unsupported('nested match-arm control','only direct function-return arms have a checked join contract',node.span);
         const subject=this.expr(node.scrutinees[0],env,path);this.patternDomain(subject.type,node.span);
         let join=expected;

@@ -89,13 +89,17 @@ test('control-valued match keeps a nontrivial subject once and guards algebraic 
   }
 });
 
+test('a discarded scalar match preserves the original early function return in both targets',async()=>{
+  const {result}=compiled('pub fn bad(word:&str)->Option<bool>{match word{"yes"=>true,_=>return None};Some(true)}');
+  for(const api of await artifacts(result)){assert.deepEqual(api.bad('yes'),some(true));assert.deepEqual(api.bad('no'),none);assert.deepEqual(api.bad('Ω'),none);}
+});
+
 test('unproven return-valued expressions and join ownership remain explicit refusals',()=>{
   for(const source of [
     'fn bad(word:&str)->Option<bool>{let flag=match word{"yes"=>true,"no"=>false};Some(flag)}',
     'fn bad(word:&str)->Option<bool>{let flag=match word{"yes"=>true,_=>return Some(1)};Some(flag)}',
     'fn consume(flag:bool)->bool{flag} fn bad(word:&str)->Option<bool>{Some(consume(match word{"yes"=>true,_=>return None}))}',
     'fn bad(word:&str)->Option<bool>{Some(true&&(match word{"yes"=>true,_=>return None}))}',
-    'fn bad(word:&str)->Option<bool>{match word{"yes"=>true,_=>return None};Some(true)}',
     'fn bad(word:&str)->Option<bool>{let flag=match (return None){_=>true};Some(flag)}',
     'fn bad(word:&str)->Option<bool>{let mut flag=match word{"yes"=>true,_=>return None};Some(flag)}',
     'fn bad(word:&str)->Option<bool>{let flag=match word{"yes"=>{if true{return None;}false},_=>true};Some(flag)}',

@@ -4,8 +4,12 @@ written lifetime constraints and explicit lazy mutable-capture refusals.
 
 The initial 24-file cohort passed 215 of 220 checks in both Node and Bun,
 with five preserved failures in four source-span, product-binding, explicit
-return and discarded-match families. The generic repairs and four added
-behavior cases are UNRUN; the expanded 28/36-file retry is pending.
+return and discarded-match families. The first expanded repair passed 250
+of 256 checks in both engines, preserving all six failures. The next source
+repair carries only exact statement matches into unit joins and specializes
+actual immutable constructor locals at emission. Two former valid refusals
+now have separate JavaScript and strict TypeScript behavior assertions.
+The next 28/36-file retry is UNRUN.
 
 New behavior cases cover zero iterations,
 short circuits, false conditions, exits under lexical shadows, nested tuple

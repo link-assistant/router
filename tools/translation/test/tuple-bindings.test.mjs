@@ -104,6 +104,14 @@ test('selected Result tuple projections retain an unrelated scalar error payload
   }
 });
 
+test('an actual immutable nested Copy product can bind as a complete tuple in both targets',async()=>{
+  const {result}=compiled('pub fn bad(value:((u8,u8),u8))->u8{let (aggregate,n)=value;n} pub fn first(value:((u8,u8),u8))->u8{let (aggregate,n)=value;aggregate.0}');
+  for(const api of await artifacts(result)) {
+    assert.equal(api.bad(tuple(tuple(1n,2n),7n)),7n);assert.equal(api.first(tuple(tuple(1n,2n),7n)),1n);
+    let reads=0;const hostile=Object.freeze({$:'Tuple',get field0(){reads++;return 1n;},field1:2n});assert.throws(()=>api.bad(tuple(hostile,7n)),TypeError);assert.equal(reads,0);
+  }
+});
+
 test('source tuple patterns refuse forged ABI fields, refutable lets and unresolved ownership',()=>{
   for(const source of [
     'fn bad(value:Option<(&str,&str)>)->Option<&str>{let (left,_)=value?;Some(left)}',
@@ -114,7 +122,7 @@ test('source tuple patterns refuse forged ABI fields, refutable lets and unresol
     'fn bad(value:(u8,u8))->u8{let (n,)=value;n}',
     'fn bad(value:Option<(u8,u8)>)->u8{let (Some((n,_)))=value;n}',
     'fn bad(value:(Option<u8>,u8))->u8{let (Some(n),_)=value;n}',
-    'fn bad(value:((u8,u8),u8))->u8{let (aggregate,n)=value;n}',
+    'fn bad(value:((String,u8),u8))->u8{let (aggregate,n)=value;n}',
     'fn bad(value:(String,u8))->u8{let (text,n)=value;n}',
     'fn bad(value:&(u8,u8))->u8{let (n,_)=value;n}',
     'fn bad(value:(u8,u8))->u8{let (mut n,_)=value;n}',

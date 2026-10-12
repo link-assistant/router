@@ -11,6 +11,10 @@ import {Scope} from '../vendor/meta-language/translation/ir.js';
 const MUTABLE = Symbol('mutable scalar locals');
 const RETURN = Symbol('function return type');
 const LOOP = Symbol('loop depth');
+// Only the exact node currently checked by routerDiscard gets a statement
+// join. Nested operands, subjects, guards and value matches get no permission.
+const statementMatches = new WeakSet();
+export const checkingStatementMatch = node => statementMatches.has(node);
 const compound = { '+=': 'add', '-=': 'sub', '*=': 'mul', '/=': 'div', '%=': 'rem' };
 const range = (start, end) => ({ start: start.start, end: end.end });
 const scalar = type => ['fixed', 'bool', 'string', 'unit'].includes(type.kind);
@@ -244,7 +248,12 @@ export class ControlChecker extends StringChecker {
     if (node.k === 'routerDiscard') {
       // Calls are pure only after their entire dependency closure is checked.
       const statementMatch=node.statementMatch===true&&['match','routerOrderedMatch'].includes(node.value.k);
-      const value = statementMatch?this.expr(node.value,env,path,node.statementMatchUnit?UNIT:undefined):checkValue(node.value);
+      let value;
+      if(statementMatch) {
+        statementMatches.add(node.value);
+        try {value=this.expr(node.value,env,path,node.statementMatchUnit?UNIT:undefined);}
+        finally {statementMatches.delete(node.value);}
+      } else value=checkValue(node.value);
       const body = checkNext(node.body);
       return { k: node.k, value, body, ...(statementMatch?{statementMatch:true}:{}), type: body.type, span: node.span };
     }
@@ -266,10 +275,10 @@ export class ControlChecker extends StringChecker {
 const indent = lines => lines.map(line => '  ' + line);
 export class ControlEmitter extends StringEmitter {
   fn(entry) {
-    const previous=this.controlStatementNames,previousParameters=this.controlParameterNames;
+    const previous=this.controlStatementNames,previousParameters=this.controlParameterNames,previousConstructors=this.controlConstructors;
     const scope=new Scope(this.state.ident,this.state.localReserved());
-    this.controlParameterNames=new Set(entry.params.map(param=>scope.fresh(param.name)));this.controlStatementNames=null;
-    try{return super.fn(entry);}finally{this.controlStatementNames=previous;this.controlParameterNames=previousParameters;}
+    this.controlParameterNames=new Set(entry.params.map(param=>scope.fresh(param.name)));this.controlStatementNames=null;this.controlConstructors=new Map();
+    try{return super.fn(entry);}finally{this.controlStatementNames=previous;this.controlParameterNames=previousParameters;this.controlConstructors=previousConstructors;}
   }
   collectControlNames(node) {
     if(!this.controlStatementNames) {
@@ -293,7 +302,14 @@ export class ControlEmitter extends StringEmitter {
     // statement match adds a temporary inside an existing lexical scope.
     this.collectControlNames(node);
     if (node.k === 'unit') return unit ? [] : ['return null;'];
-    if (node.k === 'let') return [`${node.mutable ? 'let' : 'const'} ${node.name} = ${this.expr(node.value)};`, ...this.statements(node.body, unit)];
+    if (node.k === 'let') {
+      const declaration=`${node.mutable ? 'let' : 'const'} ${node.name} = ${this.expr(node.value)};`;
+      const facts=this.controlConstructors??=new Map(),previous=facts.get(node.name);
+      const known=node.mutable?null:node.value.k==='ctor'?node.value:node.value.k==='var'?facts.get(node.value.name):null;
+      if(known)facts.set(node.name,known);else facts.delete(node.name);
+      try{return [declaration,...this.statements(node.body,unit)];}
+      finally {if(previous)facts.set(node.name,previous);else facts.delete(node.name);}
+    }
     if (node.k === 'routerSet') return [`${this.expr(node.target)} = ${this.expr(node.value)};`, ...this.statements(node.body, unit)];
     if (node.k === 'routerReturn') return [`return ${this.expr(node.value)};`];
     if (node.k === 'routerBreak') return ['break;'];
@@ -313,6 +329,22 @@ export class ControlEmitter extends StringEmitter {
     // capture Rust break; a value IIFE would capture return or continue.
     const subject=this.controlTemporary('ml_discard_match_',node),lines=[`const ${subject} = ${this.expr(node.scrutinee)};`];
     const entry=node.scrutinee.type.kind==='data'?this.program.declarations.get(node.scrutinee.type.name):null;
+    const known=node.scrutinee.k==='ctor'?node.scrutinee:node.scrutinee.k==='var'?this.controlConstructors?.get(node.scrutinee.name):null;
+    if(known&&entry&&known.data===entry.fullName&&known.type.kind==='data'&&known.type.name===entry.fullName) {
+      // Every arm was checked before emission. An immutable local initialized
+      // by this actual constructor has one possible tag; keep its evaluation
+      // and field reads once, avoiding impossible TypeScript comparisons.
+      const arm=node.cases.find(arm=>['wild','bind'].includes(arm.pattern.k)||arm.pattern.k==='ctor'&&arm.pattern.ctor===known.ctor);
+      if(!arm)throw new Error('known statement constructor lacks its checked exhaustive arm');
+      const pattern=arm.pattern,binds=[];
+      if(pattern.k==='bind')binds.push(`const ${pattern.name} = ${subject};`);
+      if(pattern.k==='ctor') {
+        const ctor=entry.ctors.find(value=>value.name===pattern.ctor);
+        if(!ctor||pattern.binds.length!==ctor.fields.length)throw new Error('known statement constructor differs from its actual checked fields');
+        pattern.binds.forEach((name,index)=>{if(name&&name!=='_')binds.push(`const ${name} = ${subject}[${JSON.stringify(ctor.fields[index].name)}];`);});
+      }
+      return [...lines,'{',...indent([...binds,...this.statements(arm.body,true)]),'}'];
+    }
     let first=true,terminal=false;
     for(const arm of node.cases) {
       const pattern=arm.pattern,binds=[];let condition;

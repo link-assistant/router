@@ -162,7 +162,7 @@ test('anonymous copied product binders retain nested borrowed leaves and hostile
 
 test('statement match temporaries avoid actual renamed formals even when every formal is unused',async()=>{
   const occupied=Array.from({length:24},(_,index)=>'ml_discard_match_'+(index+1));
-  const source='pub fn collision('+occupied.map(name=>name+':u8').join(',')+')->u8{let value:Option<u8> = Some(1u8);match value{Some(n)=>{let ignored:u8=n;},None=>{}}7u8}';
+  const source='pub fn collision('+occupied.map(name=>name+':u8').join(',')+')->u8{let value:Option<u8> = Some(1u8);match value{Some(n)=>{let ignored:u8=n;},None=>{}}7u8}pub fn known_none()->u8{let value:Option<u8> = None;let mut result:u8=0u8;match value{Some(n)=>{result=n;},None=>{result=7u8;}}result}pub fn known_some()->u8{let value:Option<u8> = Some(5u8);let alias:Option<u8> = value;let mut result:u8=0u8;match alias{None=>{result=7u8;},Some(n)=>{result=n;}}result}';
   const result=project(source);assert.deepEqual(result.meta.refused,[]);
-  await verifyTypedTargets(result,api=>{assert.equal(api.collision(...occupied.map(()=>0n)),7n);});
+  await verifyTypedTargets(result,api=>{assert.equal(api.collision(...occupied.map(()=>0n)),7n);assert.equal(api.known_none(),7n);assert.equal(api.known_some(),5n);});
 });

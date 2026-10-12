@@ -3,7 +3,8 @@
 // when it belongs to the same source arm. No guard contributes exhaustiveness.
 import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
 import {planPattern} from '../pattern-bindings.mjs';
-import {BOOL,sameType} from '../checked-types.mjs';
+import {BOOL,UNIT,sameType} from '../checked-types.mjs';
+import {checkingStatementMatch} from './control.mjs';
 import {coerce} from '../checked-coercions.mjs';
 import {renameExpr,Scope} from '../vendor/meta-language/translation/ir.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
@@ -111,7 +112,9 @@ function literalIdentities(pattern,type,checker,path,range) {
 }
 export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=false) {
   env=checker.contextEnvironment(node,env,expected);
-  if(exits(node.subject)||node.rows.some(row=>exits(row.guard)||exits(row.body)))throw unsupported('ordered match control','nonlocal control needs a separately checked statement join',node.span);
+  const statement=checkingStatementMatch(node);
+  if(exits(node.subject)||node.rows.some(row=>exits(row.guard)||!statement&&exits(row.body)))throw unsupported('ordered match control','nonlocal control needs a separately checked statement join',node.span);
+  if(statement&&node.rows.some(row=>exits(row.body)))expected??=UNIT;
   const subject=checker.expr(node.subject,env,path);checker.patternDomain(subject.type,node.span);
   const integerRange=node.rows.some(row=>containsIntegerRange(row.pattern));
   if(integerRange&&subject.type.kind!=='fixed')throw unsupported('nested integer range match','this profile requires a primitive integer subject',node.span);
