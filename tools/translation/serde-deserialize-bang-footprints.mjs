@@ -44,6 +44,9 @@ export function proveSerdeDeserializeBangFootprint({context,certificate}={}){
   if(!de.source.includes('syn::Lifetime::new("\'de", Span::call_site())')||!de.source.includes('syn::Lifetime::new("\'place", Span::call_site())')||!attr.source.includes('else if is_implicitly_borrowed(&field.ty)'))throw new TypeError('Pinned generated lifetime/default borrowed helper branches changed');
   bindingProofs.push({binding:'BorrowedLifetimes and generated generic parameters',source:de.path,sourceSha256:de.sha256,helperSource:attr.path,helperSourceSha256:attr.sha256,basis:'actual nongeneric header; no references/lifetime-bearing field Type; no borrow/default/custom helper'});
   const expansion=definition('src/de.rs','expand_derive_deserialize'),dispatch=definition('src/de.rs','deserialize_body');
+  const registration=definition('src/lib.rs','derive_deserialize');
+  if(!/#\[proc_macro_derive\(\s*Deserialize,\s*attributes\(serde\)\s*\)\]/u.test(registration.text))throw new TypeError('Locked Deserialize helper registration changed');
+  bindingProofs.push({binding:'original serde derive helper registration',source:registration.source,sourceSha256:registration.sourceSha256,span:registration.span,owner:['serde','Deserialize'],helper:'serde',importedAttributeNames:'additional conservative uncertainty; no resolver precedence inferred'});
   definition('src/de.rs','build_generics');definition('src/internals/attr.rs','is_implicitly_borrowed');definition('src/internals/attr.rs','is_implicitly_borrowed_reference');
   for(const needle of ['cont.attrs.transparent()','cont.attrs.type_from()','cont.attrs.type_try_from()','cont.attrs.identifier()'])if(!dispatch.text.includes(needle))throw new TypeError('Pinned Deserialize dispatch changed');
   branchProofs.push({predicate:'remote=false; transparent=false; from/try_from=None; identifier=No; StructForm::Struct',source:dispatch.source,sourceSha256:dispatch.sourceSha256,span:dispatch.span,basis:'actual named struct and accepted no custom helper profile'});
@@ -67,7 +70,7 @@ export function proveSerdeDeserializeBangFootprint({context,certificate}={}){
     if(observation.definitions.length||observation.macroExports.length||observation.bangCalls.length!==1||observation.bangCalls[0].writtenPath.join('::')!=='_serde::__require_serde_not_serde_core')throw new TypeError('Selected Deserialize output has unresolved bang syntax');
     return {feature,output,observation};
   });
-  const attributes=attributeOwners({...original,context,module},certificate,new Set(outputs.flatMap(output=>output.observation.attributes.map(attribute=>attribute.name))));
+  const attributes=attributeOwners({...original,context,module},certificate,new Set([...outputs.flatMap(output=>output.observation.attributes.map(attribute=>attribute.name)),...certificate.attributes.map(attribute=>attribute.name)]));
   const fixedMacro=emptySerdeMacro(dependencies),error=deriveDependencySource(dependencies,'syn','src/error.rs');
   if(!certificate.coreOwner||!error.source.includes('TokenTree::Literal(string)')||!error.source.includes('Ident::new("compile_error", start)'))throw new TypeError('Deserialize error output lacks original literal/standard owner proof');
   const owners=certificate.owners.filter(owner=>owner.target.join('::')==='serde::Deserialize'),residualOwners=certificate.owners.filter(owner=>owner.target.join('::')!=='serde::Deserialize');
@@ -75,3 +78,6 @@ export function proveSerdeDeserializeBangFootprint({context,certificate}={}){
   const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,outputs});return proof;
 }
 export const isSerdeDeserializeBangFootprint=value=>!!value&&proofs.has(value);
+export function assertSerdeDeserializeBangFootprint(proof,context,certificate){
+  const state=proofs.get(proof);if(!state||state.context!==context||state.certificate!==certificate)throw new TypeError('Deserialize output proof requires its original sealed invocation');return proof;
+}

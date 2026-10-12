@@ -142,6 +142,12 @@ export function deriveFootprintOriginalContext(context,certificate){
   if(!state||![...state.byId.values()].includes(certificate))throw new TypeError('Derive output requires its original sealed input context');
   return {modules:state.originalModules,dependencies:state.dependencies,externalModules:new Map(state.external),compilationProfile:context.compilationProfile};
 }
+// Complete authentic source context, not a caller-supplied declaration subset.
+// Consumers still need separate output proofs for each actual derive owner.
+export function deriveFootprintSourceContext(context){
+  const state=contexts.get(context);if(!state)throw new TypeError('Unsealed original derive source context');
+  return {modules:state.originalModules,dependencies:state.dependencies,externalModules:new Map(state.external),compilationProfile:context.compilationProfile};
+}
 export function deriveFootprintExternalModules(context){const state=contexts.get(context);if(!state)throw new TypeError('Unsealed derive footprint context');return new Map(state.external);}
 export function assertDeriveFootprintCertificate(certificate,source,offset=0) {
   if(!isDeriveFootprintCertificate(certificate)||source!==certificates.get(certificate).source.slice(certificate.span.start,certificate.span.end)||offset!==certificate.span.start)throw new TypeError('Unsealed or mismatched original derive source certificate');

@@ -97,6 +97,9 @@ export function proveSerdeSerializeBangFootprint({context,certificate}={}){
   const leaf=(text,type,role)=>compiler.token(text,type,{role,inputCertificateDigest:certificate.digest,source:certificate.source,sourceSpan:certificate.span});
   const empty=role=>compiler.empty({role,inputCertificateDigest:certificate.digest});
   const expansion=definition('src/ser.rs','expand_derive_serialize'),dispatch=definition('src/ser.rs','serialize_body'),wrapper=definition('src/dummy.rs','wrap_in_const');
+  const registration=definition('src/lib.rs','derive_serialize');
+  if(!/#\[proc_macro_derive\(\s*Serialize,\s*attributes\(serde\)\s*\)\]/u.test(registration.text))throw new TypeError('Locked Serialize helper registration changed');
+  bindingProofs.push({binding:'original serde derive helper registration',source:registration.source,sourceSha256:registration.sourceSha256,span:registration.span,owner:['serde','Serialize'],helper:'serde',importedAttributeNames:'additional conservative uncertainty; no resolver precedence inferred'});
   // These exclusions come from accepted original helper syntax, not caller
   // branch flags. All generator sources are separately byte-pinned inputs.
   for(const [name,needle,value]of [['remote','cont.attrs.remote()',false],['transparent','cont.attrs.transparent()',false],['type_into','cont.attrs.type_into()',null]]){
@@ -149,7 +152,7 @@ export function proveSerdeSerializeBangFootprint({context,certificate}={}){
   const output=compiler.roundTrip(inst(outer,{use_serde:inst(serdeAlias,{},'default actual locked serde crate alias'),code:impl},'original anonymous const wrapper'));
   const observation=inspectQuoteFragment(output);
   if(observation.definitions.length||observation.macroExports.length||observation.bangCalls.length!==1||observation.bangCalls[0].writtenPath.join('::')!=='_serde::__require_serde_not_serde_core')throw new TypeError('Selected Serde output contains an unproved bang definition or call');
-  const attributes=attributeOwners({...original,context,module},certificate,new Set(observation.attributes.map(attribute=>attribute.name)));
+  const attributes=attributeOwners({...original,context,module},certificate,new Set([...observation.attributes.map(attribute=>attribute.name),...certificate.attributes.map(attribute=>attribute.name)]));
   const fixedMacro=emptySerdeMacro(dependencies);
   // syn::Error builds only absolute core::compile_error with Literal::string,
   // and the input certificate already requires the actual standard core owner.
@@ -160,3 +163,6 @@ export function proveSerdeSerializeBangFootprint({context,certificate}={}){
   const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,output});return proof;
 }
 export const isSerdeSerializeBangFootprint=proof=>!!proof&&proofs.has(proof);
+export function assertSerdeSerializeBangFootprint(proof,context,certificate){
+  const state=proofs.get(proof);if(!state||state.context!==context||state.certificate!==certificate)throw new TypeError('Serialize output proof requires its original sealed invocation');return proof;
+}

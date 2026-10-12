@@ -7,6 +7,7 @@ import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
+import {deriveBangModules,deriveBangOutputAt,deriveBangHelperAttributeAt,isDeriveBangContext} from './derive-bang-context.mjs';
 import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
 const namespaces=['type','value','macro'];
 const identifier=token=>token?.type==='ident' && /^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
@@ -94,7 +95,7 @@ function uncertainty(attributes,{moduleAttribute=false}={}) {
   const unknown=attributes.some(attribute=>!harmless.has(attribute.name) && !['cfg','derive','macro_export','macro_use'].includes(attribute.name) && !(attribute.name==='path' && moduleAttribute && attribute.pathLiteral) || attribute.name==='derive' && attribute.tokens.filter(token=>/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token)).slice(1).some(name=>!standardDerives.has(name)));
   return {type:unknown,bang:unknown || attributes.some(attribute=>attribute.name==='macro_use'),attribute:unknown,macro:unknown || attributes.some(attribute=>attribute.name==='macro_use'),conditional:attributes.some(attribute=>['cfg','cfg_attr'].includes(attribute.name))};
 }
-function nestedExportUncertainty(tokens,start,profile) {
+function nestedExportUncertainty(tokens,start,profile,helperAttributeClosed=()=>false) {
   // A nested macro_export or procedural attribute can introduce a crate-root
   // macro. Inspect original attribute tokens, without resolving body scopes or
   // expanding a macro. Header attributes are handled by the ordinary binder.
@@ -104,6 +105,7 @@ function nestedExportUncertainty(tokens,start,profile) {
     const end=close(tokens,bracket),body=tokens.slice(bracket+1,end);
     const original=itemConfiguration(tokens.slice(at,end+1),profile).attributes[0];
     if(isInertConditionalAttribute(original)){at=end;continue;}
+    if(helperAttributeClosed({start:tokens[at].start,end:tokens[end].end})){at=end;continue;}
     if(body.some(token=>identifier(token)&&token.text==='macro_export')||uncertainty([{name:body[0]?.text,tokens:body.map(token=>token.text)}]).macro)return {start:tokens[at].start,end:tokens[end].end};
     at=end;
   }
@@ -135,9 +137,10 @@ function collapse(candidates) {
   }).sort((a,b)=>a.namespace===b.namespace?(a.name<b.name?-1:a.name>b.name?1:0):(a.namespace<b.namespace?-1:1));
 }
 
-export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,toolContext=null}={}) {
+export function resolveModuleBindings({modules,externalModules=new Map(),compilationProfile:profileInput=null,deriveContext=null,deriveBangContext=null,toolContext=null}={}) {
   if(!Array.isArray(modules) || !(externalModules instanceof Map))throw new TypeError('Binding resolution requires tracked modules and explicit external tables');
   if(deriveContext&&!isDeriveFootprintContext(deriveContext))throw new TypeError('Unsealed derive footprint context');
+  if(deriveBangContext){if(!isDeriveBangContext(deriveBangContext))throw new TypeError('Unsealed derive bang output context');modules=deriveBangModules(deriveBangContext,{deriveContext,modules,externalModules,compilationProfile:profileInput});}
   if(toolContext&&!isToolAttributeContext(toolContext))throw new TypeError('Unsealed tool attribute context');
   const profile=compilationProfile(profileInput);
   const scopes=new Map(),containers=new Map(),tasks=[],macroUses=[],diagnostics=[];
@@ -171,7 +174,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
       if(innerLint){scope.innerBuiltinNames.push(...innerLint.attributes.map(attribute=>({name:attribute.name,span:attribute.span})));continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
-        const nestedExport=nestedExportUncertainty(tokens,head.at,profile);
+        const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveBangContext&&deriveBangHelperAttributeAt(deriveBangContext,deriveContext,module,item,span));
         if(nestedExport){scope.baseMacro=scope.baseBang=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
         const effectiveAttributes=head.attributes.filter(attribute=>!isInertConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});
@@ -182,6 +185,10 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
           uncertain.type &&= !deriveCertificate.dimensions.typeNamespaceComplete;
           uncertain.attribute &&= !deriveCertificate.dimensions.attributeMacroComplete;
           uncertain.bang &&= !deriveCertificate.dimensions.bangMacroComplete;
+          // Bang closure is per exact original invocation and joins every
+          // actual owner; sibling/ancestor uncertainty still accumulates below.
+          const bangOutput=deriveBangContext&&deriveBangOutputAt(deriveBangContext,deriveContext,module,item);
+          if(bangOutput)uncertain.bang &&= !bangOutput.dimensions.bangMacroComplete;
           uncertain.macro=uncertain.bang||uncertain.attribute;
         }
         uncertain.conditional ||= scope.configurationCondition==='unknown';
