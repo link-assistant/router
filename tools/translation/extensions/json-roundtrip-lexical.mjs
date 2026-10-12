@@ -1,9 +1,16 @@
 // Direct bounded source-derived serde_json lexical branch execution. This is
 // not a claim that every source approximation equals ideal nearest rounding.
 import {createHash} from 'node:crypto';
+import {compileOriginalDigitRetentionControl,projectOriginalDigitRetention} from '../arithmetic-digit-retention.mjs';
+import {JSON_ROUNDTRIP_RETENTION_SOURCES} from './json-roundtrip-retention-source.mjs';
 import {JSON_LEXICAL_CACHE_SOURCE,JSON_LEXICAL_CACHE_SOURCE_SHA256} from './json-roundtrip-cache-source.mjs';
 const U64=(1n<<64n)-1n,HIDDEN=1n<<52n,FRAC=HIDDEN-1n,INF=0x7ff0000000000000n;
-export const JSON_LEXICAL_MAX_MANTISSA_DIGITS=768;
+const retentionPins=[['src/lexical/bhcomp.rs','26f39d52008225a6b377d7246d326940d44200e160a7b4652733e712e1a45a04'],['src/lexical/num.rs','2d06111d28616221995f7b4d4f13625b8d902884921268b0e02e544f871a5339']];
+const retentionSources=retentionPins.map(([path,sha256])=>{const rows=JSON_ROUNDTRIP_RETENTION_SOURCES.filter(row=>row.path===path);if(rows.length!==1||rows[0].sha256!==sha256||Buffer.byteLength(rows[0].source)!==rows[0].bytes||createHash('sha256').update(rows[0].source).digest('hex')!==sha256)throw new TypeError('Original lexical retention source changed');return rows[0].source;});
+const retentionControl=compileOriginalDigitRetentionControl(retentionSources[0],retentionSources[1],{functionName:'parse_mantissa',trait:'Float',target:'f64'});
+// This bound comes from the original retained prefix plus its actual sticky
+// digit, not from an ideal-rounding replacement. Admission/allocators stay open.
+export const JSON_LEXICAL_MAX_MANTISSA_DIGITS=retentionControl.emittedDigitsBound;
 if(createHash('sha256').update(JSON_LEXICAL_CACHE_SOURCE).digest('hex')!=='0f8f74a22cb7d871322a9893bffd0255ca10bf9dffd13afb2462dd3d7f51805f'||JSON_LEXICAL_CACHE_SOURCE_SHA256!=='0f8f74a22cb7d871322a9893bffd0255ca10bf9dffd13afb2462dd3d7f51805f')throw new TypeError('Original lexical cache source changed');
 function array(name,type,count) {
   // Input is the exact hash-checked original constant source, never caller text.
@@ -74,11 +81,9 @@ function positiveBigintBits(coefficient,exponent) {
   return nativeBits({mant,exp:length-64},'nearest',sticky);
 }
 export function sourceLexicalMantissa(integer,fraction) {
-  if(typeof integer!=='string'||typeof fraction!=='string'||! /^(?:[1-9][0-9]*|)$/u.test(integer)||! /^[0-9]*$/u.test(fraction)||fraction.endsWith('0')||!integer.length&&!fraction.length||integer.length+fraction.length>4096)throw new TypeError('Source mantissa needs bounded original digits and the source trimmed-fraction precondition');
-  const digits=integer+fraction,kept=digits.slice(0,768),tail=digits.slice(768),synthesized=tail.length>0;
-  // Deliberately preserve the original rule even for an all-zero INTEGER tail.
-  return Object.freeze({coefficient:BigInt(kept)*(synthesized?10n:1n)+(synthesized?1n:0n),count:Math.min(769,digits.length),tailSynthesized:synthesized,tailActuallyNonzero:/[1-9]/u.test(tail)});
+  return projectOriginalDigitRetention(retentionControl,integer,fraction);
 }
+
 function fallback(integer,fraction,exponent,bits) {
   const nonzeroFraction=integer.length===0?fraction.replace(/^0+/u,''):fraction;
   const parsed=sourceLexicalMantissa(integer,nonzeroFraction),count=parsed.count;
@@ -95,7 +100,7 @@ function fallback(integer,fraction,exponent,bits) {
 function checkedParts(integer,fraction,exponent) {
   if(typeof integer!=='string'||typeof fraction!=='string'||!Number.isInteger(exponent)||exponent<-2147483648||exponent>2147483647||! /^(?:[1-9][0-9]*|)$/u.test(integer)||! /^[0-9]*$/u.test(fraction)||!integer.length&&!fraction.length)throw new TypeError('Lexical parts need actual canonical integer/fraction and i32 exponent');
   if(!/[1-9]/u.test(integer+fraction))throw new TypeError('Truncated lexical input requires a nonzero source coefficient; the reader uses concise parsing for zero');
-  if(integer.length+fraction.length>768){const error=new RangeError('JSON mantissa exceeds the bounded768-digit original-lexical candidate domain');error.code='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND';throw error;}
+  if(integer.length+fraction.length>JSON_LEXICAL_MAX_MANTISSA_DIGITS){const error=new RangeError('JSON mantissa exceeds the source-derived'+JSON_LEXICAL_MAX_MANTISSA_DIGITS+'-digit original-lexical candidate domain');error.code='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND';throw error;}
 }
 export function lexicalConciseTrace(mantissa,exponent) {
   if(typeof mantissa!=='bigint'||mantissa<0n||mantissa>U64||!Number.isInteger(exponent)||exponent<-2147483648||exponent>2147483647)throw new TypeError('Concise lexical parts need actual u64/i32 values');

@@ -124,20 +124,21 @@
   "domain": {
     "target": "serde_json::Value f64 deserialization (not f32)",
     "rounding": "direct original lexical branch execution; separate ideal exact rational operation",
-    "maxMantissaDigits": 768,
+    "maxMantissaDigits": 769,
     "maxExponentDigits": 4096,
     "maxInputBytes": 1048576,
     "resourceBoundFailure": "explicit unsupported adapter-domain RangeError, never fabricated Rust Error",
-    "exactStandaloneDecimalOperationMaxDigits": 4096
+    "exactStandaloneDecimalOperationMaxDigits": 4096,
+    "maxMantissaDigitsSource": "actual Float<f64>::MAX_DIGITS; parse_mantissa retains MAX_DIGITS-1 then its original synthetic-tail digit"
   },
   "sourceBranchObligations": [
     "de.rs concise/long lexical dispatch, finite range and exponent overflow",
-    "lexical parse.rs fast/moderate/fallback branch equivalence to exact rational rounding",
+    "lexical parse.rs fast/moderate/fallback fidelity to original retained-prefix/sticky behavior, not universal equivalence to ideal rounding",
     "num.rs binary64 layout and bhcomp.rs half-way comparison",
     "rounding.rs tie-even including subnormal carry and exponent overflow"
   ],
   "remainingSemanticObligations": [
-    "larger769-digit zero-tail input remains domainunsupported; original retained-prefix/sticky operation preserves that source behavior for future expansion",
+    "Source-derived769-digit counterexample reader fix is UNRUN; larger raw input domains remain unsupported until explicit resource/control proof. Original zero-tail discrepancy remains source behavior, not ideal rounding.",
     "focused mathematical/runtime/default-regression checks are unrun",
     "direct lexical source fidelity and bounded32/64 limb/power arithmetic remain unverified; no complete ideal-rounding theorem substituted",
     "parser scratch allocation, BigInt and linked allocator/OOM behavior are not a complete application effect contract",

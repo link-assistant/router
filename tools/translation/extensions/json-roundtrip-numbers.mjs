@@ -44,7 +44,7 @@ export function parseJsonRoundtripNumber(reader) {
     if(!fractionDigits)reader.fail(reader.peek()===undefined?'EOF while parsing a value':'invalid number');
   }
   const coefficient=digits.replace(/^0+(?=[0-9])/u,'');
-  if(digits.length>JSON_LEXICAL_MAX_MANTISSA_DIGITS)bound('JSON mantissa exceeds the bounded768-digit original-lexical candidate domain');
+  if(digits.length>JSON_LEXICAL_MAX_MANTISSA_DIGITS)bound('JSON mantissa exceeds the source-derived'+JSON_LEXICAL_MAX_MANTISSA_DIGITS+'-digit original-lexical candidate domain');
   let exponent=0;
   if(reader.peek()===101||reader.peek()===69) {
     floating=true;reader.eat();let positiveExponent=true;

@@ -35,17 +35,18 @@ test('direct positive hi64/sticky and original native rounding retain carry and 
   assert.equal(bits(lexicalTruncatedFloat64(String(half),'',-1075)),0n);
   assert.equal(bits(lexicalTruncatedFloat64(String(half+1n),'',-1075)),1n);
 });
-test('reusable source mantissa preserves the known integer zero-tail rule while the JSON reader refuses its domain',()=>{
+test('source-derived retention preserves the valid769-digit integer zero-tail case through the real lexical and reader path',()=>{
   const original=((1n<<53n)+1n)*5n**53n*10n**715n,parsed=sourceLexicalMantissa(String(original),'');
   assert.equal(parsed.coefficient,original+1n);assert.equal(parsed.count,769);assert.equal(parsed.tailSynthesized,true);assert.equal(parsed.tailActuallyNonzero,false);
-  assert.throws(()=>serde_json_roundtrip_from_str(original+'e-768'),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
-  assert.throws(()=>lexicalTruncatedFloat64(String(original),'',-768),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
+  assert.equal(bits(lexicalTruncatedFloat64(String(original),'',-768)),0x3ff0000000000001n);
+  const result=serde_json_roundtrip_from_str(original+'e-768');assert.equal(result.$,'Ok');assert.equal(bits(result.field0.field0.field0),0x3ff0000000000001n);
+  assert.throws(()=>serde_json_roundtrip_from_str(original+'0e-769'),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
   assert.throws(()=>sourceLexicalMantissa('1','0'),TypeError);
   for(const pair of [['','0'],['','000'],['','']])assert.throws(()=>lexicalTruncatedFloat64(...pair,0),TypeError);
   assert.equal(lexicalConciseFloat64(0n,-2147483648),0);
 });
-test('raw leading integer/fraction zeros count toward the conservative768-digit bound and sign/error positions stay separate',()=>{
-  assert.throws(()=>serde_json_roundtrip_from_str('0.'+'0'.repeat(767)+'1'),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
+test('raw leading integer/fraction zeros count toward the source-derived769-digit bound and sign/error positions stay separate',()=>{
+  assert.throws(()=>serde_json_roundtrip_from_str('0.'+'0'.repeat(768)+'1'),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');
   assert.equal(Object.is(serde_json_roundtrip_from_str('-0.0').field0.field0.field0,-0),true);
   const exponent=serde_json_roundtrip_from_str('1e214748364899999');assert.equal(exponent.$,'Err');assert.equal(exponent.field0.message,'number out of range');assert.equal(exponent.field0.column,12n);
   const eof=serde_json_roundtrip_from_str('1e+');assert.equal(eof.field0.category.$,'Eof');assert.equal(eof.field0.column,3n);
