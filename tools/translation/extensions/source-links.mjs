@@ -46,7 +46,7 @@ export function metadataDigest(value) {
   return hash(JSON.stringify(copyMetadata(value),(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item));
 }
 function freeze(value){if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
-const signature=entry=>({name:entry.name,params:entry.params??[],ret:entry.ret??null,constant:Boolean(entry.constant),constFunction:Boolean(entry.constFunction),async:Boolean(entry.async)});
+const signature=entry=>({name:entry.name,params:entry.params??[],ret:entry.ret??null,constant:Boolean(entry.constant),constFunction:Boolean(entry.constFunction),async:Boolean(entry.async),...(Object.hasOwn(entry,'sourceLifetimeParameters')?{sourceLifetimeParameters:ownData(entry,'sourceLifetimeParameters')}:{})});
 const parsedSyntax=entry=>entry.k==='data'?entry:{signature:signature(entry),body:entry.body};
 function recordParsedDeclaration(parser,entry,record) {
   verifyParserTokens(parser);

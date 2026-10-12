@@ -6,6 +6,7 @@ import {translateProject} from '../project.mjs';
 import {HostRustParser,parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
 import {sourceItems} from '../rust-structure.mjs';
+import {linkParsedFile,checkedSourceContext,bindCheckedSourceLinks,checkedSourceEvidence} from '../extensions/source-links.mjs';
 import {verifyCohortTargets} from './cohort-targets.mjs';
 const ORIGINAL_SOURCE_SHA='1eafa26a131345dc3ce171a3ec1cc6833a801a794ecc76d545bca3d96eacf09c';
 const ORIGINAL_ITEM_SHA='69c0ed38eea80cf9a018362cdef6bc1414fd31b6da8c09b3cc078b4632207574';
@@ -88,6 +89,20 @@ test('value-only str names preserve actual primitive named string borrows',{time
   const result=project("pub fn str()->u8{7} pub fn echo<'a>(value:&'a str)->&'a str{value}");
   assert.deepEqual(result.meta.refused,[]);
   await verifyCohortTargets(result,api=>{assert.equal(api.str(),7n);assert.equal(api.echo('Ω😀'),'Ω😀');});
+});
+
+test('original lifetime binders stay sealed before source linking and after semantic checking',()=>{
+  const source="fn echo<'a>(value:&'a str)->&'a str{value}fn main(){}";
+  const parser=new HostRustParser(tokenizeRust(source)),surface=parser.file();
+  surface.items.find(item=>item.name==='echo').sourceLifetimeParameters.names[0]='b';
+  assert.throws(()=>linkParsedFile(parser,surface,source),/parser syntax changed before original source linking/);
+  const checked=checkProgram(parseRust(source)),entry=checked.declarations.get('echo');
+  const context=checkedSourceContext(checked),options={targetProfile:{language:'JavaScript'}};
+  const token=bindCheckedSourceLinks(checked,context,options);
+  assert.ok(checkedSourceEvidence(token,entry));
+  entry.sourceLifetimeParameters.span.start++;
+  assert.throws(()=>checkedSourceEvidence(token,entry),/checked source association became stale/);
+  assert.throws(()=>bindCheckedSourceLinks(checked,context,options),/checked declaration changed before source binding/);
 });
 
 test('original OpenAI model function retains its complete named lifetime syntax',()=>{
