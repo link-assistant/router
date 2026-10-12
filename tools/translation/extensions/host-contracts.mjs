@@ -46,6 +46,8 @@ import {DEFAULT_JSON_PARSER_PROFILE,configureJsonCapabilities,assertJsonParserCa
 import {withDeclarationRefusalCollection,checkCollectedDeclarationTypes} from './declaration-refusals.mjs';
 import {withJsonMacroParser,withJsonMacroChecker,withJsonMacroEmitter} from './json-macros.mjs';
 import {configureJsonMacroParser} from '../json-macro-context.mjs';
+import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
+import {standaloneMatchesMacroContext,configureMatchesMacroParser,configureMatchesParserFromSourceScope,originalMatchesImport} from '../matches-macro-context.mjs';
 
 export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -252,13 +254,14 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
       if(c.eat('{')){while(!c.is('}')){tree(prefix);if(!c.eat(','))break;}c.expect('}','use');return;}
       const segment=c.identifier('use').value,full=[...prefix,segment];if(c.eat('::')){tree(full);return;}
       const alias=c.eat('as')?c.identifier('alias').value:segment;
-      if(!['crate','self','super'].includes(full[0]) && !registered.has(pathKey(full)) && !['std::io::Error','std::io::Result','std::env::VarError'].includes(pathKey(full)))throw unsupported(`use ${pathKey(full)}`,'import requires a checked crate or registered host contract',span(start,c.peek()));
+      if(!['crate','self','super'].includes(full[0]) && !originalMatchesImport(this,full) && !registered.has(pathKey(full)) && !['std::io::Error','std::io::Result','std::env::VarError'].includes(pathKey(full)))throw unsupported(`use ${pathKey(full)}`,'import requires a checked crate or registered host contract',span(start,c.peek()));
       if(aliases.has(alias)){aliases.set(alias,['crate','ml_unresolved_import_alias',alias]);throw typeError(`ambiguous import alias ${alias}`,span(start,c.peek()));}
       aliases.set(alias,resolve(full));
     };
     tree([]);c.expect(';','use');
   }
   primary(path,options) {
+    const expandedMatches=parseOriginalMatchesCandidate(this,path);if(expandedMatches)return expandedMatches;
     if(this.cursor.peek().kind==='rustFloat') {
       const token=this.cursor.next();
       return {k:'num',value:token.value,type:FLOAT,sourceFloatLiteral:{profile:RUST_FLOAT_LITERAL_PROFILE.id,raw:token.raw,bits:token.floatBits,suffix:token.suffix},span:{start:token.start,end:token.end}};
@@ -698,7 +701,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     return {...result,preludes,text:[...preludes,...result.definitions].join('\n\n')};
   }
 }
-export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope,jsonMacroContext,jsonMacroModule}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);if(jsonMacroContext)configureJsonMacroParser(parser,jsonMacroContext,jsonMacroModule);return linkParsedFile(parser,parser.file(),source,{scope:{macroEvidence,sourceScope:sourceScope?.scope??null,compilationProfile:sourceScope?.compilationProfile??null,configurationCondition:sourceScope?.configurationCondition??null}});};
+export const parseRust=(source,{shadowedEffectRoots,shadowedPreludeTypes,macroEvidence=macroProvenance(source),sourceScope,jsonMacroContext,jsonMacroModule}={})=>{const parser=new HostRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;parser.shadowedPreludeTypes=shadowedPreludeTypes;parser.shadowedBuiltinMacros=new Set(macroEvidence.shadowedNames);parser.shadowedImportedBindings=new Set(macroEvidence.importedNames);parser.unresolvedImportScope=macroEvidence.unresolvedImportScope;if(sourceScope)configureParserSourceScope(parser,sourceScope.scope,sourceScope.scopes,[]);if(jsonMacroContext)configureJsonMacroParser(parser,jsonMacroContext,jsonMacroModule);if(sourceScope?.matchesMacroContext)configureMatchesParserFromSourceScope(parser,sourceScope);else if(!sourceScope){const context=standaloneMatchesMacroContext(source,{compilationProfile:parser.compilationProfile??null});configureMatchesMacroParser(parser,context,{file:'src/module.rs'});}return linkParsedFile(parser,parser.file(),source,{scope:{macroEvidence,sourceScope:sourceScope?.scope??null,compilationProfile:sourceScope?.compilationProfile??null,configurationCondition:sourceScope?.configurationCondition??null}});};
 export const checkProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checker.program(surface);program.jsonParserProfile=jsonParserProfile;return program;};
 export const checkProjectProgram=(surface,{jsonParserProfile=DEFAULT_JSON_PARSER_PROFILE,collectIndependentBodies=false}={})=>{const checker=configureJsonCapabilities(new HostChecker(surface.language,surface.externals??[]),jsonParserProfile);const program=checkCollectedDeclarationTypes(checker,surface,{collectIndependentBodies});program.jsonParserProfile=jsonParserProfile;return program;};
 export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>emitWith(program,class extends HostEmitter{constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;}});

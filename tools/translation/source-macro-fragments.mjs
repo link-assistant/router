@@ -64,3 +64,11 @@ export function originalMacroFragmentDefinition(context) {
   if(!state||!isStandardMatchesSourceProfile(profile))throw new TypeError('Macro fragment grammar lacks a private original definition edition/profile');
   return Object.freeze({source:standardMatchesOriginalDefinition(profile),name:profile.name,edition:profile.definitionEdition,profileDigest:profile.digest});
 }
+export function originalMacroFragmentParser(context) {
+  const state=contexts.get(context);if(!state)throw new TypeError('Unsealed original macro parser context');return state.parser;
+}
+export function originalMacroFragmentTokens(context,capture) {
+  const state=captures.get(capture),owner=contexts.get(context);
+  if(!owner||!state||state.context!==context)throw new TypeError('Unsealed original macro source tokens');
+  return owner.tokens.filter(token=>token.kind!=='eof'&&token.start>=capture.span.start&&token.end<=capture.span.end).map(token=>({kind:token.kind,value:token.value,...(token.raw?{raw:token.raw}:{}),span:{start:token.start,end:token.end}}));
+}

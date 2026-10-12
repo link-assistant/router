@@ -1,6 +1,7 @@
 // Bounded source patterns reuse the checked planner. Guarded alternatives are
 // separate ordered attempts: a false guard retries the next alternative, even
 // when it belongs to the same source arm. No guard contributes exhaustiveness.
+import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
 import {planPattern} from '../pattern-bindings.mjs';
 import {BOOL,sameType} from '../checked-types.mjs';
 import {coerce} from '../checked-coercions.mjs';
@@ -57,7 +58,7 @@ export function parseOrderedMatch(parser,path) {
   if(!rows.length)throw unsupported('empty ordered match','uninhabited layouts require another profile',start);
   return {k:'routerOrderedMatch',subject,rows,span:{start:start.start,end:end.end}};
 }
-export function parseStandardMatches(parser,token,path) {
+export function parseStandardMatchesManual(parser,token,path) {
   // This is only reached after the highest source resolver proves the ordinary
   // unshadowed standard macro. Qualified/custom/macro-expanded owners refuse.
   const c=parser.cursor,open=c.next(),close={'(':')','[':']','{':'}'}[open.value];
@@ -67,6 +68,13 @@ export function parseStandardMatches(parser,token,path) {
   c.eat(',');const end=c.expect(close,'matches!');
   const span={start:token.start,end:end.end},literal=value=>({k:'bool',value,span});
   return {k:'routerOrderedMatch',subject,rows:[{...parsed,guard,body:literal(true),span},{pattern:{k:'wild',span},sourcePattern:{pattern:{k:'wild',span},tokens:[],span},guard:null,body:literal(false),span}],sourceMacro:{name:'matches',owner:'standard-prelude',profile:ORDERED_MATCH_PROFILE.id,span},span};
+}
+export function parseStandardMatches(parser,token,path) {
+  const c=parser.cursor,at=c.tokens.indexOf(token),previous=c.index;
+  if(at<0)throw typeError('matches! token lost original source association',token);
+  c.index=at;
+  try {const parsed=parseOriginalMatchesCandidate(parser,path);if(!parsed)throw unsupported('matches! owner','requires its actual original source macro context',token);return parsed;}
+  catch(error){c.index=previous;throw error;}
 }
 function alternatives(pattern,depth=0) {
   if(depth>128)throw unsupported('ordered match pattern','exceeds the checked pattern depth',pattern.span);
@@ -121,13 +129,13 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
   if(!intervalProof)checker.compileRows([{name,type:subject.type}],coverage,node.span);
   let type=expected??attempts.find(attempt=>attempt.body.type.kind!=='literal')?.body.type;
   type??=checker.defaultNumber();
-  const bind=(plan,body)=>plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:checker.patternProjection(variable,binding.projection,binding.type),body,type:body.type,mutable:false,span:binding.span??node.span}),body);
+  const bind=(plan,body)=>plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:checker.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,type:body.type,mutable:false,span:binding.span??node.span}),body);
   const branches=[];
   for(const attempt of attempts) {
     const body=coerce(attempt.body,type,checker.language,attempt.span);
     if(!sameType(body.type,type))throw typeError('ordered match arms have different checked result types',attempt.span);
     const selected={k:'routerOrderedArm',guard:attempt.guard,body,type,span:attempt.span};
-    branches.push({cond:checker.patternTest(attempt.plan.test,variable),body:bind(attempt.plan,selected),span:attempt.span});
+    branches.push({cond:checker.patternTest(attempt.plan.test,variable,attempt.plan.projectionPaths),body:bind(attempt.plan,selected),span:attempt.span});
   }
   if(intervalProof&&attempts.every(attempt=>!attempt.guard)) {
     // Coverage proves that the last remaining row always selects if preceding
