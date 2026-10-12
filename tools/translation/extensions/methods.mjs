@@ -1,6 +1,7 @@
 // Inherent shared/static methods resolve to checked declarations. Extraction
 // supplies no runtime body: receiver fields, calls, arguments and results check.
 import {EffectRustParser,EffectChecker,emitJavaScript} from './effects.mjs';
+import {iteratorReceiverExpected} from './iterators.mjs';
 import {tokenizeRust} from './lexical.mjs';
 import {typeError,unsupported,TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 export class MethodRustParser extends EffectRustParser {
@@ -36,7 +37,7 @@ export class MethodChecker extends EffectChecker {
     if(node.k==='routerSharedMethodReceiver') {
       const entry=this.items.get(node.method),source=entry?.impl?.sharedReceiverSource,parameter=entry?.params?.[0]?.type;
       if(entry?.generated!=='router-checked-inherent-method'||entry.impl.receiver!=='shared'||source?.kind!=='shared'||source.tokens?.map(token=>token.value).join('')!=='&self'||parameter?.rustReference?.kind!=='shared'||parameter.rustReference.pointee?.kind!=='data')throw unsupported('inherent receiver autoborrow','requires the actual checked shared source receiver and nominal pointee',node.span);
-      const object=this.expr(node.object,env,path),pointee=parameter.rustReference.pointee,target=this.resolveType(entry.impl.type,entry.modulePath,node.span);
+      const object=this.expr(node.object,env,path,iteratorReceiverExpected(this,node,path,expected)),pointee=parameter.rustReference.pointee,target=this.resolveType(entry.impl.type,entry.modulePath,node.span);
       if(target.kind!=='data'||pointee.name!==target.name||object.type.kind!=='data'||object.type.name!==target.name)throw typeError('shared inherent receiver has a different actual nominal pointee',node.span);
       if(object.type.rustReference&&(object.type.rustReference.kind!=='shared'||object.type.rustReference.pointee?.kind!=='data'||object.type.rustReference.pointee.name!==target.name||object.type.rustReference.pointee.rustReference))throw unsupported('inherent receiver autodereference','requires a separately checked nested reference coercion',node.span);
       return {k:'routerSharedMethodReceiver',object,type:parameter,receiverProof:{kind:object.type.rustReference?'existing-shared-receiver':'inherent-shared-autoborrow',method:entry.fullName,pointee:target,source:structuredClone(source)},span:node.span};
@@ -46,7 +47,7 @@ export class MethodChecker extends EffectChecker {
         const subject = this.expr(node.object.object,env,path);
         if (subject.type.kind === 'string' && node.fallback) return this.expr(node.fallback,env,path,expected,allowLiteral);
       }
-      const object=this.expr(node.object,env,path);
+      const object=this.expr(node.object,env,path,iteratorReceiverExpected(this,node,path,expected));
       const method=node.method ?? node.op,entry=this.resolvedMethod(object.type,method,'shared');
       if(entry)return this.methodCall(entry,node.object,node.args,env,path,expected,node.span);
       if(node.k === 'routerDispatchMethod') {

@@ -164,6 +164,15 @@ export class IteratorRustParser extends DataRustParser {
   }
 }
 
+// Method-precedence probes need the same contextual collection Item as the
+// iterator checker. This grants no expected type to a map's input stream.
+export function iteratorReceiverExpected(checker,node,path,expected) {
+  if(node.k!=='routerIteratorOperation'||node.op!=='collect')return undefined;
+  const infer=node.explicit?.element?.kind==='routerIteratorElementInference'&&node.explicit.iteratorCollectInference?.profile==='checked-standard-vec-item-inference-v1';
+  const wanted=node.explicit&&!infer?checker.resolveType(node.explicit,path,node.span):expected;
+  return resultCollectionContext(checker,wanted,path,node.span)??(wanted?.kind==='array'?{kind:'routerIterator',element:wanted.element}:undefined);
+}
+
 export class IteratorChecker extends DataChecker {
   iteratorOptionExpected(node,env,path) {
     // Infer only a genuinely resolved standard Some constructor. Its actual
@@ -235,7 +244,7 @@ export class IteratorChecker extends DataChecker {
     const wanted = node.explicit&&!inferElement ? this.resolveType(node.explicit, path, node.span) : expected;
     const resultContext=op==='collect'?resultCollectionContext(this,wanted,path,node.span):null;
     const itemExpected = resultContext??(op === 'collect' && wanted?.kind === 'array' ? { kind: 'routerIterator', element: wanted.element } : expected?.kind === 'routerIterator' ? expected : undefined);
-    const object = this.expr(node.object, env, path, itemExpected);
+    const object = this.expr(node.object, env, path, op==='map'?undefined:itemExpected);
     if (op === 'iter' || op === 'into_iter') {
       if (object.type.kind !== 'array') throw unsupported('iterator receiver', 'only immutable typed scalar arrays have an iterator adapter', node.span);
       const borrowed=op==='iter'||object.type.rustReference||object.type.rustOwnership?.kind==='borrowed';

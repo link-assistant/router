@@ -1,3 +1,4 @@
+import {iteratorReceiverExpected} from './iterators.mjs';
 import {itemConfiguration} from '../cfg-profile.mjs';
 import {createHash} from 'node:crypto';
 // Crate contracts select operations by resolved paths and checked value types.
@@ -471,7 +472,7 @@ export class HostChecker extends withDeclarationRefusalCollection(withCheckedSou
     if(node.k==='routerHostCall')return this.hostCall(HOST_CONTRACTS.filter(contract=>!contract.requiresRefinement&&(node.id?contract.id===node.id:pathKey(contract.rustPath)===pathKey(node.path))),node.args,env,path,expected,node.span,node.instantiation);
     if(['routerDispatchMethod','routerIteratorOperation'].includes(node.k)) {
       if(node.k==='routerDispatchMethod'&&node.object.k==='routerDispatchMethod'&&node.object.fallback?.k==='routerStringView'&&this.expr(node.object.object,env,path).type.kind==='string')return super.expr(node,env,path,expected,allowLiteral);
-      const receiver=this.expr(node.object,env,path),method=node.method??node.op;
+      const receiver=this.expr(node.object,env,path,iteratorReceiverExpected(this,node,path,expected)),method=node.method??node.op;
       const inherent=this.resolvedMethod(receiver.type,method,'shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
       if(method==='as_deref')return checkedOptionAsDeref(this,node,receiver,path);
       if(receiver.type.kind==='float') {

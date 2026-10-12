@@ -1,8 +1,8 @@
-// SOURCE-ONLY DRAFT: all new cases are unrun until Gate grants a coherent slot.
+// Source-qualified reverse Split runtime/checked-target regressions.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {reverseFindCharacterSplit} from '../extensions/reverse-string-runtime.mjs';
-import {REVERSE_STRING_PROFILE} from '../extensions/reverse-string-iterators.mjs';
+import {REVERSE_STRING_PROFILE,requireReverseStringProof} from '../extensions/reverse-string-iterators.mjs';
 import {translateProject} from '../project.mjs';
 import {parseRust,checkProgram,emitJavaScript} from '../extensions/host-contracts.mjs';
 import {roundTripProgram} from '../semantic-meta.mjs';
@@ -54,5 +54,8 @@ test('reverse checked pipeline remains emit-capable after semantic roundtrip and
   const source='pub fn last(v:&str)->Option<&str>{v.split(\',\').map(str::trim).rfind(|s|!s.is_empty())}fn main(){}',program=checkProgram(parseRust(source));
   assert.doesNotThrow(()=>emitJavaScript(roundTripProgram(program)));
   const find=value=>{if(!value||typeof value!=='object')return null;if(value.k==='routerReverseSplitFind')return value;for(const child of Object.values(value)){const node=find(child);if(node)return node;}return null;};
-  const node=find(program.declarations.get('last').body);assert.ok(node);node.maps=[];assert.throws(()=>emitJavaScript(program),/reverse Split plan differs/);
+  const node=find(program.declarations.get('last').body);assert.ok(node);
+  const renamed=structuredClone(node);renamed.maps[0].binding.name='capture_safe_trim';renamed.maps[0].binding.body.string.name='capture_safe_trim';assert.doesNotThrow(()=>requireReverseStringProof(renamed));
+  for(const mutate of [value=>{value.maps[0].binding.body.string.name='free_value';},value=>{value.maps[0].binding.body.op='trim_start';},value=>{value.maps[0].binding.body.string.type.rustOwnership.source='String';},value=>{value.base.delimiter=';';}]){const changed=structuredClone(node);mutate(changed);assert.throws(()=>requireReverseStringProof(changed));}
+  node.maps=[];assert.throws(()=>emitJavaScript(program),/reverse Split plan differs/);
 });

@@ -9,6 +9,8 @@ import {sourceItems} from '../rust-structure.mjs';
 import {extractImplDeclarations} from '../impl-resolver.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {originalCsvContext,checkedDeclarationTargets} from './original-csv-context.mjs';
+let recordedOriginalInputs=false;
+function original(){const context=originalCsvContext();if(!recordedOriginalInputs){recordedOriginalInputs=true;console.log('ORIGINAL_CSV_INPUTS '+JSON.stringify(context.inputs));}return context;}
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const some=field0=>Object.freeze({$:'Some',field0}),none=Object.freeze({$:'None'});
 const methodPins=JSON.parse(readFileSync(new URL('./fixtures/option-deref-frontier.json',import.meta.url),'utf8'));
@@ -20,8 +22,8 @@ const pins=[
   ['src/config.rs','9f5bb5c2d7060a8ab317889e401d3da2155a0574b5d4e2ed112f52d5e9468d8a','parse_usize_csv',38684,39014,'c8f52fdbdd200cf6dd2ed73a3ebcda3738c2149840c4197c222e00f850e2353a'],
 ];
 for(const [file,fileHash,name,start,end,sliceHash]of pins)test(`pending complete original ${file} ${name} retains source and checked frontier`,{timeout:900_000},async()=>{
-  const source=originalCsvContext().source(file);assert.equal(hash(source),fileHash);assert.equal(hash(source.slice(start,end)),sliceHash);assert.ok(source.slice(start,end).startsWith('fn '+name+'('));
-  const result=originalCsvContext().result;assert.equal(result.meta.runtimeParity,false);
+  const source=original().source(file);assert.equal(hash(source),fileHash);assert.equal(hash(source.slice(start,end)),sliceHash);assert.ok(source.slice(start,end).startsWith('fn '+name+'('));
+  const result=original().result;assert.equal(result.meta.runtimeParity,false);
   if(name==='parse'){
     const method=result.checkedMethodDeclarations.find(entry=>entry.source===file&&entry.displayName.endsWith('Encoding.parse'));assert.ok(method,JSON.stringify(result.meta.refused.filter(entry=>entry.file===file)));assert.equal(method.sourceSha256,fileHash);assert.equal(method.term,'method');
     await verifyTypedTargets(checkedDeclarationTargets(method),api=>{for(const [value,expected]of [['','Identity'],[', ,','Identity'],['identity','Identity'],['gzip','Gzip'],['x-gzip','Gzip'],['gzip, deflate','Deflate'],['gzip, , br, ','Brotli'],['zstd','Zstd'],['GZIP','Gzip'],['other',null],['gzip, unknown',null],['gzip,\u0085', 'Gzip'],['gzip,\uFEFF',null]])assert.deepEqual(api.parse(value),expected===null?none:some({$:expected}));},{childTimeoutMs:30_000});return;
@@ -48,8 +50,8 @@ function fixture(type,declarations,depth=0){
   assert.equal(type.kind,'data');const entry=declarations.get(type.name);assert.ok(entry);const ctor=[...entry.ctors].sort((a,b)=>a.fields.length-b.fields.length)[0];return Object.freeze(Object.fromEntries([['$',ctor.name],...ctor.fields.map(field=>[field.name,fixture(field.type,declarations,depth+1)])]));
 }
 for(const pin of methodPins.pins)test(`pending unchanged ${pin.owner}.${pin.name} method closure from complete original graph`,{timeout:900_000},async()=>{
-  const source=originalCsvContext().source(pin.file);assert.equal(hash(source),pin.fileSha256);assert.equal(hash(source.slice(pin.span.start,pin.span.end)),pin.fnTokenSha256);
-  const result=originalCsvContext().result,method=result.checkedMethodDeclarations.find(entry=>entry.source===pin.file&&entry.displayName.endsWith(pin.owner+'.'+pin.name));assert.ok(method,JSON.stringify(result.meta.refused.filter(entry=>entry.file===pin.file)));assert.equal(method.sourceSha256,pin.fileSha256);assert.equal(method.receiver,'shared');assert.equal(method.signature.params[0].type.rustReference.kind,'shared');
+  const source=original().source(pin.file);assert.equal(hash(source),pin.fileSha256);assert.equal(hash(source.slice(pin.span.start,pin.span.end)),pin.fnTokenSha256);
+  const result=original().result,method=result.checkedMethodDeclarations.find(entry=>entry.source===pin.file&&entry.displayName.endsWith(pin.owner+'.'+pin.name));assert.ok(method,JSON.stringify(result.meta.refused.filter(entry=>entry.file===pin.file)));assert.equal(method.sourceSha256,pin.fileSha256);assert.equal(method.receiver,'shared');assert.equal(method.signature.params[0].type.rustReference.kind,'shared');
   const artifact=checkedDeclarationTargets(method),type=artifact.lowered.own.params[0].type.rustReference.pointee,base=fixture(type,artifact.lowered.program.declarations),field={AcceptanceFailure:'transaction_id',ResponsesStreamRewriter:'upstream_model',GitHubProxyConfig:'token',AnthropicUsage:'service_tier'}[pin.owner];assert.ok(Object.hasOwn(base,field));
   await verifyTypedTargets(artifact,api=>{const values=pin.owner==='AnthropicUsage'?[[none,none],[some('standard'),some('default')],[some('priority'),some('priority')],[some('other'),none]]:[[none,none],[some(''),some('')],[some('opaque-😀'),some('opaque-😀')]];for(const [value,expected]of values)assert.deepEqual(api[pin.name](Object.freeze({...base,[field]:value})),expected);},{childTimeoutMs:30_000});
   assert.equal(result.meta.runtimeParity,false);assert.equal(result.executableDeclarations.some(entry=>entry.qualifiedName===method.qualifiedName),false);

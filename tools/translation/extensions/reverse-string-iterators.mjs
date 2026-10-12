@@ -16,6 +16,10 @@ function pureTrim(callback,span){
   const binding=callback?.binding,body=binding?.body;
   if(callback?.k!=='routerLambda'||callback.arity!==1||binding?.k!=='let'||binding.value?.k!=='routerLambdaInput'||binding.value.position!==0||body?.k!=='routerStringOperation'||!['trim','trim_start','trim_end'].includes(body.op)||body.args?.length!==0||body.string?.k!=='var'||body.string.name!==binding.name)throw unsupported('reverse Map callback','only actual checked pure borrowed-str trim adapters preserve this bounded DoubleEnded profile',span);
   requireBorrowedString(binding.value.type,span);requireBorrowedString(body.string.type,span);requireBorrowedString(body.type,span);
+  // The emitter's capture-safe renamer visits duplicated plan nodes separately.
+  // Only this verified unary let/input → trim(bound variable) binder may differ;
+  // every source/type/op/argument/proof field remains part of deep equality.
+  return {...callback,binding:{...binding,name:'$reverse-trim-input',body:{...body,string:{...body.string,name:'$reverse-trim-input'}}}};
 }
 export function reverseSplitPlan(object,span){
   if(object?.type?.kind!=='routerIterator')throw unsupported('rfind receiver','requires a fresh checked double-ended literal-character Split pipeline',span);
@@ -39,5 +43,5 @@ export function checkedReverseSplitFind(checker,node,object,env,path){
 export function requireReverseStringProof(node){
   if(node.reverseStringProof?.profile!==REVERSE_STRING_PROFILE.id||node.reverseStringProof.verified!==true||node.reverseStringProof.operation!=='rfind'||node.constEligible!==false)throw new Error('missing checked standard reverse Split proof');
   const plan=reverseSplitPlan(node.object,node.span);
-  if(!isDeepStrictEqual(plan.base,node.base)||!isDeepStrictEqual(plan.maps,node.maps))throw new Error('reverse Split plan differs from its actual checked pipeline');
+  if(!isDeepStrictEqual(plan.base,node.base)||!isDeepStrictEqual(plan.maps.map(map=>pureTrim(map,node.span)),node.maps.map(map=>pureTrim(map,node.span))))throw new Error('reverse Split plan differs from its actual checked pipeline');
 }

@@ -1,4 +1,4 @@
-// SOURCE-ONLY DRAFT: every case remains unrun until the exclusive focus slot.
+// Source-qualified CSV runtime/checked-target regressions.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {stringSplitCharacter,stringSplitNext,allocateStringItem} from '../extensions/csv-string-runtime.mjs';
@@ -64,7 +64,7 @@ test('source unknown owners, escapes, custom Pattern, stored cursors and const a
 const find=(value,kind)=>{if(!value||typeof value!=='object')return null;if(value.k===kind)return value;for(const child of Object.values(value)){const result=find(child,kind);if(result)return result;}return null;};
 test('parsed, checked and emitter source proofs reject changed split metadata',()=>{
   const source='pub fn first(v:&str)->Option<&str>{v.split(\',\').next()}fn main(){}';
-  const surface=parseRust(source);find(surface,'routerStringIteratorOperation').args[0].value=';';assert.throws(()=>checkProgram(surface),/changed after source capture/);
+  const surface=parseRust(source);find(surface,'routerPatternChar').value=';';assert.throws(()=>checkProgram(surface),/changed after source capture/);
   const program=checkProgram(parseRust(source)),context=checkedSourceContext(program);find(program.declarations.get('first').body,'routerStringSplit').delimiter=';';assert.throws(()=>bindCheckedSourceLinks(program,context,{targetProfile:{id:'csv-freshness'}}),/changed before source binding/);assert.throws(()=>emitJavaScript(program),/delimiter differs/);
   const missing=checkProgram(parseRust(source));delete find(missing.declarations.get('first').body,'routerStringSplit').csvStringProof;assert.throws(()=>emitJavaScript(missing),/missing checked standard CSV string proof/);
 });
