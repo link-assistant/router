@@ -3,6 +3,7 @@
 import {HostRustParser} from './extensions/host-contracts.mjs';
 import {TokenCursor} from './vendor/meta-language/translation/lexer.js';
 import {types} from 'node:util';
+import {isStandardMatchesSourceProfile,standardMatchesOriginalDefinition} from './matches-source-profile.mjs';
 import {capturedRustTokenSource} from './extensions/lexical.mjs';
 import {macroTreeSource,freezeMacroTree} from './macro-token-trees.mjs';
 const contexts=new WeakMap(),captures=new WeakMap();
@@ -22,13 +23,14 @@ function assertOriginalMethods(value,prototype,methods) {
 }
 
 const flags={macroOwnerResolved:false,namespaceAuthority:false,runtimeAuthority:false,applicationEffectCompleteness:false};
-export function createOriginalMacroFragmentContext(parser,input,{sourceStart,modulePath=parser?.modulePath??[]}={}) {
+export function createOriginalMacroFragmentContext(parser,input,{sourceStart,modulePath=parser?.modulePath??[],definitionProfile=null}={}) {
   assertOriginalMethods(parser,HostRustParser.prototype,originalParserMethods());assertOriginalMethods(parser.cursor,TokenCursor.prototype,cursorMethods);
   const source=parser instanceof HostRustParser&&capturedRustTokenSource(parser.cursor.tokens),original=macroTreeSource(input);
   if(!source||!original||!Number.isSafeInteger(sourceStart)||sourceStart<0||source.source.slice(sourceStart,sourceStart+original.source.length)!==original.source)throw new TypeError('Macro fragments require genuine parser tokens and exact original invocation bytes');
   if(!Array.isArray(modulePath)||modulePath.length>64||modulePath.some(part=>typeof part!=='string')||JSON.stringify(modulePath)!==JSON.stringify(parser.modulePath??[]))throw new TypeError('Macro fragment context differs from the actual parser module');
+  if(definitionProfile!==null&&!isStandardMatchesSourceProfile(definitionProfile))throw new TypeError('Macro fragment definition requires its private pinned source profile');
   const context=Object.freeze({schema:'original-rust-macro-fragment-context-v1',originalSourceSha256:original.sha256,sourceStart,modulePath:Object.freeze([...modulePath]),...flags});
-  contexts.set(context,{parser,input,source,original,tokens:parser.cursor.tokens,modulePath:[...modulePath]});return context;
+  contexts.set(context,{parser,input,source,original,tokens:parser.cursor.tokens,modulePath:[...modulePath],definitionProfile});return context;
 }
 export const isOriginalMacroFragmentContext=value=>!!value&&contexts.has(value);
 export function parseOriginalMacroFragment(context,fragment,input,start) {
@@ -55,4 +57,10 @@ export function parseOriginalMacroFragment(context,fragment,input,start) {
 export const isOriginalMacroAstFragment=value=>!!value&&captures.has(value);
 export function originalMacroFragmentAst(context,capture) {
   const state=captures.get(capture);if(!contexts.has(context)||!state||state.context!==context)throw new TypeError('Unsealed or differently owned original macro AST fragment');return state.ast;
+}
+
+export function originalMacroFragmentDefinition(context) {
+  const state=contexts.get(context),profile=state?.definitionProfile;
+  if(!state||!isStandardMatchesSourceProfile(profile))throw new TypeError('Macro fragment grammar lacks a private original definition edition/profile');
+  return Object.freeze({source:standardMatchesOriginalDefinition(profile),name:profile.name,edition:profile.definitionEdition,profileDigest:profile.digest});
 }

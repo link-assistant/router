@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {originalMacroTrees,macroTreeSource,freezeMacroTree} from './macro-token-trees.mjs';
 import {boundedMacroBlock,boundedMacroExpression} from './macro-fragments.mjs';
 import {boundedMacroItem} from './macro-items.mjs';
+import {isOriginalMacroFragmentContext,originalMacroFragmentDefinition,parseOriginalMacroFragment} from './source-macro-fragments.mjs';
 const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const text=tree=>tree?.kind==='token'?tree.text:null;
@@ -13,7 +14,7 @@ const forbiddenTypes=new Set('as async await break const continue dyn else enum 
 const names=nodes=>nodes.flatMap(node=>node.kind==='capture'||node.kind==='variable'?[node.name]:node.children?names(node.children):[]);
 const syntax=(tree,end=tree)=>({sourceSha256:tree.sourceSha256,span:{start:tree.span.start,end:end.span.end},...(tree.sourceFeature?{sourceFeature:tree.sourceFeature}:{})});
 
-// FOLLOW(ty) is checked on the actual planned matcher, including every
+// FOLLOW(ty/expr/pat) is checked on the actual planned matcher, including every
 // nullable exit and separator/re-entry of each enclosing repetition. Unknown
 // fragment FIRST sets are carried; their opaque ASTs are never exposed.
 function assertTypeFollowers(pattern){
@@ -30,7 +31,10 @@ function assertTypeFollowers(pattern){
   function check(nodes,outer=new Set([end]),depth=0){
     if(depth>64)throw new TypeError('Declarative follow-set nesting budget');for(let at=0;at<nodes.length;at++){
       if(--cells<0)throw new TypeError('Declarative follow-set cell budget');const node=nodes[at],following=suffix(nodes,at+1,outer);
-      if(node.kind==='capture'&&node.fragment==='ty'&&[...following].some(value=>!allowed.has(value)))throw new TypeError('Declarative type fragment has an unproved Rust follow set');
+      if(node.kind==='capture') {
+        const permitted=node.fragment==='ty'?allowed:node.fragment==='pat'?new Set(['literal:=>','literal:,','literal:=','literal:if','literal:in',end]):node.fragment==='expr'?new Set(['literal:=>','literal:,','literal:;',end]):null;
+        if(permitted&&[...following].some(value=>!permitted.has(value)))throw new TypeError('Declarative '+(node.fragment==='ty'?'type':node.fragment==='pat'?'pattern':'expression')+' fragment has an unproved Rust follow set');
+      }
       if(node.kind==='group')check(node.children,new Set([end]),depth+1);
       if(node.kind==='repeat'){const next=new Set(following);if(node.operator!=='?'){if(node.separator)next.add(literal(node.separator));else for(const value of first(node.children))if(value!==end)next.add(value);}check(node.children,next,depth+1);}
     }
@@ -77,7 +81,7 @@ function matcherStartsOverlap(left,right) {
   return true;
 }
 
-function plan(trees,mode,bindings,depth=0) {
+function plan(trees,mode,bindings,depth=0,sourceFragments=null) {
   const result=[];
   for(let at=0;at<trees.length;at++) {
     const tree=trees[at];
@@ -88,7 +92,7 @@ function plan(trees,mode,bindings,depth=0) {
         let separator=null,operator=text(trees[++at]);
         if(!['*','+','?'].includes(operator)){separator=trees[at];operator=text(trees[++at]);}
         if(!['*','+','?'].includes(operator)||separator&&(!text(separator)||operator==='?'))throw new TypeError('Unproved declarative repetition separator or operator');
-        const children=plan(next.children,mode,bindings,depth+1);
+        const children=plan(next.children,mode,bindings,depth+1,sourceFragments);
         if(mode==='matcher'&&!names(children).length&&matcherFirst(children).nullable)throw new TypeError('Declarative repetition requires a consuming original source sequence');
         result.push({kind:'repeat',children,separator,operator,sourceSyntax:syntax(tree,trees[at])});continue;
       }
@@ -102,7 +106,7 @@ function plan(trees,mode,bindings,depth=0) {
       }
       if(text(trees[++at])!==':'||!ident(trees[++at]))throw new TypeError('Declarative matcher requires an explicit fragment specifier');
       const fragment=trees[at].text;
-      if(!fragments.has(fragment))throw new TypeError('Declarative fragment is outside the checked initial profile: '+fragment);
+      if(!fragments.has(fragment)&&!(fragment==='pat'&&sourceFragments))throw new TypeError('Declarative fragment is outside the checked initial profile: '+fragment);
       if(fragment==='vis') {
         const follow=trees[at+1];
         const capture=text(follow)==='$'&&ident(trees[at+2])&&text(trees[at+3])===':'&&['ident','ty'].includes(text(trees[at+4]));
@@ -116,13 +120,18 @@ function plan(trees,mode,bindings,depth=0) {
       if(bindings.has(next.text))throw new TypeError('Duplicate declarative matcher variable');
       bindings.set(next.text,{fragment,depth});result.push({kind:'capture',name:next.text,fragment,depth,sourceSyntax:syntax(tree,trees[at])});continue;
     }
-    result.push(tree.kind==='group'?{kind:'group',delimiter:tree.delimiter,children:plan(tree.children,mode,bindings,depth),sourceSyntax:syntax(tree)}:{kind:'literal',tree});
+    result.push(tree.kind==='group'?{kind:'group',delimiter:tree.delimiter,children:plan(tree.children,mode,bindings,depth,sourceFragments),sourceSyntax:syntax(tree)}:{kind:'literal',tree});
   }
   return result;
 }
 
-export function compileDeclarativeMacro(source,{name,owner=[]}={}) {
+export function compileDeclarativeMacro(source,{name,owner=[],sourceFragments=null}={}) {
   if(!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name??'')||!Array.isArray(owner)||!owner.length||owner.length>32||owner.some(part=>typeof part!=='string'||part.length>128||!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(part)))throw new TypeError('Declarative definition requires explicit bounded source name and untrusted owner identity');
+  if(sourceFragments!==null){
+    if(!isOriginalMacroFragmentContext(sourceFragments))throw new TypeError('Declarative source fragments require a private original parser context');
+    const original=originalMacroFragmentDefinition(sourceFragments);
+    if(original.source!==source||original.name!==name||original.edition!=='2024')throw new TypeError('Declarative fragment definition/source edition differs from its private original profile');
+  }
   const trees=originalMacroTrees(source),found=[];
   for(let at=0;at<trees.length;at++) {
     let group=null;
@@ -135,13 +144,13 @@ export function compileDeclarativeMacro(source,{name,owner=[]}={}) {
   for(let at=0;at<body.children.length;) {
     const matcher=body.children[at++],arrow=body.children[at++],template=body.children[at++];
     if(matcher?.kind!=='group'||text(arrow)!=='=>'||template?.kind!=='group')throw new TypeError('Unproved original declarative rule grammar');
-    const bindings=new Map(),pattern=plan(matcher.children,'matcher',bindings),output=plan(template.children,'template',bindings);assertTypeFollowers(pattern);
+    const bindings=new Map(),pattern=plan(matcher.children,'matcher',bindings,0,sourceFragments),output=plan(template.children,'template',bindings,0,sourceFragments);assertTypeFollowers(pattern);
     rules.push({pattern,output,bindings:[...bindings],span:{start:matcher.span.start,end:template.span.end}});
     if(at<body.children.length&&![';',','].includes(text(body.children[at++])))throw new TypeError('Unproved declarative rule terminator');
   }
   if(!rules.length||rules.length>32)throw new TypeError('Declarative rule count budget exceeded');
   const evidence={schema:'bounded-declarative-macro-definition-v1',name,owner:[...owner],ownerVerified:false,sourceSha256:hash(source),definitionSpan:body.span,rules};
-  const definition=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});definitions.set(definition,{source,trees});return definition;
+  const definition=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});definitions.set(definition,{source,trees,sourceFragments});return definition;
 }
 
 // Fragment opacity survives forwarding. Literal matching cannot inspect ty or
@@ -243,7 +252,7 @@ function captureArray(captures,name,indices) {
   }
   return array;
 }
-function matchSequence(nodes,trees,start,captures,budget,indices=[]) {
+function matchSequence(nodes,trees,start,captures,budget,indices=[],sourceFragments=null) {
   let at=start;
   for(let index=0;index<nodes.length;index++) {
     if(--budget.steps<0)throw new TypeError('Declarative matching step budget exceeded');
@@ -251,12 +260,13 @@ function matchSequence(nodes,trees,start,captures,budget,indices=[]) {
     if(node.kind==='literal'){if(!sameLiteral(node.tree,trees[at]))return null;at++;continue;}
     if(node.kind==='group') {
       const actual=transparentTree(trees[at]);if(actual?.kind!=='group'||actual.delimiter!==node.delimiter)return null;
-      const nested=matchSequence(node.children,actual.children,0,captures,budget,indices);
+      const nested=matchSequence(node.children,actual.children,0,captures,budget,indices,sourceFragments);
       if(nested===null||nested!==actual.children.length)return null;at++;continue;
     }
     if(node.kind==='capture') {
-      const end=fragmentEnd(node.fragment,trees,at);if(end===null)return null;
-      const value=freezeMacroTree({kind:'fragment',fragment:node.fragment,trees:trees.slice(at,end)});
+      const parsed=sourceFragments&&['expr','pat'].includes(node.fragment)?parseOriginalMacroFragment(sourceFragments,node.fragment,trees,at):null;
+      const end=parsed?.end??fragmentEnd(node.fragment,trees,at);if(end===null)return null;
+      const value=freezeMacroTree({kind:'fragment',fragment:node.fragment,trees:trees.slice(at,end),...(parsed?{sourceAstCapture:parsed.capture}:{})});
       if(node.depth) {
         if(indices.length!==node.depth)throw new TypeError('Declarative capture depth lacks source iteration evidence');
         const array=captureArray(captures,node.name,indices.slice(0,-1)),index=indices.at(-1);
@@ -276,7 +286,7 @@ function matchSequence(nodes,trees,start,captures,budget,indices=[]) {
         let candidate=at;
         if(count&&node.separator){if(!sameLiteral(node.separator,trees[candidate]))break;candidate++;}
         const trial=new Map([...captures].map(([name,value])=>[name,copyCapture(value)]));
-        const end=matchSequence(node.children,trees,candidate,trial,budget,[...indices,count]);
+        const end=matchSequence(node.children,trees,candidate,trial,budget,[...indices,count],sourceFragments);
         if(end===null)break;if(end===candidate)throw new TypeError('Declarative repetition matched an empty source sequence');
         if(++count>budget.repetitions)throw new TypeError('Declarative repetition budget exceeded');
         captures.clear();for(const entry of trial)captures.set(...entry);at=end;
@@ -343,7 +353,7 @@ export function expandDeclarativeMacro(definition,input,{steps=16000,repetitions
   if(![steps,repetitions,output].every(value=>Number.isSafeInteger(value)&&value>0&&value<=100000))throw new TypeError('Invalid declarative expansion budgets');
   const budget={steps,repetitions,output};
   for(let index=0;index<definition.rules.length;index++) {
-    const rule=definition.rules[index],captures=new Map(),end=matchSequence(rule.pattern,input,0,captures,budget);
+    const rule=definition.rules[index],captures=new Map(),end=matchSequence(rule.pattern,input,0,captures,budget,[],definitions.get(definition).sourceFragments);
     if(end!==input.length)continue;
     const trees=transcribe(rule.output,captures,definition.owner,budget);
     checkOutputBudget(trees);

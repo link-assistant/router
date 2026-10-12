@@ -21,6 +21,11 @@ export function loadStandardMatchesSourceProfile() {
     if(bytes.length!==pin.bytes||hash(bytes)!==pin.sha256||sources.has(pin.sourcePath))throw new TypeError('Standard matches original source differs or is ambiguous');
     sources.set(pin.sourcePath,{pin,source:bytes.toString('utf8')});
   }
+  const cargo=sources.get('library/core/Cargo.toml').source,packageHeader=cargo.indexOf('[package]\n'),packageEnd=cargo.indexOf('\n[',packageHeader+1);
+  if(packageHeader<0||packageEnd<0)throw new TypeError('Standard macro definition lacks its original package table');
+  const packageText=cargo.slice(packageHeader,packageEnd),editions=[...packageText.matchAll(/^edition\s*=\s*"(20[0-9]{2})"\s*$/gmu)];
+  if(editions.length!==1||editions[0][1]!==manifest.definitionEdition)throw new TypeError('Standard macro definition edition differs from its original package');
+  const definitionEditionSource={sourcePath:'library/core/Cargo.toml',span:{start:packageHeader+editions[0].index,end:packageHeader+editions[0].index+editions[0][0].length},sha256:hash(editions[0][0]),edition:editions[0][1]};
   const source=sources.get(manifest.definition.sourcePath)?.source,range=manifest.definition.span;
   const original=source?.slice(range.start,range.end);
   if(!original||Buffer.byteLength(original)!==manifest.definition.bytes||hash(original)!==manifest.definition.sha256)throw new TypeError('Standard matches original definition span differs');
@@ -30,7 +35,7 @@ export function loadStandardMatchesSourceProfile() {
   if(trees.length!==4||trees[0].text!=='macro_rules'||trees[1].text!=='!'||trees[2].text!==manifest.macroName||trees[3].delimiter!=='{')throw new TypeError('Standard matches original definition grammar differs');
   const reexports=stablePublicReexportCandidates(sources.get('library/std/src/lib.rs').source).filter(row=>row.name===manifest.macroName&&row.path.join('::')==='core::'+manifest.macroName);
   if(reexports.length!==1)throw new TypeError('Standard matches original std reexport is absent or ambiguous');
-  const evidence={schema:manifest.schema,profileSha256:PROFILE_SHA,rustVersion:manifest.rustVersion,definitionEdition:manifest.definitionEdition,name:manifest.macroName,
+  const evidence={schema:manifest.schema,profileSha256:PROFILE_SHA,rustVersion:manifest.rustVersion,definitionEdition:definitionEditionSource.edition,definitionEditionSource,name:manifest.macroName,
     sources:manifest.sources,licenses:manifest.licenses,definition:manifest.definition,originalDefinitionTrees:trees,
     enclosingOriginalItem:{term:item.term,name:item.name,span:{start:item.start,end:item.end},sha256:hash(source.slice(item.start,item.end)),tokens:item.tokens},
     stdReexport:reexports[0],remainingObligations:manifest.remainingObligations,...flags};

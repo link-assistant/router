@@ -9,6 +9,7 @@ test('full original matches definition and enclosing attributes retain exact sou
   assert.equal(source.slice(profile.definition.span.start,profile.definition.span.end),original);assert.equal(hash(original),profile.definition.sha256);
   const item=profile.enclosingOriginalItem;assert.equal(hash(source.slice(item.span.start,item.span.end)),item.sha256);
   assert.ok(item.tokens.some(token=>token.text==='macro_export'));assert.ok(item.tokens.some(token=>token.text==='stable'));
+  const cargo=standardMatchesOriginalSource(profile,'library/core/Cargo.toml').source,edition=profile.definitionEditionSource;assert.equal(hash(cargo.slice(edition.span.start,edition.span.end)),edition.sha256);assert.equal(edition.edition,'2024');
   assert.equal(profile.originalDefinitionTrees[3].delimiter,'{');assert.equal(profile.definitionEdition,'2024');
 });
 test('actual standard reexport and full injection handler stay original source evidence',()=>{
