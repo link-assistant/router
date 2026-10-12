@@ -563,7 +563,7 @@
       "format_finite"
     ]
   },
-  "sourceCapture": "Complete original Cargo-selected formatter archive captured offline byte-for-byte with all 17 members and MIT license verified; no formatter/runtime/unsafe/parse admission is granted.",
+  "sourceCapture": "Complete Cargo-selected formatter archive already exists locally; repository source capture pending separate Gate grant.",
   "arithmeticStages": "Existing generic translateProject on complete original module files, followed by checked semantic roundtrip and original-span coverage. No selected body replacement.",
   "authority": {
     "sourceIdentityOnly": true,
