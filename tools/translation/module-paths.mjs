@@ -92,6 +92,14 @@ function originalModulePath(module,item,paths,retainUnknown){
   if(attributes.length>1)fail('duplicate path attributes retain a semantic obligation');
   if(configuration.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&!['cfg','path'].includes(attribute.name)&&!(attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')))fail('enclosing module attribute owner or expansion is unresolved');
   const parsed=header(original,configuration),override=attributes.length?literal(attributes[0]):null;
+  if(retainUnknown&&configuration.status==='unknown'){
+    const alternatives=originalSourceModuleItems(module).filter(candidate=>{
+      if(candidate.term!=='mod')return false;
+      const condition=itemConfiguration(candidate.tokens,module.compilationProfile);if(condition.status==='inactive')return false;
+      return header(candidate,condition).name===parsed.name;
+    });
+    if(alternatives.length!==1)fail('conditional module source has competing original declaration alternatives');
+  }
   if(!parsed.inline&&override===null&&!asciiIdentifier.test(parsed.name))fail('default external module name requires the ASCII filesystem identifier profile');
   let target=null,directory,childPathDirectory,candidates=[];
   if(parsed.inline){

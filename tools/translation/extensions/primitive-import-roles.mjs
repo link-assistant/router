@@ -99,8 +99,10 @@ function coreRole(path,depth=0){
   const first=sourceItems(root.source).filter(item=>item.term==='mod'&&item.name===path[1]&&publicItem(item));if(first.length!==1)return null;
   if(path.length===2)return {kind:'mod',source:root.path,sourceSha256:root.sha256,span:{start:first[0].start,end:first[0].end}};
   if(path[1]==='arch'&&path.length===4&&['x86','x86_64','aarch64'].includes(path[2])){
+    const bridge=files.get('library/core/src/arch.rs');
+    if(!sourceItems(bridge.source).filter(item=>item.term==='use'&&publicItem(item)).some(item=>originalUseDeclarationLeaves(item).some(leaf=>leaf.glob&&same(leaf.segments,['crate','core_arch','arch']))))return null;
     const census=architectureCensus(),routes=architectureRouteFiles(path[2]);if(census.names.has(path[3])||!routes.some(file=>census.declarations.get(file)?.has(path[3])))return null;
-    return {kind:'original-architecture-nontrait-candidate',path,originalExportFiles:routes,evidence:census.evidence};
+    return {kind:'original-architecture-nontrait-candidate',path,originalCoreBridge:{source:bridge.path,sourceSha256:bridge.sha256},originalExportFiles:routes,evidence:census.evidence};
   }
   if(path[1]==='arch'&&path.length===3){
     const pin=files.get('library/core/src/arch.rs'),items=sourceItems(pin.source).filter(item=>item.name===path[2]&&nonTraits.has(item.term)&&publicItem(item));

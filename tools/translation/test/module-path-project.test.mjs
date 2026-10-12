@@ -58,6 +58,10 @@ test('unknown path sources remain carried while inactive or transformed declarat
     if(unknown){assert.ok(result.meta.refused.some(entry=>entry.file==='src/actual.rs'&&entry.message==='unknown crate compilation condition'));const edge=result.meta.moduleEdges.find(edge=>edge.to==='src/actual.rs');assert.equal(edge.pathSelection.configurationCondition,'unknown');assert.equal(edge.pathSelection.availabilitySelected,false);}
     if(!declaration.startsWith('#[cfg(test)]'))assert.ok(result.meta.moduleDiagnostics.length);
   }
+  const files={'src/lib.rs':'#[cfg(unix)]#[path="unix.rs"]mod child;#[cfg(windows)]#[path="windows.rs"]mod child;','src/unix.rs':'pub struct Candidate;','src/windows.rs':'pub trait Candidate{fn from(value:bool)->Self;}'};
+  const read=[],result=translateProject({...options(files,PRODUCTION_PROFILE),readSource:path=>{read.push(path);return files[path];}});
+  assert.deepEqual(read,['src/lib.rs']);assert.equal(result.meta.moduleEdges.length,0);assert.equal(result.meta.executable.length,0);
+  assert.equal(result.meta.moduleDiagnostics.filter(row=>row.message.includes('competing original declaration alternatives')).length,2);
 });
 
 test('circular literal paths are diagnosed before repeated whole-file reads',()=>{

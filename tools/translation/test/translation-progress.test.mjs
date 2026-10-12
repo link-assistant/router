@@ -14,7 +14,7 @@ import {TranslationError} from '../vendor/meta-language/translation/diagnostics.
 import {createCompilationMatrix,compilationMatrixDescription,DECLARED_FAMILY_PROFILES} from '../compilation-matrix.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const source='pub struct Counter{value:u8}impl Counter{pub fn read(&self)->u8{self.value}}pub fn plus(v:u8)->u8{Counter{value:v}.read()}pub fn bad()->u8{unknown()}';
-const fields=new Set(['schema','stage','state','entry','source','profile','completed','total','attempt','remaining','outputs','bytes']);
+const fields=new Set(['schema','stage','state','entry','source','profile','declaration','phase','completed','total','attempt','remaining','outputs','bytes']);
 function assertRecords(records){
   assert.ok(records.length>0);
   for(const row of records){assert.ok(Object.isFrozen(row));assert.equal(row.schema,'rust-meta-translation-progress-v1');assert.ok(Object.keys(row).every(key=>fields.has(key)));assert.ok(Object.values(row).every(value=>typeof value==='string'||Number.isSafeInteger(value)));}
@@ -40,7 +40,7 @@ test('diagnostic records are frozen bounded scalar data and reject hostile descr
   const accessor={stage:'plan',get state(){calls++;return 'end';}};
   const proxy=new Proxy({stage:'plan',state:'end'},{get(){calls++;throw Error('get');},getPrototypeOf(){calls++;throw Error('prototype');},ownKeys(){calls++;throw Error('keys');},getOwnPropertyDescriptor(){calls++;throw Error('descriptor');}});
   assert.throws(()=>emit(accessor),TypeError);assert.throws(()=>emit(proxy),TypeError);assert.equal(calls,0);assert.equal(records.length,2);
-  const oversized=Object.fromEntries(Array.from({length:12},(_,at)=>['unknown'+at,0]));assert.throws(()=>emit(oversized),/field budget/);
+  const oversized=Object.fromEntries(Array.from({length:fields.size},(_,at)=>['unknown'+at,0]));assert.throws(()=>emit(oversized),/field budget/);
   const hidden={stage:'plan',state:'end'};Object.defineProperty(hidden,'completed',{value:0});assert.throws(()=>emit(hidden),TypeError);
   assert.throws(()=>translationProgressReporter({}),TypeError);
 });
@@ -50,6 +50,7 @@ test('project diagnostics preserve exact Rust meta JavaScript and strict TypeScr
   assert.equal(traced.meta.refused.some(row=>row.name==='bad'),true);assert.equal(traced.meta.executable.some(row=>row.name==='bad'),false);
   for(const stage of ['project-graph','namespace','module-parse','method-parse','semantic-check','target-emit','project-serialize'])assert.ok(records.some(row=>row.stage===stage&&row.state==='end'));
   assert.ok(records.some(row=>row.stage==='semantic-check'&&row.state==='advance'&&row.remaining>0));
+  const refusal=records.filter(row=>row.stage==='semantic-refusal');assert.ok(refusal.some(row=>row.declaration==='bad'&&row.source==='src/lib.rs'&&row.phase==='declaration-bodies'));
   await verifyTypedTargets(traced,api=>{assert.equal(api.plus(0n),0n);assert.equal(api.plus(255n),255n);assert.throws(()=>api.plus(256n),RangeError);assert.equal('bad'in api,false);},{childTimeoutMs:30_000});
 });
 test('full fixture plans remain byte-identical and callback failures write no partial artifacts',{timeout:90_000},()=>{
@@ -59,7 +60,7 @@ test('full fixture plans remain byte-identical and callback failures write no pa
     assert.deepEqual(traced.outputs,plain.outputs);assert.equal(JSON.stringify(traced.manifest),JSON.stringify(plain.manifest));assertRecords(records);
     assert.ok(records.some(row=>row.stage==='plan'&&row.state==='end'&&row.outputs===traced.outputs.length&&row.bytes===traced.expectedBytes));
     const before=snapshot(root),sentinel=new TranslationError('progress-sentinel','fixture diagnostic callback failed',{start:0,end:1});
-    for(const [stage,state]of [['corpus','start'],['module-parse','advance'],['semantic-check','advance'],['plan','end']]){
+    for(const [stage,state]of [['corpus','start'],['module-parse','advance'],['semantic-check','advance'],['semantic-refusal','advance'],['plan','end']]){
       assert.throws(()=>planRegeneration({...options,progress:row=>{if(row.stage===stage&&row.state===state)throw sentinel;}}),error=>error===sentinel);assert.deepEqual(snapshot(root),before);
     }
     for(const output of OUTPUT_ROOTS)assert.equal(existsSync(join(root,output)),false);

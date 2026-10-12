@@ -363,6 +363,7 @@ export function translateProject(options) {
         if(!owner||failure.name&&failure.name!==owner.name)throw new Error(`unattributed project semantic refusal: ${cause.reason}`,{cause});
         if(owners.has(owner))continue;
         owners.add(owner);refused.push({file:owner.file,name:owner.name,term:owner.term,...diagnostic(cause)});
+        progress({stage:'semantic-refusal',state:'advance',entry:options.entry,source:owner.file,declaration:owner.name,phase:failure.phase??'uncollected',attempt:attempts,completed:owners.size});
       }
       active=active.filter(declaration=>!owners.has(declaration));
     }
