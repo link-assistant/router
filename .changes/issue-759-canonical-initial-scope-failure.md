@@ -1,0 +1,1 @@
+Preserve the complete first combined-corpus generation failure and unchanged source evidence. The method binding-scope mismatch blocks profile generation; no artifacts or parity gains are claimed from this attempt.
