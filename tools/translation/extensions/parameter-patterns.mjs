@@ -13,6 +13,7 @@ export function withParameterPatternParser(Base) {
   return class extends Base {
     fn(path) {
       const c=this.cursor,start=c.expect('fn','function'),name=c.identifier('function').value;
+      const sourceLifetimeParameters=c.is('<')?this.sourceLifetimeParameters?.():null;
       if(c.is('<'))throw unsupported('generic function','generic signatures require monomorphization',range(start,c.peek()));
       c.expect('(','function');
       const params=[],patterns=[],bound=new Set();
@@ -38,7 +39,7 @@ export function withParameterPatternParser(Base) {
       if(c.is('where'))throw unsupported('where clause','trait bounds require resolved trait implementations',range(start,c.peek()));
       let body=this.block(path);const originalBodySpan={...body.span};
       for(const {parameter,pattern} of patterns.toReversed())body={k:'routerLetPattern',pattern,subject:{k:'name',path:[parameter.name],span:parameter.span},body,span:pattern.span,sourceParameterBinding:true};
-      return {k:'fn',name,params,ret,body,span:range(start,c.peek()),...(patterns.length?{sourceParameterPatterns:{profile:'checked-irrefutable-parameters-v1',originalBodySpan,bindings:patterns.map(({parameter,pattern})=>({parameter:parameter.name,pattern}))}}:{})};
+      return {k:'fn',name,params,ret,body,span:range(start,c.peek()),...(sourceLifetimeParameters?{sourceLifetimeParameters}:{}),...(patterns.length?{sourceParameterPatterns:{profile:'checked-irrefutable-parameters-v1',originalBodySpan,bindings:patterns.map(({parameter,pattern})=>({parameter:parameter.name,pattern}))}}:{})};
     }
   };
 }

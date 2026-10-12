@@ -31,7 +31,7 @@ function referenceLifetime(type) {
   const values=type.rustReference?.tokens?.map(token=>token.value);
   if(values?.[0]!=='&')return null;
   // A nested pointee's 'static token cannot qualify the outer reference.
-  return values[1]!=="'"?'elided':values[2]==='static'?'static':null;
+  return values[1]!=="'"?'elided':values[2]==='static'?'static':values[2]?`named:${values[2]}`:null;
 }
 // Paths distinguish separate nested references in a single source parameter.
 export function sourceBorrowRegions(type,{declarations,resolveType=type=>type}={},path=[],active=new Set()) {
@@ -63,8 +63,14 @@ export function sourceBorrowRegions(type,{declarations,resolveType=type=>type}={
   return result;
 }
 
+const namedKind=kind=>typeof kind==='string'&&kind.startsWith('named:');
+function namedIdentity(entry,kind,span) {
+  const source=entry.sourceLifetimeParameters;
+  if(source?.profile!=='source-named-shared-lifetimes-v1'||!source.names.includes(kind.slice(6)))throw unsupported('named lifetime identity','requires its actual source function binder',span??entry.span);
+  return `function:${entry.fullName}:${kind}`;
+}
 export function functionLifetimeSignature(entry,context={}) {
-  const params=entry.params.map((param,index)=>sourceBorrowRegions(param.type,context).map(region=>({...region,param:index,identity:region.kind==='static'?'static':`input:${index}:${JSON.stringify(region.path)}`})));
+  const params=entry.params.map((param,index)=>sourceBorrowRegions(param.type,context).map(region=>({...region,param:index,identity:region.kind==='static'?'static':namedKind(region.kind)?namedIdentity(entry,region.kind,region.span):`input:${index}:${JSON.stringify(region.path)}`})));
   const outputs=sourceBorrowRegions(entry.ret,context);
   if(params.flat().some(region=>region.kind==='unknown'))throw unsupported('input lifetime syntax','requires retained actual source lifetime syntax',entry.span);
   const identities=new Set(params.flat().map(region=>region.identity));
@@ -82,7 +88,7 @@ export function functionLifetimeSignature(entry,context={}) {
       else if(receiverRegion)output.identity=receiverRegion;
       else if(identities.size===1)output.identity=[...identities][0];
       else throw typeError('Borrowed result lifetime cannot be elided: the function needs exactly one input lifetime or a proven shared receiver',output.span??entry.span);
-    } else output.identity='static';
+    } else output.identity=namedKind(output.kind)?namedIdentity(entry,output.kind,output.span):'static';
   }
   return {schemaVersion:1,profile:'source-shared-elision-v1',params,outputs,span:entry.span};
 }
@@ -198,7 +204,14 @@ function origins(node,env,context,returns,depth=0) {
   if(node.k==='let') {
     if(node.mutable&&hasBorrow(node.value.type,context))throw unsupported('mutable borrowed local','the lifetime profile requires immutable borrow bindings',node.span??context.entry.span);
     const value=read(node.value),inner=new Map(env);
-    if(node.sourceBindingLifetimeType&&!emptyBorrowValue(node.value,context))checkStaticArguments({params:[sourceBorrowRegions(node.sourceBindingLifetimeType,context)]},[value],node.span??context.entry.span);
+    if(node.sourceBindingLifetimeType&&!emptyBorrowValue(node.value,context)) {
+      const regions=sourceBorrowRegions(node.sourceBindingLifetimeType,context);
+      checkStaticArguments({params:[regions]},[value],node.span??context.entry.span);
+      for(const region of regions)if(namedKind(region.kind)) {
+        const identity=namedIdentity(context.entry,region.kind,region.span),actual=at(value,region.path);
+        if(!actual.size||[...actual].some(origin=>origin!=='static'&&origin!==identity))throw typeError('A named local borrow requires its actual function lifetime origin',node.span??context.entry.span);
+      }
+    }
     inner.set(node.name,value);return read(node.body,inner);
   }
   if(node.k==='routerOrderedArm'){if(node.guard)read(node.guard);return read(node.body);}
@@ -215,8 +228,10 @@ function origins(node,env,context,returns,depth=0) {
     if(!signature) return borrowed?new Set([UNKNOWN]):new Set();
     checkStaticArguments(signature,arguments_,node.span??context.entry.span);
     return leafOrigins(new Map(signature.outputs.map(region=>{
-      const input=signature.params.flat().find(input=>input.identity===region.identity);
-      const origin=region.identity==='static'?new Set(['static']):input&&arguments_[input.param]?at(arguments_[input.param],input.path):new Set([UNKNOWN]);
+      const inputs=signature.params.flat().filter(input=>input.identity===region.identity);
+      // An instantiated named lifetime is constrained by every contributing
+      // input. Choosing just its first input could allow the second to escape.
+      const origin=region.identity==='static'?new Set(['static']):inputs.length?new Set(inputs.flatMap(input=>[...(arguments_[input.param]?at(arguments_[input.param],input.path):new Set([UNKNOWN]))])):new Set([UNKNOWN]);
       return [key(region.path),origin];
     })));
   }
@@ -313,7 +328,7 @@ export function withSourceLifetimeChecker(Base) {
       if(this.language!=='Rust'||node.k!=='let'||!node.type)return value;
       const declared=this.resolveType(node.type,path,node.span);
       const context={declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope,span)};
-      if(!sourceBorrowRegions(declared,context).some(region=>region.kind==='static'))return value;
+      if(!sourceBorrowRegions(declared,context).some(region=>region.kind==='static'||namedKind(region.kind)))return value;
       if(value.k!=='let')throw unsupported('local static borrow constraint','requires the original checked local binding',node.span);
       return {...value,sourceBindingLifetimeType:declared};
     }

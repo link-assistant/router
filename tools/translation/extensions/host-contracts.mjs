@@ -8,6 +8,7 @@ import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './ma
 import {parseStandardMatches,emitOrderedMatch} from './ordered-matches.mjs';
 import {withSourceOwnershipParser,withSourceOwnershipChecker} from './ownership.mjs';
 import {withSourceLifetimeChecker} from './source-lifetimes.mjs';
+import {withNamedLifetimeParser} from './named-lifetimes.mjs';
 import {withSharedArrayBorrowChecker} from './array-borrows.mjs';
 import {withFixedArrayParser,withFixedArrayChecker,fixedArrayCopyCells} from './fixed-arrays.mjs';
 import {EffectEmitter,effectData} from './effects.mjs';
@@ -94,7 +95,7 @@ export function hostData() {
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
-export class HostRustParser extends withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser))))) {
+export class HostRustParser extends withNamedLifetimeParser(withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser)))))) {
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
   genericType(kind,types,range){const type=super.genericType(kind,types,range),entry=this.genericTypes.get(type.path.at(-1));return {...type,rustStandardGeneric:{kind,arguments:structuredClone(entry.standardGeneric.arguments)}};}
   attributes(options={}) {
@@ -193,6 +194,7 @@ export class HostRustParser extends withCapturedSourceParser(withSourceNamespace
     // && is one lexer token, but two borrows only in a source type position.
     // Split its coordinates here; boolean expression tokens remain untouched.
     if(c.is('&&')){const token=c.peek();c.tokens=[...c.tokens.slice(0,c.index),{...token,value:'&',end:token.start+1},{...token,value:'&',start:token.start+1},...c.tokens.slice(c.index+1)];}
+    const named=this.namedSourceReferenceType();if(named)return named;
     const first=c.peek();
     if(c.is('&')){
       const start=c.index;c.next();
