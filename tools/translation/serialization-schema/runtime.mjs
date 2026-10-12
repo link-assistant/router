@@ -1,10 +1,14 @@
 import { SerializationRefusal } from './extract.mjs';
 import { requireCheckedSerializationMeta } from './meta.mjs';
 import { projectSerializationDescriptor } from './descriptor.mjs';
+import { serializeBoundedJson } from './json-adapter.mjs';
 
 const fail = message => { throw new SerializationRefusal(message); };
 const members = new WeakMap();
 class JsonNumber { constructor(raw) { this.raw=raw; } }
+// Only the privately checked apply path issues these already serialized fields.
+// Caller strings and algebraic constructors never become raw wire snippets.
+class JsonWire { constructor(text) { this.text=text; } }
 const integerBounds=Object.freeze(Object.fromEntries([8,16,32,64].flatMap(bits=>[
   ['i'+bits,[-(1n<<BigInt(bits-1)),(1n<<BigInt(bits-1))-1n]],
   ['u'+bits,[0n,(1n<<BigInt(bits))-1n]],
@@ -68,6 +72,7 @@ function readJSON(text) {
   const output=value();whitespace();if(at!==text.length)fail('Trailing JSON characters');return output;
 }
 function writeJSON(value) {
+  if(value instanceof JsonWire)return value.text;
   if(typeof value==='bigint')return value.toString();
   if(Array.isArray(value))return '['+value.map(writeJSON).join(',')+']';
   if(value&&typeof value==='object')return '{'+Object.entries(value).map(([key,child])=>JSON.stringify(key)+':'+writeJSON(child)).join(',')+'}';
@@ -86,6 +91,10 @@ export function createSerializationCodec(input,{root}={}) {
     if(type==='bool') {if(typeof value!=='boolean')fail('Expected boolean visitor');return value;}
     if(Object.hasOwn(integerBounds,type))return integer(value,type);
     const spec=typeof type==='string'?schema[type]:type;if(!spec)fail('Unknown checked schema type');
+    if(['json-value','json-map'].includes(spec.kind)) {
+      if(!encoding)fail('Actual serde_json decoding profile remains refused');
+      return new JsonWire(serializeBoundedJson(value,spec.kind));
+    }
     if(spec.kind==='vec') {if(!Array.isArray(value))fail('Expected a sequence');return value.map(child=>apply(child,spec.type,encoding,depth+1));}
     if(spec.kind==='enum') {
       if(!encoding&&typeof value!=='string'){const pairs=entries(value);if(pairs.length!==1||pairs[0][1]!==null)fail('Expected unit enum');value=pairs[0][0];}

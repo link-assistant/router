@@ -42,6 +42,10 @@ export function projectSerializationDescriptor(input) {
   for(const type of meta.types) { if([...names.values()].includes(type.name))refuse('Distinct qualified source owners collide in the ordinary store ABI: '+type.name);names.set(type.owner,type.name); }
   function projectType(type) {
     if(type.kind==='primitive')return type.name;
+    if(['json-value','json-map'].includes(type.kind)) {
+      if((meta.direction??'both')!=='serialize')refuse('Actual serde_json decoding profile remains refused: '+(type.sourceProof.actualParserProfile.diagnostic??'separate numeric/typed visitor proof required'));
+      return {kind:type.kind,owner:type.owner,sourceProfileSha256:type.sourceProof.profileSha256,domain:type.sourceProof.domain,finiteFloatFormattingAvailable:false,manualTraitCompleteness:false};
+    }
     if(type.kind==='named'){if(!names.has(type.owner))refuse('Missing reachable serialization owner');return names.get(type.owner);}
     if(type.kind==='vec')return {kind:'vec',type:projectType(type.type)};
     refuse('Nested Option requires a separately proven descriptor ABI');
@@ -65,7 +69,7 @@ export function projectSerializationDescriptor(input) {
         if(entries.some(entry=>entry.key==='skip_serializing_if'))refuse('Non-Option omission requires a separately checked original predicate');
         if(entries.some(entry=>entry.key==='default')&&!field.defaultProof)refuse('Non-Option default requires a separately checked original Default body');
       }
-      return {name,type:projectType(optional?field.type.type:field.type),optional,...(aliases.length?{aliases}:{}),...(field.defaultProof?{default:{kind:'primitive',value:field.defaultProof.checkedLiteral.value}}:{}),...(optional&&value(entries,'skip_serializing_if')===null?{omitNone:false}:{}),...(optional&&!entries.some(entry=>entry.key==='default')?{sequenceDefault:false}:{})};
+      return {name,type:projectType(optional?field.type.type:field.type),optional,...(aliases.length?{aliases}:{}),...(field.defaultProof?{default:field.defaultProof.schema==='original-json-value-default-v1'?{kind:'json-value',value:field.defaultProof.value}:{kind:'primitive',value:field.defaultProof.checkedLiteral.value}}:{}),...(optional&&value(entries,'skip_serializing_if')===null?{omitNone:false}:{}),...(optional&&!entries.some(entry=>entry.key==='default')?{sequenceDefault:false}:{})};
     });
   }
   for(const type of meta.types) {

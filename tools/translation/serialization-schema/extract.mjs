@@ -11,6 +11,7 @@ import { compilationProfile, itemConfiguration } from '../cfg-profile.mjs';
 import { configureParserSourceScope } from '../source-scopes.mjs';
 import { withSourceNamespaceParser } from '../extensions/source-namespaces.mjs';
 import { primitiveFieldDefault } from './primitive-default.mjs';
+import { captureJsonSerializationSources, jsonSerializationExternalModule, jsonSerializationType, jsonValueDefault } from './json-source.mjs';
 
 const contexts = new WeakMap();
 // Reuse the production namespace walk and original visibility/reexport maps;
@@ -32,14 +33,16 @@ export function captureSerializationContext({ root, paths, entry = 'src/lib.rs',
   const graph = resolveModuleGraph({ entry, paths: sourceCorpusPaths(corpus, root), readSource: path => sourceCorpusText(corpus, root, path), compilationProfile: profile });
   const dependencies = loadDeriveDependencyProof({ manifest: sourceCorpusText(corpus, root, 'Cargo.toml'), lock: sourceCorpusText(corpus, root, 'Cargo.lock') });
   const derive = createDeriveFootprintContext({ modules: graph.modules, dependencies, compilationProfile: profile });
-  const bindings = resolveModuleBindings({ modules: graph.modules, externalModules: deriveFootprintExternalModules(derive), deriveContext: derive, compilationProfile: profile });
+  const json=captureJsonSerializationSources({manifest:sourceCorpusText(corpus,root,'Cargo.toml'),lock:sourceCorpusText(corpus,root,'Cargo.lock'),deriveDependencies:dependencies,compilationProfile:profile});
+  const external=new Map(deriveFootprintExternalModules(derive));external.set('serde_json',jsonSerializationExternalModule(json));
+  const bindings = resolveModuleBindings({ modules: graph.modules, externalModules: external, deriveContext: derive, compilationProfile: profile });
   const modules = new Map(graph.modules.map(module => [key(['crate', ...module.path]), module]));
   const scopes = new Map(bindings.scopes.map(scope => [key(['crate', ...scope.path]), scope]));
   const caseInput=deriveDependencySource(dependencies,'serde_derive','src/internals/case.rs');
   const {source:caseBody,...caseSource}=caseInput;
   const dependencyEvidence={schema:dependencies.schema,manifestSha256:dependencies.manifestSha256,lockSha256:dependencies.lockSha256,sourceProfileSha256:dependencies.sourceProfileSha256,edition:dependencies.edition,rustVersion:dependencies.rustVersion,features:dependencies.features,packages:dependencies.packages,standardCore:dependencies.standardCore};
   const description = freeze({ schema: 'original-serialization-context-v1', entry, compilationProfile: profile, sourceSetSha256: corpus.sourceSetSha256, sources: corpus.sources, cargo: corpus.cargo, dependenciesDigest: dependencies.digest, caseSource, dependencyEvidence, runtimeAuthority: false, generatedTraitBehavior: false });
-  contexts.set(description, { corpus, graph, modules, scopes, derive, dependencies, namespaceResolvers:new Map() });
+  contexts.set(description, { corpus, graph, modules, scopes, derive, dependencies, json, namespaceResolvers:new Map() });
   return description;
 }
 export const isSerializationContext = context => !!context && contexts.has(context);
@@ -98,6 +101,13 @@ function resolvePath(s,module,path,allowPrelude=false) {
   // Keep each occurrence's route evidence independent of prior field walks.
   resolver.sourceNamespaceResolvedBindings=new Map();
   const canonical=resolver.resolveSourceNamespace(segments,module.path,'type');
+  if(Array.isArray(canonical)&&canonical.length===2&&canonical[0]==='serde_json'&&['Value','Map'].includes(canonical[1])) {
+    if(segments[0]==='serde_json')for(let depth=module.path.length;depth>=0;depth--) {
+      const ancestor=s.scopes.get(key(['crate',...module.path.slice(0,depth)])),binding=ancestor?.bindings.find(binding=>binding.namespace==='type'&&binding.name==='serde_json');
+      if(binding&&(binding.status!=='resolved'||key(binding.target??[])!=='serde_json'))refuse('Original external JSON crate root is shadowed or unresolved',module);
+    }
+    return {owner:key(canonical),primitive:null,json:canonical[1],routeBindings:[...resolver.sourceNamespaceResolvedBindings.values()]};
+  }
   if(!Array.isArray(canonical)||canonical[0]!=='crate'||canonical.some(part=>part.startsWith('ml_'))) refuse('Written serialization type is inaccessible or has no checked original source route: '+path,module);
   const ownerScope=s.scopes.get(key(canonical.slice(0,-1)));
   if(!ownerScope || ownerScope.unresolvedTypeScope) refuse('Qualified serialization type scope remains unresolved: '+key(canonical),module);
@@ -111,8 +121,16 @@ function typeReference(s,module,tokens,depth=0) {
   while(at<tokens.length) { const token=tokens[at++];if(token.type!=='ident' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(token.text)) refuse('Unsupported serialization type syntax',module,span(tokens));names.push(token.text);if(tokens[at]?.text!=='::')break;at++; }
   const written=names.join('::'), resolution=resolvePath(s,module,written,true), evidence={written,owner:resolution.owner,span:span(tokens),...(resolution.routeBindings?{routeBindings:resolution.routeBindings}:{})};
   if(at===tokens.length) {
+    if(resolution.json==='Map')refuse('External JSON Map requires its exact String/Value arguments',module,span(tokens));
+    if(resolution.json)return {...evidence,kind:'json-value',sourceProof:jsonSerializationType(s.json,resolution.json)};
     if(['Vec','Option'].includes(resolution.primitive)) refuse('Generic serialization constructor lacks its element type',module,span(tokens));
     return {...evidence,kind:resolution.primitive?'primitive':'named',...(resolution.primitive?{name:resolution.primitive}:{})};
+  }
+  if(resolution.json==='Map'&&tokens[at]?.text==='<'&&matching(tokens,at)===tokens.length-1) {
+    const args=groups(tokens.slice(at+1,-1));if(args.length!==2)refuse('External JSON Map has unsupported arity',module,span(tokens));
+    const types=args.map(tokens=>typeReference(s,module,tokens,depth+1));
+    if(types[0].kind!=='primitive'||types[0].owner!=='rust-prelude::String'||types[1].kind!=='json-value'||types[1].owner!=='serde_json::Value')refuse('Only the actual external Map<String,Value> trait specialization is admitted',module,span(tokens));
+    return {...evidence,kind:'json-map',arguments:types,sourceProof:jsonSerializationType(s.json,'Map')};
   }
   if(tokens[at]?.text!=='<' || matching(tokens,at)!==tokens.length-1 || !['Vec','Option'].includes(resolution.primitive)) refuse('Only proven Option/Vec type applications are projected',module,span(tokens));
   const args=groups(tokens.slice(at+1,-1));if(args.length!==1) refuse('Serialization constructor arity is unsupported',module,span(tokens));
@@ -126,6 +144,9 @@ function fields(s,module,tokens,input) {
     const bareDefault=field.attributes.some(attribute=>attribute.name==='serde'&&attribute.helpers?.some(helper=>helper.key==='default'&&helper.value===null));
     if(bareDefault&&field.type.kind==='primitive'&&/^(?:bool|[iu](?:8|16|32|64))$/.test(field.type.name)) {
       try{field.defaultProof=primitiveFieldDefault(field.type,s.dependencies);}catch(error){refuse('Original primitive Default body is unproved: '+error.message,module,field.span);}
+    }
+    if(bareDefault&&field.type.kind==='json-value') {
+      try{field.defaultProof=jsonValueDefault(s.json);}catch(error){refuse('Original JSON Default body is unproved: '+error.message,module,field.span);}
     }
     return field;
   });

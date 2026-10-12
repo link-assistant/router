@@ -1,0 +1,145 @@
+{
+  "schema": "original-json-serialization-source-profile-v1",
+  "package": "serde_json",
+  "version": "1.0.151",
+  "archive": "../source-profiles/json-macro/serde_json-1.0.151.crate",
+  "archiveBytes": 156556,
+  "archiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+  "manifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "lockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+  "members": [
+    {
+      "path": "src/lib.rs",
+      "bytes": 14369,
+      "sha256": "34a1ddabdcf4759d9a6c64a2e851372546d635d1a578ad902d962fef3c45de58"
+    },
+    {
+      "path": "src/value/mod.rs",
+      "bytes": 30963,
+      "sha256": "6331d59ea362a74b6cd3d302d08114a63a73a384ff56fef737de29edea2f8d91"
+    },
+    {
+      "path": "src/value/ser.rs",
+      "bytes": 28223,
+      "sha256": "11f2b7daa1eba826d4086d5497f73729478dd7647bff77deccde5e47b0f126f2"
+    },
+    {
+      "path": "src/value/de.rs",
+      "bytes": 41251,
+      "sha256": "ceda1bf415aafde89caa83bf275811b70d393717d4e1038e0c61822d2da02993"
+    },
+    {
+      "path": "src/number.rs",
+      "bytes": 25285,
+      "sha256": "70b83c36286f6c58123f544f27db2b54a1135f928fe33b08b521b2997773f862"
+    },
+    {
+      "path": "src/map.rs",
+      "bytes": 35057,
+      "sha256": "b5a2fd1ee865e6cfd83ef2da0a2e1057f892465ac7ede8a78a11354a60526f33"
+    }
+  ],
+  "publicExports": {
+    "source": "src/lib.rs",
+    "declaration": "pub use crate::value::{from_value, to_value, Map, Number, Value};"
+  },
+  "types": [
+    {
+      "name": "Value",
+      "owner": [
+        "serde_json",
+        "Value"
+      ],
+      "declaration": {
+        "source": "src/value/mod.rs",
+        "term": "enum",
+        "name": "Value",
+        "qualifiedOwner": [
+          "serde_json",
+          "value",
+          "Value"
+        ]
+      },
+      "serialize": {
+        "source": "src/value/ser.rs",
+        "header": "implSerializeforValue",
+        "method": "serialize"
+      },
+      "deserialize": {
+        "source": "src/value/de.rs",
+        "header": "impl<'de>Deserialize<'de>forValue",
+        "method": "deserialize"
+      },
+      "default": {
+        "source": "src/value/mod.rs",
+        "header": "implDefaultforValue",
+        "method": "default"
+      }
+    },
+    {
+      "name": "Map",
+      "owner": [
+        "serde_json",
+        "Map"
+      ],
+      "declaration": {
+        "source": "src/map.rs",
+        "term": "struct",
+        "name": "Map",
+        "qualifiedOwner": [
+          "serde_json",
+          "map",
+          "Map"
+        ]
+      },
+      "serialize": {
+        "source": "src/map.rs",
+        "header": "implserde::ser::SerializeforMap<String,Value>",
+        "method": "serialize"
+      },
+      "deserialize": {
+        "source": "src/map.rs",
+        "header": "impl<'de>de::Deserialize<'de>forMap<String,Value>",
+        "method": "deserialize"
+      }
+    },
+    {
+      "name": "Number",
+      "owner": [
+        "serde_json",
+        "Number"
+      ],
+      "declaration": {
+        "source": "src/number.rs",
+        "term": "struct",
+        "name": "Number",
+        "qualifiedOwner": [
+          "serde_json",
+          "number",
+          "Number"
+        ]
+      },
+      "serialize": {
+        "source": "src/number.rs",
+        "header": "implSerializeforNumber",
+        "method": "serialize"
+      },
+      "deserialize": {
+        "source": "src/number.rs",
+        "header": "impl<'de>Deserialize<'de>forNumber",
+        "method": "deserialize"
+      }
+    }
+  ],
+  "serializeDomain": {
+    "numbers": "checked i64/u64 only; finite f64 formatting equivalence remains unproved",
+    "objects": "UTF8-byte sorted unique typed Map; source parser last-wins input duplicates only when decoding profile admitted",
+    "maxDepth": 128,
+    "maxCells": 50000,
+    "maxBytes": 1048576
+  },
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false,
+  "manualTraitCompleteness": false,
+  "decodeAdmissionPromotion": false
+}
