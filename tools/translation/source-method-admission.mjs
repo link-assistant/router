@@ -9,7 +9,7 @@ import {originalMethodTransformFacts} from './source-method-transforms.mjs';
 import {originalMethodLowering} from './impl-resolver.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 const semantics=new WeakMap();
-const opaque=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof']);
+const opaque=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope']);
 // Validation rejects callbacks/proxies before this descriptor-only clone. Keep
 // original property order: Copy evidence uses its original JSON byte order.
 function originalMetadataCopy(value) {

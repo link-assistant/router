@@ -64,14 +64,24 @@ test('local From masks and differently named visible from traits remain actual s
 });
 
 test('disabled preludes imported ambiguity macro-bearing and inherited trait routes remain fail closed',()=>{
-  for(const source of ['#![no_core]pub fn bad(value:bool)->u64{u64::from(value)}','#![no_implicit_prelude]pub fn bad(value:bool)->u64{u64::from(value)}','pub fn bad(value:bool)->u64{trait Local{fn from(value:bool)->Self;}u64::from(value)}','pub fn bad(value:bool)->u64{use missing::Trait;u64::from(value)}','use missing::From as Alias;pub fn bad(value:bool)->u64{u64::from(value)}','trait Marker{unknown!();}pub fn bad(value:bool)->u64{u64::from(value)}','trait Marker:Copy{}pub fn bad(value:bool)->u64{u64::from(value)}']){
+  for(const source of ['#![no_core]pub fn bad(value:bool)->u64{u64::from(value)}','#![no_implicit_prelude]pub fn bad(value:bool)->u64{u64::from(value)}','pub fn bad(value:bool)->u64{trait Local{fn from(value:bool)->Self;}u64::from(value)}','pub fn bad(value:bool)->u64{use missing::Trait;u64::from(value)}','use missing::From as Alias;pub fn bad(value:bool)->u64{u64::from(value)}','trait Marker{unknown!();}pub fn bad(value:bool)->u64{u64::from(value)}','trait Marker:Missing{}pub fn bad(value:bool)->u64{u64::from(value)}','mod m{pub trait Hijack{fn from(value:bool)->Self;}}use crate::m::Hijack as _;pub fn bad(value:bool)->u64{u64::from(value)}','use missing::Hijack as _;pub fn bad(value:bool)->u64{u64::from(value)}','use core::clone::Copy as _;pub fn bad(value:bool)->u64{u64::from(value)}','trait Parent{fn from(value:bool)->Self;}trait Marker:Parent{}pub fn bad(value:bool)->u64{u64::from(value)}','trait A:B{}trait B:A{}pub fn bad(value:bool)->u64{u64::from(value)}','trait Marker{#[cfg(unix)]fn from(value:bool)->Self;}pub fn bad(value:bool)->u64{u64::from(value)}','mod m{mod core{pub mod marker{pub trait Copy{fn from(value:bool)->Self;}}}pub trait Marker:core::marker::Copy{}}use crate::m::Marker;pub fn bad(value:bool)->u64{u64::from(value)}','#[cfg(unix)]use core::arch::aarch64::_MM_SHUFFLE;pub fn bad(value:bool)->u64{u64::from(value)}','#[cfg(unix)]use core::arch::x86_64::UnprovedTrait;pub fn bad(value:bool)->u64{u64::from(value)}','#[cfg(unix)]mod m{unknown!();pub struct Candidate;}#[cfg(unix)]use crate::m::Candidate;pub fn bad(value:bool)->u64{u64::from(value)}']){
     const result=project(source);assert.equal(result.meta.executable.some(entry=>entry.name==='bad'),false);assert.notEqual(result.meta.refused.length,0);
   }
 });
 
 test('genuine unrelated trait declarations do not silently close or broaden the original From scope',async()=>{
-  const result=project('trait Marker{}pub fn good(value:bool)->u64{u64::from(value)}');const api=(await loadJavaScript(result.javascript)).translated;assert.equal(api.good(true),1n);assert.equal(api.good(false),0n);
-  const proof=find(result.meta.checkedSemanticProgram,node=>node.k==='routerPrimitiveBoolFrom').sourceBoolFromScope;assert.equal(proof.visibleOriginalTraits[0].fromMemberAbsent,true);assert.equal(proof.wholeTraitAuthority,false);
+  for(const prefix of ['trait Marker:Copy{#[cfg(unix)]const VALUE:u32;}',
+    'mod m{pub trait Quiet:Copy{const VALUE:u32;}}use crate::m::Quiet as _;',
+    'use core::marker::Copy as _;use core::convert::From as _;',
+    '#[cfg(unix)]use core::arch::x86_64::_MM_SHUFFLE;trait Marker{}']){
+    const result=project(prefix+'pub fn good(value:bool)->u64{u64::from(value)}');
+    await verifyTypedTargets(result,api=>{assert.equal(api.good(true),1n);assert.equal(api.good(false),0n);},{childTimeoutMs:30000});
+    const proof=find(result.meta.checkedSemanticProgram,node=>node.k==='routerPrimitiveBoolFrom').sourceBoolFromScope;
+    assert.equal(proof.wholeTraitAuthority,false);assert.equal(proof.runtimeParity,false);
+    if(proof.visibleOriginalTraits.length)assert.equal(proof.visibleOriginalTraits[0].fromMemberAbsent,true);
+    if(proof.conditionalNonTraitImports.length)assert.equal(proof.conditionalNonTraitImports[0].role.conditionalAvailabilityRetained,true);
+    if(proof.visibleOriginalTraits[0]?.closure.memberConditions.length)assert.equal(proof.visibleOriginalTraits[0].closure.memberConditions[0].availabilitySelected,false);
+  }
 });
 
 test('ordinary local identifiers cannot fabricate a no_implicit_prelude attribute',async()=>{

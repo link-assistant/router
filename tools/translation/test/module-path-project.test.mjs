@@ -50,11 +50,12 @@ test('inline path directory overrides govern nested explicit children without re
   await verifyTypedTargets(result,api=>assert.equal(api.result(),7n));
 });
 
-test('inactive unknown or transformed path declarations never read or execute their children',()=>{
+test('unknown path sources remain carried while inactive or transformed declarations cannot read children',()=>{
   for(const declaration of ['#[cfg(test)]#[path="actual.rs"]mod child;','#[cfg(unix)]#[path="actual.rs"]mod child;','#[replace]#[path="actual.rs"]mod child;']){
     const files={'src/lib.rs':declaration,'src/actual.rs':'pub const HIDDEN:u8=7;'},read=[];
     const result=translateProject({...options(files,PRODUCTION_PROFILE),readSource:path=>{read.push(path);return files[path];}});
-    assert.deepEqual(read,['src/lib.rs']);assert.equal(result.meta.executable.some(entry=>entry.name.includes('HIDDEN')),false);
+    const unknown=declaration.startsWith('#[cfg(unix)]');assert.deepEqual(read,unknown?['src/lib.rs','src/actual.rs']:['src/lib.rs']);assert.equal(result.meta.executable.some(entry=>entry.name.includes('HIDDEN')),false);
+    if(unknown){assert.ok(result.meta.refused.some(entry=>entry.file==='src/actual.rs'&&entry.message==='unknown crate compilation condition'));const edge=result.meta.moduleEdges.find(edge=>edge.to==='src/actual.rs');assert.equal(edge.pathSelection.configurationCondition,'unknown');assert.equal(edge.pathSelection.availabilitySelected,false);}
     if(!declaration.startsWith('#[cfg(test)]'))assert.ok(result.meta.moduleDiagnostics.length);
   }
 });

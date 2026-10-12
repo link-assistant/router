@@ -4,7 +4,7 @@ import {translationProgressReporter} from './translation-progress.mjs';
 // conditional modules, macro expansion and effects remain explicit obligations.
 import { posix } from 'node:path';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
-import {planTrackedModulePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
+import {planTrackedModulePath,planConditionalModuleSourcePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
@@ -65,11 +65,11 @@ export function originalProjectMethodFieldEvidence(value,transform) {
 }
 
 const diagnostic = error => ({ kind: error.kind ?? 'module', message: error.reason ?? error.message, span: error.span ?? null });
-const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, key==='copyCertificate'||key==='sourceParameterPatterns'||key==='sourceParameterPattern'||key==='sourcePattern'||key==='constantEvaluationProof'||key==='deriveNamespaceProof'||key==='toolAttributeProof'||key==='jsonMacroProof'||key==='sourceMatchesProof'||key==='pinnedStandardBodyProof'||key==='sourceMethodProof'?value:['span','subjectSyntaxSpan','patternSpan'].includes(key) && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
+const relocate = (node, offset) => Array.isArray(node) ? node.map(value => relocate(value, offset)) : node && typeof node === 'object' ? Object.fromEntries(Object.entries(node).map(([key, value]) => [key, sourceEvidence(key)?value:['span','subjectSyntaxSpan','patternSpan'].includes(key) && value ? { start: value.start + offset, end: value.end + offset } : relocate(value, offset)])) : node;
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -108,8 +108,8 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
       const condition=itemConfiguration(item.tokens,profile);
       const childView=original.capture.views.find(view=>view.declaration?.span.start===item.start&&view.declaration?.span.end===item.end);
       let plan=null;
-      if(condition.status==='active'){
-        try{plan=planTrackedModulePath(module,item,paths);if(!isTrackedModulePathPlan(plan))throw new TypeError('Original tracked module plan is unsealed');}
+      if(condition.status==='active'||condition.status==='unknown'){
+        try{plan=(condition.status==='active'?planTrackedModulePath:planConditionalModuleSourcePath)(module,item,paths);if(!isTrackedModulePathPlan(plan))throw new TypeError('Original tracked module plan is unsealed');}
         catch(error){diagnostics.push({file,module:[...path,childView?.modulePath.at(-1)??item.name],kind:'module',message:error.message,span:{start:item.start,end:item.end}});continue;}
       }
       if(childView){
@@ -125,11 +125,13 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
       }
       if(!plan||plan.inline){diagnostics.push({file,module:[...path,item.name],kind:'module',message:'External module compilation condition or original header remains unresolved',span:{start:item.start,end:item.end}});continue;}
       const name=plan.name,target=plan.target;
+      if(condition.status==='unknown')diagnostics.push({file,module:[...path,name],kind:'module',message:'External module compilation condition remains unproved; complete tracked source candidate retained',span:{start:item.start,end:item.end}});
       if(!boundedChild(file,[...path,name],item))continue;
       if(original.ancestors.includes(target)){diagnostics.push({file,module:[...path,name],kind:'module',message:'Circular tracked module files require compiler rejection',cycle:[...original.ancestors,target],span:{start:item.start,end:item.end}});continue;}
       if(original.ancestors.length>=MODULE_PATH_PROFILE.limits.externalDepth){diagnostics.push({file,module:[...path,name],kind:'module',message:'Tracked module graph exceeds its bounded external-file depth',limit:MODULE_PATH_PROFILE.limits.externalDepth,target,span:{start:item.start,end:item.end}});continue;}
       edges.push({from:file,to:target,module:[...path,name],pathSelection:plan,...(condition.attributes.some(attribute=>attribute.name==='macro_use')?{macroUse:{kind:'textual-module-scope',span:{start:item.start,end:item.end},visibleAfter:item.end}}:{})});
-      visit(target,[...path,name],plan.directory,module.configurationCondition,null,null,plan.pathDirectory,original.ancestors);
+      const inherited=module.configurationCondition==='unknown'||condition.status==='unknown'?'unknown':module.configurationCondition;
+      visit(target,[...path,name],plan.directory,inherited,null,null,plan.pathDirectory,original.ancestors);
     }
   };
   visit(entry, [], posix.dirname(entry));

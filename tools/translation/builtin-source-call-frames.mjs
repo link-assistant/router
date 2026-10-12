@@ -79,7 +79,9 @@ export function projectBuiltinSourceCallFrames(frames,functionName,inputs,option
     const key=current.original.span.start+':'+metadataDigest(arguments_);
     if(seen.has(key)){terminal={obligation:'recursive-original-callee-owner-and-termination',function:current.original.name};break;}seen.add(key);
     const projection=projectBuiltinControlContinuations(current.program,arguments_);
-    trace.push({function:current.original,owner:current.owner,arguments:arguments_,projection});
+    // The continuation has already validated these inert operands and their
+    // JSON round trip. Expose the same ordinary metadata snapshot in each frame.
+    trace.push({function:current.original,owner:current.owner,arguments:JSON.parse(JSON.stringify(arguments_)),projection});
     const next=candidate(state,current,projection);
     if(!next.target){terminal={...next,sourceFunction:current.original,sourceProjection:projection.result};break;}
     trace.at(-1).candidateCall={scopeKind:next.scopeKind,target:next.target.original,sourceCallSpan:next.sourceCallSpan,actualRustOwnerResolved:false,argumentTypesChecked:false,returnContinuationResumed:false};

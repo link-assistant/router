@@ -15,3 +15,4 @@ const words=tokens=>tokens.filter(token=>token.type!=='comment').map(token=>toke
 const imports=sourceItems(source).filter(item=>item.term==='use'&&words(item.tokens)==='#[prelude_import]#[allow(unused)]useprelude::rust_2024::*;');
 if(imports.length!==1||!words(rustTokens(source)).includes('externcrateselfascore;')||!words(rustTokens(source)).includes('#![no_core]'))throw new TypeError('Original core implicit prelude route differs');
 export const ORIGINAL_CORE_PRELUDE_ROOT=Object.freeze({sourcePath:pin.path,sourceSha256:pin.sha256,profileSha256:hash(encoded),edition:'2024',importPath:Object.freeze(['core','prelude','rust_2024']),originalSpan:Object.freeze({start:imports[0].start,end:imports[0].end}),originalImport:source.slice(imports[0].start,imports[0].end),explicitPreludeImport:true,wholeCoreAuthority:false,runtimeParity:false});
+export const originalCorePreludeRootSource=()=>Object.freeze({source,path:pin.path,sha256:pin.sha256,wholeCoreAuthority:false});

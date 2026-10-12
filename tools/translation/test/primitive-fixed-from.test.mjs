@@ -74,7 +74,7 @@ test('borrowed and owning arguments remain refused while explicit genuine primit
 });
 
 test('actual local alternative traits aliases and disabled preludes cannot authorize fixed From',()=>{
-  for(const source of ['trait Alternate{fn from(value:u8)->Self;}pub fn bad(value:u8)->u64{u64::from(value)}','trait From<T>{fn from(value:T)->Self;}pub fn bad(value:u8)->u64{u64::from(value)}','use missing::From as Alias;pub fn bad(value:u8)->u64{u64::from(value)}','#![no_implicit_prelude]pub fn bad(value:u8)->u64{u64::from(value)}','trait Marker:Copy{}pub fn bad(value:u8)->u64{u64::from(value)}'])refuse(source);
+  for(const source of ['trait Alternate{fn from(value:u8)->Self;}pub fn bad(value:u8)->u64{u64::from(value)}','trait From<T>{fn from(value:T)->Self;}pub fn bad(value:u8)->u64{u64::from(value)}','use missing::From as Alias;pub fn bad(value:u8)->u64{u64::from(value)}','#![no_implicit_prelude]pub fn bad(value:u8)->u64{u64::from(value)}','trait Marker:Missing{}pub fn bad(value:u8)->u64{u64::from(value)}'])refuse(source);
 });
 
 test('custom nominal float and unproved target aliases gain no original fixed conversion authority',()=>{

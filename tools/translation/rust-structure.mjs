@@ -57,7 +57,7 @@ export function sourceItems(source) {
   const tokens = rustTokens(source);
   return topLevelItems(tokens).map(item => {
     const significant = item.tokens.filter(token => token.type !== 'comment');
-    let keyword = significant.find(token => ['fn', 'struct', 'enum', 'impl', 'trait', 'mod', 'use', 'const', 'static', 'type', 'macro_rules!'].includes(token.text));
+    let keyword = significant.find(token => ['fn', 'struct', 'union', 'enum', 'impl', 'trait', 'mod', 'use', 'const', 'static', 'type', 'macro', 'macro_rules!'].includes(token.text));
     if (keyword?.text === 'const' && significant[significant.indexOf(keyword) + 1]?.text === 'fn') keyword = significant[significant.indexOf(keyword) + 1];
     const index = significant.indexOf(keyword);
     return { ...item, term: item.comment ? 'comment' : keyword?.text ?? 'opaque', name: keyword ? significant[index + 1]?.text ?? null : null };

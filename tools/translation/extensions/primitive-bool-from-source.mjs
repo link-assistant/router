@@ -6,6 +6,9 @@ import {matchesParserFacts} from '../matches-macro-context.mjs';
 import {requireOriginalFromNamespaceCallbacks} from './host-contracts.mjs';
 import {metadataDigest,copyMetadata} from './source-links.mjs';
 import {PRIMITIVE_FROM_SOURCE_PROFILE,pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,primitiveFromNamespace} from './primitive-from-source.mjs';
+import {originalNonTraitImportRole} from './primitive-import-roles.mjs';
+import {originalAnonymousTraitScope} from './primitive-anonymous-traits.mjs';
+import {originalLocalTraitClosure} from './primitive-trait-closure.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const significant=tokens=>tokens.filter(token=>token.type!=='comment'),same=(a,b)=>a.length===b.length&&a.every((part,index)=>part===b[index]);
@@ -36,16 +39,20 @@ export function capturePrimitiveBoolFromScope(parser,target,start){
     const outer=module.sourceView.declaration?significant(rustTokens(module.source.slice(module.sourceView.declaration.span.start,module.sourceView.bodySpan.start))):[];
     if([...inner,...outer].some((token,index,tokens)=>['no_implicit_prelude','no_core'].includes(token.text)&&tokens[index-1]?.text==='['))fail('disabled implicit/core prelude requires an explicit proven trait route');
   }
-  const traits=[];
+  const traits=[],conditionalNonTraitImports=[],anonymousOriginalTraits=originalAnonymousTraitScope(facts,consumer);
   for(const binding of scope.bindings.filter(binding=>binding.namespace==='type')){
     if(binding.name==='From'||['std','core'].includes(binding.name))fail('trait or standard source namespace is shadowed/imported without this proof');
-    if(binding.status!=='resolved')fail('visible type/trait alias is ambiguous or unresolved');if(binding.kind!=='trait')continue;
+    if(binding.status!=='resolved'){
+      const role=originalNonTraitImportRole(facts,consumer,binding);if(!role)fail('visible type/trait alias is ambiguous or unresolved: '+binding.name+' ('+binding.status+')');
+      conditionalNonTraitImports.push({name:binding.name,role});continue;
+    }
+    if(binding.kind!=='trait')continue;
     const declaration=binding.declaration;if(!declaration||binding.target?.[0]!=='crate')fail('visible imported trait has no original source method proof');
     const owners=facts.modules.flatMap(module=>module.file===declaration.source?originalSourceModuleItems(module).filter(item=>item.term==='trait'&&item.start===declaration.span.start&&item.end===declaration.span.end).map(item=>({module,item})):[]);if(owners.length!==1)fail('visible trait declaration has no unique original owner');
-    const {module,item}=owners[0],tokens=significant(item.tokens),open=tokens.findIndex(token=>token.text==='{'),header=tokens.slice(0,open);if(open<0||header.some(token=>token.text===':')||tokens.some(token=>token.text.endsWith('!')))fail('visible macro/supertrait methods remain unproved');
-    if(tokens.some((token,index)=>token.text==='fn'&&tokens[index+1]?.text==='from'))fail('alternative visible trait declares from');traits.push({name:binding.name,target:binding.target,source:module.file,sourceSha256:hash(module.source),originalSpan:{start:item.start,end:item.end},fromMemberAbsent:true});
+    const {module,item}=owners[0],closure=originalLocalTraitClosure(facts,module,item);
+    traits.push({name:binding.name,target:binding.target,source:module.file,sourceSha256:hash(module.source),originalSpan:{start:item.start,end:item.end},fromMemberAbsent:true,closure});
   }
-  const body=target.kind==='bool'&&!target.rustReference&&!target.rustOwnership&&!target.patternOwnershipRefusal&&!target.rustGenericIdentityUnresolved&&!target.rustBorrowingUnresolved&&(target.rustPrimitiveName===undefined||target.rustPrimitiveName==='bool')?{target:{kind:'bool',rustPrimitiveName:'bool'},namespace:primitiveFromNamespace()}:pinnedPrimitiveBoolFrom(target),issued={schema:'original-private-primitive-bool-from-scope-v1',target:body.target,trait:body.namespace.trait,source:consumer.file,module:[...consumer.path],sourceSha256:hash(consumer.source),sourceViewDigest:consumer.sourceView.digest,originalSpan:{start:state.offset+start,end:state.offset+start},visibleOriginalTraits:traits,commonPreludeProfileSha256:PRIMITIVE_BOOL_FROM_PROFILE.manifestSha256,callerCargoEditionInferred:false,wholeTraitAuthority:false,runtimeParity:false},digest=metadataDigest(issued),proof=freeze({...issued,digest});scopeProofs.set(digest,proof);return proof;
+  const body=target.kind==='bool'&&!target.rustReference&&!target.rustOwnership&&!target.patternOwnershipRefusal&&!target.rustGenericIdentityUnresolved&&!target.rustBorrowingUnresolved&&(target.rustPrimitiveName===undefined||target.rustPrimitiveName==='bool')?{target:{kind:'bool',rustPrimitiveName:'bool'},namespace:primitiveFromNamespace()}:pinnedPrimitiveBoolFrom(target),issued={schema:'original-private-primitive-bool-from-scope-v1',target:body.target,trait:body.namespace.trait,source:consumer.file,module:[...consumer.path],sourceSha256:hash(consumer.source),sourceViewDigest:consumer.sourceView.digest,originalSpan:{start:state.offset+start,end:state.offset+start},visibleOriginalTraits:traits,conditionalNonTraitImports,anonymousOriginalTraits,commonPreludeProfileSha256:PRIMITIVE_BOOL_FROM_PROFILE.manifestSha256,callerCargoEditionInferred:false,wholeTraitAuthority:false,runtimeParity:false},digest=metadataDigest(issued),proof=freeze({...issued,digest});scopeProofs.set(digest,proof);return proof;
 }
 // The source witness may be serialized/relocated with ordinary checked IR;
 // identical fields must replay an actually issued private original source proof.

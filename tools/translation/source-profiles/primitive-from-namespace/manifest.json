@@ -1,0 +1,954 @@
+{
+  "schema": "original-rust-primitive-from-namespace-sources-v1",
+  "rust": "1.89.0",
+  "coreSources": [
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/arch.rs",
+      "bytes": 3535,
+      "sha256": "1d812c48a3c1be9198906a03080a7135feccd90ff4806875d384491b4796464b",
+      "gitBlobSha": "e5078a45c6d9c81a0f5a798d3c171e2774e21a9f",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/arch.rs",
+      "archive": "library-core-src-arch.rs.gz",
+      "archiveBytes": 1263,
+      "archiveSha256": "f6e7cdca9a59e9a4fd6570ce0f95e0d559b9a1eec89a3ab33c546f90d75990ea"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/mem/mod.rs",
+      "bytes": 49893,
+      "sha256": "04ccdc44e3a1879118611e7cfa9929dda471383df4efdddcb28482a3d104de84",
+      "gitBlobSha": "b93f854b9dc4375848f74fe141ecac9d0507f818",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/mem/mod.rs",
+      "archive": "library-core-src-mem-mod.rs.gz",
+      "archiveBytes": 14063,
+      "archiveSha256": "20a616aa4ccab0a9b81313ce3d4392e9032cc58dfd792a22975e81ec438221c9"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/mem/maybe_uninit.rs",
+      "bytes": 61471,
+      "sha256": "bf7d863ed3f5a0b686a3faa3afe791b403efed8e52752863c9af0acafc44ea7e",
+      "gitBlobSha": "63a479ed8dd4e736a495a6726da8a6de14d91f8b",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/mem/maybe_uninit.rs",
+      "archive": "library-core-src-mem-maybe_uninit.rs.gz",
+      "archiveBytes": 12310,
+      "archiveSha256": "8851f7f47944957dc675988ef0f42e7ec76d051a959fb4cc849a1e2ba0c23288"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/ops/mod.rs",
+      "bytes": 7481,
+      "sha256": "c15106f749ec6eba95bb44f1b60e5905d50eb0e4ec709386d6192f8f0349055d",
+      "gitBlobSha": "87dd873fdb57d59cb8e9f78ded6c86608731f9f3",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/ops/mod.rs",
+      "archive": "library-core-src-ops-mod.rs.gz",
+      "archiveBytes": 2672,
+      "archiveSha256": "50be41afbddcd0d574066d02ff07b3df6c7ad80424dec2f1ffd497d5b1e5742f"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/ops/range.rs",
+      "bytes": 38843,
+      "sha256": "c070f37e43e4e688a7b5a26eb23e7c6c5ab761b07b41475dfd0a5e54175cbd40",
+      "gitBlobSha": "1935268cda8918d5594c5cb16df13fae977a8f41",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/ops/range.rs",
+      "archive": "library-core-src-ops-range.rs.gz",
+      "archiveBytes": 6617,
+      "archiveSha256": "47f6b2717e577b591a7af6ad3d45f9b00beed6b7334977fbf7db5d65320dc462"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/clone.rs",
+      "bytes": 21530,
+      "sha256": "c1b8a02d24d463b92f2f97f0012dfa01fdb8e2d8821a4c53af7640ec145adcf5",
+      "gitBlobSha": "a34d1b4a064976edd0ea7cbf6f62b7435802a8d1",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/clone.rs",
+      "archive": "library-core-src-clone.rs.gz",
+      "archiveBytes": 6929,
+      "archiveSha256": "34a2a64d9a2a15a170989290dd7c9e13635ae11880152b1825c4d2ed571e2f0b"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/ops/arith.rs",
+      "bytes": 27522,
+      "sha256": "3a4a38939d509b4df7b5942a5e7fc7e1bd60e7d122b0ee48eda3b650b462d09b",
+      "gitBlobSha": "098ce4531f0c0fa25e2f8b28c6e0cc1982dc6224",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/ops/arith.rs",
+      "archive": "library-core-src-ops-arith.rs.gz",
+      "archiveBytes": 4438,
+      "archiveSha256": "67705294fa867c8f2972421b82b61583950cba6aae30c9b688dc122984354c1d"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/ops/bit.rs",
+      "bytes": 27616,
+      "sha256": "c66658a8137076d506dd94e29ad6316daea7af4edb32994ca8c0a4936f25c214",
+      "gitBlobSha": "deb54c8ba348ecac7ba0eb395ab7799fc6bcfe99",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/ops/bit.rs",
+      "archive": "library-core-src-ops-bit.rs.gz",
+      "archiveBytes": 3732,
+      "archiveSha256": "59111a9f56fa09b2ddefbc1dbb0e344f13b18eb0347c37ca1be268bffd78c7f7"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/cmp.rs",
+      "bytes": 69754,
+      "sha256": "4d99f17bff4740a566d839f9ec990ebb5f593cbfe369334fac5f08463203e1c4",
+      "gitBlobSha": "5cb1a148477026dda10bb72174e5c99101d0bc2e",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/cmp.rs",
+      "archive": "library-core-src-cmp.rs.gz",
+      "archiveBytes": 13733,
+      "archiveSha256": "c5f183d323590fe0716db965988e4a15f3aecad895e5d7891461e0a68898f4a2"
+    }
+  ],
+  "stdarch": {
+    "repository": "rust-lang/stdarch",
+    "ref": "8099c08d501ec80214d7bfe3f85002dec7d79655",
+    "rustGitlinkPath": "library/stdarch",
+    "archive": "stdarch-complete-original.tar.gz",
+    "archiveBytes": 1654940,
+    "archiveSha256": "11b7b7c9e38040c360db0068c929c4f5be044983cba60f40001e34422047e8dd",
+    "allOriginalArchiveBytes": 26145575,
+    "allOriginalArchiveFiles": 306,
+    "namespaceSourceFiles": [
+      {
+        "path": "crates/core_arch/src/aarch64/mod.rs",
+        "bytes": 1189,
+        "sha256": "ed7826f76a187c2efb54c6ae6d5eb4725791004917e9f791d06c0d4781c1b76e",
+        "gitBlobSha": "f4b9b1c30251e78763360387e4e0e44f5b0ead71"
+      },
+      {
+        "path": "crates/core_arch/src/aarch64/mte.rs",
+        "bytes": 6460,
+        "sha256": "65142d628744069a5e8475cc7a670df9575bc535b17f07cc8717abe7e3184d63",
+        "gitBlobSha": "c400f774bcce09999d3d136f8ca51f8da4ed99b3"
+      },
+      {
+        "path": "crates/core_arch/src/aarch64/neon/generated.rs",
+        "bytes": 1193662,
+        "sha256": "92707a5e4ca3e9db8bdeb25275d4c475998e6f33257f75c2adfbc473d1b5b643",
+        "gitBlobSha": "96ed82021b4b2a06cebbb822ce21d6cadfeefb6f"
+      },
+      {
+        "path": "crates/core_arch/src/aarch64/neon/mod.rs",
+        "bytes": 30943,
+        "sha256": "3e4fca45c8c409fcdc65072598dc67ae62db7e56beeff6086ac2babab1c109cd",
+        "gitBlobSha": "b172b57f325434a1c354fe6c9a5930a6b6dfcc7d"
+      },
+      {
+        "path": "crates/core_arch/src/aarch64/prefetch.rs",
+        "bytes": 3816,
+        "sha256": "7273e08c10efb77eccb1d5ed7400c5199854a92786f9e3dd2717890b0b43c897",
+        "gitBlobSha": "4dcbc9549f11531b55b5a8780247a3fcfc0d0e2a"
+      },
+      {
+        "path": "crates/core_arch/src/aarch64/test_support.rs",
+        "bytes": 4062,
+        "sha256": "a8e3175a3f4cc4f58921b9e1aa65cd2ff6a69a45a49771c6b36e1b853327a5b4",
+        "gitBlobSha": "e21cbfd1ed0552a7887fc407032338f06a921cc5"
+      },
+      {
+        "path": "crates/core_arch/src/aarch64/tme.rs",
+        "bytes": 7328,
+        "sha256": "1bf3541a2de0702bb5c1099b7c92b620abf7badcecb7d96da0315dcc2d55e121",
+        "gitBlobSha": "207633c1f8d3497ea1196b842a83b8ff3c476c3c"
+      },
+      {
+        "path": "crates/core_arch/src/arm/dsp.rs",
+        "bytes": 10842,
+        "sha256": "a3366a0b64c6a6a8489db6971a92fe6b3d3ed223c5afe9f6e21d5a3ab3541672",
+        "gitBlobSha": "22517e5929ad9a03135885b62af3779a8304bd7e"
+      },
+      {
+        "path": "crates/core_arch/src/arm/mod.rs",
+        "bytes": 2184,
+        "sha256": "02f952dd31c59068b75c1919fe9ae9ba55c0f5c1fc832ce56e75971dabf50324",
+        "gitBlobSha": "11d6e2df3ac0433868cbf5c42a01d66c22c827b5"
+      },
+      {
+        "path": "crates/core_arch/src/arm/neon.rs",
+        "bytes": 5211,
+        "sha256": "02b765cfd6a527768ba0c1c60e9762588d3ee8772baa1169b43293c0a4769775",
+        "gitBlobSha": "90c358b5db7b30a9ae6669debc48b0ccd4c399b5"
+      },
+      {
+        "path": "crates/core_arch/src/arm/sat.rs",
+        "bytes": 1621,
+        "sha256": "c068c9c3325f746b5c6bc5023bc5544d3ed13b6c6db6b281177745a9f20794fd",
+        "gitBlobSha": "bd38f59e642df1d04c0dc8fbe51387eda56873e0"
+      },
+      {
+        "path": "crates/core_arch/src/arm/simd32.rs",
+        "bytes": 20730,
+        "sha256": "37d68af9a2016ad409883aa87614138f8047e437f44b8f525ca3893bf8c1ba46",
+        "gitBlobSha": "2a9908ab2b96f1ecaf4917c5d62f70a26a6f2239"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/barrier/common.rs",
+        "bytes": 444,
+        "sha256": "cdf3d02a28f0bd3863d6faba83687933606696c7eaef4d1acd3674f53ad73e39",
+        "gitBlobSha": "476a07ffaef965dd261a8080fa475802bfad7bdb"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/barrier/cp15.rs",
+        "bytes": 1237,
+        "sha256": "1fe82f20cb56b1040aff631c9d026c42fb7685501fdac1287da2fa30171fbce6",
+        "gitBlobSha": "ae9ce3c005cd3837b3e62e11c87e1a5288f4ecf7"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/barrier/mod.rs",
+        "bytes": 5497,
+        "sha256": "3fc863b770075059b219bd250502f0f630d51ef51ff464c7dbcba1d146e8e515",
+        "gitBlobSha": "e198b63521feb168c8745e79c7b05bc054bd51db"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/barrier/not_mclass.rs",
+        "bytes": 1453,
+        "sha256": "f818ed83fd7bc3ee85ab891bb3980c28c2ec01f1e09c22b5305c1c5efe09bc1e",
+        "gitBlobSha": "3b941b2715efa9ff457a1dc55ab90a4c9a97b1d4"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/barrier/v8.rs",
+        "bytes": 771,
+        "sha256": "21d0929687676cfcad7eec9fb7784d0fcc2e9c0ca26ac98d5d4de6e4b6d2d14c",
+        "gitBlobSha": "5bf757f9f779ddb574016cb580f3b1222c33e1d2"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/hints.rs",
+        "bytes": 3927,
+        "sha256": "c350e08c444724acfdd6dc0942b7ee19766749e07eed8f66d0c175d31ddb107c",
+        "gitBlobSha": "54fd78270abdac774a48f1e591950419da8e945c"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/mod.rs",
+        "bytes": 4015,
+        "sha256": "9fb69d515c73f97f81b6f50038ac4cb0741764e5cf93d39060786f7678f4af66",
+        "gitBlobSha": "527b53de99d9568f94dd6b5af2e31a080a9e0540"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/neon/generated.rs",
+        "bytes": 2851273,
+        "sha256": "c7406c126683a31140f925e3b20328e28b9c3d83a709f5eca86a2d05f0753abf",
+        "gitBlobSha": "286f1868852aaa28f0a1910b30922db12c71e7b2"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/neon/load_tests.rs",
+        "bytes": 5786,
+        "sha256": "a47b1df25a5568bc2a1e5c1c94baf090444f916d0cce3a82aaeb29ce4afdbffc",
+        "gitBlobSha": "bdf511ecf88190b1b1c402e28877684b49d7adb0"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/neon/mod.rs",
+        "bytes": 173925,
+        "sha256": "347d1e67960d65bfba284e02fcfe935e7d02ea62a70087b1d36cd3ff24946230",
+        "gitBlobSha": "0683d48ed3271e53c95f95eb6c0043fd32d9111f"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/neon/shift_and_insert_tests.rs",
+        "bytes": 6618,
+        "sha256": "c9f8000fe658503b4cbd0d7b2cffcc87d3a573edc97be6e8369d75a283f21b12",
+        "gitBlobSha": "cfb1a2843a31e18f28d984dd6a7c358045b99fcc"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/neon/store_tests.rs",
+        "bytes": 9365,
+        "sha256": "2e5bb37a64b3c0bc67ee60c2a84a2bfd3300bf4f789b2da64db58525e31c79e5",
+        "gitBlobSha": "6b5d4a19ad57228cc7dc7e27f9d88f2d74262f96"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/neon/table_lookup_tests.rs",
+        "bytes": 39194,
+        "sha256": "ca7838f3194f0fe22cb7a49558c9ec0b5a556c69f51d836a1a5db0388e4159d2",
+        "gitBlobSha": "9403855f00e0f11f1c9fb55f7ebc8e0d7b5eddce"
+      },
+      {
+        "path": "crates/core_arch/src/arm_shared/test_support.rs",
+        "bytes": 13711,
+        "sha256": "b4a3b8e2fbb7839d9c89aeb43846533c76baa17c5c49aa909eb8424a51c95ef9",
+        "gitBlobSha": "e2828f85561df73aaceae57c82c51c60e88512ec"
+      },
+      {
+        "path": "crates/core_arch/src/lib.rs",
+        "bytes": 2443,
+        "sha256": "c2450eab85d00afb20d0750098577aa0812b2dcbf74ffa20c1875a8eff30bd30",
+        "gitBlobSha": "2b35208feffc265d653cd53f14d712ee56926941"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/lasx/generated.rs",
+        "bytes": 243559,
+        "sha256": "86a68e628ebb1d6f0e0aea29534797f41fa3484a54a026307300cfd6a2305b1c",
+        "gitBlobSha": "2e56d8fb9b83dc49602e228f4d3d35048716ad0b"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/lasx/mod.rs",
+        "bytes": 379,
+        "sha256": "f2e5f7ff9ea8edd661219e3431c7e3be0cbc09900d0035223d67597a805f0b16",
+        "gitBlobSha": "c3a244e740e9f7a20f2c5861019d4b1a3a819214"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/lasx/tests.rs",
+        "bytes": 400060,
+        "sha256": "b34d33e056109c4e5cfe9aa248d441f550c159566b4bd381a65627b01dddc414",
+        "gitBlobSha": "54771d7b51109069c29ef1d528cd576b21c71535"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/lasx/types.rs",
+        "bytes": 1173,
+        "sha256": "cf6de7b7cf4668c2220d474ee87a964f8f2ebd2937969f9fa3acb73bb2cb5a8d",
+        "gitBlobSha": "9611517e6370f242cd213d7c930470a83b2d7375"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/lsx/generated.rs",
+        "bytes": 230271,
+        "sha256": "504220484c27a5927887e7596f228ae0a346178fd4c6d4e9e6856129990e0d63",
+        "gitBlobSha": "2bc364f3e069e5019a3ab26bd737a243e781080d"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/lsx/mod.rs",
+        "bytes": 378,
+        "sha256": "6b4b4860878c5dc5ea9608d2bb02cf3dd57c37df244a35cc01ecf2edf5a6fa90",
+        "gitBlobSha": "67a08985a9637363ebb7e8f0209142ca1f18838c"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/lsx/tests.rs",
+        "bytes": 241719,
+        "sha256": "12e1437a438547dc87cd554f37b57fa97aafe19b1f8b74040547952edda05119",
+        "gitBlobSha": "5670bd4378a845ac49f4b500ef6d2faab8618cbc"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/lsx/types.rs",
+        "bytes": 1167,
+        "sha256": "27fe3eebc002a172cf766a8bf234913126b235f21c81985bf766674659fe698a",
+        "gitBlobSha": "4097164c2fae52d3448707699bfabef1d0755f56"
+      },
+      {
+        "path": "crates/core_arch/src/loongarch64/mod.rs",
+        "bytes": 11379,
+        "sha256": "4f05ff8b88f84c311dda8677c13d9d09467c080358412bb7724d3b6286294344",
+        "gitBlobSha": "b1704bbb48d4fec19dd243e607916aa177437287"
+      },
+      {
+        "path": "crates/core_arch/src/macros.rs",
+        "bytes": 5163,
+        "sha256": "13677e011471068a8b236905c3abe1fd41ffb333a02bdd9e4a6dcb8d7aad9ab5",
+        "gitBlobSha": "e00b43353679e9ffb141e9f62c1c413e15a0d520"
+      },
+      {
+        "path": "crates/core_arch/src/mips/mod.rs",
+        "bytes": 510,
+        "sha256": "c8ac0e84c30c6481df352d5900315961abe8440fc66918533a9da16590dc012f",
+        "gitBlobSha": "1de3ffd03d1f0db3fb1e1ca44f901a34533f2e29"
+      },
+      {
+        "path": "crates/core_arch/src/mips/msa.rs",
+        "bytes": 604811,
+        "sha256": "68ba494a38892055158d6e1d0521c32fe08f70e67272ca7e05f354f3f0d8da4a",
+        "gitBlobSha": "563e121a7badb9d91fc19ebdad13bde08fa2112e"
+      },
+      {
+        "path": "crates/core_arch/src/mod.rs",
+        "bytes": 13852,
+        "sha256": "452713882c91dfc0fdab541373dc2cea4e55a2d2d9c2942a2c31acbaa97c8a1e",
+        "gitBlobSha": "f6e959efd47cbc03edd7fa1707fac77d46960a27"
+      },
+      {
+        "path": "crates/core_arch/src/nvptx/mod.rs",
+        "bytes": 8000,
+        "sha256": "941f985b24c2453863f6de6a459b4abffa19093716ff541467d4bb7f3cf49aa6",
+        "gitBlobSha": "8d16dfb53d433c2e290898c7d27cbcb146b8ead9"
+      },
+      {
+        "path": "crates/core_arch/src/nvptx/packed.rs",
+        "bytes": 6768,
+        "sha256": "b9e4fbc8637531bc03e76c3debd3592340029e910a87b378e2a0019b02ce7824",
+        "gitBlobSha": "856aeea4b686cbb52ab655cb77d24d251b86e2ec"
+      },
+      {
+        "path": "crates/core_arch/src/powerpc/altivec.rs",
+        "bytes": 229737,
+        "sha256": "58337f56e44a85d665f4f42abb7d4643ba681608f9a579df8f331e1601080dd3",
+        "gitBlobSha": "2deeb53c20995dc7e483bcaac6c488fe4b652720"
+      },
+      {
+        "path": "crates/core_arch/src/powerpc/macros.rs",
+        "bytes": 10366,
+        "sha256": "724711fa34d68d1a627509ff0bafe99dadf8f78bd9425fd72db1ddce55de4fb4",
+        "gitBlobSha": "af47494e8fb4042e07535cb6f06a86b043bd794f"
+      },
+      {
+        "path": "crates/core_arch/src/powerpc/mod.rs",
+        "bytes": 494,
+        "sha256": "faf4c732ae688fd43d657be5bb689cc3ceccaf86244940375a00fc52d7c72211",
+        "gitBlobSha": "53227215d946ca37c292f8be15f3cad7c32660a4"
+      },
+      {
+        "path": "crates/core_arch/src/powerpc/vsx.rs",
+        "bytes": 8572,
+        "sha256": "ed0bacd31c7dd8275f8a7ef832f27a43e50330228597a7ff2c2b0a0448b14259",
+        "gitBlobSha": "ca9fcaabe8b224067e73bd56de4574f485960766"
+      },
+      {
+        "path": "crates/core_arch/src/powerpc64/mod.rs",
+        "bytes": 443,
+        "sha256": "491f3646a86cb52716637611c75b989c6e5ef958c330d6871582c30c440da7f0",
+        "gitBlobSha": "e361c55a9071fad44832d49688a2d250c8482ad8"
+      },
+      {
+        "path": "crates/core_arch/src/powerpc64/vsx.rs",
+        "bytes": 5107,
+        "sha256": "bfaa64a6647567e5ef0ae37ffef0d5dea0800b068a29b5580dafe0b3e779daed",
+        "gitBlobSha": "7b42be8653c55d93e404637877585d4fcdf914c9"
+      },
+      {
+        "path": "crates/core_arch/src/riscv32/mod.rs",
+        "bytes": 125,
+        "sha256": "4b3b7087688340e5dc5b602f2aaafd5ed3fe488c498ec2ef3d1907a10455d7fe",
+        "gitBlobSha": "7ff871227b503bc43e1a2020b69c19c91430faad"
+      },
+      {
+        "path": "crates/core_arch/src/riscv32/zk.rs",
+        "bytes": 12334,
+        "sha256": "c9a77c0926213cb314463feb0d337fc27519ec632b666702ae249cbb1b0ec407",
+        "gitBlobSha": "054bcfe955b7dd4f77efc4e0d2d486cac9ab9730"
+      },
+      {
+        "path": "crates/core_arch/src/riscv64/mod.rs",
+        "bytes": 2334,
+        "sha256": "2c5340c62ff07e72aae509525e1bb9e001db8e2f1c061eb6e735b056f5dc673a",
+        "gitBlobSha": "0e860f6f2ad2fb6de484ee8caec66ddbe722d63d"
+      },
+      {
+        "path": "crates/core_arch/src/riscv64/zk.rs",
+        "bytes": 9885,
+        "sha256": "0179ee2199545e76d7a68b86a78930a33acd951b5151e51b8d06d058fb1e9b98",
+        "gitBlobSha": "c6af750bbc5702c73c947e6e67c3d71466b55f3f"
+      },
+      {
+        "path": "crates/core_arch/src/riscv_shared/mod.rs",
+        "bytes": 26657,
+        "sha256": "449ea5c61f24d50f9eb5cfd6308c2adbb2a4a9a0236727afd1c727d3d376e4d0",
+        "gitBlobSha": "3ce24324de2e7a279d7ef8146849e4de16458c5a"
+      },
+      {
+        "path": "crates/core_arch/src/riscv_shared/p.rs",
+        "bytes": 44293,
+        "sha256": "312943c4738d44fd8c93da5442a6b3854b079c0cbe41e0c1513984431792b73d",
+        "gitBlobSha": "c76a0ec4b8f26e826b5d19f33b0c0862ab82e9e0"
+      },
+      {
+        "path": "crates/core_arch/src/riscv_shared/zb.rs",
+        "bytes": 3525,
+        "sha256": "2536ec674f6c43a7c4c7af23da19369646212a8b41a84f2945099320c6223105",
+        "gitBlobSha": "9472e3c8be9f60ff35f55aba9553251b30bd52db"
+      },
+      {
+        "path": "crates/core_arch/src/riscv_shared/zk.rs",
+        "bytes": 15421,
+        "sha256": "f3b47262b8e0231e832067ee1bd64113bb5357382cb4aa6ba7c5390b738c0a69",
+        "gitBlobSha": "b1e633d1702236eaeef2d0943e2700f7dbfc00a6"
+      },
+      {
+        "path": "crates/core_arch/src/s390x/macros.rs",
+        "bytes": 15607,
+        "sha256": "64cdba4d1adb400053a05763295440734a976a2abb4132c371897430837d0d56",
+        "gitBlobSha": "4f0f84ec912b78fdabaefcd4465b7c67b70f88ff"
+      },
+      {
+        "path": "crates/core_arch/src/s390x/mod.rs",
+        "bytes": 142,
+        "sha256": "3144ed0822507b107c33f0b7c21415b52ce46fd6aefcf512192245af3ffb94fe",
+        "gitBlobSha": "7d3b3f2d99aae7e9dda1959b1369f5cd1baf3578"
+      },
+      {
+        "path": "crates/core_arch/src/s390x/vector.rs",
+        "bytes": 290992,
+        "sha256": "1845b5bb63ac2486c9bdb02aef80d588f94a562f0a505e6c6b7c3f43f01594b3",
+        "gitBlobSha": "ae5c37ce0178b5c8346167069afc825a629c0d33"
+      },
+      {
+        "path": "crates/core_arch/src/simd.rs",
+        "bytes": 13444,
+        "sha256": "34cf56671e955b92acc4a5946b949ca0ad81d3f7aa25fde7530e2338a5662601",
+        "gitBlobSha": "25834943f009ba80e9fb665f9ab7ee45e516b172"
+      },
+      {
+        "path": "crates/core_arch/src/wasm32/atomic.rs",
+        "bytes": 4148,
+        "sha256": "13895678003116d5c53a13a3609e8c26bc77f465210b6b23bd66be0b89700da9",
+        "gitBlobSha": "fdc8cfbfdb41460513a77cc5a93e884f652b7cca"
+      },
+      {
+        "path": "crates/core_arch/src/wasm32/memory.rs",
+        "bytes": 2523,
+        "sha256": "5d045070910554f53b1b238e41fd5657e3a5440b7814aa26fa419eff209ffa84",
+        "gitBlobSha": "90e9075e5136bb425f4d240955d4666ea5f7976d"
+      },
+      {
+        "path": "crates/core_arch/src/wasm32/mod.rs",
+        "bytes": 8944,
+        "sha256": "89b77ce68c0587d03d41592c8108256ad0be739c9e6b16b8ee82a03f2b132215",
+        "gitBlobSha": "2c4361f1639f71bb74f69cbb6814e0e0fe85e83d"
+      },
+      {
+        "path": "crates/core_arch/src/wasm32/relaxed_simd.rs",
+        "bytes": 21270,
+        "sha256": "7e8acdc00cb179e7484d0e6d38f3b3bae944b31487ee345b13a64c49cb271bd2",
+        "gitBlobSha": "a9b7e9c04d112969d684b6c88328144382a5ce6d"
+      },
+      {
+        "path": "crates/core_arch/src/wasm32/simd128.rs",
+        "bytes": 220759,
+        "sha256": "e08b50caf79b86723eeb8570869b35e096762ec626bd0150ad7c6952d14d0dee",
+        "gitBlobSha": "fc0d7723fa01465e832cc1be7f8866b05dcb419a"
+      },
+      {
+        "path": "crates/core_arch/src/x86/abm.rs",
+        "bytes": 2033,
+        "sha256": "473c1e120a696806e853f211ed29b7a753b576f13eea30cf65909ba7bd165188",
+        "gitBlobSha": "e6d5517600439f30142befa3068982dbdcf301ee"
+      },
+      {
+        "path": "crates/core_arch/src/x86/adx.rs",
+        "bytes": 4992,
+        "sha256": "6e24956d8353bb5031aad7827d40a5d10c682d9fb1b645767cafb62bb6fd06bd",
+        "gitBlobSha": "5ba766461653bb04422266ff3e55e306a32c3a1f"
+      },
+      {
+        "path": "crates/core_arch/src/x86/aes.rs",
+        "bytes": 7072,
+        "sha256": "a0ebee81159069578db67eb9a3e2499f58f59085575e7fadbc21661db60ba8f3",
+        "gitBlobSha": "7db743b2ccd31c10a12e8c91410f9c83a1c7ad56"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx.rs",
+        "bytes": 190105,
+        "sha256": "e76adca4398fc331086d256564e180acb02e82cbf9f1abe5a7a8bac3018237b3",
+        "gitBlobSha": "df1cb63be30f0d79a820554ac1bfaad30b6fa053"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx2.rs",
+        "bytes": 215045,
+        "sha256": "531e9dc017ec2e0f2901aff4d660e7e9175e29b4d1ce5317cbc497c495871251",
+        "gitBlobSha": "21f20f9c759e00e9c317e80f1bdc18327b5e47e7"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512bf16.rs",
+        "bytes": 78616,
+        "sha256": "33672a6e10aef850822970c7459ff1eb37b26e1ece132e41826a292cbb1e1d7d",
+        "gitBlobSha": "85afd91fba7b17a295b9dd36c0de5aab00b3e03e"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512bitalg.rs",
+        "bytes": 35215,
+        "sha256": "c15a7ec711578879ca88d45a33f729bc48fac15d0109088ca0fa229c9390e780",
+        "gitBlobSha": "1cbf0faea09f92a163d2fa5b9895c20d2fd8108b"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512bw.rs",
+        "bytes": 975678,
+        "sha256": "ed9f6146baae630915c87b18641b20b53fd2d9ce6b2aac718577af37bc6b8e47",
+        "gitBlobSha": "b60b0b70795f6e5fe1886e433f049beba85c5e4c"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512cd.rs",
+        "bytes": 50703,
+        "sha256": "c4bfc4cd98000be63cf5d5858225e7ff9f6dc308547e3b68ce81e1fde91b6cfa",
+        "gitBlobSha": "78735fcc90f5e68bcd0a271f56659a7748dc1732"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512dq.rs",
+        "bytes": 473249,
+        "sha256": "6bfcc0d50ac0a180628c5f27f0617868ed1e621ab906b1922ddc064546fc4887",
+        "gitBlobSha": "c90ec894f217492a59a8695511151856f019d8df"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512f.rs",
+        "bytes": 2859104,
+        "sha256": "d6235017b2f558f7a53bc5d98985a726b947b91c57226ed314bc7fd8397de7fd",
+        "gitBlobSha": "dd224616764d6d9326a6ca4259db12dea54ed76a"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512fp16.rs",
+        "bytes": 1244169,
+        "sha256": "bf17728306e7ce659a0388657c504295d4af3510075f84a71ecd0ddd9d4f1a8e",
+        "gitBlobSha": "0a81a0581f97a4b86d0da77baffc450fddc847bc"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512ifma.rs",
+        "bytes": 30233,
+        "sha256": "d1e0cf28ccc1c47bce0fe6205b8dabe3daaf633dae531da68c5beea26daa426f",
+        "gitBlobSha": "7c9d07f6909527263e8c816b0f014b8ba0c7e18b"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512vbmi.rs",
+        "bytes": 46838,
+        "sha256": "17beffa15896ee38ddcc3ad0b645d76967c97eb07030bec0da3fa2fa051c4550",
+        "gitBlobSha": "3527ccc9e44a97f4ad0c9d64e287f4a84861dfe1"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512vbmi2.rs",
+        "bytes": 187522,
+        "sha256": "120cdcd7e348327ab86c157dfdc2b486c086f9e0d9bb63c587c3e1926506ef4f",
+        "gitBlobSha": "c722f7b370ffe08b36491c9b0460cc06e49ea7fa"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512vnni.rs",
+        "bytes": 87753,
+        "sha256": "37cf1a64130ad37a38894c5b83a14c2f5aaf17fd0738f467813d9d79b8685269",
+        "gitBlobSha": "93ea01cbb45b39f6a4d52f4425d1a15c66f88196"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avx512vpopcntdq.rs",
+        "bytes": 22199,
+        "sha256": "e1b13c3c79e88d0fcd9bdf289b374d7862a8b3a25ded8d94661f91b48fbef164",
+        "gitBlobSha": "e47a14b24dfc7e74c45dd787df516b15fccf41fe"
+      },
+      {
+        "path": "crates/core_arch/src/x86/avxneconvert.rs",
+        "bytes": 15448,
+        "sha256": "1b90ad62d6284438997c525ad98df53c6724f5f89ea554a2a6b7bcff5321420e",
+        "gitBlobSha": "b92ec823ec64eb34988b21f1813e1c2c135e3e59"
+      },
+      {
+        "path": "crates/core_arch/src/x86/bmi1.rs",
+        "bytes": 6664,
+        "sha256": "0cba531826ccdc4f58d49e3e923f59387a8daa7f854f6bd87fa75274c86afc9e",
+        "gitBlobSha": "eb7242944abcbec0fd2b330897cb8a4150bf6517"
+      },
+      {
+        "path": "crates/core_arch/src/x86/bmi2.rs",
+        "bytes": 4495,
+        "sha256": "3b311c42df62f59d8d8dd827bad2a2da83489ed0bd34021fd4be38a8b42d4ad2",
+        "gitBlobSha": "83cf650923f7a96a487f43d9bf6e480c7a614c4d"
+      },
+      {
+        "path": "crates/core_arch/src/x86/bswap.rs",
+        "bytes": 675,
+        "sha256": "034a42087c3434ee7ca88a532072d6949b08ffdd4487d75faa94392429e73270",
+        "gitBlobSha": "0db9acbd0ddf8f80c11b5f49529ac6d3c2f334f9"
+      },
+      {
+        "path": "crates/core_arch/src/x86/bt.rs",
+        "bytes": 4433,
+        "sha256": "af67a510f27a4db2f62658d055e004f390429bd1e1a23c273796ac8bf586777a",
+        "gitBlobSha": "06cc2833f4e6dcbd317eb8938270a90f8ac68be5"
+      },
+      {
+        "path": "crates/core_arch/src/x86/cpuid.rs",
+        "bytes": 3775,
+        "sha256": "5eb578773722ed8c102bafa1ae3fd0bf68529b991a363b7f0a36ad52d3a781f5",
+        "gitBlobSha": "0634f10a99fdc6eebe7d4b326dee1fc4883edeae"
+      },
+      {
+        "path": "crates/core_arch/src/x86/eflags.rs",
+        "bytes": 2449,
+        "sha256": "9662f8eaabf031a5c941ea3e9473bd781115fb2581c7e0c38d8e8ae18beb92d9",
+        "gitBlobSha": "5ae656db38768c2b18d7fd0b419cc43f63868d2e"
+      },
+      {
+        "path": "crates/core_arch/src/x86/f16c.rs",
+        "bytes": 5972,
+        "sha256": "c779d16bd5b873641ee051698de1bf57d5568b7e7267cfe1350d9fc55836fcb2",
+        "gitBlobSha": "7686b317d4d49879f5fdf2d71031fa9e3dd6611d"
+      },
+      {
+        "path": "crates/core_arch/src/x86/fma.rs",
+        "bytes": 31804,
+        "sha256": "a997c05a85c41672d21249cfbd1800986229a907a61c449780f342c03290e8e1",
+        "gitBlobSha": "d3988422b9a4d8968e6f7b8106dcb84fde166a8c"
+      },
+      {
+        "path": "crates/core_arch/src/x86/fxsr.rs",
+        "bytes": 2681,
+        "sha256": "8f352a1293caa5701e3b5ef9579d1892859cbc79a67272c340e04b71974049a7",
+        "gitBlobSha": "71fd52ca1496361bd5896f1bfae6d4f2425d4a5a"
+      },
+      {
+        "path": "crates/core_arch/src/x86/gfni.rs",
+        "bytes": 68679,
+        "sha256": "994340c921ee49ea898db7c40d50577662547287740775b43bd4524f092338aa",
+        "gitBlobSha": "9386684abaef6691c7fa5a644977834d9ac86f9e"
+      },
+      {
+        "path": "crates/core_arch/src/x86/kl.rs",
+        "bytes": 19777,
+        "sha256": "b0529423380f5c550cc7db35fe1fe3d8e8f74045129d8c37657402f972d77711",
+        "gitBlobSha": "26e5a46c6293450affa159d710838a72148282b1"
+      },
+      {
+        "path": "crates/core_arch/src/x86/macros.rs",
+        "bytes": 2804,
+        "sha256": "a15bb9e7fec556294a947fc8dbdba683bf82d4cb9544f0c405dcf7d6e28073df",
+        "gitBlobSha": "9b9c24a447ec705e95e2c3d6994f492e9d408a57"
+      },
+      {
+        "path": "crates/core_arch/src/x86/mod.rs",
+        "bytes": 28281,
+        "sha256": "6f32c5a5abe16c816965dd4d1cff4678d3bd8e13cc4944a2ac9ddfcd21487c13",
+        "gitBlobSha": "79a593e647f13197f8c740b9760fdaf576d6ad63"
+      },
+      {
+        "path": "crates/core_arch/src/x86/pclmulqdq.rs",
+        "bytes": 2835,
+        "sha256": "e6cd6cb602f11d41f502d98754d6f4c1584e1fa4e66654db31c9960ab1151cde",
+        "gitBlobSha": "cce6a51e2cd632354aee588657aedb568131ed58"
+      },
+      {
+        "path": "crates/core_arch/src/x86/rdrand.rs",
+        "bytes": 2774,
+        "sha256": "fc1c73184ae51aa70ec9499189645306244d4cb402637484f747f4efc498643b",
+        "gitBlobSha": "50097915213b99c786de9020a90496dba07bba23"
+      },
+      {
+        "path": "crates/core_arch/src/x86/rdtsc.rs",
+        "bytes": 2556,
+        "sha256": "46b594490b530c653f6b1783453132840cb32ca60bf12fb31196f2cac8f36528",
+        "gitBlobSha": "3b348153d602d803d5ce94ca63dd3d35e6f23722"
+      },
+      {
+        "path": "crates/core_arch/src/x86/rtm.rs",
+        "bytes": 6079,
+        "sha256": "a2ff52c894db22f4fe88e21548ca1605a4d0d72da88cb23fe6fe15a41d199c40",
+        "gitBlobSha": "b807305d6aa8fa6540f04b391875c03c5952b924"
+      },
+      {
+        "path": "crates/core_arch/src/x86/sha.rs",
+        "bytes": 29558,
+        "sha256": "2d280be2c5cb757ff85f5a247c58189a97147451e7fa3f122976bb1ad076a978",
+        "gitBlobSha": "9ad1a9f14c155a3d714fe24b6a68bc607b05a042"
+      },
+      {
+        "path": "crates/core_arch/src/x86/sse.rs",
+        "bytes": 123533,
+        "sha256": "6a15ca98d00d99d1e1bd7947c8be9f89b33f11db35ffdf7c3c6c92478ab9b8dc",
+        "gitBlobSha": "1eca66adc2c6ad1d59ac5d739cd59040bbd33aab"
+      },
+      {
+        "path": "crates/core_arch/src/x86/sse2.rs",
+        "bytes": 188117,
+        "sha256": "78cb77582150024dd488b5368aa7f9359ccf9911dbe9932dad155fa434eb3eb4",
+        "gitBlobSha": "3dabcde18ce9ec3c140e9158f2178e9fa9f2eec8"
+      },
+      {
+        "path": "crates/core_arch/src/x86/sse3.rs",
+        "bytes": 9070,
+        "sha256": "bb3164290373db3908a987e7a9247c91a16005689f2a987e22d5173a8bf72a2a",
+        "gitBlobSha": "7a32cfe472d439431795a1596f78c2972c740905"
+      },
+      {
+        "path": "crates/core_arch/src/x86/sse41.rs",
+        "bytes": 71352,
+        "sha256": "5fac3ef4c7991e657b82729b24da88593ff58a758ab543afd7b91765d8df1496",
+        "gitBlobSha": "9aa200dfc07ab7f8a5c4706512072f337506aeef"
+      },
+      {
+        "path": "crates/core_arch/src/x86/sse42.rs",
+        "bytes": 30059,
+        "sha256": "d3fd55601cf1048942d348be51bd41d7edc5c34f1e54504906cdfe8040697335",
+        "gitBlobSha": "83c51f2b70ebb7c22313d63f3bb0c6b732030bfc"
+      },
+      {
+        "path": "crates/core_arch/src/x86/sse4a.rs",
+        "bytes": 8837,
+        "sha256": "eb40503019e21b8b9f9cb88bbae5ed512de279e0f0aadbf17b061f5b358c01a1",
+        "gitBlobSha": "051b77d02dfe03abba1bbeb11de0f3b5411332f3"
+      },
+      {
+        "path": "crates/core_arch/src/x86/ssse3.rs",
+        "bytes": 23213,
+        "sha256": "325000fa4b7629446cf82b3bd3f3230a2b43fc7e5bf37407935d408ddff9978e",
+        "gitBlobSha": "2be182e88f4bad25e958f00a74faf94bf9547a7d"
+      },
+      {
+        "path": "crates/core_arch/src/x86/tbm.rs",
+        "bytes": 6911,
+        "sha256": "e299e4b5c21a067ca2b7b4234cd8d6b80c7377f869d2a9b86a18682de594918b",
+        "gitBlobSha": "a245e693284fb66c5998c6c19e2ed566e85dcd88"
+      },
+      {
+        "path": "crates/core_arch/src/x86/test.rs",
+        "bytes": 4802,
+        "sha256": "6d127ec03a12fb770a69fc8fe6475ce9303f5c69ca8d0b43498a32f3fd0fd2c5",
+        "gitBlobSha": "fec25ce2bc7cec1b7c0d7ce15475314bdd933dc4"
+      },
+      {
+        "path": "crates/core_arch/src/x86/vaes.rs",
+        "bytes": 14357,
+        "sha256": "930ef26179666cd96f8a9861906c04d00df6bba3fa0d851fcf7e55eb542a5292",
+        "gitBlobSha": "b1fe193e3f5d7d03cdf922b0fea1e4a57e28142f"
+      },
+      {
+        "path": "crates/core_arch/src/x86/vpclmulqdq.rs",
+        "bytes": 10040,
+        "sha256": "6addd73704e06ae68949c58f0182146cfc4ff5ba3e81f40e241189378919f59d",
+        "gitBlobSha": "b1f23bd2f45c14cc2adb51c87e49887aa3561ce5"
+      },
+      {
+        "path": "crates/core_arch/src/x86/xsave.rs",
+        "bytes": 8718,
+        "sha256": "78f3fb928c363e640bd33e1706cfd1b6cc0c1566b927ead1a4e36fa972cfb447",
+        "gitBlobSha": "10266662e13ecadb66f4f574c0ddfaf85f46ea26"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/abm.rs",
+        "bytes": 2049,
+        "sha256": "62ce90cc1d3c06c301a043b75bfa08c9fb0710a82c9305bfb30d61d74108d723",
+        "gitBlobSha": "bf59cc463218228ef0f0fc25db23d5f23e8654fe"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/adx.rs",
+        "bytes": 4734,
+        "sha256": "ff4497764442abdd6f5a37f54f526341eaab820a6a01309bfb91c1a91b49128d",
+        "gitBlobSha": "bdc534b5a525b0d1539e0df727008fe1b108dfd8"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/amx.rs",
+        "bytes": 25609,
+        "sha256": "bcc2ebe458e66f87aa4c0454810f2fc5b74c6926a955833c68fc9902ebe08ecb",
+        "gitBlobSha": "4b33c0ab6c155c38d954ef09c37b1a0f41cd3d65"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/avx.rs",
+        "bytes": 2476,
+        "sha256": "44e17d70fd4bb8fa9760dbed6ff5f6960ac4a00cda2951fcedf3163bce729c4b",
+        "gitBlobSha": "b494385e4a616727799bc4e2b63ff871739c09a2"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/avx512bw.rs",
+        "bytes": 1406,
+        "sha256": "f3364063337d00417d93bff3fef0c372a8b31a6840c6ae632c4685cb64a3b7c2",
+        "gitBlobSha": "466c36ef31e5c9d6a73dcaac713e8fca751197d1"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/avx512f.rs",
+        "bytes": 499261,
+        "sha256": "5dde37ddade867d2fbbc20d4a5eb64a5b549228727247d8e65da166e3ead1fcd",
+        "gitBlobSha": "934c9e2812c42498632bb689b41270a25837a3ba"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/avx512fp16.rs",
+        "bytes": 13790,
+        "sha256": "0d0c6501f313c2a1e87b0fcddfd0f2f5a95abeed29eb16f50f7f256527ff19be",
+        "gitBlobSha": "955c6ccc7526b6c30d858c0080d17f251f426f69"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/bmi.rs",
+        "bytes": 6247,
+        "sha256": "bfa7c3a1f778b56cb7b8e707d57d2db5270c07c71dc7318482b11790786daabd",
+        "gitBlobSha": "5d204d51ae6d98cc72e912e56a56758b7fa5a1d2"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/bmi2.rs",
+        "bytes": 4623,
+        "sha256": "e653c2d67e5a5978590749a80c98c1f79e1a1af7a5fb94e4ca1b6dfbd57b8f1f",
+        "gitBlobSha": "ea9daf88574f0362d5e5847150dae67e2457dcc8"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/bswap.rs",
+        "bytes": 718,
+        "sha256": "b7eeb055ee3446c5cbfa2c982b99cb19b9d7ca95f8332ad71af10b805dc70603",
+        "gitBlobSha": "62cd2948ce14d0052e14123cb1507de237909abf"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/bt.rs",
+        "bytes": 4486,
+        "sha256": "5be7e08dc0b9eb3227790e33731b8052ca901790692f5dc76a3a2bd657c6ed72",
+        "gitBlobSha": "f9aa3e16ccdf0ee4d07b5308bae88efff7ff461d"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/cmpxchg16b.rs",
+        "bytes": 2130,
+        "sha256": "fc21bff6ecfaa80517817d13fca11e0f145d1cdb14ffac3870c19b16129a2f75",
+        "gitBlobSha": "46a008245bf8245d658ee4f5e78feddea7d6c5ed"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/fxsr.rs",
+        "bytes": 2716,
+        "sha256": "74c4799d8bd0be8f849cda9520e37487e84591dd60b09b0ea9545c6e364d13f5",
+        "gitBlobSha": "a24b44fb1f7e387810940531e324341bfdb34772"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/macros.rs",
+        "bytes": 927,
+        "sha256": "5e91f1e2c0fee0df9c90bb446482b2117e70304ba810142c85ce10288f2337ea",
+        "gitBlobSha": "53f1d02bd368496f5d4c269e8cd507ff2a81b52e"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/mod.rs",
+        "bytes": 1829,
+        "sha256": "b67cb2bd7727eb94fa318212694ebcd184bfa536120bec8cecf8f191319c232f",
+        "gitBlobSha": "7d681882bef0ca70d852ed4f43c12e7b038f1479"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/rdrand.rs",
+        "bytes": 1551,
+        "sha256": "d28c01a55046dbe9d40f5e84f8ac7390b511a5de110029d3db24cd5db25c4d08",
+        "gitBlobSha": "42e907b4e478d1ec2476e7da0d1b61dbc84e883b"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/sse.rs",
+        "bytes": 4864,
+        "sha256": "0292cee1599c25480701b1831b359c0cad8278e75b2a25450c58ec4d5036f61b",
+        "gitBlobSha": "863c3cd2e701210477f2a161c55f511460f1f424"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/sse2.rs",
+        "bytes": 7427,
+        "sha256": "584cae1436f1516d4ea949b9b985e02653ac2344e5cbf186ab951f1c22398e4b",
+        "gitBlobSha": "475e2d2a83cc3a82f68ac2d44cfef4d5c00fa511"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/sse41.rs",
+        "bytes": 1996,
+        "sha256": "8559ecb7a9c2b3bb0766f5723ce2b2563270cbd2f97260da04d096eda7ca826c",
+        "gitBlobSha": "4b7d25f2144b01f1f3f8dc79e49e1fe119253fa4"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/sse42.rs",
+        "bytes": 1033,
+        "sha256": "acce824b3453bafabe0b4c9df79ec520c2d5ed22908be31478187366ce5a2631",
+        "gitBlobSha": "64a23b2b192103974f9d5461aa1dadb1b894ce87"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/tbm.rs",
+        "bytes": 7192,
+        "sha256": "41d6c5ddeed8f594aa52c95592ed537a6fc1d179d793c3f7c46d9fbacf690863",
+        "gitBlobSha": "002e0059160b773c13e167c3416bdfbd317da356"
+      },
+      {
+        "path": "crates/core_arch/src/x86_64/xsave.rs",
+        "bytes": 7286,
+        "sha256": "bba8cb7e75990a3919878825f33120359d78e9fda086646a88c1a8d4e0e32f6a",
+        "gitBlobSha": "ca2367307f8dbe6b664addd4b1c0bf0c49e69073"
+      }
+    ],
+    "licenses": [
+      {
+        "path": "LICENSE-APACHE",
+        "bytes": 10847,
+        "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "gitBlobSha": "16fe87b06e802f094b3fbb0894b137bca2b16ef1"
+      },
+      {
+        "path": "LICENSE-MIT",
+        "bytes": 1071,
+        "sha256": "29662666b44dff84977b46e05642cdef910bc3a93a17b5fd86e632bafa59cf21",
+        "gitBlobSha": "52d82415d8b60cd3c5858c8939fa0d8fae1aeca0"
+      }
+    ]
+  },
+  "sourceScope": "Original namespace inputs only; no bodies, layouts, traits, cfg selection or runtime semantics are authorized by this manifest",
+  "namespaceComplete": false,
+  "runtimeParity": false,
+  "rustExecutions": 0
+}

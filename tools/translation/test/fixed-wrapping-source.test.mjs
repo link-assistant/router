@@ -95,8 +95,12 @@ test('constant evaluation outside its admitted host profile remains explicit rat
 });
 
 test('original locked wide-add high-word function preserves exact carry using its unchanged Rust body',async()=>{
-  const stage=original();assert.equal(stage.translationFailure,null);const api=(await loadJavaScript(emitNumericSourceStage(stage).javascript)).translated;
-  assert.equal(api.umul128_add_hi64(max64,max64,max64),max64);assert.equal(api.umul128_add_hi64(max64,1n,1n),1n);assert.equal(api.umul128_add_hi64(0n,max64,max64),0n);
+  const stage=original();assert.equal(stage.translationFailure,null);
+  assert.ok(stage.meta.executable.some(entry=>entry.name==='umul128_add_hi64'));assert.equal(stage.meta.refused.some(entry=>entry.name==='umul128_add_hi64'),false);
+  await verifyTypedTargets({...emitNumericSourceStage(stage),meta:stage.meta},api=>{
+    assert.equal(api.umul128_add_hi64(max64,max64,max64),max64);assert.equal(api.umul128_add_hi64(max64,1n,1n),1n);assert.equal(api.umul128_add_hi64(0n,max64,max64),0n);
+    assert.equal(api.umul128_add_hi64(9007199254740993n,1n,0n),0n);assert.throws(()=>api.umul128_add_hi64(-1n,1n,0n));
+  },{childTimeoutMs:30000});
   assert.equal(stage.configuration.authority,false);assert.equal(stage.formatterEquivalence,false);
 });
 

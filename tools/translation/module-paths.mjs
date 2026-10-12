@@ -78,7 +78,7 @@ function header(item,configuration){
   if(inline?tokens.at(-1)?.text!=='}':tokens[at]?.text!==';'||at!==tokens.length-1)fail('module delimiter is outside the checked grammar');
   return {name,inline,rawIdentifier};
 }
-export function planTrackedModulePath(module,item,paths){
+function originalModulePath(module,item,paths,retainUnknown){
   const original=originalSourceModuleItems(module).find(candidate=>candidate.start===item?.start&&candidate.end===item?.end);
   if(!original||original.term!=='mod'||JSON.stringify(original)!==JSON.stringify(item))fail('declaration differs from its complete original source');
   if(!Array.isArray(paths)||paths.length>MODULE_PATH_PROFILE.limits.trackedPaths)fail('tracked path list exceeds its bound');
@@ -87,7 +87,7 @@ export function planTrackedModulePath(module,item,paths){
   if(!tracked.has(module.file))fail('complete original source file is not tracked');
   const pathDirectory=canonicalPath(module.pathDirectory??posix.dirname(module.file),{directory:true});
   const configuration=itemConfiguration(original.tokens,module.compilationProfile);
-  if(configuration.status!=='active')fail('module compilation condition is unresolved or inactive');
+  if(configuration.status!=='active'&&!(retainUnknown&&configuration.status==='unknown'&&configuration.diagnostics.length===0))fail('module compilation condition is unresolved or inactive');
   const attributes=configuration.attributes.filter(attribute=>attribute.name==='path');
   if(attributes.length>1)fail('duplicate path attributes retain a semantic obligation');
   if(configuration.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&!['cfg','path'].includes(attribute.name)&&!(attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')))fail('enclosing module attribute owner or expansion is unresolved');
@@ -111,7 +111,11 @@ export function planTrackedModulePath(module,item,paths){
   }
   const plan=freeze({profile:MODULE_PATH_PROFILE.profile,rust:MODULE_PATH_PROFILE.rust,name:parsed.name,rawIdentifier:parsed.rawIdentifier,inline:parsed.inline,target,directory,pathDirectory:childPathDirectory,candidates,explicitPath:override,
     source:module.file,sourceSha256:hash(module.source),module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,span:{start:original.start,end:original.end},declarationSha256:hash(module.source.slice(original.start,original.end)),
-    attributes:configuration.attributes,namespaceAuthority:false,attributeExpansionAuthority:false,runtimeAuthority:false});
+    attributes:configuration.attributes,configurationCondition:configuration.status,availabilitySelected:configuration.status==='active',namespaceAuthority:false,attributeExpansionAuthority:false,runtimeAuthority:false});
   plans.add(plan);return plan;
 }
+export const planTrackedModulePath=(module,item,paths)=>originalModulePath(module,item,paths,false);
+// Retain a unique complete source candidate without admitting its cfg-selected
+// availability. The project must propagate `unknown` to every child body.
+export const planConditionalModuleSourcePath=(module,item,paths)=>originalModulePath(module,item,paths,true);
 export const isTrackedModulePathPlan=plan=>!!plan&&plans.has(plan);

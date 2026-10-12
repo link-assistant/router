@@ -88,6 +88,13 @@ function leaves(tokens,start) {
   if(!eat(';') || at!==tokens.length)throw new Error('use tree has an unresolved terminator');
   return output;
 }
+// Syntax candidates only. Consumers still need their private original module
+// association, visibility, configuration and namespace proofs.
+export function originalUseDeclarationLeaves(item,owner=[]) {
+  const tokens=tokensOf(item),parsed=header(tokens,owner);
+  if(item.term!=='use'||tokens[parsed.at]?.text!=='use')throw new TypeError('Original use candidates require a complete use declaration');
+  return frozen(leaves(tokens,parsed.at+1).map(leaf=>({...leaf,namespaceAuthority:false})));
+}
 const harmless=new Set(['allow','warn','deny','forbid','doc','must_use','inline','cold','deprecated','non_exhaustive','track_caller','repr']);
 const standardDerives=new Set(['Clone','Copy','Debug','Default','PartialEq','Eq','Hash','PartialOrd','Ord']);
 function uncertainty(attributes,{moduleAttribute=false}={}) {
