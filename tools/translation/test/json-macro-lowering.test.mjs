@@ -4,7 +4,9 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {proveJsonMacroFeatures,isJsonMacroFeatureProof} from '../json-macro-features.mjs';
-import {createJsonMacroContext,isJsonMacroContext,configureJsonMacroParser} from '../json-macro-context.mjs';
+import {createJsonMacroContext,isJsonMacroContext,configureJsonMacroParser,sealJsonMacroCall} from '../json-macro-context.mjs';
+import {captureSourceModuleViews,originalSourceModuleItems} from '../source-module-views.mjs';
+import {parseJsonMacroSyntax} from '../json-macro-syntax.mjs';
 import {HostRustParser} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
 import {translateProject} from '../project.mjs';
@@ -78,4 +80,45 @@ test('original parser context rejects cloned proofs stale source slices and coun
   assert.throws(()=>configureJsonMacroParser(new HostRustParser(tokenizeRust(source)),structuredClone(context),{file:'src/lib.rs'}),/original/);
   assert.throws(()=>configureJsonMacroParser(new HostRustParser(tokenizeRust(source+' ')),context,{file:'src/lib.rs'}),/original/);
   assert.throws(()=>createJsonMacroContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies:{...dependencies(),callOwnerResolved:true,unifiedFeatureClosureVerified:true}}),/sealed/);
+});
+
+
+const viewedModules=(source,profile=PRODUCTION_PROFILE)=>captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:profile}).views.map(sourceView=>({file:'src/lib.rs',path:[...sourceView.modulePath],source,sourceView,compilationProfile:profile,configurationCondition:sourceView.configurationCondition}));
+
+test('same-file JSON sibling aliases retain genuine original views and execute distinct bodies in both targets',async()=>{
+  const source='mod left {use serde_json::{Value,json as literal};pub fn sample()->Value{literal!({"side":"left"})}} mod right {use serde_json::{Value,json as literal};pub fn sample()->Value{literal!({"side":"right"})}}',result=project(source);
+  assert.equal(result.meta.jsonMacroDiagnostic,undefined);assert.equal(result.meta.refused.some(item=>['left.sample','right.sample'].includes(item.name)),false);
+  const context=result.meta.jsonMacroContext;assert.equal(context.originalModules.length,3);assert.equal(new Set(context.originalModules.map(module=>module.sourceViewDigest)).size,3);assert.ok(context.originalModules.every(module=>module.sha256===hash(source)&&module.configurationCondition==='active'));
+  await verifyTypedTargets(result,api=>{assert.deepEqual(native(api['left.sample']()),{side:'left'});assert.deepEqual(native(api['right.sample']()),{side:'right'});});
+});
+
+test('same-file local macro shadow remains refused without leaking into an unrelated sibling JSON owner',async()=>{
+  const source='mod left {use serde_json::{Value,json};pub fn sample()->Value{json!({"side":"left"})}} mod right {use serde_json::Value;macro_rules! json{($($tt:tt)*)=>{false}}pub fn rejected()->Value{json!(null)}}',result=project(source);
+  assert.equal(result.meta.executable.some(item=>item.name==='right.rejected'),false);assert.equal(result.meta.refused.some(item=>item.name==='right.rejected'),true);assert.equal(result.meta.executable.some(item=>item.name==='left.sample'),true);
+  await verifyTypedTargets(result,api=>{assert.deepEqual(native(api['left.sample']()),{side:'left'});assert.equal(api['right.rejected'],undefined);});
+});
+
+test('JSON module snapshots reject forged sibling/root views stale whole bytes profile mismatches and missing ancestors',()=>{
+  const source='mod left {use serde_json::{Value,json};pub fn sample()->Value{json!(null)}}mod right {}',modules=viewedModules(source),create=rows=>createJsonMacroContext({modules:rows,dependencies:dependencies(),compilationProfile:PRODUCTION_PROFILE}),context=create(modules);
+  assert.equal(context.originalModules[1].sourceViewDigest,modules[1].sourceView.digest);
+  for(const change of [{sourceView:structuredClone(modules[1].sourceView)},{sourceView:modules[0].sourceView},{sourceView:modules[2].sourceView},{source:source+' '},{compilationProfile:null},{configurationCondition:'invented'}])assert.throws(()=>create(modules.map((module,index)=>index===1?{...module,...change}:module)),TypeError);
+  assert.throws(()=>create([modules[1]]),/ancestor/);assert.throws(()=>create(modules.map(module=>{const {sourceView,...bare}=module;return bare;})),/genuine original source views/);
+  const genuine=create(modules.map(module=>({...module,items:[],allItems:[]})));assert.equal(genuine.originalModules.length,3);
+});
+
+test('JSON parser slices cannot cross sibling bodies despite matching bytes in the same complete file',()=>{
+  const source='mod left {use serde_json::{Value,json};pub fn sample()->Value{json!(null)}}mod right {use serde_json::{Value,json};pub fn sample()->Value{json!(true)}}',modules=viewedModules(source),context=createJsonMacroContext({modules,dependencies:dependencies(),compilationProfile:PRODUCTION_PROFILE}),item=originalSourceModuleItems(modules[1]).find(item=>item.name==='sample'),body=source.slice(item.start,item.end);
+  configureJsonMacroParser(new HostRustParser(tokenizeRust(body)),context,{file:'src/lib.rs',modulePath:['left'],offset:item.start});
+  assert.throws(()=>configureJsonMacroParser(new HostRustParser(tokenizeRust(body)),context,{file:'src/lib.rs',modulePath:['right'],offset:item.start}),/escapes.*view/);
+  assert.throws(()=>configureJsonMacroParser(new HostRustParser(tokenizeRust(body)),structuredClone(context),{file:'src/lib.rs',modulePath:['left'],offset:item.start}),/original/);
+});
+
+test('actual unknown/inactive view conditions and procedural ancestors cannot become closed JSON macro scopes',()=>{
+  for(const attribute of ['#[cfg(unix)]','#[cfg(test)]','#[unknown]']) {
+    const source=attribute+' mod child {use serde_json::{Value,json};pub fn sample()->Value{json!(null)}}',modules=viewedModules(source),context=createJsonMacroContext({modules,dependencies:dependencies(),compilationProfile:PRODUCTION_PROFILE}),child=modules[1];
+    const record=context.originalModules.find(module=>module.path.join('.')==='child');assert.equal(record.configurationCondition,child.sourceView.configurationCondition);
+    if(record.configurationCondition!=='active')assert.throws(()=>createJsonMacroContext({modules:modules.map((module,index)=>index===1?{...module,configurationCondition:'active'}:module),dependencies:dependencies(),compilationProfile:PRODUCTION_PROFILE}),/contradicts/);
+    const item=originalSourceModuleItems(child).find(item=>item.name==='sample'),body=source.slice(item.start,item.end),parser=configureJsonMacroParser(new HostRustParser(tokenizeRust(body)),context,{file:'src/lib.rs',modulePath:['child'],offset:item.start}),start=body.indexOf('json!'),end=body.lastIndexOf(')')+1;
+    assert.throws(()=>sealJsonMacroCall(parser,{segments:['json'],start,end,syntax:parseJsonMacroSyntax(body.slice(start,end))}),/unknown|resolved original bang|owner|actual locked|configuration condition/);
+  }
 });
