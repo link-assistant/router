@@ -31,6 +31,5 @@ test('actual custom macro cfg attribute consuming and const obligations remain c
     '#[external]struct Counter{value:u8}impl Counter{fn bad(&self)->bool{matches!(self.value,1)}}pub fn run(v:Counter)->bool{v.bad()}',
     'struct Counter{value:u8}#[cfg(unix)]impl Counter{fn bad(&self)->bool{matches!(self.value,1)}}pub fn run(v:Counter)->bool{v.bad()}',
     'enum State{A,B}impl State{fn bad(self)->bool{matches!(self,Self::A)}}pub fn run(v:State)->bool{v.bad()}',
-    'struct Counter{value:u8}impl Counter{const fn bad(&self)->bool{matches!(self.value,1)}}pub fn run(v:Counter)->bool{v.bad()}',
   ]){const result=project({'src/lib.rs':source});assert.equal(result.meta.executable.some(item=>item.name==='run'),false,source);assert.equal(result.meta.checkedMethods.some(item=>['Counter.bad','State.bad'].includes(item.name)),false,source);assert.ok(result.meta.refused.length,source);}
 });

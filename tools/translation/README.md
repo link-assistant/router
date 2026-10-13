@@ -137,6 +137,17 @@ success alone does not prove constant-name resolution, constructor style,
 irrefutability, copying, moves or borrows. Those obligations must be established
 at each frontend integration point.
 
+Original unguarded `matches!` inside unchanged const functions, methods and
+const items can lower to ordinary checked let/if computations for primitive
+bools and fixed integers. Source-proved Copy unit enums use ordinary exhaustive
+constructor matches. The subject is evaluated once, and the checked Rust type
+feeds strict TypeScript local annotations without changing JavaScript evaluation.
+The complete original macro and pattern records remain serialized; their
+conservative macro flags are unchanged. Guards, payload enums, borrowed subjects
+and unproved Copy/Drop layouts remain refusals. Existing const eligibility and
+selected-path overflow checks still apply; this does not establish complete
+constant evaluation or Router runtime parity.
+
 The tuple/unit match draft sends original structural patterns through
 that planner before normalizing anonymous products to the existing matrix ABI.
 Unit becomes a wildcard only after its actual unit type is checked. Original

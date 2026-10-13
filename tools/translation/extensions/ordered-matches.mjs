@@ -9,6 +9,9 @@ import {coerce} from '../checked-coercions.mjs';
 import {renameExpr,Scope} from '../vendor/meta-language/translation/ir.js';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {containsIntegerRange,proveIntegerCoverage} from './integer-range-patterns.mjs';
+import {originalConstMatchSource} from './const-match-source-context.mjs';
+import {originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
+import {checkedOptionNominal} from './option-nominal-proof.mjs';
 const LIMIT=256;
 const exits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(exits):exits(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type.kind)&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved&&!type.rustReference&&type.rustOwnership?.kind!=='owned'&&(type.kind!=='string'||type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str');
@@ -112,6 +115,36 @@ function literalIdentities(pattern,type,checker,path,range) {
     for(const [index,child]of pattern.args.entries())literalIdentities(child,checker.resolveType(ctor.fields[index].type,path,range),checker,path,range);
   }
 }
+function constUnitCase(test,data,ctor){
+  if(test.kind==='always')return true;
+  if(test.kind==='ctor'&&test.data===data&&test.projection.length===0)return test.ctor===ctor;
+  if(test.kind==='and')return test.tests.every(child=>constUnitCase(child,data,ctor));
+  if(test.kind==='or')return test.tests.some(child=>constUnitCase(child,data,ctor));
+  throw new TypeError('Const unit match requires its exact zero-field constructor tests');
+}
+function originalConstBody(checker,node,subject,variable,attempts,branches,type,evidence){
+  if(!originalConstMatchSource(checker,node)||attempts.some(attempt=>attempt.guard))return null;
+  let result;
+  const ordinary=arm=>arm.k==='routerOrderedArm'?arm.body:arm.k==='let'?{...arm,body:ordinary(arm.body)}:arm;
+  if(['fixed','bool'].includes(subject.type.kind)&&originalPrimitiveCopySource(subject.type)){
+    result=ordinary(branches.at(-1).body);
+    for(let index=branches.length-2;index>=0;index--)result={k:'if',cond:branches[index].cond,then:ordinary(branches[index].body),else:result,type,span:branches[index].span};
+  }else if(subject.type.kind==='data'){
+    const entry=checker.items.get(subject.type.name);
+    if(!entry||entry.record||entry.tuple||entry.standardGeneric||!entry.ctors.length||entry.ctors.length>256||entry.ctors.some(ctor=>ctor.ctorStyle!=='unit'||ctor.fields.length)||attempts.some(attempt=>attempt.plan.bindings.length))return null;
+    checkedOptionNominal(checker,subject.type,node.span);
+    result={k:'match',scrutinee:variable,cases:entry.ctors.map(ctor=>{
+      const index=attempts.findIndex(attempt=>constUnitCase(attempt.plan.test,subject.type.name,ctor.name));
+      if(index<0)throw typeError('Const unit match lost checked exhaustiveness',node.span);
+      return {pattern:{k:'ctor',data:subject.type.name,ctor:ctor.name,binds:[]},body:ordinary(branches[index].body)};
+    }),type,span:node.span};
+  }else return null;
+  // Keep the complete original expansion and pattern records in source JSON.
+  // Source evidence is data; its conservative constEligible:false flags do
+  // not become executable operands or permission for another computation.
+  return {k:'let',name:variable.name,value:subject,body:result,type,mutable:false,span:node.span,
+    constMatchSourceEvidence:JSON.stringify({schema:'original-unguarded-const-match-source-v1',sourceMacro:node.sourceMacro,rows:evidence,subjectEvaluatedOnce:true,exhaustiveness:'unguarded-source-patterns-only',runtimeParity:false})};
+}
 export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=false) {
   env=checker.contextEnvironment(node,env,expected);
   const statement=checkingStatementMatch(node);
@@ -165,6 +198,8 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
     for(let index=branches.length-2;index>=0;index--)result={k:'if',cond:branches[index].cond,then:ordinary(branches[index].body),else:result,type,span:branches[index].span};
     return {k:'let',name,value:subject,body:result,type,mutable:false,span:node.span,integerRangeMatchProof:{...intervalProof,rows:evidence,subjectEvaluatedOnce:true}};
   }
+  const constBody=originalConstBody(checker,node,subject,variable,attempts,branches,type,evidence);
+  if(constBody)return constBody;
   // A linear list avoids copying all following attempts into both paths of
   // every guarded alternative. Each branch's ordinary let tree owns binders.
   let result={k:'routerOrderedMatchArms',branches,type,span:node.span};

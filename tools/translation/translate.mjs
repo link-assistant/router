@@ -241,14 +241,17 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   const parameterTypes = new Map(executable.flatMap(item => item.semantic.constructors ? item.semantic.constructors.map(ctor => [constructorTarget(item, ctor), ctor.params]) : item.semantic.mappings.filter(mapping => mapping.source === item.name).map(mapping => [mapping.target, item.semantic.params])));
   const returnTypes = new Map();
   for (const item of executable) for (const signature of emissions.get(item).signatures ?? []) { if (signature.target) { parameterTypes.set(signature.target, signature.params); returnTypes.set(signature.target, signature.ret); } }
-  const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes, returnTypes);
+  const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes, returnTypes, executable.flatMap(item=>emissions.get(item).checkedLocalBindings??[]));
   const typescript = typedRuntime.replace('export const translated =', `export const translated: { ${types} } =`);
   return { ir, javascript: runtime, typescript };
 }
 
-export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTypes = [], returnTypes = new Map()) {
+export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTypes = [], returnTypes = new Map(), checkedLocalBindings = []) {
   const tokens = tokenize(runtime, 'JavaScript').tokens;
   const annotations = [];
+  const bindingTypes=new Map();
+  for(const binding of checkedLocalBindings){const key=JSON.stringify([binding.function,binding.name]),type=tsType(binding.type,dataTypes);if(bindingTypes.has(key)&&bindingTypes.get(key)!==type)throw new Error('Ambiguous checked local binding type');bindingTypes.set(key,type);}
+  const functionRanges=[];
   const helperTypes = {
     ml_natSub: ['bigint', 'bigint'],
     ml_fixed: ['bigint', 'bigint', 'bigint', 'string'],
@@ -302,6 +305,11 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     const nameAt = at + (tokens[at + 1]?.value === '*' ? 2 : 1);
     if (tokens[nameAt + 1]?.value !== '(') continue;
     const name = tokens[nameAt].value;
+    if(bindingTypes.size){
+      let body=nameAt+2,depth=1;
+      for(;body<tokens.length&&depth;body++)if(tokens[body].kind==='punct'){if(tokens[body].value==='(')depth++;else if(tokens[body].value===')')depth--;}
+      if(tokens[body]?.value==='{'){let end=body+1;depth=1;for(;end<tokens.length&&depth;end++)if(tokens[end].kind==='punct'){if(tokens[end].value==='{')depth++;else if(tokens[end].value==='}')depth--;}functionRanges.push({name,start:body+1,end:end-1});}
+    }
     if(name==='ml_router_try')annotations.push({offset:tokens[at].start,text:[
       "function ml_router_try<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, option:true): T;",
       "function ml_router_try<R extends Readonly<{$:'Err';field0:unknown}>|Readonly<{$:'Ok';field0:unknown}>>(value: R, option:false): Extract<R,Readonly<{$:'Ok';field0:unknown}>>['field0'];",
@@ -351,6 +359,13 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     }
   }
   for (let at = 0; at < tokens.length; at++) {
+    // The emitter records the actual renamed binder and checked Rust type.
+    // Widen only that complete initializer, keeping enum discriminants and
+    // unrelated literal locals available for ordinary TypeScript narrowing.
+    if(bindingTypes.size&&tokens[at].value==='const'&&tokens[at+1]?.kind==='identifier'&&tokens[at+2]?.value==='='){
+      const frame=functionRanges.filter(range=>range.start<=at&&at<range.end).sort((a,b)=>b.start-a.start)[0],type=frame&&bindingTypes.get(JSON.stringify([frame.name,tokens[at+1].value]));
+      if(type){let end=at+3;const stack=[],pairs={'(':')','[':']','{':'}'};for(;end<tokens.length;end++){const token=tokens[end];if(token.kind!=='punct')continue;if(!stack.length&&token.value===';')break;if(pairs[token.value])stack.push(pairs[token.value]);else if([')',']','}'].includes(token.value)&&stack.pop()!==token.value)throw new Error('Checked initializer delimiter mismatch');}if(stack.length||tokens[end]?.value!==';')throw new Error('Checked local initializer is incomplete');annotations.push({offset:tokens[end-1].end,text:' as '+type});}
+    }
     if (tokens[at].value === 'let' && tokens[at + 1]?.value === 'pending' && tokens[at + 2]?.value === ';') annotations.push({ offset: tokens[at + 1].end, text: ': Promise<T> | undefined' });
     if (tokens[at].value === 'catch' && tokens[at + 2]?.value === 'ml_router_error') annotations.push({ offset: tokens[at + 2].end, text: ': any' });
   }

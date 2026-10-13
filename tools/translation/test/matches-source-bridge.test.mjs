@@ -81,7 +81,6 @@ test('source macro owner unknown cfg attributes guards and const methods stay ex
     '#[cfg(unix)] mod hidden{}pub fn bad(v:u8)->bool{matches!(v,1)}',
     '#[external] struct Unknown;pub fn bad(v:u8)->bool{matches!(v,1)}',
     '#![no_implicit_prelude] pub fn bad(v:u8)->bool{matches!(v,1)}',
-    'pub const fn bad(v:u8)->bool{matches!(v,1)}',
     'pub fn bad(v:Option<u8>)->bool{matches!(v,Some(n) if {return true;})}',
     'pub fn bad(v:&Option<u8>)->bool{matches!(v,Some(_))}',
   ]){const result=project(source);assert.equal(result.meta.executable.some(item=>item.name==='bad'||item.name==='State.bad'),false,source);assert.ok(result.meta.refused.length,source);}
