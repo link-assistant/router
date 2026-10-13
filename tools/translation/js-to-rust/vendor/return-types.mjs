@@ -1,4 +1,4 @@
-import { recordShape } from './aggregates.mjs';
+import { recordShape,errorShape } from './aggregates.mjs';
 const primitive = new Set(['string', 'number', 'boolean']);
 
 export function optionalType(type) {
@@ -23,10 +23,13 @@ export function joinReturnTypes(left, right) {
 }
 
 export function closedReturnType(type) {
-  return primitive.has(type) || ['null', 'undefined','value','array-value'].includes(type) || Boolean(optionalType(type)) || Boolean(recordShape(type)?.every(([,field])=>closedReturnType(field)));
+  return primitive.has(type) || ['null', 'undefined','value','array-value'].includes(type) || Boolean(optionalType(type)) || Boolean((recordShape(type)??errorShape(type))?.every(([,field])=>closedReturnType(field)));
 }
 
 export function typescriptType(type) {
+  if(type==='utf16-string')return 'string';
+  const error=errorShape(type);
+  if(error)return `Error & { ${error.map(([name,field])=>`${JSON.stringify(name)}: ${typescriptType(field)}`).join('; ')} }`;
   if(type==='array-value')return 'unknown[]';
   const record=recordShape(type);
   if(record)return `{ ${record.map(([name,field])=>`${JSON.stringify(name)}: ${typescriptType(field)}`).join('; ')} }`;

@@ -16,6 +16,7 @@
 (type number (javascript number) (rust f64) (rust-owned f64))
 (type boolean (javascript boolean) (rust bool) (rust-owned bool))
 (type string (javascript string) (rust "&str") (rust-owned String))
+(type utf16-string (javascript source-owned-utf16-string) (rust "&[u16]") (rust-owned "Vec<u16>"))
 (type value (javascript "*") (rust "JsValue<'_>") (rust-owned "JsValue<'static>"))
 (type null (javascript null) (rust JsNull) (rust-owned JsNull))
 (type undefined (javascript undefined) (rust JsUndefined) (rust-owned JsUndefined))

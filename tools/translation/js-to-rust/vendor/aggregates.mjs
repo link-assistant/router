@@ -10,8 +10,10 @@ export function recordShape(type) {
     return Array.isArray(fields) && fields.every(field => Array.isArray(field) && field.length === 2 && field.every(value => typeof value === 'string')) ? fields : null;
   } catch { return null; }
 }
+export function errorType(fields) {return 'error:'+JSON.stringify(fields.map(field=>[field.name,field.value.type]));}
+export function errorShape(type) {return type?.startsWith('error:')?recordShape('record:'+type.slice(6)):null;}
 export function carriesValue(type) {
-  return ['value','array-value'].includes(type) || Boolean(recordShape(type)?.some(([,field]) => carriesValue(field)));
+  return ['value','array-value'].includes(type) || Boolean((recordShape(type)??errorShape(type))?.some(([,field]) => carriesValue(field)));
 }
 // Lossless value lifts cannot reinterpret scalar strings as UTF-16 payloads.
 // String literals have known units; arbitrary strings retain unknown payloads.
@@ -21,5 +23,5 @@ export function canLiftValue(expr) {
 export function payloadBoundary(item) {
   if(item.kind!=='function')return false;
   const body=JSON.stringify(item.body);
-  return carriesValue(item.returns) || body.includes('"kind":"record"') || body.includes('"kind":"array"') || body.includes('"primitiveComparison":true') || Boolean(item.params?.some(param=>param.rest));
+  return carriesValue(item.returns) || Boolean(errorShape(item.returns)) || body.includes('"kind":"error"') || body.includes('"kind":"record"') || body.includes('"kind":"array"') || body.includes('"primitiveComparison":true') || Boolean(item.params?.some(param=>param.rest));
 }

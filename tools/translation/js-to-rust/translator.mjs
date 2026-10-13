@@ -10,6 +10,7 @@ import { parseLinks } from './vendor/lino.mjs';
 import { splitConstantItems } from './vendor/constants.mjs';
 import { shadowedBuiltins } from './vendor/builtin-ownership.mjs';
 import { tableOwnership } from './vendor/static-tables.mjs';
+import { privateErrorContracts } from './vendor/private-contracts.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -42,6 +43,7 @@ export function analyzeJavaScript(source) {
   const items = [];
   const shadowed = shadowedBuiltins(raw);
   const tables=tableOwnership(tokens,raw,shadowed,source);
+  const errors=privateErrorContracts(source);
   let doc = '';
   for (const item of raw) {
     if (item.comment) {
@@ -50,7 +52,7 @@ export function analyzeJavaScript(source) {
     }
     const row = { start: item.start, end: item.end, status: 'unsupported' };
     try {
-      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed,readOnlyTables:tables });
+      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed,readOnlyTables:tables,errorContracts:errors });
       if (row.parsed.kind === 'function' && !returns(row.parsed.body)) {
         throw Object.assign(new Error('a path ends without a return'), { slug: 'missing-return' });
       }

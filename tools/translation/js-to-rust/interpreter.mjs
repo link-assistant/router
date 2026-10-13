@@ -11,6 +11,7 @@ export function evaluate(program, functionName, arguments_) {
     switch (expr.kind) {
       case 'array':return expr.values.map(get);
       case 'record':return Object.fromEntries(expr.fields.map(field=>[field.name,get(field.value)]));
+      case 'error':return Object.assign(new Error(get(expr.message)),Object.fromEntries(expr.fields.map(field=>[field.name,get(field.value)])));
       case 'number': return Number(expr.text);
       case 'string': case 'boolean': return expr.value;
       case 'null': return null;
@@ -100,7 +101,7 @@ export function evaluate(program, functionName, arguments_) {
   const invoke = (name, args) => {
     const fn = table.get(name);
     if (!fn || fn.kind !== 'function') throw new Error(`unknown function ${name}`);
-    const result = block(fn.body, new Map(fn.params.map((param, index) => [param.name, param.rest?args.slice(index):args[index]])));
+    const result = block(fn.body, new Map(fn.params.map((param, index) => [param.name, param.rest?args.slice(index):args[index]===undefined&&param.default?expression(param.default,new Map()):args[index]])));
     if (!result.returned) throw new Error(`function ${name} returned no value`);
     return result.value;
   };

@@ -95,9 +95,10 @@ function jsdocTypes(doc) {
  * @param {string} doc the comments directly before the item
  * @returns {object}
  */
-export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables } = {}) {
+export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts } = {}) {
   const at = cursor(tokens);
   at.shadowedBuiltins = shadowedBuiltins;
+  at.errorContracts=errorContracts;
   const term = itemTerm(tokens, 'JavaScript');
   if (term === 'import') refuse('no-definition');
   if (term === 'class') refuse('class');
@@ -129,6 +130,7 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
     if (arrowAhead(at)) {
       const types = jsdocTypes(doc);
       const params = [];
+      const privatePlan=errorContracts?.bindings.get(name.start);
       const grouped = at.eat('(');
       if (!grouped || !at.eat(')')) {
         do {
@@ -136,7 +138,9 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
           const param = at.next();
           if (param.type !== 'ident') refuse('unsupported', 'a non-identifier arrow parameter');
           if(rest&&(!grouped||!at.is(')')))refuse('unsupported','a non-final rest parameter');
-          params.push({ name: snakeFromCamel(param.text), type: rest?'array-value':jsType(types.params.get(param.text)), ...(rest?{rest:true}:{}) });
+          const fallback=at.eat('=')?closedDefault(at):null;
+          const type=privatePlan&&!privatePlan.reason&&params.length===privatePlan.message?'utf16-string':rest?'array-value':jsType(types.params.get(param.text));
+          params.push({ name: snakeFromCamel(param.text), type, ...(rest?{rest:true}:{}),...(fallback?{default:fallback}:{}) });
         } while (grouped && at.eat(','));
         if (grouped) at.expect(')');
       }
@@ -164,10 +168,10 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
     const rest=at.eat('...');
     const param = at.next();
     if (param.type !== 'ident') refuse('unsupported', `the parameter ${param.text}`);
-    if (at.is('=')) refuse('unsupported', 'a default parameter');
+    const fallback=at.eat('=')?closedDefault(at):null;
     if(rest&&!at.is(')'))refuse('unsupported','a non-final rest parameter');
     const type = rest?'array-value':jsType(types.params.get(param.text));
-    params.push({ name: snakeFromCamel(param.text), type, ...(rest?{rest:true}:{}) });
+    params.push({ name: snakeFromCamel(param.text), type, ...(rest?{rest:true}:{}),...(fallback?{default:fallback}:{}) });
     if (!at.is(')')) at.expect(',');
   }
   const returns = types.returns ? jsType(types.returns) : null;
@@ -176,9 +180,17 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
   return { kind: 'function', name, exported, params, returns, body };
 }
 
+function closedDefault(at) {
+  const value=expression(at,'JavaScript');
+  if(['null','undefined'].includes(value.kind))return value;
+  try{constantValue(value);}catch{refuse('unsupported','an effectful or non-closed parameter default');}
+  return value;
+}
+
 function jsType(written) {
   const id = written === undefined || written === null ? 'value' : idBySpelling(constructMap().types, 'javascript', written);
   if (!id) refuse('untyped', written ?? 'none');
+  if(id==='utf16-string')refuse('untyped','UTF16 parameter contracts require proved source calls');
   return id;
 }
 
@@ -412,6 +424,12 @@ function unary(at, language) {
     }
   }
   if (language === 'JavaScript' && at.eat('typeof')) return { kind: 'typeof', operand: unary(at, language) };
+  if(language==='JavaScript'&&at.is('new')&&at.is('Error',1)) {
+    if(!at.errorContracts?.owned)refuse('collection',at.errorContracts?.reason??'unproved Error intrinsic ownership');
+    at.next();at.next();const args=argumentsOf(at,language);
+    if(args.length!==1)refuse('collection','Error construction without a proved message');
+    return {kind:'error',message:args[0],fields:[]};
+  }
   if (['void', 'delete', 'new'].includes(token.text)) refuse('unsupported', token.text);
   if (token.text === 'await') refuse('async');
   return postfix(at, language);
@@ -514,6 +532,12 @@ function primary(at, language) {
   if (['this', 'self', 'Self', 'function', 'None', 'Some'].includes(token.text)) refuse('unsupported', token.text);
   if (at.is('=>')) refuse('unsupported', 'an arrow function');
   const builtins = constructMap().builtins;
+  if(language==='JavaScript'&&token.text==='Object'&&at.is('.')&&at.is('assign',1)) {
+    if(!at.errorContracts?.owned)refuse('collection',at.errorContracts?.reason??'unproved Object intrinsic ownership');
+    at.next();at.next();const args=argumentsOf(at,language);
+    if(args.length!==2||args[0].kind!=='error'||args[0].fields.length||args[1].kind!=='record')refuse('collection','Object.assign outside fresh closed Error fields');
+    return {...args[0],fields:args[1].fields};
+  }
   if (language === 'JavaScript' && ['Math', 'Number', 'Buffer'].includes(token.text) && at.eat('.')) {
     if (at.shadowedBuiltins?.has(token.text)) refuse('unsupported', `a shadowed builtin ${token.text}`);
     const callee = `${token.text}.${at.next().text}`;

@@ -13,6 +13,6 @@
   { "kind": "rounding", "source": "/** @param {number} n @returns {number} */ export function rounding(n) { return Math.round(n); }" },
   { "kind": "unsupported", "source": "/** @param {number} n @returns {boolean} */ export function loose(n) { return n == 0; }" },
   { "kind": "unsupported", "source": "/** @returns {number} */ export function throwing() { throw new Error('x'); }" },
-  { "kind": "unsupported", "source": "/** @param {number} n @returns {number} */ export function defaults(n = 1) { return n; }" },
+  { "kind": "unsupported", "source": "/** @param {number} n @returns {number} */ export function defaults(n = sideEffect()) { return n; }" },
   { "kind": "missing-return", "source": "/** @param {boolean} yes @returns {number} */ export function missingReturn(yes) { if (yes) { return 1; } }" }
 ]

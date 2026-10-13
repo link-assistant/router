@@ -21,7 +21,7 @@ boolean short circuit operators, conditional expressions, sibling function
 calls, const/let locals, assignment to let locals, braced if/else, while and
 returns. Supported calls are two-argument Math.min/max, Math.abs/floor/ceil/
 sqrt/trunc, Number.isFinite/isNaN and string startsWith/endsWith/includes/trim.
-Default parameters, imports, async/await, classes, general collection values, callbacks,
+Effectful or dependent defaults, imports, async/await, classes, general collection values, callbacks,
 templates, exceptions, for loops, coercive operators and unknown calls are
 refused explicitly. Minimal examples live in `parity/fixtures/js-first/unsupported.json`.
 Source positions use UTF-16 offsets. Names must round-trip between JavaScript
@@ -153,6 +153,34 @@ Property reads, getters, prototype setters, spreads, dynamic record keys,
 coercion, arbitrary reference comparisons and source calls to rest functions
 remain unsupported. Rust text/signature inspection is distinct from Rust
 compilation or runtime verification.
+
+Closed primitive parameter defaults trigger only for omitted or explicit
+undefined arguments. They retain the original parameter order; null, NaN,
+signed zero and other supplied falsy values bypass the default. Unknown
+parameters keep their complete caller domain and payload identity. Rust uses
+the payload Undefined sentinel or an Option for a typed primitive parameter.
+Effectful, dependent, getter and allocation defaults remain refused.
+
+A bounded private Error factory can acquire a UTF-16 message contract when a
+complete source syntax audit proves every reference is a direct call and every
+message argument produces a primitive string before the helper starts. This
+contract is inferred from actual private call syntax, never from a helper name
+or a public unannotated parameter. Constructor ownership checks reject shadowed
+or modified Error/Object intrinsics, escaping aliases, dynamic evaluation and
+prototype or reflection capabilities. Argument effects are not translated by
+this proof; a caller needs its own complete supported body.
+
+The admitted factory shape constructs a fresh Error and assigns checked literal
+own fields. Special setter keys, getters, spreads and property observations
+remain refused. Meta retains the message and exact field contracts. The IR and
+strict TypeScript produce actual Error objects with the original message
+property descriptor, Error prototype, field order and retained payload aliases.
+The Rust draft instead exposes an explicit `JsErrorProjection`: an owned UTF-16
+message and the retained typed own fields in a fresh `Rc<RefCell<...>>`. That
+projection preserves generated aliases and borrowed payload lifetimes; it does
+not model Error stack, prototype, reflection or throw behavior. Such observers
+and incompatible scalar/payload calls are refused before emission. Rust text
+inspection establishes the projection API, not Rust execution parity.
 
 Run `node --test tools/translation/js-to-rust/test/*.test.mjs`. The tests execute
 58 authored fixtures against authoritative JavaScript, an independent IR

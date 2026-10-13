@@ -4,7 +4,7 @@ import { constantValue } from './vendor/constants.mjs';
 import { optionalType, typescriptType } from './vendor/return-types.mjs';
 import { classPattern } from './vendor/character-classes.mjs';
 import { mapValueType } from './vendor/static-tables.mjs';
-import { recordShape,carriesValue,payloadBoundary } from './vendor/aggregates.mjs';
+import { recordShape,errorShape,carriesValue,payloadBoundary } from './vendor/aggregates.mjs';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -170,8 +170,8 @@ function emitter(program, target) {
   const rustContract=(type,owned=true,lifetime="'a")=>{
     if(type==='value')return `${payloadMode?'JsPayload':'JsValue'}<${lifetime}>`;
     if(type==='array-value')return `std::rc::Rc<std::cell::RefCell<Vec<JsPayload<${lifetime}>>>>`;
-    const shape=recordShape(type);
-    if(shape){if(!records.has(type))records.set(type,{name:`JsRecord${records.size}`,shape});return `std::rc::Rc<std::cell::RefCell<${records.get(type).name}${carriesValue(type)?`<${lifetime}>`:''}>>`;}
+    const error=errorShape(type),shape=recordShape(type)??error;
+    if(shape){if(!records.has(type))records.set(type,{name:`${error?'JsErrorProjection':'JsRecord'}${records.size}`,shape,error:Boolean(error)});return `std::rc::Rc<std::cell::RefCell<${records.get(type).name}${carriesValue(type)?`<${lifetime}>`:''}>>`;}
     return map.types.get(type)[owned?'rustOwned':'rust'];
   };
   const lift=expr=>{
@@ -181,6 +181,7 @@ function emitter(program, target) {
     return `JsPayload::${expr.type==='number'?'Number':'Boolean'}(${expression(expr)})`;
   };
   const literal=value=>`JsLiteral::${{string:'String',number:'Number',boolean:'Boolean'}[value.type]}(${rustConstant(value)})`;
+  const units=value=>`&[${Array.from({length:value.length},(_,index)=>value.charCodeAt(index)).join(', ')}]`;
   const converted = (expr, type) => {
     if(rust&&type==='value')return lift(expr);
     const optional = optionalType(type);
@@ -197,7 +198,7 @@ function emitter(program, target) {
       case 'variable': {
         if (!rust && expr.projection === 'number') return `(${name(expr.name)} as number)`;
         const value = `${name(expr.name)}${rust && expr.projection ? `.as_${expr.projection}()` : ''}`;
-        if(rust&&(expr.type==='array-value'||recordShape(expr.type)))return `${value}.clone()`;
+        if(rust&&(expr.type==='array-value'||recordShape(expr.type)||errorShape(expr.type)))return `${value}.clone()`;
         return rust && expr.type === 'string' ? `${value}.to_string()` : value;
       }
       case 'binary': {
@@ -235,7 +236,20 @@ function emitter(program, target) {
         rustContract(expr.type);
         return `std::rc::Rc::new(std::cell::RefCell::new(${records.get(expr.type).name} { ${expr.fields.map(field=>`${snakeFromCamel(field.name)}: ${expression(field.value)}`).join(', ')} }))`;
       }
-      case 'call': return `${name(expr.name)}(${expr.args.map((arg) => `${rust && arg.type === 'string' ? '&' : ''}${expression(arg)}`).join(', ')})`;
+      case 'error': {
+        if(!rust)return `Object.assign(new Error(${expression(expr.message)}), {${expr.fields.map(field=>`${JSON.stringify(field.name)}: ${expression(field.value)}`).join(', ')}})`;
+        rustContract(expr.type);
+        const message=expr.message.kind==='string'?units(expr.message.value):expression(expr.message);
+        return `std::rc::Rc::new(std::cell::RefCell::new(${records.get(expr.type).name} { message: (${message}).to_vec()${expr.fields.length?', '+expr.fields.map(field=>`${snakeFromCamel(field.name)}: ${expression(field.value)}`).join(', '):''} }))`;
+      }
+      case 'call':return `${name(expr.name)}(${expr.args.map((arg,index)=>{
+        if(!rust)return expression(arg);
+        const callee=globals.get(expr.name),param=callee.params[index];
+        if(param.type==='value'&&arg.type!=='value'&&!payloadBoundary(callee)&&arg.type!=='undefined')throw new Error('unimplemented scalar default argument lift');
+        let value=param.type==='utf16-string'&&arg.kind==='string'?units(arg.value):param.type==='value'&&arg.type!=='value'?(payloadBoundary(callee)?lift(arg):'JsValue::Undefined'):`${arg.type==='string'?'&':''}${expression(arg)}`;
+        if(param.default&&param.type!=='value')value=arg.type==='undefined'?'None':`Some(${value})`;
+        return value;
+      }).join(', ')})`;
       case 'builtin': return rust && expr.args[0]?.type === 'value' && ['safe-integer', 'finite', 'nan'].includes(expr.name)
         ? `${expression(expr.args[0])}.${{ 'safe-integer': 'is_safe_integer', finite: 'is_finite', nan: 'is_nan' }[expr.name]}()`
         : `${map.builtins.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map(argument=>`${rust && expr.name==='utf8-length'?'&':''}${expression(argument)}`).join(', ')})`;
@@ -300,16 +314,30 @@ function emitter(program, target) {
         : `${item.exported ? 'export ' : ''}const ${name(item.name)}: ${item.type} = ${value};`;
     }
     const lifetime=payloadMode&&item.params.some(param=>param.type==='value'||param.rest)||carriesValue(item.returns);
-    const parameters = item.params.map((param, index) => `${!rust&&param.rest?'...':''}${name(param.name)}${!rust && !param.rest&&param.type === 'value' && item.params.slice(index + 1).every(later => later.type === 'value') ? '?' : ''}: ${rust ? param.rest?"Vec<JsPayload<'a>>":rustContract(param.type,false,lifetime?"'a":"'_") : typescriptType(param.type)}`);
+    const parameters = item.params.map((param, index) => {
+      let type=rust?param.rest?"Vec<JsPayload<'a>>":rustContract(param.type,false,lifetime?"'a":"'_"):typescriptType(param.type);
+      if(rust&&param.default&&param.type!=='value')type=`Option<${type}>`;
+      const optional=!rust&&!param.default&&!param.rest&&param.type==='value'&&item.params.slice(index+1).every(later=>later.type==='value'||later.default||later.rest);
+      return `${!rust&&param.rest?'...':''}${name(param.name)}${optional?'?':''}: ${type}${!rust&&param.default?' = '+expression(param.default):''}`;
+    });
     const signature = rust
       ? `${item.exported ? 'pub ' : ''}fn ${name(item.name)}${lifetime?"<'a>":''}(${parameters.join(', ')}) -> ${rustContract(item.returns)} {`
       : `${item.exported ? 'export ' : ''}function ${name(item.name)}(${parameters.join(', ')}): ${typescriptType(item.returns)} {`;
-    return [...(rust ? ['#[rustfmt::skip]'] : []), signature,...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
+    const defaults=rust?item.params.filter(param=>param.default).map(param=>{
+      if(param.type==='value') {
+        const variant=payloadMode?'JsPayload':'JsValue';
+        const fallback=payloadMode?lift(param.default):param.default.type==='undefined'?'JsValue::Undefined':param.default.type==='null'?'JsValue::Object':param.default.type==='string'?`JsValue::String(${rustString(constantValue(param.default))})`:`JsValue::${param.default.type==='number'?'Number':'Boolean'}(${expression(param.default)})`;
+        return `    let ${name(param.name)} = if matches!(${name(param.name)}, ${variant}::Undefined) { ${fallback} } else { ${name(param.name)} };`;
+      }
+      const fallback=param.type==='utf16-string'?units(param.default.value):param.type==='string'?rustString(constantValue(param.default)):expression(param.default);
+      return `    let ${name(param.name)} = ${name(param.name)}.unwrap_or(${fallback});`;
+    }):[];
+    return [...(rust ? ['#[rustfmt::skip]'] : []), signature,...defaults,...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
   });
   const serialized = JSON.stringify(program);
   payloadMode=true;
   const declarations=[];
-  for(const [type,record]of records)declarations.push(`#[derive(Clone)]\npub struct ${record.name}${carriesValue(type)?"<'a>":''} {\n${record.shape.map(([field,type])=>`    pub ${snakeFromCamel(field)}: ${rustContract(type)},`).join('\n')}\n}`);
+  for(const [type,record]of records)declarations.push(`#[derive(Clone)]\npub struct ${record.name}${carriesValue(type)?"<'a>":''} {\n${record.error?'    pub message: Vec<u16>,\n':''}${record.shape.map(([field,type])=>`    pub ${snakeFromCamel(field)}: ${rustContract(type)},`).join('\n')}\n}`);
   const helpers = rust ? [
     program.some(payloadBoundary)?PAYLOAD_HELPERS:'',
     serialized.match(/"name":"(?:min|max)"/) ? FLOAT_HELPERS : '',
