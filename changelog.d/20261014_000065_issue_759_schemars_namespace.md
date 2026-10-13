@@ -1,3 +1,5 @@
 Retain the complete original Rust1.89 module_path macro source and its positive string-expression constructor lineage for Schemars namespace prerequisites. Qualified empty module_path and bounded string/nested-module_path concat inputs keep genuine private source candidates; caller binding, string identity and generated trait execution remain independent.
 
 Retain exact original Cargo strings privately at genuine derive dependency issuance, allowing the existing JSON issuer to validate the same actual inputs. Copied, proxy, getter and forged carriers cannot select source bytes; no output, ownership or runtime authority is added.
+
+Collect original Syn typed quote templates through an explicit source-only inventory mode while preserving default inventories, and join genuine JsonSchema helper registrations to exact nested attributes. Generated outputs and trait behavior remain independent.

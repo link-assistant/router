@@ -65,8 +65,16 @@ function lifted(nodes,origin){
   }
   return result;
 }
-export function inventoryDeriveQuoteMeta(dependencies,packageName='serde_derive'){
+export function inventoryDeriveQuoteMeta(dependencies,packageName='serde_derive',includeParseQuote=false){
   if(!isDeriveDependencyProof(dependencies))throw new TypeError('Quote meta requires sealed original generator dependencies');
+  if(typeof includeParseQuote!=='boolean')throw new TypeError('Typed parse_quote inventory mode requires an explicit boolean');
+  let parseQuoteSources=null;
+  if(includeParseQuote){
+    const origin=deriveDependencySource(dependencies,'syn','src/parse_quote.rs'),rules=[['parse_quote','macro_rules! parse_quote { ($($tt:tt)*) => { $crate::__private::parse_quote($crate::__private::quote::quote!($($tt)*)) }; }'],['parse_quote_spanned','macro_rules! parse_quote_spanned { ($span:expr=> $($tt:tt)*) => { $crate::__private::parse_quote($crate::__private::quote::quote_spanned!($span=> $($tt)*)) }; }']],actual=rustTokens(origin.source).filter(token=>token.type!=='comment');
+    const declarations=rules.map(([name,written])=>{const expected=rustTokens(written).filter(token=>token.type!=='comment'),found=[];for(let at=0;at<=actual.length-expected.length;at++)if(expected.every((token,index)=>token.text===actual[at+index].text&&token.type===actual[at+index].type))found.push({start:actual[at].start,end:actual[at+expected.length-1].end});if(found.length!==1)throw new TypeError('Original Syn parse_quote declaration is absent or ambiguous: '+name);const span=found[0];return{name,span,sha256:hash(origin.source.slice(span.start,span.end))};});
+    parseQuoteSources={source:origin.path,sourceSha256:origin.sha256,bytes:Buffer.byteLength(origin.source),declarations,parsedAstAuthority:false};
+  }
+  const selectedQuotes=includeParseQuote?new Set([...quotes,'parse_quote','parse_quote_spanned']):quotes;
   const profile=DERIVE_SOURCE_PROFILE.packages.find(entry=>entry.name===packageName);
   if(!profile)throw new TypeError('Generator package is outside the original source profile');
   const members=[],all=[];
@@ -75,9 +83,9 @@ export function inventoryDeriveQuoteMeta(dependencies,packageName='serde_derive'
     function walk(nodes,path=[]){
       for(let at=0;at<nodes.length;at++){
         const node=nodes[at],bang=nodes[at+1],group=nodes[at+2];
-        if(ident(node)&&quotes.has(node.text)&&bang?.text==='!'&&group?.tag==='group'){
+        if(ident(node)&&selectedQuotes.has(node.text)&&bang?.text==='!'&&group?.tag==='group'){
           let output=group.nodes,spanArgument=null;
-          if(node.text==='quote_spanned'){
+          if(['quote_spanned','parse_quote_spanned'].includes(node.text)){
             const split=output.findIndex(entry=>entry.text==='=>');
             if(split<0)throw new TypeError('Original quote_spanned separator is unresolved');
             spanArgument=output.slice(0,split);output=output.slice(split+1);
@@ -91,7 +99,7 @@ export function inventoryDeriveQuoteMeta(dependencies,packageName='serde_derive'
     }
     walk(roots);members.push({source:sourcePath,sourceSha256:origin.sha256,bytes:Buffer.byteLength(origin.source),quotes:rows});
   }
-  const evidence={schema:'original-generator-quote-collection-v1',package:packageName,dependenciesDigest:dependencies.digest,members,quoteCount:all.length,sourceMemberCount:members.length,generatedImplBehavior:false};
+  const evidence={schema:'original-generator-quote-collection-v1',package:packageName,dependenciesDigest:dependencies.digest,members,quoteCount:all.length,sourceMemberCount:members.length,...(parseQuoteSources?{parseQuoteSources}:{}),generatedImplBehavior:false};
   const result=freeze({...evidence,digest:hash(JSON.stringify(evidence))});inventories.set(result,{dependencies,all});return result;
 }
 export const isDeriveQuoteMeta=value=>!!value&&inventories.has(value);

@@ -35,3 +35,18 @@ access to one issuance preserves identity. Copies, proxies, getters and forged
 carriers cannot select those bytes. The existing JSON issuer validates the
 retained inputs and its own archives, preserving its separate private brand.
 No public digest can replace this source handoff.
+
+Typed `parse_quote!` and `parse_quote_spanned!` templates use an explicit opt-in
+inventory mode. Both original Syn declarations must match, including forwarding
+the span before the actual `=>` separator. Default inventories, counts and
+digests remain unchanged. The opt-in retains each complete source template and
+the same private compiler brand; it does not execute Syn parsing or certify an
+output namespace. Schemars' actual `get_doc` template retains its qualified
+concat call and opaque string arguments.
+
+The actual JsonSchema registration independently declares `schemars`, `serde`,
+`validate` and `garde` helper names. Nested Serde/Schemars joins now retain its
+genuine declaring owner as well as any actual Serde sibling owners. They use
+the existing private complete invocation and ancestor checks. This is helper
+registration evidence; unsupported helper behavior and generated bang outputs
+remain separate obligations.

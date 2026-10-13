@@ -231,14 +231,14 @@ export function deriveFootprintHelperAttributeAt(context,module,item,span){
   const certificate=deriveFootprintAt(context,module,item),state=contexts.get(context);
   if(!certificate||certificate.condition.status!=='active'||certificate.dimensions.attributeMacroComplete!==true)return null;
   const attribute=certificate.attributes.find(row=>row.position!=='container'&&row.span.start===span?.start&&row.span.end===span?.end);
-  if(!attribute||!['default','serde'].includes(attribute.name))return null;
+  if(!attribute||!['default','serde','schemars'].includes(attribute.name))return null;
   const ancestors=state.helperScopes.filter(scope=>scope.path.every((part,index)=>certificate.module[index]===part));
   const attributeNames=new Set([...certificate.attributes.map(row=>row.name),...(attribute.name==='default'?['Default']:[])]);
   const missingModule=binding=>binding.namespace==='type'&&binding.kind==='mod'&&(binding.status!=='resolved'||binding.via==='declaration'&&binding.target?.[0]==='crate'&&!state.originalModules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target)));
   if(!ancestors.length||ancestors.some(scope=>scope.configurationCondition!=='active'||!state.attributeClosure.get(moduleScopeKey(scope))||scope.bindings.some(binding=>missingModule(binding)||attributeNames.has(binding.name)&&macroBindingAffects(binding,'attribute'))||scope.unresolvedImports.some(entry=>entry.glob||attributeNames.has(entry.name))))return null;
   const builtin=attribute.name==='default'?certificate.builtinDefault:null;
   if(attribute.name==='default'&&(!builtin||builtin.attributeSpan.start!==attribute.span.start||builtin.attributeSpan.end!==attribute.span.end))return null;
-  const owners=builtin?[builtin.owner]:certificate.owners.filter(owner=>owner.target[0]==='serde'&&['Serialize','Deserialize'].includes(owner.target[1]));
+  const owners=builtin?[builtin.owner]:certificate.owners.filter(owner=>attribute.name==='serde'&&owner.target[0]==='serde'&&['Serialize','Deserialize'].includes(owner.target[1])||owner.target.join('::')==='schemars::JsonSchema');
   if(!owners.length||attribute.name==='serde'&&!attribute.helpers)return null;
   let cache=helperCertificates.get(certificate);if(!cache){cache=new Map();helperCertificates.set(certificate,cache);}const key=attribute.span.start+':'+attribute.span.end;if(cache.has(key))return cache.get(key);
   const registrations=owners.map(owner=>registeredDeriveHelperSource({dependencies:state.dependencies,target:owner.target,helperName:attribute.name,defaultProof:builtin?.dependencyProof}));

@@ -29,19 +29,21 @@ function registration(origin,attributeName,ownerName,helperName){
 export function registeredDeriveHelperSource({dependencies,target,helperName,defaultProof=null}={}){
   if(!isDeriveDependencyProof(dependencies))throw new TypeError('Derive helper registration requires private locked source dependencies');
   const serde=Array.isArray(target)&&target.length===2&&target[0]==='serde'&&['Serialize','Deserialize'].includes(target[1])&&helperName==='serde';
+  const schemars=Array.isArray(target)&&target.length===2&&target[0]==='schemars'&&target[1]==='JsonSchema'&&['schemars','serde','validate','garde'].includes(helperName);
   const builtin=Array.isArray(target)&&JSON.stringify(target)===JSON.stringify(['core','default','Default'])&&helperName==='default';
-  if(!serde&&!builtin)return null;
+  if(!serde&&!schemars&&!builtin)return null;
   if(builtin&&(!isBuiltinDefaultDependencyProof(defaultProof)||defaultProof.dependenciesDigest!==dependencies.digest))throw new TypeError('Default helper requires its genuine original builtin dependency proof');
   let cache=sources.get(dependencies);if(!cache){cache=new Map();sources.set(dependencies,cache);}const key=JSON.stringify([target,helperName]);if(cache.has(key))return cache.get(key);
   let origin;
   if(serde)origin=deriveDependencySource(dependencies,'serde_derive','src/lib.rs');
+  else if(schemars)origin=deriveDependencySource(dependencies,'schemars_derive','src/lib.rs');
   else{
     const entry=BUILTIN_DEFAULT_SOURCE_PROFILE.sources.find(row=>row.path==='library/core/src/default.rs'),archive=readFileSync(new URL('./source-profiles/derive/'+entry.archive,import.meta.url));
     if(archive.length!==entry.archiveBytes||hash(archive)!==entry.archiveSha256)throw new TypeError('Original Default helper archive changed');
     const bytes=gunzipSync(archive,{maxOutputLength:100000});if(bytes.length!==entry.bytes||hash(bytes)!==entry.sha256)throw new TypeError('Original Default helper source changed');
     origin={path:entry.path,sha256:entry.sha256,source:bytes.toString('utf8')};
   }
-  const original=registration(origin,serde?'proc_macro_derive':'rustc_builtin_macro',target.at(-1),helperName);
+  const original=registration(origin,serde||schemars?'proc_macro_derive':'rustc_builtin_macro',target.at(-1),helperName);
   const evidence={schema:'original-derive-helper-registration-v1',dependenciesDigest:dependencies.digest,target:[...target],helperName,registration:original,inputAuthority:false,namespaceAuthority:false,bangOutputAuthority:false,generatedImplBehavior:false};
   const proof=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});proofs.add(proof);cache.set(key,proof);return proof;
 }
