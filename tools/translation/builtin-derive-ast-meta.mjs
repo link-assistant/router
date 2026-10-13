@@ -23,15 +23,27 @@ export function builtinDeriveAstSourceProfile(dependencies){
     sources.set(entry.path,freeze({...entry,source:bytes.toString('utf8')}));
   }
   const evidence={schema:'sealed-builtin-derive-ast-source-v1',dependenciesDigest:dependencies.digest,rustVersion:dependencies.rustVersion,sourceProfileSha256:hash(profileBytes),sources:BUILTIN_DERIVE_AST_PROFILE.sources,generatedImplBehavior:false};
-  const profile=freeze({...evidence,digest:hash(JSON.stringify(evidence))});profiles.set(profile,{dependencies,sources,functions:new Map()});cached.set(dependencies,profile);return profile;
+  const profile=freeze({...evidence,digest:hash(JSON.stringify(evidence))});profiles.set(profile,{dependencies,sources,functions:new Map(),syntaxRoots:new Map()});cached.set(dependencies,profile);return profile;
 }
 export const isBuiltinDeriveAstProfile=value=>!!value&&profiles.has(value);
 export function builtinAstOriginal(profile,path){const state=profiles.get(profile),source=state?.sources.get(path);if(!source)throw new TypeError('Unsealed or missing builtin AST source');return source;}
+// These roots are static, unbranded source syntax. The genuine profile owns
+// frozen original strings; callers still issue/check their own fragments and
+// semantic computations. Nothing is shared across private profile identities.
+function originalSyntaxRoots(profile,path){
+  const origin=builtinAstOriginal(profile,path),state=profiles.get(profile),cached=state.syntaxRoots.get(path);
+  if(cached){
+    if(cached.origin!==origin||cached.source!==origin.source||cached.sha256!==origin.sha256)throw new TypeError('Original builtin AST syntax source changed');
+    return cached.roots;
+  }
+  const roots=freeze(originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}));
+  state.syntaxRoots.set(path,{origin,source:origin.source,sha256:origin.sha256,roots});return roots;
+}
 export function originalAstFunction(profile,path,name,sourceContains=null){
   const state=profiles.get(profile);if(!state)throw new TypeError('Unsealed builtin AST function inventory');
   if(sourceContains!==null&&(typeof sourceContains!=='string'||!sourceContains.length||sourceContains.length>256))throw new TypeError('Original AST overload selector exceeds its bounded source profile');
   const key=path+'::'+name+'::'+(sourceContains??'');if(state.functions.has(key))return state.functions.get(key);
-  const origin=builtinAstOriginal(profile,path),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),matches=[];
+  const origin=builtinAstOriginal(profile,path),roots=originalSyntaxRoots(profile,path),matches=[];
   function visit(nodes){
     for(let at=0;at<nodes.length;at++){
       if(nodes[at].text==='fn'&&identifier(nodes[at+1])&&nodes[at+1].text===name){
@@ -53,7 +65,7 @@ export function originalAstFunction(profile,path,name,sourceContains=null){
 export function assertOriginalAstFunction(profile,fragment){if(fragments.get(fragment)?.profile!==profile)throw new TypeError('Unsealed original AST construction fragment');return fragment;}
 export function astFragmentText(fragment){if(!fragments.has(fragment))throw new TypeError('Unsealed AST source fragment');const state=fragments.get(fragment);return state.origin.source.slice(fragment.span.start,fragment.span.end);}
 export function originalAstDefinition(profile,path,kind,name){
-  const origin=builtinAstOriginal(profile,path),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),matches=[];
+  const origin=builtinAstOriginal(profile,path),roots=originalSyntaxRoots(profile,path),matches=[];
   function visit(nodes){for(let at=0;at<nodes.length;at++){
     if(nodes[at].text===kind&&nodes[at+1]?.text===name){let end=at+2;while(end<nodes.length&&!(nodes[end].kind==='group'&&nodes[end].delimiter==='{')&&nodes[end].text!==';')end++;if(nodes[end]?.kind==='group'&&nodes[end].delimiter==='{')matches.push(nodes.slice(at,end+1));}
     if(nodes[at].kind==='group')visit(nodes[at].children);

@@ -4,7 +4,6 @@ import { lex, topLevelItems } from './vendor/formal-ai/lexer.mjs';
 // Mask only opaque lexical regions; token coordinates remain UTF-16 offsets.
 // The original text is always used in the resulting source-bearing IR.
 export function rustTokens(source) {
-  let masked = source;
   const replacements = [];
   const quoteEnd = (start, quote) => {
     let end = start + 1;
@@ -31,8 +30,14 @@ export function rustTokens(source) {
       if (depth) throw new Error(`unterminated nested comment at ${start}`);
       replacements.push([start, at, '/*' + ' '.repeat(at - start - 4) + '*/']);
     } else {
-      const raw = /^(?:br|cr|r)(#*)"/u.exec(source.slice(at));
-      if (raw && (at === 0 || !/[\p{L}\p{N}_]/u.test(source[at - 1]))) {
+      // Only these exact prefixes can match the original raw-literal regex.
+      // Keep its preceding UTF-16 code-unit boundary, including surrogate behavior.
+      const prefix = source[at] === 'r' ? at + 1 :
+        (source[at] === 'b' || source[at] === 'c') && source[at + 1] === 'r' ? at + 2 : -1;
+      const raw = prefix >= 0 && (source[prefix] === '#' || source[prefix] === '"') &&
+        (at === 0 || !/[\p{L}\p{N}_]/u.test(source[at - 1])) ?
+        /^(?:br|cr|r)(#*)"/u.exec(source.slice(at)) : null;
+      if (raw) {
         const terminator = '"' + raw[1];
         const end = source.indexOf(terminator, at + raw[0].length);
         if (end < 0) throw new Error(`unterminated raw literal at ${at}`);
@@ -49,7 +54,15 @@ export function rustTokens(source) {
       } else at++;
     }
   }
-  for (const [start, end, replacement] of replacements.reverse()) masked = masked.slice(0, start) + replacement + masked.slice(end);
+  // Replacements are ordered and nonoverlapping; assemble the same masked
+  // UTF-16 text without repeatedly copying the complete remaining source.
+  const pieces = [];
+  let end = 0;
+  for (const [start, stop, replacement] of replacements) {
+    pieces.push(source.slice(end, start), replacement);
+    end = stop;
+  }
+  const masked = replacements.length ? pieces.join('') + source.slice(end) : source;
   return lex(masked, 'Rust').map(token => ({ ...token, text: source.slice(token.start, token.end) }));
 }
 
