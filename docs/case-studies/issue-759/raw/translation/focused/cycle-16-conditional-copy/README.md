@@ -1,6 +1,6 @@
 Complete focused conditional-attribute and Copy-provenance verification
 
-The [receipt](receipt.json) records all four attempts and the fifteen byte-verified
+The [receipt](receipt.json.gz) records all four attempts and the fifteen byte-verified
 members in the [complete archive](cycle-16-conditional-copy.tar.gz). Initial Node
 and Bun runs each reported eight passing tests and twenty-nine loader failures
 because the new delimiter map lacked a closing quote. After that one-character
