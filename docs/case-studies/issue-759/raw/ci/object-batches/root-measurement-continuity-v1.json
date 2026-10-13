@@ -1,0 +1,32 @@
+{
+  "schema": "root-complete-ci-measurement-continuity-v1",
+  "beforeSourceHead": "688bf9b9a1257a1dc58c758b50b6906ecc4eee63",
+  "afterSourceHead": "bec400e7b916a9fcbca38dabd3796eb72495c4ed",
+  "fieldsComparedExactly": [
+    "schemaVersion",
+    "summary",
+    "limitations",
+    "warnings",
+    "runs",
+    "jobs",
+    "pullRequests",
+    "resourceSamples"
+  ],
+  "beforeSourceCount": 10208,
+  "afterSourceCount": 10209,
+  "addedSourcePaths": [
+    "docs/case-studies/issue-759/raw/ci/object-storage-index.json"
+  ],
+  "removedSourcePaths": [],
+  "currentReceiptReferences": 19964,
+  "originalLogicalFiles": 18174,
+  "decodedBytesVerified": 2916309416,
+  "selectedFullGitContainers": 100,
+  "casePhysicalBeforeBytes": 498212864,
+  "casePhysicalAfterBytes": 474210304,
+  "caseCapBytes": 500000000,
+  "measurements": "Exact preserved CI facts; physical allocation is separate from historical receipt sizes",
+  "fullGatePass": false,
+  "runtimeParity": false,
+  "rustExecutions": 0
+}
