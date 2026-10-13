@@ -1,0 +1,1 @@
+Compact 22 complete issue #759 commit, comment and timeline API responses into deterministic gzip archives. Preserve every original decoded byte and Git blob identity in the archive map, and verify that all fields of the archived CI measurement report remain equal after normalizing archive locations.

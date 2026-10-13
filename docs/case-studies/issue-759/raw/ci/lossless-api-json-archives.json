@@ -1,0 +1,235 @@
+{
+  "schema": "router-759-original-ci-api-json-lossless-compaction-v1",
+  "sourceHead": "3ce07c8fbd20edffdaf0c9b44ce47042fe3c65b4",
+  "combinedEvidenceCapBytes": 500000000,
+  "allocatedBytesBefore": 497881088,
+  "allOriginalGitBytesVerified": true,
+  "allDecodedOriginalsByteIdentical": true,
+  "scope": "Complete original commit/comment/timeline API responses only; log payloads and historical receipt vectors remain unchanged",
+  "semanticAuthority": false,
+  "appliedSourceHead": "3ce07c8fbd20edffdaf0c9b44ce47042fe3c65b4",
+  "entries": [
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/timeline-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/timeline-all.json.gz",
+      "originalBytes": 196643,
+      "originalSha256": "3acdd15a5d76e520bcbf322af2285afb095e93e46d013a4630a991b499e3c97b",
+      "originalGitBlob": "ae66f27a40d16777f78dc19e14ebb27bdc4e81db",
+      "archiveBytes": 35667,
+      "archiveSha256": "724c30ca1bda6d2131b7f9d559f954f39dfc4c6469fb6e11f67ed91cf0908df4",
+      "originalAllocatedBytes": 200704
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/timeline-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2889/timeline-page-001.json.gz",
+      "originalBytes": 196643,
+      "originalSha256": "3acdd15a5d76e520bcbf322af2285afb095e93e46d013a4630a991b499e3c97b",
+      "originalGitBlob": "ae66f27a40d16777f78dc19e14ebb27bdc4e81db",
+      "archiveBytes": 35667,
+      "archiveSha256": "724c30ca1bda6d2131b7f9d559f954f39dfc4c6469fb6e11f67ed91cf0908df4",
+      "originalAllocatedBytes": 200704
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/comments-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/comments-all.json.gz",
+      "originalBytes": 69615,
+      "originalSha256": "30ae29ae8a223dc7d6457a1db18a503d4841ea7ef1da30d212d9773c441b435a",
+      "originalGitBlob": "6cde9e4e7fc25ff9de4a1314aad13618a19d3a84",
+      "archiveBytes": 9661,
+      "archiveSha256": "1c5748e5439ca63519298610621500fa4c36281fe7213bad3292dbce0432e1b1",
+      "originalAllocatedBytes": 69632
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/comments-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/comments-page-001.json.gz",
+      "originalBytes": 69615,
+      "originalSha256": "30ae29ae8a223dc7d6457a1db18a503d4841ea7ef1da30d212d9773c441b435a",
+      "originalGitBlob": "6cde9e4e7fc25ff9de4a1314aad13618a19d3a84",
+      "archiveBytes": 9661,
+      "archiveSha256": "1c5748e5439ca63519298610621500fa4c36281fe7213bad3292dbce0432e1b1",
+      "originalAllocatedBytes": 69632
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/timeline-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/timeline-all.json.gz",
+      "originalBytes": 212497,
+      "originalSha256": "fe522610d47782e782df66bccdcf4243bdcb694ecb53d50a2cbbf91e20d06366",
+      "originalGitBlob": "d33e30e5a667acc3059bcdec0d6a1dca1db51caf",
+      "archiveBytes": 33129,
+      "archiveSha256": "8d5dddd45f27269df6a28a841b86103278f5c7ff2b73c089e7d4956eeb94aa73",
+      "originalAllocatedBytes": 212992
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/timeline-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--hive-mind/2892/timeline-page-001.json.gz",
+      "originalBytes": 212497,
+      "originalSha256": "fe522610d47782e782df66bccdcf4243bdcb694ecb53d50a2cbbf91e20d06366",
+      "originalGitBlob": "d33e30e5a667acc3059bcdec0d6a1dca1db51caf",
+      "archiveBytes": 33129,
+      "archiveSha256": "8d5dddd45f27269df6a28a841b86103278f5c7ff2b73c089e7d4956eeb94aa73",
+      "originalAllocatedBytes": 212992
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/724/timeline-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/724/timeline-all.json.gz",
+      "originalBytes": 201085,
+      "originalSha256": "6bc3cfcacadd7d8086565f05cab3538643b23aa2f8567faec6cf9d27e352dff0",
+      "originalGitBlob": "5d17aaefd746ebb7e0e3a79a85c407583b298f57",
+      "archiveBytes": 25173,
+      "archiveSha256": "7009074cd3a41c67d7f963f8793e44b0829f88281403d11969ae40f24c805346",
+      "originalAllocatedBytes": 204800
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/724/timeline-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/724/timeline-page-001.json.gz",
+      "originalBytes": 201085,
+      "originalSha256": "6bc3cfcacadd7d8086565f05cab3538643b23aa2f8567faec6cf9d27e352dff0",
+      "originalGitBlob": "5d17aaefd746ebb7e0e3a79a85c407583b298f57",
+      "archiveBytes": 25173,
+      "archiveSha256": "7009074cd3a41c67d7f963f8793e44b0829f88281403d11969ae40f24c805346",
+      "originalAllocatedBytes": 204800
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/725/timeline-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/725/timeline-all.json.gz",
+      "originalBytes": 152789,
+      "originalSha256": "0cb51e2c87b3180787af3767ccd040504a2040c20098fb3aecf8ad02f0e9fc21",
+      "originalGitBlob": "fa0fe7cf8de97d9a7dda071f31cc1fbb004a9101",
+      "archiveBytes": 19353,
+      "archiveSha256": "f81c002756da8552b3aee3847dacf6f16713a219210bdd989cd7758ee17aec76",
+      "originalAllocatedBytes": 155648
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/725/timeline-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/725/timeline-page-001.json.gz",
+      "originalBytes": 152789,
+      "originalSha256": "0cb51e2c87b3180787af3767ccd040504a2040c20098fb3aecf8ad02f0e9fc21",
+      "originalGitBlob": "fa0fe7cf8de97d9a7dda071f31cc1fbb004a9101",
+      "archiveBytes": 19353,
+      "archiveSha256": "f81c002756da8552b3aee3847dacf6f16713a219210bdd989cd7758ee17aec76",
+      "originalAllocatedBytes": 155648
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/727/timeline-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/727/timeline-all.json.gz",
+      "originalBytes": 132507,
+      "originalSha256": "14eddc4f90f6a4d8295aef6e74430880fc3200fa47fa556d932d9ded3176420a",
+      "originalGitBlob": "ed8be11a98010c69e93b08d3227d340da967c806",
+      "archiveBytes": 18624,
+      "archiveSha256": "a6a4b0c6033b42ec847d9d441b7478b28394280c9a7f39ae841d5472ca777f18",
+      "originalAllocatedBytes": 135168
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/727/timeline-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/727/timeline-page-001.json.gz",
+      "originalBytes": 132507,
+      "originalSha256": "14eddc4f90f6a4d8295aef6e74430880fc3200fa47fa556d932d9ded3176420a",
+      "originalGitBlob": "ed8be11a98010c69e93b08d3227d340da967c806",
+      "archiveBytes": 18624,
+      "archiveSha256": "a6a4b0c6033b42ec847d9d441b7478b28394280c9a7f39ae841d5472ca777f18",
+      "originalAllocatedBytes": 135168
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/728/timeline-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/728/timeline-all.json.gz",
+      "originalBytes": 104729,
+      "originalSha256": "27db1a055fb485d1aeb34bc7b2fa6c86c9286c87f4005d09de70388dacc99166",
+      "originalGitBlob": "14613ab903fc28432a3b989f88eb6e1ccf025696",
+      "archiveBytes": 15680,
+      "archiveSha256": "9a3a1993dc4059ed9145f8202b179fb8e26d5562f9fffd09ef6961c6ce20fc7e",
+      "originalAllocatedBytes": 106496
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/728/timeline-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/728/timeline-page-001.json.gz",
+      "originalBytes": 104729,
+      "originalSha256": "27db1a055fb485d1aeb34bc7b2fa6c86c9286c87f4005d09de70388dacc99166",
+      "originalGitBlob": "14613ab903fc28432a3b989f88eb6e1ccf025696",
+      "archiveBytes": 15680,
+      "archiveSha256": "9a3a1993dc4059ed9145f8202b179fb8e26d5562f9fffd09ef6961c6ce20fc7e",
+      "originalAllocatedBytes": 106496
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/timeline-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/timeline-all.json.gz",
+      "originalBytes": 164663,
+      "originalSha256": "c33328d2d92ffd05c391c979d503a288cc9705385a4d82119f7feeb659ee54f8",
+      "originalGitBlob": "493b588f193c82f70f320926dc828d49793fe542",
+      "archiveBytes": 27933,
+      "archiveSha256": "85b46bd0e034790e86b6e00bb1c50ade596d280d712b0c237b24b5ee953b2a1f",
+      "originalAllocatedBytes": 167936
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/timeline-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-assistant--router/759/timeline-page-001.json.gz",
+      "originalBytes": 164663,
+      "originalSha256": "c33328d2d92ffd05c391c979d503a288cc9705385a4d82119f7feeb659ee54f8",
+      "originalGitBlob": "493b588f193c82f70f320926dc828d49793fe542",
+      "archiveBytes": 27933,
+      "archiveSha256": "85b46bd0e034790e86b6e00bb1c50ade596d280d712b0c237b24b5ee953b2a1f",
+      "originalAllocatedBytes": 167936
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-foundation--disk-space-saviour/36/timeline-all.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-foundation--disk-space-saviour/36/timeline-all.json.gz",
+      "originalBytes": 66457,
+      "originalSha256": "b4fd63a1c68337c92651b4f9b4326cfeb12d3252f0b301062483904ec7325b34",
+      "originalGitBlob": "b47d61370c85a1dd56f2bb70865bd4aad419530a",
+      "archiveBytes": 11992,
+      "archiveSha256": "02cae9748a5bc5446c557d685ef3d40a38c741bdf8f286dbee814291b5afbeaa",
+      "originalAllocatedBytes": 69632
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/incidents/link-foundation--disk-space-saviour/36/timeline-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/incidents/link-foundation--disk-space-saviour/36/timeline-page-001.json.gz",
+      "originalBytes": 66457,
+      "originalSha256": "b4fd63a1c68337c92651b4f9b4326cfeb12d3252f0b301062483904ec7325b34",
+      "originalGitBlob": "b47d61370c85a1dd56f2bb70865bd4aad419530a",
+      "archiveBytes": 11992,
+      "archiveSha256": "02cae9748a5bc5446c557d685ef3d40a38c741bdf8f286dbee814291b5afbeaa",
+      "originalAllocatedBytes": 69632
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/commits-page-003.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--formal-ai/commits-page-003.json.gz",
+      "originalBytes": 218628,
+      "originalSha256": "72b2bfad6631496144f1898aa028f65fba69acc9a6b1dee6ad7fbb203e40cccb",
+      "originalGitBlob": "e946d8250672c20ecd4a9ec94a9de69f4b91a694",
+      "archiveBytes": 11580,
+      "archiveSha256": "eb3f374d92467f7543218327d159f8ecaadd1d973511e045abc15fd1010cd6e7",
+      "originalAllocatedBytes": 221184
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/commits-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-assistant--router/commits-page-001.json.gz",
+      "originalBytes": 132476,
+      "originalSha256": "58bf97096c3b651fe41008d35e15824371cad2704401c6fc033ac2897f74578a",
+      "originalGitBlob": "becdab39dda8fdf4ac52dda3afc24f10810427a6",
+      "archiveBytes": 8202,
+      "archiveSha256": "58cdbdd6f88e47f3009f9fbefb38476aba8e1d5cc6ef1c76bb1fb6197c2e10a8",
+      "originalAllocatedBytes": 135168
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/commits-page-001.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--meta-language/commits-page-001.json.gz",
+      "originalBytes": 292635,
+      "originalSha256": "9ff454cd7f58a187d627727887ef5deae53ca7d85fba589e4a7445144d6611fa",
+      "originalGitBlob": "789a3e4d94467b88918f07a2a67184fa9f63cc6c",
+      "archiveBytes": 17257,
+      "archiveSha256": "7d24f38f526eac9cd3a9ad9235828b4f03b84698d12fee37f00bbec849467123",
+      "originalAllocatedBytes": 294912
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/commits-page-002.json",
+      "archivePath": "docs/case-studies/issue-759/raw/ci/link-foundation--relative-meta-logic/commits-page-002.json.gz",
+      "originalBytes": 182599,
+      "originalSha256": "79ac4162aa72aad191f69bd39abbbcaf8852243f02a9f8d38b0d908751e402df",
+      "originalGitBlob": "0d737e68531248055c2333a7c2312dcdcfc799db",
+      "archiveBytes": 15095,
+      "archiveSha256": "d83f147f9ddb97647488e3b95cf6d478ca8ef5de45ef4657b11c566de0e0351c",
+      "originalAllocatedBytes": 184320
+    }
+  ],
+  "citationUpdates": [],
+  "decode": "gzip -dc ARCHIVE.json.gz; verify complete decoded length and SHA256 against entries"
+}
