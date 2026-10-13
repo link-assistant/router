@@ -1,12 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37807766108/attempt-1/logs/6_Build CLI cli-linux-arm64.txt.gz",
-    "sha256": "7a448074cf47571f575321b44bf010da63644a2e5223fc44d0136e5e1a8879d9",
-    "bytes": 38321,
+    "path": "link-assistant--formal-ai/runs/37807766108/attempt-1/logs/6_Build CLI cli-linux-arm64.txt.xz",
+    "sha256": "f4d336568170e10526b15bb46adc5432ce4c5790a14ee7b29fa7c10855718b9a",
+    "bytes": 26520,
     "uncompressed_bytes": 201394,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "56eae3e6513e0c0a7385c44b9d3070193a5a8beac4231480fff898ad0d9704aa"
+    "compression": "xz",
+    "decoded_sha256": "56eae3e6513e0c0a7385c44b9d3070193a5a8beac4231480fff898ad0d9704aa",
+    "original_gzip_sha256": "7a448074cf47571f575321b44bf010da63644a2e5223fc44d0136e5e1a8879d9"
   },
   {
     "path": "link-assistant--formal-ai/runs/37807766108/attempt-1/logs/Build CLI cli-linux-arm64/system.txt.gz",

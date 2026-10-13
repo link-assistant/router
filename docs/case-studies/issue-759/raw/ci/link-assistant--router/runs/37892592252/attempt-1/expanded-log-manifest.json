@@ -42,11 +42,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/5_generated-http.txt.gz",
-    "sha256": "9d66458ad54a69dabb63f83a813070fed164fa1947d89f9ed306e91d37060290",
-    "bytes": 45560,
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/5_generated-http.txt.xz",
+    "sha256": "aa9a2b7d230f36509422e04dd19b0947826170f463f6e2df75658fdd451b5a5a",
+    "bytes": 35160,
     "uncompressed_bytes": 433655,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "9d66458ad54a69dabb63f83a813070fed164fa1947d89f9ed306e91d37060290",
+    "compression": "xz",
+    "decoded_sha256": "77e967e36a861b073765e50e57fd49be2fa1b1ec6cdc75039413b9522391b53a"
   },
   {
     "path": "link-assistant--router/runs/37892592252/attempt-1/logs/generated-http/system.txt.gz",

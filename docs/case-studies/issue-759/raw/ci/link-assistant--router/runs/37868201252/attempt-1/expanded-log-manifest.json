@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--router/runs/37868201252/attempt-1/logs/5_generated-http.txt.gz",
-    "sha256": "6b76dfa86d0bc532e7d66c968f7ddb9d8e7892adde0b3c50bb6b9f68b9277213",
-    "bytes": 45487,
+    "path": "link-assistant--router/runs/37868201252/attempt-1/logs/5_generated-http.txt.xz",
+    "sha256": "833092bf4882a195482531527f3419547b2b373dafda41033e86ce0d6adfdbe8",
+    "bytes": 35292,
     "uncompressed_bytes": 430874,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "6b76dfa86d0bc532e7d66c968f7ddb9d8e7892adde0b3c50bb6b9f68b9277213",
+    "compression": "xz",
+    "decoded_sha256": "ca447e7998b1ed7cc5ee93e3abbe0d07c13eb676b9294e5445a9ab05a5d5c58a"
   },
   {
     "path": "link-assistant--router/runs/37868201252/attempt-1/logs/generated-http/system.txt.gz",

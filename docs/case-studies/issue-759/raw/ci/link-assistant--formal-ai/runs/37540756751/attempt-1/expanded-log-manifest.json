@@ -28,11 +28,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37540756751/attempt-1/logs/15_Lint and Format Check.txt.gz",
-    "sha256": "9aa7079524664b6a081878a062a0fa2422fa366407d74bf507042cc3ae00ddc8",
-    "bytes": 46235,
+    "path": "link-assistant--formal-ai/runs/37540756751/attempt-1/logs/15_Lint and Format Check.txt.xz",
+    "sha256": "99fc9c7a65fa1f7e80dd0ee0e917545c38c03baaef3c6b4e1c80b8e66f41a42e",
+    "bytes": 33808,
     "uncompressed_bytes": 228619,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "9aa7079524664b6a081878a062a0fa2422fa366407d74bf507042cc3ae00ddc8",
+    "compression": "xz",
+    "decoded_sha256": "0390da74971ab1e8534537d2951ab72ed24c6df0cdd1efed619ada583143062f"
   },
   {
     "path": "link-assistant--formal-ai/runs/37540756751/attempt-1/logs/Lint and Format Check/system.txt.gz",

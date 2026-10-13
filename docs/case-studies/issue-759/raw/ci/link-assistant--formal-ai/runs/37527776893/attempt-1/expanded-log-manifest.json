@@ -14,11 +14,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37527776893/attempt-1/logs/12_E2E Tests (local web app) _ E2E Tests (local web app).txt.gz",
-    "sha256": "b42d6ca224478803055f3e760ecdf6e6d8f30d53c9840a5c8eb47671550fb2f5",
-    "bytes": 40766,
+    "path": "link-assistant--formal-ai/runs/37527776893/attempt-1/logs/12_E2E Tests (local web app) _ E2E Tests (local web app).txt.xz",
+    "sha256": "fb5ea888ed3bf07003d521b870faf8308f33378f8dedea731e5898477d60cd72",
+    "bytes": 33208,
     "uncompressed_bytes": 194466,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "b42d6ca224478803055f3e760ecdf6e6d8f30d53c9840a5c8eb47671550fb2f5",
+    "compression": "xz",
+    "decoded_sha256": "c0ca093e56f589a39758f0a9224ff8a20bdaf45fbdd5313e3d49be14c5c1a9c0"
   },
   {
     "path": "link-assistant--formal-ai/runs/37527776893/attempt-1/logs/E2E Tests (local web app) _ E2E Tests (local web app)/system.txt.gz",

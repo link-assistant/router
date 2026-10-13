@@ -18,13 +18,14 @@
     "decoded_sha256": "cdb698930173d4c42cd1a6e438f767b6076e58d70e38e3f64e18a3c6b1f78a54"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/10_Build CLI cli-linux-arm64.txt.gz",
-    "sha256": "d81f91da2cd531decea4dd67a3d683805623bce37dab8921303764a8eebda883",
-    "bytes": 40693,
+    "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/10_Build CLI cli-linux-arm64.txt.xz",
+    "sha256": "b3af2613a41853074b02795735afe0c52f5d8376958ff21cd5bdd677afd5eeb8",
+    "bytes": 27852,
     "uncompressed_bytes": 214942,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "35fc30f6a988abf3f1366be5352413d82c0c937f6c308c30261049ba57e89617"
+    "compression": "xz",
+    "decoded_sha256": "35fc30f6a988abf3f1366be5352413d82c0c937f6c308c30261049ba57e89617",
+    "original_gzip_sha256": "d81f91da2cd531decea4dd67a3d683805623bce37dab8921303764a8eebda883"
   },
   {
     "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/Build CLI cli-linux-arm64/system.txt.gz",
@@ -36,13 +37,14 @@
     "decoded_sha256": "9295b8e927023143629566b803746d0a98a2284c51ef04dc471850d9554ccb27"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/12_Build CLI cli-linux-x64.txt.gz",
-    "sha256": "6d6e6ecf01013909340dcf44567336ebc12bac1110701329d9154fefff3f10da",
-    "bytes": 39866,
+    "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/12_Build CLI cli-linux-x64.txt.xz",
+    "sha256": "b17a8a9ec4fa1fd6853a7b136cf80c0ea95e4cfa1707dd100611499f1b62a64d",
+    "bytes": 27372,
     "uncompressed_bytes": 209974,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "b5a3e46152acf8eb3255850239710a96951a13623959079253f6797471baa575"
+    "compression": "xz",
+    "decoded_sha256": "b5a3e46152acf8eb3255850239710a96951a13623959079253f6797471baa575",
+    "original_gzip_sha256": "6d6e6ecf01013909340dcf44567336ebc12bac1110701329d9154fefff3f10da"
   },
   {
     "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/Build CLI cli-linux-x64/system.txt.gz",

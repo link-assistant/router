@@ -28,11 +28,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37471466051/attempt-1/logs/2_Detect Changes.txt.gz",
-    "sha256": "816e0aacf381ce1a4b4130dce5e2cd0638928253f7a97bcf8cfc00e3382ea876",
-    "bytes": 40877,
+    "path": "link-assistant--formal-ai/runs/37471466051/attempt-1/logs/2_Detect Changes.txt.xz",
+    "sha256": "2ccea110156ae77a4464acbf72c6ff2f982a94e23c369e6e195109c6b1443faa",
+    "bytes": 26552,
     "uncompressed_bytes": 228891,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "816e0aacf381ce1a4b4130dce5e2cd0638928253f7a97bcf8cfc00e3382ea876",
+    "compression": "xz",
+    "decoded_sha256": "a1945b8057a7aefe5a9320f82ae64f6f6a9c1f18b057e908b6654159dd75e2c6"
   },
   {
     "path": "link-assistant--formal-ai/runs/37471466051/attempt-1/logs/Detect Changes/system.txt.gz",

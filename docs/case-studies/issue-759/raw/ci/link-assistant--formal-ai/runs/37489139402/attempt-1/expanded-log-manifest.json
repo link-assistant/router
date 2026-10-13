@@ -42,11 +42,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37489139402/attempt-1/logs/3_Detect tier changes.txt.gz",
-    "sha256": "8e31d2f48365ea4d2cd70f67ff8e2ca9858e5d943b9a725d7859b8786f3dfa73",
-    "bytes": 42642,
+    "path": "link-assistant--formal-ai/runs/37489139402/attempt-1/logs/3_Detect tier changes.txt.xz",
+    "sha256": "4b4745ab3288e7f7f4a3a081e10ba6f7491ed34ba1ddaf0b09adf38451a14478",
+    "bytes": 27348,
     "uncompressed_bytes": 242546,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "8e31d2f48365ea4d2cd70f67ff8e2ca9858e5d943b9a725d7859b8786f3dfa73",
+    "compression": "xz",
+    "decoded_sha256": "890cf5604950605064839a2f8637edfb98008c6410583368f74a07796b4fac27"
   },
   {
     "path": "link-assistant--formal-ai/runs/37489139402/attempt-1/logs/Detect tier changes/system.txt.gz",
