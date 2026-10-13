@@ -38,3 +38,12 @@ source reconstruction; serialized checksums cannot restore that authority.
 Shared references use the original core shared-reference Copy implementation;
 this does not prove pointee Copy, destruction or pointer equality. Mutable
 captures and mutable references remain refused.
+
+Option::filter reuses its complete original early-return body in a private
+method-local source frame. The original predicate receives an ephemeral shared
+loan, and neither caller patterns nor escaped/mutable loans inherit authority.
+Original or_else whole-Some movement admits checked standard String and
+source-written structural tuple domains without inventing tuple Copy or
+executing payload Drop. The original Option Copy derive plus actual primitive
+marker macro output also supports precise shared Option scalar field reads.
+Unknown owned/Drop payloads and owned/mutable captures remain refused.

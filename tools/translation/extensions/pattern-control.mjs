@@ -354,14 +354,14 @@ export function withPatternControlChecker(Base=ControlChecker) {
         if(reference.kind!=='shared'||!pointee||type.rustGenericIdentityUnresolved||pointee.kind==='data'&&!this.items.has(pointee.name))throw unsupported('shared pattern reference','requires its actual checked immutable source pointee',span);
         return;
       }
-      if(type.patternOwnershipRefusal)throw unsupported('if-let ownership',type.patternOwnershipRefusal,span);
+      if(type.patternOwnershipRefusal&&!this.sourceStandardFramePatternRead?.(type))throw unsupported('if-let ownership',type.patternOwnershipRefusal,span);
       if(type.kind!=='data')return;
       if(active.has(type.name))throw unsupported('recursive if-let layout','recursive ownership requires a separate contract',span);
       const entry=this.items.get(type.name);
       if(!entry||entry.k!=='data')throw typeError('if-let subject needs its actual checked declaration',span);
       active.add(type.name);
       for(const ctor of entry.ctors)for(const field of ctor.fields) {
-        if(field.rustTypeSyntax&&ownershipRefusal(field.rustTypeSyntax.map(value=>({value}))))throw unsupported('if-let ownership','the original field syntax carries unresolved ownership',span);
+        if(field.rustTypeSyntax&&ownershipRefusal(field.rustTypeSyntax.map(value=>({value})))&&!this.sourceStandardFramePatternRead?.(field.type))throw unsupported('if-let ownership','the original field syntax carries unresolved ownership',span);
         this.patternDomain(field.type,span,active);
       }
       active.delete(type.name);

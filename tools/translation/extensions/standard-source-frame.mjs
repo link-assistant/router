@@ -1,0 +1,53 @@
+import {sharedReferenceCopyIdentity,SHARED_REFERENCE_COPY_SOURCE,STANDARD_OPTION_COPY_SOURCE} from '../shared-reference-copy-source.mjs';
+// Original standard calls have their own return scope. Public metadata cannot
+// create this scope or turn an original predicate loan into an escaping borrow.
+import {renameFunction} from '../vendor/meta-language/translation/ir.js';
+import {sameType} from '../checked-types.mjs';
+import {metadataDigest} from './source-links.mjs';
+import {alphaTree,retargetCheckedCallback} from './standard-body-checker.mjs';
+import {parsedPinnedBodyEvidence} from './standard-body-source.mjs';
+import {typeError} from '../vendor/meta-language/translation/diagnostics.js';
+const frames=new Map(),frameOrigins=new WeakSet(),loans=new Map(),activeFrames=new WeakMap();
+export function originalCallbackLoanType(checker,payload,span){
+  const type=checker.sharedFieldType(payload,{rustReference:{kind:'shared',span}},span);
+  type.patternOwnershipRefusal='shared source reference';
+  type.rustReference.source='original-standard-callback-local-loan';
+  return type;
+}
+export function checkOriginalCallbackLoan(checker,syntax,env,path,expected){
+  if(syntax?.k!=='routerTextReference'||syntax.sourceBorrowToken?.value!=='&'||expected?.rustReference?.kind!=='shared')throw new TypeError('Original callback loan requires its actual immutable ampersand and shared signature');
+  const pointee=expected.rustReference.pointee,value=checker.expr(syntax.value,env,path,pointee);
+  if(!sameType(value.type,pointee))throw typeError('Original callback loan pointee differs from its checked source argument',syntax.span);
+  checker.expectedOwnership(value.type,pointee,path,syntax.span);checker.expectedPrimitiveIdentity(value.type,pointee,path,syntax.span);
+  const type=originalCallbackLoanType(checker,value.type,syntax.span),proof={profile:'original-standard-ephemeral-callback-loan-v1',key:metadataDigest({value:alphaTree(value),type}),escapes:false,mutable:false};
+  loans.set(proof.key,{proof:structuredClone(proof),value:structuredClone(value),type:structuredClone(type)});
+  return {k:'routerOriginalCallbackLoan',value,type,originalLoanProof:proof,span:syntax.span};
+}
+export function checkOriginalSourceFrame(checker,syntax,bindings,resultType,original){
+  const evidence=parsedPinnedBodyEvidence(original),env=checker.contextEnvironment(syntax,new Map(bindings),resultType),previous=activeFrames.get(checker),entry=checker.items.get(resultType.name),payload=entry?.standardGeneric?.kind==='Option'&&entry.standardGeneric.arguments.length===1?checker.resolveType(entry.standardGeneric.arguments[0],entry.modulePath,syntax.span):null;let body;activeFrames.set(checker,{selection:evidence.selection,receiver:resultType,payload});try{body=checker.expr(syntax,env,[],resultType);}finally{if(previous)activeFrames.set(checker,previous);else activeFrames.delete(checker);}
+  if(!sameType(body.type,resultType))throw typeError('Original standard frame tail result differs from its source signature',syntax.span);
+  checker.expectedOwnership(body.type,resultType,[],syntax.span);checker.expectedPrimitiveIdentity(body.type,resultType,[],syntax.span);
+  const proof={profile:'original-standard-local-return-frame-v1',selection:evidence.selection,syntaxSha256:evidence.syntaxSha256,key:metadataDigest({source:evidence,body:alphaTree(body),resultType}),returnScope:'selected-original-method-only',referenceCopySource:payload?.rustReference?SHARED_REFERENCE_COPY_SOURCE:null,canonicalOptionCopySource:payload?.rustReference?STANDARD_OPTION_COPY_SOURCE:null};
+  frames.set(proof.key,{proof:structuredClone(proof),body:structuredClone(body),type:structuredClone(resultType)});frameOrigins.add(proof);
+  return {k:'routerOriginalStandardFrame',body,type:resultType,sourceFrameProof:proof,span:syntax.span};
+}
+export const hasOriginalSourceFrame=node=>frameOrigins.has(node.sourceFrameProof);
+export function hasOriginalCallbackLoan(node){const state=loans.get(node.originalLoanProof?.key);return Boolean(state&&metadataDigest(node.originalLoanProof)===metadataDigest(state.proof));}
+const nodes=(value,result=[])=>{if(!value||typeof value!=='object')return result;if(['routerOriginalStandardFrame','routerOriginalCallbackLoan'].includes(value.k))result.push(value);for(const [key,child]of Object.entries(value))if(!['type','sourceFrameProof','originalLoanProof','pinnedStandardBodyProof','sharedBodyProof','originalCallbackProof'].includes(key))Array.isArray(child)?child.forEach(item=>nodes(item,result)):nodes(child,result);return result;};
+const functions=new WeakMap();
+export function prepareOriginalSourceFrames(emitter,entry){
+  const found=nodes(entry.body);if(!found.length)return null;
+  for(const node of found){const frame=node.k==='routerOriginalStandardFrame',proof=frame?node.sourceFrameProof:node.originalLoanProof,state=(frame?frames:loans).get(proof?.key),value=frame?node.body:node.value;
+    if(!state||metadataDigest(proof)!==metadataDigest(state.proof)||metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,emitter.program))||metadataDigest(alphaTree(value))!==metadataDigest(alphaTree(retargetCheckedCallback(frame?state.body:state.value,emitter.program))))throw new Error('Original standard frame/loan changed or lacks private source authority');
+  }
+  const previous=functions.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());functions.set(emitter,nodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));
+  return ()=>{if(previous)functions.set(emitter,previous);else functions.delete(emitter);};
+}
+export function requireOriginalSourceFrameEmission(emitter,node){if(!functions.get(emitter)?.includes(metadataDigest(alphaTree(node))))throw new Error('Original standard frame/loan changed from its privately checked function rename');return node.k==='routerOriginalStandardFrame'?node.body:node.value;}
+
+// Independently rechecked specializations can have different private nonce
+// keys after project name retargeting. Compare their complete typed IR while
+// each original proof envelope remains checked against its private issuer.
+export function originalFrameSemanticTree(node){if(Array.isArray(node))return node.map(originalFrameSemanticTree);if(!node||typeof node!=='object')return node;return Object.fromEntries(Object.entries(node).filter(([key])=>!['sourceFrameProof','originalLoanProof'].includes(key)).map(([key,value])=>[key,originalFrameSemanticTree(value)]));}
+
+export function originalSourceFramePatternRead(checker,type){const frame=activeFrames.get(checker);if(frame?.selection.key!=='Option::filter'||!sharedReferenceCopyIdentity(frame.payload))return false;const wanted=type.rustReference?frame.payload:frame.receiver;if(!sameType(type,wanted))return false;try{checker.expectedOwnership(type,wanted,[],type.span);checker.expectedPrimitiveIdentity(type,wanted,[],type.span);}catch{return false;}return type.rustReference?.kind==='shared'||type.kind==='data'&&type.name===frame.receiver.name;}
