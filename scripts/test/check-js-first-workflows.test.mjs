@@ -102,10 +102,32 @@ test('duplicate YAML keys are rejected rather than choosing a convenient one', (
   assert.ok(auditWorkflows(sources).some(error => error.includes('Map keys must be unique')));
 });
 
-test('Bun runtime is required for both native JavaScript and compiled TypeScript', () => {
-  for (const id of ['bun-tests', 'typescript']) {
+test('Bun runtime is required for native JavaScript, compiled TypeScript and reverse translation', () => {
+  for (const id of ['bun-tests', 'typescript', 'reverse-translation']) {
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps = workflow.jobs[id].steps.filter(step => !step.uses?.startsWith('oven-sh/setup-bun@')); }, 'pinned Bun runtime');
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.find(step => step.uses?.startsWith('oven-sh/setup-bun@')).with['bun-version'] = 'latest'; }, 'pinned Bun runtime');
+  }
+});
+
+test('both reverse translator engines must discover every current and future test file', () => {
+  const glob = 'tools/translation/js-to-rust/test/*.test.mjs';
+  for (const [command, replacements] of [
+    [`node --test --test-concurrency=2 ${glob}`, [
+      'node --test tools/translation/js-to-rust/test/translator.test.mjs',
+      `node --test --test-concurrency=2 --test-name-pattern=one ${glob}`,
+    ]],
+    [`bun test ${glob}`, ['bun test tools/translation/js-to-rust/test/translator.test.mjs', `bun test --test-name-pattern=one ${glob}`]],
+  ]) {
+    assert.ok(parse(baseline['javascript-first.yml']).jobs['reverse-translation'].steps.some(step => step.run === command));
+    fails('javascript-first.yml', workflow => {
+      workflow.jobs['reverse-translation'].steps = workflow.jobs['reverse-translation'].steps.filter(step => step.run !== command);
+    }, `missing mandatory command ${command}`);
+    for (const replacement of [...replacements, `${command} || true`]) fails('javascript-first.yml', workflow => {
+      workflow.jobs['reverse-translation'].steps.find(step => step.run === command).run = replacement;
+    }, `missing mandatory command ${command}`);
+    for (const bypass of ['if', 'continue-on-error']) fails('javascript-first.yml', workflow => {
+      workflow.jobs['reverse-translation'].steps.find(step => step.run === command)[bypass] = true;
+    }, 'conditional or ignore failures');
   }
 });
 

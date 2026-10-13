@@ -3,8 +3,37 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fingerprint, verifyStamp, stages } from '../check-js-first-local.mjs';
+test('local reverse stage discovers a new failing test under both engines before freshness', { timeout: 30_000 }, () => {
+  const commands = stages.find(([id]) => id === 'reverse-translation')[1];
+  assert.deepEqual(commands, [
+    'node --test --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs',
+    'bun test tools/translation/js-to-rust/test/*.test.mjs',
+    'node scripts/regenerate-js-first.mjs --check',
+  ]);
+  assert.equal(stages.length, 7);
+  assert.ok(stages.find(([id]) => id === 'typescript')[1].includes('node --test tools/translation/js-to-rust/test/native-typescript.test.mjs'));
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-reverse-discovery-'));
+  const testDirectory = path.join(directory, 'tools/translation/js-to-rust/test');
+  const environment = { ...process.env };
+  delete environment.NODE_TEST_CONTEXT;
+  try {
+    fs.mkdirSync(testDirectory, { recursive: true });
+    fs.writeFileSync(path.join(testDirectory, 'existing.test.mjs'), "import test from 'node:test'; test('existing translator', () => {});\n");
+    for (const command of commands.slice(0, 2)) {
+      const result = spawnSync(command, { cwd: directory, env: environment, shell: true, encoding: 'utf8', timeout: 10_000 });
+      assert.equal(result.status, 0, result.error?.message ?? result.stdout + result.stderr);
+    }
+    fs.writeFileSync(path.join(testDirectory, 'future.test.mjs'), "import test from 'node:test'; test('new translator regression', () => { throw new Error('future test was discovered'); });\n");
+    for (const command of commands.slice(0, 2)) {
+      const result = spawnSync(command, { cwd: directory, env: environment, shell: true, encoding: 'utf8', timeout: 10_000 });
+      assert.ok(!result.error, result.error?.message);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stdout + result.stderr, /future test was discovered/);
+    }
+  } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+});
 test('green stamps require strict parity, every stage and unchanged tracked/untracked source', () => {
   const previous = process.cwd();
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-gate-stamp-'));
@@ -65,7 +94,7 @@ test('the full translation stage runs every fixture with bounded test-file concu
     const command=stages.find(([name])=>name==='translation')[1][0].split(' ');
     assert.equal(command.shift(),'node');assert.equal(command.pop(),'tools/translation/serialization-schema/*.test.mjs');assert.equal(command.pop(),'tools/translation/test/*.test.mjs');
     const environment={...process.env};delete environment.NODE_TEST_CONTEXT;
-    execFileSync(process.execPath,[...command,...files],{encoding:'utf8',timeout:10000,env:environment});
+    execFileSync('node',[...command,...files],{encoding:'utf8',timeout:10000,env:environment});
     const active=new Set();let started=0,peak=0;
     for(const {event,pid} of fs.readFileSync(trace,'utf8').trim().split('\n').map(line=>JSON.parse(line))) {
       if(event==='start'){active.add(pid);started++;peak=Math.max(peak,active.size);}else{assert.ok(active.delete(pid));}

@@ -13,7 +13,7 @@ export const stages = [
   ['typescript', ['npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node --test tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node tools/translation/serialization-schema/native-descriptor.mjs --check', 'node tools/translation/serialization-schema/check-descriptor-typescript.mjs', 'node tools/translation/serialization-schema/bulk.mjs --check', 'node tools/translation/serialization-schema/check-bulk-typescript.mjs', 'node scripts/build-js-first-ui.mjs']],
   ['parity', ['node --test --test-concurrency=2 experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict']],
   ['translation', ['node --test --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs', 'node scripts/translate-router.mjs --check', 'node scripts/translate-router.mjs --profile-matrix --check']],
-  ['reverse-translation', ['node --test tools/translation/js-to-rust/test/translator.test.mjs', 'node scripts/regenerate-js-first.mjs --check']],
+  ['reverse-translation', ['node --test --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'bun test tools/translation/js-to-rust/test/*.test.mjs', 'node scripts/regenerate-js-first.mjs --check']],
 ];
 function git(...args) {
   const result = spawnSync('git', args, { encoding: 'utf8' });
