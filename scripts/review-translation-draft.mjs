@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
-import {parseProgram} from '../tools/translation/semantic-meta.mjs';
+import {parseProgram,roundTripProgram} from '../tools/translation/semantic-meta.mjs';
 import {sourceItems} from '../tools/translation/rust-structure.mjs';
 import {inspectDeriveInput} from '../tools/translation/derive-inputs.mjs';
 import {loadDeriveDependencyProof} from '../tools/translation/derive-dependencies.mjs';
@@ -19,6 +19,20 @@ import {tokenizeRust} from '../tools/translation/extensions/lexical.mjs';
 import {TokenCursor} from '../tools/translation/vendor/meta-language/translation/lexer.js';
 import {originalTextCursorGuard} from '../tools/translation/extensions/text.mjs';
 import {rustFixedType} from '../tools/translation/checked-types.mjs';
+import {resolveModuleGraph} from '../tools/translation/project.mjs';
+import {createDeriveFootprintContext,deriveFootprintAt} from '../tools/translation/derive-footprints.mjs';
+import {createCloneSourceContext,cloneSourceContextFacts} from '../tools/translation/clone-trait-source.mjs';
+import {originalCloneGeneratedMethod} from '../tools/translation/clone-source-ir.mjs';
+import {linkOriginalCloneSemantic} from '../tools/translation/extensions/clone-source-body.mjs';
+import {registeredStandardHostBindings} from '../tools/translation/standard-host-bindings.mjs';
+import {originalMatchesNamespaceBindings} from '../tools/translation/matches-macro-context.mjs';
+import {lockedTomlValueNamespaceBindings} from '../tools/translation/toml-value-namespace.mjs';
+import {configureParserSourceScope} from '../tools/translation/source-scopes.mjs';
+import {configureDeriveLayout} from '../tools/translation/derive-layout.mjs';
+import {moduleScopeKey,originalSourceModuleItems} from '../tools/translation/source-module-views.mjs';
+import {linkProjectDeclaration,metadataDigest} from '../tools/translation/extensions/source-links.mjs';
+import {projectCopyEvidence,originalOptionCopyPayload} from '../tools/translation/project-copy.mjs';
+import {HostChecker} from '../tools/translation/extensions/host-contracts.mjs';
 
 const MAX_FILE_BYTES=64*1024*1024,MAX_TOTAL_BYTES=512*1024*1024,MAX_FILES=32768;
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -83,6 +97,97 @@ function checkDefaultBody(entry,data,fields) {
   same(node.type,{kind:'data',name:data.fullName},'Generated Default constructor type mismatch');
   node.args.forEach((arg,index)=>{same(arg,{k:'var',name:names[index],type:layout[index].type},'Generated Default field binding mismatch');});
 }
+const cloneSame=(actual,expected,message)=>{if(!isDeepStrictEqual(actual,expected))throw new Error(message,{cause:{actual,expected}});};
+// Reinspect source-owned Clone output, then check only its actual bounded
+// record and generated body. No original Rust function body is translated here.
+function originalCloneReviewContext(meta,row,{readSource,dependencies}) {
+  const proof=typeof dependencies==='function'?dependencies():dependencies;
+  if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Clone review requires complete original source modules');
+  const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
+  for(const item of meta.sources)if(typeof sources.get(item.source)!=='string'||digest(sources.get(item.source))!==item.sha256)throw new Error('Clone original source module hash mismatch');
+  const graph=resolveModuleGraph({entry:row.entry,paths,readSource:name=>sources.get(name),compilationProfile:meta.compilationProfile});
+  cloneSame(graph.modules.map(module=>({source:module.file,sha256:digest(module.source),module:module.path})),meta.sources,'Clone complete original source module layout mismatch');
+  const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(proof)]),derive=createDeriveFootprintContext({modules:graph.modules,dependencies:proof,externalModules,compilationProfile:graph.compilationProfile}),context=createCloneSourceContext(derive),state=cloneSourceContextFacts(context);
+  return {graph,derive,context,state,sources};
+}
+function cloneRelocate(node,offset) {
+  if(Array.isArray(node))return node.map(value=>cloneRelocate(value,offset));if(!node||typeof node!=='object')return node;
+  return Object.fromEntries(Object.entries(node).map(([key,value])=>[key,['cloneSourceProof','deriveNamespaceProof','copyCertificate','toolAttributeProof'].includes(key)?value:key==='span'&&value?{start:value.start+offset,end:value.end+offset}:cloneRelocate(value,offset)]));
+}
+function cloneTree(path,items){for(const name of [...path].reverse())items=[{k:'module',name,items}];return items;}
+function originalCloneCheckedRecord(context,module,item,surface,offset) {
+  const {state,derive}=context,scope=state.binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),parser=new HostRustParser(tokenizeRust(module.source.slice(item.start,item.end))),snapshot=originalHostParserIdentitySnapshot();
+  const configured=configureParserSourceScope(parser,scope,state.binding.scopes,module.path);parser.aliases=configured.aliases;parser.modulePath=module.path;
+  const certificate=deriveFootprintAt(derive,module,item);if(certificate)configureDeriveLayout(parser,certificate,module.source.slice(item.start,item.end),item.start);
+  const guard=()=>{assertOriginalParserIdentity(parser,HostRustParser.prototype,new Map(snapshot.parserMethods));assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});};
+  guard();const items=[];parser.items({main:null},items,module.path,()=>parser.cursor.atEnd());guard();
+  if(items.length!==1||items[0].k!=='data'||!parser.cursor.atEnd())throw new Error('Clone original record parser mismatch');
+  const data=cloneRelocate(items[0],offset+item.start),span={start:offset+item.start,end:offset+item.end};
+  linkProjectDeclaration(parser,items[0],data,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:offset,path:module.path,scope:{bindingEvidence:scope,compilationProfile:state.compilationProfile,configurationCondition:module.configurationCondition}});
+  const aliases=new Map(state.modules.map(owner=>[moduleScopeKey(owner),configureParserSourceScope(new HostRustParser([]),state.binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(owner)),state.binding.scopes,owner.path).aliases])),scopes=new Map(state.binding.scopes.map(scope=>[moduleScopeKey(scope),scope]));
+  if(surface.impl.cloneSourceProof.selectedBranch==='has_derive_copy=true'){
+    projectCopyEvidence([{file:module.file,path:module.path,name:[...module.path,item.name].join('.'),term:'struct',span:{start:item.start,end:item.end},globalSpan:span,surface:data}],state.modules,aliases,scopes);
+    if(!originalOptionCopyPayload(data))throw new Error('Clone Copy branch lacks its genuine original private Copy/no-Drop layout');
+  }
+  const generated=cloneRelocate(surface,offset);linkOriginalCloneSemantic(surface,generated,offset);
+  const checked=roundTripProgram(new HostChecker('Rust',[]).program({language:'Rust',items:cloneTree(module.path,[data,generated]),main:null}));
+  return {data:checked.declarations.get([...module.path,item.name].join('.')),entry:checked.declarations.get([...module.path,surface.name].join('.'))};
+}
+function cloneAlpha(expected,actual) {
+  const names=new Map(),seen=new Set();let left=expected,right=actual.body;
+  while(left?.k==='let'){
+    if(right?.k!=='let'||typeof right.name!=='string'||seen.has(right.name)||right.name===actual.params[0].name)throw new Error('Clone checked local binding mismatch');
+    names.set(left.name,right.name);seen.add(right.name);left=left.body;right=right.body;
+  }
+  if(right?.k==='let')throw new Error('Clone checked body contains extra local bindings');
+  const rename=node=>{if(Array.isArray(node))return node.map(rename);if(!node||typeof node!=='object')return node;const value=Object.fromEntries(Object.entries(node).map(([key,value])=>[key,key==='cloneSourceProof'?value:rename(value)]));if(['let','var'].includes(node.k)&&names.has(node.name))value.name=names.get(node.name);return value;};
+  return rename(expected);
+}
+function flattenedCloneNode(node,names) {
+  if(Array.isArray(node))return node.map(value=>flattenedCloneNode(value,names));if(!node||typeof node!=='object')return node;
+  const result=Object.fromEntries(Object.entries(node).map(([key,value])=>[key,key==='cloneSourceProof'?value:flattenedCloneNode(value,names)]));
+  if(node.kind==='data'&&names.has(node.name))result.name=names.get(node.name);
+  if(node.kind==='named'&&node.path?.[0]==='crate'&&names.has(node.path.slice(1).join('.')))result.path=['crate',names.get(node.path.slice(1).join('.'))];
+  if(['call','routerFutureCall'].includes(node.k))result.fn=names.get(node.fn)??node.fn;
+  if(node.k==='ctor')result.data=names.get(node.data)??node.data;
+  return result;
+}
+function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}) {
+  if(item.term!=='generated-method'||item.origin!=='derive-invocation'||item.originalDeclarationTerm!=='struct'||item.receiver!=='shared'||item.semanticBodyChecked!==true||item.runtimeParity===true||item.semanticAuthority===true||typeof item.name!=='string'||Object.hasOwn(item,'defaultSourceProof'))throw new Error('Invalid generated Clone classification');
+  relativeName(item.source);const proof=item.cloneSourceProof,span=item.span,source=context.sources.get(item.source);
+  if(typeof source!=='string'||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new Error('Invalid Clone original declaration boundary');
+  const sourceSha256=digest(source),itemSha256=digest(source.slice(span.start,span.end));
+  if(proof?.schema!=='original-generated-clone-ir-v1'||proof.generator!=='core::clone::Clone'||proof.source!==item.source||proof.sourceSha256!==sourceSha256||proof.itemSha256!==itemSha256)throw new Error('Clone original declaration hash/identity mismatch');
+  cloneSame(proof.span,span,'Clone original declaration span mismatch');
+  const candidates=entries.filter(entry=>entry.impl?.cloneSourceProof?.source===item.source&&isDeepStrictEqual(entry.impl.cloneSourceProof.span,span));if(candidates.length!==1||used.has(candidates[0]))throw new Error('Clone metadata is not one-to-one');
+  const entry=candidates[0],module=context.graph.modules.find(module=>module.file===item.source&&isDeepStrictEqual(module.path,entry.modulePath));if(!module)throw new Error('Clone source module mismatch');
+  const original=originalSourceModuleItems(module).find(original=>original.term==='struct'&&original.start===span.start&&original.end===span.end);if(!original)throw new Error('Clone source is not the exact original struct');
+  const actual=originalCloneGeneratedMethod(context.context,module,original,HostRustParser),originalProof=actual.impl.cloneSourceProof;
+  cloneSame(proof,originalProof,'Clone original source/AST/primitive/receiver proof mismatch');cloneSame(entry.impl.cloneSourceProof,proof,'Clone checked source proof mismatch');
+  const nominal=[...module.path,original.name].join('.'),localName=actual.name;
+  if(item.name!==nominal+'.clone'||entry.generated!=='router-source-generated-clone-method'||entry.name!==localName||entry.fullName!==[...module.path,localName].join('.')||entry.impl.method!=='clone'||entry.impl.receiver!=='shared'||entry.params.length!==1||entry.async||entry.constant||entry.constFunction||Object.hasOwn(entry.impl,'defaultSourceProof'))throw new Error('Clone checked generated signature/symbol mismatch');
+  cloneSame(entry.impl.type,actual.impl.type,'Clone checked nominal owner mismatch');
+  cloneSame(entry.ret,{kind:'data',name:nominal,rustSourceType:true},'Clone checked owned return mismatch');
+  if(!Number.isSafeInteger(entry.span?.start)||!Number.isSafeInteger(entry.span?.end))throw new Error('Clone checked declaration boundary mismatch');const shift=entry.span.start-span.start;if(!Number.isSafeInteger(shift)||shift<0||entry.span.end-span.end!==shift)throw new Error('Clone relocated declaration span mismatch');
+  if(meta.checkedMethods.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span))||meta.executable.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span)))throw new Error('Clone overlaps original fn/method counts');
+  const regenerated=originalCloneCheckedRecord(context,module,original,actual,shift),data=checked.declarations.get(nominal);
+  cloneSame(data,regenerated.data,'Clone actual checked original layout mismatch');
+  cloneSame(entry.impl,regenerated.entry.impl,'Clone whole original implementation header/receiver mismatch');
+  cloneSame({params:entry.params,ret:entry.ret},{params:regenerated.entry.params,ret:regenerated.entry.ret},'Clone checked shared receiver/ownership mismatch');
+  const expected=cloneAlpha(regenerated.entry.body.body,{body:entry.body.body,params:entry.params});
+  cloneSame(entry.body.body,expected,'Clone whole actual primitive/record computation mismatch');
+  const expectedProof={...regenerated.entry.body.cloneSourceProof,computationSha256:metadataDigest(expected)};expectedProof.digest=proof.digest;expectedProof.digest=metadataDigest(expectedProof);
+  cloneSame(entry.body.cloneSourceProof,expectedProof,'Clone checked Copy/no-Drop/layout/receiver/body proof mismatch');
+  cloneSame({...entry.body,body:expected,cloneSourceProof:expectedProof},{...regenerated.entry.body,body:expected,cloneSourceProof:expectedProof},'Clone checked wrapper ownership/authority mismatch');
+  const flattened=target.declarations.get(names.get(entry.fullName));if(!flattened||flattened.generated!=='router-project-flattened'||flattened.impl?.method!=='clone'||flattened.impl.receiver!=='shared'||flattened.name!==flattened.fullName||flattened.modulePath.length)throw new Error('Clone flattened target missing/identity mismatch');
+  cloneSame(flattened.impl.cloneSourceProof,proof,'Clone flattened source proof mismatch');
+  cloneSame(flattened.impl,flattenedCloneNode(entry.impl,names),'Clone flattened whole implementation header mismatch');
+  cloneSame({params:flattened.params,ret:flattened.ret},flattenedCloneNode({params:entry.params,ret:entry.ret},names),'Clone flattened shared signature mismatch');
+  cloneSame(flattened.body,flattenedCloneNode(entry.body,names),'Clone flattened whole body mismatch');cloneSame(flattened.span,entry.span,'Clone flattened span mismatch');
+  const targetData=target.declarations.get(names.get(nominal));if(!targetData||targetData.generated!=='router-project-flattened')throw new Error('Clone flattened nominal layout missing');cloneSame(targetData,{...flattenedCloneNode(data,names),name:names.get(nominal),fullName:names.get(nominal),modulePath:[],generated:'router-project-flattened'},'Clone flattened whole nominal layout mismatch');
+  used.add(entry);return {...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
+}
+
 // Integrity only. Serialized rows never recreate the compiler's private caller
 // brands; source namespace, runtime and whole-trait authority remain false.
 export function reviewGeneratedMethods(meta,row,{readSource,dependencies}={}) {
@@ -91,11 +196,16 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies}={}) {
   if(!Number.isSafeInteger(count)||count<0||count!==rows.length)throw new Error('Generated method count mismatch: '+row.entry);
   if(!rows.length&&!Object.hasOwn(meta,'checkedSemanticProgram')&&!Object.hasOwn(meta,'targetSemanticProgram'))return [];
   const checked=parseProgram(JSON.stringify(meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(meta.targetSemanticProgram));
-  const entries=[...checked.declarations.values()].filter(entry=>entry.generated==='router-source-generated-default-method'||entry.impl?.defaultSourceProof?.schema==='original-generated-default-ir-v1');
+  const entries=[...checked.declarations.values()].filter(entry=>entry.generated==='router-source-generated-default-method'||entry.impl?.defaultSourceProof?.schema==='original-generated-default-ir-v1'||entry.generated==='router-source-generated-clone-method'||entry.impl?.cloneSourceProof?.schema==='original-generated-clone-ir-v1');
   if(entries.length!==rows.length)throw new Error('Generated method semantic count mismatch: '+row.entry);
   const names=new Map([...checked.declarations.keys()].map(name=>[name,'rp_'+Buffer.from(name).toString('hex')]));
-  const used=new Set(),identities=new Set(),result=[];
+  const used=new Set(),identities=new Set(),result=[];let cloneContext=null;
   for(const item of rows){
+    if(item?.generator==='core::clone::Clone'){
+      cloneContext??=originalCloneReviewContext(meta,row,{readSource,dependencies});
+      const reviewed=reviewCloneMethod(meta,item,{checked,target,entries,names,used,context:cloneContext});
+      const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
+    }
     if(item?.term!=='generated-method'||item.origin!=='derive-invocation'||item.originalDeclarationTerm!=='struct'||item.generator!=='core::default::Default'||item.receiver!==null||item.semanticBodyChecked!==true||item.runtimeParity===true||item.semanticAuthority===true||typeof item.name!=='string')throw new Error('Invalid generated method classification');
     relativeName(item.source);const source=readSource(item.source),proof=item.defaultSourceProof,span=item.span;
     if(typeof source!=='string'||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new Error('Invalid generated original declaration boundary');

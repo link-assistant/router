@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {gzipSync} from 'node:zlib';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
@@ -11,6 +12,7 @@ import {loadDeriveDependencyProof} from '../../tools/translation/derive-dependen
 import {PRODUCTION_PROFILE} from '../../tools/translation/cfg-profile.mjs';
 import {sourceItems} from '../../tools/translation/rust-structure.mjs';
 import {HostRustParser} from '../../tools/translation/extensions/host-contracts.mjs';
+import {metadataDigest} from '../../tools/translation/extensions/source-links.mjs';
 import {planRegeneration} from '../../tools/translation/bulk.mjs';
 const root=new URL('../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock}),hash=value=>createHash('sha256').update(value).digest('hex');
@@ -125,3 +127,85 @@ test('bounded one-source bulk inventory records generated methods separately fro
     vectors.observations.push({label:'bounded-bulk-inventory',manifest:plan.manifest,outputs:plan.outputs});save();
   }finally{repo.cleanup();}
 });
+
+// Closed snapshots are produced once by the sealed source-owned Clone path.
+// Each review reparses original inputs rather than trusting the serialized row.
+const cloneInputs=[
+  ['plain','#[derive(Clone)] pub struct Payload{flag:bool,count:u32} pub fn duplicate(x:&Payload)->Payload{x.clone()}'],
+  ['copy','#[derive(Clone,Copy)] pub struct Payload{first:u32,second:u32,flag:bool} pub fn duplicate(x:&Payload)->Payload{x.clone()}'],
+  ['mixed','#[derive(Default,Clone)] pub struct Payload{flag:bool,count:u32} pub fn make()->Payload{Payload::default().clone()}'],
+  ['nested','mod nested{#[derive(Clone,Copy)]pub struct Payload{pub count:u32}pub fn duplicate(x:&Payload)->Payload{x.clone()}}'],
+];
+const cloneFixtures=new Map(cloneInputs.map(([label,source])=>[label,{source,meta:JSON.parse(JSON.stringify(translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE}).meta))}]));
+const cloneChecked=meta=>meta.checkedSemanticProgram.program.declarations.$map.find(([,entry])=>entry.impl?.cloneSourceProof)[1],cloneTarget=meta=>meta.targetSemanticProgram.program.declarations.$map.find(([,entry])=>entry.impl?.cloneSourceProof)[1],cloneRow=meta=>meta.checkedGeneratedMethods.find(row=>row.generator==='core::clone::Clone');
+const cloneReview=(fixture)=>reviewGeneratedMethods(fixture.meta,{entry:fixture.meta.entry,checkedGeneratedMethods:fixture.meta.checkedGeneratedMethods?.length??0},{readSource:()=>fixture.source,dependencies});
+function cloneRetain(label,value){if(process.env.ROUTER_CLONE_REVIEW_VECTORS){const directory=process.env.ROUTER_CLONE_REVIEW_VECTORS;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,label+'.json.gz'),gzipSync(JSON.stringify(value,null,2)+'\n'));}}
+for(const [label,fixture]of cloneFixtures)test('original generated Clone '+label+' independently rejoins source AST, receiver, private proof and whole body',()=>{
+  const rows=cloneReview(fixture);assert.equal(rows.filter(row=>row.generator==='core::clone::Clone').length,1);assert.equal(rows.find(row=>row.generator==='core::clone::Clone').receiver,'shared');for(const row of rows){assert.equal(row.semanticAuthority,false);assert.equal(row.runtimeParity,false);}assert.equal(fixture.meta.checkedMethods.length,0);assert.equal(fixture.meta.executable.length,1);
+  const clone=cloneRow(fixture.meta);assert.equal(clone.cloneSourceProof.selectedBranch,'has_derive_copy='+(label==='copy'||label==='nested'));if(label==='copy')assert.equal(clone.cloneSourceProof.typeAssertions.length,2);if(label==='mixed')assert.deepEqual(rows.map(row=>row.generator),['core::default::Default','core::clone::Clone']);cloneRetain('positive-'+label,{...fixture,rows});
+});
+function cloneFailure(label,mutate,pattern=/Clone|clone/){test('generated Clone refuses '+label,()=>{const fixture=structuredClone(cloneFixtures.get(label.startsWith('copy-')?'copy':'plain'));mutate(fixture.meta,fixture);let error;try{cloneReview(fixture);}catch(thrown){error=thrown;}assert.ok(error,label);assert.match(error.message,pattern,label);cloneRetain('negative-'+label,{...fixture,error:error.message});});}
+const cloneProofs=meta=>[cloneRow(meta).cloneSourceProof,cloneChecked(meta).impl.cloneSourceProof,cloneTarget(meta).impl.cloneSourceProof];
+const cloneBodies=meta=>[cloneChecked(meta).body,cloneTarget(meta).body];
+const walkClone=(value,visit)=>{if(!value||typeof value!=='object')return;visit(value);for(const [key,child]of Object.entries(value))if(!['type','cloneSourceProof'].includes(key))Array.isArray(child)?child.forEach(value=>walkClone(value,visit)):walkClone(child,visit);};
+for(const [key,value]of [['term','method'],['origin','source-fn'],['originalDeclarationTerm','fn'],['generator','foreign::Clone'],['receiver','value'],['semanticBodyChecked',false],['semanticAuthority',true],['runtimeParity',true]])cloneFailure('classification-'+key,meta=>cloneRow(meta)[key]=value,/classification/);
+cloneFailure('duplicate-row',meta=>meta.checkedGeneratedMethods.push(structuredClone(cloneRow(meta))),/semantic count/);
+cloneFailure('missing-checked',meta=>meta.checkedSemanticProgram.program.declarations.$map=meta.checkedSemanticProgram.program.declarations.$map.filter(([,entry])=>!entry.impl?.cloneSourceProof),/semantic count/);
+cloneFailure('missing-target',meta=>meta.targetSemanticProgram.program.declarations.$map=meta.targetSemanticProgram.program.declarations.$map.filter(([,entry])=>!entry.impl?.cloneSourceProof));
+cloneFailure('original-method-overlap',meta=>meta.checkedMethods.push({source:'src/lib.rs',span:cloneRow(meta).span}),/overlaps original/);
+cloneFailure('original-fn-overlap',meta=>meta.executable.push({source:'src/lib.rs',span:cloneRow(meta).span}),/overlaps original/);
+cloneFailure('foreign-owner-proof',meta=>{for(const proof of cloneProofs(meta))proof.typePath=['crate','Other'];});
+cloneFailure('mirrored-source-branch',meta=>{for(const proof of cloneProofs(meta))proof.selectedBranch='has_derive_copy=true';});
+cloneFailure('mirrored-compiler-ast',meta=>{for(const proof of cloneProofs(meta))proof.originalAstBranch.body.slots.fields[0].ident='other';});
+cloneFailure('mirrored-receiver-recipe',meta=>{for(const proof of cloneProofs(meta))proof.receiver.originalRecipe.syntax[1].text='other';});
+cloneFailure('mirrored-primitive-body',meta=>{for(const proof of cloneProofs(meta))proof.fields[0].originalSyntax.value.path=['other'];});
+cloneFailure('mirrored-primitive-source',meta=>{for(const proof of cloneProofs(meta))proof.fields[0].originalMember.methodSource='fn clone(&self)->Self{false}';});
+cloneFailure('mirrored-no-drop-authority',meta=>{for(const proof of cloneProofs(meta))proof.noDropProof.copyAuthority=true;});
+cloneFailure('mirrored-runtime-authority',meta=>{for(const proof of cloneProofs(meta))proof.runtimeParity=true;});
+cloneFailure('mirrored-shared-param',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.params[0].type.rustReference.kind='mutable';});
+cloneFailure('mirrored-loan-pointee',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.params[0].type.rustReference.pointee.name='Other';});
+cloneFailure('mirrored-owned-return',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.ret.rustReference={kind:'shared',pointee:structuredClone(entry.ret)};});
+cloneFailure('mirrored-param-extra',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.params.push({name:'extra',type:{kind:'bool'}});});
+cloneFailure('mirrored-impl-header',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.impl.type.path=['crate','Other'];});
+cloneFailure('mirrored-proof-reference',meta=>{for(const node of cloneBodies(meta))walkClone(node,value=>{if(value.k==='routerCheckedCloneFieldBorrow')value.cloneSourceProof.sourceProofDigest='f'.repeat(64);});});
+cloneFailure('mirrored-proof-reference-field',meta=>{for(const node of cloneBodies(meta))walkClone(node,value=>{if(value.k==='routerCheckedCloneFieldBorrow')value.cloneSourceProof.field='other';});});
+cloneFailure('mirrored-source-field-read',meta=>{for(const node of cloneBodies(meta))walkClone(node,value=>{if(value.k==='routerField')value.field='other';});});
+cloneFailure('mirrored-clone-result',meta=>{for(const node of cloneBodies(meta))walkClone(node,value=>{if(value.k==='ctor')value.ctor='Other';});});
+cloneFailure('mirrored-wrapper-authority',meta=>{for(const node of cloneBodies(meta))node.constEligible=true;});
+cloneFailure('mirrored-checked-receiver-proof',meta=>{for(const node of cloneBodies(meta))node.cloneSourceProof.checkedReceiver.rustReference.kind='mutable';});
+cloneFailure('mirrored-layout',meta=>{for(const key of ['checkedSemanticProgram','targetSemanticProgram'])meta[key].program.declarations.$map.find(([,entry])=>entry.k==='data'&&entry.record)[1].ctors[0].fields[0].type={kind:'fixed',bits:32,signed:false,rustPrimitiveName:'u32',rustSourceType:true};});
+cloneFailure('copy-missing-private-token',meta=>{for(const node of cloneBodies(meta))node.cloneSourceProof.checkedCopyProof=null;});
+cloneFailure('copy-foreign-private-layout',meta=>{for(const node of cloneBodies(meta))node.cloneSourceProof.checkedCopyProof.proof.layout.fullName='Other';});
+cloneFailure('copy-fake-certificate',meta=>{for(const node of cloneBodies(meta))node.cloneSourceProof.checkedCopyProof.proof.certificate.verified=false;});
+cloneFailure('copy-no-drop-substitution',meta=>{for(const node of cloneBodies(meta))node.cloneSourceProof.checkedCopyProof=structuredClone(cloneChecked(cloneFixtures.get('plain').meta).body.cloneSourceProof.noDropProof);});
+cloneFailure('target-only-field-ref',meta=>walkClone(cloneTarget(meta).body,value=>{if(value.k==='routerCheckedCloneFieldBorrow')value.cloneSourceProof.field='other';}));
+cloneFailure('target-only-owned-param',meta=>delete cloneTarget(meta).params[0].type.rustReference);
+cloneFailure('source-shadow-with-mirrored-hashes',(meta,fixture)=>{fixture.source+=' trait Clone{}';const sha=hash(fixture.source);meta.sources[0].sha256=sha;for(const proof of cloneProofs(meta))proof.sourceSha256=sha;},/shadow|Clone/);
+cloneFailure('source-hidden-bang-with-mirrored-hashes',(meta,fixture)=>{fixture.source+=' fn hidden(){unknown!();}';const sha=hash(fixture.source);meta.sources[0].sha256=sha;for(const proof of cloneProofs(meta))proof.sourceSha256=sha;},/bang|Clone/);
+for(const file of ['src/cli/emergency_args.rs','src/cli/management_args.rs'])test('complete original '+file+' Clone review retains actual input slots and separate generated counts',()=>{
+  const source=readFileSync(new URL(file,root),'utf8'),meta=JSON.parse(JSON.stringify(translateProject({entry:file,paths:[file],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE}).meta)),rows=cloneReview({source,meta});assert.ok(rows.some(row=>row.generator==='core::clone::Clone'));assert.equal(rows.find(row=>row.generator==='core::clone::Clone').receiver,'shared');cloneRetain('original-'+file.replaceAll('/','_'),{source,meta,rows});
+});
+test('mixed original Default and Clone comparison keys include generator and retain unchanged source denominators',()=>{
+  const fixture=cloneFixtures.get('mixed'),rows=cloneReview(fixture),defaults=rows.filter(row=>row.generator==='core::default::Default'),clones=rows.filter(row=>row.generator==='core::clone::Clone'),comparison=compareGeneratedMethods(defaults,clones);assert.equal(comparison.newlyCheckedGeneratedMethods.length,1);assert.equal(comparison.lostCheckedGeneratedMethods.length,1);assert.equal(comparison.changedGeneratedMethodBodies.length,0);assert.equal(fixture.meta.executable.length,1);assert.equal(fixture.meta.checkedMethods.length,0);cloneRetain('mixed-comparison',{fixture,rows,comparison});
+});
+
+cloneFailure('mirrored-computation-and-rehashed-proof',meta=>{
+  for(const node of cloneBodies(meta))walkClone(node,value=>{if(value.k==='routerField')value.field='other';});
+  const body=cloneChecked(meta).body;for(const node of cloneBodies(meta)){node.cloneSourceProof.computationSha256=metadataDigest(body.body);node.cloneSourceProof.digest=cloneRow(meta).cloneSourceProof.digest;node.cloneSourceProof.digest=metadataDigest(node.cloneSourceProof);}
+});
+test('Clone alpha-renamed checked locals still join original body slots and report a changed body separately',()=>{
+  const fixture=structuredClone(cloneFixtures.get('plain')),before=cloneReview(fixture),old=cloneChecked(fixture.meta).body.body.name;
+  for(const node of cloneBodies(fixture.meta))walkClone(node,value=>{if(['let','var'].includes(value.k)&&value.name===old)value.name='other_checked_local';});
+  for(const node of cloneBodies(fixture.meta)){node.cloneSourceProof.computationSha256=metadataDigest(cloneChecked(fixture.meta).body.body);node.cloneSourceProof.digest=cloneRow(fixture.meta).cloneSourceProof.digest;node.cloneSourceProof.digest=metadataDigest(node.cloneSourceProof);}
+  const after=cloneReview(fixture),comparison=compareGeneratedMethods(before,after);assert.equal(comparison.changedGeneratedMethodBodies.length,1);assert.equal(comparison.newlyCheckedGeneratedMethods.length,0);assert.equal(comparison.lostCheckedGeneratedMethods.length,0);cloneRetain('alpha-changed-comparison',{fixture,before,after,comparison});
+});
+test('complete bounded mixed inventory reviews Default and Clone one-to-one without original-method growth',{timeout:60000},()=>{
+  const fixture=cloneFixtures.get('mixed'),repo=repository(fixture.meta);try{repo.write('src/lib.rs',fixture.source);const items=sourceItems(fixture.source).filter(item=>!item.comment).map(item=>({term:item.term,name:item.name,span:{start:item.start,end:item.end},source:fixture.source.slice(item.start,item.end),sha256:hash(fixture.source.slice(item.start,item.end)),status:item.term==='fn'?'executable':'carried'}));
+    const inventory=JSON.parse(readFileSync(join(repo.directory,'parity/rust-source-inventory.json')));inventory.sources[0].sha256=hash(fixture.source);inventory.sources[0].bytes=Buffer.byteLength(fixture.source);const standalone=JSON.parse(readFileSync(join(repo.directory,inventory.sources[0].targets.meta)));standalone.sourceBytes=Buffer.byteLength(fixture.source);standalone.sourceSha256=hash(fixture.source);standalone.items=items;repo.write(inventory.sources[0].targets.meta,JSON.stringify(standalone));repo.write('parity/rust-source-inventory.json',JSON.stringify(inventory));
+    const report=reviewTranslationDraft({root:repo.directory});assert.equal(report.projects[0].checkedGeneratedMethods,2);assert.equal(report.projects[0].checkedMethods,0);assert.deepEqual(report.projects[0].checkedGeneratedMethodItems.map(row=>row.generator),['core::default::Default','core::clone::Clone']);assert.equal(report.functionCoverage.all.topLevelFunctions,1);assert.equal(report.totals.executable,1);for(const key of ['semanticAuthority','runtimeParity','fullGatePass','rustExecuted'])assert.equal(report[key],false);cloneRetain('mixed-complete-inventory',{fixture,report});
+  }finally{repo.cleanup();}
+});
+
+cloneFailure('target-only-impl-owner',meta=>cloneTarget(meta).impl.type.path=['crate','Other']);
+cloneFailure('target-only-layout-record',meta=>meta.targetSemanticProgram.program.declarations.$map.find(([,entry])=>entry.k==='data'&&entry.record)[1].record=false);
+cloneFailure('mirrored-extra-implementation-authority',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.impl.copyCertificate={verified:true};});
