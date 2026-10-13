@@ -411,7 +411,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 1228,
             "end": 1713,
@@ -431,7 +431,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 1940,
             "end": 4697,
@@ -480,7 +480,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 338,
             "end": 1480,
@@ -1015,7 +1015,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 971,
             "end": 1325,
@@ -1094,8 +1094,8 @@
           "example": "function buffered(value,depth,legacy) { if(typeof value==='string')scalarString(value); else if(value instanceof JsonNumber) {if(!Number.isFinite(Number(value.raw)))fail('number ou"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: type",
           "span": {
             "start": 5749,
             "end": 8363,
@@ -1119,8 +1119,8 @@
       "path": "packages/javascript/native/auth-service.mjs",
       "sha256": "39d3f52bcf3e0c28181de027c195f7ab85282bb6ef6e8aa269d215d8a8065c46",
       "sourceItems": 14,
-      "translatedItems": 1,
-      "unsupportedItems": 13,
+      "translatedItems": 2,
+      "unsupportedItems": 12,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -1183,16 +1183,6 @@
           "example": "const {CredentialFileStore,OAuthManager,ClaudeLogin,importCredential,validateCredentialCatalog,subscriptionHome} = oauthPrimitives;"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
-          "span": {
-            "start": 430,
-            "end": 522,
-            "encoding": "utf16"
-          },
-          "example": "const fail = (code,message,status = 400) => Object.assign(new Error(message),{code,status});"
-        },
-        {
           "kind": "statement",
           "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
@@ -1214,7 +1204,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 878,
             "end": 980,
@@ -1529,8 +1519,8 @@
           "example": "import {atomicWrite} from './storage.mjs';"
         },
         {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: Error message coercion without a proved UTF16 string contract",
           "span": {
             "start": 394,
             "end": 491,
@@ -1600,7 +1590,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 4520,
             "end": 4883,
@@ -2150,8 +2140,8 @@
       "path": "packages/javascript/native/codex-login.mjs",
       "sha256": "3a5895c1a4c40fb93a7775bf887128fd38348f2f05406878f79266b25ca2b86d",
       "sourceItems": 14,
-      "translatedItems": 1,
-      "unsupportedItems": 13,
+      "translatedItems": 2,
+      "unsupportedItems": 12,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -2222,16 +2212,6 @@
             "encoding": "utf16"
           },
           "example": "import {CODEX_CLIENT_ID,importCredential,validateCredentialCatalog} from './oauth.mjs';"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
-          "span": {
-            "start": 417,
-            "end": 503,
-            "encoding": "utf16"
-          },
-          "example": "const fail=(code,message,status=400)=>Object.assign(new Error(message),{code,status});"
         },
         {
           "kind": "unsupported",
@@ -2403,8 +2383,8 @@
           "example": "export const nativeConfigEnvironment = {TOKEN_SECRET:'token_secret',DATA_DIR:'data_dir',STORAGE_POLICY:'storage_policy',HOST:'host',PORT:'port', ACCOUNT_STRATEGY:'account_strategy'"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property env",
           "span": {
             "start": 2987,
             "end": 5623,
@@ -2414,7 +2394,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 5624,
             "end": 9812,
@@ -2717,8 +2697,8 @@
       "path": "packages/javascript/native/credential-operations.mjs",
       "sha256": "dae49bf6f618971b6df1c63b00e3541892cd95fbedb78422a7b28ff3170e1e66",
       "sourceItems": 27,
-      "translatedItems": 1,
-      "unsupportedItems": 26,
+      "translatedItems": 2,
+      "unsupportedItems": 25,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -2849,16 +2829,6 @@
             "encoding": "utf16"
           },
           "example": "const candidates={claude:['.credentials.json','credentials.json','auth.json','oauth.json','config.json'],codex:['auth.json'],gemini:['oauth_creds.json'],qwen:['oauth_creds.json']};"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
-          "span": {
-            "start": 891,
-            "end": 979,
-            "encoding": "utf16"
-          },
-          "example": "const fail=(code,message,exitCode=1)=>Object.assign(new Error(message),{code,exitCode});"
         },
         {
           "kind": "collection",
@@ -3145,8 +3115,8 @@
       "path": "packages/javascript/native/emergency-auth.mjs",
       "sha256": "cf0f05c7cc52e209f0f6408b07b4665747cc5b71432755b341c0be5ad2177cc9",
       "sourceItems": 18,
-      "translatedItems": 2,
-      "unsupportedItems": 16,
+      "translatedItems": 3,
+      "unsupportedItems": 15,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -3197,16 +3167,6 @@
             "encoding": "utf16"
           },
           "example": "const truthy = value => ['1','true','yes','on'].includes(String(value ?? '').trim().toLowerCase());"
-        },
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 306,
-            "end": 412,
-            "encoding": "utf16"
-          },
-          "example": "const failure = message => Object.assign(new Error(message),{code:'invalid_emergency_config',status:400});"
         },
         {
           "kind": "collection",
@@ -3290,7 +3250,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 3544,
             "end": 4226,
@@ -3766,7 +3726,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 2422,
             "end": 3592,
@@ -3967,8 +3927,8 @@
       "path": "packages/javascript/native/managed-server.mjs",
       "sha256": "e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf",
       "sourceItems": 50,
-      "translatedItems": 3,
-      "unsupportedItems": 47,
+      "translatedItems": 5,
+      "unsupportedItems": 45,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -4069,26 +4029,6 @@
             "encoding": "utf16"
           },
           "example": "OWNER_BOOT = randomUUID();"
-        },
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 819,
-            "end": 901,
-            "encoding": "utf16"
-          },
-          "example": "const fail = message => Object.assign(new Error(message),{code:'managed_server'});"
-        },
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 902,
-            "end": 988,
-            "encoding": "utf16"
-          },
-          "example": "const unsupported = message => Object.assign(new Error(message),{code:'unsupported'});"
         },
         {
           "kind": "unsupported",
@@ -4669,8 +4609,8 @@
           "example": "export async function boundedBytes(request, limit) { if (!request.body) return new Uint8Array(); const reader = request.body.getReader(), parts = []; let length = 0; try { for (;;)"
         },
         {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 3538,
             "end": 3653,
@@ -4700,7 +4640,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 6043,
             "end": 7038,
@@ -4889,7 +4829,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 2184,
             "end": 2265,
@@ -4929,7 +4869,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 4999,
             "end": 5804,
@@ -5058,8 +4998,8 @@
           "example": "export async function validateCredentialCatalog({provider,token,fetch = globalThis.fetch,baseURL,allowLoopback = false,timeoutMs = 20000}) { provider = subscriptionProvider(provide"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: String",
           "span": {
             "start": 29034,
             "end": 29385,
@@ -5123,8 +5063,8 @@
       "path": "packages/javascript/native/operation-input.mjs",
       "sha256": "9a847b5efee84ca21f47afda2b2374f082892a4f8dd39bca7a1d58524f46f57e",
       "sourceItems": 6,
-      "translatedItems": 0,
-      "unsupportedItems": 6,
+      "translatedItems": 1,
+      "unsupportedItems": 5,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -5155,16 +5095,6 @@
             "encoding": "utf16"
           },
           "example": "import {resolve,dirname,parse} from 'node:path';"
-        },
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 129,
-            "end": 219,
-            "encoding": "utf16"
-          },
-          "example": "const fail=message=>Object.assign(new Error(message),{code:'operation_input',exitCode:2});"
         },
         {
           "kind": "async",
@@ -5477,7 +5407,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 2760,
             "end": 3038,
@@ -5517,7 +5447,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 5447,
             "end": 5823,
@@ -5685,8 +5615,8 @@
           "example": "export function requestToChat(body, source) { if (source === 'chat') return copy(body); if (source === 'gemini') return geminiToChat(body); const out = { model: body.model, message"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property model",
           "span": {
             "start": 6427,
             "end": 10927,
@@ -5696,7 +5626,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 10928,
             "end": 11808,
@@ -5715,8 +5645,8 @@
           "example": "export function responseToCanonical(body, protocol) { if (protocol === 'gemini') return geminiCanonical(body,normalizeUsage); const result = { id: body.id, model: body.model, text:"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property model",
           "span": {
             "start": 15020,
             "end": 17127,
@@ -5736,7 +5666,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 17536,
             "end": 19687,
@@ -5750,19 +5680,9 @@
       "path": "packages/javascript/native/provider-manifest.mjs",
       "sha256": "e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e",
       "sourceItems": 5,
-      "translatedItems": 1,
-      "unsupportedItems": 4,
+      "translatedItems": 2,
+      "unsupportedItems": 3,
       "diagnostics": [
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 79,
-            "end": 171,
-            "encoding": "utf16"
-          },
-          "example": "const fail = message=>Object.assign(new Error(message),{code:'provider_import',exitCode:2});"
-        },
         {
           "kind": "name",
           "message": "a name with no spelling both languages read back: Array",
@@ -5799,8 +5719,8 @@
       "path": "packages/javascript/native/provider-provision.mjs",
       "sha256": "dd01336f186b8f4ef40b8584c4ff64aa07dc4f090f678a59c9d0a601b9c7bdb9",
       "sourceItems": 4,
-      "translatedItems": 0,
-      "unsupportedItems": 4,
+      "translatedItems": 1,
+      "unsupportedItems": 3,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -5811,16 +5731,6 @@
             "encoding": "utf16"
           },
           "example": "import {providerProvisionResponse} from './provider-manifest.mjs';"
-        },
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 157,
-            "end": 274,
-            "encoding": "utf16"
-          },
-          "example": "const failure = (outcome,message)=>Object.assign(new Error(message),{code:'provider_acceptance',outcome,exitCode:1});"
         },
         {
           "kind": "async",
@@ -5848,8 +5758,8 @@
       "path": "packages/javascript/native/remote-operations.mjs",
       "sha256": "877e0c4d821ab90eadf1119b221b9f7c58eaf93d2500ecd7c6f736ce350c9ce9",
       "sourceItems": 20,
-      "translatedItems": 2,
-      "unsupportedItems": 18,
+      "translatedItems": 3,
+      "unsupportedItems": 17,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -5922,16 +5832,6 @@
           "example": "import {parseProviderImport,providerProvisionResponse} from './provider-manifest.mjs';"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
-          "span": {
-            "start": 417,
-            "end": 526,
-            "encoding": "utf16"
-          },
-          "example": "const error = (message,exitCode = 1) => Object.assign(new Error(message),{code:'remote-operation',exitCode});"
-        },
-        {
           "kind": "name",
           "message": "a name with no spelling both languages read back: String",
           "span": {
@@ -5952,8 +5852,8 @@
           "example": "const list = value => value === undefined ? [] : Array.isArray(value) ? value : [value];"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Number",
           "span": {
             "start": 850,
             "end": 1128,
@@ -5962,8 +5862,8 @@
           "example": "const positive = (value,fallback,zero = false) => { const parsed = value === undefined ? fallback : Number(value); if (!Number.isSafeInteger(parsed) || parsed < (zero ? 0 : 1)) thr"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Date",
           "span": {
             "start": 1130,
             "end": 1781,
@@ -5983,7 +5883,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 1908,
             "end": 5418,
@@ -6296,8 +6196,8 @@
       "path": "packages/javascript/native/resources.mjs",
       "sha256": "bba4751a4e639261a9036aa1c62510701d1e76fc07fe7a7661613fecd73e140c",
       "sourceItems": 35,
-      "translatedItems": 3,
-      "unsupportedItems": 32,
+      "translatedItems": 5,
+      "unsupportedItems": 30,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -6388,26 +6288,6 @@
             "encoding": "utf16"
           },
           "example": "const tlsTasks = new Map();"
-        },
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 560,
-            "end": 649,
-            "encoding": "utf16"
-          },
-          "example": "const unsupported = message => Object.assign(new Error(message), { code:'unsupported' });"
-        },
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 650,
-            "end": 736,
-            "encoding": "utf16"
-          },
-          "example": "const bad = message => Object.assign(new Error(message), { code:'invalid_resource' });"
         },
         {
           "kind": "name",
@@ -6719,8 +6599,8 @@
           "example": "export function conversationContract(method, path) { const match = /^\\/api\\/services\\/(openai|codex|qwen)\\/v1\\/conversations(?:\\/([^/]+)(?:\\/(items)(?:\\/([^/]+))?)?)?$/.exec(path);"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Response",
           "span": {
             "start": 5043,
             "end": 5342,
@@ -6770,7 +6650,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 6160,
             "end": 6523,
@@ -6800,7 +6680,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 8503,
             "end": 8786,
@@ -6928,7 +6808,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 158,
             "end": 1866,
@@ -7187,7 +7067,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 1343,
             "end": 1483,
@@ -7317,7 +7197,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 7555,
             "end": 48971,
@@ -7506,7 +7386,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: the method replace",
           "span": {
             "start": 6057,
             "end": 7081,
@@ -7699,8 +7579,8 @@
       "path": "packages/javascript/native/token-import.mjs",
       "sha256": "db94e3f88df72216c3492c331c7e9b369ce4d1cfd4b8894c1c19be5e867cf8f5",
       "sourceItems": 13,
-      "translatedItems": 0,
-      "unsupportedItems": 13,
+      "translatedItems": 1,
+      "unsupportedItems": 12,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -7761,16 +7641,6 @@
             "encoding": "utf16"
           },
           "example": "import {readBinaryTokenRecords} from './doublets.mjs';"
-        },
-        {
-          "kind": "name",
-          "message": "a name with no spelling both languages read back: Object",
-          "span": {
-            "start": 407,
-            "end": 494,
-            "encoding": "utf16"
-          },
-          "example": "const fail=message=>Object.assign(new Error(message),{code:'token_import',exitCode:2});"
         },
         {
           "kind": "name",
@@ -7942,7 +7812,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 1070,
             "end": 1324,
@@ -7962,7 +7832,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a default parameter",
+          "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default",
           "span": {
             "start": 1705,
             "end": 2260,
@@ -8110,7 +7980,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: Buffer.from",
           "span": {
             "start": 343,
             "end": 773,
@@ -8224,8 +8094,8 @@
     },
     {
       "kind": "unsupported",
-      "source": "/** @param {number} n @returns {number} */ export function defaults(n = 1) { return n; }",
-      "message": "a construct outside portable-pure-v1: a default parameter"
+      "source": "/** @param {number} n @returns {number} */ export function defaults(n = sideEffect()) { return n; }",
+      "message": "a construct outside portable-pure-v1: an effectful or non-closed parameter default"
     },
     {
       "kind": "missing-return",
