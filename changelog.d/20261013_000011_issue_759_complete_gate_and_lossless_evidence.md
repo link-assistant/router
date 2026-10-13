@@ -1,0 +1,1 @@
+Preserve the complete unchanged JavaScript gate failure inventory and isolated original-source translator comparisons for issue #759. Compress the full historical member index losslessly so complete new raw logs and input vectors fit the existing evidence cap; strict parity continues to block Rust verification.
