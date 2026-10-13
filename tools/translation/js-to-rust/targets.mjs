@@ -6,6 +6,7 @@ import { classPattern } from './vendor/character-classes.mjs';
 import { mapValueType } from './vendor/static-tables.mjs';
 import { recordShape,errorShape,carriesValue,payloadBoundary } from './vendor/aggregates.mjs';
 import { closedJsonValue,jsonResponseStatus } from './vendor/json-responses.mjs';
+import {PAYLOAD_GUARD_HELPERS} from './vendor/payload-guards.mjs';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -167,7 +168,7 @@ function emitter(program, target) {
   const name = (value) => rust ? value : camelFromSnake(value);
   const globals=new Map(program.map(item=>[item.name,item]));
   const records=new Map();
-  let payloadMode=false;
+  let payloadMode=false,losslessMode=false;
   const rustContract=(type,owned=true,lifetime="'a")=>{
     if(type==='value')return `${payloadMode?'JsPayload':'JsValue'}<${lifetime}>`;
     if(type==='array-value')return `std::rc::Rc<std::cell::RefCell<Vec<JsPayload<${lifetime}>>>>`;
@@ -177,6 +178,7 @@ function emitter(program, target) {
   };
   const lift=expr=>{
     if(expr.type==='value')return expression(expr);
+    if(expr.type==='utf16-string'&&expr.borrowed)return `JsPayload::String(${expression(expr)})`;
     if(expr.type==='null')return 'JsPayload::Null';if(expr.type==='undefined')return 'JsPayload::Undefined';
     if(expr.type==='string'){if(expr.kind!=='string')throw new Error('lossless UTF16 string lift requires a literal');return `JsPayload::String(&[${Array.from({length:expr.value.length},(_,index)=>expr.value.charCodeAt(index)).join(', ')}])`;}
     return `JsPayload::${expr.type==='number'?'Number':'Boolean'}(${expression(expr)})`;
@@ -185,10 +187,11 @@ function emitter(program, target) {
   const units=value=>`&[${Array.from({length:value.length},(_,index)=>value.charCodeAt(index)).join(', ')}]`;
   const converted = (expr, type) => {
     if(rust&&type==='value')return lift(expr);
+    if(rust&&type==='utf16-string')return expr.borrowed?`${expression(expr)}.to_vec()`:expression(expr);
     const optional = optionalType(type);
     if (!rust || !optional || expr.type === type) return expression(expr);
     const wrapper = optional.absent === 'null' ? 'JsNullable' : 'JsOptional';
-    return expr.type === optional.absent ? `${wrapper}::${optional.absent === 'null' ? 'Null' : 'Undefined'}` : `${wrapper}::Value(${expression(expr)})`;
+    return expr.type === optional.absent ? `${wrapper}::${optional.absent === 'null' ? 'Null' : 'Undefined'}` : `${wrapper}::Value(${optional.primitive==='utf16-string'&&expr.borrowed?expression(expr)+'.to_vec()':expression(expr)})`;
   };
   const expression = (expr) => {
     switch (expr.kind) {
@@ -198,11 +201,13 @@ function emitter(program, target) {
       case 'null': case 'undefined': return rust ? expr.kind === 'null' ? 'JsNull' : 'JsUndefined' : expr.kind;
       case 'variable': {
         if (!rust && expr.projection === 'number') return `(${name(expr.name)} as number)`;
-        const value = `${name(expr.name)}${rust && expr.projection ? `.as_${expr.projection}()` : ''}`;
-        if(rust&&(expr.type==='array-value'||expr.type==='json-response'||recordShape(expr.type)||errorShape(expr.type)))return `${value}.clone()`;
+        const value = `${name(expr.name)}${rust && expr.projection ? `.as_${expr.projection==='utf16-string'?'utf16':expr.projection}()` : ''}`;
+        if(rust&&(expr.type==='array-value'||expr.type==='json-response'||optionalType(expr.type)?.primitive==='utf16-string'||recordShape(expr.type)||errorShape(expr.type)))return `${value}.clone()`;
         return rust && expr.type === 'string' ? `${value}.to_string()` : value;
       }
+      case 'logical':return rust?`(if ${expression(expr.left)} { ${expr.op==='and'?lift(expr.right):'JsPayload::Boolean(true)'} } else { ${expr.op==='and'?'JsPayload::Boolean(false)':lift(expr.right)} })`:`(${expression(expr.left)} ${expr.op==='and'?'&&':'||'} ${expression(expr.right)})`;
       case 'binary': {
+        if(rust&&expr.utf16Comparison)return `(${expr.left.kind==='string'?units(expr.left.value):expression(expr.left)} ${expr.op==='equal'?'==':'!='} ${expr.right.kind==='string'?units(expr.right.value):expression(expr.right)})`;
         if(rust&&expr.primitiveComparison)return `${expr.op==='not-equal'?'!':''}${lift(expr.left)}.strict_primitive(${lift(expr.right)})`;
         const left = expression(expr.left);
         const right = expression(expr.right);
@@ -212,17 +217,22 @@ function emitter(program, target) {
       case 'unary': return `(${map.unaries.get(expr.op)[rust ? 'rust' : 'javascript']}${expression(expr.operand)})`;
       case 'typeof': return !rust ? `(typeof ${expression(expr.operand)})`
         : expr.operand.type === 'value' ? `${expression(expr.operand)}.type_name().to_string()`
-          : `({ let _ = ${expression(expr.operand)}; "${expr.operand.type === 'null' ? 'object' : expr.operand.type}".to_string() })`;
+          : `({ let _ = ${expression(expr.operand)}; "${expr.operand.type === 'null' ? 'object' : expr.operand.type==='utf16-string'?'string':expr.operand.type}".to_string() })`;
       case 'truthy': {
         if (!rust) return `!!(${expression(expr.operand)})`;
         if (expr.operand.type === 'boolean') return expression(expr.operand);
-        if (expr.operand.type === 'string') return `!(${expression(expr.operand)}).is_empty()`;
+        if (['string','utf16-string'].includes(expr.operand.type)) return `!(${expression(expr.operand)}).is_empty()`;
         if (expr.operand.type === 'number') return `({ let observed = ${expression(expr.operand)}; observed != 0.0 && !observed.is_nan() })`;
         return `({ let _ = ${expression(expr.operand)}; false })`;
       }
       case 'includes': {
         if (!rust) return `([${expr.values.map(expression).join(', ')}] as readonly unknown[]).includes(${expression(expr.argument)})`;
         if (['null', 'undefined'].includes(expr.argument.type)) return `({ let _ = ${expression(expr.argument)}; false })`;
+        if(losslessMode) {
+          const observed=expr.argument.type==='value'?'observed':expr.argument.type==='utf16-string'?'JsPayload::String(observed)':expr.argument.type==='string'?null:`JsPayload::${expr.argument.type==='number'?'Number':'Boolean'}(observed)`;
+          if(observed===null)throw new Error('unimplemented scalar string membership in a lossless function');
+          return `({ let observed = ${expression(expr.argument)}; ${expr.values.map(value=>`${lift(value)}.same_primitive(${observed})`).join(' || ')||'false'} })`;
+        }
         const variant = type => ({ string: 'String', number: 'Number', boolean: 'Boolean' })[type];
         const observed = expr.argument.type === 'value' ? 'observed' : `JsValue::${variant(expr.argument.type)}(${expr.argument.type === 'string' ? '&' : ''}observed)`;
         const comparisons = expr.values.map(value => `JsValue::${variant(value.type)}(${rustConstant(value)}).same_primitive(${observed})`);
@@ -235,7 +245,7 @@ function emitter(program, target) {
       case 'record': {
         if(!rust)return `({${expr.fields.map(field=>`${JSON.stringify(field.name)}: ${expression(field.value)}`).join(', ')}})`;
         rustContract(expr.type);
-        return `std::rc::Rc::new(std::cell::RefCell::new(${records.get(expr.type).name} { ${expr.fields.map(field=>`${snakeFromCamel(field.name)}: ${expression(field.value)}`).join(', ')} }))`;
+        return `std::rc::Rc::new(std::cell::RefCell::new(${records.get(expr.type).name} { ${expr.fields.map(field=>`${snakeFromCamel(field.name)}: ${converted(field.value,field.value.type)}`).join(', ')} }))`;
       }
       case 'json-response': {
         if(!rust)return `Response.json(${expression(expr.body)}${expr.options?', '+expression(expr.options):''})`;
@@ -267,18 +277,26 @@ function emitter(program, target) {
         if(param.default&&param.type!=='value')value=arg.type==='undefined'?'None':`Some(${value})`;
         return value;
       }).join(', ')})`;
-      case 'builtin': return rust && expr.args[0]?.type === 'value' && ['safe-integer', 'finite', 'nan'].includes(expr.name)
+      case 'builtin': return rust&&expr.name==='utf8-length'&&expr.args[0]?.type==='utf16-string'?`js_payload_utf8_length(${expression(expr.args[0])})`:rust && expr.args[0]?.type === 'value' && ['safe-integer', 'finite', 'nan'].includes(expr.name)
         ? `${expression(expr.args[0])}.${{ 'safe-integer': 'is_safe_integer', finite: 'is_finite', nan: 'is_nan' }[expr.name]}()`
         : `${map.builtins.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map(argument=>`${rust && expr.name==='utf8-length'?'&':''}${expression(argument)}`).join(', ')})`;
-      case 'method': return rust && expr.name === 'trim' ? `js_trim(&${expression(expr.receiver)})`
+      case 'method': {
+        if(rust&&expr.receiver.type==='utf16-string') {
+          const receiver=expression(expr.receiver),argument=expr.args[0],search=argument?.type==='string'?units(argument.value):argument?expression(argument):null;
+          if(expr.name==='trim')return `js_payload_trim(${receiver})`;
+          if(expr.name==='includes')return `({ let observed = ${receiver}; let search = ${search}; search.is_empty() || observed.windows(search.len()).any(|window| window == search) })`;
+          return `${receiver}.${expr.name==='starts-with'?'starts_with':'ends_with'}(${search})`;
+        }
+        return rust && expr.name === 'trim' ? `js_trim(&${expression(expr.receiver)})`
         : `${expression(expr.receiver)}.${map.methods.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map((arg) => `${rust && arg.type === 'string' ? '&' : ''}${expression(arg)}`).join(', ')})`;
-      case 'length': return rust ? `(${expression(expr.receiver)}.encode_utf16().count() as f64)` : `${expression(expr.receiver)}.length`;
-      case 'codepoints': return rust ? `(${expression(expr.receiver)}.chars().count() as f64)` : `[...${expression(expr.receiver)}].length`;
+      }
+      case 'length': return rust ? expr.receiver.type==='utf16-string'?`(${expression(expr.receiver)}.len() as f64)`:`(${expression(expr.receiver)}.encode_utf16().count() as f64)` : `${expression(expr.receiver)}.length`;
+      case 'codepoints': return rust ? expr.receiver.type==='utf16-string'?`(js_payload_points(${expression(expr.receiver)}).len() as f64)`:`(${expression(expr.receiver)}.chars().count() as f64)` : `[...${expression(expr.receiver)}].length`;
       case 'class-test': {
         if (!rust) return `/${classPattern(expr)}/${expr.unicode?'u':''}.test(${expression(expr.receiver)})`;
         const within=expr.ranges.map(({low,high})=>low===high?`unit == ${low}`:`(unit >= ${low} && unit <= ${high})`).join(' || ')||'false';
         const accepted=`${expr.negated?'!':''}(${within})`;
-        const iterator=`observed.${expr.unicode?'chars()':'encode_utf16()'}.map(|unit| unit as u32)`;
+        const iterator=expr.receiver.type==='utf16-string'?expr.unicode?'js_payload_points(observed).into_iter()':'observed.iter().map(|unit| *unit as u32)':`observed.${expr.unicode?'chars()':'encode_utf16()'}.map(|unit| unit as u32)`;
         const test=expr.anchored?'units.next().is_some_and(accepted) && units.next().is_none()':'units.any(accepted)';
         return `({ let observed = ${expression(expr.receiver)}; let mut units = ${iterator}; let accepted = |unit: u32| ${accepted}; ${test} })`;
       }
@@ -317,6 +335,7 @@ function emitter(program, target) {
   };
   const items = program.map((item) => {
     payloadMode=payloadBoundary(item);
+    losslessMode=item.lossless===true;
     if (item.kind === 'constant') {
       const type = map.types.get(item.type);
       if(['table-set','table-map'].includes(item.value.kind)) {
@@ -382,6 +401,7 @@ impl JsonResponseProjection {
   for(const [type,record]of records)declarations.push(`#[derive(Clone)]\npub struct ${record.name}${carriesValue(type)?"<'a>":''} {\n${record.error?'    pub message: Vec<u16>,\n':''}${record.shape.map(([field,type])=>`    pub ${snakeFromCamel(field)}: ${rustContract(type)},`).join('\n')}\n}`);
   const helpers = rust ? [
     program.some(payloadBoundary)?PAYLOAD_HELPERS:'',
+    program.some(item=>item.lossless)?PAYLOAD_GUARD_HELPERS:'',
     serialized.match(/"name":"(?:min|max)"/) ? FLOAT_HELPERS : '',
     serialized.includes('"type":"value"') || serialized.includes('"kind":"includes"') || serialized.includes('"kind":"table-') || serialized.includes('array-value') ? VALUE_HELPERS : '',
     serialized.includes('"name":"trim"') ? TRIM_HELPER : '',

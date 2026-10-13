@@ -18,10 +18,10 @@ export function carriesValue(type) {
 // Lossless value lifts cannot reinterpret scalar strings as UTF-16 payloads.
 // String literals have known units; arbitrary strings retain unknown payloads.
 export function canLiftValue(expr) {
-  return ['value','number','boolean','null','undefined'].includes(expr.type) || expr.type === 'string' && expr.kind === 'string';
+  return ['value','number','boolean','null','undefined'].includes(expr.type) || expr.type === 'string' && expr.kind === 'string' || expr.type==='utf16-string'&&expr.borrowed===true;
 }
 export function payloadBoundary(item) {
   if(item.kind!=='function')return false;
   const body=JSON.stringify(item.body);
-  return carriesValue(item.returns) || Boolean(errorShape(item.returns)) || body.includes('"kind":"error"') || body.includes('"kind":"record"') || body.includes('"kind":"array"') || body.includes('"primitiveComparison":true') || Boolean(item.params?.some(param=>param.rest));
+  return item.lossless===true || carriesValue(item.returns) || Boolean(errorShape(item.returns)) || body.includes('"kind":"error"') || body.includes('"kind":"record"') || body.includes('"kind":"array"') || body.includes('"primitiveComparison":true') || Boolean(item.params?.some(param=>param.rest));
 }

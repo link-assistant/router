@@ -213,13 +213,16 @@ export function check(item, table) {
     if(param.type==='value'?!canLiftValue(value):param.type==='utf16-string'?value.type!=='string'||value.kind!=='string':value.type!==param.type)refuse('type','an inconsistent closed parameter default');
     return {...param,default:value};
   });
+  if(item.lossless&&item.params.some(param=>param.type==='string'))refuse('collection','a scalar string input in a lossless function');
   const scope = new Map(item.params.map((param) => [param.name, param.type]));
+  scope.lossless=item.lossless===true;
   let inferredReturn = item.returns;
   const block = (body, names, mutable = new Set()) => body.map((statement) => {
     if (statement.kind === 'let') {
       canonicalRustName(statement.name);
       if (names.has(statement.name)) refuse('name', `shadowed or duplicate binding ${statement.name}`);
       const value = expression(statement.value, names, table);
+      if(item.lossless&&value.type==='utf16-string'&&!value.borrowed)refuse('collection','an unimplemented owned UTF16 local boundary');
       names.set(statement.name, value.type);
       if (statement.mutable) mutable.add(statement.name);
       return { ...statement, mutable:Boolean(statement.mutable), value };
@@ -229,6 +232,7 @@ export function check(item, table) {
       if (!mutable.has(statement.name)) refuse('mutable', statement.name);
       const value = expression(statement.value, names, table);
       if (value.type !== names.get(statement.name)) refuse('type', statement.name);
+      if(item.lossless&&value.type==='utf16-string'&&!value.borrowed)refuse('collection','an unimplemented owned UTF16 assignment boundary');
       return { ...statement, value };
     }
     if (statement.kind === 'return') {
@@ -261,7 +265,8 @@ export function check(item, table) {
       const proved=callee.body.every(statement=>statement.value?.type||statement.cond?.type);
       if(proved&&callee.params.some(param=>param.type==='value')&&payloadBoundary(callee)!==payload)refuse('collection','a lossless payload/scalar observer call boundary');
     }
-    if(payload&&(node.projection||['typeof','includes','table-get','table-has'].includes(node.kind)||node.kind==='builtin'&&node.args?.some(arg=>arg.type==='value')))refuse('collection','an unimplemented observation of a lossless payload');
+    if(item.lossless&&['table-get','table-has','table-size'].includes(node.kind))refuse('collection','an unimplemented lossless/static-table observer boundary');
+    if(payload&&!item.lossless&&(node.projection||['typeof','includes','table-get','table-has'].includes(node.kind)||node.kind==='builtin'&&node.args?.some(arg=>arg.type==='value')))refuse('collection','an unimplemented observation of a lossless payload');
     for(const child of Object.values(node))if(Array.isArray(child))child.forEach(capabilities);else capabilities(child);
   };
   const jsonProjection=JSON.stringify(body).includes('"type":"json-response"');
@@ -280,7 +285,8 @@ function condition(expr, names, table) {
   }
   const operand = expression(expr, names, table);
   if (operand.type === 'boolean') return operand;
-  if (!['number', 'string', 'null', 'undefined'].includes(operand.type)) refuse('type', 'a condition without a closed primitive truthiness contract');
+  if(operand.type==='utf16-string'&&!names.lossless)refuse('collection','an unimplemented scalar UTF16 truthiness boundary');
+  if (!['number', 'string','utf16-string', 'null', 'undefined'].includes(operand.type)) refuse('type', 'a condition without a closed primitive truthiness contract');
   return { kind: 'truthy', operand, type: 'boolean' };
 }
 
@@ -302,7 +308,7 @@ function expression(expr, names, table) {
       canonicalRustName(expr.name);
       if (names.has(expr.name)) {
         const type = names.get(expr.name);
-        return type.startsWith('value:') ? typed({ projection: type.slice(6) }, type.slice(6)) : typed({}, type);
+        return type.startsWith('value:') ? names.lossless&&type==='value:string'?typed({projection:'utf16-string',borrowed:true},'utf16-string'):typed({ projection: type.slice(6) }, type.slice(6)) : typed(type==='utf16-string'&&names.lossless?{borrowed:true}:{}, type);
       }
       const item = table.get(expr.name);
       if (item && item.kind === 'constant') return typed({}, item.type);
@@ -312,6 +318,7 @@ function expression(expr, names, table) {
       const row = map.operators.get(expr.op);
       const left = expression(expr.left, names, table);
       const right = expression(expr.right, expr.op === 'and' ? guardedScope(expr.left, names, true) : expr.op === 'or' ? guardedScope(expr.left, names, false) : names, table);
+      if(['and','or'].includes(expr.op)&&left.type==='boolean'&&right.type!=='boolean'&&names.lossless&&canLiftValue(right))return typed({kind:'logical',left,right},'value');
       if(left.type==='value'||right.type==='value') {
         if(!['equal','not-equal'].includes(expr.op)||![left,right].some(value=>value.type==='value')||[left,right].some(value=>value.type==='value'?false:!['string','number','boolean','null','undefined'].includes(value.type)||!canLiftValue(value)))refuse('untyped','dynamic values need a proven primitive typeof guard');
         // Reference equality and arbitrary primitive coercion remain outside
@@ -319,6 +326,7 @@ function expression(expr, names, table) {
         if(left.type==='value'&&right.type==='value')refuse('untyped','dynamic reference comparisons');
         return typed({left,right,primitiveComparison:true},'boolean');
       }
+      if(names.lossless&&['equal','not-equal'].includes(expr.op)&&[left,right].some(value=>value.type==='utf16-string')&&[left,right].every(value=>value.type==='utf16-string'||value.kind==='string'))return typed({left,right,utf16Comparison:true},'boolean');
       if(row.operands==='any'&&!['number','string','boolean','null','undefined'].includes(left.type))refuse('collection','an unimplemented projected reference or UTF16 comparison');
       if (expr.op === 'add' && left.type === 'string' && right.type === 'string') return typed({ left, right }, 'string');
       if (row.operands === 'any' ? left.type !== right.type : left.type !== row.operands || right.type !== row.operands) {
@@ -328,19 +336,20 @@ function expression(expr, names, table) {
     }
     case 'unary': {
       const row = map.unaries.get(expr.op);
-      const operand = expression(expr.operand, names, table);
+      const operand = expr.op==='not'?condition(expr.operand,names,table):expression(expr.operand, names, table);
       if (operand.type !== row.operand) refuse('type', `${expr.op} of ${operand.type}`);
       return typed({ operand }, row.yields);
     }
     case 'typeof': {
       const operand = expression(expr.operand, names, table);
       if (optionalType(operand.type)) refuse('type', 'typeof a nullable return value');
-      if(['utf16-string','array-value','json-response'].includes(operand.type)||recordShape(operand.type)||errorShape(operand.type))refuse('collection','an unimplemented scalar observation of a projected aggregate or UTF16 contract');
+      if(operand.type==='utf16-string'&&!names.lossless||['array-value','json-response'].includes(operand.type)||recordShape(operand.type)||errorShape(operand.type))refuse('collection','an unimplemented scalar observation of a projected aggregate or UTF16 contract');
       return typed({ operand }, 'string');
     }
     case 'truthy': {
       const operand = expression(expr.operand, names, table);
-      if (!['number', 'string', 'boolean', 'null', 'undefined'].includes(operand.type)) refuse('type', 'truthiness of a dynamic value');
+      if(operand.type==='utf16-string'&&!names.lossless)refuse('collection','an unimplemented scalar UTF16 truthiness boundary');
+      if (!['number', 'string','utf16-string', 'boolean', 'null', 'undefined'].includes(operand.type)) refuse('type', 'truthiness of a dynamic value');
       return typed({ operand }, 'boolean');
     }
     case 'includes': {
@@ -349,7 +358,8 @@ function expression(expr, names, table) {
         if (!['number', 'boolean', 'string'].includes(value.type) || typeof constantValue(value) !== value.type) refuse('collection', 'non-closed primitive includes elements');
       }
       const argument = expression(expr.argument, names, table);
-      if (!['number', 'string', 'boolean', 'value', 'null', 'undefined'].includes(argument.type)) refuse('collection', 'includes of an unsupported nullable argument');
+      if (!['number', 'string','utf16-string', 'boolean', 'value', 'null', 'undefined'].includes(argument.type)) refuse('collection', 'includes of an unsupported nullable argument');
+      if(names.lossless&&argument.type==='string')refuse('collection','an unimplemented scalar string membership in a lossless function');
       return typed({ values, argument }, 'boolean');
     }
     case 'choose': {
@@ -400,6 +410,11 @@ function expression(expr, names, table) {
       });
       return typed({message,fields},errorType(fields));
     }
+    case 'logical': {
+      const left=expression(expr.left,names,table),right=expression(expr.right,guardedScope(expr.left,names,expr.op==='and'),table);
+      if(!names.lossless||!['and','or'].includes(expr.op)||left.type!=='boolean'||!canLiftValue(right))refuse('type','an unproved mixed primitive short circuit');
+      return typed({left,right},'value');
+    }
     case 'call': {
       canonicalRustName(expr.name);
       const callee = table.get(expr.name);
@@ -419,13 +434,19 @@ function expression(expr, names, table) {
     case 'builtin': {
       const row = map.builtins.get(expr.name);
       const args = expr.args.map((arg) => expression(arg, names, table));
-      if (args.length !== row.arguments.length || args.some((arg, index) => arg.type !== row.arguments[index] && !(arg.type === 'value' && ['safe-integer', 'finite', 'nan'].includes(expr.name)))) refuse('type', expr.name);
+      if(args.some(arg=>arg.type==='utf16-string')&&!names.lossless)refuse('collection','an unimplemented scalar UTF16 builtin boundary');
+      if (args.length !== row.arguments.length || args.some((arg, index) => arg.type !== row.arguments[index] && !(arg.type === 'value' && ['safe-integer', 'finite', 'nan'].includes(expr.name))&&!(expr.name==='utf8-length'&&arg.type==='utf16-string'))) refuse('type', expr.name);
       return typed({ args }, row.yields);
     }
     case 'method': {
       const row = map.methods.get(expr.name);
       const receiver = expression(expr.receiver, names, table);
       const args = expr.args.map((arg) => expression(arg, names, table));
+      if(receiver.type==='utf16-string') {
+        if(!names.lossless)refuse('collection','an unimplemented scalar UTF16 method boundary');
+        if(!['trim','starts-with','ends-with','includes'].includes(expr.name)||args.length!==row.arguments.length||args.some(arg=>arg.type!=='utf16-string'&&!(arg.type==='string'&&arg.kind==='string')))refuse('type','an unimplemented lossless string method');
+        return typed({receiver,args,...(expr.name==='trim'?{borrowed:receiver.borrowed===true}:{})},expr.name==='trim'?'utf16-string':'boolean');
+      }
       if (receiver.type !== row.receiver || args.length !== row.arguments.length || args.some((arg, index) => arg.type !== row.arguments[index])) {
         refuse('type', expr.name);
       }
@@ -433,18 +454,21 @@ function expression(expr, names, table) {
     }
     case 'length': {
       const receiver = expression(expr.receiver, names, table);
-      if (receiver.type !== 'string') refuse('type', 'length of a non-string');
+      if(receiver.type==='utf16-string'&&!names.lossless)refuse('collection','an unimplemented scalar UTF16 observation boundary');
+      if (!['string','utf16-string'].includes(receiver.type)) refuse('type', 'length of a non-string');
       return typed({ receiver }, 'number');
     }
     case 'codepoints': {
       const receiver = expression(expr.receiver, names, table);
-      if (receiver.type !== 'string') refuse('type', 'codepoint iteration of a non-string');
+      if(receiver.type==='utf16-string'&&!names.lossless)refuse('collection','an unimplemented scalar UTF16 observation boundary');
+      if (!['string','utf16-string'].includes(receiver.type)) refuse('type', 'codepoint iteration of a non-string');
       return typed({ receiver }, 'number');
     }
     case 'class-test': {
       validateCharacterClass(expr);
       const receiver = expression(expr.receiver, names, table);
-      if (receiver.type !== 'string') refuse('type', 'a regex test requiring coercion of a non-string');
+      if(receiver.type==='utf16-string'&&!names.lossless)refuse('collection','an unimplemented scalar UTF16 observation boundary');
+      if (!['string','utf16-string'].includes(receiver.type)) refuse('type', 'a regex test requiring coercion of a non-string');
       return typed({ receiver }, 'boolean');
     }
     case 'table-get':case 'table-has':case 'table-size': {
@@ -476,6 +500,7 @@ export function toLino(item) {
     'function',
     item.name,
     ...flag,
+    ...(item.lossless?[['lossless']]:[]),
     ['parameters', ...item.params.map((param) => [param.name, param.type,...(param.rest?[['rest']]:[]),...(param.default?[['default',linkOf(param.default)]]:[])])],
     ['returns', encodeWord(item.returns)],
     ['body', ...item.body.map(statementLink)],
@@ -504,6 +529,7 @@ function linkOf(expr) {
       return [expr.kind];
     case 'variable':
       return ['variable', expr.name];
+    case 'logical':return ['logical',expr.op,linkOf(expr.left),linkOf(expr.right)];
     case 'binary':
       return ['binary', expr.op, linkOf(expr.left), linkOf(expr.right)];
     case 'unary':
@@ -561,6 +587,7 @@ function itemOf(link) {
     kind: 'function',
     name: link[1],
     exported,
+    ...(link.some(part=>Array.isArray(part)&&part[0]==='lossless')?{lossless:true}:{}),
     params: field(link, 'parameters').slice(1).map(([name, type,...flags]) => ({ name, type,...(flags.some(flag=>flag[0]==='rest')?{rest:true}:{}),...(flags.find(flag=>flag[0]==='default')?{default:exprOf(flags.find(flag=>flag[0]==='default')[1])}:{}) })),
     returns: textOf(field(link, 'returns')[1]),
     body: field(link, 'body').slice(1).map(statementOf),
@@ -595,6 +622,7 @@ function exprOf(link) {
       return { kind };
     case 'variable':
       return { kind, name: rest[0] };
+    case 'logical':return {kind,op:rest[0],left:exprOf(rest[1]),right:exprOf(rest[2])};
     case 'binary':
       return { kind, op: rest[0], left: exprOf(rest[1]), right: exprOf(rest[2]) };
     case 'unary':

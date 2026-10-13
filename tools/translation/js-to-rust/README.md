@@ -206,6 +206,44 @@ is retained in independent Node/Bun goldens rather than erased. This API has
 observers and projection/payload crossings are not implemented in Rust and
 remain refused in source lowering. Rust text inspection is not runtime proof.
 
+Scoped pure helper discovery uses the complete original TypeScript syntax AST
+and lexical binding symbols. `analyzeJavaScript(source, {sourcePath})` retains
+its existing top-level `program`, `items` and `diagnostics`, and adds a separate
+`scopedFunctions` inventory and executable `program`. In the current 52 native
+modules, the top-level denominator stays 788 declarations (73 translated).
+The scoped denominator is 705 additional arrow functions, function expressions
+and function declarations (34 translated
+in 18 modules): it excludes top-level function declarations and top-level
+variable initializer arrows/function expressions already represented by the
+top-level inventory. It includes other callbacks, local functions and immediate
+functions. Method and accessor bodies themselves are excluded; their nested
+functions are included. Every admitted or refused scoped body records its original UTF-16
+span, complete enclosing source scopes, source path/hash, original owner and
+capture diagnostics. Synthetic names derive from the source path/hash and span.
+An admitted isolated body does not admit its containing function or module.
+
+Each scoped program is serialized and checked independently. Parameters retain
+`unknown` in strict TypeScript; the Rust boundary uses `JsPayload<'a>`, with
+borrowed UTF-16 string units and opaque object/function/BigInt/Symbol references.
+Proven `typeof` and noncoercive Number guards narrow only the matching branch.
+UTF-16 trim returns a borrowed slice, preserving lone surrogates; unmatched
+branches retain the original payload identity. Optional string returns own their
+UTF-16 units and distinguish undefined from null. Primitive truthiness is
+observed only after proof; unknown and BigInt truthiness remain refused.
+Boolean-left mixed short circuits retain their actual Boolean/string/payload
+result. Primitive length, codepoint iteration, UTF-8 byte length and bounded
+string predicates observe UTF-16 without property reads on opaque values.
+Caller-owned payloads must outlive borrowed returns. Generated record/array
+allocations remain fresh and only those generated containers share Rc/RefCell
+aliases. Rust signatures and text are inspected without Rust compilation.
+
+The explicit `{lossless:true}` option selects the same checked boundary for
+other pure functions. The default top-level API is unchanged; scalar-string
+input bridges, scalar-string membership, static-table crossings, captures,
+this/arguments/new.target, async/generators, accessors, effects, dynamic scope,
+unknown properties/coercion, intrinsic mutation and escaping intrinsic owners
+remain refused. `includeScoped:false` disables supplemental discovery.
+
 Run `node --test tools/translation/js-to-rust/test/*.test.mjs`. The tests execute
 58 authored fixtures against authoritative JavaScript, an independent IR
 evaluator and strict-compiled TypeScript; they also check ordinary source
@@ -218,7 +256,7 @@ or large upstream checkout are needed.
 
 Public module `translator.mjs` exports:
 
-- `analyzeJavaScript(source)` returns `{fragment, program, items, diagnostics}`
+- `analyzeJavaScript(source, options)` returns `{fragment, program, items, diagnostics, scopedFunctions}`
   with partial item coverage and explicit refusals.
 - `translateJavaScript(source)` returns the same fields plus `{meta, rust,
   typescript}` and rejects any refused source item.

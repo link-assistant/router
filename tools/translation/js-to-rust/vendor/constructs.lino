@@ -18,6 +18,8 @@
 (type string (javascript string) (rust "&str") (rust-owned String))
 (type utf16-string (javascript source-owned-utf16-string) (rust "&[u16]") (rust-owned "Vec<u16>"))
 (type json-response (javascript source-owned-json-response) (rust "std::rc::Rc<std::cell::RefCell<JsonResponseProjection>>") (rust-owned "std::rc::Rc<std::cell::RefCell<JsonResponseProjection>>"))
+(type nullable-utf16-string (javascript source-owned-nullable-utf16-string) (rust "JsNullable<&[u16]>") (rust-owned "JsNullable<Vec<u16>>"))
+(type optional-utf16-string (javascript source-owned-optional-utf16-string) (rust "JsOptional<&[u16]>") (rust-owned "JsOptional<Vec<u16>>"))
 (type value (javascript "*") (rust "JsValue<'_>") (rust-owned "JsValue<'static>"))
 (type null (javascript null) (rust JsNull) (rust-owned JsNull))
 (type undefined (javascript undefined) (rust JsUndefined) (rust-owned JsUndefined))

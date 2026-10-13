@@ -12,6 +12,7 @@ import { shadowedBuiltins } from './vendor/builtin-ownership.mjs';
 import { tableOwnership } from './vendor/static-tables.mjs';
 import { privateErrorContracts } from './vendor/private-contracts.mjs';
 import { jsonResponseOwnership } from './vendor/json-responses.mjs';
+import { discoverScopedHelpers } from './vendor/scoped-helpers.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -33,7 +34,7 @@ function returns(body) {
 }
 
 /** Discover and independently check every top-level source item. */
-export function analyzeJavaScript(source) {
+export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,lossless=false}={}) {
   let raw,tokens;
   try {
     tokens=lex(source,'JavaScript');
@@ -55,6 +56,7 @@ export function analyzeJavaScript(source) {
     const row = { start: item.start, end: item.end, status: 'unsupported' };
     try {
       row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed,readOnlyTables:tables,errorContracts:errors,jsonResponses:responses });
+      if(lossless&&row.parsed.kind==='function')row.parsed.lossless=true;
       if (row.parsed.kind === 'function' && !returns(row.parsed.body)) {
         throw Object.assign(new Error('a path ends without a return'), { slug: 'missing-return' });
       }
@@ -94,17 +96,20 @@ export function analyzeJavaScript(source) {
       for(const item of candidates)try{item.checked=check(item.checked,completed);}catch(error){if(!isRefusal(error)&&!error.slug)throw error;item.status='unsupported';item.diagnostic=diagnostic(error,item,source);changed=true;}
     }
   }
+  const censusItems=items.map(({parsed,checked,...item})=>item);
+  const scopedFunctions=includeScoped?discoverScopedHelpers(source,censusItems,analyzeJavaScript,sourcePath):undefined;
   return {
     fragment: FRAGMENT,
     program: items.filter((item) => item.status === 'translated').map((item) => item.checked),
-    items: items.map(({ parsed, checked, ...item }) => item),
+    items: censusItems,
+    ...(scopedFunctions?{scopedFunctions}:{}),
     diagnostics: items.filter((item) => item.diagnostic).map((item) => item.diagnostic),
   };
 }
 
 /** Strict executable translation: any unsupported item fails the module. */
-export function translateJavaScript(source) {
-  const analyzed = analyzeJavaScript(source);
+export function translateJavaScript(source,options) {
+  const analyzed = analyzeJavaScript(source,options);
   if (analyzed.diagnostics.length) throw new TranslationError(analyzed.diagnostics[0]);
   const meta = `${analyzed.program.map(toLino).join('\n')}\n`;
   // Both targets consume the serialized/reparsed meta-language document.

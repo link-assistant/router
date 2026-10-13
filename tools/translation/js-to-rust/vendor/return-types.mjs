@@ -1,8 +1,8 @@
 import { recordShape,errorShape } from './aggregates.mjs';
-const primitive = new Set(['string', 'number', 'boolean']);
+const primitive = new Set(['string', 'number', 'boolean','utf16-string']);
 
 export function optionalType(type) {
-  const match = /^(nullable|optional)-(string|number|boolean)$/u.exec(type);
+  const match = /^(nullable|optional)-(string|number|boolean|utf16-string)$/u.exec(type);
   return match ? { primitive: match[2], absent: match[1] === 'nullable' ? 'null' : 'undefined' } : null;
 }
 
@@ -38,5 +38,5 @@ export function typescriptType(type) {
   const map=/^table-map-(string|number|boolean)$/u.exec(type);
   if(map)return `ReadonlyMap<unknown, ${map[1]}>`;
   const optional = optionalType(type);
-  return optional ? `${optional.primitive} | ${optional.absent}` : type === 'value' ? 'unknown' : type;
+  return optional ? `${optional.primitive==='utf16-string'?'string':optional.primitive} | ${optional.absent}` : type === 'value' ? 'unknown' : type;
 }

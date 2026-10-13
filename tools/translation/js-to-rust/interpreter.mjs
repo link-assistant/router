@@ -30,6 +30,7 @@ export function evaluate(program, functionName, arguments_) {
         const values = expr.values.map(get), argument = get(expr.argument);
         return values.includes(argument);
       }
+      case 'logical': {const left=get(expr.left);return expr.op==='and'?left&&get(expr.right):left||get(expr.right);}
       case 'binary': {
         const left = get(expr.left);
         if (expr.op === 'and') return left && get(expr.right);

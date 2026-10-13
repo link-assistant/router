@@ -2,6 +2,7 @@
 // branch edge. Unknown parameters stay full value projections at the boundary.
 export function guardedScope(expr, names, truth) {
   let refined = new Map(names);
+  refined.lossless=names.lossless;
   if (expr.kind === 'truthy') return guardedScope(expr.operand, names, truth);
   if (truth && expr.kind === 'builtin' && ['safe-integer', 'finite', 'nan'].includes(expr.name) && expr.args.length === 1 && expr.args[0].kind === 'variable') {
     if (names.get(expr.args[0].name) === 'value') refined.set(expr.args[0].name, 'value:number');
