@@ -66,10 +66,15 @@ test('unchanged whole tracked thinking file retains unproved task-local and Copy
   }
 });
 
-test('unchanged whole subscription file checks proven original Copy and shared expiry behavior',async()=>{
+let subscriptionTranslation;
+function originalSubscriptionTranslation(){
   const path='src/subscription/types.rs',source=readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
   assert.equal(hash(source),'74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26');
-  const result=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
+  return subscriptionTranslation??=translateProject({entry:path,paths:[path],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,deriveDependencies:dependencies});
+}
+
+test('unchanged whole subscription file checks proven original Copy and shared expiry source',()=>{
+  const path='src/subscription/types.rs',source=readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex'),result=originalSubscriptionTranslation();
   const method=result.meta.checkedMethods.find(method=>method.source===path&&method.name==='SubscriptionToken.is_expired');
   assert.ok(method);assert.deepEqual(method.span,{start:6721,end:6850});assert.equal(method.receiver,'shared');
   assert.equal(hash(source.slice(method.span.start,method.span.end)),'e83bced63445758eaec0237fbad7f91eb1e895191ba8eaed92548862ee4286ad');
@@ -80,6 +85,10 @@ test('unchanged whole subscription file checks proven original Copy and shared e
   }
   assert.equal(result.meta.runtimeParity,false);
   const target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),emitted=[...target.declarations.values()].find(entry=>entry.impl?.method==='is_expired');assert.ok(emitted);
+});
+
+test('unchanged whole subscription expiry behavior executes emitted JavaScript and strict TypeScript',async()=>{
+  const result=originalSubscriptionTranslation(),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),emitted=[...target.declarations.values()].find(entry=>entry.impl?.method==='is_expired');assert.ok(emitted);
   const alias=`\nexport {${emitted.name} as originalIsExpired};`;
   await verifyTypedTargets({...result,javascript:result.javascript+alias,typescript:result.typescript+alias},(_api,_result,module)=>{
     const tag=($,fields={})=>Object.freeze({$,...fields}),record=expiry=>tag('SubscriptionToken',{access_token:'fixture',refresh_token:tag('None'),expires_at_ms:expiry,account_id:tag('None'),resource_url:tag('None')});
