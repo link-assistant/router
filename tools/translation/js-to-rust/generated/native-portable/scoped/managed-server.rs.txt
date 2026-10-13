@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/managed-server.mjs; source sha256=e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf; IR sha256=0f9a85c9a5368fe69c40be39474af46e2f72132890340d73a0ccc6adefeb3012.
+// Independently checked scoped bodies from packages/javascript/native/managed-server.mjs; source sha256=e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf; IR sha256=20254176637919971bc66ae982e631f3129701984f46a823de08b595abf237d7.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -67,6 +67,9 @@ fn js_payload_utf8_length(value: &[u16]) -> f64 {
 }
 
 #[derive(Clone, Copy)]
+pub struct JsEntry<'a> { pub key: &'a [u16], pub value: JsPayload<'a> }
+
+#[derive(Clone, Copy)]
 pub enum JsValue<'a> {
     String(&'a str), Number(f64), Boolean(bool), Undefined,
     Object, Function, BigInt, Symbol,
@@ -120,6 +123,15 @@ pub enum JsOptional<T> { Undefined, Value(T) }
 #[rustfmt::skip]
 fn scoped_src64d5345b06fc246b_at3370<'a>(value: JsPayload<'a>) -> JsOptional<Vec<u16>> {
     return (if ((value.type_name().to_string() == "string".to_string()) && !(js_payload_trim(value.as_utf16())).is_empty()) { JsOptional::Value(value.as_utf16().to_vec()) } else { JsOptional::Undefined });
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src64d5345b06fc246b_at21400<'a>(scoped_entry_at21401: JsEntry<'a>) -> bool {
+    let key = scoped_entry_at21401.key;
+    let value = scoped_entry_at21401.value;
+    return (((!({ let observed = key; JsPayload::String(&[99, 108, 101, 97, 114]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[100, 97, 116, 97, 95, 100, 105, 114]).same_primitive(JsPayload::String(observed)) })) && !value.strict_primitive(JsPayload::Undefined)) && !value.strict_primitive(JsPayload::Boolean(false)));
 }
 
 #[rustfmt::skip]

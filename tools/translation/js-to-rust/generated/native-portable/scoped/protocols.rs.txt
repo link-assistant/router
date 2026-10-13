@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/protocols.mjs; source sha256=b9ace0e7c7cd08872b60cd44bdfc12db0de3c17d2d633a77d4770ead6ad1fff8; IR sha256=192c8a40cdc02360f76d107fd3b105339e81614cc4d221539f0f68a97ca03665.
+// Independently checked scoped bodies from packages/javascript/native/protocols.mjs; source sha256=b9ace0e7c7cd08872b60cd44bdfc12db0de3c17d2d633a77d4770ead6ad1fff8; IR sha256=54dbf9c83e05c3ebe4c0a69737aa8993279db38342bd7553cd5bf8285a652093.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -67,6 +67,9 @@ fn js_payload_utf8_length(value: &[u16]) -> f64 {
 }
 
 #[derive(Clone, Copy)]
+pub struct JsEntry<'a> { pub key: &'a [u16], pub value: JsPayload<'a> }
+
+#[derive(Clone, Copy)]
 pub enum JsValue<'a> {
     String(&'a str), Number(f64), Boolean(bool), Undefined,
     Object, Function, BigInt, Symbol,
@@ -105,7 +108,32 @@ fn js_safe_integer(value: f64) -> bool {
     value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0
 }
 
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsNull;
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsUndefined;
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsNullable<T> { Null, Value(T) }
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsOptional<T> { Undefined, Value(T) }
+
 #[rustfmt::skip]
 fn scoped_src4f369c860effa56f_at11662<'a>(value: JsPayload<'a>) -> bool {
     return ((!value.is_safe_integer()) || (value.as_number() < 0.0));
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src4f369c860effa56f_at18036<'a>(scoped_entry_at18037: JsEntry<'a>) -> bool {
+    let value = scoped_entry_at18037.value;
+    return !value.strict_primitive(JsPayload::Undefined);
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src4f369c860effa56f_at18303<'a>(scoped_entry_at18304: JsEntry<'a>) -> bool {
+    let value = scoped_entry_at18304.value;
+    return !value.strict_primitive(JsPayload::Undefined);
 }

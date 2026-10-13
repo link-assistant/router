@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/provider-manifest.mjs; source sha256=e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e; IR sha256=e7abbce465a07ce2482a90e1e32d63bcb476dcf6f6823b8323ef84a3b7fa3e46.
+// Independently checked scoped bodies from packages/javascript/native/provider-manifest.mjs; source sha256=e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e; IR sha256=27360af78cb3365a41a69f37c53abdaba55500faf78e16013090677b30e9ee6e.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -101,8 +101,37 @@ impl<'a> JsValue<'a> {
 }
 
 #[rustfmt::skip]
+fn js_trim(value: &str) -> String {
+    value.trim_matches(|ch: char| matches!(ch,
+        '\u{9}'..='\u{d}' | '\u{20}' | '\u{a0}' | '\u{1680}' | '\u{2000}'..='\u{200a}' |
+        '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}'
+    )).to_string()
+}
+
+#[rustfmt::skip]
 fn scoped_src39c3556e9adc7692_at1141<'a>(value: JsPayload<'a>) -> bool {
     return (value.type_name().to_string() != "string".to_string());
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src39c3556e9adc7692_at2021(line: &[u16]) -> bool {
+    return line.starts_with(&[80, 82, 79, 86, 73, 68, 69, 82, 58, 32]);
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src39c3556e9adc7692_at2096(line: &[u16]) -> Vec<u16> {
+    return js_payload_trim(line).to_vec();
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src39c3556e9adc7692_at2122(line: &[u16]) -> bool {
+    return line.starts_with(&[80, 82, 79, 86, 73, 68, 69, 82, 58, 32]);
 }
 
 #[rustfmt::skip]

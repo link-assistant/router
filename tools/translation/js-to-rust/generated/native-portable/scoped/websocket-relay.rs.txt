@@ -1,4 +1,82 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/websocket-relay.mjs; source sha256=a569f6e3376eb9b37a866d1016d6e81760c45b91566b03c70ae0ed61667758e2; IR sha256=01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b.
+// Independently checked scoped bodies from packages/javascript/native/websocket-relay.mjs; source sha256=a569f6e3376eb9b37a866d1016d6e81760c45b91566b03c70ae0ed61667758e2; IR sha256=be45b7c6bcedb9b462792c08ae602dbe901bd4c44ce7056ec88c778471619a4c.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[derive(Clone, Copy)]
+pub enum JsPayload<'a> {
+    String(&'a [u16]), Number(f64), Boolean(bool), Null, Undefined,
+    Object(&'a dyn std::any::Any), Function(&'a dyn std::any::Any),
+    BigInt(&'a dyn std::any::Any), Symbol(&'a dyn std::any::Any),
+}
+#[rustfmt::skip]
+impl<'a> JsPayload<'a> {
+    fn strict_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right,
+            (Self::Null, Self::Null) | (Self::Undefined, Self::Undefined) => true,
+            _ => false,
+        }
+    }
+}
 
+#[rustfmt::skip]
+impl<'a> JsPayload<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number", Self::Boolean(_) => "boolean",
+            Self::Null | Self::Object(_) => "object", Self::Undefined => "undefined",
+            Self::Function(_) => "function", Self::BigInt(_) => "bigint", Self::Symbol(_) => "symbol",
+        }
+    }
+    fn as_utf16(self) -> &'a [u16] { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked number guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool { matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0) }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => self.strict_primitive(other),
+        }
+    }
+}
+#[rustfmt::skip]
+fn js_payload_trim(value: &[u16]) -> &[u16] {
+    let space = |unit: u16| matches!(unit, 0x0009..=0x000d | 0x0020 | 0x00a0 | 0x1680 | 0x2000..=0x200a | 0x2028 | 0x2029 | 0x202f | 0x205f | 0x3000 | 0xfeff);
+    let mut start = 0; let mut end = value.len();
+    while start < end && space(value[start]) { start += 1; }
+    while end > start && space(value[end-1]) { end -= 1; }
+    &value[start..end]
+}
+#[rustfmt::skip]
+fn js_payload_points(value: &[u16]) -> Vec<u32> {
+    let mut result = Vec::new(); let mut index = 0;
+    while index < value.len() {
+        let high = value[index] as u32; index += 1;
+        if (0xd800..=0xdbff).contains(&high) && index < value.len() && (0xdc00..=0xdfff).contains(&value[index]) {
+            result.push(0x10000 + ((high-0xd800)<<10) + (value[index] as u32-0xdc00)); index += 1;
+        } else { result.push(high); }
+    }
+    result
+}
+#[rustfmt::skip]
+fn js_payload_utf8_length(value: &[u16]) -> f64 {
+    js_payload_points(value).iter().map(|point| if *point <= 0x7f { 1.0 } else if *point <= 0x7ff { 2.0 } else if *point <= 0xffff { 3.0 } else { 4.0 }).sum()
+}
+
+#[rustfmt::skip]
+fn js_trim(value: &str) -> String {
+    value.trim_matches(|ch: char| matches!(ch,
+        '\u{9}'..='\u{d}' | '\u{20}' | '\u{a0}' | '\u{1680}' | '\u{2000}'..='\u{200a}' |
+        '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}'
+    )).to_string()
+}
+
+// Conditional private body draft: genuine unchanged producer/callback intrinsics required.
+// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
+#[rustfmt::skip]
+fn scoped_src6c9e3e9fd94af35a_at5535(v: &[u16]) -> Vec<u16> {
+    return js_payload_trim(v).to_vec();
+}
