@@ -15,9 +15,9 @@ test('actual original attribute helper bodies retain their single-segment and em
 });
 test('original Default visitor callbacks and dispatch remain retained source without generated/runtime authority',()=>{
  const path='compiler/rustc_builtin_macros/src/deriving/default.rs',entry=originalAstFunction(profile,path,'expand_deriving_default'),callback=originalAstFunction(profile,path,'default_enum_substructure'),dispatch=originalAstFunction(profile,'compiler/rustc_expand/src/base.rs','visit_with');assert.ok(astFragmentText(entry).includes('item.visit_with(&mut DetectNonVariantDefaultAttr { cx })'));assert.ok(astFragmentText(callback).includes('validate_default_attribute(cx, default_variant)?'));assert.ok(astFragmentText(dispatch).includes('Annotatable::Item(item) => visitor.visit_item(item)'));
- const visitor=builtinAstOriginal(profile,'compiler/rustc_ast/src/visit.rs');for(const name of ['walk_item','walk_attribute','walk_variant'])assert.ok(visitor.source.includes('pub fn '+name+'<'));
+ const visitor=builtinAstOriginal(profile,'compiler/rustc_ast/src/visit.rs');for(const name of ['walk_item','walk_attribute','walk_variant']){const recipe=originalAstFunction(profile,visitor.path,name);assert.equal(recipe.generatedImplBehavior,false);assert.equal(recipe.semanticSyntaxRoundTrip,true);assert.equal(astFragmentText(recipe),visitor.source.slice(recipe.span.start,recipe.span.end));}
  // The complete source is retained, including the compiler's actual unstable
  // metavariable expressions. This prerequisite does not rewrite them or claim
- // the current bounded token grammar already projects their function bodies.
- assert.ok(visitor.source.includes('${ignore($lt)}'));assert.throws(()=>originalAstFunction(profile,visitor.path,'walk_item'),/metavariable requires bounded original spelling/);
+ // ordinary token projection expands the compiler's actual transcriber.
+ assert.ok(visitor.source.includes('${ignore($lt)}'));
 });
