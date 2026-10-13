@@ -140,22 +140,29 @@ function compileDeclarativeMacro(source,{name,owner=[],sourceFragments=null}={})
   }
   const trees=originalMacroTrees(source),found=[];
   for(let at=0;at<trees.length;at++) {
-    let group=null;
+    let group=null,inlineMatcher=null;
     if(text(trees[at])==='macro_rules'&&text(trees[at+1])==='!'&&text(trees[at+2])===name)group=trees[at+3];
-    else if(text(trees[at])==='macro'&&text(trees[at+1])===name)group=trees[at+2];
-    if(group?.kind==='group'&&group.delimiter==='{')found.push(group);
+    else if(text(trees[at])==='macro'&&text(trees[at+1])===name){
+      group=trees[at+2];
+      if(group?.kind==='group'&&group.delimiter==='('){inlineMatcher=group;group=trees[at+3];}
+    }
+    if(group?.kind==='group'&&group.delimiter==='{')found.push({body:group,inlineMatcher});
   }
   if(found.length!==1)throw new TypeError('Declarative definition requires one original top-level rule body');
-  const body=found[0],rules=[];
-  for(let at=0;at<body.children.length;) {
-    const matcher=body.children[at++],arrow=body.children[at++],template=body.children[at++];
-    if(matcher?.kind!=='group'||text(arrow)!=='=>'||template?.kind!=='group')throw new TypeError('Unproved original declarative rule grammar');
+  const {body,inlineMatcher}=found[0],rules=[];
+  const addRule=(matcher,template)=>{
     const bindings=new Map(),pattern=plan(matcher.children,'matcher',bindings,0,sourceFragments),output=plan(template.children,'template',bindings,0,sourceFragments);assertTypeFollowers(pattern);
     rules.push({pattern,output,bindings:[...bindings],span:{start:matcher.span.start,end:template.span.end}});
+  };
+  if(inlineMatcher)addRule(inlineMatcher,body);
+  else for(let at=0;at<body.children.length;) {
+    const matcher=body.children[at++],arrow=body.children[at++],template=body.children[at++];
+    if(matcher?.kind!=='group'||text(arrow)!=='=>'||template?.kind!=='group')throw new TypeError('Unproved original declarative rule grammar');
+    addRule(matcher,template);
     if(at<body.children.length&&![';',','].includes(text(body.children[at++])))throw new TypeError('Unproved declarative rule terminator');
   }
   if(!rules.length||rules.length>32)throw new TypeError('Declarative rule count budget exceeded');
-  const evidence={schema:'bounded-declarative-macro-definition-v1',name,owner:[...owner],ownerVerified:false,sourceSha256:hash(source),definitionSpan:body.span,rules};
+  const evidence={schema:'bounded-declarative-macro-definition-v1',name,owner:[...owner],ownerVerified:false,sourceSha256:hash(source),definitionSpan:body.span,...(inlineMatcher?{declarationForm:'single-rule-decl-macro',matcherSpan:inlineMatcher.span}:{}),rules};
   const definition=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});definitions.set(definition,{source,trees,sourceFragments});return definition;
 }
 
@@ -401,7 +408,12 @@ function declarativeDefinitionHeader(definition) {
   if(body<0)throw new TypeError('Original declaration body is absent from the sealed source');
   let begin=body-2,kind='macro';
   if(text(trees[body-3])==='macro_rules'&&text(trees[body-2])==='!'){begin=body-3;kind='macro_rules';}
-  if(text(trees[begin])!==kind||text(trees[body-1])!==definition.name)throw new TypeError('Original macro declaration header differs from its compiled definition');
+  const inline=definition.declarationForm==='single-rule-decl-macro';
+  if(inline){
+    if(trees[body-1]?.kind!=='group'||trees[body-1].delimiter!=='('||trees[body-1].span.start!==definition.matcherSpan.start||trees[body-1].span.end!==definition.matcherSpan.end)throw new TypeError('Original inline macro matcher differs from its compiled definition');
+    begin=body-3;
+  }
+  if(text(trees[begin])!==kind||text(trees[body-(inline?2:1)])!==definition.name)throw new TypeError('Original macro declaration header differs from its compiled definition');
   let visibility=null;
   if(text(trees[begin-1])==='pub'){visibility=syntax(trees[--begin]);}
   const attributes=[];
