@@ -5,6 +5,7 @@ import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootp
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {builtinDeriveDataInputs} from './builtin-derive-data-inputs.mjs';
 import {sourceItems} from './rust-structure.mjs';
+import {liftBuiltinHashAstRoute} from './builtin-hash-ast-route.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
 import {liftBuiltinCloneAstRoute} from './builtin-clone-ast-route.mjs';
 import {liftBuiltinDebugAstRoute} from './builtin-debug-ast-route.mjs';
@@ -103,6 +104,23 @@ function proveDefaultDataOutput(state,plan,context,certificate,invocation){
   const evidence={schema:'builtin-default-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},visitorInputBranches:['actual named/no field defaults','actual single unit default word'],constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['generated Default field trait calls and trait implementation validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs','unsupported layouts/configuration/compiler errors remain refused']};
   const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
 }
+function proveHashDataOutput(state,plan,context,certificate,invocation){
+  const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
+  for(const attribute of input.attributes){
+    if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
+      const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+      if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original Hash doc comment differs from the private source invocation');
+      continue;
+    }
+    const actual=certificate.attributes.find(row=>row.name===attribute.name&&row.position===attribute.position&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end);if(!actual)throw new TypeError('Original Hash attribute differs from the private source invocation');
+    if(attribute.position!=='container'&&attribute.name!=='doc'){
+      const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original Hash nested attribute requires its genuine active helper owner');helpers.push(proof);
+    }
+  }
+  const route=liftBuiltinHashAstRoute({...state,original:state.original,input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','coverage','Hash',...certificate.attributes.map(attribute=>attribute.name)]));
+  const evidence={schema:'builtin-hash-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},visitorInputBranches:['actual named/no field hashs','actual single unit hash word'],constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['Hash/Hasher trait validity, mutable reborrows and intrinsic execution remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs','unsupported layouts/configuration/compiler errors remain refused']};
+  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
+}
 export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}={}){
   const plan=planBuiltinDeriveBangOutput({context,certificate,invocation}),state=plans.get(plan);
   if(['Clone','Debug','Default'].includes(state.original.name)){
@@ -124,6 +142,7 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
     const evidence={schema:'builtin-partial-eq-data-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:selected.input,originalHelperOwners:selected.helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',implementations:2,structuralAssociatedItems:0,equalityAssociatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true,structuralAlways:'Const::No'}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['generated PartialEq/equality and intrinsic behavior remain unlowered','all other derives, original scopes, ownership and const eligibility require independent proofs']};
     const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
   }
+  if(state.original.name==='Hash')return proveHashDataOutput(state,plan,context,certificate,invocation);
   if(state.original.name==='Eq'){
     const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
     for(const attribute of input.attributes){
