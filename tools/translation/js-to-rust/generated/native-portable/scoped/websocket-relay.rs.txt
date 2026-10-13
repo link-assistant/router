@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/websocket-relay.mjs; source sha256=a569f6e3376eb9b37a866d1016d6e81760c45b91566b03c70ae0ed61667758e2; IR sha256=be45b7c6bcedb9b462792c08ae602dbe901bd4c44ce7056ec88c778471619a4c.
+// Independently checked scoped bodies from packages/javascript/native/websocket-relay.mjs; source sha256=a569f6e3376eb9b37a866d1016d6e81760c45b91566b03c70ae0ed61667758e2; IR sha256=6c6f44aaeb5906ed71dbf78391b1e6fd42cff4c1dcee6e06981391048acdfe8a.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -72,6 +72,20 @@ fn js_trim(value: &str) -> String {
         '\u{9}'..='\u{d}' | '\u{20}' | '\u{a0}' | '\u{1680}' | '\u{2000}'..='\u{200a}' |
         '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}'
     )).to_string()
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsNull;
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsUndefined;
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsNullable<T> { Null, Value(T) }
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsOptional<T> { Undefined, Value(T) }
+
+#[rustfmt::skip]
+fn scoped_src6c9e3e9fd94af35a_at950() -> JsUndefined {
+    return JsUndefined;
 }
 
 // Conditional private body draft: genuine unchanged producer/callback intrinsics required.

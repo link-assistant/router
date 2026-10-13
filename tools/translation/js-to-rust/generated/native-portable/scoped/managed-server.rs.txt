@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/managed-server.mjs; source sha256=e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf; IR sha256=20254176637919971bc66ae982e631f3129701984f46a823de08b595abf237d7.
+// Independently checked scoped bodies from packages/javascript/native/managed-server.mjs; source sha256=e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf; IR sha256=f817c45d28acab4cd5626cb5534b617143cbd12cdea4a1149d552a26b97dcd55.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -125,6 +125,11 @@ fn scoped_src64d5345b06fc246b_at3370<'a>(value: JsPayload<'a>) -> JsOptional<Vec
     return (if ((value.type_name().to_string() == "string".to_string()) && !(js_payload_trim(value.as_utf16())).is_empty()) { JsOptional::Value(value.as_utf16().to_vec()) } else { JsOptional::Undefined });
 }
 
+#[rustfmt::skip]
+fn scoped_src64d5345b06fc246b_at13797() -> JsUndefined {
+    return JsUndefined;
+}
+
 // Conditional private body draft: genuine unchanged producer/callback intrinsics required.
 // Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.
 #[rustfmt::skip]
@@ -137,4 +142,9 @@ fn scoped_src64d5345b06fc246b_at21400<'a>(scoped_entry_at21401: JsEntry<'a>) -> 
 #[rustfmt::skip]
 fn scoped_src64d5345b06fc246b_at22833() -> JsNull {
     return JsNull;
+}
+
+#[rustfmt::skip]
+fn scoped_src64d5345b06fc246b_at26565() -> JsUndefined {
+    return JsUndefined;
 }

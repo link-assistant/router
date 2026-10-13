@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/native-service.mjs; source sha256=36ece5d3f3d097c6c1a5d2d4b7a441c7b4e314175535c7ed553891f2291f7b88; IR sha256=548a0be72b37205edb37ef0c073416b1695e32ff9fd4b266972a128e179e8ab3.
+// Independently checked scoped bodies from packages/javascript/native/native-service.mjs; source sha256=36ece5d3f3d097c6c1a5d2d4b7a441c7b4e314175535c7ed553891f2291f7b88; IR sha256=cd8a3cdd6fd71bfba349b8a82d94427e0de81b1aeade729fdcf69bc645d68df0.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -98,6 +98,20 @@ impl<'a> JsValue<'a> {
             _ => false,
         }
     }
+}
+
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsNull;
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsUndefined;
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsNullable<T> { Null, Value(T) }
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsOptional<T> { Undefined, Value(T) }
+
+#[rustfmt::skip]
+fn scoped_src98b8647679fdc088_at5391() -> JsUndefined {
+    return JsUndefined;
 }
 
 #[rustfmt::skip]

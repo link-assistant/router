@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/server.mjs; source sha256=6e928aa7f9d2ac7e31f3ae21497fb4d74b4010e726c410b2fe45cfa51da11b72; IR sha256=c06ecf696156a8e0795798325e80b93a0b6a31c444f147e4be9f9cb667ff96e5.
+// Independently checked scoped bodies from packages/javascript/native/server.mjs; source sha256=6e928aa7f9d2ac7e31f3ae21497fb4d74b4010e726c410b2fe45cfa51da11b72; IR sha256=de5fc437f093c4909f9763a842a8935b4e3c377dc1ac31dfe95ab2cfbbd34fd0.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -103,6 +103,15 @@ impl<'a> JsValue<'a> {
     }
 }
 
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsNull;
+#[derive(Clone, Copy, PartialEq)]
+pub struct JsUndefined;
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsNullable<T> { Null, Value(T) }
+#[derive(Clone, Copy, PartialEq)]
+pub enum JsOptional<T> { Undefined, Value(T) }
+
 #[rustfmt::skip]
 fn scoped_src4ca549491e09fb8d_at15763<'a>(key: JsPayload<'a>) -> bool {
     return !key.strict_primitive(JsPayload::String(&[100, 101, 98, 117, 103]));
@@ -114,4 +123,9 @@ fn scoped_src4ca549491e09fb8d_at15763<'a>(key: JsPayload<'a>) -> bool {
 fn scoped_src4ca549491e09fb8d_at38560<'a>(scoped_entry_at38561: JsEntry<'a>) -> bool {
     let key = scoped_entry_at38561.key;
     return ({ let observed = key; JsPayload::String(&[110, 97, 109, 101]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[98, 97, 115, 101, 77, 111, 100, 101, 108, 73, 100]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[118, 101, 114, 115, 105, 111, 110]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[100, 105, 115, 112, 108, 97, 121, 78, 97, 109, 101]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[100, 101, 115, 99, 114, 105, 112, 116, 105, 111, 110]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[105, 110, 112, 117, 116, 84, 111, 107, 101, 110, 76, 105, 109, 105, 116]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[111, 117, 116, 112, 117, 116, 84, 111, 107, 101, 110, 76, 105, 109, 105, 116]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[115, 117, 112, 112, 111, 114, 116, 101, 100, 71, 101, 110, 101, 114, 97, 116, 105, 111, 110, 77, 101, 116, 104, 111, 100, 115]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[116, 101, 109, 112, 101, 114, 97, 116, 117, 114, 101]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[109, 97, 120, 84, 101, 109, 112, 101, 114, 97, 116, 117, 114, 101]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[116, 111, 112, 80]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[116, 111, 112, 75]).same_primitive(JsPayload::String(observed)) });
+}
+
+#[rustfmt::skip]
+fn scoped_src4ca549491e09fb8d_at44154() -> JsUndefined {
+    return JsUndefined;
 }
