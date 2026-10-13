@@ -3,7 +3,7 @@
 import {types as nodeTypes} from 'node:util';
 import {HostRustParser,HostChecker,originalHostParserIdentitySnapshot} from './host-contracts.mjs';
 import {tokenizeRust} from './lexical.mjs';
-import {metadataDigest,copyMetadata,originalParsedDeclarationEvidence} from './source-links.mjs';
+import {metadataDigest,copyMetadata,originalParsedDeclarationEvidence,checkedSourceEvidence,checkedSourceContext,ownData,snapshotMap} from './source-links.mjs';
 import {assertOriginalParserIdentity} from '../original-parser-identity.mjs';
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {originalTextCursorGuard} from './text.mjs';
@@ -13,8 +13,10 @@ import {sameType} from '../checked-types.mjs';
 import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {renameFunction} from '../vendor/meta-language/translation/ir.js';
-const issued=new Map(),originalCalls=new WeakMap(),emitterFunctions=new WeakMap();let parsed;
+const issued=new Map(),originalCalls=new WeakMap(),emitterFunctions=new WeakMap(),checkerOrigins=new WeakMap();let parsed;
 const fail=message=>{throw new TypeError('Original conversion body: '+message);};
+// Preserve exact checker identity without retaining failed whole-program graphs.
+function checkerOrigin(checker){let origin=checkerOrigins.get(checker);if(!origin){origin=Object.freeze({});checkerOrigins.set(checker,origin);}return origin;}
 const ownedString=type=>type?.kind==='string'&&type.rustSourceType===true&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&!type.rustReference&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved;
 const borrowedStr=type=>type?.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str'&&!type.rustReference&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&(type.rustSourceType===true||type.rustBorrowLifetime?.kind==='static'||type.rustStandardSignature);
 function primitive(type){try{return pinnedPrimitiveIdentityFrom(type).type;}catch(error){if(!(error instanceof TypeError))throw error;return null;}}
@@ -65,8 +67,27 @@ export function checkOriginalSourceInto(checker,node,receiver,env,path,expected)
   const bodySurface=identity?rename(syntax.identity,'t',name):rename(syntax.from.body,syntax.from.params[0].name,name),body=checker.expr(bodySurface,new Map([[name,receiver.type]]),[],expected);
   if(!sameType(body.type,expected)||identity&&(body.k!=='var'||body.name!==name)||!identity&&(body.k!=='toString'||body.arg?.k!=='var'||body.arg.name!==name||body.sourceOwnershipOperation?.profile!=='checked-standard-string-ownership-v1'||body.sourceOwnershipOperation.operation!=='to_owned'||body.sourceOwnershipOperation.verified!==true))fail('original checked conversion capability differs');
   checker.expectedOwnership(body.type,expected,path,node.span);
-  const computation={k:'let',name,value:receiver,body,type:body.type,span:node.span},proof={schema:'original-checked-source-conversion-v1',route:identity?'Into<T> for T via From<T> identity':'Into<String> for &str via From<&str>',profileSha256:plan.profileSha256,caller,selectedInto:plan.into,selectedFrom:identity?plan.identity:plan.string,identityBodyProof,bindings:{T:receiver.type,U:expected,Self:expected},syntax:{into:syntax.into,from:identity?syntax.identity:syntax.from,intoSha256:syntax.intoSyntaxSha256,fromSha256:identity?syntax.identitySyntaxSha256:syntax.fromSyntaxSha256},allocationBoundary:identity?null:plan.allocationBoundary,ownershipOperation:body.sourceOwnershipOperation??null,evaluationOrder:'receiver once; original delegate; selected original From body',constTraitCall:false,wholeTraitTranslated:false,wholeAllocTranslated:false,runtimeParity:false,computationSha256:treeDigest(computation)},digest=metadataDigest(proof),result={k:'routerSourceConversion',body:computation,type:body.type,sourceConversionProof:{...proof,digest},constEligible:false,span:node.span};issued.set(digest,{proof:copyMetadata(result.sourceConversionProof),computation:copyMetadata(computation)});return result;
+  const computation={k:'let',name,value:receiver,body,type:body.type,span:node.span},proof={schema:'original-checked-source-conversion-v1',route:identity?'Into<T> for T via From<T> identity':'Into<String> for &str via From<&str>',profileSha256:plan.profileSha256,caller,selectedInto:plan.into,selectedFrom:identity?plan.identity:plan.string,identityBodyProof,bindings:{T:receiver.type,U:expected,Self:expected},syntax:{into:syntax.into,from:identity?syntax.identity:syntax.from,intoSha256:syntax.intoSyntaxSha256,fromSha256:identity?syntax.identitySyntaxSha256:syntax.fromSyntaxSha256},allocationBoundary:identity?null:plan.allocationBoundary,ownershipOperation:body.sourceOwnershipOperation??null,evaluationOrder:'receiver once; original delegate; selected original From body',constTraitCall:false,wholeTraitTranslated:false,wholeAllocTranslated:false,runtimeParity:false,computationSha256:treeDigest(computation)},digest=metadataDigest(proof),result={k:'routerSourceConversion',body:computation,type:body.type,sourceConversionProof:{...proof,digest},constEligible:false,span:node.span};issued.set(digest,{checkerOrigin:checkerOrigin(checker),proof:copyMetadata(result.sourceConversionProof),computation:copyMetadata(computation),finalized:[]});return result;
 }
-export function requireOriginalConversionEmission(node,emitter=null){const proof=copyMetadata(node.sourceConversionProof),original=proof&&issued.get(proof.digest),computationValid=original&&(emitter?emitterFunctions.get(emitter)?.get(proof.digest)?.has(treeDigest(node.body)):treeDigest(originalReferences(node.body,original.computation))===proof.computationSha256);if(!original||metadataDigest(proof)!==metadataDigest(original.proof)||!computationValid||node.constEligible!==false||!sameType(node.type,node.body.type)||!ownedString(node.type)&&!primitive(node.type))fail('unissued, changed or forged checked conversion computation');requireSourceConversionScope(proof.caller);if(proof.identityBodyProof)requirePrimitiveIdentityFromEvidence(proof.identityBodyProof,node.body.value.type);return node.body;}
+export function requireOriginalConversionEmission(node,emitter=null){const proof=copyMetadata(node.sourceConversionProof),original=proof&&issued.get(proof.digest),computationValid=original&&(emitter?emitterFunctions.get(emitter)?.get(proof.digest)?.has(treeDigest(node.body)):[original.computation,...original.finalized].some(computation=>treeDigest(originalReferences(node.body,computation))===treeDigest(computation)));if(!original||metadataDigest(proof)!==metadataDigest(original.proof)||!computationValid||node.constEligible!==false||!sameType(node.type,node.body.type)||!ownedString(node.type)&&!primitive(node.type))fail('unissued, changed or forged checked conversion computation');requireSourceConversionScope(proof.caller);if(proof.identityBodyProof)requirePrimitiveIdentityFromEvidence(proof.identityBodyProof,node.body.value.type);return node.body;}
 function conversions(tree,result=[]){if(!tree||typeof tree!=='object')return result;if(tree.k==='routerSourceConversion')result.push(tree);for(const [key,value]of Object.entries(tree))if(!['type','sourceConversionProof'].includes(key)){if(Array.isArray(value))value.forEach(child=>conversions(child,result));else conversions(value,result);}return result;}
+// The core checker's structural-recursion pass can rewrite a recursive
+// argument inside an already checked conversion. Only its genuine whole
+// original declaration seal can bind that exact post-pass computation.
+export function finalizeOriginalConversions(checker,program,sourceLinks){
+  if(!checker||nodeTypes.isProxy(checker)||Object.getPrototypeOf(checker)!==HostChecker.prototype||Object.hasOwn(checker,'expr'))fail('finalization requires actual original Host checker');
+  if(!checkedSourceContext(program))fail('finalization requires the genuine checked program identity');
+  for(const originalEntry of snapshotMap(ownData(program,'declarations')).values()){
+    const entry=copyMetadata(originalEntry),nodes=conversions(entry.body);if(!nodes.length)continue;
+    if(!checkedSourceEvidence(sourceLinks,entry))fail('finalization requires its genuine complete original checked declaration');
+    for(const node of nodes){
+      const proof=copyMetadata(node.sourceConversionProof),state=proof&&issued.get(proof.digest);
+      if(!state||state.checkerOrigin!==checkerOrigins.get(checker)||metadataDigest(proof)!==metadataDigest(state.proof)||node.constEligible!==false||!sameType(node.type,node.body.type)||!ownedString(node.type)&&!primitive(node.type))fail('finalization requires its own unchanged privately issued conversion proof');
+      requireSourceConversionScope(proof.caller);
+      if(proof.identityBodyProof)requirePrimitiveIdentityFromEvidence(proof.identityBodyProof,node.body.value.type);
+      const computation=copyMetadata(node.body);
+      if(!state.finalized.some(prior=>treeDigest(prior)===treeDigest(computation)))state.finalized.push(computation);
+    }
+  }
+}
 export function prepareOriginalConversionFunction(emitter,entry){const nodes=conversions(entry.body);if(!nodes.length)return null;for(const node of nodes)requireOriginalConversionEmission(node);const prior=emitterFunctions.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved()),expected=new Map();for(const node of conversions(renamed.body)){const digest=node.sourceConversionProof.digest;if(!expected.has(digest))expected.set(digest,new Set());expected.get(digest).add(treeDigest(node.body));}emitterFunctions.set(emitter,expected);return ()=>{if(prior)emitterFunctions.set(emitter,prior);else emitterFunctions.delete(emitter);};}
