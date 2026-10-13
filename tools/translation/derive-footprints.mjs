@@ -15,6 +15,7 @@ import {originalMacroTrees} from './macro-token-trees.mjs';
 import {encodeBuiltinSourceMeta,decodeBuiltinSourceMeta} from './builtin-source-meta.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {registeredDeriveHelperSource} from './derive-helper-namespaces.mjs';
+import {builtinStandardDeriveRegistry,builtinStandardDeriveSourceOwner} from './builtin-derive-standard-inputs.mjs';
 export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
@@ -169,7 +170,16 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           if(!owner)throw new TypeError('Derive invocation lacks actual locked macro binding: '+key(invocation.path));
           owners.push({...owner,attributeSpan:invocation.attributeSpan});
         }
-        if(!owners.length&&!input.builtinDefault)continue;
+        let standardInput=null,standardRegistry=null;
+        if(!owners.length&&!input.builtinDefault){
+          if(input.genericParameters||input.lifetimeParameters||input.absentConditionalAttributes.length||input.inertConditionalAttributes.length||input.attributes.some(attribute=>attribute.helpers||!['derive','doc','allow','warn','deny','forbid','must_use'].includes(attribute.name)))throw new TypeError('Standard-only input retains a generic, helper, configuration or layout obligation');
+          const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name)),names=new Set(['core','std',...input.attributes.map(attribute=>attribute.name),...input.derives.map(invocation=>invocation.path[0])]);
+          const missingModule=binding=>binding.namespace==='type'&&binding.kind==='mod'&&(binding.status!=='resolved'||binding.via==='declaration'&&binding.target?.[0]==='crate'&&!modules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target)));
+          if(!ancestors.length||ancestors.some(candidate=>candidate.configurationCondition!=='active'||!attributeClosure.get(moduleScopeKey(candidate))||candidate.bindings.some(binding=>missingModule(binding)||names.has(binding.name)&&macroBindingAffects(binding,'attribute')||binding.namespace==='type'&&['core','std'].includes(binding.name))||candidate.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))))throw new TypeError('Standard-only input has an unresolved original ancestor, prelude root or attribute owner');
+          standardRegistry=builtinStandardDeriveRegistry(dependencies);
+          const standardOwners=input.derives.map(invocation=>{const owner=builtinStandardDeriveSourceOwner(standardRegistry,dependencies,invocation.path[0]);return {invocation,target:owner.target,declaration:owner.declaration,symbol:owner.symbol,registration:{name:owner.registration.name,callback:owner.registration.callback,deriveModule:owner.registration.deriveModule},corePrelude:owner.corePrelude,stdPrelude:owner.stdPrelude,callbackBodyCompiled:false};});
+          standardInput={schema:'original-standard-only-derive-input-v1',registryDigest:standardRegistry.digest,sourceProfileSha256:standardRegistry.sourceProfileSha256,completeRegistrationEntries:standardRegistry.registration.completeEntries.length,owners:standardOwners,originalScopes:ancestors.map(candidate=>({source:candidate.file,module:candidate.path,configurationCondition:candidate.configurationCondition,resolverScopeSha256:hash(JSON.stringify(candidate)),originalAttributeFootprintClosed:true,unresolvedImports:candidate.unresolvedImports})),namespaceAuthority:false,runtimeAuthority:false,generatedImplBehavior:false};
+        }
         if(!coreOwner)throw new TypeError('Derive error branch has no checked standard core owner');
         let builtinDefault=null;
         if(input.builtinDefault) {
@@ -199,7 +209,8 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           }
         }
         const evidence={schema:'derive-namespace-footprint-v1',source:module.file,module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(clapValueEnumOutput?{clapValueEnumOutput,clapGeneratedAttributeOwners}:{}),...(clapArgsOutput?{...(clapSourceOutputs.get(invocationId(module,item))?.concatCaller?{clapArgsOutputStorage:encodeBuiltinSourceMeta(clapArgsOutput),clapConcatCaller:clapSourceOutputs.get(invocationId(module,item)).concatCaller}:{clapArgsOutput}),clapGeneratedAttributeOwners}:{}),...(input.lifetimeParameters?{lifetimeParameters:input.lifetimeParameters}:{}),...(input.genericParameters?{genericParameters:input.genericParameters}:{}),...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs retain anonymous const groups or a source-proved Clap trait impl; original data and inert helper syntax remain unchanged. Unsupported output branches retain independent obligations.'};
-        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});if(certificate.clapArgsOutputStorage&&JSON.stringify(decodeBuiltinSourceMeta(certificate.clapArgsOutputStorage))!==JSON.stringify(clapArgsOutput))throw new TypeError('Original scalar Args storage roundtrip changed');certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView,clapArgsOutput});byId.set(invocationId(module,item),certificate);
+        if(standardInput){evidence.standardInput=standardInput;evidence.dimensions.typeNamespaceComplete=false;evidence.dimensions.valueNamespaceComplete=false;evidence.obligations.push('standard-only registered input requires independent complete output grammar for every actual owner');evidence.confinement='Actual standard declarations, preludes and complete compiler registration identify inputs only. Generated layouts, namespace outputs and trait bodies retain separate obligations.';}
+        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});if(certificate.clapArgsOutputStorage&&JSON.stringify(decodeBuiltinSourceMeta(certificate.clapArgsOutputStorage))!==JSON.stringify(clapArgsOutput))throw new TypeError('Original scalar Args storage roundtrip changed');certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView,clapArgsOutput,standardRegistry});byId.set(invocationId(module,item),certificate);
       } catch(error){diagnostics.push({source:module.file,span:{start:item.start,end:item.end},name:item.name,message:error.message});}
     }
   }
@@ -256,6 +267,9 @@ export function deriveFootprintOriginalContext(context,certificate){
   if(!state||![...state.byId.values()].includes(certificate))throw new TypeError('Derive output requires its original sealed input context');
   return {modules:state.originalModules,dependencies:state.dependencies,externalModules:new Map(state.external),compilationProfile:context.compilationProfile};
 }
+// The full registered-source lineage stays private and shared. Serialized
+// reference digests alone cannot supply this actual input join.
+export function deriveFootprintStandardInputSource(context,certificate){const state=contexts.get(context),sealed=certificates.get(certificate);if(!state||!sealed?.standardRegistry||![...state.byId.values()].includes(certificate))throw new TypeError('Standard-only source input requires its genuine original certificate/context');return {registry:sealed.standardRegistry,input:sealed.input,module:deriveFootprintOriginalModule(context,certificate)};}
 // Select the exact private scoped original for this genuine invocation. A
 // whole-file SHA alone cannot choose among sibling inline module views.
 export function deriveFootprintOriginalModule(context,certificate){
