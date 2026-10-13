@@ -23,13 +23,24 @@ export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDe
       continue;
     }
     const append=(text,start,end)=>tokens.push({kind:'token',text,type:token.type,span:{start,end},sourceSha256});
-    if(token.type==='ident'&&token.text.startsWith('$')) {
-      if(!/^\$(?:[A-Za-z_][A-Za-z0-9_]*!?)?$/u.test(token.text))throw new TypeError('Declarative macro metavariable requires bounded original spelling');
+    if(token.type==='ident'&&token.text.includes('$')) {
+      if(!/^(?:[A-Za-z_][A-Za-z0-9_]*)?(?:\$(?:[A-Za-z_][A-Za-z0-9_]*)?)+!?$/u.test(token.text)||token.text.endsWith('!')&&!/[A-Za-z0-9_]!$/u.test(token.text))throw new TypeError('Declarative macro metavariable requires bounded original spelling');
       const bang=token.text.endsWith('!'),end=token.end-(bang?1:0);
-      append('$',token.start,token.start+1);if(end>token.start+1)append(token.text.slice(1,bang?-1:undefined),token.start+1,end);
+      // The structural lexer retains adjacent dollars in one identifier.
+      // Rust TT boundaries still separate each dollar and source identifier:
+      // `$Visitor$(...)` is `$`, `Visitor`, `$`, then the original group.
+      // Retain every exact source position; no expression/repetition semantics
+      // or new spelling domain follows from this lexical projection.
+      let cursor=token.start;
+      while(cursor<end){if(token.text[cursor-token.start]==='$'){append('$',cursor,cursor+1);cursor++;}else{const begin=cursor;while(cursor<end&&token.text[cursor-token.start]!=='$')cursor++;append(token.text.slice(begin-token.start,cursor-token.start),begin,cursor);}}
       if(bang)append('!',end,token.end);
     } else if(token.type==='ident'&&token.text.endsWith('!')) {
       append(token.text.slice(0,-1),token.start,token.end-1);append('!',token.end-1,token.end);
+    } else if(token.type==='punct'&&token.text==='**') {
+      // Original rustc_ast TokenKind::Star has no Star+Star glue branch.
+      // The structural lexer fuses this spelling; retain its two exact TT
+      // punctuators, without admitting compound **= or other operators.
+      append('*',token.start,token.start+1);append('*',token.start+1,token.end);
     } else if(token.text==='>>') {
       // Rust TT punctuation consists of individual punctuators, even when
       // their original lexical spacing forms a compound type close token.
