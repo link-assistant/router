@@ -139,7 +139,8 @@ function plan(trees,mode,bindings,depth=0,sourceFragments=null) {
   return result;
 }
 
-function compileDeclarativeMacro(source,{name,owner=[],sourceFragments=null}={}) {
+function compileDeclarativeMacro(source,{name,owner=[],sourceFragments=null,maxRules=32}={}) {
+  if(!Number.isSafeInteger(maxRules)||maxRules<1||maxRules>64)throw new TypeError('Declarative explicit rule budget must be an integer from 1 through 64');
   if(!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name??'')||!Array.isArray(owner)||!owner.length||owner.length>32||owner.some(part=>typeof part!=='string'||part.length>128||!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(part)))throw new TypeError('Declarative definition requires explicit bounded source name and untrusted owner identity');
   if(sourceFragments!==null){
     if(!sourceFragmentAdapter)throw new TypeError('Token-only declarative expansion rejects source AST fragment contexts');
@@ -170,8 +171,8 @@ function compileDeclarativeMacro(source,{name,owner=[],sourceFragments=null}={})
     addRule(matcher,template);
     if(at<body.children.length&&![';',','].includes(text(body.children[at++])))throw new TypeError('Unproved declarative rule terminator');
   }
-  if(!rules.length||rules.length>32)throw new TypeError('Declarative rule count budget exceeded');
-  const evidence={schema:'bounded-declarative-macro-definition-v1',name,owner:[...owner],ownerVerified:false,sourceSha256:hash(source),definitionSpan:body.span,...(inlineMatcher?{declarationForm:'single-rule-decl-macro',matcherSpan:inlineMatcher.span}:{}),rules};
+  if(!rules.length||rules.length>maxRules)throw new TypeError('Declarative rule count budget exceeded');
+  const evidence={schema:'bounded-declarative-macro-definition-v1',name,owner:[...owner],ownerVerified:false,sourceSha256:hash(source),definitionSpan:body.span,...(inlineMatcher?{declarationForm:'single-rule-decl-macro',matcherSpan:inlineMatcher.span}:{}),...(maxRules!==32?{explicitRuleBudget:maxRules}:{}),rules};
   const definition=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});definitions.set(definition,{source,trees,sourceFragments});return definition;
 }
 
