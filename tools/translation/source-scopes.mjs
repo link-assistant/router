@@ -34,7 +34,7 @@ function sourceNamespaceTemplate(scopes){
   restricted.forEach((candidate,index)=>{
     const slots=restrictionSlots[candidate.binding.namespace];
     if(!slots.has(candidate.key))slots.set(candidate.key,new Map());
-    slots.get(candidate.key).set(candidate.binding.name,index);
+    const names=slots.get(candidate.key);if(!names.has(candidate.binding.name))names.set(candidate.binding.name,[]);names.get(candidate.binding.name).push(index);
   });
   const template={ownedScopes,restricted,bindings,restrictionSlots,visibilityMasks:new Map(),scopePaths:new Set(scopes.map(scope=>JSON.stringify(scope.path))),reusable};
   if(reusable)namespaceTemplates.set(scopes,template);
@@ -52,8 +52,9 @@ function cloneSourceNamespaces(template,path){
   return Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...template.ownedScopes].map(([key,owned])=>{
     const restrictions=template.restrictionSlots[namespace].get(key);
     const aliases=new Map([...owned.namespaceAliases[namespace]].map(([name,target])=>{
-      const index=restrictions?.get(name),candidate=index===undefined?null:template.restricted[index];
-      return [name,candidate&&mask[index]?['crate','ml_inaccessible_source_binding',...candidate.path,name]:[...target]];
+      const indices=restrictions?.get(name);let inaccessible=null;
+      for(const index of indices??[])if(mask[index])inaccessible=template.restricted[index];
+      return [name,inaccessible?['crate','ml_inaccessible_source_binding',...inaccessible.path,name]:[...target]];
     }));
     return [key,aliases];
   }))]));

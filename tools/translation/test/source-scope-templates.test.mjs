@@ -66,3 +66,19 @@ test('separate original resolver results keep private templates independent',()=
   one.sourceNamespaceAliases.type.get('inner').get('Public').push('changed');
   assert.deepEqual(inspect(parser(second)),inspect(two));
 });
+
+
+test('repeated restrictions retain every inaccessible binding after warm setup',()=>{
+  const scopes=structuredClone(resolve());
+  const binding=scopes[1].bindings.find(binding=>binding.namespace==='type'&&binding.name==='Private');
+  binding.visibility={kind:'restricted',path:['inner','child']};
+  scopes[1].bindings.push({...structuredClone(binding),visibility:{kind:'restricted',path:['inner']}});
+  for(const path of [['inner'],[],['inner','child'],['inner']]){
+    const target=parser(scopes,0,path).sourceNamespaceAliases.type.get('inner').get('Private');
+    assert.deepEqual(target,path.length>=2&&path[0]==='inner'&&path[1]==='child'
+      ?['crate','inner','Private']:['crate','ml_inaccessible_source_binding','inner','Private']);
+  }
+  scopes[1].bindings.reverse();
+  assert.deepEqual(parser(scopes,0,['inner']).sourceNamespaceAliases.type.get('inner').get('Private'),
+    ['crate','ml_inaccessible_source_binding','inner','Private']);
+});
