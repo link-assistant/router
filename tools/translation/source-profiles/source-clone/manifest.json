@@ -20,6 +20,28 @@
       "sha256": "8e6dbbb0ec8bcb49b2f8e5b943621a95039c2779131a34930f516db13ff7a8d5",
       "archiveBytes": 14900,
       "archiveSha256": "ee1c5bd38944837a73044b3879966e612876ab169c8a8547ff05cd5af27b74d2"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "compiler/rustc_macros/src/symbols.rs",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/compiler/rustc_macros/src/symbols.rs",
+      "archive": "rust-1.89-symbols.rs.gz",
+      "bytes": 10125,
+      "sha256": "cf66817df78fb44e38f3aa456835fae0e317a82b43819ae70d35fb3dc0136cef",
+      "archiveBytes": 3150,
+      "archiveSha256": "d6c227023bb135b7f12eb7ec0a2ac7e821999cb67b81b8ed5b53d4d7434a506e"
+    },
+    {
+      "repository": "rust-lang/rust",
+      "ref": "1.89.0",
+      "path": "library/core/src/ops/drop.rs",
+      "url": "https://github.com/rust-lang/rust/blob/1.89.0/library/core/src/ops/drop.rs",
+      "archive": "rust-1.89-drop.rs.gz",
+      "bytes": 9930,
+      "sha256": "a04e5438385053157665cbb0e2287a19e26e01f2eaf5ddc03d1b599eff7ba375",
+      "archiveBytes": 3754,
+      "archiveSha256": "2b1a008cd7e87f680b7d7206688a28127a9958214c665478b140a953cef228c5"
     }
   ],
   "references": [

@@ -1,5 +1,6 @@
 import {hasOriginalMappedOrigin} from './standard-mapped-body.mjs';
 import {sameType} from '../checked-types.mjs';
+import {originalCloneReceiverOrigin} from './clone-source-body.mjs';
 import {hasOriginalSourceFrame,hasOriginalCallbackLoan} from './standard-source-frame.mjs';
 import {hasPinnedSharedOrigin,hasOriginalSharedDomainGuard} from './standard-borrowed-body.mjs';
 import {hasStaticElementOrigin} from './static-array-element.mjs';
@@ -77,7 +78,12 @@ function namedIdentity(entry,kind,span) {
   return `function:${entry.fullName}:${kind}`;
 }
 export function functionLifetimeSignature(entry,context={}) {
-  const params=entry.params.map((param,index)=>sourceBorrowRegions(param.type,context).map(region=>({...region,param:index,identity:region.kind==='static'?'static':namedKind(region.kind)?namedIdentity(entry,region.kind,region.span):`input:${index}:${JSON.stringify(region.path)}`})));
+  const generated=originalCloneReceiverOrigin(entry),receiverType=entry.params[0]?.type;
+  if(generated&&(receiverType?.kind!=='data'||receiverType.rustReference?.kind!=='shared'||receiverType.rustReference.pointee?.kind!=='data'||receiverType.name!==receiverType.rustReference.pointee.name||entry.ret?.kind!=='data'||entry.ret.name!==receiverType.name||entry.ret.rustReference))throw unsupported('compiler Clone receiver lifetime','requires the actual shared nominal receiver and owned primitive-record result',entry.span);
+  const params=entry.params.map((param,index)=>sourceBorrowRegions(param.type,context).map(region=>{
+    if(generated&&index===0&&region.path.length===0&&region.kind==='unknown')region={...region,kind:'elided',origin:'original compiler SelfKind::Region(None, ast::Mutability::Not)'};
+    return {...region,param:index,identity:region.kind==='static'?'static':namedKind(region.kind)?namedIdentity(entry,region.kind,region.span):`input:${index}:${JSON.stringify(region.path)}`};
+  }));
   const outputs=sourceBorrowRegions(entry.ret,context);
   if(params.flat().some(region=>region.kind==='unknown'))throw unsupported('input lifetime syntax','requires retained actual source lifetime syntax',entry.span);
   const identities=new Set(params.flat().map(region=>region.identity));

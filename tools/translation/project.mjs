@@ -14,8 +14,11 @@ import {configureParserSourceScope} from './source-scopes.mjs';
 import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
 import {declarationRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
-import {projectCopyEvidence} from './project-copy.mjs';
+import {projectCopyEvidence,originalOptionCopyPayload} from './project-copy.mjs';
 import {createDefaultSourceContext} from './default-trait-source.mjs';
+import {createCloneSourceContext} from './clone-trait-source.mjs';
+import {originalCloneGeneratedMethods,assertOriginalCloneGeneratedMethod} from './clone-source-ir.mjs';
+import {linkOriginalCloneSemantic} from './extensions/clone-source-body.mjs';
 import {originalDefaultGeneratedMethods,assertOriginalDefaultGeneratedMethod} from './default-source-ir.mjs';
 import {proveDefaultMethodAdmission,lowerDefaultMethodTokens} from './impl-resolver.mjs';
 import {admittedHostData} from './extensions/source-namespaces.mjs';
@@ -70,6 +73,9 @@ export function originalProjectDeclarationRefusalRange(surface,path){
   if(state.defaultGenerated){
     const origin=state.defaultGenerated;assertOriginalDefaultGeneratedMethod(origin.surface,origin.context);
     actual={start:origin.surface.span.start+origin.offset,end:origin.surface.span.end+origin.offset};
+  }else if(state.cloneGenerated){
+    const origin=state.cloneGenerated;assertOriginalCloneGeneratedMethod(origin.surface,origin.context);
+    actual={start:origin.surface.span.start+origin.offset,end:origin.surface.span.end+origin.offset};
   }else if(state.structural){
     const origin=state.structural,lowering=originalMethodLowering(origin.lowered);
     if(lowering.method!==origin.method||lowering.original!==origin.original||metadataDigest(state.parent)!==origin.parentDigest)throw new TypeError('Structural method refusal original lowering or parsed parent changed');
@@ -112,7 +118,7 @@ const relocate = (node, offset) => Array.isArray(node) ? node.map(value => reloc
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope','defaultSourceProof','sourceConversionProof','sourceSharedPatternProof','sourcePatternProjectionProof','sourceSharedStringViewProof'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope','defaultSourceProof','sourceConversionProof','sourceSharedPatternProof','sourcePatternProjectionProof','sourceSharedStringViewProof','cloneSourceProof'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -270,6 +276,8 @@ export function translateProject(options) {
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
   const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
   const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultSourceContext(deriveContext):null;
+  const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>item.term==='struct'&&item.tokens.some(token=>token.text==='Clone')));
+  const cloneContext=deriveContext&&hasCloneDeclarations?createCloneSourceContext(deriveContext):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
   const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:graph.compilationProfile});
@@ -413,6 +421,25 @@ export function translateProject(options) {
     }
     for(const {item,message}of generated.refused)refused.push({file:module.file,name:[...module.path,item.name,'default'].join('.'),term:'generated-method',kind:'unsupported',span:{start:item.start,end:item.end},message});
   }
+  if(cloneContext)for(const module of graph.modules){
+    if(module.configurationCondition!=='active')continue;
+    const generated=originalCloneGeneratedMethods(cloneContext,module,MethodRustParser);
+    for(const {item,surface}of generated.methods){
+      assertOriginalCloneGeneratedMethod(surface,cloneContext);
+      if(surface.impl.cloneSourceProof.selectedBranch==='has_derive_copy=true'){
+        const data=declarations.find(entry=>entry.term==='struct'&&entry.file===module.file&&entry.name===surface.impl.cloneSourceProof.typePath.slice(1).join('.'));
+        if(!data||!originalOptionCopyPayload(data.surface)){
+          refused.push({file:module.file,name:[...module.path,item.name,'clone'].join('.'),term:'generated-method',kind:'unsupported',span:{start:item.start,end:item.end},message:'Original generated Clone Copy branch requires the existing private original nominal Copy/no-Drop layout before registration'});
+          continue;
+        }
+      }
+      const globalSpan={start:module.offset+item.start,end:module.offset+item.end},semantic=relocate(surface,module.offset),displayName=[...module.path,item.name,'clone'].join('.');
+      linkOriginalCloneSemantic(surface,semantic,module.offset);
+      declarationRanges.set(semantic,Object.freeze({parent:semantic,parentPath:Object.freeze([...module.path]),path:Object.freeze([...module.path]),range:Object.freeze(globalSpan),digest:metadataDigest(semantic),cloneGenerated:Object.freeze({surface,context:cloneContext,offset:module.offset})}));
+      declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName,term:'generated-method',span:{start:item.start,end:item.end},globalSpan,surface:semantic});
+    }
+    for(const {item,message}of generated.refused)refused.push({file:module.file,name:[...module.path,item.name,'clone'].join('.'),term:'generated-method',kind:'unsupported',span:{start:item.start,end:item.end},message});
+  }
   progress({stage:'method-parse',state:'end',entry:options.entry,completed:completedMethods});
   const duplicateNames = new Set(declarations.filter((entry, index) => declarations.findIndex(candidate => candidate.name === entry.name) !== index).map(entry => entry.name));
   for (const entry of declarations.filter(entry => duplicateNames.has(entry.name))) refused.push({ file: entry.file, name: entry.name, term: entry.term, kind: 'ambiguous', message: 'duplicate module-scoped declaration', span: entry.span });
@@ -464,7 +491,7 @@ export function translateProject(options) {
   progress({stage:'project-serialize',state:'start',entry:options.entry});
   const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver,...(entry.defaultSourceAdmission?{defaultSourceAdmission:entry.defaultSourceAdmission}:{})})), encodings: emitted.encodings, assumptions: emitted.assumptions };
   if(deriveContext)meta.deriveNamespaceFootprints=deriveContext;
-  if(generatedMethods.length)meta.checkedGeneratedMethods=generatedMethods.map(entry=>({source:entry.file,name:entry.displayName,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:'struct',generator:'core::default::Default',span:entry.span,receiver:null,semanticBodyChecked:true,defaultSourceProof:entry.surface.impl.defaultSourceProof}));
+  if(generatedMethods.length)meta.checkedGeneratedMethods=generatedMethods.map(entry=>({source:entry.file,name:entry.displayName,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:'struct',generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:entry.span,receiver:entry.surface.impl.receiver,semanticBodyChecked:true,...(entry.surface.impl.cloneSourceProof?{cloneSourceProof:entry.surface.impl.cloneSourceProof}:{defaultSourceProof:entry.surface.impl.defaultSourceProof})}));
   if(toolContext.certificates.length)meta.toolAttributeFootprints=toolContext;
   if(jsonMacroContext)meta.jsonMacroContext=jsonMacroContext;
   if(jsonMacroDiagnostic)meta.jsonMacroDiagnostic=jsonMacroDiagnostic;
@@ -489,6 +516,6 @@ export function translateProject(options) {
     return facade;
   });
   progress({stage:'project-serialize',state:'end',entry:options.entry});
-  const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:'default',term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:'struct',generator:'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:null,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,'default')});});
+  const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.surface.impl.method,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:'struct',generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,entry.surface.impl.method)});});
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, checkedGeneratedMethodDeclarations, sourceScopes };
 }

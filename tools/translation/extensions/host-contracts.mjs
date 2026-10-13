@@ -13,6 +13,7 @@ import {sourcePrimitiveAlias} from './primitive-type-aliases.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
 import {captureSourceConversionScope} from './source-conversion-scope.mjs';
 import {captureOriginalConversions,checkOriginalSourceInto,requireOriginalConversionEmission,prepareOriginalConversionFunction,finalizeOriginalConversions,hasOriginalConversionIssuance} from './source-conversion-body.mjs';
+import {captureOriginalCloneBodies,checkOriginalCloneBody,checkOriginalCloneFieldBorrow,prepareOriginalCloneEmission,requireOriginalCloneEmission,requireOriginalCloneFieldEmission,originalCloneReceiverParameter} from './clone-source-body.mjs';
 import {iteratorReceiverExpected} from './iterators.mjs';
 import {itemConfiguration} from '../cfg-profile.mjs';
 import {createHash} from 'node:crypto';
@@ -69,7 +70,7 @@ import {configureJsonMacroParser} from '../json-macro-context.mjs';
 import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
 import {standaloneMatchesMacroContext,configureMatchesMacroParser,configureMatchesParserFromSourceScope,originalMatchesImport} from '../matches-macro-context.mjs';
 import {captureOriginalCargoEdition} from '../cargo-edition-context.mjs';
-import {originalMethodSnapshot} from '../original-parser-identity.mjs';
+import {originalMethodSnapshot,assertOriginalParserIdentity} from '../original-parser-identity.mjs';
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {validateOriginalMethodAssociations,withCheckedMethodCopyReceivers} from '../source-method-admission.mjs';
 import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
@@ -549,6 +550,8 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
       const call=this.hostCall([contract],node.args,env,path,expected,node.span);call.args.forEach(arg=>requirePrimitiveFloat(arg,node.span));return call;
     }
     if(node.k==='routerSharedArrayLiteral')return this.sharedArrayBorrow(node,env,path,expected);
+    if(node.k==='routerOriginalCloneBody')return checkOriginalCloneBody(this,node,env,path,expected,HostChecker,(type,span)=>checkedOptionNominal(this,type,span),assertOriginalCloneChecker);
+    if(node.k==='routerOriginalCloneFieldBorrow')return checkOriginalCloneFieldBorrow(this,node,env,path);
     if(node.k==='routerPrimitiveDereference') {
       if(nonlocalDefault(node.value))throw unsupported('dereference control','nonlocal exits require separately checked statement lowering',node.span);
       const value=this.expr(node.value,env,path),reference=value.type.rustReference,pointee=reference?.pointee;
@@ -688,6 +691,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     captureOriginalMoveTuples(this,surface);
     captureOriginalStandardCalls(this,surface);
     captureOriginalConversions(this,surface);
+    captureOriginalCloneBodies(this,surface,assertOriginalCloneChecker);
     captureOptionNominals(this,surface);
     captureStaticArrays(this,surface);
     validateOriginalMethodAssociations(surface);
@@ -718,9 +722,12 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     return program;
   }
 }
+const originalCloneCheckerMethods=originalMethodSnapshot(HostChecker.prototype);
+function assertOriginalCloneChecker(checker){assertOriginalParserIdentity(checker,HostChecker.prototype,originalCloneCheckerMethods);}
 export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.sharedGuardVariable='ml_shared_immutable_value';for(let index=2;state.claimed.has(this.sharedGuardVariable);index++)this.sharedGuardVariable='ml_shared_immutable_value_'+index;state.reserved.add(this.sharedGuardVariable);this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from','ml_integer_cast','ml_integer_shift','ml_static_array_values','ml_static_array_element'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
+    if(originalCloneReceiverParameter(this,param)){this.copyReceivers=true;return [`ml_assert_immutable_copy(${param.name});`,this.valueGuard(param.name,param.type)+';'];}
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
       return [`${param.name} = ml_copy_fixed_array(${param.name}, ${JSON.stringify(runtimeValueType(param.type))});`,this.valueGuard(param.name,param.type)+';'];
@@ -748,9 +755,11 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
-  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry);try{return super.fn(entry);}finally{restorePatterns?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();}}
+  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry);try{return super.fn(entry);}finally{restoreClones?.();restorePatterns?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();}}
   expr(node) {
     if(node.k==='routerSourceConversion')return this.expr(requireOriginalConversionEmission(node,this));
+    if(node.k==='routerCheckedCloneBody')return this.expr(requireOriginalCloneEmission(node,this));
+    if(node.k==='routerCheckedCloneFieldBorrow')return this.expr(requireOriginalCloneFieldEmission(node,this));
     if(node.k==='routerOriginalCallbackLoan')return this.expr(requireOriginalSourceFrameEmission(this,node));
     if(node.k==='routerOriginalStandardFrame')return `(() => {\n${this.statements(requireOriginalSourceFrameEmission(this,node)).join('\n')}\n})()`;
     if(node.k==='routerOriginalSharedDomainGuard'){this.copyReceivers=true;return `(() => { const ${this.sharedGuardVariable} = ${this.expr(node.value)}; ml_assert_immutable_copy(${this.sharedGuardVariable}); return ${this.sharedGuardVariable}; })()`;}

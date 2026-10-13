@@ -3,6 +3,7 @@
 import {EffectRustParser,EffectChecker,emitJavaScript} from './effects.mjs';
 import {iteratorReceiverExpected} from './iterators.mjs';
 import {tokenizeRust} from './lexical.mjs';
+import {originalCloneReceiverOrigin} from './clone-source-body.mjs';
 import {typeError,unsupported,TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 export class MethodRustParser extends EffectRustParser {
   method(object,method,args,span) {
@@ -35,12 +36,12 @@ export class MethodChecker extends EffectChecker {
   expr(node,env,path,expected,allowLiteral=false) {
     env=this.contextEnvironment(node,env,expected);
     if(node.k==='routerSharedMethodReceiver') {
-      const entry=this.items.get(node.method),source=entry?.impl?.sharedReceiverSource,parameter=entry?.params?.[0]?.type;
-      if(entry?.generated!=='router-checked-inherent-method'||entry.impl.receiver!=='shared'||source?.kind!=='shared'||source.tokens?.map(token=>token.value).join('')!=='&self'||parameter?.rustReference?.kind!=='shared'||parameter.rustReference.pointee?.kind!=='data')throw unsupported('inherent receiver autoborrow','requires the actual checked shared source receiver and nominal pointee',node.span);
+      const entry=this.items.get(node.method),generated=originalCloneReceiverOrigin(entry),source=generated?.source??entry?.impl?.sharedReceiverSource,parameter=entry?.params?.[0]?.type;
+      if(!generated&&(entry?.generated!=='router-checked-inherent-method'||entry.impl.receiver!=='shared'||source?.kind!=='shared'||source.tokens?.map(token=>token.value).join('')!=='&self')||parameter?.rustReference?.kind!=='shared'||parameter.rustReference.pointee?.kind!=='data')throw unsupported('inherent receiver autoborrow','requires the actual checked shared source receiver or private original compiler Clone receiver and nominal pointee',node.span);
       const object=this.expr(node.object,env,path,iteratorReceiverExpected(this,node,path,expected)),pointee=parameter.rustReference.pointee,target=this.resolveType(entry.impl.type,entry.modulePath,node.span);
       if(target.kind!=='data'||pointee.name!==target.name||object.type.kind!=='data'||object.type.name!==target.name)throw typeError('shared inherent receiver has a different actual nominal pointee',node.span);
       if(object.type.rustReference&&(object.type.rustReference.kind!=='shared'||object.type.rustReference.pointee?.kind!=='data'||object.type.rustReference.pointee.name!==target.name||object.type.rustReference.pointee.rustReference))throw unsupported('inherent receiver autodereference','requires a separately checked nested reference coercion',node.span);
-      return {k:'routerSharedMethodReceiver',object,type:parameter,receiverProof:{kind:object.type.rustReference?'existing-shared-receiver':'inherent-shared-autoborrow',method:entry.fullName,pointee:target,source:structuredClone(source)},span:node.span};
+      return {k:'routerSharedMethodReceiver',object,type:parameter,receiverProof:{kind:generated?'original-compiler-clone-shared-receiver':object.type.rustReference?'existing-shared-receiver':'inherent-shared-autoborrow',method:entry.fullName,pointee:target,source:structuredClone(source)},span:node.span};
     }
     if(['routerDispatchMethod','routerIteratorOperation'].includes(node.k)) {
       if (node.k === 'routerDispatchMethod' && node.object.k === 'routerDispatchMethod' && node.object.fallback?.k === 'routerStringView') {
