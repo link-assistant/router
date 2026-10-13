@@ -28,6 +28,7 @@ export function closedReturnType(type) {
 
 export function typescriptType(type) {
   if(type==='utf16-string')return 'string';
+  if(type==='entry-value')return '[string, unknown]';
   if(type==='json-response')return 'Response';
   const error=errorShape(type);
   if(error)return `Error & { ${error.map(([name,field])=>`${JSON.stringify(name)}: ${typescriptType(field)}`).join('; ')} }`;

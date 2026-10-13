@@ -212,8 +212,8 @@ its existing top-level `program`, `items` and `diagnostics`, and adds a separate
 `scopedFunctions` inventory and executable `program`. In the current 52 native
 modules, the top-level denominator stays 788 declarations (73 translated).
 The scoped denominator is 705 additional arrow functions, function expressions
-and function declarations (34 translated
-in 18 modules): it excludes top-level function declarations and top-level
+and function declarations (34 full-domain translations and nine conditional private drafts
+in 20 modules): it excludes top-level function declarations and top-level
 variable initializer arrows/function expressions already represented by the
 top-level inventory. It includes other callbacks, local functions and immediate
 functions. Method and accessor bodies themselves are excluded; their nested
@@ -236,6 +236,43 @@ string predicates observe UTF-16 without property reads on opaque values.
 Caller-owned payloads must outlive borrowed returns. Generated record/array
 allocations remain fresh and only those generated containers share Rc/RefCell
 aliases. Rust signatures and text are inspected without Rust compilation.
+
+Nine further scoped bodies have explicitly conditional private producer
+contracts inferred from their genuine original AST call sites and lexical
+symbols. Their typed input domains are draft assumptions under genuine unchanged
+standard producer and callback intrinsics. Lookup stability across producer
+effects is unproved; this does not preserve the full original callback signature
+for arbitrary executions of the refused parents. An inline
+callback on a fresh standard string split receives UTF-16 strings only when
+its receiver has a dominating string guard, a source string literal, or a
+genuine unshadowed String result. Separators must be fixed primitives or owned
+noncapturing RegExp literals: capturing separators may produce undefined slots
+and are refused. Aliased arrays, custom Symbol.split, unproved receivers and
+separator values remain refused. Each pipeline step needs an independently
+checked original callback under the same capability; an additional serialized type witness may prove an
+identity map's string result while retaining that callback's existing full-domain
+public draft signature. Genuine Object.entries producers supply fresh two-slot
+entries with a UTF-16 key and arbitrary lossless value. Omitted destructuring
+slots and the original one-argument arity are preserved. The Rust projection
+uses JsEntry with a borrowed UTF-16 key and JsPayload value; strict TypeScript
+uses a string/unknown tuple. Values retain identity, including symbols, large
+BigInts, functions, boxed values and opaque references. These contracts are
+sealed to the original callback body, not accepted from caller metadata.
+
+Producer calls, coercion, getters and containing methods/functions are still
+refused parents. Independent original-JavaScript fixtures demonstrate opaque
+String coercion and Object.entries getter hooks replacing split/map intrinsics
+before the callback runs, producing out-of-contract inputs and TypeErrors. Proving their result shape does not translate or remove their
+effects. Intrinsic shadows, namespace assignments (including synthetic checker
+symbols), prototype/constructor/Reflect access, callback escape, alias mutation,
+dynamic scopes and effects in callback bodies remain explicit refusals. All
+previous 73 top-level and 34 scoped programs retain their original contracts.
+The added callback drafts expose conditional private inputs explicitly;
+unqualified and public callers remain refused. Meta serializes a
+`conditional-inputs` capability, both targets label the conditional draft, and
+scoped census fields retain `fullDomainTranslatedItems: 34` separately from
+`conditionalPrivateBodyDraftItems: 9`. The combined 43 definitions are not a
+43-body full-domain or runtime parity claim.
 
 The explicit `{lossless:true}` option selects the same checked boundary for
 other pure functions. The default top-level API is unchanged; scalar-string

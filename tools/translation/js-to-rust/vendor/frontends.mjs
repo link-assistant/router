@@ -96,7 +96,7 @@ function jsdocTypes(doc) {
  * @param {string} doc the comments directly before the item
  * @returns {object}
  */
-export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses } = {}) {
+export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses,callbackInputs } = {}) {
   const at = cursor(tokens);
   at.shadowedBuiltins = shadowedBuiltins;
   at.errorContracts=errorContracts;
@@ -136,12 +136,17 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
       const grouped = at.eat('(');
       if (!grouped || !at.eat(')')) {
         do {
+          if(at.is('[')&&callbackInputs?.type==='entry-value'&&params.length===0){
+            at.expect('[');const bindings=[];while(!at.eat(']')){if(at.eat(',')){bindings.push(null);continue;}const slot=at.next();if(slot.type!=='ident')refuse('collection','a non-identifier private entry binding');bindings.push(snakeFromCamel(slot.text));if(!at.is(']'))at.expect(',');}
+            if(JSON.stringify(bindings)!==JSON.stringify(callbackInputs.bindings.map(name=>name===null?null:snakeFromCamel(name))))refuse('collection','private entry binding drift');
+            params.push({name:'scoped_entry_at'+callbackInputs.parameter.start,type:'entry-value',bindings});continue;
+          }
           const rest=at.eat('...');
           const param = at.next();
           if (param.type !== 'ident') refuse('unsupported', 'a non-identifier arrow parameter');
           if(rest&&(!grouped||!at.is(')')))refuse('unsupported','a non-final rest parameter');
           const fallback=at.eat('=')?closedDefault(at):null;
-          const type=privatePlan&&!privatePlan.reason&&params.length===privatePlan.message?'utf16-string':rest?'array-value':jsType(types.params.get(param.text));
+          const type=callbackInputs?.type==='utf16-string'&&params.length===0?'utf16-string':privatePlan&&!privatePlan.reason&&params.length===privatePlan.message?'utf16-string':rest?'array-value':jsType(types.params.get(param.text));
           params.push({ name: snakeFromCamel(param.text), type, ...(rest?{rest:true}:{}),...(fallback?{default:fallback}:{}) });
         } while (grouped && at.eat(','));
         if (grouped) at.expect(')');
@@ -150,7 +155,7 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
       const body = at.is('{') ? jsBlock(at) : [{ kind: 'return', value: expression(at, 'JavaScript') }];
       at.eat(';');
       if (!at.done()) refuse('unsupported', at.peek().text);
-      return { kind: 'function', name: snakeFromCamel(name.text), exported, params, returns: types.returns ? jsType(types.returns) : null, body };
+      return { kind: 'function', name: snakeFromCamel(name.text), exported,...(callbackInputs?{conditionalInputs:true}:{}), params, returns: types.returns ? jsType(types.returns) : null, body };
     }
     // The value is read first, so a computed binding names what it computes.
     const value = expression(at, 'JavaScript');
@@ -192,7 +197,7 @@ function closedDefault(at) {
 function jsType(written) {
   const id = written === undefined || written === null ? 'value' : idBySpelling(constructMap().types, 'javascript', written);
   if (!id) refuse('untyped', written ?? 'none');
-  if(id==='utf16-string')refuse('untyped','UTF16 parameter contracts require proved source calls');
+  if(['utf16-string','entry-value'].includes(id))refuse('untyped','UTF16/entry parameter contracts require proved source calls');
   return id;
 }
 

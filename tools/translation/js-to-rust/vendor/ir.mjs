@@ -182,9 +182,10 @@ export function check(item, table) {
   const map = constructMap();
   canonicalRustName(item.name);
   for (const param of item.params ?? []) canonicalRustName(param.name);
-  if(item.exported&&item.params?.some(param=>param.type==='utf16-string'))refuse('collection','an exported UTF16 parameter lacks a closed private call contract');
+  if(item.conditionalInputs&&(!item.lossless||item.exported||item.params?.length!==1||!['utf16-string','entry-value'].includes(item.params[0].type)))refuse('collection','an inconsistent conditional private input capability');
+  if(item.exported&&item.params?.some(param=>['utf16-string','entry-value'].includes(param.type)))refuse('collection','an exported UTF16 parameter lacks a closed private call contract');
   if(item.params?.some((param,index)=>param.rest&&(param.type!=='array-value'||index!==item.params.length-1||param.default)))refuse('type','an inconsistent rest parameter contract');
-  if (item.params?.some((param,index) => !['number', 'string', 'boolean', 'value','utf16-string'].includes(param.type) && !(param.type==='array-value'&&param.rest&&index===item.params.length-1))) refuse('untyped', 'nullable and aggregate types are return contracts only');
+  if (item.params?.some((param,index) => !['number', 'string', 'boolean', 'value','utf16-string','entry-value'].includes(param.type) && !(param.type==='array-value'&&param.rest&&index===item.params.length-1))) refuse('untyped', 'nullable and aggregate types are return contracts only');
   for (const type of item.kind === 'function' ? [...item.params.map((param) => param.type), ...(item.returns ? [item.returns] : [])] : [item.type]) {
     if (!map.types.has(type)&&type!=='array-value'&&!recordShape(type)&&!errorShape(type)) refuse('untyped', type);
   }
@@ -205,7 +206,9 @@ export function check(item, table) {
     if (typeof constantValue(value) !== item.type || value.type !== item.type) refuse('type', item.name);
     return { ...item, value };
   }
-  if (new Set(item.params.map((param) => param.name)).size !== item.params.length) refuse('name', 'duplicate parameter');
+  for(const param of item.params){if(param.type==='entry-value'){if(!item.conditionalInputs||!item.lossless||param.rest||param.default||!Array.isArray(param.bindings)||param.bindings.length<1||param.bindings.length>2||param.bindings.some(binding=>binding!==null&&typeof binding!=='string'))refuse('collection','an inconsistent private entry parameter');for(const binding of param.bindings)if(binding!==null)canonicalRustName(binding);}else if(param.bindings)refuse('collection','entry bindings on an inconsistent parameter type');}
+  const bindings=item.params.flatMap(param=>[param.name,...(param.bindings??[]).filter(name=>name!==null)]);
+  if(new Set(bindings).size!==bindings.length)refuse('name','duplicate parameter or entry binding');
   const params=item.params.map(param=>{
     if(!param.default)return param;
     const value=expression(param.default,new Map(),table);
@@ -216,6 +219,7 @@ export function check(item, table) {
   if(item.lossless&&item.params.some(param=>param.type==='string'))refuse('collection','a scalar string input in a lossless function');
   const scope = new Map(item.params.map((param) => [param.name, param.type]));
   scope.lossless=item.lossless===true;
+  for(const param of item.params)if(param.bindings)param.bindings.forEach((name,index)=>{if(name!==null)scope.set(name,index===0?'utf16-string':'value');});
   let inferredReturn = item.returns;
   const block = (body, names, mutable = new Set()) => body.map((statement) => {
     if (statement.kind === 'let') {
@@ -262,6 +266,7 @@ export function check(item, table) {
     if(!node||typeof node!=='object')return;
     if(node.kind==='call') {
       const callee=table.get(node.name);
+      if(callee.conditionalInputs&&!item.conditionalInputs)refuse('collection','an unqualified conditional private callback boundary');
       const proved=callee.body.every(statement=>statement.value?.type||statement.cond?.type);
       if(proved&&callee.params.some(param=>param.type==='value')&&payloadBoundary(callee)!==payload)refuse('collection','a lossless payload/scalar observer call boundary');
     }
@@ -343,7 +348,7 @@ function expression(expr, names, table) {
     case 'typeof': {
       const operand = expression(expr.operand, names, table);
       if (optionalType(operand.type)) refuse('type', 'typeof a nullable return value');
-      if(operand.type==='utf16-string'&&!names.lossless||['array-value','json-response'].includes(operand.type)||recordShape(operand.type)||errorShape(operand.type))refuse('collection','an unimplemented scalar observation of a projected aggregate or UTF16 contract');
+      if(operand.type==='utf16-string'&&!names.lossless||['array-value','entry-value','json-response'].includes(operand.type)||recordShape(operand.type)||errorShape(operand.type))refuse('collection','an unimplemented scalar observation of a projected aggregate or UTF16 contract');
       return typed({ operand }, 'string');
     }
     case 'truthy': {
@@ -419,6 +424,7 @@ function expression(expr, names, table) {
       canonicalRustName(expr.name);
       const callee = table.get(expr.name);
       if (!callee || callee.kind !== 'function') return refuse('unknown-call', expr.name);
+      if(callee.params.some(param=>param.type==='entry-value'))refuse('collection','an unimplemented private entry call boundary');
       if(callee.params.some(param=>param.rest))refuse('collection','an unimplemented source call to a rest function');
       if (!callee.returns) refuse('untyped', `an unresolved inferred return contract for ${expr.name}`);
       const args = expr.args.map((arg) => expression(arg, names, table));
@@ -501,7 +507,8 @@ export function toLino(item) {
     item.name,
     ...flag,
     ...(item.lossless?[['lossless']]:[]),
-    ['parameters', ...item.params.map((param) => [param.name, param.type,...(param.rest?[['rest']]:[]),...(param.default?[['default',linkOf(param.default)]]:[])])],
+    ...(item.conditionalInputs?[['conditional-inputs']]:[]),
+    ['parameters', ...item.params.map((param) => [param.name, param.type,...(param.bindings?[['bindings',...param.bindings.map(name=>name??'_')]]:[]),...(param.rest?[['rest']]:[]),...(param.default?[['default',linkOf(param.default)]]:[])])],
     ['returns', encodeWord(item.returns)],
     ['body', ...item.body.map(statementLink)],
   ]);
@@ -588,7 +595,8 @@ function itemOf(link) {
     name: link[1],
     exported,
     ...(link.some(part=>Array.isArray(part)&&part[0]==='lossless')?{lossless:true}:{}),
-    params: field(link, 'parameters').slice(1).map(([name, type,...flags]) => ({ name, type,...(flags.some(flag=>flag[0]==='rest')?{rest:true}:{}),...(flags.find(flag=>flag[0]==='default')?{default:exprOf(flags.find(flag=>flag[0]==='default')[1])}:{}) })),
+    ...(link.some(part=>Array.isArray(part)&&part[0]==='conditional-inputs')?{conditionalInputs:true}:{}),
+    params: field(link, 'parameters').slice(1).map(([name, type,...flags]) => ({ name, type,...(flags.find(flag=>flag[0]==='bindings')?{bindings:flags.find(flag=>flag[0]==='bindings').slice(1).map(name=>name==='_'?null:name)}:{}),...(flags.some(flag=>flag[0]==='rest')?{rest:true}:{}),...(flags.find(flag=>flag[0]==='default')?{default:exprOf(flags.find(flag=>flag[0]==='default')[1])}:{}) })),
     returns: textOf(field(link, 'returns')[1]),
     body: field(link, 'body').slice(1).map(statementOf),
   };

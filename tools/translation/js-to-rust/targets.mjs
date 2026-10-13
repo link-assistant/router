@@ -170,6 +170,7 @@ function emitter(program, target) {
   const records=new Map();
   let payloadMode=false,losslessMode=false;
   const rustContract=(type,owned=true,lifetime="'a")=>{
+    if(type==='entry-value')return `JsEntry<${lifetime}>`;
     if(type==='value')return `${payloadMode?'JsPayload':'JsValue'}<${lifetime}>`;
     if(type==='array-value')return `std::rc::Rc<std::cell::RefCell<Vec<JsPayload<${lifetime}>>>>`;
     const error=errorShape(type),shape=recordShape(type)??error;
@@ -349,12 +350,13 @@ function emitter(program, target) {
       return rust ? `#[rustfmt::skip]\n${/^[A-Z][A-Z0-9_]*$/u.test(item.name) ? '' : '#[allow(non_upper_case_globals)]\n'}${item.exported ? 'pub ' : ''}const ${item.name}: ${type.rust} = ${value};`
         : `${item.exported ? 'export ' : ''}const ${name(item.name)}: ${item.type} = ${value};`;
     }
-    const lifetime=payloadMode&&item.params.some(param=>param.type==='value'||param.rest)||carriesValue(item.returns);
+    const lifetime=payloadMode&&item.params.some(param=>['value','entry-value'].includes(param.type)||param.rest)||carriesValue(item.returns);
     const parameters = item.params.map((param, index) => {
       let type=rust?param.rest?"Vec<JsPayload<'a>>":rustContract(param.type,false,lifetime?"'a":"'_"):typescriptType(param.type);
       if(rust&&param.default&&param.type!=='value')type=`Option<${type}>`;
       const optional=!rust&&!param.default&&!param.rest&&param.type==='value'&&item.params.slice(index+1).every(later=>later.type==='value'||later.default||later.rest);
-      return `${!rust&&param.rest?'...':''}${name(param.name)}${optional?'?':''}: ${type}${!rust&&param.default?' = '+expression(param.default):''}`;
+      const binding=!rust&&param.bindings?`[${param.bindings.map(binding=>binding===null?'':name(binding)).join(', ')}${param.bindings.at(-1)===null?',':''}]`:name(param.name);
+      return `${!rust&&param.rest?'...':''}${binding}${optional?'?':''}: ${type}${!rust&&param.default?' = '+expression(param.default):''}`;
     });
     const signature = rust
       ? `${item.exported ? 'pub ' : ''}fn ${name(item.name)}${lifetime?"<'a>":''}(${parameters.join(', ')}) -> ${rustContract(item.returns)} {`
@@ -368,7 +370,7 @@ function emitter(program, target) {
       const fallback=param.type==='utf16-string'?units(param.default.value):param.type==='string'?rustString(constantValue(param.default)):expression(param.default);
       return `    let ${name(param.name)} = ${name(param.name)}.unwrap_or(${fallback});`;
     }):[];
-    return [...(rust ? ['#[rustfmt::skip]'] : []), signature,...defaults,...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
+    return [...(item.conditionalInputs?['// Conditional private body draft: genuine unchanged producer/callback intrinsics required.', '// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.']:[]),...(rust ? ['#[rustfmt::skip]'] : []), signature,...defaults,...(rust?item.params.filter(param=>param.bindings).flatMap(param=>param.bindings.flatMap((binding,index)=>binding===null?[]:[`    let ${name(binding)} = ${name(param.name)}.${index===0?'key':'value'};`])):[]),...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
   });
   const serialized = JSON.stringify(program);
   payloadMode=true;
@@ -402,6 +404,7 @@ impl JsonResponseProjection {
   const helpers = rust ? [
     program.some(payloadBoundary)?PAYLOAD_HELPERS:'',
     program.some(item=>item.lossless)?PAYLOAD_GUARD_HELPERS:'',
+    program.some(item=>item.params?.some(param=>param.type==='entry-value'))?`#[derive(Clone, Copy)]\npub struct JsEntry<'a> { pub key: &'a [u16], pub value: JsPayload<'a> }`:'',
     serialized.match(/"name":"(?:min|max)"/) ? FLOAT_HELPERS : '',
     serialized.includes('"type":"value"') || serialized.includes('"kind":"includes"') || serialized.includes('"kind":"table-') || serialized.includes('array-value') ? VALUE_HELPERS : '',
     serialized.includes('"name":"trim"') ? TRIM_HELPER : '',

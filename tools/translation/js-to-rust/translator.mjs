@@ -12,6 +12,7 @@ import { shadowedBuiltins } from './vendor/builtin-ownership.mjs';
 import { tableOwnership } from './vendor/static-tables.mjs';
 import { privateErrorContracts } from './vendor/private-contracts.mjs';
 import { jsonResponseOwnership } from './vendor/json-responses.mjs';
+import {callbackInputsFor} from './vendor/callback-inputs.mjs';
 import { discoverScopedHelpers } from './vendor/scoped-helpers.mjs';
 
 export class TranslationError extends Error {
@@ -43,6 +44,7 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
     return { fragment: FRAGMENT, program: [], items: [], diagnostics: [diagnostic(error, { start: 0, end: source.length }, source)] };
   }
   const items = [];
+  const callbackInputs=callbackInputsFor(source);
   const shadowed = shadowedBuiltins(raw);
   const tables=tableOwnership(tokens,raw,shadowed,source);
   const errors=privateErrorContracts(source);
@@ -55,7 +57,7 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
     }
     const row = { start: item.start, end: item.end, status: 'unsupported' };
     try {
-      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed,readOnlyTables:tables,errorContracts:errors,jsonResponses:responses });
+      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed,readOnlyTables:tables,errorContracts:errors,jsonResponses:responses,callbackInputs });
       if(lossless&&row.parsed.kind==='function')row.parsed.lossless=true;
       if (row.parsed.kind === 'function' && !returns(row.parsed.body)) {
         throw Object.assign(new Error('a path ends without a return'), { slug: 'missing-return' });

@@ -108,7 +108,9 @@ export function evaluate(program, functionName, arguments_) {
   const invoke = (name, args) => {
     const fn = table.get(name);
     if (!fn || fn.kind !== 'function') throw new Error(`unknown function ${name}`);
-    const result = block(fn.body, new Map(fn.params.map((param, index) => [param.name, param.rest?args.slice(index):args[index]===undefined&&param.default?expression(param.default,new Map()):args[index]])));
+    const environment=new Map(fn.params.map((param,index)=>[param.name,param.rest?args.slice(index):args[index]===undefined&&param.default?expression(param.default,new Map()):args[index]]));
+    for(const param of fn.params)if(param.bindings){const argument=environment.get(param.name),slots=param.bindings;let values;if(slots.length===1)values=slots[0]===null?(([,])=>[])(argument):(([key])=>[key])(argument);else if(slots[0]===null)values=slots[1]===null?(([, ,])=>[])(argument):(([,value])=>[undefined,value])(argument);else values=slots[1]===null?(([key,,])=>[key])(argument):(([key,value])=>[key,value])(argument);slots.forEach((name,index)=>{if(name!==null)environment.set(name,values[index]);});}
+    const result = block(fn.body, environment);
     if (!result.returned) throw new Error(`function ${name} returned no value`);
     return result.value;
   };
