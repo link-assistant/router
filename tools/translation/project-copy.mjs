@@ -10,6 +10,14 @@ import {nominalTypeIdentities,resolveNominalImplTarget,implementationTargetPath}
 import {macroProvenance} from './macro-provenance.mjs';
 import {attributeMacroProvenance} from './macro-subnamespaces.mjs';
 import {admittedHostData} from './extensions/source-namespaces.mjs';
+import {originalParsedDeclarationEvidence,metadataDigest} from './extensions/source-links.mjs';
+const optionPayloads=new WeakMap();
+const freezeOptionLayout=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freezeOptionLayout);Object.freeze(value);}return value;};
+export function originalOptionCopyPayload(surface){
+  const proof=optionPayloads.get(surface);if(!proof)return null;
+  if(!originalParsedDeclarationEvidence(surface)||metadataDigest(surface)!==proof.syntaxDigest)throw new TypeError('Option nominal original layout changed');
+  return proof;
+}
 import {bindNonCopyTraitOwner} from './copy-trait-owners.mjs';
 
 function tree(declarations,modules){
@@ -76,5 +84,16 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
     if(!entry)return [];
     return entry.ctors.flatMap(ctor=>ctor.fields.map(field=>({ctor:ctor.name,field:field.name,copyCertificate:certify(field.type,span)}))).filter(field=>field.copyCertificate.verified);
   };
+  for(const declaration of active){
+    if(!originalParsedDeclarationEvidence(declaration.surface)||!['Copy','Clone'].every(trait=>declaration.surface.deriveTraits?.includes(trait)))continue;
+    const type=resolve(declaration.name.split('.'),{path:[]},declaration.globalSpan),layout=type?.kind==='data'?checked.get(type.name):null;
+    if(!layout||layout.standardGeneric||layout.generated)continue;
+    const certificate=certify(type,declaration.globalSpan);
+    if(certificate.verified){
+      const dependencies=[],seen=new Set();
+      const visit=current=>{if(current?.kind!=='data'||seen.has(current.name))return;seen.add(current.name);const entry=checked.get(current.name);if(!entry)return;dependencies.push(structuredClone(entry));for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);};visit(type);
+      optionPayloads.set(declaration.surface,Object.freeze({syntaxDigest:metadataDigest(declaration.surface),layout:freezeOptionLayout(structuredClone(layout)),dependencies:freezeOptionLayout(dependencies),certificate}));
+    }
+  }
   return evidence;
 }

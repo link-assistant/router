@@ -16,7 +16,7 @@ if(DERIVE_GENERIC_INPUT_GRAMMAR.sha256!=='a563693b6c9ec11d61b2ce7f869763a3c96787
 const fail=()=>{throw new TypeError('Derive generic parameters require bounded original names and optional macro-free type-path defaults');};
 const name=token=>token?.type==='ident'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(token.text)&&isPlainSourceIdentifier(token.text);
 const retained=tokens=>tokens.map(token=>({text:token.text,type:token.type,span:{start:token.start,end:token.end}}));
-function defaultPath(tokens,begin) {
+function defaultPath(tokens,begin,terminators=[',','>']) {
   let at=begin,absolute=false;const segments=[];
   if(tokens[at]?.text==='::'){absolute=true;at++;}
   while(true) {
@@ -25,8 +25,14 @@ function defaultPath(tokens,begin) {
     segments.push(token.text);if(segments.length>32)fail();
     if(tokens[at]?.text!=='::')break;at++;
   }
-  if(![',','>'].includes(tokens[at]?.text))fail();
+  if(at!==tokens.length&&!terminators.includes(tokens[at]?.text)||at===tokens.length&&terminators.length)fail();
   return {end:at,evidence:{kind:'original-nongeneric-type-path',leadingColon:absolute,segments,span:{start:tokens[begin].start,end:tokens[at-1].end},tokens:retained(tokens.slice(begin,at)),resolvedType:false}};
+}
+// Reuse the same macro-free nongeneric TypePath grammar for literal helpers.
+// End-of-input is mandatory; a path cannot conceal a second syntax item.
+export function originalDeriveTypePath(tokens) {
+  if(!Array.isArray(tokens)||!tokens.length||tokens.length>65)fail();
+  return defaultPath(tokens,0,[]).evidence;
 }
 export function originalDeriveGenericParameters(tokens,begin) {
   if(tokens[begin]?.text!=='<')fail();

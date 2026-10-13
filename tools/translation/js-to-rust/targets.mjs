@@ -1,5 +1,6 @@
 import { constructMap } from './vendor/constructs.mjs';
 import { camelFromSnake } from './vendor/ir.mjs';
+import { constantValue } from './vendor/constants.mjs';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -8,6 +9,13 @@ function rustString(value) {
     const escapes = { '\\': '\\\\', '"': '\\"', '\n': '\\n', '\r': '\\r', '\t': '\\t', '\0': '\\0' };
     return escapes[char] ?? `\\u{${char.codePointAt(0).toString(16)}}`;
   })}"`;
+}
+
+function rustConstant(expr) {
+  const value = constantValue(expr);
+  return expr.type === 'string' ? rustString(value) : expr.type === 'boolean' ? String(value)
+    : Number.isNaN(value) ? 'f64::NAN' : value === Infinity ? 'f64::INFINITY'
+      : value === -Infinity ? 'f64::NEG_INFINITY' : Object.is(value, -0) ? '-0.0' : numberLiteral(String(value));
 }
 
 // JavaScript Math.min/max propagate NaN and distinguish both signed zeros.
@@ -34,6 +42,45 @@ fn js_max(a: f64, b: f64) -> f64 {
     if a > b { a } else { b }
 }`;
 
+// Opaque categories carry only their observable typeof tag. These predicates
+// cannot inspect object/function/bigint/symbol data or invoke a coercion hook.
+export const VALUE_HELPERS = `#[derive(Clone, Copy)]
+pub enum JsValue<'a> {
+    String(&'a str), Number(f64), Boolean(bool), Undefined,
+    Object, Function, BigInt, Symbol,
+}
+
+#[rustfmt::skip]
+impl<'a> JsValue<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number",
+            Self::Boolean(_) => "boolean", Self::Undefined => "undefined",
+            Self::Object => "object", Self::Function => "function",
+            Self::BigInt => "bigint", Self::Symbol => "symbol",
+        }
+    }
+    fn as_string(self) -> &'a str { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+}`;
+
+export const TRIM_HELPER = `#[rustfmt::skip]
+fn js_trim(value: &str) -> String {
+    value.trim_matches(|ch: char| matches!(ch,
+        '\\u{9}'..='\\u{d}' | '\\u{20}' | '\\u{a0}' | '\\u{1680}' | '\\u{2000}'..='\\u{200a}' |
+        '\\u{2028}' | '\\u{2029}' | '\\u{202f}' | '\\u{205f}' | '\\u{3000}' | '\\u{feff}'
+    )).to_string()
+}`;
+
 function emitter(program, target) {
   const rust = target === 'rust';
   const map = constructMap();
@@ -43,7 +90,10 @@ function emitter(program, target) {
       case 'number': return rust ? numberLiteral(expr.text) : expr.text;
       case 'string': return rust ? `${rustString(expr.value)}.to_string()` : JSON.stringify(expr.value);
       case 'boolean': return String(expr.value);
-      case 'variable': return rust && expr.type === 'string' ? `${name(expr.name)}.to_string()` : name(expr.name);
+      case 'variable': {
+        const value = `${name(expr.name)}${rust && expr.projection ? `.as_${expr.projection}()` : ''}`;
+        return rust && expr.type === 'string' ? `${value}.to_string()` : value;
+      }
       case 'binary': {
         const left = expression(expr.left);
         const right = expression(expr.right);
@@ -51,12 +101,23 @@ function emitter(program, target) {
         return `(${left} ${map.operators.get(expr.op)[rust ? 'rust' : 'javascript']} ${right})`;
       }
       case 'unary': return `(${map.unaries.get(expr.op)[rust ? 'rust' : 'javascript']}${expression(expr.operand)})`;
+      case 'typeof': return !rust ? `(typeof ${expression(expr.operand)})`
+        : expr.operand.type === 'value' ? `${expression(expr.operand)}.type_name().to_string()`
+          : `({ let _ = ${expression(expr.operand)}; "${expr.operand.type}".to_string() })`;
+      case 'includes': {
+        if (!rust) return `([${expr.values.map(expression).join(', ')}] as readonly unknown[]).includes(${expression(expr.argument)})`;
+        const variant = type => ({ string: 'String', number: 'Number', boolean: 'Boolean' })[type];
+        const observed = expr.argument.type === 'value' ? 'observed' : `JsValue::${variant(expr.argument.type)}(${expr.argument.type === 'string' ? '&' : ''}observed)`;
+        const comparisons = expr.values.map(value => `JsValue::${variant(value.type)}(${rustConstant(value)}).same_primitive(${observed})`);
+        return `({ let observed = ${expression(expr.argument)}; ${comparisons.join(' || ') || 'false'} })`;
+      }
       case 'choose': return rust
         ? `(if ${expression(expr.cond)} { ${expression(expr.then)} } else { ${expression(expr.else)} })`
         : `(${expression(expr.cond)} ? ${expression(expr.then)} : ${expression(expr.else)})`;
       case 'call': return `${name(expr.name)}(${expr.args.map((arg) => `${rust && arg.type === 'string' ? '&' : ''}${expression(arg)}`).join(', ')})`;
       case 'builtin': return `${map.builtins.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map(expression).join(', ')})`;
-      case 'method': return `${expression(expr.receiver)}.${map.methods.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map((arg) => `${rust && arg.type === 'string' ? '&' : ''}${expression(arg)}`).join(', ')})`;
+      case 'method': return rust && expr.name === 'trim' ? `js_trim(&${expression(expr.receiver)})`
+        : `${expression(expr.receiver)}.${map.methods.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map((arg) => `${rust && arg.type === 'string' ? '&' : ''}${expression(arg)}`).join(', ')})`;
       case 'length': return rust ? `(${expression(expr.receiver)}.encode_utf16().count() as f64)` : `${expression(expr.receiver)}.length`;
       default: throw new Error(`missing ${target} expression emitter: ${expr.kind}`);
     }
@@ -85,17 +146,22 @@ function emitter(program, target) {
     if (item.kind === 'constant') {
       const type = map.types.get(item.type);
       // Rust constant strings are borrowed static literals, unlike local Strings.
-      const value = rust && item.type === 'string' ? rustString(item.value.value) : expression(item.value);
-      return rust ? `#[rustfmt::skip]\n${item.exported ? 'pub ' : ''}const ${item.name}: ${type.rust} = ${value};`
-        : `${item.exported ? 'export ' : ''}const ${item.name}: ${item.type} = ${value};`;
+      const value = rust ? rustConstant(item.value) : expression(item.value);
+      return rust ? `#[rustfmt::skip]\n${/^[A-Z][A-Z0-9_]*$/u.test(item.name) ? '' : '#[allow(non_upper_case_globals)]\n'}${item.exported ? 'pub ' : ''}const ${item.name}: ${type.rust} = ${value};`
+        : `${item.exported ? 'export ' : ''}const ${name(item.name)}: ${item.type} = ${value};`;
     }
-    const parameters = item.params.map((param) => `${name(param.name)}: ${rust ? map.types.get(param.type).rust : param.type}`);
+    const parameters = item.params.map((param, index) => `${name(param.name)}${!rust && param.type === 'value' && item.params.slice(index + 1).every(later => later.type === 'value') ? '?' : ''}: ${rust ? map.types.get(param.type).rust : param.type === 'value' ? 'unknown' : param.type}`);
     const signature = rust
       ? `${item.exported ? 'pub ' : ''}fn ${name(item.name)}(${parameters.join(', ')}) -> ${map.types.get(item.returns).rustOwned} {`
       : `${item.exported ? 'export ' : ''}function ${name(item.name)}(${parameters.join(', ')}): ${item.returns} {`;
     return [...(rust ? ['#[rustfmt::skip]'] : []), signature, ...body(item.body, 1), '}'].join('\n');
   });
-  const helpers = rust && JSON.stringify(program).match(/"name":"(?:min|max)"/) ? `${FLOAT_HELPERS}\n\n` : '';
+  const serialized = JSON.stringify(program);
+  const helpers = rust ? [
+    serialized.match(/"name":"(?:min|max)"/) ? FLOAT_HELPERS : '',
+    serialized.includes('"type":"value"') || serialized.includes('"kind":"includes"') ? VALUE_HELPERS : '',
+    serialized.includes('"name":"trim"') ? TRIM_HELPER : '',
+  ].filter(Boolean).map(helper => `${helper}\n\n`).join('') : '';
   return `${helpers}${items.join('\n\n')}\n`;
 }
 

@@ -12,6 +12,11 @@ export function evaluate(program, functionName, arguments_) {
       case 'string': case 'boolean': return expr.value;
       case 'variable': return env.has(expr.name) ? env.get(expr.name) : get(table.get(expr.name).value);
       case 'unary': return expr.op === 'not' ? !get(expr.operand) : -get(expr.operand);
+      case 'typeof': return typeof get(expr.operand);
+      case 'includes': {
+        const values = expr.values.map(get), argument = get(expr.argument);
+        return values.includes(argument);
+      }
       case 'binary': {
         const left = get(expr.left);
         if (expr.op === 'and') return left && get(expr.right);

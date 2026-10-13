@@ -52,7 +52,7 @@ function seal(key,method,evidence){
   selections.set(value,{method,evidence});cache.set(key,value);return value;
 }
 export function pinnedOptionBody(name){
-  if(!['unwrap_or','unwrap_or_default'].includes(name))throw new TypeError('standard method is outside the initial body profile');
+  if(!['unwrap_or','unwrap_or_default','unwrap_or_else','or_else'].includes(name))throw new TypeError('standard method is outside the initial body profile');
   const key='Option::'+name;if(cache.has(key))return cache.get(key);
   const source=sources.get('library/core/src/option.rs'),method=methodIn(source.source,'impl<T>Option<T>',name);
   return seal(key,method,{kind:'original-inherent-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner:'core::option::Option<T>',genericParameter:'T'});
@@ -77,7 +77,16 @@ export function pinnedDefaultBody(owner){
 }
 export function parsePinnedBody(Parser,selection){
   const state=selections.get(selection);if(!state||typeof Parser!=='function')throw new TypeError('standard parsing requires an actual privately selected pinned body');
-  const parser=new Parser(tokenizeRust(state.method.bodySource)),node=parser.block([]);
+  const ActualParser=state.method.name==='or_else'?class extends Parser{
+    pattern(path,aliases){
+      // The selected original @ pattern returns the complete Some value.
+      // Name its one wildcard field for the existing reconstruction adapter;
+      // caller payload Copy/no-Drop and canonical Option checks remain mandatory.
+      if(this.cursor.is('_')){const token=this.cursor.next();return {k:'bindOrCtor',name:'ml_standard_alias_field',span:{start:token.start,end:token.end}};}
+      return super.pattern(path,aliases);
+    }
+  }:Parser;
+  const parser=new ActualParser(tokenizeRust(state.method.bodySource)),node=parser.block([]);
   if(!parser.cursor.atEnd())throw new TypeError('standard body requires complete original block parsing');
   parsed.set(node,{selection,syntaxSha256:hash(JSON.stringify(node))});return node;
 }

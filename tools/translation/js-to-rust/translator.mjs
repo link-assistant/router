@@ -7,6 +7,7 @@ import { check, signatures, toLino, fromLino, FRAGMENT } from './vendor/ir.mjs';
 import { isRefusal } from './vendor/constructs.mjs';
 import { emitRust, emitTypeScript } from './targets.mjs';
 import { parseLinks } from './vendor/lino.mjs';
+import { splitConstantItems } from './vendor/constants.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -31,7 +32,7 @@ function returns(body) {
 export function analyzeJavaScript(source) {
   let raw;
   try {
-    raw = topLevelItems(lex(source, 'JavaScript'));
+    raw = topLevelItems(lex(source, 'JavaScript')).flatMap(splitConstantItems);
   } catch (error) {
     return { fragment: FRAGMENT, program: [], items: [], diagnostics: [diagnostic(error, { start: 0, end: source.length }, source)] };
   }

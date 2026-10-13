@@ -15,13 +15,13 @@ reviewed too. This adapter extends the reused AST for local mutation, while
 loops, primitive string concatenation and UTF-16 string lengths. It does not
 use carried source as an executable target implementation.
 
-Supported syntax: JSDoc `number`, `boolean`, `string` functions, primitive
-literal constants, arithmetic/remainder and strict equality/comparisons,
+Supported syntax: JSDoc `number`, `boolean`, `string` functions, closed primitive
+constant expressions, arithmetic/remainder and strict equality/comparisons,
 boolean short circuit operators, conditional expressions, sibling function
 calls, const/let locals, assignment to let locals, braced if/else, while and
 returns. Supported calls are two-argument Math.min/max, Math.abs/floor/ceil/
-sqrt/trunc, Number.isFinite/isNaN and string startsWith/endsWith/includes.
-Default parameters, imports, async/await, classes, arrays/objects, callbacks,
+sqrt/trunc, Number.isFinite/isNaN and string startsWith/endsWith/includes/trim.
+Default parameters, imports, async/await, classes, general collection values, callbacks,
 templates, exceptions, for loops, coercive operators and unknown calls are
 refused explicitly. Minimal examples live in `parity/fixtures/js-first/unsupported.json`.
 Source positions use UTF-16 offsets. Names must round-trip between JavaScript
@@ -41,6 +41,39 @@ top-level item discovered in `packages/javascript/native/**/*.mjs`. That census
 updates on regeneration as native source evolves. The manifest explicitly
 states that the whole native implementation is not translated. Native I/O,
 stateful services and protocol glue remain separate code.
+
+Constants may use camelCase or upper-case names, arithmetic, same-type string
+concatenation, boolean operators, comparisons and conditionals over literals.
+Their initializer AST survives the Links round trip; Rust constants use the
+computed primitive value because owned string operations are not const Rust
+expressions. Signed zero, NaN and infinities have explicit encodings. Free names,
+calls, collections and coercive mixed-type operands remain refused. Each member
+of a multiple-const declaration is counted separately with its own source span;
+an unsupported sibling remains visible and strict module translation fails.
+
+Pure identifier-parameter arrows and ordinary functions can infer a primitive
+return contract from their complete checked bodies. Unannotated parameters
+retain an unknown caller domain; a proven `typeof` condition refines string,
+number or boolean operations only along the matching short-circuit or branch
+edge. Rust receives `JsValue` with all eight native JavaScript `typeof` tags;
+string/number/boolean variants carry data, while null, boxed values and other
+objects share the opaque object tag. BigInt, symbols and functions keep their
+opaque tags. These projections support only type observation and guarded
+primitive operations, never object identity, property reads or coercion hooks.
+The existing Unicode scalar string boundary still applies. TypeScript emits
+`unknown` parameters and genuine `typeof` narrowing. JavaScript function-object
+identity, constructor/prototype behavior and browser exotic values are outside
+this native pure-call contract.
+
+Literal-array `includes` is supported solely for closed primitive elements and
+the default start index. Its SameValueZero comparison preserves NaN membership
+and equal signed zeros without coercing unknown arguments. Arrays remain
+refused as returned values, mutable state or other collection operations. Rust
+trim uses the explicit ECMAScript whitespace codepoints, including BOM and
+excluding NEL; a fixture checks the emitted ranges over every Unicode scalar.
+JavaScript, the IR evaluator and strict-compiled TypeScript execute independent
+all-type fixtures. Generated Rust is inspected but not locally compiled or
+executed; those checks do not establish native Rust runtime parity.
 
 Run `node --test tools/translation/js-to-rust/test/*.test.mjs`. The tests execute
 58 authored fixtures against authoritative JavaScript, an independent IR
@@ -79,6 +112,10 @@ identity lowering. JSDoc primitive parameter contracts become types; unannotated
 `any` draft annotations. The official compiler infers closed primitive/container
 return types and reliable const-local types. Nullable, undefined, evolving and
 object locals remain explicit gaps where a source invariant is unavailable.
+Closed containers include builtin Map/ReadonlyMap and Set/ReadonlySet with
+recursively supported key/value or element types. Empty dynamic containers and
+containers holding unsupported object types retain explicit `any` gaps. A
+source-defined class with the same name cannot acquire a builtin type hint.
 Public parameter contracts narrow only when JSDoc explicitly states a type;
 default expressions do not narrow the caller domain. Inferred counts and the
 remaining explicit `any` counts are recorded separately. Class fields added for typing use `declare` and emit no

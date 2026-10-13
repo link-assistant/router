@@ -20,17 +20,17 @@ test('generic unwrap keeps string payload types through ASCII folds and equality
   });
 });
 
-test('original scalar unwrap preserves eager fallback and keeps nominal payload ownership unproved',async()=>{
+test('unchanged scalar and nominal unwrap preserve eager fallback and checked Copy payloads',async()=>{
   const source='pub fn number(value:Option<u8>)->u8{value.unwrap_or(7)} pub fn text(value:Result<&str,u8>)->String{value.unwrap_or("fallback").to_ascii_lowercase()} #[derive(Clone,Copy)]pub enum Mode{Ready,Paused} pub fn mode(value:Option<Mode>)->Mode{value.unwrap_or(Mode::Paused)} fn fallback()->u8{panic!("eager fallback")} pub fn eager(value:Option<u8>)->u8{value.unwrap_or(fallback())}';
   const result=project(source);
-  assert.deepEqual(result.meta.refused.map(item=>item.name),['mode']);
-  assert.match(result.meta.refused[0].message,/pinned standard body owner.*scalar or borrowed str/);
-  assert.equal(result.meta.executable.some(item=>item.name==='mode'),false);
+  assert.deepEqual(result.meta.refused,[]);
+  assert.equal(result.meta.executable.some(item=>item.name==='mode'),true);
   assert.equal(result.meta.sources[0].sha256,hash(source));
   await verifyTypedTargets(result,api=>{
     assert.equal(api.number(none),7n);assert.equal(api.number(some(0n)),0n);assert.equal(api.number(some(255n)),255n);
     assert.equal(api.text(tag('Ok',{field0:'ASCII É'})),'ascii É');assert.equal(api.text(tag('Err',{field0:9n})),'fallback');
-    assert.equal(api.mode,undefined);
+    assert.deepEqual(api.mode(none),tag('Paused'));assert.deepEqual(api.mode(some(tag('Ready'))),tag('Ready'));
+    assert.throws(()=>api.mode(some(tag('Unknown'))),TypeError);
     assert.throws(()=>api.eager(some(3n)),/eager fallback/);assert.throws(()=>api.eager(none),/eager fallback/);
   });
 });

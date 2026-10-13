@@ -29,7 +29,8 @@ import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,cons
 import {checkStringIteratorOperation,requireBorrowedString} from './string-iterators.mjs';
 import {checkedStringBytes,requireStringBytesProof} from './string-bytes.mjs';
 import {sourceByteLiteral,requireByteLiteral} from './rust-byte-character.mjs';
-import {checkPinnedOptionBody,requirePinnedStandardBody} from './standard-body-checker.mjs';
+import {captureOptionNominals} from './option-nominal-proof.mjs';
+import {checkPinnedOptionBody,requirePinnedStandardBody,checkPinnedCallbackApplication,preparePinnedStandardFunction,requirePinnedStandardEmission} from './standard-body-checker.mjs';
 import {CSV_STRING_PROFILE,checkCharacterSplit,checkCharacterSplitNext,allocatingStringFunctionItem,checkedAllocatingStringItem,requireCsvEmitterProof} from './csv-strings.mjs';
 import {canonicalResult,checkResultMapError,requireResultIteratorProof} from './result-iterators.mjs';
 import {checkedOptionAsDeref,requireOptionDerefProof} from './option-deref.mjs';
@@ -193,7 +194,7 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
     return {k:'routerIntegerParse',object,args,instantiation,span:range};
   }
   method(object,name,args,range) {
-    if(['unwrap_or','unwrap_or_default'].includes(name.value))return {k:'routerPinnedStandardBodyCall',method:name.value,object,args,span:range};
+    if(['unwrap_or','unwrap_or_default','unwrap_or_else','or_else'].includes(name.value))return {k:'routerPinnedStandardBodyCall',method:name.value,object,args,span:range};
     if(name.value==='bytes')return {k:'routerStringBytesOperation',object,args,span:range};
     if(name.value==='rfind')return {k:'routerReverseStringFind',object,args,span:range};
     if(name.value==='split')return {k:'routerStringIteratorOperation',operation:'split',object,args,span:range};
@@ -566,6 +567,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
       const instance=this.instantiations.integer(type,node.span),operation=node.k==='routerIntegerParse'?'rust_integer_parse':node.operation==='from_str'?'rust_integer_from_str':'rust_integer_from_str_radix';
       return this.hostCall(instance.contracts.filter(contract=>contract.id.startsWith(operation+'_')),(node.object?[node.object,...node.args]:node.args),env,path,expected,node.span,type);
     }
+    if(node.k==='routerPinnedCallbackApplication')return checkPinnedCallbackApplication(this,node);
     if(node.k==='routerPinnedStandardBodyCall'){
       const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,node.method,'shared');
       if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
@@ -625,6 +627,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     return super.expr(node,env,path,expected,allowLiteral);
   }
   program(surface) {
+    captureOptionNominals(this,surface);
     validateOriginalMethodAssociations(surface);
     this.floatSignObligations=false;
     const program=super.program(surface);
@@ -678,6 +681,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
+  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker);try{return super.fn(entry);}finally{restore?.();}}
   expr(node) {
     if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift'].includes(node.k)){
       const proof=requirePrimitiveOperator(node);this.primitiveOperators=true;
@@ -685,7 +689,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
       if(node.k==='routerPrimitiveIntegerCast')return `ml_integer_cast(${this.expr(node.value)}, ${node.value.type.bits}, ${node.value.type.signed}, ${node.type.bits}, ${node.type.signed})`;
       return `ml_integer_shift(${this.expr(node.left)}, ${this.expr(node.right)}, ${node.type.bits}, ${node.type.signed}, ${node.right.type.bits}, ${node.right.type.signed}, ${JSON.stringify(proof.operation)})`;
     }
-    if(node.k==='routerPinnedStandardBody'){requirePinnedStandardBody(node,HostRustParser,{Checker:HostChecker,program:this.program});return this.expr(node.body);}
+    if(node.k==='routerPinnedStandardBody'){requirePinnedStandardEmission(this,node,HostRustParser,HostChecker);return this.expr(node.body);}
     if(node.sourceByteLiteral)requireByteLiteral(node,true);
     if(node.k==='routerReverseSplitFind'){requireReverseStringProof(node);this.reverseStrings=true;return `ml_reverse_split_find(${this.expr(node.base.object)}, ${JSON.stringify(node.base.delimiter)}, Object.freeze([${node.maps.map(map=>this.expr(map)).join(', ')}]), ${this.expr(node.predicate)})`;}
     if(node.k==='routerOptionAsDeref'){requireOptionDerefProof(node);this.optionDeref=true;return `ml_option_string_as_deref(${this.expr(node.object)})`;}

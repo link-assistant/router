@@ -214,6 +214,7 @@ function flatten(program) {
     if (!node || typeof node !== 'object') return node;
     const result = Object.fromEntries(Object.entries(node).map(([key, value]) => [key, sourceEvidence(key) ? value : visit(value)]));
     if (node.kind === 'data' && names.has(node.name)) result.name = names.get(node.name);
+    if(node.kind==='named'&&Array.isArray(node.path)){const owner=node.path.filter((part,index)=>index!==0||part!=='crate').join('.');if(names.has(owner))result.path=['crate',names.get(owner)];}
     if (['call', 'routerFutureCall'].includes(node.k)) result.fn = names.get(node.fn) ?? node.fn;
     if (node.k === 'ctor') result.data = names.get(node.data) ?? node.data;
     return result;

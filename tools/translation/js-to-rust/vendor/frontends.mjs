@@ -7,6 +7,7 @@
 
 import { constructMap, idBySpelling, refuse } from './constructs.mjs';
 import { camelFromSnake, canonicalRustName, snakeFromCamel } from './ir.mjs';
+import { constantValue } from './constants.mjs';
 
 const UNSUPPORTED_BINARY = new Set(['==', '!=', '**', '??', '&', '|', '^', '<<', '>>', '>>>', 'instanceof', 'in', 'as']);
 const ASSIGNMENTS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '++', '--', '&&=', '||=', '??=']);
@@ -106,12 +107,29 @@ export function parseJavaScriptItem(tokens, doc) {
     const name = at.next();
     if (name.type !== 'ident') refuse('unsupported', 'a destructuring binding');
     at.expect('=');
+    if (arrowAhead(at)) {
+      const types = jsdocTypes(doc);
+      const params = [];
+      const grouped = at.eat('(');
+      if (!grouped || !at.eat(')')) {
+        do {
+          const param = at.next();
+          if (param.type !== 'ident') refuse('unsupported', 'a non-identifier arrow parameter');
+          params.push({ name: snakeFromCamel(param.text), type: jsType(types.params.get(param.text)) });
+        } while (grouped && at.eat(','));
+        if (grouped) at.expect(')');
+      }
+      at.expect('=>');
+      const body = at.is('{') ? jsBlock(at) : [{ kind: 'return', value: expression(at, 'JavaScript') }];
+      at.eat(';');
+      if (!at.done()) refuse('unsupported', at.peek().text);
+      return { kind: 'function', name: snakeFromCamel(name.text), exported, params, returns: types.returns ? jsType(types.returns) : null, body };
+    }
     // The value is read first, so a computed binding names what it computes.
     const value = expression(at, 'JavaScript');
     at.eat(';');
     if (!at.done()) refuse('unsupported', at.peek().text);
-    if (!/^[A-Z][A-Z0-9_]+$/u.test(name.text)) refuse('statement');
-    return { kind: 'constant', name: name.text, exported, type: literalType(value), value };
+    return { kind: 'constant', name: snakeFromCamel(name.text), exported, type: typeof constantValue(value), value };
   }
   if (at.is('let') || at.is('var')) refuse('mutable');
   at.expect('function');
@@ -129,22 +147,28 @@ export function parseJavaScriptItem(tokens, doc) {
     params.push({ name: snakeFromCamel(param.text), type });
     if (!at.is(')')) at.expect(',');
   }
-  const returns = jsType(types.returns);
+  const returns = types.returns ? jsType(types.returns) : null;
   const body = jsBlock(at);
   if (!at.done()) refuse('unsupported', at.peek().text);
   return { kind: 'function', name, exported, params, returns, body };
 }
 
-function literalType(value) {
-  const literal = value.kind === 'unary' && value.op === 'negate' ? value.operand : value;
-  if (!['number', 'string', 'boolean'].includes(literal.kind)) refuse('statement');
-  return literal.kind;
-}
-
 function jsType(written) {
-  const id = written === undefined || written === null ? undefined : idBySpelling(constructMap().types, 'javascript', written);
+  const id = written === undefined || written === null ? 'value' : idBySpelling(constructMap().types, 'javascript', written);
   if (!id) refuse('untyped', written ?? 'none');
   return id;
+}
+
+function arrowAhead(at) {
+  if (at.peek().type === 'ident' && at.is('=>', 1)) return true;
+  if (!at.is('(')) return false;
+  let depth = 1, offset = 1;
+  while (at.peek(offset).type !== 'end') {
+    if (at.is('(', offset)) depth++;
+    if (at.is(')', offset) && --depth === 0) return at.is('=>', offset + 1);
+    offset++;
+  }
+  return false;
 }
 
 function jsBlock(at) {
@@ -364,7 +388,8 @@ function unary(at, language) {
       return { kind: 'unary', op, operand: unary(at, language) };
     }
   }
-  if (['typeof', 'void', 'delete', 'new'].includes(token.text)) refuse('unsupported', token.text);
+  if (language === 'JavaScript' && at.eat('typeof')) return { kind: 'typeof', operand: unary(at, language) };
+  if (['void', 'delete', 'new'].includes(token.text)) refuse('unsupported', token.text);
   if (token.text === 'await') refuse('async');
   return postfix(at, language);
 }
@@ -414,6 +439,17 @@ function primary(at, language) {
     const value = expression(at, language);
     at.expect(')');
     return value;
+  }
+  if (language === 'JavaScript' && token.text === '[') {
+    const values = [];
+    while (!at.eat(']')) {
+      values.push(expression(at, language));
+      if (!at.is(']')) at.expect(',');
+    }
+    if (!at.eat('.') || !at.eat('includes')) refuse('collection');
+    const args = argumentsOf(at, language);
+    if (args.length !== 1) refuse('unsupported', 'array includes with a non-default start index');
+    return { kind: 'includes', values, argument: args[0] };
   }
   if (token.text === '[' || token.text === '{') refuse('collection');
   if (token.type !== 'ident') refuse('unsupported', token.text || 'the end of the item');

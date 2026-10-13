@@ -1,6 +1,7 @@
 import {itemConfiguration,isInertConditionalAttribute,isAbsentConditionalAttribute} from './cfg-profile.mjs';
 import {boundedSerdeExprPath} from './derive-helper-paths.mjs';
 import {boundedSchemarsNumericHelper} from './derive-numeric-helpers.mjs';
+import {boundedSchemarsWithType} from './derive-schemars-with.mjs';
 import {originalDeriveGenericParameters} from './derive-generic-parameters.mjs';
 import {inspectBuiltinDefaultVariant} from './derive-builtin-default.mjs';
 import {isPlainSourceIdentifier} from './module-paths.mjs';
@@ -61,7 +62,10 @@ function helper(body,position,kind) {
       const parsed=boundedSchemarsNumericHelper(values,at-1,position);at=parsed.end;namespaceInput=parsed.evidence;value=parsed.evidence.bounds;
     } else {
       if(values[at]?.text==='='){at++;value=literal(values[at++]);}
-      if(body[0].text==='serde'&&['skip_serializing_if','with'].includes(key.text)) {
+      if(body[0].text==='schemars'&&key.text==='with') {
+        if(value===null)throw new TypeError('Schemars with requires an original type string literal');
+        namespaceInput=boundedSchemarsWithType(value,position);
+      } else if(body[0].text==='serde'&&['skip_serializing_if','with'].includes(key.text)) {
         if(value===null||position!=='field'&&!(position==='variant'&&key.text==='with'))throw new TypeError('Invalid bounded Serde path helper position');
         namespaceInput=boundedSerdeExprPath(value);
       } else if(body[0].text==='serde'&&key.text==='default'&&value!==null) {

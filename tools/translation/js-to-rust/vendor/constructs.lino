@@ -16,6 +16,7 @@
 (type number (javascript number) (rust f64) (rust-owned f64))
 (type boolean (javascript boolean) (rust bool) (rust-owned bool))
 (type string (javascript string) (rust "&str") (rust-owned String))
+(type value (javascript "*") (rust "JsValue<'_>") (rust-owned "JsValue<'static>"))
 # (operator <meta> (javascript <spelling>) (rust <spelling>) (precedence <n>) (operands <type>) (yields <type>))
 # `any` operands must share one type; Rust comparisons do not chain, so a
 # comparison operand that is itself a comparison is parenthesized.
@@ -48,6 +49,7 @@
 (method starts-with (javascript startsWith) (rust starts_with) (receiver string) (arguments string) (yields boolean))
 (method ends-with (javascript endsWith) (rust ends_with) (receiver string) (arguments string) (yields boolean))
 (method includes (javascript includes) (rust contains) (receiver string) (arguments string) (yields boolean))
+(method trim (javascript trim) (rust js_trim) (receiver string) (arguments) (yields string))
 # (construct <meta> (javascript "<form>") (rust "<form>")) rows name the item,
 # statement and expression shapes; the emitters write them, and the corpus
 # must use each.

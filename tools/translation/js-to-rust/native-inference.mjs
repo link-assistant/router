@@ -24,12 +24,19 @@ export function describeType(ts, checker, type, depth = 0) {
   }
   const symbol = type.target?.symbol;
   const builtin = symbol?.declarations?.some(declaration => declaration.getSourceFile().isDeclarationFile && /(?:^|[/\\])lib\.[^/\\]+\.d\.ts$/u.test(declaration.getSourceFile().fileName));
-  if (builtin && ['Promise', 'Array', 'ReadonlyArray'].includes(symbol.name)) {
+  if (builtin && ['Map', 'ReadonlyMap'].includes(symbol.name)) {
+    const arguments_ = checker.getTypeArguments(type);
+    if (arguments_.length !== 2) return null;
+    const key = describeType(ts, checker, arguments_[0], depth + 1);
+    const value = describeType(ts, checker, arguments_[1], depth + 1);
+    return key && value ? { kind: symbol.name === 'Map' ? 'map' : 'readonly-map', key, value } : null;
+  }
+  if (builtin && ['Promise', 'Array', 'ReadonlyArray', 'Set', 'ReadonlySet'].includes(symbol.name)) {
     const arguments_ = checker.getTypeArguments(type);
     if (arguments_.length !== 1) return null;
     const element = describeType(ts, checker, arguments_[0], depth + 1);
     if (!element) return null;
-    return { kind: symbol.name === 'Promise' ? 'promise' : symbol.name === 'ReadonlyArray' ? 'readonly-array' : 'array', element };
+    return { kind: { Promise: 'promise', Array: 'array', ReadonlyArray: 'readonly-array', Set: 'set', ReadonlySet: 'readonly-set' }[symbol.name], element };
   }
   return null;
 }
@@ -44,7 +51,8 @@ export function typeNode(ts, hint, depth = 0) {
     return f.createKeywordTypeNode(ts.SyntaxKind[keyword]);
   }
   if (hint.kind === 'union' && Array.isArray(hint.members) && hint.members.length > 1 && hint.members.length < 32) return f.createUnionTypeNode(hint.members.map(member => typeNode(ts, member, depth + 1)));
-  if (['promise', 'array', 'readonly-array'].includes(hint.kind)) return f.createTypeReferenceNode({ promise: 'Promise', array: 'Array', 'readonly-array': 'ReadonlyArray' }[hint.kind], [typeNode(ts, hint.element, depth + 1)]);
+  if (['map', 'readonly-map'].includes(hint.kind)) return f.createTypeReferenceNode(hint.kind === 'map' ? 'Map' : 'ReadonlyMap', [typeNode(ts, hint.key, depth + 1), typeNode(ts, hint.value, depth + 1)]);
+  if (['promise', 'array', 'readonly-array', 'set', 'readonly-set'].includes(hint.kind)) return f.createTypeReferenceNode({ promise: 'Promise', array: 'Array', 'readonly-array': 'ReadonlyArray', set: 'Set', 'readonly-set': 'ReadonlySet' }[hint.kind], [typeNode(ts, hint.element, depth + 1)]);
   throw new Error('unsupported native type inference hint');
 }
 
@@ -63,14 +71,14 @@ export function returnHint(ts, checker, node) {
   if (!checker || ts.isConstructorDeclaration(node) || ts.isSetAccessorDeclaration(node) || node.asteriskToken) return null;
   const signature = checker.getSignatureFromDeclaration(node);
   const hint=signature ? describeType(ts, checker, checker.getReturnTypeOfSignature(signature)) : null;
-  const stable=value=>value && (value.kind==='primitive' ? value.name!=='never' : value.kind==='union' ? value.members.every(stable) : stable(value.element));
+  const stable=value=>value && (value.kind==='primitive' ? value.name!=='never' : value.kind==='union' ? value.members.every(stable) : ['map','readonly-map'].includes(value.kind) ? stable(value.key) && stable(value.value) : stable(value.element));
   return stable(hint) ? hint : null;
 }
 
 export function localHint(ts, checker, node) {
   if (!checker || !ts.isIdentifier(node.name) || !ts.isVariableDeclarationList(node.parent) || !(node.parent.flags & ts.NodeFlags.Const)) return null;
   const hint = describeType(ts, checker, checker.getTypeAtLocation(node));
-  const reliable = value => value && (value.kind === 'primitive' ? !['null', 'undefined', 'never', 'void'].includes(value.name) : value.kind === 'union' ? value.members.every(reliable) : reliable(value.element));
+  const reliable = value => value && (value.kind === 'primitive' ? !['null', 'undefined', 'never', 'void'].includes(value.name) : value.kind === 'union' ? value.members.every(reliable) : ['map','readonly-map'].includes(value.kind) ? reliable(value.key) && reliable(value.value) : reliable(value.element));
   // JS dynamic property writes and evolving arrays can appear as undefined or
   // never before later mutation. Preserve an explicit gap at those callsites.
   // Nullable reads also need a source invariant before narrowing their callers.
