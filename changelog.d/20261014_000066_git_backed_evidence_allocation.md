@@ -1,0 +1,1 @@
+Keep complete CI evidence recoverable from immutable Git containers when decoded batch archives are absent. Report declared and physically present batches separately, preserving exact decoded hash checks and the fixed evidence allocation.

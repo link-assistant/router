@@ -25,7 +25,7 @@ def verify(root,repository=None,manifest_list=None,index='raw/ci/object-storage-
     errors=[];counts=collections.Counter();decoded=0
     try:
         checked=store.verify_entries(entries,screen=pattern)
-        counts.update(receipt_references=checked['receiptReferences'],unique_receipt_files=checked['uniqueLogicalObjects'],indexed_objects=checked['indexedObjects'],physical_batch_archives=checked['physicalArchives'])
+        counts.update(receipt_references=checked['receiptReferences'],unique_receipt_files=checked['uniqueLogicalObjects'],indexed_objects=checked['indexedObjects'],declared_batch_archives=checked['declaredArchives'],physical_batch_archives=checked['physicalArchives'])
         decoded=checked['decodedBytesStreamed']
         for name in {entry['path'] for entry in entries}:counts[pathlib.Path(name).suffix]+=1
     except Exception as error:errors.append({'error':str(error)})

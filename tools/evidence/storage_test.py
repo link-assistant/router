@@ -69,6 +69,12 @@ class StorageTests(unittest.TestCase):
     def test_staged_before_archive_install_still_reads_exact_git_bytes(self):
         self.f.archive.unlink();store=self.f.store()
         for name,b in self.f.data.items():self.assertEqual(store.read_decoded(name),b)
+        result=store.verify_entries(self.f.entries())
+        self.assertEqual(result['declaredArchives'],1);self.assertEqual(result['physicalArchives'],0)
+        self.assertEqual(result['decodedBytesStreamed'],sum(map(len,self.f.data.values())))
+        self.assertEqual(store.physical_metrics()['distinctPhysicalFiles'],1)
+        self.f.index['objects']['text-objects/a.xz']['decodedSha256']='0'*64;self.f.write_index()
+        with self.assertRaisesRegex(ValueError,'decoded member size/hash'):self.f.store().read_decoded('text-objects/a.xz')
     def test_unindexed_regular_container_retains_existing_behaviour(self):
         p=self.f.ci/'legacy.gz';import gzip;p.write_bytes(gzip.compress(b'old exact\n',mtime=0));store=self.f.store();self.assertEqual(store.read_decoded('legacy.gz'),b'old exact\n');self.assertEqual(store.container_size('legacy.gz'),p.stat().st_size)
     def test_duplicate_index_keys_and_missing_extra_member_targets(self):

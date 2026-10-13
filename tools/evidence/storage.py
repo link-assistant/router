@@ -327,4 +327,5 @@ class Storage:
                 expected = entry.get('decoded_sha256', entry.get('scrubbed_content_sha256'))
                 if expected and h.hexdigest() != expected:
                     raise ValueError('Current receipt decoded hash mismatch')
-        return {'receiptReferences':len(entries),'uniqueLogicalObjects':len(grouped),'decodedBytesStreamed':decoded_bytes,'indexedObjects':len(self.objects),'physicalArchives':len(self.archives)}
+        present_archives = sum(plain(self.root/name, missing=True) is not None for name in self.archives)
+        return {'receiptReferences':len(entries),'uniqueLogicalObjects':len(grouped),'decodedBytesStreamed':decoded_bytes,'indexedObjects':len(self.objects),'declaredArchives':len(self.archives),'physicalArchives':present_archives}
