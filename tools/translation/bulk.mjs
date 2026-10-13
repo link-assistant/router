@@ -15,6 +15,7 @@ export {trackedSource} from './source-corpus.mjs';
 import {jsonMacroDependencyProfile} from './json-macro-sources.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
 import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
+import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
 
 export const OUTPUT_ROOTS = ['tools/translation/meta', 'packages/javascript/generated/rust-draft', 'packages/typescript/generated/rust-draft', 'tools/translation/projects', 'packages/javascript/generated/rust-project', 'packages/typescript/generated/rust-project'];
 const plans=new WeakMap();
@@ -205,8 +206,11 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
   // insertion order and every earlier source/license entry.
   const sourceProfileInputs=discoverSourceProfileInputs({root:translatorRoot});
   implementation.push('tools/translation/source-profile-inputs.mjs',...sourceProfileInputs.map(input=>input.path));
+  const compilerSourceInputs=discoverCompilerSourceInputs({root:translatorRoot});
+  implementation.push(...compilerSourceInputs.map(input=>input.path));
   const implementationHashes = Object.fromEntries(implementation.map(path => [path, sha256(readFileSync(join(translatorRoot, path)))]));
   for(const input of sourceProfileInputs)if(implementationHashes[input.path]!==input.sha256)throw new TypeError('source profile changed after original byte discovery: '+input.path);
+  for(const input of compilerSourceInputs)if(implementationHashes[input.path]!==input.sha256)throw new TypeError('compiler source changed after original byte discovery: '+input.path);
   progress({stage:'fingerprint',state:'end',total:implementation.length});
   progress({stage:'plan',state:'start'});
   const manifest = { schemaVersion: 1, kind: 'draft-translation-inventory', runtimeParity: false, compilationProfile:profile, compilationProfileScope:'resolved tracked crate contexts; unmatched standalone source conditions remain unknown', translatorCommit: PIN, implementationHashes, totals, functionCoverage, diagnosticCounts: Object.fromEntries([...diagnostics].sort(([a], [b]) => a.localeCompare(b))), sources: inventory, projects };

@@ -239,6 +239,15 @@ directories, preserving their paths, notices, licenses and upstream lock. Copy
 `fixtures`, `test` and `tsconfig.json` when carrying its validation suite. Source
 code suffices for regeneration; copying existing generated corpora is optional.
 
+Bulk generation automatically fingerprints all tracked production translator
+modules and JSON descriptors, including nested reverse and serialization tools.
+It also captures every tracked original source-profile input. Generated trees,
+tests and fixtures are excluded from compiler discovery. Both readers preserve
+the indexed Git blob separately from the exact checked-out byte hash, reject
+unfrozen inputs and selected symlinks, and bound file counts and bytes. Captured
+hashes establish freshness; they do not certify source semantics or runtime
+behavior. A new compiler module must be tracked before generation can freeze it.
+
 `source-profiles/derive` contains the original compressed locked dependency
 sources and Rust core source used by namespace proofs, with their hashes and
 licenses, including the bounded Rust 1.89 builtin Default expansion profile.
