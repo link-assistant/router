@@ -85,6 +85,10 @@ export function analyzeJavaScript(source) {
         changed = true;
       }
     }
+    if(!changed) {
+      const completed=signatures(candidates.map(item=>item.checked));
+      for(const item of candidates)try{item.checked=check(item.checked,completed);}catch(error){if(!isRefusal(error)&&!error.slug)throw error;item.status='unsupported';item.diagnostic=diagnostic(error,item,source);changed=true;}
+    }
   }
   return {
     fragment: FRAGMENT,
@@ -116,7 +120,8 @@ export function parseMeta(text) {
     if (item.kind === 'function' && !returns(item.body)) throw new Error(`meta-language function ${item.name} has a path without a return`);
   }
   const table = signatures(items);
-  return items.map((item) => check(item, table));
+  const checked=items.map(item=>check(item,table)),completed=signatures(checked);
+  return checked.map(item=>check(item,completed));
 }
 
 export { emitRust, emitTypeScript };

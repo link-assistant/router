@@ -134,6 +134,26 @@ not match closed primitive entries. No table identity or mutable reference
 escapes the checked fragment. TypeScript preserves real Map/Set construction
 with read-only types; Rust emits immutable data and typed primitive readers.
 
+Identity returns, strict comparisons of unknown payloads with primitive
+literals, identifier-key record literals, bounded fresh arrays and final rest
+parameters form a separate lossless payload capability. Meta retains each
+field, entry, rest parameter and exact structural return contract. TypeScript
+keeps unknown inputs and exact output records; the IR evaluator preserves
+input references and allocates each source record/array afresh.
+
+The Rust draft uses `JsPayload<'a>`: strings borrow UTF-16 units, including lone
+surrogates, and object/function/BigInt/symbol payloads borrow opaque `dyn Any`
+references. Null and undefined have distinct tags. These values cannot outlive
+their borrowed inputs. Only generated record/array allocations use
+`Rc<RefCell<...>>`, so aliases share their fresh container and retain mutation
+identity; an original argument container remains its borrowed opaque payload.
+Existing `JsValue` scalar observers keep their earlier API. Calls between the
+two capabilities, including inferred calls, remain refused before emission.
+Property reads, getters, prototype setters, spreads, dynamic record keys,
+coercion, arbitrary reference comparisons and source calls to rest functions
+remain unsupported. Rust text/signature inspection is distinct from Rust
+compilation or runtime verification.
+
 Run `node --test tools/translation/js-to-rust/test/*.test.mjs`. The tests execute
 58 authored fixtures against authoritative JavaScript, an independent IR
 evaluator and strict-compiled TypeScript; they also check ordinary source

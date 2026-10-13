@@ -25,6 +25,7 @@ import { guardedScope } from './guards.mjs';
 import { optionalType, joinReturnTypes, closedReturnType } from './return-types.mjs';
 import { validateCharacterClass } from './character-classes.mjs';
 import { staticTableType,mapValueType } from './static-tables.mjs';
+import { recordType,recordShape,canLiftValue,payloadBoundary } from './aggregates.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
 
@@ -180,9 +181,10 @@ export function check(item, table) {
   const map = constructMap();
   canonicalRustName(item.name);
   for (const param of item.params ?? []) canonicalRustName(param.name);
-  if (item.params?.some(param => !['number', 'string', 'boolean', 'value'].includes(param.type))) refuse('untyped', 'nullable types are return contracts only');
+  if(item.params?.some((param,index)=>param.rest&&(param.type!=='array-value'||index!==item.params.length-1)))refuse('type','an inconsistent rest parameter contract');
+  if (item.params?.some((param,index) => !['number', 'string', 'boolean', 'value'].includes(param.type) && !(param.type==='array-value'&&param.rest&&index===item.params.length-1))) refuse('untyped', 'nullable and aggregate types are return contracts only');
   for (const type of item.kind === 'function' ? [...item.params.map((param) => param.type), ...(item.returns ? [item.returns] : [])] : [item.type]) {
-    if (!map.types.has(type)) refuse('untyped', type);
+    if (!map.types.has(type)&&type!=='array-value'&&!recordShape(type)) refuse('untyped', type);
   }
   if (item.kind === 'constant') {
     if(['table-set','table-map'].includes(item.value.kind)) {
@@ -211,7 +213,7 @@ export function check(item, table) {
       const value = expression(statement.value, names, table);
       names.set(statement.name, value.type);
       if (statement.mutable) mutable.add(statement.name);
-      return { ...statement, value };
+      return { ...statement, mutable:Boolean(statement.mutable), value };
     }
     if (statement.kind === 'assign') {
       canonicalRustName(statement.name);
@@ -225,6 +227,7 @@ export function check(item, table) {
       if (!closedReturnType(value.type)) refuse('untyped', 'a dynamic return value without a closed primitive contract');
       const combined = joinReturnTypes(inferredReturn, value.type);
       if (!combined || item.returns && combined !== item.returns) refuse('type', `returns ${value.type}, not ${inferredReturn}`);
+      if(combined==='value'&&!canLiftValue(value))refuse('type','a dynamic return borrowing a temporary primitive');
       inferredReturn = combined;
       return { ...statement, value };
     }
@@ -239,7 +242,21 @@ export function check(item, table) {
   });
   const body = block(item.body, scope);
   if (!inferredReturn) refuse('missing-return');
-  return { ...item, returns: inferredReturn, body };
+  const verifyLifts=statements=>{for(const statement of statements){if(statement.kind==='return'&&inferredReturn==='value'&&!canLiftValue(statement.value))refuse('type','a return borrowing a temporary primitive');if(statement.then)verifyLifts(statement.then);if(statement.else)verifyLifts(statement.else);if(statement.body)verifyLifts(statement.body);}};
+  verifyLifts(body);
+  const checked={...item,returns:inferredReturn,body},payload=payloadBoundary(checked);
+  const capabilities=node=>{
+    if(!node||typeof node!=='object')return;
+    if(node.kind==='call') {
+      const callee=table.get(node.name);
+      const proved=callee.body.every(statement=>statement.value?.type||statement.cond?.type);
+      if(proved&&callee.params.some(param=>param.type==='value')&&payloadBoundary(callee)!==payload)refuse('collection','a lossless payload/scalar observer call boundary');
+    }
+    if(payload&&(node.projection||['typeof','includes','table-get','table-has'].includes(node.kind)||node.kind==='builtin'&&node.args?.some(arg=>arg.type==='value')))refuse('collection','an unimplemented observation of a lossless payload');
+    for(const child of Object.values(node))if(Array.isArray(child))child.forEach(capabilities);else capabilities(child);
+  };
+  capabilities(body);
+  return checked;
 }
 
 // Observe truthiness only where the source chooses a control-flow edge. A
@@ -284,7 +301,13 @@ function expression(expr, names, table) {
       const row = map.operators.get(expr.op);
       const left = expression(expr.left, names, table);
       const right = expression(expr.right, expr.op === 'and' ? guardedScope(expr.left, names, true) : expr.op === 'or' ? guardedScope(expr.left, names, false) : names, table);
-      if (left.type === 'value' || right.type === 'value') refuse('untyped', 'dynamic values need a proven primitive typeof guard');
+      if(left.type==='value'||right.type==='value') {
+        if(!['equal','not-equal'].includes(expr.op)||![left,right].some(value=>value.type==='value')||[left,right].some(value=>value.type==='value'?false:!['string','number','boolean','null','undefined'].includes(value.type)||!canLiftValue(value)))refuse('untyped','dynamic values need a proven primitive typeof guard');
+        // Reference equality and arbitrary primitive coercion remain outside
+        // this fragment: at least one operand must be a primitive observation.
+        if(left.type==='value'&&right.type==='value')refuse('untyped','dynamic reference comparisons');
+        return typed({left,right,primitiveComparison:true},'boolean');
+      }
       if (expr.op === 'add' && left.type === 'string' && right.type === 'string') return typed({ left, right }, 'string');
       if (row.operands === 'any' ? left.type !== right.type : left.type !== row.operands || right.type !== row.operands) {
         return refuse(left.type === 'string' && expr.op === 'add' ? 'concatenation' : 'type', `${expr.op} of ${left.type} and ${right.type}`);
@@ -322,12 +345,33 @@ function expression(expr, names, table) {
       const otherwise = expression(expr.else, guardedScope(expr.cond, names, false), table);
       const type = joinReturnTypes(then.type, otherwise.type);
       if (!type) refuse('type', 'a conditional expression');
+      if(type==='value'&&![then,otherwise].every(canLiftValue))refuse('type','a conditional borrowing a temporary primitive');
       return typed({ cond, then, else: otherwise }, type);
+    }
+    case 'array': {
+      if(expr.values.length>256)refuse('collection','an oversized fresh array');
+      const values=expr.values.map(value=>expression(value,names,table));
+      if(!values.every(canLiftValue))refuse('collection','array elements without identity-preserving value lifts');
+      return typed({values},'array-value');
+    }
+    case 'record': {
+      if(expr.fields.length>64)refuse('collection','an oversized fresh record');
+      const keys=new Set();
+      const fields=expr.fields.map(field=>{
+        snakeFromCamel(field.name);
+        if(keys.has(field.name))refuse('collection','duplicate record fields');keys.add(field.name);
+        const value=expression(field.value,names,table);
+        if(!closedReturnType(value.type))refuse('collection','an unproved record field value');
+        if(value.type.includes('string')&&!(value.type==='string'&&value.kind==='string'))refuse('collection','a scalar string field without a lossless payload bridge');
+        return {name:field.name,value};
+      });
+      return typed({fields},recordType(fields));
     }
     case 'call': {
       canonicalRustName(expr.name);
       const callee = table.get(expr.name);
       if (!callee || callee.kind !== 'function') return refuse('unknown-call', expr.name);
+      if(callee.params.some(param=>param.rest))refuse('collection','an unimplemented source call to a rest function');
       if (!callee.returns) refuse('untyped', `an unresolved inferred return contract for ${expr.name}`);
       const args = expr.args.map((arg) => expression(arg, names, table));
       if (args.length !== callee.params.length || args.some((arg, index) => arg.type !== callee.params[index].type)) {
@@ -395,8 +439,8 @@ export function toLino(item) {
     'function',
     item.name,
     ...flag,
-    ['parameters', ...item.params.map((param) => [param.name, param.type])],
-    ['returns', item.returns],
+    ['parameters', ...item.params.map((param) => [param.name, param.type,...(param.rest?[['rest']]:[])])],
+    ['returns', encodeWord(item.returns)],
     ['body', ...item.body.map(statementLink)],
   ]);
 }
@@ -444,6 +488,8 @@ function linkOf(expr) {
     case 'class-test':
       return ['class-test', ['unicode', String(expr.unicode)], ['negated', String(expr.negated)], ['anchored', String(expr.anchored)], ['ranges', ...expr.ranges.map(range=>[String(range.low), String(range.high)])], ['receiver', linkOf(expr.receiver)]];
     case 'table-set':return ['table-set',...expr.entries.map(linkOf)];
+    case 'array':return ['array',...expr.values.map(linkOf)];
+    case 'record':return ['record',...expr.fields.map(field=>['field',encodeWord(field.name),linkOf(field.value)])];
     case 'table-map':return ['table-map',...expr.entries.map(entry=>['entry',linkOf(entry.key),linkOf(entry.value)])];
     case 'table-size':return ['table-size',expr.name];
     case 'table-get':case 'table-has':return [expr.kind,expr.name,linkOf(expr.argument)];
@@ -470,8 +516,8 @@ function itemOf(link) {
     kind: 'function',
     name: link[1],
     exported,
-    params: field(link, 'parameters').slice(1).map(([name, type]) => ({ name, type })),
-    returns: field(link, 'returns')[1],
+    params: field(link, 'parameters').slice(1).map(([name, type,...flags]) => ({ name, type,...(flags.some(flag=>flag[0]==='rest')?{rest:true}:{}) })),
+    returns: textOf(field(link, 'returns')[1]),
     body: field(link, 'body').slice(1).map(statementOf),
   };
 }
@@ -527,6 +573,8 @@ function exprOf(link) {
       return { kind, unicode:boolean('unicode'), negated:boolean('negated'), anchored:boolean('anchored'), ranges:(field(link,'ranges')??[]).slice(1).map(range=>({low:Number(range[0]),high:Number(range[1])})), receiver:exprOf(field(link,'receiver')[1]) };
     }
     case 'table-set':return {kind,entries:rest.map(exprOf)};
+    case 'array':return {kind,values:rest.map(exprOf)};
+    case 'record':return {kind,fields:rest.map(entry=>({name:textOf(entry[1]),value:exprOf(entry[2])}))};
     case 'table-map':return {kind,entries:rest.map(entry=>({key:exprOf(entry[1]),value:exprOf(entry[2])}))};
     case 'table-size':return {kind,name:rest[0]};
     case 'table-get':case 'table-has':return {kind,name:rest[0],argument:exprOf(rest[1])};

@@ -1,3 +1,4 @@
+import { recordShape } from './aggregates.mjs';
 const primitive = new Set(['string', 'number', 'boolean']);
 
 export function optionalType(type) {
@@ -9,6 +10,7 @@ export function joinReturnTypes(left, right) {
   if (left === right) return left;
   if (!left) return right;
   if (!right) return left;
+  if ([left,right].includes('value') && [left,right].every(type => type === 'value' || primitive.has(type) || ['null','undefined'].includes(type))) return 'value';
   const member = optionalType(left) ?? optionalType(right);
   if (member) {
     const union = optionalType(left) ? left : right;
@@ -21,10 +23,13 @@ export function joinReturnTypes(left, right) {
 }
 
 export function closedReturnType(type) {
-  return primitive.has(type) || ['null', 'undefined'].includes(type) || Boolean(optionalType(type));
+  return primitive.has(type) || ['null', 'undefined','value','array-value'].includes(type) || Boolean(optionalType(type)) || Boolean(recordShape(type)?.every(([,field])=>closedReturnType(field)));
 }
 
 export function typescriptType(type) {
+  if(type==='array-value')return 'unknown[]';
+  const record=recordShape(type);
+  if(record)return `{ ${record.map(([name,field])=>`${JSON.stringify(name)}: ${typescriptType(field)}`).join('; ')} }`;
   if(type==='table-set')return 'ReadonlySet<unknown>';
   const map=/^table-map-(string|number|boolean)$/u.exec(type);
   if(map)return `ReadonlyMap<unknown, ${map[1]}>`;

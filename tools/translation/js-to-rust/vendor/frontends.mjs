@@ -132,9 +132,11 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
       const grouped = at.eat('(');
       if (!grouped || !at.eat(')')) {
         do {
+          const rest=at.eat('...');
           const param = at.next();
           if (param.type !== 'ident') refuse('unsupported', 'a non-identifier arrow parameter');
-          params.push({ name: snakeFromCamel(param.text), type: jsType(types.params.get(param.text)) });
+          if(rest&&(!grouped||!at.is(')')))refuse('unsupported','a non-final rest parameter');
+          params.push({ name: snakeFromCamel(param.text), type: rest?'array-value':jsType(types.params.get(param.text)), ...(rest?{rest:true}:{}) });
         } while (grouped && at.eat(','));
         if (grouped) at.expect(')');
       }
@@ -159,11 +161,13 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
   at.expect('(');
   const params = [];
   while (!at.eat(')')) {
+    const rest=at.eat('...');
     const param = at.next();
     if (param.type !== 'ident') refuse('unsupported', `the parameter ${param.text}`);
     if (at.is('=')) refuse('unsupported', 'a default parameter');
-    const type = jsType(types.params.get(param.text));
-    params.push({ name: snakeFromCamel(param.text), type });
+    if(rest&&!at.is(')'))refuse('unsupported','a non-final rest parameter');
+    const type = rest?'array-value':jsType(types.params.get(param.text));
+    params.push({ name: snakeFromCamel(param.text), type, ...(rest?{rest:true}:{}) });
     if (!at.is(')')) at.expect(',');
   }
   const returns = types.returns ? jsType(types.returns) : null;
@@ -483,10 +487,22 @@ function primary(at, language) {
       values.push(expression(at, language));
       if (!at.is(']')) at.expect(',');
     }
-    if (!at.eat('.') || !at.eat('includes')) refuse('collection');
+    if(!at.is('.'))return {kind:'array',values};
+    at.expect('.');if(!at.eat('includes'))refuse('collection');
     const args = argumentsOf(at, language);
     if (args.length !== 1) refuse('unsupported', 'array includes with a non-default start index');
     return { kind: 'includes', values, argument: args[0] };
+  }
+  if(language==='JavaScript'&&token.text==='{') {
+    const fields=[];
+    while(!at.eat('}')) {
+      const key=at.next();
+      if(key.type!=='ident')refuse('collection','a non-identifier record key');
+      const binding=snakeFromCamel(key.text);
+      const value=at.eat(':')?expression(at,language):{kind:'variable',name:binding};
+      fields.push({name:key.text,value});if(!at.is('}'))at.expect(',');
+    }
+    return {kind:'record',fields};
   }
   if (token.text === '[' || token.text === '{') refuse('collection');
   if (token.type !== 'ident') refuse('unsupported', token.text || 'the end of the item');

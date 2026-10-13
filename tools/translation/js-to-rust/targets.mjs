@@ -1,9 +1,10 @@
 import { constructMap } from './vendor/constructs.mjs';
-import { camelFromSnake } from './vendor/ir.mjs';
+import { camelFromSnake,snakeFromCamel } from './vendor/ir.mjs';
 import { constantValue } from './vendor/constants.mjs';
 import { optionalType, typescriptType } from './vendor/return-types.mjs';
 import { classPattern } from './vendor/character-classes.mjs';
 import { mapValueType } from './vendor/static-tables.mjs';
+import { recordShape,carriesValue,payloadBoundary } from './vendor/aggregates.mjs';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -81,6 +82,27 @@ impl<'a> JsValue<'a> {
     }
 }`;
 
+// Lossless passthrough capability: strings retain UTF-16 units and opaque
+// payloads remain borrowed. No scalar observer or coercion is implemented.
+export const PAYLOAD_HELPERS = `#[derive(Clone, Copy)]
+pub enum JsPayload<'a> {
+    String(&'a [u16]), Number(f64), Boolean(bool), Null, Undefined,
+    Object(&'a dyn std::any::Any), Function(&'a dyn std::any::Any),
+    BigInt(&'a dyn std::any::Any), Symbol(&'a dyn std::any::Any),
+}
+#[rustfmt::skip]
+impl<'a> JsPayload<'a> {
+    fn strict_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right,
+            (Self::Null, Self::Null) | (Self::Undefined, Self::Undefined) => true,
+            _ => false,
+        }
+    }
+}`;
+
 export const SAFE_INTEGER_HELPER = `#[rustfmt::skip]
 fn js_safe_integer(value: f64) -> bool {
     value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0
@@ -143,8 +165,24 @@ function emitter(program, target) {
   const map = constructMap();
   const name = (value) => rust ? value : camelFromSnake(value);
   const globals=new Map(program.map(item=>[item.name,item]));
+  const records=new Map();
+  let payloadMode=false;
+  const rustContract=(type,owned=true,lifetime="'a")=>{
+    if(type==='value')return `${payloadMode?'JsPayload':'JsValue'}<${lifetime}>`;
+    if(type==='array-value')return `std::rc::Rc<std::cell::RefCell<Vec<JsPayload<${lifetime}>>>>`;
+    const shape=recordShape(type);
+    if(shape){if(!records.has(type))records.set(type,{name:`JsRecord${records.size}`,shape});return `std::rc::Rc<std::cell::RefCell<${records.get(type).name}${carriesValue(type)?`<${lifetime}>`:''}>>`;}
+    return map.types.get(type)[owned?'rustOwned':'rust'];
+  };
+  const lift=expr=>{
+    if(expr.type==='value')return expression(expr);
+    if(expr.type==='null')return 'JsPayload::Null';if(expr.type==='undefined')return 'JsPayload::Undefined';
+    if(expr.type==='string'){if(expr.kind!=='string')throw new Error('lossless UTF16 string lift requires a literal');return `JsPayload::String(&[${Array.from({length:expr.value.length},(_,index)=>expr.value.charCodeAt(index)).join(', ')}])`;}
+    return `JsPayload::${expr.type==='number'?'Number':'Boolean'}(${expression(expr)})`;
+  };
   const literal=value=>`JsLiteral::${{string:'String',number:'Number',boolean:'Boolean'}[value.type]}(${rustConstant(value)})`;
   const converted = (expr, type) => {
+    if(rust&&type==='value')return lift(expr);
     const optional = optionalType(type);
     if (!rust || !optional || expr.type === type) return expression(expr);
     const wrapper = optional.absent === 'null' ? 'JsNullable' : 'JsOptional';
@@ -159,9 +197,11 @@ function emitter(program, target) {
       case 'variable': {
         if (!rust && expr.projection === 'number') return `(${name(expr.name)} as number)`;
         const value = `${name(expr.name)}${rust && expr.projection ? `.as_${expr.projection}()` : ''}`;
+        if(rust&&(expr.type==='array-value'||recordShape(expr.type)))return `${value}.clone()`;
         return rust && expr.type === 'string' ? `${value}.to_string()` : value;
       }
       case 'binary': {
+        if(rust&&expr.primitiveComparison)return `${expr.op==='not-equal'?'!':''}${lift(expr.left)}.strict_primitive(${lift(expr.right)})`;
         const left = expression(expr.left);
         const right = expression(expr.right);
         if (rust && expr.op === 'add' && expr.type === 'string') return `format!("{}{}", ${left}, ${right})`;
@@ -189,6 +229,12 @@ function emitter(program, target) {
       case 'choose': return rust
         ? `(if ${expression(expr.cond)} { ${converted(expr.then, expr.type)} } else { ${converted(expr.else, expr.type)} })`
         : `(${expression(expr.cond)} ? ${expression(expr.then)} : ${expression(expr.else)})`;
+      case 'array':return rust?`std::rc::Rc::new(std::cell::RefCell::new(vec![${expr.values.map(lift).join(', ')}]))`:`[${expr.values.map(expression).join(', ')}]`;
+      case 'record': {
+        if(!rust)return `({${expr.fields.map(field=>`${JSON.stringify(field.name)}: ${expression(field.value)}`).join(', ')}})`;
+        rustContract(expr.type);
+        return `std::rc::Rc::new(std::cell::RefCell::new(${records.get(expr.type).name} { ${expr.fields.map(field=>`${snakeFromCamel(field.name)}: ${expression(field.value)}`).join(', ')} }))`;
+      }
       case 'call': return `${name(expr.name)}(${expr.args.map((arg) => `${rust && arg.type === 'string' ? '&' : ''}${expression(arg)}`).join(', ')})`;
       case 'builtin': return rust && expr.args[0]?.type === 'value' && ['safe-integer', 'finite', 'nan'].includes(expr.name)
         ? `${expression(expr.args[0])}.${{ 'safe-integer': 'is_safe_integer', finite: 'is_finite', nan: 'is_nan' }[expr.name]}()`
@@ -239,6 +285,7 @@ function emitter(program, target) {
     return lines;
   };
   const items = program.map((item) => {
+    payloadMode=payloadBoundary(item);
     if (item.kind === 'constant') {
       const type = map.types.get(item.type);
       if(['table-set','table-map'].includes(item.value.kind)) {
@@ -252,23 +299,28 @@ function emitter(program, target) {
       return rust ? `#[rustfmt::skip]\n${/^[A-Z][A-Z0-9_]*$/u.test(item.name) ? '' : '#[allow(non_upper_case_globals)]\n'}${item.exported ? 'pub ' : ''}const ${item.name}: ${type.rust} = ${value};`
         : `${item.exported ? 'export ' : ''}const ${name(item.name)}: ${item.type} = ${value};`;
     }
-    const parameters = item.params.map((param, index) => `${name(param.name)}${!rust && param.type === 'value' && item.params.slice(index + 1).every(later => later.type === 'value') ? '?' : ''}: ${rust ? map.types.get(param.type).rust : typescriptType(param.type)}`);
+    const lifetime=payloadMode&&item.params.some(param=>param.type==='value'||param.rest)||carriesValue(item.returns);
+    const parameters = item.params.map((param, index) => `${!rust&&param.rest?'...':''}${name(param.name)}${!rust && !param.rest&&param.type === 'value' && item.params.slice(index + 1).every(later => later.type === 'value') ? '?' : ''}: ${rust ? param.rest?"Vec<JsPayload<'a>>":rustContract(param.type,false,lifetime?"'a":"'_") : typescriptType(param.type)}`);
     const signature = rust
-      ? `${item.exported ? 'pub ' : ''}fn ${name(item.name)}(${parameters.join(', ')}) -> ${map.types.get(item.returns).rustOwned} {`
+      ? `${item.exported ? 'pub ' : ''}fn ${name(item.name)}${lifetime?"<'a>":''}(${parameters.join(', ')}) -> ${rustContract(item.returns)} {`
       : `${item.exported ? 'export ' : ''}function ${name(item.name)}(${parameters.join(', ')}): ${typescriptType(item.returns)} {`;
-    return [...(rust ? ['#[rustfmt::skip]'] : []), signature, ...body(item.body, 1, item.returns), '}'].join('\n');
+    return [...(rust ? ['#[rustfmt::skip]'] : []), signature,...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
   });
   const serialized = JSON.stringify(program);
+  payloadMode=true;
+  const declarations=[];
+  for(const [type,record]of records)declarations.push(`#[derive(Clone)]\npub struct ${record.name}${carriesValue(type)?"<'a>":''} {\n${record.shape.map(([field,type])=>`    pub ${snakeFromCamel(field)}: ${rustContract(type)},`).join('\n')}\n}`);
   const helpers = rust ? [
+    program.some(payloadBoundary)?PAYLOAD_HELPERS:'',
     serialized.match(/"name":"(?:min|max)"/) ? FLOAT_HELPERS : '',
-    serialized.includes('"type":"value"') || serialized.includes('"kind":"includes"') || serialized.includes('"kind":"table-') ? VALUE_HELPERS : '',
+    serialized.includes('"type":"value"') || serialized.includes('"kind":"includes"') || serialized.includes('"kind":"table-') || serialized.includes('array-value') ? VALUE_HELPERS : '',
     serialized.includes('"name":"trim"') ? TRIM_HELPER : '',
     serialized.includes('"name":"safe-integer"') ? SAFE_INTEGER_HELPER : '',
     serialized.includes('"name":"utf8-length"') ? UTF8_LENGTH_HELPER : '',
     serialized.includes('"kind":"null"') || serialized.includes('"kind":"undefined"') || serialized.includes('"kind":"table-get"') ? ABSENCE_HELPERS : '',
     serialized.includes('"kind":"table-set"') || serialized.includes('"kind":"table-map"') ? TABLE_HELPERS : '',
   ].filter(Boolean).map(helper => `${helper}\n\n`).join('') : '';
-  return `${helpers}${items.join('\n\n')}\n`;
+  return `${helpers}${rust&&declarations.length?declarations.join('\n\n')+'\n\n':''}${items.join('\n\n')}\n`;
 }
 
 export const emitRust = (program) => emitter(program, 'rust');

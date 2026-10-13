@@ -4,7 +4,7 @@
   { "kind": "collection", "source": "/** @returns {number} */ export function collection() { return [1, 2].length; }" },
   { "kind": "class", "source": "export class Router {}" },
   { "kind": "no-definition", "source": "import { readFile } from 'node:fs';" },
-  { "kind": "untyped", "source": "export function untyped(value) { return value; }" },
+  { "kind": "untyped", "source": "export function untyped(value) { return value + 1; }" },
   { "kind": "unknown-call", "source": "/** @returns {number} */ export function missing() { return absent(); }" },
   { "kind": "mutable", "source": "/** @returns {number} */ export function immutable() { const x = 1; x = 2; return x; }" },
   { "kind": "concatenation", "source": "/** @param {number} n @returns {string} */ export function coercion(n) { return 'x' + n; }" },
