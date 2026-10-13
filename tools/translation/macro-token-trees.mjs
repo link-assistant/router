@@ -23,8 +23,8 @@ export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDe
       continue;
     }
     const append=(text,start,end)=>tokens.push({kind:'token',text,type:token.type,span:{start,end},sourceSha256});
-    if(token.type==='ident'&&token.text.startsWith('$')) {
-      if(!/^(?:\$(?:[A-Za-z_][A-Za-z0-9_]*)?)+!?$/u.test(token.text)||token.text.endsWith('!')&&!/[A-Za-z0-9_]!$/u.test(token.text))throw new TypeError('Declarative macro metavariable requires bounded original spelling');
+    if(token.type==='ident'&&token.text.includes('$')) {
+      if(!/^(?:[A-Za-z_][A-Za-z0-9_]*)?(?:\$(?:[A-Za-z_][A-Za-z0-9_]*)?)+!?$/u.test(token.text)||token.text.endsWith('!')&&!/[A-Za-z0-9_]!$/u.test(token.text))throw new TypeError('Declarative macro metavariable requires bounded original spelling');
       const bang=token.text.endsWith('!'),end=token.end-(bang?1:0);
       // The structural lexer retains adjacent dollars in one identifier.
       // Rust TT boundaries still separate each dollar and source identifier:
@@ -32,7 +32,7 @@ export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDe
       // Retain every exact source position; no expression/repetition semantics
       // or new spelling domain follows from this lexical projection.
       let cursor=token.start;
-      while(cursor<end){append('$',cursor,cursor+1);cursor++;const begin=cursor;while(cursor<end&&token.text[cursor-token.start]!=='$')cursor++;if(cursor>begin)append(token.text.slice(begin-token.start,cursor-token.start),begin,cursor);}
+      while(cursor<end){if(token.text[cursor-token.start]==='$'){append('$',cursor,cursor+1);cursor++;}else{const begin=cursor;while(cursor<end&&token.text[cursor-token.start]!=='$')cursor++;append(token.text.slice(begin-token.start,cursor-token.start),begin,cursor);}}
       if(bang)append('!',end,token.end);
     } else if(token.type==='ident'&&token.text.endsWith('!')) {
       append(token.text.slice(0,-1),token.start,token.end-1);append('!',token.end-1,token.end);
