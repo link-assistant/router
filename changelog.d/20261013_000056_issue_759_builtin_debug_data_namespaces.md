@@ -1,1 +1,1 @@
-Preserve builtin derive input identifier and complete field-definition source spans separately, retaining existing type spans and independent namespace and ownership obligations.
+Close original bounded Debug data output namespaces through complete compiler AST recipes and recursive initializer/expression grammar, retaining exact field source spans and independent formatting, ownership, const and unresolved derive obligations.

@@ -27,9 +27,10 @@ IR in JavaScript and strict TypeScript; const matches remain refused.
 
 For unchanged whole `src/model_contract.rs`, the four nested registered helpers
 are recognized. Its six production declarations still have 46 derive owners,
-16 selected outputs and 30 residual owners after the independent
-[Eq data namespace stage](builtin-eq-data-namespaces.md), which adds two original
-Eq owner closures to this helper stage's 14/32 observation. The module's bang scope stays
+22 selected outputs and 24 residual owners after the independent
+[Eq data namespace stage](builtin-eq-data-namespaces.md) and
+[Debug data namespace stage](builtin-debug-data-namespaces.md). Their two Eq
+and six Debug closures extend this helper stage's 14/32 observation. The module's bang scope stays
 unresolved, `ModelSelectorKind.permits_resolution` stays refused, and its
 independent const, Deserialize, ownership and upstream-method obligations are
 preserved. This change does not claim an original whole-module executable gain.

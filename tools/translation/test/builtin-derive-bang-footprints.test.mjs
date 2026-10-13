@@ -46,15 +46,16 @@ test('actual original struct/enum routes share the verified Copy sink without tr
   ]){const proof=proveBuiltinDeriveBangFootprint(selected(source));assert.equal(proof.selectedOwnerBangComplete,true);assert.equal(proof.generatedImplBehavior,false,'Even invalid Copy implementations do not become callable/ownership certificates');}
 });
 
-test('remaining value callback routes preserve all original recipes and options but stay unclosed',()=>{
+test('remaining unsupported callbacks preserve recipes while source-closed fieldless Debug stays independent',()=>{
   const args=selected('#[derive(Clone,Debug,Copy,PartialEq,Eq,Hash,serde::Serialize)] pub enum Payload { A,B }');
-  for(const name of ['Clone','Debug','PartialEq','Hash']){
+  for(const name of ['Clone','PartialEq','Hash']){
     const plan=planBuiltinDeriveBangOutput({...args,invocation:{...args.invocation,path:[name]}});
     assert.equal(isBuiltinDeriveBangPlan(plan),true);assert.equal(plan.closed,false);assert.equal(plan.generatedImplBehavior,false);
     assert.ok(plan.callbackRecipes.length);assert.ok(plan.conditionalOutputs.length);
     assert.throws(()=>proveBuiltinDeriveBangFootprint({...args,invocation:{...args.invocation,path:[name]}}),/callback\/conditional AST output obligations/);
   }
   const debug=planBuiltinDeriveBangOutput({...args,invocation:{...args.invocation,path:['Debug']}});assert.ok(debug.conditionalOutputs.includes('FmtDebug None/Shallow/Full'));
+  const debugOutput=proveBuiltinDeriveBangFootprint({...args,invocation:{...args.invocation,path:['Debug']}});assert.equal(debugOutput.selectedOwnerBangComplete,true);assert.equal(debugOutput.generatedImplBehavior,false);assert.equal(debugOutput.route.branches.length,2);
   const clone=planBuiltinDeriveBangOutput({...args,invocation:{...args.invocation,path:['Clone']}});assert.ok(clone.conditionalOutputs.includes('resolver.has_derive_copy chooses simple/full'));
 });
 
