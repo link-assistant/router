@@ -22,6 +22,7 @@ import { constructMap, refuse } from './constructs.mjs';
 import { encodeWord, field, parseLinks, textOf, writeLink } from './lino.mjs';
 import { constantValue } from './constants.mjs';
 import { guardedScope } from './guards.mjs';
+import { optionalType, joinReturnTypes, closedReturnType } from './return-types.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
 
@@ -177,6 +178,7 @@ export function check(item, table) {
   const map = constructMap();
   canonicalRustName(item.name);
   for (const param of item.params ?? []) canonicalRustName(param.name);
+  if (item.params?.some(param => !['number', 'string', 'boolean', 'value'].includes(param.type))) refuse('untyped', 'nullable types are return contracts only');
   for (const type of item.kind === 'function' ? [...item.params.map((param) => param.type), ...(item.returns ? [item.returns] : [])] : [item.type]) {
     if (!map.types.has(type)) refuse('untyped', type);
   }
@@ -206,13 +208,13 @@ export function check(item, table) {
     }
     if (statement.kind === 'return') {
       const value = expression(statement.value, names, table);
-      if (!['number', 'string', 'boolean'].includes(value.type)) refuse('untyped', 'a dynamic return value without a closed primitive contract');
-      if (!inferredReturn) inferredReturn = value.type;
-      if (value.type !== inferredReturn) refuse('type', `returns ${value.type}, not ${inferredReturn}`);
+      if (!closedReturnType(value.type)) refuse('untyped', 'a dynamic return value without a closed primitive contract');
+      const combined = joinReturnTypes(inferredReturn, value.type);
+      if (!combined || item.returns && combined !== item.returns) refuse('type', `returns ${value.type}, not ${inferredReturn}`);
+      inferredReturn = combined;
       return { ...statement, value };
     }
-    const cond = expression(statement.cond, names, table);
-    if (cond.type !== 'boolean') refuse('type', 'a condition that is not boolean');
+    const cond = condition(statement.cond, names, table);
     if (statement.kind === 'while') return { ...statement, cond, body: block(statement.body, guardedScope(statement.cond, names, true), new Set(mutable)) };
     return {
       ...statement,
@@ -224,6 +226,20 @@ export function check(item, table) {
   const body = block(item.body, scope);
   if (!inferredReturn) refuse('missing-return');
   return { ...item, returns: inferredReturn, body };
+}
+
+// Observe truthiness only where the source chooses a control-flow edge. A
+// returned `&&` or `||` keeps its value-producing semantics and strict checker.
+function condition(expr, names, table) {
+  if (expr.kind === 'binary' && ['and', 'or'].includes(expr.op)) {
+    const left = condition(expr.left, names, table);
+    const right = condition(expr.right, guardedScope(expr.left, names, expr.op === 'and'), table);
+    return { ...expr, left, right, type: 'boolean' };
+  }
+  const operand = expression(expr, names, table);
+  if (operand.type === 'boolean') return operand;
+  if (!['number', 'string', 'null', 'undefined'].includes(operand.type)) refuse('type', 'a condition without a closed primitive truthiness contract');
+  return { kind: 'truthy', operand, type: 'boolean' };
 }
 
 function expression(expr, names, table) {
@@ -238,6 +254,8 @@ function expression(expr, names, table) {
       return typed({}, 'string');
     case 'boolean':
       return typed({}, 'boolean');
+    case 'null': case 'undefined':
+      return typed({}, expr.kind);
     case 'variable': {
       canonicalRustName(expr.name);
       if (names.has(expr.name)) {
@@ -267,7 +285,13 @@ function expression(expr, names, table) {
     }
     case 'typeof': {
       const operand = expression(expr.operand, names, table);
+      if (optionalType(operand.type)) refuse('type', 'typeof a nullable return value');
       return typed({ operand }, 'string');
+    }
+    case 'truthy': {
+      const operand = expression(expr.operand, names, table);
+      if (!['number', 'string', 'boolean', 'null', 'undefined'].includes(operand.type)) refuse('type', 'truthiness of a dynamic value');
+      return typed({ operand }, 'boolean');
     }
     case 'includes': {
       const values = expr.values.map(value => expression(value, names, table));
@@ -275,19 +299,22 @@ function expression(expr, names, table) {
         if (!['number', 'boolean', 'string'].includes(value.type) || typeof constantValue(value) !== value.type) refuse('collection', 'non-closed primitive includes elements');
       }
       const argument = expression(expr.argument, names, table);
+      if (!['number', 'string', 'boolean', 'value', 'null', 'undefined'].includes(argument.type)) refuse('collection', 'includes of an unsupported nullable argument');
       return typed({ values, argument }, 'boolean');
     }
     case 'choose': {
-      const cond = expression(expr.cond, names, table);
+      const cond = condition(expr.cond, names, table);
       const then = expression(expr.then, guardedScope(expr.cond, names, true), table);
       const otherwise = expression(expr.else, guardedScope(expr.cond, names, false), table);
-      if (cond.type !== 'boolean' || then.type !== otherwise.type) refuse('type', 'a conditional expression');
-      return typed({ cond, then, else: otherwise }, then.type);
+      const type = joinReturnTypes(then.type, otherwise.type);
+      if (!type) refuse('type', 'a conditional expression');
+      return typed({ cond, then, else: otherwise }, type);
     }
     case 'call': {
       canonicalRustName(expr.name);
       const callee = table.get(expr.name);
       if (!callee || callee.kind !== 'function') return refuse('unknown-call', expr.name);
+      if (!callee.returns) refuse('untyped', `an unresolved inferred return contract for ${expr.name}`);
       const args = expr.args.map((arg) => expression(arg, names, table));
       if (args.length !== callee.params.length || args.some((arg, index) => arg.type !== callee.params[index].type)) {
         refuse('type', `the arguments of ${expr.name}`);
@@ -297,7 +324,7 @@ function expression(expr, names, table) {
     case 'builtin': {
       const row = map.builtins.get(expr.name);
       const args = expr.args.map((arg) => expression(arg, names, table));
-      if (args.length !== row.arguments.length || args.some((arg, index) => arg.type !== row.arguments[index])) refuse('type', expr.name);
+      if (args.length !== row.arguments.length || args.some((arg, index) => arg.type !== row.arguments[index] && !(arg.type === 'value' && ['safe-integer', 'finite', 'nan'].includes(expr.name)))) refuse('type', expr.name);
       return typed({ args }, row.yields);
     }
     case 'method': {
@@ -355,6 +382,8 @@ function linkOf(expr) {
       return ['string', encodeWord(expr.value)];
     case 'boolean':
       return ['boolean', String(expr.value)];
+    case 'null': case 'undefined':
+      return [expr.kind];
     case 'variable':
       return ['variable', expr.name];
     case 'binary':
@@ -363,6 +392,8 @@ function linkOf(expr) {
       return ['unary', expr.op, linkOf(expr.operand)];
     case 'typeof':
       return ['typeof', linkOf(expr.operand)];
+    case 'truthy':
+      return ['truthy', linkOf(expr.operand)];
     case 'includes':
       return ['includes', ['values', ...expr.values.map(linkOf)], ['argument', linkOf(expr.argument)]];
     case 'choose':
@@ -424,6 +455,8 @@ function exprOf(link) {
       return { kind, value: textOf(rest[0]) };
     case 'boolean':
       return { kind, value: rest[0] === 'true' };
+    case 'null': case 'undefined':
+      return { kind };
     case 'variable':
       return { kind, name: rest[0] };
     case 'binary':
@@ -431,6 +464,8 @@ function exprOf(link) {
     case 'unary':
       return { kind, op: rest[0], operand: exprOf(rest[1]) };
     case 'typeof':
+      return { kind, operand: exprOf(rest[0]) };
+    case 'truthy':
       return { kind, operand: exprOf(rest[0]) };
     case 'includes':
       return { kind, values: rest[0].slice(1).map(exprOf), argument: exprOf(rest[1][1]) };

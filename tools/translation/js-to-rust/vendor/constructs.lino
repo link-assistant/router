@@ -17,6 +17,14 @@
 (type boolean (javascript boolean) (rust bool) (rust-owned bool))
 (type string (javascript string) (rust "&str") (rust-owned String))
 (type value (javascript "*") (rust "JsValue<'_>") (rust-owned "JsValue<'static>"))
+(type null (javascript null) (rust JsNull) (rust-owned JsNull))
+(type undefined (javascript undefined) (rust JsUndefined) (rust-owned JsUndefined))
+(type nullable-string (javascript "string|null") (rust "JsNullable<&str>") (rust-owned "JsNullable<String>"))
+(type nullable-number (javascript "number|null") (rust "JsNullable<f64>") (rust-owned "JsNullable<f64>"))
+(type nullable-boolean (javascript "boolean|null") (rust "JsNullable<bool>") (rust-owned "JsNullable<bool>"))
+(type optional-string (javascript "string|undefined") (rust "JsOptional<&str>") (rust-owned "JsOptional<String>"))
+(type optional-number (javascript "number|undefined") (rust "JsOptional<f64>") (rust-owned "JsOptional<f64>"))
+(type optional-boolean (javascript "boolean|undefined") (rust "JsOptional<bool>") (rust-owned "JsOptional<bool>"))
 # (operator <meta> (javascript <spelling>) (rust <spelling>) (precedence <n>) (operands <type>) (yields <type>))
 # `any` operands must share one type; Rust comparisons do not chain, so a
 # comparison operand that is itself a comparison is parenthesized.
@@ -45,6 +53,7 @@
 (builtin finite (javascript "Number.isFinite") (rust "f64::is_finite") (arguments number) (yields boolean))
 (builtin nan (javascript "Number.isNaN") (rust "f64::is_nan") (arguments number) (yields boolean))
 (builtin trunc (javascript "Math.trunc") (rust "f64::trunc") (arguments number) (yields number))
+(builtin safe-integer (javascript "Number.isSafeInteger") (rust js_safe_integer) (arguments number) (yields boolean))
 # (method <meta> (javascript <name>) (rust <name>) (receiver <type>) (arguments <types>) (yields <type>))
 (method starts-with (javascript startsWith) (rust starts_with) (receiver string) (arguments string) (yields boolean))
 (method ends-with (javascript endsWith) (rust ends_with) (receiver string) (arguments string) (yields boolean))

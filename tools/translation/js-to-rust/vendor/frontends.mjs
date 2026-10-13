@@ -94,8 +94,9 @@ function jsdocTypes(doc) {
  * @param {string} doc the comments directly before the item
  * @returns {object}
  */
-export function parseJavaScriptItem(tokens, doc) {
+export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins } = {}) {
   const at = cursor(tokens);
+  at.shadowedBuiltins = shadowedBuiltins;
   const term = itemTerm(tokens, 'JavaScript');
   if (term === 'import') refuse('no-definition');
   if (term === 'class') refuse('class');
@@ -454,10 +455,15 @@ function primary(at, language) {
   if (token.text === '[' || token.text === '{') refuse('collection');
   if (token.type !== 'ident') refuse('unsupported', token.text || 'the end of the item');
   if (token.text === 'true' || token.text === 'false') return { kind: 'boolean', value: token.text === 'true' };
-  if (['null', 'undefined', 'this', 'self', 'Self', 'function', 'None', 'Some'].includes(token.text)) refuse('unsupported', token.text);
+  if (language === 'JavaScript' && ['null', 'undefined'].includes(token.text)) {
+    if (token.text === 'undefined' && at.shadowedBuiltins?.has(token.text)) refuse('unsupported', 'a shadowed undefined identifier');
+    return { kind: token.text };
+  }
+  if (['this', 'self', 'Self', 'function', 'None', 'Some'].includes(token.text)) refuse('unsupported', token.text);
   if (at.is('=>')) refuse('unsupported', 'an arrow function');
   const builtins = constructMap().builtins;
   if (language === 'JavaScript' && ['Math', 'Number'].includes(token.text) && at.eat('.')) {
+    if (at.shadowedBuiltins?.has(token.text)) refuse('unsupported', `a shadowed builtin ${token.text}`);
     const callee = `${token.text}.${at.next().text}`;
     if (callee === 'Math.round') refuse('rounding');
     const name = idBySpelling(builtins, 'javascript', callee);

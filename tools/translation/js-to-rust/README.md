@@ -75,6 +75,30 @@ JavaScript, the IR evaluator and strict-compiled TypeScript execute independent
 all-type fixtures. Generated Rust is inspected but not locally compiled or
 executed; those checks do not establish native Rust runtime parity.
 
+Closed returns may also be a primitive paired with exactly one absence kind:
+`string | null`, `number | undefined`, and the analogous primitive forms.
+Meta nodes and TypeScript retain null and undefined separately. Rust uses
+distinct `JsNullable<T>::Null/Value` and `JsOptional<T>::Undefined/Value` tags,
+and distinct marker types for standalone null/undefined returns. A union
+containing both null and undefined is refused. Boolean control contexts
+(`if`, `while`, `?:`) lower primitive
+truthiness explicitly, preserving NaN and both signed zeros as false and
+nonempty strings as true. Returned mixed-type `&&`/`||` payloads and unknown
+truthiness remain refused.
+
+Unshadowed `Number.isSafeInteger`, `Number.isFinite` and `Number.isNaN` accept
+unknown values without coercion. Only their true edge proves a number payload;
+TypeScript records that proof with a number assertion because its standard
+Number signatures do not narrow unknown inputs. Module imports and declarations
+are checked for builtin ownership before partial admission, so a refused import
+cannot silently turn a custom `Number` into the standard builtin. Shadowed
+undefined identifiers also remain refused. Independent goldens exercise actual
+native function spans for string/null filtering, nonempty strings, exact
+nonnegative integers and admin TTL clipping.
+Inferred sibling signatures must be available before checking a call; forward
+references without an explicit result contract remain refused. Nullable inputs,
+unknown truthiness and nullable collection arguments also remain limitations.
+
 Run `node --test tools/translation/js-to-rust/test/*.test.mjs`. The tests execute
 58 authored fixtures against authoritative JavaScript, an independent IR
 evaluator and strict-compiled TypeScript; they also check ordinary source

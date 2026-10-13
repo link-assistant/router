@@ -10,9 +10,12 @@ export function evaluate(program, functionName, arguments_) {
     switch (expr.kind) {
       case 'number': return Number(expr.text);
       case 'string': case 'boolean': return expr.value;
+      case 'null': return null;
+      case 'undefined': return undefined;
       case 'variable': return env.has(expr.name) ? env.get(expr.name) : get(table.get(expr.name).value);
       case 'unary': return expr.op === 'not' ? !get(expr.operand) : -get(expr.operand);
       case 'typeof': return typeof get(expr.operand);
+      case 'truthy': return Boolean(get(expr.operand));
       case 'includes': {
         const values = expr.values.map(get), argument = get(expr.argument);
         return values.includes(argument);

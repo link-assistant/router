@@ -9,7 +9,7 @@
   { "kind": "mutable", "source": "/** @returns {number} */ export function immutable() { const x = 1; x = 2; return x; }" },
   { "kind": "concatenation", "source": "/** @param {number} n @returns {string} */ export function coercion(n) { return 'x' + n; }" },
   { "kind": "loop", "source": "/** @returns {number} */ export function forbiddenLoop() { for (;;) {} return 1; }" },
-  { "kind": "type", "source": "/** @param {number} n @returns {number} */ export function truthy(n) { if (n) { return 1; } return 0; }" },
+  { "kind": "type", "source": "/** @param {*} n @returns {number} */ export function truthy(n) { if (n) { return 1; } return 0; }" },
   { "kind": "rounding", "source": "/** @param {number} n @returns {number} */ export function rounding(n) { return Math.round(n); }" },
   { "kind": "unsupported", "source": "/** @param {number} n @returns {boolean} */ export function loose(n) { return n == 0; }" },
   { "kind": "unsupported", "source": "/** @returns {number} */ export function throwing() { throw new Error('x'); }" },

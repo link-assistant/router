@@ -8,6 +8,7 @@ import { isRefusal } from './vendor/constructs.mjs';
 import { emitRust, emitTypeScript } from './targets.mjs';
 import { parseLinks } from './vendor/lino.mjs';
 import { splitConstantItems } from './vendor/constants.mjs';
+import { shadowedBuiltins } from './vendor/builtin-ownership.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -37,6 +38,7 @@ export function analyzeJavaScript(source) {
     return { fragment: FRAGMENT, program: [], items: [], diagnostics: [diagnostic(error, { start: 0, end: source.length }, source)] };
   }
   const items = [];
+  const shadowed = shadowedBuiltins(raw);
   let doc = '';
   for (const item of raw) {
     if (item.comment) {
@@ -45,7 +47,7 @@ export function analyzeJavaScript(source) {
     }
     const row = { start: item.start, end: item.end, status: 'unsupported' };
     try {
-      row.parsed = parseJavaScriptItem(item.tokens, doc);
+      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed });
       if (row.parsed.kind === 'function' && !returns(row.parsed.body)) {
         throw Object.assign(new Error('a path ends without a return'), { slug: 'missing-return' });
       }
@@ -71,6 +73,7 @@ export function analyzeJavaScript(source) {
         if (names.has(item.name)) throw Object.assign(new Error(`duplicate definition ${item.name}`), { slug: 'name' });
         names.add(item.name);
         item.checked = check(item.parsed, table);
+        table.set(item.name, item.checked);
         item.status = 'translated';
       } catch (error) {
         if (!isRefusal(error) && !error.slug) throw error;

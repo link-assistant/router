@@ -2,6 +2,11 @@
 // branch edge. Unknown parameters stay full value projections at the boundary.
 export function guardedScope(expr, names, truth) {
   let refined = new Map(names);
+  if (expr.kind === 'truthy') return guardedScope(expr.operand, names, truth);
+  if (truth && expr.kind === 'builtin' && ['safe-integer', 'finite', 'nan'].includes(expr.name) && expr.args.length === 1 && expr.args[0].kind === 'variable') {
+    if (names.get(expr.args[0].name) === 'value') refined.set(expr.args[0].name, 'value:number');
+    return refined;
+  }
   if (expr.kind === 'unary' && expr.op === 'not') return guardedScope(expr.operand, names, !truth);
   if (expr.kind === 'binary' && (expr.op === 'and' && truth || expr.op === 'or' && !truth)) {
     refined = guardedScope(expr.left, refined, truth);
