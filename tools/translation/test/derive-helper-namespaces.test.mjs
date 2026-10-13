@@ -75,8 +75,14 @@ test('assembled complete source outputs execute ordinary matches in JS and stric
   await verifyTypedTargets(result,api=>{assert.equal(api.accepted(Object.freeze({$:'None'})),false);for(const [n,want]of [[0n,false],[2n,false],[3n,true],[255n,true]])assert.equal(api.accepted(Object.freeze({$:'Some',field0:n})),want);assert.throws(()=>api.accepted({$:'Some',field0:3n}),TypeError);assert.throws(()=>api.accepted(Object.freeze({$:'Some',field0:256n})),TypeError);},{childTimeoutMs:20000});
  }
 });
+test('original Default output closes its own namespace before ordinary matches execute',async()=>{
+ const source='#[derive(Default,serde::Serialize)]pub enum Mode{On,#[default]Off}pub fn f(v:u8)->bool{matches!(v,1)}';
+ const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+ assert.equal(result.meta.executable.some(row=>row.name==='f'),true);assert.deepEqual(result.meta.refused,[]);
+ await verifyTypedTargets(result,api=>{assert.equal(api.f(0n),false);assert.equal(api.f(1n),true);assert.equal(api.f(255n),false);assert.throws(()=>api.f(256n),RangeError);},{childTimeoutMs:20000});
+});
 test('unresolved sibling derives remain separate mandatory refusals',()=>{
- for(const source of ['#[derive(Default,serde::Serialize)]pub enum Mode{On,#[default]Off}pub fn f(v:u8)->bool{matches!(v,1)}','#[derive(serde::Serialize,schemars::JsonSchema)]pub struct Payload{value:u8}pub fn f(v:u8)->bool{matches!(v,1)}','#[unknown]struct Other;pub fn f(v:u8)->bool{matches!(v,1)}']){const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.executable.some(r=>r.name==='f'),false);assert.match(result.meta.refused.find(r=>r.name==='f').message,/matches! original source contract/);}
+ for(const source of ['#[derive(serde::Serialize,schemars::JsonSchema)]pub struct Payload{value:u8}pub fn f(v:u8)->bool{matches!(v,1)}','#[unknown]struct Other;pub fn f(v:u8)->bool{matches!(v,1)}']){const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.executable.some(r=>r.name==='f'),false);assert.match(result.meta.refused.find(r=>r.name==='f').message,/matches! original source contract/);}
 });
 test('the unchanged original const match executes independently of unresolved sibling derives',async()=>{
  const source='pub const fn f(v:u8)->bool{matches!(v,1)}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.executable.some(r=>r.name==='f'),true);assert.deepEqual(result.meta.refused,[]);
