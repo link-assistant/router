@@ -237,6 +237,7 @@ function fragmentEnd(fragment,trees,start) {
   // Rust's TT parser captures an invisible-delimited nonterminal as one
   // tree. Keep its opaque fragment intact; this never exposes its interior.
   if(fragment==='tt')return start<trees.length?start+1:null;
+  if(fragment==='expr'&&(opaque(trees[start],'expr')||opaque(trees[start],'block')))return boundedMacroExpression(trees,start,boundedType);
   if(opaque(trees[start],fragment))return start+1;
   // A checked Block AST is a Rust expression. Retain its opaque AST rather
   // than exposing its interior to literal matching when forwarded as Expr.
