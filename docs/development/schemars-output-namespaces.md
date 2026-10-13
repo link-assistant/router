@@ -27,3 +27,11 @@ reuses unchanged original constructor/parser/expander archives and retains
 both Rust licenses. Source rules and complete function spans remain evidence;
 public hashes, copied candidates or caller-supplied source plans grant no
 private authority.
+
+The genuine derive dependency issuer also retains the exact actual Cargo
+manifest and lock strings in a private WeakMap. Its accessor returns frozen
+source data only. Independent issuances retain separate objects; repeated
+access to one issuance preserves identity. Copies, proxies, getters and forged
+carriers cannot select those bytes. The existing JSON issuer validates the
+retained inputs and its own archives, preserving its separate private brand.
+No public digest can replace this source handoff.

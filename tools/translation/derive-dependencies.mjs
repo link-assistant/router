@@ -7,6 +7,7 @@ const profileBytes=readFileSync(new URL('./source-profiles/derive/manifest.json'
 export const DERIVE_SOURCE_PROFILE=Object.freeze(JSON.parse(profileBytes));
 const proofs=new WeakSet();
 const proofSources=new WeakMap();
+const proofInputs=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 freeze(DERIVE_SOURCE_PROFILE);
 
@@ -57,10 +58,12 @@ export function createDeriveDependencyProof({manifest,lock,archives,standardCore
   const core=gunzipSync(standardCore,{maxOutputLength:300000});
   if(core.length!==profile.standardCore.bytes||hash(core)!==profile.standardCore.sha256)throw new TypeError('Unproved standard compile_error owner source');
   const evidence={schema:'locked-derive-dependencies-v1',manifestSha256:hash(manifest),lockSha256:hash(lock),sourceProfileSha256:hash(profileBytes),edition:profile.rustEdition,rustVersion:profile.rustVersion,features:profile.dependencies,packages,standardCore:{url:profile.standardCore.url,sha256:hash(core)}};
-  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.add(proof);proofSources.set(proof,sources);return proof;
+  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.add(proof);proofSources.set(proof,sources);proofInputs.set(proof,Object.freeze({manifest,lock}));return proof;
 }
 
 export function isDeriveDependencyProof(proof){return !!proof&&proofs.has(proof);}
+// Actual immutable source data only; copied carriers cannot select these bytes.
+export function deriveDependencyOriginalInputs(proof){const inputs=proofInputs.get(proof);if(!inputs)throw new TypeError('Original derive inputs require their genuine private dependency proof');return inputs;}
 export function deriveDependencySource(proof,packageName,path) {
   const sources=proofSources.get(proof);if(!sources)throw new TypeError('Unsealed derive dependency source proof');
   const source=sources.get(packageName+'/'+path);if(!source)throw new TypeError('Derive source was not an audited archive member');
