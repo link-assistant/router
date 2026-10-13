@@ -1,12 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37785706815/attempt-1/logs/15_Agent CLI ladder 2.1.2.2.txt.gz",
-    "sha256": "37bf5d36ad34fc592846c60ecb45af1f3671358e491ee954093f37c442e10751",
-    "bytes": 16519,
+    "path": "link-assistant--formal-ai/runs/37785706815/attempt-1/logs/15_Agent CLI ladder 2.1.2.2.txt.xz",
+    "sha256": "06fc0dd920777312839831fa56c125f2debacbf7610b281ff65110160369a6ea",
+    "bytes": 13404,
     "uncompressed_bytes": 77801,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "8767a266e2734400508fdbf8c0e74342de92c3221020da13fd1032e494066063"
+    "compression": "xz",
+    "decoded_sha256": "8767a266e2734400508fdbf8c0e74342de92c3221020da13fd1032e494066063",
+    "original_gzip_sha256": "37bf5d36ad34fc592846c60ecb45af1f3671358e491ee954093f37c442e10751"
   },
   {
     "path": "link-assistant--formal-ai/runs/37785706815/attempt-1/logs/Agent CLI ladder 2.1.2.2/system.txt.gz",

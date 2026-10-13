@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37838535260/attempt-1/logs/20_E2E Tests (local web app) _ E2E Tests (local web app, shard 2_3).txt.gz",
-    "sha256": "a198a22e199ec4f80df536aff93df44250c548945d763d8c6f8192efb0a81f74",
-    "bytes": 17733,
+    "path": "link-assistant--formal-ai/runs/37838535260/attempt-1/logs/20_E2E Tests (local web app) _ E2E Tests (local web app, shard 2_3).txt.xz",
+    "sha256": "2659daccb985e598b33c27e0919d4b1754624cd608202aceeebf11a5a359d363",
+    "bytes": 14492,
     "uncompressed_bytes": 80481,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "a198a22e199ec4f80df536aff93df44250c548945d763d8c6f8192efb0a81f74",
+    "compression": "xz",
+    "decoded_sha256": "2badad9689a87224be45243f16e68f8de58c35624e2358042057098bbbe0aa69"
   },
   {
     "path": "link-assistant--formal-ai/runs/37838535260/attempt-1/logs/E2E Tests (local web app) _ E2E Tests (local web app, shard 2_3)/system.txt.gz",

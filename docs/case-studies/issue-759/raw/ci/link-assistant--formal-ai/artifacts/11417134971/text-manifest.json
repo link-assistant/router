@@ -1,12 +1,15 @@
 [
   {
-    "path": "text-objects/e8/e8bb63efe8c951af2d821a43264f248be833583b2e26bc98a2c0aee862422529.gz",
+    "path": "text-objects/e8/e8bb63efe8c951af2d821a43264f248be833583b2e26bc98a2c0aee862422529.xz",
     "artifact_member_name": "browser-lcov.info",
     "scrubbed_content_sha256": "e8bb63efe8c951af2d821a43264f248be833583b2e26bc98a2c0aee862422529",
-    "sha256": "1f813271b543b56b07da187071cc996324a4597ecf54208593cdab45599590c9",
+    "sha256": "73d8d8bf475f992efa719b9fe5690fd2f37b94144ca4289ce140b26c43dfae95",
     "compressed_bytes": 163731,
     "original_bytes": 677391,
     "redacted": false,
-    "compression": "gzip"
+    "compression": "xz",
+    "original_gzip_sha256": "1f813271b543b56b07da187071cc996324a4597ecf54208593cdab45599590c9",
+    "bytes": 83448,
+    "decoded_sha256": "e8bb63efe8c951af2d821a43264f248be833583b2e26bc98a2c0aee862422529"
   }
 ]

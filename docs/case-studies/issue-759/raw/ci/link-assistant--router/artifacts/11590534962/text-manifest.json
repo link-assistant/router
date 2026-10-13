@@ -14,14 +14,18 @@
     "compression": "xz"
   },
   {
-    "path": "text-objects/ba/bad4e45680fe8e686f2e04d8d8158309459fef980ada6f94933356100c5f378c.gz",
-    "sha256": "f8997a658cb409818709ba9c24a41b2387c866ce485c00aff4cfb91acaf591bb",
+    "path": "text-objects/ba/bad4e45680fe8e686f2e04d8d8158309459fef980ada6f94933356100c5f378c.xz",
+    "sha256": "d0d0a4536d576ed63ddf105cae505f83c5dccc5938106899f4c86b3978ad8f8b",
     "compressed_bytes": 20360,
     "original_bytes": 167448,
     "redacted": false,
     "original_compressed_sha256": "196891d72c538130f1b811c1e0fd8a77ae9d9f4fb3f7eacec95450d535b10c5e",
     "original_storage_path": "link-assistant--router/artifacts/11590534962/text/coverage-summary.json.gz",
     "artifact_member_name": "coverage-summary.json",
-    "scrubbed_content_sha256": "bad4e45680fe8e686f2e04d8d8158309459fef980ada6f94933356100c5f378c"
+    "scrubbed_content_sha256": "bad4e45680fe8e686f2e04d8d8158309459fef980ada6f94933356100c5f378c",
+    "original_gzip_sha256": "f8997a658cb409818709ba9c24a41b2387c866ce485c00aff4cfb91acaf591bb",
+    "bytes": 15300,
+    "compression": "xz",
+    "decoded_sha256": "bad4e45680fe8e686f2e04d8d8158309459fef980ada6f94933356100c5f378c"
   }
 ]

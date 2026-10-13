@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-foundation--relative-meta-logic/runs/37725910296/attempt-1/logs/0_Issue 183 complete delivery.txt.gz",
-    "sha256": "68d6937ecfcec88268945372a5de259ece4a7c71e9ad16fa4b51c070824c79ac",
-    "bytes": 16604,
+    "path": "link-foundation--relative-meta-logic/runs/37725910296/attempt-1/logs/0_Issue 183 complete delivery.txt.xz",
+    "sha256": "ec7de32a70ee7f9c06edab7ad5fb4039136afaa3ee4492c6612c571bb3add41e",
+    "bytes": 13988,
     "uncompressed_bytes": 124628,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "68d6937ecfcec88268945372a5de259ece4a7c71e9ad16fa4b51c070824c79ac",
+    "compression": "xz",
+    "decoded_sha256": "1271a16f780bf2f336d658ccc811e661f3c87f0a5bc133e42db4cb1a10f24365"
   },
   {
     "path": "link-foundation--relative-meta-logic/runs/37725910296/attempt-1/logs/Issue 183 complete delivery/system.txt.gz",

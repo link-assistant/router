@@ -19,13 +19,14 @@
     "decoded_sha256": "c8286c8fbe4711ea8829245ddbaf8801c3eaf2b8d08615472af9f10508c6e612"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37539023966/attempt-1/logs/1_Dependency Review.txt.gz",
-    "sha256": "1a0b272b3469299fd0fcc3e9e25bb1cb3319df7ca918cd33d665f03c40960a44",
-    "bytes": 10178,
+    "path": "link-assistant--formal-ai/runs/37539023966/attempt-1/logs/1_Dependency Review.txt.xz",
+    "sha256": "c4045c1684012cd89c0f8660c77639aff36502129db23be387a90ff1879c5ae8",
+    "bytes": 8156,
     "uncompressed_bytes": 49108,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "acbb3aa8ba3055056b7507b9edbb40058a0eb7b75a7d8d5b623873845c3870a3"
+    "compression": "xz",
+    "decoded_sha256": "acbb3aa8ba3055056b7507b9edbb40058a0eb7b75a7d8d5b623873845c3870a3",
+    "original_gzip_sha256": "1a0b272b3469299fd0fcc3e9e25bb1cb3319df7ca918cd33d665f03c40960a44"
   },
   {
     "path": "link-assistant--formal-ai/runs/37539023966/attempt-1/logs/Dependency Review/system.txt.gz",

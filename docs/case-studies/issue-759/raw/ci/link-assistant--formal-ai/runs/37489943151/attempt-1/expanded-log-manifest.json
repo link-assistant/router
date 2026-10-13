@@ -14,11 +14,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37489943151/attempt-1/logs/4_Build formal-ai.txt.gz",
-    "sha256": "238a5dab14710911bcb39f104ac0298ca0748459729109610a66e1ca3bdf1328",
-    "bytes": 24687,
+    "path": "link-assistant--formal-ai/runs/37489943151/attempt-1/logs/4_Build formal-ai.txt.xz",
+    "sha256": "bf516a283cc0a4e7dbe11eb60b87e69daf302b02971077beede80bfb3993a639",
+    "bytes": 19752,
     "uncompressed_bytes": 108476,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "238a5dab14710911bcb39f104ac0298ca0748459729109610a66e1ca3bdf1328",
+    "compression": "xz",
+    "decoded_sha256": "9faa8a8e01ed34e25ee83357a472b900e244616132735910495a4c615cac80d7"
   },
   {
     "path": "link-assistant--formal-ai/runs/37489943151/attempt-1/logs/Build formal-ai/system.txt.gz",

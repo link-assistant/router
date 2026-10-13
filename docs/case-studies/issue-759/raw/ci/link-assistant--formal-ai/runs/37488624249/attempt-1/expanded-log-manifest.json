@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37488624249/attempt-1/logs/0_rust tier (dogfood regeneration gate).txt.gz",
-    "sha256": "1c6bbdf7947f64e0d85e654827ba23d798bbff8b242d513a91c4a62ceec95fff",
-    "bytes": 22628,
+    "path": "link-assistant--formal-ai/runs/37488624249/attempt-1/logs/0_rust tier (dogfood regeneration gate).txt.xz",
+    "sha256": "2805e1c65d343dc639ca4ecac399227db7e055d8c66f0d8d0dbbeacf90847257",
+    "bytes": 18176,
     "uncompressed_bytes": 98233,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "1c6bbdf7947f64e0d85e654827ba23d798bbff8b242d513a91c4a62ceec95fff",
+    "compression": "xz",
+    "decoded_sha256": "0dba8a11f5c8f73c01e64de86630f21b7cf1128135fa58caa06d1257b342677c"
   },
   {
     "path": "link-assistant--formal-ai/runs/37488624249/attempt-1/logs/rust tier (dogfood regeneration gate)/system.txt.gz",

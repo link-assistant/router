@@ -57,13 +57,14 @@
     "decoded_sha256": "517ccceb5ccb8fedd20f49b363ae0332f25dab31969c14826cdb79df0b402574"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37529113206/attempt-1/logs/11_Package VS Code extension (.vsix).txt.gz",
-    "sha256": "b26e156c707752e66384f4dda04c1644587e907f3d543d5b2d08efac9140e22e",
-    "bytes": 24097,
+    "path": "link-assistant--formal-ai/runs/37529113206/attempt-1/logs/11_Package VS Code extension (.vsix).txt.xz",
+    "sha256": "34db77c258f3d210c1f2661c20b858105c54d35bf8da92fee1ac42fdc5016e57",
+    "bytes": 15904,
     "uncompressed_bytes": 130317,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "e87b3e7b03d0cba8863e8f926f47f9085666f0e07ca7effe9b00f8199423d4f2"
+    "compression": "xz",
+    "decoded_sha256": "e87b3e7b03d0cba8863e8f926f47f9085666f0e07ca7effe9b00f8199423d4f2",
+    "original_gzip_sha256": "b26e156c707752e66384f4dda04c1644587e907f3d543d5b2d08efac9140e22e"
   },
   {
     "path": "link-assistant--formal-ai/runs/37529113206/attempt-1/logs/Package VS Code extension (.vsix)/system.txt.gz",

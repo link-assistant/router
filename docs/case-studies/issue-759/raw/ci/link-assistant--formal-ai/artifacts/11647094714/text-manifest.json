@@ -10,13 +10,16 @@
     "compression": "gzip"
   },
   {
-    "path": "text-objects/db/dba04685f4d0463c9266daae7c8d82e9a17a2005d7ec4fa3d1f54721d10dfb0f.gz",
+    "path": "text-objects/db/dba04685f4d0463c9266daae7c8d82e9a17a2005d7ec4fa3d1f54721d10dfb0f.xz",
     "artifact_member_name": "formal-ai-serve-8896.log",
     "scrubbed_content_sha256": "dba04685f4d0463c9266daae7c8d82e9a17a2005d7ec4fa3d1f54721d10dfb0f",
-    "sha256": "bf3e7989eb049c254424f3f9e98af63df4d1276c68c0d63551cbbb2bdcf4ab8b",
+    "sha256": "618c251c78f308723712d929a77fd26453881e1586f204553b0468fa0aca01a6",
     "compressed_bytes": 45831,
     "original_bytes": 169415,
     "redacted": false,
-    "compression": "gzip"
+    "compression": "xz",
+    "original_gzip_sha256": "bf3e7989eb049c254424f3f9e98af63df4d1276c68c0d63551cbbb2bdcf4ab8b",
+    "bytes": 15384,
+    "decoded_sha256": "dba04685f4d0463c9266daae7c8d82e9a17a2005d7ec4fa3d1f54721d10dfb0f"
   }
 ]

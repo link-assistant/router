@@ -18,13 +18,14 @@
     "decoded_sha256": "e1e2eb37d120a2974591f6612613b869cba603bc5984958b039e4d08d522af59"
   },
   {
-    "path": "link-assistant--formal-ai/runs/38050091410/attempt-1/logs/2_Build the corpus gate binary.txt.gz",
-    "sha256": "df066b28d30be4f43f548935ba69df9eb41bf91c4121d5239d42d2d70090d757",
-    "bytes": 23641,
+    "path": "link-assistant--formal-ai/runs/38050091410/attempt-1/logs/2_Build the corpus gate binary.txt.xz",
+    "sha256": "37bd83c954a6086372486cc059684464e34e57c899779f39dfa10abaf0a25a60",
+    "bytes": 18932,
     "uncompressed_bytes": 99481,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "ad7acb879bed073c170a917fe989c5bbf2badfc52ebf0f70e80dfa052a6330c1"
+    "compression": "xz",
+    "decoded_sha256": "ad7acb879bed073c170a917fe989c5bbf2badfc52ebf0f70e80dfa052a6330c1",
+    "original_gzip_sha256": "df066b28d30be4f43f548935ba69df9eb41bf91c4121d5239d42d2d70090d757"
   },
   {
     "path": "link-assistant--formal-ai/runs/38050091410/attempt-1/logs/Build the corpus gate binary/system.txt.gz",

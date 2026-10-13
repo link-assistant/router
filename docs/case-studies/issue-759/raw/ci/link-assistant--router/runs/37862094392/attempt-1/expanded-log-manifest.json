@@ -17,11 +17,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/16_Dependency Audit.txt.gz",
-    "sha256": "3459aef8d0f6d7223a918e2a09ad5a4bbeba4e3bb5c6f393fc5d8ae27ad70f7f",
-    "bytes": 20647,
+    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/16_Dependency Audit.txt.xz",
+    "sha256": "c14bc65ca3c40d409c94089397d0e546a74efef38cdb29dc8a99d0223bae2508",
+    "bytes": 16168,
     "uncompressed_bytes": 99714,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "3459aef8d0f6d7223a918e2a09ad5a4bbeba4e3bb5c6f393fc5d8ae27ad70f7f",
+    "compression": "xz",
+    "decoded_sha256": "d782a890b316924aab09352ea2a9dfe847a5cd90913b48c75c5cc8aa44dd7a1f"
   },
   {
     "path": "link-assistant--router/runs/37862094392/attempt-1/logs/Dependency Audit/system.txt.gz",
@@ -31,11 +34,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/17_Changelog Fragment Check.txt.gz",
-    "sha256": "91bf1d58c28649ec2dd3804e70126a33e81318396012741c3fd5f56ccc0be60b",
-    "bytes": 16406,
+    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/17_Changelog Fragment Check.txt.xz",
+    "sha256": "575905b3eea6cc1590adf47fa1ad98434c1f3ff7d034219cc8e1ea8c69df0ff9",
+    "bytes": 12268,
     "uncompressed_bytes": 90519,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "91bf1d58c28649ec2dd3804e70126a33e81318396012741c3fd5f56ccc0be60b",
+    "compression": "xz",
+    "decoded_sha256": "a67ab54cb19a70fa2578939fcaeb92b5a75563095fffac26172a153164cafcca"
   },
   {
     "path": "link-assistant--router/runs/37862094392/attempt-1/logs/Changelog Fragment Check/system.txt.gz",
@@ -59,11 +65,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/19_Version Modification Check.txt.gz",
-    "sha256": "f4737d3ffd70325f31a01bca46d64f602c0d9a0477ca9166c1d72c712e17a574",
-    "bytes": 16370,
+    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/19_Version Modification Check.txt.xz",
+    "sha256": "2b32d1f8b99c3e3d31cbd7c0c9db819ea3c13b39386f9a9c0759022b9e945494",
+    "bytes": 12280,
     "uncompressed_bytes": 89852,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "f4737d3ffd70325f31a01bca46d64f602c0d9a0477ca9166c1d72c712e17a574",
+    "compression": "xz",
+    "decoded_sha256": "80d46c37076fc2f2a9bd18f197287da8ca6dc7f07b45ff75001b0b278909275d"
   },
   {
     "path": "link-assistant--router/runs/37862094392/attempt-1/logs/Version Modification Check/system.txt.gz",
@@ -73,11 +82,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/21_Detect Changes.txt.gz",
-    "sha256": "fc2ccc3a843bb12776a6b7c90986d7f1c90e94f1f307892636661a47611d9421",
-    "bytes": 16459,
+    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/21_Detect Changes.txt.xz",
+    "sha256": "ae68c17e978afd83f1f82207f394d9e896a6047c7e91dca4b509ec2f1f6aaa70",
+    "bytes": 12356,
     "uncompressed_bytes": 90866,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "fc2ccc3a843bb12776a6b7c90986d7f1c90e94f1f307892636661a47611d9421",
+    "compression": "xz",
+    "decoded_sha256": "6bf2ba20e84fd4e9a80c7ff6dcc318a0d224980f105ec0613bb715ebfd4e6267"
   },
   {
     "path": "link-assistant--router/runs/37862094392/attempt-1/logs/Detect Changes/system.txt.gz",

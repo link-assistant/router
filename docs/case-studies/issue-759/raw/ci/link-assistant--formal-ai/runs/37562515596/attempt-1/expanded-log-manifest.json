@@ -14,11 +14,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37562515596/attempt-1/logs/14_E2E Tests (local web app) _ E2E Tests (local web app).txt.gz",
-    "sha256": "84b907e8ebeef757ccdaae5a4517a07bf6314cedfe86f619b40b49375aaf8a46",
-    "bytes": 21905,
+    "path": "link-assistant--formal-ai/runs/37562515596/attempt-1/logs/14_E2E Tests (local web app) _ E2E Tests (local web app).txt.xz",
+    "sha256": "dff3af9387204c05dd1cb30854662c049df106d78ce6e275e43753003fbbc0a7",
+    "bytes": 18256,
     "uncompressed_bytes": 98984,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "84b907e8ebeef757ccdaae5a4517a07bf6314cedfe86f619b40b49375aaf8a46",
+    "compression": "xz",
+    "decoded_sha256": "6bc14ccf8dbcda94691b4d285e5be062cf2c3d7d716f002cacfed16b54cec412"
   },
   {
     "path": "link-assistant--formal-ai/runs/37562515596/attempt-1/logs/E2E Tests (local web app) _ E2E Tests (local web app)/system.txt.gz",
@@ -28,11 +31,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37562515596/attempt-1/logs/16_Secrets Scan.txt.gz",
-    "sha256": "e5da17da8bb56015bb37399123a086046823245f22aafeeeb77b7e7e1f573b85",
-    "bytes": 20172,
+    "path": "link-assistant--formal-ai/runs/37562515596/attempt-1/logs/16_Secrets Scan.txt.xz",
+    "sha256": "eb14afd3f8f568a43845eba2f083f3cb08f6637fbdf1c3402a427151ce9ce934",
+    "bytes": 12820,
     "uncompressed_bytes": 114465,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "e5da17da8bb56015bb37399123a086046823245f22aafeeeb77b7e7e1f573b85",
+    "compression": "xz",
+    "decoded_sha256": "876af34a3b3d364e688f33f29b077978485ef0c4fc9faea98a5573fc03fac35d"
   },
   {
     "path": "link-assistant--formal-ai/runs/37562515596/attempt-1/logs/Secrets Scan/system.txt.gz",

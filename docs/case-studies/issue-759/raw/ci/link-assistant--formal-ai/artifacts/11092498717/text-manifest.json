@@ -1,13 +1,16 @@
 [
   {
-    "path": "text-objects/2d/2d0e0d232f75f7bea4b1562f5ea983eab30c44d0937608b6fdad2d5875e38aef.gz",
+    "path": "text-objects/2d/2d0e0d232f75f7bea4b1562f5ea983eab30c44d0937608b6fdad2d5875e38aef.xz",
     "artifact_member_name": "browser-lcov.info",
     "scrubbed_content_sha256": "2d0e0d232f75f7bea4b1562f5ea983eab30c44d0937608b6fdad2d5875e38aef",
-    "sha256": "cd17c38c01adab04c6a1ef481fe637bf6febcc6d7320bb6d35504eab37ebe9c9",
+    "sha256": "0e047a7710b1732b62594d2af934e9eff001d7bc2e6110f45d560c8670603e6c",
     "compressed_bytes": 152057,
     "original_bytes": 626241,
     "redacted": false,
-    "compression": "gzip"
+    "compression": "xz",
+    "original_gzip_sha256": "cd17c38c01adab04c6a1ef481fe637bf6febcc6d7320bb6d35504eab37ebe9c9",
+    "bytes": 77620,
+    "decoded_sha256": "2d0e0d232f75f7bea4b1562f5ea983eab30c44d0937608b6fdad2d5875e38aef"
   },
   {
     "path": "text-objects/c0/c020e040ab02ebbdf946ba802b9a8f28cbae996032be8d7406ecf3f1136647fd.gz",

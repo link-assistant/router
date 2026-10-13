@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--router/runs/37868201243/attempt-1/logs/0_Soak (ubuntu-24.04).txt.gz",
-    "sha256": "582b37534b613f3ccd08ff43f03c8e279bcf476d6656d0907bb20cb1e1aa7a23",
-    "bytes": 20058,
+    "path": "link-assistant--router/runs/37868201243/attempt-1/logs/0_Soak (ubuntu-24.04).txt.xz",
+    "sha256": "21ed33ae32409f3229063561d8f5f9e90707336eb4c4983ce2bf33e96aae77a7",
+    "bytes": 15904,
     "uncompressed_bytes": 93071,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "582b37534b613f3ccd08ff43f03c8e279bcf476d6656d0907bb20cb1e1aa7a23",
+    "compression": "xz",
+    "decoded_sha256": "40201613a0348779786a13588ef3c5a328340c67c0eb8891eb762168cbebd202"
   },
   {
     "path": "link-assistant--router/runs/37868201243/attempt-1/logs/Soak (ubuntu-24.04)/system.txt.gz",
@@ -14,11 +17,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--router/runs/37868201243/attempt-1/logs/1_Soak (macos-15).txt.gz",
-    "sha256": "a4106134c9102dc6ebaad04dbd2c74b97c081373a423210a025cc8854e5266d9",
-    "bytes": 18619,
+    "path": "link-assistant--router/runs/37868201243/attempt-1/logs/1_Soak (macos-15).txt.xz",
+    "sha256": "c2a1e5f6cd81ac468e99bc5ac467727ac09e6c1dec94c7ad166a88c62d8944be",
+    "bytes": 14640,
     "uncompressed_bytes": 91714,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "a4106134c9102dc6ebaad04dbd2c74b97c081373a423210a025cc8854e5266d9",
+    "compression": "xz",
+    "decoded_sha256": "525376c0ec517b412b5ce849c675ba733c7a1b9375943aa2a1422c00592d27ef"
   },
   {
     "path": "link-assistant--router/runs/37868201243/attempt-1/logs/Soak (macos-15)/system.txt.gz",

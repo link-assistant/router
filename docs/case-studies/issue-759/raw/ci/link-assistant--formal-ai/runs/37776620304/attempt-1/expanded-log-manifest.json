@@ -1,12 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37776620304/attempt-1/logs/0_Check Links.txt.gz",
-    "sha256": "f00a21670c807b899b559fa684b579f31b8739f82ea905e90b7d3ec20eb0005d",
-    "bytes": 23655,
+    "path": "link-assistant--formal-ai/runs/37776620304/attempt-1/logs/0_Check Links.txt.xz",
+    "sha256": "547b519328022d71cddbf78cae7b6ee877f5cda5e92cb62cd28f26c7fea4c7b7",
+    "bytes": 18240,
     "uncompressed_bytes": 184474,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "cd19b3612ea43c8d6dc13a86322f1c56e1f9949082918224d20778fe48e5f163"
+    "compression": "xz",
+    "decoded_sha256": "cd19b3612ea43c8d6dc13a86322f1c56e1f9949082918224d20778fe48e5f163",
+    "original_gzip_sha256": "f00a21670c807b899b559fa684b579f31b8739f82ea905e90b7d3ec20eb0005d"
   },
   {
     "path": "link-assistant--formal-ai/runs/37776620304/attempt-1/logs/Check Links/system.txt.gz",

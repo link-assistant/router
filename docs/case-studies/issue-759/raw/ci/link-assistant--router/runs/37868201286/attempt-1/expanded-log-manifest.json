@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--router/runs/37868201286/attempt-1/logs/0_Fuzz sse_stream_translators.txt.gz",
-    "sha256": "e6a29fec6d7bc439392ca3d7cd66b09371cbd7b12296f0eebdd9c4b46740debf",
-    "bytes": 21209,
+    "path": "link-assistant--router/runs/37868201286/attempt-1/logs/0_Fuzz sse_stream_translators.txt.xz",
+    "sha256": "bc03565f1c31672d5a28ad97be28455d05a02dd8f6b4ddd99a2a194922178d22",
+    "bytes": 16724,
     "uncompressed_bytes": 110822,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "e6a29fec6d7bc439392ca3d7cd66b09371cbd7b12296f0eebdd9c4b46740debf",
+    "compression": "xz",
+    "decoded_sha256": "981e8e3eeb477fcd597be7956081444457b4757059c6fe7367686fcaab73640b"
   },
   {
     "path": "link-assistant--router/runs/37868201286/attempt-1/logs/Fuzz sse_stream_translators/system.txt.gz",

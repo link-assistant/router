@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/36742615944/attempt-1/logs/0_Build the census and upload it.txt.gz",
-    "sha256": "cddaef21142dbe0495448e140b5106900c5a282aac86f2f4d0170ee917647530",
-    "bytes": 24436,
+    "path": "link-assistant--formal-ai/runs/36742615944/attempt-1/logs/0_Build the census and upload it.txt.xz",
+    "sha256": "a979a6115af5b721724e12a7f3de03aeef1fce5e13a571c97d72d306690d9352",
+    "bytes": 19432,
     "uncompressed_bytes": 108672,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "cddaef21142dbe0495448e140b5106900c5a282aac86f2f4d0170ee917647530",
+    "compression": "xz",
+    "decoded_sha256": "2a97f8b1fbff40338593e529938e127b8b191998ab4f569a77e3311aa76cffb9"
   },
   {
     "path": "link-assistant--formal-ai/runs/36742615944/attempt-1/logs/Build the census and upload it/system.txt.gz",

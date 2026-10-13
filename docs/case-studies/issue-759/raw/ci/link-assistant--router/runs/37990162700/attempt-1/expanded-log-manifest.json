@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--router/runs/37990162700/attempt-1/logs/0_Build amd64 runtime (no push).txt.gz",
-    "sha256": "f2178e42085750eadd0b9f349003e6060a721e29eddf6cebf46bce17bcf2be9c",
-    "bytes": 14390,
+    "path": "link-assistant--router/runs/37990162700/attempt-1/logs/0_Build amd64 runtime (no push).txt.xz",
+    "sha256": "3ffae30c200851b74ae72d5c2ab67383442cd55f5913070e7c32d310475754e4",
+    "bytes": 12092,
     "uncompressed_bytes": 64381,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "f2178e42085750eadd0b9f349003e6060a721e29eddf6cebf46bce17bcf2be9c",
+    "compression": "xz",
+    "decoded_sha256": "fe1c181348fbf8ea22230fa90efd233c8bdd7cecab4b8d172cf0099c605fc419"
   },
   {
     "path": "link-assistant--router/runs/37990162700/attempt-1/logs/Build amd64 runtime (no push)/system.txt.gz",

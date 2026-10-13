@@ -34,11 +34,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/4_semver.txt.gz",
-    "sha256": "c06166062de3ee2d9817753eaa3543092ad087c6b76b575be8f5cece5437dcf6",
-    "bytes": 22342,
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/4_semver.txt.xz",
+    "sha256": "39fb2d6d3200691be5b1e1e74c22ac697e4b291c2686a1dfeb7e30569cd50e87",
+    "bytes": 16848,
     "uncompressed_bytes": 121447,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "c06166062de3ee2d9817753eaa3543092ad087c6b76b575be8f5cece5437dcf6",
+    "compression": "xz",
+    "decoded_sha256": "7c1cc358d3b876630a3a380205ebb3ff7d5eac41f7023a34717ac5417bebbcc1"
   },
   {
     "path": "link-assistant--router/runs/37892592252/attempt-1/logs/semver/system.txt.gz",
