@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import {types as utilTypes} from 'node:util';
 import { resolve } from 'node:path';
 import { captureSourceCorpus, sourceCorpusPaths, sourceCorpusText } from '../source-corpus.mjs';
 import { resolveModuleGraph } from '../project.mjs';
@@ -42,7 +43,7 @@ export function captureSerializationContext({ root, paths, entry = 'src/lib.rs',
   const {source:caseBody,...caseSource}=caseInput;
   const dependencyEvidence={schema:dependencies.schema,manifestSha256:dependencies.manifestSha256,lockSha256:dependencies.lockSha256,sourceProfileSha256:dependencies.sourceProfileSha256,edition:dependencies.edition,rustVersion:dependencies.rustVersion,features:dependencies.features,packages:dependencies.packages,standardCore:dependencies.standardCore};
   const description = freeze({ schema: 'original-serialization-context-v1', entry, compilationProfile: profile, sourceSetSha256: corpus.sourceSetSha256, sources: corpus.sources, cargo: corpus.cargo, dependenciesDigest: dependencies.digest, caseSource, dependencyEvidence, runtimeAuthority: false, generatedTraitBehavior: false });
-  contexts.set(description, { corpus, graph, modules, scopes, derive, dependencies, json, namespaceResolvers:new Map() });
+  contexts.set(description, { corpus, graph, modules, scopes, derive, dependencies, json, namespaceResolvers:new Map(),metadataCache:new Map(),metadataCacheBytes:0 });
   return description;
 }
 export const isSerializationContext = context => !!context && contexts.has(context);
@@ -172,14 +173,43 @@ function declaration(s,owner,direction) {
   const rows=groups(tokens.slice(at+3,-1));if(rows.length>SERIALIZATION_LIMITS.variants)refuse('Serialization variant budget exceeded',module);
   return {...common,variants:rows.map(row=>{const first=head(row),name=row[first];if(name?.type!=='ident')refuse('Serialization variant needs an original identifier',module,span(row));let layout='unit',members=[];if(first+1<row.length){if(row[first+1].text!=='{'||matching(row,first+1)!==row.length-1)refuse('Tuple/discriminant variant requires a separately proven projection',module,span(row));layout='struct';members=fields(s,module,row.slice(first+2,-1),input);}return {name:name.text,span:span(row),attributes:attributes(input,row).filter(attribute=>attribute.position==='variant'),layout,fields:members};})};
 }
+// Only this private capture owns these source/profile/dependency inputs. Cached
+// rows never acquire parsed authority; every public result has a fresh identity.
+const META_CACHE_ENTRIES=128,META_CACHE_BYTES=16*1024*1024;
+function rootSnapshot(roots) {
+  if(!Array.isArray(roots)||utilTypes.isProxy(roots)||Object.getPrototypeOf(roots)!==Array.prototype)refuse('Roots require an ordinary original data array');
+  const length=Object.getOwnPropertyDescriptor(roots,'length')?.value;
+  if(!Number.isSafeInteger(length)||length<1)refuse('Roots must be explicit original crate-qualified data types');
+  for(const name of Reflect.ownKeys(roots))if(name!=='length'&&(typeof name!=='string'||!(/^(0|[1-9][0-9]*)$/).test(name)||Number(name)>=length))refuse('Roots cannot have incidental properties or custom iteration');
+  const result=[];
+  for(let index=0;index<length;index++) {
+    const field=Object.getOwnPropertyDescriptor(roots,String(index));
+    if(!field||!('value'in field)||!field.enumerable||typeof field.value!=='string'||!/^crate(?:::[A-Za-z_][A-Za-z0-9_]*)+$/.test(field.value))refuse('Roots require exact own source-qualified string data; getters and holes are refused');
+    result.push(field.value);
+  }
+  return Object.freeze(result);
+}
+const freshMetadata=value=>freeze(structuredClone(value));
 export function extractSerializationSchema(context,{roots,direction='both'}={}) {
   if(!['both','serialize','deserialize'].includes(direction))refuse('Serialization direction must have an actual checked trait identity');
-  const s=state(context);if(!Array.isArray(roots)||!roots.length||roots.some(value=>typeof value!=='string'||!/^crate(?:::[A-Za-z_][A-Za-z0-9_]*)+$/.test(value)))refuse('Roots must be explicit original crate-qualified data types');
+  const s=state(context);roots=rootSnapshot(roots);
+  const cacheKey=JSON.stringify([direction,roots]),cached=s.metadataCache.get(cacheKey);
+  if(cached)return freshMetadata(cached.value);
   const queue=[...new Set(roots)],types=[];const seen=new Set();
   function reachable(type){if(type.kind==='named')queue.push(type.owner);if(type.type)reachable(type.type);}
   while(queue.length){const owner=queue.shift();if(seen.has(owner))continue;seen.add(owner);if(seen.size>SERIALIZATION_LIMITS.types)refuse('Reachable serialization type budget exceeded');const value=declaration(s,owner,direction);types.push(value);for(const member of value.fields??value.variants.flatMap(variant=>variant.fields))reachable(member.type);}
   const meta={schema:'original-serialization-meta-v1',...(direction!=='both'?{direction}:{}),context:{entry:context.entry,compilationProfile:context.compilationProfile,sourceSetSha256:context.sourceSetSha256,dependenciesDigest:context.dependenciesDigest,dependencyEvidence:context.dependencyEvidence,caseSource:context.caseSource,cargo:context.cargo},roots:[...new Set(roots)],types:types.sort((a,b)=>a.owner<b.owner?-1:a.owner>b.owner?1:0),obligations:['Bounded data layout projection only; custom serializers, generated traits and whole-crate runtime parity remain unproved'],runtimeAuthority:false,generatedTraitBehavior:false};
-  return freeze(meta);
+  const value=freeze(meta),bytes=Buffer.byteLength(JSON.stringify(value));
+  // Default bodies still run the actual Host parser/checker guards on every
+  // extraction. Their proof-bearing results are deliberately not memoized.
+  const bodyProof=value.types.some(type=>(type.fields??type.variants.flatMap(variant=>variant.fields)).some(field=>field.defaultProof));
+  if(!bodyProof&&bytes<=META_CACHE_BYTES) {
+    while(s.metadataCache.size>=META_CACHE_ENTRIES||s.metadataCacheBytes+bytes>META_CACHE_BYTES) {
+      const oldest=s.metadataCache.keys().next().value;const row=s.metadataCache.get(oldest);s.metadataCache.delete(oldest);s.metadataCacheBytes-=row.bytes;
+    }
+    s.metadataCache.set(cacheKey,{value,bytes});s.metadataCacheBytes+=bytes;
+  }
+  return freshMetadata(value);
 }
 
 // Full original graph discovery is private-context-backed. Unknown derives,

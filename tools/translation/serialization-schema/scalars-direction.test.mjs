@@ -102,13 +102,15 @@ test('only checked Option omission helpers remove None fields from serialization
   });
   fixture(record('#[serde(skip_serializing_if="opaque")]note:Option<String>'),captured=>assert.throws(()=>projectSerializationDescriptor(checked(captured)),/Option::is_none/));
 });
-test('nested Option, opaque defaults and non-Option default functions remain explicit refusals',()=>{
-  for(const fields of ['value:Option<Option<u8>>','#[serde(default="make_value")]value:u8','#[serde(default)]value:String','#[serde(with="custom")]value:u8'])fixture(record(fields),captured=>assert.throws(()=>projectSerializationDescriptor(checked(captured)),/Nested Option|opaque|default|separate|profile/));
-});
-test('actual original ServerSelection and TunnelStatusReport run through the shared scalar and nullable descriptor consumer',()=>{
+for(const fields of ['value:Option<Option<u8>>','#[serde(default="make_value")]value:u8','#[serde(default)]value:String','#[serde(with="custom")]value:u8']) {
+  test('nested Option or opaque/default hook remains an explicit refusal: '+fields,()=>fixture(record(fields),captured=>assert.throws(()=>projectSerializationDescriptor(checked(captured)),/Nested Option|opaque|default|separate|profile/)));
+}
+test('actual original ServerSelection runs through the shared scalar and nullable descriptor consumer',()=>{
   const selection=createSerializationCodec(checked(context(),'crate::operation_reports::ServerSelection'));
   assert.deepEqual(plain(selection.deserialize('{"source":"environment","token_configured":true}')),{source:'environment',url:null,token_configured:true});
   assert.equal(selection.serialize({source:'environment',token_configured:false}),'{"source":"environment","url":null,"token_configured":false}');
+});
+test('actual original TunnelStatusReport runs through the shared scalar and nullable descriptor consumer',()=>{
   const tunnel=createSerializationCodec(checked(context(),'crate::operation_reports::TunnelStatusReport'));
   const input={running:true,via:'ssh',server:'example',local_port:8080,remote_port:443,health_status:200,models_status:null,models_checked:false,output:['ready']};
   assert.deepEqual(plain(tunnel.deserialize(tunnel.serialize(input))),input);assert.throws(()=>tunnel.serialize({...input,local_port:65536}),/bounds/);

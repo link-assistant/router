@@ -7,23 +7,43 @@ import {isPlainSourceIdentifier} from './module-paths.mjs';
 import {originalClapDocumentFeaturePlan,originalClapValueDocuments} from './derive-clap-documentation.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
-const cache=new WeakMap(),proofs=new WeakMap();
+const cache=new WeakMap(),proofs=new WeakMap(),sourceInventories=new WeakMap();
 const significant=source=>rustTokens(source).filter(token=>token.type!=='comment');
 const text=nodes=>nodes.map(node=>node.tag==='slot'?'#'+node.name:node.tag==='repeat'?'#('+text(node.nodes)+')'+(node.separator?.text??'')+node.quantifier:node.tag==='group'?node.delimiter+text(node.nodes)+({'(':')','[':']','{':'}'}[node.delimiter]):node.text).join(' ');
 
+// Retain only static syntax scalar values inside the actual dependency issuer.
+// Rule matching, callback predicates and fresh evidence remain call-local.
+function sourceInventory(dependencies,packageName,path){
+  const original=deriveDependencySource(dependencies,packageName,path);
+  let origins=sourceInventories.get(dependencies);if(!origins){origins=new Map();sourceInventories.set(dependencies,origins);}
+  let value=origins.get(original);
+  if(value){if(value.source!==original.source||value.sha256!==original.sha256||!Object.isFrozen(original))throw new TypeError('Clap retained original syntax source changed');return value;}
+  if(!Object.isFrozen(original))throw new TypeError('Clap original syntax source is not frozen');
+  value={source:original.source,sha256:original.sha256,significant:null,declarations:null};origins.set(original,value);return value;
+}
+function originalSignificant(dependencies,packageName,path){
+  const inventory=sourceInventory(dependencies,packageName,path);
+  if(!inventory.significant)inventory.significant=freeze(significant(inventory.source).map(({text,type,start,end})=>({text,type,start,end})));
+  return inventory.significant;
+}
+function originalDeclarations(dependencies,path){
+  const inventory=sourceInventory(dependencies,'clap_derive',path);if(inventory.declarations)return inventory.declarations;
+  const source=inventory.source,roots=sourceItems(source),items=[...roots];
+  for(const impl of roots.filter(item=>item.term==='impl')) {
+    const open=impl.tokens.find(token=>token.text==='{'),close=impl.tokens.at(-1);
+    items.push(...sourceItems(source.slice(open.end,close.start)).map(item=>({...item,start:item.start+open.end,end:item.end+open.end})));
+  }
+  inventory.declarations=freeze(items.map(({term,name,start,end})=>({term,name,start,end})));return inventory.declarations;
+}
 function rule(dependencies,packageName,path,written,role,count=1) {
-  const original=deriveDependencySource(dependencies,packageName,path),tokens=significant(original.source),expected=significant(written),rows=[];
+  const original=deriveDependencySource(dependencies,packageName,path),tokens=originalSignificant(dependencies,packageName,path),expected=significant(written),rows=[];
   for(let at=0;at<=tokens.length-expected.length;at++)if(expected.every((token,index)=>token.text===tokens[at+index].text&&token.type===tokens[at+index].type)) {
     const span={start:tokens[at].start,end:tokens[at+expected.length-1].end};rows.push({role,package:packageName,source:path,sourceSha256:original.sha256,span,sha256:hash(original.source.slice(span.start,span.end))});
   }
   if(rows.length!==count)throw new TypeError('Clap original source binding changed or is ambiguous: '+role);return rows;
 }
 function definition(dependencies,path,name,predicate=()=>true) {
-  const original=deriveDependencySource(dependencies,'clap_derive',path),roots=sourceItems(original.source),items=[...roots];
-  for(const impl of roots.filter(item=>item.term==='impl')) {
-    const open=impl.tokens.find(token=>token.text==='{'),close=impl.tokens.at(-1);
-    items.push(...sourceItems(original.source.slice(open.end,close.start)).map(item=>({...item,start:item.start+open.end,end:item.end+open.end})));
-  }
+  const original=deriveDependencySource(dependencies,'clap_derive',path),items=originalDeclarations(dependencies,path);
   const matches=items.filter(item=>item.term==='fn'&&item.name===name&&predicate(original.source.slice(item.start,item.end)));
   if(matches.length!==1)throw new TypeError('Clap original generator definition is not unique: '+name);
   const item=matches[0];return {source:path,sourceSha256:original.sha256,span:{start:item.start,end:item.end},sha256:hash(original.source.slice(item.start,item.end))};

@@ -104,18 +104,25 @@ test('whole original response affinity selectors retain certified source and lit
   });
 });
 
-test('whole original standard-default-helper selectors retain bodies and unit layout',async()=>{
-  const bridge=original('src/bridge_selection.rs'),accounts=original('src/accounts.rs');
-  for(const {pin,result}of [bridge,accounts]){
+function checkedOriginalHelper(path) {
+  const value=original(path),{pin,result}=value;
+  {
     for(const method of pin.methods)assert.deepEqual(result.meta.checkedMethods.find(entry=>entry.name===method.owner+'.'+method.name)?.span,method.span);
     assert.equal(result.meta.runtimeParity,false);assert.ok(result.meta.refused.length);
     assert.ok(result.meta.deriveNamespaceFootprints.certificates.some(entry=>entry.builtinDefault?.generatedImplBehavior===false));
   }
+  return value;
+}
+test('whole original bridge standard-default-helper selector retains body and unit layout',async()=>{
+  const bridge=checkedOriginalHelper('src/bridge_selection.rs');
   await verifyTypedTargets(expose(bridge.result,[['BridgeModelPolicy','name','originalPolicyName']]),(_api,_result,module)=>{
     assert.equal(module.originalPolicyName(tag('FirstAdvertised')),'first-advertised');
     assert.equal(module.originalPolicyName(tag('LastAdvertised')),'last-advertised');
     assert.throws(()=>module.originalPolicyName(tag('Invented')),TypeError);
   });
+});
+test('whole original account standard-default-helper selector retains body and unit layout',async()=>{
+  const accounts=checkedOriginalHelper('src/accounts.rs');
   await verifyTypedTargets(expose(accounts.result,[['SelectionStrategy','from_str_opt','originalStrategy']]),(_api,_result,module)=>{
     for(const [value,name]of [['rr','RoundRobin'],[' roundrobin ','RoundRobin'],['WEIGHTED_ROUND_ROBIN','WeightedRoundRobin'],['fillfirst','Priority'],['quota-first','LeastUsed']])assert.deepEqual(module.originalStrategy(value),tag('Some',{field0:tag(name)}));
     for(const value of ['','unsupported'])assert.deepEqual(module.originalStrategy(value),tag('None'));

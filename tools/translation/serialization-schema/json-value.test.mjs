@@ -130,10 +130,14 @@ test('bounded recursive JSON domains reject excessive depth and escaped wire exp
     assert.throws(()=>codec.serialize({payload:text('\u0000'.repeat(200000))}),/bounded source contract/);
   });
 });
-test('actual Serialize-only report DTOs use the same Value adapter while remaining DTO obstacles stay explicit',()=>{
+test('actual Serialize-only report DTO uses the same Value adapter',()=>{
   const report=createSerializationCodec(checked(context(),'crate::providers_cli::ProviderImportReport'));
   assert.equal(report.deserialize,undefined);assert.equal(report.serialize({complete:true,results:[text('provider')]}),'{"complete":true,"results":["provider"]}');
+});
+test('actual ClientRepresentation decoding profile remains refused',()=>{
   const both=checked(context(),'crate::operation_reports::ClientRepresentation','both');assert.throws(()=>createSerializationCodec(both),/decoding profile remains refused/);
+});
+test('actual OpenAIResponseRequest retains its original f32 obstacle',()=>{
   assert.throws(()=>checked(context(),'crate::responses::OpenAIResponseRequest'),/route: f32/);
 });
 test('shared JS and TS descriptor data carry bounded external owners and never widen full trait or parser authority',async()=>{

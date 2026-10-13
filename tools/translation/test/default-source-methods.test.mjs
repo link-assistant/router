@@ -20,13 +20,13 @@ function alias(result,type,name='originalDefault'){
 }
 function setup(source){const captured=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),modules=captured.views.map(sourceView=>({file:'src/lib.rs',path:sourceView.modulePath,source,sourceView,compilationProfile:PRODUCTION_PROFILE,configurationCondition:sourceView.configurationCondition})),derive=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),context=createDefaultSourceContext(derive);return {context,module:defaultSourceContextFacts(context).modules[0]};}
 
-test('actual generated primitive field Default calls execute checked IR in JS and strict TS',async()=>{
-  for(const types of [['u8'],['u16','bool','i16'],['u32','i32','u64','bool','i64'],['usize','isize','i8','bool','u8']]){
+for(const types of [['u8'],['u16','bool','i16'],['u32','i32','u64','bool','i64'],['usize','isize','i8','bool','u8']]) {
+  test('actual generated primitive field Default '+types.join('/')+' executes checked IR in JS and strict TS',async()=>{
     const count=types.length,fields=types.map((type,index)=>`field_${index}:${type}`).join(','),result=compile(`#[derive(Default)] struct Payload{${fields}} pub fn make()->Payload{Payload::default()}`);
     assert.deepEqual(result.meta.refused,[]);assert.equal(result.meta.checkedGeneratedMethods[0].name,'Payload.default');
     await verifyTypedTargets(result,api=>{const value=api.make();assert.equal(value.$,'Payload');for(let index=0;index<count;index++)assert.equal(value['field_'+index],types[index]==='bool'?false:0n);assert.notStrictEqual(api.make(),value);},{childTimeoutMs:30000});
-  }
-});
+  });
+}
 test('actual manual static Default body and ordinary static dispatch preserve custom values',async()=>{
   for(const trait of ['Default','core::default::Default','std::default::Default']){
     const result=compile(`struct Payload{flag:bool,value:u32} impl ${trait} for Payload{fn default()->Self{Self{flag:true,value:17}}} pub fn make()->Payload{Payload::default()}`);

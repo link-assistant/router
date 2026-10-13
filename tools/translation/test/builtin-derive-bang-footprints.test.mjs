@@ -85,7 +85,8 @@ test('custom Copy stays unresolved and bounded generic Copy retains only its zer
   const joined=createDeriveBangContext({deriveContext:args.context});assert.equal(joined.certificates[0].dimensions.bangMacroComplete,false);assert.ok(joined.certificates[0].residualOwners.some(owner=>owner.target?.join('::')==='serde::Serialize'));
 });
 
-test('complete unchanged SubscriptionProvider and CatalogRecord preserve residual owners and parents',{timeout:60_000},()=>{
+let completeOriginalBuiltin;
+test('complete unchanged SubscriptionProvider and CatalogRecord retain original input and individual owner proofs',{timeout:60_000},()=>{
   const original=originalCsvContext(),paths=original.inputs.sources.map(value=>value.source).filter(path=>path.endsWith('.rs'));
   const graph=resolveModuleGraph({entry:'src/lib.rs',paths,readSource:original.source,compilationProfile:PRODUCTION_PROFILE});
   const context=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE});
@@ -98,6 +99,11 @@ test('complete unchanged SubscriptionProvider and CatalogRecord preserve residua
   const recordAttribute=record.attributes.find(value=>value.derives?.some(path=>path[0]==='Eq'));
   const eq=proveBuiltinDeriveBangFootprint({context,certificate:record,invocation:{path:['Eq'],attributeSpan:recordAttribute.span}});assert.equal(eq.selectedOwnerBangComplete,true);assert.equal(eq.route.typedSource.fields.length,8);assert.equal(eq.generatedImplBehavior,false);
   const providerEq=proveBuiltinDeriveBangFootprint({context,certificate:provider,invocation:{path:['Eq'],attributeSpan:attribute.span}});assert.equal(providerEq.route.typedSource.inputStyle,'unit-enum');assert.equal(providerEq.route.typedSource.assertionCount.maximum,0);
+  completeOriginalBuiltin={context,provider,record};
+});
+test('complete unchanged SubscriptionProvider and CatalogRecord preserve full-graph residual owners and parents',{timeout:60_000},()=>{
+  assert.ok(completeOriginalBuiltin,'whole original input and owner proofs must be checked');
+  const {context,provider,record}=completeOriginalBuiltin;
   const outputs=createDeriveBangContext({deriveContext:context});
   const providerOutput=outputs.certificates.find(value=>value.source===provider.source&&value.span.start===provider.span.start);assert.equal(providerOutput.dimensions.bangMacroComplete,false);assert.ok(providerOutput.residualOwners.some(owner=>owner.target?.[0]==='schemars'));
   assert.equal(outputs.certificates.find(value=>value.source===record.source&&value.span.start===record.span.start).dimensions.bangMacroComplete,false);

@@ -106,12 +106,14 @@ test('one-way traits keep their actual callable direction with aliases and primi
     else {assert.equal(codec.serialize,undefined);assert.equal(codec.deserialize('{}').value,false);assert.equal(codec.deserialize('{"old":true}').value,true);}
   });
 });
-test('actual private Claude and subscription DTOs decode original nested vendor aliases and exact signed timestamps',()=>{
+test('actual private Claude DTO decodes original vendor aliases and exact signed timestamps',()=>{
   const claude=createSerializationCodec(checked(context(),'crate::oauth::ClaudeCredentials','deserialize'));
   assert.equal(claude.serialize,undefined);
   const value=claude.deserialize('{"claudeAiOauth":{"accessToken":"access","refreshToken":"refresh","expiresAt":9223372036854775807}}');
   assert.equal(value.claude_ai_oauth.access_token,'access');assert.equal(value.claude_ai_oauth.expires_at,9223372036854775807n);
   assert.throws(()=>claude.deserialize('{"accessToken":"one","access_token":"two"}'),/Duplicate field access_token/);
+});
+test('actual private subscription DTO decodes original nested aliases and exact signed timestamps',()=>{
   const raw=createSerializationCodec(checked(context(),'crate::subscription::RawCredentials','deserialize'));
   const nested=raw.deserialize('{"tokens":{"accessToken":"access","accountId":"owner"},"expiryDate":-9223372036854775808}');
   assert.equal(nested.tokens.account_id,'owner');assert.equal(nested.expiry_date,-9223372036854775808n);

@@ -108,11 +108,17 @@ test('neutral and explicit family contexts never borrow each other or erase unkn
   assert.equal(parserSourceScope(model(resolve(windows)),resolve(windows).scopes).unresolvedBangMacroScope,false);
 });
 
-test('complete unchanged original library keeps omitted standard owners and unrelated root gaps',{timeout:60_000},()=>{
+let completeOriginalInput;
+test('complete unchanged original library captures its whole original source/derive graph',{timeout:60_000},()=>{
   const original=originalCsvContext(),paths=original.inputs.sources.map(value=>value.source).filter(path=>path.endsWith('.rs'));
   const graph=resolveModuleGraph({entry:'src/lib.rs',paths,readSource:original.source,compilationProfile:PRODUCTION_PROFILE});
   const deriveContext=createDeriveFootprintContext({dependencies,modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});
   const input={modules:graph.modules,deriveContext,externalModules:deriveFootprintExternalModules(deriveContext),compilationProfile:PRODUCTION_PROFILE};
+  completeOriginalInput={input,graph,deriveContext};
+});
+test('complete unchanged original library keeps omitted standard owners and unrelated root gaps',{timeout:60_000},()=>{
+  assert.ok(completeOriginalInput,'the complete original graph must be captured');
+  const {input,graph,deriveContext}=completeOriginalInput;
   const context=createDeriveBangContext(input),record=context.certificates.find(value=>value.source==='src/model_catalog.rs'&&value.span.start===1956);
   assert.ok(record);assert.equal(record.sourceSha256,'2972dab979148c9b1deb3ec2cfb4e2800e8445585044d93c629e83538be01ed5');
   assert.deepEqual(record.span,{start:1956,end:2355});assert.equal(record.itemSha256,'3a3ce14fae59aa072caeee14af08b6e3810b15caccb661c9165ccab3dc43132a');
