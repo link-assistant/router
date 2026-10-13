@@ -11,6 +11,7 @@ import {TranslationError} from './vendor/meta-language/translation/diagnostics.j
 import {createHash} from 'node:crypto';
 import {typeKey} from './checked-types.mjs';
 import {nonCopyTraitOwner} from './copy-trait-owners.mjs';
+import {proveDefaultOriginalMember,assertDefaultOriginalMember} from './default-trait-source.mjs';
 
 const originalMethodMembers=new WeakMap(),originalMethodLowerings=new WeakMap();
 export function originalMethodMember(method){const state=originalMethodMembers.get(method);if(!state||metadataDigest(method)!==state.methodDigest)throw new TypeError('Method source member is unsealed, copied or changed');return state;}
@@ -150,6 +151,16 @@ export function extractImplDeclarations(source,{sourcePath=null,modulePath=[],so
 export function lowerSharedMethodTokens(method,typePath=method.typePath) {
   if (!method.loweringReady || ![null,'shared'].includes(method.receiver)) throw new TranslationError('unsupported','method receiver, trait or capability obligations remain unresolved',method.span);
   return lowerMethodTokens(method,typePath,'shared');
+}
+// Only a genuine captured original member can discharge the one standard
+// Default trait obligation. No other trait/body obligation is removed.
+export function proveDefaultMethodAdmission(context,method,typePath){
+  return proveDefaultOriginalMember(context,{method,original:originalMethodMember(method),typePath});
+}
+export function lowerDefaultMethodTokens(method,typePath,proof){
+  assertDefaultOriginalMember(proof,method,originalMethodMember(method));
+  if(JSON.stringify(typePath)!==JSON.stringify(proof.typePath))throw new TypeError('Original Default resolved target differs from its source proof');
+  return lowerMethodTokens(method,typePath,'default');
 }
 function lowerMethodTokens(method,typePath,mode,certificate=null) {
   if (!Array.isArray(typePath) || !typePath.length || typePath.some(name=>typeof name !== 'string' || !/^(?:r#)?[\p{L}_][\p{L}\p{N}_]*$/u.test(name))) throw new TranslationError('syntax','method lowering requires a resolved type path',method.span);

@@ -14,6 +14,9 @@ import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript
 import {declarationRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
 import {projectCopyEvidence} from './project-copy.mjs';
+import {createDefaultSourceContext} from './default-trait-source.mjs';
+import {originalDefaultGeneratedMethods,assertOriginalDefaultGeneratedMethod} from './default-source-ir.mjs';
+import {proveDefaultMethodAdmission,lowerDefaultMethodTokens} from './impl-resolver.mjs';
 import {admittedHostData} from './extensions/source-namespaces.mjs';
 import { tokenizeRust } from './extensions/lexical.mjs';
 import { TranslationError } from './vendor/meta-language/translation/diagnostics.js';
@@ -63,7 +66,10 @@ export function originalProjectDeclarationRefusalRange(surface,path){
   const actualPath=copyMetadata(path);
   if(!Array.isArray(actualPath)||actualPath.length!==state.path.length||actualPath.some((part,index)=>part!==state.path[index]))return null;
   let actual;
-  if(state.structural){
+  if(state.defaultGenerated){
+    const origin=state.defaultGenerated;assertOriginalDefaultGeneratedMethod(origin.surface,origin.context);
+    actual={start:origin.surface.span.start+origin.offset,end:origin.surface.span.end+origin.offset};
+  }else if(state.structural){
     const origin=state.structural,lowering=originalMethodLowering(origin.lowered);
     if(lowering.method!==origin.method||lowering.original!==origin.original||metadataDigest(state.parent)!==origin.parentDigest)throw new TypeError('Structural method refusal original lowering or parsed parent changed');
     actual={start:origin.method.span.start+origin.offset,end:origin.method.span.end+origin.offset};
@@ -105,7 +111,7 @@ const relocate = (node, offset) => Array.isArray(node) ? node.map(value => reloc
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope','defaultSourceProof'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -261,6 +267,8 @@ export function translateProject(options) {
   if(options.jsonMacroDependencies)try{jsonMacroContext=createJsonMacroContext({modules:graph.modules,dependencies:options.jsonMacroDependencies,compilationProfile:graph.compilationProfile});}catch(error){if(!(error instanceof TypeError))throw error;jsonMacroDiagnostic={kind:'unsupported-profile',message:error.message};}
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
+  const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
+  const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultSourceContext(deriveContext):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
   const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:graph.compilationProfile});
@@ -344,9 +352,11 @@ export function translateProject(options) {
         const qualifiedType = ['crate','self','super'].includes(resolved[0]) ? resolved : ['crate',...module.path,...resolved];
         const display = [...qualifiedType.slice(1),method.name].join('.');
         const copyProof=method.receiver==='value'?copyEvidence(qualifiedType,module,method.span):null,certificate=copyProof?.verified?copyProof:null;
-        if (!method.loweringReady && !certificate) {refused.push({file:module.file,name:display,term:'method',span:method.span,kind:'unsupported',message:method.diagnostics.map(item=>item.message).join('; '),...(copyProof?{copyDiagnostics:copyProof.diagnostics}: {})});continue;}
+        let defaultProof=null;
+        if(defaultContext&&method.traitPath&&method.name==='default')try{defaultProof=proveDefaultMethodAdmission(defaultContext,method,qualifiedType);}catch(error){if(!(error instanceof TypeError))throw error;}
+        if (!method.loweringReady && !certificate && !defaultProof) {refused.push({file:module.file,name:display,term:'method',span:method.span,kind:'unsupported',message:method.diagnostics.map(item=>item.message).join('; '),...(copyProof?{copyDiagnostics:copyProof.diagnostics}: {})});continue;}
         try {
-          const lowered = certificate ? lowerCopyMethodTokens(method,certificate.type,certificate) : lowerSharedMethodTokens(method,qualifiedType);
+          const lowered = defaultProof?lowerDefaultMethodTokens(method,qualifiedType,defaultProof):certificate ? lowerCopyMethodTokens(method,certificate.type,certificate) : lowerSharedMethodTokens(method,qualifiedType);
           let transform=null;
           // A closed original owner can acquire source association. Existing
           // independent method checking remains available without that claim;
@@ -377,6 +387,7 @@ export function translateProject(options) {
           }
           surface.impl = {type:{kind:'named',path:qualifiedType},method:method.name,receiver:method.receiver,receiverName:lowered.receiverName,...(lowered.sharedReceiverSource?{sharedReceiverSource:lowered.sharedReceiverSource}:{}),...(certificate?{copyCertificate:certificate}:{}),rewrites:lowered.rewrites,assumptions:lowered.assumptions};
           }
+          if(defaultProof&&!originalParsed)surface.impl.defaultSourceProof=defaultProof;
           const globalSpan = {start:module.offset+method.span.start,end:module.offset+method.span.end};
           const semantic=originalParsed?relocateOriginalMethodSemantic(surface,module.offset):relocate(surface,module.offset);
           if(fieldEvidence)fieldEvidenceBySurface.set(semantic,fieldEvidence);
@@ -384,11 +395,22 @@ export function translateProject(options) {
           if(originalParsed)linkProjectMethodDeclaration(parser,originalParsed.entry,surface,semantic,{source:module.source,sourcePath:module.file,memberSpan:method.span,bodySpan:method.bodySpan,globalOffset:module.offset,scope:{bindingEvidence:scopes.get(moduleScopeKey(module)),compilationProfile:graph.compilationProfile,configurationCondition:module.configurationCondition}});
           if(originalParsed)captureDeclarationRange(semantic,module,globalSpan);
           else captureStructuralMethodRange(semantic,method,lowered,module,globalSpan);
-          declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic});
+          declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName:display,term:'method',span:method.span,globalSpan,surface:semantic,...(defaultProof?{defaultSourceAdmission:defaultProof}:{})});
           captureGenericDeclarations(declarations,parser,module,globalSpan,module.offset,semantic);
         } catch(error) {if(!(error instanceof TranslationError))throw error;refused.push({file:module.file,name:display,term:'method',...diagnostic(error)});}
       }
     }
+  }
+  if(defaultContext)for(const module of graph.modules){
+    if(module.configurationCondition!=='active')continue;
+    const generated=originalDefaultGeneratedMethods(defaultContext,module,MethodRustParser);
+    for(const {item,surface}of generated.methods){
+      assertOriginalDefaultGeneratedMethod(surface,defaultContext);
+      const globalSpan={start:module.offset+item.start,end:module.offset+item.end},semantic=relocate(surface,module.offset),displayName=[...module.path,item.name,'default'].join('.');
+      declarationRanges.set(semantic,Object.freeze({parent:semantic,parentPath:Object.freeze([...module.path]),path:Object.freeze([...module.path]),range:Object.freeze(globalSpan),digest:metadataDigest(semantic),defaultGenerated:Object.freeze({surface,context:defaultContext,offset:module.offset})}));
+      declarations.push({file:module.file,path:module.path,name:[...module.path,surface.name].join('.'),displayName,term:'generated-method',span:{start:item.start,end:item.end},globalSpan,surface:semantic});
+    }
+    for(const {item,message}of generated.refused)refused.push({file:module.file,name:[...module.path,item.name,'default'].join('.'),term:'generated-method',kind:'unsupported',span:{start:item.start,end:item.end},message});
   }
   progress({stage:'method-parse',state:'end',entry:options.entry,completed:completedMethods});
   const duplicateNames = new Set(declarations.filter((entry, index) => declarations.findIndex(candidate => candidate.name === entry.name) !== index).map(entry => entry.name));
@@ -423,6 +445,7 @@ export function translateProject(options) {
   const runtimeModule = posix.relative(posix.dirname(options.entry.replace(/\.rs$/u,'.mjs')), 'runtime/effects.mjs');
   const emitted = emitJavaScript(target.program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
   const methods = active.filter(declaration => declaration.term === 'method');
+  const generatedMethods = active.filter(declaration => declaration.term === 'generated-method');
   const entries = active.filter(declaration => ['fn', 'const'].includes(declaration.term));
   const targetName = name => emitted.mappings.find(mapping => mapping.source === target.names.get(name)).target;
   const exports = entries.map(declaration => `[${JSON.stringify(declaration.name)}]: ${targetName(declaration.name)}${declaration.term === 'const' ? '()' : ''}`).join(', ');
@@ -438,8 +461,9 @@ export function translateProject(options) {
   const typescript = annotateRuntimeTypes(javascript, parameterTypes, dataTypes, returnTypes).replace('export const translated =', `export const translated: Readonly<{ ${types} }> =`);
   progress({stage:'target-emit',state:'end',entry:options.entry});
   progress({stage:'project-serialize',state:'start',entry:options.entry});
-  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver})), encodings: emitted.encodings, assumptions: emitted.assumptions };
+  const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver,...(entry.defaultSourceAdmission?{defaultSourceAdmission:entry.defaultSourceAdmission}:{})})), encodings: emitted.encodings, assumptions: emitted.assumptions };
   if(deriveContext)meta.deriveNamespaceFootprints=deriveContext;
+  if(generatedMethods.length)meta.checkedGeneratedMethods=generatedMethods.map(entry=>({source:entry.file,name:entry.displayName,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:'struct',generator:'core::default::Default',span:entry.span,receiver:null,semanticBodyChecked:true,defaultSourceProof:entry.surface.impl.defaultSourceProof}));
   if(toolContext.certificates.length)meta.toolAttributeFootprints=toolContext;
   if(jsonMacroContext)meta.jsonMacroContext=jsonMacroContext;
   if(jsonMacroDiagnostic)meta.jsonMacroDiagnostic=jsonMacroDiagnostic;
@@ -464,5 +488,6 @@ export function translateProject(options) {
     return facade;
   });
   progress({stage:'project-serialize',state:'end',entry:options.entry});
-  return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, sourceScopes };
+  const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:'default',term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:'struct',generator:'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:null,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,'default')});});
+  return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, checkedGeneratedMethodDeclarations, sourceScopes };
 }
