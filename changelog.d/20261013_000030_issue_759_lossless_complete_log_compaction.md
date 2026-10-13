@@ -1,0 +1,4 @@
+### Changed
+
+- Recompress 256 complete archived gzip logs into XZ after exact decoded-byte verification, updating only their 109 current storage manifests. Original gzip containers and manifests remain recoverable from the named Git commit; the migration map records every original and stored length/hash. The combined physical case/dev allocation falls from 498,946,048 to 495,546,368 bytes within the unchanged 500 MB budget.
+- Verify continuity for every original repository input and equality of every field in both complete CI measurement reports, without normalization. The complete current archive receipt/hash/decoded-data scan passes with zero errors. Its read-only wrapper counts physical inodes once across the case/dev budget; source archive scripts and historical receipts stay intact. Storage compaction does not establish runtime parity or CI resource savings.

@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37753750847/attempt-1/logs/4_js tier (node --check over js, suites 3_4).txt.gz",
-    "sha256": "e75408a08a0b328cb35b065ce53e6b1508006c0cd085f63ddc66b9abc4f25fb4",
-    "bytes": 47217,
+    "path": "link-assistant--formal-ai/runs/37753750847/attempt-1/logs/4_js tier (node --check over js, suites 3_4).txt.xz",
+    "sha256": "8bdcc19f77451a0945f983c38ed2140589b36667f1b845ead5dfa3654dae94a1",
+    "bytes": 36060,
     "uncompressed_bytes": 249456,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "e75408a08a0b328cb35b065ce53e6b1508006c0cd085f63ddc66b9abc4f25fb4",
+    "compression": "xz",
+    "decoded_sha256": "a1a533b495ecfb607da127e6e93dd75844edea9ae95f61cf5a6e502ed3f7b7bf"
   },
   {
     "path": "link-assistant--formal-ai/runs/37753750847/attempt-1/logs/js tier (node --check over js, suites 3_4)/system.txt.gz",
