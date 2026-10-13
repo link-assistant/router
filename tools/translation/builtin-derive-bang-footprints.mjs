@@ -1,7 +1,10 @@
 // Bounded actual builtin generator routes. Copy and Eq close source-selected associated
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
-import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
+import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
+import {originalSourceModuleItems} from './source-module-views.mjs';
+import {builtinDeriveDataInputs} from './builtin-derive-data-inputs.mjs';
+import {sourceItems} from './rust-structure.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
 import {proveBuiltinScalarSourceOutput,assertBuiltinScalarSourceOutput} from './builtin-scalar-ast-route.mjs';
 import {attributeOwners} from './serde-bang-footprints.mjs';
@@ -52,9 +55,21 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
     const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
   }
   if(state.original.name==='Eq'){
-    const route=liftBuiltinEqAstRoute({...state,original:state.original}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','coverage','Eq',...certificate.attributes.map(attribute=>attribute.name)]));
+    const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
+    for(const attribute of input.attributes){
+      if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
+        const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+        if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original Eq doc comment differs from the private source invocation');
+        continue;
+      }
+      const actual=certificate.attributes.find(row=>row.name===attribute.name&&row.position===attribute.position&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end);if(!actual)throw new TypeError('Original Eq attribute differs from the private source invocation');
+      if(attribute.position!=='container'&&attribute.name!=='doc'){
+        const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original Eq nested attribute requires its genuine active helper owner');helpers.push(proof);
+      }
+    }
+    const route=liftBuiltinEqAstRoute({...state,original:state.original,input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','coverage','Eq',...certificate.attributes.map(attribute=>attribute.name)]));
     const evidence={schema:'builtin-eq-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,bodyCallbacksEvaluated:1,associatedKind:'AssocItemKind::Fn',statementKind:'LocalKind::Decl',initializerCount:0},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['Eq and AssertParamIsEq trait validity/implementation behavior is not admitted','other original derive owners retain separate output proofs','unrelated source scopes and conditional modules stay independent']};
-    const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
+    const joined={...evidence,inputSyntax:input,originalHelperOwners:helpers,copyAuthority:false,noDropAuthority:false,constAuthority:false};const proof=freeze({...joined,digest:hash(JSON.stringify(joined))});proofs.set(proof,{context,certificate,invocation});return proof;
   }
   if(state.original.name!=='Copy')throw new TypeError('Builtin '+state.original.name+' retains typed callback/conditional AST output obligations (plan '+plan.digest+')');
   const {profile,original,entry}=state,descriptor=astStructLiteral(profile,entry,'TraitDef');

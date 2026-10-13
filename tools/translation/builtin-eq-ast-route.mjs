@@ -1,8 +1,6 @@
 // Source-selected Eq callback bridge. These are original construction recipes
 // and typed source leaves; no generated implementation bodies are synthesized.
 import {createHash} from 'node:crypto';
-import {originalMacroTrees} from './macro-token-trees.mjs';
-import {boundedInput} from './serde-bang-footprints.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';
 import {originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant} from './builtin-derive-ast-meta.mjs';
 const generic='compiler/rustc_builtin_macros/src/deriving/generic/mod.rs';
@@ -15,34 +13,21 @@ function field(recipe,name,expected){
   const actual=member(recipe,name);if(!actual||astSyntaxText(actual.expression)!==expected)throw new TypeError('Original Eq AST field flow changed: '+recipe.name+'.'+name);return actual;
 }
 function contains(fragment,...needles){const text=astFragmentText(fragment);for(const needle of needles)if(!text.includes(needle))throw new TypeError('Original Eq AST recipe flow changed: '+fragment.source+' '+needle);}
-function sourceLeaves(original,certificate){
-  const source=original.module.source.slice(certificate.span.start,certificate.span.end);
-  // This utility checks actual headers/fields. The owner is checked by the
-  // enclosing private builtin invocation, independent of Serde ownership.
-  const input=boundedInput(certificate,source,null);
-  // Nested attributes could conditionally change the original field set or
-  // expand it before this callback. Retain that obligation instead of guessing.
-  function nested(nodes,depth=0){for(let at=0;at<nodes.length;at++){
-    if(depth&&nodes[at].text==='#'){
-      const attribute=nodes[at+1];if(attribute?.kind!=='group'||attribute.delimiter!=='['||attribute.children[0]?.text!=='doc')throw new TypeError('Eq source field/variant attribute expansion remains unproved');
-      at++;continue;
-    }
-    if(nodes[at].kind==='group')nested(nodes[at].children,depth+1);
-  }}
-  nested(originalMacroTrees(source));
+function sourceLeaves(original,certificate,input){
+  if(!input||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind||JSON.stringify(input.span)!==JSON.stringify(certificate.span))throw new TypeError('Original Eq source syntax candidate differs from its private invocation');
   let inventory=inventories.get(original.dependencies);if(!inventory){inventory=inventoryDeriveQuoteMeta(original.dependencies);inventories.set(original.dependencies,inventory);}
   const compiler=createQuoteFragmentCompiler(inventory);
   const fields=(input.fields??[]).map(value=>{
-    const span={start:certificate.span.start+value.typeSpan.start,end:certificate.span.start+value.typeSpan.end};
+    const span=value.typeSpan;
     const typeSource=original.module.source.slice(span.start,span.end);
     const typed=compiler.roundTrip(compiler.sourceType(typeSource,{source:certificate.source,sourceSha256:certificate.sourceSha256,span,field:value.name,owner:'original Eq field Ty clone'}));
     return {name:value.name,span,sourceSha256:hash(typeSource),syntaxSha256:hash(JSON.stringify(typed.syntax)),category:typed.provenance.category,syntax:typed.syntax,semanticSyntaxRoundTrip:typed.provenance.semanticRoundTrip===true};
   });
   // The actual simple-name dedup branch may omit statements; both branches
   // preserve the same checked type-only statement kind, without enumeration.
-  return {inputStyle:input.style,fields,variants:input.variants,assertionCount:{minimum:fields.length?1:0,maximum:fields.length},deduplication:'actual is_simple_path/seen_type_names branch; both preserve LocalKind::Decl'};
+  return {inputStyle:input.style,fields,variants:input.variants,inputSyntaxDigest:input.digest,sourceAttributes:input.attributes,namespaceAuthority:false,assertionCount:{minimum:fields.length?1:0,maximum:fields.length},deduplication:'actual is_simple_path/seen_type_names branch; both preserve LocalKind::Decl'};
 }
-export function liftBuiltinEqAstRoute({profile,original,certificate,entry}={}){
+export function liftBuiltinEqAstRoute({profile,original,certificate,entry,input}={}){
   const descriptor=astStructLiteral(profile,entry,'TraitDef'),method=astStructLiteral(profile,entry,'MethodDef');
   field(descriptor,'path','path_std ! (cmp :: Eq)');
   const methods=member(descriptor,'methods')?.expression;
@@ -87,7 +72,7 @@ export function liftBuiltinEqAstRoute({profile,original,certificate,entry}={}){
   const positiveVariants=[['ItemKind','Impl',1],['AssocItemKind','Fn',1],['StmtKind','Let',1],['LocalKind','Decl',0],['TyKind','Path',2],['TyKind','Tup',1],['TyKind','Ref',2]].map(([owner,name,arity])=>{
     const definition=schemas.find(value=>value.syntax.some(node=>node.text===owner)),variant=astEnumVariant(profile,definition,name);if(variant.arity!==arity)throw new TypeError('Original Eq AST positive constructor arity changed: '+owner+'::'+name);return {owner,...variant};
   });
-  const input=sourceLeaves(original,certificate);
-  const evidence={schema:'original-eq-type-only-method-bridge-v1',profileDigest:profile.digest,descriptor,method,recipes:[entry,callback,assertion,localBuilder,stmtBuilder,stmts,blockBridge,blockBuilder,createMethod,emptyBounds,emptyVec,generics,ret,explicitSelf,structure,enumeration,staticStruct,staticEnum,dispatch,sink,expand,itemBuilder,parameters,...builders],positiveSchemas:schemas,positiveVariants,typedSource:input,constructionFlow:{sourceCallback:callback.digest,fieldType:'actual field.ty clone in original assertion Type argument',statement:{constructor:localBuilder.digest,kind:'LocalKind::Decl',initializerCount:0,wrapper:'StmtKind::Let'},block:{bridge:blockBridge.digest,optionalExpression:'None from original new_stmts',constructor:blockBuilder.digest},associatedItem:{constructor:createMethod.digest,kind:'AssocItemKind::Fn',methods:1,genericBounds:0,nonselfArguments:0,returnKind:'TyKind::Tup empty'},implementation:{constructor:sink.digest,kind:'ItemKind::Impl',associatedTypes:0},hygiene:'original with_def_site_ctxt and original self/field Ty spans retained',constantBranches:['Const::Yes','Const::No'],fieldlessAndDedupBranches:'all preserve the identical closed type-only statement category'},generatedImplBehavior:false};
+  const typedSource=sourceLeaves(original,certificate,input);
+  const evidence={schema:'original-eq-type-only-method-bridge-v1',profileDigest:profile.digest,descriptor,method,recipes:[entry,callback,assertion,localBuilder,stmtBuilder,stmts,blockBridge,blockBuilder,createMethod,emptyBounds,emptyVec,generics,ret,explicitSelf,structure,enumeration,staticStruct,staticEnum,dispatch,sink,expand,itemBuilder,parameters,...builders],positiveSchemas:schemas,positiveVariants,typedSource,constructionFlow:{sourceCallback:callback.digest,fieldType:'actual field.ty clone in original assertion Type argument',statement:{constructor:localBuilder.digest,kind:'LocalKind::Decl',initializerCount:0,wrapper:'StmtKind::Let'},block:{bridge:blockBridge.digest,optionalExpression:'None from original new_stmts',constructor:blockBuilder.digest},associatedItem:{constructor:createMethod.digest,kind:'AssocItemKind::Fn',methods:1,genericBounds:0,nonselfArguments:0,returnKind:'TyKind::Tup empty'},implementation:{constructor:sink.digest,kind:'ItemKind::Impl',associatedTypes:0},hygiene:'original with_def_site_ctxt and original self/field Ty spans retained',constantBranches:['Const::Yes','Const::No'],fieldlessAndDedupBranches:'all preserve the identical closed type-only statement category'},generatedImplBehavior:false};
   return freeze({...evidence,digest:hash(JSON.stringify(evidence))});
 }
