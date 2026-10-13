@@ -7,6 +7,7 @@ import { posix } from 'node:path';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {planTrackedModulePath,planConditionalModuleSourcePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
+import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
@@ -280,7 +281,8 @@ export function translateProject(options) {
   const cloneContext=deriveContext&&hasCloneDeclarations?createCloneSourceContext(deriveContext):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});
-  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:graph.compilationProfile});
+  const deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
+  const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});

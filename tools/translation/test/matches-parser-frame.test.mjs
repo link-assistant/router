@@ -53,7 +53,7 @@ test('ordinary and genuine transformed frames preserve original rule execution i
   // Reuse the complete, already checked source fixture without rewriting any
   // member body or manufacturing a target ABI. The original Mode stays above.
   const original=readFileSync(new URL('./source-method-project.test.mjs',import.meta.url),'utf8');
-  assert.equal(hash(original),'4bf726a884a64cdda0ead81c39ad182207bf048137adcaa100e4e8f7e6197254');
+  assert.equal(hash(original),'42e569f50f314bb241fd8a7471a6b56238836dc82d46c25599557f98bbc29279');
   const sources=[...original.matchAll(/const source='(pub struct Counter\{value:u8\}impl Counter\{pub fn make[^']*)';/g)];assert.equal(sources.length,1);
   const counter=sources[0][1];assert.equal(hash(counter),'fb334b2ccd6375e8bca63fee12912403284687d54d4ef41f4edc6bedf9c98780');
   const source=counter+ordinary,result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});
