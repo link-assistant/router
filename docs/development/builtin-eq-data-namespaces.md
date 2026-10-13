@@ -8,6 +8,14 @@ a syntax candidate with no namespace, ownership, Copy or no-Drop authority.
 Generics, conditional attributes, unions, field defaults, macro-bearing types,
 payload variants and explicit discriminants remain outside this route.
 
+Field candidates separately retain `nameSpan`, the existing identifier `span`,
+and `fieldDefinitionSpan`. The latter starts after outer attributes, before any
+visibility tokens, and ends after the complete type before the comma. The pinned
+original `parse_field_def`, `parse_name_and_ty` and `parse_single_struct_field`
+recipes establish this order; `create_fields` retains that complete field span
+while applying the original trait hygiene. The added source offsets are syntax
+candidates and do not supply a compiler session span or independent authority.
+
 The private builtin output issuer rereads the unchanged declaration and joins
 its genuine source/view/profile certificate and exact Eq invocation. Nested
 Serde and Default attributes require the independent original registered helper

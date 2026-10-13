@@ -28,14 +28,14 @@ export function builtinDeriveDataInputs(options){
   if(body?.delimiter!=='{'||at+1!==trees.length)throw new TypeError('Builtin data requires named struct fields or unit enum variants');
   if(kind==='struct'){
    style='named-struct';let index=0;
-   while(index<body.children.length){index+=attrs(body.children.slice(index),'field');if(body.children[index]?.text==='pub'){index++;if(body.children[index]?.delimiter==='(')index++;}
+   while(index<body.children.length){index+=attrs(body.children.slice(index),'field');const definitionStart=body.children[index]?.span.start;if(body.children[index]?.text==='pub'){index++;if(body.children[index]?.delimiter==='(')index++;}
     const field=body.children[index++];if(!identifier(field)||fields.some(row=>row.name===field.text)||body.children[index++]?.text!==':')throw new TypeError('Builtin data field identity or separator remains unproved');
     const begin=index;let angle=0;
     for(;index<body.children.length;index++){const node=body.children[index];if(node.text==='<')angle++;if(node.text==='>')angle--;if(angle<0)throw new TypeError('Builtin data field generic type is unbalanced');if(node.text===','&&!angle)break;}
     if(angle||begin===index)throw new TypeError('Builtin data field type is incomplete');
     const typeNodes=body.children.slice(begin,index);
     const check=nodes=>{for(const node of nodes){if(node.text==='!'||node.text?.endsWith('!')||['#','=','where','const','macro','macro_rules','macro_rules!'].includes(node.text)||node.delimiter==='{')throw new TypeError('Builtin data field macro, default or const syntax remains unproved');if(node.kind==='group')check(node.children);}};check(typeNodes);
-    const typeSpan={start:start+typeNodes[0].span.start,end:start+typeNodes.at(-1).span.end};fields.push({name:field.text,span:{start:start+field.span.start,end:start+field.span.end},typeSpan,typeSource:source.slice(typeSpan.start,typeSpan.end)});if(body.children[index]?.text===',')index++;
+    const typeSpan={start:start+typeNodes[0].span.start,end:start+typeNodes.at(-1).span.end},nameSpan={start:start+field.span.start,end:start+field.span.end};fields.push({name:field.text,span:nameSpan,nameSpan,fieldDefinitionSpan:{start:start+definitionStart,end:typeSpan.end},typeSpan,typeSource:source.slice(typeSpan.start,typeSpan.end)});if(body.children[index]?.text===',')index++;
    }
   }else{
    style='unit-enum';let index=0;
