@@ -470,7 +470,7 @@
       "diagnostics": [
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 40,
             "end": 181,
@@ -539,7 +539,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 132,
             "end": 405,
@@ -549,7 +549,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 406,
             "end": 760,
@@ -702,8 +702,8 @@
       "path": "packages/javascript/native/affinities.mjs",
       "sha256": "8a101d57de4ba2ec7267533348bb774c8798e0668924793d4bb97a932e773e6d",
       "sourceItems": 17,
-      "translatedItems": 1,
-      "unsupportedItems": 16,
+      "translatedItems": 2,
+      "unsupportedItems": 15,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -767,7 +767,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 431,
             "end": 858,
@@ -814,16 +814,6 @@
             "encoding": "utf16"
           },
           "example": "function destinationValue(destination) { if (!destination || typeof destination.base_url !== 'string') throw new RouterError('invalid_argument','Resource destination is required');"
-        },
-        {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: dynamic values need a proven primitive typeof guard",
-          "span": {
-            "start": 3656,
-            "end": 3759,
-            "encoding": "utf16"
-          },
-          "example": "function persistedProviderKind(kind) { return kind === 'z.ai-coding-plan' ? 'zai-coding-plan' : kind; }"
         },
         {
           "kind": "collection",
@@ -876,7 +866,7 @@
       "diagnostics": [
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 99,
             "end": 2905,
@@ -1203,8 +1193,8 @@
           "example": "const fail = (code,message,status = 400) => Object.assign(new Error(message),{code,status});"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 523,
             "end": 576,
@@ -1282,8 +1272,8 @@
           "example": "const columns=(values,widths)=>values.map((value,index)=>String(value ?? '').padEnd(widths[index] ?? 0)).join('  ');"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \";\" belongs",
           "span": {
             "start": 196,
             "end": 941,
@@ -1400,8 +1390,8 @@
           "example": "import {clientIntegration,clientFailure} from './client-files.mjs';"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 159,
             "end": 357,
@@ -1956,8 +1946,8 @@
           "example": "import {clientPaths,optionalClientText,preferredClientPath,clientObject,readClientEnvironment,clientCommandExists,clientFailure} from './client-files.mjs';"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 278,
             "end": 439,
@@ -2403,8 +2393,8 @@
           "example": "export const nativeConfigOptions = new Set(['token_secret','data_dir','storage_policy','host','port','account_strategy', 'account_failover','account_cooldown_seconds','account_max_"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 2101,
             "end": 2986,
@@ -2727,8 +2717,8 @@
       "path": "packages/javascript/native/credential-operations.mjs",
       "sha256": "dae49bf6f618971b6df1c63b00e3541892cd95fbedb78422a7b28ff3170e1e66",
       "sourceItems": 27,
-      "translatedItems": 0,
-      "unsupportedItems": 27,
+      "translatedItems": 1,
+      "unsupportedItems": 26,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -2841,8 +2831,8 @@
           "example": "const exec=promisify(execFile)"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 660,
             "end": 709,
@@ -2851,8 +2841,8 @@
           "example": "subscriptions=['claude','codex','gemini','qwen'];"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 710,
             "end": 890,
@@ -2869,16 +2859,6 @@
             "encoding": "utf16"
           },
           "example": "const fail=(code,message,exitCode=1)=>Object.assign(new Error(message),{code,exitCode});"
-        },
-        {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
-          "span": {
-            "start": 980,
-            "end": 1017,
-            "encoding": "utf16"
-          },
-          "example": "const output=lines=>({output:lines});"
         },
         {
           "kind": "collection",
@@ -3030,8 +3010,8 @@
           "example": "import { decodeTokenRecords, encodeLino } from './storage.mjs';"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 106,
             "end": 237,
@@ -3230,7 +3210,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 513,
             "end": 637,
@@ -3289,8 +3269,8 @@
           "example": "export function firstAuthenticationOutcome() {const scope=requestOutcome.getStore();if (!scope) return true;const first=!scope.counted;scope.counted=true;return first;}"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: invalid_token",
           "span": {
             "start": 1663,
             "end": 2219,
@@ -3487,8 +3467,8 @@
           "example": "const alias = (value,a,b) => value[a] ?? value[b];"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 849,
             "end": 931,
@@ -3598,7 +3578,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: the property text",
           "span": {
             "start": 17820,
             "end": 18305,
@@ -3656,8 +3636,8 @@
           "example": "const allowedRef=(policy,repository,name)=>(policy.rules ?? []).some(rule=>rule.effect==='allow' && (!rule.method || rule.method.toUpperCase()==='GIT') && glob(rule.path,`/git/${re"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 567,
             "end": 1327,
@@ -3884,7 +3864,7 @@
       "diagnostics": [
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 79,
             "end": 27342,
@@ -3924,7 +3904,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 27860,
             "end": 36207,
@@ -3987,8 +3967,8 @@
       "path": "packages/javascript/native/managed-server.mjs",
       "sha256": "e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf",
       "sourceItems": 50,
-      "translatedItems": 2,
-      "unsupportedItems": 48,
+      "translatedItems": 3,
+      "unsupportedItems": 47,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -4119,16 +4099,6 @@
             "encoding": "utf16"
           },
           "example": "const sleep = ms => new Promise(done=>setTimeout(done,ms));"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a non-identifier arrow parameter",
-          "span": {
-            "start": 1049,
-            "end": 1092,
-            "encoding": "utf16"
-          },
-          "example": "const out = (...lines) => ({output:lines});"
         },
         {
           "kind": "unsupported",
@@ -4342,7 +4312,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: the property providers",
           "span": {
             "start": 9703,
             "end": 10266,
@@ -4740,7 +4710,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: the property destination_kind",
           "span": {
             "start": 7039,
             "end": 7672,
@@ -4878,8 +4848,8 @@
           "example": "import { RouterError } from './tokens.mjs';"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 1759,
             "end": 1936,
@@ -4909,7 +4879,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a non-identifier arrow parameter",
+          "message": "a construct outside portable-pure-v1: the method map",
           "span": {
             "start": 2077,
             "end": 2183,
@@ -5222,8 +5192,8 @@
       "path": "packages/javascript/native/operations.mjs",
       "sha256": "b796dd42092e3d8c03ce9a96ddb8b34c64b83fb53076347eaf4227b24e5322f9",
       "sourceItems": 41,
-      "translatedItems": 0,
-      "unsupportedItems": 41,
+      "translatedItems": 1,
+      "unsupportedItems": 40,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -5517,16 +5487,6 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a non-identifier arrow parameter",
-          "span": {
-            "start": 3039,
-            "end": 3088,
-            "encoding": "utf16"
-          },
-          "example": "const output = (...lines) => ({ output: lines });"
-        },
-        {
-          "kind": "unsupported",
           "message": "a construct outside portable-pure-v1: the statement throw",
           "span": {
             "start": 3089,
@@ -5567,7 +5527,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: the property name",
           "span": {
             "start": 5824,
             "end": 6491,
@@ -5576,8 +5536,8 @@
           "example": "function redactedProvider(provider) { return { name: provider.name, kind: provider.kind ?? 'openai-compatible', base_url: provider.base_url, models: provider.models ?? [], supporte"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "loop",
+          "message": "for, do and generator loops are outside portable-router-v1",
           "span": {
             "start": 6492,
             "end": 7423,
@@ -5888,8 +5848,8 @@
       "path": "packages/javascript/native/remote-operations.mjs",
       "sha256": "877e0c4d821ab90eadf1119b221b9f7c58eaf93d2500ecd7c6f736ce350c9ce9",
       "sourceItems": 20,
-      "translatedItems": 0,
-      "unsupportedItems": 20,
+      "translatedItems": 2,
+      "unsupportedItems": 18,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -5972,16 +5932,6 @@
           "example": "const error = (message,exitCode = 1) => Object.assign(new Error(message),{code:'remote-operation',exitCode});"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: a non-identifier arrow parameter",
-          "span": {
-            "start": 527,
-            "end": 565,
-            "encoding": "utf16"
-          },
-          "example": "const out = (...output) => ({output});"
-        },
-        {
           "kind": "name",
           "message": "a name with no spelling both languages read back: String",
           "span": {
@@ -5992,24 +5942,14 @@
           "example": "const segment = value => encodeURIComponent(String(value)).replace(/[!'()*]/g,ch=>`%${ch.charCodeAt(0).toString(16).toUpperCase()}`);"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 700,
             "end": 788,
             "encoding": "utf16"
           },
           "example": "const list = value => value === undefined ? [] : Array.isArray(value) ? value : [value];"
-        },
-        {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: dynamic values need a proven primitive typeof guard",
-          "span": {
-            "start": 789,
-            "end": 849,
-            "encoding": "utf16"
-          },
-          "example": "const nullish = value => value === undefined ? null : value;"
         },
         {
           "kind": "unsupported",
@@ -6621,7 +6561,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: the property bytes",
           "span": {
             "start": 11952,
             "end": 12681,
@@ -6630,8 +6570,8 @@
           "example": "function summary(log, all) { const result = {exchanges:all.length,records:0,bytes:log.bytes,statuses:{},streamed:0,non_streamed:0,incomplete_streams:0,unterminated_streams:0,unveri"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \";\" belongs",
           "span": {
             "start": 12682,
             "end": 14101,
@@ -6640,8 +6580,8 @@
           "example": "function anomalies(all) { const result = [], add = (kind, detail, test, minimum = 1) => { const ids = all.filter(test).map(x=>x.id); if (ids.length >= minimum) result.push({kind,de"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "loop",
+          "message": "for, do and generator loops are outside portable-router-v1",
           "span": {
             "start": 14102,
             "end": 15067,
@@ -7237,7 +7177,7 @@
         },
         {
           "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "message": "arrays and objects are outside portable-pure-v1: a non-identifier record key",
           "span": {
             "start": 1267,
             "end": 1342,
@@ -7316,8 +7256,8 @@
           "example": "const protocolOf = candidate => { const value = candidate.protocol ?? candidate.provider?.protocol ?? candidate.provider?.type ?? candidate.provider; if (['anthropic', 'messages']."
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 3191,
             "end": 3281,
@@ -7356,8 +7296,8 @@
           "example": "function upstreamHeaders(candidate, protocol, request) { const headers = new Headers({ 'content-type': 'application/json', accept: 'application/json, text/event-stream' }); // Only"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "loop",
+          "message": "for, do and generator loops are outside portable-router-v1",
           "span": {
             "start": 6231,
             "end": 6481,
@@ -7505,8 +7445,8 @@
           "example": "export async function readOptional(path, fallback = '') { try { return await readFile(path, 'utf8'); } catch (error) { if (error.code === 'ENOENT') return fallback; throw error; } "
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "template",
+          "message": "template literals are outside portable-pure-v1",
           "span": {
             "start": 3733,
             "end": 3898,
@@ -7585,8 +7525,8 @@
           "example": "export function decodeLino(text, {integer,scalar:unquotedScalar,escaped,object:makeObject,whitespace} = {}) { let i = 0; const firstKeys=new WeakMap(); const space=character=>white"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 12633,
             "end": 12856,
@@ -8011,8 +7951,8 @@
           "example": "const number = (value, name, positive = false) => { if (!Number.isSafeInteger(value) || value < (positive ? 1 : 0)) throw new RouterError('invalid_argument', `${name} must be a ${p"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: run_lease_expires_at",
           "span": {
             "start": 1325,
             "end": 1704,
@@ -8239,8 +8179,8 @@
     },
     {
       "kind": "untyped",
-      "source": "export function untyped(value) { return value; }",
-      "message": "a parameter or result without a JSDoc number, boolean or string type: a dynamic return value without a closed primitive contract"
+      "source": "export function untyped(value) { return value + 1; }",
+      "message": "a parameter or result without a JSDoc number, boolean or string type: dynamic values need a proven primitive typeof guard"
     },
     {
       "kind": "unknown-call",
