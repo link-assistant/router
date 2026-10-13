@@ -1,1 +1,1 @@
-Added original Serde field-helper syntax/source inputs for bare field defaults and bounded predicate paths. Candidates retain private-issuer obligations and grant no generated output, runtime, Copy, Drop or const authority.
+Added source-owned Serde field-helper output closure for bare field defaults and bounded predicate paths, preserving original Serialize length/skip branches and both normal/in-place Deserialize feature outputs. Two original model namespace obligations close; runtime, Copy, Drop and const checking remain independent.

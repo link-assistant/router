@@ -2,13 +2,15 @@
 // namespace confinement; Serialize behavior and generated impls stay unlowered.
 import {createHash} from 'node:crypto';
 import {deriveDependencySource} from './derive-dependencies.mjs';
-import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
+import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {macroBindingAffects,macroScopeUncertain} from './macro-subnamespaces.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {originalMacroTrees,originalMacroInvocation} from './macro-token-trees.mjs';
 import {compileDeclarativeMacro,expandDeclarativeMacro} from './declarative-token-macros.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler,inspectQuoteFragment} from './derive-quote-meta.mjs';
+import {serdeFieldHelperInputs,originalSerdeFieldHelperSourcePlan} from './serde-field-helper-inputs.mjs';
+import {originalSourceModuleItems} from './source-module-views.mjs';
 import {liftSerdeNamedStructRoute} from './serde-serialize-struct-route.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -39,6 +41,7 @@ export function boundedInput(certificate,source,owner='Serialize',allowedHelpers
   for(const attribute of certificate.attributes){
     if(!['derive','serde','doc','allow','warn','deny','forbid','must_use','non_exhaustive'].includes(attribute.name)&&!(attribute.name==='default'&&certificate.builtinDefault))throw new TypeError('Selected route retains attribute behavior: '+attribute.name);
     if(attribute.helpers?.some(helper=>!allowedHelpers.includes(helper.key)))throw new TypeError('Selected route excludes helper branches with fields, custom calls or token-stream payloads');
+    if(attribute.helpers?.some(helper=>['default','skip_serializing_if'].includes(helper.key)&&(attribute.position!=='field'||helper.key==='default'&&helper.value!==null)))throw new TypeError('Selected route excludes helper branches with container/default paths');
   }
   const trees=originalMacroTrees(source),keyword=trees.findIndex(tree=>tree.text===certificate.kind),name=trees[keyword+1];
   if(keyword<0||!identifier(name)||name.text!==certificate.name)throw new TypeError('Selected route requires its actual original nongeneric data name');
@@ -91,13 +94,25 @@ export function emptySerdeMacro(dependencies){
   return {target:['serde',item.name],source:origin.path,sourceSha256:origin.sha256,span:{start:item.start,end:item.end},sha256:hash(text),expansionDigest:expansion.digest,outputTokens:0,ownerResolution:'original-wrapper-extern-crate-locked-serde'};
 }
 
+// Syntax candidates become usable only inside the actual private caller join.
+export function joinOriginalSerdeFieldHelpers({context,certificate,module,input,compiler,owner,dependencies}){
+  const candidate=serdeFieldHelperInputs({source:module.source,span:certificate.span}),sourcePlan=originalSerdeFieldHelperSourcePlan(dependencies),item=originalSourceModuleItems(module).find(row=>row.start===certificate.span.start&&row.end===certificate.span.end),helperProofs=[];
+  if(candidate.wholeSourceSha256!==certificate.sourceSha256||candidate.itemSha256!==certificate.itemSha256||candidate.fields.length!==(input.fields??[]).length)throw new TypeError('Original Serde helper source differs from private invocation');
+  for(const [index,field]of(input.fields??[]).entries()){
+    const selected=candidate.fields[index];if(field.name!==selected.name||field.typeSpan.start+certificate.span.start!==selected.typeSpan.start||field.typeSpan.end+certificate.span.start!==selected.typeSpan.end)throw new TypeError('Original Serde helper field source identity differs');
+    for(const helper of selected.helperAttributes){const actual=certificate.attributes.find(row=>row.name==='serde'&&row.position==='field'&&row.span.start===helper.attribute.span.start&&row.span.end===helper.attribute.span.end);if(!actual?.helpers.some(row=>row.key===helper.key&&row.value===helper.value))throw new TypeError('Original Serde helper syntax differs from actual private attribute');const proof=deriveFootprintHelperAttributeAt(context,module,item,actual.span);if(!isDeriveFootprintHelperAttributeProof(proof)||!proof.registrations.some(row=>row.target.join('::')==='serde::'+owner))throw new TypeError('Original Serde field helper requires its genuine active declaring owner');if(!helperProofs.includes(proof))helperProofs.push(proof);}
+    field.default=selected.default;field.skipSerializingIf=selected.skipSerializingIf===null?null:compiler.roundTrip(compiler.sourceExpression(selected.skipSerializingIf,{role:'actual original skip_serializing_if literal ExprPath',source:certificate.source,sourceSha256:certificate.sourceSha256,span:selected.helperAttributes.find(row=>row.key==='skip_serializing_if').attribute.span}));if(field.skipSerializingIf&&field.skipSerializingIf.provenance.expressionKind!=='Expr::Path')throw new TypeError('Original Serde predicate is not its bounded actual ExprPath');
+  }
+  return {candidate,sourcePlan,helperProofs,generatedHelperBehavior:false};
+}
+
 export function proveSerdeSerializeBangFootprint({context,certificate}={}){
   const original=deriveFootprintOriginalContext(context,certificate),module=deriveFootprintOriginalModule(context,certificate);
   const source=module.source.slice(certificate.span.start,certificate.span.end);
   if(hash(source)!==certificate.itemSha256)throw new TypeError('Selected route original input bytes have changed');
-  const input=boundedInput(certificate,source),dependencies=original.dependencies;
+  const input=boundedInput(certificate,source,'Serialize',['rename','rename_all','alias','default','skip_serializing_if']),dependencies=original.dependencies;
   let inventory=cachedInventories.get(dependencies);if(!inventory){inventory=inventoryDeriveQuoteMeta(dependencies);cachedInventories.set(dependencies,inventory);}
-  const compiler=createQuoteFragmentCompiler(inventory),routes=[],branchProofs=[],bindingProofs=[];
+  const compiler=createQuoteFragmentCompiler(inventory),fieldHelpers=joinOriginalSerdeFieldHelpers({context,certificate,module,input,compiler,owner:'Serialize',dependencies}),routes=[],branchProofs=[],bindingProofs=[];
   const definition=(path,name)=>{const result=originalFunction(dependencies,path,name),{text,...evidence}=result;routes.push(evidence);return result;};
   const inst=(template,bindings,role)=>compiler.instantiate(template,new Map(Object.entries(bindings)),{role,inputCertificateDigest:certificate.digest});
   const leaf=(text,type,role)=>compiler.token(text,type,{role,inputCertificateDigest:certificate.digest,source:certificate.source,sourceSpan:certificate.span});
@@ -165,7 +180,7 @@ export function proveSerdeSerializeBangFootprint({context,certificate}={}){
   const error=deriveDependencySource(dependencies,'syn','src/error.rs');
   if(!certificate.coreOwner||!error.source.includes('TokenTree::Literal(string)')||!error.source.includes('Ident::new("compile_error", start)'))throw new TypeError('Selected generator error output lacks its pinned literal/standard owner proof');
   const selectedOwners=certificate.owners.filter(owner=>owner.target.join('::')==='serde::Serialize'),residualOwners=certificate.owners.filter(owner=>owner.target.join('::')!=='serde::Serialize');
-  const evidence={schema:'selected-serde-bang-footprint-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,deriveCertificateDigest:certificate.digest,dependenciesDigest:dependencies.digest,compilationProfile:certificate.compilationProfile,owners:selectedOwners,residualOwners,selectedOwnerBangComplete:true,inputStyle:input.style,inventoryDigest:inventory.digest,inventoryCounts:{sourceMembers:inventory.sourceMemberCount,quoteGroups:inventory.quoteCount},routes,branchProofs,bindingProofs,attributeOwners:attributes,fixedMacro,errorBranch:{source:error.path,sourceSha256:error.sha256,target:certificate.coreOwner.target,namespaceOutput:'compile-error only'},outputGrammarDigest:observation.fragmentSha256,semanticSyntaxRoundTrip:output.provenance.semanticRoundTrip===true,outputObservation:observation,dimensions:{bangMacroComplete:residualOwners.length===0,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['Serialize implementation behavior is not lowered','other original derives require separate output proofs','conditional modules and unrelated expansions retain independent namespace uncertainty']};
+  const evidence={schema:'selected-serde-bang-footprint-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,deriveCertificateDigest:certificate.digest,dependenciesDigest:dependencies.digest,compilationProfile:certificate.compilationProfile,owners:selectedOwners,residualOwners,selectedOwnerBangComplete:true,inputStyle:input.style,fieldHelperInputs:fieldHelpers,inventoryDigest:inventory.digest,inventoryCounts:{sourceMembers:inventory.sourceMemberCount,quoteGroups:inventory.quoteCount},routes,branchProofs,bindingProofs,attributeOwners:attributes,fixedMacro,errorBranch:{source:error.path,sourceSha256:error.sha256,target:certificate.coreOwner.target,namespaceOutput:'compile-error only'},outputGrammarDigest:observation.fragmentSha256,semanticSyntaxRoundTrip:output.provenance.semanticRoundTrip===true,outputObservation:observation,dimensions:{bangMacroComplete:residualOwners.length===0,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['Serialize implementation behavior is not lowered','other original derives require separate output proofs','conditional modules and unrelated expansions retain independent namespace uncertainty']};
   const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,output});return proof;
 }
 export const isSerdeSerializeBangFootprint=proof=>!!proof&&proofs.has(proof);
