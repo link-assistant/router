@@ -46,14 +46,24 @@ test('an exact registered nested helper span closes; independent sibling and sou
   assert.equal(scope.shadowedBuiltinMacros.has('format'),true,'Closing derive output cannot acquire a custom macro owner');
 });
 
-test('Schemars, omitted builtin derives, generic/custom helper outputs remain residual',()=>{
+test('Schemars and generic/custom helper outputs remain residual',()=>{
   for(const source of [
     '#[derive(serde::Serialize,schemars::JsonSchema)] pub struct Payload { value:u8 }',
-    '#[derive(Clone,Debug,serde::Serialize)] pub struct Payload { value:u8 }',
     '#[derive(serde::Deserialize)] #[serde(default)] pub struct Payload { value:u8 }',
   ]){const input=setup(source),context=createDeriveBangContext(input);assert.equal(context.certificates[0].dimensions.bangMacroComplete,false);assert.ok(context.certificates[0].residualOwners.length);assert.equal(model(resolve(input,context)).unresolvedBangMacroScope,true);}
   const generic=setup('#[derive(serde::Serialize)] pub struct Payload<T>{value:T}');
   const genericOutput=createDeriveBangContext(generic);assert.equal(genericOutput.certificates.length,1);assert.equal(genericOutput.certificates[0].dimensions.bangMacroComplete,false);assert.ok(genericOutput.certificates[0].residualOwners.length);assert.equal(model(resolve(generic)).unresolvedBangMacroScope,true);
+});
+
+test('original primitive Clone and Debug outputs join Serialize without granting generated behavior',()=>{
+  const input=setup('#[derive(Clone,Debug,serde::Serialize)] pub struct Payload { value:u8 }');
+  const context=createDeriveBangContext(input),certificate=context.certificates[0];
+  assert.equal(certificate.dimensions.bangMacroComplete,true);
+  assert.equal(certificate.selectedOwners.length,3);
+  assert.deepEqual(certificate.residualOwners,[]);
+  assert.equal(certificate.generatedImplBehavior,false);
+  assert.equal(certificate.dimensions.typeNamespaceComplete,false);
+  assert.equal(model(resolve(input,context)).unresolvedBangMacroScope,false);
 });
 
 test('original and generated attribute names require actual ancestor closure',()=>{

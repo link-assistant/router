@@ -118,7 +118,7 @@ test('original linked enum evidence denies cloned resealed accessor and proxy la
 test('raw public method and enum metadata cannot mint a private shared receiver admission',()=>{
   let callbacks=0;const surface=parseRust('pub enum Mode{On,Off}pub fn probe(v:&Mode)->bool{matches!(v,Mode::On)}fn main(){}');
   const fn=surface.items.find(item=>item.k==='fn');fn.sourceMethodProof={schema:'original-method-semantic-source-v1',copyAuthority:false};
-  assert.throws(()=>new HostChecker('Rust',[]).program(surface),/copied|unsealed|fabricated/);
+  assert.throws(()=>new HostChecker('Rust',[]).program(surface),/copied|unsealed|fabricated|original parsed declaration changed after source capture/);
   const cloned=structuredClone(surface);Object.defineProperty(cloned.items[1],'sourceMethodProof',{enumerable:true,get(){callbacks++;return fn.sourceMethodProof;}});
   assert.throws(()=>new HostChecker('Rust',[]).program(cloned),/data property|accessor/);assert.equal(callbacks,0);
 });

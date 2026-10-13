@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzeJavaScript, translateJavaScript, parseMeta, emitRust, emitTypeScript } from '../tools/translation/js-to-rust/translator.mjs';
 import { camelFromSnake } from '../tools/translation/js-to-rust/vendor/ir.mjs';
+import { buildNativePortableArtifacts } from '../tools/translation/js-to-rust/native-portable-artifacts.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
@@ -66,11 +67,15 @@ export function buildArtifacts(root = ROOT) {
   const fixtureSource = readFileSync(join(root, fixturesPath), 'utf8');
   const fixtures = JSON.parse(fixtureSource);
   const header = `// GENERATED: node scripts/regenerate-js-first.mjs\n// JavaScript -> portable-router-v1 Links IR -> target; IR sha256=${sha256(meta)}\n`;
-  const nativeCoverage = modules(root, 'packages/javascript/native').map((path) => {
+  const nativeSources = modules(root, 'packages/javascript/native').map((path) => {
+    if (lstatSync(join(root, path)).isSymbolicLink()) throw new Error(`linked native source: ${path}`);
     const source = readFileSync(join(root, path), 'utf8');
-    const analyzed = analyzeJavaScript(source);
-    return { path, sha256: sha256(source), sourceItems: analyzed.items.length, translatedItems: analyzed.program.length, unsupportedItems: analyzed.items.filter((item) => item.status === 'unsupported').length, diagnostics: analyzed.diagnostics };
+    return { path, source };
   });
+  const nativeDraft = buildNativePortableArtifacts(nativeSources);
+  const nativeCoverage = nativeDraft.manifest.modules.map(({ path, sha256, topLevel }) => ({ path, sha256,
+    sourceItems: topLevel.sourceItems, translatedItems: topLevel.translatedItems,
+    unsupportedItems: topLevel.unsupportedItems, diagnostics: topLevel.diagnostics }));
   const unsupported = JSON.parse(readFileSync(join(root, 'parity/fixtures/js-first/unsupported.json'), 'utf8')).map((fixture) => {
     const diagnostic = analyzeJavaScript(fixture.source).diagnostics[0];
     if (!diagnostic || diagnostic.kind !== fixture.kind) throw new Error(`unsupported fixture diagnostic changed: ${fixture.kind}`);
@@ -82,6 +87,7 @@ export function buildArtifacts(root = ROOT) {
     ['src/generated_js_first/mod.rs', '// Generated from authoritative JavaScript policy kernels.\npub mod policy;\n'],
     ['packages/typescript/native/js-first-policy.ts', `${header}${emitTypeScript(program)}`],
   ]);
+  for (const [path, content] of nativeDraft.artifacts) artifacts.set(path, content);
   const manifest = {
     schemaVersion: 1,
     translator: 'tools/translation/js-to-rust/translator.mjs',
@@ -99,6 +105,8 @@ export function buildArtifacts(root = ROOT) {
     sources: sourceRows,
     fixtures: { path: fixturesPath, sha256: sha256(fixtureSource), cases: fixtures.cases.length, expectedResults: 'independently authored JSON, not generated from the JavaScript implementation' },
     nativeCoverage,
+    nativePortableDraft: { manifest: 'parity/js-native-portable-draft.json', topLevel: nativeDraft.manifest.topLevel,
+      scopedFunctions: nativeDraft.manifest.scopedFunctions, wholeNativeImplementationTranslated: false, runtimeParity: false },
     unsupportedExamples: unsupported,
     outputs: [...artifacts].map(([path, content]) => ({ path, bytes: Buffer.byteLength(content), sha256: sha256(content) })),
   };
@@ -109,6 +117,27 @@ export function buildArtifacts(root = ROOT) {
 export function regenerate(root = ROOT, { check = false } = {}) {
   const artifacts = buildArtifacts(root);
   const changed = [];
+  // Empty current programs are emitted too, so a newly refused body cannot
+  // survive. Removed source modules also remove only recognized owned drafts.
+  for (const directory of ['tools/translation/js-to-rust/generated/native-portable', 'packages/typescript/native/portable-draft']) {
+    const visit = (path) => {
+      if (!existsSync(join(root, path))) return;
+      if (lstatSync(join(root, path)).isSymbolicLink()) throw new Error(`linked generated draft: ${path}`);
+      for (const entry of readdirSync(join(root, path), { withFileTypes: true })) {
+        const child = `${path}/${entry.name}`;
+        if (entry.isSymbolicLink()) throw new Error(`linked generated draft: ${child}`);
+        if (entry.isDirectory()) visit(child);
+        else if (!artifacts.has(child)) {
+          if (!readFileSync(join(root, child), 'utf8').startsWith(entry.name.endsWith('.lino') ? '# GENERATED:' : '// GENERATED:')) {
+            throw new Error(`unrecognized stale native draft: ${child}`);
+          }
+          changed.push(child);
+          if (!check) rmSync(join(root, child));
+        }
+      }
+    };
+    visit(directory);
+  }
   for (const [path, content] of artifacts) {
     const absolute = join(root, path);
     if (existsSync(absolute) && readFileSync(absolute, 'utf8') === content) continue;

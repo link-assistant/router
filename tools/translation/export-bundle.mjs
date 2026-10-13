@@ -5,16 +5,17 @@ import {createHash} from 'node:crypto';
 import {constants,closeSync,fstatSync,lstatSync,mkdirSync,openSync,readSync,realpathSync,writeFileSync} from 'node:fs';
 import {basename,dirname,join,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {isCompilerSourceInputPath} from './compiler-source-inputs.mjs';
 
 export const TRANSLATOR_EXPORT_LIMITS=Object.freeze({files:2048,fileBytes:4*1024*1024,totalBytes:64*1024*1024,gitMilliseconds:10000,gitOutputBytes:4*1024*1024});
-const roots=['tools/translation','scripts/translate-router.mjs','scripts/export-router-translator.mjs'];
+const roots=['tools/translation','scripts/translate-router.mjs','scripts/export-router-translator.mjs',
+  'scripts/regenerate-js-first.mjs','scripts/regenerate-native-typescript.mjs'];
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 const selected=path=>{
   if(roots.slice(1).includes(path))return true;
   if(!path.startsWith('tools/translation/'))return false;
   const relative=path.slice('tools/translation/'.length);
-  if(relative==='check-typescript-fixtures.mjs')return false;
-  return !relative.includes('/')&&/\.(?:mjs|d\.mts)$/u.test(relative)||['extensions/','vendor/','source-profiles/'].some(prefix=>relative.startsWith(prefix));
+  return isCompilerSourceInputPath(path)||['extensions/','vendor/','source-profiles/'].some(prefix=>relative.startsWith(prefix));
 };
 const git=(root,args,input)=>{
   // Export never borrows an inherited repository, index, object store or config
@@ -119,7 +120,7 @@ export function exportTranslatorBundle({sourceRoot=fileURLToPath(new URL('../../
   if(JSON.stringify(before)!==JSON.stringify(after))throw new TypeError('Translator export HEAD or source index changed during collection');
   for(const row of copies)if(!originalBytes(root,row).equals(row.bytes))throw new TypeError('Translator export source changed during collection');
   const inputs=copies.map(({path,mode,gitBlob,bytes,sha256})=>({path,mode,gitBlob,bytes:bytes.length,sha256}));
-  const manifest={schema:'committed-offline-rust-meta-translator-bundle-v1',sourceHead:before.head,sourceInventorySha256:sha256(Buffer.from(JSON.stringify(inputs))),files:inputs.length,totalSourceBytes:totalBytes,inputs,entrypoint:'scripts/translate-router.mjs',compilerIndex:{kind:'fresh-unborn-enumeration',objectFormat:before.head.length===40?'sha1':'sha256',sourceHeadPresent:false,namespaceAuthority:false},runtimeParity:false,scope:'Complete selected committed forward compiler, vendored meta-language, extensions, original-source profiles and licenses; generated outputs, the repository fixture checker and test evidence are excluded.'};
+  const manifest={schema:'committed-offline-rust-meta-translator-bundle-v1',sourceHead:before.head,sourceInventorySha256:sha256(Buffer.from(JSON.stringify(inputs))),files:inputs.length,totalSourceBytes:totalBytes,inputs,entrypoint:'scripts/translate-router.mjs',compilerIndex:{kind:'fresh-unborn-enumeration',objectFormat:before.head.length===40?'sha1':'sha256',sourceHeadPresent:false,namespaceAuthority:false},runtimeParity:false,scope:'Complete committed production compiler fingerprint closure, forward/reverse generation CLIs, vendored meta-language, extensions, original-source profiles and licenses; generated outputs and test evidence are excluded. Native reverse generation additionally requires the receiving JavaScript sources and TypeScript dependency.'};
   // Preflight completes before creating any destination. wx refuses overwrites.
   mkdirSync(destination,{mode:0o755});
   for(const row of copies)writeFileSync(outputPath(destination,row.path),row.bytes,{flag:'wx',mode:row.mode==='100755'?0o755:0o644});

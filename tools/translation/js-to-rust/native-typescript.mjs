@@ -317,7 +317,8 @@ export function regenerateNativeTypeScript(outputRoot, { sourceRoot = outputRoot
     ...(existsSync(join(outputRoot, 'packages/typescript')) ? readdirSync(join(outputRoot, 'packages/typescript'), { withFileTypes: true }).filter((entry) => entry.isFile() && /\.(?:ts|json)$/u.test(entry.name) && entry.name !== 'package-lock.json').map((entry) => `packages/typescript/${entry.name}`) : []),
     ...walkFiles(outputRoot, 'tools/translation/js-to-rust/generated/native-typescript'),
     ...walkFiles(outputRoot, 'packages/typescript/schemas'),
-    ...walkFiles(outputRoot, 'packages/typescript/native').filter((path) => !path.endsWith('/js-first-policy.ts')),
+    ...walkFiles(outputRoot, 'packages/typescript/native').filter((path) => !path.endsWith('/js-first-policy.ts')
+      && !path.startsWith('packages/typescript/native/portable-draft/')),
     ...walkFiles(outputRoot, 'packages/typescript/portable'),
   ];
   const unexpected = managed.filter((path) => !artifacts.has(path));

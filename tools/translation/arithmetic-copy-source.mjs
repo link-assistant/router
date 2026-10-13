@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {originalTopLevelMacroInvocations,freezeMacroTree} from './macro-token-trees.mjs';
-import {compileDeclarativeMacro,expandDeclarativeMacro,declarativeSubInput,declarativeExpansionLineage,declarativeDefinitionHeader} from './declarative-macros.mjs';
+import {compileDeclarativeMacro,expandDeclarativeMacro,declarativeSubInput,declarativeExpansionLineage,declarativeDefinitionHeader} from './declarative-token-macros.mjs';
 const states=new WeakMap(),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 function transparent(tree){for(let depth=0;tree?.kind==='fragment'&&['ident','tt'].includes(tree.fragment)&&tree.trees.length===1;depth++){if(depth>=64)throw new RangeError('Original Copy transparent capture depth');tree=tree.trees[0];}return tree;}
 const word=tree=>transparent(tree)?.kind==='token'?transparent(tree).text:null;
@@ -23,3 +23,4 @@ export function compilePinnedArithmeticCopySource(){
 }
 export const isArithmeticCopySource=proof=>!!proof&&states.has(proof);
 export function arithmeticCopyExpansionProofs(proof){const state=states.get(proof);if(!state)throw new TypeError('Unsealed original Copy output candidate');for(const expansion of state.expansions)declarativeExpansionLineage(expansion);return Object.freeze([...state.expansions]);}
+export const arithmeticCopyExpansionLineage=declarativeExpansionLineage;

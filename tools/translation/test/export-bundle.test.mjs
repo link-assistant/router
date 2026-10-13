@@ -7,6 +7,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {exportTranslatorBundle} from '../export-bundle.mjs';
+import {discoverCompilerSourceInputs} from '../compiler-source-inputs.mjs';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -45,7 +46,9 @@ test('complete committed offline compiler exports deterministically with full so
     for(const family of ['extensions/','vendor/','source-profiles/'])assert.ok(first.manifest.inputs.some(row=>row.path.startsWith('tools/translation/'+family)));
     assert.ok(first.manifest.inputs.some(row=>/license|notice/iu.test(row.path)));
     assert.ok(first.manifest.inputs.every(row=>!row.path.startsWith('tools/translation/meta/')&&!row.path.startsWith('tools/translation/test/')&&!row.path.includes('node_modules')));
-    assert.equal(first.manifest.inputs.some(row=>row.path==='tools/translation/check-typescript-fixtures.mjs'),false);
+    assert.equal(first.manifest.inputs.some(row=>row.path==='tools/translation/check-typescript-fixtures.mjs'),true);
+    const exportedPaths=new Set(first.manifest.inputs.map(row=>row.path));
+    for(const input of discoverCompilerSourceInputs({root}))assert.ok(exportedPaths.has(input.path),input.path);
   }finally{rmSync(directory,{recursive:true,force:true});}
 });
 
