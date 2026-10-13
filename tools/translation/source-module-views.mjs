@@ -54,7 +54,7 @@ export function captureSourceModuleViews({source,sourcePath,compilationProfile:i
     const evidence={schema:'original-source-module-view-v1',sourcePath,sourceSha256,modulePath:path,bodySpan,bodySha256:hash(source.slice(bodySpan.start,bodySpan.end)),
       parentDigest:parent?.digest??null,declaration:declaration?{span:{start:declaration.start,end:declaration.end},sha256:hash(source.slice(declaration.start,declaration.end))}:null,
       compilationProfile:profile,configurationCondition,configurationEvidence,namespaceAuthority:false,attributeOwnerAuthority:false,runtimeAuthority:false};
-    const view=freeze({...evidence,digest:hash(JSON.stringify(evidence))});states.set(view,{source,items:freeze(items),parent});views.push(view);
+    const view=freeze({...evidence,digest:hash(JSON.stringify(evidence))});states.set(view,{source,sourceSha256,items:freeze(items),parent});views.push(view);
     for(const item of items.filter(item=>item.term==='mod')){
       const parsed=inlineHeader(item,profile);
       if(!parsed){diagnostics.push({source:sourcePath,modulePath:path,span:{start:item.start,end:item.end},kind:'source-module-view',message:'Original module requires an external-file or unsupported header consumer'});continue;}
@@ -67,7 +67,10 @@ export function captureSourceModuleViews({source,sourcePath,compilationProfile:i
 export const isSourceModuleView=view=>!!view&&states.has(view);
 export function originalModuleViewItems(view,source){
   const state=states.get(view);
-  if(!state||typeof source!=='string'||source!==state.source||hash(source)!==view.sourceSha256)throw new TypeError('Original module view is unsealed or its complete source changed');
+  // The genuine issuer hashed this exact immutable string before freezing its
+  // view and items. Equality is stronger than UTF-8 hashes for malformed UTF-16;
+  // copied/refrozen views cannot reach this private record.
+  if(!state||typeof source!=='string'||source!==state.source||state.sourceSha256!==view.sourceSha256)throw new TypeError('Original module view is unsealed or its complete source changed');
   return state.items;
 }
 export function originalModuleViewParent(view){

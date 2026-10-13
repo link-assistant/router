@@ -93,3 +93,27 @@ test('view-aware original consumers ignore invented caller item lists',()=>{
   assert.equal(originalSourceModuleItems(module).length,1);
   assert.equal(originalSourceModuleItems({source:'pub const ROOT:u8=2;'}).length,1);
 });
+test('issuer hash reuse retains exact UTF-16 source equality even when malformed strings share UTF-8 hashes',()=>{
+  const sources=['//\ud800\npub const VALUE:u8=7;','//\udc00\npub const VALUE:u8=7;','//\ufffd\npub const VALUE:u8=7;'];
+  assert.equal(new Set(sources).size,3);assert.equal(new Set(sources.map(hash)).size,1);
+  const rows=sources.map(source=>({source,view:capture(source).views[0]}));
+  for(const row of rows){const items=originalModuleViewItems(row.view,row.source);for(let count=0;count<3;count++)assert.equal(originalModuleViewItems(row.view,row.source),items);
+    for(const other of rows)if(other!==row)assert.throws(()=>originalModuleViewItems(row.view,other.source),/changed/);
+    for(const copy of [structuredClone(row.view),Object.freeze(structuredClone(row.view)),Object.freeze({...row.view}),Object.create(row.view)])assert.throws(()=>originalModuleViewItems(copy,row.source),/unsealed/);
+  }
+});
+test('warmed source views retain foreign file/profile/path checks and private view identity',()=>{
+  const source='mod child{pub const VALUE:u8=7;}',result=capture(source),view=viewAt(result,['child']);
+  const module={file:'src/lib.rs',source,path:['child'],sourceView:view};
+  const items=originalSourceModuleItems(module);assert.equal(originalSourceModuleItems(module),items);
+  const foreign=captureSourceModuleViews({source,sourcePath:'src/foreign.rs'}).views[1];
+  const altered=capture(source+' ').views[1],otherProfile=capture(source,{flags:{test:false}}).views[1];
+  for(const sourceView of [foreign,altered,otherProfile,Object.freeze(structuredClone(view))])assert.throws(()=>originalSourceModuleItems({...module,sourceView}),/match|changed|unsealed/);
+  assert.throws(()=>originalSourceModuleItems({...module,path:[]}),/match/);
+  assert.throws(()=>{view.compilationProfile.flags.test=true;},TypeError);assert.throws(()=>{items[0].end++;},TypeError);
+  let traps=0;const proxy=new Proxy(view,{get(){traps++;throw Error('get');},ownKeys(){traps++;throw Error('keys');}});
+  assert.throws(()=>originalModuleViewItems(proxy,source),/unsealed/);assert.equal(traps,0);
+  const opaque={[Symbol.toPrimitive](){traps++;return source;},toString(){traps++;return source;}};
+  for(const replacement of [new String(source),opaque,undefined,null])assert.throws(()=>originalModuleViewItems(view,replacement),/changed/);assert.equal(traps,0);
+  assert.equal(originalSourceModuleItems(module),items);
+});

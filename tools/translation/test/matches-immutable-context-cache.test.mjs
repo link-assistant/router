@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {captureSourceModuleViews} from '../source-module-views.mjs';
 import {extractImplDeclarations,lowerSharedMethodTokens} from '../impl-resolver.mjs';
-import {createMatchesMacroContext,matchesParserFacts,originalMethodNamespaceOwner} from '../matches-macro-context.mjs';
+import {createMatchesMacroContext,matchesParserFacts,originalMethodNamespaceOwner,originalMethodParserNamespace} from '../matches-macro-context.mjs';
 import {createOriginalMethodTokenTransform,originalMethodTransformFacts} from '../source-method-transforms.mjs';
 import {parseOriginalMethodTransform,originalMethodParsedFacts} from '../source-method-parser.mjs';
 import {metadataDigest} from '../extensions/source-links.mjs';
@@ -92,4 +92,33 @@ test('warmed immutable hashes preserve metadata budgets cycles and descriptor va
   try{assert.throws(()=>originalMethodNamespaceOwner(row.context,row.method),/accessor/);}finally{delete row.method.forgedMetadata;}
   const proxy=new Proxy(row.method,{get(){calls++;return null;},getPrototypeOf(){calls++;return null;},ownKeys(){calls++;return [];}});
   assert.throws(()=>originalMethodNamespaceOwner(row.context,proxy),/unsealed/);assert.equal(calls,0);assert.deepEqual(originalMethodNamespaceOwner(row.context,row.method),row.owner);
+});
+test('issued context indices retain unrelated original modules and never accept replacement or foreign roots',()=>{
+  const text='mod unrelated{pub const MARK:u8=7;mod tokio{}}'+source,row=fixture(text);
+  const namespace=originalMethodParserNamespace(row.context,row.method);assert.deepEqual(namespace.shadowedEffectRoots,['tokio']);assert.ok(Object.isFrozen(namespace.shadowedEffectRoots));
+  for(let count=0;count<3;count++){assert.equal(originalMethodParserNamespace(row.context,row.method).shadowedEffectRoots,namespace.shadowedEffectRoots);assert.deepEqual(originalMethodNamespaceOwner(row.context,row.method),row.owner);originalMethodParsedFacts(row.parsed);}
+  const unrelated=row.facts.modules.find(module=>module.path.join('.')==='unrelated');
+  assert.throws(()=>{unrelated.source+=' ';},TypeError);assert.throws(()=>{unrelated.path[0]='changed';},TypeError);
+  const replacements=row.facts.modules.map(module=>module===unrelated?{...module,source:module.source+' '}:module);
+  for(const modules of [replacements,Object.freeze(replacements)])changedProperty(row.facts,'modules',{value:modules,writable:true},()=>assert.throws(()=>originalMethodParserNamespace(row.context,row.method),/private issuance/));
+  for(const context of [structuredClone(row.context),Object.freeze(structuredClone(row.context))])assert.throws(()=>originalMethodParserNamespace(context,row.method),/private module context/);
+  const foreign=fixture(text);assert.throws(()=>originalMethodNamespaceOwner(foreign.context,row.method),/identity differs/);
+  assert.deepEqual(originalMethodNamespaceOwner(row.context,row.method),row.owner);matchesParserFacts(row.parser);
+});
+test('context index hits never bypass source-view caller profile or configuration identity checks',()=>{
+  const row=fixture('mod child{'+source+'}',['child']),module=row.facts.modules.find(module=>module.path.join('.')==='child');
+  assert.deepEqual(originalMethodParserNamespace(row.context,row.method).modulePath,['child']);
+  for(const contextRoot of ['modules','evidence','profile','compilationProfile','cargoEditionContext']){
+    let calls=0;const original=row.facts[contextRoot];changedProperty(row.facts,contextRoot,{get(){calls++;return original;}},()=>assert.throws(()=>originalMethodParserNamespace(row.context,row.method),TypeError));assert.equal(calls,0);
+  }
+  for(const field of ['source','sourceView','compilationProfile','configurationCondition'])if(Object.hasOwn(module,field))assert.throws(()=>{module[field]=structuredClone(module[field]);},TypeError);
+  assert.throws(()=>row.facts.evidence.scopes[0].path.push('forged'),TypeError);
+  originalMethodParsedFacts(row.parsed);matchesParserFacts(row.parser);
+});
+test('private issued indices do not dispatch through changed public Map lookup callbacks',()=>{
+  const row=fixture();let calls=0;
+  changedProperty(Map.prototype,'get',{get(){calls++;return ()=>{calls++;return null;};}},()=>{
+    assert.deepEqual(originalMethodNamespaceOwner(row.context,row.method),row.owner);
+    assert.deepEqual(originalMethodParserNamespace(row.context,row.method).modulePath,[]);
+  });assert.equal(calls,0);originalMethodParsedFacts(row.parsed);
 });

@@ -21,7 +21,7 @@ import {itemConfiguration,compilationProfile as normalizeProfile} from './cfg-pr
 import {originalCargoEditionEvidence,configureRustEditionParser} from './cargo-edition-context.mjs';
 const contexts=new WeakMap(),immutableContexts=new WeakMap(),parsers=new WeakMap(),issuedFrames=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
 let standardProfile=null;
-const mapEntries=Map.prototype.entries;
+const mapEntries=Map.prototype.entries,mapGet=Map.prototype.get,mapHas=Map.prototype.has,mapSet=Map.prototype.set;
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
 function namespaceDigest(parser){const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');return metadataDigest(['type','value','macro'].map(namespace=>[namespace,nativeEntries(ownData(aliases,namespace)).map(([path,map])=>[path,nativeEntries(map)])]));}
 // Only the actual producer's recursively frozen roots qualify for reuse.
@@ -30,6 +30,16 @@ function immutableContext(context,facts){
   const issued=immutableContexts.get(context);
   if(!issued||facts!==issued.facts||['modules','evidence','profile','compilationProfile','cargoEditionContext'].some(key=>ownData(facts,key)!==issued[key]))throw new TypeError('Matches context immutable roots differ from their private issuance');
   return issued;
+}
+function immutableNamespaceIndices(modules,evidence){
+  const moduleByKey=new Map(),scopeByKey=new Map(),scopeByPath=new Map(),ancestors=new WeakMap();
+  // Retain find-first behavior. Only the genuine deeply frozen issuer roots
+  // enter these private indices; exposed facts and parser Maps never do.
+  for(const module of modules){const key=moduleScopeKey(module);if(!mapHas.call(moduleByKey,key))mapSet.call(moduleByKey,key,module);}
+  for(const scope of evidence.scopes){const key=moduleScopeKey(scope),path=JSON.stringify(scope.path);if(!mapHas.call(scopeByKey,key))mapSet.call(scopeByKey,key,scope);if(!mapHas.call(scopeByPath,path))mapSet.call(scopeByPath,path,scope);}
+  for(const module of modules)ancestors.set(module,Object.freeze(evidence.scopes.filter(scope=>scope.path.every((part,index)=>module.path[index]===part))));
+  const shadowedEffectRoots=Object.freeze([...new Set(modules.flatMap(module=>[...module.path.filter(name=>['std','tokio','serde_json'].includes(name)),...originalSourceModuleItems(module).filter(item=>item.term==='mod'&&['std','tokio','serde_json'].includes(item.name)).map(item=>item.name)]))]);
+  return {moduleByKey,scopeByKey,scopeByPath,ancestors,shadowedEffectRoots};
 }
 // Configure sites alone bind these original fields. The exposed frame remains
 // mutable so consumers cannot mistake its own recomputable digest for issuance.
@@ -77,7 +87,7 @@ export function createMatchesMacroContext({modules,compilationProfile=null,deriv
   const certificate=freezeMacroTree({schema:'original-standard-matches-call-context-v1',profileDigest:profile.digest,compilationProfile:original.compilationProfile,originalModules:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source),sourceViewDigest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition})),namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
   const facts={...original,profile,evidence,cargoEditionContext};
   contexts.set(certificate,facts);
-  immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,cargoEditionContext,moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap()}));
+  immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,cargoEditionContext,...immutableNamespaceIndices(original.modules,evidence),moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap()}));
   return certificate;
 }
 export const isMatchesMacroContext=value=>!!value&&contexts.has(value);
@@ -88,14 +98,14 @@ export function standaloneMatchesMacroContext(source,{file='src/module.rs',compi
 export function configureMatchesMacroParser(parser,context,{file,modulePath=[],offset=0,allowEmptyMainCarrier=false}={}) {
   const facts=contexts.get(context),captured=capturedRustTokenSource(parser.cursor.tokens);
   if(!facts||!captured||!Number.isSafeInteger(offset)||offset<0)throw new TypeError('Matches parser requires private original context and tokenizer source');
-  immutableContext(context,facts);
-  const module=facts.modules.find(module=>module.file===file&&JSON.stringify(module.path)===JSON.stringify(modulePath));
+  const issued=immutableContext(context,facts);
+  const module=mapGet.call(issued.moduleByKey,JSON.stringify([file,modulePath]));
   if(!module)throw new TypeError('Matches parser module is outside its original context');
   let source=captured.source;
   if(allowEmptyMainCarrier&&source.endsWith('\nfn main() {}\n'))source=source.slice(0,-'\nfn main() {}\n'.length);
   if(module.source.slice(offset,offset+source.length)!==source||offset<module.sourceView.bodySpan.start||offset+source.length>module.sourceView.bodySpan.end)throw new TypeError('Matches parser source slice differs from its original module view');
   if(JSON.stringify(normalizeProfile(parser.compilationProfile??null))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Matches parser compilation profile differs from its source context');
-  const scope=facts.evidence.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module));
+  const scope=mapGet.call(issued.scopeByKey,moduleScopeKey(module));
   configureParserSourceScope(parser,scope,facts.evidence.scopes,module.path);parser.modulePath=[...module.path];
   // The legacy use parser may update its working alias table. The genuine
   // namespace maps consumed by source resolution stay separate and sealed.
@@ -110,7 +120,7 @@ export function matchesParserFacts(parser) {
   return facts;
 }
 function resolvedMacroPath(state,segments) {
-  const scopes=state.facts.evidence.scopes,scope=scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(state.module)),consumer=state.module.path;
+  const issued=immutableContext(state.context,state.facts),scope=mapGet.call(issued.scopeByKey,moduleScopeKey(state.module)),consumer=state.module.path;
   const visible=binding=>!binding?.visibility||binding.visibility.kind==='public'||binding.visibility.path.every((part,index)=>consumer[index]===part);
   if(segments.length===1){const binding=scope.bindings.find(binding=>binding.namespace==='macro'&&binding.name===segments[0]);if(!binding)return {path:segments[0]===state.facts.profile.name?['std',state.facts.profile.name]:[...segments],binding:null};return binding.status==='resolved'&&visible(binding)?{path:binding.target,binding}:{path:null,binding};}
   const first=scope.bindings.find(binding=>binding.namespace==='type'&&binding.name===segments[0]);
@@ -119,7 +129,7 @@ function resolvedMacroPath(state,segments) {
   if(path[0]==='self')path=['crate',...consumer,...path.slice(1)];
   if(path[0]==='super'){const parent=[...consumer];let index=0;while(path[index]==='super'){if(!parent.length)return {path:null,binding:first};parent.pop();index++;}path=['crate',...parent,...path.slice(index)];}
   if(path[0]==='crate') {
-    const owner=scopes.find(scope=>JSON.stringify(scope.path)===JSON.stringify(path.slice(1,-1))),leaf=owner?.bindings.find(binding=>binding.namespace==='macro'&&binding.name===path.at(-1));
+    const owner=mapGet.call(issued.scopeByPath,JSON.stringify(path.slice(1,-1))),leaf=owner?.bindings.find(binding=>binding.namespace==='macro'&&binding.name===path.at(-1));
     if(!leaf||leaf.status!=='resolved'||!visible(leaf))return {path:null,binding:leaf??first};
     path=leaf.target;return {path,binding:leaf};
   }
@@ -143,9 +153,9 @@ export function proveOriginalMatchesCall(parser,{segments,start,end}={}) {
   if(JSON.stringify(invocation.path)!==JSON.stringify(segments)||!state.tokens.some(token=>token.start===start&&['identifier','macro'].includes(token.kind))||!state.tokens.some(token=>token.end===end&&[')',']','}'].includes(token.value)))throw new TypeError('Matches proof differs from actual original invocation tokens/path');
   const enclosing=originalSourceModuleItems(module).filter(item=>item.start<=start+state.offset&&item.end>=end+state.offset);
   for(const item of enclosing){const local=macroProvenance(module.source.slice(item.start,item.end));if(local.unresolvedImportScope||local.shadowedNames.includes(segments[0])||local.importedNames.includes(segments[0]))throw new TypeError('Matches local macro/import scope requires actual lexical expansion resolution');}
-  const scope=facts.evidence.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),ancestors=facts.evidence.scopes.filter(parent=>parent.path.every((part,index)=>module.path[index]===part));
+  const issued=immutableContext(state.context,facts),scope=mapGet.call(issued.scopeByKey,moduleScopeKey(module)),ancestors=issued.ancestors.get(module);
   if(!scope||ancestors.some(parent=>parent.configurationCondition!=='active'||parent.unresolvedBangMacroScope!==false||parent.unresolvedTypeScope!==false||parent.unresolvedAttributeMacroScope!==false))throw new TypeError('Matches owner requires active original type/bang/attribute scopes');
-  for(const parent of ancestors)for(const item of originalSourceModuleItems(facts.modules.find(entry=>moduleScopeKey(entry)===moduleScopeKey(parent))))if(item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!'&&itemConfiguration(item.tokens,facts.compilationProfile).attributes.some(attribute=>['no_core','no_std','no_implicit_prelude'].includes(attribute.name)))throw new TypeError('Matches owner requires its proved original standard prelude/profile');
+  for(const parent of ancestors)for(const item of originalSourceModuleItems(mapGet.call(issued.moduleByKey,moduleScopeKey(parent))))if(item.tokens[0]?.text==='#'&&item.tokens[1]?.text==='!'&&itemConfiguration(item.tokens,facts.compilationProfile).attributes.some(attribute=>['no_core','no_std','no_implicit_prelude'].includes(attribute.name)))throw new TypeError('Matches owner requires its proved original standard prelude/profile');
   const {path:resolved,binding}=resolvedMacroPath(state,segments);
   if(!resolved||!['std::'+facts.profile.name,'core::'+facts.profile.name].includes(resolved.join('::')))throw new TypeError('Matches call is not its original standard macro owner');
   if(segments.length===1&&ancestors.some(parent=>parent!==scope&&parent.bindings.some(binding=>binding.namespace==='macro'&&binding.name===segments[0]&&binding.target?.join('::')!==resolved.join('::'))))throw new TypeError('Matches call has an original ancestor textual macro shadow');
@@ -157,8 +167,8 @@ export function originalMatchesCallFacts(proof){const facts=calls.get(proof);if(
 
 export function configureMatchesParserFromSourceScope(parser,sourceScope) {
   const context=sourceScope?.matchesMacroContext;if(!isMatchesMacroContext(context))throw new TypeError('Source-scope matches context is absent or not genuine');
-  const facts=contexts.get(context);immutableContext(context,facts);
-  const module=facts.modules.find(module=>module.file===sourceScope.source&&JSON.stringify(module.path)===JSON.stringify(sourceScope.module));
+  const facts=contexts.get(context),issued=immutableContext(context,facts);
+  const module=mapGet.call(issued.moduleByKey,JSON.stringify([sourceScope.source,sourceScope.module]));
   if(!module||module.sourceView!==sourceScope.sourceView||JSON.stringify(normalizeProfile(sourceScope.compilationProfile))!==JSON.stringify(facts.compilationProfile)||sourceScope.configurationCondition!==(module.configurationCondition??module.sourceView.configurationCondition))throw new TypeError('Source-scope matches context differs from its original view/profile/condition');
   const captured=capturedRustTokenSource(parser.cursor.tokens),suffix='\nfn main() {}\n';
   if(!captured)throw new TypeError('Matches source scope has no original tokenizer');
@@ -175,16 +185,16 @@ export function originalMethodNamespaceOwner(context,method) {
   const facts=contexts.get(context),original=originalMethodMember(method);
   if(!facts)throw new TypeError('Original method owner requires its private module context');
   const issued=immutableContext(context,facts);
-  const module=facts.modules.find(module=>module.file===original.sourcePath&&JSON.stringify(module.path)===JSON.stringify(original.modulePath));
+  const module=mapGet.call(issued.moduleByKey,JSON.stringify([original.sourcePath,original.modulePath]));
   if(!module||module.source!==original.source||module.sourceView!==original.sourceView||JSON.stringify(normalizeProfile(original.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Original method source/module/view/profile identity differs');
-  const scope=facts.evidence.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),ancestors=facts.evidence.scopes.filter(scope=>scope.path.every((part,index)=>module.path[index]===part));
+  const scope=mapGet.call(issued.scopeByKey,moduleScopeKey(module)),ancestors=issued.ancestors.get(module);
   if(!scope||ancestors.some(scope=>scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.unresolvedAttributeMacroScope!==false))throw new OriginalMethodOwnerUnproved('Original method nominal owner has unresolved source type/attribute scope');
   let route=[...method.typePath],binding;
   if(route[0]==='self')route=['crate',...module.path,...route.slice(1)];
   else if(route[0]==='super'){const parent=[...module.path];let at=0;while(route[at]==='super'){if(!parent.length)throw new TypeError('Original method owner escapes crate modules');parent.pop();at++;}route=['crate',...parent,...route.slice(at)];}
   else if(route[0]!=='crate'){binding=scope.bindings.find(binding=>binding.namespace==='type'&&binding.name===route[0]);if(!binding||binding.status!=='resolved')throw new OriginalMethodOwnerUnproved('Original method owner has no resolved actual type binding');route=[...binding.target,...route.slice(1)];}
   if(route[0]!=='crate')throw new OriginalMethodOwnerUnproved('Original inherent method owner is not a source crate nominal type');
-  const owner=facts.evidence.scopes.find(scope=>JSON.stringify(scope.path)===JSON.stringify(route.slice(1,-1))),nominal=owner?.bindings.find(binding=>binding.namespace==='type'&&binding.name===route.at(-1));
+  const owner=mapGet.call(issued.scopeByPath,JSON.stringify(route.slice(1,-1))),nominal=owner?.bindings.find(binding=>binding.namespace==='type'&&binding.name===route.at(-1));
   if(!nominal||nominal.status!=='resolved'||!['struct','enum'].includes(nominal.kind)||nominal.via!=='declaration'||JSON.stringify(nominal.target)!==JSON.stringify(route))throw new OriginalMethodOwnerUnproved('Original method owner needs its actual declared nominal type');
   const consumer=module.path;
   if(nominal.visibility?.kind!=='public'&&nominal.visibility?.path&&!nominal.visibility.path.every((part,index)=>consumer[index]===part))throw new TypeError('Original method nominal owner is inaccessible from its source module');
@@ -196,17 +206,17 @@ export function originalMethodNamespaceOwner(context,method) {
 // owner metadata into this context. High consumers recheck the member issuer.
 export function originalMethodParserNamespace(context,method) {
   originalMethodNamespaceOwner(context,method);
-  const facts=contexts.get(context),original=originalMethodMember(method);
-  const scope=facts.evidence.scopes.find(scope=>scope.file===original.sourcePath&&JSON.stringify(scope.path)===JSON.stringify(original.modulePath));
+  const facts=contexts.get(context),original=originalMethodMember(method),issued=immutableContext(context,facts);
+  const scope=mapGet.call(issued.scopeByKey,JSON.stringify([original.sourcePath,original.modulePath]));
   if(!scope)throw new TypeError('Original method parser has no actual module scope');
-  const shadowedEffectRoots=Object.freeze([...new Set(facts.modules.flatMap(module=>[...module.path.filter(name=>['std','tokio','serde_json'].includes(name)),...originalSourceModuleItems(module).filter(item=>item.term==='mod'&&['std','tokio','serde_json'].includes(item.name)).map(item=>item.name)]))]);
+  const shadowedEffectRoots=issued.shadowedEffectRoots;
   return Object.freeze({scope,scopes:facts.evidence.scopes,modulePath:original.modulePath,compilationProfile:facts.compilationProfile,shadowedEffectRoots});
 }
 
 export function configureMatchesMethodParser(parser,context,method) {
-  const captured=originalMethodParserTokenFacts(parser.cursor.tokens),transform=originalMethodTransformFacts(captured.proof),namespace=originalMethodParserNamespace(context,method),facts=contexts.get(context);
+  const captured=originalMethodParserTokenFacts(parser.cursor.tokens),transform=originalMethodTransformFacts(captured.proof),namespace=originalMethodParserNamespace(context,method),facts=contexts.get(context),issued=immutableContext(context,facts);
   if(transform.context!==context||transform.method!==method)throw new TypeError('Matches method parser has another original source transform/member context');
-  const module=facts.modules.find(module=>module.file===captured.sourcePath&&JSON.stringify(module.path)===JSON.stringify(captured.modulePath));
+  const module=mapGet.call(issued.moduleByKey,JSON.stringify([captured.sourcePath,captured.modulePath]));
   if(!module||module.source!==captured.source||module.sourceView!==captured.sourceView||JSON.stringify(normalizeProfile(captured.compilationProfile))!==JSON.stringify(facts.compilationProfile))throw new TypeError('Matches method parser changed its full original view/profile');
   configureParserSourceScope(parser,namespace.scope,namespace.scopes,namespace.modulePath);parser.modulePath=[...namespace.modulePath];
   parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));

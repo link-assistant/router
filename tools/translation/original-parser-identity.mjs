@@ -4,15 +4,14 @@ import {types} from 'node:util';
 const entries=Map.prototype.entries,get=Map.prototype.get,has=Map.prototype.has,set=Map.prototype.set;
 const fail=message=>{throw new TypeError('Original parser/cursor '+message);};
 function reflectionTarget(value){if(!value||!['object','function'].includes(typeof value)||types.isProxy(value))fail('source class changed');return value;}
-function methodDescriptor(prototype,name){
-  let found;
+function prototypeDescriptors(prototype){
+  const nearest=new Map();
   for(let current=prototype,depth=0;current;current=Object.getPrototypeOf(current)){
     reflectionTarget(current);if(++depth>64)fail('prototype chain exceeds its finite identity bound');
-    const descriptor=Object.getOwnPropertyDescriptor(current,name);
-    if(descriptor&&!found){if(!Object.hasOwn(descriptor,'value'))fail('method identity changed: accessor');found=descriptor;}
+    const descriptors=Object.getOwnPropertyDescriptors(current);
+    for(const name of Reflect.ownKeys(descriptors))if(!has.call(nearest,name))set.call(nearest,name,descriptors[name]);
   }
-  if(found)return found;
-  fail('method identity changed: missing original method');
+  return nearest;
 }
 export function originalMethodSnapshot(prototype) {
   reflectionTarget(prototype);const methods=new Map();
@@ -43,11 +42,16 @@ export function assertOriginalParserIdentity(value,prototype,methods,options={})
   for(const name of Reflect.ownKeys(own)){
     const descriptor=own[name];if(!Object.hasOwn(descriptor,'value')||typeof descriptor.value==='function'&&!(name==='is'&&descriptor.value===guard))fail('callbacks or accessors changed');
   }
+  // Inspect the complete chain once per assertion. This index never survives
+  // the call: prototypes, accessors and own overrides remain mutable inputs.
+  const descriptors=prototypeDescriptors(prototype);
   for(const [name,method]of entries.call(methods)){
     if(typeof name!=='string'||typeof method!=='function'||types.isProxy(method))fail('method identity changed: invalid expected method');
     // Inspect the original prototype method even when the genuine text guard
     // shadows `is`; its captured delegation never authorizes a changed class.
-    const descriptor=methodDescriptor(prototype,name);
+    const descriptor=get.call(descriptors,name);
+    if(!descriptor)fail('method identity changed: missing original method');
+    if(!Object.hasOwn(descriptor,'value'))fail('method identity changed: accessor');
     if(descriptor.value!==method)fail('method identity changed');
     const override=Object.hasOwn(own,name)?own[name]:null;if(override&&!(name==='is'&&override.value===guard))fail('method identity changed: own replacement');
   }
