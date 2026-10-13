@@ -6,6 +6,7 @@ import {originalSourceModuleItems} from './source-module-views.mjs';
 import {builtinDeriveDataInputs} from './builtin-derive-data-inputs.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
+import {liftBuiltinCloneAstRoute} from './builtin-clone-ast-route.mjs';
 import {proveBuiltinScalarSourceOutput,assertBuiltinScalarSourceOutput} from './builtin-scalar-ast-route.mjs';
 import {attributeOwners} from './serde-bang-footprints.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal,originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText} from './builtin-derive-ast-meta.mjs';
@@ -45,11 +46,28 @@ export function planBuiltinDeriveBangOutput({context,certificate,invocation}={})
   const plan=freeze({...evidence,digest:hash(JSON.stringify(evidence))});plans.set(plan,{original,profile,certificate,entry});return plan;
 }
 export const isBuiltinDeriveBangPlan=value=>!!value&&plans.has(value);
+function proveCloneDataOutput(state,plan,context,certificate,invocation){
+  const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
+  for(const attribute of input.attributes){
+    if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
+      const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+      if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original Clone doc comment differs from the private source invocation');
+      continue;
+    }
+    const actual=certificate.attributes.find(row=>row.name===attribute.name&&row.position===attribute.position&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end);if(!actual)throw new TypeError('Original Clone attribute differs from the private source invocation');
+    if(attribute.position!=='container'&&attribute.name!=='doc'){
+      const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original Clone nested attribute requires its genuine active helper owner');helpers.push(proof);
+    }
+  }
+  const route=liftBuiltinCloneAstRoute({...state,original:state.original,input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','coverage','Clone',...certificate.attributes.map(attribute=>attribute.name)]));
+  const evidence={schema:'builtin-clone-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},resolverBranches:['has_derive_copy=false','has_derive_copy=true'],constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['generated Clone field trait calls and Copy assertion validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs','unsupported layouts/configuration/compiler errors remain refused']};
+  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
+}
 export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}={}){
   const plan=planBuiltinDeriveBangOutput({context,certificate,invocation}),state=plans.get(plan);
   if(['Clone','Debug','Default'].includes(state.original.name)){
     const input={dependencies:state.original.dependencies,source:state.original.module.source,span:certificate.span,owner:state.original.name};
-    let route;try{route=assertBuiltinScalarSourceOutput(proveBuiltinScalarSourceOutput(input),input);}catch(error){throw new TypeError('Builtin '+state.original.name+' retains typed callback/conditional AST output obligations: '+error.message);}
+    let route;try{route=assertBuiltinScalarSourceOutput(proveBuiltinScalarSourceOutput(input),input);}catch(error){if(state.original.name==='Clone')return proveCloneDataOutput(state,plan,context,certificate,invocation);throw new TypeError('Builtin '+state.original.name+' retains typed callback/conditional AST output obligations: '+error.message);}
     const attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline',state.original.name,...certificate.attributes.map(attribute=>attribute.name)]));
     const evidence={schema:'builtin-scalar-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['generated builtin trait methods remain unlowered','other derive owners and original ancestor scopes require separate closed outputs','unsupported source layouts and compiler errors remain refused']};
     const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;

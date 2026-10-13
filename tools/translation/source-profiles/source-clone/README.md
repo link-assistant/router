@@ -60,3 +60,26 @@ written methods. Checked primitive-field leaves store compact source-proof
 references; the complete source/AST/receiver proof stays in the whole checked
 Clone body and is joined through its private emission frame. A field reference
 alone grants no parsing, checking or emission authority.
+
+The independent namespace route reads the complete original `cs_clone` and
+`cs_clone_simple` callbacks for nongeneric named/unit structs and nonempty
+unit enums. Macro-free field type syntax is round-tripped from its exact
+original source span. Both resolver Copy outcomes retain a complete positive
+function/block/statement/expression/pattern/arm tree: named field Clone calls,
+unit constructors, exhaustive unit-enum matches, and type-only assertions
+followed by dereferencing the shared receiver. Original parser recipes and
+`create_fields` retain the complete field-definition span separately from the
+field identifier and type spans. Packed/repr, payload/empty enums, explicit
+discriminants, generics, field defaults and type macros remain refused.
+
+Every selected tree is recursively compared against its privately retained
+source construction. Copied compiler fragments, changed arguments, inserted
+item/macro statements, expression macros, attributes and guards cannot obtain
+output authority. The existing scalar and Eq routes keep their own proofs;
+nested helpers and original ancestor attribute bindings are separately joined.
+This route closes six Clone invocation outputs in the unchanged model-contract
+source. Its complete 46-owner observation changes 16 selected/30 residual
+outputs to 22 selected/24 residual outputs. Sibling derive obligations remain.
+The broader syntax route executes no String/Vec/nested nominal Clone bodies,
+certifies no Copy/no-Drop/const/loan behavior, and adds no original or generated
+executable method. All generated-implementation runtime flags remain false.
