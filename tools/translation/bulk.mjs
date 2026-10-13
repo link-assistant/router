@@ -87,7 +87,7 @@ export function planRegeneration({ root, sources, entries, compilationProfile:pr
     const stem = entry.replace(/\.rs$/u, '');
     const targets = { meta: `${outputRoots[3]}/${stem}.meta.json`, javascript: `${outputRoots[4]}/${stem}.mjs`, typescript: `${outputRoots[5]}/${stem}.ts` };
     expected.set(targets.meta, json(result.meta)); expected.set(targets.javascript, result.javascript); expected.set(targets.typescript, result.typescript);
-    projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });
+    projects.push({ entry, status: 'partial', runtimeParity: false, sources: result.meta.sources.length, moduleEdges: result.meta.moduleEdges.length, moduleDiagnostics: result.meta.moduleDiagnostics.length, executableFunctions: result.meta.executable.filter(item => item.term === 'fn').length, executableConstants: result.meta.executable.filter(item => item.term === 'const').length, checkedMethods: result.meta.checkedMethods?.length ?? 0, checkedGeneratedMethods: result.meta.checkedGeneratedMethods?.length ?? 0, refused: result.meta.refused.length, unloweredItems: result.meta.unloweredItems.length, targets });
     progress({stage:'project',state:'end',entry});
   }
   progress({stage:'standalone',state:'start',total:paths.length});
