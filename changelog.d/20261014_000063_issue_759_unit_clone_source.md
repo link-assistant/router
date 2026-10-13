@@ -1,0 +1,1 @@
+Prove the original Copy branch of unit enum Clone output through private source certificates and the complete positive compiler AST. Preserve all original variants and source spans; executable, ownership and const lowering remain separate obligations.
