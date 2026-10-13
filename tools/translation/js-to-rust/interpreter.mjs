@@ -9,6 +9,12 @@ export function evaluate(program, functionName, arguments_) {
   const expression = (expr, env) => {
     const get = (value) => expression(value, env);
     switch (expr.kind) {
+      case 'json-response':return Response.json(get(expr.body),expr.options===null?undefined:get(expr.options));
+      case 'json-array':return expr.values.map(get);
+      case 'json-record':return Object.fromEntries(expr.fields.map(field=>[field.name,get(field.value)]));
+      case 'json-string':case 'json-boolean':return expr.value;
+      case 'json-number':return Number(expr.text);
+      case 'json-null':return null;
       case 'array':return expr.values.map(get);
       case 'record':return Object.fromEntries(expr.fields.map(field=>[field.name,get(field.value)]));
       case 'error':return Object.assign(new Error(get(expr.message)),Object.fromEntries(expr.fields.map(field=>[field.name,get(field.value)])));

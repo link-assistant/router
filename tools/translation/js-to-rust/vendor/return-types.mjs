@@ -23,11 +23,12 @@ export function joinReturnTypes(left, right) {
 }
 
 export function closedReturnType(type) {
-  return primitive.has(type) || ['null', 'undefined','value','array-value'].includes(type) || Boolean(optionalType(type)) || Boolean((recordShape(type)??errorShape(type))?.every(([,field])=>closedReturnType(field)));
+  return primitive.has(type) || ['null', 'undefined','value','array-value','json-response'].includes(type) || Boolean(optionalType(type)) || Boolean((recordShape(type)??errorShape(type))?.every(([,field])=>closedReturnType(field)));
 }
 
 export function typescriptType(type) {
   if(type==='utf16-string')return 'string';
+  if(type==='json-response')return 'Response';
   const error=errorShape(type);
   if(error)return `Error & { ${error.map(([name,field])=>`${JSON.stringify(name)}: ${typescriptType(field)}`).join('; ')} }`;
   if(type==='array-value')return 'unknown[]';

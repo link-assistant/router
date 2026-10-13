@@ -17,6 +17,7 @@
 (type boolean (javascript boolean) (rust bool) (rust-owned bool))
 (type string (javascript string) (rust "&str") (rust-owned String))
 (type utf16-string (javascript source-owned-utf16-string) (rust "&[u16]") (rust-owned "Vec<u16>"))
+(type json-response (javascript source-owned-json-response) (rust "std::rc::Rc<std::cell::RefCell<JsonResponseProjection>>") (rust-owned "std::rc::Rc<std::cell::RefCell<JsonResponseProjection>>"))
 (type value (javascript "*") (rust "JsValue<'_>") (rust-owned "JsValue<'static>"))
 (type null (javascript null) (rust JsNull) (rust-owned JsNull))
 (type undefined (javascript undefined) (rust JsUndefined) (rust-owned JsUndefined))

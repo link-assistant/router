@@ -26,6 +26,7 @@ import { optionalType, joinReturnTypes, closedReturnType } from './return-types.
 import { validateCharacterClass } from './character-classes.mjs';
 import { staticTableType,mapValueType } from './static-tables.mjs';
 import { recordType,recordShape,errorType,errorShape,canLiftValue,payloadBoundary } from './aggregates.mjs';
+import { checkClosedJson,jsonResponseStatus,closedJsonValue,utf16Link,utf16Of } from './json-responses.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
 
@@ -263,6 +264,8 @@ export function check(item, table) {
     if(payload&&(node.projection||['typeof','includes','table-get','table-has'].includes(node.kind)||node.kind==='builtin'&&node.args?.some(arg=>arg.type==='value')))refuse('collection','an unimplemented observation of a lossless payload');
     for(const child of Object.values(node))if(Array.isArray(child))child.forEach(capabilities);else capabilities(child);
   };
+  const jsonProjection=JSON.stringify(body).includes('"type":"json-response"');
+  if(jsonProjection&&(item.params.length||payload))refuse('collection','a JSON Response input or payload capability boundary');
   capabilities(body);
   return checked;
 }
@@ -332,7 +335,7 @@ function expression(expr, names, table) {
     case 'typeof': {
       const operand = expression(expr.operand, names, table);
       if (optionalType(operand.type)) refuse('type', 'typeof a nullable return value');
-      if(['utf16-string','array-value'].includes(operand.type)||recordShape(operand.type)||errorShape(operand.type))refuse('collection','an unimplemented scalar observation of a projected aggregate or UTF16 contract');
+      if(['utf16-string','array-value','json-response'].includes(operand.type)||recordShape(operand.type)||errorShape(operand.type))refuse('collection','an unimplemented scalar observation of a projected aggregate or UTF16 contract');
       return typed({ operand }, 'string');
     }
     case 'truthy': {
@@ -371,11 +374,18 @@ function expression(expr, names, table) {
         snakeFromCamel(field.name);
         if(keys.has(field.name))refuse('collection','duplicate record fields');keys.add(field.name);
         const value=expression(field.value,names,table);
+        if(value.type==='json-response')refuse('collection','a JSON Response embedded payload boundary');
         if(!closedReturnType(value.type))refuse('collection','an unproved record field value');
         if((value.type==='string'&&value.kind!=='string')||/^(?:optional|nullable)-string$/u.test(value.type))refuse('collection','a scalar string field without a lossless payload bridge');
         return {name:field.name,value};
       });
       return typed({fields},recordType(fields));
+    }
+    case 'json-response': {
+      const body=checkClosedJson(expr.body),options=expr.options===null?null:checkClosedJson(expr.options);
+      jsonResponseStatus(options);
+      if(Buffer.byteLength(JSON.stringify(closedJsonValue(body)),'utf8')>262144)refuse('collection','an oversized JSON Response body');
+      return typed({body,options},'json-response');
     }
     case 'error': {
       const message=expression(expr.message,names,table);
@@ -517,6 +527,13 @@ function linkOf(expr) {
     case 'table-set':return ['table-set',...expr.entries.map(linkOf)];
     case 'array':return ['array',...expr.values.map(linkOf)];
     case 'record':return ['record',...expr.fields.map(field=>['field',encodeWord(field.name),linkOf(field.value)])];
+    case 'json-response':return ['json-response',['body',linkOf(expr.body)],['options',...(expr.options?[linkOf(expr.options)]:[])]];
+    case 'json-string':return ['json-string',utf16Link(expr.value)];
+    case 'json-number':return ['json-number',expr.text];
+    case 'json-boolean':return ['json-boolean',String(expr.value)];
+    case 'json-null':return ['json-null'];
+    case 'json-array':return ['json-array',...expr.values.map(linkOf)];
+    case 'json-record':return ['json-record',...expr.fields.map(field=>['field',utf16Link(field.name),linkOf(field.value)])];
     case 'error':return ['error',['message',linkOf(expr.message)],...expr.fields.map(field=>['field',encodeWord(field.name),linkOf(field.value)])];
     case 'table-map':return ['table-map',...expr.entries.map(entry=>['entry',linkOf(entry.key),linkOf(entry.value)])];
     case 'table-size':return ['table-size',expr.name];
@@ -603,6 +620,13 @@ function exprOf(link) {
     case 'table-set':return {kind,entries:rest.map(exprOf)};
     case 'array':return {kind,values:rest.map(exprOf)};
     case 'record':return {kind,fields:rest.map(entry=>({name:textOf(entry[1]),value:exprOf(entry[2])}))};
+    case 'json-response':return {kind,body:exprOf(field(link,'body')[1]),options:field(link,'options')[1]?exprOf(field(link,'options')[1]):null};
+    case 'json-string':return {kind,value:utf16Of(rest[0])};
+    case 'json-number':return {kind,text:rest[0]};
+    case 'json-boolean':return {kind,value:rest[0]==='true'};
+    case 'json-null':return {kind};
+    case 'json-array':return {kind,values:rest.map(exprOf)};
+    case 'json-record':return {kind,fields:rest.map(entry=>({name:utf16Of(entry[1]),value:exprOf(entry[2])}))};
     case 'error':return {kind,message:exprOf(field(link,'message')[1]),fields:rest.filter(entry=>entry[0]==='field').map(entry=>({name:textOf(entry[1]),value:exprOf(entry[2])}))};
     case 'table-map':return {kind,entries:rest.map(entry=>({key:exprOf(entry[1]),value:exprOf(entry[2])}))};
     case 'table-size':return {kind,name:rest[0]};

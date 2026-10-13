@@ -9,6 +9,7 @@ import { constructMap, idBySpelling, refuse } from './constructs.mjs';
 import { camelFromSnake, canonicalRustName, snakeFromCamel } from './ir.mjs';
 import { constantValue } from './constants.mjs';
 import { parseCharacterClass } from './character-classes.mjs';
+import { parseClosedJson } from './json-responses.mjs';
 
 const UNSUPPORTED_BINARY = new Set(['==', '!=', '**', '??', '&', '|', '^', '<<', '>>', '>>>', 'instanceof', 'in', 'as']);
 const ASSIGNMENTS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '++', '--', '&&=', '||=', '??=']);
@@ -95,10 +96,11 @@ function jsdocTypes(doc) {
  * @param {string} doc the comments directly before the item
  * @returns {object}
  */
-export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts } = {}) {
+export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses } = {}) {
   const at = cursor(tokens);
   at.shadowedBuiltins = shadowedBuiltins;
   at.errorContracts=errorContracts;
+  at.jsonResponses=jsonResponses;
   const term = itemTerm(tokens, 'JavaScript');
   if (term === 'import') refuse('no-definition');
   if (term === 'class') refuse('class');
@@ -532,6 +534,12 @@ function primary(at, language) {
   if (['this', 'self', 'Self', 'function', 'None', 'Some'].includes(token.text)) refuse('unsupported', token.text);
   if (at.is('=>')) refuse('unsupported', 'an arrow function');
   const builtins = constructMap().builtins;
+  if(language==='JavaScript'&&token.text==='Response'&&at.is('.')&&at.is('json',1)) {
+    if(!at.jsonResponses?.owned)refuse('collection',at.jsonResponses?.reason??'unproved Response.json ownership');
+    at.next();at.next();at.expect('(');const body=parseClosedJson(at);
+    const options=at.eat(',')?parseClosedJson(at):null;at.expect(')');
+    return {kind:'json-response',body,options};
+  }
   if(language==='JavaScript'&&token.text==='Object'&&at.is('.')&&at.is('assign',1)) {
     if(!at.errorContracts?.owned)refuse('collection',at.errorContracts?.reason??'unproved Object intrinsic ownership');
     at.next();at.next();const args=argumentsOf(at,language);

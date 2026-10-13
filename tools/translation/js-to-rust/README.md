@@ -182,6 +182,30 @@ not model Error stack, prototype, reflection or throw behavior. Such observers
 and incompatible scalar/payload calls are refused before emission. Rust text
 inspection establishes the projection API, not Rust execution parity.
 
+Zero-input functions may construct `Response.json` from bounded closed literal
+JSON trees and closed valid status options. A complete syntax audit checks
+Response, JSON and Object intrinsic ownership; shadowing, mutation, aliases,
+dynamic evaluation and prototype/reflection access retain refusals. The JSON
+nodes store UTF-16 units for both keys and strings, so lone surrogates survive
+meta and become escaped JSON bytes. Meta retains duplicate fields and source
+order; targets preserve final duplicate values and ECMAScript integer-key
+ordering. Nonliteral values, getters, spreads, serialization hooks, magic
+prototype keys, unknown options and throwing/bodyless statuses remain refused.
+
+JavaScript, the independent IR evaluator and strict TypeScript produce actual
+Response objects. Fixtures check their class, host descriptors, fresh body and
+headers, cloning and single-use consumption against the original sources. The
+Rust draft exposes only a fresh `JsonResponseProjection` with status, owned
+`body_utf8` bytes and `default_content_type: HostDefault`. Its separately
+qualified `content_type_for(JsonResponseHost::Node20)` returns
+`application/json`; the observed Bun 1.4.3 qualification returns
+`application/json;charset=utf-8`. Source function arity stays unchanged, and
+emission never consults the ambient host to choose a header. The host difference
+is retained in independent Node/Bun goldens rather than erased. This API has
+`runtimeParity: false`: headers, streams, body consumption, cloning, property
+observers and projection/payload crossings are not implemented in Rust and
+remain refused in source lowering. Rust text inspection is not runtime proof.
+
 Run `node --test tools/translation/js-to-rust/test/*.test.mjs`. The tests execute
 58 authored fixtures against authoritative JavaScript, an independent IR
 evaluator and strict-compiled TypeScript; they also check ordinary source

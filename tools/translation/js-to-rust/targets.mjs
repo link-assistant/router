@@ -5,6 +5,7 @@ import { optionalType, typescriptType } from './vendor/return-types.mjs';
 import { classPattern } from './vendor/character-classes.mjs';
 import { mapValueType } from './vendor/static-tables.mjs';
 import { recordShape,errorShape,carriesValue,payloadBoundary } from './vendor/aggregates.mjs';
+import { closedJsonValue,jsonResponseStatus } from './vendor/json-responses.mjs';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -198,7 +199,7 @@ function emitter(program, target) {
       case 'variable': {
         if (!rust && expr.projection === 'number') return `(${name(expr.name)} as number)`;
         const value = `${name(expr.name)}${rust && expr.projection ? `.as_${expr.projection}()` : ''}`;
-        if(rust&&(expr.type==='array-value'||recordShape(expr.type)||errorShape(expr.type)))return `${value}.clone()`;
+        if(rust&&(expr.type==='array-value'||expr.type==='json-response'||recordShape(expr.type)||errorShape(expr.type)))return `${value}.clone()`;
         return rust && expr.type === 'string' ? `${value}.to_string()` : value;
       }
       case 'binary': {
@@ -235,6 +236,22 @@ function emitter(program, target) {
         if(!rust)return `({${expr.fields.map(field=>`${JSON.stringify(field.name)}: ${expression(field.value)}`).join(', ')}})`;
         rustContract(expr.type);
         return `std::rc::Rc::new(std::cell::RefCell::new(${records.get(expr.type).name} { ${expr.fields.map(field=>`${snakeFromCamel(field.name)}: ${expression(field.value)}`).join(', ')} }))`;
+      }
+      case 'json-response': {
+        if(!rust)return `Response.json(${expression(expr.body)}${expr.options?', '+expression(expr.options):''})`;
+        const text=JSON.stringify(closedJsonValue(expr.body));
+        return `std::rc::Rc::new(std::cell::RefCell::new(JsonResponseProjection { status: ${jsonResponseStatus(expr.options)}, body_utf8: vec![${[...Buffer.from(text,'utf8')].join(', ')}], default_content_type: JsonResponseDefaultContentType::HostDefault }))`;
+      }
+      case 'json-string':return JSON.stringify(expr.value);
+      case 'json-number':return expr.text;
+      case 'json-boolean':return String(expr.value);
+      case 'json-null':return 'null';
+      case 'json-array':return `[${expr.values.map(expression).join(', ')}]`;
+      case 'json-record': {
+        // Closed duplicate expressions have no effects. Keep first key position
+        // and final value, avoiding a duplicate-property TypeScript error.
+        const fields=new Map(expr.fields.map(field=>[field.name,field.value]));
+        return `{${[...fields].map(([name,value])=>`${JSON.stringify(name)}: ${expression(value)}`).join(', ')}}`;
       }
       case 'error': {
         if(!rust)return `Object.assign(new Error(${expression(expr.message)}), {${expr.fields.map(field=>`${JSON.stringify(field.name)}: ${expression(field.value)}`).join(', ')}})`;
@@ -337,6 +354,31 @@ function emitter(program, target) {
   const serialized = JSON.stringify(program);
   payloadMode=true;
   const declarations=[];
+  if(serialized.includes('"type":"json-response"'))declarations.push(`// Explicit host-qualified projection; runtimeParity: false.
+#[derive(Clone, Copy)]
+#[allow(non_camel_case_types)]
+pub enum JsonResponseHost {
+    Node20,
+    Bun1_4_3,
+}
+#[derive(Clone, Copy)]
+pub enum JsonResponseDefaultContentType {
+    HostDefault,
+}
+#[derive(Clone)]
+pub struct JsonResponseProjection {
+    pub status: u16,
+    pub body_utf8: Vec<u8>,
+    pub default_content_type: JsonResponseDefaultContentType,
+}
+impl JsonResponseProjection {
+    pub fn content_type_for(&self, host: JsonResponseHost) -> &'static str {
+        match (self.default_content_type, host) {
+            (JsonResponseDefaultContentType::HostDefault, JsonResponseHost::Node20) => "application/json",
+            (JsonResponseDefaultContentType::HostDefault, JsonResponseHost::Bun1_4_3) => "application/json;charset=utf-8",
+        }
+    }
+}`);
   for(const [type,record]of records)declarations.push(`#[derive(Clone)]\npub struct ${record.name}${carriesValue(type)?"<'a>":''} {\n${record.error?'    pub message: Vec<u16>,\n':''}${record.shape.map(([field,type])=>`    pub ${snakeFromCamel(field)}: ${rustContract(type)},`).join('\n')}\n}`);
   const helpers = rust ? [
     program.some(payloadBoundary)?PAYLOAD_HELPERS:'',
