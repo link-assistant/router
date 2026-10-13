@@ -1,0 +1,1 @@
+Read original compiler repetition FOLLOW rules and single-rule decl_macro syntax through existing private matcher/transcriber engines. Preserve all original source spans, attributes, cfg facts and expansion tokens; these grammar drafts confer no runtime, namespace or Router feature authority.
