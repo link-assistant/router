@@ -291,3 +291,70 @@ test('complete bounded enum inventory uses actual Cargo proofs and separates gen
     const report=reviewTranslationDraft({root:repo.directory});assert.equal(report.projects[0].checkedGeneratedMethods,1);assert.equal(report.projects[0].checkedMethods,0);assert.equal(report.projects[0].checkedGeneratedMethodItems[0].originalDeclarationTerm,'enum');assert.equal(report.functionCoverage.all.topLevelFunctions,1);assert.equal(report.totals.executable,1);for(const key of ['semanticAuthority','runtimeParity','fullGatePass','rustExecuted'])assert.equal(report[key],false);cloneRetain('unit-complete-inventory',{source:fixture.source,meta:fixture.meta,report});
   }finally{repo.cleanup();}
 });
+
+const defaultUnitFixtures=new Map([
+  ['one',['Only']],['two',['First','Last']],['four',['A','B','C','D']],['nested',['Before','Selected','After']],['thirty-two',Array.from({length:32},(_,i)=>'Variant'+i)],
+].map(([label,variants])=>{
+  const selected=variants[Math.floor(variants.length/2)],declaration='#[derive(Default,Clone,Copy,serde::Serialize)]pub enum Choice{'+variants.map(name=>(name===selected?'#[default]':'')+name).join(',')+'}pub fn make()->Choice{Choice::default()}',source=label==='nested'?'mod inner{'+declaration+'}':declaration,result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  return [label,{source,selected,variants,result,meta:JSON.parse(JSON.stringify(result.meta))}];
+}));
+const defaultUnitRow=meta=>meta.checkedGeneratedMethods.find(row=>row.generator==='core::default::Default'),defaultUnitChecked=meta=>meta.checkedSemanticProgram.program.declarations.$map.find(([,entry])=>entry.impl?.defaultSourceProof)[1],defaultUnitTarget=meta=>meta.targetSemanticProgram.program.declarations.$map.find(([,entry])=>entry.impl?.defaultSourceProof)[1];
+const defaultUnitProofs=meta=>[defaultUnitRow(meta).defaultSourceProof,defaultUnitChecked(meta).impl.defaultSourceProof,defaultUnitTarget(meta).impl.defaultSourceProof];
+for(const [label,fixture]of defaultUnitFixtures)test('unit Default '+label+' rejoins actual compiler selected path and fresh owned JS/strict TS constructor',{timeout:60000},async()=>{
+  assert.deepEqual(fixture.meta.refused,[]);const rows=cloneReview(fixture),row=rows.find(row=>row.generator==='core::default::Default');assert.equal(rows.length,2);assert.equal(row.originalDeclarationTerm,'enum');assert.equal(row.receiver,null);assert.equal(row.defaultSourceProof.schema,'original-generated-unit-default-ir-v1');assert.equal(row.defaultSourceProof.unitSourceProof.selectedVariant.variant.name,fixture.selected);assert.equal(fixture.meta.executable.length,1);assert.equal(fixture.meta.checkedMethods.length,0);assert.equal(row.runtimeParity,false);assert.equal(row.semanticAuthority,false);
+  assert.deepEqual(defaultUnitChecked(fixture.meta).params,[]);assert.equal(defaultUnitChecked(fixture.meta).body.k,'ctor');assert.equal(defaultUnitChecked(fixture.meta).body.ctor,fixture.selected);
+  await verifyTypedTargets(fixture.result,api=>{const make=api[label==='nested'?'inner.make':'make'],a=make(),b=make();assert.deepEqual(a,{$:fixture.selected});assert.deepEqual(b,a);assert.notStrictEqual(a,b);assert.ok(Object.isFrozen(a));},{childTimeoutMs:30000});cloneRetain('unit-default-positive-'+label,{...fixture,rows});
+});
+function defaultUnitFailure(label,mutate,pattern=/Default|default|original|Clone|source|shadow|bang/){test('unit Default refuses '+label,()=>{
+  const original=defaultUnitFixtures.get('two'),fixture={source:original.source,selected:original.selected,meta:structuredClone(original.meta)};mutate(fixture.meta,fixture);let error;try{cloneReview(fixture);}catch(thrown){error=thrown;}assert.ok(error,label);assert.match(error.message,pattern,label);cloneRetain('unit-default-negative-'+label,{...fixture,error:error.message});
+});}
+defaultUnitFailure('enum-mislabelled-struct',meta=>defaultUnitRow(meta).originalDeclarationTerm='struct',/Generated source|schema|hash/);
+defaultUnitFailure('mirrored-selected-variant',meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof.selectedVariant.variant.name='First';});
+defaultUnitFailure('mirrored-original-path',meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof.originalOutput.items[0].body.statements[0].expr.slots.path.segments=['Self','First'];});
+defaultUnitFailure('mirrored-compiler-plan',meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof.originalCompilerPlanDigest='a'.repeat(64);});
+defaultUnitFailure('mirrored-original-zero-argument-descriptor',meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof.methodDescriptor.fields.find(field=>field.name==='explicit_self').name='other';});
+for(const key of ['namespaceAuthority','copyAuthority','noDropAuthority','constAuthority','generatedImplBehavior','runtimeParity'])defaultUnitFailure('mirrored-unit-authority-'+key,meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof[key]=true;});
+for(const key of ['checkedBody','wholeCompilerExecuted','wholeTraitTranslated','runtimeParity'])defaultUnitFailure('mirrored-source-authority-'+key,meta=>{for(const proof of defaultUnitProofs(meta))proof[key]=true;});
+defaultUnitFailure('mirrored-profile-flag',meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof.sourceOutput.compilationProfile.flags.test=true;});
+defaultUnitFailure('mirrored-profile-values',meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof.sourceOutput.compilationProfile.values.foreign=['value'];});
+defaultUnitFailure('mirrored-profile-extra',meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof.sourceOutput.compilationProfile.extra=true;});
+defaultUnitFailure('mirrored-profile-missing',meta=>{for(const proof of defaultUnitProofs(meta))delete proof.unitSourceProof.sourceOutput.compilationProfile.flags.test;});
+defaultUnitFailure('caller-profile',meta=>meta.compilationProfile.flags.test=true);
+defaultUnitFailure('foreign-source-scope',meta=>meta.sources[0].module=['foreign']);
+defaultUnitFailure('mirrored-wrong-constructor',meta=>{for(const entry of [defaultUnitChecked(meta),defaultUnitTarget(meta)])entry.body.ctor='First';});
+defaultUnitFailure('mirrored-constructor-argument',meta=>{for(const entry of [defaultUnitChecked(meta),defaultUnitTarget(meta)])entry.body.args.push({k:'lit',value:true,type:{kind:'bool'}});});
+defaultUnitFailure('mirrored-return-loan',meta=>{for(const entry of [defaultUnitChecked(meta),defaultUnitTarget(meta)])entry.ret.rustReference={kind:'shared',pointee:structuredClone(entry.ret)};});
+defaultUnitFailure('mirrored-receiver',meta=>{for(const entry of [defaultUnitChecked(meta),defaultUnitTarget(meta)])entry.impl.receiver='shared';});
+defaultUnitFailure('mirrored-zero-argument',meta=>{for(const entry of [defaultUnitChecked(meta),defaultUnitTarget(meta)])entry.params.push({name:'self',type:{kind:'bool'}});});
+defaultUnitFailure('mirrored-const-function',meta=>{for(const entry of [defaultUnitChecked(meta),defaultUnitTarget(meta)])entry.constFunction=true;});
+defaultUnitFailure('mirrored-owned-result-type',meta=>{for(const entry of [defaultUnitChecked(meta),defaultUnitTarget(meta)])entry.body.type={kind:'bool'};});
+defaultUnitFailure('mirrored-layout-order',meta=>{for(const key of ['checkedSemanticProgram','targetSemanticProgram'])meta[key].program.declarations.$map.find(([,entry])=>entry.k==='data'&&entry.ctors?.some(ctor=>ctor.name==='Last'))[1].ctors.reverse();});
+defaultUnitFailure('mirrored-layout-payload',meta=>{for(const key of ['checkedSemanticProgram','targetSemanticProgram'])meta[key].program.declarations.$map.find(([,entry])=>entry.k==='data'&&entry.ctors?.some(ctor=>ctor.name==='Last'))[1].ctors[0].fields.push({name:'value',type:{kind:'bool'}});});
+defaultUnitFailure('target-only-body',meta=>defaultUnitTarget(meta).body.ctor='First');
+defaultUnitFailure('checked-relocation',meta=>defaultUnitChecked(meta).span.end++);
+defaultUnitFailure('original-method-overlap',meta=>meta.checkedMethods.push({source:'src/lib.rs',span:defaultUnitRow(meta).span}));
+defaultUnitFailure('original-fn-overlap',meta=>meta.executable.push({source:'src/lib.rs',span:defaultUnitRow(meta).span}));
+for(const [label,change]of [['trait-shadow',source=>source+'trait Default{}'],['manual-coherence',source=>source+'impl Default for Choice{fn default()->Self{Self::First}}'],['changed-marker',source=>source.replace('#[default]Last','#[default]First').replace('First,#[default]First','First,Last')]])defaultUnitFailure('mirrored-source-'+label,(meta,fixture)=>{
+  fixture.source=change(fixture.source);const sha=hash(fixture.source);meta.sources[0].sha256=sha;for(const proof of defaultUnitProofs(meta)){proof.sourceSha256=sha;proof.unitSourceProof.sourceSha256=sha;}
+});
+for(const [label,proof]of [['absent',null],['copied',structuredClone(dependencies)],['foreign',loadJsonMacroSourceProof({manifest,lock})]])test('unit Default refuses '+label+' dependency issuer',()=>{
+ const fixture=defaultUnitFixtures.get('two');assert.throws(()=>reviewGeneratedMethods(fixture.meta,row(fixture.meta),{readSource:()=>fixture.source,dependencies:proof}),/derive|Derive|unsealed|dependencies|Clone/);cloneRetain('unit-default-negative-dependency-'+label,{source:fixture.source,meta:fixture.meta,suppliedDependencies:proof});
+});
+test('complete original Model Default and Clone review retains exact original fn and method denominators',{timeout:60000},()=>{
+ const source=readFileSync(new URL('src/model_contract.rs',root),'utf8'),jsonMacroDependencies=loadJsonMacroSourceProof({manifest,lock}),result=translateProject({entry:'src/model_contract.rs',paths:['src/model_contract.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE}),meta=JSON.parse(JSON.stringify(result.meta)),rows=cloneReview({source,meta,jsonMacroDependencies});assert.equal(meta.executable.length,2);assert.equal(meta.checkedMethods.length,4);assert.equal(meta.refused.length,20);const row=rows.find(row=>row.name==='ModelSelectorKind.default');assert.ok(row);assert.equal(row.originalDeclarationTerm,'enum');assert.equal(row.defaultSourceProof.unitSourceProof.selectedVariant.variant.name,'Unknown');assert.ok(rows.some(row=>row.name==='ModelSelectorKind.clone'));cloneRetain('unit-default-complete-original-model',{source,result,rows});
+});
+test('unit Default independently reconstructs its own source context without a Clone declaration',()=>{
+ const source='trait Clone{}#[derive(Default)]pub enum Choice{Before,#[default]Selected}pub fn make()->Choice{Choice::default()}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE}),meta=JSON.parse(JSON.stringify(result.meta)),rows=cloneReview({source,meta});assert.equal(rows.length,1);assert.equal(rows[0].generator,'core::default::Default');assert.equal(rows[0].defaultSourceProof.unitSourceProof.selectedVariant.variant.name,'Selected');cloneRetain('unit-default-independent-context',{source,result,rows});
+});
+defaultUnitFailure('mirrored-source-aliased-overlap',(meta,fixture)=>{
+ fixture.source+='use Choice as Alias;impl Alias{fn default()->Self{Self::First}}';const sha=hash(fixture.source);meta.sources[0].sha256=sha;for(const proof of defaultUnitProofs(meta)){proof.sourceSha256=sha;proof.unitSourceProof.sourceSha256=sha;}
+});
+defaultUnitFailure('mirrored-missing-unit-source-proof',meta=>{for(const proof of defaultUnitProofs(meta))delete proof.unitSourceProof;});
+defaultUnitFailure('mirrored-foreign-unit-source-proof',meta=>{
+ const foreign=defaultUnitRow(defaultUnitFixtures.get('four').meta).defaultSourceProof.unitSourceProof;for(const proof of defaultUnitProofs(meta))proof.unitSourceProof=structuredClone(foreign);
+});
+defaultUnitFailure('mirrored-copied-clone-source-in-default-proof',meta=>{for(const proof of defaultUnitProofs(meta))proof.unitSourceProof=structuredClone(cloneRow(meta).cloneSourceProof.unitSource);});
+defaultUnitFailure('metadata-receiver-claim',meta=>defaultUnitRow(meta).receiver='shared');
+defaultUnitFailure('metadata-runtime-authority',meta=>defaultUnitRow(meta).runtimeParity=true);
+defaultUnitFailure('metadata-semantic-authority',meta=>defaultUnitRow(meta).semanticAuthority=true);
+defaultUnitFailure('target-only-implementation-owner',meta=>defaultUnitTarget(meta).impl.type.path=['crate','Other']);
