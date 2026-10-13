@@ -38,7 +38,7 @@ function tree(declarations,modules){
   for(const entry of declarations)owner(entry.path).push(entry.surface);
   return items;
 }
-export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map()){
+export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(),dependencies=null){
   let active=declarations.filter(entry=>['enum','struct','generated-type'].includes(entry.term)),checker,program;
   for(let attempts=0;attempts<=declarations.length;attempts++){
     checker=new HostChecker('Rust',[]);
@@ -59,7 +59,7 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
     const actualTarget=implementationTargetPath(implementation,module);
     const path=actualTarget?(binding?[...binding,...implementation.typePath.slice(1)]:implementation.typePath):null;
     let resolvedType=null;try{if(Array.isArray(path)&&path.length&&path.every(part=>typeof part==='string'))resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
-    return bindNonCopyTraitOwner({...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)},module,scopes);
+    return bindNonCopyTraitOwner({...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)},module,scopes,dependencies);
   }));
   const resolve=(qualifiedType,module,span)=>{try{return checker.resolveType({kind:'named',path:qualifiedType},module.path,span);}catch(error){if(!(error instanceof TranslationError))throw error;return null;}};
   const certify=(type,span)=>{

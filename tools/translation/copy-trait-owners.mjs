@@ -1,3 +1,4 @@
+import {bindOriginalSerdeCopyTraitOwner,originalSerdeCopyTraitOwner} from './serde-copy-trait-owners.mjs';
 // Namespace facts and Copy relevance; this implements no formatting behavior.
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
@@ -27,7 +28,8 @@ export const COPY_NAMESPACE_BINDINGS=freeze([
   {name:'PathBuf',namespace:'type',target:['std','path','PathBuf'],kind:'struct',source:'rust-1.89-opaque-path-type'},
 ]);
 const fingerprint=implementation=>hash(JSON.stringify({trait:implementation.traitPath,type:implementation.typePath,generics:implementation.genericParameters,source:implementation.sourcePath,module:implementation.modulePath,span:implementation.span,header:implementation.headerSpan,attributes:implementation.attributes,diagnostics:implementation.diagnostics,resolvedType:implementation.resolvedType,resolvedNominalTarget:implementation.resolvedNominalTarget}));
-export function bindNonCopyTraitOwner(implementation,module,scopes) {
+export function bindNonCopyTraitOwner(implementation,module,scopes,dependencies) {
+  bindOriginalSerdeCopyTraitOwner(implementation,module,scopes,dependencies);
   if(!implementation||!module||!(scopes instanceof Map)||!Array.isArray(implementation.traitPath)||implementation.sourcePath!==module.file||JSON.stringify(implementation.modulePath)!==JSON.stringify(module.path)||implementation.genericParameters?.length)return implementation;
   const originalTarget=implementationTargetPath(implementation,module);
   if(!originalTarget||JSON.stringify(originalTarget)!==JSON.stringify(implementation.typePath))return implementation;
@@ -60,5 +62,5 @@ export function bindNonCopyTraitOwner(implementation,module,scopes) {
 }
 export function nonCopyTraitOwner(implementation) {
   const proof=owners.get(implementation);
-  return proof&&proof.fingerprint===fingerprint(implementation)?proof.evidence:null;
+  return proof&&proof.fingerprint===fingerprint(implementation)?proof.evidence:originalSerdeCopyTraitOwner(implementation);
 }

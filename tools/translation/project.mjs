@@ -338,7 +338,7 @@ export function translateProject(options) {
   }
   progress({stage:'module-parse',state:'end',entry:options.entry,completed:completedModules,total:graph.modules.length});
   progress({stage:'method-parse',state:'start',entry:options.entry});
-  const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes),fieldEvidenceBySurface=new Map();
+  const copyEvidence=projectCopyEvidence(declarations,graph.modules,moduleAliases,scopes,{deriveDependencies:options.deriveDependencies,jsonMacroDependencies:options.jsonMacroDependencies,sourceScopes:bindingEvidence.scopes}),fieldEvidenceBySurface=new Map();
   for (const module of graph.modules) {
     if(module.configurationCondition!=='active')continue;
     const extracted = extractImplDeclarations(module.source, {sourcePath:module.file,modulePath:module.path,sourceView:module.sourceView,compilationProfile:module.compilationProfile});
