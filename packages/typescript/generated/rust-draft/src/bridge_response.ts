@@ -108,7 +108,7 @@ const serde_json = {
 
 function rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373(reason: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>): Readonly<{ readonly "$": "StopSemantics"; readonly "chat_finish_reason": string; readonly "response_status": string; readonly "incomplete_reason": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "refusal": boolean }> {
   ml_validate_rust_value(reason, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
-  const ml_s3 = (() => {
+  const ml_s1 = (() => {
     const ml_standard_body_1 = reason;
     const ml_standard_body_2 = "end_turn";
     switch (ml_standard_body_1.$) {
@@ -124,25 +124,25 @@ function rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373(reason:
       }
     }
   })();
-  if ((ml_s3 === "end_turn")) {
+  if ((ml_s1 === "end_turn")) {
     return rp_6272696467655f726573706f6e73652e636f6d706c657465("stop");
   } else {
-    if ((ml_s3 === "stop_sequence")) {
+    if ((ml_s1 === "stop_sequence")) {
       return rp_6272696467655f726573706f6e73652e636f6d706c657465("stop");
     } else {
-      if ((ml_s3 === "tool_use")) {
+      if ((ml_s1 === "tool_use")) {
         return rp_6272696467655f726573706f6e73652e636f6d706c657465("tool_calls");
       } else {
-        if ((ml_s3 === "refusal")) {
+        if ((ml_s1 === "refusal")) {
           return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("content_filter", "content_filter", true);
         } else {
-          if ((ml_s3 === "max_tokens")) {
+          if ((ml_s1 === "max_tokens")) {
             return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
           } else {
-            if ((ml_s3 === "pause_turn")) {
+            if ((ml_s1 === "pause_turn")) {
               return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
             } else {
-              if ((ml_s3 === "model_context_window_exceeded")) {
+              if ((ml_s1 === "model_context_window_exceeded")) {
                 return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
               } else {
                 return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);

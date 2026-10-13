@@ -15,6 +15,16 @@ const ml_host_value_schema_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42b
 
 const ml_host_value_refinements_766d6723e004a4c15a13d337c2127a6016abfe2e2e3b3108dc42bd5cc363c106 = new Map([]);
 
+import { stringSplitCharacter as ml_csv_split, stringSplitNext as ml_csv_split_next, allocateStringItem as ml_csv_allocate } from "../../runtime/csv-string-runtime.mjs";
+
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
+
+const ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = new Map([]);
+
 function ml_make_StreamOutcome_StreamOutcome(streamed, terminated, inspectable, detail, frames, bytes, duration_ms) {
   if (!(typeof streamed === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof terminated === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
@@ -74,6 +84,40 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c
   return (((router_self).streamed && (router_self).inspectable) && !(router_self).terminated);
 }
 
+function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e69735f73747265616d696e675f6d656469615f74797065(content_type) {
+  ml_validate_rust_value(content_type, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
+  return (() => {
+    const ml_standard_callback_self_1 = content_type;
+    switch (ml_standard_callback_self_1.$) {
+      case "None": {
+        return true;
+      }
+      case "Some": {
+        const ml_standard_pattern_2 = ml_standard_callback_self_1.field0;
+        const value = ml_standard_pattern_2;
+        return ((((() => {
+          const ml_standard_body_1 = ml_csv_split_next(ml_csv_split(value, ";"));
+          switch (ml_standard_body_1.$) {
+            case "None": {
+              return "";
+            }
+            case "Some": {
+              const x = ml_standard_body_1.field0;
+              return x;
+            }
+            default: {
+              return ml_router_unexpected(ml_standard_body_1);
+            }
+          }
+        })()).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === ("text/event-stream").replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)));
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_callback_self_1);
+      }
+    }
+  })();
+}
+
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d(text) {
   if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
   return ((((() => {
@@ -95,5 +139,5 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465
   })());
 }
 
-export const translated = { ["StreamOutcome"]: ml_make_StreamOutcome_StreamOutcome, ["STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d };
-export const provenance = {"sourcePath":"src/request_log/stream_outcome.rs","sourceSha256":"92452a28069d0b7055a62026b34c241153c21059c18943df97e165790b6f1f29","executable":4,"executableFunctions":2,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":7,"preserved":12,"runtimeParity":false};
+export const translated = { ["StreamOutcome"]: ml_make_StreamOutcome_StreamOutcome, ["STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["is_streaming_media_type"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e69735f73747265616d696e675f6d656469615f74797065, ["text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d };
+export const provenance = {"sourcePath":"src/request_log/stream_outcome.rs","sourceSha256":"92452a28069d0b7055a62026b34c241153c21059c18943df97e165790b6f1f29","executable":5,"executableFunctions":3,"executableConstants":1,"executableTypes":1,"executableConstructors":1,"carried":6,"preserved":12,"runtimeParity":false};

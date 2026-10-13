@@ -35,33 +35,33 @@ function ml_host_option_map_or(value, defaultValue, callback) { return value.$ =
 function rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579(event) {
   ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return Object.freeze({ $: 'Tuple', field0: (() => {
-    const ml_standard_body_1 = ml_host_option_bind(ml_host_serde_json_value_get_string(event, "output_index"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
-    const ml_standard_body_2 = 0n;
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(event, "output_index"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
+    const ml_standard_body_3 = 0n;
+    switch (ml_standard_body_2.$) {
       case "None": {
-        return ml_standard_body_2;
+        return ml_standard_body_3;
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
+        const x = ml_standard_body_2.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_2);
       }
     }
   })(), field1: (() => {
-    const ml_standard_body_1_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_2_0); }, "and_then");
-    const ml_standard_body_2_2 = 0n;
-    switch (ml_standard_body_1_2.$) {
+    const ml_standard_body_2_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(event, "content_index"), (ml_host_callback_0_0_2) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0_2); }, "and_then");
+    const ml_standard_body_3_2 = 0n;
+    switch (ml_standard_body_2_2.$) {
       case "None": {
-        return ml_standard_body_2_2;
+        return ml_standard_body_3_2;
       }
       case "Some": {
-        const x_2 = ml_standard_body_1_2.field0;
+        const x_2 = ml_standard_body_2_2.field0;
         return x_2;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1_2);
+        return ml_router_unexpected(ml_standard_body_2_2);
       }
     }
   })() });

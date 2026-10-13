@@ -47,7 +47,7 @@ export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDe
         if(token.text!==close)throw new TypeError('Declarative macro mismatched original delimiters');
         return {children:result,end:token.span.end};
       }
-      if(pairs[token.text]) {
+      if(Object.hasOwn(pairs,token.text)) {
         const nested=list(pairs[token.text],depth+1);
         result.push({kind:'group',delimiter:token.text,children:nested.children,span:{start:token.span.start,end:nested.end},sourceSha256});
       } else result.push(token);

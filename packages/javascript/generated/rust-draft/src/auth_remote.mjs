@@ -51,18 +51,18 @@ function rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c() {
 function rp_617574685f72656d6f74652e7374617475735f6f66(view) {
   ml_validate_rust_value(view, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return (() => {
-    const ml_standard_body_1 = ml_host_option_bind(ml_host_serde_json_value_get_string(view, "status"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
-    const ml_standard_body_2 = "unknown";
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(view, "status"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
+    const ml_standard_body_3 = "unknown";
+    switch (ml_standard_body_2.$) {
       case "None": {
-        return ml_standard_body_2;
+        return ml_standard_body_3;
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
+        const x = ml_standard_body_2.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_2);
       }
     }
   })();
@@ -72,7 +72,22 @@ function rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473(body, provi
   ml_assert_immutable_iterator(body);
   ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_host_option_map(ml_host_option_bind(ml_router_find(ml_router_flatten(ml_router_filter_map(ml_router_iter(ml_copy_fixed_array(["credentials", "accounts"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":2}}), false), (key) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(body, key), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_8_0); }, "and_then"); })), (entry) => { return ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(entry, "name"), (ml_host_callback_9_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_9_0); }, "and_then"), (name) => { return ((name).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (provider).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32))); }, "is_some_and"); }), (entry_2) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(entry_2, "home"), (ml_host_callback_10_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_10_0); }, "and_then"); }, "and_then"), (ml_standard_callback_11_0) => { return ml_standard_callback_11_0; });
+  return ml_host_option_map(ml_host_option_bind(ml_router_find(ml_router_flatten(ml_router_filter_map(ml_router_iter(ml_copy_fixed_array(["credentials", "accounts"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":2}}), false), (key) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(body, key), (ml_host_callback_8_0) => { return ml_host_serde_json_value_as_array(ml_host_callback_8_0); }, "and_then"); })), (entry) => { return (() => {
+    const ml_standard_callback_self_11 = ml_host_option_bind(ml_host_serde_json_value_get_string(entry, "name"), (ml_host_callback_9_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_9_0); }, "and_then");
+    switch (ml_standard_callback_self_11.$) {
+      case "None": {
+        return false;
+      }
+      case "Some": {
+        const ml_standard_pattern_12 = ml_standard_callback_self_11.field0;
+        const name = ml_standard_pattern_12;
+        return ((name).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)) === (provider).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32)));
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_callback_self_11);
+      }
+    }
+  })(); }), (entry_2) => { return ml_host_option_bind(ml_host_serde_json_value_get_string(entry_2, "home"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"); }, "and_then"), (ml_standard_callback_1_0) => { return ml_standard_callback_1_0; });
 }
 
 export const translated = { ["REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["home_in_accounts"]: rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473 };

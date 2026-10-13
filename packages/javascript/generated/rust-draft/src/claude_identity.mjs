@@ -8,6 +8,10 @@ import { serde_json_value_get_string as ml_host_serde_json_value_get_string, ser
 
 import { createVectorRuntime as ml_create_vector_runtime } from "../runtime/vector-runtime.mjs";
 
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
+
 const ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 = {"schemaVersion":1,"types":{"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
 
 const ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
@@ -33,9 +37,24 @@ function rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e746961
 
 function rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479(blocks) {
   ml_validate_rust_value(blocks, {"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
-  return ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_rust_vec_first_named_73657264655f6a736f6e_56616c7565(blocks), (block) => { return ml_host_serde_json_value_get_string(block, "text"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then"), (text) => { const ml_text_2 = text;
-  const ml_text_3 = rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054();
-  return ml_text_2.startsWith(ml_text_3); }, "is_some_and");
+  return (() => {
+    const ml_standard_callback_self_4 = ml_host_option_bind(ml_host_option_bind(ml_host_rust_vec_first_named_73657264655f6a736f6e_56616c7565(blocks), (block) => { return ml_host_serde_json_value_get_string(block, "text"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
+    switch (ml_standard_callback_self_4.$) {
+      case "None": {
+        return false;
+      }
+      case "Some": {
+        const ml_standard_pattern_5 = ml_standard_callback_self_4.field0;
+        const text = ml_standard_pattern_5;
+        const ml_text_2 = text;
+        const ml_text_3 = rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054();
+        return ml_text_2.startsWith(ml_text_3);
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_callback_self_4);
+      }
+    }
+  })();
 }
 
 export const translated = { ["CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479 };
