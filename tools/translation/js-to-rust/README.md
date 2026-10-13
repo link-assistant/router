@@ -212,8 +212,8 @@ its existing top-level `program`, `items` and `diagnostics`, and adds a separate
 `scopedFunctions` inventory and executable `program`. In the current 52 native
 modules, the top-level denominator stays 788 declarations (73 translated).
 The scoped denominator is 705 additional arrow functions, function expressions
-and function declarations (34 full-domain translations and nine conditional private drafts
-in 20 modules): it excludes top-level function declarations and top-level
+and function declarations (52 full-domain translations and nine conditional private drafts
+in 27 modules): it excludes top-level function declarations and top-level
 variable initializer arrows/function expressions already represented by the
 top-level inventory. It includes other callbacks, local functions and immediate
 functions. Method and accessor bodies themselves are excluded; their nested
@@ -270,9 +270,24 @@ previous 73 top-level and 34 scoped programs retain their original contracts.
 The added callback drafts expose conditional private inputs explicitly;
 unqualified and public callers remain refused. Meta serializes a
 `conditional-inputs` capability, both targets label the conditional draft, and
-scoped census fields retain `fullDomainTranslatedItems: 34` separately from
-`conditionalPrivateBodyDraftItems: 9`. The combined 43 definitions are not a
-43-body full-domain or runtime parity claim.
+scoped census fields retain `fullDomainTranslatedItems: 52` separately from
+`conditionalPrivateBodyDraftItems: 9`. The combined 61 definitions are not a
+61-body full-domain or runtime parity claim.
+
+Ordinary JavaScript function completion now lowers to an explicit undefined
+return in the existing checked IR. This includes empty blocks, pure local
+bindings and bare return statements, with original-source ASI gaps preserving
+comments and all four ECMAScript line terminators. Empty statements and a
+trailing function declaration semicolon are accepted. Declared nonundefined
+return contracts still refuse fallthrough; unsupported expression statements,
+effects and unreachable unsupported statements are not discarded. Meta bodies
+without an explicit return remain invalid. Null, undefined and Rust unit remain
+separate; these changes use the existing JsUndefined target without Rust
+compilation. All 18 original synchronous empty callbacks have independent
+source/IR/strict TypeScript goldens; both original asynchronous empty callbacks
+remain refused with their source owners and spans retained. Their containing
+functions and modules remain refused. Identifier continuation excludes the
+lexer's existing ECMAScript whitespace set without broadening identifier names.
 
 The explicit `{lossless:true}` option selects the same checked boundary for
 other pure functions. The default top-level API is unchanged; scalar-string

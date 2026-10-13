@@ -57,7 +57,7 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
     }
     const row = { start: item.start, end: item.end, status: 'unsupported' };
     try {
-      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed,readOnlyTables:tables,errorContracts:errors,jsonResponses:responses,callbackInputs });
+      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed,readOnlyTables:tables,errorContracts:errors,jsonResponses:responses,callbackInputs,source });
       if(lossless&&row.parsed.kind==='function')row.parsed.lossless=true;
       if (row.parsed.kind === 'function' && !returns(row.parsed.body)) {
         throw Object.assign(new Error('a path ends without a return'), { slug: 'missing-return' });

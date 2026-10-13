@@ -50,7 +50,7 @@ export function lex(source, language) {
       index = end + 2;
       push('comment', start);
     } else if (/[A-Za-z_$]/u.test(char) || char.charCodeAt(0) >= 0x80) {
-      while (index < source.length && (/[A-Za-z0-9_$]/u.test(source[index]) || source.charCodeAt(index) >= 0x80)) index += 1;
+      while (index < source.length && (/[A-Za-z0-9_$]/u.test(source[index]) || source.charCodeAt(index) >= 0x80 && !/\s/u.test(source[index]))) index += 1;
       if (language === 'Rust' && source[index] === '!' && source[index + 1] !== '=') index += 1;
       push('ident', start);
     } else if (/[0-9]/u.test(char)) {

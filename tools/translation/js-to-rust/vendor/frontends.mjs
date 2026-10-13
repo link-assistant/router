@@ -96,8 +96,9 @@ function jsdocTypes(doc) {
  * @param {string} doc the comments directly before the item
  * @returns {object}
  */
-export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses,callbackInputs } = {}) {
+export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses,callbackInputs,source } = {}) {
   const at = cursor(tokens);
+  at.source = source;
   at.shadowedBuiltins = shadowedBuiltins;
   at.errorContracts=errorContracts;
   at.jsonResponses=jsonResponses;
@@ -152,10 +153,11 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
         if (grouped) at.expect(')');
       }
       at.expect('=>');
-      const body = at.is('{') ? jsBlock(at) : [{ kind: 'return', value: expression(at, 'JavaScript') }];
+      const returns=types.returns?jsType(types.returns):null;
+      const body = at.is('{') ? completeJavaScriptBody(jsBlock(at),returns) : [{ kind: 'return', value: expression(at, 'JavaScript') }];
       at.eat(';');
       if (!at.done()) refuse('unsupported', at.peek().text);
-      return { kind: 'function', name: snakeFromCamel(name.text), exported,...(callbackInputs?{conditionalInputs:true}:{}), params, returns: types.returns ? jsType(types.returns) : null, body };
+      return { kind: 'function', name: snakeFromCamel(name.text), exported,...(callbackInputs?{conditionalInputs:true}:{}), params, returns, body };
     }
     // The value is read first, so a computed binding names what it computes.
     const value = expression(at, 'JavaScript');
@@ -182,7 +184,8 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTabl
     if (!at.is(')')) at.expect(',');
   }
   const returns = types.returns ? jsType(types.returns) : null;
-  const body = jsBlock(at);
+  const body = completeJavaScriptBody(jsBlock(at),returns);
+  at.eat(';');
   if (!at.done()) refuse('unsupported', at.peek().text);
   return { kind: 'function', name, exported, params, returns, body };
 }
@@ -213,11 +216,21 @@ function arrowAhead(at) {
   return false;
 }
 
+// JavaScript ordinary function completion is undefined. Make it explicit
+// before the shared checker; missing/unsupported IR paths remain rejected.
+function completeJavaScriptBody(body,declaredReturns) {
+  const terminates=statements=>{const last=statements.at(-1);return last?.kind==='return'||last?.kind==='if'&&last.else!==null&&terminates(last.then)&&terminates(last.else);};
+  if(terminates(body))return body;
+  if(declaredReturns!==null&&!['undefined','value'].includes(declaredReturns))refuse('missing-return','normal completion violates the declared nonundefined return contract');
+  return [...body,{kind:'return',value:{kind:'undefined'}}];
+}
+
 function jsBlock(at) {
   at.expect('{');
   const body = [];
   while (!at.eat('}')) {
     if (at.peek().type === 'end') refuse('unsupported', 'an unclosed block');
+    if(at.eat(';'))continue;
     body.push(jsStatement(at));
   }
   return body;
@@ -234,9 +247,13 @@ function jsStatement(at) {
     return { kind: 'let', name, value, mutable };
   }
   if (at.eat('return')) {
-    if (at.is(';')) refuse('unsupported', 'a return without a value');
+    // Restricted-production ASI observes the original gap, including comments
+    // and every ECMAScript line terminator. A following expression statement
+    // remains subject to the existing statement/after-return refusals.
+    const lineBreak=typeof at.source==='string'&&Number.isSafeInteger(token.end)&&Number.isSafeInteger(at.peek().start)&&/[\n\r\u2028\u2029]/u.test(at.source.slice(token.end,at.peek().start));
+    if(at.eat(';')||at.is('}')||lineBreak)return {kind:'return',value:{kind:'undefined'}};
     const value = expression(at, 'JavaScript');
-    at.expect(';');
+    if(!at.eat(';')&&!at.is('}'))at.expect(';');
     return { kind: 'return', value };
   }
   if (at.eat('if')) {
