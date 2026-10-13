@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {originalMacroTrees,macroTreeSource,freezeMacroTree} from './macro-token-trees.mjs';
 import {boundedMacroBlock,boundedMacroExpression} from './macro-fragments.mjs';
 import {boundedMacroItem} from './macro-items.mjs';
+import {originalMacroSequenceFollowRule,assertOriginalMacroSequenceFollowRule} from './macro-follow-source.mjs';
 // Each instance keeps separate definition, expansion and forwarding authority.
 export function createDeclarativeMacroEngine(sourceFragmentAdapter=null) {
 const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap();
@@ -17,7 +18,7 @@ const names=nodes=>nodes.flatMap(node=>node.kind==='capture'||node.kind==='varia
 const syntax=(tree,end=tree)=>({sourceSha256:tree.sourceSha256,span:{start:tree.span.start,end:end.span.end},...(tree.sourceFeature?{sourceFeature:tree.sourceFeature}:{})});
 
 // FOLLOW(ty/expr/pat) is checked on the actual planned matcher, including every
-// nullable exit and separator/re-entry of each enclosing repetition. Unknown
+// nullable exit and original rustc separator rule of each repetition. Unknown
 // fragment FIRST sets are carried; their opaque ASTs are never exposed.
 function assertTypeFollowers(pattern){
   let cells=32000;const end='end',allowed=new Set(['=>',',','=','|',';',':','>','as','where'].map(value=>'literal:'+value));allowed.add('group:[');allowed.add('group:{');allowed.add(end);
@@ -38,7 +39,11 @@ function assertTypeFollowers(pattern){
         if(permitted&&[...following].some(value=>!permitted.has(value)))throw new TypeError('Declarative '+(node.fragment==='ty'?'type':node.fragment==='pat'?'pattern':'expression')+' fragment has an unproved Rust follow set');
       }
       if(node.kind==='group')check(node.children,new Set([end]),depth+1);
-      if(node.kind==='repeat'){const next=new Set(following);if(node.operator!=='?'){if(node.separator)next.add(literal(node.separator));else for(const value of first(node.children))if(value!==end)next.add(value);}check(node.children,next,depth+1);}
+      if(node.kind==='repeat'){
+        const rule=assertOriginalMacroSequenceFollowRule(originalMacroSequenceFollowRule()),next=new Set(following);
+        if(rule.includeOwnFirst!==false||rule.includeSeparator!==true)throw new TypeError('Unsupported original repetition FOLLOW plan');
+        if(node.separator)next.add(literal(node.separator));check(node.children,next,depth+1);
+      }
     }
   }check(pattern);
 }
