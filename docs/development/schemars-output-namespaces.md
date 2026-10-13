@@ -50,3 +50,19 @@ genuine declaring owner as well as any actual Serde sibling owners. They use
 the existing private complete invocation and ancestor checks. This is helper
 registration evidence; unsupported helper behavior and generated bang outputs
 remain separate obligations.
+
+The pure Schemars data candidate retains leading outer line docs after the
+preceding complete original item. It keeps their comment source and lexical
+spans instead of extending the derive invocation or manufacturing attribute
+source. Locked proc-macro2's original outer-doc branch constructs `doc =`
+string tokens at the comment span; locked Syn parses those outer attributes
+before declaration visibility. Inner and block docs remain outside this
+bounded attachment route. Explicit attributes and field line docs retain their
+original source independently.
+
+For named fields, the candidate retains both the existing visibility-to-type
+definition span and an additional Syn token span beginning at the first field
+attribute. The original Syn Field parser and printer establish attribute,
+visibility, name, colon and type order. This is an input candidate, not a Rust
+Span identity or namespace capability. Only the private output issuer can join
+it to the original module and derive invocation.

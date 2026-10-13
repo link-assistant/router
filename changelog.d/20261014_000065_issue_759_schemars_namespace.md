@@ -3,3 +3,5 @@ Retain the complete original Rust1.89 module_path macro source and its positive 
 Retain exact original Cargo strings privately at genuine derive dependency issuance, allowing the existing JSON issuer to validate the same actual inputs. Copied, proxy, getter and forged carriers cannot select source bytes; no output, ownership or runtime authority is added.
 
 Collect original Syn typed quote templates through an explicit source-only inventory mode while preserving default inventories, and join genuine JsonSchema helper registrations to exact nested attributes. Generated outputs and trait behavior remain independent.
+
+Retain exact leading outer-doc attachment and field attribute-to-type token spans through locked proc-macro2/Syn source recipes. These pure input candidates grant no namespace, Span identity, ownership or trait execution authority.
