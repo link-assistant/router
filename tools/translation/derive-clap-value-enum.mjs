@@ -4,6 +4,7 @@ import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler,inspectQuoteFragmen
 import {rustTokens,sourceItems} from './rust-structure.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
 import {isPlainSourceIdentifier} from './module-paths.mjs';
+import {originalClapDocumentFeaturePlan,originalClapValueDocuments} from './derive-clap-documentation.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const cache=new WeakMap(),proofs=new WeakMap();
@@ -46,6 +47,12 @@ function sourcePlan(dependencies) {
     ...rule(dependencies,'clap_derive',item,'_ => self.methods.push(Method::new(name, arg)),','alias-method-storage'),
     ...rule(dependencies,'clap_derive',item,'None | Some(MagicAttrName::Short) | Some(MagicAttrName::Long) | Some(MagicAttrName::Env) | Some(MagicAttrName::About) | Some(MagicAttrName::LongAbout) | Some(MagicAttrName::LongHelp) | Some(MagicAttrName::Author) | Some(MagicAttrName::Version) => { let expr = attr.value_or_abort()?; self.push_method(*attr.kind.get(), attr.name.clone(), expr); }','nonmagic-literal-forwarding'),
     ...rule(dependencies,'clap_derive','src/attr.rs','else if attr.path().is_ident("value") { Sp::new(AttrKind::Value, attr.path().span()) }','value-helper-owner'),
+    ...rule(dependencies,'clap_derive','src/attr.rs','else if attr.path().is_ident("value") { Sp::new(AttrKind::Value, attr.path().span()) } else { continue; };','other-attribute-paths-ignored'),
+    ...rule(dependencies,'clap_derive',item,'res.push_doc_comment(&variant.attrs, "help", None);','value-document-help-only'),
+    ...rule(dependencies,'clap_derive',item,'verbatim_doc_comment: false, force_long_help: false,','default-document-mode-bindings'),
+    ...rule(dependencies,'clap_derive',item,'short_help.map(|h| quote!(#h)).unwrap_or_else(|| quote!(None))','default-feature-short-document-binding'),
+    ...rule(dependencies,'clap_derive','src/utils/doc_comments.rs','let (short, long) = parse_markdown(lines); let long = long.or_else(|| force_long.then(|| short.clone())); (Some(remove_period(short)), long)','default-document-preprocessing'),
+    ...rule(dependencies,'clap_derive','src/utils/doc_comments.rs','fn remove_period(mut s: String) -> String { if s.ends_with(\'.\') && !s.ends_with("..") { s.pop(); } s }','document-final-single-period-removal'),
     ...rule(dependencies,'clap_derive','src/attr.rs','let value = if input.peek(Token![=]) { let assign_token = input.parse::<Token![=]>()?; match input.parse::<Expr>() { Ok(expr) => Some(AttrValue::Expr(expr)),','literal-expression-parser'),
     ...rule(dependencies,'heck','src/kebab.rs','transform(self.0.as_ref(), lowercase, |f| write!(f, "-"), f)','heck-word-boundary-sink'),
     ...rule(dependencies,'heck','src/lib.rs','for word in s.split(|c: char| !c.is_alphanumeric())','heck-ascii-word-split'),
@@ -60,13 +67,17 @@ function sourcePlan(dependencies) {
   definitions.methodInitialization=definition(dependencies,item,'new',value=>value.includes('Self { name, args }'));
   definitions.attributeParser=definition(dependencies,'src/attr.rs','parse',value=>value.includes('let name: Ident = input.parse()?'));
   definitions.attributeLists=definition(dependencies,'src/attr.rs','parse_all');
+  for(const name of ['extract_doc_comment','format_doc_comment','remove_period','split_paragraphs','merge_lines','is_blank'])definitions[name]=definition(dependencies,'src/utils/doc_comments.rs',name);
+  definitions.parse_markdown=definition(dependencies,'src/utils/doc_comments.rs','parse_markdown',value=>value.includes('split_paragraphs(lines)'));
   definitions.method=definition(dependencies,item,'to_tokens',value=>value.includes('let Self { name, args }'));
   const template=(name,predicate=()=>true)=>{
     const def=definitions[name],rows=inventory.members.find(member=>member.source===def.source).quotes.filter(row=>row.span.start>=def.span.start&&row.span.end<=def.span.end&&predicate(text(row.syntax)));
     if(rows.length!==1)throw new TypeError('Clap selected quote template is not unique: '+name);return rows[0];
   };
-  const templates={impl:template('gen_for_enum'),literal:template('lits'),variants:template('gen_value_variants'),possible:template('gen_to_possible_value'),method:template('method'),fields:template('field_methods'),deprecations:template('deprecations'),derivedName:template('translate',value=>value==='#s')};
-  const plan={rules:freeze(rules),inventory,definitions:freeze(definitions),templates};cache.set(dependencies,plan);return plan;
+  const docBinding=rules.find(row=>row.role==='default-feature-short-document-binding'),docQuotes=inventory.members.find(member=>member.source===docBinding.source).quotes.filter(row=>row.span.start>=docBinding.span.start&&row.span.end<=docBinding.span.end&&text(row.syntax)==='#h');
+  if(docQuotes.length!==1)throw new TypeError('Clap original short-document quote is not unique');
+  const templates={impl:template('gen_for_enum'),literal:template('lits'),variants:template('gen_value_variants'),possible:template('gen_to_possible_value'),method:template('method'),fields:template('field_methods'),deprecations:template('deprecations'),derivedName:template('translate',value=>value==='#s'),docLiteral:docQuotes[0]};
+  const plan={rules:freeze(rules),inventory,definitions:freeze(definitions),templates,documentFeatures:originalClapDocumentFeaturePlan(dependencies)};cache.set(dependencies,plan);return plan;
 }
 
 // Translate the actual Heck word-mode algorithm on its bounded ASCII input.
@@ -90,12 +101,26 @@ function boundedInput(source) {
   if(typeof source!=='string'||Buffer.byteLength(source)>128000)throw new TypeError('Clap input exceeds original enum grammar budget');
   const trees=originalMacroTrees(source),at=trees.findIndex(node=>node.text==='enum'),name=trees[at+1],body=trees[at+2];
   if(at<0||!ident(name)||body?.kind!=='group'||body.delimiter!=='{'||at+3!==trees.length)throw new TypeError('Clap ValueEnum route requires an original nongeneric unit enum');
+  const ignoredContainerAttributes=[];let header=0;
+  while(trees[header]?.text==='#'&&trees[header+1]?.kind==='group'&&trees[header+1].delimiter==='[') {
+    const attribute=trees[header+1],path=attribute.children[0];
+    if(path?.kind!=='token'||!isPlainSourceIdentifier(path.text)||['cfg','cfg_attr','clap','structopt','command','group','arg','value'].includes(path.text))throw new TypeError('Clap container attributes require an independent original input/output route');
+    ignoredContainerAttributes.push({path:path.text,span:attribute.span,syntax:attribute.children});header+=2;
+  }
+  if(trees[header]?.text==='pub'){header++;if(trees[header]?.kind==='group'&&trees[header].delimiter==='('){if(trees[header].children.some(node=>node.kind!=='token'||['!','#'].includes(node.text)))throw new TypeError('Clap visibility needs an independent original input route');header++;}}
+  if(header!==at)throw new TypeError('Clap ValueEnum route requires its original enum declaration header');
   const variants=[],nodes=body.children;let index=0;
   while(index<nodes.length) {
-    const helpers=[];
+    const helpers=[],attributes=[],ignoredAttributes=[];
     while(nodes[index]?.text==='#'&&nodes[index+1]?.kind==='group'&&nodes[index+1].delimiter==='[') {
       const attr=nodes[index+1],path=attr.children[0],group=attr.children[1];
-      if(path?.text!=='value'||group?.kind!=='group'||group.delimiter!=='('||attr.children.length!==2)throw new TypeError('Clap variant attribute needs an independent original output route');
+      attributes.push(attr);
+      if(path?.kind!=='token'||!isPlainSourceIdentifier(path.text)||['cfg','cfg_attr'].includes(path.text))throw new TypeError('Clap variant configuration requires an independent original input route');
+      if(path.text!=='value') {
+        if(['clap','structopt','command','group','arg'].includes(path.text))throw new TypeError('Clap variant attribute needs an independent original output route');
+        ignoredAttributes.push({path:path.text,span:attr.span,syntax:attr.children});index+=2;continue;
+      }
+      if(group?.kind!=='group'||group.delimiter!=='('||attr.children.length!==2)throw new TypeError('Clap variant attribute needs an independent original output route');
       let helper=0;while(helper<group.children.length) {
         const key=group.children[helper++],eq=group.children[helper++],literal=group.children[helper++];let value;
         if(literal?.type!=='string'||!literal.text.startsWith('"'))throw new TypeError('Clap helper requires an actual original string literal');
@@ -108,14 +133,11 @@ function boundedInput(source) {
       if(!helpers.length)throw new TypeError('Clap helper requires a nonempty original list');index+=2;
     }
     const variant=nodes[index++];if(!ident(variant)||variants.some(row=>row.name===variant.text))throw new TypeError('Clap route requires distinct ASCII unit variant identifiers');
-    variants.push({name:variant.text,span:variant.span,helpers,canonicalName:helpers.find(row=>row.key==='name')?.value??kebab(variant.text),aliases:helpers.filter(row=>row.key==='alias').map(row=>row.value)});
+    variants.push({name:variant.text,span:variant.span,helpers,ignoredAttributes,documentation:originalClapValueDocuments(attributes),canonicalName:helpers.find(row=>row.key==='name')?.value??kebab(variant.text),aliases:helpers.filter(row=>row.key==='alias').map(row=>row.value)});
     if(index<nodes.length&&nodes[index++]?.text!==',')throw new TypeError('Clap route excludes fields and discriminants');
   }
   if(!variants.length||variants.length>128)throw new TypeError('Clap route requires one to 128 bounded unit variants');
-  // Variant documentation feeds field methods in the actual generator. This
-  // route currently proves empty documentation only; container docs are ignored.
-  if(rustTokens(source).some(token=>token.start>=body.span.start&&token.type==='comment'&&/^\/(?:\/\/|\*\*|\*!)/u.test(token.text)))throw new TypeError('Clap variant documentation requires an independent source output route');
-  return {name:name.text,span:name.span,variants};
+  return {name:name.text,span:name.span,ignoredContainerAttributes,variants};
 }
 export function proveClapValueEnumSourceOutput({dependencies,source}={}) {
   if(!isDeriveDependencyProof(dependencies))throw new TypeError('Clap output requires sealed original source dependencies');
@@ -127,7 +149,8 @@ export function proveClapValueEnumSourceOutput({dependencies,source}={}) {
   const emptyDeprecations=()=>inst(plan.templates.deprecations,{deprecations:sequence([],'no old Clap/id/arg attributes')},'empty original deprecation sequence');
   const literals=input.variants.map(variant=>{
     const methods=variant.helpers.filter(helper=>helper.key==='alias').map(helper=>inst(plan.templates.method,{name:leaf('alias','ident','actual original helper key'),args:leaf(JSON.stringify(helper.value),'string','original helper literal Expr')},'Method::to_tokens'));
-    const fields=inst(plan.templates.fields,{doc_comment:sequence([],'original variant has no docs'),methods:sequence(methods,'source-ordered aliases')},'Item::field_methods');
+    const docMethods=variant.documentation.short===null?[]:[inst(plan.templates.method,{name:leaf('help','ident','original value document short_name'),args:inst(plan.templates.docLiteral,{h:leaf(JSON.stringify(variant.documentation.short),'string','original formatted short help')},'original default-feature document literal quote')},'original value document Method::to_tokens')];
+    const fields=inst(plan.templates.fields,{doc_comment:sequence(docMethods,'original default-feature value documentation'),methods:sequence(methods,'source-ordered aliases')},'Item::field_methods');
     const literal=leaf(JSON.stringify(variant.canonicalName),'string','Name::Assigned literal or actual Heck ASCII case output');
     const name=variant.helpers.some(helper=>helper.key==='name')?literal:inst(plan.templates.derivedName,{s:literal},'Name::Derived Kebab quote');
     return inst(plan.templates.literal,{deprecations:emptyDeprecations(),name,fields},'lits source unit variant');
@@ -139,7 +162,7 @@ export function proveClapValueEnumSourceOutput({dependencies,source}={}) {
   const observation=inspectQuoteFragment(output),body=output.syntax.find(node=>node.tag==='group'&&node.delimiter==='{');
   if(observation.bangCalls.length||observation.definitions.length||observation.macroExports.length||output.syntax.filter(node=>node.text==='impl').length!==1||body?.nodes.filter(node=>node.text==='fn').length!==2||observation.attributes.some(attr=>!['allow','automatically_derived'].includes(attr.name)))throw new TypeError('Clap output failed original one-impl/two-method confinement');
   const evidence={schema:'original-clap-value-enum-source-output-v1',dependenciesDigest:dependencies.digest,inputSha256:hash(source),input,
-    inventoryDigest:plan.inventory.digest,inventoryCounts:{sourceMembers:plan.inventory.sourceMemberCount,quoteGroups:plan.inventory.quoteCount},originalRules:plan.rules,originalDefinitions:plan.definitions,bindingProofs:bindings,
+    inventoryDigest:plan.inventory.digest,inventoryCounts:{sourceMembers:plan.inventory.sourceMemberCount,quoteGroups:plan.inventory.quoteCount},originalRules:plan.rules,originalDefinitions:plan.definitions,documentFeatures:plan.documentFeatures,bindingProofs:bindings,
     syntax:output.syntax,outputGrammarDigest:observation.fragmentSha256,semanticSyntaxRoundTrip:true,outputObservation:observation,
     selectedSuccessOutputComplete:true,selectedOutputKind:'one trait impl containing two methods',generatedAttributeOwnersResolved:false,errorBranchComplete:false,
     generatedImplBehavior:false,obligations:['original context must resolve generated builtin attribute owners','generator error stream has independent obligations','ValueEnum method execution and full runtime parity remain unimplemented']};

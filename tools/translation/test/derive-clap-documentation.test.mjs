@@ -1,0 +1,84 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {loadDeriveDependencyProof,deriveDependencySource} from '../derive-dependencies.mjs';
+import {originalClapDocumentFeaturePlan,originalClapValueDocuments} from '../derive-clap-documentation.mjs';
+import {proveClapValueEnumSourceOutput,isClapValueEnumSourceOutput} from '../derive-clap-value-enum.mjs';
+import {createDeriveFootprintContext} from '../derive-footprints.mjs';
+import {originalMacroTrees} from '../macro-token-trees.mjs';
+import {sourceItems} from '../rust-structure.mjs';
+import {translateProject} from '../project.mjs';
+import {parseProgram} from '../semantic-meta.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
+const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
+const hash=value=>createHash('sha256').update(value).digest('hex');
+const context=source=>createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE});
+const docAttrs=source=>originalMacroTrees(source).filter(node=>node.kind==='group'&&node.delimiter==='[');
+function helpLiterals(nodes) {
+  const values=[];
+  for(let at=0;at<nodes.length;at++) {
+    const node=nodes[at];if(node.text==='help'&&nodes[at+1]?.tag==='group'&&nodes[at+1].delimiter==='(')values.push(JSON.parse(nodes[at+1].nodes[0].text));
+    if(node.tag==='group')values.push(...helpLiterals(node.nodes));
+  }
+  return values;
+}
+
+test('actual Cargo feature edges and generator document bindings retain original bytes and spans',()=>{
+  const plan=originalClapDocumentFeaturePlan(dependencies);assert.deepEqual(plan.rootFeatures,['derive','env','string','default']);assert.equal(plan.markdown,false);assert.equal(plan.unstableV5,false);assert.equal(plan.wholeCargoFeatureUnification,false);
+  assert.ok(plan.selected.some(row=>row.package==='clap_derive'&&row.name==='default'&&row.values.length===0));
+  for(const row of [...plan.selected,plan.dependency]){const source=deriveDependencySource(dependencies,row.package,row.source);assert.equal(source.sha256,row.sourceSha256);assert.equal(hash(source.source.slice(row.span.start,row.span.end)),row.sha256);}
+  assert.throws(()=>plan.selected.push({}),TypeError);assert.throws(()=>plan.selected[0].values.push('unstable-markdown'),TypeError);
+  assert.throws(()=>originalClapDocumentFeaturePlan(structuredClone(dependencies)),/sealed/);
+  const proof=proveClapValueEnumSourceOutput({dependencies,source:'enum Kind{/// Original help.\nFirst}'});
+  for(const row of Object.values(proof.originalDefinitions)){const source=deriveDependencySource(dependencies,'clap_derive',row.source);assert.equal(source.sha256,row.sourceSha256);assert.equal(hash(source.source.slice(row.span.start,row.span.end)),row.sha256);}
+  for(const name of ['extract_doc_comment','format_doc_comment','parse_markdown','split_paragraphs','merge_lines','remove_period','is_blank'])assert.ok(proof.originalDefinitions[name],name);
+  assert.ok(proof.originalRules.some(row=>row.role==='other-attribute-paths-ignored'));assert.ok(proof.bindingProofs.some(row=>row.role==='original default-feature document literal quote'));
+});
+
+test('independent document goldens cover blank edges paragraphs exact punctuation and source-order doc literals',()=>{
+  const vectors=[
+    ['#[doc="help"]','help',null],
+    ['/// help\n','help',null],
+    ['/// First line.\n/// Second line.\n','First line. Second line',null],
+    ['///   \n/// First paragraph.\n///\n/// Second paragraph.\n///\n','First paragraph','First paragraph.\n\nSecond paragraph.'],
+    ['#[doc=" first\\n second.\\n\\n more..."]','first second','first second.\n\nmore...'],
+    ['/// Wait...\n','Wait...',null],
+    ['/// Literal `code` **bold** [link](target).\n','Literal `code` **bold** [link](target)',null],
+    ['#[doc=" "] #[doc=""]',null,null],
+  ];
+  for(const [source,short,long]of vectors){const result=originalClapValueDocuments(docAttrs(source));assert.equal(result.short,short,source);assert.equal(result.long,long,source);assert.equal(result.generatedHelperBehavior,false);const proof=proveClapValueEnumSourceOutput({dependencies,source:'enum Kind{'+source+' First}'});assert.deepEqual(helpLiterals(proof.syntax),short===null?[]:[short],source);assert.deepEqual(proof.outputObservation.bangCalls,[]);}
+  const opaque='#[doc="#[macro_export] macro_rules! escape {}."]';assert.deepEqual(helpLiterals(proveClapValueEnumSourceOutput({dependencies,source:'enum Kind{'+opaque+' First}'}).syntax),['#[macro_export] macro_rules! escape {}']);
+  for(const source of ['#[derive(clap::ValueEnum)] enum Choice {#[doc="help"] First}', '#[derive(clap::ValueEnum)] enum Choice {/// help\n First}']){const result=context(source);assert.equal(result.certificates.length,1);assert.deepEqual(helpLiterals(result.certificates[0].clapValueEnumOutput.syntax),['help']);}
+});
+
+test('Clap ignores original sibling attributes but only the separate closed original owner context admits them',()=>{
+  const source='#[derive(Clone,Copy,Default,serde::Serialize,clap::ValueEnum)] enum Kind {#[default] #[serde(rename="first")] /// Help.\n First, #[serde(alias="second")] Second}';
+  const proof=proveClapValueEnumSourceOutput({dependencies,source});assert.deepEqual(proof.input.variants[0].ignoredAttributes.map(row=>row.path),['default','serde','doc']);assert.deepEqual(helpLiterals(proof.syntax),['Help']);assert.deepEqual(proof.input.variants.map(row=>row.canonicalName),['first','second']);
+  for(const variant of proof.input.variants)for(const attribute of variant.ignoredAttributes)assert.ok(attribute.syntax.length&&source.slice(attribute.span.start,attribute.span.end).length);
+  const result=context(source);assert.deepEqual(result.diagnostics,[]);assert.ok(isClapValueEnumSourceOutput(result.certificates[0].clapValueEnumOutput));assert.equal(result.certificates[0].generatedImplBehavior,false);assert.equal(result.certificates[0].dimensions.bangMacroComplete,false);
+  for(const original of ['#[derive(clap::ValueEnum)] enum Kind{#[unknown] First}', '#[derive(clap::ValueEnum)] enum Kind{#[serde(rename="first")] First}', '#[derive(clap::ValueEnum)] enum Kind{#[default] First}', '#[derive(clap::ValueEnum)] enum Kind{First} #[derive(clap::Args)] struct Sibling{value:String}', 'use unknown::automatically_derived; #[derive(clap::ValueEnum)] enum Kind{/// help\n First}', 'mod clap; #[derive(clap::ValueEnum)] enum Kind{/// help\n First}'])assert.equal(context(original).certificates.length,0,original);
+});
+
+test('unsupported docs and actual Clap helper/configuration effects retain independent source refusals',()=>{
+  for(const source of ['#[doc="é"]','#[doc="\\u0041"]','#[doc="\\b"]','/** help */','#[value(verbatim_doc_comment)]','#[value(skip)]','#[arg(long)]','#[command(name="first")]','#[group(skip)]','#[clap(alias="first")]','#[cfg(any())]','#[cfg_attr(any(),value(skip))]'])assert.throws(()=>proveClapValueEnumSourceOutput({dependencies,source:'enum Kind{'+source+' First}'}),TypeError,source);
+  for(const source of ['#[doc=make!()]','#[doc=make()]','#[doc(hidden)]','/// é\n'])assert.equal(context('#[derive(clap::ValueEnum)] enum Kind{'+source+' First}').certificates.length,0,source);
+  for(const source of ['#[value(rename_all="snake_case")] enum Kind{First}', '#[command(name="other")] enum Kind{First}', '#[cfg(any())] enum Kind{First}', 'const X = enum Kind{First}'])assert.throws(()=>proveClapValueEnumSourceOutput({dependencies,source}),/original.*route|original.*header/,source);
+});
+
+for(const [path,digest,owner,variants,certificateCount,constants]of [
+  ['src/subscription_usage_types.rs','82d1cd22e3f51589a10197244374b7c00ccb3fdfc3573c09291e1e6463ca7145','UsageProvider',[['Anthropic','anthropic'],['OpenAi','openai'],['ZAi','z-ai'],['Lefine','lefine'],['Gemini','gemini'],['Qwen','qwen']],11,[]],
+  ['src/deploy_config.rs','3ae8cf1934d158188b5685421eb38e9b39adab01a0d89873ce91ba663ae4483c','ProviderKeyMode',[['Keep','keep'],['IfAbsent','if-absent'],['Replace','replace']],4,['RESERVED_ENV','RESERVED_ENV_PREFIXES','VERIFIABLE_CLIENTS']],
+])test('complete unchanged '+path+' admits source data and original methods in emitted JS and strict TS',{timeout:60000},async()=>{
+  const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),digest);
+  const paths=execFileSync('git',['ls-files','*.rs'],{cwd:root,encoding:'utf8',timeout:10000}).trim().split('\n');assert.equal(paths.length,804);
+  const result=translateProject({entry:path,paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  assert.equal(result.meta.sources.find(row=>row.source===path).sha256,digest);assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,certificateCount);assert.equal(result.meta.runtimeParity,false);assert.deepEqual(result.meta.executable.map(row=>row.name),constants);
+  const certificate=result.meta.deriveNamespaceFootprints.certificates.find(row=>row.name===owner);assert.ok(certificate);const item=sourceItems(source).find(row=>row.name===owner);assert.equal(certificate.itemSha256,hash(source.slice(item.start,item.end)));assert.deepEqual(certificate.span,{start:item.start,end:item.end});assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);
+  const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),method=[...program.declarations.values()].find(row=>row.impl?.method==='as_str');assert.ok(result.meta.checkedMethods.some(row=>row.name===owner+'.as_str'));assert.ok(method);assert.equal(method.sourceMethodProof.originalTokenTransformVerified,true);assert.equal(method.impl.copyCertificate.verified,true);
+  const alias='\nexport {'+method.fullName+' as original_as_str};\n',targets={...result,javascript:result.javascript+alias,typescript:result.typescript+alias};
+  await verifyTypedTargets(targets,(api,_result,module)=>{for(const [variant,value]of variants)assert.equal(module.original_as_str(Object.freeze({$:variant})),value);assert.throws(()=>module.original_as_str(Object.freeze({$:'Unknown'})),TypeError);assert.throws(()=>module.original_as_str({$:variants[0][0]}),TypeError);if(path==='src/deploy_config.rs'){assert.deepEqual(api.VERIFIABLE_CLIENTS,['claude','codex','qwen-code','gemini','opencode']);assert.deepEqual(api.RESERVED_ENV_PREFIXES,['ROUTER_DEPLOY_','TLS_','VERIFY_','PRESERVATION_']);assert.ok(Object.isFrozen(api.RESERVED_ENV));assert.ok(api.RESERVED_ENV.includes('TOKEN_SECRET'));}}, {childTimeoutMs:30000});
+  if(path==='src/subscription_usage_types.rs')assert.ok(result.meta.refused.some(row=>row.message.includes('SubscriptionProvider')));else assert.ok(result.meta.refused.some(row=>row.name==='ProviderKeyMode.parse'&&row.message.includes('format!')));
+});
