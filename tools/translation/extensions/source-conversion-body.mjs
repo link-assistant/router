@@ -71,6 +71,9 @@ export function checkOriginalSourceInto(checker,node,receiver,env,path,expected)
 }
 export function requireOriginalConversionEmission(node,emitter=null){const proof=copyMetadata(node.sourceConversionProof),original=proof&&issued.get(proof.digest),computationValid=original&&(emitter?emitterFunctions.get(emitter)?.get(proof.digest)?.has(treeDigest(node.body)):[original.computation,...original.finalized].some(computation=>treeDigest(originalReferences(node.body,computation))===treeDigest(computation)));if(!original||metadataDigest(proof)!==metadataDigest(original.proof)||!computationValid||node.constEligible!==false||!sameType(node.type,node.body.type)||!ownedString(node.type)&&!primitive(node.type))fail('unissued, changed or forged checked conversion computation');requireSourceConversionScope(proof.caller);if(proof.identityBodyProof)requirePrimitiveIdentityFromEvidence(proof.identityBodyProof,node.body.value.type);return node.body;}
 function conversions(tree,result=[]){if(!tree||typeof tree!=='object')return result;if(tree.k==='routerSourceConversion')result.push(tree);for(const [key,value]of Object.entries(tree))if(!['type','sourceConversionProof'].includes(key)){if(Array.isArray(value))value.forEach(child=>conversions(child,result));else conversions(value,result);}return result;}
+// No-conversion checker extensions retain their ordinary lifecycle. This
+// predicate exposes no token and public flags cannot manufacture issuance.
+export const hasOriginalConversionIssuance=checker=>checkerOrigins.has(checker);
 // The core checker's structural-recursion pass can rewrite a recursive
 // argument inside an already checked conversion. Only its genuine whole
 // original declaration seal can bind that exact post-pass computation.

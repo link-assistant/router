@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {writeFileSync} from 'node:fs';
 import {translateProject} from '../project.mjs';
 import {parseRust,HostChecker} from '../extensions/host-contracts.mjs';
-import {finalizeOriginalConversions,requireOriginalConversionEmission} from '../extensions/source-conversion-body.mjs';
+import {finalizeOriginalConversions,requireOriginalConversionEmission,hasOriginalConversionIssuance} from '../extensions/source-conversion-body.mjs';
 import {bindCheckedSourceLinks,checkedSourceContext,metadataDigest} from '../extensions/source-links.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const source='pub fn count(n:u64,value:u64)->u64{if n==0{value}else{count(n-1,value).into()}}';
@@ -62,4 +62,18 @@ test('genuine program declarations cannot be changed to accessor or proxy roots 
 test('mutated genuine declaration body accessors and proxies cannot run before source seal validation',()=>{
   const accessor=checked();let reads=0;Object.defineProperty(accessor.program.declarations.get('count'),'body',{enumerable:true,get(){reads++;return {};}});negative('changed-accessor-body',()=>finalizeOriginalConversions(accessor.checker,accessor.program,accessor.links),/accessor|metadata/);assert.equal(reads,0);
   const proxy=checked();let traps=0;proxy.program.declarations.get('count').body=new Proxy(proxy.node,{get(){traps++;throw Error('trap');},ownKeys(){traps++;throw Error('trap');}});negative('changed-proxy-body',()=>finalizeOriginalConversions(proxy.checker,proxy.program,proxy.links),/acyclic data|metadata/);assert.equal(traps,0);
+});
+
+test('no-conversion Host subclasses retain ordinary checking while conversion issuance stays private',()=>{
+  class Extension extends HostChecker{program(surface){const result=super.program(surface);this.completed=true;return result;}}
+  const extension=new Extension('Rust',[]),surface=parseRust('pub const GOOD:u8=1;fn main(){}'),program=extension.program(surface);
+  assert.equal(extension.completed,true);assert.equal(program.declarations.get('GOOD').body.value,'1');assert.equal(hasOriginalConversionIssuance(extension),false);
+  extension.hasOriginalConversionIssuance=true;extension.checkerOrigin={};assert.equal(hasOriginalConversionIssuance(extension),false);
+  const fresh=new HostChecker('rust',[]);assert.equal(hasOriginalConversionIssuance(fresh),false);
+  let reads=0;const proxy=new Proxy(extension,{get(){reads++;throw Error('trap');},getPrototypeOf(){reads++;throw Error('trap');}});assert.equal(hasOriginalConversionIssuance(proxy),false);assert.equal(reads,0);
+  const state=checked();assert.equal(hasOriginalConversionIssuance(state.checker),true);state.checker.hasOriginalConversionIssuance=false;assert.equal(hasOriginalConversionIssuance(state.checker),true);
+  assert.equal(hasOriginalConversionIssuance({...state.checker}),false);negative('no-conversion-subclass-cannot-finalize',()=>finalizeOriginalConversions(extension,state.program,state.links),/actual original Host checker/);
+  Object.setPrototypeOf(state.checker,Extension.prototype);negative('issued-host-prototype-mutation',()=>finalizeOriginalConversions(state.checker,state.program,state.links),/actual original Host checker/);
+  const falseIssuer=new Extension('Rust',[]);negative('subclass-cannot-issue-conversion',()=>falseIssuer.program(parseRust(source+'fn main(){}')),/actual original Host checker/);assert.equal(hasOriginalConversionIssuance(falseIssuer),false);
+  record('no-conversion-subclass-preserves-lifecycle',{source:'pub const GOOD:u8=1;fn main(){}',constant:program.declarations.get('GOOD'),unissuedSubclass:false,publicFlagsIgnored:true,proxyTraps:reads});
 });

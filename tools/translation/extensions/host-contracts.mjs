@@ -12,7 +12,7 @@ import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,requ
 import {sourcePrimitiveAlias} from './primitive-type-aliases.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
 import {captureSourceConversionScope} from './source-conversion-scope.mjs';
-import {captureOriginalConversions,checkOriginalSourceInto,requireOriginalConversionEmission,prepareOriginalConversionFunction,finalizeOriginalConversions} from './source-conversion-body.mjs';
+import {captureOriginalConversions,checkOriginalSourceInto,requireOriginalConversionEmission,prepareOriginalConversionFunction,finalizeOriginalConversions,hasOriginalConversionIssuance} from './source-conversion-body.mjs';
 import {iteratorReceiverExpected} from './iterators.mjs';
 import {itemConfiguration} from '../cfg-profile.mjs';
 import {createHash} from 'node:crypto';
@@ -708,7 +708,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     checkConstEligibilityRefusals(this,program,entry=>{if(forbidden(entry.body,new Set(),!entry.constant&&entry.constFunction))throw unsupported('non-const host operation','pure does not imply Rust const eligibility',entry.span);});
     bindCheckedNominalNoDrop(program,this);
     const sourceLinks=bindCheckedSourceLinks(program,sourceContext,{targetProfile:CONSTANT_EVALUATION_PROFILE});
-    finalizeOriginalConversions(this,program,sourceLinks);
+    if(hasOriginalConversionIssuance(this))finalizeOriginalConversions(this,program,sourceLinks);
     for(const entry of program.declarations.values())if(entry.constant){
       const result=evaluateCheckedConstant(program,entry.fullName,{sourceLinks,contracts:new Map(HOST_CONTRACTS.map(contract=>[contract.id,contract]))});
       if(result.status!=='value'||!result.proof.sourceLinksVerified)throw unsupported('constant evaluation',result.diagnostic?.reason??'requires fresh original parser source association',entry.span);
