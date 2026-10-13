@@ -20,7 +20,8 @@ def migrate(old):
   fcntl.flock(lock,fcntl.LOCK_EX);state_path=m.ROOT/'.disk-budget-state.json';state=json.loads(state_path.read_text());old.unlink();state['ci_bytes']-=old_bytes;state['ci_allocated_bytes']-=old_alloc;state_path.write_text(json.dumps(state,indent=2)+'\n')
   with (m.ROOT/'artifact-object-compression-migrations.jsonl').open('a') as f:f.write(json.dumps(row)+'\n')
  return row
-objects=sorted((p for p in (m.ROOT/'text-objects').rglob('*.gz') if p.stat().st_size>50*1024),key=lambda p:p.stat().st_size,reverse=True)
+indexed=m.storage().objects
+objects=sorted((p for p in (m.ROOT/'text-objects').rglob('*.gz') if str(p.relative_to(m.ROOT)) not in indexed and str(p.with_suffix('.xz').relative_to(m.ROOT)) not in indexed and p.stat().st_size>50*1024),key=lambda p:p.stat().st_size,reverse=True)
 with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:rows=[x for x in pool.map(migrate,objects) if x]
 changes={x['original_path']:x for x in rows};updated=0
 for p in list(m.ROOT.glob('*--*/artifacts/*/text-manifest.json*'))+list(m.ROOT.glob('*--*/artifacts/artifact-selection-manifest.json*')):

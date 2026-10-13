@@ -77,15 +77,15 @@ for repo,(root,ids,artifacts) in collections:
                             content_hash.update(clean.encode())
                         dst.flush()
                     digest=content_hash.hexdigest();dest=m.ROOT/'text-objects'/digest[:2]/(digest+'.gz');payload=compressed.getvalue();compression='gzip'
-                    if dest.with_suffix('.xz').exists():dest=dest.with_suffix('.xz');compression='xz'
-                    elif not dest.exists() and len(payload)>200*1024:
+                    if m.stored_exists(dest.with_suffix('.xz')):dest=dest.with_suffix('.xz');compression='xz'
+                    elif not m.stored_exists(dest) and len(payload)>200*1024:
                         packed_buffer=io.BytesIO()
                         with gzip.GzipFile(fileobj=io.BytesIO(payload),mode='rb') as src,lzma.LZMAFile(packed_buffer,'wb',preset=6) as dst:
                             while chunk:=src.read(1024*1024):dst.write(chunk)
                         packed=packed_buffer.getvalue()
                         if len(packed)<len(payload):dest=dest.with_suffix('.xz');payload=packed;compression='xz'
-                    if not dest.exists():m.write_bounded(dest,payload,allow_payload_reserve=True)
-                    item['downloaded_text_files'].append({'path':str(dest.relative_to(m.ROOT)),'artifact_member_name':entry.filename,'scrubbed_content_sha256':digest,'sha256':hashlib.sha256(dest.read_bytes()).hexdigest(),'compressed_bytes':dest.stat().st_size,'original_bytes':entry.file_size,'redacted':redacted,'compression':compression})
+                    if not m.stored_exists(dest):m.write_bounded(dest,payload,allow_payload_reserve=True)
+                    item['downloaded_text_files'].append({'path':str(dest.relative_to(m.ROOT)),'artifact_member_name':entry.filename,'scrubbed_content_sha256':digest,'sha256':hashlib.sha256(m.read_stored(dest)).hexdigest(),'compressed_bytes':m.stored_size(dest),'original_bytes':entry.file_size,'redacted':redacted,'compression':compression})
             m.write_json(folder/'text-manifest.json',item['downloaded_text_files'])
         except Exception as error:item['selection_reason']='zip_or_decode_error:'+str(error)
         return item

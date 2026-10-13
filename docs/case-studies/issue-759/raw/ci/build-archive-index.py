@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build a durable, honest completion ledger from collected files, without network."""
-import collections,datetime,gzip,hashlib,json,pathlib
-ROOT=pathlib.Path(__file__).resolve().parent
+import collections,datetime,gzip,hashlib,json,pathlib,importlib.util
+spec=importlib.util.spec_from_file_location("ci",pathlib.Path(__file__).with_name("archive-ci.py"));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+ROOT=m.ROOT
 def load(p):
     if p.exists():return json.loads(p.read_text())
     if p.with_suffix(p.suffix+'.gz').exists():
@@ -17,7 +18,7 @@ for item in requested:
     item['jobs_status']='collected' if jobs is not None else ('download_error' if list(folder.glob('jobs-*.error.txt')) else 'pending')
     item['job_count']=len(jobs) if jobs is not None else None
     if logs is not None:
-        missing=[x['path'] for x in logs if not (ROOT/x['path']).exists()]
+        missing=[x['path'] for x in logs if not m.stored_exists(ROOT/x['path'])]
         item['logs_status']='collected' if not missing else 'manifest_incomplete'
         item['log_members']=len(logs);item['compressed_log_bytes']=sum(x['bytes'] for x in logs)
         if missing:item['missing_log_members']=missing

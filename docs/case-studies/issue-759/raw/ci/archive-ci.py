@@ -3,9 +3,22 @@
 
 Requires authenticated gh. Expanded logs are retained; ZIPs stay in memory.
 """
-import concurrent.futures, datetime, fcntl, gzip, hashlib, io, json, lzma, os, pathlib, re, subprocess, threading, time, urllib.parse, zipfile
+import concurrent.futures, datetime, fcntl, gzip, hashlib, io, json, lzma, os, pathlib, re, subprocess, sys, threading, time, urllib.parse, zipfile
 
-ROOT = pathlib.Path(__file__).resolve().parent
+SOURCE_REPOSITORY = pathlib.Path(__file__).resolve().parents[5]
+sys.path.insert(0, str(SOURCE_REPOSITORY / 'tools/evidence'))
+from storage import Storage
+ROOT = pathlib.Path(os.environ.get('ROUTER_CI_ARCHIVE_ROOT', pathlib.Path(__file__).resolve().parent))
+def storage():
+    return Storage(ROOT.parent.parent, repository_root=os.environ.get('ROUTER_CI_GIT_ROOT', SOURCE_REPOSITORY), index=os.environ.get('ROUTER_CI_STORAGE_INDEX','raw/ci/object-storage-index.json'))
+def stored_exists(path):
+    return storage().exists(str(path.relative_to(ROOT)))
+def read_stored(path):
+    return storage().read_container(str(path.relative_to(ROOT)))
+def stored_size(path):
+    return storage().container_size(str(path.relative_to(ROOT)))
+def read_decoded(path):
+    return storage().read_decoded(str(path.relative_to(ROOT)))
 GH_CWD=ROOT
 for ancestor in ROOT.parents:
     if ancestor.name=='.worktrees':GH_CWD=ancestor.parent;break
@@ -17,6 +30,10 @@ REPOS = [('link-assistant/router',749),('link-foundation/meta-language',201),('l
 
 def write_bounded(path, payload, allow_payload_reserve=False):
     """Share a serialized byte allocation between both collectors; never overshoot."""
+    store=storage();logical=str(path.relative_to(ROOT))
+    if logical in store.objects:
+        if store.read_container(logical)!=payload:raise ValueError('Indexed original container mutation refused')
+        return
     path.parent.mkdir(parents=True,exist_ok=True)
     with (ROOT/'.disk-budget.lock').open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)
