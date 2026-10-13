@@ -23,7 +23,7 @@ test('bulk drafts retain refused owners and independent lexical bodies, with det
   const b = buildNativePortableArtifacts([row(), row('two')]);
   assert.deepEqual([...a.artifacts], [...b.artifacts]);
   assert.deepEqual(a.manifest.topLevel, { sourceItems: 4, translatedItems: 2, unsupportedItems: 2 });
-  assert.deepEqual(a.manifest.scopedFunctions, { sourceItems: 2, translatedItems: 2, unsupportedItems: 0 });
+  assert.deepEqual(a.manifest.scopedFunctions, { sourceItems: 2, translatedItems: 2, unsupportedItems: 0, fullDomainTranslatedItems: 2, conditionalPrivateBodyDraftItems: 0 });
   assert.equal(a.manifest.contract.runtimeParity, false);
   const identities = a.manifest.modules.flatMap((module) => module.scopedFunctions.items.map((item) => item.name));
   assert.equal(new Set(identities).size, 2);
@@ -91,4 +91,27 @@ test('regeneration clears newly refused bodies and reports/removes stale drafts 
     assert.equal(existsSync(join(root, target)), false);
     assert.deepEqual(regenerate(root, { check: true }).changed, []);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('bulk census separates conditional private definitions and retains producer capability refusals', () => {
+  const source = "export function outer(input) { return String(input).split(';').map(part => part.trim()); }";
+  const { manifest, artifacts } = buildNativePortableArtifacts([row('conditional', source)]);
+  const census = manifest.scopedFunctions;
+  assert.equal(census.fullDomainTranslatedItems, 0);
+  assert.equal(census.conditionalPrivateBodyDraftItems, 1);
+  assert.equal(census.translatedItems, 1);
+  assert.equal(census.sourceItems, 1);
+  assert.equal(manifest.topLevel.translatedItems, 0);
+  const item = manifest.modules[0].scopedFunctions.items[0];
+  assert.equal(item.coverageContract, 'conditional-private-body-draft');
+  assert.equal(item.inputContract.capability.originalSignatureFullDomainPreserved, false);
+  assert.equal(item.inputContract.capability.producerLookupStabilityProved, false);
+  assert.equal(item.inputContract.capability.parentAdmitted, false);
+  assert.equal(item.inputContract.capability.unqualifiedCallerAdmitted, false);
+  const metaPath = 'tools/translation/js-to-rust/generated/native-portable/scoped/conditional.lino';
+  const program = parseMeta(artifacts.get(metaPath));
+  assert.equal(program[0].conditionalInputs, true);
+  assert.match(artifacts.get('packages/typescript/native/portable-draft/scoped/conditional.ts'), /conditional/u);
+  assert.match(artifacts.get('tools/translation/js-to-rust/generated/native-portable/scoped/conditional.rs.txt'), /conditional/u);
+  assert.equal(manifest.contract.runtimeParity, false);
 });

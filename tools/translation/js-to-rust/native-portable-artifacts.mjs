@@ -20,6 +20,10 @@ export function buildNativePortableArtifacts(sources) {
     const analyzed = analyzeJavaScript(source, { sourcePath: path });
     const scoped = analyzed.scopedFunctions;
     if (!scoped?.complete || scoped.sourceItems !== scoped.items.length
+      || !Number.isSafeInteger(scoped.fullDomainTranslatedItems) || scoped.fullDomainTranslatedItems < 0
+      || !Number.isSafeInteger(scoped.conditionalPrivateBodyDraftItems) || scoped.conditionalPrivateBodyDraftItems < 0
+      || scoped.fullDomainTranslatedItems + scoped.conditionalPrivateBodyDraftItems !== scoped.translatedItems
+      || scoped.program.filter((item) => item.conditionalInputs === true).length !== scoped.conditionalPrivateBodyDraftItems
       || scoped.translatedItems !== scoped.program.length
       || scoped.sourceItems !== scoped.translatedItems + scoped.unsupportedItems) {
       throw new Error(`incomplete scoped native discovery: ${path}`);
@@ -55,17 +59,20 @@ export function buildNativePortableArtifacts(sources) {
     }
     modules.push({ path, bytes: Buffer.byteLength(source), sha256: hash(source), topLevel,
       scopedFunctions: { complete: true, sourceItems: scoped.sourceItems, translatedItems: scoped.translatedItems,
+        fullDomainTranslatedItems: scoped.fullDomainTranslatedItems, conditionalPrivateBodyDraftItems: scoped.conditionalPrivateBodyDraftItems,
         unsupportedItems: scoped.unsupportedItems, items: scoped.items, diagnostics: scoped.diagnostics }, outputs });
   }
   const totals = (field) => modules.reduce((sum, module) => {
     const census = module[field];
     return { sourceItems: sum.sourceItems + census.sourceItems, translatedItems: sum.translatedItems + census.translatedItems,
-      unsupportedItems: sum.unsupportedItems + census.unsupportedItems };
-  }, { sourceItems: 0, translatedItems: 0, unsupportedItems: 0 });
+      unsupportedItems: sum.unsupportedItems + census.unsupportedItems, ...(field === 'scopedFunctions' ? {
+        fullDomainTranslatedItems: sum.fullDomainTranslatedItems + census.fullDomainTranslatedItems,
+        conditionalPrivateBodyDraftItems: sum.conditionalPrivateBodyDraftItems + census.conditionalPrivateBodyDraftItems } : {}) };
+  }, { sourceItems: 0, translatedItems: 0, unsupportedItems: 0, ...(field === 'scopedFunctions' ? { fullDomainTranslatedItems: 0, conditionalPrivateBodyDraftItems: 0 } : {}) });
   const manifest = { schema: 'native-portable-body-draft-v1', fragment: 'portable-router-v1',
     contract: { wholeNativeImplementationTranslated: false, runtimeParity: false, rustCompiled: false,
       topLevel: 'Original top-level source items; partial module admission does not admit its refused owners.',
-      scopedFunctions: 'Additional ArrowFunction, FunctionExpression and FunctionDeclaration bodies, excluding top-level declarations and initializer forms already counted at top level, and excluding method/accessor bodies themselves; no lexical captures or implicit input narrowing.',
+      scopedFunctions: 'Additional ArrowFunction, FunctionExpression and FunctionDeclaration bodies, excluding top-level declarations and initializer forms already counted at top level, and excluding method/accessor bodies themselves; no lexical captures; full-domain helpers and explicitly conditional private producer-body drafts have separate counts. Conditional drafts require unchanged standard producer/callback intrinsics, with producer effects and lookup stability unproved; parents and public/unqualified callers remain refused.',
       meta: 'Both targets consume the serialized and independently checked meta-language program.',
       targets: 'TypeScript preserves the declared checked fragment; Rust uses explicit payload and host-qualified projections.' },
     topLevel: totals('topLevel'), scopedFunctions: totals('scopedFunctions'), modules };

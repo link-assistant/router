@@ -30,9 +30,33 @@ function sourceNamespaceTemplate(scopes){
     ownedScopes.set(key,sourceNamespaceMaps(candidate));bindings.push([key,candidate.bindings]);
     for(const binding of candidate.bindings)if(binding.visibility&&binding.visibility.kind!=='public')restricted.push({key,path:candidate.path,binding});
   }
-  const template={ownedScopes,restricted,bindings};
+  const restrictionSlots=Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map()]));
+  restricted.forEach((candidate,index)=>{
+    const slots=restrictionSlots[candidate.binding.namespace];
+    if(!slots.has(candidate.key))slots.set(candidate.key,new Map());
+    slots.get(candidate.key).set(candidate.binding.name,index);
+  });
+  const template={ownedScopes,restricted,bindings,restrictionSlots,visibilityMasks:new Map(),scopePaths:new Set(scopes.map(scope=>JSON.stringify(scope.path))),reusable};
   if(reusable)namespaceTemplates.set(scopes,template);
   return template;
+}
+function sourceVisibilityMask(template,path){
+  const key=JSON.stringify(path),cacheable=template.reusable&&template.scopePaths.has(key);
+  if(cacheable&&template.visibilityMasks.has(key))return template.visibilityMasks.get(key);
+  const mask=Uint8Array.from(template.restricted,candidate=>candidate.binding.visibility.path.every((name,index)=>path[index]===name)?0:1);
+  if(cacheable)template.visibilityMasks.set(key,mask);
+  return mask;
+}
+function cloneSourceNamespaces(template,path){
+  const mask=sourceVisibilityMask(template,path);
+  return Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...template.ownedScopes].map(([key,owned])=>{
+    const restrictions=template.restrictionSlots[namespace].get(key);
+    const aliases=new Map([...owned.namespaceAliases[namespace]].map(([name,target])=>{
+      const index=restrictions?.get(name),candidate=index===undefined?null:template.restricted[index];
+      return [name,candidate&&mask[index]?['crate','ml_inaccessible_source_binding',...candidate.path,name]:[...target]];
+    }));
+    return [key,aliases];
+  }))]));
 }
 export function parserSourceScope(scope,scopes=[scope]){
   const {namespaceAliases,namespaceShadows}=sourceNamespaceMaps(scope);
@@ -43,19 +67,12 @@ export function parserSourceScope(scope,scopes=[scope]){
 }
 export function configureParserSourceScope(parser,scope,scopes=[scope],path=scope.path){
   const evidence=parserSourceScope(scope,scopes);
-  const {ownedScopes,restricted,bindings}=sourceNamespaceTemplate(scopes);
+  const template=sourceNamespaceTemplate(scopes),{bindings}=template;
   parser.compilationProfile=evidence.compilationProfile;
-  // Parser import processing may mutate a map or a target path. Retain fresh
-  // maps and arrays for every parser; private templates are never exposed.
-  parser.sourceNamespaceAliases=Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...ownedScopes].map(([key,owned])=>[key,new Map([...owned.namespaceAliases[namespace]].map(([name,target])=>[name,[...target]]))]))]));
-  // A qualified path still checks visibility from the consuming module. Keep
-  // inaccessible bindings explicit so a later declaration lookup cannot grant
-  // them merely because their canonical source name exists.
-  for(const candidate of restricted){
-    const {binding}=candidate;
-    const visibility=binding.visibility;
-    if(!visibility.path.every((name,index)=>path[index]===name))parser.sourceNamespaceAliases[binding.namespace].get(candidate.key).set(binding.name,['crate','ml_inaccessible_source_binding',...candidate.path,binding.name]);
-  }
+  // Reuse only private visibility decisions for genuine immutable scopes.
+  // Every parser still owns complete native maps and fresh target paths;
+  // copied/caller scopes and paths outside the actual graph remain uncached.
+  parser.sourceNamespaceAliases=cloneSourceNamespaces(template,path);
   parser.aliases=parser.sourceNamespaceAliases.type;
   parser.sourceNamespaceBindingEvidence=new Map(bindings);
   parser.sourceNamespaceShadows=evidence.namespaceShadows;
