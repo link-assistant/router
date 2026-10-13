@@ -18,13 +18,14 @@
     "decoded_sha256": "8c84e8912857dd382dfd815a88c23714b62348fcd1545d9aa970cfb4e3133d5d"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/2_CodeQL (actions).txt.gz",
-    "sha256": "63269b10841074bab33f93852608f32b75e903c82fd10f65e585e80b4b7585c5",
-    "bytes": 26456,
+    "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/2_CodeQL (actions).txt.xz",
+    "sha256": "2d6e1e7aabab2e685ac0b488f544932a28c2a543b4291496583c732a8a5e1951",
+    "bytes": 18648,
     "uncompressed_bytes": 161529,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "f32e0d6f3e9f140e28ffa0d5ec9a654fd09d2a01a8901607ea0c0c36985fc083"
+    "compression": "xz",
+    "decoded_sha256": "f32e0d6f3e9f140e28ffa0d5ec9a654fd09d2a01a8901607ea0c0c36985fc083",
+    "original_gzip_sha256": "63269b10841074bab33f93852608f32b75e903c82fd10f65e585e80b4b7585c5"
   },
   {
     "path": "link-assistant--formal-ai/runs/37820816209/attempt-1/logs/CodeQL (actions)/system.txt.gz",

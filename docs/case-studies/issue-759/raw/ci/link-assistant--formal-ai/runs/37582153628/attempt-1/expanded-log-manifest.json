@@ -1,12 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37582153628/attempt-1/logs/3_CodeQL (rust).txt.gz",
-    "sha256": "37aecc5caab3bcb2062461267a04c6d424d31ddf42b26bba3ba7b3e1a77514ac",
-    "bytes": 33138,
+    "path": "link-assistant--formal-ai/runs/37582153628/attempt-1/logs/3_CodeQL (rust).txt.xz",
+    "sha256": "4bac891882969a86bdde30f7b91c2cc67fa1387225ccdf12045a35ed6ef042a3",
+    "bytes": 23340,
     "uncompressed_bytes": 261790,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "ec2bcf9649a769a9bf6f2625a32e89a77aefeb7f4ce2df723c213a96795c2bcc"
+    "compression": "xz",
+    "decoded_sha256": "ec2bcf9649a769a9bf6f2625a32e89a77aefeb7f4ce2df723c213a96795c2bcc",
+    "original_gzip_sha256": "37aecc5caab3bcb2062461267a04c6d424d31ddf42b26bba3ba7b3e1a77514ac"
   },
   {
     "path": "link-assistant--formal-ai/runs/37582153628/attempt-1/logs/CodeQL (rust)/system.txt.gz",

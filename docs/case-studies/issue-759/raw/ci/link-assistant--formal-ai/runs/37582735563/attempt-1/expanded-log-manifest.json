@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37582735563/attempt-1/logs/0_Code Coverage.txt.gz",
-    "sha256": "7889d18fdaa70d078e03c528e0841dd8e10b267f288245d143e23ee8249bddcd",
-    "bytes": 26854,
+    "path": "link-assistant--formal-ai/runs/37582735563/attempt-1/logs/0_Code Coverage.txt.xz",
+    "sha256": "971ee30e7a08791fb94ece6a54a015d273c0e5d0140d0ba3f3838c5977b452ec",
+    "bytes": 20936,
     "uncompressed_bytes": 119783,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "7889d18fdaa70d078e03c528e0841dd8e10b267f288245d143e23ee8249bddcd",
+    "compression": "xz",
+    "decoded_sha256": "7104e436e163240ba705def5aa75b6df93bb16e846f75b9e458eb9faf5027797"
   },
   {
     "path": "link-assistant--formal-ai/runs/37582735563/attempt-1/logs/Code Coverage/system.txt.gz",
@@ -14,11 +17,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37582735563/attempt-1/logs/1_Browser Code Coverage.txt.gz",
-    "sha256": "a48d453a9d8c2729c8cc4090c66dfb4774094f143e551f1a2f4c40abb14b31cf",
-    "bytes": 33308,
+    "path": "link-assistant--formal-ai/runs/37582735563/attempt-1/logs/1_Browser Code Coverage.txt.xz",
+    "sha256": "96e60ee5f2b296e851ab68eff59a3f7841315c02a0688825599cf916ddce94f2",
+    "bytes": 27904,
     "uncompressed_bytes": 122118,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "a48d453a9d8c2729c8cc4090c66dfb4774094f143e551f1a2f4c40abb14b31cf",
+    "compression": "xz",
+    "decoded_sha256": "3e9fa068875b1d33e638cfe1ccd396bd1f83feee67be72c292e2450a83bb0991"
   },
   {
     "path": "link-assistant--formal-ai/runs/37582735563/attempt-1/logs/Browser Code Coverage/system.txt.gz",

@@ -28,11 +28,14 @@
     "redacted": false
   },
   {
-    "path": "link-foundation--relative-meta-logic/runs/37982698852/attempt-1/logs/2_Cache lifecycle (windows-latest).txt.gz",
-    "sha256": "7ac87319615deae32d28a77116052acc5c55bd3cd40368d8435ffd12d3ce56e6",
-    "bytes": 27361,
+    "path": "link-foundation--relative-meta-logic/runs/37982698852/attempt-1/logs/2_Cache lifecycle (windows-latest).txt.xz",
+    "sha256": "5e0e6684c020edefdbc0de1eaffedc18d0ee61f1b6b1f9dbab0afca0ce3bf69b",
+    "bytes": 21284,
     "uncompressed_bytes": 223296,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "7ac87319615deae32d28a77116052acc5c55bd3cd40368d8435ffd12d3ce56e6",
+    "compression": "xz",
+    "decoded_sha256": "35179f40400eb9f7cb9f188f9f76047d244375860ebde269e739360b18ab165a"
   },
   {
     "path": "link-foundation--relative-meta-logic/runs/37982698852/attempt-1/logs/Cache lifecycle (windows-latest)/system.txt.gz",

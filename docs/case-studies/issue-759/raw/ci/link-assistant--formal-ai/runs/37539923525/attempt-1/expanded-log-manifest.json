@@ -1,12 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37539923525/attempt-1/logs/0_Self-development floor and debt ratchet since the last tag.txt.gz",
-    "sha256": "fdd877cdf62cfed39454bb92314493f71a90087365be4cfe413fd2ebeae13fa3",
-    "bytes": 26846,
+    "path": "link-assistant--formal-ai/runs/37539923525/attempt-1/logs/0_Self-development floor and debt ratchet since the last tag.txt.xz",
+    "sha256": "8311489364452b63f015abc0d9615af931873db6eec435a6d8c055f98b4b8dfc",
+    "bytes": 18172,
     "uncompressed_bytes": 143358,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "5e7f61f469efe9775ce92dfb2ace688bd41aa4239abca5bf88f930b2788194bc"
+    "compression": "xz",
+    "decoded_sha256": "5e7f61f469efe9775ce92dfb2ace688bd41aa4239abca5bf88f930b2788194bc",
+    "original_gzip_sha256": "fdd877cdf62cfed39454bb92314493f71a90087365be4cfe413fd2ebeae13fa3"
   },
   {
     "path": "link-assistant--formal-ai/runs/37539923525/attempt-1/logs/Self-development floor and debt ratchet since the last tag/system.txt.gz",

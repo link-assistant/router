@@ -18,13 +18,14 @@
     "decoded_sha256": "f4709e1ac8cd9c0974de15b743368ec6aaf925f2e7cb6bc8411ee47ec4757907"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37527776558/attempt-1/logs/1_Self-Hosting Evidence Check.txt.gz",
-    "sha256": "dfe878d708d8508437827dce512bd44aede9bded77c20a68af623776af9c7a9a",
-    "bytes": 26248,
+    "path": "link-assistant--formal-ai/runs/37527776558/attempt-1/logs/1_Self-Hosting Evidence Check.txt.xz",
+    "sha256": "0a874225ecdfe226621a926828bdd80690a89cede4435f086cba292712d7eaa8",
+    "bytes": 17680,
     "uncompressed_bytes": 141573,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "e63ba1bbb95a021163f95c75cc5884eba0f7a79cd89b19f30b809cb4548cb4bd"
+    "compression": "xz",
+    "decoded_sha256": "e63ba1bbb95a021163f95c75cc5884eba0f7a79cd89b19f30b809cb4548cb4bd",
+    "original_gzip_sha256": "dfe878d708d8508437827dce512bd44aede9bded77c20a68af623776af9c7a9a"
   },
   {
     "path": "link-assistant--formal-ai/runs/37527776558/attempt-1/logs/Self-Hosting Evidence Check/system.txt.gz",

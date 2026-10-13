@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37474764172/attempt-1/logs/1_CodeQL (actions).txt.gz",
-    "sha256": "2add844e1c1ad755275305e104b2afb89665625ff08fbdf23dfccd0a7b216807",
-    "bytes": 27078,
+    "path": "link-assistant--formal-ai/runs/37474764172/attempt-1/logs/1_CodeQL (actions).txt.xz",
+    "sha256": "de3235a102ef2e1ae6bc29591fdd361d579b82de55982f6bb694f829cad49aa4",
+    "bytes": 19228,
     "uncompressed_bytes": 164025,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "2add844e1c1ad755275305e104b2afb89665625ff08fbdf23dfccd0a7b216807",
+    "compression": "xz",
+    "decoded_sha256": "0d5131be97c7a03c9c820b38b8a196bf30f1ef6a5d2359ef0ae2cbf3f465ac34"
   },
   {
     "path": "link-assistant--formal-ai/runs/37474764172/attempt-1/logs/CodeQL (actions)/system.txt.gz",

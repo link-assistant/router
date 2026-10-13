@@ -18,13 +18,14 @@
     "decoded_sha256": "f2c1d22d8c4594600e62bc4aa09dc62bcacfeb762104de92bd05de073b2f2ab2"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37807765888/attempt-1/logs/2_CodeQL (rust).txt.gz",
-    "sha256": "3c666b2591eb0afbe3eede6a0fb38792b9c2f1ffd485687b7e4e272fc1fde466",
-    "bytes": 26170,
+    "path": "link-assistant--formal-ai/runs/37807765888/attempt-1/logs/2_CodeQL (rust).txt.xz",
+    "sha256": "65ee30ac1cd2841e6c93dfcb08048ece14ced5d2478f4526b91c1abc8aeb7aa4",
+    "bytes": 18336,
     "uncompressed_bytes": 164645,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "e80ef10bfce56bf6dfd3bd70c3c8d88a4e8758dd848e299da2ce135cd747bdf5"
+    "compression": "xz",
+    "decoded_sha256": "e80ef10bfce56bf6dfd3bd70c3c8d88a4e8758dd848e299da2ce135cd747bdf5",
+    "original_gzip_sha256": "3c666b2591eb0afbe3eede6a0fb38792b9c2f1ffd485687b7e4e272fc1fde466"
   },
   {
     "path": "link-assistant--formal-ai/runs/37807765888/attempt-1/logs/CodeQL (rust)/system.txt.gz",

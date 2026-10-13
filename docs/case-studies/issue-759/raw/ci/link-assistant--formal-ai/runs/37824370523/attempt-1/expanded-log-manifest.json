@@ -36,13 +36,14 @@
     "decoded_sha256": "3742c2225bac2eff4f7a37003beeb24be3957e96b4da051ba24dfbb8aaa27b93"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37824370523/attempt-1/logs/6_Coding ladder binary.txt.gz",
-    "sha256": "e6e38bf030e1a3ff1734bbd9674ba32fef752a38dae2df8472b9fd581f1f29fd",
-    "bytes": 29651,
+    "path": "link-assistant--formal-ai/runs/37824370523/attempt-1/logs/6_Coding ladder binary.txt.xz",
+    "sha256": "e461bce9b4a52368cfc6d858a08e1c9e96ea308cb53995814e6193a9b3c2452a",
+    "bytes": 21852,
     "uncompressed_bytes": 136487,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "bdc389165cff552ee5ae9b997724b756703d7de2c385717b05f019b2065890a2"
+    "compression": "xz",
+    "decoded_sha256": "bdc389165cff552ee5ae9b997724b756703d7de2c385717b05f019b2065890a2",
+    "original_gzip_sha256": "e6e38bf030e1a3ff1734bbd9674ba32fef752a38dae2df8472b9fd581f1f29fd"
   },
   {
     "path": "link-assistant--formal-ai/runs/37824370523/attempt-1/logs/Coding ladder binary/system.txt.gz",

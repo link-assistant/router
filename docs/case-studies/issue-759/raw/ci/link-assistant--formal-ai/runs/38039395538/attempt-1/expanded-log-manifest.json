@@ -1,12 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/38039395538/attempt-1/logs/0_Summarization quality ratchet (issue #893).txt.gz",
-    "sha256": "c39aba3ee84ffd95458f9e94a5e78ff81e7052cf67adf3ccb7d68b1f10e0cbd7",
-    "bytes": 25619,
+    "path": "link-assistant--formal-ai/runs/38039395538/attempt-1/logs/0_Summarization quality ratchet (issue #893).txt.xz",
+    "sha256": "3feef4d2f78d7be3df41a63af7288c64a190200229a894ac9fe8212231f99e1e",
+    "bytes": 20224,
     "uncompressed_bytes": 111169,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "80107b4f7ad15d76a09c1eb4efa4e819eef42a8a368a083de638260b552b8f38"
+    "compression": "xz",
+    "decoded_sha256": "80107b4f7ad15d76a09c1eb4efa4e819eef42a8a368a083de638260b552b8f38",
+    "original_gzip_sha256": "c39aba3ee84ffd95458f9e94a5e78ff81e7052cf67adf3ccb7d68b1f10e0cbd7"
   },
   {
     "path": "link-assistant--formal-ai/runs/38039395538/attempt-1/logs/Summarization quality ratchet (issue #893)/system.txt.gz",

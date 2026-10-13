@@ -19,13 +19,14 @@
     "decoded_sha256": "9ad7bf8ab22279eee1e4de4e33d7b1bb47d3d7dbf6b001ba27e7f83d3d75aefe"
   },
   {
-    "path": "link-assistant--formal-ai/runs/38050091359/attempt-1/logs/4_Plan the Agent CLI ladder.txt.gz",
-    "sha256": "466c35d432cc4845bf6c4643211df2291e353b90e8a1398736075d3e52176087",
-    "bytes": 26593,
+    "path": "link-assistant--formal-ai/runs/38050091359/attempt-1/logs/4_Plan the Agent CLI ladder.txt.xz",
+    "sha256": "fb33c4c771341cba93b7fa91db36f88df5dcd140020346f86b3e5bf25d88382c",
+    "bytes": 21380,
     "uncompressed_bytes": 115609,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "afa6bcbb33d262f76eb4b62ad7c1e61fab642a75e4659e2c7e2652220a7e6f06"
+    "compression": "xz",
+    "decoded_sha256": "afa6bcbb33d262f76eb4b62ad7c1e61fab642a75e4659e2c7e2652220a7e6f06",
+    "original_gzip_sha256": "466c35d432cc4845bf6c4643211df2291e353b90e8a1398736075d3e52176087"
   },
   {
     "path": "link-assistant--formal-ai/runs/38050091359/attempt-1/logs/Plan the Agent CLI ladder/system.txt.gz",

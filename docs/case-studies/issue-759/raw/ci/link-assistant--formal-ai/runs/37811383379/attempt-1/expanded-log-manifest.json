@@ -1,12 +1,13 @@
 [
   {
-    "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/8_Build macos-arm64.txt.gz",
-    "sha256": "ba47be7c33f3c18c5eeb97ef6a4b1dc6289f6df8065bae7b112f1c8ff0566989",
-    "bytes": 36240,
+    "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/8_Build macos-arm64.txt.xz",
+    "sha256": "f4fbfe3ba03c0b10e4b15ed07f16ddeccc29605ecaec100306f9ae96ca80a49b",
+    "bytes": 24592,
     "uncompressed_bytes": 198028,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "8de55ee614ee7187030c8b6995611ad4e3780d484f0f0dc28103c47c69d649d1"
+    "compression": "xz",
+    "decoded_sha256": "8de55ee614ee7187030c8b6995611ad4e3780d484f0f0dc28103c47c69d649d1",
+    "original_gzip_sha256": "ba47be7c33f3c18c5eeb97ef6a4b1dc6289f6df8065bae7b112f1c8ff0566989"
   },
   {
     "path": "link-assistant--formal-ai/runs/37811383379/attempt-1/logs/Build macos-arm64/system.txt.gz",

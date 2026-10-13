@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/15_Lint and Format Check.txt.gz",
-    "sha256": "dc714bc4c34bcbb3faca4bf89e7873b4c83732d86564d31d3bc273eb85e4a78f",
-    "bytes": 37118,
+    "path": "link-assistant--router/runs/37862094392/attempt-1/logs/15_Lint and Format Check.txt.xz",
+    "sha256": "3f629b8c669fc076f87064f9a9b847ccd958434416ae975b94f6f5c2a0fd930b",
+    "bytes": 27620,
     "uncompressed_bytes": 178429,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "dc714bc4c34bcbb3faca4bf89e7873b4c83732d86564d31d3bc273eb85e4a78f",
+    "compression": "xz",
+    "decoded_sha256": "36ebf512f86ab0b7716152f35e0c287f385d859cc86a955efb3fe7be0ae4603b"
   },
   {
     "path": "link-assistant--router/runs/37862094392/attempt-1/logs/Lint and Format Check/system.txt.gz",

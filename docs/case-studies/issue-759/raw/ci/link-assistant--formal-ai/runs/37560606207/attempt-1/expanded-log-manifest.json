@@ -56,11 +56,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37560606207/attempt-1/logs/18_Version Modification Check.txt.gz",
-    "sha256": "cb00dd8d0004fa4bdacb8f7f2c63afe3feb16348351ef37510d56d265e402844",
-    "bytes": 26682,
+    "path": "link-assistant--formal-ai/runs/37560606207/attempt-1/logs/18_Version Modification Check.txt.xz",
+    "sha256": "70c29163de20f25acfaddbfadb09c24a602252d9ff5a077fe5564dceb9a3904a",
+    "bytes": 17964,
     "uncompressed_bytes": 148696,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "cb00dd8d0004fa4bdacb8f7f2c63afe3feb16348351ef37510d56d265e402844",
+    "compression": "xz",
+    "decoded_sha256": "d690df8ee21ccd786f0aae1469f1159cf34f84b1af67f5488f9c94b2fe1714f0"
   },
   {
     "path": "link-assistant--formal-ai/runs/37560606207/attempt-1/logs/Version Modification Check/system.txt.gz",

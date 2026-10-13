@@ -14,11 +14,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--formal-ai/runs/37707863726/attempt-1/logs/2_Build instrumented test executables.txt.gz",
-    "sha256": "ab8bf06ec9e86f5aa6b7fe2e44a119ef9b5651843017a5a076ea1b093dd4c97c",
-    "bytes": 27124,
+    "path": "link-assistant--formal-ai/runs/37707863726/attempt-1/logs/2_Build instrumented test executables.txt.xz",
+    "sha256": "6d0b6877188e3c8e8fa1455a4d83cdf8e01ada3e808d130f009faa22ddfd5416",
+    "bytes": 21952,
     "uncompressed_bytes": 119326,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "ab8bf06ec9e86f5aa6b7fe2e44a119ef9b5651843017a5a076ea1b093dd4c97c",
+    "compression": "xz",
+    "decoded_sha256": "076e44b62738e6185f603a01d1d0a771ffa7591b38e1a491f26daf1019ec541a"
   },
   {
     "path": "link-assistant--formal-ai/runs/37707863726/attempt-1/logs/Build instrumented test executables/system.txt.gz",

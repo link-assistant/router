@@ -1,10 +1,13 @@
 [
   {
-    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/2_bindings (macos-15, 20).txt.gz",
-    "sha256": "a8cda73c5b94139241e316eb159f3d7b253448a87879d05106d2fd297e08b6e1",
-    "bytes": 37598,
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/2_bindings (macos-15, 20).txt.xz",
+    "sha256": "79c73910f08e2bc124b74c8e1c2f475d649c1e04bda13664378d43616eb28fb8",
+    "bytes": 28676,
     "uncompressed_bytes": 225575,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "a8cda73c5b94139241e316eb159f3d7b253448a87879d05106d2fd297e08b6e1",
+    "compression": "xz",
+    "decoded_sha256": "f0e869b4ccf8dd537a675898d5da439f834852d9170ea168f69046a1067cb09d"
   },
   {
     "path": "link-assistant--router/runs/37892592252/attempt-1/logs/bindings (macos-15, 20)/system.txt.gz",
@@ -14,11 +17,14 @@
     "redacted": false
   },
   {
-    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/3_bindings (macos-15, 24).txt.gz",
-    "sha256": "5f37be5d7a54fcdd8a4b5ca35928cb8dfec71caf3d8fda605573062558bdaf7c",
-    "bytes": 36667,
+    "path": "link-assistant--router/runs/37892592252/attempt-1/logs/3_bindings (macos-15, 24).txt.xz",
+    "sha256": "9ef49716b5ec98ff4dbb1e0096a09f9a042df5d9f9df4ae8fc08e7f4aec50f60",
+    "bytes": 27896,
     "uncompressed_bytes": 222417,
-    "redacted": false
+    "redacted": false,
+    "original_gzip_sha256": "5f37be5d7a54fcdd8a4b5ca35928cb8dfec71caf3d8fda605573062558bdaf7c",
+    "compression": "xz",
+    "decoded_sha256": "a172e24b566ca3429435fdf6a9ae4daaa983cf7a26cca7773bd5ebe10e75b42d"
   },
   {
     "path": "link-assistant--router/runs/37892592252/attempt-1/logs/bindings (macos-15, 24)/system.txt.gz",

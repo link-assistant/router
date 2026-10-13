@@ -1,12 +1,13 @@
 [
   {
-    "path": "link-foundation--relative-meta-logic/runs/35698121310/attempt-1/logs/0_build-images.txt.gz",
-    "sha256": "4bea1518b749ae61573b31e35d72295b857b24e4bf55c732aed3e760c90d7b45",
-    "bytes": 29975,
+    "path": "link-foundation--relative-meta-logic/runs/35698121310/attempt-1/logs/0_build-images.txt.xz",
+    "sha256": "4d94004f12429dc53110beee60e89f23ce28a95a1aeafd02fef65279064b1a67",
+    "bytes": 22200,
     "uncompressed_bytes": 149449,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "fd8505e7ee5247bd8867fc15e6bae3a5df543af1862ecf5710fce537d0dc7ffe"
+    "compression": "xz",
+    "decoded_sha256": "fd8505e7ee5247bd8867fc15e6bae3a5df543af1862ecf5710fce537d0dc7ffe",
+    "original_gzip_sha256": "4bea1518b749ae61573b31e35d72295b857b24e4bf55c732aed3e760c90d7b45"
   },
   {
     "path": "link-foundation--relative-meta-logic/runs/35698121310/attempt-1/logs/build-images/system.txt.gz",

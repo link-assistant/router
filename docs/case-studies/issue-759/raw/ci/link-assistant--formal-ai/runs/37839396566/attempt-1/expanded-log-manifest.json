@@ -18,13 +18,14 @@
     "decoded_sha256": "f8508b8d4dc47017f5313097590fbb9c0d1e66bb6cfb99d8068005b34d197614"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37839396566/attempt-1/logs/1_CodeQL (actions).txt.gz",
-    "sha256": "1ce7b451df5d3507a95c2c117cc5649ad93d12e1b14b9abb17f69df8357ae150",
-    "bytes": 26563,
+    "path": "link-assistant--formal-ai/runs/37839396566/attempt-1/logs/1_CodeQL (actions).txt.xz",
+    "sha256": "1fe32f77ccf9c877fa98012b4b01f6151523304ba71d2d95c0fc536e5920efd0",
+    "bytes": 18776,
     "uncompressed_bytes": 161730,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "fe4c2194c64e6d3c183eb2e045218390a1cb6eba468fa743b3e9351d15639e2a"
+    "compression": "xz",
+    "decoded_sha256": "fe4c2194c64e6d3c183eb2e045218390a1cb6eba468fa743b3e9351d15639e2a",
+    "original_gzip_sha256": "1ce7b451df5d3507a95c2c117cc5649ad93d12e1b14b9abb17f69df8357ae150"
   },
   {
     "path": "link-assistant--formal-ai/runs/37839396566/attempt-1/logs/CodeQL (actions)/system.txt.gz",
@@ -36,13 +37,14 @@
     "decoded_sha256": "f39b5fa261cfb4d40c2c68cd83331ccdd4939a74b29a2593033529efb0d57226"
   },
   {
-    "path": "link-assistant--formal-ai/runs/37839396566/attempt-1/logs/2_CodeQL (rust).txt.gz",
-    "sha256": "6bec00c323845e741c83df715c1c5d47d32c0381e48f433c374b59f560cf3241",
-    "bytes": 35378,
+    "path": "link-assistant--formal-ai/runs/37839396566/attempt-1/logs/2_CodeQL (rust).txt.xz",
+    "sha256": "1149a7ff5341a80a8fbd63b855ef023b4582be841bb3b9b4bb1a5824908a17ba",
+    "bytes": 25272,
     "uncompressed_bytes": 307750,
     "redacted": false,
-    "compression": "gzip",
-    "decoded_sha256": "7d27e667c35598fe0a952f6cc5d8825537776e01be44d04c9d5509c148413ca7"
+    "compression": "xz",
+    "decoded_sha256": "7d27e667c35598fe0a952f6cc5d8825537776e01be44d04c9d5509c148413ca7",
+    "original_gzip_sha256": "6bec00c323845e741c83df715c1c5d47d32c0381e48f433c374b59f560cf3241"
   },
   {
     "path": "link-assistant--formal-ai/runs/37839396566/attempt-1/logs/CodeQL (rust)/system.txt.gz",
