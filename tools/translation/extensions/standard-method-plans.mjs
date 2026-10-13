@@ -135,3 +135,10 @@ export function completeStandardMethod(plan,callbackResult,{optionType,span=plan
   if(plan.operation==='bool_then_some'&&plan.expectedResult&&!sameOutput(plan.expectedResult,result))throw typeError('bool.then_some canonical Option result differs from checked source argument identity',span);
   return freeze(structuredClone(result));
 }
+
+// Selection is only a type-directed route. The mapped-body checker separately
+// requires privately captured original call syntax and complete payload proofs.
+export function mappedStandardFamily(type,method,declarations){
+  const kind=type?.kind==='data'?declarations.get(type.name)?.standardGeneric?.kind:null;
+  return kind==='Result'&&method==='map'?'Result':kind==='Option'&&method==='map_or'?'Option':null;
+}

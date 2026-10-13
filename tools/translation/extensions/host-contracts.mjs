@@ -1,3 +1,4 @@
+import {checkOriginalMappedBody,checkOriginalMappedApplication,prepareOriginalMappedBodies,requireOriginalMappedEmission,finalizeOriginalMappedBodies} from './standard-mapped-body.mjs';
 import {createOriginalSharedPatternAdapter} from './shared-source-patterns.mjs';
 import {captureOriginalMoveTuples} from './standard-move-payload.mjs';
 import {prepareOriginalSourceFrames,requireOriginalSourceFrameEmission,originalSourceFramePatternRead} from './standard-source-frame.mjs';
@@ -29,7 +30,7 @@ import {withFixedArrayParser,withFixedArrayChecker,fixedArrayCopyCells} from './
 import {EffectEmitter,effectData} from './effects.mjs';
 import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
 import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
-import {planStandardMethod,completeStandardMethod} from './standard-method-plans.mjs';
+import {planStandardMethod,completeStandardMethod,mappedStandardFamily} from './standard-method-plans.mjs';
 import {rustFixedType} from '../checked-types.mjs';
 import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
@@ -604,6 +605,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
       return this.hostCall(instance.contracts.filter(contract=>contract.id.startsWith(operation+'_')),(node.object?[node.object,...node.args]:node.args),env,path,expected,node.span,type);
     }
     if(node.k==='routerIteratorOperation'&&node.op==='filter'){const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,'filter','shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);if(receiver.type.kind==='data'&&this.items.get(receiver.type.name)?.standardGeneric?.kind==='Option')return checkPinnedOptionCallbackBody(this,node,receiver,env,path,expected,HostRustParser);}
+    if(node.k==='routerOriginalMappedCallbackApplication')return checkOriginalMappedApplication(this,node,env,path);
     if(node.k==='routerOriginalCallbackApplication')return checkOriginalCallbackApplication(this,node,env,path);
     if(node.k==='routerPinnedOptionCallbackCall'){const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,node.method,'shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);return checkPinnedOptionCallbackBody(this,node,receiver,env,path,expected,HostRustParser);}
     if(node.k==='routerPinnedSharedMatchPlace')return checkedSharedMatchPlace(node);
@@ -635,11 +637,13 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
         if(method.startsWith('wrapping_')){const primitive=rustFixedType(type.rustPrimitiveName);if(!primitive||!/^([iu])(8|16|32|64|128)$/u.test(type.rustPrimitiveName)||primitive.bits!==type.bits||primitive.signed!==type.signed||type.rustOwnership||type.rustGenericIdentityUnresolved)throw unsupported('primitive wrapping owner','requires an actual by-value checked fixed primitive; alternate pointer widths, custom ownership and unresolved generics remain refused',node.span);}
         const instance=this.instantiations.fixed(type,node.span);return this.hostCall(instance.contracts.filter(contract=>contract.rustPath.at(-1)===method),[object,...node.args],env,path,expected,node.span);
       }
+      if(mappedStandardFamily(receiver.type,method,this.items)==='Result')return checkOriginalMappedBody(this,node,receiver,env,path,expected,HostRustParser,'Result');
       const mapOr=method==='map_or'&&receiver.type.kind==='data'&&this.items.get(receiver.type.name)?.standardGeneric?.kind==='Option';
       if(method==='map_err'&&canonicalResult(this,receiver.type,path,node.span,false))return checkResultMapError(this,node,receiver,env,path,expected);
       if(mapOr&&node.args.length!==2)throw typeError('standard map_or expects 2 arguments',node.span);
       if(mapOr&&nonlocalDefault(node.args[0]))throw unsupported('Option.map_or default control','nonlocal exits require separately checked statement lowering',node.args[0].span);
       const defaultValue=mapOr?this.expr(node.args[0],env,path,expected):null;
+      if(mapOr&&defaultValue.type.kind==='data')return checkOriginalMappedBody(this,node,receiver,env,path,expected,HostRustParser,'Option',defaultValue);
       const plan=['bool','data'].includes(receiver.type.kind)?planStandardMethod(receiver.type,method,{declarations:this.items,resolveType:(type,range)=>this.resolveType(type,path,range),expected,defaultType:defaultValue?.type,span:node.span,argumentCount:node.args.length}):null;
       if(plan?.operation==='bool_then_some'){
         if(nonlocalDefault(node.args[0]))throw unsupported('bool.then_some argument control','nonlocal exits require separately checked statement lowering',node.args[0].span);
@@ -691,6 +695,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     const program=super.program(surface);
     const sourceContext=checkedSourceContext(program);
     sourcePatterns.finalizeOriginalSharedPatterns(this,program);
+    finalizeOriginalMappedBodies(this,program);
     program.items.push(...this.instantiations.items);
     const forbidden=(node,seen=new Set(),runtimeConstFunction=false)=>{
       if(!node||typeof node!=='object')return false;
@@ -742,12 +747,13 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
-  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry);try{return super.fn(entry);}finally{restorePatterns?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreShared?.();restore?.();}}
+  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry);try{return super.fn(entry);}finally{restorePatterns?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();}}
   expr(node) {
     if(node.k==='routerSourceConversion')return this.expr(requireOriginalConversionEmission(node,this));
     if(node.k==='routerOriginalCallbackLoan')return this.expr(requireOriginalSourceFrameEmission(this,node));
     if(node.k==='routerOriginalStandardFrame')return `(() => {\n${this.statements(requireOriginalSourceFrameEmission(this,node)).join('\n')}\n})()`;
     if(node.k==='routerOriginalSharedDomainGuard'){this.copyReceivers=true;return `(() => { const ${this.sharedGuardVariable} = ${this.expr(node.value)}; ml_assert_immutable_copy(${this.sharedGuardVariable}); return ${this.sharedGuardVariable}; })()`;}
+    if(node.k==='routerOriginalMappedBody')return this.expr(requireOriginalMappedEmission(this,node));
     if(node.k==='routerPinnedOptionCallbackBody')return this.expr(requireOriginalOptionCallbackEmission(this,node));
     if(node.k==='routerPinnedSharedBody')return this.expr(requireOriginalSharedEmission(this,node));
     if(node.k==='routerStaticArrayElement'){const proof=requireStaticArrayElement(node,this.program,HostChecker);this.staticArrayElements=true;return `ml_static_array_element(${JSON.stringify(proof.storageKey)}, () => ${this.expr(node.array)}, ${this.expr(node.index)})`;}

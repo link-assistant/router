@@ -40,7 +40,23 @@ function methodIn(source,header,name){
   const member=members[0],written=significant(member.tokens),fn=written.findIndex(token=>token.text==='fn'),body=written.findIndex((token,index)=>index>fn&&token.text==='{'),end=written.at(-1);
   if(fn<0||body<0||end?.text!=='}')throw new TypeError('standard member requires one complete original function body');
   const definitionSpan={start:offset+written[fn].start,end:offset+end.end},bodySpan={start:offset+written[body].start,end:offset+end.end};
-  const paren=written.findIndex((token,index)=>index>fn&&token.text==='(');let endParams=-1,parameterDepth=0;for(let at=paren;at<written.length;at++){if(written[at].text==='(')parameterDepth++;else if(written[at].text===')'&&--parameterDepth===0){endParams=at;break;}}
+  // FnOnce(T) in a generic bound is not the member's parameter group.
+  // Consume the complete balanced generic prefix before selecting `(self, ...)`.
+  let paren=fn+2;
+  if(written[paren]?.text==='<'){
+    let genericDepth=0,groupDepth=0;
+    for(;paren<written.length;paren++){
+      const token=written[paren].text;
+      if(['(','['].includes(token))groupDepth++;
+      else if([')',']'].includes(token))groupDepth--;
+      else if(!groupDepth&&token==='<')genericDepth++;
+      else if(!groupDepth&&token==='>'&&--genericDepth===0){paren++;break;}
+      if(groupDepth<0||genericDepth<0)throw new TypeError('standard member generic prefix is unbalanced');
+    }
+    if(genericDepth||groupDepth)throw new TypeError('standard member requires its complete original generic prefix');
+  }
+  if(written[paren]?.text!=='(')throw new TypeError('standard member parameter group must follow its actual generic prefix');
+  let endParams=-1,parameterDepth=0;for(let at=paren;at<written.length;at++){if(written[at].text==='(')parameterDepth++;else if(written[at].text===')'&&--parameterDepth===0){endParams=at;break;}}
   if(paren<0||endParams<0||endParams>=body)throw new TypeError('standard method requires its complete original parameter group');
   const parameterGroups=[],parameters=[];let group=[];
   let nested=0;for(const token of written.slice(paren+1,endParams)){if(['(','[','<'].includes(token.text))nested++;if([')',']','>'].includes(token.text))nested--;if(token.text===','&&nested===0){parameterGroups.push(group);group=[];}else group.push(token);}
@@ -69,6 +85,12 @@ export function pinnedSharedBody(kind){
   const key='Result::as_ref';if(cache.has(key))return cache.get(key);
   const source=sources.get('library/core/src/result.rs'),method=methodIn(source.source,'impl<T,E>Result<T,E>','as_ref');
   return seal(key,method,{kind:'original-inherent-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner:'core::result::Result<T,E>',genericParameters:['T','E']});
+}
+export function pinnedMappedBody(kind,name){
+  if(!(kind==='Result'&&name==='map'||kind==='Option'&&name==='map_or'))throw new TypeError('mapped body requires a checked canonical mapped method');
+  const key=kind+'::'+name;if(cache.has(key))return cache.get(key);
+  const source=sources.get('library/core/src/'+kind.toLowerCase()+'.rs'),method=methodIn(source.source,kind==='Option'?'impl<T>Option<T>':'impl<T,E>Result<T,E>',name);
+  return seal(key,method,{kind:'original-inherent-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner:'core::'+kind.toLowerCase()+'::'+kind,genericParameters:kind==='Option'?['T','U']:['T','U','E']});
 }
 const scalarNames=new Set(['bool','char','usize','u8','u16','u32','u64','u128','isize','i8','i16','i32','i64','i128','f64']);
 let defaultDefinition,defaultInvocations;

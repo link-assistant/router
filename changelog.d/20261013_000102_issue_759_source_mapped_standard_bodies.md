@@ -1,0 +1,1 @@
+Add privately source-owned parsed Rust Result.map and nominal/nested Option.map_or output routes with exact generic identity, Copy/no-Drop, shared lifetime, callback and caller-integrity checks. Balance original generic bounds before selecting method parameters. Keep unknown owned/nominal payload and dependent method refusals explicit.
