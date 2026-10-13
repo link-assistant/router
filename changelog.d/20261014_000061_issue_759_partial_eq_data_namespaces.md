@@ -1,0 +1,1 @@
+Added a private-source plural AST literal reader for original compiler recipes that emit multiple implementations. The exactly-one reader retains its existing refusal behavior; no generated method execution is admitted.

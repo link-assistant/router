@@ -78,7 +78,7 @@ export function originalAstDefinition(profile,path,kind,name){
 
 // Extract an actual named Rust struct literal, retaining every source field.
 // Field expression meta remains syntax until a route discharges its typed slots.
-export function astStructLiteral(profile,fragment,name){
+export function astStructLiterals(profile,fragment,name){
   assertOriginalAstFunction(profile,fragment);const candidates=[];
   function visit(nodes){for(let at=0;at<nodes.length;at++){
     if(nodes[at].text===name&&nodes[at+1]?.kind==='group'&&nodes[at+1].delimiter==='{')candidates.push(nodes[at+1]);
@@ -88,8 +88,8 @@ export function astStructLiteral(profile,fragment,name){
   // not a Stmt literal. Inspect executable recipe syntax inside that body.
   const body=fragment.syntax.at(-1);if(fragment.schema!=='original-ast-function-meta-v1'||body?.kind!=='group'||body.delimiter!=='{')throw new TypeError('AST literal recipe requires its original function body');
   visit(body.children);
-  if(candidates.length!==1)throw new TypeError('Original AST struct recipe is not unique: '+name);
-  const group=candidates[0],fields=[];let at=0;
+  return freeze(candidates.map(group=>{
+  const fields=[];let at=0;
   while(at<group.children.length){
     const member=group.children[at++];if(!identifier(member)||fields.some(field=>field.name===member.text))throw new TypeError('AST source recipe field is not unique');
     const explicit=group.children[at]?.text===':';if(explicit)at++;
@@ -99,7 +99,13 @@ export function astStructLiteral(profile,fragment,name){
     if(!expression.length||angle)throw new TypeError('AST source recipe field expression remains unresolved');
     fields.push({name:member.text,span:member.span,expression});if(group.children[at]?.text===',')at++;
   }
-  return freeze({schema:'original-ast-struct-recipe-v1',source:fragment.source,sourceSha256:fragment.sourceSha256,span:group.span,fragmentDigest:fragment.digest,name,fields,generatedImplBehavior:false});
+  return {schema:'original-ast-struct-recipe-v1',source:fragment.source,sourceSha256:fragment.sourceSha256,span:group.span,fragmentDigest:fragment.digest,name,fields,generatedImplBehavior:false};
+  }));
+}
+export function astStructLiteral(profile,fragment,name){
+  const candidates=astStructLiterals(profile,fragment,name);
+  if(candidates.length!==1)throw new TypeError('Original AST struct recipe is not unique: '+name);
+  return candidates[0];
 }
 export const astSyntaxText=nodes=>nodes.map(node=>node.kind==='group'?node.delimiter+astSyntaxText(node.children)+({'(':')','[':']','{':'}'}[node.delimiter]):node.text).join(' ');
 
