@@ -136,7 +136,8 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e69735f73747265
       }
       case "Some": {
         const ml_standard_pattern_2 = ml_standard_callback_self_1.field0;
-        const value = ml_standard_pattern_2;
+        const ml_standard_callback_arg_1 = ml_standard_pattern_2;
+        const value = ml_standard_callback_arg_1;
         return ((((() => {
           const ml_standard_body_1 = ml_csv_split_next(ml_csv_split(value, ";"));
           switch (ml_standard_body_1.$) {

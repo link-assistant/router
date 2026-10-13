@@ -54,7 +54,8 @@ function rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f696465
       }
       case "Some": {
         const ml_standard_pattern_5 = ml_standard_callback_self_4.field0;
-        const text = ml_standard_pattern_5;
+        const ml_standard_callback_arg_1 = ml_standard_pattern_5;
+        const text = ml_standard_callback_arg_1;
         const ml_text_2 = text;
         const ml_text_3 = rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054();
         return ml_text_2.startsWith(ml_text_3);
