@@ -1,3 +1,4 @@
+import {hasPinnedSharedOrigin,hasOriginalSharedDomainGuard} from './standard-borrowed-body.mjs';
 import {hasStaticElementOrigin} from './static-array-element.mjs';
 // Function elision and return origins are proof obligations, not value-domain
 // equivalence. This bounded adapter does not manufacture reference lifetimes.
@@ -320,7 +321,9 @@ function origins(node,env,context,returns,depth=0) {
     for(const state of context.loopExitStates?.slice(exitStart)??[])if(env.has(node.name))state.set(node.name,env.get(node.name));else state.delete(node.name);
     propagateLocals(env,inner,context,node.name);return result;
   }
-  if(node.k==='routerPinnedStandardBody')return read(node.body);
+  if(node.k==='routerOriginalSharedDomainGuard'){if(!hasOriginalSharedDomainGuard(node))throw unsupported('shared immutable value guard','requires its actual privately checked source specialization',node.span);return read(node.value);}
+  if(node.k==='routerPinnedSharedBody'){if(!hasPinnedSharedOrigin(node)||node.body?.k!=='let'||node.body.value.type?.rustReference?.kind!=='shared')throw unsupported('original shared body origins','requires the actual privately checked source receiver and specialization',node.span);const value=read(node.body.value);return leafOrigins(new Map(sourceBorrowRegions(node.type,context).map(region=>{const [argument,index,place,...inner]=region.path;if(argument!=='argument'||!Number.isInteger(index))throw unsupported('shared body result origins','requires its actual canonical shared generic argument',node.span);const source=place==='pointee'?['pointee','argument',index,...inner]:[];return [key(region.path),at(value,source)];})));}
+  if(['routerPinnedStandardBody','routerPinnedOptionCallbackBody'].includes(node.k))return read(node.body);
   if(node.k==='routerOrderedArm'){if(node.guard)read(node.guard);return read(node.body);}
   if(node.k==='routerOrderedMatchArms') {
     const states=[],values=node.branches.map(branch=>{const inner=new Map(env);read(branch.cond,inner);const value=read(branch.body,inner);states.push(inner);return value;});

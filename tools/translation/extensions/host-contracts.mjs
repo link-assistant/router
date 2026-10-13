@@ -1,3 +1,6 @@
+import {checkPinnedOptionCallbackBody,checkOriginalCallbackApplication,requirePinnedOptionCallbackBody,prepareOriginalOptionCallbacks,requireOriginalOptionCallbackEmission} from './standard-option-callback-body.mjs';
+import {captureOriginalStandardCalls} from './original-standard-calls.mjs';
+import {checkPinnedSharedBody,checkedSharedMatchPlace,requirePinnedSharedBody,originalStandardRefField,prepareOriginalSharedBodies,requireOriginalSharedEmission} from './standard-borrowed-body.mjs';
 import {STANDARD_OPTION_COPY_SOURCE,SHARED_REFERENCE_COPY_SOURCE} from '../shared-reference-copy-source.mjs';
 import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs';
 import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasSourceFixedFrom} from './primitive-from-source.mjs';
@@ -197,6 +200,8 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
     return {k:'routerIntegerParse',object,args,instantiation,span:range};
   }
   method(object,name,args,range) {
+    if(['is_none_or','is_some_and','map_or_else'].includes(name.value))return {k:'routerPinnedOptionCallbackCall',method:name.value,object,args,span:range};
+    if(name.value==='as_ref')return {k:'routerPinnedSharedBodyCall',object,args,span:range};
     if(['unwrap_or','unwrap_or_default','unwrap_or_else','or_else'].includes(name.value))return {k:'routerPinnedStandardBodyCall',method:name.value,object,args,span:range};
     if(name.value==='bytes')return {k:'routerStringBytesOperation',object,args,span:range};
     if(name.value==='rfind')return {k:'routerReverseStringFind',object,args,span:range};
@@ -573,6 +578,10 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
       const instance=this.instantiations.integer(type,node.span),operation=node.k==='routerIntegerParse'?'rust_integer_parse':node.operation==='from_str'?'rust_integer_from_str':'rust_integer_from_str_radix';
       return this.hostCall(instance.contracts.filter(contract=>contract.id.startsWith(operation+'_')),(node.object?[node.object,...node.args]:node.args),env,path,expected,node.span,type);
     }
+    if(node.k==='routerOriginalCallbackApplication')return checkOriginalCallbackApplication(this,node,env,path);
+    if(node.k==='routerPinnedOptionCallbackCall'){const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,node.method,'shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);return checkPinnedOptionCallbackBody(this,node,receiver,env,path,expected,HostRustParser);}
+    if(node.k==='routerPinnedSharedMatchPlace')return checkedSharedMatchPlace(node);
+    if(node.k==='routerPinnedSharedBodyCall'){const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,'as_ref','shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);return checkPinnedSharedBody(this,node,receiver,path,expected,HostRustParser);}
     if(node.k==='routerPinnedCallbackApplication')return checkPinnedCallbackApplication(this,node);
     if(node.k==='routerPinnedStandardBodyCall'){
       const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,node.method,'shared');
@@ -632,6 +641,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     }
     return super.expr(node,env,path,expected,allowLiteral);
   }
+  sourceStandardRefField(field,receiver){return originalStandardRefField(this,field,receiver);}
   sourceStandardFieldCopy(field,span){
     const type=field.type,entry=type.kind==='data'?this.items.get(type.name):null,source=type.rustStandardGeneric;
     if(type.rustReference||entry?.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||entry.standardGeneric.arguments?.length!==1||source.arguments?.length!==1||entry.ctors.length!==2)return null;
@@ -643,6 +653,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
   }
   sourceFixedArrayCells(type,span){return fixedArrayCopyCells(type,span,0,(element,range)=>{checkedOptionNominal(this,element,range);const count=(type,active=new Set())=>{if(type.rustReference)return 1;if(type.kind==='array')return 1+(fixedArrayLength(type)??0)*count(type.element,active);if(type.kind!=='data')return 1;if(active.has(type.name))throw unsupported('static array cell budget','recursive owned layouts remain unproved',range);const entry=this.items.get(type.name),inner=new Set(active).add(type.name);return 1+Math.max(...entry.ctors.map(ctor=>ctor.fields.reduce((sum,field)=>sum+count(field.type,inner),0)));};return count(element);});}
   program(surface) {
+    captureOriginalStandardCalls(this,surface);
     captureOptionNominals(this,surface);
     captureStaticArrays(this,surface);
     validateOriginalMethodAssociations(surface);
@@ -671,7 +682,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
   }
 }
 export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from','ml_integer_cast','ml_integer_shift','ml_static_array_values','ml_static_array_element'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.sharedGuardVariable='ml_shared_immutable_value';for(let index=2;state.claimed.has(this.sharedGuardVariable);index++)this.sharedGuardVariable='ml_shared_immutable_value_'+index;state.reserved.add(this.sharedGuardVariable);this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from','ml_integer_cast','ml_integer_shift','ml_static_array_values','ml_static_array_element'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
@@ -700,8 +711,11 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
-  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker);try{return super.fn(entry);}finally{restore?.();}}
+  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker);try{return super.fn(entry);}finally{restoreCallbacks?.();restoreShared?.();restore?.();}}
   expr(node) {
+    if(node.k==='routerOriginalSharedDomainGuard'){this.copyReceivers=true;return `(() => { const ${this.sharedGuardVariable} = ${this.expr(node.value)}; ml_assert_immutable_copy(${this.sharedGuardVariable}); return ${this.sharedGuardVariable}; })()`;}
+    if(node.k==='routerPinnedOptionCallbackBody')return this.expr(requireOriginalOptionCallbackEmission(this,node));
+    if(node.k==='routerPinnedSharedBody')return this.expr(requireOriginalSharedEmission(this,node));
     if(node.k==='routerStaticArrayElement'){const proof=requireStaticArrayElement(node,this.program,HostChecker);this.staticArrayElements=true;return `ml_static_array_element(${JSON.stringify(proof.storageKey)}, () => ${this.expr(node.array)}, ${this.expr(node.index)})`;}
     if(node.k==='routerSourceUnitEnumCast')return this.expr(requireUnitEnumCast(node,this.program,HostChecker));
     if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift'].includes(node.k)){

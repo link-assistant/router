@@ -1,3 +1,5 @@
+import {hasMutableScalarBinding} from './control.mjs';
+import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
 import {renameFunction} from '../vendor/meta-language/translation/ir.js';
 // Specialize actual selected Rust bodies through the existing checker. The
 // returned semantic tree uses the ordinary let/match/literal emitter.
@@ -22,25 +24,26 @@ function scalarOwner(type,span){
   if(type.kind==='float'&&type.rustPrimitiveName==='f64')return 'f64';
   return refuse(span);
 }
-function payloadOwner(checker,type,span){
+export function payloadOwner(checker,type,span,{allowShared=false}={}){
+  if(allowShared&&type?.rustReference){const identity=sharedReferenceCopyIdentity(type);if(!identity)refuse(span);return 'shared:'+identity;}
   if(type?.kind==='data'){checkedOptionNominal(checker,type,span);return 'nominal:'+type.name;}
   return scalarOwner(type,span);
 }
-function optionPayload(checker,type,path,span){
+export function optionPayload(checker,type,path,span,{allowShared=false}={}){
   if(type?.kind!=='data'||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse(span);
   const entry=checker.items.get(type.name),source=type.rustStandardGeneric;
   if(entry?.k!=='data'||entry.fullName!==type.name||!Array.isArray(entry.modulePath)||entry.standardGeneric?.kind!=='Option'||entry.standardGeneric.arguments?.length!==1||source?.kind!=='Option'||source.arguments?.length!==1||entry.ctors?.length!==2)refuse(span);
   const some=entry.ctors.filter(ctor=>ctor.name==='Some'),none=entry.ctors.filter(ctor=>ctor.name==='None');
   if(some.length!==1||none.length!==1||some[0].fields?.length!==1||some[0].fields[0].name!=='field0'||none[0].fields?.length)refuse(span);
-  const payload=checker.resolveType(source.arguments[0],entry.modulePath,span),owner=payloadOwner(checker,payload,span);
+  const payload=checker.resolveType(source.arguments[0],entry.modulePath,span),owner=payloadOwner(checker,payload,span,{allowShared});
   for(const written of [entry.standardGeneric.arguments[0],some[0].fields[0].type]){
     const actual=checker.resolveType(written,entry.modulePath,span);
-    if(!sameType(payload,actual)||payloadOwner(checker,actual,span)!==owner)refuse(span);
+    if(!sameType(payload,actual)||payloadOwner(checker,actual,span,{allowShared})!==owner)refuse(span);
     checker.expectedOwnership(actual,payload,path,span);checker.expectedPrimitiveIdentity(actual,payload,path,span);
   }
   return {payload,owner};
 }
-const sourceTree=value=>{
+export const sourceTree=value=>{
   if(Array.isArray(value))return value.map(sourceTree);
   if(!value||typeof value!=='object')return value;
   const node=Object.fromEntries(Object.entries(value).map(([key,item])=>[key,sourceTree(item)]));
@@ -52,7 +55,7 @@ const sourceTree=value=>{
   if(node.k==='ctor'&&node.path?.length===1&&['Some','None'].includes(node.path[0]))node.registeredGenericOwner='Option';
   return node;
 };
-function freeNames(node,names){
+export function freeNames(node,names){
   if(Array.isArray(node))return node.map(child=>freeNames(child,names));
   if(!node||typeof node!=='object')return node;
   if(node.k==='name'&&node.path?.length===1&&names.has(node.path[0]))return {...node,path:[names.get(node.path[0])]};
@@ -68,7 +71,7 @@ function freeNames(node,names){
   })};
   return Object.fromEntries(Object.entries(node).map(([key,value])=>[key,['type','span','patternControl'].includes(key)?value:freeNames(value,names)]));
 }
-const nonlocal=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>!['type','span'].includes(key)&&(Array.isArray(value)?value.some(nonlocal):nonlocal(value))));
+export const nonlocal=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>!['type','span'].includes(key)&&(Array.isArray(value)?value.some(nonlocal):nonlocal(value))));
 function replaceTraitCall(node,generic,defaultBody,originalEvidence){
   if(Array.isArray(node))return node.map(child=>replaceTraitCall(child,generic,defaultBody,originalEvidence));
   if(!node||typeof node!=='object')return node;
@@ -101,8 +104,8 @@ function callbackTree(node,name,binding){
   return Object.fromEntries(Object.entries(node).map(([key,value])=>[key,callbackTree(value,name,binding)]));
 }
 function dataDependencies(entries,root){const result=[],seen=new Set();const visit=name=>{if(seen.has(name))return;seen.add(name);const entry=entries.get(name);if(!entry||entry.k!=='data')throw new Error('Standard body dependency lacks its actual checked layout');result.push(structuredClone(entry));const types=value=>{if(!value||typeof value!=='object')return;if(value.kind==='data')visit(value.name);if(Array.isArray(value))value.forEach(types);else for(const child of Object.values(value))types(child);};types(entry.ctors);types(entry.standardGeneric);};visit(root);return result;}
-function validateCallbackCaptures(checker,callback,env,path,span){
-  const visit=(node,bound=new Set())=>{if(!node||typeof node!=='object')return;if(node.k==='var'&&!bound.has(node.name)){const type=env.get(node.name);if(!type)throw typeError('Standard callback capture is not an actual source local',span);if(type.kind==='data'&&checker.items.get(type.name)?.standardGeneric?.kind==='Option')optionPayload(checker,type,path,span);else payloadOwner(checker,type,span);return;}if(node.k==='let'){visit(node.value,bound);visit(node.body,new Set(bound).add(node.name));return;}if(node.k==='match'){visit(node.scrutinee,bound);for(const arm of node.cases){const inner=new Set(bound);for(const name of arm.pattern.binds??[])if(name)inner.add(name);if(arm.pattern.k==='bind')inner.add(arm.pattern.name);visit(arm.body,inner);}return;}for(const [key,value]of Object.entries(node))if(!['type','span','pinnedStandardBodyProof'].includes(key)){if(Array.isArray(value))value.forEach(child=>visit(child,bound));else visit(value,bound);}};visit(callback.binding);
+export function validateCallbackCaptures(checker,callback,env,path,span,{allowShared=false,immutableCaptures=false}={}){
+  const visit=(node,bound=new Set())=>{if(!node||typeof node!=='object')return;if(node.k==='var'&&!bound.has(node.name)){if(immutableCaptures&&hasMutableScalarBinding(env,node.name))throw unsupported('Option callback mutable capture','requires an independently checked borrow/alias interval',span);const type=env.get(node.name);if(!type)throw typeError('Standard callback capture is not an actual source local',span);if(type.kind==='data'&&checker.items.get(type.name)?.standardGeneric?.kind==='Option')optionPayload(checker,type,path,span,{allowShared});else payloadOwner(checker,type,span,{allowShared});return;}if(immutableCaptures&&node.k==='routerSet'&&!bound.has(node.name))throw unsupported('Option callback captured write','requires an independently checked borrow/alias interval',span);if(node.k==='let'){visit(node.value,bound);visit(node.body,new Set(bound).add(node.name));return;}if(node.k==='match'){visit(node.scrutinee,bound);for(const arm of node.cases){const inner=new Set(bound);for(const name of arm.pattern.binds??[])if(name)inner.add(name);if(arm.pattern.k==='bind')inner.add(arm.pattern.name);visit(arm.body,inner);}return;}for(const [key,value]of Object.entries(node))if(!['type','span','pinnedStandardBodyProof'].includes(key)){if(Array.isArray(value))value.forEach(child=>visit(child,bound));else visit(value,bound);}};visit(callback.binding);
 }
 const bodyDigest=body=>createHash('sha256').update(JSON.stringify(stableBody(body))).digest('hex');
 export function checkPinnedOptionBody(checker,node,receiver,env,path,expected,Parser){
@@ -135,7 +138,7 @@ export function checkPinnedOptionBody(checker,node,receiver,env,path,expected,Pa
 // Canonicalize only bound local names. Function/data references remain exact
 // and are checked using the current real declaration registry, including the
 // project's ordinary flattening pass. Literal types remain part of the tree.
-function alphaTree(node,env=new Map(),counter={next:0}){
+export function alphaTree(node,env=new Map(),counter={next:0}){
   if(Array.isArray(node))return node.map(child=>alphaTree(child,env,counter));
   if(!node||typeof node!=='object')return typeof node==='bigint'?{$bigint:node.toString()}:node;
   const clean=value=>Object.fromEntries(Object.entries(value).filter(([key])=>!['span','patternControl'].includes(key)).map(([key,item])=>[key,alphaTree(item,env,counter)]));
@@ -197,10 +200,11 @@ export function requirePinnedStandardBody(node,Parser,{Checker,program}={}){
   if(!isDeepStrictEqual(alphaTree(inner),alphaTree(reconstructed)))throw new Error('standard body differs from the rechecked actual original specialization');
 }
 
-function retargetCheckedCallback(value,program){
+export function retargetCheckedCallback(value,program){
   if(Array.isArray(value))return value.map(child=>retargetCheckedCallback(child,program));
   if(!value||typeof value!=='object')return value;
-  const node=Object.fromEntries(Object.entries(value).map(([key,child])=>[key,retargetCheckedCallback(child,program)]));
+  const opaque=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope','sharedBodyProof','originalCallbackProof']);
+  const node=Object.fromEntries(Object.entries(value).map(([key,child])=>[key,opaque.has(key)?child:retargetCheckedCallback(child,program)]));
   const mapped=name=>!program.declarations.has(name)&&program.declarations.has('rp_'+Buffer.from(name).toString('hex'))?'rp_'+Buffer.from(name).toString('hex'):name;
   if(value.kind==='data')node.name=mapped(value.name);
   if(value.kind==='named'&&Array.isArray(value.path)){const name=value.path.filter((part,index)=>index!==0||part!=='crate').join('.'),target=mapped(name);if(target!==name)node.path=['crate',target];}

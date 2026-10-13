@@ -9,6 +9,7 @@ import { typeError, unsupported } from '../vendor/meta-language/translation/diag
 import {Scope} from '../vendor/meta-language/translation/ir.js';
 
 const MUTABLE = Symbol('mutable scalar locals');
+export const hasMutableScalarBinding=(env,name)=>env.get(MUTABLE)?.has(name)===true;
 const RETURN = Symbol('function return type');
 const LOOP = Symbol('loop depth');
 // Only the exact node currently checked by routerDiscard gets a statement

@@ -35,6 +35,16 @@
       "compressedBytes": 1526,
       "compressedSha256": "8c61d6172846164659de1be4d0fd0bb67b04daa349918f400546f5fd5084a79e",
       "gitBlobSha": "0a15cedfb552d968f8dc79e016c2dafd83071b3d"
+    },
+    {
+      "file": "../result-iterators/core-result.rs.gz",
+      "rustPath": "library/core/src/result.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/result.rs",
+      "bytes": 69180,
+      "compressedBytes": 14134,
+      "sha256": "9166f16035d67e4b42b9439b3f2400a07866a8ff111d7d544584c593d39e2ecc",
+      "compressedSha256": "30d240da09888014cec8e916965cf9631a9552f5995250ca44a4c198ea40953d",
+      "gitBlobSha": "7f3f29649854496857f961a6c1bdebbf4dfeeb1b"
     }
   ],
   "automaticCallerBodies": true,

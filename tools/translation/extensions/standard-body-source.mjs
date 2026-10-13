@@ -1,3 +1,8 @@
+import {copyMetadata} from './source-links.mjs';
+import {HostRustParser,originalHostParserIdentitySnapshot} from './host-contracts.mjs';
+import {assertOriginalParserIdentity} from '../original-parser-identity.mjs';
+import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
+import {originalTextCursorGuard} from './text.mjs';
 // Read actual pinned Rust bodies. This module selects source and expands the
 // original Default macro; it supplies neither per-method JavaScript templates
 // nor authority to resolve a caller's receiver or trait implementation.
@@ -35,27 +40,35 @@ function methodIn(source,header,name){
   const member=members[0],written=significant(member.tokens),fn=written.findIndex(token=>token.text==='fn'),body=written.findIndex((token,index)=>index>fn&&token.text==='{'),end=written.at(-1);
   if(fn<0||body<0||end?.text!=='}')throw new TypeError('standard member requires one complete original function body');
   const definitionSpan={start:offset+written[fn].start,end:offset+end.end},bodySpan={start:offset+written[body].start,end:offset+end.end};
-  const paren=written.findIndex((token,index)=>index>fn&&token.text==='('),endParams=written.findIndex((token,index)=>index>paren&&token.text===')');
+  const paren=written.findIndex((token,index)=>index>fn&&token.text==='(');let endParams=-1,parameterDepth=0;for(let at=paren;at<written.length;at++){if(written[at].text==='(')parameterDepth++;else if(written[at].text===')'&&--parameterDepth===0){endParams=at;break;}}
   if(paren<0||endParams<0||endParams>=body)throw new TypeError('standard method requires its complete original parameter group');
   const parameterGroups=[],parameters=[];let group=[];
-  for(const token of written.slice(paren+1,endParams)){if(token.text===','){parameterGroups.push(group);group=[];}else group.push(token);}
+  let nested=0;for(const token of written.slice(paren+1,endParams)){if(['(','[','<'].includes(token.text))nested++;if([')',']','>'].includes(token.text))nested--;if(token.text===','&&nested===0){parameterGroups.push(group);group=[];}else group.push(token);}
   if(group.length)parameterGroups.push(group);
   for(const tokens of parameterGroups){
-    if(tokens.length===1&&tokens[0].text==='self')parameters.push({name:'self',receiver:true,rustTypeSyntax:['Self']});
+    if(tokens.length===2&&tokens[0].text==='&'&&tokens[1].text==='self')parameters.push({name:'self',receiver:true,reference:'shared',rustTypeSyntax:['&','Self']});
+    else if(tokens.length===1&&tokens[0].text==='self')parameters.push({name:'self',receiver:true,rustTypeSyntax:['Self']});
     else if(tokens[0]?.type==='ident'&&tokens[1]?.text===':'&&tokens.length>2)parameters.push({name:tokens[0].text,receiver:false,rustTypeSyntax:tokens.slice(2).map(token=>token.text)});
     else throw new TypeError('standard body parameter requires a separately checked source signature');
   }
   return {name,ownerHeader:header,parameters,definitionSpan,bodySpan,signatureSource:source.slice(definitionSpan.start,bodySpan.start),bodySource:source.slice(bodySpan.start,bodySpan.end),definitionSource:source.slice(definitionSpan.start,definitionSpan.end)};
 }
 function seal(key,method,evidence){
-  const value=freeze({profile:manifest.profile,key,method:structuredClone(method),sourceInputs:STANDARD_BODY_SOURCE_PROFILE.sourceInputs,evidence:structuredClone(evidence),bodySha256:hash(method.bodySource),namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false});
+  const value=freeze({profile:manifest.profile,key,method:structuredClone(method),sourceInputs:STANDARD_BODY_SOURCE_PROFILE.sourceInputs.filter((input,index)=>key.startsWith('Result::')?manifest.sources[index].rustPath==='library/core/src/result.rs':manifest.sources[index].rustPath!=='library/core/src/result.rs'),evidence:structuredClone(evidence),bodySha256:hash(method.bodySource),namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false});
   selections.set(value,{method,evidence});cache.set(key,value);return value;
 }
 export function pinnedOptionBody(name){
-  if(!['unwrap_or','unwrap_or_default','unwrap_or_else','or_else'].includes(name))throw new TypeError('standard method is outside the initial body profile');
+  if(!['unwrap_or','unwrap_or_default','unwrap_or_else','or_else','as_ref','is_none_or','is_some_and','map_or_else'].includes(name))throw new TypeError('standard method is outside the initial body profile');
   const key='Option::'+name;if(cache.has(key))return cache.get(key);
   const source=sources.get('library/core/src/option.rs'),method=methodIn(source.source,'impl<T>Option<T>',name);
   return seal(key,method,{kind:'original-inherent-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner:'core::option::Option<T>',genericParameter:'T'});
+}
+export function pinnedSharedBody(kind){
+  if(!['Option','Result'].includes(kind))throw new TypeError('shared body requires an actual canonical standard family');
+  if(kind==='Option')return pinnedOptionBody('as_ref');
+  const key='Result::as_ref';if(cache.has(key))return cache.get(key);
+  const source=sources.get('library/core/src/result.rs'),method=methodIn(source.source,'impl<T,E>Result<T,E>','as_ref');
+  return seal(key,method,{kind:'original-inherent-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner:'core::result::Result<T,E>',genericParameters:['T','E']});
 }
 const scalarNames=new Set(['bool','char','usize','u8','u16','u32','u64','u128','isize','i8','i16','i32','i64','i128','f64']);
 let defaultDefinition,defaultInvocations;
@@ -76,8 +89,12 @@ export function pinnedDefaultBody(owner){
   return seal(key,method,{kind:'original-macro-expanded-trait-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner,trait:'core::default::Default',definitionDigest:defaultDefinition.digest,definitionSpan:defaultDefinition.definitionSpan,invocationSourceSha256:invocation.sourceSha256,invocationSpan:invocation.sourceSpan,expansionDigest:expansion.digest,expandedSourceSha256:hash(expandedSource),expandedTrees:expansion.trees,macroOwnerNamespaceComplete:false});
 }
 export function parsePinnedBody(Parser,selection){
-  const state=selections.get(selection);if(!state||typeof Parser!=='function')throw new TypeError('standard parsing requires an actual privately selected pinned body');
-  const ActualParser=state.method.name==='or_else'?class extends Parser{
+  const state=selections.get(selection);if(!state||Parser!==HostRustParser)throw new TypeError('standard parsing requires an actual privately selected pinned body');
+  const snapshot=originalHostParserIdentitySnapshot(),guard=new HostRustParser(tokenizeRust(state.method.bodySource));
+  const identity=()=>assertOriginalParserIdentity(guard,HostRustParser.prototype,new Map(snapshot.parserMethods));identity();
+  const ActualParser=state.method.name==='as_ref'?class extends Parser{
+    pattern(path,aliases){if(this.cursor.is('ref')){const token=this.cursor.next(),value=super.pattern(path,aliases);if(value.k!=='bindOrCtor'||this.cursor.is('mut'))throw new TypeError('Original shared body requires its actual immutable ref binder');return {...value,pinnedSourceRefBinder:{kind:'ref',span:{start:token.start,end:token.end}}};}return super.pattern(path,aliases);}
+  }:state.method.name==='or_else'?class extends Parser{
     pattern(path,aliases){
       // The selected original @ pattern returns the complete Some value.
       // Name its one wildcard field for the existing reconstruction adapter;
@@ -86,11 +103,12 @@ export function parsePinnedBody(Parser,selection){
       return super.pattern(path,aliases);
     }
   }:Parser;
-  const parser=new ActualParser(tokenizeRust(state.method.bodySource)),node=parser.block([]);
+  const parser=new ActualParser(tokenizeRust(state.method.bodySource)),node=parser.block([]);identity();
+  assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});
   if(!parser.cursor.atEnd())throw new TypeError('standard body requires complete original block parsing');
-  parsed.set(node,{selection,syntaxSha256:hash(JSON.stringify(node))});return node;
+  parsed.set(node,{selection,syntaxSha256:hash(JSON.stringify(copyMetadata(node,{preserveKeyOrder:true})))});return node;
 }
 export function parsedPinnedBodyEvidence(node){
-  const state=parsed.get(node);if(!state||hash(JSON.stringify(node))!==state.syntaxSha256)throw new TypeError('standard body syntax differs from its private actual parse');
+  const state=parsed.get(node);if(!state||hash(JSON.stringify(copyMetadata(node,{preserveKeyOrder:true})))!==state.syntaxSha256)throw new TypeError('standard body syntax differs from its private actual parse');
   return freeze({selection:state.selection,syntaxSha256:state.syntaxSha256,parsedBodySource:state.selection.method.bodySource,sourceCoordinates:'exact original body fragment; enclosing full-source bodySpan retained separately'});
 }

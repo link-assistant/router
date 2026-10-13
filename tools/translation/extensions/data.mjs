@@ -229,6 +229,7 @@ export class DataChecker extends withStandardStringEqualityChecker(TextChecker) 
       // a written &T. Retain its actual field projection and receiver origin.
       const primitive=field.type.kind==='fixed'?rustFixedType(field.type.rustPrimitiveName):null;
       if(primitive&&field.type.bits===primitive.bits&&field.type.signed===primitive.signed&&!field.type.rustReference&&!field.type.rustOwnership&&!field.type.patternOwnershipRefusal&&!field.type.rustGenericIdentityUnresolved&&!field.type.rustBorrowingUnresolved&&this.sharedFieldCopy(field,ctor,pointee,span)?.kind==='source-fixed-copy')borrowed.patternOwnershipRefusal='shared source reference';
+      if(field.type.kind==='fixed'&&this.sourceStandardRefField?.(field,type))borrowed.patternOwnershipRefusal='shared source reference';
       env.set(name,borrowed);bindings.push({name,field:field.name,type:borrowed});
     }
     return {...checked,sharedBindingProof:{kind:'shared-match-ergonomics',pointee,bindings,span}};

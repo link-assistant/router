@@ -1,4 +1,4 @@
-This profile reuses complete original Rust 1.89 core option, str and Default
+This profile reuses complete original Rust 1.89 core option, result, str and Default
 source archives already retained in this repository. Each source is validated
 against compressed and original SHA256, byte counts and original Git blob
 identity. MIT OR Apache-2.0 licenses are retained in ../copy-standard/.
@@ -27,3 +27,14 @@ Canonical/profile corpus admissions remain unproved by these focused tests.
 This profile does not close the core namespace, authorize custom or derived
 Default implementations, prove destruction semantics, admit mutable borrowed
 locals or translate the complete core library. No Rust build ran.
+
+The shared-view profile parses the original Option::as_ref and Result::as_ref
+match bodies and their immutable `ref` binders. Result source reuses the
+existing result-iterators archive; no archive or license is duplicated.
+Option::is_none_or, is_some_and and map_or_else specialize the original match
+and actual FnOnce signatures with independently checked callback bindings.
+These additions require private original caller/parser associations and exact
+source reconstruction; serialized checksums cannot restore that authority.
+Shared references use the original core shared-reference Copy implementation;
+this does not prove pointee Copy, destruction or pointer equality. Mutable
+captures and mutable references remain refused.
