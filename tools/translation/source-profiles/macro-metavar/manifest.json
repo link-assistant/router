@@ -1,0 +1,82 @@
+{
+  "schema": "original-rust-macro-ignore-lifetime-source-v1",
+  "rustVersion": "1.89",
+  "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "license": "MIT OR Apache-2.0",
+  "sources": [
+    {
+      "path": "compiler/rustc_expand/src/mbe/metavar_expr.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_expand/src/mbe/metavar_expr.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "bytes": 10618,
+      "sha256": "a123126629bd860b3f67b6b9ad9cafcfb01d73d21f581cf2ab70d8c34d238950",
+      "archive": "rust-1.89-compiler_rustc_expand_src_mbe_metavar_expr.rs.gz",
+      "archiveBytes": 2850,
+      "archiveSha256": "9f936b7d87b2b772532a06ef9fc3bac220dcc42f6641df33be07a57a188246a7"
+    },
+    {
+      "path": "compiler/rustc_expand/src/mbe/transcribe.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_expand/src/mbe/transcribe.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "bytes": 40107,
+      "sha256": "acda5fe47ef2ea8f896d9bef65757174e194b7a0b9ca5d4af17961bc91875a8d",
+      "archive": "rust-1.89-compiler_rustc_expand_src_mbe_transcribe.rs.gz",
+      "archiveBytes": 11336,
+      "archiveSha256": "3a6de8d134cc8e58206df89e45471eb024c32e659aebec9bbc11c947ed5cd009"
+    },
+    {
+      "path": "compiler/rustc_expand/src/mbe/macro_parser.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_expand/src/mbe/macro_parser.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "bytes": 31489,
+      "sha256": "d01472ee6ad0319600ab1a386c6a9c7c5852b808c15cab2901a4e02c2e45e382",
+      "archive": "rust-1.89-compiler_rustc_expand_src_mbe_macro_parser.rs.gz",
+      "archiveBytes": 8536,
+      "archiveSha256": "80115fdaa0690ede2115cc53b51d6e0bedc5732fd4f03c6c9a6a3728a06c9308"
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/nonterminal.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_parse/src/parser/nonterminal.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "bytes": 9585,
+      "sha256": "2d1859eb9295a1a11f8567ce0563b53d428a6063a3d3b10cf380e6e5cdf6fff3",
+      "archive": "rust-1.89-compiler_rustc_parse_src_parser_nonterminal.rs.gz",
+      "archiveBytes": 2406,
+      "archiveSha256": "5a8680f93bd4822919abf0f6090d2ecbd2d68085849cbc8804879a7122a2742a"
+    },
+    {
+      "path": "compiler/rustc_ast/src/token.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast/src/token.rs",
+      "bytes": 40118,
+      "sha256": "a15e0c1152f601a82bad4f08553ce68dc88aad6cde52c618e30a6d292c4d1751",
+      "archive": "../clap-concat/rust-1.89-token.rs.gz",
+      "archiveBytes": 9485,
+      "archiveSha256": "6c6d97093c0ccd49f83fa700e5ba23af25a3a26547e37fd236ea2a148fc8607c",
+      "reusedProfile": "clap-concat/manifest.json"
+    },
+    {
+      "path": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+      "archive": "../clap-concat/../builtin-derive-bang/rust-1.89-LICENSE-MIT.gz",
+      "archiveBytes": 646,
+      "archiveSha256": "e675109f90bf15b2d8120a8bd7a7d062a8f62a7efa9b09a2c25e030dae5de841",
+      "reusedProfile": "clap-concat/manifest.json"
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "archive": "../clap-concat/../builtin-derive-bang/rust-1.89-LICENSE-APACHE.gz",
+      "archiveBytes": 3554,
+      "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6",
+      "reusedProfile": "clap-concat/manifest.json"
+    }
+  ],
+  "namespaceAuthority": false,
+  "runtimeAuthority": false,
+  "compilerFeatureAuthority": false,
+  "scope": "Bounded original ignore transcriber and lifetime fragment source semantics; whole compiler/other metavariable expressions and source-owner bindings remain independent."
+}

@@ -5,6 +5,7 @@ import {originalMacroTrees,macroTreeSource,freezeMacroTree} from './macro-token-
 import {boundedMacroBlock,boundedMacroExpression} from './macro-fragments.mjs';
 import {boundedMacroItem} from './macro-items.mjs';
 import {originalMacroSequenceFollowRule,assertOriginalMacroSequenceFollowRule} from './macro-follow-source.mjs';
+import {originalMacroMetavarRules,assertOriginalMacroMetavarRules} from './macro-metavar-source.mjs';
 // Each instance keeps separate definition, expansion and forwarding authority.
 export function createDeclarativeMacroEngine(sourceFragmentAdapter=null) {
 const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap();
@@ -12,9 +13,9 @@ const {isOriginalMacroFragmentContext,originalMacroFragmentDefinition,parseOrigi
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const text=tree=>tree?.kind==='token'?tree.text:null;
 const ident=tree=>tree?.kind==='token'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(tree.text);
-const fragments=new Set(['ident','tt','ty','meta','vis','block','expr','item']);
+const fragments=new Set(['ident','tt','ty','meta','vis','block','expr','item','lifetime']);
 const forbiddenTypes=new Set('as async await break const continue dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return static struct trait true type unsafe use where while abstract become box do final gen macro override priv try typeof unsized virtual yield'.split(' '));
-const names=nodes=>nodes.flatMap(node=>node.kind==='capture'||node.kind==='variable'?[node.name]:node.children?names(node.children):[]);
+const names=nodes=>nodes.flatMap(node=>['capture','variable','ignore-variable'].includes(node.kind)?[node.name]:node.children?names(node.children):[]);
 const syntax=(tree,end=tree)=>({sourceSha256:tree.sourceSha256,span:{start:tree.span.start,end:end.span.end},...(tree.sourceFeature?{sourceFeature:tree.sourceFeature}:{})});
 
 // FOLLOW(ty/expr/pat) is checked on the actual planned matcher, including every
@@ -103,6 +104,13 @@ function plan(trees,mode,bindings,depth=0,sourceFragments=null) {
         if(mode==='matcher'&&!names(children).length&&matcherFirst(children).nullable)throw new TypeError('Declarative repetition requires a consuming original source sequence');
         result.push({kind:'repeat',children,separator,operator,sourceSyntax:syntax(tree,trees[at])});continue;
       }
+      if(next?.kind==='group'&&next.delimiter==='{'){
+        if(mode!=='template')throw new TypeError('Metavariable expressions are supported only in original transcribers');
+        const body=next.children,args=body[1];
+        if(body.length!==2||text(body[0])!=='ignore'||args?.delimiter!=='('||args.children.length!==2||text(args.children[0])!=='$'||!ident(args.children[1]))throw new TypeError('Original transcriber requires exactly ignore($bound_name); other metavariable expressions remain unproved');
+        const name=text(args.children[1]);if(!bindings.has(name))throw new TypeError('Unbound original ignore transcription variable');
+        const sourceRule=assertOriginalMacroMetavarRules(originalMacroMetavarRules());result.push({kind:'ignore-variable',name,sourceRuleDigest:sourceRule.digest,sourceSyntax:syntax(tree,next)});continue;
+      }
       if(!ident(next))throw new TypeError('Declarative metavariable needs an original identifier');
       if(mode==='template') {
         if(next.text==='crate'){result.push({kind:'crate-owner',sourceSyntax:syntax(tree,next)});continue;}
@@ -114,6 +122,7 @@ function plan(trees,mode,bindings,depth=0,sourceFragments=null) {
       if(text(trees[++at])!==':'||!ident(trees[++at]))throw new TypeError('Declarative matcher requires an explicit fragment specifier');
       const fragment=trees[at].text;
       if(!fragments.has(fragment)&&!(fragment==='pat'&&sourceFragments))throw new TypeError('Declarative fragment is outside the checked initial profile: '+fragment);
+      if(fragment==='lifetime')assertOriginalMacroMetavarRules(originalMacroMetavarRules());
       if(fragment==='vis') {
         const follow=trees[at+1];
         const capture=text(follow)==='$'&&ident(trees[at+2])&&text(trees[at+3])===':'&&['ident','ty'].includes(text(trees[at+4]));
@@ -167,13 +176,13 @@ function compileDeclarativeMacro(source,{name,owner=[],sourceFragments=null}={})
 }
 
 // Fragment opacity survives forwarding. Literal matching cannot inspect ty or
-// meta AST fragments. Only Rust's ident/tt forwarding exceptions are exposed.
+// meta AST fragments. Only Rust's ident/lifetime/tt forwarding exceptions are exposed.
 function sameLiteral(pattern,actual) {
-  if(actual?.kind==='fragment')return ['ident','tt'].includes(actual.fragment)&&actual.trees.length===1&&sameLiteral(pattern,actual.trees[0]);
+  if(actual?.kind==='fragment')return ['ident','lifetime','tt'].includes(actual.fragment)&&actual.trees.length===1&&sameLiteral(pattern,actual.trees[0]);
   return pattern?.kind==='token'&&actual?.kind==='token'&&pattern.text===actual.text;
 }
 function transparentTree(tree) {
-  while(tree?.kind==='fragment'&&['ident','tt'].includes(tree.fragment)&&tree.trees.length===1)tree=tree.trees[0];
+  while(tree?.kind==='fragment'&&['ident','lifetime','tt'].includes(tree.fragment)&&tree.trees.length===1)tree=tree.trees[0];
   return tree;
 }
 function opaque(tree,fragment) {return tree?.kind==='fragment'&&tree.fragment===fragment;}
@@ -234,10 +243,11 @@ function fragmentEnd(fragment,trees,start) {
   if(fragment==='expr'&&opaque(trees[start],'block'))return start+1;
   const forwarded=trees[start];
   if(forwarded?.kind==='fragment') {
-    if(['ident','tt'].includes(forwarded.fragment)&&forwarded.trees.length===1){if(fragment==='ty')return boundedType(trees,start);return fragmentEnd(fragment,forwarded.trees,0)===1?start+1:null;}
+    if(['ident','lifetime','tt'].includes(forwarded.fragment)&&forwarded.trees.length===1){if(fragment==='ty')return boundedType(trees,start);return fragmentEnd(fragment,forwarded.trees,0)===1?start+1:null;}
     throw new TypeError('Opaque declarative fragments require the same checked fragment kind when forwarded');
   }
   if(fragment==='ident')return ident(trees[start])?start+1:null;
+  if(fragment==='lifetime'){assertOriginalMacroMetavarRules(originalMacroMetavarRules());return trees[start]?.kind==='token'&&trees[start].type==='char'&&/^'[A-Za-z_][A-Za-z0-9_]*$/u.test(trees[start].text)?start+1:null;}
   if(fragment==='ty')return boundedType(trees,start);
   if(fragment==='block')return boundedMacroBlock(trees[start],boundedType)?start+1:null;
   if(fragment==='expr')return boundedMacroExpression(trees,start,boundedType);
@@ -329,6 +339,12 @@ function transcribe(nodes,captures,owner,budget,indices=[]) {
       if(node.depth>indices.length)throw new TypeError('Declarative capture repetition depth differs from transcription');
       const value=captureAt(captures,node.name,indices.slice(0,node.depth));
       if(!value||Array.isArray(value))throw new TypeError('Declarative transcription capture arity mismatch');output.push(value);
+      continue;
+    }
+    if(node.kind==='ignore-variable'){
+      const sourceRule=assertOriginalMacroMetavarRules(originalMacroMetavarRules());if(node.sourceRuleDigest!==sourceRule.digest||!captures.has(node.name))throw new TypeError('Original ignore requires its bound LHS match and pinned source rule');
+      // The original Ignore arm checks matched_from_ident without descending
+      // or emitting a token. Its referenced name still constrains repetition.
       continue;
     }
     if(node.kind==='repeat') {
