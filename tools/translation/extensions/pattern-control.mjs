@@ -305,6 +305,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       return type?.patternOwnershipRefusal?{...resolved,patternOwnershipRefusal:type.patternOwnershipRefusal}:resolved;
     }
     patternOwner(node,type,path,env) {
+      const source=this.sourceSharedPatternOwner?.(node,type,path,env);if(source)return source;
       if(['bind','bindOrCtor'].includes(node.k)&&this.lookup([node.name],path,node.span)?.constant)throw unsupported('constant binding pattern','requires its actual checked value and irrefutability; a source constant cannot become a fresh binding',node.span);
       if(type.rustReference) {
         if(node.k==='wild'||node.k==='bind')return node;
@@ -349,6 +350,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       return normalized;
     }
     patternDomain(type,span,active=new Set()) {
+      if(this.sourceSharedPatternDomain?.(type,span))return;
       if(type.rustReference) {
         const reference=type.rustReference,pointee=reference.pointee;
         if(reference.kind!=='shared'||!pointee||type.rustGenericIdentityUnresolved||pointee.kind==='data'&&!this.items.has(pointee.name))throw unsupported('shared pattern reference','requires its actual checked immutable source pointee',span);
@@ -372,6 +374,7 @@ export function withPatternControlChecker(Base=ControlChecker) {
       active.add(type.name);const entry=this.items.get(type.name),result=entry?.ctors.some(ctor=>ctor.fields.some(field=>this.sharedPatternView(field.type,active)))??false;active.delete(type.name);return result;
     }
     patternProjection(subject,projection,targetType,projectionPaths) {
+      const source=this.sourceSharedPatternProjection?.(subject,projection,targetType,projectionPaths);if(source)return source;
       let value=subject;
       for(const [index,field] of projection.entries()) {
         const entry=this.items.get(value.type.name),fields=entry?.ctors.flatMap(ctor=>ctor.fields.filter(candidate=>candidate.name===field))??[];

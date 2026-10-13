@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {freezeMacroTree} from './macro-token-trees.mjs';
-import {isJsonMacroSourceProof} from './json-macro-sources.mjs';
+import {isJsonMacroSourceProof} from './json-macro-inputs.mjs';
 const root=new URL('./source-profiles/json-macro/features/',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const bytes=readFileSync(new URL('manifest.json',root));
 if(hash(bytes)!=='a2c8d8a3e73ff7bafd7a27214270aa1be07bf4f51539b48560974172cc6ad982')throw new TypeError('JSON feature source profile changed');

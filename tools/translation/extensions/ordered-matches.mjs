@@ -82,13 +82,14 @@ function alternatives(pattern,checker,type,path,depth=0) {
   if(pattern.k==='or') {
     const result=[];for(const child of pattern.alternatives){result.push(...alternatives(child,checker,type,path,depth+1));if(result.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked expansion bound',pattern.span);}return result;
   }
+  if(pattern.k==='routerRecordPattern'){if(!checker.sourceSharedPatternRecord?.(pattern,type))throw unsupported('ordered match source record','requires the active original shared source pattern profile',pattern.span);const entry=checker.items.get(type.name),ctor=entry?.ctors.find(ctor=>ctor.name===pattern.ctor);if(!ctor)throw typeError('Shared record expansion lost its actual source owner',pattern.span);let products=[[]];for(const field of pattern.fields){const declared=ctor.fields.find(candidate=>candidate.name===field.name);if(!declared)throw typeError('Shared record expansion lost its source field',field.span);const fieldType=checker.sourceSharedPatternFieldType(declared,type,ctor,pattern.span),parts=alternatives(field.pattern,checker,fieldType,path,depth+1);if(products.length*parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked product bound',pattern.span);products=products.flatMap(prefix=>parts.map(part=>[...prefix,{...field,pattern:part} ]));}return products.map(fields=>({...pattern,fields}));}
   if(pattern.k==='ctor'||pattern.k==='routerTuplePattern') {
     const entry=type.kind==='data'?checker.items.get(type.name):null,tuple=pattern.k==='routerTuplePattern';
     if(tuple&&(!entry?.tuple||entry.ctors.length!==1||entry.ctors[0].ctorStyle!=='tuple'))throw unsupported('ordered tuple pattern','requires its actual checked anonymous tuple constructor',pattern.span);
     const ctor=tuple?entry.ctors[0]:entry?.ctors.find(ctor=>ctor.name===pattern.ctor),children=tuple?pattern.items:pattern.args;
     if(!ctor||!Array.isArray(children)||ctor.fields.length!==children.length||!tuple&&pattern.data!==type.name)throw typeError('ordered constructor expansion differs from its checked source layout',pattern.span);
     let products=[[]];for(const [index,child]of children.entries()) {
-      const fieldType=checker.resolveType(ctor.fields[index].type,path,pattern.span),parts=alternatives(child,checker,fieldType,path,depth+1);
+      const field=ctor.fields[index],fieldType=checker.sourceSharedPatternFieldType?.(field,type,ctor,pattern.span)??checker.resolveType(field.type,path,pattern.span),parts=alternatives(child,checker,fieldType,path,depth+1);
       if(products.length*parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked product bound',pattern.span);
       products=products.flatMap(prefix=>parts.map(part=>[...prefix,part]));
     }
@@ -101,7 +102,8 @@ function alternatives(pattern,checker,type,path,depth=0) {
   if(!['wild','bind','numLit','boolLit','strLit','routerIntegerRangePattern'].includes(pattern.k))throw unsupported('ordered match source pattern',`${pattern.k} requires another checked pattern profile`,pattern.span);
   return [pattern];
 }
-function plan(checker,pattern,type,path,span) {return planPattern(pattern,type,{declarations:checker.items,resolveType:type=>checker.resolveType(type,path,span),span});}
+function coveragePattern(pattern,type,checker,path){if(pattern.k==='routerRecordPattern'){const entry=checker.items.get(type.name),ctor=entry?.ctors.find(ctor=>ctor.name===pattern.ctor);if(!ctor||ctor.ctorStyle!=='named')throw typeError('Shared record coverage lost its original named layout',pattern.span);return {...pattern,k:'ctor',args:ctor.fields.map(field=>coveragePattern(pattern.fields.find(candidate=>candidate.name===field.name)?.pattern??{k:'wild'},checker.sourceSharedPatternFieldType(field,type,ctor,pattern.span),checker,path))};}if(pattern.k==='ctor'){const entry=checker.items.get(type.name),ctor=entry?.ctors.find(ctor=>ctor.name===pattern.ctor);return {...pattern,args:pattern.args.map((child,index)=>coveragePattern(child,checker.sourceSharedPatternFieldType?.(ctor.fields[index],type,ctor,pattern.span)??ctor.fields[index].type,checker,path))};}return pattern;}
+function plan(checker,pattern,type,path,span) {return planPattern(pattern,type,{declarations:checker.items,resolveType:type=>checker.resolveType(type,path,span),span,projectFieldType:checker.sourceSharedPatternFieldType?((field,parent,ctor,range)=>checker.sourceSharedPatternFieldType(field,parent,ctor,range)):undefined});}
 function literalIdentities(pattern,type,checker,path,range) {
   if(pattern.k==='or'){for(const child of pattern.alternatives)literalIdentities(child,type,checker,path,range);return;}
   if(pattern.k==='numLit'&&pattern.suffix&&pattern.suffix!==type.rustPrimitiveName)throw typeError('ordered match literal requires its actual Rust primitive identity',pattern.span);
@@ -123,7 +125,7 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
   for(const row of node.rows) {
     const pattern=checker.patternOwner(row.pattern,subject.type,path,env),shared=plan(checker,pattern,subject.type,path,row.span);
     literalIdentities(pattern,subject.type,checker,path,row.span);
-    for(const binding of shared.bindings)if(!scalar(binding.type)||binding.type.kind==='fixed'&&!binding.type.rustPrimitiveName)throw unsupported('ordered match binding ownership','requires actual immutable scalar source identities',binding.span??row.span);
+    for(const binding of shared.bindings)if(!scalar(binding.type)&&!checker.sourceSharedPatternBinding?.(binding)||binding.type.kind==='fixed'&&!binding.type.rustPrimitiveName)throw unsupported('ordered match binding ownership','requires actual immutable scalar source identities',binding.span??row.span);
     const parts=alternatives(pattern,checker,subject.type,path);
     if(attempts.length+parts.length>LIMIT)throw unsupported('ordered match alternatives','exceeds the checked whole-match bound',row.span);
     for(const part of parts) {
@@ -135,7 +137,7 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
       const guard=row.guard?renameExpr(coerce(checker.expr(row.guard,inner,path,BOOL),BOOL,checker.language,row.span),names,scope):null;
       const body=renameExpr(checker.expr(row.body,inner,path,expected,allowLiteral),names,scope);
       attempts.push({plan:{...bindingPlan,bindings:bound},guard,body,span:row.span});
-      if(!row.guard)coverage.push({patterns:[part],binds:[],body:{k:'unit'},span:row.span});
+      if(!row.guard)coverage.push({patterns:[coveragePattern(part,subject.type,checker,path)],binds:[],body:{k:'unit'},span:row.span});
     }
     evidence.push({sourcePattern:row.sourcePattern,plan:shared,alternatives:parts.length,guarded:Boolean(row.guard),span:row.span});
   }

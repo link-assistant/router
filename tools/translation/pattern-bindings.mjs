@@ -7,7 +7,7 @@ const always=()=>({kind:'always'});
 const combine=(kind,tests)=>{const useful=tests.filter(test=>test.kind !== 'always');return useful.length?useful.length === 1?useful[0]:{kind,tests:useful}:always();};
 const equalProjection=(left,right)=>left.length === right.length && left.every((field,index)=>field === right[index]);
 const scalar=value=>typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value);
-export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
+export function planPattern(pattern,type,{declarations,resolveType,span,projectFieldType}={}) {
   if(!(declarations instanceof Map))throw new TypeError('Pattern checking requires the actual checked declaration Map');
   const active=new Set(),projectionPaths=[],fallbackSpan=span ?? pattern?.span;
   function checkedType(current,location) {
@@ -60,7 +60,7 @@ export function planPattern(pattern,type,{declarations,resolveType,span}={}) {
     if(!name && (record || tuple) && entry.ctors.length === 1)name=entry.ctors[0].name;
     const ctor=entry.ctors.find(candidate=>candidate.name === name);
     if(!ctor)throw typeError(`${type.name} has no constructor ${name ?? '(unspecified)'}`,location);
-    const fields=ctor.fields.map((field,index)=>({...field,name:field.name ?? `field${index}`,type:checkedType(field.type,location)}));
+    const fields=ctor.fields.map((field,index)=>({...field,name:field.name ?? `field${index}`,type:checkedType(projectFieldType?projectFieldType(field,type,ctor,location):field.type,location)}));
     const child=(pattern,field)=>{
       projectionPaths.push({projection:[...projection],data:type.name,ctor:name,field:field.name,type:field.type});
       return visit(pattern,field.type,[...projection,field.name]);

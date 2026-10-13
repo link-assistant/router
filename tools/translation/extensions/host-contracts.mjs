@@ -1,3 +1,4 @@
+import {createOriginalSharedPatternAdapter} from './shared-source-patterns.mjs';
 import {captureOriginalMoveTuples} from './standard-move-payload.mjs';
 import {prepareOriginalSourceFrames,requireOriginalSourceFrameEmission,originalSourceFramePatternRead} from './standard-source-frame.mjs';
 import {checkPinnedOptionCallbackBody,checkOriginalCallbackApplication,requirePinnedOptionCallbackBody,prepareOriginalOptionCallbacks,requireOriginalOptionCallbackEmission} from './standard-option-callback-body.mjs';
@@ -19,7 +20,7 @@ import {types as nodeTypes} from 'node:util';
 // They never supply a repository function body or waive a body obligation.
 import {MethodRustParser,MethodChecker} from './methods.mjs';
 import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './match-patterns.mjs';
-import {parseStandardMatches,emitOrderedMatch} from './ordered-matches.mjs';
+import {parseStandardMatches,emitOrderedMatch,checkOrderedMatch} from './ordered-matches.mjs';
 import {withSourceOwnershipParser,withSourceOwnershipChecker} from './ownership.mjs';
 import {withSourceLifetimeChecker} from './source-lifetimes.mjs';
 import {withNamedLifetimeParser} from './named-lifetimes.mjs';
@@ -371,6 +372,7 @@ const originalHostParserIdentity=Object.freeze({
   cursorMethods:Object.freeze([...originalMethodSnapshot(TokenCursor.prototype)].map(row=>Object.freeze(row))),
 });
 export function originalHostParserIdentitySnapshot(){return originalHostParserIdentity;}
+const sourcePatterns=createOriginalSharedPatternAdapter();
 export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalCollection(withSharedNullaryEnumChecker(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker))))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
@@ -452,12 +454,21 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     const contracts=head.k==='name'?HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(head.path)):[];
     return contracts.length?this.hostCall(contracts,args,env,path,expected,range):super.application(head,args,env,path,expected,range);
   }
+  sourceSharedPatternProofOrigin(node){return sourcePatterns.hasOriginalSharedPatternFrame(node)?'frame':sourcePatterns.hasOriginalPatternProjection(node)?'projection':sourcePatterns.hasOriginalSharedPatternView(node)?'string-view':null;}
+  sourceSharedPatternDomain(type,span){return sourcePatterns.originalSharedPatternDomain(this,type,span);}
+  sourceSharedPatternOwner(node,type,path,env){return sourcePatterns.originalSharedPatternOwner(this,node,type,path,env);}
+  sourceSharedPatternFieldType(field,parent,ctor,span){return sourcePatterns.originalSharedPatternFieldType(this,field,parent,ctor,span);}
+  sourceSharedPatternRecord(pattern,type){return sourcePatterns.originalSharedPatternRecord(this,pattern,type);}
+  sourceSharedPatternBinding(binding){return sourcePatterns.originalSharedPatternBinding(this,binding);}
+  sourceSharedPatternProjection(subject,projection,targetType,paths){return sourcePatterns.originalSharedPatternProjection(this,subject,projection,targetType,paths);}
   expr(node,env,path,expected,allowLiteral=false) {
     if(node.k==='routerSourceIntoCall'){
       const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,'into','shared');
       if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
       return checkOriginalSourceInto(this,node,receiver,env,path,expected);
     }
+    const view=sourcePatterns.originalSharedPatternCoercion(this,node,env,path,expected);if(view)return view;
+    const sharedPattern=sourcePatterns.checkOriginalSharedPatternMatch(this,node,env,path,expected,allowLiteral,syntax=>checkOrderedMatch(this,syntax,env,path,expected,allowLiteral));if(sharedPattern)return sharedPattern;
     let value=this.hostExpression(node,env,path,expected,allowLiteral);
     if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};
     value=this.qualifyOwnershipResult?.(node,value,expected,path)??value;
@@ -669,6 +680,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
   }
   sourceFixedArrayCells(type,span){return fixedArrayCopyCells(type,span,0,(element,range)=>{checkedOptionNominal(this,element,range);const count=(type,active=new Set())=>{if(type.rustReference)return 1;if(type.kind==='array')return 1+(fixedArrayLength(type)??0)*count(type.element,active);if(type.kind!=='data')return 1;if(active.has(type.name))throw unsupported('static array cell budget','recursive owned layouts remain unproved',range);const entry=this.items.get(type.name),inner=new Set(active).add(type.name);return 1+Math.max(...entry.ctors.map(ctor=>ctor.fields.reduce((sum,field)=>sum+count(field.type,inner),0)));};return count(element);});}
   program(surface) {
+    sourcePatterns.captureOriginalSharedPatterns(this,surface);
     captureOriginalMoveTuples(this,surface);
     captureOriginalStandardCalls(this,surface);
     captureOriginalConversions(this,surface);
@@ -678,6 +690,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     this.floatSignObligations=false;
     const program=super.program(surface);
     const sourceContext=checkedSourceContext(program);
+    sourcePatterns.finalizeOriginalSharedPatterns(this,program);
     program.items.push(...this.instantiations.items);
     const forbidden=(node,seen=new Set(),runtimeConstFunction=false)=>{
       if(!node||typeof node!=='object')return false;
@@ -729,7 +742,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
-  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry);try{return super.fn(entry);}finally{restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreShared?.();restore?.();}}
+  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry);try{return super.fn(entry);}finally{restorePatterns?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreShared?.();restore?.();}}
   expr(node) {
     if(node.k==='routerSourceConversion')return this.expr(requireOriginalConversionEmission(node,this));
     if(node.k==='routerOriginalCallbackLoan')return this.expr(requireOriginalSourceFrameEmission(this,node));
@@ -748,6 +761,9 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(node.k==='routerPinnedStandardBody'){requirePinnedStandardEmission(this,node,HostRustParser,HostChecker);return this.expr(node.body);}
     if(node.sourceByteLiteral)requireByteLiteral(node,true);
     if(node.k==='routerReverseSplitFind'){requireReverseStringProof(node);this.reverseStrings=true;return `ml_reverse_split_find(${this.expr(node.base.object)}, ${JSON.stringify(node.base.delimiter)}, Object.freeze([${node.maps.map(map=>this.expr(map)).join(', ')}]), ${this.expr(node.predicate)})`;}
+    if(node.k==='routerOriginalSharedPatternMatch')return sourcePatterns.withOriginalSharedPatternEmission(this,node,body=>this.expr(body));
+    if(node.k==='routerSourcePatternStringView'){sourcePatterns.requireOriginalSharedPatternNodeEmission(this,node);return this.expr(node.value);}
+    if(node.k==='routerSourcePatternProjection'){sourcePatterns.requireOriginalSharedPatternNodeEmission(this,node);return `(${this.expr(node.object)})[${JSON.stringify(node.field)}]`;}
     if(node.k==='routerOptionAsDeref'){requireOptionDerefProof(node);this.optionDeref=true;return `ml_option_string_as_deref(${this.expr(node.object)})`;}
     if(['routerResultCollect','routerResultMapErr'].includes(node.k)){
       requireResultIteratorProof(node);this.resultIterators=true;

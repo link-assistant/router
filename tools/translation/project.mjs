@@ -1,3 +1,4 @@
+import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
 // Resolve tracked Rust module edges before semantic checking. External crates,
@@ -111,7 +112,7 @@ const relocate = (node, offset) => Array.isArray(node) ? node.map(value => reloc
 // Original pattern evidence uses frontend nodes, including ctor
 // syntax without checked declaration links. Keep it out of target renaming
 // and executable dependency discovery while preserving it in serialized meta.
-const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope','defaultSourceProof','sourceConversionProof'].includes(key);
+const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope','defaultSourceProof','sourceConversionProof','sourceSharedPatternProof','sourcePatternProjectionProof','sourceSharedStringViewProof'].includes(key);
 
 export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
   const profile=compilationProfile(profileInput);
@@ -422,7 +423,7 @@ export function translateProject(options) {
   progress({stage:'semantic-check',state:'start',entry:options.entry,remaining:active.length});
   for (let attempts = 0; attempts <= declarations.length; attempts++) {
     progress({stage:'semantic-check',state:'advance',entry:options.entry,attempt:attempts,remaining:active.length});
-    try { checked = roundTripProgram(checkProjectProgram({ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null },{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true})); break; }
+    try { const surface={ language: 'Rust', items: [...tree(active), ...admittedHostData(effectData(),tree(active))], main: null };associateOriginalSharedPatternDependencies(surface,options.jsonMacroDependencies);checked = roundTripProgram(checkProjectProgram(surface,{jsonParserProfile,collectIndependentBodies:options.collectIndependentBodies??true})); break; }
     catch (error) {
       const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);
       if(!failures)throw error;

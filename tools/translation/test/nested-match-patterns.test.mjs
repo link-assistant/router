@@ -87,7 +87,6 @@ test('unproved owners binders guards references source identities and exhaustive
     'pub fn wrong(v:Option<u8>)->u8{match v{Some(1 | 2)=>0,None=>1}}',
     'pub fn wrong(v:Option<u8>)->u8{match v{Some(256 | 2)=>0,Some(_)=>1,None=>2}}',
     'pub fn wrong(v:Option<u64>)->u8{match v{Some(1usize | 2usize)=>0,Some(_)=>1,None=>2}}',
-    'pub fn wrong(v:&Option<u8>)->u8{match v{Some(1 | 2)=>0,Some(_)=>1,None=>2}}',
     'pub fn wrong(v:Option<u8>)->u8{match v{Some(1 | 2)=>0,&Some(_)=>1,None=>2}}',
     'pub fn wrong(v:Option<u8>)->u8{match v{Some(1 | 2)=>0,x @ Some(_)=>1,None=>2}}',
     'pub fn wrong(v:Option<u8>)->u8{match v{Result::Some(1 | 2)=>0,Some(_)=>1,None=>2}}',
