@@ -1,3 +1,4 @@
+import {STANDARD_OPTION_COPY_SOURCE,SHARED_REFERENCE_COPY_SOURCE} from '../shared-reference-copy-source.mjs';
 import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs';
 import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasSourceFixedFrom} from './primitive-from-source.mjs';
 import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,requirePrimitiveOperator} from './primitive-operators.mjs';
@@ -29,7 +30,9 @@ import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,cons
 import {checkStringIteratorOperation,requireBorrowedString} from './string-iterators.mjs';
 import {checkedStringBytes,requireStringBytesProof} from './string-bytes.mjs';
 import {sourceByteLiteral,requireByteLiteral} from './rust-byte-character.mjs';
-import {captureOptionNominals} from './option-nominal-proof.mjs';
+import {captureStaticArrays,finalizeStaticArrays,checkStaticArrayElement,requireStaticArrayElement} from './static-array-element.mjs';
+import {checkUnitEnumCast,requireUnitEnumCast} from './unit-enum-cast.mjs';
+import {captureOptionNominals,bindCheckedNominalNoDrop,checkedOptionNominal}  from './option-nominal-proof.mjs';
 import {checkPinnedOptionBody,requirePinnedStandardBody,checkPinnedCallbackApplication,preparePinnedStandardFunction,requirePinnedStandardEmission} from './standard-body-checker.mjs';
 import {CSV_STRING_PROFILE,checkCharacterSplit,checkCharacterSplitNext,allocatingStringFunctionItem,checkedAllocatingStringItem,requireCsvEmitterProof} from './csv-strings.mjs';
 import {canonicalResult,checkResultMapError,requireResultIteratorProof} from './result-iterators.mjs';
@@ -39,7 +42,7 @@ import {TIME_DATA,TIME_CONTRACTS} from './time-contracts.mjs';
 import {EFFECT_CONTRACTS} from './effects-contracts.mjs';
 import {emitWith} from './core.mjs';
 import {tokenizeRust} from './lexical.mjs';
-import {sameType,fixedBounds} from '../checked-types.mjs';
+import {sameType,fixedBounds,fixedArrayLength} from '../checked-types.mjs';
 import {coerce} from '../checked-coercions.mjs';
 import {TranslationError,typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {valueSchema} from '../type-layout.mjs';
@@ -213,6 +216,7 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
       // Preserve only written borrows of actual allocation candidates. Their
       // authority is checked later against an ordinary scalar-returning call.
       const operand=value.k==='routerTextReference'?value.value:null;
+      if(operand?.k==='routerIndex')return {k:'routerStaticArrayElementBorrow',value:operand,sourceAmpersand:{kind:'punct',value:'&',span:{start:first.start,end:first.end}},span:value.span};
       const allocation=operand?.k==='routerDispatchMethod'&&!operand.args.length?operand.fallback:operand;
       if(allocation&&(allocation.k==='toString'||allocation.k==='routerStringOwnership'&&allocation.operation==='to_owned'||allocation.k==='routerBuiltinConversion'&&allocation.operation==='String::from'||allocation.k==='routerOwnedString'))return {...value,sourceAmpersand:{value:'&',span:{start:first.start,end:first.end}}};
       return value;
@@ -448,6 +452,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
+    if(node.k==='routerStaticArrayElementBorrow')return checkStaticArrayElement(this,node,env,path,expected);
     if(node.k==='routerPrimitiveShift')return checkedPrimitiveShift(this,node,env,path,expected);
     if(node.k==='routerReverseStringFind'){
       const object=this.expr(node.object,env,path),inherent=this.resolvedMethod(object.type,'rfind','shared');
@@ -497,6 +502,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     if(node.k==='cast') {
       const target=this.resolveType(node.to,path,node.span);
       if(target.kind==='float')return checkedFixedF64Cast(this.expr(node.arg,env,path),target,node.span);
+      if(target.kind==='fixed'){const object=this.expr(node.arg,env,path);if(object.type.kind==='data'&&!object.type.rustReference)return checkUnitEnumCast(this,node,object,target);}
       if(target.kind==='fixed'&&/^([iu])(8|16|32|64|128)$/u.test(target.rustPrimitiveName??'')){
         const value=this.expr(node.arg,env,path);
         if(value.type.kind==='fixed'&&/^([iu])(8|16|32|64|128)$/u.test(value.type.rustPrimitiveName??'')){
@@ -626,8 +632,19 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     }
     return super.expr(node,env,path,expected,allowLiteral);
   }
+  sourceStandardFieldCopy(field,span){
+    const type=field.type,entry=type.kind==='data'?this.items.get(type.name):null,source=type.rustStandardGeneric;
+    if(type.rustReference||entry?.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||entry.standardGeneric.arguments?.length!==1||source.arguments?.length!==1||entry.ctors.length!==2)return null;
+    const some=entry.ctors.find(ctor=>ctor.name==='Some'),none=entry.ctors.find(ctor=>ctor.name==='None');if(some?.fields.length!==1||some.fields[0].name!=='field0'||none?.fields.length)return null;
+    const actual=this.resolveType(some.fields[0].type,entry.modulePath,span),argument=this.resolveType(source.arguments[0],entry.modulePath,span),registered=this.resolveType(entry.standardGeneric.arguments[0],entry.modulePath,span);
+    if(actual.kind!=='string'||actual.rustReference||actual.rustOwnership?.kind!=='borrowed'||actual.rustOwnership.source!=='str'||!sameType(actual,argument)||!sameType(actual,registered))return null;
+    this.expectedOwnership(actual,argument,entry.modulePath,span);this.expectedOwnership(actual,registered,entry.modulePath,span);
+    return {kind:'source-standard-option-borrowed-str-copy',type:structuredClone(type),owner:'core::option::Option',payload:structuredClone(actual),source:STANDARD_OPTION_COPY_SOURCE,referenceSource:SHARED_REFERENCE_COPY_SOURCE,referenceDepth:1};
+  }
+  sourceFixedArrayCells(type,span){return fixedArrayCopyCells(type,span,0,(element,range)=>{checkedOptionNominal(this,element,range);const count=(type,active=new Set())=>{if(type.rustReference)return 1;if(type.kind==='array')return 1+(fixedArrayLength(type)??0)*count(type.element,active);if(type.kind!=='data')return 1;if(active.has(type.name))throw unsupported('static array cell budget','recursive owned layouts remain unproved',range);const entry=this.items.get(type.name),inner=new Set(active).add(type.name);return 1+Math.max(...entry.ctors.map(ctor=>ctor.fields.reduce((sum,field)=>sum+count(field.type,inner),0)));};return count(element);});}
   program(surface) {
     captureOptionNominals(this,surface);
+    captureStaticArrays(this,surface);
     validateOriginalMethodAssociations(surface);
     this.floatSignObligations=false;
     const program=super.program(surface);
@@ -642,17 +659,19 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
       return Object.entries(node).some(([key,value])=>!['type','patternControl'].includes(key)&&(Array.isArray(value)?value.some(item=>forbidden(item,seen,runtimeConstFunction)):forbidden(value,seen,runtimeConstFunction)));
     };
     for(const entry of program.declarations.values())if((entry.constant||entry.constFunction)&&forbidden(entry.body,new Set(),!entry.constant&&entry.constFunction))throw unsupported('non-const host operation','pure does not imply Rust const eligibility',entry.span);
+    bindCheckedNominalNoDrop(program,this);
     const sourceLinks=bindCheckedSourceLinks(program,sourceContext,{targetProfile:CONSTANT_EVALUATION_PROFILE});
     for(const entry of program.declarations.values())if(entry.constant){
       const result=evaluateCheckedConstant(program,entry.fullName,{sourceLinks,contracts:new Map(HOST_CONTRACTS.map(contract=>[contract.id,contract]))});
       if(result.status!=='value'||!result.proof.sourceLinksVerified)throw unsupported('constant evaluation',result.diagnostic?.reason??'requires fresh original parser source association',entry.span);
       entry.constantEvaluationProof=result.proof;
     }
+    finalizeStaticArrays(this,program);
     return program;
   }
 }
 export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
-  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from','ml_integer_cast','ml_integer_shift'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
+  constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from','ml_integer_cast','ml_integer_shift','ml_static_array_values','ml_static_array_element'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
@@ -683,6 +702,8 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   }
   fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker);try{return super.fn(entry);}finally{restore?.();}}
   expr(node) {
+    if(node.k==='routerStaticArrayElement'){const proof=requireStaticArrayElement(node,this.program,HostChecker);this.staticArrayElements=true;return `ml_static_array_element(${JSON.stringify(proof.storageKey)}, () => ${this.expr(node.array)}, ${this.expr(node.index)})`;}
+    if(node.k==='routerSourceUnitEnumCast')return this.expr(requireUnitEnumCast(node,this.program,HostChecker));
     if(['routerPrimitiveIntegerCast','routerPrimitiveIntegerShift'].includes(node.k)){
       const proof=requirePrimitiveOperator(node);this.primitiveOperators=true;
       this.state.encode('rust-primitive-integer-operators','Actual by-value primitive integer cast and shift nodes, exact two-complement BigInt ABI and checked shift counts; no trait or pointer authority.');
@@ -755,6 +776,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(this.stringBytesRuntime)preludes.unshift(`import { stringBytes as ${this.stringBytesHelper} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'string-bytes-runtime.mjs'))};`);
     if(this.utf16Runtime||this.fixedF64Runtime)preludes.unshift(`import { ${[...(this.utf16Runtime?['encodeUtf16 as ml_encode_utf16']:[]),...(this.fixedF64Runtime?['fixedToF64 as ml_fixed_to_f64']:[])].join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'utf16-fixed-f64-runtime.mjs'))};`);
     if(this.fixedArrays)preludes.unshift(`import { copyFixedArray as ml_copy_fixed_array } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-array-runtime.mjs'))};`);
+    if(this.staticArrayElements)preludes.unshift(`const ml_static_array_values = new Map(); function ml_static_array_element(key, initialize, index) { let array = ml_static_array_values.get(key); if (!array) { array = initialize(); ml_static_array_values.set(key, array); } if (index < 0n || index >= BigInt(array.length)) throw new RangeError('index out of bounds'); return array[Number(index)]; }`);
     if(this.copyReceivers)preludes.unshift(`import { assertImmutableCopy as ml_assert_immutable_copy } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'copy-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_integer_')))preludes.unshift(`import { createIntegerRuntime as ml_create_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'integer-runtime.mjs'))};`);

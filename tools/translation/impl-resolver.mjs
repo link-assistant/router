@@ -1,3 +1,4 @@
+import {sharedReferenceCopyIdentity,SHARED_REFERENCE_COPY_SOURCE,STANDARD_OPTION_COPY_SOURCE} from './shared-reference-copy-source.mjs';
 // Source-coordinate implementation extraction for checked method lowering.
 // Extraction is structural evidence; only later checked bodies are executable.
 import {sourceItems} from './rust-structure.mjs';
@@ -183,6 +184,7 @@ const seal=value=>{const clone=structuredClone(value);return frozen({...clone,di
 const consumingReceiver='mutable or consuming receiver requires checked ownership and alias semantics';
 const checkedKey=type=>{
   if(!type || typeof type!=='object')return null;
+  if(type.rustReference)return sharedReferenceCopyIdentity(type);
   if(['bool','unit','float'].includes(type.kind))return typeKey(type);
   if(type.kind==='fixed' && [8,16,32,64,128].includes(type.bits) && typeof type.signed==='boolean')return typeKey(type);
   if(type.kind==='data' && typeof type.name==='string' && type.name.length)return typeKey(type);
@@ -239,6 +241,7 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
     const key=checkedKey(current);
     if(!key)return refuse('type has no checked standard primitive or derived Copy profile',location);
     if(done.has(key))return true;
+    if(current.rustReference){proofs.push({kind:'original-standard-shared-reference',type:current,source:SHARED_REFERENCE_COPY_SOURCE});done.add(key);return true;}
     if(active.has(key))return refuse('recursive value layout has no finite checked Copy proof',location);
     if(!implementationProof(current))return false;
     if(current.kind==='array') {
@@ -246,7 +249,7 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
       if(!visit(current.element,location))return false;
       proofs.push({kind:'standard-fixed-array',type:current,length:fixedArrayLength(current),profile:FIXED_ARRAY_PROFILE});done.add(key);return true;
     }
-    if(current.kind!=='data') {proofs.push({kind:'standard-primitive',type:current});done.add(key);return true;}
+    if(current.kind!=='data') {proofs.push({kind:'standard-primitive',...(current.kind==='string'&&current.rustOwnership?.kind==='borrowed'&&current.rustOwnership.source==='str'?{source:SHARED_REFERENCE_COPY_SOURCE,referenceDepth:1}:{}),type:current});done.add(key);return true;}
     const entry=declarations.get(current.name);
     if(entry?.k!=='data' || entry.fullName!==current.name || !Array.isArray(entry.modulePath) || !Array.isArray(entry.ctors))return refuse('Copy requires an actual resolved algebraic declaration',location);
     active.add(key);let valid=true,standard=false;
@@ -272,13 +275,15 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
         for(const field of ctor.fields) {
           const syntax=field.rustTypeSyntax;
           const sized=field.type.kind==='array'&&field.type.rustFixedArray&&syntax?.[0]==='['&&syntax.at(-1)===']';
-          if(!Array.isArray(syntax) || !syntax.length || syntax.some(token=>typeof token!=='string' || ownershipSyntax.test(token) || (sized?['*','dyn','impl']:['&','*','[',']','dyn','impl']).includes(token))) {valid=refuse('field ownership syntax has no supported Copy proof',location);continue;}
+          const standard=field.type.rustStandardGeneric?.kind==='Option'&&declarations.get(field.type.name)?.standardGeneric?.kind==='Option';
+          const shared=(Boolean(sharedReferenceCopyIdentity(field.type))||field.type.kind==='string'&&field.type.rustOwnership?.kind==='borrowed'&&field.type.rustOwnership.source==='str'&&syntax?.at(-1)==='str')&&syntax?.[0]==='&'&&!syntax.includes('mut');
+          if(!Array.isArray(syntax) || !syntax.length || !shared&&!standard&&syntax.some(token=>typeof token!=='string' || ownershipSyntax.test(token) || (sized?['*','dyn','impl']:['&','*','[',']','dyn','impl']).includes(token))) {valid=refuse('field ownership syntax has no supported Copy proof',location);continue;}
           if(!visit(field.type,location))valid=false;
         }
       }
     }
     active.delete(key);
-    if(valid){proofs.push({kind:standard?'standard-generic':'source-derived',type:current,derive:standard?null:'Copy',...(!standard&&provenance?.macroSubnamespace==='attribute'?{attributeMacroProvenance:structuredClone(provenance)}:{}),constructors:entry.ctors.map(ctor=>({name:ctor.name,fields:ctor.fields.map(field=>({name:field.name,type:field.type,...(field.rustTypeSyntax?{rustTypeSyntax:field.rustTypeSyntax}:{})}))}))});done.add(key);}
+    if(valid){proofs.push({kind:standard?'standard-generic':'source-derived',...(standard&&generic.kind==='Option'?{source:STANDARD_OPTION_COPY_SOURCE}:{}),type:current,derive:standard?null:'Copy',...(!standard&&provenance?.macroSubnamespace==='attribute'?{attributeMacroProvenance:structuredClone(provenance)}:{}),constructors:entry.ctors.map(ctor=>({name:ctor.name,fields:ctor.fields.map(field=>({name:field.name,type:field.type,...(field.rustTypeSyntax?{rustTypeSyntax:field.rustTypeSyntax}:{})}))}))});done.add(key);}
     return valid;
   }
   visit(type);return certificate();

@@ -210,6 +210,7 @@ export class DataChecker extends withStandardStringEqualityChecker(TextChecker) 
     const primitive=type.kind==='fixed'?rustFixedType(type.rustPrimitiveName):null;
     if(primitive&&primitive.bits===type.bits&&primitive.signed===type.signed&&!type.patternOwnershipRefusal&&!type.rustOwnership)return {kind:'source-fixed-copy',primitive:type.rustPrimitiveName};
     if(type.kind==='bool'&&syntax.length===1&&syntax[0]==='bool'||type.kind==='unit'&&syntax.join('')==='()'||type.kind==='float'&&syntax.length===1&&syntax[0]==='f64')return {kind:'source-scalar-copy',syntax:[...syntax]};
+    const standard=typeof this.sourceStandardFieldCopy==='function'?this.sourceStandardFieldCopy(field,span):null;if(standard)return standard;
     const evidence=pointee.rustSharedFieldCopies?.find(value=>value.ctor===ctor.name&&value.field===field.name);
     if(evidence) {
       if(!validCopyCertificate(evidence.copyCertificate,type))throw unsupported('shared field Copy certificate','requires matching verified layout evidence and an intact certificate',span);

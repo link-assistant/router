@@ -1,3 +1,4 @@
+import {hasStaticElementOrigin} from './static-array-element.mjs';
 // Function elision and return origins are proof obligations, not value-domain
 // equivalence. This bounded adapter does not manufacture reference lifetimes.
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
@@ -300,6 +301,7 @@ function origins(node,env,context,returns,depth=0) {
     if(!node.option&&(borrowed||hasBorrow(node.value.type,context)))throw unsupported('borrowed Result propagation','requires checked residual error lifetime origins',node.span);
     return borrowed?project(value,['argument',0]):new Set();
   }
+  if(node.k==='routerStaticArrayElement'&&hasStaticElementOrigin(node))return uniformOrigins(node.type,new Set(['static']),context);
   if(node.k==='lit'&&typeof node.value==='string'&&node.type?.rustBorrowLifetime?.source==='string-literal'&&node.type.rustBorrowLifetime.kind==='static')return staticOrigin();
   if(node.k==='let') {
     const value=read(node.value),inner=new Map(env);

@@ -258,6 +258,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     ml_assert: ['boolean', 'string'],
     ml_showNumber: ['number'],
     ml_at: ['ReadonlyArray<T>', 'number | bigint'],
+    ml_static_array_element: ['string','() => ReadonlyArray<T>','bigint'],
     ml_forall: ['any[]', '(value: any) => boolean'],
     ml_router_strip: ['string', 'string', 'boolean'],
     ml_router_unwrap: ["Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>", 'T', 'boolean'],
@@ -293,6 +294,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
   };
   const generics = { ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'T, U',ml_host_option_map_or:'T, U', ml_router_future: 'T', ml_router_defer: 'T', ml_at: 'T', ml_router_iter: 'T', ml_router_map: 'T, U', ml_router_filter: 'T', ml_router_take: 'T', ml_router_collect: 'T', ml_router_count: 'T', ml_router_any: 'T', ml_router_all: 'T', ml_router_fold: 'T, A' };
   Object.assign(generics,{ml_router_find_map:'T, U',ml_router_filter_map:'T, U',ml_router_find:'T',ml_router_flatten:'T',ml_router_try:'T, E',ml_router_unwrap:'T'});
+  generics.ml_static_array_element='T';
   generics.ml_router_enumerate='T';
   generics.ml_host_bool_then_some='T';
   for (let at = 0; at < tokens.length; at++) {
@@ -330,6 +332,7 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
     }
     const standardResult={ml_host_bool_then_some:'T',ml_host_bool_then:'T',ml_host_result_ok:'T',ml_host_option_map:'U'}[name];
     if(standardResult){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:`: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:${standardResult}}>`});}
+    if(name==='ml_static_array_element'){const close=tokens.find((token,index)=>index>nameAt+1&&token.value===')');annotations.push({offset:close.end,text:': T'});}
     if (returnTypes.has(name)) {
       const close = tokens.find((token, index) => index > nameAt + 1 && token.value === ')');
       annotations.push({ offset: close.end, text: `: ${tsType(returnTypes.get(name), dataTypes)}` });

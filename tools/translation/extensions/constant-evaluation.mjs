@@ -1,3 +1,4 @@
+import {checkedNominalNoDrop} from './option-nominal-proof.mjs';
 // Concrete, bounded evaluation of checked Rust constants. This module never
 // executes emitted JavaScript, metadata functions, or host runtime adapters.
 import {createHash} from 'node:crypto';
@@ -72,6 +73,7 @@ function children(node) {
     case 'array':return node.items;
     case 'match':if(!Array.isArray(node.cases))refuse('constant match requires checked cases',node);return [node.scrutinee,...node.cases.map(arm=>arm.body)];
     case 'routerSharedArrayLiteral':return [node.value];
+    case 'routerSourceUnitEnumCast':return [node.body];
     default:refuse('constant operation has no checked evaluation semantics: '+node?.k,node);
   }
 }
@@ -82,7 +84,7 @@ class Evaluator {
     if(!options||utilTypes.isProxy(options)||Object.getPrototypeOf(options)!==Object.prototype)refuse('constant options require plain non-proxy data');
     const target=option('targetProfile')?copyMetadata(option('targetProfile')):null;
     if(target&&(target.pointerBits!==64||target.rustVersion!=='1.89.0'))refuse('constant evaluation target differs from the explicitly pinned Rust 1.89 64-bit profile');
-    this.program={declarations:snapshotMap(ownData(program,'declarations'))};this.safeEntries=new Set();
+    this.sourceProgram=program;this.program={declarations:snapshotMap(ownData(program,'declarations'))};this.safeEntries=new Set();
     this.sources=snapshotMap(option('sources')??new Map());this.contracts=snapshotMap(option('contracts')??new Map());this.sourceLinks=option('sourceLinks');
     this.limits={...DEFAULT_LIMITS,...copyMetadata(option('limits')??{})};
     for(const [name,value] of Object.entries(this.limits))if(!(name in DEFAULT_LIMITS)||!Number.isSafeInteger(value)||value<1||value>DEFAULT_LIMITS[name])refuse('constant evaluation limits must be positive bounded profile values');
@@ -172,6 +174,7 @@ class Evaluator {
     if(['fixed','bool','unit'].includes(type?.kind))return true;
     if(type?.kind==='string')return type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str';
     if(type?.kind==='array')return this.noDrop(type.element,active);
+    if(type?.kind==='data'&&checkedNominalNoDrop(this.sourceProgram,type))return true;
     const entry=type?.kind==='data'?this.layout(type.name):null;
     if(!entry||active.has(type.name)||(!entry.tuple&&!['Option','Result'].includes(entry.standardGeneric?.kind)))return false;
     active.add(type.name);const result=entry.ctors.every(ctor=>ctor.fields.every(field=>this.noDrop(field.type,active)));active.delete(type.name);return result;
@@ -196,6 +199,7 @@ class Evaluator {
         if(node.type?.kind==='bool'&&typeof node.value==='boolean'||node.type?.kind==='string'&&typeof node.value==='string')return result(node.value);
         if(node.type?.kind==='unit'&&node.value===null)return result(null);refuse('constant literal domain is unsupported',node);break;
       }
+      case 'routerSourceUnitEnumCast':return this.evaluate(node.body,env,depth+1);
       case 'var':{const value=env.get(node.name);if(!value||!sameType(value.type,node.type))refuse('constant local is not bound to its checked type',node);return value;}
       case 'let':{
         const value=this.evaluate(node.value,env,depth+1);if(!this.noDrop(value.type))refuse('constant local destructor/move is not proved',node);

@@ -1,3 +1,4 @@
+import {checkedOptionNominal} from './option-nominal-proof.mjs';
 // Source array borrows have two different static-origin rules. Constant-tail
 // lifetime extension permits Drop layouts; ordinary promotion does not.
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
@@ -32,7 +33,7 @@ function immutable(type,checker,span,nominal,active=new Set()) {
   if(type.kind==='array') {immutable(type.element,checker,span,nominal,active);return;}
   const entry=type.kind==='data'?checker.items.get(type.name):null;
   if(!entry||active.has(type.name))fail('array borrow unknown or recursive layout',span);
-  if(!entry.tuple&&!['Option','Result'].includes(entry.standardGeneric?.kind)&&(!nominal||entry.generated||!entry.ctors.every(ctor=>ctor.ctorStyle&&ctor.fields.every(field=>field.rustTypeSyntax))))fail('array borrow nominal promotion',span);
+  if(!entry.tuple&&!['Option','Result'].includes(entry.standardGeneric?.kind)&&(!nominal||entry.generated||!entry.ctors.every(ctor=>ctor.ctorStyle&&ctor.fields.every(field=>field.rustTypeSyntax)))){try{checkedOptionNominal(checker,type,span);}catch{fail('array borrow nominal promotion',span);}}
   active.add(type.name);
   for(const ctor of entry.ctors)for(const field of ctor.fields)immutable(checker.resolveType(field.type,entry.modulePath,span),checker,span,nominal,active);
   active.delete(type.name);

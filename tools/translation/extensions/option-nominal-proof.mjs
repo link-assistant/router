@@ -33,3 +33,7 @@ export function restoreOptionNominals(checker,context){
   if(!(context instanceof Map)||[...context.values()].some(token=>!tokens.has(token)))throw new TypeError('Option nominal context is not privately issued');
   contexts.set(checker,context);
 }
+
+const noDropPrograms=new WeakMap();
+export function bindCheckedNominalNoDrop(program,checker){noDropPrograms.set(program,checker);}
+export function checkedNominalNoDrop(program,type){const checker=noDropPrograms.get(program);if(!checker)return false;try{checkedOptionNominal(checker,type,{start:0,end:0});return true;}catch{return false;}}

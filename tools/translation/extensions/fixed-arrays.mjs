@@ -18,16 +18,17 @@ const literalLength=token=>{
   if(length>BigInt(FIXED_ARRAY_MAX_LENGTH))reject('length exceeds the checked array bound',token);
   return Number(length);
 };
-export function fixedArrayCopyCells(type,span,depth=0) {
+export function fixedArrayCopyCells(type,span,depth=0,nominal=null) {
   if(depth>32||!type||type.rustGenericIdentityUnresolved)reject('requires a bounded resolved Copy element type',span);
   if(type.rustReference)reject('shared aggregate references require a separate Copy and lifetime profile',span);
   if(type.kind==='array') {
     const length=fixedArrayLength(type);
     if(length===null||type.rustOwnership?.kind!=='value'||type.rustOwnership.source!=='array')reject('requires actual sized value storage, not Vec or slice ownership',span);
-    const cells=1+length*fixedArrayCopyCells(type.element,span,depth+1);
+    const cells=1+length*fixedArrayCopyCells(type.element,span,depth+1,nominal);
     if(cells>FIXED_ARRAY_PROFILE.maxCells)reject('exceeds the fixed-array cell budget',span);
     return cells;
   }
+  if(type.kind==='data'&&nominal)return nominal(type,span,depth);
   if(['bool','unit','float'].includes(type.kind))return 1;
   if(type.kind==='fixed'&&[8,16,32,64,128].includes(type.bits)&&typeof type.signed==='boolean')return 1;
   if(type.kind==='string'&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return 1;
@@ -66,13 +67,13 @@ export function withFixedArrayChecker(Base) {
   return class extends Base {
     program(surface) {
       const program=super.program(surface);
-      const visit=(type,span)=>{
+      const visit=(type,span,sourceConstant=false)=>{
         if(type?.kind!=='array')return;
-        if(type.rustFixedArray)fixedArrayCopyCells(type,span);
+        if(type.rustFixedArray){if(sourceConstant&&this.sourceFixedArrayCells)this.sourceFixedArrayCells(type,span);else fixedArrayCopyCells(type,span);}
         else visit(type.element,span);
       };
       for(const entry of program.declarations.values()) {
-        if(entry.k==='fn') {for(const param of entry.params)visit(param.type,param.span??entry.span);visit(entry.ret,entry.span);}
+        if(entry.k==='fn') {for(const param of entry.params)visit(param.type,param.span??entry.span);visit(entry.ret,entry.span,Boolean(entry.constant));}
         else if(entry.k==='data')for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type,field.span??entry.span);
       }
       return program;
@@ -94,7 +95,7 @@ export function withFixedArrayChecker(Base) {
       let value=this.expr(node.value,env,path,expected?.kind==='array'?expected.element:undefined);
       if(value.type.kind==='literal')value=coerce(value,this.defaultNumber(),this.language,node.span);
       const type={kind:'array',element:value.type,rustFixedArray:{length:node.length},rustOwnership:owner,rustSourceType:true};
-      fixedArrayCopyCells(type,node.span);
+      if(this.sourceFixedArrayCells)this.sourceFixedArrayCells(type,node.span);else fixedArrayCopyCells(type,node.span);
       if(wanted!==null&&typeKey(type)!==typeKey(expected))throw typeError('fixed-array repeat element type differs from the expected source type',node.span);
       let name;do{name=this.freshName('ml_fixed_array_repeat_');}while(env.has(name));
       const variable={k:'var',name,type:value.type,span:node.value.span};
@@ -115,7 +116,7 @@ export function withFixedArrayChecker(Base) {
       const value=super.arrayLiteral(node,env,path,hint);
       if(value.k!=='array')reject('requires a single checked array literal',node.span);
       const type={...value.type,rustFixedArray:{length},rustOwnership:owner,rustSourceType:true};
-      fixedArrayCopyCells(type,node.span);
+      if(this.sourceFixedArrayCells)this.sourceFixedArrayCells(type,node.span);else fixedArrayCopyCells(type,node.span);
       if(wanted!==null&&typeKey(type)!==typeKey(expected))throw typeError('fixed-array element type differs from the expected source type',node.span);
       return {...value,type,span:node.span,fixedArrayProof:{profile:FIXED_ARRAY_PROFILE,verified:true,length}};
     }
