@@ -2,7 +2,7 @@
 // import/declaration may still shadow a standard builtin used by another item.
 export function shadowedBuiltins(items) {
   const result = new Set();
-  const add = token => { if (token?.type === 'ident' && ['Number', 'Math', 'Buffer', 'undefined'].includes(token.text)) result.add(token.text); };
+  const add = token => { if (token?.type === 'ident' && ['Number', 'Math', 'Buffer', 'Map', 'Set', 'undefined'].includes(token.text)) result.add(token.text); };
   for (const item of items) {
     if (item.comment) continue;
     const tokens = item.tokens.filter(token => token.type !== 'comment');
@@ -42,9 +42,9 @@ export function shadowedBuiltins(items) {
         }
       }
     }
-    if (['Number', 'Math', 'Buffer', 'undefined'].includes(term) && tokens[head + 1]?.text === '=') add(tokens[head]);
+    if (['Number', 'Math', 'Buffer', 'Map', 'Set', 'undefined'].includes(term) && tokens[head + 1]?.text === '=') add(tokens[head]);
     for (let index = 0; index < tokens.length; index++) {
-      if (['Number', 'Math', 'Buffer'].includes(tokens[index].text) && tokens[index + 1]?.text === '.' && tokens[index + 3]?.text === '=') add(tokens[index]);
+      if (['Number', 'Math', 'Buffer', 'Map', 'Set'].includes(tokens[index].text) && tokens[index + 1]?.text === '.' && tokens[index + 3]?.text === '=') add(tokens[index]);
       if (['globalThis', 'global', 'window'].includes(tokens[index].text) && tokens[index + 1]?.text === '.' && tokens[index + 3]?.text === '=') add(tokens[index + 2]);
     }
   }

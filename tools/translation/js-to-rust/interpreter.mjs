@@ -5,6 +5,7 @@ import { constructMap } from './vendor/constructs.mjs';
 export function evaluate(program, functionName, arguments_) {
   const table = new Map(program.map((item) => [item.name, item]));
   const map = constructMap();
+  const tables=new Map();
   const expression = (expr, env) => {
     const get = (value) => expression(value, env);
     switch (expr.kind) {
@@ -54,6 +55,16 @@ export function evaluate(program, functionName, arguments_) {
         const units=expr.unicode?[...receiver].map(character=>character.codePointAt(0)):Array.from({length:receiver.length},(_,index)=>receiver.charCodeAt(index));
         const accepted=unit=>expr.negated!==expr.ranges.some(range=>unit>=range.low && unit<=range.high);
         return expr.anchored?units.length===1 && accepted(units[0]):units.some(accepted);
+      }
+      case 'table-get':case 'table-has':case 'table-size': {
+        if(!tables.has(expr.name)) {
+          const value=table.get(expr.name).value;
+          tables.set(expr.name,value.kind==='table-set'?new Set(value.entries.map(get)):new Map(value.entries.map(entry=>[get(entry.key),get(entry.value)])));
+        }
+        const receiver=tables.get(expr.name);
+        if(expr.kind==='table-size')return receiver.size;
+        const argument=get(expr.argument);
+        return expr.kind==='table-has'?receiver.has(argument):receiver.get(argument);
       }
       default: throw new Error(`unhandled IR expression ${expr.kind}`);
     }

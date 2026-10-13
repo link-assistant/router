@@ -25,6 +25,10 @@
 (type optional-string (javascript "string|undefined") (rust "JsOptional<&str>") (rust-owned "JsOptional<String>"))
 (type optional-number (javascript "number|undefined") (rust "JsOptional<f64>") (rust-owned "JsOptional<f64>"))
 (type optional-boolean (javascript "boolean|undefined") (rust "JsOptional<bool>") (rust-owned "JsOptional<bool>"))
+(type table-set (javascript source-owned-set) (rust JsStaticSet) (rust-owned JsStaticSet))
+(type table-map-string (javascript source-owned-map-string) (rust "JsStaticMap<&'static str>") (rust-owned "JsStaticMap<&'static str>"))
+(type table-map-number (javascript source-owned-map-number) (rust "JsStaticMap<f64>") (rust-owned "JsStaticMap<f64>"))
+(type table-map-boolean (javascript source-owned-map-boolean) (rust "JsStaticMap<bool>") (rust-owned "JsStaticMap<bool>"))
 # (operator <meta> (javascript <spelling>) (rust <spelling>) (precedence <n>) (operands <type>) (yields <type>))
 # `any` operands must share one type; Rust comparisons do not chain, so a
 # comparison operand that is itself a comparison is parenthesized.

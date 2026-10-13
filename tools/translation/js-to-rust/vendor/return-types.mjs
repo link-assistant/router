@@ -25,6 +25,9 @@ export function closedReturnType(type) {
 }
 
 export function typescriptType(type) {
+  if(type==='table-set')return 'ReadonlySet<unknown>';
+  const map=/^table-map-(string|number|boolean)$/u.exec(type);
+  if(map)return `ReadonlyMap<unknown, ${map[1]}>`;
   const optional = optionalType(type);
   return optional ? `${optional.primitive} | ${optional.absent}` : type === 'value' ? 'unknown' : type;
 }

@@ -114,6 +114,26 @@ regex state and coercive test arguments remain refused. Independent fixtures
 exercise actual native ID validation, pinned Rust whitespace and codepoint
 counting, including a full Unicode scalar comparison for the whitespace class.
 
+Private module `new Map([...])` and `new Set([...])` declarations can become
+read-only tables when their entries are closed primitive expressions and every
+reference is a direct `get`, `has` or `size` read. A complete TypeScript syntax
+AST audit checks module ownership, including template substitutions and binding
+contexts; the native table extension reuses the existing TypeScript dependency.
+Portable kernels without table candidates remain dependency-free. Missing
+ownership syntax support retains a refusal.
+
+Exported tables, aliases, mutation, getter/prototype/iterator manipulation,
+constructor shadowing, direct eval and other collection operations remain
+refused. The proof conservatively rejects ambiguous scopes and references.
+Maps require homogeneous primitive values; keys and Set elements may mix
+strings, numbers and booleans. Raw duplicate entries and source order remain
+in meta. Primitive reads use SameValueZero, including NaN and equal signed
+zeros; Map lookup keeps the last value while size counts unique keys. Objects,
+boxed primitives, symbols and BigInt keys never invoke coercion hooks and do
+not match closed primitive entries. No table identity or mutable reference
+escapes the checked fragment. TypeScript preserves real Map/Set construction
+with read-only types; Rust emits immutable data and typed primitive readers.
+
 Run `node --test tools/translation/js-to-rust/test/*.test.mjs`. The tests execute
 58 authored fixtures against authoritative JavaScript, an independent IR
 evaluator and strict-compiled TypeScript; they also check ordinary source

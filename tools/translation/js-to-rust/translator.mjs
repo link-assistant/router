@@ -9,6 +9,7 @@ import { emitRust, emitTypeScript } from './targets.mjs';
 import { parseLinks } from './vendor/lino.mjs';
 import { splitConstantItems } from './vendor/constants.mjs';
 import { shadowedBuiltins } from './vendor/builtin-ownership.mjs';
+import { tableOwnership } from './vendor/static-tables.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -31,14 +32,16 @@ function returns(body) {
 
 /** Discover and independently check every top-level source item. */
 export function analyzeJavaScript(source) {
-  let raw;
+  let raw,tokens;
   try {
-    raw = topLevelItems(lex(source, 'JavaScript')).flatMap(splitConstantItems);
+    tokens=lex(source,'JavaScript');
+    raw = topLevelItems(tokens).flatMap(splitConstantItems);
   } catch (error) {
     return { fragment: FRAGMENT, program: [], items: [], diagnostics: [diagnostic(error, { start: 0, end: source.length }, source)] };
   }
   const items = [];
   const shadowed = shadowedBuiltins(raw);
+  const tables=tableOwnership(tokens,raw,shadowed,source);
   let doc = '';
   for (const item of raw) {
     if (item.comment) {
@@ -47,7 +50,7 @@ export function analyzeJavaScript(source) {
     }
     const row = { start: item.start, end: item.end, status: 'unsupported' };
     try {
-      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed });
+      row.parsed = parseJavaScriptItem(item.tokens, doc, { shadowedBuiltins: shadowed,readOnlyTables:tables });
       if (row.parsed.kind === 'function' && !returns(row.parsed.body)) {
         throw Object.assign(new Error('a path ends without a return'), { slug: 'missing-return' });
       }

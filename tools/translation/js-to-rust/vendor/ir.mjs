@@ -24,6 +24,7 @@ import { constantValue } from './constants.mjs';
 import { guardedScope } from './guards.mjs';
 import { optionalType, joinReturnTypes, closedReturnType } from './return-types.mjs';
 import { validateCharacterClass } from './character-classes.mjs';
+import { staticTableType,mapValueType } from './static-tables.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
 
@@ -184,6 +185,18 @@ export function check(item, table) {
     if (!map.types.has(type)) refuse('untyped', type);
   }
   if (item.kind === 'constant') {
+    if(['table-set','table-map'].includes(item.value.kind)) {
+      if(item.exported)refuse('collection','a table exposed outside the checked module');
+      const primitive=value=>{
+        const checked=expression(value,new Map(),table);
+        if(!['number','string','boolean'].includes(checked.type)||typeof constantValue(checked)!==checked.type)refuse('collection','a non-closed primitive table entry');
+        return checked;
+      };
+      const entries=item.value.kind==='table-set'?item.value.entries.map(primitive):item.value.entries.map(entry=>({key:primitive(entry.key),value:primitive(entry.value)}));
+      const type=staticTableType(item.value.kind,entries);
+      if(type!==item.type)refuse('type','an inconsistent static table type');
+      return {...item,value:{...item.value,entries,type}};
+    }
     const value = expression(item.value, new Map(), table);
     if (typeof constantValue(value) !== item.type || value.type !== item.type) refuse('type', item.name);
     return { ...item, value };
@@ -353,6 +366,18 @@ function expression(expr, names, table) {
       if (receiver.type !== 'string') refuse('type', 'a regex test requiring coercion of a non-string');
       return typed({ receiver }, 'boolean');
     }
+    case 'table-get':case 'table-has':case 'table-size': {
+      canonicalRustName(expr.name);
+      if(names.has(expr.name))refuse('collection','a shadowed table binding');
+      const declared=table.get(expr.name);
+      if(!declared||declared.kind!=='constant'||!['table-set','table-map'].includes(declared.value.kind))refuse('collection','a read without a source-owned static table');
+      const valueType=mapValueType(declared.type);
+      if(expr.kind==='table-get'&&!valueType)refuse('collection','get requires a closed Map');
+      if(expr.kind==='table-size')return typed({},'number');
+      const argument=expression(expr.argument,names,table);
+      if(!['number','string','boolean','null','undefined','value'].includes(argument.type))refuse('collection','a table key without a closed observation contract');
+      return typed({argument},expr.kind==='table-get'?`optional-${valueType}`:'boolean');
+    }
     default:
       return refuse('unsupported', expr.kind);
   }
@@ -418,6 +443,10 @@ function linkOf(expr) {
       return ['codepoints', linkOf(expr.receiver)];
     case 'class-test':
       return ['class-test', ['unicode', String(expr.unicode)], ['negated', String(expr.negated)], ['anchored', String(expr.anchored)], ['ranges', ...expr.ranges.map(range=>[String(range.low), String(range.high)])], ['receiver', linkOf(expr.receiver)]];
+    case 'table-set':return ['table-set',...expr.entries.map(linkOf)];
+    case 'table-map':return ['table-map',...expr.entries.map(entry=>['entry',linkOf(entry.key),linkOf(entry.value)])];
+    case 'table-size':return ['table-size',expr.name];
+    case 'table-get':case 'table-has':return [expr.kind,expr.name,linkOf(expr.argument)];
     default:
       return [expr.kind, expr.name, ...expr.args.map(linkOf)];
   }
@@ -497,6 +526,10 @@ function exprOf(link) {
       const boolean = head => {const value=field(link,head)?.[1];if(!['true','false'].includes(value))throw new Error(`invalid class-test ${head}`);return value==='true';};
       return { kind, unicode:boolean('unicode'), negated:boolean('negated'), anchored:boolean('anchored'), ranges:(field(link,'ranges')??[]).slice(1).map(range=>({low:Number(range[0]),high:Number(range[1])})), receiver:exprOf(field(link,'receiver')[1]) };
     }
+    case 'table-set':return {kind,entries:rest.map(exprOf)};
+    case 'table-map':return {kind,entries:rest.map(entry=>({key:exprOf(entry[1]),value:exprOf(entry[2])}))};
+    case 'table-size':return {kind,name:rest[0]};
+    case 'table-get':case 'table-has':return {kind,name:rest[0],argument:exprOf(rest[1])};
     case 'call':
     case 'builtin':
       return { kind, name: rest[0], args: rest.slice(1).map(exprOf) };

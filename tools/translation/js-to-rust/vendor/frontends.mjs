@@ -95,7 +95,7 @@ function jsdocTypes(doc) {
  * @param {string} doc the comments directly before the item
  * @returns {object}
  */
-export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins } = {}) {
+export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables } = {}) {
   const at = cursor(tokens);
   at.shadowedBuiltins = shadowedBuiltins;
   const term = itemTerm(tokens, 'JavaScript');
@@ -109,6 +109,23 @@ export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins } = {}) {
     const name = at.next();
     if (name.type !== 'ident') refuse('unsupported', 'a destructuring binding');
     at.expect('=');
+    if(at.is('new')&&['Map','Set'].includes(at.peek(1).text)) {
+      const plan=readOnlyTables?.get(name.start);
+      if(!plan||plan.reason)refuse('collection',plan?.reason??'a collection without a whole-module read-only ownership proof');
+      at.expect('new');const constructor=at.next().text;at.expect('(');at.expect('[');
+      const entries=[];
+      while(!at.eat(']')) {
+        if(constructor==='Map') {
+          at.expect('[');const key=expression(at,'JavaScript');at.expect(',');const value=expression(at,'JavaScript');at.eat(',');at.expect(']');entries.push({key,value});
+        } else entries.push(expression(at,'JavaScript'));
+        if(!at.is(']'))at.expect(',');
+      }
+      at.expect(')');at.eat(';');if(!at.done())refuse('unsupported',at.peek().text);
+      const kind=constructor==='Map'?'table-map':'table-set';
+      const types=entries.map(entry=>typeof constantValue(constructor==='Map'?entry.value:entry));
+      if(types.some(type=>!['string','number','boolean'].includes(type))||constructor==='Map'&&(!types.length||types.some(type=>type!==types[0])))refuse('collection','a table without uniform closed primitive values');
+      return {kind:'constant',name:snakeFromCamel(name.text),exported,type:kind==='table-set'?'table-set':`table-map-${types[0]}`,value:{kind,entries}};
+    }
     if (arrowAhead(at)) {
       const types = jsdocTypes(doc);
       const params = [];
@@ -404,6 +421,12 @@ function postfix(at, language) {
     if (!at.is('.')) return value;
     at.next();
     const name = at.next().text;
+    if(language==='JavaScript'&&value.kind==='variable'&&['get','has','size'].includes(name)) {
+      if(name==='size'&&!at.is('(')){value={kind:'table-size',name:value.name};continue;}
+      const args=argumentsOf(at,language);
+      if(args.length!==1)refuse('collection','a table read without exactly one key');
+      value={kind:`table-${name}`,name:value.name,argument:args[0]};continue;
+    }
     if (language === 'Rust' && TRANSPARENT_RUST.has(name)) {
       at.expect('(');
       at.expect(')');

@@ -3,6 +3,7 @@ import { camelFromSnake } from './vendor/ir.mjs';
 import { constantValue } from './vendor/constants.mjs';
 import { optionalType, typescriptType } from './vendor/return-types.mjs';
 import { classPattern } from './vendor/character-classes.mjs';
+import { mapValueType } from './vendor/static-tables.mjs';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -88,6 +89,38 @@ fn js_safe_integer(value: f64) -> bool {
 export const UTF8_LENGTH_HELPER = `#[rustfmt::skip]
 fn js_utf8_length(value: &str) -> f64 { value.len() as f64 }`;
 
+export const TABLE_HELPERS = `#[derive(Clone, Copy)]
+pub enum JsLiteral { String(&'static str), Number(f64), Boolean(bool) }
+#[rustfmt::skip]
+impl JsLiteral {
+    fn matches(self, value: JsValue<'_>) -> bool {
+        match (self, value) {
+            (Self::String(left), JsValue::String(right)) => left == right,
+            (Self::Boolean(left), JsValue::Boolean(right)) => left == right,
+            (Self::Number(left), JsValue::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+    fn same_key(self, other: Self) -> bool {
+        match other { Self::String(value) => self.matches(JsValue::String(value)), Self::Number(value) => self.matches(JsValue::Number(value)), Self::Boolean(value) => self.matches(JsValue::Boolean(value)) }
+    }
+}
+#[derive(Clone, Copy)]
+pub struct JsStaticSet { values: &'static [JsLiteral] }
+#[rustfmt::skip]
+impl JsStaticSet {
+    fn has(&self, key: JsValue<'_>) -> bool { self.values.iter().any(|value| value.matches(key)) }
+    fn size(&self) -> f64 { self.values.iter().enumerate().filter(|(index, value)| !self.values[..*index].iter().any(|earlier| earlier.same_key(**value))).count() as f64 }
+}
+#[derive(Clone, Copy)]
+pub struct JsStaticMap<T: Copy + 'static> { entries: &'static [(JsLiteral, T)] }
+#[rustfmt::skip]
+impl<T: Copy + 'static> JsStaticMap<T> {
+    fn has(&self, key: JsValue<'_>) -> bool { self.entries.iter().any(|entry| entry.0.matches(key)) }
+    fn get(&self, key: JsValue<'_>) -> Option<T> { self.entries.iter().rev().find(|entry| entry.0.matches(key)).map(|entry| entry.1) }
+    fn size(&self) -> f64 { self.entries.iter().enumerate().filter(|(index, entry)| !self.entries[..*index].iter().any(|earlier| earlier.0.same_key(entry.0))).count() as f64 }
+}`;
+
 export const ABSENCE_HELPERS = `#[derive(Clone, Copy, PartialEq)]
 pub struct JsNull;
 #[derive(Clone, Copy, PartialEq)]
@@ -109,6 +142,8 @@ function emitter(program, target) {
   const rust = target === 'rust';
   const map = constructMap();
   const name = (value) => rust ? value : camelFromSnake(value);
+  const globals=new Map(program.map(item=>[item.name,item]));
+  const literal=value=>`JsLiteral::${{string:'String',number:'Number',boolean:'Boolean'}[value.type]}(${rustConstant(value)})`;
   const converted = (expr, type) => {
     const optional = optionalType(type);
     if (!rust || !optional || expr.type === type) return expression(expr);
@@ -170,6 +205,16 @@ function emitter(program, target) {
         const test=expr.anchored?'units.next().is_some_and(accepted) && units.next().is_none()':'units.any(accepted)';
         return `({ let observed = ${expression(expr.receiver)}; let mut units = ${iterator}; let accepted = |unit: u32| ${accepted}; ${test} })`;
       }
+      case 'table-size':return rust?`${name(expr.name)}.size()`:`${name(expr.name)}.size`;
+      case 'table-get':case 'table-has': {
+        if(!rust)return `${name(expr.name)}.${expr.kind==='table-get'?'get':'has'}(${expression(expr.argument)})`;
+        const missing=['null','undefined'].includes(expr.argument.type);
+        const observed=expr.argument.type==='value'?'observed':`JsValue::${{string:'String',number:'Number',boolean:'Boolean'}[expr.argument.type]}(${expr.argument.type==='string'?'&':''}observed)`;
+        if(expr.kind==='table-has')return `({ let ${missing?'_':'observed'} = ${expression(expr.argument)}; ${missing?'false':`${name(expr.name)}.has(${observed})`} })`;
+        const valueType=mapValueType(globals.get(expr.name).type);
+        const result=missing?'JsOptional::Undefined':`match ${name(expr.name)}.get(${observed}) { Some(value) => JsOptional::Value(value${valueType==='string'?'.to_string()':''}), None => JsOptional::Undefined }`;
+        return `({ let ${missing?'_':'observed'} = ${expression(expr.argument)}; ${result} })`;
+      }
       default: throw new Error(`missing ${target} expression emitter: ${expr.kind}`);
     }
   };
@@ -196,6 +241,12 @@ function emitter(program, target) {
   const items = program.map((item) => {
     if (item.kind === 'constant') {
       const type = map.types.get(item.type);
+      if(['table-set','table-map'].includes(item.value.kind)) {
+        const set=item.value.kind==='table-set';
+        const entries=item.value.entries.map(entry=>set?(rust?literal(entry):expression(entry)):rust?`(${literal(entry.key)}, ${rustConstant(entry.value)})`:`[${expression(entry.key)}, ${expression(entry.value)}]`).join(', ');
+        const target=rust?set?`JsStaticSet { values: &[${entries}] }`:`JsStaticMap { entries: &[${entries}] }`:set?`new Set<unknown>([${entries}])`:`new Map<unknown, ${mapValueType(item.type)}>([${entries}])`;
+        return rust?`#[rustfmt::skip]\n#[allow(non_upper_case_globals)]\nconst ${name(item.name)}: ${type.rust} = ${target};`:`const ${name(item.name)}: ${typescriptType(item.type)} = ${target};`;
+      }
       // Rust constant strings are borrowed static literals, unlike local Strings.
       const value = rust ? rustConstant(item.value) : expression(item.value);
       return rust ? `#[rustfmt::skip]\n${/^[A-Z][A-Z0-9_]*$/u.test(item.name) ? '' : '#[allow(non_upper_case_globals)]\n'}${item.exported ? 'pub ' : ''}const ${item.name}: ${type.rust} = ${value};`
@@ -210,11 +261,12 @@ function emitter(program, target) {
   const serialized = JSON.stringify(program);
   const helpers = rust ? [
     serialized.match(/"name":"(?:min|max)"/) ? FLOAT_HELPERS : '',
-    serialized.includes('"type":"value"') || serialized.includes('"kind":"includes"') ? VALUE_HELPERS : '',
+    serialized.includes('"type":"value"') || serialized.includes('"kind":"includes"') || serialized.includes('"kind":"table-') ? VALUE_HELPERS : '',
     serialized.includes('"name":"trim"') ? TRIM_HELPER : '',
     serialized.includes('"name":"safe-integer"') ? SAFE_INTEGER_HELPER : '',
     serialized.includes('"name":"utf8-length"') ? UTF8_LENGTH_HELPER : '',
-    serialized.includes('"kind":"null"') || serialized.includes('"kind":"undefined"') ? ABSENCE_HELPERS : '',
+    serialized.includes('"kind":"null"') || serialized.includes('"kind":"undefined"') || serialized.includes('"kind":"table-get"') ? ABSENCE_HELPERS : '',
+    serialized.includes('"kind":"table-set"') || serialized.includes('"kind":"table-map"') ? TABLE_HELPERS : '',
   ].filter(Boolean).map(helper => `${helper}\n\n`).join('') : '';
   return `${helpers}${items.join('\n\n')}\n`;
 }
