@@ -80,3 +80,10 @@ test('unchanged whole subscription Copy methods retain actual source and standar
     assert.throws(()=>module.original_as_str({$:'Claude'}),TypeError);assert.throws(()=>module.original_home_subdir(Object.freeze({$:'Wrong'})),TypeError);
   });
 });
+
+test('actual imported standard Display modules and trait aliases retain closed Copy ownership',async()=>{
+  for(const [imported,trait]of [['use std::fmt;','fmt::Display'],['use std::fmt as F;','F::Display'],['use std::fmt::Display as D;','D']]){const source=value+imported+display.replace('std::fmt::Display',trait),result=project(source);assert.equal(result.meta.checkedMethods.some(item=>item.name==='Kind.read'),true,source);await verifyTypedTargets(result,api=>assert.equal(api.run(Object.freeze({$:'B'})),2n),{childTimeoutMs:15000});}
+});
+test('public imported Display aliases cannot replace original local trait or Drop owners',()=>{
+  for(const imported of ['mod foreign{pub trait Display{}}use foreign::Display as D;','use std::ops::Drop as D;','#[cfg(feature="unknown")]use std::fmt::Display as D;']){const source=value+imported+display.replace('std::fmt::Display','D'),module={file:'src/lib.rs',path:[],source,items:sourceItems(source),configurationCondition:'active'};const raw=extractImplDeclarations(source,{sourcePath:module.file,modulePath:[]}).implementations.find(impl=>impl.traitPath);const scopes=new Map([[module.file,{file:module.file,path:[],configurationCondition:'active',unresolvedTypeScope:false,bindings:[{namespace:'type',name:'D',kind:'trait',status:'resolved',via:'named-import',target:['std','fmt','Display'],span:{start:34,end:69}}]}]]);const implementation={...raw,resolvedType:{kind:'data',name:'Kind'},resolvedNominalTarget:null};bindNonCopyTraitOwner(implementation,module,scopes);assert.equal(nonCopyTraitOwner(implementation),null,source);}
+});

@@ -1,6 +1,7 @@
 // Per-call proof from genuine original module views. No caller-closed flags or
 // external namespace tables are accepted as authority.
 import {createHash} from 'node:crypto';
+import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {types} from 'node:util';
 import {metadataDigest,ownData} from './extensions/source-links.mjs';
@@ -64,11 +65,11 @@ function originalOwnerHashes(issued,module,scope){
   return {...scopeHashes,sourceSha256:issued.moduleHashes.get(module)};
 }
 export function originalMatchesNamespaceBindings(){const profile=standardProfile??=loadStandardMatchesSourceProfile();return ['std','core'].map(root=>Object.freeze({name:profile.name,namespace:'macro',macroKind:'bang',target:[root,profile.name],kind:'macro',originalNamespaceDigest:profile.digest}));}
-function standardExternal(){return registeredStandardHostBindings(originalMatchesNamespaceBindings());}
+function standardExternal(dependencies){return registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(dependencies)]);}
 
 export function createMatchesMacroContext({modules,compilationProfile=null,deriveDependencies=null,cargoEditionContext=null}={}) {
   if(cargoEditionContext!==null&&!originalCargoEditionEvidence(cargoEditionContext))throw new TypeError('Matches source context requires private original Cargo edition evidence');
-  const profile=standardProfile??=loadStandardMatchesSourceProfile(),snapshot=captureOriginalMacroModules({modules,compilationProfile}),original=originalMacroModules(snapshot),external=standardExternal();
+  const profile=standardProfile??=loadStandardMatchesSourceProfile(),snapshot=captureOriginalMacroModules({modules,compilationProfile}),original=originalMacroModules(snapshot),external=standardExternal(deriveDependencies);
   const deriveContext=deriveDependencies?createDeriveFootprintContext({modules:original.modules,dependencies:deriveDependencies,externalModules:external,compilationProfile:original.compilationProfile}):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):external;
   const toolContext=createToolAttributeContext({modules:original.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:original.compilationProfile});

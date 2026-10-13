@@ -6,6 +6,7 @@ import { posix } from 'node:path';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {planTrackedModulePath,planConditionalModuleSourcePath,isTrackedModulePathPlan,MODULE_PATH_PROFILE} from './module-paths.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
+import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
@@ -258,7 +259,7 @@ export function translateProject(options) {
   const jsonParserProfile=options.jsonParserProfile??actualJsonCapabilityProfile();
   let jsonMacroContext=null,jsonMacroDiagnostic=null;
   if(options.jsonMacroDependencies)try{jsonMacroContext=createJsonMacroContext({modules:graph.modules,dependencies:options.jsonMacroDependencies,compilationProfile:graph.compilationProfile});}catch(error){if(!(error instanceof TypeError))throw error;jsonMacroDiagnostic={kind:'unsupported-profile',message:error.message};}
-  const externalModules=registeredStandardHostBindings(originalMatchesNamespaceBindings());
+  const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):externalModules;
   const toolContext=createToolAttributeContext({modules:graph.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:graph.compilationProfile});

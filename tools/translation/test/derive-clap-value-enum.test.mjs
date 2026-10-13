@@ -61,6 +61,6 @@ test('whole original clients module admits its data declaration and source const
   const result=translateProject({entry:'src/clients.rs',paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),type=program.declarations.get('ClientKind');assert.equal(type.k,'data');assert.equal(type.ctors.length,8);assert.equal(result.meta.runtimeParity,false);
   assert.ok(result.meta.executable.some(row=>row.name==='CODEX_PROVIDER'));assert.ok(result.meta.executable.some(row=>row.name==='CLAUDE_TOKEN_ENV'));
-  assert.ok(result.meta.refused.some(row=>row.name==='ClientKind.legacy_name'&&/consuming receiver/.test(row.message)));assert.ok(result.meta.refused.some(row=>row.name==='ClientKind.from_str_opt'&&/alias\/local scope collision/.test(row.message)));
+  for(const method of ['ClientKind.legacy_name','ClientKind.from_str_opt'])assert.ok(result.meta.checkedMethods.some(row=>row.name===method));
   await verifyTypedTargets(result,api=>{assert.equal(api.CODEX_PROVIDER,'link-assistant');assert.equal(api.CLAUDE_TOKEN_ENV,'ANTHROPIC_AUTH_TOKEN');assert.equal(api.CLAUDE_BASE_ENV,'ANTHROPIC_BASE_URL');},{childTimeoutMs:30000});
 });

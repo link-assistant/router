@@ -3,6 +3,8 @@ import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {originalSourceModuleItems} from './source-module-views.mjs';
+import {resolveModuleBindings} from './module-bindings.mjs';
+import {externalModuleBindings} from './registered-bindings.mjs';
 import {implementationTargetPath} from './project-nominal.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const owners=new WeakMap();
@@ -26,19 +28,34 @@ export const COPY_NAMESPACE_BINDINGS=freeze([
 ]);
 const fingerprint=implementation=>hash(JSON.stringify({trait:implementation.traitPath,type:implementation.typePath,generics:implementation.genericParameters,source:implementation.sourcePath,module:implementation.modulePath,span:implementation.span,header:implementation.headerSpan,attributes:implementation.attributes,diagnostics:implementation.diagnostics,resolvedType:implementation.resolvedType,resolvedNominalTarget:implementation.resolvedNominalTarget}));
 export function bindNonCopyTraitOwner(implementation,module,scopes) {
-  if(!implementation||!module||!(scopes instanceof Map)||JSON.stringify(implementation.traitPath)!==JSON.stringify(COPY_TRAIT_OWNER_PROFILE.trait)||implementation.sourcePath!==module.file||JSON.stringify(implementation.modulePath)!==JSON.stringify(module.path)||implementation.genericParameters?.length)return implementation;
+  if(!implementation||!module||!(scopes instanceof Map)||!Array.isArray(implementation.traitPath)||implementation.sourcePath!==module.file||JSON.stringify(implementation.modulePath)!==JSON.stringify(module.path)||implementation.genericParameters?.length)return implementation;
   const originalTarget=implementationTargetPath(implementation,module);
   if(!originalTarget||JSON.stringify(originalTarget)!==JSON.stringify(implementation.typePath))return implementation;
   const ancestors=[...scopes.values()].filter(scope=>scope.path.every((part,index)=>module.path[index]===part));
   if(!ancestors.some(scope=>scope.file===module.file)||ancestors.some(scope=>scope.unresolvedTypeScope!==false||scope.configurationCondition!=='active'))return implementation;
   // Bare std can resolve to a source module. Accept only the extern owner.
   if(ancestors.some(scope=>scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='std'&&(binding.status!=='resolved'||binding.kind!=='mod'||JSON.stringify(binding.target)!=='["std"]'))))return implementation;
+  const scope=ancestors.find(scope=>scope.file===module.file&&JSON.stringify(scope.path)===JSON.stringify(module.path));
+  if(!scope)return implementation;
+  let actualTrait=[...implementation.traitPath],importEvidence=null;
+  if(JSON.stringify(actualTrait)!==JSON.stringify(COPY_TRAIT_OWNER_PROFILE.trait)){
+    const root=scope.bindings.find(binding=>binding.namespace==='type'&&binding.name===actualTrait[0]);
+    if(root?.status!=='resolved'||!['mod','trait'].includes(root.kind)||!['named-import'].includes(root.via)||!Array.isArray(root.target))return implementation;
+    // Re-resolve the exact original use against the pinned partial standard
+    // descriptors. Public supplied bindings cannot invent a standard alias.
+    const original=resolveModuleBindings({modules:[module],externalModules:externalModuleBindings({extraBindings:COPY_NAMESPACE_BINDINGS}),compilationProfile:module.compilationProfile??null});
+    const source=original.scopes.find(candidate=>candidate.file===module.file&&JSON.stringify(candidate.path)===JSON.stringify(module.path)),binding=source?.bindings.find(binding=>binding.namespace==='type'&&binding.name===actualTrait[0]);
+    if(binding?.status!=='resolved'||binding.kind!==root.kind||binding.via!=='named-import'||JSON.stringify(binding.target)!==JSON.stringify(root.target)||JSON.stringify(binding.span)!==JSON.stringify(root.span))return implementation;
+    actualTrait=[...binding.target,...actualTrait.slice(1)];
+    if(JSON.stringify(actualTrait)!==JSON.stringify(COPY_TRAIT_OWNER_PROFILE.trait))return implementation;
+    importEvidence=freeze({name:binding.name,target:[...binding.target],source:module.file,span:{...binding.span},sourceSha256:hash(module.source.slice(binding.span.start,binding.span.end))});
+  }
   const original=originalSourceModuleItems(module).find(item=>item.term==='impl'&&item.start===implementation.span.start&&item.end===implementation.span.end);
   if(!original)return implementation;
   const tokens=original.tokens.filter(token=>token.type!=='comment'&&token.end<=implementation.headerSpan.end).map(token=>token.text);
   const begin=tokens.indexOf('impl'),end=tokens.indexOf('for',begin+1);
-  if(begin<0||end<0||tokens.slice(begin+1,end).join('')!=='std::fmt::Display')return implementation;
-  const evidence=freeze({profile:COPY_TRAIT_OWNER_PROFILE,sourceInputsVerified:true,trait:[...implementation.traitPath],source:module.file,sourceSha256:hash(module.source),headerSha256:hash(module.source.slice(implementation.headerSpan.start,implementation.headerSpan.end)),headerSpan:{...implementation.headerSpan},scopeFiles:ancestors.map(scope=>scope.file)});
+  if(begin<0||end<0||tokens.slice(begin+1,end).join('')!==implementation.traitPath.join('::'))return implementation;
+  const evidence=freeze({profile:COPY_TRAIT_OWNER_PROFILE,sourceInputsVerified:true,trait:[...actualTrait],writtenTrait:[...implementation.traitPath],importEvidence,source:module.file,sourceSha256:hash(module.source),headerSha256:hash(module.source.slice(implementation.headerSpan.start,implementation.headerSpan.end)),headerSpan:{...implementation.headerSpan},scopeFiles:ancestors.map(scope=>scope.file)});
   owners.set(implementation,{fingerprint:fingerprint(implementation),evidence});return implementation;
 }
 export function nonCopyTraitOwner(implementation) {
