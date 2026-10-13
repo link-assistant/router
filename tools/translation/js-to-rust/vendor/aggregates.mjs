@@ -21,7 +21,7 @@ export function canLiftValue(expr) {
   return ['value','number','boolean','null','undefined'].includes(expr.type) || expr.type === 'string' && expr.kind === 'string' || expr.type==='utf16-string'&&expr.borrowed===true;
 }
 export function payloadBoundary(item) {
-  if(item.kind!=='function')return false;
+  if(!['function','closure'].includes(item.kind))return false;
   const body=JSON.stringify(item.body);
   return item.lossless===true || carriesValue(item.returns) || Boolean(errorShape(item.returns)) || body.includes('"kind":"error"') || body.includes('"kind":"record"') || body.includes('"kind":"array"') || body.includes('"primitiveComparison":true') || Boolean(item.params?.some(param=>param.rest));
 }

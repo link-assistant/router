@@ -1,5 +1,6 @@
 // Independent evaluator for the semantic IR. Used alongside authored fixtures
 // and execution of the authoritative source; neither emitter is consulted.
+import {check} from './vendor/ir.mjs';
 import { constructMap } from './vendor/constructs.mjs';
 
 export function evaluate(program, functionName, arguments_) {
@@ -52,7 +53,7 @@ export function evaluate(program, functionName, arguments_) {
         }
       }
       case 'choose': return get(expr.cond) ? get(expr.then) : get(expr.else);
-      case 'call': return invoke(expr.name, expr.args.map(get));
+      case 'call': if(table.get(expr.name)?.kind==='closure')throw Error('unlowered closure call boundary');return invoke(expr.name, expr.args.map(get));
       case 'builtin': {
         const [namespace, method] = map.builtins.get(expr.name).javascript.split('.');
         return ({ Math, Number, Buffer })[namespace][method](...expr.args.map(get));
@@ -107,6 +108,13 @@ export function evaluate(program, functionName, arguments_) {
   };
   const invoke = (name, args) => {
     const fn = table.get(name);
+    if(fn?.kind==='closure') {
+      const closure=check(fn,table),captured=new Map(closure.captures.map((capture,index)=>[capture.name,args[index]]));
+      return (...values)=>{
+        const environment=new Map(captured);closure.params.forEach((param,index)=>environment.set(param.name,values[index]));
+        const result=block(closure.body,environment);if(!result.returned)throw Error('closure returned no value');return result.value;
+      };
+    }
     if (!fn || fn.kind !== 'function') throw new Error(`unknown function ${name}`);
     const environment=new Map(fn.params.map((param,index)=>[param.name,param.rest?args.slice(index):args[index]===undefined&&param.default?expression(param.default,new Map()):args[index]]));
     for(const param of fn.params)if(param.bindings){const argument=environment.get(param.name),slots=param.bindings;let values;if(slots.length===1)values=slots[0]===null?(([,])=>[])(argument):(([key])=>[key])(argument);else if(slots[0]===null)values=slots[1]===null?(([, ,])=>[])(argument):(([,value])=>[undefined,value])(argument);else values=slots[1]===null?(([key,,])=>[key])(argument):(([key,value])=>[key,value])(argument);slots.forEach((name,index)=>{if(name!==null)environment.set(name,values[index]);});}

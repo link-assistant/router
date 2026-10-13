@@ -2,7 +2,8 @@ import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {ownershipSyntax} from './module-syntax.mjs';
 import {parseMeta} from '../translator.mjs';
-import {toLino} from './ir.mjs';
+import {toLino,lowerSourceClosure} from './ir.mjs';
+import {issueLexicalEnvironment,lexicalClosureName} from './lexical-environments.mjs';
 import {callbackProducerInputs,withCallbackInputs} from './callback-inputs.mjs';
 
 const globals=new Set(['Math','Number','Buffer','undefined']);
@@ -73,7 +74,16 @@ export function discoverScopedHelpers(source,owners,analyze,sourcePath=null) {
         ts.forEachChild(child,inspect);
       };
       inspect(node);
-      if(!reason) {
+      if(reason==='a scoped lexical capture'&&row.captures.every(capture=>capture.bindings.length===1&&capture.bindings[0].kind==='Parameter')) {
+        // A failed environment attempt retains the complete previous refusal.
+        // Parent execution and closure creation are still outside this draft.
+        try {
+          const environment=issueLexicalEnvironment(source,start,end,sourcePath),closure=lowerSourceClosure(environment,lexicalClosureName(environment));
+          if(!isDeepStrictEqual(parseMeta(toLino(closure)),[closure]))throw Error('closure meta drift');
+          program.push(closure);row.name=closure.name;row.status='translated';row.coverageContract='full-domain-body';row.environmentContract={schema:closure.environment.schema,parentCreationLowered:false};reason=null;
+        } catch { /* complete original capture census remains authoritative */ }
+      }
+      if(!reason&&row.status!=='translated') {
         const text=node.getText(file),temporary='scopedSrc'+namespace+'At'+start,wrapper=ts.isFunctionDeclaration(node)?'function '+temporary+'('+node.parameters.map(param=>param.getText(file)).join(',')+') '+node.body.getText(file):'const '+temporary+'='+text+';';
         let checked=analyze(wrapper,{includeScoped:false,lossless:true});
         if((checked.diagnostics.length||checked.program.length!==1)&&inputContract){checked=withCallbackInputs(wrapper,inputContract,analyze);row.inputContract=inputContract;}

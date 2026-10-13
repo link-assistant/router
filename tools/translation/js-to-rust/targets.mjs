@@ -1,5 +1,5 @@
 import { constructMap } from './vendor/constructs.mjs';
-import { camelFromSnake,snakeFromCamel } from './vendor/ir.mjs';
+import { camelFromSnake,snakeFromCamel,check } from './vendor/ir.mjs';
 import { constantValue } from './vendor/constants.mjs';
 import { optionalType, typescriptType } from './vendor/return-types.mjs';
 import { classPattern } from './vendor/character-classes.mjs';
@@ -334,7 +334,8 @@ function emitter(program, target) {
     }
     return lines;
   };
-  const items = program.map((item) => {
+  const items = program.map((input,itemIndex) => {
+    const item=input.kind==='closure'?check(input,globals):input;
     payloadMode=payloadBoundary(item);
     losslessMode=item.lossless===true;
     if (item.kind === 'constant') {
@@ -350,7 +351,7 @@ function emitter(program, target) {
       return rust ? `#[rustfmt::skip]\n${/^[A-Z][A-Z0-9_]*$/u.test(item.name) ? '' : '#[allow(non_upper_case_globals)]\n'}${item.exported ? 'pub ' : ''}const ${item.name}: ${type.rust} = ${value};`
         : `${item.exported ? 'export ' : ''}const ${name(item.name)}: ${item.type} = ${value};`;
     }
-    const lifetime=payloadMode&&item.params.some(param=>['value','entry-value'].includes(param.type)||param.rest)||carriesValue(item.returns);
+    const lifetime=item.kind==='closure'||payloadMode&&item.params.some(param=>['value','entry-value'].includes(param.type)||param.rest)||carriesValue(item.returns);
     const parameters = item.params.map((param, index) => {
       let type=rust?param.rest?"Vec<JsPayload<'a>>":rustContract(param.type,false,lifetime?"'a":"'_"):typescriptType(param.type);
       if(rust&&param.default&&param.type!=='value')type=`Option<${type}>`;
@@ -358,6 +359,14 @@ function emitter(program, target) {
       const binding=!rust&&param.bindings?`[${param.bindings.map(binding=>binding===null?'':name(binding)).join(', ')}${param.bindings.at(-1)===null?',':''}]`:name(param.name);
       return `${!rust&&param.rest?'...':''}${binding}${optional?'?':''}: ${type}${!rust&&param.default?' = '+expression(param.default):''}`;
     });
+    if(item.kind==='closure') {
+      const contract=typescriptType(item.returns),environmentName='JsClosureEnvironment'+itemIndex;
+      const qualification='// Source-bound body draft; parent creation/effects remain refused; runtimeParity: false.';
+      if(!rust)return [qualification,`function ${name(item.name)}(${item.captures.map(capture=>`${name(capture.name)}?: unknown`).join(', ')}): (${parameters.join(', ')}) => ${contract} {`,`    return (${parameters.join(', ')}): ${contract} => {`,...body(item.body,2,item.returns),'    };','}'].join('\n');
+      const fields=item.captures.map(capture=>`    ${name(capture.name)}: JsPayload<'env>,`);
+      const environmentParameters=item.captures.map(capture=>`${name(capture.name)}: JsPayload<'env>`).join(', ');
+      return [qualification,`pub struct ${environmentName}<'env> {`,...fields,'}',`fn ${name(item.name)}<'env>(${environmentParameters}) -> ${environmentName}<'env> {`,`    ${environmentName} { ${item.captures.map(capture=>name(capture.name)).join(', ')} }`,'}',`impl<'env> ${environmentName}<'env> {`,`    pub fn call<'a>(&self${parameters.length?', '+parameters.join(', '):''}) -> ${rustContract(item.returns)} where 'env: 'a {`,...item.captures.map(capture=>`        let ${name(capture.name)}: JsPayload<'a> = self.${name(capture.name)};`),...body(item.body,2,item.returns),'    }','}'].join('\n');
+    }
     const signature = rust
       ? `${item.exported ? 'pub ' : ''}fn ${name(item.name)}${lifetime?"<'a>":''}(${parameters.join(', ')}) -> ${rustContract(item.returns)} {`
       : `${item.exported ? 'export ' : ''}function ${name(item.name)}(${parameters.join(', ')}): ${typescriptType(item.returns)} {`;

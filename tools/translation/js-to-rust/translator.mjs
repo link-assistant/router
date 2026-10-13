@@ -121,14 +121,14 @@ export function translateJavaScript(source,options) {
 
 export function parseMeta(text) {
   const links = parseLinks(text);
-  if (links.some((link) => !['function', 'constant'].includes(link[0]))) throw new Error('unsupported top-level meta-language link');
+  if (links.some((link) => !['function', 'constant','closure'].includes(link[0]))) throw new Error('unsupported top-level meta-language link');
   const items = fromLino(text);
   if (JSON.stringify(links) !== JSON.stringify(parseLinks(items.map(toLino).join('\n')))) throw new Error('noncanonical or malformed meta-language fields');
   const names = new Set();
   for (const item of items) {
     if (names.has(item.name)) throw new Error(`duplicate meta-language definition ${item.name}`);
     names.add(item.name);
-    if (item.kind === 'function' && !returns(item.body)) throw new Error(`meta-language function ${item.name} has a path without a return`);
+    if (['function','closure'].includes(item.kind) && !returns(item.body)) throw new Error(`meta-language function ${item.name} has a path without a return`);
   }
   const table = signatures(items);
   const checked=items.map(item=>check(item,table)),completed=signatures(checked);

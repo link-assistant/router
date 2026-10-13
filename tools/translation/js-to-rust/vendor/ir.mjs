@@ -18,6 +18,10 @@
 // Names are canonical snake_case (UPPER_SNAKE for constants); `type` is a
 // type row of the construct map. `check` adds `type` to every expression.
 
+import {isDeepStrictEqual} from 'node:util';
+import {parseJavaScriptItem} from './frontends.mjs';
+import {lex,topLevelItems} from './lexer.mjs';
+import {readLexicalEnvironment,reissueLexicalEnvironment,lexicalClosureName} from './lexical-environments.mjs';
 import { constructMap, refuse } from './constructs.mjs';
 import { encodeWord, field, parseLinks, textOf, writeLink } from './lino.mjs';
 import { constantValue } from './constants.mjs';
@@ -178,7 +182,25 @@ export function signatures(items) {
  * @param {Map<string, object>} table
  * @returns {object}
  */
+// Reconstruct the body from privately reissued original source. Environment
+// metadata is provenance, never an authority to supply values or narrower types.
+export function lowerSourceClosure(handle,name) {
+  canonicalRustName(name);
+  if(name!==lexicalClosureName(handle))refuse('collection','a foreign closure source identity');
+  const environment=readLexicalEnvironment(handle),source=environment.wrapper(camelFromSnake(name));
+  const raw=topLevelItems(lex(source,'JavaScript')).filter(item=>!item.comment);
+  if(raw.length!==1)refuse('collection','a noncanonical original closure wrapper');
+  const parsed=parseJavaScriptItem(raw[0].tokens,'',{source});
+  const checked=check({...parsed,lossless:true},new Map());
+  const count=environment.proof.captures.length;
+  return {...checked,kind:'closure',captures:checked.params.slice(0,count),params:checked.params.slice(count),environment:environment.proof};
+}
 export function check(item, table) {
+  if(item.kind==='closure') {
+    const expected=lowerSourceClosure(reissueLexicalEnvironment(item.environment),item.name);
+    if(!Array.isArray(item.captures)||!isDeepStrictEqual(item.captures,expected.captures)||toLino(item)!==toLino(expected))refuse('collection','a changed source-bound closure body, type or signature');
+    return expected;
+  }
   const map = constructMap();
   canonicalRustName(item.name);
   for (const param of item.params ?? []) canonicalRustName(param.name);
@@ -503,8 +525,9 @@ export function toLino(item) {
   const flag = item.exported ? [['exported']] : [];
   if (item.kind === 'constant') return writeLink(['constant', item.name, ...flag, ['type', item.type], ['value', linkOf(item.value)]]);
   return writeLink([
-    'function',
+    item.kind==='closure'?'closure':'function',
     item.name,
+    ...(item.kind==='closure'?[['environment',encodeWord(JSON.stringify(item.environment))],['captures',...item.captures.map(capture=>[capture.name,capture.type])]]:[]),
     ...flag,
     ...(item.lossless?[['lossless']]:[]),
     ...(item.conditionalInputs?[['conditional-inputs']]:[]),
@@ -582,7 +605,7 @@ function linkOf(expr) {
  * @returns {Array<object>}
  */
 export function fromLino(text) {
-  return parseLinks(text).filter((link) => link[0] === 'function' || link[0] === 'constant').map(itemOf);
+  return parseLinks(text).filter((link) => ['function','constant','closure'].includes(link[0])).map(itemOf);
 }
 
 function itemOf(link) {
@@ -591,7 +614,8 @@ function itemOf(link) {
     return { kind: 'constant', name: link[1], exported, type: field(link, 'type')[1], value: exprOf(field(link, 'value')[1]) };
   }
   return {
-    kind: 'function',
+    kind: link[0],
+    ...(link[0]==='closure'?{environment:JSON.parse(textOf(field(link,'environment')[1])),captures:field(link,'captures').slice(1).map(([name,type])=>({name,type}))}:{}),
     name: link[1],
     exported,
     ...(link.some(part=>Array.isArray(part)&&part[0]==='lossless')?{lossless:true}:{}),
