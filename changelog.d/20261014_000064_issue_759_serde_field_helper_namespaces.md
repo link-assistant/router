@@ -1,0 +1,1 @@
+Added original Serde field-helper syntax/source inputs for bare field defaults and bounded predicate paths. Candidates retain private-issuer obligations and grant no generated output, runtime, Copy, Drop or const authority.
