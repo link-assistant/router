@@ -46,27 +46,29 @@ test('actual original struct/enum routes share the verified Copy sink without tr
   ]){const proof=proveBuiltinDeriveBangFootprint(selected(source));assert.equal(proof.selectedOwnerBangComplete,true);assert.equal(proof.generatedImplBehavior,false,'Even invalid Copy implementations do not become callable/ownership certificates');}
 });
 
-test('remaining unsupported callbacks preserve recipes while source-closed fieldless Debug stays independent',()=>{
+test('source-closed Clone Hash and fieldless Debug retain independent original callback recipes',()=>{
   const args=selected('#[derive(Clone,Debug,Copy,PartialEq,Eq,Hash,serde::Serialize)] pub enum Payload { A,B }');
   for(const name of ['Clone','Hash']){
     const plan=planBuiltinDeriveBangOutput({...args,invocation:{...args.invocation,path:[name]}});
     assert.equal(isBuiltinDeriveBangPlan(plan),true);assert.equal(plan.closed,false);assert.equal(plan.generatedImplBehavior,false);
     assert.ok(plan.callbackRecipes.length);assert.ok(plan.conditionalOutputs.length);
-    assert.throws(()=>proveBuiltinDeriveBangFootprint({...args,invocation:{...args.invocation,path:[name]}}),/callback\/conditional AST output obligations/);
+    const output=proveBuiltinDeriveBangFootprint({...args,invocation:{...args.invocation,path:[name]}});
+    assert.equal(output.selectedOwnerBangComplete,true);assert.equal(output.generatedImplBehavior,false);
+    assert.equal(output.dimensions.typeNamespaceComplete,false);assert.equal(output.dimensions.valueNamespaceComplete,false);
   }
   const debug=planBuiltinDeriveBangOutput({...args,invocation:{...args.invocation,path:['Debug']}});assert.ok(debug.conditionalOutputs.includes('FmtDebug None/Shallow/Full'));
   const debugOutput=proveBuiltinDeriveBangFootprint({...args,invocation:{...args.invocation,path:['Debug']}});assert.equal(debugOutput.selectedOwnerBangComplete,true);assert.equal(debugOutput.generatedImplBehavior,false);assert.equal(debugOutput.route.branches.length,2);
   const clone=planBuiltinDeriveBangOutput({...args,invocation:{...args.invocation,path:['Clone']}});assert.ok(clone.conditionalOutputs.includes('resolver.has_derive_copy chooses simple/full'));
 });
 
-test('joined per-owner context admits only Copy plus independently closed Serde output',()=>{
+test('joined per-owner namespace proofs keep invalid Copy ownership independent',()=>{
   const args=selected('#[derive(Copy,serde::Serialize)] pub struct Payload { value:u8 }');
   const context=createDeriveBangContext({deriveContext:args.context});assert.equal(context.certificates[0].dimensions.bangMacroComplete,true);
   const bindings=resolveModuleBindings({modules:args.modules,compilationProfile:PRODUCTION_PROFILE,deriveContext:args.context,deriveBangContext:context,externalModules:deriveFootprintExternalModules(args.context)});
   assert.equal(bindings.scopes.find(scope=>scope.file==='src/model.rs').unresolvedBangMacroScope,false);
   const other=selected('#[derive(Clone,Copy,serde::Serialize)] pub struct Payload { value:u8 }');
   assert.equal(createDeriveBangContext({deriveContext:other.context}).certificates[0].dimensions.bangMacroComplete,true);
-  const unproved=selected('#[derive(Clone,Copy,serde::Serialize)] pub struct Payload { value:String }');assert.equal(createDeriveBangContext({deriveContext:unproved.context}).certificates[0].dimensions.bangMacroComplete,false);
+  const unproved=selected('#[derive(Clone,Copy,serde::Serialize)] pub struct Payload { value:String }'),output=createDeriveBangContext({deriveContext:unproved.context});assert.equal(output.certificates[0].dimensions.bangMacroComplete,true);assert.deepEqual(output.certificates[0].residualOwners,[]);assert.equal(output.generatedImplBehavior,false);
 });
 
 test('fake builtin invocations source fragments and detached certificates cannot create closure',()=>{
@@ -106,7 +108,7 @@ test('complete unchanged SubscriptionProvider and CatalogRecord preserve full-gr
   const {context,provider,record}=completeOriginalBuiltin;
   const outputs=createDeriveBangContext({deriveContext:context});
   const providerOutput=outputs.certificates.find(value=>value.source===provider.source&&value.span.start===provider.span.start);assert.equal(providerOutput.dimensions.bangMacroComplete,false);assert.ok(providerOutput.residualOwners.some(owner=>owner.target?.[0]==='schemars'));
-  assert.equal(outputs.certificates.find(value=>value.source===record.source&&value.span.start===record.span.start).dimensions.bangMacroComplete,false);
+  const recordOutput=outputs.certificates.find(value=>value.source===record.source&&value.span.start===record.span.start);assert.equal(recordOutput.dimensions.bangMacroComplete,true);assert.deepEqual(recordOutput.residualOwners,[]);assert.equal(recordOutput.selectedOwners.length,6);assert.equal(recordOutput.generatedImplBehavior,false);
 });
 
 // Additional Eq source bridge cases; no generated trait execution.
@@ -126,13 +128,13 @@ test('Eq callback traces original type-only Local/Stmt/Block/Fn/Impl constructor
   assert.deepEqual(route.constructionFlow.constantBranches,['Const::Yes','Const::No']);
 });
 
-test('unit Eq fieldless routes close without enabling other builtin owners or traits',()=>{
+test('unit Eq and Clone fieldless routes close independently without trait execution',()=>{
   for(const source of ['#[derive(Eq,serde::Serialize)] pub struct Payload;','#[derive(Eq,serde::Serialize)] pub enum Payload { A,B }']){
     const args=selected(source,'Eq'),proof=proveBuiltinDeriveBangFootprint(args);assert.equal(proof.route.typedSource.assertionCount.maximum,0);
     const output=createDeriveBangContext({deriveContext:args.context});assert.equal(output.certificates[0].dimensions.bangMacroComplete,true);assert.equal(output.generatedImplBehavior,false);
   }
   const args=selected('#[derive(Clone,Eq,serde::Serialize)] pub struct Payload;','Eq');
-  assert.equal(createDeriveBangContext({deriveContext:args.context}).certificates[0].dimensions.bangMacroComplete,false);
+  const output=createDeriveBangContext({deriveContext:args.context});assert.equal(output.certificates[0].dimensions.bangMacroComplete,true);assert.deepEqual(output.certificates[0].residualOwners,[]);assert.equal(output.generatedImplBehavior,false);
 });
 
 test('Eq cloned field Type macros and nested conditional fields retain output obligations',()=>{
