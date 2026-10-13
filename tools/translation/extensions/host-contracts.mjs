@@ -9,6 +9,8 @@ import {pinnedPrimitiveFrom,parsePrimitiveFromBody,requirePrimitiveFromBody,hasS
 import {parsePrimitiveComparison,checkedPrimitiveCast,checkedPrimitiveShift,requirePrimitiveOperator} from './primitive-operators.mjs';
 import {sourcePrimitiveAlias} from './primitive-type-aliases.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
+import {captureSourceConversionScope} from './source-conversion-scope.mjs';
+import {captureOriginalConversions,checkOriginalSourceInto,requireOriginalConversionEmission,prepareOriginalConversionFunction} from './source-conversion-body.mjs';
 import {iteratorReceiverExpected} from './iterators.mjs';
 import {itemConfiguration} from '../cfg-profile.mjs';
 import {createHash} from 'node:crypto';
@@ -202,6 +204,11 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
     return {k:'routerIntegerParse',object,args,instantiation,span:range};
   }
   method(object,name,args,range) {
+    if(name.value==='into'){
+      let sourceConversionScope=null,sourceConversionRefusal=null;
+      try{sourceConversionScope=captureSourceConversionScope(this,name.start);}catch(error){if(!(error instanceof TypeError))throw error;sourceConversionRefusal=error.message;}
+      return {k:'routerSourceIntoCall',object,args,sourceConversionScope,sourceConversionRefusal,fallback:super.method(object,name,args,range),span:range};
+    }
     if(['is_none_or','is_some_and','map_or_else'].includes(name.value))return {k:'routerPinnedOptionCallbackCall',method:name.value,object,args,span:range};
     if(name.value==='as_ref')return {k:'routerPinnedSharedBodyCall',object,args,span:range};
     if(['unwrap_or','unwrap_or_default','unwrap_or_else','or_else'].includes(name.value))return {k:'routerPinnedStandardBodyCall',method:name.value,object,args,span:range};
@@ -446,6 +453,11 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
     return contracts.length?this.hostCall(contracts,args,env,path,expected,range):super.application(head,args,env,path,expected,range);
   }
   expr(node,env,path,expected,allowLiteral=false) {
+    if(node.k==='routerSourceIntoCall'){
+      const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,'into','shared');
+      if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
+      return checkOriginalSourceInto(this,node,receiver,env,path,expected);
+    }
     let value=this.hostExpression(node,env,path,expected,allowLiteral);
     if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};
     value=this.qualifyOwnershipResult?.(node,value,expected,path)??value;
@@ -659,6 +671,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
   program(surface) {
     captureOriginalMoveTuples(this,surface);
     captureOriginalStandardCalls(this,surface);
+    captureOriginalConversions(this,surface);
     captureOptionNominals(this,surface);
     captureStaticArrays(this,surface);
     validateOriginalMethodAssociations(surface);
@@ -716,8 +729,9 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
-  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry);try{return super.fn(entry);}finally{restoreFrames?.();restoreCallbacks?.();restoreShared?.();restore?.();}}
+  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry);try{return super.fn(entry);}finally{restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreShared?.();restore?.();}}
   expr(node) {
+    if(node.k==='routerSourceConversion')return this.expr(requireOriginalConversionEmission(node,this));
     if(node.k==='routerOriginalCallbackLoan')return this.expr(requireOriginalSourceFrameEmission(this,node));
     if(node.k==='routerOriginalStandardFrame')return `(() => {\n${this.statements(requireOriginalSourceFrameEmission(this,node)).join('\n')}\n})()`;
     if(node.k==='routerOriginalSharedDomainGuard'){this.copyReceivers=true;return `(() => { const ${this.sharedGuardVariable} = ${this.expr(node.value)}; ml_assert_immutable_copy(${this.sharedGuardVariable}); return ${this.sharedGuardVariable}; })()`;}

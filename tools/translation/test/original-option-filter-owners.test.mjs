@@ -14,6 +14,7 @@ test('unchanged whole administrator source applies original TTL defaults and upp
  await verifyTypedTargets(result,api=>{assert.equal(api.DEFAULT_CLAIM_TTL_HOURS,8760n);assert.equal(api.clamp_ttl(none),8760n);for(const [hours,wanted]of [[-(1n<<63n),8760n],[-5n,8760n],[0n,8760n],[1n,1n],[5n,5n],[8759n,8759n],[8760n,8760n],[8761n,8760n],[(1n<<63n)-1n,8760n]])assert.equal(api.clamp_ttl(some(hours)),wanted);assert.throws(()=>api.clamp_ttl(some(1n<<63n)),TypeError);assert.throws(()=>api.clamp_ttl(some(1)),TypeError);},{childTimeoutMs:20000});
 });
 
-test('unchanged whole bridge control source retains later unsupported conversion refusals',()=>{
- const result=original('src/bridge_controls.rs');for(const name of ['untranslatable_moderation','untranslatable_chat_prediction']){const refusal=result.meta.refused.find(item=>item.name===name);assert.ok(refusal);assert.match(refusal.message,/method into: outside the portable core/);assert.equal(result.meta.executable.some(item=>item.name===name),false);}
+test('unchanged whole bridge control source executes original filtered Into string conversions',{timeout:60000},async()=>{
+ const result=original('src/bridge_controls.rs');for(const name of ['untranslatable_moderation','untranslatable_chat_prediction']){assert.ok(result.meta.executable.some(item=>item.name===name));assert.equal(result.meta.refused.some(item=>item.name===name),false);}
+ await verifyTypedTargets(result,api=>{for(const [name,field]of [['untranslatable_moderation','moderation'],['untranslatable_chat_prediction','prediction']]){assert.deepEqual(api[name](none),none);assert.deepEqual(api[name](some(canonical(null))),none);for(const value of [false,true,0,'',[],{},'É😀'])assert.deepEqual(api[name](some(canonical(value))),some(`${field} cannot be represented by the selected provider`));assert.throws(()=>api[name](some('portable lookalike')),TypeError);}},{childTimeoutMs:20000});
 });
