@@ -23,9 +23,10 @@ confers no type-owner resolution, complete derive output, bang closure,
 syntax while their schema implementation remains unresolved.
 
 The tests inspect the complete unchanged `src/clients.rs` and prove its actual
-`ClientKind` String helper confinement. That original declaration remains
-refused because Clap `ValueEnum` and `value` helpers need independent original
-source proofs. This batch adds zero whole original modules by itself. A fixture
+`ClientKind` String helper confinement. This Schemars batch alone leaves Clap
+`ValueEnum` and `value` helpers requiring independent original source proofs;
+the later Clap source frontend supplies those bounded input/output proofs.
+This Schemars batch adds zero whole original modules by itself. A fixture
 with the same type override independently executes its borrowed string helper
 in emitted JavaScript and strictly compiled TypeScript. Node and Bun both run
 the original-source, adversarial, sealed-proof and nearby derive regression

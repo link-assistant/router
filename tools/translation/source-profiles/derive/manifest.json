@@ -18,6 +18,15 @@
         "chrono04"
       ],
       "defaultFeatures": true
+    },
+    "clap": {
+      "version": "4",
+      "features": [
+        "derive",
+        "env",
+        "string"
+      ],
+      "defaultFeatures": true
     }
   },
   "packages": [
@@ -296,6 +305,81 @@
         "src/rcvec.rs": "d6e4c1ea42f75e63465fce50ca83f9257536ccdc0345fe78b0037aa2c08c5e37",
         "src/rustc_literal_escaper.rs": "fb3f2f93a09b84f539e6ef514d4b403ee16f2112ff04642099170a60828318ee",
         "src/wrapper.rs": "21a563ef1eec685e3d60ee0479812f212c578dc6d405053b7827c46f6801fdc6"
+      }
+    },
+    {
+      "name": "clap",
+      "version": "4.6.7",
+      "archive": "clap-4.6.7.crate",
+      "sha256": "aa8876b300ab35ba921adea3dfd70157a46249b33f95c9084ae5709785478946",
+      "bytes": 65831,
+      "url": "https://static.crates.io/crates/clap/clap-4.6.7.crate",
+      "members": {
+        "Cargo.toml": "4c4829a1a916d2c47e3299ca4c3e607721fc62998d2d3628afc10a85f0a8169a",
+        "LICENSE-APACHE": "249fdb6694467dd615b259f7ddde07be3f8ae5a72cecebb0e24f6629af4215fe",
+        "LICENSE-MIT": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+        "src/lib.rs": "7cc12d03be294e8fe5014d27d54102a9d16f2f8c0ca7213e5c4542be3354a665"
+      }
+    },
+    {
+      "name": "clap_builder",
+      "version": "4.6.7",
+      "archive": "clap_builder-4.6.7.crate",
+      "sha256": "ec0797fb7aeb1406c84efac526901f7ec3ead2124f946b494e72879d4b54704d",
+      "bytes": 171709,
+      "url": "https://static.crates.io/crates/clap_builder/clap_builder-4.6.7.crate",
+      "members": {
+        "Cargo.toml": "6713390509693d70b80f30cecf55b09b4cc79d536dbd3252d2cacfb1abca9727",
+        "LICENSE-APACHE": "249fdb6694467dd615b259f7ddde07be3f8ae5a72cecebb0e24f6629af4215fe",
+        "LICENSE-MIT": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+        "src/builder/mod.rs": "c2b552aced3607ad926c72ad6fb4ccf7dfb0df57185084f0c0427b9b5136b1c8",
+        "src/builder/possible_value.rs": "3c174a11e4e893adb0912084ea2f0432258e773871f8c41813df176917cace08",
+        "src/derive.rs": "9435f58f2ebcc16aba2bbc3a5374e0dfd4fe1d1bfc4cd6dc5ca8a08d4e9e9680",
+        "src/lib.rs": "bd8987448be4ace2a3501375f6850261252f3485ea1c9879e137a2245359fbf5"
+      }
+    },
+    {
+      "name": "clap_derive",
+      "version": "4.6.7",
+      "archive": "clap_derive-4.6.7.crate",
+      "sha256": "f9c751b79415d4e559e3d1fcf128e09e720eb673a06d26cf6f392d37d75b66e0",
+      "bytes": 33942,
+      "url": "https://static.crates.io/crates/clap_derive/clap_derive-4.6.7.crate",
+      "members": {
+        "Cargo.toml": "6055bb6c6476792910d3e50a1edd321fda0bf4ae48e0a2d3cb07e89e4736a676",
+        "LICENSE-APACHE": "249fdb6694467dd615b259f7ddde07be3f8ae5a72cecebb0e24f6629af4215fe",
+        "LICENSE-MIT": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+        "src/attr.rs": "94861c00bc57d3b063d6042673752b6b708fbfa12f75aa02f2e414fa5da64bbf",
+        "src/derives/args.rs": "ef2fe1a4d886b42984c29b59bdeb1c86949c023ac66fa48bef22eb9d2aa00016",
+        "src/derives/into_app.rs": "fb1d0708ede65e15ae3ec80ced5a38fa4960c372ceae65c916b48bcc9bd5a9dc",
+        "src/derives/mod.rs": "660c5d27942993d7331025ddfc29ee4c1d7f3a7f49ae2ee2293624e6b2abd952",
+        "src/derives/parser.rs": "11af0826ebec312d44dfec3d94d8c516e4bf9fdb1bd0712e26fd9207b643fbc0",
+        "src/derives/subcommand.rs": "dc86761722cd4b8f781e343cd8e9142aa54fcdd937ec7caff1028605204daff9",
+        "src/derives/value_enum.rs": "251a794bfa7e8a267abca8db518175ddfaeb6b68e75591742bae06f986da722a",
+        "src/dummies.rs": "f3217ddec1c671e37c6efbc471cda390b0a98092c1bc8b019b02ed3379dca498",
+        "src/item.rs": "e62a263bbfece319b5b844d592b2f362f9b9c3f4c5b04759d4d14edb66aca67f",
+        "src/lib.rs": "ecb7d751f03cb24ae5ba7c963d2298716d67cae9baa16c7b301b198e810ca893",
+        "src/macros.rs": "3f60c5673c005548bbcd47f84e1f0fc6d1fb190d467681c3d9c52014bb4c6d36",
+        "src/utils/doc_comments.rs": "1f106617e61102c267f69ab82aadf38174c75e62a065eb751014ec885e349069",
+        "src/utils/error.rs": "977fd26c7ec7c33e20b1cf20944ed1e529b52a8f733694e30c211f97c8c32e72",
+        "src/utils/mod.rs": "d7fd1c1a8f45816b49d22c224546dcd11939c7c5fe7d38944e76abe1d78e13d6",
+        "src/utils/spanned.rs": "4ed8b8d350f7ee3c15a3a108856c6fb011637fa3a583ae128573061bd5291faf",
+        "src/utils/ty.rs": "8e9a298c7b990a1d067ad9a883f3ffbf27cd0adb05cc7e348eafb7a4d46dbb79"
+      }
+    },
+    {
+      "name": "heck",
+      "version": "0.5.0",
+      "archive": "heck-0.5.0.crate",
+      "sha256": "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea",
+      "bytes": 11517,
+      "url": "https://static.crates.io/crates/heck/heck-0.5.0.crate",
+      "members": {
+        "Cargo.toml": "db0e63b72de157a2f5194458b73b6542c3f4e17e33ab34a71d0260bfc035467e",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
+        "src/kebab.rs": "3075cf72c95404e6b5800494a5d8a3c5f6dd5066593ddb249cefcb376e30b450",
+        "src/lib.rs": "bffcc5144da472d2f915696d4654f7608e60861d168d3dd07b5dcb8f14211153"
       }
     }
   ],

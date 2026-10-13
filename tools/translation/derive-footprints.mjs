@@ -8,6 +8,8 @@ import {inspectDeriveInput,STANDARD_LAYOUT_DERIVES} from './derive-inputs.mjs';
 import {inertInnerLintItem} from './tool-attributes.mjs';
 import {builtinDefaultDependencyProof} from './derive-builtin-default.mjs';
 import {proveSchemarsWithTypeConfinement} from './derive-schemars-with.mjs';
+import {proveClapValueEnumSourceOutput} from './derive-clap-value-enum.mjs';
+import {macroBindingAffects} from './macro-subnamespaces.mjs';
 export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
@@ -48,14 +50,14 @@ function actualOwner(path,scope,scopes,external,dependency) {
   }
   if(!binding||binding.status!==undefined&&binding.status!=='resolved'||binding.macroKind!=='derive'||binding.deriveDependencyDigest!==dependency.digest)return null;
   const target=key(binding.target);
-  if(!['serde::Serialize','serde::Deserialize','schemars::JsonSchema'].includes(target))return null;
+  if(!['serde::Serialize','serde::Deserialize','schemars::JsonSchema','clap::ValueEnum'].includes(target))return null;
   return {path:[...path],target:[...binding.target],source:binding.source,sourceSpan:binding.span??null,via:binding.via??'locked-external-path',dependencyDigest:dependency.digest};
 }
 
 export function createDeriveFootprintContext({modules,dependencies,compilationProfile:profileInput=null,externalModules=new Map()}={}) {
   if(!isDeriveDependencyProof(dependencies)||!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Derive context requires sealed dependencies and original tracked modules');
   const profile=compilationProfile(profileInput),external=new Map(externalModules);
-  for(const table of external.values())if(table.bindings?.some(binding=>binding.deriveDependencyDigest||['serde','schemars'].includes(binding.target?.[0])))throw new TypeError('Derive dependency paths require privately verified registry inputs, not caller external aliases');
+  for(const table of external.values())if(table.bindings?.some(binding=>binding.deriveDependencyDigest||['serde','schemars','clap'].includes(binding.target?.[0])))throw new TypeError('Derive dependency paths require privately verified registry inputs, not caller external aliases');
   modules=modules.map(module=>({...module,items:originalSourceModuleItems(module).filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive')}));
   for(const [path,table]of deriveExternalModules(dependencies)) {
     const existing=external.get(path);
@@ -108,13 +110,22 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           const proof=builtinDefaultDependencyProof(dependencies);
           builtinDefault={...input.builtinDefault,owner:{target:['core','default','Default'],resolution:'closed-standard-attribute-prelude',sourceProfileDigest:proof.digest},dependencyProof:proof};
         }
+        const clapOwner=owners.find(owner=>owner.target.join('::')==='clap::ValueEnum');
+        const clapValueEnumOutput=clapOwner?proveClapValueEnumSourceOutput({dependencies,source:module.source.slice(item.start,item.end)}):null;
+        let clapGeneratedAttributeOwners=null;
+        if(clapValueEnumOutput) {
+          const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
+          if(ancestors.some(candidate=>!attributeClosure.get(moduleScopeKey(candidate))||candidate.bindings.some(binding=>['allow','automatically_derived'].includes(binding.name)&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Generated Clap builtin attributes have an unresolved or shadowed original ancestor');
+          clapGeneratedAttributeOwners={names:['allow','automatically_derived'],scopes:ancestors.map(candidate=>({source:candidate.file,module:candidate.path,originalAttributeFootprintClosed:true})),bindingsDigest:hash(JSON.stringify(baseline)),generatedAttributeOwnersResolved:true};
+        }
         for(const helper of input.attributes.filter(attribute=>attribute.helpers)) {
           if(helper.name==='schemars'&&!owners.some(owner=>owner.target[0]==='schemars')||helper.name==='serde'&&!owners.some(owner=>['serde','schemars'].includes(owner.target[0])))throw new TypeError('Helper attribute lacks an actual declaring derive owner');
+          if(helper.name==='value'&&!clapOwner)throw new TypeError('Value helper lacks an actual declaring Clap ValueEnum owner');
           if(helper.name==='schemars')for(const entry of helper.helpers.filter(entry=>entry.key==='with')) {
             entry.namespaceInput={...entry.namespaceInput,outputConfinement:proveSchemarsWithTypeConfinement({dependencies,value:entry.value,position:helper.position})};
           }
         }
-        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(input.lifetimeParameters?{lifetimeParameters:input.lifetimeParameters}:{}),...(input.genericParameters?{genericParameters:input.genericParameters}:{}),...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs have one anonymous const group; standard error outputs cannot introduce names. Original data and inert helper syntax remain unchanged.'};
+        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(clapValueEnumOutput?{clapValueEnumOutput,clapGeneratedAttributeOwners}:{}),...(input.lifetimeParameters?{lifetimeParameters:input.lifetimeParameters}:{}),...(input.genericParameters?{genericParameters:input.genericParameters}:{}),...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs retain anonymous const groups or a source-proved Clap trait impl; original data and inert helper syntax remain unchanged. Unsupported output branches retain independent obligations.'};
         const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView});byId.set(invocationId(module,item),certificate);
       } catch(error){diagnostics.push({source:module.file,span:{start:item.start,end:item.end},name:item.name,message:error.message});}
     }

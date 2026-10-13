@@ -72,14 +72,13 @@ test('type override removes bounded attribute uncertainty for executable borrowe
   await verifyTypedTargets(result,api=>{assert.equal(api.selected('router'),true);assert.equal(api.selected('Router'),false);},{childTimeoutMs:30000});
 });
 
-test('unchanged whole original ClientKind helper proves String confinement while Clap and full JsonSchema remain refused',()=>{
+test('unchanged whole original ClientKind helper proves String confinement while full JsonSchema remains unresolved',()=>{
   const source=readFileSync(new URL('src/clients.rs',root),'utf8');assert.equal(hash(source),'2f12c5aa34a65ec62b793902cdefe8f36c1b6c414c673e6499ef40c7dbfb8c2d');
   const item=sourceItems(source).find(item=>item.name==='ClientKind'),tokens=item.tokens,at=tokens.findIndex((token,index)=>token.text==='schemars'&&tokens[index+1]?.text==='(');
   assert.ok(at>=0);assert.deepEqual(tokens.slice(at,at+6).map(token=>token.text),['schemars','(','with','=','"String"',')']);
   const literal=tokens[at+4],value=JSON.parse(literal.text),proof=proveSchemarsWithTypeConfinement({dependencies,value,position:'container'});
   assert.equal(source.slice(literal.start,literal.end),'"String"');assert.deepEqual(proof.outputType.segments,['String']);assert.deepEqual(proof.helperDefinitions,[]);
   const actual=createDeriveFootprintContext({modules:[{file:'src/clients.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE});
-  assert.equal(actual.certificates.some(certificate=>certificate.name==='ClientKind'),false);
-  assert.ok(actual.diagnostics.some(entry=>entry.name==='ClientKind'));
-  assert.throws(()=>inspectDeriveInput(item,PRODUCTION_PROFILE),/Unknown procedural or helper attribute.*value/);
+  const certificate=actual.certificates.find(certificate=>certificate.name==='ClientKind');assert.ok(certificate);assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);
+  assert.ok(inspectDeriveInput(item,PRODUCTION_PROFILE).attributes.some(attribute=>attribute.name==='value'));
 });

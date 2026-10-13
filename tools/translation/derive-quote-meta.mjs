@@ -39,7 +39,7 @@ function originalTrees(origin){
         if(token.text!==close)throw new TypeError('Generator original delimiter mismatch');
         return {nodes:result,end:span.end};
       }
-      if(pairs[token.text]){const body=list(pairs[token.text],depth+1);result.push({tag:'group',delimiter:token.text,nodes:body.nodes,span:{start:span.start,end:body.end}});}
+      if(Object.hasOwn(pairs,token.text)){const body=list(pairs[token.text],depth+1);result.push({tag:'group',delimiter:token.text,nodes:body.nodes,span:{start:span.start,end:body.end}});}
       else result.push({tag:'token',text:token.text,tokenType:token.type,span});
     }
     if(close)throw new TypeError('Generator original delimiter is unterminated');

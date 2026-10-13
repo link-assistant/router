@@ -79,5 +79,5 @@ export function deriveDependencyProfile({manifest,lock}) {
 }
 export function deriveExternalModules(proof) {
   if(!isDeriveDependencyProof(proof))throw new TypeError('Unsealed derive dependency evidence');
-  return new Map([['serde',['Serialize','Deserialize']],['schemars',['JsonSchema']]].map(([name,derives])=>[name,{complete:false,kind:'mod',bindings:derives.map(derive=>({name:derive,namespace:'macro',macroKind:'derive',kind:'proc-macro-derive',target:[name,derive],source:'locked-derive-source:'+proof.digest,deriveDependencyDigest:proof.digest}))}]));
+  return new Map([['serde',['Serialize','Deserialize']],['schemars',['JsonSchema']],['clap',['ValueEnum']]].map(([name,derives])=>[name,{complete:false,kind:'mod',bindings:derives.map(derive=>({name:derive,namespace:'macro',macroKind:'derive',kind:'proc-macro-derive',target:[name,derive],source:'locked-derive-source:'+proof.digest,deriveDependencyDigest:proof.digest}))}]));
 }

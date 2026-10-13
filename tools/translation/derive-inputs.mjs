@@ -62,7 +62,10 @@ function helper(body,position,kind) {
       const parsed=boundedSchemarsNumericHelper(values,at-1,position);at=parsed.end;namespaceInput=parsed.evidence;value=parsed.evidence.bounds;
     } else {
       if(values[at]?.text==='='){at++;value=literal(values[at++]);}
-      if(body[0].text==='schemars'&&key.text==='with') {
+      if(body[0].text==='value') {
+        if(position!=='variant'||kind!=='enum'||!['name','alias'].includes(key.text)||value===null)throw new TypeError('Clap value helper requires bounded variant name or alias strings');
+        namespaceInput={profile:'bounded-clap-value-variant-literal-v1',generatedHelperBehavior:false};
+      } else if(body[0].text==='schemars'&&key.text==='with') {
         if(value===null)throw new TypeError('Schemars with requires an original type string literal');
         namespaceInput=boundedSchemarsWithType(value,position);
       } else if(body[0].text==='serde'&&['skip_serializing_if','with'].includes(key.text)) {
@@ -108,7 +111,7 @@ export function inspectDeriveInput(item,profile) {
       if(name==='derive') {
         if(!header||body[1]?.text!=='('||body.at(-1)?.text!==')')throw new TypeError('Unregistered nested derive input');
         attribute.derives=paths(body.slice(2,-1));derives.push(...attribute.derives.map(path=>({path,attributeSpan:attribute.span})));
-      } else if(['serde','schemars'].includes(name))attribute.helpers=helper(body,position,item.term);
+      } else if(['serde','schemars','value'].includes(name))attribute.helpers=helper(body,position,item.term);
       else if(name==='default') {
         if(position!=='variant'||body.length!==1)throw new TypeError('Builtin default requires a plain enum-variant helper');
       }
