@@ -146,6 +146,18 @@ export function createQuoteFragmentCompiler(inventory){
     const lift=nodes=>nodes.map(node=>node.kind==='group'?{tag:'group',delimiter:node.delimiter,nodes:lift(node.children),span:node.span}:{tag:'token',text:node.text,tokenType:lifetime(node)?'lifetime':node.type,span:node.span});
     return seal(lift(roots),{...provenance,category:'original syn::Type',sourceSha256:hash(source)});
   };
+  const sourceExpression=(source,provenance)=>{
+    if(typeof source!=='string'||Buffer.byteLength(source)>4096)throw new TypeError('Original syn Expr exceeds its bounded source grammar');
+    const roots=originalMacroTrees(source,{maxBytes:4096,maxTokens:128,maxDepth:8});
+    const decimal=node=>node?.kind==='token'&&node.type==='number'&&/^\d{1,38}$/u.test(node.text)&&BigInt(node.text)<2n**128n;
+    const identifier=node=>node?.kind==='token'&&node.type==='ident'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(node.text)&&!['as','async','await','const','dyn','else','extern','false','fn','for','if','impl','in','let','loop','match','mod','move','mut','return','struct','true','unsafe','use','where','while'].includes(node.text);
+    let category;
+    if(roots.length===1&&(decimal(roots[0])||['true','false'].includes(roots[0]?.text)))category='Expr::Lit';
+    else if(roots.length===1&&roots[0]?.type==='string'){for(let at=1;at<roots[0].text.length-1;at++)if(roots[0].text[at]==='\\'&&!['"','\\','n','r','t'].includes(roots[0].text[++at]))throw new TypeError('Original syn Expr string escape needs its independent Rust literal route');token(roots[0].text,'string',provenance);category='Expr::Lit';}
+    else if([4,5].includes(roots.length)&&decimal(roots[0])&&roots[1]?.text==='.'&&roots[2]?.text==='.'&&roots[1].span.end===roots[2].span.start&&decimal(roots.at(-1))&&(roots.length===4||roots[3]?.text==='='&&roots[2].span.end===roots[3].span.start))category='Expr::Range';
+    else {let at=roots[0]?.text==='::'?1:0;if(!identifier(roots[at++]))throw new TypeError('Original syn Expr requires a bounded literal, path or closed integer range');while(at<roots.length)if(roots[at++]?.text!=='::'||!identifier(roots[at++]))throw new TypeError('Original syn Expr path excludes calls, macros, generics and effects');category='Expr::Path';}
+    return seal(roots.map(node=>({tag:'token',text:node.text,tokenType:node.type,span:node.span})),{...provenance,category:'original syn::Expr syntactic subset',expressionKind:category,sourceSha256:hash(source)});
+  };
   function instantiate(template,bindings,provenance){
     if(!templates.has(template)||!state.all.includes(template)||!(bindings instanceof Map))throw new TypeError('Generator route requires a genuine template and checked bindings');
     let cells=0;
@@ -178,7 +190,7 @@ export function createQuoteFragmentCompiler(inventory){
   // This compiler is a trusted source-profile implementation, not a binder
   // certificate API. The final route still must verify every original binding,
   // output macro owner and generated attribute before returning authority.
-  return Object.freeze({token,sourceType,byteString:(value,provenance)=>{
+  return Object.freeze({token,sourceType,sourceExpression,byteString:(value,provenance)=>{
     if(typeof value!=='string'||Buffer.byteLength(value)>4096||/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(value))throw new TypeError('Literal::byte_string requires bounded original Unicode scalar bytes');
     const text='b"'+[...Buffer.from(value,'utf8')].map(byte=>'\\x'+byte.toString(16).padStart(2,'0')).join('')+'"';
     // Bytes are a single literal token, including quotes/backslashes/non-ASCII

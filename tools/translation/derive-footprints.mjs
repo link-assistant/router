@@ -85,7 +85,16 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
             if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::Args')&&ancestors.some(candidate=>candidate.bindings.some(binding=>binding.namespace==='type'&&binding.name==='clap'&&(binding.status!=='resolved'||JSON.stringify(binding.target)!==JSON.stringify(['clap'])))))throw new TypeError('Sibling Args generated Clap macro path is shadowed in an original ancestor');
           }
           if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::ValueEnum'))output.valueEnum=proveClapValueEnumSourceOutput({dependencies,source:module.source.slice(candidate.start,candidate.end)});
-          if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::Args'))output.args=proveClapArgsSourceOutput({dependencies,source:module.source,span:{start:candidate.start,end:candidate.end}});
+          if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::Args')) {
+            output.args=proveClapArgsSourceOutput({dependencies,source:module.source,span:{start:candidate.start,end:candidate.end}});
+            if(output.args.outputs.some(branch=>branch.concatExpansions.length)) {
+              const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
+              if(ancestors.some(candidate=>candidate.bindings.some(binding=>binding.name==='concat'&&macroBindingAffects(binding,'bang'))||candidate.unresolvedImports.some(entry=>entry.glob||entry.name==='concat')||candidate.bindings.some(binding=>binding.namespace==='type'&&['std','core'].includes(binding.name))))throw new TypeError('Generated Args concat caller has an unresolved import or shadow in an original ancestor');
+              if(ancestors.some(candidate=>candidate.unresolvedBangMacroScope!==false))throw new TypeError('Generated Args concat caller requires independent original bang/export ancestor closure; scalar quote output remains unproved for namespace admission');
+              // A literal output proof cannot itself mint caller resolution.
+              throw new TypeError('Generated Args concat caller lacks a sealed original builtin binding certificate');
+            }
+          }
           if(Object.keys(output).length)clapSourceOutputs.set(invocationId(module,candidate),output);
           return true;
         }catch(error){clapSourceRefusals.set(invocationId(module,candidate),error.message);return false;}

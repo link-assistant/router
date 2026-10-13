@@ -23,7 +23,7 @@ test('literal Args helpers retain original token spans without helper execution'
     const parsed=boundedClapArgHelper(rustTokens(source),0,'field','struct');assert.equal(parsed.key,key);assert.equal(parsed.value,value);assert.equal(parsed.evidence.generatedHelperBehavior,false);
     for(const token of parsed.evidence.tokens)assert.equal(source.slice(token.span.start,token.span.end),token.text);
   }
-  for(const source of ['global','global = make()','env = make()','value_parser = parser','default_value_t = 4','num_args = 0..=1','long = "\\b"'])assert.throws(()=>boundedClapArgHelper(rustTokens(source),0,'field','struct'),TypeError,source);
+  for(const source of ['global','global = make()','env = make()','value_parser = parser()','default_value_t = make!()','num_args = start..=end','long = "\\b"'])assert.throws(()=>boundedClapArgHelper(rustTokens(source),0,'field','struct'),TypeError,source);
   assert.throws(()=>boundedClapArgHelper(rustTokens('long'),0,'container','struct'),TypeError);
 });
 
@@ -46,8 +46,8 @@ test('actual constructor updater positional and long branches retain raw IDs cas
 });
 
 test('payload type/helper/documentation extensions and unrelated generated owners stay refused',()=>{
-  for(const fields of ['value:String','value:Vec<u8>','value:Vec<Vec<String>>','value:emit!()','#[arg(value_parser=custom)]value:Vec<String>','#[arg(global)]value:Vec<String>','#[arg(long,long)]value:Vec<String>','#[arg(long="a",long="b")]value:Vec<String>','#[command(flatten)]value:Vec<String>','/// first\n/// second\nvalue:Vec<String>','/// **bold**\nvalue:Vec<String>','#[doc="text"]value:Vec<String>'])assert.equal(context('#[derive(clap::Args)] struct Options{'+fields+'}').certificates.length,0,fields);
-  for(const source of ['#[derive(clap::Args)] struct Options<T>{value:Vec<String>}', '/// first\n/// second\n#[derive(clap::Args)] struct Options{value:Vec<String>}', '#[derive(clap::Args)] #[command(rename_all="snake_case")] struct Options{value:Vec<String>}', 'mod clap; #[derive(clap::Args)] struct Options{value:Vec<String>}', '#[derive(serde::Serialize)] struct Options{#[arg(long)]value:Vec<String>}', 'use unknown::allow; #[derive(clap::Args)] struct Options{value:Vec<String>}', '#[derive(clap::Args)] struct Options{value:Vec<String>} #[unknown] struct Sibling;'])assert.equal(context(source).certificates.length,0,source);
+  for(const fields of ['value:String','value:Vec<u8>','value:Vec<Vec<String>>','value:emit!()','#[arg(value_parser=custom())]value:Vec<String>','#[arg(global)]value:Vec<String>','#[arg(long,long)]value:Vec<String>','#[arg(long="a",long="b")]value:Vec<String>','#[command(flatten)]value:Vec<String>','/// é\nvalue:Vec<String>','#[doc="\\b"]value:Vec<String>','#[doc=make!()]value:Vec<String>'])assert.equal(context('#[derive(clap::Args)] struct Options{'+fields+'}').certificates.length,0,fields);
+  for(const source of ['#[derive(clap::Args)] struct Options<T>{value:Vec<String>}', '/// é\n#[derive(clap::Args)] struct Options{value:Vec<String>}', '#[derive(clap::Args)] #[command(rename_all="snake_case")] struct Options{value:Vec<String>}', 'mod clap; #[derive(clap::Args)] struct Options{value:Vec<String>}', '#[derive(serde::Serialize)] struct Options{#[arg(long)]value:Vec<String>}', 'use unknown::allow; #[derive(clap::Args)] struct Options{value:Vec<String>}', '#[derive(clap::Args)] struct Options{value:Vec<String>} #[unknown] struct Sibling;'])assert.equal(context(source).certificates.length,0,source);
   assert.equal(context('#[derive(clap::Args)] struct Unproved{value:String} #[derive(serde::Serialize)] struct Sibling{ready:bool}').certificates.length,0,'unproved sibling Clap output cannot bootstrap another declaration namespace');
 });
 
