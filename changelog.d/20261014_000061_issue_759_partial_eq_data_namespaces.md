@@ -1,1 +1,1 @@
-Added a private-source plural AST literal reader for original compiler recipes that emit multiple implementations. The exactly-one reader retains its existing refusal behavior; no generated method execution is admitted.
+Added private-source plural AST literal reading and original PartialEq data output namespace closure, preserving both StructuralPartialEq and equality implementations, shared field projections and the unit-enum discriminant locals. Six original model derive obligations close; equality execution, ownership, Copy, no-Drop and const admission remain independent.

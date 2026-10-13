@@ -8,6 +8,7 @@ import {sourceItems} from './rust-structure.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
 import {liftBuiltinCloneAstRoute} from './builtin-clone-ast-route.mjs';
 import {liftBuiltinDebugAstRoute} from './builtin-debug-ast-route.mjs';
+import {liftBuiltinPartialEqAstRoute} from './builtin-partial-eq-ast-route.mjs';
 import {proveBuiltinScalarSourceOutput,assertBuiltinScalarSourceOutput} from './builtin-scalar-ast-route.mjs';
 import {attributeOwners} from './serde-bang-footprints.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal,originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText} from './builtin-derive-ast-meta.mjs';
@@ -74,6 +75,16 @@ function debugDataInput(state,context,certificate){
     if(attribute.position!=='container'&&attribute.name!=='doc'){const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original Debug nested attribute requires its genuine active helper owner');helpers.push(proof);}
   }return {input,helpers};
 }
+function partialEqDataInput(state,context,certificate){
+  const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+  for(const attribute of input.attributes){
+    if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
+      if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original PartialEq doc comment differs from its private source invocation');continue;
+    }
+    if(!certificate.attributes.some(row=>row.name===attribute.name&&row.position===attribute.position&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end))throw new TypeError('Original PartialEq attribute differs from the private source invocation');
+    if(attribute.position!=='container'&&attribute.name!=='doc'){const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original PartialEq nested attribute requires its genuine active helper owner');helpers.push(proof);}
+  }return {input,helpers};
+}
 export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}={}){
   const plan=planBuiltinDeriveBangOutput({context,certificate,invocation}),state=plans.get(plan);
   if(['Clone','Debug','Default'].includes(state.original.name)){
@@ -87,6 +98,11 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
     }
     const attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline',state.original.name,...certificate.attributes.map(attribute=>attribute.name)]));
     const evidence={schema:'builtin-scalar-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['generated builtin trait methods remain unlowered','other derive owners and original ancestor scopes require separate closed outputs','unsupported source layouts and compiler errors remain refused']};
+    const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
+  }
+  if(state.original.name==='PartialEq'){
+    const selected=partialEqDataInput(state,context,certificate),route=liftBuiltinPartialEqAstRoute({...state,original:state.original,input:selected.input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','PartialEq',...certificate.attributes.map(attribute=>attribute.name)]));
+    const evidence={schema:'builtin-partial-eq-data-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:selected.input,originalHelperOwners:selected.helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',implementations:2,structuralAssociatedItems:0,equalityAssociatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true,structuralAlways:'Const::No'}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['generated PartialEq/equality and intrinsic behavior remain unlowered','all other derives, original scopes, ownership and const eligibility require independent proofs']};
     const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
   }
   if(state.original.name==='Eq'){

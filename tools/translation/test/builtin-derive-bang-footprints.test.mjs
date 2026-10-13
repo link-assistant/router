@@ -48,7 +48,7 @@ test('actual original struct/enum routes share the verified Copy sink without tr
 
 test('remaining unsupported callbacks preserve recipes while source-closed fieldless Debug stays independent',()=>{
   const args=selected('#[derive(Clone,Debug,Copy,PartialEq,Eq,Hash,serde::Serialize)] pub enum Payload { A,B }');
-  for(const name of ['Clone','PartialEq','Hash']){
+  for(const name of ['Clone','Hash']){
     const plan=planBuiltinDeriveBangOutput({...args,invocation:{...args.invocation,path:[name]}});
     assert.equal(isBuiltinDeriveBangPlan(plan),true);assert.equal(plan.closed,false);assert.equal(plan.generatedImplBehavior,false);
     assert.ok(plan.callbackRecipes.length);assert.ok(plan.conditionalOutputs.length);
