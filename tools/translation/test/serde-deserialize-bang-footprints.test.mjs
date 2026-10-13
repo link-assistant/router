@@ -1,4 +1,4 @@
-// Source-only authored cases: UNRUN while the publisher holds the compiler.
+// Original source output cases; generated trait execution remains unimplemented.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -54,7 +54,8 @@ test('borrowed fields, custom helpers and other source owners remain separate ob
     '#[derive(serde::Deserialize)] pub struct Payload { #[serde(alias="v")] value:u8 }',
     '#[derive(serde::Deserialize)] pub struct Payload { #[serde(skip)] value:u8 }',
   ]){const context=input(source);assert.ok(context.certificates[0]);assert.throws(()=>proveSerdeDeserializeBangFootprint({context,certificate:context.certificates[0]}),/helper branches/);}
-  for(const source of ['use custom::Deserialize; #[derive(Deserialize)] pub struct Payload { value:u8 }','#[derive(serde::Deserialize)] pub struct Payload<T>{value:T}','#[derive(serde::Deserialize)] pub struct Payload { #[serde(flatten)] value:Other }'])assert.equal(input(source).certificates.length,0);
+  const generic=input('#[derive(serde::Deserialize)] pub struct Payload<T>{value:T}');assert.equal(generic.certificates.length,1);assert.equal(generic.certificates[0].genericParameters.genericTypeInstantiation,false);assert.throws(()=>proveSerdeDeserializeBangFootprint({context:generic,certificate:generic.certificates[0]}),/original named fields/);
+  for(const source of ['use custom::Deserialize; #[derive(Deserialize)] pub struct Payload { value:u8 }','#[derive(serde::Deserialize)] pub struct Payload { #[serde(flatten)] value:Other }'])assert.equal(input(source).certificates.length,0);
 });
 
 test('literal byte and original Type grammars cannot inject macro or attribute syntax',()=>{

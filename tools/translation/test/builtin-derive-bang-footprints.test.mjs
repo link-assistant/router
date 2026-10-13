@@ -1,4 +1,4 @@
-// Future source/AST namespace cases, all UNRUN. No generated trait execution.
+// Source/AST namespace cases; generated trait execution remains unimplemented.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -76,8 +76,11 @@ test('fake builtin invocations source fragments and detached certificates cannot
   assert.equal(isBuiltinDeriveBangFootprint(structuredClone(proveBuiltinDeriveBangFootprint(args))),false);
 });
 
-test('custom imported Copy derives and generic headers never use builtin recipes',()=>{
-  for(const source of ['use custom::Copy; #[derive(Copy,serde::Serialize)] pub struct Payload;','#[derive(Copy,serde::Serialize)] pub struct Payload<T>{value:T}'])assert.equal(createDeriveFootprintContext(input(source)).certificates.length,0);
+test('custom Copy stays unresolved and bounded generic Copy retains only its zero-item namespace sink',()=>{
+  assert.equal(createDeriveFootprintContext(input('use custom::Copy; #[derive(Copy,serde::Serialize)] pub struct Payload;')).certificates.length,0);
+  const source='#[derive(Copy,serde::Serialize)] pub struct Payload<T>{value:T}',args=selected(source),proof=proveBuiltinDeriveBangFootprint(args);
+  assert.equal(args.context.certificates.length,1);assert.equal(args.certificate.genericParameters.genericTypeInstantiation,false);assert.equal(proof.selectedOwnerBangComplete,true);assert.equal(proof.slotProofs.outputKind.associatedItems,0);assert.equal(proof.slotProofs.outputKind.bodyCallbacksEvaluated,0);assert.equal(proof.generatedImplBehavior,false);
+  const joined=createDeriveBangContext({deriveContext:args.context});assert.equal(joined.certificates[0].dimensions.bangMacroComplete,false);assert.ok(joined.certificates[0].residualOwners.some(owner=>owner.target?.join('::')==='serde::Serialize'));
 });
 
 test('complete unchanged SubscriptionProvider and CatalogRecord preserve residual owners and parents',{timeout:60_000},()=>{
@@ -98,7 +101,7 @@ test('complete unchanged SubscriptionProvider and CatalogRecord preserve residua
   assert.equal(outputs.certificates.find(value=>value.source===record.source&&value.span.start===record.span.start).dimensions.bangMacroComplete,false);
 });
 
-// Additional future Eq bridge cases, all UNRUN, no generated trait execution.
+// Additional Eq source bridge cases; no generated trait execution.
 test('Eq callback traces original type-only Local/Stmt/Block/Fn/Impl constructors',()=>{
   const args=selected('#[derive(Eq,serde::Serialize)] pub struct Payload { one:u8,two:u8,other:Option<&\'static str> }','Eq');
   const proof=proveBuiltinDeriveBangFootprint(args),route=proof.route;
