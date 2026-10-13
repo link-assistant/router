@@ -17,3 +17,10 @@ documentation and Default helper owner. Bare Clone/Copy inputs without a
 registered derive footprint remain unproved; the fixtures use a real additional
 Serialize invocation. Payloads, generics, explicit discriminants, empty enums
 and duplicate invocations retain source refusals.
+
+The generated-method path consumes this proof and the existing privately
+checked Copy/no-Drop layout. It checks the actual shared receiver and every
+unit constructor, then lowers the original dereference to an owned enum value
+in the checked meta program. Both JavaScript and strict TypeScript emit that
+checked computation. Generated Clone rows stay separate from original Router
+methods; Clone calls retain their non-const trait status.
