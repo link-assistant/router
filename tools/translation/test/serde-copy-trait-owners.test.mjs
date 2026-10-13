@@ -22,7 +22,10 @@ test('genuine retained serde source proves both exact trait routes without certi
  for(const falseDeps of [{...deps,deriveDependencies:structuredClone(deriveDependencies)},{...deps,jsonMacroDependencies:structuredClone(jsonMacroDependencies)}])assert.throws(()=>originalSerdeCopyTraitInputs(falseDeps),/genuine locked/);
 });
 test('lifetime-only manual trait leaves independently source-derived Copy mapping checked in both targets',{timeout:60000},async()=>{
- const r=project('use serde::Deserialize;'+definition+implementation+run);assert.deepEqual(r.meta.refused.map(row=>row.name),['Choice.deserialize']);assert.match(r.meta.refused[0].message,/generic/);
+ const r=project('use serde::Deserialize;'+definition+implementation+run);
+ assert.deepEqual(r.meta.refused.filter(row=>row.term!=='generated-method'),[{file:'src/lib.rs',name:'Choice.deserialize',term:'method',span:{start:98,end:192},kind:'unsupported',message:'generic implementation requires checked monomorphization; trait implementation needs resolved generic bounds or qualified trait syntax; trait implementation requires declared trait and dispatch checking; generic method requires checked monomorphization'}]);
+ assert.deepEqual(r.meta.refused.filter(row=>row.term==='generated-method'),[{file:'src/lib.rs',name:'Choice.clone',term:'generated-method',kind:'unsupported',span:{start:23,end:60},message:'Original unit Clone source: requires its genuine original derive invocation'}]);
+ assert.deepEqual(r.meta.checkedGeneratedMethods??[],[]);
  await verifyTypedTargets(r,api=>{assert.deepEqual(api.chosen(none),tag('B'));assert.deepEqual(api.chosen(some(255n)),tag('A'));assert.throws(()=>api.chosen(some(256n)),TypeError);},{childTimeoutMs:20000});
 });
 test('qualified and imported alias identities use actual source exports rather than trait spelling',{timeout:60000},async()=>{
