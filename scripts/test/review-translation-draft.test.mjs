@@ -14,6 +14,8 @@ import {sourceItems} from '../../tools/translation/rust-structure.mjs';
 import {HostRustParser} from '../../tools/translation/extensions/host-contracts.mjs';
 import {metadataDigest} from '../../tools/translation/extensions/source-links.mjs';
 import {planRegeneration} from '../../tools/translation/bulk.mjs';
+import {verifyTypedTargets} from '../../tools/translation/test/typed-targets.mjs';
+import {loadJsonMacroSourceProof} from '../../tools/translation/json-macro-inputs.mjs';
 const root=new URL('../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8');
 const dependencies=loadDeriveDependencyProof({manifest,lock}),hash=value=>createHash('sha256').update(value).digest('hex');
 const source='#[derive(Default)] pub struct Payload{flag:bool,count:u32} pub fn make()->Payload{Payload::default()}';
@@ -138,7 +140,7 @@ const cloneInputs=[
 ];
 const cloneFixtures=new Map(cloneInputs.map(([label,source])=>[label,{source,meta:JSON.parse(JSON.stringify(translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE}).meta))}]));
 const cloneChecked=meta=>meta.checkedSemanticProgram.program.declarations.$map.find(([,entry])=>entry.impl?.cloneSourceProof)[1],cloneTarget=meta=>meta.targetSemanticProgram.program.declarations.$map.find(([,entry])=>entry.impl?.cloneSourceProof)[1],cloneRow=meta=>meta.checkedGeneratedMethods.find(row=>row.generator==='core::clone::Clone');
-const cloneReview=(fixture)=>reviewGeneratedMethods(fixture.meta,{entry:fixture.meta.entry,checkedGeneratedMethods:fixture.meta.checkedGeneratedMethods?.length??0},{readSource:()=>fixture.source,dependencies});
+const cloneReview=(fixture)=>reviewGeneratedMethods(fixture.meta,{entry:fixture.meta.entry,checkedGeneratedMethods:fixture.meta.checkedGeneratedMethods?.length??0},{readSource:()=>fixture.source,dependencies,...(fixture.jsonMacroDependencies?{jsonMacroDependencies:fixture.jsonMacroDependencies}:{})});
 function cloneRetain(label,value){if(process.env.ROUTER_CLONE_REVIEW_VECTORS){const directory=process.env.ROUTER_CLONE_REVIEW_VECTORS;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,label+'.json.gz'),gzipSync(JSON.stringify(value,null,2)+'\n'));}}
 for(const [label,fixture]of cloneFixtures)test('original generated Clone '+label+' independently rejoins source AST, receiver, private proof and whole body',()=>{
   const rows=cloneReview(fixture);assert.equal(rows.filter(row=>row.generator==='core::clone::Clone').length,1);assert.equal(rows.find(row=>row.generator==='core::clone::Clone').receiver,'shared');for(const row of rows){assert.equal(row.semanticAuthority,false);assert.equal(row.runtimeParity,false);}assert.equal(fixture.meta.checkedMethods.length,0);assert.equal(fixture.meta.executable.length,1);
@@ -209,3 +211,83 @@ test('complete bounded mixed inventory reviews Default and Clone one-to-one with
 cloneFailure('target-only-impl-owner',meta=>cloneTarget(meta).impl.type.path=['crate','Other']);
 cloneFailure('target-only-layout-record',meta=>meta.targetSemanticProgram.program.declarations.$map.find(([,entry])=>entry.k==='data'&&entry.record)[1].record=false);
 cloneFailure('mirrored-extra-implementation-authority',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.impl.copyCertificate={verified:true};});
+
+
+// Unit enums use the same privately reconstructed original nominal/body join.
+// Root producer metadata must identify the actual enum declaration separately.
+const unitCases=[
+  ['one',['Only']],['two',['Off','On']],['four',['First','Second','Third','Fourth']],
+  ['thirty-two',Array.from({length:32},(_,index)=>'Variant'+index)],
+  ['nested',['Off','On']],
+];
+const unitFixtures=new Map(unitCases.map(([label,variants])=>{
+  const declaration='#[derive(Clone,Copy,serde::Serialize)]pub enum Mode{'+variants.join(',')+'}pub fn duplicate(value:&Mode)->Mode{value.clone()}',source=label==='nested'?'mod inner{'+declaration+'}':declaration;
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  return [label,{source,variants,result,meta:JSON.parse(JSON.stringify(result.meta))}];
+}));
+for(const [label,fixture]of unitFixtures)test('original unit enum '+label+' review reconstructs source Copy branch and owned computation',{timeout:60000},async()=>{
+  assert.deepEqual(fixture.meta.refused,[]);const rows=cloneReview(fixture),row=rows.find(value=>value.generator==='core::clone::Clone');assert.equal(rows.length,1);assert.equal(row.originalDeclarationTerm,'enum');assert.equal(fixture.result.checkedGeneratedMethodDeclarations[0].originalDeclarationTerm,'enum');assert.equal(row.receiver,'shared');assert.equal(row.cloneSourceProof.unitVariants.length,fixture.variants.length);assert.equal(fixture.meta.checkedMethods.length,0);assert.equal(fixture.meta.executable.length,1);assert.equal(row.semanticAuthority,false);assert.equal(row.runtimeParity,false);
+  const body=cloneChecked(fixture.meta).body;assert.equal(body.body.k,'var');assert.equal(body.body.name,cloneChecked(fixture.meta).params[0].name);assert.equal(body.body.type.rustReference,undefined);assert.equal(body.cloneSourceProof.checkedBody,true);assert.ok(body.cloneSourceProof.checkedCopyProof);assert.equal(body.constEligible,false);
+  await verifyTypedTargets(fixture.result,api=>{for(const variant of fixture.variants){const value=Object.freeze({$:variant});assert.deepEqual(api[label==='nested'?'inner.duplicate':'duplicate'](value),{$:variant});}},{childTimeoutMs:30000});
+  cloneRetain('unit-positive-'+label,{source:fixture.source,result:fixture.result,rows});
+});
+function unitFailure(label,mutate,pattern=/Clone|clone|original|shadow|bang|Copy/){test('generated unit Clone refuses '+label,()=>{
+  const original=unitFixtures.get('two'),fixture={source:original.source,variants:[...original.variants],meta:structuredClone(original.meta)};mutate(fixture.meta,fixture);let error;try{cloneReview(fixture);}catch(thrown){error=thrown;}assert.ok(error,label);assert.match(error.message,pattern,label);cloneRetain('unit-negative-'+label,{...fixture,error:error.message});
+});}
+unitFailure('enum-mislabelled-struct',meta=>cloneRow(meta).originalDeclarationTerm='struct',/classification/);
+cloneFailure('struct-mislabelled-enum',meta=>cloneRow(meta).originalDeclarationTerm='enum',/classification/);
+unitFailure('mirrored-variant-name',meta=>{for(const proof of cloneProofs(meta))proof.unitVariants[0].name='Other';});
+unitFailure('mirrored-unit-source-output',meta=>{for(const proof of cloneProofs(meta))proof.unitSource.selectedBranch.output.items[0].name='other';});
+unitFailure('mirrored-copy-source-authority',meta=>{for(const proof of cloneProofs(meta))proof.unitSource.copyAuthority=true;});
+unitFailure('mirrored-source-variant-order',meta=>{for(const proof of cloneProofs(meta))proof.unitSource.variants.reverse();});
+unitFailure('mirrored-selected-branch',meta=>{for(const proof of cloneProofs(meta))proof.selectedBranch='has_derive_copy=false';});
+unitFailure('mirrored-original-receiver',meta=>{for(const proof of cloneProofs(meta))proof.receiver.originalParameter.name='other';});
+unitFailure('mirrored-mutable-receiver',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.params[0].type.rustReference.kind='mutable';});
+unitFailure('mirrored-borrowed-return',meta=>{for(const entry of [cloneChecked(meta),cloneTarget(meta)])entry.ret.rustReference={kind:'shared',pointee:structuredClone(entry.ret)};});
+unitFailure('mirrored-owned-variable-name-and-rehash',meta=>{for(const body of cloneBodies(meta))body.body.name='other';for(const body of cloneBodies(meta)){body.cloneSourceProof.computationSha256=metadataDigest(cloneChecked(meta).body.body);body.cloneSourceProof.digest=cloneRow(meta).cloneSourceProof.digest;body.cloneSourceProof.digest=metadataDigest(body.cloneSourceProof);}});
+unitFailure('mirrored-owned-variable-reference-type',meta=>{for(const body of cloneBodies(meta))body.body.type.rustReference={kind:'shared',pointee:structuredClone(body.body.type)};});
+unitFailure('missing-checked-copy-proof',meta=>{for(const body of cloneBodies(meta))body.cloneSourceProof.checkedCopyProof=null;});
+unitFailure('foreign-checked-copy-layout',meta=>{for(const body of cloneBodies(meta))body.cloneSourceProof.checkedCopyProof.proof.layout.fullName='Other';});
+unitFailure('mirrored-unit-ctor-payload',meta=>{for(const key of ['checkedSemanticProgram','targetSemanticProgram'])meta[key].program.declarations.$map.find(([,entry])=>entry.k==='data'&&!entry.record)[1].ctors[0].fields.push({name:'payload',type:{kind:'bool'}});});
+unitFailure('mirrored-unit-ctor-order',meta=>{for(const key of ['checkedSemanticProgram','targetSemanticProgram'])meta[key].program.declarations.$map.find(([,entry])=>entry.k==='data'&&!entry.record)[1].ctors.reverse();});
+unitFailure('target-only-owned-variable-name',meta=>cloneTarget(meta).body.body.name='other');
+unitFailure('target-only-unit-ctor-tag',meta=>meta.targetSemanticProgram.program.declarations.$map.find(([,entry])=>entry.k==='data'&&!entry.record)[1].ctors[0].name='Other');
+unitFailure('mirrored-const-trait-authority',meta=>{for(const body of cloneBodies(meta))body.constEligible=true;});
+unitFailure('checked-declaration-relocation',meta=>cloneChecked(meta).span.end++);
+unitFailure('original-method-denominator-overlap',meta=>meta.checkedMethods.push({source:'src/lib.rs',span:cloneRow(meta).span}),/overlaps original/);
+unitFailure('original-function-denominator-overlap',meta=>meta.executable.push({source:'src/lib.rs',span:cloneRow(meta).span}),/overlaps original/);
+unitFailure('source-clone-shadow-with-mirrored-hash',(meta,fixture)=>{fixture.source+='trait Clone{}';const sha=hash(fixture.source);meta.sources[0].sha256=sha;for(const proof of cloneProofs(meta))proof.sourceSha256=sha;});
+unitFailure('source-hidden-bang-with-mirrored-hash',(meta,fixture)=>{fixture.source+='fn hidden(){unknown!();}';const sha=hash(fixture.source);meta.sources[0].sha256=sha;for(const proof of cloneProofs(meta))proof.sourceSha256=sha;});
+test('unit enum generated comparison remains separate from original struct identities',()=>{
+  const before=cloneReview(unitFixtures.get('one')),after=cloneReview(unitFixtures.get('two')),comparison=compareGeneratedMethods(before,after);assert.equal(comparison.newlyCheckedGeneratedMethods.length,1);assert.equal(comparison.lostCheckedGeneratedMethods.length,1);assert.equal(comparison.changedGeneratedMethodBodies.length,0);assert.equal(before[0].originalDeclarationTerm,'enum');assert.equal(after[0].originalDeclarationTerm,'enum');cloneRetain('unit-distinct-original-comparison',{before,after,comparison});
+});
+
+test('complete original model unit Clone review preserves original function method and blocked-record census',{timeout:60000},()=>{
+  const source=readFileSync(new URL('src/model_contract.rs',root),'utf8'),jsonMacroDependencies=loadJsonMacroSourceProof({manifest,lock}),result=translateProject({entry:'src/model_contract.rs',paths:['src/model_contract.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE}),meta=JSON.parse(JSON.stringify(result.meta)),rows=cloneReview({source,meta,jsonMacroDependencies});
+  assert.equal(meta.executable.length,2);assert.equal(meta.checkedMethods.length,4);const clone=rows.find(row=>row.name==='ModelSelectorKind.clone');assert.ok(clone);assert.equal(clone.originalDeclarationTerm,'enum');assert.equal(clone.cloneSourceProof.unitVariants.length,4);assert.equal(meta.refused.filter(row=>row.term==='generated-method'&&row.name.endsWith('.clone')).length,5);assert.equal(clone.semanticAuthority,false);assert.equal(clone.runtimeParity,false);cloneRetain('unit-complete-original-model',{source,result,rows});
+});
+
+unitFailure('mirrored-unit-source-profile-flag',meta=>{for(const proof of cloneProofs(meta))proof.unitSource.sourceOutput.compilationProfile.flags.test=true;});
+unitFailure('mirrored-unit-copy-profile-values',meta=>{for(const proof of cloneProofs(meta))proof.unitSource.sourceCopyOutput.compilationProfile.values.foreign=['value'];});
+unitFailure('mirrored-unit-source-profile-extra-field',meta=>{for(const proof of cloneProofs(meta))proof.unitSource.sourceOutput.compilationProfile.authority=true;});
+unitFailure('mirrored-unit-attribute-owner-profile',meta=>{for(const proof of cloneProofs(meta))proof.unitSource.sourceOutput.attributeOwners.compilationProfile.flags.test=true;});
+
+unitFailure('mirrored-unit-copy-profile-missing-flag',meta=>{for(const proof of cloneProofs(meta))delete proof.unitSource.sourceCopyOutput.compilationProfile.flags.test;});
+unitFailure('mirrored-unit-source-profile-missing-values',meta=>{for(const proof of cloneProofs(meta))delete proof.unitSource.sourceOutput.compilationProfile.values;});
+test('complete original model source requires genuine independent JSON/Serde proof for its manual non-Drop trait',{timeout:60000},()=>{
+  const source=readFileSync(new URL('src/model_contract.rs',root),'utf8'),jsonMacroDependencies=loadJsonMacroSourceProof({manifest,lock}),result=translateProject({entry:'src/model_contract.rs',paths:['src/model_contract.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE}),meta=JSON.parse(JSON.stringify(result.meta));
+  for(const proof of [undefined,structuredClone(jsonMacroDependencies),dependencies]){assert.throws(()=>cloneReview({source,meta,jsonMacroDependencies:proof}),/genuine original private Copy/);cloneRetain(proof===dependencies?'unit-model-foreign-serde-proof':proof?'unit-model-copied-serde-proof':'unit-model-missing-serde-proof',{source,result,suppliedJsonMacroDependencies:proof??null});}
+});
+unitFailure('foreign-original-source-scope',meta=>meta.sources[0].module=['foreign']);
+unitFailure('mirrored-copy-source-scope-uncertainty',meta=>{for(const body of cloneBodies(meta))body.cloneSourceProof.checkedCopyProof.proof.certificate.proofs.find(proof=>proof.kind==='source-derived').attributeMacroProvenance.sourceScopes[0].unresolvedTypeScope=true;});
+for(const [label,proof]of [['absent',null],['copied',structuredClone(dependencies)],['foreign',loadJsonMacroSourceProof({manifest,lock})]])test('unit enum review refuses '+label+' derive dependency issuer',()=>{
+  const fixture=unitFixtures.get('two');assert.throws(()=>reviewGeneratedMethods(fixture.meta,{entry:fixture.meta.entry,checkedGeneratedMethods:1},{readSource:()=>fixture.source,dependencies:proof}),/derive|Derive|unsealed|dependencies|Clone/);cloneRetain('unit-negative-derive-issuer-'+label,{source:fixture.source,meta:fixture.meta,suppliedDependencies:proof});
+});
+unitFailure('source-caller-profile-with-original-proofs',meta=>meta.compilationProfile.flags.test=true);
+test('complete bounded enum inventory uses actual Cargo proofs and separates generated rows',{timeout:60000},()=>{
+  const fixture=unitFixtures.get('two'),repo=repository(fixture.meta);try{
+    repo.write('src/lib.rs',fixture.source);const items=sourceItems(fixture.source).filter(item=>!item.comment).map(item=>({term:item.term,name:item.name,span:{start:item.start,end:item.end},source:fixture.source.slice(item.start,item.end),sha256:hash(fixture.source.slice(item.start,item.end)),status:item.term==='fn'?'executable':'carried'}));
+    const inventory=JSON.parse(readFileSync(join(repo.directory,'parity/rust-source-inventory.json')));inventory.sources[0].sha256=hash(fixture.source);inventory.sources[0].bytes=Buffer.byteLength(fixture.source);const standalone=JSON.parse(readFileSync(join(repo.directory,inventory.sources[0].targets.meta)));standalone.sourceBytes=Buffer.byteLength(fixture.source);standalone.sourceSha256=hash(fixture.source);standalone.items=items;repo.write(inventory.sources[0].targets.meta,JSON.stringify(standalone));repo.write('parity/rust-source-inventory.json',JSON.stringify(inventory));
+    const report=reviewTranslationDraft({root:repo.directory});assert.equal(report.projects[0].checkedGeneratedMethods,1);assert.equal(report.projects[0].checkedMethods,0);assert.equal(report.projects[0].checkedGeneratedMethodItems[0].originalDeclarationTerm,'enum');assert.equal(report.functionCoverage.all.topLevelFunctions,1);assert.equal(report.totals.executable,1);for(const key of ['semanticAuthority','runtimeParity','fullGatePass','rustExecuted'])assert.equal(report[key],false);cloneRetain('unit-complete-inventory',{source:fixture.source,meta:fixture.meta,report});
+  }finally{repo.cleanup();}
+});

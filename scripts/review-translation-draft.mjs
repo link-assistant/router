@@ -11,6 +11,7 @@ import {parseProgram,roundTripProgram} from '../tools/translation/semantic-meta.
 import {sourceItems} from '../tools/translation/rust-structure.mjs';
 import {inspectDeriveInput} from '../tools/translation/derive-inputs.mjs';
 import {loadDeriveDependencyProof} from '../tools/translation/derive-dependencies.mjs';
+import {loadJsonMacroSourceProof} from '../tools/translation/json-macro-inputs.mjs';
 import {proveBuiltinScalarSourceOutput,builtinScalarOriginalSourcePlan} from '../tools/translation/builtin-scalar-ast-route.mjs';
 import {pinnedDefaultBody,parsePinnedBody,parsedPinnedBodyEvidence} from '../tools/translation/extensions/standard-body-source.mjs';
 import {HostRustParser,originalHostParserIdentitySnapshot} from '../tools/translation/extensions/host-contracts.mjs';
@@ -19,8 +20,10 @@ import {tokenizeRust} from '../tools/translation/extensions/lexical.mjs';
 import {TokenCursor} from '../tools/translation/vendor/meta-language/translation/lexer.js';
 import {originalTextCursorGuard} from '../tools/translation/extensions/text.mjs';
 import {rustFixedType} from '../tools/translation/checked-types.mjs';
+import {itemConfiguration} from '../tools/translation/cfg-profile.mjs';
+import {TranslationError} from '../tools/translation/vendor/meta-language/translation/diagnostics.js';
 import {resolveModuleGraph} from '../tools/translation/project.mjs';
-import {createDeriveFootprintContext,deriveFootprintAt} from '../tools/translation/derive-footprints.mjs';
+import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from '../tools/translation/derive-footprints.mjs';
 import {createCloneSourceContext,cloneSourceContextFacts} from '../tools/translation/clone-trait-source.mjs';
 import {originalCloneGeneratedMethod} from '../tools/translation/clone-source-ir.mjs';
 import {linkOriginalCloneSemantic} from '../tools/translation/extensions/clone-source-body.mjs';
@@ -28,6 +31,10 @@ import {registeredStandardHostBindings} from '../tools/translation/standard-host
 import {originalMatchesNamespaceBindings} from '../tools/translation/matches-macro-context.mjs';
 import {lockedTomlValueNamespaceBindings} from '../tools/translation/toml-value-namespace.mjs';
 import {configureParserSourceScope} from '../tools/translation/source-scopes.mjs';
+import {resolveModuleBindings} from '../tools/translation/module-bindings.mjs';
+import {createDeriveBangContext} from '../tools/translation/derive-bang-context.mjs';
+import {createToolAttributeContext} from '../tools/translation/tool-attributes.mjs';
+import {configureToolAttributes} from '../tools/translation/tool-attribute-layout.mjs';
 import {configureDeriveLayout} from '../tools/translation/derive-layout.mjs';
 import {moduleScopeKey,originalSourceModuleItems} from '../tools/translation/source-module-views.mjs';
 import {linkProjectDeclaration,metadataDigest} from '../tools/translation/extensions/source-links.mjs';
@@ -99,8 +106,8 @@ function checkDefaultBody(entry,data,fields) {
 }
 const cloneSame=(actual,expected,message)=>{if(!isDeepStrictEqual(actual,expected))throw new Error(message,{cause:{actual,expected}});};
 // Reinspect source-owned Clone output, then check only its actual bounded
-// record and generated body. No original Rust function body is translated here.
-function originalCloneReviewContext(meta,row,{readSource,dependencies}) {
+// nominal declaration and generated body. No original Rust function body is translated here.
+function originalCloneReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies}) {
   const proof=typeof dependencies==='function'?dependencies():dependencies;
   if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Clone review requires complete original source modules');
   const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
@@ -108,25 +115,61 @@ function originalCloneReviewContext(meta,row,{readSource,dependencies}) {
   const graph=resolveModuleGraph({entry:row.entry,paths,readSource:name=>sources.get(name),compilationProfile:meta.compilationProfile});
   cloneSame(graph.modules.map(module=>({source:module.file,sha256:digest(module.source),module:module.path})),meta.sources,'Clone complete original source module layout mismatch');
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(proof)]),derive=createDeriveFootprintContext({modules:graph.modules,dependencies:proof,externalModules,compilationProfile:graph.compilationProfile}),context=createCloneSourceContext(derive),state=cloneSourceContextFacts(context);
-  return {graph,derive,context,state,sources};
+  return {graph,derive,context,state,sources,jsonMacroDependencies};
 }
 function cloneRelocate(node,offset) {
   if(Array.isArray(node))return node.map(value=>cloneRelocate(value,offset));if(!node||typeof node!=='object')return node;
   return Object.fromEntries(Object.entries(node).map(([key,value])=>[key,['cloneSourceProof','deriveNamespaceProof','copyCertificate','toolAttributeProof'].includes(key)?value:key==='span'&&value?{start:value.start+offset,end:value.end+offset}:cloneRelocate(value,offset)]));
 }
 function cloneTree(path,items){for(const name of [...path].reverse())items=[{k:'module',name,items}];return items;}
-function originalCloneCheckedRecord(context,module,item,surface,offset) {
-  const {state,derive}=context,scope=state.binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),parser=new HostRustParser(tokenizeRust(module.source.slice(item.start,item.end))),snapshot=originalHostParserIdentitySnapshot();
-  const configured=configureParserSourceScope(parser,scope,state.binding.scopes,module.path);parser.aliases=configured.aliases;parser.modulePath=module.path;
+function originalEnumBinding(context) {
+  if(context.enumBinding)return context.enumBinding;
+  const {graph,derive}=context,externalModules=deriveFootprintExternalModules(derive);
+  const toolContext=createToolAttributeContext({modules:graph.modules,externalModules,deriveContext:derive,compilationProfile:graph.compilationProfile}),deriveBangContext=createDeriveBangContext({deriveContext:derive});
+  context.enumToolContext=toolContext;
+  return context.enumBinding=resolveModuleBindings({modules:graph.modules,externalModules,deriveContext:derive,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
+}
+// Reparse source-owned nominal layouts only. Original function/method bodies
+// are excluded, and unsupported layouts retain the producer's type refusal.
+function originalEnumNominals(context,module,item,data,offset,binding) {
+  const declarations=[],snapshot=originalHostParserIdentitySnapshot();
+  for(const owner of context.graph.modules){
+    if(owner.configurationCondition!=='active')continue;
+    for(const original of originalSourceModuleItems(owner).filter(original=>['struct','enum'].includes(original.term)&&original.name!=='main'&&itemConfiguration(original.tokens,context.graph.compilationProfile).status==='active')){
+      if(owner.file===module.file&&moduleScopeKey(owner)===moduleScopeKey(module)&&original.start===item.start&&original.end===item.end){declarations.push({file:owner.file,path:owner.path,name:[...owner.path,original.name].join('.'),term:original.term,span:{start:original.start,end:original.end},globalSpan:{start:offset+original.start,end:offset+original.end},surface:data});continue;}
+      const scope=binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(owner)),kernel=owner.source.slice(original.start,original.end),parser=new HostRustParser(tokenizeRust(kernel));
+      const guard=()=>{assertOriginalParserIdentity(parser,HostRustParser.prototype,new Map(snapshot.parserMethods));assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});};
+      try{
+        const configured=configureParserSourceScope(parser,scope,binding.scopes,owner.path);parser.aliases=configured.aliases;parser.modulePath=owner.path;
+        configureToolAttributes(parser,context.enumToolContext,owner,original,kernel);const certificate=deriveFootprintAt(context.derive,owner,original);if(certificate)configureDeriveLayout(parser,certificate,kernel,original.start);
+        guard();const items=[];parser.items({main:null},items,owner.path,()=>parser.cursor.atEnd());guard();if(items.length!==1||items[0].k!=='data'||!parser.cursor.atEnd())throw new Error('Clone original nominal parser mismatch');
+        const surface=cloneRelocate(items[0],owner.offset+original.start),globalSpan={start:owner.offset+original.start,end:owner.offset+original.end};
+        linkProjectDeclaration(parser,items[0],surface,{source:owner.source,sourcePath:owner.file,itemSpan:{start:original.start,end:original.end},itemOffset:original.start,globalOffset:owner.offset,path:owner.path,scope:{bindingEvidence:scope,compilationProfile:context.graph.compilationProfile,configurationCondition:owner.configurationCondition}});
+        declarations.push({file:owner.file,path:owner.path,name:[...owner.path,original.name].join('.'),term:original.term,span:{start:original.start,end:original.end},globalSpan,surface});
+        for(const type of parser.genericTypes.values()){
+          const previous=declarations.find(entry=>entry.name===type.name&&entry.path.length===0),origin={file:owner.file,path:[...owner.path]};
+          if(previous){if(previous.term==='generated-type'&&!previous.sourceModuleOrigins.some(candidate=>moduleScopeKey(candidate)===moduleScopeKey(origin)))previous.sourceModuleOrigins.push(origin);continue;}
+          declarations.push({file:owner.file,path:[],sourceModuleOrigins:[origin],name:type.name,term:'generated-type',globalSpan,surface:cloneRelocate(type,owner.offset+original.start)});
+        }
+      }catch(error){if(!(error instanceof TranslationError))throw error;}
+    }
+  }
+  return declarations;
+}
+function originalCloneCheckedNominal(context,module,item,surface,offset) {
+  const {state,derive}=context,binding=item.term==='enum'?originalEnumBinding(context):state.binding,scope=binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),parser=new HostRustParser(tokenizeRust(module.source.slice(item.start,item.end))),snapshot=originalHostParserIdentitySnapshot();
+  const configured=configureParserSourceScope(parser,scope,binding.scopes,module.path);parser.aliases=configured.aliases;parser.modulePath=module.path;
   const certificate=deriveFootprintAt(derive,module,item);if(certificate)configureDeriveLayout(parser,certificate,module.source.slice(item.start,item.end),item.start);
   const guard=()=>{assertOriginalParserIdentity(parser,HostRustParser.prototype,new Map(snapshot.parserMethods));assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});};
   guard();const items=[];parser.items({main:null},items,module.path,()=>parser.cursor.atEnd());guard();
   if(items.length!==1||items[0].k!=='data'||!parser.cursor.atEnd())throw new Error('Clone original record parser mismatch');
   const data=cloneRelocate(items[0],offset+item.start),span={start:offset+item.start,end:offset+item.end};
   linkProjectDeclaration(parser,items[0],data,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:offset,path:module.path,scope:{bindingEvidence:scope,compilationProfile:state.compilationProfile,configurationCondition:module.configurationCondition}});
-  const aliases=new Map(state.modules.map(owner=>[moduleScopeKey(owner),configureParserSourceScope(new HostRustParser([]),state.binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(owner)),state.binding.scopes,owner.path).aliases])),scopes=new Map(state.binding.scopes.map(scope=>[moduleScopeKey(scope),scope]));
+  const aliases=new Map(state.modules.map(owner=>[moduleScopeKey(owner),configureParserSourceScope(new HostRustParser([]),binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(owner)),binding.scopes,owner.path).aliases])),scopes=new Map(binding.scopes.map(scope=>[moduleScopeKey(scope),scope]));
   if(surface.impl.cloneSourceProof.selectedBranch==='has_derive_copy=true'){
-    projectCopyEvidence([{file:module.file,path:module.path,name:[...module.path,item.name].join('.'),term:'struct',span:{start:item.start,end:item.end},globalSpan:span,surface:data}],state.modules,aliases,scopes);
+    const copyDependencies=item.term==='enum'?{deriveDependencies:state.dependencies,jsonMacroDependencies:typeof context.jsonMacroDependencies==='function'?context.jsonMacroDependencies():context.jsonMacroDependencies,sourceScopes:binding.scopes}:null;
+    const originalNominals=item.term==='enum'?originalEnumNominals(context,module,item,data,offset,binding):[{file:module.file,path:module.path,name:[...module.path,item.name].join('.'),term:item.term,span:{start:item.start,end:item.end},globalSpan:span,surface:data}];
+    projectCopyEvidence(originalNominals,state.modules,aliases,scopes,copyDependencies);
     if(!originalOptionCopyPayload(data))throw new Error('Clone Copy branch lacks its genuine original private Copy/no-Drop layout');
   }
   const generated=cloneRelocate(surface,offset);linkOriginalCloneSemantic(surface,generated,offset);
@@ -153,7 +196,7 @@ function flattenedCloneNode(node,names) {
   return result;
 }
 function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}) {
-  if(item.term!=='generated-method'||item.origin!=='derive-invocation'||item.originalDeclarationTerm!=='struct'||item.receiver!=='shared'||item.semanticBodyChecked!==true||item.runtimeParity===true||item.semanticAuthority===true||typeof item.name!=='string'||Object.hasOwn(item,'defaultSourceProof'))throw new Error('Invalid generated Clone classification');
+  if(item.term!=='generated-method'||item.origin!=='derive-invocation'||!['struct','enum'].includes(item.originalDeclarationTerm)||item.receiver!=='shared'||item.semanticBodyChecked!==true||item.runtimeParity===true||item.semanticAuthority===true||typeof item.name!=='string'||Object.hasOwn(item,'defaultSourceProof'))throw new Error('Invalid generated Clone classification');
   relativeName(item.source);const proof=item.cloneSourceProof,span=item.span,source=context.sources.get(item.source);
   if(typeof source!=='string'||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new Error('Invalid Clone original declaration boundary');
   const sourceSha256=digest(source),itemSha256=digest(source.slice(span.start,span.end));
@@ -161,16 +204,20 @@ function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}
   cloneSame(proof.span,span,'Clone original declaration span mismatch');
   const candidates=entries.filter(entry=>entry.impl?.cloneSourceProof?.source===item.source&&isDeepStrictEqual(entry.impl.cloneSourceProof.span,span));if(candidates.length!==1||used.has(candidates[0]))throw new Error('Clone metadata is not one-to-one');
   const entry=candidates[0],module=context.graph.modules.find(module=>module.file===item.source&&isDeepStrictEqual(module.path,entry.modulePath));if(!module)throw new Error('Clone source module mismatch');
-  const original=originalSourceModuleItems(module).find(original=>original.term==='struct'&&original.start===span.start&&original.end===span.end);if(!original)throw new Error('Clone source is not the exact original struct');
+  const original=originalSourceModuleItems(module).find(original=>original.term===item.originalDeclarationTerm&&original.start===span.start&&original.end===span.end);if(!original)throw new Error('Clone source declaration classification differs from the exact original item');
   const actual=originalCloneGeneratedMethod(context.context,module,original,HostRustParser),originalProof=actual.impl.cloneSourceProof;
-  cloneSame(proof,originalProof,'Clone original source/AST/primitive/receiver proof mismatch');cloneSame(entry.impl.cloneSourceProof,proof,'Clone checked source proof mismatch');
+  // Genuine unit compiler outputs include null-prototype profile records.
+  // Compare their complete persisted JSON representation; keep the private
+  // live source proof intact for reconstruction and every semantic check.
+  const serializedOriginalProof=original.term==='enum'?JSON.parse(JSON.stringify(originalProof)):originalProof;
+  cloneSame(proof,serializedOriginalProof,'Clone original source/AST/primitive/receiver proof mismatch');cloneSame(entry.impl.cloneSourceProof,proof,'Clone checked source proof mismatch');
   const nominal=[...module.path,original.name].join('.'),localName=actual.name;
   if(item.name!==nominal+'.clone'||entry.generated!=='router-source-generated-clone-method'||entry.name!==localName||entry.fullName!==[...module.path,localName].join('.')||entry.impl.method!=='clone'||entry.impl.receiver!=='shared'||entry.params.length!==1||entry.async||entry.constant||entry.constFunction||Object.hasOwn(entry.impl,'defaultSourceProof'))throw new Error('Clone checked generated signature/symbol mismatch');
   cloneSame(entry.impl.type,actual.impl.type,'Clone checked nominal owner mismatch');
   cloneSame(entry.ret,{kind:'data',name:nominal,rustSourceType:true},'Clone checked owned return mismatch');
   if(!Number.isSafeInteger(entry.span?.start)||!Number.isSafeInteger(entry.span?.end))throw new Error('Clone checked declaration boundary mismatch');const shift=entry.span.start-span.start;if(!Number.isSafeInteger(shift)||shift<0||entry.span.end-span.end!==shift)throw new Error('Clone relocated declaration span mismatch');
   if(meta.checkedMethods.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span))||meta.executable.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span)))throw new Error('Clone overlaps original fn/method counts');
-  const regenerated=originalCloneCheckedRecord(context,module,original,actual,shift),data=checked.declarations.get(nominal);
+  const regenerated=originalCloneCheckedNominal(context,module,original,actual,shift),data=checked.declarations.get(nominal);
   cloneSame(data,regenerated.data,'Clone actual checked original layout mismatch');
   cloneSame(entry.impl,regenerated.entry.impl,'Clone whole original implementation header/receiver mismatch');
   cloneSame({params:entry.params,ret:entry.ret},{params:regenerated.entry.params,ret:regenerated.entry.ret},'Clone checked shared receiver/ownership mismatch');
@@ -190,7 +237,7 @@ function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}
 
 // Integrity only. Serialized rows never recreate the compiler's private caller
 // brands; source namespace, runtime and whole-trait authority remain false.
-export function reviewGeneratedMethods(meta,row,{readSource,dependencies}={}) {
+export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies}={}) {
   if(meta.runtimeParity===true||meta.semanticAuthority===true)throw new Error('Generated review cannot accept semantic or runtime authority');
   const rows=generatedArray(meta),count=Object.hasOwn(row,'checkedGeneratedMethods')?row.checkedGeneratedMethods:0;
   if(!Number.isSafeInteger(count)||count<0||count!==rows.length)throw new Error('Generated method count mismatch: '+row.entry);
@@ -202,7 +249,7 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies}={}) {
   const used=new Set(),identities=new Set(),result=[];let cloneContext=null;
   for(const item of rows){
     if(item?.generator==='core::clone::Clone'){
-      cloneContext??=originalCloneReviewContext(meta,row,{readSource,dependencies});
+      cloneContext??=originalCloneReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies});
       const reviewed=reviewCloneMethod(meta,item,{checked,target,entries,names,used,context:cloneContext});
       const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
     }
@@ -367,6 +414,7 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     const bytes=read(name);if(baselineSha&&digest(git(root,['show',baselineSha+':'+name]))!==digest(bytes))throw new Error('Original Cargo input changed since baseline: '+name);cargo.push(inputs.get(name));
   }
   let generatedDependencies;const dependencies=()=>generatedDependencies??=loadDeriveDependencyProof({manifest:read('Cargo.toml').toString('utf8'),lock:read('Cargo.lock').toString('utf8')});
+  let generatedJsonDependencies;const jsonMacroDependencies=()=>generatedJsonDependencies??=loadJsonMacroSourceProof({manifest:read('Cargo.toml').toString('utf8'),lock:read('Cargo.lock').toString('utf8')});
   const projectIdentity=item=>JSON.stringify([item.source,item.name,item.term??null,item.span.start,item.span.end]);
   function projectMeta(meta,row) {
     if(!Array.isArray(meta.sources)||!Array.isArray(meta.refused)||!Array.isArray(meta.unloweredItems)||!Array.isArray(meta.checkedMethods)||!Array.isArray(meta.executable)||!Array.isArray(meta.moduleDiagnostics))throw new Error('Incomplete project metadata: '+row.entry);
@@ -375,7 +423,7 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     for(const item of [...meta.executable,...meta.checkedMethods]){
       if(!tracked.includes(item.source)||!Number.isSafeInteger(item.span?.start)||!Number.isSafeInteger(item.span?.end)||item.span.start<0||item.span.end<item.span.start||item.span.end>new TextDecoder('utf-8',{fatal:true}).decode(read(item.source)).length)throw new Error('Invalid project original item: '+row.entry);
     }
-    return {...meta,reviewedGeneratedMethods:reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies})};
+    return {...meta,reviewedGeneratedMethods:reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies})};
   }
   const projects=inventory.projects.map(row=>{
     for(const target of Object.values(row.targets))output(target);
