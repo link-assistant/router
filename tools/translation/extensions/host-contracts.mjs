@@ -54,7 +54,7 @@ import {withSourceNamespaceParser} from './source-namespaces.mjs';
 import {withCapturedSourceParser,linkParsedFile,withCheckedSourceLinks,checkedSourceContext,bindCheckedSourceLinks} from './source-links.mjs';
 import {evaluateCheckedConstant,CONSTANT_EVALUATION_PROFILE} from './constant-evaluation.mjs';
 import {DEFAULT_JSON_PARSER_PROFILE,configureJsonCapabilities,assertJsonParserCapability} from '../json-capabilities.mjs';
-import {withDeclarationRefusalCollection,checkCollectedDeclarationTypes} from './declaration-refusals.mjs';
+import {withDeclarationRefusalCollection,checkCollectedDeclarationTypes,checkConstEligibilityRefusals} from './declaration-refusals.mjs';
 import {withJsonMacroParser,withJsonMacroChecker,withJsonMacroEmitter} from './json-macros.mjs';
 import {configureJsonMacroParser} from '../json-macro-context.mjs';
 import {parseOriginalMatchesCandidate} from '../matches-source-bridge.mjs';
@@ -658,7 +658,7 @@ export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalColl
       if(['call','routerFutureCall'].includes(node.k)&&!seen.has(node.fn)){seen.add(node.fn);const entry=program.declarations.get(node.fn);if(!entry||!entry.constant&&!entry.constFunction||forbidden(entry.body,seen))return true;}
       return Object.entries(node).some(([key,value])=>!['type','patternControl'].includes(key)&&(Array.isArray(value)?value.some(item=>forbidden(item,seen,runtimeConstFunction)):forbidden(value,seen,runtimeConstFunction)));
     };
-    for(const entry of program.declarations.values())if((entry.constant||entry.constFunction)&&forbidden(entry.body,new Set(),!entry.constant&&entry.constFunction))throw unsupported('non-const host operation','pure does not imply Rust const eligibility',entry.span);
+    checkConstEligibilityRefusals(this,program,entry=>{if(forbidden(entry.body,new Set(),!entry.constant&&entry.constFunction))throw unsupported('non-const host operation','pure does not imply Rust const eligibility',entry.span);});
     bindCheckedNominalNoDrop(program,this);
     const sourceLinks=bindCheckedSourceLinks(program,sourceContext,{targetProfile:CONSTANT_EVALUATION_PROFILE});
     for(const entry of program.declarations.values())if(entry.constant){

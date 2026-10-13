@@ -1,5 +1,6 @@
 import {compilationProfile} from './cfg-profile.mjs';
 import {macroBindingAffects,macroScopeUncertain} from './macro-subnamespaces.mjs';
+import {isResolvedSourceScopeSet} from './module-bindings.mjs';
 // Resolved namespace evidence configures parsers without expanding macros or
 // inferring a callable implementation from an imported signature.
 function sourceNamespaceMaps(scope){
@@ -18,6 +19,21 @@ function sourceNamespaceMaps(scope){
   }
   return {namespaceAliases,namespaceShadows};
 }
+const namespaceTemplates=new WeakMap();
+function sourceNamespaceTemplate(scopes){
+  const reusable=isResolvedSourceScopeSet(scopes),known=reusable&&namespaceTemplates.get(scopes);
+  if(known)return known;
+  const ownedScopes=new Map(),restricted=[],bindings=[];
+  for(const candidate of scopes){
+    const key=candidate.path.join('.');
+    if(ownedScopes.has(key))throw new TypeError('Source namespace scopes have duplicate module paths');
+    ownedScopes.set(key,sourceNamespaceMaps(candidate));bindings.push([key,candidate.bindings]);
+    for(const binding of candidate.bindings)if(binding.visibility&&binding.visibility.kind!=='public')restricted.push({key,path:candidate.path,binding});
+  }
+  const template={ownedScopes,restricted,bindings};
+  if(reusable)namespaceTemplates.set(scopes,template);
+  return template;
+}
 export function parserSourceScope(scope,scopes=[scope]){
   const {namespaceAliases,namespaceShadows}=sourceNamespaceMaps(scope);
   const ancestors=scopes.filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
@@ -27,25 +43,21 @@ export function parserSourceScope(scope,scopes=[scope]){
 }
 export function configureParserSourceScope(parser,scope,scopes=[scope],path=scope.path){
   const evidence=parserSourceScope(scope,scopes);
-  const ownedScopes=new Map();
-  for(const candidate of scopes){
-    const key=candidate.path.join('.');
-    if(ownedScopes.has(key))throw new TypeError('Source namespace scopes have duplicate module paths');
-    // Qualified lookup consumes namespace maps only. Ancestor macro and
-    // prelude state belongs to the consuming scope and is computed above.
-    ownedScopes.set(key,sourceNamespaceMaps(candidate));
-  }
+  const {ownedScopes,restricted,bindings}=sourceNamespaceTemplate(scopes);
   parser.compilationProfile=evidence.compilationProfile;
-  parser.sourceNamespaceAliases=Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...ownedScopes].map(([key,owned])=>[key,new Map(owned.namespaceAliases[namespace])]))]));
+  // Parser import processing may mutate a map or a target path. Retain fresh
+  // maps and arrays for every parser; private templates are never exposed.
+  parser.sourceNamespaceAliases=Object.fromEntries(['type','value','macro'].map(namespace=>[namespace,new Map([...ownedScopes].map(([key,owned])=>[key,new Map([...owned.namespaceAliases[namespace]].map(([name,target])=>[name,[...target]]))]))]));
   // A qualified path still checks visibility from the consuming module. Keep
   // inaccessible bindings explicit so a later declaration lookup cannot grant
   // them merely because their canonical source name exists.
-  for(const candidate of scopes)for(const binding of candidate.bindings){
+  for(const candidate of restricted){
+    const {binding}=candidate;
     const visibility=binding.visibility;
-    if(visibility&&visibility.kind!=='public'&&!visibility.path.every((name,index)=>path[index]===name))parser.sourceNamespaceAliases[binding.namespace].get(candidate.path.join('.')).set(binding.name,['crate','ml_inaccessible_source_binding',...candidate.path,binding.name]);
+    if(!visibility.path.every((name,index)=>path[index]===name))parser.sourceNamespaceAliases[binding.namespace].get(candidate.key).set(binding.name,['crate','ml_inaccessible_source_binding',...candidate.path,binding.name]);
   }
   parser.aliases=parser.sourceNamespaceAliases.type;
-  parser.sourceNamespaceBindingEvidence=new Map(scopes.map(candidate=>[candidate.path.join('.'),candidate.bindings]));
+  parser.sourceNamespaceBindingEvidence=new Map(bindings);
   parser.sourceNamespaceShadows=evidence.namespaceShadows;
   parser.sourceNamespaceEvidence={source:scope.file,module:[...scope.path],bindings:scope.bindings.map(binding=>({name:binding.name,namespace:binding.namespace,kind:binding.kind,status:binding.status,target:binding.target?[...binding.target]:null,source:binding.source,sourceSpan:binding.span?{...binding.span}:null}))};
   parser.shadowedPreludeTypes=evidence.shadowedPreludeTypes;parser.shadowedImportedBindings=evidence.shadowedBindings;

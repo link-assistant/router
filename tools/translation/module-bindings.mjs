@@ -18,6 +18,10 @@ const descendant=(path,ancestor)=>ancestor.every((name,index)=>path[index]===nam
 const visible=(visibility,path)=>visibility.kind==='public' || descendant(path,visibility.path);
 const narrower=(requested,original)=>original.kind==='public' || requested.kind==='restricted' && descendant(requested.path,original.path);
 const frozen=value=>{if(value && typeof value==='object'){for(const child of Object.values(value))frozen(child);Object.freeze(value);}return value;};
+// Identity permits reuse of immutable namespace setup, never body admission.
+// Copies and caller-created arrays retain the ordinary uncached path.
+const resolvedSourceScopeSets=new WeakSet();
+export const isResolvedSourceScopeSet=scopes=>!!scopes&&resolvedSourceScopeSets.has(scopes);
 function tokensOf(item) {
   const input=item.tokens.filter(token=>token.type!=='comment'),result=[];
   for(let index=0;index<input.length;index++) {
@@ -440,5 +444,6 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
     if(result.error || task.conditional || !task.glob && result.bindings?.some(binding=>binding.status!=='resolved') || task.glob && (!result.container || result.container===task.scope || result.container.unknownType || result.container.unknownMacro))diagnostic(task.scope,result.error??'use scope completeness, target or compilation condition remains unresolved',task.span,{name:task.name??null,glob:!!task.glob});
     if(!task.glob && result.bindings?.some(binding=>!narrower(task.visibility,binding.visibility)))diagnostic(task.scope,'reexport visibility exceeds the checked target visibility',task.span,{name:task.name});
   }
-  return frozen(structuredClone({version:1,compilationProfile:profile,editionProfile:'2018+',externPrelude,scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro,unresolvedBangMacroScope:scope.unknownBang,unresolvedAttributeMacroScope:scope.unknownAttribute})),diagnostics}));
+  const result=frozen(structuredClone({version:1,compilationProfile:profile,editionProfile:'2018+',externPrelude,scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro,unresolvedBangMacroScope:scope.unknownBang,unresolvedAttributeMacroScope:scope.unknownAttribute})),diagnostics}));
+  resolvedSourceScopeSets.add(result.scopes);return result;
 }
