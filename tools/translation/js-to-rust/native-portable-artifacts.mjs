@@ -4,7 +4,7 @@ import { analyzeJavaScript, parseMeta, emitRust, emitTypeScript } from './transl
 import { toLino } from './vendor/ir.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
-const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
+const json = (value) => `${JSON.stringify(value)}\n`;
 const safeSource = /^packages\/javascript\/native\/(?:[a-z0-9]+(?:-[a-z0-9]+)*\/)*[a-z0-9]+(?:-[a-z0-9]+)*\.mjs$/u;
 
 /** Assemble independently checked native bodies; refused owners remain refused. */

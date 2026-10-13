@@ -9,7 +9,7 @@ import { buildNativePortableArtifacts } from '../tools/translation/js-to-rust/na
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
-const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
+const json = (value) => `${JSON.stringify(value)}\n`;
 
 function modules(root, directory) {
   const absolute = join(root, directory);
