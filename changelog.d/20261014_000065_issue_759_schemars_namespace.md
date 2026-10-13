@@ -1,0 +1,1 @@
+Retain the complete original Rust1.89 module_path macro source and its positive string-expression constructor lineage for Schemars namespace prerequisites. Qualified empty module_path and bounded string/nested-module_path concat inputs keep genuine private source candidates; caller binding, string identity and generated trait execution remain independent.
