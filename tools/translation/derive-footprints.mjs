@@ -14,10 +14,11 @@ import {proveBuiltinScalarSourceOutput} from './builtin-scalar-ast-route.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
 import {encodeBuiltinSourceMeta,decodeBuiltinSourceMeta} from './builtin-source-meta.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
+import {registeredDeriveHelperSource} from './derive-helper-namespaces.mjs';
 export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
-const contexts=new WeakMap(),certificates=new WeakMap(),concatCallerSources=new WeakMap();
+const contexts=new WeakMap(),certificates=new WeakMap(),concatCallerSources=new WeakMap(),helperProofs=new WeakSet(),helperCertificates=new WeakMap();
 const key=path=>path.join('::');
 const invocationId=(module,item)=>moduleScopeKey(module)+':'+item.start+':'+item.end;
 const standardOwner=(path,scope)=>path.length===1&&STANDARD_LAYOUT_DERIVES.has(path[0])&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.name===path[0]&&binding.macroKind!=='bang');
@@ -210,7 +211,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
       ...(Object.hasOwn(module,'sourceView')?{sourceView:module.sourceView}:{}),...(module.configurationCondition?{configurationCondition:module.configurationCondition}:{})};
   }));
   const originalExternal=new Map([...external].map(([path,table])=>[path,freeze(structuredClone(table))]));
-  contexts.set(context,{byId,external:originalExternal,dependencies,originalModules});return context;
+  contexts.set(context,{byId,external:originalExternal,dependencies,originalModules,helperScopes:baseline.scopes,attributeClosure});return context;
 }
 
 export function deriveFootprintAt(context,module,item) {
@@ -224,6 +225,28 @@ export function deriveFootprintAt(context,module,item) {
   if(!original||original.term!==item.term||original.name!==item.name||JSON.stringify(original.tokens)!==JSON.stringify(item.tokens))throw new TypeError('Derive certificate invocation differs from original module items');
   return certificate;
 }
+// Inert helper ownership is independent of generated bang output. Consume the
+// complete private source invocation, never an exposed certificate or span alone.
+export function deriveFootprintHelperAttributeAt(context,module,item,span){
+  const certificate=deriveFootprintAt(context,module,item),state=contexts.get(context);
+  if(!certificate||certificate.condition.status!=='active'||certificate.dimensions.attributeMacroComplete!==true)return null;
+  const attribute=certificate.attributes.find(row=>row.position!=='container'&&row.span.start===span?.start&&row.span.end===span?.end);
+  if(!attribute||!['default','serde'].includes(attribute.name))return null;
+  const ancestors=state.helperScopes.filter(scope=>scope.path.every((part,index)=>certificate.module[index]===part));
+  const attributeNames=new Set([...certificate.attributes.map(row=>row.name),...(attribute.name==='default'?['Default']:[])]);
+  const missingModule=binding=>binding.namespace==='type'&&binding.kind==='mod'&&(binding.status!=='resolved'||binding.via==='declaration'&&binding.target?.[0]==='crate'&&!state.originalModules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target)));
+  if(!ancestors.length||ancestors.some(scope=>scope.configurationCondition!=='active'||!state.attributeClosure.get(moduleScopeKey(scope))||scope.bindings.some(binding=>missingModule(binding)||attributeNames.has(binding.name)&&macroBindingAffects(binding,'attribute'))||scope.unresolvedImports.some(entry=>entry.glob||attributeNames.has(entry.name))))return null;
+  const builtin=attribute.name==='default'?certificate.builtinDefault:null;
+  if(attribute.name==='default'&&(!builtin||builtin.attributeSpan.start!==attribute.span.start||builtin.attributeSpan.end!==attribute.span.end))return null;
+  const owners=builtin?[builtin.owner]:certificate.owners.filter(owner=>owner.target[0]==='serde'&&['Serialize','Deserialize'].includes(owner.target[1]));
+  if(!owners.length||attribute.name==='serde'&&!attribute.helpers)return null;
+  let cache=helperCertificates.get(certificate);if(!cache){cache=new Map();helperCertificates.set(certificate,cache);}const key=attribute.span.start+':'+attribute.span.end;if(cache.has(key))return cache.get(key);
+  const registrations=owners.map(owner=>registeredDeriveHelperSource({dependencies:state.dependencies,target:owner.target,helperName:attribute.name,defaultProof:builtin?.dependencyProof}));
+  if(registrations.some(proof=>!proof))return null;
+  const evidence={schema:'original-nested-derive-helper-owner-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,sourceViewDigest:certificate.sourceViewDigest,module:certificate.module,compilationProfile:certificate.compilationProfile,invocationSpan:certificate.span,inputCertificateDigest:certificate.digest,attribute,registrations,ancestorScopes:ancestors.map(scope=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,originalAttributeFootprintClosed:true})),exactNestedHelperInert:true,namespaceAuthority:false,bangOutputAuthority:false,copyAuthority:false,generatedImplBehavior:false};
+  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});helperProofs.add(proof);cache.set(key,proof);return proof;
+}
+export const isDeriveFootprintHelperAttributeProof=value=>!!value&&helperProofs.has(value);
 export function isDeriveFootprintCertificate(certificate){return !!certificate&&certificates.has(certificate);}
 export function isDeriveFootprintContext(context){return !!context&&contexts.has(context);}
 // A later output grammar check must use the same original module/dependency

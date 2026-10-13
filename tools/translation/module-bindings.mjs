@@ -6,7 +6,7 @@ import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from '
 import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
-import {deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
+import {deriveFootprintAt,deriveFootprintHelperAttributeAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 import {deriveBangModules,deriveBangOutputAt,deriveBangHelperAttributeAt,isDeriveBangContext} from './derive-bang-context.mjs';
 import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
 import {builtinInnerSourceItem} from './inner-source-attributes.mjs';
@@ -214,7 +214,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
       if(innerBuiltin){scope.innerBuiltinNames.push({name:innerBuiltin.name,span:innerBuiltin.span});continue;}
       try {
         const tokens=tokensOf(item),head=header(tokens,scope.path),moduleAttribute=tokens[head.at]?.text==='mod';
-        const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveBangContext&&deriveBangHelperAttributeAt(deriveBangContext,deriveContext,module,item,span));
+        const nestedExport=nestedExportUncertainty(tokens,head.at,profile,span=>deriveContext&&deriveFootprintHelperAttributeAt(deriveContext,module,item,span)||deriveBangContext&&deriveBangHelperAttributeAt(deriveBangContext,deriveContext,module,item,span));
         if(nestedExport){scope.baseMacro=scope.baseBang=true;diagnostic(scope,'nested source attribute can introduce crate-root exported macros; expansion remains unresolved',nestedExport);}
         const macroUse=moduleAttribute&&head.attributes.some(attribute=>attribute.name==='macro_use'&&attribute.tokens.length===1)&&condition.status==='active'&&scope.configurationCondition==='active';
         const effectiveAttributes=head.attributes.filter(attribute=>!isInertConditionalAttribute(condition.attributes.find(original=>original.span.start===attribute.span.start))&&!(attribute.name==='cfg'&&condition.attributes.find(original=>original.span.start===attribute.span.start)?.evaluation?.value===true)&&!(macroUse&&attribute.name==='macro_use'&&attribute.tokens.length===1)&&!(toolContext&&toolAttributeAt(toolContext,module,item,attribute))),uncertain=uncertainty(effectiveAttributes,{moduleAttribute});

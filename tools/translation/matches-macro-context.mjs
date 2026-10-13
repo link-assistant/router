@@ -9,6 +9,7 @@ import {captureOriginalMacroModules,originalMacroModules} from './original-macro
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {createDeriveFootprintContext,deriveFootprintExternalModules} from './derive-footprints.mjs';
+import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {createToolAttributeContext} from './tool-attributes.mjs';
 import {capturedRustTokenSource} from './extensions/lexical.mjs';
 import {loadStandardMatchesSourceProfile,isStandardMatchesSourceProfile} from './matches-source-profile.mjs';
@@ -83,7 +84,8 @@ export function createMatchesMacroContext({modules,compilationProfile=null,deriv
   const deriveContext=deriveDependencies?createDeriveFootprintContext({modules:original.modules,dependencies:deriveDependencies,externalModules:external,compilationProfile:original.compilationProfile}):null;
   const resolvedExternal=deriveContext?deriveFootprintExternalModules(deriveContext):external;
   const toolContext=createToolAttributeContext({modules:original.modules,externalModules:resolvedExternal,deriveContext,compilationProfile:original.compilationProfile});
-  const evidence=freezeMacroTree(resolveModuleBindings({modules:original.modules,externalModules:resolvedExternal,deriveContext,toolContext,compilationProfile:original.compilationProfile}));
+  const deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
+  const evidence=freezeMacroTree(resolveModuleBindings({modules:original.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:original.compilationProfile}));
   const certificate=freezeMacroTree({schema:'original-standard-matches-call-context-v1',profileDigest:profile.digest,compilationProfile:original.compilationProfile,originalModules:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source),sourceViewDigest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition})),namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
   const facts={...original,profile,evidence,cargoEditionContext};
   contexts.set(certificate,facts);
