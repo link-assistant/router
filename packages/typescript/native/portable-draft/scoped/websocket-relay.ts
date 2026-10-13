@@ -1,0 +1,5 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked scoped bodies from packages/javascript/native/websocket-relay.mjs; source sha256=a569f6e3376eb9b37a866d1016d6e81760c45b91566b03c70ae0ed61667758e2; IR sha256=01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+export {};
+

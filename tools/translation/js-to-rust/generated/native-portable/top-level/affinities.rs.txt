@@ -1,0 +1,68 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked top-level bodies from packages/javascript/native/affinities.mjs; source sha256=8a101d57de4ba2ec7267533348bb774c8798e0668924793d4bb97a932e773e6d; IR sha256=46eef230676311331b314a3a9992fa336d21cc7f088618856d8931ff5418f6b7.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[derive(Clone, Copy)]
+pub enum JsPayload<'a> {
+    String(&'a [u16]), Number(f64), Boolean(bool), Null, Undefined,
+    Object(&'a dyn std::any::Any), Function(&'a dyn std::any::Any),
+    BigInt(&'a dyn std::any::Any), Symbol(&'a dyn std::any::Any),
+}
+#[rustfmt::skip]
+impl<'a> JsPayload<'a> {
+    fn strict_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right,
+            (Self::Null, Self::Null) | (Self::Undefined, Self::Undefined) => true,
+            _ => false,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum JsValue<'a> {
+    String(&'a str), Number(f64), Boolean(bool), Undefined,
+    Object, Function, BigInt, Symbol,
+}
+
+#[rustfmt::skip]
+impl<'a> JsValue<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number",
+            Self::Boolean(_) => "boolean", Self::Undefined => "undefined",
+            Self::Object => "object", Self::Function => "function",
+            Self::BigInt => "bigint", Self::Symbol => "symbol",
+        }
+    }
+    fn as_string(self) -> &'a str { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool {
+        matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0)
+    }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+}
+
+#[rustfmt::skip]
+fn js_utf8_length(value: &str) -> f64 { value.len() as f64 }
+
+#[rustfmt::skip]
+fn valid_id(value: JsValue<'_>) -> bool {
+    return ((((value.type_name().to_string() == "string".to_string()) && ((value.as_string().to_string().encode_utf16().count() as f64) > 0.0)) && (js_utf8_length(&value.as_string().to_string()) <= 256.0)) && (!({ let observed = value.as_string().to_string(); let mut units = observed.chars().map(|unit| unit as u32); let accepted = |unit: u32| (unit == 47 || (unit >= 0 && unit <= 31) || (unit >= 127 && unit <= 159)); units.any(accepted) })));
+}
+
+#[rustfmt::skip]
+fn persisted_provider_kind<'a>(kind: JsPayload<'a>) -> JsPayload<'a> {
+    return (if kind.strict_primitive(JsPayload::String(&[122, 46, 97, 105, 45, 99, 111, 100, 105, 110, 103, 45, 112, 108, 97, 110])) { JsPayload::String(&[122, 97, 105, 45, 99, 111, 100, 105, 110, 103, 45, 112, 108, 97, 110]) } else { kind });
+}

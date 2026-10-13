@@ -1,0 +1,108 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked top-level bodies from packages/javascript/native/emergency-auth.mjs; source sha256=cf0f05c7cc52e209f0f6408b07b4665747cc5b71432755b341c0be5ad2177cc9; IR sha256=58bdcdbf6d44f7d598e0054648337a1746d06c043895c670a4a4c42aa653a756.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[derive(Clone, Copy)]
+pub enum JsPayload<'a> {
+    String(&'a [u16]), Number(f64), Boolean(bool), Null, Undefined,
+    Object(&'a dyn std::any::Any), Function(&'a dyn std::any::Any),
+    BigInt(&'a dyn std::any::Any), Symbol(&'a dyn std::any::Any),
+}
+#[rustfmt::skip]
+impl<'a> JsPayload<'a> {
+    fn strict_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right,
+            (Self::Null, Self::Null) | (Self::Undefined, Self::Undefined) => true,
+            _ => false,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum JsValue<'a> {
+    String(&'a str), Number(f64), Boolean(bool), Undefined,
+    Object, Function, BigInt, Symbol,
+}
+
+#[rustfmt::skip]
+impl<'a> JsValue<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number",
+            Self::Boolean(_) => "boolean", Self::Undefined => "undefined",
+            Self::Object => "object", Self::Function => "function",
+            Self::BigInt => "bigint", Self::Symbol => "symbol",
+        }
+    }
+    fn as_string(self) -> &'a str { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool {
+        matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0)
+    }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum JsLiteral { String(&'static str), Number(f64), Boolean(bool) }
+#[rustfmt::skip]
+impl JsLiteral {
+    fn matches(self, value: JsValue<'_>) -> bool {
+        match (self, value) {
+            (Self::String(left), JsValue::String(right)) => left == right,
+            (Self::Boolean(left), JsValue::Boolean(right)) => left == right,
+            (Self::Number(left), JsValue::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+    fn same_key(self, other: Self) -> bool {
+        match other { Self::String(value) => self.matches(JsValue::String(value)), Self::Number(value) => self.matches(JsValue::Number(value)), Self::Boolean(value) => self.matches(JsValue::Boolean(value)) }
+    }
+}
+#[derive(Clone, Copy)]
+pub struct JsStaticSet { values: &'static [JsLiteral] }
+#[rustfmt::skip]
+impl JsStaticSet {
+    fn has(&self, key: JsValue<'_>) -> bool { self.values.iter().any(|value| value.matches(key)) }
+    fn size(&self) -> f64 { self.values.iter().enumerate().filter(|(index, value)| !self.values[..*index].iter().any(|earlier| earlier.same_key(**value))).count() as f64 }
+}
+#[derive(Clone, Copy)]
+pub struct JsStaticMap<T: Copy + 'static> { entries: &'static [(JsLiteral, T)] }
+#[rustfmt::skip]
+impl<T: Copy + 'static> JsStaticMap<T> {
+    fn has(&self, key: JsValue<'_>) -> bool { self.entries.iter().any(|entry| entry.0.matches(key)) }
+    fn get(&self, key: JsValue<'_>) -> Option<T> { self.entries.iter().rev().find(|entry| entry.0.matches(key)).map(|entry| entry.1) }
+    fn size(&self) -> f64 { self.entries.iter().enumerate().filter(|(index, entry)| !self.entries[..*index].iter().any(|earlier| earlier.0.same_key(entry.0))).count() as f64 }
+}
+
+#[derive(Clone)]
+pub struct JsErrorProjection0 {
+    pub message: Vec<u16>,
+    pub code: String,
+    pub status: f64,
+}
+
+#[rustfmt::skip]
+fn failure(message: &[u16]) -> std::rc::Rc<std::cell::RefCell<JsErrorProjection0>> {
+    return std::rc::Rc::new(std::cell::RefCell::new(JsErrorProjection0 { message: (message).to_vec(), code: "invalid_emergency_config".to_string(), status: 400.0 }));
+}
+
+#[rustfmt::skip]
+#[allow(non_upper_case_globals)]
+const client_names: JsStaticSet = JsStaticSet { values: &[JsLiteral::String("claude"), JsLiteral::String("codex"), JsLiteral::String("cursor"), JsLiteral::String("gemini"), JsLiteral::String("grok"), JsLiteral::String("opencode"), JsLiteral::String("qwen"), JsLiteral::String("agent")] };
+
+#[rustfmt::skip]
+pub fn is_synthetic_token_id(id: JsValue<'_>) -> bool {
+    return ((id.type_name().to_string() == "string".to_string()) && id.as_string().to_string().starts_with(&"emergency-bypass-".to_string()));
+}

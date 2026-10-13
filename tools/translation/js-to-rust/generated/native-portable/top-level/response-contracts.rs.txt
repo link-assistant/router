@@ -1,0 +1,95 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked top-level bodies from packages/javascript/native/response-contracts.mjs; source sha256=09feb4c2763d15abcd6c7a630ca7bb708dc13150469d0106a20d40ad91b9d40e; IR sha256=7bafac23e281281c357cb010bad372a757a6679720074b0022249045d5c47124.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[derive(Clone, Copy)]
+pub enum JsValue<'a> {
+    String(&'a str), Number(f64), Boolean(bool), Undefined,
+    Object, Function, BigInt, Symbol,
+}
+
+#[rustfmt::skip]
+impl<'a> JsValue<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number",
+            Self::Boolean(_) => "boolean", Self::Undefined => "undefined",
+            Self::Object => "object", Self::Function => "function",
+            Self::BigInt => "bigint", Self::Symbol => "symbol",
+        }
+    }
+    fn as_string(self) -> &'a str { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool {
+        matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0)
+    }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+}
+
+#[rustfmt::skip]
+fn js_utf8_length(value: &str) -> f64 { value.len() as f64 }
+
+// Explicit host-qualified projection; runtimeParity: false.
+#[derive(Clone, Copy)]
+#[allow(non_camel_case_types)]
+pub enum JsonResponseHost {
+    Node20,
+    Bun1_4_3,
+}
+#[derive(Clone, Copy)]
+pub enum JsonResponseDefaultContentType {
+    HostDefault,
+}
+#[derive(Clone)]
+pub struct JsonResponseProjection {
+    pub status: u16,
+    pub body_utf8: Vec<u8>,
+    pub default_content_type: JsonResponseDefaultContentType,
+}
+impl JsonResponseProjection {
+    pub fn content_type_for(&self, host: JsonResponseHost) -> &'static str {
+        match (self.default_content_type, host) {
+            (JsonResponseDefaultContentType::HostDefault, JsonResponseHost::Node20) => "application/json",
+            (JsonResponseDefaultContentType::HostDefault, JsonResponseHost::Bun1_4_3) => "application/json;charset=utf-8",
+        }
+    }
+}
+
+#[rustfmt::skip]
+pub fn response_not_found() -> std::rc::Rc<std::cell::RefCell<JsonResponseProjection>> {
+    return std::rc::Rc::new(std::cell::RefCell::new(JsonResponseProjection { status: 404, body_utf8: vec![123, 34, 101, 114, 114, 111, 114, 34, 58, 123, 34, 109, 101, 115, 115, 97, 103, 101, 34, 58, 34, 82, 101, 115, 112, 111, 110, 115, 101, 32, 110, 111, 116, 32, 102, 111, 117, 110, 100, 34, 44, 34, 116, 121, 112, 101, 34, 58, 34, 105, 110, 118, 97, 108, 105, 100, 95, 114, 101, 113, 117, 101, 115, 116, 95, 101, 114, 114, 111, 114, 34, 44, 34, 112, 97, 114, 97, 109, 34, 58, 110, 117, 108, 108, 44, 34, 99, 111, 100, 101, 34, 58, 34, 114, 101, 115, 112, 111, 110, 115, 101, 95, 110, 111, 116, 95, 102, 111, 117, 110, 100, 34, 125, 125], default_content_type: JsonResponseDefaultContentType::HostDefault }));
+}
+
+#[rustfmt::skip]
+pub fn response_reference_missing() -> std::rc::Rc<std::cell::RefCell<JsonResponseProjection>> {
+    return std::rc::Rc::new(std::cell::RefCell::new(JsonResponseProjection { status: 404, body_utf8: vec![123, 34, 101, 114, 114, 111, 114, 34, 58, 123, 34, 116, 121, 112, 101, 34, 58, 34, 110, 111, 116, 95, 102, 111, 117, 110, 100, 95, 101, 114, 114, 111, 114, 34, 44, 34, 109, 101, 115, 115, 97, 103, 101, 34, 58, 34, 116, 104, 101, 32, 114, 101, 102, 101, 114, 101, 110, 99, 101, 100, 32, 114, 101, 115, 112, 111, 110, 115, 101, 32, 114, 101, 115, 111, 117, 114, 99, 101, 32, 105, 115, 32, 117, 110, 97, 118, 97, 105, 108, 97, 98, 108, 101, 34, 125, 125], default_content_type: JsonResponseDefaultContentType::HostDefault }));
+}
+
+#[rustfmt::skip]
+pub fn response_reference_conflict() -> std::rc::Rc<std::cell::RefCell<JsonResponseProjection>> {
+    return std::rc::Rc::new(std::cell::RefCell::new(JsonResponseProjection { status: 409, body_utf8: vec![123, 34, 101, 114, 114, 111, 114, 34, 58, 123, 34, 116, 121, 112, 101, 34, 58, 34, 105, 110, 118, 97, 108, 105, 100, 95, 114, 101, 113, 117, 101, 115, 116, 95, 101, 114, 114, 111, 114, 34, 44, 34, 109, 101, 115, 115, 97, 103, 101, 34, 58, 34, 116, 104, 101, 32, 114, 101, 102, 101, 114, 101, 110, 99, 101, 100, 32, 114, 101, 115, 112, 111, 110, 115, 101, 32, 114, 101, 115, 111, 117, 114, 99, 101, 115, 32, 100, 111, 32, 110, 111, 116, 32, 115, 104, 97, 114, 101, 32, 111, 110, 101, 32, 112, 114, 111, 118, 105, 100, 101, 114, 32, 97, 99, 99, 111, 117, 110, 116, 34, 125, 125], default_content_type: JsonResponseDefaultContentType::HostDefault }));
+}
+
+#[rustfmt::skip]
+pub fn conversation_unsupported() -> std::rc::Rc<std::cell::RefCell<JsonResponseProjection>> {
+    return std::rc::Rc::new(std::cell::RefCell::new(JsonResponseProjection { status: 400, body_utf8: vec![123, 34, 101, 114, 114, 111, 114, 34, 58, 123, 34, 116, 121, 112, 101, 34, 58, 34, 105, 110, 118, 97, 108, 105, 100, 95, 114, 101, 113, 117, 101, 115, 116, 95, 101, 114, 114, 111, 114, 34, 44, 34, 109, 101, 115, 115, 97, 103, 101, 34, 58, 34, 116, 104, 101, 32, 115, 101, 108, 101, 99, 116, 101, 100, 32, 115, 101, 114, 118, 105, 99, 101, 32, 100, 111, 101, 115, 32, 110, 111, 116, 32, 115, 117, 112, 112, 111, 114, 116, 32, 110, 97, 116, 105, 118, 101, 32, 67, 111, 110, 118, 101, 114, 115, 97, 116, 105, 111, 110, 115, 32, 114, 101, 115, 111, 117, 114, 99, 101, 115, 34, 125, 125], default_content_type: JsonResponseDefaultContentType::HostDefault }));
+}
+
+#[rustfmt::skip]
+pub fn conversation_method_not_allowed() -> std::rc::Rc<std::cell::RefCell<JsonResponseProjection>> {
+    return std::rc::Rc::new(std::cell::RefCell::new(JsonResponseProjection { status: 405, body_utf8: vec![123, 34, 101, 114, 114, 111, 114, 34, 58, 123, 34, 116, 121, 112, 101, 34, 58, 34, 105, 110, 118, 97, 108, 105, 100, 95, 114, 101, 113, 117, 101, 115, 116, 95, 101, 114, 114, 111, 114, 34, 44, 34, 109, 101, 115, 115, 97, 103, 101, 34, 58, 34, 116, 104, 101, 32, 114, 101, 113, 117, 101, 115, 116, 101, 100, 32, 67, 111, 110, 118, 101, 114, 115, 97, 116, 105, 111, 110, 115, 32, 111, 112, 101, 114, 97, 116, 105, 111, 110, 32, 105, 115, 32, 110, 111, 116, 32, 115, 117, 112, 112, 111, 114, 116, 101, 100, 34, 125, 125], default_content_type: JsonResponseDefaultContentType::HostDefault }));
+}
+
+#[rustfmt::skip]
+pub fn valid_conversation_id(id: JsValue<'_>) -> bool {
+    return ((((id.type_name().to_string() == "string".to_string()) && ((id.as_string().to_string().encode_utf16().count() as f64) > 0.0)) && (js_utf8_length(&id.as_string().to_string()) <= 256.0)) && (!({ let observed = id.as_string().to_string(); let mut units = observed.chars().map(|unit| unit as u32); let accepted = |unit: u32| (unit == 47 || (unit >= 0 && unit <= 31) || (unit >= 127 && unit <= 159)); units.any(accepted) })));
+}

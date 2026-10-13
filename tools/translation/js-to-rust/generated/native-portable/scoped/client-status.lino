@@ -1,0 +1,2 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(function scoped_src68a7fd82a94bce8e_at3464 (lossless) (parameters (key value)) (returns boolean) (body (return (unary not (includes (values (string ANTHROPIC_MODEL) (string CLAUDE_CODE_SUBAGENT_MODEL)) (argument (variable key)))))))
