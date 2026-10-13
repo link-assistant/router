@@ -268,6 +268,7 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
   }
   use(path) {
     const c=this.cursor,start=c.next(),key=path.join('.');if(!this.aliases.has(key))this.aliases.set(key,new Map());const aliases=this.aliases.get(key);
+    this.parsedUseAliases??=new Map();if(!this.parsedUseAliases.has(key))this.parsedUseAliases.set(key,new Set());const parsedAliases=this.parsedUseAliases.get(key);
     const registered=builtins();
     const resolve=full=>full[0]==='self'?['crate',...path,...full.slice(1)]:full[0]==='super'?['crate',...path.slice(0,-1),...full.slice(1)]:full;
     const tree=prefix=>{
@@ -275,7 +276,10 @@ export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(
       const segment=c.identifier('use').value,full=[...prefix,segment];if(c.eat('::')){tree(full);return;}
       const alias=c.eat('as')?c.identifier('alias').value:segment;
       if(!['crate','self','super'].includes(full[0]) && !originalMatchesImport(this,full) && !registered.has(pathKey(full)) && !['std::io::Error','std::io::Result','std::env::VarError'].includes(pathKey(full)))throw unsupported(`use ${pathKey(full)}`,'import requires a checked crate or registered host contract',span(start,c.peek()));
-      if(aliases.has(alias)){aliases.set(alias,['crate','ml_unresolved_import_alias',alias]);throw typeError(`ambiguous import alias ${alias}`,span(start,c.peek()));}
+      const original=(this.sourceNamespaceBindingEvidence?.get(key)??this.sourceNamespaceEvidence?.bindings)?.find(binding=>binding.namespace==='type'&&binding.name===alias&&binding.status==='resolved'&&binding.via==='named-import'&&binding.target?.join('::')===resolve(full).join('::'));
+      const preloaded=original&&aliases.get(alias)?.join('::')===original.target.join('::');
+      if(parsedAliases.has(alias)||aliases.has(alias)&&!preloaded){aliases.set(alias,['crate','ml_unresolved_import_alias',alias]);throw typeError(`ambiguous import alias ${alias}`,span(start,c.peek()));}
+      parsedAliases.add(alias);
       aliases.set(alias,resolve(full));
     };
     tree([]);c.expect(';','use');

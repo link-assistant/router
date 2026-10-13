@@ -123,7 +123,10 @@ test('checked block expressions retain opacity and refuse unsupported statements
   const first=expandDeclarativeMacro(block,originalMacroTrees('{ const VALUE:u8=7; call(VALUE) }'));
   const forwarded=expandDeclarativeMacro(receiver,declarativeSubInput(first));
   assert.equal(forwarded.trees[0].fragment,'expr');assert.equal(forwarded.trees[0].trees[0].fragment,'block');
-  for(const source of ['{ let value=1;value }','{ unknown!() }','{ #[unknown] const VALUE:u8=7;VALUE }','{ const VALUE:u8=;VALUE }','{ VALUE+1 }']) {
+  const opaque=expandDeclarativeMacro(block,originalMacroTrees('{ unknown!() }'));
+  assert.equal(opaque.ownerVerified,false);assert.equal(opaque.namespaceComplete,false);assert.equal(opaque.generatedBehavior,false);
+  assert.equal(opaque.trees[0].fragment,'block');
+  for(const source of ['{ let value=1;value }','{ #[unknown] const VALUE:u8=7;VALUE }','{ const VALUE:u8=;VALUE }','{ VALUE+1 }']) {
     assert.throws(()=>expandDeclarativeMacro(block,originalMacroTrees(source)),/does not match/);
   }
   assert.throws(()=>expandDeclarativeMacro(receiver,originalMacroTrees('unsafe {7}')),/does not match/);

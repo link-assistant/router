@@ -86,7 +86,7 @@ export function withPatternControlParser(Base=ControlRustParser) {
       const c=this.cursor;
       let pattern;const owners=[];
       try {pattern=parseBindingPattern(c,{resolvePath:(written,location)=>{
-        const resolved=this.resolve(written,path),kind=this.registeredPatternOwner(written,resolved,path,location);
+        const resolved=this.sourcePatternPath?this.sourcePatternPath(written,path):this.resolve(written,path),kind=this.registeredPatternOwner(written,resolved,path,location);
         owners.push({resolved,kind,span:location});return resolved;
       }});}
       catch(error){if(error instanceof TranslationError&&c.is('<'))throw unsupported('generic if-let pattern','generic pattern arguments require checked monomorphization',range(first,c.peek()));throw error;}

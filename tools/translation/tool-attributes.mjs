@@ -6,6 +6,7 @@ import {sourceItems} from './rust-structure.mjs';
 import {originalSourceModuleItems,originalModuleViewItems,moduleScopeKey} from './source-module-views.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
+import {builtinInnerSourceItem} from './inner-source-attributes.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const contexts=new WeakMap(),certificates=new WeakMap();
@@ -86,7 +87,8 @@ export function createToolAttributeContext({modules,externalModules=new Map(),de
     const scopes=new Map(baseline.scopes.map(scope=>[scopeKey(scope.path),scope]));
     for(const [key,candidate]of candidates){
       const ancestors=candidate.module.map((_,index)=>scopes.get(scopeKey(candidate.module.slice(0,index+1))));ancestors.unshift(scopes.get('crate'));
-      if(ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
+      const disabledPrelude=originals.some(module=>module.path.every((name,index)=>candidate.module[index]===name)&&originalSourceModuleItems(module).some(item=>builtinInnerSourceItem(item,module.source,module.sourceView,profile)?.preludeControl==='no_implicit_prelude'));
+      if(disabledPrelude||ancestors.some(scope=>!scope||scope.configurationCondition!=='active'||scope.unresolvedTypeScope!==false||scope.bindings.some(binding=>binding.namespace==='type'&&binding.name==='rustfmt')||scope.unresolvedImports.some(entry=>entry.glob||entry.name==='rustfmt'))){
         diagnostics.push({source:candidate.source,span:candidate.attribute.span,message:'Original tool prefix lacks closed active tool-prelude ownership'});continue;
       }
       const evidence={schema:'original-tool-attribute-v1',profile:TOOL_ATTRIBUTE_PROFILE,sourceInputsVerified:true,...candidate,owner:{namespace:'tool-prelude',path:['rustfmt']},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:true},runtimeBehavior:false};

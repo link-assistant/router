@@ -1,10 +1,31 @@
 import {itemConfiguration,isInertConditionalAttribute,isAbsentConditionalAttribute} from './cfg-profile.mjs';
 import {boundedSerdeExprPath} from './derive-helper-paths.mjs';
+import {boundedSchemarsNumericHelper} from './derive-numeric-helpers.mjs';
+import {originalDeriveGenericParameters} from './derive-generic-parameters.mjs';
 import {inspectBuiltinDefaultVariant} from './derive-builtin-default.mjs';
+import {isPlainSourceIdentifier} from './module-paths.mjs';
 
 export const STANDARD_LAYOUT_DERIVES=new Set(['Clone','Copy','Debug','Default','PartialEq','Eq','Hash','PartialOrd','Ord']);
 const identifier=token=>token?.type==='ident'&&/^[\p{L}_][\p{L}\p{N}_]*$/u.test(token.text);
 const cases=new Set(['lowercase','UPPERCASE','PascalCase','camelCase','snake_case','SCREAMING_SNAKE_CASE','kebab-case','SCREAMING-KEBAB-CASE']);
+// Lifetime-only parameters cannot splice item/type/value syntax into the
+// pinned anonymous-const derive wrapper. Preserve the exact original tokens;
+// type/const parameters, bounds and parameter attributes require other routes.
+// https://doc.rust-lang.org/reference/items/generics.html
+function originalLifetimeParameters(tokens,begin) {
+  const first=tokens[begin],names=[];let at=begin+1;
+  while(tokens[at]?.text!=='>') {
+    const token=tokens[at++],name=token?.text.slice(1);
+    if(token?.type!=='char'||!/^'[A-Za-z_][A-Za-z0-9_]*$/u.test(token.text)||!isPlainSourceIdentifier(name)||names.includes(name))throw new TypeError('Derive lifetime parameters require distinct nonreserved original names');
+    names.push(name);
+    if(names.length>32)throw new TypeError('Derive lifetime parameters exceed the bounded 32-name profile');
+    if(tokens[at]?.text==='>')break;
+    if(tokens[at++]?.text!==',')throw new TypeError('Derive lifetime bounds or mixed generics require a separate input profile');
+  }
+  const last=tokens[at];
+  if(!last||!names.length)throw new TypeError('Derive lifetime parameters require a nonempty original group');
+  return {end:at+1,evidence:{schema:'original-derive-lifetime-parameters-v1',names,span:{start:first.start,end:last.end},tokens:tokens.slice(begin,at+1).map(token=>({text:token.text,type:token.type,span:{start:token.start,end:token.end}})),genericTypeInstantiation:false,generatedImplBehavior:false}};
+}
 function endOf(tokens,start) {
   const pairs={'(':')','[':']','{':'}'},stack=[];
   for(let at=start;at<tokens.length;at++) {
@@ -35,22 +56,26 @@ function helper(body,position,kind) {
   const values=body.slice(2,-1),entries=[];let at=0;
   while(at<values.length) {
     const key=values[at++];if(!identifier(key))throw new TypeError('Unregistered derive helper key');
-    let value=null;if(values[at]?.text==='='){at++;value=literal(values[at++]);}
-    let namespaceInput=null;
-    if(body[0].text==='serde'&&['skip_serializing_if','with'].includes(key.text)) {
-      if(value===null||position!=='field'&&!(position==='variant'&&key.text==='with'))throw new TypeError('Invalid bounded Serde path helper position');
-      namespaceInput=boundedSerdeExprPath(value);
-    } else if(body[0].text==='serde'&&key.text==='default'&&value!==null) {
-      if(position==='variant'||position==='container'&&kind!=='struct')throw new TypeError('Invalid bounded Serde default path position');
-      namespaceInput=boundedSerdeExprPath(value);
-    } else if(body[0].text==='serde'&&['tag','content'].includes(key.text)) {
-      if(value===null||position!=='container'||kind!=='enum')throw new TypeError('Invalid bounded Serde tag metadata position');
-      namespaceInput={profile:'bounded-serde-tag-literal-v1',generatedHelperBehavior:false};
-    } else if(['rename','rename_all','alias'].includes(key.text)) {
-      if(value===null||key.text==='rename_all'&&!cases.has(value)||key.text==='alias'&&position==='container')throw new TypeError('Unregistered derive rename metadata');
-    } else if(['default','skip','skip_serializing','skip_deserializing','deny_unknown_fields','untagged'].includes(key.text)) {
-      if(value!==null||key.text==='default'&&position==='container'&&kind!=='struct'||key.text.startsWith('skip')&&position==='container'||['deny_unknown_fields','untagged'].includes(key.text)&&position!=='container'||key.text==='untagged'&&kind!=='enum')throw new TypeError('Invalid bounded derive flag position');
-    } else throw new TypeError('Derive helper requires a separately checked input profile: '+key.text);
+    let value=null,namespaceInput=null;
+    if(body[0].text==='schemars'&&['range','length'].includes(key.text)) {
+      const parsed=boundedSchemarsNumericHelper(values,at-1,position);at=parsed.end;namespaceInput=parsed.evidence;value=parsed.evidence.bounds;
+    } else {
+      if(values[at]?.text==='='){at++;value=literal(values[at++]);}
+      if(body[0].text==='serde'&&['skip_serializing_if','with'].includes(key.text)) {
+        if(value===null||position!=='field'&&!(position==='variant'&&key.text==='with'))throw new TypeError('Invalid bounded Serde path helper position');
+        namespaceInput=boundedSerdeExprPath(value);
+      } else if(body[0].text==='serde'&&key.text==='default'&&value!==null) {
+        if(position==='variant'||position==='container'&&kind!=='struct')throw new TypeError('Invalid bounded Serde default path position');
+        namespaceInput=boundedSerdeExprPath(value);
+      } else if(body[0].text==='serde'&&['tag','content'].includes(key.text)) {
+        if(value===null||position!=='container'||kind!=='enum')throw new TypeError('Invalid bounded Serde tag metadata position');
+        namespaceInput={profile:'bounded-serde-tag-literal-v1',generatedHelperBehavior:false};
+      } else if(['rename','rename_all','alias'].includes(key.text)) {
+        if(value===null||key.text==='rename_all'&&!cases.has(value)||key.text==='alias'&&position==='container')throw new TypeError('Unregistered derive rename metadata');
+      } else if(['default','skip','skip_serializing','skip_deserializing','deny_unknown_fields','untagged'].includes(key.text)) {
+        if(value!==null||key.text==='default'&&position==='container'&&kind!=='struct'||key.text.startsWith('skip')&&position==='container'||['deny_unknown_fields','untagged'].includes(key.text)&&position!=='container'||key.text==='untagged'&&kind!=='enum')throw new TypeError('Invalid bounded derive flag position');
+      } else throw new TypeError('Derive helper requires a separately checked input profile: '+key.text);
+    }
     if(entries.some(entry=>entry.key===key.text)&&key.text!=='alias')throw new TypeError('Duplicate bounded derive helper');
     entries.push({key:key.text,value,...(namespaceInput?{namespaceInput}:{})});
     if(at<values.length&&values[at++].text!==',')throw new TypeError('Unregistered derive helper expression');
@@ -63,7 +88,7 @@ export function inspectDeriveInput(item,profile) {
   if(!item||!['struct','enum'].includes(item.term)||!Array.isArray(item.tokens))throw new TypeError('Derive footprint requires an original data declaration');
   const condition=itemConfiguration(item.tokens,profile);
   if(condition.status!=='active')throw new TypeError('Derive footprint requires an active original compilation condition');
-  const tokens=item.tokens.filter(token=>token.type!=='comment'),attributes=[],derives=[],absentConditionalAttributes=[],inertConditionalAttributes=[];let depth=0,header=true,keyword=-1;
+  const tokens=item.tokens.filter(token=>token.type!=='comment'),attributes=[],derives=[],absentConditionalAttributes=[],inertConditionalAttributes=[];let depth=0,header=true,keyword=-1,lifetimeParameters=null,genericParameters=null;
   for(let at=0;at<tokens.length;at++) {
     const token=tokens[at];
     if(token.type==='punct'&&token.text==='#') {
@@ -91,7 +116,17 @@ export function inspectDeriveInput(item,profile) {
       } else throw new TypeError('Unknown procedural or helper attribute remains unproved: '+name);
       attributes.push(attribute);at=end;continue;
     }
-    if(header&&token.text===item.term){keyword=at;const name=tokens[at+1];if(!identifier(name)||tokens[at+2]?.text==='<'||tokens[at+2]?.text==='where')throw new TypeError('Generic derive headers remain unproved');}
+    if(header&&token.text===item.term){
+      keyword=at;const name=tokens[at+1];let after=at+2;
+      if(!identifier(name))throw new TypeError('Generic derive headers remain unproved');
+      if(tokens[after]?.text==='<'){
+        const original=originalDeriveGenericParameters(tokens,after);
+        if(original.evidence.parameters.every(parameter=>parameter.kind==='lifetime'))lifetimeParameters=originalLifetimeParameters(tokens,after).evidence;
+        else genericParameters=original.evidence;
+        after=original.end;at=after-1;
+      }
+      if(tokens[after]?.text==='where')throw new TypeError('Generic derive where clauses remain unproved');
+    }
     if(token.type==='punct'&&['{','('].includes(token.text)){if(keyword>=0)header=false;depth++;}
     if(token.type==='punct'&&['}',')'].includes(token.text))depth--;
     if(token.type==='punct'&&['!','#','='].includes(token.text)||token.type==='ident'&&token.text.endsWith('!')||['where','const','extern','macro_rules','macro_export'].includes(token.text))throw new TypeError('Macro, discriminant or generic-const derive input remains unproved');
@@ -103,7 +138,7 @@ export function inspectDeriveInput(item,profile) {
     // still owns any source-specific helper/type validation not checked here.
     if(siblings.some(other=>other.span.end===attribute.span.start&&other.helpers.some(a=>attribute.helpers.some(b=>a.key===b.key&&a.key!=='alias'))))throw new TypeError('Duplicate adjacent helper metadata');
   }
-  const input={kind:item.term,name:item.name,condition,attributes,derives,absentConditionalAttributes,inertConditionalAttributes,generatedImplBehavior:false};
+  const input={kind:item.term,name:item.name,condition,attributes,derives,absentConditionalAttributes,inertConditionalAttributes,...(lifetimeParameters?{lifetimeParameters}:{}),...(genericParameters?{genericParameters}:{}),generatedImplBehavior:false};
   const builtinDefault=inspectBuiltinDefaultVariant(item,input);
   return {...input,...(builtinDefault?{builtinDefault}:{})};
 }

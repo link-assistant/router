@@ -53,7 +53,7 @@ test('Schemars, omitted builtin derives, generic/custom helper outputs remain re
     '#[derive(serde::Deserialize)] #[serde(default)] pub struct Payload { value:u8 }',
   ]){const input=setup(source),context=createDeriveBangContext(input);assert.equal(context.certificates[0].dimensions.bangMacroComplete,false);assert.ok(context.certificates[0].residualOwners.length);assert.equal(model(resolve(input,context)).unresolvedBangMacroScope,true);}
   const generic=setup('#[derive(serde::Serialize)] pub struct Payload<T>{value:T}');
-  assert.equal(createDeriveBangContext(generic).certificates.length,0);assert.equal(model(resolve(generic)).unresolvedBangMacroScope,true);
+  const genericOutput=createDeriveBangContext(generic);assert.equal(genericOutput.certificates.length,1);assert.equal(genericOutput.certificates[0].dimensions.bangMacroComplete,false);assert.ok(genericOutput.certificates[0].residualOwners.length);assert.equal(model(resolve(generic)).unresolvedBangMacroScope,true);
 });
 
 test('original and generated attribute names require actual ancestor closure',()=>{

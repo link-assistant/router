@@ -1,0 +1,130 @@
+{
+  "schema": "router-759-original-source-json-lossless-compaction-v1",
+  "sourceHead": "747bacb6117c28284b2afdc5e0d5ec4306d4c15d",
+  "combinedEvidenceCapBytes": 500000000,
+  "allocatedBytesBefore": 499535872,
+  "allOriginalGitBytesVerified": true,
+  "allDecodedOriginalsByteIdentical": true,
+  "scope": "Lossless gzip archives of original GitHub API JSON only; snapshot source files and historical receipt vectors are unchanged",
+  "semanticAuthority": false,
+  "entries": [
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/calculator/default-head-runs.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/calculator/default-head-runs.json.gz",
+      "originalBytes": 378034,
+      "originalSha256": "2cc157234712429a56dd95877ebaa28503c785f8f1a28d9450b41c01961df78a",
+      "originalGitBlob": "0beaaceb7b83cc56029776c10f48c9c2a5fc1fdb",
+      "archiveBytes": 9901,
+      "archiveSha256": "1f196a55095b754b0eb2853afca1a601b609ed70450487f8d64d35b5dbbf10f7",
+      "originalAllocatedBytes": 380928
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/formal-ai/pr-1188-files.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/formal-ai/pr-1188-files.json.gz",
+      "originalBytes": 863963,
+      "originalSha256": "edab8979c11c14fe622a77f12b95b924d19240dcb9bda95fe55381555790784a",
+      "originalGitBlob": "ef5e9e2906049f27cb7a5772555079b3d7b6b1b5",
+      "archiveBytes": 202379,
+      "archiveSha256": "4557b8e7b30d194c2e9b49a0a9b515bd20ab33b3d55ac5388fd103ff8d248370",
+      "originalAllocatedBytes": 864256
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-runs.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/link-cli/default-head-runs.json.gz",
+      "originalBytes": 379876,
+      "originalSha256": "0ea4c7d82d3bda18fcd6c79d6cfc3b6770388e6806cbc492a6c5f5dcfb2edf15",
+      "originalGitBlob": "058c9e0eb2e456d0471106fb63b3818a6c113906",
+      "archiveBytes": 8136,
+      "archiveSha256": "17ec3a5d58e00b190fcb69388d16adf3cc537a34773c3b3d5f09eaeb1d569adb",
+      "originalAllocatedBytes": 380928
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/link-cli/open-pulls.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/link-cli/open-pulls.json.gz",
+      "originalBytes": 224658,
+      "originalSha256": "88a8dd08839b65e6c43773b5112a9b2476c82f5e8b650b61c0b286049c946b69",
+      "originalGitBlob": "984bccef46ca1a23779f7f1811dc04a25b1cb8cb",
+      "archiveBytes": 16368,
+      "archiveSha256": "552ae86654b12849c6b16acad440afd9db62ec2062838959214251199bfa731a",
+      "originalAllocatedBytes": 225280
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-runs.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/links-notation/default-head-runs.json.gz",
+      "originalBytes": 391221,
+      "originalSha256": "579989cb387f72d4313d32c1579c6f851f8b35c08e1136c6142d635c9ad5ceac",
+      "originalGitBlob": "ad8cab799606b916631419bedf75d66996f25a0b",
+      "archiveBytes": 7936,
+      "archiveSha256": "1fa4653c5ac9e4fb78f1f0860635d73f586c409a59fd0a9a38bbcfa9a2a7f492",
+      "originalAllocatedBytes": 393216
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/links-notation/open-pulls.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/links-notation/open-pulls.json.gz",
+      "originalBytes": 152854,
+      "originalSha256": "8d37f785e5266fe034dbd2dbb896d9f79cc49f52f8f6a9bebf5cda411d478691",
+      "originalGitBlob": "c0bdf629efabf23ea6cc3d8f2d0fdebed71807d1",
+      "archiveBytes": 10623,
+      "archiveSha256": "e6b9faf5e9b1e5120c4587b695b67acb7a82bff38521b1724613a92191f0594d",
+      "originalAllocatedBytes": 155648
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/open-issues-gap-dedup.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/open-issues-gap-dedup.json.gz",
+      "originalBytes": 128449,
+      "originalSha256": "7a35702a813ed87dcae0ff2f49a76a3b9e741d322b28dc96e5982c8ae1d0b878",
+      "originalGitBlob": "948132c8623cb37e8f7cc758a501c87a566ddec6",
+      "archiveBytes": 27456,
+      "archiveSha256": "4656c2fd6ed694dfc1f04f5d5bab4c290992320996f649e24da8eb5982006e4e",
+      "originalAllocatedBytes": 131072
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/meta-language/pr-201-files.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/meta-language/pr-201-files.json.gz",
+      "originalBytes": 341905,
+      "originalSha256": "4ea2e6f8be057bcc9b290cad842c381a53fdcbab9d33c30e5bfb5128ec8b5d68",
+      "originalGitBlob": "d05d4f165e8f44e1c8fac6ca9c4a0b93b9706c3b",
+      "archiveBytes": 78533,
+      "archiveSha256": "74f4241ba0d5ad876e45d4ca7259fe637edc0f76816deaeb3dfcd39a4288bcfa",
+      "originalAllocatedBytes": 344064
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/pr-184-files.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/relative-meta-logic/pr-184-files.json.gz",
+      "originalBytes": 858038,
+      "originalSha256": "84b7303804b178405423869fa2400d01f86c15b7d4db2f95ab24cfa30568ea62",
+      "originalGitBlob": "97ae800457f62d5ea85731b38876cb07496e0e57",
+      "archiveBytes": 209961,
+      "archiveSha256": "81e4c054741d0c5cab63a44f879e4cc13f81a51e47d38389f3cf19e37fe01a43",
+      "originalAllocatedBytes": 860160
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/source-manifest.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/source-manifest.json.gz",
+      "originalBytes": 137437,
+      "originalSha256": "43a90d95bf617107a8909fd6afbb9610e3cc699b0786ff4837544cc61aa6e094",
+      "originalGitBlob": "c5618604ea36863526d5a80b39d37666cb4ae335",
+      "archiveBytes": 18815,
+      "archiveSha256": "cc765735b7bedde81ffd6a213596c2c613ec436bfe163b7af66d4a74bd621a2c",
+      "originalAllocatedBytes": 139264
+    },
+    {
+      "logicalOriginalPath": "docs/case-studies/issue-759/raw/sources/start/default-head-runs.json",
+      "archivePath": "docs/case-studies/issue-759/raw/sources/start/default-head-runs.json.gz",
+      "originalBytes": 369936,
+      "originalSha256": "bfd28b500a232405729d7c46d07597d8f2846896132ee8f7af37fe6bdec89b54",
+      "originalGitBlob": "0b67e92867268d3b65857a4a1c0cf7d8ec4e5deb",
+      "archiveBytes": 7929,
+      "archiveSha256": "5476aae901e55b528c197664c9acc216a3bee387cced994e638711fef8685cda",
+      "originalAllocatedBytes": 372736
+    }
+  ],
+  "citationUpdates": [
+    {
+      "path": "docs/case-studies/issue-759/README.md",
+      "oldSha256": "49295f0a480edf281fcf50bb875d437f378ca6e134c05b971199eaeed4fbcd82",
+      "newSha256": "c034380a4f190b0aff761bd0f7523a961b5709825296888238e9c48156dcb1f8"
+    }
+  ],
+  "decode": "gzip -dc ARCHIVE.json.gz; verify decoded length and SHA256 against entries"
+}

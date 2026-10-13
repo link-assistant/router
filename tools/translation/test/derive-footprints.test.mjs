@@ -55,19 +55,22 @@ test('binder narrows only sealed declaration dimensions and keeps exported bang 
   assert.throws(()=>resolveModuleBindings({modules,deriveContext:structuredClone(proof)}),/Unsealed/);
 });
 
-test('unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty',()=>{
+test('unknown helpers and macro-bearing fragments retain namespace uncertainty',()=>{
   for(const declaration of [
     '#[derive(serde::Serialize)] #[serde(crate="other")] pub struct Entry {value:u8}',
     '#[derive(serde::Serialize)] #[serde(remote="Other")] pub struct Entry {value:u8}',
     '#[derive(serde::Deserialize)] pub struct Entry {#[serde(default="helper()")] value:u8}',
     '#[derive(schemars::JsonSchema)] #[schemars(title={#[macro_export] macro_rules! escaped{()=>{}} "title"})] pub struct Entry {value:u8}',
-    '#[derive(serde::Serialize)] pub struct Entry<T>{value:T}',
     '#[derive(serde::Serialize)] pub struct Entry{value:injected!()}',
     '#[derive(serde::Serialize,Unknown)] pub struct Entry{value:u8}',
     '#[derive(serde::Serialize)] pub struct Entry{value:u8} #[unknown] pub struct Sibling;',
     '#[derive(serde::Serialize)] pub struct Entry{value:u8} unknown::emit!{pub static SIBLING:u8=0;}',
     '#[cfg_attr(unix,derive(serde::Serialize))] pub struct Entry{value:u8}',
   ]){const result=context(declaration);assert.equal(result.certificates.length,0,declaration);}
+});
+
+test('original generic input confines namespace names while instantiation and trait behavior remain unproved',()=>{
+  const proof=context('#[derive(serde::Serialize)] pub struct Entry<T>{value:T}');assert.equal(proof.certificates.length,1);assert.equal(proof.certificates[0].genericParameters.genericTypeInstantiation,false);assert.equal(proof.certificates[0].generatedImplBehavior,false);assert.equal(proof.certificates[0].dimensions.bangMacroComplete,false);
 });
 
 test('actual local packages unknown macro imports and custom core owners cannot forge standard derives',()=>{

@@ -88,11 +88,14 @@ test('unselected payload and helper-controlled generator routes remain explicit 
     '#[derive(serde::Serialize)] pub enum State { #[serde(with="crate::codec")] First }',
   ])assert.throws(()=>proof(source),/unit|payload|helper|branches/);
   for(const source of [
-    '#[derive(serde::Serialize)] pub enum State<T> { Item(T) }',
     '#[derive(serde::Serialize)] #[serde(remote="Other")] pub enum State { First }',
     'use custom::Serialize; #[derive(Serialize)] pub enum State { First }',
     '#[derive(serde::Serialize)] pub enum State { First } #[unknown] struct Other;',
   ])assert.equal(context(source).certificates.length,0,source);
+});
+
+test('original generic input does not acquire the nongeneric Serialize output route',()=>{
+  const source='#[derive(serde::Serialize)] pub enum State<T> { Item(T) }';assert.equal(context(source).certificates.length,1);assert.throws(()=>proof(source),/nongeneric/);
 });
 
 test('generated attribute owners cannot be borrowed from a clean unrelated context',()=>{

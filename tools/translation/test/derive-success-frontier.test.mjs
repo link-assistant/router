@@ -57,10 +57,13 @@ test('frontier excludes payloads, helper behavior and unsupported derive owners 
     '#[derive(serde::Serialize,schemars::JsonSchema)] pub enum State { Ready }',
   ])assert.throws(()=>candidate(declaration),/unit|fields|helper|owners/);
   for(const declaration of [
-    '#[derive(serde::Serialize)] pub enum State<T> { Ready(T) }',
     '#[derive(serde::Serialize)] #[serde(remote="Other")] pub enum State { Ready }',
     '#[derive(serde::Serialize)] pub enum State { Ready } #[unknown] struct Sibling;',
   ])assert.equal(context(declaration).certificates.length,0);
+});
+
+test('bounded generic input retains a certificate while the nongeneric output frontier refuses original generic source',()=>{
+  const declaration='#[derive(serde::Serialize)] pub enum State<T> { Ready(T) }';assert.equal(context(declaration).certificates.length,1);assert.throws(()=>candidate(declaration),/nongeneric/);
 });
 
 test('source cloning stale bytes unknown archive paths and caller closed-scope assertions cannot mint frontier evidence',()=>{

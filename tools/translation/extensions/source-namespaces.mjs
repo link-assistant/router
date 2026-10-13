@@ -41,7 +41,7 @@ export function withSourceNamespaceParser(Base) {
       if(!aliases)return declaration;
       const pattern=node=>{
         if(!node||typeof node!=='object')return;
-        if(['bind','bindOrCtor'].includes(node.k)&&aliases.has(node.name))throw unsupported('source value alias/local scope collision','pattern bindings require checked lexical activation',node.span??declaration.span);
+        if(['bind','bindOrCtor'].includes(node.k)&&aliases.has(node.name)&&!node.sourceLexicalBinding)throw unsupported('source value alias/local scope collision','pattern bindings require checked lexical activation',node.span??declaration.span);
         for(const key of ['args','items','alternatives'])for(const child of node[key]??[])pattern(child);
         for(const field of node.fields??[])pattern(field.pattern);
       };
@@ -87,7 +87,29 @@ export function withSourceNamespaceParser(Base) {
       // The initializer was parsed in the previous scope. Activate only the
       // exact ordinary source binder after that parsing has completed.
       if(binding.name){const proof={name:binding.name,span:{...binding.span},kind:'source-let'};this.sourceLexicalBind(proof);return {...binding,sourceLexicalBinding:proof};}
+      if(binding.k==='routerLetElse'){
+        // The initializer and diverging else were parsed in the old scope.
+        // Only the success continuation can shadow an actual function name.
+        const activate=node=>{
+          if(!node||typeof node!=='object')return node;
+          if(['bind','bindOrCtor'].includes(node.k)){
+            const original=(this.sourceNamespaceBindingEvidence?.get(path.join('.'))??this.sourceNamespaceEvidence?.bindings)?.find(item=>item.namespace==='value'&&item.name===node.name);
+            if(node.k==='bind'||!original||original.status==='resolved'&&original.kind==='fn'){
+              const proof={name:node.name,span:{...node.span},kind:'source-let-else'};this.sourceLexicalBind(proof);return {...node,sourceLexicalBinding:proof};
+            }
+          }
+          return {...node,...(node.args?{args:node.args.map(activate)}:{}),...(node.items?{items:node.items.map(activate)}:{}),...(node.alternatives?{alternatives:node.alternatives.map(activate)}:{}),...(node.fields?{fields:node.fields.map(field=>({...field,pattern:activate(field.pattern)}))}:{})};
+        };
+        return {...binding,pattern:activate(binding.pattern)};
+      }
       return binding;
+    }
+    sourcePatternPath(written,path){
+      const original=(this.sourceNamespaceBindingEvidence?.get(path.join('.'))??this.sourceNamespaceEvidence?.bindings)?.find(item=>item.namespace==='value'&&item.name===written[0]);
+      // A plain function name may be an identifier binding in Rust. Preserve
+      // it until the checker distinguishes it from actual constants/ctors.
+      if(written.length===1&&!this.cursor.is('(')&&!this.cursor.is('{')&&original?.status==='resolved'&&original.kind==='fn')return [...written];
+      return this.resolve(written,path);
     }
     inSourceNamespace(namespace,operation) {
       const previous=this.sourceResolutionNamespace;this.sourceResolutionNamespace=namespace;

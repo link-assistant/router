@@ -24,7 +24,7 @@ export function snapshotMap(value) {
 }
 // Descriptor inspection precedes value access, including non-enumerable and
 // symbol properties. This never calls getters or caller-defined Map methods.
-export function copyMetadata(value,{cells=200000,bytes=4194304}={},depth=0,active=new Set(),budget=null) {
+export function copyMetadata(value,{cells=200000,bytes=4194304,preserveKeyOrder=false}={},depth=0,active=new Set(),budget=null) {
   budget??={cells,bytes};if(--budget.cells<0||depth>160)fail('metadata budget exhausted');
   if(value===null||value===undefined||typeof value==='boolean'||typeof value==='bigint')return value;
   if(typeof value==='number'){if(!Number.isSafeInteger(value))fail('non-integer metadata number');return value;}
@@ -38,8 +38,12 @@ export function copyMetadata(value,{cells=200000,bytes=4194304}={},depth=0,activ
   if(array){
     const length=descriptors.length.value;if(!Number.isSafeInteger(length)||length<0||length>budget.cells)fail('array metadata budget exhausted');
     if(keys.length!==length+1)fail('array metadata holes or extra properties');
-    result=[];for(let index=0;index<length;index++){const descriptor=descriptors[String(index)];if(!descriptor)fail('array metadata hole');result.push(copyMetadata(descriptor.value,{},depth+1,active,budget));}
-  }else {result=Object.create(null);for(const key of keys.sort(ordinal))Object.defineProperty(result,key,{value:copyMetadata(descriptors[key].value,{},depth+1,active,budget),enumerable:true,writable:true,configurable:true});}
+    result=[];for(let index=0;index<length;index++){const descriptor=descriptors[String(index)];if(!descriptor)fail('array metadata hole');result.push(copyMetadata(descriptor.value,{preserveKeyOrder},depth+1,active,budget));}
+  }else {
+    // Copy certificates hash their original JSON property order. Canonical
+    // metadata cloning must retain every signed byte inside those envelopes.
+    result=Object.create(null);for(const key of preserveKeyOrder?keys:keys.sort(ordinal))Object.defineProperty(result,key,{value:copyMetadata(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget),enumerable:true,writable:true,configurable:true});
+  }
   active.delete(value);return result;
 }
 export function metadataDigest(value) {

@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { resolveModuleGraph, translateProject } from '../project.mjs';
 import { translateSource } from '../translate.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {loadJavaScript as load} from './artifact-loader.mjs';
 
 const project = files => ({ entry: 'src/lib.rs', paths: Object.keys(files), readSource: path => { assert.ok(Object.hasOwn(files, path)); return files[path]; } });
@@ -74,10 +75,10 @@ test('imported immutable layouts retain constructor tags and cross-file fields',
 test('ambiguous, missing, and conditional module edges never read an invented source', () => {
   const files = { 'src/lib.rs': 'mod duplicate; mod missing; #[cfg(test)] mod tests;', 'src/duplicate.rs': '', 'src/duplicate/mod.rs': '', 'src/tests.rs': 'panic!("do not parse");' };
   const read = [];
-  const graph = resolveModuleGraph({ ...project(files), readSource: path => { read.push(path); return files[path]; } });
+  const graph = resolveModuleGraph({ ...project(files), compilationProfile:PRODUCTION_PROFILE, readSource: path => { read.push(path); return files[path]; } });
   assert.deepEqual(read, ['src/lib.rs']);
   assert.equal(graph.edges.length, 0);
-  assert.equal(graph.diagnostics.length, 3);
+  assert.equal(graph.diagnostics.length, 2);
   assert.match(graph.diagnostics[0].message, /ambiguous/u);
   assert.match(graph.diagnostics[1].message, /missing/u);
 });

@@ -138,7 +138,9 @@ export function requirePinnedStandardBody(node,Parser,{Checker,program}={}){
   const issued=issuedContexts.get(proof.checkedBodyDigest),ActualChecker=Checker??issued?.Checker;
   const entry=program?.declarations.get(bindings[0].value.type.name)??issued?.entry;
   if(typeof ActualChecker!=='function'||!entry||entry.fullName!==bindings[0].value.type.name)throw new Error('standard body validation requires actual checked declaration context');
-  const checker=new ActualChecker(program?.sourceLanguage??issued.language,program?.externals??[]);
+  const language=program?.sourceLanguage??program?.language??issued?.language;
+  if(language!=='Rust')throw new Error('standard body validation requires the actual Rust program language');
+  const checker=new ActualChecker(language,program?.externals??[]);
   // This actual canonical layout is the sole data dependency of the selected
   // original Option body. Its checked payload and constructor identities are
   // revalidated rather than reconstructed from public proof claims.

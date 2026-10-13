@@ -1,0 +1,446 @@
+{
+  "schema": "complete-coordinated-source-repair-evidence-v1",
+  "originalSourceHead": "747bacb6117c28284b2afdc5e0d5ec4306d4c15d",
+  "archive": "complete-evidence.tar.xz",
+  "archiveBytes": 1942600,
+  "archiveSha256": "bb5c1cc748fcf905294ccc930b8ca56de0f34dfc71a5f0caa3a61c4991f76de6",
+  "originalMembers": 85,
+  "byteIdenticalTarHardlinks": 4,
+  "completeOriginalBytes": 65396711,
+  "members": [
+    {
+      "path": "observations/router-759-coordinated-compiler-lint-v1-inputs.json",
+      "bytes": 9525692,
+      "sha256": "b41402e8311f6e48a3fd64c91b513dd7b63aabcbc91089e2850025a99e63cdc8"
+    },
+    {
+      "path": "observations/router-759-coordinated-compiler-lint-v1.json",
+      "bytes": 1011,
+      "sha256": "2e2b998501ac888da8ad70f85d3af9054663db3dc0910fbff3d311d4a0730a95"
+    },
+    {
+      "path": "observations/router-759-coordinated-compiler-lint-v1.raw.log",
+      "bytes": 44,
+      "sha256": "c010341e3bd827db4c666a92b43c0bd7407167187a8f73f076dcf952af3f78e4"
+    },
+    {
+      "path": "observations/router-759-coordinated-forward-uncommitted-export-failures-v1.json",
+      "bytes": 5882,
+      "sha256": "3e855d2518250af52018141e6302392ae1b3da27178ccb6d0afc6f94ecc066b8"
+    },
+    {
+      "path": "observations/router-759-coordinated-repair-diagnostic-v1.py",
+      "bytes": 2746,
+      "sha256": "15658da6498a7e0997562a7f275bc2ea6206122a5c3c0d5a136910160ca2a764"
+    },
+    {
+      "path": "observations/router-759-coordinated-repair-evidence-archive-v1.py",
+      "bytes": 7643,
+      "sha256": "cd89872bae9152c598e3d2843cd3499bf5aa4639f7c935c92d1f749af3ad2212"
+    },
+    {
+      "path": "observations/router-759-coordinated-serialization-regeneration-review-v1.json",
+      "bytes": 1634,
+      "sha256": "c9d4cb5792b380dc1f46a27c08e9f7c04edfca7b4b79822a12348bd3cdb697a8"
+    },
+    {
+      "path": "observations/router-759-coordinated-serialization-verification-v1-inputs.json",
+      "bytes": 9525692,
+      "sha256": "b41402e8311f6e48a3fd64c91b513dd7b63aabcbc91089e2850025a99e63cdc8",
+      "storedAsHardlink": "observations/router-759-coordinated-compiler-lint-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-coordinated-serialization-verification-v1.json",
+      "bytes": 1071,
+      "sha256": "dab3df60907dd4df79937a7dca80d0dac12e89922789db8e55adf9af18dda55d"
+    },
+    {
+      "path": "observations/router-759-coordinated-serialization-verification-v1.raw.log",
+      "bytes": 29272,
+      "sha256": "97349c8426d304bc8ec5a6aff62dbec4d9f35f4ea7498c44d404862c2b5ca739"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-bun-final-v1-inputs.json",
+      "bytes": 9525198,
+      "sha256": "ef47e3f1c2d10a5bd50e8098fe1089bf9c00e7ac4166e8b7f62d73ddde49f7c5"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-bun-final-v1.json",
+      "bytes": 1884,
+      "sha256": "98b395663be9a91cca4546b811413e0c2a619288a38bff03e8aa8e436d1fe680"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-bun-final-v1.raw.log",
+      "bytes": 12511,
+      "sha256": "19836733c6172ec0eb194bc49d663cc263f94f2d46802fc55eb37b05005fb716"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-complete-forward-node-v1-inputs.json",
+      "bytes": 9525198,
+      "sha256": "ef47e3f1c2d10a5bd50e8098fe1089bf9c00e7ac4166e8b7f62d73ddde49f7c5",
+      "storedAsHardlink": "observations/router-759-e68-coordinated-repair-bun-final-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-complete-forward-node-v1.json",
+      "bytes": 13663,
+      "sha256": "722fcd11f85223f7c7f39afe44cca0284a1456d73735ccfeee93e5c2c41f7f52"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-complete-forward-node-v1.raw.log",
+      "bytes": 494587,
+      "sha256": "4b1eb7b96aa378d7471de717f43d751bd9def9d42b14aad7d1d8cafb3bb1738f"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-node-final-v1-inputs.json",
+      "bytes": 9525198,
+      "sha256": "ef47e3f1c2d10a5bd50e8098fe1089bf9c00e7ac4166e8b7f62d73ddde49f7c5",
+      "storedAsHardlink": "observations/router-759-e68-coordinated-repair-bun-final-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-node-final-v1.json",
+      "bytes": 1889,
+      "sha256": "018f76359d6fde337d4fcf01b904b8b5a669299eb9a2a89c595e9f715db58216"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-node-final-v1.raw.log",
+      "bytes": 25814,
+      "sha256": "8e3c2600668c46af0b66038ed07ef0a6fb1880b6a367f2c5cace250fe587352a"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-node-initial-v1-inputs.json",
+      "bytes": 9525198,
+      "sha256": "ed5d78f42a32494389a48cd9d49bcf58a41658509d0138cff4a1b02c30b90db8"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-node-initial-v1.json",
+      "bytes": 1646,
+      "sha256": "e9d5b88a19cdaec62381a329276812e21357f64a08b0a9fa0c3b55993a44b7b3"
+    },
+    {
+      "path": "observations/router-759-e68-coordinated-repair-node-initial-v1.raw.log",
+      "bytes": 25640,
+      "sha256": "1387d8715dfd421800f48422821f4b0b753df44f7e805e346e6b486ce7987f31"
+    },
+    {
+      "path": "observations/router-759-e68-copy-integrity-diagnostics-v1.mjs",
+      "bytes": 1409,
+      "sha256": "e86e013646c99d1ca7b37b58e8a3d7f0150d37cec4c89484d53cd3c437f84706"
+    },
+    {
+      "path": "observations/router-759-e68-copy-integrity-diagnostics-v1.raw.log",
+      "bytes": 1701,
+      "sha256": "67e70be62ce37e3609de9bb0522a8a7e79534821ea0cf84a7fcbb3c83acbbe6b"
+    },
+    {
+      "path": "observations/router-759-e68-copy-integrity-diagnostics-v1.result.json",
+      "bytes": 257157,
+      "sha256": "65ae598c39ef1cecca6b23d534687447282564ca461b65e79d2e9cf2683640ed"
+    },
+    {
+      "path": "observations/router-759-e68-gate-repair-diagnostics-v1.mjs",
+      "bytes": 1728,
+      "sha256": "58d824e4c1c173e56c193b6d8ea5b5e7307538c48f68f63f77cf1ab81f36dfe1"
+    },
+    {
+      "path": "observations/router-759-e68-gate-repair-diagnostics-v1.raw.log",
+      "bytes": 2442,
+      "sha256": "f7c385d4150bb52e01a5e164274c8f61a47edddcc1a81ee87721962c34d7c3f4"
+    },
+    {
+      "path": "observations/router-759-e68eea368-derive-candidate-integration-v1.json",
+      "bytes": 1714,
+      "sha256": "61c3e23476329dc89d0b283b6b9dd1e64a5924049887cbd76d9fc4c1fb54948a"
+    },
+    {
+      "path": "observations/router-759-generic-candidate-authentic-original-git-context-v1.json",
+      "bytes": 132717,
+      "sha256": "e539665c1e61689af799e505be1aab37cb2cd7bbec24bfda670dec12ae5df43b"
+    },
+    {
+      "path": "observations/router-759-generic-candidate-initial-five-files-v1.json",
+      "bytes": 1132,
+      "sha256": "67c90adb7252303a0f139271aa910dc41eb5466435433f3665a44f9247a8836b"
+    },
+    {
+      "path": "observations/router-759-generic-candidate-initial-five-files-v1.tar.xz",
+      "bytes": 11232,
+      "sha256": "b254a2755853659f8e276e36b19e3c41c6ac486b81c28d65f1da657484ef887e"
+    },
+    {
+      "path": "observations/router-759-generic-candidate-original-export-v1.json",
+      "bytes": 331892,
+      "sha256": "5640ea15496376c1527a0667b400e449190c2f118850301d69195dd8d9a6b6c2"
+    },
+    {
+      "path": "observations/router-759-generic-families-73e322a2-node.log",
+      "bytes": 6388,
+      "sha256": "5d404977defad5bd20ea097dd829cce72b22face23f87bc98baebd7f871080a9"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-bun-verified-v1-inputs.json",
+      "bytes": 270576,
+      "sha256": "831b1a74c4c67a832e1b5e039686eef9271751e97dd6a025b916e2122c5ef958"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-bun-verified-v1.json",
+      "bytes": 1800,
+      "sha256": "3462102bc616051d82c5ecc3c44f5380039d005e3970f9746c5df2433b606a75"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-bun-verified-v1.raw.log",
+      "bytes": 8077,
+      "sha256": "d2c9b2bfb011348e5ec9564118f6f8a301a7b0c401bf891ddb7629ac7356571f"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-integration-v1.json",
+      "bytes": 2876,
+      "sha256": "72063533a3c654cd3389c87b5c116e27aa6ba429212e5f6bff3994be143f6171"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-final-v1-inputs.json",
+      "bytes": 270576,
+      "sha256": "cd608b75d5f50d195f4646d484a2700e380569081395e0ed9b85457b9711b2e7"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-final-v1.json",
+      "bytes": 1828,
+      "sha256": "24bafd2f7004a36f236edd4fb0c23681eca77f6cebaf8823661e351d047203c0"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-final-v1.raw.log",
+      "bytes": 16737,
+      "sha256": "c3473ff47310ea360389f9c88a10751cdf8ae065aec7af7b4e4850ea31b0a174"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-initial-v1-inputs.json",
+      "bytes": 270576,
+      "sha256": "8078732dd9c7b6ddf1cf12465dcde4301524b95b59e0dc9653cf012ed07a66a4"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-initial-v1.json",
+      "bytes": 1805,
+      "sha256": "be98208a711e6a208e02b1103c1ea064e9218a01e79ace8e439c4cce32d72ddb"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-initial-v1.raw.log",
+      "bytes": 22496,
+      "sha256": "a01edd79f7c93072edf7ae16b8e95cd2a729ec20b06783de937f0f1fa6ba02dd"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-verified-v1-inputs.json",
+      "bytes": 270576,
+      "sha256": "831b1a74c4c67a832e1b5e039686eef9271751e97dd6a025b916e2122c5ef958",
+      "storedAsHardlink": "observations/router-759-generic-original-candidate-bun-verified-v1-inputs.json"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-verified-v1.json",
+      "bytes": 1834,
+      "sha256": "82ab594b2d93fbf8acb1fb3b919754c5e645620e232bec36b4df28da6be2ed5b"
+    },
+    {
+      "path": "observations/router-759-generic-original-candidate-node-verified-v1.raw.log",
+      "bytes": 16073,
+      "sha256": "25af9b47b58492b113a60ff1b003978141ba954c220df0a17a044fb35f70ff1f"
+    },
+    {
+      "path": "observations/router-759-prepare-generic-candidate-v1.py",
+      "bytes": 1441,
+      "sha256": "ae716f65b26c1063bb3ccbbb9bd72c272e9ae9bd8b6a161fcb37358a6054b574"
+    },
+    {
+      "path": "observations/router-759-run-isolated-candidate-diagnostic-v3.py",
+      "bytes": 2607,
+      "sha256": "69a1caf2a769d76a591beda62683a380bec9562aacbbac3c8a7ab845b1e6239a"
+    },
+    {
+      "path": "observations/router-759-source-json-compaction-after-measurements-v1.json",
+      "bytes": 62588,
+      "sha256": "f1a9398c8b03352feca30ceed5dfcf75d68316365d9e26c393d29137eed426e3"
+    },
+    {
+      "path": "observations/router-759-source-json-compaction-before-measurements-v1.json",
+      "bytes": 62135,
+      "sha256": "46fd188eaba38bdea08380a5fa7b7a487c042aa9db181497eebd8aa108d5c450"
+    },
+    {
+      "path": "observations/router-759-source-json-compaction-measurement-verification-v1.json",
+      "bytes": 7860,
+      "sha256": "080ce33bcfbedbea43dd44e296b64f4e9b7612ac001c34a243a4e3d9a7460be2"
+    },
+    {
+      "path": "observations/router-759-source-json-compaction-v1.applied.json",
+      "bytes": 707,
+      "sha256": "ecf8f8f576ed0c5f51da89a5e929af2b64a8f482f50fa5f3f4395aba10f7ebee"
+    },
+    {
+      "path": "observations/router-759-source-json-compaction-v1.plan.json",
+      "bytes": 8017,
+      "sha256": "d4a10242d27e1267c5dfeee138ab171ee9141085838c5a0ee877441093814187"
+    },
+    {
+      "path": "observations/router-759-source-json-compaction-v1.py",
+      "bytes": 4988,
+      "sha256": "746efbdcbd3d173385b20e604c8808d6143c992bb8c1886319bd0f0fc22ba2d3"
+    },
+    {
+      "path": "observations/router-759-verify-coordinated-serialization-v1.mjs",
+      "bytes": 917,
+      "sha256": "98f46a5eaa7f23a904c24d0623a7e44efe84b7d5f4b610522a3f5a428cdb8f90"
+    },
+    {
+      "path": "implementation/tools/translation/README.md",
+      "bytes": 21876,
+      "sha256": "1a75242ffd20f48e06f375bf46297f8eeb6301005031a66f69d0a86cbef80b13"
+    },
+    {
+      "path": "implementation/tools/translation/derive-footprints.mjs",
+      "bytes": 16983,
+      "sha256": "e628a23f8fc083abcd8f45aede50e9471c3cbb7fdb1fa69b0101b4a252caab4f"
+    },
+    {
+      "path": "implementation/tools/translation/derive-generic-parameters.mjs",
+      "bytes": 3356,
+      "sha256": "58903868af2e4bb7c5b9042ce4bcd3ccc440c038f154bc28710548a15b67c435"
+    },
+    {
+      "path": "implementation/tools/translation/derive-inputs.mjs",
+      "bytes": 11672,
+      "sha256": "eccc765f761b30a101ae931e407f83818fb32446efeab9ff91a8d1050493f6de"
+    },
+    {
+      "path": "implementation/tools/translation/derive-numeric-helpers.mjs",
+      "bytes": 3122,
+      "sha256": "16b3562d7f8c6dd1efce867f773b5a9a4fec2d814310af91d7e36c4fe99ff066"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/host-contracts.mjs",
+      "bytes": 91298,
+      "sha256": "6d0a6a17ebc0c8e344a6d2d14ea6df086906daa5f44103281b7509b465cddd00"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/pattern-control.mjs",
+      "bytes": 52180,
+      "sha256": "db6f6377917ca99dcad82721bd62e5f7aecf455213cd02b0d3a334dddce3fffb"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/source-links.mjs",
+      "bytes": 23377,
+      "sha256": "9594cf3081705cfcc497b8e0472913e9f738828f04283af245e1c3e50c54bfb8"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/source-namespaces.mjs",
+      "bytes": 18333,
+      "sha256": "9de97e8c76ccb52412f35575a00923579dd75e8e200e86034fc7715b05094f85"
+    },
+    {
+      "path": "implementation/tools/translation/extensions/standard-body-checker.mjs",
+      "bytes": 15203,
+      "sha256": "20909bc5e391beb8b5566da492f5fca720616af53a794f38bf9042e087d47c2c"
+    },
+    {
+      "path": "implementation/tools/translation/impl-resolver.mjs",
+      "bytes": 26732,
+      "sha256": "67d287f4d82dca9846d768d5b3a6af6b9e359c32274e066400eb3a187e5763bb"
+    },
+    {
+      "path": "implementation/tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json",
+      "bytes": 905339,
+      "sha256": "e9b8db496dad18e100f60741fa851d783f5fa6612fa673bec0b1eefdc5b9a96e"
+    },
+    {
+      "path": "implementation/tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json",
+      "bytes": 4103665,
+      "sha256": "e9884e35323b672b88f822ed8aa5b6832d28938059a220785f8fec110a6c273b"
+    },
+    {
+      "path": "implementation/tools/translation/serialization-schema/bulk-generated/router-serialization.mjs",
+      "bytes": 67200,
+      "sha256": "ceeb05796a308299c17d38a54422f9dbd82c477a2ca914f527d3858ab3186f38"
+    },
+    {
+      "path": "implementation/tools/translation/serialization-schema/bulk-generated/router-serialization.ts",
+      "bytes": 67965,
+      "sha256": "f2ee776b65082b47907e7117b85b604cf331ad8ed9c2b92e9cbfa6dce9557d22"
+    },
+    {
+      "path": "implementation/tools/translation/test/cfg-profile.test.mjs",
+      "bytes": 9508,
+      "sha256": "b7ab727ff540ba3183a115fe732e7e953df87be870eb783dfe7618a77b4209bc"
+    },
+    {
+      "path": "implementation/tools/translation/test/declarative-macros.test.mjs",
+      "bytes": 16571,
+      "sha256": "b6cde294b76f8d4366f3d2718bcc0b7bba2f890b970f261218e6c28f96bc3784"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-bang-context.test.mjs",
+      "bytes": 14603,
+      "sha256": "e84a3befc9fe60d53d491ae90427ecc1dfa1276ba5df4cf1e194c44f97f9ccb1"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-bang-footprints.test.mjs",
+      "bytes": 14595,
+      "sha256": "d114ffa1563a595d607eb8a396bfa86d4b1abf20b134503d7de48704c0f3cb66"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-footprints.test.mjs",
+      "bytes": 11053,
+      "sha256": "e696c9be597c97b4598ce055e06c49b2b0784b78bcba3befbaf51a01dffe918d"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-generic-parameters.test.mjs",
+      "bytes": 6924,
+      "sha256": "4987c3112acffeb4976f21067af4e364dd6b5df382db37d9c28b39a1cbb86c2e"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-lifetime-original-token.test.mjs",
+      "bytes": 4946,
+      "sha256": "b2b3061d051d96a9e22bf76b85b3226641f888604df28800093d934faf57b143"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-lifetime-parameters.test.mjs",
+      "bytes": 6123,
+      "sha256": "0e440631f7ff7b18a38ebcf2e72cc6a93b79bb2b4d80a01fec96a50f29da17d7"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-numeric-helpers.test.mjs",
+      "bytes": 4288,
+      "sha256": "18bd6fda6781c01ab2a05a4c91bcd48f5b167df39cc111eb7fe8b53d6bca0672"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-numeric-original-model-catalog.test.mjs",
+      "bytes": 3166,
+      "sha256": "f2b0ed7c3ad6ddaff785a660a03c666bbb426d7b36912f715b778f526a69ddd3"
+    },
+    {
+      "path": "implementation/tools/translation/test/derive-success-frontier.test.mjs",
+      "bytes": 6623,
+      "sha256": "fb09a0323dcc61e27d254c62a9072c52dede82028e50138c1047d7eacb6cf047"
+    },
+    {
+      "path": "implementation/tools/translation/test/matrix-bulk.test.mjs",
+      "bytes": 12045,
+      "sha256": "f7aa874fa46f81608ac388650dce4a8ee2af5e90aac9b72431d2a7e376f0d721"
+    },
+    {
+      "path": "implementation/tools/translation/test/option-unwrapping-types.test.mjs",
+      "bytes": 5246,
+      "sha256": "b9a4fbe90b80fdabc3af83344b9ba04439e45d6d663f68be8d6b5debdf7674a8"
+    },
+    {
+      "path": "implementation/tools/translation/test/project.test.mjs",
+      "bytes": 6959,
+      "sha256": "bf01e9b858199853f35499f1ae6f3edcd5b3de9cb6fd87171f9022c39e63571c"
+    },
+    {
+      "path": "implementation/tools/translation/tool-attributes.mjs",
+      "bytes": 10045,
+      "sha256": "a0f464782997b495246cc17476166b61c1753a88a4c77b4937b48c0f1a028d6c"
+    }
+  ],
+  "allDecodedOriginalsVerified": true,
+  "rustExecutions": 0,
+  "fullGatePass": false,
+  "strictParityStatus": "Unimplemented runtime obligations remain mandatory; no green gate stamp or Rust run",
+  "producerStatus": "Forward source changes and serialization outputs are verified; canonical and three-profile corpus regeneration remain required for the new compiler"
+}

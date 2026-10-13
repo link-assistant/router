@@ -234,6 +234,15 @@ not installed dependencies. A different manifest or lock leaves these derive
 namespaces unresolved with an explicit unsupported-profile diagnostic; it
 does not grant the registered derive owners or stop unrelated translation.
 
+The original derive input grammar preserves lifetime and type parameter names,
+optional nongeneric path defaults such as `OperationResult<T = Value>`, and
+literal Schemars range/length bounds. It retains exact original tokens and spans
+and confines bounded namespace outputs using the pinned Syn and Schemars
+sources. This permits independent declarations in the same original scope to
+be checked. Generic instantiation, referenced schema type resolution, generated
+trait execution and bang-output closure still require separate implementation;
+the existing nongeneric output routes refuse these generic inputs.
+
 The future binary64 literal draft verifies `source-profiles/floating-standard`
 before lexical adaptation. Its bounded decimal-to-binary converter uses exact
 integer ratios and one ties-to-even rounding, retaining the written token and

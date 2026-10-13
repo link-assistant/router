@@ -113,7 +113,9 @@ test('whole unchanged lib and Unix listener retain separate original configured 
     const result=regenerateCompilationMatrix({root:directory,matrix:matrix(),sources:Object.keys(originals)});
     for(const member of result.manifest.profiles){
       const project=member.projects.find(project=>project.entry==='src/lib.rs'),meta=JSON.parse(readFileSync(join(directory,project.targets.meta),'utf8'));
-      assert.equal(meta.moduleEdges.some(edge=>edge.to==='src/unix_listener.rs'),member.name==='unix-family');
+      const edge=meta.moduleEdges.find(edge=>edge.to==='src/unix_listener.rs');
+      assert.equal(Boolean(edge),member.name!=='windows-family');
+      if(edge){assert.equal(edge.pathSelection.availabilitySelected,member.name==='unix-family');assert.equal(edge.pathSelection.configurationCondition,member.name==='unix-family'?'active':'unknown');assert.equal(edge.pathSelection.runtimeAuthority,false);}
       assert.ok(meta.refused.length||meta.moduleDiagnostics.length);assert.equal(meta.runtimeParity,false);
       assert.deepEqual(Object.fromEntries(result.manifest.sources.map(source=>[source.source,source.sha256])),originals);
       await verifyTypedTargets({meta,javascript:readFileSync(join(directory,project.targets.javascript),'utf8'),typescript:readFileSync(join(directory,project.targets.typescript),'utf8')},()=>{});

@@ -174,7 +174,7 @@ function lowerMethodTokens(method,typePath,mode,certificate=null) {
   const sharedReceiverSource=method.receiver==='shared'?{kind:'shared',span:{...method.receiverSpan},tokens:method.signatureTokens.filter(token=>token.start>=method.receiverSpan.start&&token.end<=method.receiverSpan.end).map(token=>({kind:token.type,value:token.text,span:{start:token.start,end:token.end}}))}:null;
   const lowered={tokens,rewrites,receiver:method.receiver,receiverName:method.receiver ? freshName : null,typePath:[...typePath],...(sharedReceiverSource?{sharedReceiverSource}:{}),
     assumptions:mode === 'copy' ? certificate.obligations : ['Shared receiver syntax and pointee identity remain checked; scalar field reads require Copy evidence, and ownership, mutation, consuming receivers, trait dispatch and unsafe operations retain their own frontend obligations.']};
-  if(originalMethodMembers.has(method)){const original=originalMethodMember(method);originalMethodLowerings.set(lowered,Object.freeze({method,original,mode,copyCertificate:certificate?copyMetadata(certificate):null,loweredDigest:metadataDigest(lowered)}));}
+  if(originalMethodMembers.has(method)){const original=originalMethodMember(method);originalMethodLowerings.set(lowered,Object.freeze({method,original,mode,copyCertificate:certificate?copyMetadata(certificate,{preserveKeyOrder:true}):null,loweredDigest:metadataDigest(lowered)}));}
   return lowered;
 }
 

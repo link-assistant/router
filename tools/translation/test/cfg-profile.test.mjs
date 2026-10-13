@@ -43,7 +43,13 @@ test('inactive module scopes never read source or poison production macro names'
   const bindings=resolveModuleBindings({modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});const root=bindings.scopes.find(scope=>!scope.path.length);assert.equal(root.unresolvedMacroScope,false);assert.equal(root.bindings.some(binding=>binding.name==='tests'),false);assert.equal(Object.isFrozen(root.compilationProfile.flags),true);
 });
 test('unknown target conditions and cfg_attr do not certify module edges or namespace closure',()=>{
-  for(const attr of ['#[cfg(unix)]','#[cfg_attr(unix,custom)]']){const files={'src/lib.rs':attr+' mod conditional;','src/conditional.rs':'pub fn amount()->u8{3}'},graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});assert.equal(graph.edges.length,0);const bindings=resolveModuleBindings({modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});assert.equal(bindings.scopes[0].unresolvedMacroScope,true);}
+  for(const attr of ['#[cfg(unix)]','#[cfg_attr(unix,custom)]']){
+    const files={'src/lib.rs':attr+' mod conditional;','src/conditional.rs':'pub fn amount()->u8{3}'},options={entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE},graph=resolveModuleGraph(options);
+    assert.equal(graph.edges.length,attr==='#[cfg(unix)]'?1:0);
+    for(const edge of graph.edges){assert.equal(edge.pathSelection.configurationCondition,'unknown');assert.equal(edge.pathSelection.availabilitySelected,false);assert.equal(edge.pathSelection.namespaceAuthority,false);assert.equal(edge.pathSelection.runtimeAuthority,false);}
+    const bindings=resolveModuleBindings({modules:graph.modules,compilationProfile:PRODUCTION_PROFILE});assert.equal(bindings.scopes[0].unresolvedMacroScope,true);
+    assert.equal(translateProject(options).meta.executable.some(item=>item.name==='conditional.amount'),false);
+  }
 });
 test('inactive nested fields remain explicit refusals until profile-aware field layout exists',()=>{
   const source='struct Record{#[cfg(test)] amount:u8} pub fn invented(value:Record)->u8{value.amount}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.executable.some(entry=>entry.name==='invented'),false);
