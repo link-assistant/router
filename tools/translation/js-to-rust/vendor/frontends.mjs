@@ -8,6 +8,7 @@
 import { constructMap, idBySpelling, refuse } from './constructs.mjs';
 import { camelFromSnake, canonicalRustName, snakeFromCamel } from './ir.mjs';
 import { constantValue } from './constants.mjs';
+import { parseCharacterClass } from './character-classes.mjs';
 
 const UNSUPPORTED_BINARY = new Set(['==', '!=', '**', '??', '&', '|', '^', '<<', '>>', '>>>', 'instanceof', 'in', 'as']);
 const ASSIGNMENTS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '++', '--', '&&=', '||=', '??=']);
@@ -435,6 +436,13 @@ function primary(at, language) {
   if (token.type === 'number') return { kind: 'number', text: numberText(token.text, language) };
   if (token.type === 'string') return { kind: 'string', value: unquote(token.text) };
   if (token.type === 'template') refuse('template');
+  if (token.type === 'regex' && language === 'JavaScript') {
+    const model = parseCharacterClass(token.text);
+    at.expect('.'); at.expect('test');
+    const args = argumentsOf(at, language);
+    if (args.length !== 1) refuse('unsupported', 'a character-class test without exactly one argument');
+    return { kind: 'class-test', ...model, receiver: args[0] };
+  }
   if (token.type === 'regex' || token.type === 'char') refuse('unsupported', token.text);
   if (token.text === '(') {
     const value = expression(at, language);
@@ -442,6 +450,11 @@ function primary(at, language) {
     return value;
   }
   if (language === 'JavaScript' && token.text === '[') {
+    if (at.eat('...')) {
+      const receiver = expression(at, language);
+      at.expect(']'); at.expect('.'); at.expect('length');
+      return { kind: 'codepoints', receiver };
+    }
     const values = [];
     while (!at.eat(']')) {
       values.push(expression(at, language));
@@ -462,7 +475,7 @@ function primary(at, language) {
   if (['this', 'self', 'Self', 'function', 'None', 'Some'].includes(token.text)) refuse('unsupported', token.text);
   if (at.is('=>')) refuse('unsupported', 'an arrow function');
   const builtins = constructMap().builtins;
-  if (language === 'JavaScript' && ['Math', 'Number'].includes(token.text) && at.eat('.')) {
+  if (language === 'JavaScript' && ['Math', 'Number', 'Buffer'].includes(token.text) && at.eat('.')) {
     if (at.shadowedBuiltins?.has(token.text)) refuse('unsupported', `a shadowed builtin ${token.text}`);
     const callee = `${token.text}.${at.next().text}`;
     if (callee === 'Math.round') refuse('rounding');

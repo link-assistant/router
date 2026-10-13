@@ -23,6 +23,7 @@ import { encodeWord, field, parseLinks, textOf, writeLink } from './lino.mjs';
 import { constantValue } from './constants.mjs';
 import { guardedScope } from './guards.mjs';
 import { optionalType, joinReturnTypes, closedReturnType } from './return-types.mjs';
+import { validateCharacterClass } from './character-classes.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
 
@@ -341,6 +342,17 @@ function expression(expr, names, table) {
       if (receiver.type !== 'string') refuse('type', 'length of a non-string');
       return typed({ receiver }, 'number');
     }
+    case 'codepoints': {
+      const receiver = expression(expr.receiver, names, table);
+      if (receiver.type !== 'string') refuse('type', 'codepoint iteration of a non-string');
+      return typed({ receiver }, 'number');
+    }
+    case 'class-test': {
+      validateCharacterClass(expr);
+      const receiver = expression(expr.receiver, names, table);
+      if (receiver.type !== 'string') refuse('type', 'a regex test requiring coercion of a non-string');
+      return typed({ receiver }, 'boolean');
+    }
     default:
       return refuse('unsupported', expr.kind);
   }
@@ -402,6 +414,10 @@ function linkOf(expr) {
       return ['method', expr.name, linkOf(expr.receiver), ...expr.args.map(linkOf)];
     case 'length':
       return ['length', linkOf(expr.receiver)];
+    case 'codepoints':
+      return ['codepoints', linkOf(expr.receiver)];
+    case 'class-test':
+      return ['class-test', ['unicode', String(expr.unicode)], ['negated', String(expr.negated)], ['anchored', String(expr.anchored)], ['ranges', ...expr.ranges.map(range=>[String(range.low), String(range.high)])], ['receiver', linkOf(expr.receiver)]];
     default:
       return [expr.kind, expr.name, ...expr.args.map(linkOf)];
   }
@@ -475,6 +491,12 @@ function exprOf(link) {
       return { kind, name: rest[0], receiver: exprOf(rest[1]), args: rest.slice(2).map(exprOf) };
     case 'length':
       return { kind, receiver: exprOf(rest[0]) };
+    case 'codepoints':
+      return { kind, receiver: exprOf(rest[0]) };
+    case 'class-test': {
+      const boolean = head => {const value=field(link,head)?.[1];if(!['true','false'].includes(value))throw new Error(`invalid class-test ${head}`);return value==='true';};
+      return { kind, unicode:boolean('unicode'), negated:boolean('negated'), anchored:boolean('anchored'), ranges:(field(link,'ranges')??[]).slice(1).map(range=>({low:Number(range[0]),high:Number(range[1])})), receiver:exprOf(field(link,'receiver')[1]) };
+    }
     case 'call':
     case 'builtin':
       return { kind, name: rest[0], args: rest.slice(1).map(exprOf) };

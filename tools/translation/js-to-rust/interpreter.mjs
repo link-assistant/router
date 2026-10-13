@@ -44,10 +44,17 @@ export function evaluate(program, functionName, arguments_) {
       case 'call': return invoke(expr.name, expr.args.map(get));
       case 'builtin': {
         const [namespace, method] = map.builtins.get(expr.name).javascript.split('.');
-        return ({ Math, Number })[namespace][method](...expr.args.map(get));
+        return ({ Math, Number, Buffer })[namespace][method](...expr.args.map(get));
       }
       case 'method': return get(expr.receiver)[map.methods.get(expr.name).javascript](...expr.args.map(get));
       case 'length': return get(expr.receiver).length;
+      case 'codepoints': return [...get(expr.receiver)].length;
+      case 'class-test': {
+        const receiver=get(expr.receiver);
+        const units=expr.unicode?[...receiver].map(character=>character.codePointAt(0)):Array.from({length:receiver.length},(_,index)=>receiver.charCodeAt(index));
+        const accepted=unit=>expr.negated!==expr.ranges.some(range=>unit>=range.low && unit<=range.high);
+        return expr.anchored?units.length===1 && accepted(units[0]):units.some(accepted);
+      }
       default: throw new Error(`unhandled IR expression ${expr.kind}`);
     }
   };

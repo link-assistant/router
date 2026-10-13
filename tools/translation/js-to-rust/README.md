@@ -99,6 +99,21 @@ Inferred sibling signatures must be available before checking a call; forward
 references without an explicit result contract remain refused. Nullable inputs,
 unknown truthiness and nullable collection arguments also remain limitations.
 
+Guarded string observations also cover default-UTF8 `Buffer.byteLength` and
+`[...string].length` codepoint counts. They preserve UTF8 bytes, UTF16 length
+and codepoints as separate operations. A shadowed Buffer owner, other encodings
+or unknown iterable/string-coercion inputs remain refused.
+
+Stateless regex tests support exactly one character class, optionally anchored
+over the complete input, with no flags or only `u`. The meta document contains
+numeric ranges, negation, anchor and Unicode/UTF16 mode; it carries no regex
+source. Rust matches Unicode scalars or UTF16 units directly, and TypeScript
+emits a canonical class literal. Escaped surrogate pairs in Unicode patterns
+retain their ECMAScript meaning. Quantifiers, captures, other flags, mutable
+regex state and coercive test arguments remain refused. Independent fixtures
+exercise actual native ID validation, pinned Rust whitespace and codepoint
+counting, including a full Unicode scalar comparison for the whitespace class.
+
 Run `node --test tools/translation/js-to-rust/test/*.test.mjs`. The tests execute
 58 authored fixtures against authoritative JavaScript, an independent IR
 evaluator and strict-compiled TypeScript; they also check ordinary source

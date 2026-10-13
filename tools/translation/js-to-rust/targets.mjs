@@ -2,6 +2,7 @@ import { constructMap } from './vendor/constructs.mjs';
 import { camelFromSnake } from './vendor/ir.mjs';
 import { constantValue } from './vendor/constants.mjs';
 import { optionalType, typescriptType } from './vendor/return-types.mjs';
+import { classPattern } from './vendor/character-classes.mjs';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -84,6 +85,9 @@ fn js_safe_integer(value: f64) -> bool {
     value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0
 }`;
 
+export const UTF8_LENGTH_HELPER = `#[rustfmt::skip]
+fn js_utf8_length(value: &str) -> f64 { value.len() as f64 }`;
+
 export const ABSENCE_HELPERS = `#[derive(Clone, Copy, PartialEq)]
 pub struct JsNull;
 #[derive(Clone, Copy, PartialEq)]
@@ -153,10 +157,19 @@ function emitter(program, target) {
       case 'call': return `${name(expr.name)}(${expr.args.map((arg) => `${rust && arg.type === 'string' ? '&' : ''}${expression(arg)}`).join(', ')})`;
       case 'builtin': return rust && expr.args[0]?.type === 'value' && ['safe-integer', 'finite', 'nan'].includes(expr.name)
         ? `${expression(expr.args[0])}.${{ 'safe-integer': 'is_safe_integer', finite: 'is_finite', nan: 'is_nan' }[expr.name]}()`
-        : `${map.builtins.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map(expression).join(', ')})`;
+        : `${map.builtins.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map(argument=>`${rust && expr.name==='utf8-length'?'&':''}${expression(argument)}`).join(', ')})`;
       case 'method': return rust && expr.name === 'trim' ? `js_trim(&${expression(expr.receiver)})`
         : `${expression(expr.receiver)}.${map.methods.get(expr.name)[rust ? 'rust' : 'javascript']}(${expr.args.map((arg) => `${rust && arg.type === 'string' ? '&' : ''}${expression(arg)}`).join(', ')})`;
       case 'length': return rust ? `(${expression(expr.receiver)}.encode_utf16().count() as f64)` : `${expression(expr.receiver)}.length`;
+      case 'codepoints': return rust ? `(${expression(expr.receiver)}.chars().count() as f64)` : `[...${expression(expr.receiver)}].length`;
+      case 'class-test': {
+        if (!rust) return `/${classPattern(expr)}/${expr.unicode?'u':''}.test(${expression(expr.receiver)})`;
+        const within=expr.ranges.map(({low,high})=>low===high?`unit == ${low}`:`(unit >= ${low} && unit <= ${high})`).join(' || ')||'false';
+        const accepted=`${expr.negated?'!':''}(${within})`;
+        const iterator=`observed.${expr.unicode?'chars()':'encode_utf16()'}.map(|unit| unit as u32)`;
+        const test=expr.anchored?'units.next().is_some_and(accepted) && units.next().is_none()':'units.any(accepted)';
+        return `({ let observed = ${expression(expr.receiver)}; let mut units = ${iterator}; let accepted = |unit: u32| ${accepted}; ${test} })`;
+      }
       default: throw new Error(`missing ${target} expression emitter: ${expr.kind}`);
     }
   };
@@ -200,6 +213,7 @@ function emitter(program, target) {
     serialized.includes('"type":"value"') || serialized.includes('"kind":"includes"') ? VALUE_HELPERS : '',
     serialized.includes('"name":"trim"') ? TRIM_HELPER : '',
     serialized.includes('"name":"safe-integer"') ? SAFE_INTEGER_HELPER : '',
+    serialized.includes('"name":"utf8-length"') ? UTF8_LENGTH_HELPER : '',
     serialized.includes('"kind":"null"') || serialized.includes('"kind":"undefined"') ? ABSENCE_HELPERS : '',
   ].filter(Boolean).map(helper => `${helper}\n\n`).join('') : '';
   return `${helpers}${items.join('\n\n')}\n`;
