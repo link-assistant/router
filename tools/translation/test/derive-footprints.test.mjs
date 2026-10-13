@@ -16,7 +16,7 @@ const context=(source,rootSource='mod model;')=>createDeriveFootprintContext({mo
 test('actual locked archives and all audited members are verified before dependency branding',()=>{
   assert.equal(isDeriveDependencyProof(dependency),true);assert.equal(isDeriveDependencyProof(structuredClone(dependency)),false);
   assert.equal(dependency.packages.length,12);assert.equal(dependency.packages.slice(0,8).reduce((count,entry)=>count+entry.members.length,0),197);
-  assert.deepEqual(dependency.packages.slice(8).map(entry=>entry.name),['clap','clap_builder','clap_derive','heck']);assert.equal(dependency.packages.reduce((count,entry)=>count+entry.members.length,0),232);
+  assert.deepEqual(dependency.packages.slice(8).map(entry=>entry.name),['clap','clap_builder','clap_derive','heck']);assert.equal(dependency.packages.reduce((count,entry)=>count+entry.members.length,0),234);
   const changed=inputs(),entry=DERIVE_SOURCE_PROFILE.packages[0],bytes=Buffer.from(changed.archives.get(entry.name+'@'+entry.version));bytes[bytes.length-1]^=1;changed.archives.set(entry.name+'@'+entry.version,bytes);
   assert.throws(()=>createDeriveDependencyProof(changed),/checksum mismatch/);
   assert.throws(()=>createDeriveDependencyProof({...inputs(),manifest:inputs().manifest+'\n'}),/manifest or lock/);

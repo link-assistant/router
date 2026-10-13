@@ -2,6 +2,7 @@ import {itemConfiguration,isInertConditionalAttribute,isAbsentConditionalAttribu
 import {boundedSerdeExprPath} from './derive-helper-paths.mjs';
 import {boundedSchemarsNumericHelper} from './derive-numeric-helpers.mjs';
 import {boundedSchemarsWithType} from './derive-schemars-with.mjs';
+import {boundedClapArgHelper} from './derive-clap-helpers.mjs';
 import {originalDeriveGenericParameters} from './derive-generic-parameters.mjs';
 import {inspectBuiltinDefaultVariant} from './derive-builtin-default.mjs';
 import {isPlainSourceIdentifier} from './module-paths.mjs';
@@ -58,7 +59,9 @@ function helper(body,position,kind) {
   while(at<values.length) {
     const key=values[at++];if(!identifier(key))throw new TypeError('Unregistered derive helper key');
     let value=null,namespaceInput=null;
-    if(body[0].text==='schemars'&&['range','length'].includes(key.text)) {
+    if(body[0].text==='arg') {
+      const parsed=boundedClapArgHelper(values,at-1,position,kind);at=parsed.end;namespaceInput=parsed.evidence;value=parsed.value;
+    } else if(body[0].text==='schemars'&&['range','length'].includes(key.text)) {
       const parsed=boundedSchemarsNumericHelper(values,at-1,position);at=parsed.end;namespaceInput=parsed.evidence;value=parsed.evidence.bounds;
     } else {
       if(values[at]?.text==='='){at++;value=literal(values[at++]);}
@@ -111,7 +114,7 @@ export function inspectDeriveInput(item,profile) {
       if(name==='derive') {
         if(!header||body[1]?.text!=='('||body.at(-1)?.text!==')')throw new TypeError('Unregistered nested derive input');
         attribute.derives=paths(body.slice(2,-1));derives.push(...attribute.derives.map(path=>({path,attributeSpan:attribute.span})));
-      } else if(['serde','schemars','value'].includes(name))attribute.helpers=helper(body,position,item.term);
+      } else if(['serde','schemars','value','arg'].includes(name))attribute.helpers=helper(body,position,item.term);
       else if(name==='default') {
         if(position!=='variant'||body.length!==1)throw new TypeError('Builtin default requires a plain enum-variant helper');
       }

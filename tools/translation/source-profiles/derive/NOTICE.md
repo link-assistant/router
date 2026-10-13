@@ -7,3 +7,5 @@ The contract concerns the lexical namespace footprint of bounded derive inputs. 
 The builtin-default-manifest.json profile additionally retains compressed original Rust 1.89.0 core Default and compiler derive sources, Copyright The Rust Project Developers, MIT OR Apache-2.0. Its bounded all-unit enum profile preserves one plain default helper and unchanged layout; the generated Default trait implementation is not lowered or executed.
 
 Clap, clap_builder and clap_derive 4.6.7 and Heck 0.5.0: MIT OR Apache-2.0; the complete unchanged original archives retain their license files and notices. These added archives match the existing unchanged Cargo.lock. Original Clap quote templates and Heck ASCII casing rules supply bounded ValueEnum source-output syntax evidence, without implementing trait methods or CLI/schema execution.
+
+The bounded Args frontend additionally audits the original value_parser declarative macro and Heck shouty-snake member from those same unchanged archives. Source quote and expression-block expansion evidence does not implement Args/FromArgMatches or parser execution.

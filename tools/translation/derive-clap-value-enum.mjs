@@ -149,3 +149,5 @@ export const isClapValueEnumSourceOutput=value=>!!value&&proofs.has(value);
 export function assertClapValueEnumSourceOutput(proof,{dependencies,source}={}) {
   const state=proofs.get(proof);if(!state||state.dependencies!==dependencies||state.source!==source)throw new TypeError('Unsealed or mismatched original Clap output');return proof;
 }
+// Shared original-source readers; these confer no derive certificate authority.
+export {rule as originalClapSourceRule,definition as originalClapSourceFunction,text as originalClapQuoteText,kebab as originalClapAsciiKebab};

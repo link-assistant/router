@@ -334,6 +334,7 @@
         "LICENSE-MIT": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
         "src/builder/mod.rs": "c2b552aced3607ad926c72ad6fb4ccf7dfb0df57185084f0c0427b9b5136b1c8",
         "src/builder/possible_value.rs": "3c174a11e4e893adb0912084ea2f0432258e773871f8c41813df176917cace08",
+        "src/builder/value_parser.rs": "408d538a5ec467ba22db1231d2b48f1ecc3cbe4c6b25eec968699e4ad3da18e4",
         "src/derive.rs": "9435f58f2ebcc16aba2bbc3a5374e0dfd4fe1d1bfc4cd6dc5ca8a08d4e9e9680",
         "src/lib.rs": "bd8987448be4ace2a3501375f6850261252f3485ea1c9879e137a2245359fbf5"
       }
@@ -379,7 +380,8 @@
         "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
         "LICENSE-MIT": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
         "src/kebab.rs": "3075cf72c95404e6b5800494a5d8a3c5f6dd5066593ddb249cefcb376e30b450",
-        "src/lib.rs": "bffcc5144da472d2f915696d4654f7608e60861d168d3dd07b5dcb8f14211153"
+        "src/lib.rs": "bffcc5144da472d2f915696d4654f7608e60861d168d3dd07b5dcb8f14211153",
+        "src/shouty_snake.rs": "e8b6dcb77de87e2355067d5d47037537b68fa51c2601924a6acfae409c6d9920"
       }
     }
   ],

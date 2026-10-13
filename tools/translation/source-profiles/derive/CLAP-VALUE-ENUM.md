@@ -4,7 +4,8 @@ The additional unchanged Clap, clap_builder and clap_derive 4.6.7 archives and
 Heck 0.5.0 archive match the existing Cargo.lock. Their licenses remain inside
 the complete original archives. All previous eight package entries and their
 197 audited members remain unchanged; the expanded profile contains twelve
-packages and 232 audited members. Clap's actual Cargo dependency enables
+packages and 232 audited members; the later bounded Args route audits two more
+existing archive members, bringing the current total to 234. Clap's actual Cargo dependency enables
 `derive`, `env` and `string` with default features.
 
 `derive-clap-value-enum.mjs` checks the original feature reexport, actual
