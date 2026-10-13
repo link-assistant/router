@@ -36,6 +36,11 @@ export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDe
       if(bang)append('!',end,token.end);
     } else if(token.type==='ident'&&token.text.endsWith('!')) {
       append(token.text.slice(0,-1),token.start,token.end-1);append('!',token.end-1,token.end);
+    } else if(token.type==='punct'&&token.text==='**') {
+      // Original rustc_ast TokenKind::Star has no Star+Star glue branch.
+      // The structural lexer fuses this spelling; retain its two exact TT
+      // punctuators, without admitting compound **= or other operators.
+      append('*',token.start,token.start+1);append('*',token.start+1,token.end);
     } else if(token.text==='>>') {
       // Rust TT punctuation consists of individual punctuators, even when
       // their original lexical spacing forms a compound type close token.
