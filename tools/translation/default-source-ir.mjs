@@ -17,6 +17,7 @@ import {assertOriginalParserIdentity} from './original-parser-identity.mjs';
 import {astSyntaxText} from './builtin-derive-ast-meta.mjs';
 import {TokenCursor} from './vendor/meta-language/translation/lexer.js';
 import {originalTextCursorGuard} from './extensions/text.mjs';
+import {originalUnitDefaultSource,assertOriginalUnitDefaultSource} from './default-unit-source.mjs';
 const generated=new WeakMap(),hash=value=>createHash('sha256').update(value).digest('hex');
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Original Default AST lowering: '+message);};
@@ -34,6 +35,14 @@ export function originalDefaultGeneratedMethod(context,module,item,Parser){
   // Any original explicit impl for this target is a coherence obligation;
   // even an unsupported/conditional header cannot be silently overwritten.
   if(originalSourceModuleItems(original).some(candidate=>candidate.term==='impl'&&candidate.tokens.some(token=>token.text==='Default')&&candidate.tokens.some(token=>token.text===item.name)))fail('manual and generated Default may overlap');
+  if(item.term==='enum'){
+    const unitSource=originalUnitDefaultSource(context,original,item),typePath=unitSource.typePath,methodName=context.keywordSymbols.Default.value;
+    if(methodName!=='default')fail('original Default keyword data differs');
+    const name=`ml_impl_${Buffer.from(typePath.join('.')).toString('hex')}_${Buffer.from(methodName).toString('hex')}`,span={start:item.start,end:item.end};
+    const sourceProof={schema:'original-generated-unit-default-ir-v1',contextDigest:context.digest,source:original.file,sourceSha256:unitSource.sourceSha256,span:unitSource.span,itemSha256:unitSource.itemSha256,typePath,unitSourceProof:unitSource,bodyMapped:true,checkedBody:false,wholeCompilerExecuted:false,wholeTraitTranslated:false,runtimeParity:false};
+    const surface={k:'fn',name,params:[],ret:{kind:'named',path:typePath,rustSourceType:true,span},body:{k:'routerRecord',path:[...typePath,unitSource.selectedVariant.variant.name],fields:[],span},span,async:false,generated:'router-source-generated-default-method',impl:{type:{kind:'named',path:typePath},method:methodName,receiver:null,receiverName:null,defaultSourceProof:sourceProof,assumptions:['Original unit Default path selected; the ordinary checker must validate its exact owned unit constructor.']}};
+    generated.set(surface,{context,module:original,item,unitSource,digest:hash(JSON.stringify(surface))});return surface;
+  }
   const args={dependencies:state.dependencies,source:original.source,span:{start:item.start,end:item.end},owner:'Default'},output=proveBuiltinScalarSourceOutput(args);
   assertBuiltinScalarSourceOutput(output,args);const plan=builtinScalarOriginalSourcePlan(output);
   for(const [name,expected]of [['name','kw :: Default'],['nonself_args','Vec :: new ()'],['ret_ty','Self_'],['explicit_self','false']]){
@@ -65,10 +74,10 @@ export function originalDefaultGeneratedMethod(context,module,item,Parser){
   const span={start:item.start,end:item.end},surface={k:'fn',name,params:[],ret:{kind:'named',path:typePath,rustSourceType:true,span},body:{k:'routerRecord',path:typePath,fields,span},span,async:false,generated:'router-source-generated-default-method',impl:{type:{kind:'named',path:typePath},method:'default',receiver:null,receiverName:null,defaultSourceProof:sourceProof,assumptions:['Original standard Default signature and primitive implementation calls selected; the ordinary checker must validate the whole generated record body.']}};
   generated.set(surface,{context,module:original,item,output,args,digest:hash(JSON.stringify(surface))});return surface;
 }
-export function assertOriginalDefaultGeneratedMethod(surface,context){const state=generated.get(surface);if(!state||state.context!==context||hash(JSON.stringify(surface))!==state.digest)fail('surface is copied, changed or rebound');assertBuiltinScalarSourceOutput(state.output,state.args);return surface;}
+export function assertOriginalDefaultGeneratedMethod(surface,context){const state=generated.get(surface);if(!state||state.context!==context||hash(JSON.stringify(surface))!==state.digest)fail('surface is copied, changed or rebound');if(state.unitSource)assertOriginalUnitDefaultSource(state.unitSource,context,state.module,state.item);else assertBuiltinScalarSourceOutput(state.output,state.args);return surface;}
 export function originalDefaultGeneratedMethods(context,module,Parser){
   const state=defaultSourceContextFacts(context),methods=[],refused=[];
-  for(const item of originalSourceModuleItems(module).filter(item=>item.term==='struct'&&itemConfiguration(item.tokens,state.compilationProfile).status==='active')){
+  for(const item of originalSourceModuleItems(module).filter(item=>['struct','enum'].includes(item.term)&&itemConfiguration(item.tokens,state.compilationProfile).status==='active')){
     let input;try{input=inspectDeriveInput(item,state.compilationProfile);}catch{continue;}
     if(!input.derives.some(row=>same(row.path,['Default'])))continue;
     try{methods.push({item,surface:originalDefaultGeneratedMethod(context,module,item,Parser)});}catch(error){if(!(error instanceof TypeError))throw error;refused.push({item,message:error.message});}

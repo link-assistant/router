@@ -275,7 +275,7 @@ export function translateProject(options) {
   if(options.jsonMacroDependencies)try{jsonMacroContext=createJsonMacroContext({modules:graph.modules,dependencies:options.jsonMacroDependencies,compilationProfile:graph.compilationProfile});}catch(error){if(!(error instanceof TypeError))throw error;jsonMacroDiagnostic={kind:'unsupported-profile',message:error.message};}
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(options.deriveDependencies)]);
   const deriveContext=options.deriveDependencies?createDeriveFootprintContext({modules:graph.modules,dependencies:options.deriveDependencies,externalModules,compilationProfile:graph.compilationProfile}):null;
-  const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
+  const hasDefaultDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum','impl'].includes(item.term)&&item.tokens.some(token=>token.text==='Default')));
   const defaultContext=deriveContext&&hasDefaultDeclarations?createDefaultSourceContext(deriveContext):null;
   const hasCloneDeclarations=graph.modules.some(module=>module.items.some(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='Clone')));
   const cloneContext=deriveContext&&hasCloneDeclarations?createCloneSourceContext(deriveContext):null;
