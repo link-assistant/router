@@ -5,6 +5,73 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fingerprint, verifyStamp, stages } from '../check-js-first-local.mjs';
+import {reviewTranslationDraft} from '../review-translation-draft.mjs';
+import {createHash} from 'node:crypto';
+
+function draftFixture() {
+  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'router-draft-review-'));
+  const original='pub fn label()->&\'static str{"Ω"}\n',sha=value=>createHash('sha256').update(value).digest('hex');
+  const targets={meta:'tools/translation/meta/src/lib.meta.json',javascript:'packages/javascript/generated/rust-draft/src/lib.mjs',typescript:'packages/typescript/generated/rust-draft/src/lib.ts'};
+  const compiler='tools/translation/review-fixture.mjs';
+  const put=(name,value)=>{fs.mkdirSync(path.dirname(path.join(directory,name)),{recursive:true});fs.writeFileSync(path.join(directory,name),value);};
+  put('src/lib.rs',original);put('Cargo.toml','[package]\nname="review_fixture"\nversion="0.1.0"\n');put(compiler,'// original compiler fixture\n');
+  put(targets.javascript,'export const draftOnly=true;\n');put(targets.typescript,'export const draftOnly=true;\n');
+  function write(status='executable') {
+    const counts={executable:status==='executable'?1:0,executableFunctions:status==='executable'?1:0,executableConstants:0,executableTypes:0,executableConstructors:0,carried:status==='carried'?1:0,preserved:0};
+    const meta={sourcePath:'src/lib.rs',sourceBytes:Buffer.byteLength(original),sourceSha256:sha(original),counts,items:[{term:'fn',name:'label',source:original,sha256:sha(original),span:{start:0,end:original.length},status,diagnostic:null}]};
+    const projectTargets={meta:'tools/translation/projects/src/lib.meta.json',javascript:'packages/javascript/generated/rust-project/src/lib.mjs',typescript:'packages/typescript/generated/rust-project/src/lib.ts'};
+    const entry={source:'src/lib.rs',name:'label',term:'fn',span:{start:0,end:original.length}};
+    const project={sources:[{source:'src/lib.rs',sha256:sha(original),module:[]}],refused:status==='carried'?[{kind:'unsupported',message:'fixture body'}]:[],unloweredItems:[],checkedMethods:[],executable:status==='executable'?[entry]:[],moduleDiagnostics:[]};
+    put(projectTargets.meta,JSON.stringify(project));put(projectTargets.javascript,'export const draftOnly=true;\n');put(projectTargets.typescript,'export const draftOnly=true;\n');
+    const inventory={sources:[{source:'src/lib.rs',bytes:Buffer.byteLength(original),sha256:sha(original),...counts,targets}],projects:[{entry:'src/lib.rs',sources:1,refused:project.refused.length,unloweredItems:0,checkedMethods:0,moduleDiagnostics:0,executableFunctions:project.executable.length,executableConstants:0,targets:projectTargets}],implementationHashes:{[compiler]:sha('// original compiler fixture\n')},totals:{sources:1,...counts},functionCoverage:{runtimeParity:false}};
+    put(targets.meta,JSON.stringify(meta));put('parity/rust-source-inventory.json',JSON.stringify(inventory));return {meta,inventory};
+  }
+  write('carried');
+  const git=(...args)=>execFileSync('git',args,{cwd:directory,encoding:'utf8'}).trim();
+  git('init','-q');git('config','user.name','Draft Review Test');git('config','user.email','review@example.invalid');git('add','.');git('commit','-qm','original fixture');
+  const baselineSha=git('rev-parse','HEAD');write();
+  return {directory,baselineSha,original,targets,compiler,put,write,review:()=>reviewTranslationDraft({root:directory,baselineSha}),dispose:()=>fs.rmSync(directory,{recursive:true,force:true})};
+}
+
+test('complete corpus review compares unchanged original items and hashes every target without granting parity',()=>{
+  const fixture=draftFixture();
+  try {
+    const result=fixture.review();
+    assert.equal(result.originalRustInputs.length,1);assert.equal(result.originalCargoInputs.length,1);assert.equal(result.outputs.length,7);
+    assert.equal(result.comparison.totalChanges.executable,1);assert.equal(result.comparison.totalChanges.carried,-1);
+    assert.equal(result.comparison.newlyExecutableItems[0].name,'label');assert.equal(result.comparison.newlyExecutableItems[0].previousStatus,'carried');assert.deepEqual(result.comparison.lostExecutableItems,[]);
+    assert.equal(result.projects[0].comparison.countChanges.refused,-1);assert.equal(result.projects[0].comparison.newlyExecutableItems[0].name,'label');assert.deepEqual(result.projects[0].comparison.lostCheckedMethods,[]);
+    for(const key of ['semanticAuthority','runtimeParity','fullGatePass','rustExecuted'])assert.equal(result[key],false,key);
+    assert.deepEqual(result,fixture.review());
+  } finally {fixture.dispose();}
+});
+
+test('corpus review refuses source/compiler drift and forged item/count evidence',()=>{
+  const fixture=draftFixture();
+  try {
+    fixture.put('src/lib.rs',fixture.original+'// changed\n');assert.throws(fixture.review,/Stale original Rust/);fixture.put('src/lib.rs',fixture.original);
+    fixture.put(fixture.compiler,'// changed compiler\n');assert.throws(fixture.review,/Stale compiler input/);fixture.put(fixture.compiler,'// original compiler fixture\n');
+    const {meta,inventory}=fixture.write();meta.items[0].source='forged';fixture.put(fixture.targets.meta,JSON.stringify(meta));assert.throws(fixture.review,/Original item integrity/);
+    fixture.write();inventory.totals.executable=2;fixture.put('parity/rust-source-inventory.json',JSON.stringify(inventory));assert.throws(fixture.review,/Invalid complete inventory total/);
+    const previous=fixture.write('carried').inventory;previous.totals.carried=99;fixture.put('parity/rust-source-inventory.json',JSON.stringify(previous));
+    execFileSync('git',['add','.'],{cwd:fixture.directory});execFileSync('git',['commit','-qm','forged baseline counter'],{cwd:fixture.directory});
+    const baselineSha=execFileSync('git',['rev-parse','HEAD'],{cwd:fixture.directory,encoding:'utf8'}).trim();fixture.write();
+    assert.throws(()=>reviewTranslationDraft({root:fixture.directory,baselineSha}),/Invalid baseline inventory total/);
+  } finally {fixture.dispose();}
+});
+
+test('corpus review requires complete Rust discovery and bounded ordinary output paths',()=>{
+  const fixture=draftFixture();
+  try {
+    fixture.put('extra.rs','fn extra(){}\n');execFileSync('git',['add','extra.rs'],{cwd:fixture.directory});assert.throws(fixture.review,/every tracked Rust source/);
+    execFileSync('git',['rm','-f','extra.rs'],{cwd:fixture.directory});
+    const {inventory}=fixture.write();inventory.sources[0].targets.javascript='../outside.mjs';fixture.put('parity/rust-source-inventory.json',JSON.stringify(inventory));assert.throws(fixture.review,/outside generated roots/);
+    fixture.write();const alias=path.join(fixture.directory,'packages/javascript/generated/rust-draft/linked.mjs');fs.symlinkSync(path.join(fixture.directory,'src/lib.rs'),alias);assert.throws(fixture.review,/linked inputs/);fs.unlinkSync(alias);
+    fs.unlinkSync(path.join(fixture.directory,fixture.targets.meta));assert.throws(fixture.review,/ENOENT/);
+    assert.throws(()=>reviewTranslationDraft({root:fixture.directory,baselineSha:'main'}),/immutable full Git SHA/);
+    assert.throws(()=>reviewTranslationDraft({root:fixture.directory,inventoryPath:'../inventory.json'}),/bounded relative paths/);
+  } finally {fixture.dispose();}
+});
 test('local reverse stage discovers a new failing test under both engines before freshness', { timeout: 30_000 }, () => {
   const commands = stages.find(([id]) => id === 'reverse-translation')[1];
   assert.deepEqual(commands, [
