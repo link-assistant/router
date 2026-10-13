@@ -14,11 +14,8 @@ import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-run
 
 import { assertImmutableIterator as ml_pattern_immutable_view, assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
 
-function ml_router_unwrap(value, fallback, option) {
-  if (option) {
-    if (value.$ === 'Some') return value.field0;
-  } else if (value.$ === 'Ok') return value.field0;
-  return fallback;
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
 }
 
 function ml_router_array(values, validate) {
@@ -83,7 +80,37 @@ try {
   const total = (ml_pattern_1)["field0"];
   const input = (ml_pattern_1)["field1"];
   const output = (ml_pattern_1)["field2"];
-  return ml_host_option_bind(total, () => { return Object.freeze({ $: 'Some', field0: ml_host_rust_fixed_saturating_add_u64(ml_router_unwrap(input, 0n, true), ml_router_unwrap(output, 0n, true)) }); }, "or_else");
+  return ml_host_option_bind(total, () => { return Object.freeze({ $: 'Some', field0: ml_host_rust_fixed_saturating_add_u64((() => {
+    const ml_standard_body_1 = input;
+    const ml_standard_body_2 = 0n;
+    switch (ml_standard_body_1.$) {
+      case "None": {
+        return ml_standard_body_2;
+      }
+      case "Some": {
+        const x = ml_standard_body_1.field0;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1);
+      }
+    }
+  })(), (() => {
+    const ml_standard_body_1_2 = output;
+    const ml_standard_body_2_2 = 0n;
+    switch (ml_standard_body_1_2.$) {
+      case "None": {
+        return ml_standard_body_2_2;
+      }
+      case "Some": {
+        const x_2 = ml_standard_body_1_2.field0;
+        return x_2;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1_2);
+      }
+    }
+  })()) }); }, "or_else");
 
 } catch (ml_router_error) { if (ml_router_propagated(ml_router_error)) return ml_router_error.value; throw ml_router_error; }
 }

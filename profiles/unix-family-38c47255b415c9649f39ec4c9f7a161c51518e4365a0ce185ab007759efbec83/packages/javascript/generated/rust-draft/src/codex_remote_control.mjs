@@ -10,6 +10,11 @@ const ml_host_value_schema_bd4e6dafd5789d745fe132717d8ecdaf27b27ccd24179091dc70f
 
 const ml_host_value_refinements_bd4e6dafd5789d745fe132717d8ecdaf27b27ccd24179091dc70f7038744fe46 = new Map([]);
 
+function ml_fixed(value, min, max, message) {
+  if (value < min || value > max) throw new RangeError(message);
+  return value;
+}
+
 function rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958() {
   return "la_rc_";
 }
@@ -142,5 +147,25 @@ function rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e
   return ml_text_1.startsWith(ml_text_2);
 }
 
-export const translated = { ["CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["StoreError"]: Object.freeze({ ["Io"]: ml_make_StoreError_Io, ["Decode"]: ml_make_StoreError_Decode, ["Crypto"]: ml_make_StoreError_Crypto, ["Invalid"]: ml_make_StoreError_Invalid, ["StaleRotation"]: ml_make_StoreError_StaleRotation }), ["ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["Operation"]: Object.freeze({ ["WebSocket"]: ml_make_Operation_WebSocket, ["Enroll"]: ml_make_Operation_Enroll, ["Refresh"]: ml_make_Operation_Refresh, ["Pair"]: ml_make_Operation_Pair, ["PairStatus"]: ml_make_Operation_PairStatus, ["List"]: ml_make_Operation_List, ["Revoke"]: ml_make_Operation_Revoke }), ["is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468 };
-export const provenance = {"sourcePath":"src/codex_remote_control.rs","sourceSha256":"43cb591d410ee78d98ee810bc696c521ace0317df1536c54a8daf9b4d15d8cf0","executable":15,"executableFunctions":1,"executableConstants":12,"executableTypes":2,"executableConstructors":12,"carried":56,"preserved":72,"runtimeParity":false};
+function rp_636f6465785f72656d6f74655f636f6e74726f6c2e6865785f6469676974(byte) {
+  if (typeof byte !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(byte, 0n, 255n, "u8 argument byte out of range");
+  if (!(typeof byte === 'bigint' && byte >= 0n && byte <= 255n)) throw new TypeError('argument outside supported Rust value domain');
+  const ml_ordered_match_1 = byte;
+  if (((ml_ordered_match_1 >= 48n) && (ml_ordered_match_1 <= 57n))) {
+    return Object.freeze({ $: 'Some', field0: ml_fixed((byte - 48n), 0n, 255n, "attempt to subtract with overflow") });
+  } else {
+    if (((ml_ordered_match_1 >= 97n) && (ml_ordered_match_1 <= 102n))) {
+      return Object.freeze({ $: 'Some', field0: ml_fixed((ml_fixed((byte - 97n), 0n, 255n, "attempt to subtract with overflow") + 10n), 0n, 255n, "attempt to add with overflow") });
+    } else {
+      if (((ml_ordered_match_1 >= 65n) && (ml_ordered_match_1 <= 70n))) {
+        return Object.freeze({ $: 'Some', field0: ml_fixed((ml_fixed((byte - 65n), 0n, 255n, "attempt to subtract with overflow") + 10n), 0n, 255n, "attempt to add with overflow") });
+      } else {
+        return Object.freeze({ $: 'None' });
+      }
+    }
+  }
+}
+
+export const translated = { ["CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["StoreError"]: Object.freeze({ ["Io"]: ml_make_StoreError_Io, ["Decode"]: ml_make_StoreError_Decode, ["Crypto"]: ml_make_StoreError_Crypto, ["Invalid"]: ml_make_StoreError_Invalid, ["StaleRotation"]: ml_make_StoreError_StaleRotation }), ["ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["Operation"]: Object.freeze({ ["WebSocket"]: ml_make_Operation_WebSocket, ["Enroll"]: ml_make_Operation_Enroll, ["Refresh"]: ml_make_Operation_Refresh, ["Pair"]: ml_make_Operation_Pair, ["PairStatus"]: ml_make_Operation_PairStatus, ["List"]: ml_make_Operation_List, ["Revoke"]: ml_make_Operation_Revoke }), ["is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468, ["hex_digit"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e6865785f6469676974 };
+export const provenance = {"sourcePath":"src/codex_remote_control.rs","sourceSha256":"43cb591d410ee78d98ee810bc696c521ace0317df1536c54a8daf9b4d15d8cf0","executable":16,"executableFunctions":2,"executableConstants":12,"executableTypes":2,"executableConstructors":12,"carried":55,"preserved":72,"runtimeParity":false};

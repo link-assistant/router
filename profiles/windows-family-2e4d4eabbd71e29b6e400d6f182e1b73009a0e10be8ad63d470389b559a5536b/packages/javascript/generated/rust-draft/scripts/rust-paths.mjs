@@ -1,33 +1,6 @@
 // Generated draft from scripts/rust-paths.rs; sha256=264592d7626f495454825cfd215b33dd25a9f3c9ffc7d05dd0cb68d9e1819a5f
 // Carried constructs are data, never runtime parity evidence.
-function needs_cd(rust_root) {
-  if (!(typeof rust_root === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(rust_root))) throw new TypeError('argument outside supported Rust value domain');
-  return (rust_root !== ".");
-}
 
-const std = {
-  io: {
 
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-  num: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-export const translated = { ["needs_cd"]: needs_cd };
-export const provenance = {"sourcePath":"scripts/rust-paths.rs","sourceSha256":"264592d7626f495454825cfd215b33dd25a9f3c9ffc7d05dd0cb68d9e1819a5f","executable":1,"executableFunctions":1,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":9,"preserved":10,"runtimeParity":false};
+export const translated = {  };
+export const provenance = {"sourcePath":"scripts/rust-paths.rs","sourceSha256":"264592d7626f495454825cfd215b33dd25a9f3c9ffc7d05dd0cb68d9e1819a5f","executable":0,"executableFunctions":0,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":10,"preserved":10,"runtimeParity":false};

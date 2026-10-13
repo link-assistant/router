@@ -3,6 +3,8 @@ export declare function createFixedIntegerRuntime(type: Readonly<{kind:'fixed';b
 rust_fixed_checked_add(left:bigint,right:bigint): RustOption<bigint>;
 rust_fixed_checked_sub(left:bigint,right:bigint): RustOption<bigint>;
 rust_fixed_checked_mul(left:bigint,right:bigint): RustOption<bigint>;
+rust_fixed_wrapping_add(left:bigint,right:bigint): bigint;
+rust_fixed_wrapping_sub(left:bigint,right:bigint): bigint;
 rust_fixed_saturating_add(left:bigint,right:bigint): bigint;
 rust_fixed_saturating_sub(left:bigint,right:bigint): bigint;
 rust_fixed_saturating_mul(left:bigint,right:bigint): bigint;

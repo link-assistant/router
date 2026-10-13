@@ -1,4 +1,3 @@
-type MLData_506f7374 = Readonly<{ readonly "$": "Stall"; readonly "field0": string }> | Readonly<{ readonly "$": "Redirect"; readonly "field0": bigint; readonly "field1": string }>;
 type MLData_526f757465724f7074696f6e5f33375f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_526f757465724f7074696f6e5f33385f6e616d65645f3733373436345f37343639366436355f34343735373236313734363936663665 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }>;
 type MLData_526f757465724f7074696f6e5f33395f6e616d65645f37333635373236343635356636613733366636655f346537353664363236353732 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_73657264655f6a736f6e2e4e756d626572 }>;
@@ -38,13 +37,10 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from tests/upstream_resilience_test.rs; sha256=c7f749d223c2a0e4b1d04a35852c0017e3c70fec475f3cf0439844b98380c43f
 // Carried constructs are data, never runtime parity evidence.
-function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
-  if (value < min || value > max) throw new RangeError(message);
-  return value;
-}
+import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } from "../runtime/time-runtime.mjs";
 
-function SECRET(): string {
-  return "upstream-resilience-test-secret";
+function STALL(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
+  return ml_host_std_time_duration_from_secs(30n);
 }
 
 const std = {
@@ -71,18 +67,5 @@ const serde_json = {
   },
 };
 
-function ml_make_Post_Stall(field0: string): Readonly<{ readonly "$": "Stall"; readonly "field0": string }> | Readonly<{ readonly "$": "Redirect"; readonly "field0": bigint; readonly "field1": string }> {
-  if (!(typeof field0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field0))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'Stall', field0: field0 });
-}
-
-function ml_make_Post_Redirect(field0: bigint, field1: string): Readonly<{ readonly "$": "Stall"; readonly "field0": string }> | Readonly<{ readonly "$": "Redirect"; readonly "field0": bigint; readonly "field1": string }> {
-  if (typeof field0 !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
-  ml_fixed(field0, 0n, 65535n, "u16 argument field0 out of range");
-  if (!(typeof field0 === 'bigint' && field0 >= 0n && field0 <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
-  if (!(typeof field1 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(field1))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: 'Redirect', field0: field0, field1: field1 });
-}
-
-export const translated: { "SECRET": string; "Post": Readonly<{ "Stall": (field0: string) => Readonly<{ readonly "$": "Stall"; readonly "field0": string }> | Readonly<{ readonly "$": "Redirect"; readonly "field0": bigint; readonly "field1": string }>; "Redirect": (field0: bigint, field1: string) => Readonly<{ readonly "$": "Stall"; readonly "field0": string }> | Readonly<{ readonly "$": "Redirect"; readonly "field0": bigint; readonly "field1": string }> }> } = { ["SECRET"]: SECRET(), ["Post"]: Object.freeze({ ["Stall"]: ml_make_Post_Stall, ["Redirect"]: ml_make_Post_Redirect }) };
-export const provenance = {"sourcePath":"tests/upstream_resilience_test.rs","sourceSha256":"c7f749d223c2a0e4b1d04a35852c0017e3c70fec475f3cf0439844b98380c43f","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":2,"carried":25,"preserved":28,"runtimeParity":false};
+export const translated: { "STALL": Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> } = { ["STALL"]: STALL() };
+export const provenance = {"sourcePath":"tests/upstream_resilience_test.rs","sourceSha256":"c7f749d223c2a0e4b1d04a35852c0017e3c70fec475f3cf0439844b98380c43f","executable":1,"executableFunctions":0,"executableConstants":1,"executableTypes":0,"executableConstructors":0,"carried":26,"preserved":28,"runtimeParity":false};

@@ -6,11 +6,8 @@ const ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec2
 
 const ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = new Map([]);
 
-function ml_router_unwrap(value, fallback, option) {
-  if (option) {
-    if (value.$ === 'Some') return value.field0;
-  } else if (value.$ === 'Ok') return value.field0;
-  return fallback;
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
 }
 
 const ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
@@ -22,10 +19,6 @@ import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_va
 import { serde_json_value_as_str as ml_host_serde_json_value_as_str } from "../runtime/json-runtime.mjs";
 
 import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
-
-function ml_router_unexpected(value) {
-  throw new TypeError(`unexpected constructor ${value.$}`);
-}
 
 const ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
 
@@ -67,26 +60,41 @@ const serde_json = {
 
 function rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373(reason) {
   ml_validate_rust_value(reason, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
-  const ml_s1 = ml_router_unwrap(reason, "end_turn", true);
-  if ((ml_s1 === "end_turn")) {
+  const ml_s3 = (() => {
+    const ml_standard_body_1 = reason;
+    const ml_standard_body_2 = "end_turn";
+    switch (ml_standard_body_1.$) {
+      case "None": {
+        return ml_standard_body_2;
+      }
+      case "Some": {
+        const x = ml_standard_body_1.field0;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1);
+      }
+    }
+  })();
+  if ((ml_s3 === "end_turn")) {
     return rp_6272696467655f726573706f6e73652e636f6d706c657465("stop");
   } else {
-    if ((ml_s1 === "stop_sequence")) {
+    if ((ml_s3 === "stop_sequence")) {
       return rp_6272696467655f726573706f6e73652e636f6d706c657465("stop");
     } else {
-      if ((ml_s1 === "tool_use")) {
+      if ((ml_s3 === "tool_use")) {
         return rp_6272696467655f726573706f6e73652e636f6d706c657465("tool_calls");
       } else {
-        if ((ml_s1 === "refusal")) {
+        if ((ml_s3 === "refusal")) {
           return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("content_filter", "content_filter", true);
         } else {
-          if ((ml_s1 === "max_tokens")) {
+          if ((ml_s3 === "max_tokens")) {
             return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
           } else {
-            if ((ml_s1 === "pause_turn")) {
+            if ((ml_s3 === "pause_turn")) {
               return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
             } else {
-              if ((ml_s1 === "model_context_window_exceeded")) {
+              if ((ml_s3 === "model_context_window_exceeded")) {
                 return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);
               } else {
                 return rp_6272696467655f726573706f6e73652e696e636f6d706c657465("length", "max_output_tokens", false);

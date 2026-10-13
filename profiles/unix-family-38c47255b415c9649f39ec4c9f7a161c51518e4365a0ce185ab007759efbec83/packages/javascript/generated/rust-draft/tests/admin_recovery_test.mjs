@@ -1,36 +1,6 @@
 // Generated draft from tests/admin_recovery_test.rs; sha256=e6002b6bcd4dd795e02c094823fcfd7c9170f2168a10a35f7bbc4f75decd776c
 // Carried constructs are data, never runtime parity evidence.
-function SECRET() {
-  return "admin-recovery-end-to-end-secret";
-}
 
-const std = {
-  io: {
 
-  },
-  ffi: {
-
-  },
-  env: {
-
-  },
-  time: {
-
-  },
-  num: {
-
-  },
-};
-
-const serde_json = {
-  error: {
-
-  },
-};
-
-function ATTEMPTS() {
-  return 5n;
-}
-
-export const translated = { ["SECRET"]: SECRET(), ["ATTEMPTS"]: ATTEMPTS() };
-export const provenance = {"sourcePath":"tests/admin_recovery_test.rs","sourceSha256":"e6002b6bcd4dd795e02c094823fcfd7c9170f2168a10a35f7bbc4f75decd776c","executable":2,"executableFunctions":0,"executableConstants":2,"executableTypes":0,"executableConstructors":0,"carried":19,"preserved":22,"runtimeParity":false};
+export const translated = {  };
+export const provenance = {"sourcePath":"tests/admin_recovery_test.rs","sourceSha256":"e6002b6bcd4dd795e02c094823fcfd7c9170f2168a10a35f7bbc4f75decd776c","executable":0,"executableFunctions":0,"executableConstants":0,"executableTypes":0,"executableConstructors":0,"carried":21,"preserved":22,"runtimeParity":false};

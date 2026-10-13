@@ -8,6 +8,7 @@ export function createFixedIntegerRuntime(type) {
     if(typeof value!=='bigint'||value<minimum||value>maximum)throw new TypeError('Fixed arithmetic operand is outside the checked source domain');
     return value;
   };
+  const modulus=1n<<bits,wrapped=value=>{const residue=((value%modulus)+modulus)%modulus;return type.signed&&residue>maximum?residue-modulus:residue;};
   const checked=value=>value<minimum||value>maximum?NONE:some(value);
   const saturated=value=>value<minimum?minimum:value>maximum?maximum:value;
   const add=(left,right)=>operand(left)+operand(right),subtract=(left,right)=>operand(left)-operand(right),multiply=(left,right)=>operand(left)*operand(right);
@@ -15,6 +16,8 @@ export function createFixedIntegerRuntime(type) {
     rust_fixed_checked_add:(left,right)=>checked(add(left,right)),
     rust_fixed_checked_sub:(left,right)=>checked(subtract(left,right)),
     rust_fixed_checked_mul:(left,right)=>checked(multiply(left,right)),
+    rust_fixed_wrapping_add:(left,right)=>wrapped(add(left,right)),
+    rust_fixed_wrapping_sub:(left,right)=>wrapped(subtract(left,right)),
     rust_fixed_saturating_add:(left,right)=>saturated(add(left,right)),
     rust_fixed_saturating_sub:(left,right)=>saturated(subtract(left,right)),
     rust_fixed_saturating_mul:(left,right)=>saturated(multiply(left,right)),

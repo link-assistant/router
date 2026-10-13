@@ -72,13 +72,6 @@ import { validateJsonNumber as ml_validate_json_number, validateJsonMap as ml_va
 
 import { serde_json_value_get_string as ml_host_serde_json_value_get_string, serde_json_value_as_str as ml_host_serde_json_value_as_str, serde_json_value_as_array as ml_host_serde_json_value_as_array } from "../runtime/json-runtime.mjs";
 
-function ml_router_unwrap<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>|Readonly<{$:'Ok';field0:T}>|Readonly<{$:'Err';field0:unknown}>, fallback: T, option: boolean): T {
-  if (option) {
-    if (value.$ === 'Some') return value.field0;
-  } else if (value.$ === 'Ok') return value.field0;
-  return fallback;
-}
-
 import { assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
 
 function ml_router_iter<T>(values: ReadonlyArray<T>, immutable: boolean): ArrayIterator<T> { if (immutable) ml_assert_immutable_iterator(values); return Array.prototype.values.call(values); }
@@ -234,15 +227,30 @@ try {
     return Object.freeze({ $: 'None' });
   } else {
   }
-  const has_function = ml_router_any(ml_router_iter(tools_2, true), (tool) => { const kind = ml_router_unwrap(ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_34_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_34_0); }, "and_then"), "custom", true);
+  const has_function = ml_router_any(ml_router_iter(tools_2, true), (tool) => { const kind = (() => {
+    const ml_standard_body_1 = ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_2_0); }, "and_then");
+    const ml_standard_body_2 = "custom";
+    switch (ml_standard_body_1.$) {
+      case "None": {
+        return ml_standard_body_2;
+      }
+      case "Some": {
+        const x = ml_standard_body_1.field0;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1);
+      }
+    }
+  })();
   return !((() => {
-    const ml_text_36 = kind;
-    const ml_text_37 = "web_search";
-    return ml_text_36.startsWith(ml_text_37);
+    const ml_text_3 = kind;
+    const ml_text_4 = "web_search";
+    return ml_text_3.startsWith(ml_text_4);
   })() || (() => {
-    const ml_text_38 = kind;
-    const ml_text_39 = "web_fetch";
-    return ml_text_38.startsWith(ml_text_39);
+    const ml_text_5 = kind;
+    const ml_text_6 = "web_fetch";
+    return ml_text_5.startsWith(ml_text_6);
   })()); });
   return ml_host_bool_then(!has_function, () => { return "tool_choice requires a tool call, but the request offers only server-side tools that the provider executes itself; use tool_choice auto or add a client tool"; });
 

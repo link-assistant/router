@@ -1,11 +1,12 @@
 // A byte-oriented serde_json Value decoder; no JavaScript numeric JSON coercion.
 import {parseJsonNumber} from './json-numbers.mjs';
+import {parseJsonRoundtripNumber} from './json-roundtrip-numbers.mjs';
 import {tagged,JSON_NULL,jsonMap,jsonError,ok,err} from './json-values.mjs';
 const digit=byte=>byte >= 48 && byte <= 57;
 const whitespace=byte=>[32,9,10,13].includes(byte);
 class JsonFailure extends Error {constructor(value){super(value.message);this.value=value;}}
 class JsonReader {
-  constructor(bytes) {this.bytes=bytes;this.at=0;this.depth=128;}
+  constructor(bytes,roundtrip=false) {this.bytes=bytes;this.at=0;this.depth=128;this.roundtrip=roundtrip;}
   peek(){return this.bytes[this.at];}
   eat(){this.at++;}
   next(){return this.at < this.bytes.length?this.bytes[this.at++]:undefined;}
@@ -64,7 +65,7 @@ class JsonReader {
     if(byte === 110)return this.literal('null',JSON_NULL);
     if(byte === 116)return this.literal('true',tagged('Bool',{field0:true}));
     if(byte === 102)return this.literal('false',tagged('Bool',{field0:false}));
-    if(byte === 45 || digit(byte))return tagged('Number',{field0:parseJsonNumber(this)});
+    if(byte === 45 || digit(byte))return tagged('Number',{field0:this.roundtrip?parseJsonRoundtripNumber(this):parseJsonNumber(this)});
     if(byte !== 91 && byte !== 123)this.fail('expected value');
     if(--this.depth === 0)this.fail('recursion limit exceeded');
     this.eat();this.skip();const array=byte === 91,end=array?93:125,items=[];
@@ -87,7 +88,12 @@ class JsonReader {
   }
 }
 export function parseJsonBytes(bytes) {
-  const reader=new JsonReader(bytes);
+  return parse(new JsonReader(bytes));
+}
+export function parseJsonBytesRoundtrip(bytes) {
+  return parse(new JsonReader(bytes,true));
+}
+function parse(reader) {
   try {const value=reader.value();reader.skip();if(reader.peek() !== undefined)reader.fail('trailing characters');return ok(value);}
   catch(error){if(error instanceof JsonFailure)return err(error.value);throw error;}
 }

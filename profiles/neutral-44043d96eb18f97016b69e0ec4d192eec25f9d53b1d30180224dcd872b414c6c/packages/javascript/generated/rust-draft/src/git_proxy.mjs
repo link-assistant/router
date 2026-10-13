@@ -33,13 +33,6 @@ function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_
 
 function ml_router_any(values, predicate) { for (const value of values) if (predicate(value)) return true; return false; }
 
-function ml_router_unwrap(value, fallback, option) {
-  if (option) {
-    if (value.$ === 'Some') return value.field0;
-  } else if (value.$ === 'Ok') return value.field0;
-  return fallback;
-}
-
 function rp_6769745f70726f78792e5a45524f5f4f4944() {
   return "0000000000000000000000000000000000000000";
 }
@@ -156,11 +149,26 @@ function rp_6769745f70726f78792e73636f70655f61646d697473(allowed_repositories, r
 
 function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path) {
   if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_unwrap((() => {
-    const ml_text_5 = path;
-    const ml_text_6 = "/api/services/github";
-    return (ml_text_5.startsWith(ml_text_6)?Object.freeze({ $: 'Some', field0: ml_text_5.slice(ml_text_6.length) }):Object.freeze({ $: 'None' }));
-  })(), path, true);
+  return (() => {
+    const ml_standard_body_1 = (() => {
+      const ml_text_1 = path;
+      const ml_text_2 = "/api/services/github";
+      return (ml_text_1.startsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(ml_text_2.length) }):Object.freeze({ $: 'None' }));
+    })();
+    const ml_standard_body_2 = path;
+    switch (ml_standard_body_1.$) {
+      case "None": {
+        return ml_standard_body_2;
+      }
+      case "Some": {
+        const x = ml_standard_body_1.field0;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_1);
+      }
+    }
+  })();
 }
 
 export const translated = { ["ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["RefUpdate"]: ml_make_RefUpdate_RefUpdate, ["RefRefusal"]: Object.freeze({ ["Delete"]: ml_make_RefRefusal_Delete, ["NonFastForward"]: ml_make_RefRefusal_NonFastForward, ["Unverifiable"]: ml_make_RefRefusal_Unverifiable }), ["AncestryQuery"]: ml_make_AncestryQuery_AncestryQuery, ["Ancestry"]: Object.freeze({ ["FastForward"]: ml_make_Ancestry_FastForward, ["Diverged"]: ml_make_Ancestry_Diverged, ["Unknown"]: ml_make_Ancestry_Unknown }), ["ancestry_from_compare"]: rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265, ["scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468 };
