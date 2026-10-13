@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=7955e02cf1014a7a31724bfac667ce1601e60156e8728039302f04db1a9100a8; dynamic any annotations are explicit draft gaps.
+// Meta sha256=6d596c0b8b9dd1ab74d5cd040a1dafaa48d7eb62914350a2a61a791e82b894e0; dynamic any annotations are explicit draft gaps.
 import { open } from 'node:fs/promises';
 import { decodeTokenRecords, encodeLino } from "./storage.js";
 const schema: Array<Array<string>> = [['StorageFormat', 'router-token-doublets-v1'], ['Type', 'TokenRecord'], ['TokenRecord', 'SubType'], ['SubType', 'Value']];
@@ -28,7 +28,7 @@ export function tokenSemanticLinks(records?: any): Array<Array<string>> {
             links.push([value, path], [path, valueNode(path, text)]);
         }
     }
-    const unique: any = new (Map as any)(links.map((pair?: any): any => [(JSON as any).stringify(pair), pair]));
+    const unique: Map<string, Array<string>> = new (Map as any)(links.map((pair?: any): any => [(JSON as any).stringify(pair), pair]));
     return [...unique.values()].sort((left?: any, right?: any): number => stringCompare((left as any)[0], (right as any)[0]) || stringCompare((left as any)[1], (right as any)[1]));
 }
 export function semanticTokenRecords(links?: any): any {

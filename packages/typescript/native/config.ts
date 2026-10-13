@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=c9bc1d26c9687036a7d8f0bb3f037dcdfe11c1b8c347edb45a2779403aa95ad9; dynamic any annotations are explicit draft gaps.
+// Meta sha256=547c1691a4855aefc1bbcd583f46d8491e6054b1addd6a553c2976455c676645; dynamic any annotations are explicit draft gaps.
 import { readFile } from 'node:fs/promises';
 import { createHash, createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -33,7 +33,7 @@ const bool: any = (value?: any): boolean => {
         return false;
     throw new (RouterError as any)('invalid_config', 'Boolean configuration must be true or false');
 };
-export const nativeConfigOptions: any = new (Set as any)(['token_secret', 'data_dir', 'storage_policy', 'host', 'port', 'account_strategy',
+export const nativeConfigOptions: Set<string> = new (Set as any)(['token_secret', 'data_dir', 'storage_policy', 'host', 'port', 'account_strategy',
     'account_failover', 'account_cooldown_seconds', 'account_max_cooldown_seconds', 'session_affinity_ttl_seconds',
     'token_admin_key', 'admin_key', 'allow_anonymous_admin', 'disable_login_api', 'login_max_sessions', 'login_session_ttl_secs',
     'claude_code_home', 'claude_home', 'codex_home', 'gemini_home', 'qwen_home', 'home', 'openai_compatible_provider_name',
@@ -224,7 +224,7 @@ export class ProviderStore {
         if (record.kind === 'z.ai-coding-plan' && (typeof record.subscriber_id !== 'string' || !record.subscriber_id.trim()))
             throw new (RouterError as any)('invalid_provider', 'z.ai Coding Plan requires one subscriber_id');
         if (record.kind === 'openai-compatible') {
-            const canonical: any = new (Set as any)(['codex', 'claude', 'gemini', 'qwen', 'grok', 'opencode', 'agent', 'cursor-agent']);
+            const canonical: Set<string> = new (Set as any)(['codex', 'claude', 'gemini', 'qwen', 'grok', 'opencode', 'agent', 'cursor-agent']);
             if ((record.supported_clients.some as any)((client?: any): boolean => !canonical.has(client)))
                 throw new (RouterError as any)('invalid_provider', 'supported_clients must use canonical client names');
             if (record.name === 'z.ai')

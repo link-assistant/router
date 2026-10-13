@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=a31587ae2e08e82fa34f68b31727d6ced165ba0ede8a1c2a71812bd945fdc54a; dynamic any annotations are explicit draft gaps.
+// Meta sha256=989e2fed8e806a75ea00124c131383207de4d59767cfc8f6c8d97e58fbd97e56; dynamic any annotations are explicit draft gaps.
 import { open, lstat, readdir, mkdir, mkdtemp, rename, chmod, rm } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { resolve, join, dirname, parse } from 'node:path';
@@ -435,7 +435,7 @@ async function serializedTlsGenerate(dataDir?: any, dns?: any): Promise<any> {
 export async function executeResourceOperation({ name, options = {}, config = {}, core }: any): Promise<any> {
     if (!(supportedResourceOperations as any)[name])
         throw unsupported(`Native resource operation ${name} is unavailable`);
-    const accepted: any = new (Set as any)(['data_dir', 'home', 'local', 'json', ...((name.startsWith as any)('logs.') ? ['token', 'correlation_id', 'request_log'] : name === 'tls.generate' ? ['dns'] : [])]);
+    const accepted: Set<string> = new (Set as any)(['data_dir', 'home', 'local', 'json', ...((name.startsWith as any)('logs.') ? ['token', 'correlation_id', 'request_log'] : name === 'tls.generate' ? ['dns'] : [])]);
     for (const [key, value] of (Object as any).entries(options) as any)
         if (value !== undefined && value !== false && !accepted.has(key))
             throw unsupported(`Native ${name} does not support option ${key}`);

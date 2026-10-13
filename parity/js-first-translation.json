@@ -356,8 +356,8 @@
       "path": "packages/javascript/native/accounts.mjs",
       "sha256": "0042f4f7cf2a4e246864146a6eeb624d54fc287b26e0cdad7cd398b341b120cf",
       "sourceItems": 14,
-      "translatedItems": 0,
-      "unsupportedItems": 14,
+      "translatedItems": 1,
+      "unsupportedItems": 13,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -400,18 +400,8 @@
           "example": "const strategyAliases = new Map([ ['rr','round-robin'],['roundrobin','round-robin'],['weighted_round_robin','weighted-round-robin'], ['prio','priority'],['fill-first','priority'],["
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
-          "span": {
-            "start": 438,
-            "end": 526,
-            "encoding": "utf16"
-          },
-          "example": "export const retryableStatus = status => [401,429,529,500,502,503,504].includes(status);"
-        },
-        {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 527,
             "end": 769,
@@ -440,8 +430,8 @@
           "example": "const storedKinds=new Set(['openai-compatible','openai','litellm','lefine','z.ai-coding-plan']);"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property implicit",
           "span": {
             "start": 979,
             "end": 1124,
@@ -450,8 +440,8 @@
           "example": "export function principalAccountName(account,provider) {return account.implicit && subscriptionKinds.has(provider?.kind)?'primary':account.name;}"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 1228,
             "end": 1713,
@@ -460,8 +450,8 @@
           "example": "export function principalAccountScope(records,providers,context={}) { const pin=context.pinnedAccount ?? context.pinned_account,principal=context.principalAccount,byProvider=new Ma"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method split",
           "span": {
             "start": 1714,
             "end": 1939,
@@ -480,8 +470,8 @@
           "example": "export function validateAccountPolicy(policy = {}) { const p = { weight:1, prefix:null, disable_cooling:false, request_retry:null, request_scoped_errors:[], headers:{}, model_alias"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property policy",
           "span": {
             "start": 4698,
             "end": 5400,
@@ -505,8 +495,8 @@
       "path": "packages/javascript/native/activitypub.mjs",
       "sha256": "a5cad0b38b510e897c590a39da4461a77e187d6a9e4615fac8b8fa811b4be7c1",
       "sourceItems": 5,
-      "translatedItems": 1,
-      "unsupportedItems": 4,
+      "translatedItems": 2,
+      "unsupportedItems": 3,
       "diagnostics": [
         {
           "kind": "collection",
@@ -519,18 +509,8 @@
           "example": "const context=['https://www.w3.org/ns/activitystreams','https://forgefed.org/ns',{'fep':'https://w3id.org/fep/ef61#',aliases:'fep:aliases'}];"
         },
         {
-          "kind": "statement",
-          "message": "a top-level statement runs once, as a program",
-          "span": {
-            "start": 182,
-            "end": 337,
-            "encoding": "utf16"
-          },
-          "example": "export const defaultActivityPublicKey='-----BEGIN PUBLIC KEY-----\\nMCowBQYDK2VwAyEA0000000000000000000000000000000000000000000=\\n-----END PUBLIC KEY-----';"
-        },
-        {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 338,
             "end": 1480,
@@ -608,8 +588,8 @@
           "example": "const security={'content-security-policy':\"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self';"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "loop",
+          "message": "for, do and generator loops are outside portable-router-v1",
           "span": {
             "start": 761,
             "end": 901,
@@ -633,8 +613,8 @@
       "path": "packages/javascript/native/admin.mjs",
       "sha256": "07419bb36f9df147782ca321daa5ffb4b376c6b02be89131ee2222534866d18d",
       "sourceItems": 12,
-      "translatedItems": 0,
-      "unsupportedItems": 12,
+      "translatedItems": 1,
+      "unsupportedItems": 11,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -698,7 +678,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method update",
           "span": {
             "start": 353,
             "end": 426,
@@ -707,8 +687,8 @@
           "example": "const digest = value => createHash('sha256').update(value).digest('hex');"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 427,
             "end": 576,
@@ -717,18 +697,8 @@
           "example": "function equal(left,right) { const a = Buffer.from(left ?? ''), b = Buffer.from(right ?? ''); return a.length === b.length && timingSafeEqual(a,b); }"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
-          "span": {
-            "start": 577,
-            "end": 669,
-            "encoding": "utf16"
-          },
-          "example": "const ttl = hours => Number.isSafeInteger(hours) && hours > 0 ? Math.min(hours,8760) : 8760;"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Boolean",
           "span": {
             "start": 670,
             "end": 738,
@@ -738,7 +708,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the statement throw",
           "span": {
             "start": 739,
             "end": 827,
@@ -836,8 +806,8 @@
           "example": "const resourceNames = {responses:'responses','chat/completions':'chat',conversations:'conversations', 'conversations/items':'conversation_items','realtime/calls':'realtime_calls',f"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 859,
             "end": 1690,
@@ -846,8 +816,8 @@
           "example": "export function affinityNamespace(namespace) { if (typeof namespace !== 'string' || !namespace) throw new RouterError('invalid_argument','Resource namespace is required'); const co"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 1691,
             "end": 1851,
@@ -856,8 +826,8 @@
           "example": "function validId(value) { return typeof value === 'string' && value.length > 0 && Buffer.byteLength(value) <= 256 && !/[\\/\\x00-\\x1f\\x7f-\\x9f]/u.test(value); }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property client_kind",
           "span": {
             "start": 1852,
             "end": 2255,
@@ -866,8 +836,8 @@
           "example": "function ownerValue(owner) { if (typeof owner === 'object' && owner !== null && typeof owner.client_kind === 'string' && owner.client_kind.trim() && typeof owner.principal_id === '"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property client_kind",
           "span": {
             "start": 2256,
             "end": 2382,
@@ -876,8 +846,8 @@
           "example": "function sameOwner(left, right) { return left.client_kind === right.client_kind && left.principal_id === right.principal_id; }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property base_url",
           "span": {
             "start": 2383,
             "end": 3655,
@@ -887,7 +857,7 @@
         },
         {
           "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: dynamic values need a proven primitive typeof guard",
           "span": {
             "start": 3656,
             "end": 3759,
@@ -896,8 +866,8 @@
           "example": "function persistedProviderKind(kind) { return kind === 'z.ai-coding-plan' ? 'zai-coding-plan' : kind; }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property kind",
           "span": {
             "start": 3760,
             "end": 4117,
@@ -906,8 +876,8 @@
           "example": "function sameDestination(left, right) { return left.kind === right.kind && left.base_url === right.base_url && (left.kind === 'stored_provider' ? left.name === right.name && left.p"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property destination",
           "span": {
             "start": 4118,
             "end": 4897,
@@ -916,8 +886,8 @@
           "example": "function matchesExpectedRecord(record, expected) { if (!sameDestination(record.destination,destinationValue(expected.destination ?? expected))) return false; // Rust remove_if_matc"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 4898,
             "end": 5601,
@@ -959,9 +929,9 @@
     {
       "path": "packages/javascript/native/affinity-schema.mjs",
       "sha256": "1b1b7347d1aa596d0551adfa4f95b386ceb7472e0fe32c6ca4f4a08f47ba977b",
-      "sourceItems": 21,
+      "sourceItems": 24,
       "translatedItems": 0,
-      "unsupportedItems": 21,
+      "unsupportedItems": 24,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -994,8 +964,8 @@
           "example": "export { affinitySchema };"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "loop",
+          "message": "for, do and generator loops are outside portable-router-v1",
           "span": {
             "start": 213,
             "end": 363,
@@ -1018,20 +988,50 @@
           "message": "a construct outside portable-pure-v1: the literal 1n",
           "span": {
             "start": 394,
+            "end": 429,
+            "encoding": "utf16"
+          },
+          "example": "export const I64_MIN = -(1n << 63n)"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the literal 1n",
+          "span": {
+            "start": 431,
+            "end": 455,
+            "encoding": "utf16"
+          },
+          "example": "I64_MAX = (1n << 63n)-1n"
+        },
+        {
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the literal 1n",
+          "span": {
+            "start": 457,
             "end": 482,
             "encoding": "utf16"
           },
-          "example": "export const I64_MIN = -(1n << 63n), I64_MAX = (1n << 63n)-1n, U64_MAX = (1n << 64n)-1n;"
+          "example": "U64_MAX = (1n << 64n)-1n;"
         },
         {
           "kind": "name",
           "message": "a name with no spelling both languages read back: BigInt",
           "span": {
             "start": 483,
+            "end": 531,
+            "encoding": "utf16"
+          },
+          "example": "const SAFE_MIN = BigInt(Number.MIN_SAFE_INTEGER)"
+        },
+        {
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: BigInt",
+          "span": {
+            "start": 533,
             "end": 576,
             "encoding": "utf16"
           },
-          "example": "const SAFE_MIN = BigInt(Number.MIN_SAFE_INTEGER), SAFE_MAX = BigInt(Number.MAX_SAFE_INTEGER);"
+          "example": "SAFE_MAX = BigInt(Number.MAX_SAFE_INTEGER);"
         },
         {
           "kind": "unsupported",
@@ -1054,8 +1054,8 @@
           "example": "class JsonNumber { constructor(raw) { this.raw = raw; } }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement throw",
           "span": {
             "start": 664,
             "end": 716,
@@ -1065,7 +1065,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: /^[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]$/u",
           "span": {
             "start": 803,
             "end": 970,
@@ -1074,8 +1074,8 @@
           "example": "const rustWhitespace=character=>typeof character==='string' && /^[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]$/u.test(character);"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 971,
             "end": 1325,
@@ -1084,8 +1084,8 @@
           "example": "export function exactInteger(value, minimum = I64_MIN, maximum = I64_MAX) { if (typeof value === 'number' && !Number.isSafeInteger(value) || !['number','bigint'].includes(typeof va"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Number",
           "span": {
             "start": 1326,
             "end": 1434,
@@ -1094,8 +1094,8 @@
           "example": "export function integerABI(value) { return value >= SAFE_MIN && value <= SAFE_MAX ? Number(value) : value; }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the literal 1n",
           "span": {
             "start": 1435,
             "end": 1720,
@@ -1104,8 +1104,8 @@
           "example": "export function affinityExpiry(now, ttl) { now = exactInteger(now); ttl = exactInteger(ttl,1n,U64_MAX); // Duration.as_secs() is converted/clipped BEFORE saturating addition. const"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"fail\" where \"{\" belongs",
           "span": {
             "start": 1721,
             "end": 2155,
@@ -1114,8 +1114,8 @@
           "example": "function scalarString(value) { if (typeof value !== 'string') fail('expected a string'); for (let i=0;i<value.length;i++) { const unit=value.charCodeAt(i); if (unit>=0xd800 && unit"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 2156,
             "end": 2355,
@@ -1124,8 +1124,8 @@
           "example": "function entries(value) { if (!value || typeof value!=='object' || Array.isArray(value) || value instanceof JsonNumber) fail('expected a map'); return pairs.get(value) ?? Object.en"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \";\" belongs",
           "span": {
             "start": 2590,
             "end": 4702,
@@ -1134,8 +1134,8 @@
           "example": "function lexicalJson(text) { let offset=0, root, assigned=false; const stack=[]; const whitespace=()=>{while(/[\\x20\\t\\r\\n]/.test(text[offset]??'') && offset<text.length) offset++;}"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: type",
           "span": {
             "start": 4704,
             "end": 5248,
@@ -1144,8 +1144,8 @@
           "example": "function integer(value,type) { const min=type==='u32'?0n:I64_MIN,max=type==='u32'?4294967295n:I64_MAX; if(value instanceof JsonNumber) { // Pinned serde_json treats negative zero a"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"scalarString\" where \"{\" belongs",
           "span": {
             "start": 5249,
             "end": 5748,
@@ -1154,8 +1154,8 @@
           "example": "function buffered(value,depth,legacy) { if(typeof value==='string')scalarString(value); else if(value instanceof JsonNumber) {if(!Number.isFinite(Number(value.raw)))fail('number ou"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 5749,
             "end": 8363,
@@ -1164,8 +1164,8 @@
           "example": "export function validateAffinityValue(value,type='AffinityFile',{legacy=false}={}) { function apply(value,type,depth=1) { if(type==='String')return scalarString(value); if(type==='"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 8364,
             "end": 9482,
@@ -1244,7 +1244,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 430,
             "end": 522,
@@ -1274,7 +1274,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the operator ??",
           "span": {
             "start": 659,
             "end": 877,
@@ -1283,8 +1283,8 @@
           "example": "const integer = (value,fallback,name) => { value = value ?? fallback; if (!Number.isSafeInteger(value) || value <= 0) throw fail('invalid_login_config',`${name} must be a positive "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 878,
             "end": 980,
@@ -1293,8 +1293,8 @@
           "example": "function homeFor(core,provider,env = {}) {return subscriptionHome(provider,{config:core.config,env});}"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: /^[a-z0-9_-]{1,100}$/i",
           "span": {
             "start": 982,
             "end": 1101,
@@ -1333,7 +1333,7 @@
       "diagnostics": [
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the method map",
           "span": {
             "start": 79,
             "end": 195,
@@ -1342,8 +1342,8 @@
           "example": "const columns=(values,widths)=>values.map((value,index)=>String(value ?? '').padEnd(widths[index] ?? 0)).join('  ');"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 196,
             "end": 941,
@@ -1352,8 +1352,8 @@
           "example": "export function tokenTable(records) { const widths=[36,10,10,8,13,15,9,8,6,0],rows=[columns(['id','issued_at','expires_at','revoked','requests','tokens','reserved','rpm','scope','l"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: {",
           "span": {
             "start": 942,
             "end": 1663,
@@ -1411,8 +1411,8 @@
           "example": "import { NativeRouter, catalog, operationResult } from './operations.mjs';"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: ...",
           "span": {
             "start": 268,
             "end": 3754,
@@ -1470,8 +1470,8 @@
           "example": "const originSuffixes=['/api/services/anthropic','/api/services/openai/v1','/api/services/codex/v1','/api/services/qwen/v1','/api/services/gemini','/api/gemini','/api/qwen/v1','/api"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 358,
             "end": 924,
@@ -1480,8 +1480,8 @@
           "example": "export function clientRouterOrigin(baseURL) { let url;try {url=new URL(String(baseURL).trim().replace(/\\/+$/,''));}catch{throw clientFailure('Invalid Router base URL');} if(!['http"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 925,
             "end": 1099,
@@ -1490,8 +1490,8 @@
           "example": "const optional=(row,key,predicate)=>{if(row[key]!==null && row[key]!==undefined && !predicate(row[key])) throw clientFailure(`Router model catalog row has invalid ${key}`);};"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 1100,
             "end": 3259,
@@ -1510,8 +1510,8 @@
           "example": "export async function fetchNativeClientCatalog(client,baseURL,token,{fetch:fetcher=globalThis.fetch,signal,timeoutMs=15000,maxBytes=4*1024*1024}={}) { const info=clientIntegration("
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property client",
           "span": {
             "start": 5357,
             "end": 5665,
@@ -1520,8 +1520,8 @@
           "example": "export function nativeClientModelAuthorized(client,catalog,requested) { const info=clientIntegration(client); if(info.client==='claude' && requested.endsWith('[1m]')) return catalo"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "loop",
+          "message": "for, do and generator loops are outside portable-router-v1",
           "span": {
             "start": 5666,
             "end": 5965,
@@ -1599,8 +1599,8 @@
           "example": "import {atomicWrite} from './storage.mjs';"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 394,
             "end": 491,
@@ -1619,8 +1619,8 @@
           "example": "export const clientIntegrations=Object.freeze([ {client:'codex',legacy:'codex',dialect:'OpenAI Responses',token:'LINK_ASSISTANT_TOKEN',base:null,suffix:'/api/services/codex/v1',own"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method find",
           "span": {
             "start": 2057,
             "end": 2259,
@@ -1630,7 +1630,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 2260,
             "end": 2450,
@@ -1639,8 +1639,8 @@
           "example": "const absolute=(path,label)=>{if (typeof path!=='string' || !path.trim() || !isAbsolute(path)) throw clientFailure(`${label} requires an absolute nonempty directory`);return resolv"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 2451,
             "end": 4052,
@@ -1669,8 +1669,8 @@
           "example": "export async function preferredClientPath(canonical,legacy) {return await optionalClientText(canonical)!==null || await optionalClientText(legacy)===null ? canonical : legacy;}"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 4520,
             "end": 4883,
@@ -1679,8 +1679,8 @@
           "example": "export function clientObject(source,label='Client configuration') { if (source===null || !source.trim()) return {}; let value;try {value=JSON.parse(source);}catch {throw clientFail"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 4884,
             "end": 5143,
@@ -1690,7 +1690,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method stringify",
           "span": {
             "start": 5144,
             "end": 5215,
@@ -1729,8 +1729,8 @@
           "example": "export async function removeClientFile(path) {await requireNativePath(path);try {await unlink(path);}catch(error) {if(error.code!=='ENOENT') throw error;}}"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "template",
+          "message": "template literals are outside portable-pure-v1",
           "span": {
             "start": 5917,
             "end": 6249,
@@ -1739,8 +1739,8 @@
           "example": "export function readClientEnvironment(source,key) { const prefix=`export ${key}=`;const line=source?.split(/\\r?\\n/).find(line=>line.startsWith(prefix));if (line===undefined) return"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: String",
           "span": {
             "start": 6250,
             "end": 6327,
@@ -1770,7 +1770,7 @@
         },
         {
           "kind": "statement",
-          "message": "a top-level statement runs once, as a program",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 7545,
             "end": 7592,
@@ -1799,7 +1799,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: optional chaining",
           "span": {
             "start": 269,
             "end": 415,
@@ -1808,8 +1808,8 @@
           "example": "const managedQwen=value=>value?.envKey==='LINK_ASSISTANT_TOKEN' && typeof value.name==='string' && value.name.startsWith('Link.Assistant.Router');"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement providers",
           "span": {
             "start": 416,
             "end": 664,
@@ -1927,8 +1927,8 @@
           "example": "const implementedClients=new Set(['opencode','agent','qwen','grok']);"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property client_kind",
           "span": {
             "start": 718,
             "end": 1095,
@@ -1937,8 +1937,8 @@
           "example": "const completeBinding=(claims,client)=>{ if(claims.client_kind!==client || typeof claims.principal_id!=='string' || !claims.principal_id.trim() || typeof claims.sub!=='string' || !"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 1096,
             "end": 1685,
@@ -1947,8 +1947,8 @@
           "example": "function decodedBinding(token,client) { if(Buffer.byteLength(token)>65536 || !token.startsWith('la_sk_')) throw clientFailure('Supplied Router token requires la_sk_ prefix'); const"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \";\" belongs",
           "span": {
             "start": 1686,
             "end": 1892,
@@ -1957,8 +1957,8 @@
           "example": "function canonicalOrigin(value) {const origin=clientRouterOrigin(value),url=new URL(origin);if(url.pathname!=='/') throw clientFailure('Client setup requires a Router origin withou"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property host",
           "span": {
             "start": 1893,
             "end": 2154,
@@ -1967,8 +1967,8 @@
           "example": "function localOrigin(config) {let host=config.host ?? '127.0.0.1';if(host==='0.0.0.0') host='127.0.0.1';if(host==='::') host='::1';if(host.includes(':') && !host.startsWith('[')) h"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property metadata",
           "span": {
             "start": 2155,
             "end": 2238,
@@ -2002,8 +2002,8 @@
       "path": "packages/javascript/native/client-status.mjs",
       "sha256": "cfd6afd52b809baa8478dd1df89a34e44dcf1f12529c76cc6b73f85bd0da2c84",
       "sourceItems": 12,
-      "translatedItems": 0,
-      "unsupportedItems": 12,
+      "translatedItems": 1,
+      "unsupportedItems": 11,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -2036,8 +2036,8 @@
           "example": "const modelKeys=['ANTHROPIC_MODEL','ANTHROPIC_DEFAULT_OPUS_MODEL','ANTHROPIC_DEFAULT_SONNET_MODEL','ANTHROPIC_DEFAULT_HAIKU_MODEL','CLAUDE_CODE_SUBAGENT_MODEL'];"
         },
         {
-          "kind": "collection",
-          "message": "arrays and objects are outside portable-pure-v1",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: ...",
           "span": {
             "start": 440,
             "end": 609,
@@ -2047,7 +2047,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: optional chaining",
           "span": {
             "start": 610,
             "end": 655,
@@ -2057,17 +2057,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
-          "span": {
-            "start": 656,
-            "end": 713,
-            "encoding": "utf16"
-          },
-          "example": "const text=value=>typeof value==='string' ? value : null;"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the statement try",
           "span": {
             "start": 714,
             "end": 860,
@@ -2076,8 +2066,8 @@
           "example": "const safeOrigin=value=>{try {const url=new URL(value);return ['http:','https:'].includes(url.protocol) ? url.origin : null;}catch{return null;}};"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement try",
           "span": {
             "start": 861,
             "end": 1070,
@@ -2086,8 +2076,8 @@
           "example": "function publicDocument(client,source) { if(client==='codex') {try{return TOML.parse(source ?? '');}catch{throw clientFailure('Client configuration contains invalid TOML');}} retur"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement switch",
           "span": {
             "start": 1071,
             "end": 1915,
@@ -2096,8 +2086,8 @@
           "example": "function publicBase(paths,document,environment,env) { switch(paths.info.client) { case 'codex': { const provider=document.model_providers?.['link-assistant']; return document.model"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: optional chaining",
           "span": {
             "start": 1916,
             "end": 2253,
@@ -2106,8 +2096,8 @@
           "example": "function claudeEntries(marker) { const env=marker?.gateway_env; if(!env || typeof env!=='object' || Array.isArray(env)) return []; return Object.entries(env).flatMap(([key,value])="
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \",\" where \";\" belongs",
           "span": {
             "start": 2254,
             "end": 3659,
@@ -2206,7 +2196,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method update",
           "span": {
             "start": 481,
             "end": 570,
@@ -2240,8 +2230,8 @@
       "path": "packages/javascript/native/codex-login.mjs",
       "sha256": "3a5895c1a4c40fb93a7775bf887128fd38348f2f05406878f79266b25ca2b86d",
       "sourceItems": 14,
-      "translatedItems": 0,
-      "unsupportedItems": 14,
+      "translatedItems": 1,
+      "unsupportedItems": 13,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -2315,7 +2305,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 417,
             "end": 503,
@@ -2325,7 +2315,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: )",
+          "message": "a construct outside portable-pure-v1: the method replaceAll",
           "span": {
             "start": 504,
             "end": 552,
@@ -2335,7 +2325,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method replace",
           "span": {
             "start": 553,
             "end": 677,
@@ -2345,17 +2335,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
-          "span": {
-            "start": 678,
-            "end": 749,
-            "encoding": "utf16"
-          },
-          "example": "const nonempty=value=>typeof value==='string' && value.trim().length>0;"
-        },
-        {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 750,
             "end": 1335,
@@ -2463,8 +2443,8 @@
           "example": "import { normalizeEmergencyConfig } from './emergency-auth.mjs';"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 474,
             "end": 1060,
@@ -2474,7 +2454,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 1061,
             "end": 1413,
@@ -2503,8 +2483,8 @@
           "example": "export const nativeConfigEnvironment = {TOKEN_SECRET:'token_secret',DATA_DIR:'data_dir',STORAGE_POLICY:'storage_policy',HOST:'host',PORT:'port', ACCOUNT_STRATEGY:'account_strategy'"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 2987,
             "end": 5623,
@@ -2533,8 +2513,8 @@
           "example": "export async function loadConfig({ config = {}, configPath, env = process.env } = {}) { let fromFile = {}; if (configPath) { const text = await readFile(configPath,'utf8'); if (con"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method update",
           "span": {
             "start": 10520,
             "end": 10927,
@@ -2543,8 +2523,8 @@
           "example": "export function encryptProviderSecret(secret, tokenSecret) { const key = createHash('sha256').update(ensureRealSecret(tokenSecret)).digest(), nonce = randomBytes(12); const cipher "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 10928,
             "end": 11697,
@@ -2553,8 +2533,8 @@
           "example": "export function decryptProviderSecret(secret, tokenSecret) { if (!secret.startsWith('aes256gcm:')) throw new RouterError('invalid_provider','Unsupported provider secret format'); c"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: {",
           "span": {
             "start": 11698,
             "end": 11836,
@@ -2816,9 +2796,9 @@
     {
       "path": "packages/javascript/native/credential-operations.mjs",
       "sha256": "dae49bf6f618971b6df1c63b00e3541892cd95fbedb78422a7b28ff3170e1e66",
-      "sourceItems": 26,
+      "sourceItems": 27,
       "translatedItems": 0,
-      "unsupportedItems": 26,
+      "unsupportedItems": 27,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -2921,14 +2901,24 @@
           "example": "import {atomicWrite} from './storage.mjs';"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: ,",
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 629,
+            "end": 659,
+            "encoding": "utf16"
+          },
+          "example": "const exec=promisify(execFile)"
+        },
+        {
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
+          "span": {
+            "start": 660,
             "end": 709,
             "encoding": "utf16"
           },
-          "example": "const exec=promisify(execFile),subscriptions=['claude','codex','gemini','qwen'];"
+          "example": "subscriptions=['claude','codex','gemini','qwen'];"
         },
         {
           "kind": "collection",
@@ -2942,7 +2932,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 891,
             "end": 979,
@@ -2951,8 +2941,8 @@
           "example": "const fail=(code,message,exitCode=1)=>Object.assign(new Error(message),{code,exitCode});"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 980,
             "end": 1017,
@@ -2961,8 +2951,8 @@
           "example": "const output=lines=>({output:lines});"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property clear_all",
           "span": {
             "start": 1018,
             "end": 1217,
@@ -3001,8 +2991,8 @@
           "example": "async function hasFile(path) {try{return (await stat(path)).isFile();}catch(error){if(error.code==='ENOENT')return false;throw fail('credential_read','Credential location cannot be"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property CLAUDE_CONFIG_DIR",
           "span": {
             "start": 2928,
             "end": 3098,
@@ -3021,8 +3011,8 @@
           "example": "async function keychainPresent(service,settings) { if(settings.keychainHasEntry)return settings.keychainHasEntry(service); if((settings.platform ?? process.platform)!=='darwin')ret"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property GH_CONFIG_DIR",
           "span": {
             "start": 3442,
             "end": 3546,
@@ -3130,8 +3120,8 @@
           "example": "const utf8 = new TextDecoder('utf8',{fatal:true});"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 289,
             "end": 380,
@@ -3140,8 +3130,8 @@
           "example": "const stringCompare = (left,right) => Buffer.compare(Buffer.from(left),Buffer.from(right));"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 381,
             "end": 461,
@@ -3150,8 +3140,8 @@
           "example": "const base64 = value => Buffer.from(value).toString('base64').replace(/=+$/,'');"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "template",
+          "message": "template literals are outside portable-pure-v1",
           "span": {
             "start": 462,
             "end": 529,
@@ -3161,7 +3151,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: /^[A-Za-z0-9+/]*$/",
           "span": {
             "start": 530,
             "end": 833,
@@ -3170,8 +3160,8 @@
           "example": "const decode64 = value => { if (!/^[A-Za-z0-9+/]*$/.test(value) || value.length%4 === 1) throw new Error('Invalid token doublets base64'); const bytes = Buffer.from(value,'base64')"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method map",
           "span": {
             "start": 834,
             "end": 1688,
@@ -3180,8 +3170,8 @@
           "example": "export function tokenSemanticLinks(records) { const links = schema.map(pair => pair.slice()); for (const record of records) { const root = `Record/${base64(record.id)}`, subtype = "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 1689,
             "end": 4408,
@@ -3190,8 +3180,8 @@
           "example": "export function semanticTokenRecords(links) { const pairs = new Set(links.map(pair => JSON.stringify(pair))), targets = new Map(); for (const pair of schema) if (!pairs.has(JSON.st"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 4491,
             "end": 6694,
@@ -3200,8 +3190,8 @@
           "example": "export function encodeDoublets(links,{wordBytes = 8,maxLinks = 1000000} = {}) { if (![4,8].includes(wordBytes)) throw new Error('Unsupported doublets word width'); const parts = [A"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 6695,
             "end": 8823,
@@ -3210,8 +3200,8 @@
           "example": "export function decodeDoublets(bytes,{wordBytes = 8,maxLinks = 1000000} = {}) { const stride = wordBytes*8; const read = (index,field) => { const offset = index*stride+field*wordBy"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unknown-call",
+          "message": "a call to a function the module does not define: encode_doublets",
           "span": {
             "start": 8824,
             "end": 8929,
@@ -3220,8 +3210,8 @@
           "example": "export function encodeBinaryTokenRecords(records) { return encodeDoublets(tokenSemanticLinks(records)); }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unknown-call",
+          "message": "a call to a function the module does not define: semantic_token_records",
           "span": {
             "start": 8930,
             "end": 9033,
@@ -3245,8 +3235,8 @@
       "path": "packages/javascript/native/emergency-auth.mjs",
       "sha256": "cf0f05c7cc52e209f0f6408b07b4665747cc5b71432755b341c0be5ad2177cc9",
       "sourceItems": 18,
-      "translatedItems": 0,
-      "unsupportedItems": 18,
+      "translatedItems": 1,
+      "unsupportedItems": 17,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -3289,8 +3279,8 @@
           "example": "const requestOutcome = new AsyncLocalStorage();"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: String",
           "span": {
             "start": 206,
             "end": 305,
@@ -3299,8 +3289,8 @@
           "example": "const truthy = value => ['1','true','yes','on'].includes(String(value ?? '').trim().toLowerCase());"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 306,
             "end": 412,
@@ -3329,8 +3319,8 @@
           "example": "const aliases = {'claude-code':'claude','cursor-agent':'cursor','gemini-cli':'gemini','grok-cli':'grok','qwen-code':'qwen'};"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: String",
           "span": {
             "start": 638,
             "end": 783,
@@ -3340,17 +3330,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
-          "span": {
-            "start": 784,
-            "end": 885,
-            "encoding": "utf16"
-          },
-          "example": "export const isSyntheticTokenId = id => typeof id === 'string' && id.startsWith('emergency-bypass-');"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method update",
           "span": {
             "start": 886,
             "end": 988,
@@ -3359,8 +3339,8 @@
           "example": "export const tokenFingerprint = token => createHash('sha256').update(token).digest('hex').slice(0,12);"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement try",
           "span": {
             "start": 989,
             "end": 1394,
@@ -3370,7 +3350,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method run",
           "span": {
             "start": 1395,
             "end": 1493,
@@ -3379,8 +3359,8 @@
           "example": "export const withAuthenticationScope = operation => requestOutcome.run({counted:false},operation);"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method getStore",
           "span": {
             "start": 1494,
             "end": 1662,
@@ -3389,8 +3369,8 @@
           "example": "export function firstAuthenticationOutcome() {const scope=requestOutcome.getStore();if (!scope) return true;const first=!scope.counted;scope.counted=true;return first;}"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 1663,
             "end": 2219,
@@ -3478,8 +3458,8 @@
           "example": "const helper = String.raw` import os,sys,time path,mode,timeout=sys.argv[1:] fd=os.open(path,os.O_RDWR|os.O_CREAT,0o600) if os.name!='nt': import fcntl os.fchmod(fd,0o600) def take"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "template",
+          "message": "template literals are outside portable-pure-v1",
           "span": {
             "start": 1693,
             "end": 1837,
@@ -3528,7 +3508,7 @@
         },
         {
           "kind": "statement",
-          "message": "a top-level statement runs once, as a program",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 47,
             "end": 76,
@@ -3537,8 +3517,8 @@
           "example": "const copy = structuredClone;"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 77,
             "end": 242,
@@ -3548,7 +3528,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the statement object",
           "span": {
             "start": 243,
             "end": 449,
@@ -3558,7 +3538,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 450,
             "end": 580,
@@ -3568,7 +3548,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 581,
             "end": 797,
@@ -3577,8 +3557,8 @@
           "example": "const parseObject = (value,path) => {let parsed;try {parsed = typeof value === 'string' ? JSON.parse(value) : value;} catch {throw new ProtocolError(`${path} must encode a JSON obj"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 798,
             "end": 848,
@@ -3597,8 +3577,8 @@
           "example": "const levels={minimal:512,low:1024,medium:8192,high:24576,xhigh:32768,max:128000};"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the operator ==",
           "span": {
             "start": 932,
             "end": 1285,
@@ -3607,8 +3587,8 @@
           "example": "function effort(value) {if(value==null)return;if(typeof value!=='string')throw new ProtocolError('thinking effort must be a string');const normalized=value.toLowerCase();if(normali"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property reasoning",
           "span": {
             "start": 1286,
             "end": 1786,
@@ -3617,8 +3597,8 @@
           "example": "function chatThinking(body) { if(body.reasoning!=null)object(body.reasoning,'reasoning'); const value=effort(body.reasoning?.effort ?? body.reasoning_effort);if(value===undefined)r"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 1787,
             "end": 2654,
@@ -3627,8 +3607,8 @@
           "example": "function geminiThinking(config) { if(!config)return;fields(config,['includeThoughts','include_thoughts','thinkingBudget','thinking_budget','thinkingLevel','thinking_level'],'thinki"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 2655,
             "end": 2828,
@@ -3637,8 +3617,8 @@
           "example": "function imageMedia(value) {if(!['image/jpeg','image/png','image/gif','image/webp'].includes(value))throw new ProtocolError('Image media type is unsupported');return value;}"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: /^[A-Za-z0-9+/]+={0,2}$/",
           "span": {
             "start": 2829,
             "end": 3188,
@@ -3647,8 +3627,8 @@
           "example": "function imageBase64(value) {if(typeof value!=='string' || !value || !/^[A-Za-z0-9+/]+={0,2}$/.test(value) || value.replace(/=+$/,'').length%4===1 || value.includes('=') && value.l"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 3189,
             "end": 3279,
@@ -3657,8 +3637,8 @@
           "example": "const chatContent=parts=>parts.length===1 && parts[0].type==='text' ? parts[0].text:parts;"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the operator ==",
           "span": {
             "start": 3280,
             "end": 4562,
@@ -3667,8 +3647,8 @@
           "example": "function chatParts(content) { if (content == null) return []; if (typeof content === 'string') return content ? [{text:content}] : []; if (!Array.isArray(content)) throw new Protoc"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement fields",
           "span": {
             "start": 4563,
             "end": 11261,
@@ -3677,8 +3657,8 @@
           "example": "export function chatToGemini(body) { fields(body,['model','messages','stream','max_tokens','max_completion_tokens','temperature','top_p','top_k','stop','tools','tool_choice','paral"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement fields",
           "span": {
             "start": 11262,
             "end": 16797,
@@ -3687,8 +3667,8 @@
           "example": "export function geminiToChat(body) { fields(body,['model','stream','contents','systemInstruction','system_instruction','generationConfig','generation_config','tools','toolConfig','"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property response",
           "span": {
             "start": 16798,
             "end": 17819,
@@ -3697,8 +3677,8 @@
           "example": "export function geminiCanonical(body, normalizeUsage) { const value=body.response ?? body,candidate=value.candidates?.[0],reason=candidate?.finishReason ?? value.promptFeedback?.bl"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 17820,
             "end": 18305,
@@ -3737,7 +3717,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the method slice",
           "span": {
             "start": 100,
             "end": 364,
@@ -3746,8 +3726,8 @@
           "example": "const glob=(pattern,path)=>pattern.endsWith('/**') ? path===pattern.slice(0,-3) || path.startsWith(pattern.slice(0,-3)+'/') : pattern.split('/').length===path.split('/').length && "
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property rules",
           "span": {
             "start": 365,
             "end": 566,
@@ -3756,8 +3736,8 @@
           "example": "const allowedRef=(policy,repository,name)=>(policy.rules ?? []).some(rule=>rule.effect==='allow' && (!rule.method || rule.method.toUpperCase()==='GIT') && glob(rule.path,`/git/${re"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 567,
             "end": 1327,
@@ -3766,8 +3746,8 @@
           "example": "export function parseRefUpdates(body) { const updates=[];let cursor=0;const decoder=new TextDecoder('utf-8',{fatal:true}); while(cursor+4<=body.length) { const prefix=Buffer.from(b"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "template",
+          "message": "template literals are outside portable-pure-v1",
           "span": {
             "start": 1328,
             "end": 1642,
@@ -3836,7 +3816,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the method slice",
           "span": {
             "start": 195,
             "end": 459,
@@ -3846,7 +3826,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the statement try",
           "span": {
             "start": 460,
             "end": 559,
@@ -3855,8 +3835,8 @@
           "example": "const parse=body=>{try{return JSON.parse(Buffer.from(body).toString('utf8'));}catch{return null;}};"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 560,
             "end": 1255,
@@ -3865,8 +3845,8 @@
           "example": "function graphqlNames(query) { const names=[];let position=0; while(position<query.length) { if(query[position]==='#'){while(position<query.length && query[position]!=='\\n')positio"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 1256,
             "end": 1439,
@@ -3875,8 +3855,8 @@
           "example": "function nested(value,predicate) {return value && typeof value==='object' && Object.entries(value).some(([key,child])=>predicate(key.toLowerCase(),child) || nested(child,predicate)"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: optional chaining",
           "span": {
             "start": 1440,
             "end": 2421,
@@ -3885,8 +3865,8 @@
           "example": "export function destructiveGraphql(body) { const value=parse(body);if(typeof value?.query!=='string')return false; const names=graphqlNames(value.query),compact=value.query.replace"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 2422,
             "end": 3592,
@@ -3895,8 +3875,8 @@
           "example": "export function githubDecision(policy,method,path,body=new Uint8Array()) { method=method.toUpperCase();const text=Buffer.from(body).toString('utf8').toLowerCase(); for(const rule o"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 3593,
             "end": 4266,
@@ -3915,8 +3895,8 @@
           "example": "export async function githubConfiguration(config={},env={}) { const specified=config.github ?? {},base_url=(specified.base_url ?? env.GITHUB_PROXY_BASE_URL ?? 'https://api.github.c"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 5768,
             "end": 6077,
@@ -3994,7 +3974,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method replace",
           "span": {
             "start": 27343,
             "end": 27410,
@@ -4013,8 +3993,8 @@
           "example": "const patterns = HTTP_ROUTES.map(route => ({ ...route, pattern: new RegExp('^' + route.path.split(/(\\{[^}]+\\})/).map(part => part.startsWith('{') ? (part === '{path}' ? '.+' : '[^/"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method find",
           "span": {
             "start": 27633,
             "end": 27765,
@@ -4086,9 +4066,9 @@
     {
       "path": "packages/javascript/native/managed-server.mjs",
       "sha256": "e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf",
-      "sourceItems": 47,
-      "translatedItems": 0,
-      "unsupportedItems": 47,
+      "sourceItems": 50,
+      "translatedItems": 2,
+      "unsupportedItems": 48,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -4161,28 +4141,38 @@
           "example": "import { atomicWrite, serialized, withNativeFileLock } from './storage.mjs';"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: ,",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: import",
           "span": {
-            "start": 642,
+            "start": 700,
             "end": 738,
             "encoding": "utf16"
           },
-          "example": "const ENGINE = 'link-assistant-router/native-managed/v1', SELF = fileURLToPath(import.meta.url);"
+          "example": "SELF = fileURLToPath(import.meta.url);"
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: ,",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
-            "start": 739,
+            "start": 770,
+            "end": 790,
+            "encoding": "utf16"
+          },
+          "example": "children = new Map()"
+        },
+        {
+          "kind": "statement",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
+          "span": {
+            "start": 792,
             "end": 818,
             "encoding": "utf16"
           },
-          "example": "const MAX_STATE = 1024 * 1024, children = new Map(), OWNER_BOOT = randomUUID();"
+          "example": "OWNER_BOOT = randomUUID();"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 819,
             "end": 901,
@@ -4191,8 +4181,8 @@
           "example": "const fail = message => Object.assign(new Error(message),{code:'managed_server'});"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 902,
             "end": 988,
@@ -4202,7 +4192,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 989,
             "end": 1048,
@@ -4212,7 +4202,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: ...",
+          "message": "a construct outside portable-pure-v1: a non-identifier arrow parameter",
           "span": {
             "start": 1049,
             "end": 1092,
@@ -4222,7 +4212,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: )",
+          "message": "a construct outside portable-pure-v1: the method toString",
           "span": {
             "start": 1093,
             "end": 1145,
@@ -4232,7 +4222,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the method update",
           "span": {
             "start": 1146,
             "end": 1227,
@@ -4242,7 +4232,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method update",
           "span": {
             "start": 1228,
             "end": 1306,
@@ -4251,8 +4241,8 @@
           "example": "const fingerprint = value => createHash('sha256').update(value).digest('hex');"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 1307,
             "end": 1460,
@@ -4301,8 +4291,8 @@
           "example": "async function readJSON(path) { await noLinks(path); let file; try { file = await open(path,'r'); const stat = await file.stat(); if (!stat.isFile() || stat.size > MAX_STATE) throw"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 3013,
             "end": 3318,
@@ -4311,8 +4301,8 @@
           "example": "function paths(dataDir) { if (typeof dataDir !== 'string' || !dataDir) throw fail('Managed operation requires a resolved data directory'); const root = join(resolve(dataDir),'nativ"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
             "start": 3319,
             "end": 3742,
@@ -4321,8 +4311,8 @@
           "example": "function selectionPath(p,env) { const nonempty = value=>typeof value === 'string' && value.trim() ? value : undefined; const root = nonempty(env.XDG_CONFIG_HOME) ?? (nonempty(env.H"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: /^ca-[a-f0-9]{64}\\.pem$/",
           "span": {
             "start": 3743,
             "end": 3965,
@@ -4361,8 +4351,8 @@
           "example": "async function locked(p,operation) { await noLinks(p.root); await mkdir(p.root,{recursive:true,mode:0o700}); await chmod(p.root,0o700); return serialized(p.state,()=>withNativeFile"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 5617,
             "end": 6549,
@@ -4381,8 +4371,8 @@
           "example": "const loadState = async p => validateState(await readJSON(p.state));"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 6619,
             "end": 6860,
@@ -4391,8 +4381,8 @@
           "example": "function alive(pid) { if (!Number.isSafeInteger(pid) || pid <= 0) return false; try { process.kill(pid,0); return true; } catch (error) { if (error.code === 'ESRCH') return false; "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 6861,
             "end": 7367,
@@ -4401,8 +4391,8 @@
           "example": "export function normalizeManagedOrigin(value) { let url; try { url = new URL(String(value).trim()); } catch { throw fail('Server URL must be an absolute http:// or https:// origin "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 7368,
             "end": 8201,
@@ -4431,8 +4421,8 @@
           "example": "async function verified(state,verifyBootstrap = false) { if (!state.pid || !alive(state.pid)) throw fail('Managed daemon is stopped or its recorded process has exited'); const resu"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 9703,
             "end": 10266,
@@ -4511,8 +4501,8 @@
           "example": "async function status(p,state,env) { let lifecycle = state ? 'stopped' : 'absent', detail = null; if (state?.pid && alive(state.pid)) { try { await verified(state); lifecycle = 'ru"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 19931,
             "end": 20919,
@@ -4630,8 +4620,8 @@
           "example": "import { RouterError } from './tokens.mjs';"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 269,
             "end": 809,
@@ -4641,7 +4631,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: /^127\\./",
           "span": {
             "start": 810,
             "end": 873,
@@ -4780,7 +4770,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 1597,
             "end": 1719,
@@ -4789,8 +4779,8 @@
           "example": "const connectionNames = headers => new Set((headers.get('connection') ?? '').split(',').map(v => v.trim().toLowerCase()));"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 1720,
             "end": 2489,
@@ -4799,8 +4789,8 @@
           "example": "export function nativeRequestHeaders(incoming, candidate) { const headers = new Headers(), nominated = connectionNames(incoming); for (const [name,value] of incoming) if (!transpor"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 2490,
             "end": 3052,
@@ -4819,8 +4809,8 @@
           "example": "export async function boundedBytes(request, limit) { if (!request.body) return new Uint8Array(); const reader = request.body.getReader(), parts = []; let length = 0; try { for (;;)"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 3538,
             "end": 3653,
@@ -4849,8 +4839,8 @@
           "example": "async function captureNativeStream(upstream,{namespace,owner,selected,affinities,model,cleanup,controller,limit=1024*1024}) { if (!upstream.body) {cleanup();throw captureFailure(50"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 6043,
             "end": 7038,
@@ -4859,8 +4849,8 @@
           "example": "export function nativeURL(base, service, pathname, search = '') { let url; try { url = new URL(base); } catch { throw new ProtocolError('Native provider base URL is invalid',503); "
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 7039,
             "end": 7672,
@@ -4869,8 +4859,8 @@
           "example": "const destination = c => ({provider:c.destination_kind === 'subscription' ? c.provider_kind : typeof c.provider === 'string' ? c.provider : c.provider?.name,account:c.destination_k"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 7673,
             "end": 7831,
@@ -4889,8 +4879,8 @@
           "example": "export class NativeAffinityStore { constructor({maxRecords=10000} = {}) { this.records = new Map(); this.maxRecords = maxRecords; } key(namespace,owner,id,parent_id) { return JSON."
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 9787,
             "end": 13161,
@@ -4914,8 +4904,8 @@
       "path": "packages/javascript/native/oauth.mjs",
       "sha256": "b8a1f59bd7bc38a903d1e074f04fff0f8ffd13bc7987732f7311889e6b90669f",
       "sourceItems": 53,
-      "translatedItems": 14,
-      "unsupportedItems": 39,
+      "translatedItems": 18,
+      "unsupportedItems": 35,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -4998,16 +4988,6 @@
           "example": "import { RouterError } from './tokens.mjs';"
         },
         {
-          "kind": "statement",
-          "message": "a top-level statement runs once, as a program",
-          "span": {
-            "start": 1098,
-            "end": 1175,
-            "encoding": "utf16"
-          },
-          "example": "export const GEMINI_CLIENT_SECRET = 'GOCSPX-4uHgMPm'+'-1o7Sk-geV6Cu5clXFsxl';"
-        },
-        {
           "kind": "collection",
           "message": "arrays and objects are outside portable-pure-v1",
           "span": {
@@ -5039,17 +5019,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
-          "span": {
-            "start": 1993,
-            "end": 2076,
-            "encoding": "utf16"
-          },
-          "example": "const nonempty = value => typeof value === 'string' && value.length ? value : null;"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: a non-identifier arrow parameter",
           "span": {
             "start": 2077,
             "end": 2183,
@@ -5059,33 +5029,13 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 2184,
             "end": 2265,
             "encoding": "utf16"
           },
           "example": "const fail = (code,message,status = 400) => new RouterError(code,message,status);"
-        },
-        {
-          "kind": "statement",
-          "message": "a top-level statement runs once, as a program",
-          "span": {
-            "start": 2266,
-            "end": 2308,
-            "encoding": "utf16"
-          },
-          "example": "const CREDENTIAL_FILE_LIMIT = 4*1024*1024;"
-        },
-        {
-          "kind": "statement",
-          "message": "a top-level statement runs once, as a program",
-          "span": {
-            "start": 2309,
-            "end": 2344,
-            "encoding": "utf16"
-          },
-          "example": "const PENDING_FILE_LIMIT = 16*1024;"
         },
         {
           "kind": "async",
@@ -5098,8 +5048,8 @@
           "example": "async function boundedOAuthFile(path,{maxBytes = CREDENTIAL_FILE_LIMIT,optional = false,code = 'credential_read_failed',status = 401} = {}) { let handle; try { handle = await open("
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: String",
           "span": {
             "start": 4046,
             "end": 4513,
@@ -5108,8 +5058,8 @@
           "example": "export function subscriptionProvider(value) { const name = String(value).trim().toLowerCase(); if (['claude','anthropic','claude-code'].includes(name)) return 'claude'; if (['codex"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 4514,
             "end": 4998,
@@ -5118,8 +5068,8 @@
           "example": "export function subscriptionHome(provider,{config = {},env = {}} = {}) { provider = subscriptionProvider(provider); if (provider === 'gemini' && env.GEMINI_CLI_HOME) return resolve"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 4999,
             "end": 5804,
@@ -5128,8 +5078,8 @@
           "example": "export function subscriptionBaseURL(provider,token = {}) { provider = subscriptionProvider(provider); const defaults = {claude:'https://api.anthropic.com',codex:'https://chatgpt.co"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the operator ==",
           "span": {
             "start": 5805,
             "end": 5990,
@@ -5138,8 +5088,8 @@
           "example": "function integer(value,name) { if (value == null) return null; if (!Number.isSafeInteger(value)) throw fail('credential_invalid',`${name} must be a safe integer`); return value; }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement try",
           "span": {
             "start": 5991,
             "end": 6292,
@@ -5148,8 +5098,8 @@
           "example": "function jwtHint(token) { try { const payload = token.split('.')[1]; if (!payload || !/^[A-Za-z0-9_-]+$/.test(payload)) return null; const parsed = JSON.parse(Buffer.from(payload,'"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: optional chaining",
           "span": {
             "start": 6293,
             "end": 6735,
@@ -5158,8 +5108,8 @@
           "example": "function scopesFrom(block) { const scopes = block?.scopes ?? []; if (!Array.isArray(scopes) || scopes.some(value => typeof value !== 'string')) throw fail('credential_invalid','Cre"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 6897,
             "end": 10033,
@@ -5168,8 +5118,8 @@
           "example": "export function parseCredentialDocument(provider, input) { provider = subscriptionProvider(provider); let document; try { document = typeof input === 'string' ? JSON.parse(input) :"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 10034,
             "end": 11314,
@@ -5178,8 +5128,8 @@
           "example": "export function mergeCredentialDocument(provider, document, token, nowMs) { provider = subscriptionProvider(provider); document = structuredClone(document); if (provider === 'claud"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
             "start": 11315,
             "end": 12042,
@@ -5188,8 +5138,8 @@
           "example": "export function credentialFingerprint(token) { const hash = createHash('sha256'); const string = value => { if (value == null) { hash.update(Buffer.from([0])); return; } const byte"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 12043,
             "end": 12862,
@@ -5198,8 +5148,8 @@
           "example": "export function validateOAuthEndpoint(value,{allowLoopback = false,expected} = {}) { let url; try { url = new URL(value); } catch { throw fail('invalid_oauth_endpoint','OAuth endpo"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 12863,
             "end": 13553,
@@ -5258,8 +5208,8 @@
           "example": "function loginMode(value = 'full') { const normalized = String(value).trim().toLowerCase(); if (['','full','login','default'].includes(normalized)) return 'full'; if (['setup-token"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 29386,
             "end": 29660,
@@ -5347,8 +5297,8 @@
           "example": "import {resolve,dirname,parse} from 'node:path';"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 129,
             "end": 219,
@@ -5607,7 +5557,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method replace",
           "span": {
             "start": 1651,
             "end": 1741,
@@ -5617,7 +5567,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method replace",
           "span": {
             "start": 1742,
             "end": 1848,
@@ -5656,8 +5606,8 @@
           "example": "export class NativeRouterError extends Error { constructor(message, { code = 'operation', result = null, cause } = {}) { super(message, { cause }); this.name = 'NativeRouterError';"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method has",
           "span": {
             "start": 2306,
             "end": 2759,
@@ -5666,8 +5616,8 @@
           "example": "export function validateNativeResult(name, result) { if (!validators.has(name)) { const schema = JSON.parse(readFileSync(new URL(`../schemas/${name.replaceAll('.', '-')}.v1.json`, "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 2760,
             "end": 3038,
@@ -5677,7 +5627,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: ...",
+          "message": "a construct outside portable-pure-v1: a non-identifier arrow parameter",
           "span": {
             "start": 3039,
             "end": 3088,
@@ -5687,7 +5637,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the statement throw",
           "span": {
             "start": 3089,
             "end": 3187,
@@ -5706,8 +5656,8 @@
           "example": "export const nativeOperationSupport = Object.freeze({ ...Object.fromEntries(Object.entries(supportedResourceOperations).map(([name, support]) => [name, support.status])), ...Object"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 4336,
             "end": 5446,
@@ -5716,8 +5666,8 @@
           "example": "function normalizeOptions(operation, options) { const allowed = new Map(operation.options.map(option => [snake(option.name), option])); const normalized = {}; for (const [key, valu"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 5447,
             "end": 5823,
@@ -5726,8 +5676,8 @@
           "example": "function localOnly(options, accepted = []) { const consumed = new Set(['local', ...nativeConfigOptions, ...accepted]); for (const [name, value] of Object.entries(options)) { if (va"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 5824,
             "end": 6491,
@@ -5736,8 +5686,8 @@
           "example": "function redactedProvider(provider) { return { name: provider.name, kind: provider.kind ?? 'openai-compatible', base_url: provider.base_url, models: provider.models ?? [], supporte"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 6492,
             "end": 7423,
@@ -5747,7 +5697,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the method find",
           "span": {
             "start": 7424,
             "end": 7642,
@@ -5787,7 +5737,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 26048,
             "end": 26119,
@@ -5825,8 +5775,8 @@
           "example": "export class ProtocolError extends Error { constructor(message, status = 400) { super(message); this.status = status; this.code = 'unsupported_translation'; } }"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "unknown-call",
+          "message": "a call to a function the module does not define: structured_clone",
           "span": {
             "start": 328,
             "end": 373,
@@ -5836,7 +5786,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the operator ??",
           "span": {
             "start": 374,
             "end": 486,
@@ -5846,7 +5796,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the statement try",
           "span": {
             "start": 487,
             "end": 676,
@@ -5855,8 +5805,8 @@
           "example": "const parseArguments = raw => { try { return typeof raw === 'string' ? JSON.parse(raw) : raw ?? {}; } catch { throw new ProtocolError('Function arguments must contain valid JSON');"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the operator ==",
           "span": {
             "start": 677,
             "end": 1366,
@@ -5865,8 +5815,8 @@
           "example": "function chatParts(content) { if (content == null || typeof content === 'string') return content ?? ''; if (!Array.isArray(content)) throw new ProtocolError('Message content must b"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 1367,
             "end": 1964,
@@ -5875,8 +5825,8 @@
           "example": "function anthropicParts(content) { if (typeof content === 'string') return content; return (content ?? []).map(p => { if (p.cache_control || p.citations?.length) throw new Protocol"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 1965,
             "end": 6426,
@@ -5885,8 +5835,8 @@
           "example": "export function requestToChat(body, source) { if (source === 'chat') return copy(body); if (source === 'gemini') return geminiToChat(body); const out = { model: body.model, message"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 6427,
             "end": 10927,
@@ -5905,8 +5855,8 @@
           "example": "export function normalizeUsage(usage = {}, protocol = 'chat') { const rawInput = usage.input_tokens ?? usage.prompt_tokens ?? usage.promptTokenCount ?? 0; const output = usage.outp"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 11809,
             "end": 15019,
@@ -5915,8 +5865,8 @@
           "example": "export function responseToCanonical(body, protocol) { if (protocol === 'gemini') return geminiCanonical(body,normalizeUsage); const result = { id: body.id, model: body.model, text:"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 15020,
             "end": 17127,
@@ -5925,8 +5875,8 @@
           "example": "export function canonicalResponse(r, protocol, model = r.model, now = Date.now()) { if (protocol === 'gemini') return canonicalGemini(r,model); const created = Math.floor(now / 100"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 17128,
             "end": 17534,
@@ -5935,8 +5885,8 @@
           "example": "export function translateResponse(body, source, target, model, now) { if (source === target && source === 'gemini') return {...copy(body.response ?? body),modelVersion:model}; try "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 17536,
             "end": 19687,
@@ -5954,8 +5904,8 @@
       "unsupportedItems": 5,
       "diagnostics": [
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 79,
             "end": 171,
@@ -5974,8 +5924,8 @@
           "example": "const fields = new Set(['name','kind','base_url','default_model','models','supported_clients','api_key','api_key_env','encrypted_api_key','enabled','subscriber_id','acknowledge_int"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 417,
             "end": 1618,
@@ -5984,8 +5934,8 @@
           "example": "function record(input) { if (!input || typeof input !== 'object' || Array.isArray(input) || typeof input.name !== 'string' || typeof input.base_url !== 'string') throw fail('Provid"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 1619,
             "end": 3826,
@@ -5994,8 +5944,8 @@
           "example": "export function parseProviderImport(text) { if (typeof text !== 'string') throw fail('Provider import requires UTF-8 text'); const trimmed=text.trimStart();let inputs; if (trimmed."
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property outcome",
           "span": {
             "start": 3909,
             "end": 5098,
@@ -6023,8 +5973,8 @@
           "example": "import {providerProvisionResponse} from './provider-manifest.mjs';"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 157,
             "end": 274,
@@ -6133,7 +6083,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 417,
             "end": 526,
@@ -6143,7 +6093,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: ...",
+          "message": "a construct outside portable-pure-v1: a non-identifier arrow parameter",
           "span": {
             "start": 527,
             "end": 565,
@@ -6152,8 +6102,8 @@
           "example": "const out = (...output) => ({output});"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: String",
           "span": {
             "start": 566,
             "end": 699,
@@ -6162,8 +6112,8 @@
           "example": "const segment = value => encodeURIComponent(String(value)).replace(/[!'()*]/g,ch=>`%${ch.charCodeAt(0).toString(16).toUpperCase()}`);"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 700,
             "end": 788,
@@ -6172,8 +6122,8 @@
           "example": "const list = value => value === undefined ? [] : Array.isArray(value) ? value : [value];"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "untyped",
+          "message": "a parameter or result without a JSDoc number, boolean or string type: dynamic values need a proven primitive typeof guard",
           "span": {
             "start": 789,
             "end": 849,
@@ -6183,7 +6133,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 850,
             "end": 1128,
@@ -6192,8 +6142,8 @@
           "example": "const positive = (value,fallback,zero = false) => { const parsed = value === undefined ? fallback : Number(value); if (!Number.isSafeInteger(parsed) || parsed < (zero ? 0 : 1)) thr"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 1130,
             "end": 1781,
@@ -6212,8 +6162,8 @@
           "example": "export const remoteStateFamilies = new Set(['accounts','auth','tokens','providers','logs','tls','doctor','usage','models']);"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 1908,
             "end": 5418,
@@ -6372,7 +6322,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: /^error-\\d{20}-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\\.json$/i",
           "span": {
             "start": 534,
             "end": 652,
@@ -6382,7 +6332,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method replace",
           "span": {
             "start": 653,
             "end": 758,
@@ -6392,7 +6342,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: /^(?:authorization|proxy_authorization|x_api_key|api_key|key|cookie|set_cookie|access_token|refresh_token|oauth_token|auth_token|security_token|x_auth_token|x_goog_api_key|x_amz_security_token|token|password|secret|client_secret|private_key)$/",
           "span": {
             "start": 759,
             "end": 1107,
@@ -6402,7 +6352,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: /^bearer /i",
           "span": {
             "start": 1108,
             "end": 1299,
@@ -6411,8 +6361,8 @@
           "example": "const secretValue=value=>/^bearer /i.test(value.trim()) || /(?:sk-ant-|la_sk_|at-|la_admin_)/.test(value) || /^eyJ[A-Za-z0-9_-]{5,}\\.[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}$/.test(val"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: String",
           "span": {
             "start": 1300,
             "end": 1571,
@@ -6421,8 +6371,8 @@
           "example": "const mask=value=>{const text=String(value).trim(),bearer=/^(Bearer )(.*)$/i.exec(text),parts=[...(bearer?.[2] ?? text)],masked=parts.length<12?'[REDACTED]':parts.slice(0,3).join('"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 1572,
             "end": 2110,
@@ -6431,8 +6381,8 @@
           "example": "export function logRedact(value) { if(Array.isArray(value))return value.map(logRedact); if(value && typeof value==='object')return Object.fromEntries(Object.entries(value).map(([na"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: [",
           "span": {
             "start": 2111,
             "end": 2581,
@@ -6442,7 +6392,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 2582,
             "end": 2817,
@@ -6451,8 +6401,8 @@
           "example": "const bodyValue=bytes=>{let text;try{text=new TextDecoder('utf8',{fatal:true}).decode(bytes);}catch{return {base64:Buffer.from(bytes).toString('base64'),bytes:bytes.length};}try{re"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: an arrow function",
           "span": {
             "start": 2818,
             "end": 3349,
@@ -6501,8 +6451,8 @@
           "example": "export class NativeRequestLog { constructor({config={},env={},clock=Date.now}={}) { this.root=env.REQUEST_LOG || join(config.data_dir,'requests');this.maxBytes=positive(env.REQUEST"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Number",
           "span": {
             "start": 17259,
             "end": 17384,
@@ -6511,8 +6461,8 @@
           "example": "function nonnegative(value,fallback){const n=Number(value);return value!=null && Number.isSafeInteger(n) && n>=0?n:fallback;}"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unknown-call",
+          "message": "a call to a function the module does not define: nonnegative",
           "span": {
             "start": 17385,
             "end": 17467,
@@ -6525,9 +6475,9 @@
     {
       "path": "packages/javascript/native/resources.mjs",
       "sha256": "bba4751a4e639261a9036aa1c62510701d1e76fc07fe7a7661613fecd73e140c",
-      "sourceItems": 33,
-      "translatedItems": 0,
-      "unsupportedItems": 33,
+      "sourceItems": 35,
+      "translatedItems": 3,
+      "unsupportedItems": 32,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -6601,7 +6551,7 @@
         },
         {
           "kind": "statement",
-          "message": "a top-level statement runs once, as a program",
+          "message": "a top-level statement runs once, as a program: a non-closed primitive constant initializer",
           "span": {
             "start": 425,
             "end": 458,
@@ -6620,18 +6570,8 @@
           "example": "const tlsTasks = new Map();"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: ,",
-          "span": {
-            "start": 487,
-            "end": 559,
-            "encoding": "utf16"
-          },
-          "example": "const MAX_BYTES = 256 * 1024 * 1024, MAX_FILES = 10000, MAX_DEPTH = 128;"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 560,
             "end": 649,
@@ -6640,8 +6580,8 @@
           "example": "const unsupported = message => Object.assign(new Error(message), { code:'unsupported' });"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 650,
             "end": 736,
@@ -6660,8 +6600,8 @@
           "example": "export const supportedResourceOperations = Object.freeze({ 'logs.show': { status:'partial', limitations:['Local logs only; 256 MiB / 10000-file read budget; symlinks refused; zstd "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 1700,
             "end": 4346,
@@ -6700,8 +6640,8 @@
           "example": "async function boundedFile(path, budget) { await noLinks(path); const handle = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0)); try { const stat = await handle.s"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement try",
           "span": {
             "start": 5769,
             "end": 5931,
@@ -6720,8 +6660,8 @@
           "example": "export async function readNativeRequestLogs(root, token) { await noLinks(root); const rootStat = await statOptional(root); if (!rootStat?.isDirectory()) return { files:[], bytes:0,"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 7504,
             "end": 7631,
@@ -6730,8 +6670,8 @@
           "example": "const terminates = text => ['message_stop','[DONE]','response.completed','finishReason'].some(marker => text.includes(marker));"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the operator ??",
           "span": {
             "start": 7632,
             "end": 7772,
@@ -6740,8 +6680,8 @@
           "example": "function encoding(header) { return (header ?? 'identity').split(',').map(s=>s.trim()).filter(Boolean).at(-1)?.toLowerCase() ?? 'identity'; }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/",
           "span": {
             "start": 7773,
             "end": 7953,
@@ -6750,8 +6690,8 @@
           "example": "function base64Bytes(text) { return typeof text === 'string' && /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(text) ? Buffer.from(text,'base64') : null; }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 7954,
             "end": 8712,
@@ -6760,8 +6700,8 @@
           "example": "function decompress(bytes, kind) { if (kind === 'identity' || !bytes.length) return null; const decoders = {gzip:zlib.gunzipSync,'x-gzip':zlib.gunzipSync,deflate:zlib.inflateRawSyn"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 8713,
             "end": 11719,
@@ -6770,8 +6710,8 @@
           "example": "function exchanges(log) { const map = new Map(); for (const record of log.files.flat()) { if (!record || typeof record.correlation_id !== 'string') continue; const id = record.corr"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property streamed",
           "span": {
             "start": 11720,
             "end": 11796,
@@ -6780,8 +6720,8 @@
           "example": "const incomplete = x => x.streamed && x.inspectable && x.complete === false;"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property streamed",
           "span": {
             "start": 11797,
             "end": 11895,
@@ -6790,8 +6730,8 @@
           "example": "const unterminated = x => x.streamed && x.inspectable && x.outcome === undefined && !x.terminated;"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property streamed",
           "span": {
             "start": 11896,
             "end": 11951,
@@ -6800,8 +6740,8 @@
           "example": "const unverifiable = x => x.streamed && !x.inspectable;"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 11952,
             "end": 12681,
@@ -6810,8 +6750,8 @@
           "example": "function summary(log, all) { const result = {exchanges:all.length,records:0,bytes:log.bytes,statuses:{},streamed:0,non_streamed:0,incomplete_streams:0,unterminated_streams:0,unveri"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 12682,
             "end": 14101,
@@ -6820,8 +6760,8 @@
           "example": "function anomalies(all) { const result = [], add = (kind, detail, test, minimum = 1) => { const ids = all.filter(test).map(x=>x.id); if (ids.length >= minimum) result.push({kind,de"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 14102,
             "end": 15067,
@@ -6879,8 +6819,8 @@
           "example": "import { ProtocolError } from './protocols.mjs';"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: match",
           "span": {
             "start": 272,
             "end": 875,
@@ -6889,8 +6829,8 @@
           "example": "export function responseContract(method, path) { const match = /^(\\/api\\/services\\/(openai|codex|qwen)\\/v1|\\/v1)\\/responses(?:\\/(.*))?$/.exec(path); if (!match) return null; const "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: optional chaining",
           "span": {
             "start": 877,
             "end": 1547,
@@ -6899,8 +6839,8 @@
           "example": "export function validateResponseCreate(contract, document) { if (!contract?.create) return; if (!document || typeof document !== 'object' || Array.isArray(document)) throw new Prot"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 1549,
             "end": 2545,
@@ -6909,8 +6849,8 @@
           "example": "export function responseReferences(contract, document) { if (!contract || !document || typeof document !== 'object') return []; const references = []; if ((contract.create || contr"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Response",
           "span": {
             "start": 2547,
             "end": 2744,
@@ -6919,8 +6859,8 @@
           "example": "export function responseNotFound() { return Response.json({ error: { message: 'Response not found', type: 'invalid_request_error', param: null, code: 'response_not_found' } }, { st"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Response",
           "span": {
             "start": 2746,
             "end": 2933,
@@ -6929,8 +6869,8 @@
           "example": "export function responseReferenceMissing() { return Response.json({ error: { type: 'not_found_error', message: 'the referenced response resource is unavailable' } }, { status: 404 "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Response",
           "span": {
             "start": 2935,
             "end": 3149,
@@ -6939,8 +6879,8 @@
           "example": "export function responseReferenceConflict() { return Response.json({ error: { type: 'invalid_request_error', message: 'the referenced response resources do not share one provider a"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the operator instanceof",
           "span": {
             "start": 3151,
             "end": 3412,
@@ -6949,8 +6889,8 @@
           "example": "export function responseAffinityStorageError(error) { const message = error instanceof Error ? error.message : String(error); return Response.json({ error: { type: 'api_error', mes"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: match",
           "span": {
             "start": 3644,
             "end": 5041,
@@ -6969,8 +6909,8 @@
           "example": "export function conversationNotFound(item = false) { return Response.json({ error: { message: item ? 'Conversation item not found' : 'Conversation not found', type: 'invalid_reques"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Response",
           "span": {
             "start": 5343,
             "end": 5556,
@@ -6979,8 +6919,8 @@
           "example": "export function conversationUnsupported() { return Response.json({ error: { type: 'invalid_request_error', message: 'the selected service does not support native Conversations reso"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Response",
           "span": {
             "start": 5557,
             "end": 5761,
@@ -6989,8 +6929,8 @@
           "example": "export function conversationMethodNotAllowed() { return Response.json({ error: { type: 'invalid_request_error', message: 'the requested Conversations operation is not supported' } "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the operator instanceof",
           "span": {
             "start": 5762,
             "end": 6020,
@@ -6999,8 +6939,8 @@
           "example": "export function conversationAffinityError(error) { const message = error instanceof Error ? error.message : String(error); return Response.json({ error: { type: 'api_error', messag"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Response",
           "span": {
             "start": 6021,
             "end": 6159,
@@ -7009,8 +6949,8 @@
           "example": "export function conversationUpstreamError(message) { return Response.json({ error: { type: 'api_error', message } }, { status: 502 }); }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 6160,
             "end": 6523,
@@ -7019,8 +6959,8 @@
           "example": "export function conversationIds(raw, list = false) { let document; try { document = captureJsonValue(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw)); } catch { re"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 6524,
             "end": 6688,
@@ -7029,8 +6969,8 @@
           "example": "export function validConversationId(id) { return typeof id === 'string' && id.length > 0 && Buffer.byteLength(id) <= 256 && !/[\\/\\x00-\\x1f\\x7f-\\x9f]/u.test(id); }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 6921,
             "end": 7940,
@@ -7039,8 +6979,8 @@
           "example": "function captureJsonValue(text) { let value; try { value = JSON.parse(text); } catch { return undefined; } // serde_json constructs Rust UTF-8 Strings, so isolated UTF-16 surrogate"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "loop",
+          "message": "for, do and generator loops are outside portable-router-v1",
           "span": {
             "start": 7941,
             "end": 8502,
@@ -7049,8 +6989,8 @@
           "example": "export function captureSseId(block) { for (const line of block.split(/\\r?\\n/)) { if (!line.startsWith('data:')) continue; const payload = line.slice(5).replace(/^[\\u0009-\\u000d\\u00"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 8503,
             "end": 8786,
@@ -7059,8 +6999,8 @@
           "example": "export function captureJsonId(raw, fields = ['id']) { let value; try { value = captureJsonValue(new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw)); } catch { return "
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method get",
           "span": {
             "start": 8787,
             "end": 9016,
@@ -7069,8 +7009,8 @@
           "example": "export function captureLocationId(headers) { const location = headers.get('location'); if (!location) return undefined; const path = location.split('?')[0].replace(/\\/+$/,''); retu"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Response",
           "span": {
             "start": 9017,
             "end": 9178,
@@ -7118,8 +7058,8 @@
           "example": "export class ResponsesStore { constructor({ clock = Date.now, ttlMs = 3_600_000, maxRecords = 1000, maxBytes = 16 * 1024 * 1024, maxRecordBytes = 1024 * 1024 } = {}) { for (const ["
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property client_kind",
           "span": {
             "start": 5909,
             "end": 6375,
@@ -7128,8 +7068,8 @@
           "example": "export function responseOwner(claims, credential) { const value = claims.client_kind && claims.principal_id ? ['principal', claims.client_kind, claims.principal_id] : claims.sub ??"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property input",
           "span": {
             "start": 6376,
             "end": 7518,
@@ -7177,8 +7117,8 @@
           "example": "import { RouterError } from './tokens.mjs';"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 158,
             "end": 1866,
@@ -7187,8 +7127,8 @@
           "example": "export function modelCandidates(providers, accounts, context = {}) { const requested = context.model; if (typeof requested !== 'string' || !requested) throw new RouterError('model_"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 1867,
             "end": 2577,
@@ -7437,7 +7377,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 1343,
             "end": 1483,
@@ -7456,8 +7396,8 @@
           "example": "const redactedKeys = /(?:api[_-]?key|password|secret|authorization|credential|cookie|(?:access|refresh|id)[_-]?token|^token$)/i;"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 1613,
             "end": 1885,
@@ -7466,8 +7406,8 @@
           "example": "export function redact(value) { if (Array.isArray(value)) return value.map(redact); if (!value || typeof value !== 'object') return value; return Object.fromEntries(Object.entries("
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 1886,
             "end": 2057,
@@ -7476,8 +7416,8 @@
           "example": "const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && Buffer.byteLength(a) === Buffer.byteLength(b) && timingSafeEqual(Buffer.from(a), Buffer.from(b));"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 2058,
             "end": 2466,
@@ -7487,7 +7427,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method get",
           "span": {
             "start": 2467,
             "end": 2607,
@@ -7496,8 +7436,8 @@
           "example": "const bearer = headers => { const a = headers.get('authorization'); return a?.match(/^Bearer\\s+(.+)$/i)?.[1] ?? headers.get('x-api-key'); };"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property protocol",
           "span": {
             "start": 2608,
             "end": 3190,
@@ -7517,7 +7457,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: /^\\/api\\/services\\/(openai|anthropic|codex|qwen|gemini|vertex|bedrock)(?:\\/|$)/",
           "span": {
             "start": 3282,
             "end": 3404,
@@ -7526,8 +7466,8 @@
           "example": "const serviceOf = path => /^\\/api\\/services\\/(openai|anthropic|codex|qwen|gemini|vertex|bedrock)(?:\\/|$)/.exec(path)?.[1];"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \";\" where \"=\" belongs",
           "span": {
             "start": 3405,
             "end": 4220,
@@ -7536,8 +7476,8 @@
           "example": "function upstreamURL(base, protocol, endpointPath) { let u; try { u = new URL(base); } catch { throw new ProtocolError('Provider base URL is invalid', 500); } if (!['http:', 'https"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: new",
           "span": {
             "start": 4221,
             "end": 6230,
@@ -7546,8 +7486,8 @@
           "example": "function upstreamHeaders(candidate, protocol, request) { const headers = new Headers({ 'content-type': 'application/json', accept: 'application/json, text/event-stream' }); // Only"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 6231,
             "end": 6481,
@@ -7695,8 +7635,8 @@
           "example": "export async function readOptional(path, fallback = '') { try { return await readFile(path, 'utf8'); } catch (error) { if (error.code === 'ENOENT') return fallback; throw error; } "
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1",
           "span": {
             "start": 3733,
             "end": 3898,
@@ -7745,8 +7685,8 @@
           "example": "export async function transactionalWrite(path,contents) { await recoverTransactionalWrite(path); const {rollback,commit} = transactionPaths(path); let previous; try { previous = Bu"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 5598,
             "end": 5969,
@@ -7755,8 +7695,8 @@
           "example": "function quote(text) { if (!text.includes('\"')) return `\"${text}\"`; if (!text.includes(\"'\")) return `'${text}'`; const delimiter = text.startsWith('\"') ? \"'\" : '\"'; const runs = te"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: a default parameter",
           "span": {
             "start": 6057,
             "end": 7081,
@@ -7765,8 +7705,8 @@
           "example": "export function encodeLino(value, level = 0) { if (typeof value === 'string') { if (/[\\x00-\\x08\\x0b-\\x1f\\x7f]/.test(value)) { const escaped = value.replace(/[%\\x00-\\x08\\x0b-\\x1f\\x7"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 7082,
             "end": 12631,
@@ -7785,8 +7725,8 @@
           "example": "const strings = ['max_requests', 'used_requests', 'max_tokens', 'used_tokens', 'reserved_tokens', 'rate_limit_per_minute', 'rate_window_started_at', 'rate_window_requests', 'slidin"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method slice",
           "span": {
             "start": 12857,
             "end": 13405,
@@ -7795,8 +7735,8 @@
           "example": "export function encodeTokenRecords(records) { const values = records.slice().sort((a,b) => a.id.localeCompare(b.id)).map(record => { const value = { ...record }; for (const field o"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"return\" where \"{\" belongs",
           "span": {
             "start": 13406,
             "end": 14682,
@@ -7835,8 +7775,8 @@
           "example": "export class BinaryTokenStore extends MemoryTokenStore { constructor(path) { super(); this.path = path; } async transaction(operation) { return serialized(this.path,() => withAdvis"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the statement current",
           "span": {
             "start": 17249,
             "end": 17891,
@@ -7894,8 +7834,8 @@
           "example": "const encoder = new TextEncoder();"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "kind": "template",
+          "message": "template literals are outside portable-pure-v1",
           "span": {
             "start": 119,
             "end": 255,
@@ -7924,8 +7864,8 @@
           "example": "async function* normalizedEvents(body, protocol) { const tools = new Map(); let ended = false, finish = 'stop', usage = normalizeUsage(), id, started = false; for await (const f of"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 8321,
             "end": 17384,
@@ -7934,8 +7874,8 @@
           "example": "export function translateStream(body, source, target, model, { clock = Date.now, onStart, onComplete, onError, onCancel, maxStateBytes = 32 * 1024 * 1024 } = {}) { const events = n"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the parameter {",
           "span": {
             "start": 17466,
             "end": 20557,
@@ -8013,8 +7953,8 @@
           "example": "import {readBinaryTokenRecords} from './doublets.mjs';"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Object",
           "span": {
             "start": 407,
             "end": 494,
@@ -8033,8 +7973,8 @@
           "example": "const stat=async path=>lstat(path).catch(error=>{if (error.code==='ENOENT') return null;throw error;});"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Array",
           "span": {
             "start": 599,
             "end": 827,
@@ -8044,7 +7984,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the method stringify",
           "span": {
             "start": 828,
             "end": 916,
@@ -8092,8 +8032,8 @@
       "unsupportedItems": 2,
       "diagnostics": [
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 87,
             "end": 299,
@@ -8102,8 +8042,8 @@
           "example": "const totalStrings=value=>typeof value==='string'?Buffer.byteLength(value):value && typeof value==='object'?Object.values(value).reduce((sum,child)=>Math.min(Number.MAX_SAFE_INTEGE"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "loop",
+          "message": "for, do and generator loops are outside portable-router-v1",
           "span": {
             "start": 300,
             "end": 843,
@@ -8171,8 +8111,8 @@
           "example": "export class RouterError extends Error { constructor(code, message, status = 400) { super(message); this.name = 'RouterError'; this.code = code; this.status = status; } }"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: \"throw\" where \"{\" belongs",
           "span": {
             "start": 459,
             "end": 739,
@@ -8181,8 +8121,8 @@
           "example": "export function ensureRealSecret(secret) { if (!secret || secret.startsWith('\\0') || ['unused-by-remote-command','unused-by-auth','unused-by-this-client-command'].includes(secret))"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "name",
+          "message": "a name with no spelling both languages read back: Buffer",
           "span": {
             "start": 740,
             "end": 823,
@@ -8212,7 +8152,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 1070,
             "end": 1324,
@@ -8251,8 +8191,8 @@
           "example": "export class TokenManager { constructor({ secret, store = new MemoryTokenStore(), clock = () => Math.floor(Date.now()/1000), leeway = 60,emergency,diagnostics } = {}) { this.secret"
         },
         {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "kind": "template",
+          "message": "template literals are outside portable-pure-v1",
           "span": {
             "start": 13907,
             "end": 14006,
@@ -8266,22 +8206,12 @@
       "path": "packages/javascript/native/usage.mjs",
       "sha256": "92485873de1ea2c4e4e05dddea2250e3668f5e2fdb9ec61f083962572ddf7274",
       "sourceItems": 7,
-      "translatedItems": 0,
-      "unsupportedItems": 7,
+      "translatedItems": 1,
+      "unsupportedItems": 6,
       "diagnostics": [
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
-          "span": {
-            "start": 87,
-            "end": 174,
-            "encoding": "utf16"
-          },
-          "example": "const integer = value => Number.isSafeInteger(value) && value >= 0 ? value : undefined;"
-        },
-        {
-          "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: the method map",
           "span": {
             "start": 175,
             "end": 275,
@@ -8290,8 +8220,8 @@
           "example": "const first = (value,keys) => keys.map(key=>integer(value?.[key])).find(value=>value !== undefined);"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: optional chaining",
           "span": {
             "start": 276,
             "end": 1160,
@@ -8301,7 +8231,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: ...",
           "span": {
             "start": 1161,
             "end": 1230,
@@ -8310,8 +8240,8 @@
           "example": "const chars = value => typeof value === 'string'?[...value].length:0;"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: optional chaining",
           "span": {
             "start": 1231,
             "end": 1946,
@@ -8320,8 +8250,8 @@
           "example": "function outputChars(value) { if(value?.type === 'content_block_delta')return ['text','thinking','partial_json'].reduce((n,key)=>n+chars(value.delta?.[key]),0); if(value?.type?.sta"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "collection",
+          "message": "arrays and objects are outside portable-pure-v1: the property type",
           "span": {
             "start": 1947,
             "end": 2379,
@@ -8345,8 +8275,8 @@
       "path": "packages/javascript/native/websocket-relay.mjs",
       "sha256": "a569f6e3376eb9b37a866d1016d6e81760c45b91566b03c70ae0ed61667758e2",
       "sourceItems": 10,
-      "translatedItems": 0,
-      "unsupportedItems": 10,
+      "translatedItems": 1,
+      "unsupportedItems": 9,
       "diagnostics": [
         {
           "kind": "no-definition",
@@ -8389,18 +8319,8 @@
           "example": "import {ProtocolError,normalizeUsage} from './protocols.mjs';"
         },
         {
-          "kind": "statement",
-          "message": "a top-level statement runs once, as a program",
-          "span": {
-            "start": 216,
-            "end": 266,
-            "encoding": "utf16"
-          },
-          "example": "const guid='258EAFA5-E914-47DA-95CA-C5AB0DC85B11';"
-        },
-        {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: an arrow function",
+          "message": "a construct outside portable-pure-v1: the method update",
           "span": {
             "start": 267,
             "end": 342,
@@ -8410,7 +8330,7 @@
         },
         {
           "kind": "unsupported",
-          "message": "a construct outside portable-pure-v1: \",\" where \")\" belongs",
+          "message": "a construct outside portable-pure-v1: \"=\" where \")\" belongs",
           "span": {
             "start": 343,
             "end": 773,
@@ -8429,8 +8349,8 @@
           "example": "export class WebSocketInspector { constructor({masked,maxMessageBytes=4*1024*1024,onMessage=()=>{}}) {this.masked=masked;this.limit=maxMessageBytes;this.onMessage=onMessage;this.bu"
         },
         {
-          "kind": "untyped",
-          "message": "a parameter or result without a JSDoc number, boolean or string type: none",
+          "kind": "unsupported",
+          "message": "a construct outside portable-pure-v1: the method stringify",
           "span": {
             "start": 3142,
             "end": 3407,
@@ -8480,7 +8400,7 @@
     {
       "kind": "untyped",
       "source": "export function untyped(value) { return value; }",
-      "message": "a parameter or result without a JSDoc number, boolean or string type: none"
+      "message": "a parameter or result without a JSDoc number, boolean or string type: a dynamic return value without a closed primitive contract"
     },
     {
       "kind": "unknown-call",
@@ -8504,8 +8424,8 @@
     },
     {
       "kind": "type",
-      "source": "/** @param {number} n @returns {number} */ export function truthy(n) { if (n) { return 1; } return 0; }",
-      "message": "operand types the construct map does not accept: a condition that is not boolean"
+      "source": "/** @param {*} n @returns {number} */ export function truthy(n) { if (n) { return 1; } return 0; }",
+      "message": "operand types the construct map does not accept: a condition without a closed primitive truthiness contract"
     },
     {
       "kind": "rounding",

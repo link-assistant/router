@@ -1,12 +1,12 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=559e61b37200252bf15ff6effc521721661bd85710c9b7f1e19e5b012b92f4b4; dynamic any annotations are explicit draft gaps.
+// Meta sha256=d95b397611629f9782a4a302b8316abc609873618d761989a5b4ae2f102e1a96; dynamic any annotations are explicit draft gaps.
 import { createHash } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { normalizeManagementPeer } from "./management-access.js";
 const requestOutcome: any = new (AsyncLocalStorage as any)();
 const truthy: any = (value?: any): boolean => ['1', 'true', 'yes', 'on'].includes(String(value ?? '').trim().toLowerCase());
 const failure: any = (message?: any): any => (Object as any).assign(new (Error as any)(message), { code: 'invalid_emergency_config', status: 400 });
-const clientNames: any = new (Set as any)(['claude', 'codex', 'cursor', 'gemini', 'grok', 'opencode', 'qwen', 'agent']);
+const clientNames: Set<string> = new (Set as any)(['claude', 'codex', 'cursor', 'gemini', 'grok', 'opencode', 'qwen', 'agent']);
 const aliases: any = { 'claude-code': 'claude', 'cursor-agent': 'cursor', 'gemini-cli': 'gemini', 'grok-cli': 'grok', 'qwen-code': 'qwen' };
 const clientKind: any = (value?: any): any => { const name: string = String(value ?? '').trim().toLowerCase(); return (aliases as any)[name] ?? (clientNames.has(name) ? name : null); };
 export const isSyntheticTokenId: any = (id?: any): boolean => typeof id === 'string' && id.startsWith('emergency-bypass-');

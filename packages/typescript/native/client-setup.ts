@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=a9cf08397e3ff2afd3dfe33d1468e8067c547fefa0e0c57b893603834968b808; dynamic any annotations are explicit draft gaps.
+// Meta sha256=ee9353d70405b98a7aa2fa6f11dfd2762e33ca049d98374ee79d26e4a89f2f61; dynamic any annotations are explicit draft gaps.
 import { createHash } from 'node:crypto';
 import { clientPaths, clientFailure, clientObject, optionalClientText, preferredClientPath, readClientEnvironment, writeClientEnvironment, writeClientMarker, removeClientFile } from "./client-files.js";
 import { fetchNativeClientCatalog, clientRouterOrigin } from "./client-catalog.js";
@@ -7,7 +7,7 @@ import { setupClientJSON, removeClientJSON } from "./client-json.js";
 import { nativeClientStatus } from "./client-status.js";
 import { clientFileTransaction } from "./client-transaction.js";
 import { selectedManagedTarget } from "./managed-server.js";
-const implementedClients: any = new (Set as any)(['opencode', 'agent', 'qwen', 'grok']);
+const implementedClients: Set<string> = new (Set as any)(['opencode', 'agent', 'qwen', 'grok']);
 const completeBinding: any = (claims?: any, client?: any): any => {
     if (claims.client_kind !== client || typeof claims.principal_id !== 'string' || !claims.principal_id.trim() || typeof claims.sub !== 'string' || !claims.sub)
         throw clientFailure('Supplied token requires the exact canonical managed-client binding and subscriber principal');

@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=bed99553ccf905c87700958497ede32630e435dc077720f1038a0194592401e0; dynamic any annotations are explicit draft gaps.
+// Meta sha256=1569ef14fe70b6241fc697763a982705cb6904f776732ec5f67aa2240af1304e; dynamic any annotations are explicit draft gaps.
 import { ProtocolError } from "./protocols.js";
 import { responseOwner } from "./responses.js";
 import { matchHTTPRoute } from "./http-route-contract.js";
@@ -8,9 +8,9 @@ import { UsageTracker } from "./usage.js";
 import { responseContract, validateResponseCreate, responseReferences, responseNotFound, responseReferenceMissing, responseReferenceConflict, responseAffinityStorageError } from "./response-contracts.js";
 import { conversationContract, conversationNotFound, conversationUnsupported, conversationMethodNotAllowed, conversationAffinityError, conversationUpstreamError, conversationIds, validConversationId } from "./response-contracts.js";
 import { captureSseId, captureJsonId, captureLocationId, resourceCaptureError } from "./response-contracts.js";
-const transport: any = new (Set as any)(['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-auth-token', 'proxy-authorization', 'proxy-authenticate', 'host', 'connection', 'proxy-connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'te', 'trailer', 'content-length', 'accept-encoding', 'cookie', 'chatgpt-account-id', 'sec-websocket-key', 'sec-websocket-version', 'sec-websocket-extensions', 'sec-websocket-accept']);
-const ingress: any = new (Set as any)(['forwarded', 'x-real-ip', 'x-client-ip', 'x-cluster-client-ip', 'cf-connecting-ip', 'true-client-ip', 'fastly-client-ip', 'fly-client-ip', 'x-envoy-external-address', 'x-azure-clientip', 'x-appengine-user-ip', 'cloudfront-viewer-address']);
-const responseCredentials: any = new (Set as any)(['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-auth-token', 'set-cookie', 'cookie', 'chatgpt-account-id']);
+const transport: Set<string> = new (Set as any)(['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-auth-token', 'proxy-authorization', 'proxy-authenticate', 'host', 'connection', 'proxy-connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'te', 'trailer', 'content-length', 'accept-encoding', 'cookie', 'chatgpt-account-id', 'sec-websocket-key', 'sec-websocket-version', 'sec-websocket-extensions', 'sec-websocket-accept']);
+const ingress: Set<string> = new (Set as any)(['forwarded', 'x-real-ip', 'x-client-ip', 'x-cluster-client-ip', 'cf-connecting-ip', 'true-client-ip', 'fastly-client-ip', 'fly-client-ip', 'x-envoy-external-address', 'x-azure-clientip', 'x-appengine-user-ip', 'cloudfront-viewer-address']);
+const responseCredentials: Set<string> = new (Set as any)(['authorization', 'x-api-key', 'x-goog-api-key', 'anthropic-auth-token', 'set-cookie', 'cookie', 'chatgpt-account-id']);
 const connectionNames: any = (headers?: any): any => new (Set as any)(((((headers.get as any)('connection') ?? '').split as any)(',').map as any)((v?: any): any => v.trim().toLowerCase()));
 export function nativeRequestHeaders(incoming?: any, candidate?: any): any {
     const headers: any = new (Headers as any)(), nominated: any = connectionNames(incoming);
@@ -27,7 +27,7 @@ export function nativeRequestHeaders(incoming?: any, candidate?: any): any {
 }
 export function nativeResponseHeaders(incoming?: any): any {
     const headers: any = new (Headers as any)(), nominated: any = connectionNames(incoming);
-    const hop: any = new (Set as any)(['connection', 'proxy-connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'te', 'trailer', 'content-length']);
+    const hop: Set<string> = new (Set as any)(['connection', 'proxy-connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'te', 'trailer', 'content-length']);
     for (const [name, value] of incoming as any)
         if (!hop.has(name) && !responseCredentials.has(name) && !nominated.has(name) && !(name.startsWith as any)('x-router-') && !(name.startsWith as any)('x-link-assistant-') && !/^x-codex-(?:plan-type|active-limit|credits-balance)/.test(name))
             headers.append(name, value);

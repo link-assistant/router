@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=036333cc19833b596cb9ab6e976870e01cbcd60013a13ed71f6b2e0390310d36; dynamic any annotations are explicit draft gaps.
+// Meta sha256=20afcb57dc314df7493beb836d241fbc46b67f79e55f3e156587a4ed2b01c63d; dynamic any annotations are explicit draft gaps.
 import { createServer } from 'node:http';
 import { createServer as createHTTPSServer } from 'node:https';
 import { lstat, readFile } from 'node:fs/promises';
@@ -81,7 +81,7 @@ function upstreamURL(base?: any, protocol?: any, endpointPath?: any): any {
 function upstreamHeaders(candidate?: any, protocol?: any, request?: any): any {
     const headers: any = new (Headers as any)({ 'content-type': 'application/json', accept: 'application/json, text/event-stream' });
     const forbidden: any = /^(?:authorization|x-api-key|x-goog-api-key|anthropic-auth-token|chatgpt-account-id|cookie|set-cookie|host|connection|content-length|content-encoding|transfer-encoding|upgrade|te|trailer|keep-alive|proxy-.*|forwarded|x-forwarded-.*|x-router-.*|x-link-assistant-.*)$/i;
-    const copies: any = new (Set as any)(['x-request-id', 'x-correlation-id', 'traceparent', 'tracestate', 'x-claude-code-session-id', 'x-codex-session-id', 'x-session-id', 'session-id']);
+    const copies: Set<string> = new (Set as any)(['x-request-id', 'x-correlation-id', 'traceparent', 'tracestate', 'x-claude-code-session-id', 'x-codex-session-id', 'x-session-id', 'session-id']);
     for (const [key, value] of (Object as any).entries(candidate.headers ?? candidate.account?.headers ?? {}) as any) {
         if (forbidden.test(key))
             continue;

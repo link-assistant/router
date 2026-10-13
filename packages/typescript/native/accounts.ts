@@ -1,9 +1,9 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=2b6750f88d68eb2b169a632152b3eb476e16f70c62393aaa87fc0f1e48e49850; dynamic any annotations are explicit draft gaps.
+// Meta sha256=4baa6cd4456069a7bed0858bae4181ff51a594a7cd9162c2aa951f131c3c2c24; dynamic any annotations are explicit draft gaps.
 import { cooldownActive } from "../portable/policy.js";
 import { atomicWrite, readOptional, serialized } from "./storage.js";
 import { RouterError } from "./tokens.js";
-const strategyAliases: any = new (Map as any)([
+const strategyAliases: Map<string, string> = new (Map as any)([
     ['rr', 'round-robin'], ['roundrobin', 'round-robin'], ['weighted_round_robin', 'weighted-round-robin'],
     ['prio', 'priority'], ['fill-first', 'priority'], ['leastused', 'least-used'], ['quota-first', 'least-used'], ['lru', 'least-used'],
 ]);
@@ -12,8 +12,8 @@ export function requestErrorAction(policy?: any, status?: any, body?: any): any 
     const prefix: any = (Buffer as any).from(body ?? '').subarray(0, 16384);
     return (policy.request_scoped_errors.find as any)((rule?: any): boolean => rule.status === status && prefix.indexOf((Buffer as any).from(rule.match)) >= 0)?.action;
 }
-const subscriptionKinds: any = new (Set as any)(['anthropic', 'claude', 'codex', 'gemini', 'qwen', 'vertex', 'vertex-ai', 'bedrock']);
-const storedKinds: any = new (Set as any)(['openai-compatible', 'openai', 'litellm', 'lefine', 'z.ai-coding-plan']);
+const subscriptionKinds: Set<string> = new (Set as any)(['anthropic', 'claude', 'codex', 'gemini', 'qwen', 'vertex', 'vertex-ai', 'bedrock']);
+const storedKinds: Set<string> = new (Set as any)(['openai-compatible', 'openai', 'litellm', 'lefine', 'z.ai-coding-plan']);
 export function principalAccountName(account?: any, provider?: any): any { return account.implicit && subscriptionKinds.has(provider?.kind) ? 'primary' : account.name; }
 export function principalAccountScope(records?: any, providers?: any, context: any = {}): any {
     const pin: any = context.pinnedAccount ?? context.pinned_account, principal: any = context.principalAccount, byProvider: any = new (Map as any)((providers.map as any)((provider?: any): any => [provider.name, provider]));
@@ -38,7 +38,7 @@ export function validateAccountPolicy(policy: any = {}): any {
     if (!(Array as any).isArray(p.request_scoped_errors) || p.request_scoped_errors.some((e?: any): boolean => !(Number as any).isInteger(e.status) || e.status < 100 || e.status > 599 || typeof e.match !== 'string' || (Buffer as any).byteLength(e.match) > 16384 || !['relay', 'retry-next', 'cooldown'].includes(e.action)))
         throw new (RouterError as any)('invalid_policy', 'Invalid request scoped error rule');
     const protectedHeader: any = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|x-goog-api-key|anthropic-auth-token|chatgpt-account-id|host|connection|content-length|content-encoding|transfer-encoding|upgrade|te|trailer|proxy-authenticate|keep-alive|x-router-.*|x-link-assistant-.*)$/i;
-    const copyHeaders: any = new (Set as any)(['x-request-id', 'x-correlation-id', 'traceparent', 'tracestate', 'x-claude-code-session-id', 'x-codex-session-id', 'x-session-id', 'session-id']);
+    const copyHeaders: Set<string> = new (Set as any)(['x-request-id', 'x-correlation-id', 'traceparent', 'tracestate', 'x-claude-code-session-id', 'x-codex-session-id', 'x-session-id', 'session-id']);
     if (!p.headers || typeof p.headers !== 'object')
         throw new (RouterError as any)('invalid_policy', 'Invalid policy headers');
     for (const [name, value] of (Object as any).entries(p.headers) as any) {

@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=b1ee286b7f8e4e38d8ec8c9ec0ee7f974ba3cb0967095bfcc3ae45b04b9d549e; dynamic any annotations are explicit draft gaps.
+// Meta sha256=4055fb5b26af8a876f7df610103d942bfaf0321bb53aa1843b16986a872dc6c9; dynamic any annotations are explicit draft gaps.
 import { randomUUID } from 'node:crypto';
 import { rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -8,7 +8,7 @@ import { CodexLogin } from "./codex-login.js";
 const { CredentialFileStore, OAuthManager, ClaudeLogin, importCredential, validateCredentialCatalog, subscriptionHome }: any = oauthPrimitives;
 const fail: any = (code?: any, message?: any, status: any = 400): any => (Object as any).assign(new (Error as any)(message), { code, status });
 const providers: Array<string> = ['claude', 'codex', 'gemini', 'qwen'];
-const pending: any = new (Set as any)(['awaiting_code', 'awaiting_callback', 'awaiting_device']);
+const pending: Set<string> = new (Set as any)(['awaiting_code', 'awaiting_callback', 'awaiting_device']);
 const integer: any = (value?: any, fallback?: any, name?: any): any => {
     (value as any) = value ?? fallback;
     if (!(Number as any).isSafeInteger(value) || value <= 0)

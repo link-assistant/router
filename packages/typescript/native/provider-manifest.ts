@@ -1,7 +1,7 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=82a56beba2b7851c95f5938a3430a2f49422f1882757226613a3fb8dc3ce277b; dynamic any annotations are explicit draft gaps.
+// Meta sha256=a7d6b2c2ea1c3181c734d61a021c0a4f356558ac5ce69d5af6d2b474b62d03e4; dynamic any annotations are explicit draft gaps.
 const fail: any = (message?: any): any => (Object as any).assign(new (Error as any)(message), { code: 'provider_import', exitCode: 2 });
-const fields: any = new (Set as any)(['name', 'kind', 'base_url', 'default_model', 'models', 'supported_clients', 'api_key', 'api_key_env', 'encrypted_api_key', 'enabled', 'subscriber_id', 'acknowledge_intermediary_risk', 'acknowledge_unsupported_clients', 'if_absent']);
+const fields: Set<string> = new (Set as any)(['name', 'kind', 'base_url', 'default_model', 'models', 'supported_clients', 'api_key', 'api_key_env', 'encrypted_api_key', 'enabled', 'subscriber_id', 'acknowledge_intermediary_risk', 'acknowledge_unsupported_clients', 'if_absent']);
 function record(input?: any): any {
     if (!input || typeof input !== 'object' || (Array as any).isArray(input) || typeof input.name !== 'string' || typeof input.base_url !== 'string')
         throw fail('Provider declarations require name and base_url strings');

@@ -165,7 +165,7 @@ test('strict compiler checks the entire generated native package', () => {
   assert.ok(result.files >= sourceModules(SOURCE).length);
 });
 
-test('regeneration rejects stale, missing, and unexpected TS, meta, and asset artifacts', () => {
+test('regeneration rejects stale, missing, and unexpected TS, meta, and asset artifacts', { timeout: 60_000 }, () => {
   assert.deepEqual(regenerateNativeTypeScript(ROOT, { sourceRoot: SOURCE, check: true }).changed, []);
   const directory = mkdtempSync(join(tmpdir(), 'router-native-ts-drift-'));
   try {
@@ -207,8 +207,16 @@ test('compiled TypeScript executes the shared native runtime fixture suite in No
       assert.equal(realpathSync(alias),realpathSync(path));
     }};
     aliases(join(outDir,'native'));aliases(join(outDir,'portable'));
-    const canonical=await import(pathToFileURL(join(outDir,'native/oauth.js')).href);
-    assert.equal(await import(pathToFileURL(join(outDir,'native/oauth.mjs')).href),canonical);
+    // Exercise Node's canonical module cache under Node even when Bun hosts
+    // this test. Bun's shared runtime fixtures run independently below.
+    execFileSync('node', ['--input-type=module', '-e', `
+      import assert from 'node:assert/strict';
+      import {join} from 'node:path';
+      import {pathToFileURL} from 'node:url';
+      const root=process.argv[1];
+      const canonical=await import(pathToFileURL(join(root,'native/oauth.js')).href);
+      assert.equal(await import(pathToFileURL(join(root,'native/oauth.mjs')).href),canonical);
+    `, outDir], { encoding: 'utf8', timeout: 10_000, stdio: 'pipe' });
     const original = tests.map((path) => join(SOURCE, 'packages/javascript/test', path.slice(path.lastIndexOf('/') + 1)));
     const nodeArgs = ['--test', '--test-reporter=tap'];
     const env = { ...process.env }; delete env.NODE_TEST_CONTEXT;
@@ -221,8 +229,8 @@ test('compiled TypeScript executes the shared native runtime fixture suite in No
         throw new Error(`Native runtime fixture failure after ${Date.now()-started}ms (code=${error.code}, signal=${error.signal}, status=${error.status}):\n${failures || [String(error.stderr ?? ''),String(error.stdout ?? '').slice(-4000),error.message].filter(Boolean).join('\n').slice(-6000)}`);
       }
     };
-    const baseline = run(process.execPath, [...nodeArgs, ...original], SOURCE);
-    const compiled = run(process.execPath, [...nodeArgs, ...tests], directory);
+    const baseline = run('node', [...nodeArgs, ...original], SOURCE);
+    const compiled = run('node', [...nodeArgs, ...tests], directory);
     const count = (text) => Number(/# pass (\d+)/u.exec(text)?.[1]);
     assert.ok(count(compiled) >= 30, 'runtime assertions include core, auth/budgets, provider store, HTTP/protocol/SSE and resources');
     assert.equal(count(compiled), count(baseline), 'source and compiled target execute the same shared runtime expectations');

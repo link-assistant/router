@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=8578b47dc518ee073594a31140f8080e9d7f9f016b2c220380588d2124772d0d; dynamic any annotations are explicit draft gaps.
+// Meta sha256=902c5fbfe37655caadb284e1d478b633e7fe04f3c719594940d8f59697019f13; dynamic any annotations are explicit draft gaps.
 import { spawn } from 'node:child_process';
 import { createServer, request as httpRequest } from 'node:http';
 import { randomBytes, randomUUID, createHmac, createHash, timingSafeEqual, X509Certificate } from 'node:crypto';
@@ -407,7 +407,7 @@ async function status(p?: any, state?: any, env?: any): Promise<any> {
         output: [`effective server: ${selected.source}${selected.url ? `: ${selected.url}` : ''}`, `managed server: ${lifecycle}; engine=node`] };
 }
 function validateOptions(name?: any, options?: any, config?: any): void {
-    const allowed: any = new (Set as any)(['data_dir', ...(name === 'server.use' ? ['server', 'management_server', 'token', 'token_stdin', 'clear', 'run_max_requests', 'ca_cert', 'management_ca_cert'] : name === 'server.reap' ? ['pid'] : name === 'server.remove' ? ['yes'] : [])]);
+    const allowed: Set<string> = new (Set as any)(['data_dir', ...(name === 'server.use' ? ['server', 'management_server', 'token', 'token_stdin', 'clear', 'run_max_requests', 'ca_cert', 'management_ca_cert'] : name === 'server.reap' ? ['pid'] : name === 'server.remove' ? ['yes'] : [])]);
     for (const [key, value] of (Object as any).entries(options) as any)
         if (value !== undefined && value !== false && !allowed.has(key))
             throw unsupported(`Native ${name} does not support ${key}`);

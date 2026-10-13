@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=2fe91dac461b7f45de55bf7ccebcc7c423f591bb8e0afe347b8ec32b530c0aa5; dynamic any annotations are explicit draft gaps.
+// Meta sha256=542a96ffbd8bf88619deb655e353f9659389a5727f5e73a96ec96cab6e0675e5; dynamic any annotations are explicit draft gaps.
 import { open } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { resolve } from 'node:path';
@@ -33,7 +33,7 @@ export function parsePauseUntil(value?: any, now: any = (Math as any).floor((Dat
         throw error('Pause deadline must be Unix seconds, RFC 3339, or a delay like 90m in the safe integer range', 2);
     return result;
 }
-export const remoteStateFamilies: any = new (Set as any)(['accounts', 'auth', 'tokens', 'providers', 'logs', 'tls', 'doctor', 'usage', 'models']);
+export const remoteStateFamilies: Set<string> = new (Set as any)(['accounts', 'auth', 'tokens', 'providers', 'logs', 'tls', 'doctor', 'usage', 'models']);
 export function nativeRemoteCall(name?: any, options: any = {}, invocation: any = {}): any {
     if (name === 'tokens.issue')
         return { method: 'POST', path: '/api/management/tokens', body: {

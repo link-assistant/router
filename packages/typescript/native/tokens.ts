@@ -1,5 +1,5 @@
 // GENERATED JavaScript -> structured syntax AST -> TypeScript draft.
-// Meta sha256=0cede9f13455942e38e6017ae108dbd64cc16bffaa024083f487726ace037dc5; dynamic any annotations are explicit draft gaps.
+// Meta sha256=a6f5584364d04e2bf51f78690364e2babb221990b48dd1dd9b0e70c8dde63ef9; dynamic any annotations are explicit draft gaps.
 import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { tokenBudgetPermits } from "../portable/policy.js";
 import { MemoryTokenStore } from "./storage.js";
@@ -16,8 +16,8 @@ export function ensureRealSecret(secret?: any): any {
     return secret;
 }
 const encode: any = (object?: any): string => (Buffer as any).from((JSON as any).stringify(object)).toString('base64url');
-const clients: any = new (Set as any)(['claude', 'codex', 'cursor', 'opencode', 'gemini', 'grok', 'qwen', 'agent']);
-const clientAliases: any = new (Map as any)([['claude-code', 'claude'], ['cursor-agent', 'cursor'], ['gemini-cli', 'gemini'], ['grok-cli', 'grok'], ['qwen-code', 'qwen']]);
+const clients: Set<string> = new (Set as any)(['claude', 'codex', 'cursor', 'opencode', 'gemini', 'grok', 'qwen', 'agent']);
+const clientAliases: Map<string, string> = new (Map as any)([['claude-code', 'claude'], ['cursor-agent', 'cursor'], ['gemini-cli', 'gemini'], ['grok-cli', 'grok'], ['qwen-code', 'qwen']]);
 const number: any = (value?: any, name?: any, positive: any = false): any => {
     if (!(Number as any).isSafeInteger(value) || value < (positive ? 1 : 0))
         throw new (RouterError as any)('invalid_argument', `${name} must be a ${positive ? 'positive' : 'nonnegative'} safe integer`);
