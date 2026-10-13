@@ -93,8 +93,8 @@ function docs(source,begin,end) {
   const rows=output.short===null?[]:[{value:output.short,span:{start:output.inputs[0].span.start,end:output.inputs.at(-1).span.end}}];return {rows,output};
 }
 function boundedInput(source,span) {
-  if(typeof source!=='string'||Buffer.byteLength(source)>256000||!span)throw new TypeError('Args output needs bounded complete original source and declaration span');
-  const item=sourceItems(source).find(item=>item.start===span.start&&item.end===span.end&&item.term==='struct');if(!item)throw new TypeError('Args original declaration span changed');
+  if(typeof source!=='string'||Buffer.byteLength(source)>256000||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new TypeError('Args output needs bounded complete original source and declaration span');
+  const writtenSource=source.slice(span.start,span.end),selected=sourceItems(writtenSource).find(item=>item.start===0&&item.end===writtenSource.length&&item.term==='struct'),item=selected?{...selected,start:span.start,end:span.end}:null;if(!item)throw new TypeError('Args original declaration span changed');
   const written=source.slice(item.start,item.end),trees=originalMacroTrees(written),at=trees.findIndex(node=>node.text==='struct'),name=trees[at+1],body=trees[at+2];
   if(!ident(name)||body?.kind!=='group'||body.delimiter!=='{'||at+3!==trees.length)throw new TypeError('Args route requires an original nongeneric named struct');
   for(let header=0;header<at;header++)if(trees[header]?.text==='#'&&trees[header+1]?.delimiter==='[') {

@@ -228,6 +228,78 @@
       "archive": "../declarative/rust-1.89-compiler_rustc_parse_src_parser_mod.rs.gz",
       "archiveBytes": 16588,
       "archiveSha256": "1ac31573ac1590fbff8c7508572ba21fb139f257d8a7cc5f94b382949d937f05"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/deriving/default.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/deriving/default.rs",
+      "bytes": 11984,
+      "sha256": "4c381dd6ee2196eb3184b4946a0a58f39f2d7d4618e78820a33d010ebf2196cf",
+      "archive": "../derive/rust-1.89-default-compiler_rustc_builtin_macros_src_deriving_default.rs.gz",
+      "archiveBytes": 3077,
+      "archiveSha256": "56b9c7ced9506f0c525389099352015e8b273a35eba9f46b5bb350533151999c"
+    },
+    {
+      "path": "library/core/src/option.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/option.rs",
+      "bytes": 86718,
+      "sha256": "4c172731ebf0ef2ae6fc3e9b5127096d3c5c400c3757cfe5e38223de91bc3efd",
+      "archive": "../option-deref/core-option.rs.gz",
+      "archiveBytes": 18396,
+      "archiveSha256": "2f8986530d23db3ed08f32fbe8b0c82b7ffb1c3abe6b407b38ff989998739cb1"
+    },
+    {
+      "path": "library/std/src/prelude/v1.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/prelude/v1.rs",
+      "bytes": 4246,
+      "sha256": "8db0d69ae9539ec53440b11c45473271d3c22762f12ecd951d89089aaef0af53",
+      "archive": "../csv-strings/std-prelude-v1.rs.gz",
+      "archiveBytes": 1314,
+      "archiveSha256": "6c807ef253a39ccd60bee180988a19328a5723bba9ccfa185faacda29e235658"
+    },
+    {
+      "path": "library/core/src/prelude/v1.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/prelude/v1.rs",
+      "bytes": 3914,
+      "sha256": "2bcd2c3059bfaf026bba86f44dd9698371cedd416e1e60eab02218fa1b8b3349",
+      "archive": "../json-macro/standard/library-core-src-prelude-v1.rs.gz",
+      "archiveBytes": 1141,
+      "archiveSha256": "34630a30100fccf3fdba54db4560b1ba5e2cb722b74ebd9a662e4397b06d2eb9"
+    },
+    {
+      "path": "library/core/src/prelude/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/prelude/mod.rs",
+      "bytes": 2868,
+      "sha256": "3db82d282c4ac980659183842d446e13d28b0bab609f3dc37e2036d9fefceb4c",
+      "archive": "../json-macro/standard/library-core-src-prelude-mod.rs.gz",
+      "archiveBytes": 576,
+      "archiveSha256": "f41b433ac9346d277dda41c7cde5d804ea0e67f60dcbe3393571d75810da2de2"
+    },
+    {
+      "path": "library/std/src/prelude/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/prelude/mod.rs",
+      "bytes": 7269,
+      "sha256": "37789af3a1c5be890479f847f0a6831a40d7305f9f865a685bdaabaef1db7618",
+      "archive": "../json-macro/standard/library-std-src-prelude-mod.rs.gz",
+      "archiveBytes": 2227,
+      "archiveSha256": "c87bef3e23a727c8ac801086dca648c983d846547fcfca21191471fc96edba71"
+    },
+    {
+      "path": "library/std/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/std/src/lib.rs",
+      "bytes": 28184,
+      "sha256": "d070a5abc5138536e274e483181db929cc56d7a4b7a1947a11149f92b2cdc1ea",
+      "archive": "../namespace-standard/rust-std-lib-1.89.0.rs.gz",
+      "archiveBytes": 8934,
+      "archiveSha256": "d0216701dd8c129fb80a7c32ddd025de22d1420090a9fc7219384f06eecce065"
+    },
+    {
+      "path": "compiler/rustc_expand/src/base.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_expand/src/base.rs",
+      "bytes": 52174,
+      "sha256": "0bf27a4b3d96610af84dd2dd9780587e0fb4ac0fb951bbc53f982295f837077f",
+      "archive": "../clap-concat/rust-1.89-base.rs.gz",
+      "archiveBytes": 12220,
+      "archiveSha256": "203c8d2ef3a0774863906f41da8d5d398d08b65834468946f7d79aee6224c4d9"
     }
   ],
   "generatedImplBehavior": false,

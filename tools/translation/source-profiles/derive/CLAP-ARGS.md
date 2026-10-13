@@ -58,11 +58,11 @@ The scalar source-output draft covers the complete unchanged ManagementArgs
 and EmergencyArgs source entries. Constructor/updater missing-value branches,
 primitive action selection, required/default selection, typed defaults, explicit
 parser paths, ranges and complete documentation instantiate the original quote
-slots. Both original raw-deprecated feature outputs remain separate. The draft
-is not admitted as a namespace certificate: original caller/ancestor bang
-closure is still required. Debug and Clone retain unproved typed AST callback
-routes; EmergencyArgs additionally selects Default. A successful Clap quote
-cannot close those independent original invocations.
+slots. Both original raw-deprecated feature outputs remain separate. The historical draft initially withheld namespace admission because original
+caller/ancestor bang closure was unproved. The separately audited bounded
+`builtin-derive-bang/SCALAR-OUTPUT.md` route now closes the independently selected
+Debug, Clone and Default outputs and the actual concat caller for these complete
+source entries. A Clap quote alone still cannot close sibling invocations.
 
 The separately licensed `source-profiles/clap-concat` inventory retains complete
 Rust 1.89 original compiler sources. It proves a bounded selected builtin
@@ -75,7 +75,9 @@ Unsupported literals, eager macros, escapes and error outputs remain refused.
 This private expansion proof does not resolve the caller's macro owner, confer
 namespace authority or execute generated Args traits. The source-scope guard
 rejects concat shadows, unresolved relevant/glob imports and incomplete bang
-ancestors, and still requires a separately sealed builtin binding certificate.
+ancestors, and requires a separately sealed builtin binding certificate. That private
+caller certificate now follows the complete selected output and original
+core/std prelude source chain; unknown sibling export effects remain refused.
 
 Bounded tests preserve the formerly refused helper/doc strings as positives,
 replace their obsolete refusals with executable/effectful inputs, and exercise

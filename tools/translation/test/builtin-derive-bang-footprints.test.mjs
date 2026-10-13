@@ -64,7 +64,8 @@ test('joined per-owner context admits only Copy plus independently closed Serde 
   const bindings=resolveModuleBindings({modules:args.modules,compilationProfile:PRODUCTION_PROFILE,deriveContext:args.context,deriveBangContext:context,externalModules:deriveFootprintExternalModules(args.context)});
   assert.equal(bindings.scopes.find(scope=>scope.file==='src/model.rs').unresolvedBangMacroScope,false);
   const other=selected('#[derive(Clone,Copy,serde::Serialize)] pub struct Payload { value:u8 }');
-  assert.equal(createDeriveBangContext({deriveContext:other.context}).certificates[0].dimensions.bangMacroComplete,false);
+  assert.equal(createDeriveBangContext({deriveContext:other.context}).certificates[0].dimensions.bangMacroComplete,true);
+  const unproved=selected('#[derive(Clone,Copy,serde::Serialize)] pub struct Payload { value:String }');assert.equal(createDeriveBangContext({deriveContext:unproved.context}).certificates[0].dimensions.bangMacroComplete,false);
 });
 
 test('fake builtin invocations source fragments and detached certificates cannot create closure',()=>{

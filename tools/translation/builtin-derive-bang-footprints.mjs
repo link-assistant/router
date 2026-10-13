@@ -3,6 +3,7 @@
 import {createHash} from 'node:crypto';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
+import {proveBuiltinScalarSourceOutput,assertBuiltinScalarSourceOutput} from './builtin-scalar-ast-route.mjs';
 import {attributeOwners} from './serde-bang-footprints.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal,originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText} from './builtin-derive-ast-meta.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -12,6 +13,7 @@ const directory='compiler/rustc_builtin_macros/src/deriving/';
 const routes=new Map([
   ['Copy',{path:'bounds.rs',entry:'expand_deriving_copy',callbackFunctions:[],branches:['empty methods and associated types; constness both outcomes']}],
   ['Clone',{path:'clone.rs',entry:'expand_deriving_clone',callbackFunctions:['cs_clone_simple','cs_clone'],branches:['resolver.has_derive_copy chooses simple/full','struct/enum/union dispatch (original input excludes union)','field-type assertions and deduplication']}],
+  ['Default',{path:'default.rs',entry:'expand_deriving_default',callbackFunctions:['default_struct_substructure','default_call'],branches:['original named primitive fields have no parsed default expressions','enum/default-field/error routes remain independent']}],
   ['Debug',{path:'debug.rs',entry:'expand_deriving_debug',callbackFunctions:['show_substructure','show_fieldless_enum','expr_for_field'],branches:['FmtDebug None/Shallow/Full','all-fieldless special route','empty/<=5/>5 fields','last-field extra reference','named/tuple/unit layout']}],
   ['PartialEq',{path:'cmp/partial_eq.rs',entry:'expand_deriving_partial_eq',callbackFunctions:['get_substructure_equality_expr','get_field_equality_expr','peel_refs','wrap_block_expr'],branches:['fieldless enum discrimination','struct/enum fields','short-circuit conjunction and value expression recipes']}],
   ['Eq',{path:'cmp/eq.rs',entry:'expand_deriving_eq',callbackFunctions:['cs_total_eq_assert'],branches:['static struct/enum field type assertions','type-name deduplication']}],
@@ -42,6 +44,13 @@ export function planBuiltinDeriveBangOutput({context,certificate,invocation}={})
 export const isBuiltinDeriveBangPlan=value=>!!value&&plans.has(value);
 export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}={}){
   const plan=planBuiltinDeriveBangOutput({context,certificate,invocation}),state=plans.get(plan);
+  if(['Clone','Debug','Default'].includes(state.original.name)){
+    const input={dependencies:state.original.dependencies,source:state.original.module.source,span:certificate.span,owner:state.original.name};
+    let route;try{route=assertBuiltinScalarSourceOutput(proveBuiltinScalarSourceOutput(input),input);}catch(error){throw new TypeError('Builtin '+state.original.name+' retains typed callback/conditional AST output obligations: '+error.message);}
+    const attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline',state.original.name,...certificate.attributes.map(attribute=>attribute.name)]));
+    const evidence={schema:'builtin-scalar-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['generated builtin trait methods remain unlowered','other derive owners and original ancestor scopes require separate closed outputs','unsupported source layouts and compiler errors remain refused']};
+    const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
+  }
   if(state.original.name==='Eq'){
     const route=liftBuiltinEqAstRoute({...state,original:state.original}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','coverage','Eq',...certificate.attributes.map(attribute=>attribute.name)]));
     const evidence={schema:'builtin-eq-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,bodyCallbacksEvaluated:1,associatedKind:'AssocItemKind::Fn',statementKind:'LocalKind::Decl',initializerCount:0},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['Eq and AssertParamIsEq trait validity/implementation behavior is not admitted','other original derive owners retain separate output proofs','unrelated source scopes and conditional modules stay independent']};

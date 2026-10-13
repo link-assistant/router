@@ -91,6 +91,22 @@ export function astStructLiteral(profile,fragment,name){
 }
 export const astSyntaxText=nodes=>nodes.map(node=>node.kind==='group'?node.delimiter+astSyntaxText(node.children)+({'(':')','[':']','{':'}'}[node.delimiter]):node.text).join(' ');
 
+// Positive constructors in an actual original recipe. Preserve each argument
+// slot and schema; an AST variant spelling alone is never an output proof.
+export function originalAstPositiveConstructors(profile,fragment,owner){
+  assertOriginalAstFunction(profile,fragment);
+  const definition=originalAstDefinition(profile,'compiler/rustc_ast/src/ast.rs','enum',owner),constructors=[];
+  function visit(nodes){for(let at=0;at<nodes.length;at++){
+    if(nodes[at].text==='ast'&&nodes[at+1]?.text==='::'&&nodes[at+2]?.text===owner&&nodes[at+3]?.text==='::'){
+      const variant=astEnumVariant(profile,definition,nodes[at+4]?.text),group=nodes[at+5],args=[];
+      if(variant.arity){if(group?.delimiter!=='(')throw new TypeError('Original positive AST recipe requires constructor argument slots');let from=0,depth=0;for(let index=0;index<=group.children.length;index++){const node=group.children[index];if(node?.text==='<')depth++;if(node?.text==='>')depth--;if(index===group.children.length||node?.text===','&&!depth){if(index>from)args.push(group.children.slice(from,index));from=index+1;}}if(depth||args.length!==variant.arity)throw new TypeError('Original positive AST recipe arity changed');}
+      constructors.push({source:fragment.source,sourceSha256:fragment.sourceSha256,span:{start:nodes[at].span.start,end:variant.arity?group.span.end:nodes[at+4].span.end},variant,args,recipeDigest:fragment.digest});
+    }
+    if(nodes[at].kind==='group')visit(nodes[at].children);
+  }}visit(fragment.syntax.at(-1).children);
+  if(!constructors.length)throw new TypeError('Original recipe has no positive '+owner+' constructor');return freeze(constructors);
+}
+
 // Positive enum variant schema lifted from the original AST definition. This
 // records constructor arity/typed source slots, rather than an absence of MacCall.
 export function astEnumVariant(profile,definition,name){

@@ -10,11 +10,14 @@ import {builtinDefaultDependencyProof} from './derive-builtin-default.mjs';
 import {proveSchemarsWithTypeConfinement} from './derive-schemars-with.mjs';
 import {proveClapValueEnumSourceOutput} from './derive-clap-value-enum.mjs';
 import {proveClapArgsSourceOutput} from './derive-clap-args.mjs';
+import {proveBuiltinScalarSourceOutput} from './builtin-scalar-ast-route.mjs';
+import {originalMacroTrees} from './macro-token-trees.mjs';
+import {encodeBuiltinSourceMeta,decodeBuiltinSourceMeta} from './builtin-source-meta.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
-const contexts=new WeakMap(),certificates=new WeakMap();
+const contexts=new WeakMap(),certificates=new WeakMap(),concatCallerSources=new WeakMap();
 const key=path=>path.join('::');
 const invocationId=(module,item)=>moduleScopeKey(module)+':'+item.start+':'+item.end;
 const standardOwner=(path,scope)=>path.length===1&&STANDARD_LAYOUT_DERIVES.has(path[0])&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.name===path[0]&&binding.macroKind!=='bang');
@@ -68,10 +71,11 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
   // Resolve aliases against actual source before applying any certificates.
   // Unknown imports, duplicate slots and local package shadows remain visible.
   const baseline=resolveModuleBindings({modules,externalModules:external,compilationProfile:profile}),scopes=new Map(baseline.scopes.map(scope=>[key(['crate',...scope.path]),scope]));
-  const attributeClosure=new Map(),clapSourceOutputs=new Map(),clapSourceRefusals=new Map();
+  const attributeClosure=new Map(),clapSourceOutputs=new Map(),clapSourceRefusals=new Map(),moduleInputs=new Map(),scalarConcatCandidates=[];
   for(const module of modules) {
     const scope=scopes.get(key(['crate',...module.path])),inputs=new Map();
     for(const candidate of module.items.filter(item=>['struct','enum'].includes(item.term)&&item.tokens.some(token=>token.text==='derive')))try{inputs.set(candidate.start,inspectDeriveInput(candidate,profile));}catch{}
+    moduleInputs.set(moduleScopeKey(module),inputs);
     attributeClosure.set(moduleScopeKey(module),scope.configurationCondition==='active'&&module.items.every(candidate=>{
       const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
       if(inputs.has(candidate.start)) {
@@ -87,13 +91,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::ValueEnum'))output.valueEnum=proveClapValueEnumSourceOutput({dependencies,source:module.source.slice(candidate.start,candidate.end)});
           if(owners.some(owner=>owner!==true&&owner.target.join('::')==='clap::Args')) {
             output.args=proveClapArgsSourceOutput({dependencies,source:module.source,span:{start:candidate.start,end:candidate.end}});
-            if(output.args.outputs.some(branch=>branch.concatExpansions.length)) {
-              const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
-              if(ancestors.some(candidate=>candidate.bindings.some(binding=>binding.name==='concat'&&macroBindingAffects(binding,'bang'))||candidate.unresolvedImports.some(entry=>entry.glob||entry.name==='concat')||candidate.bindings.some(binding=>binding.namespace==='type'&&['std','core'].includes(binding.name))))throw new TypeError('Generated Args concat caller has an unresolved import or shadow in an original ancestor');
-              if(ancestors.some(candidate=>candidate.unresolvedBangMacroScope!==false))throw new TypeError('Generated Args concat caller requires independent original bang/export ancestor closure; scalar quote output remains unproved for namespace admission');
-              // A literal output proof cannot itself mint caller resolution.
-              throw new TypeError('Generated Args concat caller lacks a sealed original builtin binding certificate');
-            }
+            if(output.args.outputs.some(branch=>branch.concatExpansions.length))scalarConcatCandidates.push({module,candidate,scope,output});
           }
           if(Object.keys(output).length)clapSourceOutputs.set(invocationId(module,candidate),output);
           return true;
@@ -102,6 +100,49 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
       return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module);
     })&&!scope.unresolvedImports.some(entry=>entry.glob));
   }
+  // Stage complete successful output grammars independently of caller lookup.
+  // This discharges the original owner/helper export obligations before resolving
+  // the expression-only concat sink. A source quote cannot supply its own owner.
+  for(const pending of scalarConcatCandidates.sort((a,b)=>a.module.path.length-b.module.path.length))try{
+    const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>pending.scope.path[index]===name)),closedOwners=[],originalScopes=[],sourceProofs=[];
+    const inert=new Set(['doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','track_caller','non_exhaustive']);
+    for(const scope of scopes.values()){
+      const isAncestor=ancestors.includes(scope),module=modules.find(value=>value.file===scope.file&&JSON.stringify(value.path)===JSON.stringify(scope.path));
+      if(!module||scope.configurationCondition!=='active'||!attributeClosure.get(moduleScopeKey(module)))throw new TypeError('Generated Args concat requires complete original attribute/owner ancestor closure');
+      if(scope.bindings.some(binding=>binding.name==='concat'&&macroBindingAffects(binding,'bang')||binding.namespace==='type'&&['std','core'].includes(binding.name))||scope.unresolvedImports.some(entry=>entry.glob||['concat','std','core',...inert].includes(entry.name)))throw new TypeError('Generated Args concat has an original ancestor shadow or unresolved relevant import');
+      if(scope.bindings.some(binding=>inert.has(binding.name)&&macroBindingAffects(binding,'attribute')))throw new TypeError('Generated Args concat ancestor builtin attributes are shadowed');
+      const inputs=moduleInputs.get(moduleScopeKey(module));
+      for(const item of module.items){
+        const input=inputs.get(item.start),written=module.source.slice(item.start,item.end),trees=originalMacroTrees(written);
+        function scan(nodes){for(let at=0;at<nodes.length;at++){
+          if(nodes[at].text==='!'&&nodes[at-1]?.text!=='#')throw new TypeError('Generated Args concat ancestor retains an original bang invocation or macro definition');
+          if(nodes[at].text==='#'){let next=at+1;if(nodes[next]?.text==='!')next++;const group=nodes[next];if(group?.delimiter!=='[')throw new TypeError('Generated Args concat ancestor attribute syntax remains unproved');const attr=group.children[0]?.text;
+            if(!inert.has(attr)&&!(input&&['derive','arg'].includes(attr)))throw new TypeError('Generated Args concat ancestor retains an unproved attribute or prelude switch: '+attr);at=next;continue;
+          }
+          if(nodes[at].kind==='group'){if(item.term==='mod'&&nodes[at]===trees.at(-1)&&nodes[at].delimiter==='{'){const child=modules.find(value=>value.file===module.file&&JSON.stringify(value.path)===JSON.stringify([...module.path,item.name])&&value.sourceView?.declaration?.span.start===item.start&&value.sourceView?.declaration?.span.end===item.end);if(!child)throw new TypeError('Generated Args concat requires the genuine complete inline child source view');}else scan(nodes[at].children);}
+        }}scan(trees);
+        if(!input)continue;
+        const output=clapSourceOutputs.get(invocationId(module,item));
+        for(const invocation of input.derives){
+          if(standardOwner(invocation.path,scope)){
+            if(!['Clone','Debug','Default'].includes(invocation.path[0]))throw new TypeError('Generated Args concat retains an independent builtin output owner: '+invocation.path.join('::'));
+            const proof=proveBuiltinScalarSourceOutput({dependencies,source:module.source,span:{start:item.start,end:item.end},owner:invocation.path[0]});
+            if(proof.input.fields.some(field=>field.attributes.some(attr=>attr.children[0]?.text==='arg'))&&!output?.args)throw new TypeError('Generated Args concat ancestor has an unowned original arg helper');
+            sourceProofs.push(proof);closedOwners.push({source:module.file,module:module.path,span:proof.span,target:['core',invocation.path[0]],proof:{schema:proof.schema,digest:proof.digest,plan:proof.plan,branchDigests:proof.branches.map(branch=>({feature:branch.feature,digest:hash(JSON.stringify(branch))})),positiveOutputGrammarComplete:proof.positiveOutputGrammarComplete}});
+          }else{
+            const owner=actualOwner(invocation.path,scope,scopes,external,dependencies);
+            if(owner?.target.join('::')!=='clap::Args'||!output?.args)throw new TypeError('Generated Args concat retains an independent original derive owner: '+invocation.path.join('::'));
+            closedOwners.push({source:module.file,module:module.path,span:{start:item.start,end:item.end},target:owner.target,proofDigest:output.args.digest,expressionSinks:output.args.outputs.map(branch=>({feature:branch.feature,concat:branch.concatExpansions.map(proof=>proof.digest),valueParsers:output.args.valueParserExpansions.map(proof=>proof.expansionDigest)}))});
+          }
+        }
+      }
+      originalScopes.push({source:module.file,module:module.path,sourceSha256:hash(module.source),sourceViewDigest:module.sourceView?.digest??null,resolverScopeSha256:hash(JSON.stringify(scope)),isAncestor,configurationCondition:scope.configurationCondition,unresolvedImports:scope.unresolvedImports});
+    }
+    const expansions=pending.output.args.outputs.flatMap(branch=>branch.concatExpansions);
+    if(!expansions.length||expansions.some(proof=>proof.meta.expression.kind!=='Lit'||proof.meta.attrs.length||proof.plan.rules.filter(rule=>['original-builtin-registration','original-core-builtin-owner'].includes(rule.role)).length!==2))throw new TypeError('Generated Args concat lacks its independent original builtin literal sink');
+    const evidence={schema:'original-scalar-args-concat-caller-v1',source:pending.module.file,sourceSha256:hash(pending.module.source),span:{start:pending.candidate.start,end:pending.candidate.end},dependenciesDigest:dependencies.digest,compilationProfile:profile,resolved:['core','concat'],originalScopes,closedOwners,crateExportProducingInputsComplete:true,expansionDigests:expansions.map(proof=>proof.digest),builtinRegistration:expansions[0].plan.rules.filter(rule=>['original-builtin-registration','original-core-builtin-owner'].includes(rule.role)),macroOwnerResolved:true,scopeWideCompleteness:false,generatedImplBehavior:false};
+    pending.output.concatCaller=freeze({...evidence,digest:hash(JSON.stringify(evidence))});concatCallerSources.set(pending.output.concatCaller,freeze(sourceProofs));
+  }catch(error){attributeClosure.set(moduleScopeKey(pending.module),false);clapSourceOutputs.delete(invocationId(pending.module,pending.candidate));clapSourceRefusals.set(invocationId(pending.module,pending.candidate),error.message);}
   const root=scopes.get('crate');
   // A root derive cannot bootstrap its own proof from a spelling. Its entire
   // original attribute footprint must independently match locked owners first.
@@ -156,8 +197,8 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
             entry.namespaceInput={...entry.namespaceInput,outputConfinement:proveSchemarsWithTypeConfinement({dependencies,value:entry.value,position:helper.position})};
           }
         }
-        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(clapValueEnumOutput?{clapValueEnumOutput,clapGeneratedAttributeOwners}:{}),...(clapArgsOutput?{clapArgsOutput,clapGeneratedAttributeOwners}:{}),...(input.lifetimeParameters?{lifetimeParameters:input.lifetimeParameters}:{}),...(input.genericParameters?{genericParameters:input.genericParameters}:{}),...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs retain anonymous const groups or a source-proved Clap trait impl; original data and inert helper syntax remain unchanged. Unsupported output branches retain independent obligations.'};
-        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView});byId.set(invocationId(module,item),certificate);
+        const evidence={schema:'derive-namespace-footprint-v1',source:module.file,module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(clapValueEnumOutput?{clapValueEnumOutput,clapGeneratedAttributeOwners}:{}),...(clapArgsOutput?{...(clapSourceOutputs.get(invocationId(module,item))?.concatCaller?{clapArgsOutputStorage:encodeBuiltinSourceMeta(clapArgsOutput),clapConcatCaller:clapSourceOutputs.get(invocationId(module,item)).concatCaller}:{clapArgsOutput}),clapGeneratedAttributeOwners}:{}),...(input.lifetimeParameters?{lifetimeParameters:input.lifetimeParameters}:{}),...(input.genericParameters?{genericParameters:input.genericParameters}:{}),...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs retain anonymous const groups or a source-proved Clap trait impl; original data and inert helper syntax remain unchanged. Unsupported output branches retain independent obligations.'};
+        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});if(certificate.clapArgsOutputStorage&&JSON.stringify(decodeBuiltinSourceMeta(certificate.clapArgsOutputStorage))!==JSON.stringify(clapArgsOutput))throw new TypeError('Original scalar Args storage roundtrip changed');certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView,clapArgsOutput});byId.set(invocationId(module,item),certificate);
       } catch(error){diagnostics.push({source:module.file,span:{start:item.start,end:item.end},name:item.name,message:error.message});}
     }
   }
@@ -213,3 +254,7 @@ export function assertDeriveFootprintCertificate(certificate,source,offset=0) {
   if(!isDeriveFootprintCertificate(certificate)||source!==certificates.get(certificate).source.slice(certificate.span.start,certificate.span.end)||offset!==certificate.span.start)throw new TypeError('Unsealed or mismatched original derive source certificate');
   return certificate;
 }
+
+export function deriveFootprintConcatSourceProofs(context,certificate){deriveFootprintOriginalContext(context,certificate);const proofs=concatCallerSources.get(certificate.clapConcatCaller);if(!proofs)throw new TypeError('Concat original source proofs require their genuine private caller certificate');return proofs;}
+
+export function deriveFootprintClapArgsSourceOutput(context,certificate){deriveFootprintOriginalContext(context,certificate);const state=certificates.get(certificate);if(!state?.clapArgsOutput)throw new TypeError('Original Args output requires its genuine private invocation');return state.clapArgsOutput;}
