@@ -300,6 +300,32 @@
       "archive": "../clap-concat/rust-1.89-base.rs.gz",
       "archiveBytes": 12220,
       "archiveSha256": "203c8d2ef3a0774863906f41da8d5d398d08b65834468946f7d79aee6224c4d9"
+    },
+    {
+      "path": "compiler/rustc_ast/src/attr/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_ast/src/attr/mod.rs",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "bytes": 29412,
+      "sha256": "48133e6b040d81c61ab6a0d33ea698e9f5032578c7df09fa95ebcbdbb84397b8",
+      "archive": "rust-1.89-compiler_rustc_ast_src_attr_mod.rs.gz",
+      "archiveBytes": 5872,
+      "archiveSha256": "d63f603f97aad6399e05141770f231c6a049d4c5dd5a31b0c6056a0953309103",
+      "license": "MIT OR Apache-2.0",
+      "namespaceAuthority": false,
+      "generatedImplBehavior": false
+    },
+    {
+      "path": "compiler/rustc_ast/src/visit.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_ast/src/visit.rs",
+      "bytes": 81117,
+      "sha256": "2cde31625ec47f907d6a314ae06e75711245ca79f8dc1f5bf5b44768c6dc87fd",
+      "archive": "../clap-concat/rust-1.89-visit.rs.gz",
+      "archiveBytes": 12455,
+      "archiveSha256": "adad0653d6db72b3c9793d70299fca148b7a22ba8ec88cec6e0ea6a477628bee",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "reusedProfile": "clap-concat/manifest.json",
+      "namespaceAuthority": false,
+      "generatedImplBehavior": false
     }
   ],
   "generatedImplBehavior": false,
