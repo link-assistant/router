@@ -5,6 +5,7 @@ import {moduleScopeKey} from './source-module-views.mjs';
 import {HostChecker,hostData} from './extensions/host-contracts.mjs';
 import {extractImplDeclarations,certifyCopyType} from './impl-resolver.mjs';
 import {TranslationError} from './vendor/meta-language/translation/diagnostics.js';
+import {checkCollectedDeclarationTypes,declarationRefusals} from './extensions/declaration-refusals.mjs';
 import {nominalTypeIdentities,resolveNominalImplTarget,implementationTargetPath} from './project-nominal.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import {attributeMacroProvenance} from './macro-subnamespaces.mjs';
@@ -34,8 +35,13 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
   for(let attempts=0;attempts<=declarations.length;attempts++){
     checker=new HostChecker('Rust',[]);
     const items=tree(active,modules);
-    try{program=checker.program({language:'Rust',items:[...items,...admittedHostData(hostData(),items)],main:null});break;}
-    catch(error){if(!(error instanceof TranslationError))throw error;const owner=active.find(entry=>error.span&&entry.globalSpan.start<=error.span.start&&error.span.start<=entry.globalSpan.end);if(!owner)return ()=>null;active=active.filter(entry=>entry!==owner);}
+    try{program=checkCollectedDeclarationTypes(checker,{language:'Rust',items:[...items,...admittedHostData(hostData(),items)],main:null});break;}
+    catch(error){
+      const failures=declarationRefusals(error)??(error instanceof TranslationError?[{error}]:null);if(!failures)throw error;
+      const owners=new Set();
+      for(const failure of failures){const cause=failure.error,owner=active.find(entry=>(!failure.name||failure.name===entry.name)&&cause.span&&entry.globalSpan.start<=cause.span.start&&cause.span.start<=entry.globalSpan.end);if(!owner)return ()=>null;owners.add(owner);}
+      active=active.filter(entry=>!owners.has(entry));
+    }
   }
   if(!program)return ()=>null;
   const checked=new Map([...program.declarations].map(([name,entry])=>[name,entry.standardGeneric?{...entry,standardGeneric:{...entry.standardGeneric,arguments:entry.standardGeneric.arguments.map(type=>checker.resolveType(type,entry.modulePath,entry.span))}}:entry]));

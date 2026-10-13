@@ -174,6 +174,19 @@ speedup, whole-corpus gain or complete gate success. The
 [body evidence](../../docs/case-studies/issue-759/current/source-body-refusals-ed3ab766/README.md)
 also retains 182 focused and nine original-source cases in each engine.
 
+The Copy layout prepass now uses the same original declaration refusal collector.
+Independent failing layouts are removed together, each failed checker is discarded,
+and dependent layouts and surviving certificates are checked afresh. Custom Copy,
+Drop and unresolved import obligations stay checked. The coordinated 89-case batch
+passes in Node and Bun, including nested consuming Copy execution in JavaScript and
+strict compiled TypeScript. On one retained original 64-layout fixture, the full
+survivor and field certificates remain identical while checker calls fall from 66
+to three. Complete corpus timing remains a separate measurement. The
+[complete evidence](../../docs/case-studies/issue-759/current/generic-input-output-boundaries/README.md)
+also retains the completed 1,542-case Node pass, both completed Bun timeouts and
+their exact original inputs. Both timed-out tests keep every assertion and source
+case with an explicit finite 30-second budget.
+
 Actual lifetime-only free-function binders retain original names, spans and
 tokens, checked shared-reference identities and every contributing call-input
 constraint. Primitive str identity, local/return origins, reserved names and

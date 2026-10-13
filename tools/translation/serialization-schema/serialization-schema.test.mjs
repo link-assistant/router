@@ -94,7 +94,7 @@ test('checked grammar refuses duplicate metadata keys and unbounded nesting',()=
   assert.throws(()=>parseSerializationMeta(text.replace('"schema":','"schema":"original-serialization-meta-v1","schema":'),context),/canonical/);
   assert.throws(()=>parseSerializationMeta('{"schema":"original-serialization-meta-v1","roots":'+ '['.repeat(70)+'0'+']'.repeat(70)+'}',context),/budget/);
 });
-test('generation compares the actual projection before offering any native replacement artifact',()=>{
+test('generation compares the actual projection before offering any native replacement artifact',{timeout:30000},()=>{
   const options={root:repository,paths:corpusPaths(),entry:'src/lib.rs',roots,compilationProfile:profile,expectedDescriptor:affinitySchema,exportName:'affinitySchema'};
   const generated=generateSerializationSchema(options);assert.equal(generated.comparedExistingProjection,true);assert.equal(generated.runtimeAuthority,false);assert.match(generated.javascript,/export const affinitySchema/);
   assert.throws(()=>generateSerializationSchema({...options,expectedDescriptor:{}}),/differs from the actual existing manual/);

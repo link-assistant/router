@@ -1,0 +1,3 @@
+Batch independently attributed original layout refusals in the automated Rust-to-meta Copy prepass, discard failed checkers and recheck every surviving certificate. Preserve custom Copy, Drop and unresolved import refusals, and verify nested consuming execution in JavaScript and compiled strict TypeScript.
+
+Give the two completed Bun timeout cases explicit finite 30-second budgets while retaining every original assertion and source case. Preserve complete successful and failed runs, original input vectors and the lossless CI archive measurement comparison; the coordinated 89-case batch passes in both engines.
