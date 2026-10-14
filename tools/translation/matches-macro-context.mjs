@@ -26,13 +26,16 @@ const mapEntries=Map.prototype.entries,mapGet=Map.prototype.get,mapHas=Map.proto
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
 function namespaceDigest(parser){const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');return metadataDigest(['type','value','macro'].map(namespace=>[namespace,nativeEntries(ownData(aliases,namespace)).map(([path,map])=>[path,nativeEntries(map)])]));}
 // Initial capture may reuse only a privately reconstructed immutable value.
-// Caller Maps never enter this cache, and subsequent parser validation still
-// computes namespaceDigest over the complete mutable namespace each time.
+// Caller Maps never enter this cache. Validation compares every mutable map
+// entry and target descriptor against a live private capture; eviction or
+// changed ambient machinery retains the original complete digest route.
 const namespaceCaptureLimits=Object.freeze({contextEntries:2,entries:8,entryBytes:2097152,bytes:8388608});
 const originalJson=JSON,originalJsonStringify=JSON.stringify;
+const originalArray=Array,originalArrayIsArray=Array.isArray,originalArrayIterator=Array.prototype[Symbol.iterator],originalArraySome=Array.prototype.some;
 const originalMap=Map,originalMapPrototype=Map.prototype,mapDescriptors=Object.freeze(Reflect.ownKeys(Map.prototype).map(key=>Object.freeze([key,Object.freeze(Object.getOwnPropertyDescriptor(Map.prototype,key))]))),mapIteratorPrototype=Object.getPrototypeOf(new Map().entries());
 const iteratorPrototype=Object.getPrototypeOf(mapIteratorPrototype),iteratorMethod=Object.getOwnPropertyDescriptor(iteratorPrototype,Symbol.iterator).value;
 const namespaceCaptureEntries=new Map();let namespaceCaptureBytes=0;
+const parserNamespaceCaptures=new WeakMap();
 const namespaceCaptureReleases=new FinalizationRegistry(token=>discardNamespaceCapture(token));
 const registerNamespaceRelease=FinalizationRegistry.prototype.register,unregisterNamespaceRelease=FinalizationRegistry.prototype.unregister;
 function discardNamespaceCapture(token){
@@ -81,16 +84,33 @@ function issuedNamespaceCapture(issued,module,scope){
   entry={snapshot,digest,bytes,token:Symbol('private original matches namespace capture'),active:true};
   mapSet.call(issued.namespaceCaptures,module,entry);mapSet.call(namespaceCaptureEntries,entry.token,entry);namespaceCaptureBytes+=bytes;registerNamespaceRelease.call(namespaceCaptureReleases,issued,entry.token,entry);return entry;
 }
-function initialNamespaceDigest(parser,issued,module,scope){
+function originalNamespaceCaptureIntrinsics(){
   // The original metadata serializer remains the fallback under ambient
   // serializer/prototype changes. A cached byte digest cannot stand in for a
   // changed stringify callback or an inherited toJSON hook.
-  if(Object.getOwnPropertyDescriptor(globalThis,'JSON')?.value!==originalJson||Object.getOwnPropertyDescriptor(originalJson,'stringify')?.value!==originalJsonStringify||Object.getOwnPropertyDescriptor(Array.prototype,'toJSON')||Object.getOwnPropertyDescriptor(Object.prototype,'toJSON'))return namespaceDigest(parser);
+  if(Object.getOwnPropertyDescriptor(globalThis,'JSON')?.value!==originalJson||Object.getOwnPropertyDescriptor(originalJson,'stringify')?.value!==originalJsonStringify||Object.getOwnPropertyDescriptor(Array.prototype,'toJSON')||Object.getOwnPropertyDescriptor(Object.prototype,'toJSON'))return false;
+  // Direct comparisons iterate ordinary arrays and the guard below uses
+  // their `some` method. Check these data values before either can dispatch
+  // through changed ambient callbacks; the full original digest is fallback.
+  if(Object.getOwnPropertyDescriptor(globalThis,'Array')?.value!==originalArray||Object.getOwnPropertyDescriptor(originalArray,'isArray')?.value!==originalArrayIsArray||Object.getOwnPropertyDescriptor(Array.prototype,Symbol.iterator)?.value!==originalArrayIterator||Object.getOwnPropertyDescriptor(Array.prototype,'some')?.value!==originalArraySome)return false;
   // Avoid an additional private builder call when its public Map machinery
   // has changed. The original caller construction/capture remains the route.
-  if(Object.getOwnPropertyDescriptor(globalThis,'Map')?.value!==originalMap||Reflect.ownKeys(originalMapPrototype).length!==mapDescriptors.length||mapDescriptors.some(([key,expected])=>{const actual=Object.getOwnPropertyDescriptor(originalMapPrototype,key);return !actual||Reflect.ownKeys(expected).some(field=>actual[field]!==expected[field]);})||Object.getOwnPropertyDescriptor(mapIteratorPrototype,'next')?.value!==mapNext||Object.getPrototypeOf(mapIteratorPrototype)!==iteratorPrototype||Object.getOwnPropertyDescriptor(mapIteratorPrototype,Symbol.iterator)||Object.getOwnPropertyDescriptor(iteratorPrototype,Symbol.iterator)?.value!==iteratorMethod)return namespaceDigest(parser);
+  if(Object.getOwnPropertyDescriptor(globalThis,'Map')?.value!==originalMap||Reflect.ownKeys(originalMapPrototype).length!==mapDescriptors.length||mapDescriptors.some(([key,expected])=>{const actual=Object.getOwnPropertyDescriptor(originalMapPrototype,key);return !actual||Reflect.ownKeys(expected).some(field=>actual[field]!==expected[field]);})||Object.getOwnPropertyDescriptor(mapIteratorPrototype,'next')?.value!==mapNext||Object.getPrototypeOf(mapIteratorPrototype)!==iteratorPrototype||Object.getOwnPropertyDescriptor(mapIteratorPrototype,Symbol.iterator)||Object.getOwnPropertyDescriptor(iteratorPrototype,Symbol.iterator)?.value!==iteratorMethod)return false;
+  return true;
+}
+function initialNamespaceDigest(parser,issued,module,scope){
+  parserNamespaceCaptures.delete(parser);
+  if(!originalNamespaceCaptureIntrinsics())return namespaceDigest(parser);
   const capture=issuedNamespaceCapture(issued,module,scope);
-  return capture&&exactNamespaceCapture(parser,capture.snapshot)?capture.digest:namespaceDigest(parser);
+  if(!capture||!exactNamespaceCapture(parser,capture.snapshot))return namespaceDigest(parser);
+  parserNamespaceCaptures.set(parser,capture);return capture.digest;
+}
+function originalParserNamespaceUnchanged(parser,expected){
+  const capture=parserNamespaceCaptures.get(parser);
+  // Eviction clears snapshot/digest even while a parser retains this small
+  // entry carrier. No independent per-parser namespace tree is retained.
+  if(capture?.active&&capture.digest===expected&&originalNamespaceCaptureIntrinsics()&&exactNamespaceCapture(parser,capture.snapshot))return true;
+  return namespaceDigest(parser)===expected;
 }
 // Only the actual producer's recursively frozen roots qualify for reuse.
 // Publicly exposed context wrappers remain untrusted mutable surfaces.
@@ -185,7 +205,7 @@ export function configureMatchesMacroParser(parser,context,{file,modulePath=[],o
 export function matchesParserFacts(parser) {
   const facts=parserFrame(parser);
   const captured=facts?.methodTransform?originalMethodParserTokenFacts(facts.tokens):facts?capturedRustTokenSource(facts.tokens):null;
-  if(!facts||parser.cursor.tokens!==facts.tokens||(facts.methodTransform?captured.proof!==facts.methodTransform:captured!==facts.captured)||JSON.stringify(normalizeProfile(parser.compilationProfile??null))!==JSON.stringify(facts.facts.compilationProfile)||JSON.stringify(parser.modulePath??[])!==JSON.stringify(facts.module.path)||namespaceDigest(parser)!==facts.namespaceDigest)throw new TypeError('Matches parser lost its original private source association');
+  if(!facts||parser.cursor.tokens!==facts.tokens||(facts.methodTransform?captured.proof!==facts.methodTransform:captured!==facts.captured)||JSON.stringify(normalizeProfile(parser.compilationProfile??null))!==JSON.stringify(facts.facts.compilationProfile)||JSON.stringify(parser.modulePath??[])!==JSON.stringify(facts.module.path)||!originalParserNamespaceUnchanged(parser,facts.namespaceDigest))throw new TypeError('Matches parser lost its original private source association');
   return facts;
 }
 function resolvedMacroPath(state,segments) {
