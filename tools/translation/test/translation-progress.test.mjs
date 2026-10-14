@@ -12,6 +12,8 @@ import {planRegeneration,applyRegenerationPlan,OUTPUT_ROOTS} from '../bulk.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 import {createCompilationMatrix,compilationMatrixDescription,DECLARED_FAMILY_PROFILES} from '../compilation-matrix.mjs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const source='pub struct Counter{value:u8}impl Counter{pub fn read(&self)->u8{self.value}}pub fn plus(v:u8)->u8{Counter{value:v}.read()}pub fn bad()->u8{unknown()}';
 const fields=new Set(['schema','stage','state','entry','source','profile','declaration','phase','completed','total','attempt','remaining','outputs','bytes']);
@@ -52,6 +54,15 @@ test('project diagnostics preserve exact Rust meta JavaScript and strict TypeScr
   assert.ok(records.some(row=>row.stage==='semantic-check'&&row.state==='advance'&&row.remaining>0));
   const refusal=records.filter(row=>row.stage==='semantic-refusal');assert.ok(refusal.some(row=>row.declaration==='bad'&&row.source==='src/lib.rs'&&row.phase==='declaration-bodies'));
   await verifyTypedTargets(traced,api=>{assert.equal(api.plus(0n),0n);assert.equal(api.plus(255n),255n);assert.throws(()=>api.plus(256n),RangeError);assert.equal('bad'in api,false);},{childTimeoutMs:30_000});
+});
+test('generated Default and Clone diagnostics delimit every original module without changing target bytes',()=>{
+  const cargoManifest=readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock=readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8'),deriveDependencies=loadDeriveDependencyProof({manifest:cargoManifest,lock});
+  const sources=new Map([['src/lib.rs','mod model;pub fn value(v:u8)->u8{v}'],['src/model.rs','#[derive(Clone,Default)]pub enum Flag{#[default]Off,On}']]),options={entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),cargoManifest,deriveDependencies,compilationProfile:PRODUCTION_PROFILE};
+  const plain=translateProject(options),records=[],traced=translateProject({...options,progress:row=>records.push(row)});assertRecords(records);assert.deepEqual(traced.meta,plain.meta);assert.equal(traced.javascript,plain.javascript);assert.equal(traced.typescript,plain.typescript);
+  for(const stage of ['generated-default','generated-clone']){
+    const rows=records.filter(row=>row.stage===stage);assert.deepEqual(rows.map(row=>row.state),['start','advance','advance','end']);assert.deepEqual(rows.filter(row=>row.state==='advance').map(row=>[row.source,row.completed]),[['src/lib.rs',0],['src/model.rs',1]]);assert.equal(rows.at(-1).completed,2);assert.ok(rows.every(row=>row.total===2));
+    const sentinel=new Error(stage+' callback');assert.throws(()=>translateProject({...options,progress:row=>{if(row.stage===stage&&row.state==='advance')throw sentinel;}}),error=>error===sentinel);
+  }
 });
 test('full fixture plans remain byte-identical and callback failures write no partial artifacts',{timeout:90_000},()=>{
   const root=folder();

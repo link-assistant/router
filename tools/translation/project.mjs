@@ -412,7 +412,10 @@ export function translateProject(options) {
       }
     }
   }
+  let completedDefaults=0,completedClones=0;
+  if(defaultContext)progress({stage:'generated-default',state:'start',entry:options.entry,total:graph.modules.length});
   if(defaultContext)for(const module of graph.modules){
+    progress({stage:'generated-default',state:'advance',entry:options.entry,source:module.file,completed:completedDefaults++,total:graph.modules.length});
     if(module.configurationCondition!=='active')continue;
     const generated=originalDefaultGeneratedMethods(defaultContext,module,MethodRustParser);
     for(const {item,surface}of generated.methods){
@@ -423,7 +426,10 @@ export function translateProject(options) {
     }
     for(const {item,message}of generated.refused)refused.push({file:module.file,name:[...module.path,item.name,'default'].join('.'),term:'generated-method',kind:'unsupported',span:{start:item.start,end:item.end},message});
   }
+  if(defaultContext)progress({stage:'generated-default',state:'end',entry:options.entry,completed:completedDefaults,total:graph.modules.length});
+  if(cloneContext)progress({stage:'generated-clone',state:'start',entry:options.entry,total:graph.modules.length});
   if(cloneContext)for(const module of graph.modules){
+    progress({stage:'generated-clone',state:'advance',entry:options.entry,source:module.file,completed:completedClones++,total:graph.modules.length});
     if(module.configurationCondition!=='active')continue;
     const generated=originalCloneGeneratedMethods(cloneContext,module,MethodRustParser);
     for(const {item,surface}of generated.methods){
@@ -442,6 +448,7 @@ export function translateProject(options) {
     }
     for(const {item,message}of generated.refused)refused.push({file:module.file,name:[...module.path,item.name,'clone'].join('.'),term:'generated-method',kind:'unsupported',span:{start:item.start,end:item.end},message});
   }
+  if(cloneContext)progress({stage:'generated-clone',state:'end',entry:options.entry,completed:completedClones,total:graph.modules.length});
   progress({stage:'method-parse',state:'end',entry:options.entry,completed:completedMethods});
   const duplicateNames = new Set(declarations.filter((entry, index) => declarations.findIndex(candidate => candidate.name === entry.name) !== index).map(entry => entry.name));
   for (const entry of declarations.filter(entry => duplicateNames.has(entry.name))) refused.push({ file: entry.file, name: entry.name, term: entry.term, kind: 'ambiguous', message: 'duplicate module-scoped declaration', span: entry.span });

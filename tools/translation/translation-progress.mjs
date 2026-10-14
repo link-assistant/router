@@ -1,7 +1,7 @@
 // Diagnostic callbacks receive bounded flat data only. No original source, AST, scope
 // text or private proof is exposed, and progress never enters generated artifacts.
 import {types} from 'node:util';
-const stages=new Set(['corpus','project','project-graph','namespace','module-parse','method-parse','semantic-check','semantic-refusal','target-emit','project-serialize','standalone','fingerprint','plan','profile']);
+const stages=new Set(['corpus','project','project-graph','namespace','module-parse','method-parse','generated-default','generated-clone','semantic-check','semantic-refusal','target-emit','project-serialize','standalone','fingerprint','plan','profile']);
 const states=new Set(['start','advance','end']);
 const strings=new Set(['stage','state','entry','source','profile','declaration','phase']);
 const integers=new Set(['completed','total','attempt','remaining','outputs','bytes']);
