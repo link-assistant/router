@@ -11,24 +11,33 @@ import {astSyntaxText} from './builtin-derive-ast-meta.mjs';
 import {extractImplDeclarations} from './impl-resolver.mjs';
 import {nominalTypeIdentities,resolveNominalImplTarget} from './project-nominal.mjs';
 
-const proofs=new WeakMap(),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const proofs=new WeakMap(),coherence=new WeakMap(),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const fail=message=>{throw new TypeError('Original unit Default source: '+message);};
-export function originalUnitDefaultSource(context,module,item){
- if(types.isProxy(module)||types.isProxy(item))fail('requires plain original source descriptors');
- const {state,original}=assertDefaultCaller(context,module);
- const actual=originalSourceModuleItems(original).find(value=>value.start===item.start&&value.end===item.end);
- if(!actual||actual.term!=='enum'||actual.name!==item.name||!same(actual.tokens,item.tokens))fail('requires its exact original enum declaration');
- const identities=nominalTypeIdentities(state.binding.scopes,state.modules),family=['crate',...original.path,actual.name];
+function writtenDefaultFamilies(context,state){
+ let result=coherence.get(context);if(result)return result;
+ // Genuine contexts privately retain deeply frozen original modules and
+ // bindings. Resolve the complete written implementation set once per
+ // context; no caller-supplied identity or source digest can address this cache.
+ const identities=nominalTypeIdentities(state.binding.scopes,state.modules),families=new Set();let unresolved=false;
  for(const owner of state.modules){
   const extracted=extractImplDeclarations(owner.source,{sourcePath:owner.file,modulePath:owner.path,sourceView:owner.sourceView,compilationProfile:state.compilationProfile});
   for(const implementation of extracted.implementations){
    if(!implementation.methods.some(method=>method.name==='default'))continue;
    const target=resolveNominalImplTarget(implementation,{...owner,items:originalSourceModuleItems(owner)},state.binding.scopes,identities);
-   if(!target||same(target.family,family))fail('written default method has an unresolved or overlapping actual nominal target');
+   if(!target)unresolved=true;else families.add(JSON.stringify(target.family));
   }
  }
+ result={unresolved,families};coherence.set(context,result);return result;
+}
+export function originalUnitDefaultSource(context,module,item){
+ if(types.isProxy(module)||types.isProxy(item))fail('requires plain original source descriptors');
+ const {state,original}=assertDefaultCaller(context,module);
+ const actual=originalSourceModuleItems(original).find(value=>value.start===item.start&&value.end===item.end);
+ if(!actual||actual.term!=='enum'||actual.name!==item.name||!same(actual.tokens,item.tokens))fail('requires its exact original enum declaration');
+ const written=writtenDefaultFamilies(context,state),family=['crate',...original.path,actual.name];
+ if(written.unresolved||written.families.has(JSON.stringify(family)))fail('written default method has an unresolved or overlapping actual nominal target');
  const certificate=deriveFootprintAt(state.deriveContext,original,actual);
  if(!certificate)fail('requires its genuine original derive invocation');
  const invocations=certificate.attributes.filter(value=>value.name==='derive').flatMap(value=>value.derives.map(path=>({path,attributeSpan:value.span}))).filter(value=>same(value.path,['Default']));

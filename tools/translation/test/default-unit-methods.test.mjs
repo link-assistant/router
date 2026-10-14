@@ -73,3 +73,11 @@ test('unit Default coherence resolves unrelated same-named original targets inde
  const r=compile(source);assert.ok(r.meta.checkedGeneratedMethods.some(row=>row.name==='Choice.default'));
  await verifyTypedTargets(r,api=>assert.deepEqual(api.make(),{$:'A'}),{childTimeoutMs:20000});
 });
+test('repeated unit Default checks preserve target-specific overlap and isolate original contexts',()=>{
+ const declarations='#[derive(Default,serde::Serialize)]pub enum First{#[default]A}#[derive(Default,serde::Serialize)]pub enum Second{#[default]B}',written='impl Default for Second{fn default()->Self{Self::B}}';
+ const {context,module,item}=setup(declarations+written),first=originalUnitDefaultSource(context,module,item),second=originalSourceModuleItems(module).find(row=>row.name==='Second');
+ assert.throws(()=>originalUnitDefaultSource(context,module,second),/overlapping actual nominal target/);assert.deepEqual(originalUnitDefaultSource(context,module,item),first);
+ const other=setup(declarations),otherSecond=originalSourceModuleItems(other.module).find(row=>row.name==='Second');assert.equal(originalUnitDefaultSource(other.context,other.module,otherSecond).selectedVariant.variant.name,'B');assert.equal(originalUnitDefaultSource(other.context,other.module,other.item).selectedVariant.variant.name,'A');
+ const unresolved=setup(declarations+'impl<T> Default for T{fn default()->Self{unknown()}}');for(const row of originalSourceModuleItems(unresolved.module).filter(row=>row.term==='enum'))assert.throws(()=>originalUnitDefaultSource(unresolved.context,unresolved.module,row),/unresolved or overlapping/);
+ assert.throws(()=>originalUnitDefaultSource(structuredClone(context),module,item),/unsealed/);
+});

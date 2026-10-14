@@ -18,8 +18,22 @@ import {TokenCursor} from './vendor/meta-language/translation/lexer.js';
 import {originalTextCursorGuard} from './extensions/text.mjs';
 import {createOriginalCloneSurface,createOriginalCloneUnitSurface,assertOriginalCloneSurface} from './extensions/clone-source-body.mjs';
 import {originalUnitCloneSource} from './clone-unit-source.mjs';
-const generated=new WeakMap(),hash=value=>createHash('sha256').update(value).digest('hex'),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const generated=new WeakMap(),coherence=new WeakMap(),hash=value=>createHash('sha256').update(value).digest('hex'),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Original Clone AST lowering: '+message);};
+function writtenCloneFamilies(context,state){
+ const cached=coherence.get(context),cacheable=Object.isFrozen(state.modules)&&Object.isFrozen(state.binding)&&Object.isFrozen(state.compilationProfile);
+ if(cacheable&&cached?.modules===state.modules&&cached.binding===state.binding&&cached.profile===state.compilationProfile)return cached;
+ const identities=nominalTypeIdentities(state.binding.scopes,state.modules),families=new Set();let unresolved=false;
+ for(const owner of state.modules){
+  const extracted=extractImplDeclarations(owner.source,{sourcePath:owner.file,modulePath:owner.path,sourceView:owner.sourceView,compilationProfile:state.compilationProfile});
+  for(const implementation of extracted.implementations){
+   if(!implementation.methods.some(method=>method.name==='clone'))continue;
+   const target=resolveNominalImplTarget(implementation,{...owner,items:originalSourceModuleItems(owner)},state.binding.scopes,identities);
+   if(!target)unresolved=true;else families.add(JSON.stringify(target.family));
+  }
+ }
+ const result={modules:state.modules,binding:state.binding,profile:state.compilationProfile,unresolved,families};if(cacheable)coherence.set(context,result);return result;
+}
 function primitiveSyntax(Parser,member){
   if(Parser!==HostRustParser)fail('requires the actual original Host parser');
   // Preserve the actual expanded block including original braces. The
@@ -35,15 +49,8 @@ export function originalCloneGeneratedMethod(context,module,item,Parser){
   if(Parser!==HostRustParser)fail('requires the actual original Host parser');const {state,original}=assertCloneCaller(context,module),actual=originalSourceModuleItems(original).find(candidate=>candidate.start===item.start&&candidate.end===item.end&&candidate.name===item.name);
   if(!actual||!same(actual.tokens,item.tokens))fail('original declaration differs');item=actual;const input=inspectDeriveInput(item,state.compilationProfile);
   if(input.derives.filter(owner=>same(owner.path,['Clone'])).length!==1||input.genericParameters||input.lifetimeParameters)fail('one actual nongeneric standard Clone invocation required');
-  const identities=nominalTypeIdentities(state.binding.scopes,state.modules),family=['crate',...original.path,item.name];
-  for(const owner of state.modules){
-    const extracted=extractImplDeclarations(owner.source,{sourcePath:owner.file,modulePath:owner.path,sourceView:owner.sourceView,compilationProfile:state.compilationProfile});
-    for(const implementation of extracted.implementations){
-      if(!implementation.methods.some(method=>method.name==='clone'))continue;
-      const target=resolveNominalImplTarget(implementation,{...owner,items:originalSourceModuleItems(owner)},state.binding.scopes,identities);
-      if(!target||same(target.family,family))fail('written clone method has an unresolved or overlapping actual nominal target');
-    }
-  }
+  const written=writtenCloneFamilies(context,state),family=['crate',...original.path,item.name];
+  if(written.unresolved||written.families.has(JSON.stringify(family)))fail('written clone method has an unresolved or overlapping actual nominal target');
   if(item.term==='enum'){
     const unitSource=originalUnitCloneSource(context,original,item),surface=createOriginalCloneUnitSurface(context,original,item,unitSource);
     assertOriginalCloneSurface(surface);generated.set(surface,{context,module:original,item,unitSource,digest:hash(JSON.stringify(surface))});return surface;
