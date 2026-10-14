@@ -11,6 +11,7 @@ import {macroProvenance} from './macro-provenance.mjs';
 import {attributeMacroProvenance} from './macro-subnamespaces.mjs';
 import {admittedHostData} from './extensions/source-namespaces.mjs';
 import {originalParsedDeclarationEvidence,metadataDigest} from './extensions/source-links.mjs';
+import {originalNestedImplementationObligations} from './nested-implementation-obligations.mjs';
 const optionPayloads=new WeakMap();
 const freezeOptionLayout=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freezeOptionLayout);Object.freeze(value);}return value;};
 export function originalOptionCopyPayload(surface){
@@ -61,6 +62,12 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
     let resolvedType=null;try{if(Array.isArray(path)&&path.length&&path.every(part=>typeof part==='string'))resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
     return bindNonCopyTraitOwner({...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)},module,scopes,dependencies);
   }));
+  // Preserve every unproved nested declaration as an unresolved obligation;
+  // this marker issues no trait, target, Copy or no-Drop authority.
+  for(const module of modules)for(const obligation of originalNestedImplementationObligations(module))implementations.push({
+    traitPath:[],resolvedType:null,resolvedNominalTarget:null,headerSpan:obligation.span,
+    originalNestedImplementation:obligation,diagnostics:[{kind:'unsupported',message:obligation.message,span:obligation.span}],
+  });
   const resolve=(qualifiedType,module,span)=>{try{return checker.resolveType({kind:'named',path:qualifiedType},module.path,span);}catch(error){if(!(error instanceof TranslationError))throw error;return null;}};
   const certify=(type,span)=>{
     const owners=new Set(),seen=new Set();

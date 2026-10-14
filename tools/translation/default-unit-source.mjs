@@ -9,6 +9,7 @@ import {originalBuiltinDefaultBangOutput} from './builtin-derive-bang-footprints
 import {validateBuiltinDefaultAstOutput} from './builtin-default-ast-route.mjs';
 import {astSyntaxText} from './builtin-derive-ast-meta.mjs';
 import {extractImplDeclarations} from './impl-resolver.mjs';
+import {originalNestedImplementationObligations} from './nested-implementation-obligations.mjs';
 import {nominalTypeIdentities,resolveNominalImplTarget} from './project-nominal.mjs';
 
 const proofs=new WeakMap(),coherence=new WeakMap(),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
@@ -22,6 +23,7 @@ function writtenDefaultFamilies(context,state){
  // context; no caller-supplied identity or source digest can address this cache.
  const identities=nominalTypeIdentities(state.binding.scopes,state.modules),families=new Set();let unresolved=false;
  for(const owner of state.modules){
+  if(originalNestedImplementationObligations(owner).length)unresolved=true;
   const extracted=extractImplDeclarations(owner.source,{sourcePath:owner.file,modulePath:owner.path,sourceView:owner.sourceView,compilationProfile:state.compilationProfile});
   for(const implementation of extracted.implementations){
    if(!implementation.methods.some(method=>method.name==='default'))continue;
@@ -30,6 +32,12 @@ function writtenDefaultFamilies(context,state){
   }
  }
  result={unresolved,families};coherence.set(context,result);return result;
+}
+export function assertOriginalDefaultCoherence(context,module,item){
+ const {state,original}=assertDefaultCaller(context,module),actual=originalSourceModuleItems(original).find(value=>value.start===item.start&&value.end===item.end&&value.name===item.name);
+ if(!actual)fail('coherence requires its exact original declaration');
+ const written=writtenDefaultFamilies(context,state),family=['crate',...original.path,actual.name];
+ if(written.unresolved||written.families.has(JSON.stringify(family)))fail('written default method has an unresolved or overlapping actual nominal target');
 }
 export function originalUnitDefaultSource(context,module,item){
  if(types.isProxy(module)||types.isProxy(item))fail('requires plain original source descriptors');

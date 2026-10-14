@@ -18,6 +18,7 @@ import {TokenCursor} from './vendor/meta-language/translation/lexer.js';
 import {originalTextCursorGuard} from './extensions/text.mjs';
 import {createOriginalCloneSurface,createOriginalCloneUnitSurface,assertOriginalCloneSurface} from './extensions/clone-source-body.mjs';
 import {originalUnitCloneSource} from './clone-unit-source.mjs';
+import {originalNestedImplementationObligations} from './nested-implementation-obligations.mjs';
 const generated=new WeakMap(),coherence=new WeakMap(),hash=value=>createHash('sha256').update(value).digest('hex'),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Original Clone AST lowering: '+message);};
 function writtenCloneFamilies(context,state){
@@ -25,6 +26,7 @@ function writtenCloneFamilies(context,state){
  if(cacheable&&cached?.modules===state.modules&&cached.binding===state.binding&&cached.profile===state.compilationProfile)return cached;
  const identities=nominalTypeIdentities(state.binding.scopes,state.modules),families=new Set();let unresolved=false;
  for(const owner of state.modules){
+  if(originalNestedImplementationObligations(owner).length)unresolved=true;
   const extracted=extractImplDeclarations(owner.source,{sourcePath:owner.file,modulePath:owner.path,sourceView:owner.sourceView,compilationProfile:state.compilationProfile});
   for(const implementation of extracted.implementations){
    if(!implementation.methods.some(method=>method.name==='clone'))continue;

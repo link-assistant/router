@@ -17,7 +17,7 @@ import {assertOriginalParserIdentity} from './original-parser-identity.mjs';
 import {astSyntaxText} from './builtin-derive-ast-meta.mjs';
 import {TokenCursor} from './vendor/meta-language/translation/lexer.js';
 import {originalTextCursorGuard} from './extensions/text.mjs';
-import {originalUnitDefaultSource,assertOriginalUnitDefaultSource} from './default-unit-source.mjs';
+import {originalUnitDefaultSource,assertOriginalUnitDefaultSource,assertOriginalDefaultCoherence} from './default-unit-source.mjs';
 import {originalBuiltinDefaultBangOutput} from './builtin-derive-bang-footprints.mjs';
 import {validateBuiltinDefaultAstOutput} from './builtin-default-ast-route.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
@@ -81,6 +81,7 @@ export function originalDefaultGeneratedMethod(context,module,item,Parser){
   if(input.genericParameters||input.lifetimeParameters)fail('generic generated method remains unproved');
   const certificate=deriveFootprintAt(state.deriveContext,original,item);
   if(input.attributes.some(attribute=>attribute.helpers)&&!certificate)fail('helper owner lacks its genuine original certificate');
+  assertOriginalDefaultCoherence(context,original,item);
   // Any original explicit impl for this target is a coherence obligation;
   // even an unsupported/conditional header cannot be silently overwritten.
   if(originalSourceModuleItems(original).some(candidate=>candidate.term==='impl'&&candidate.tokens.some(token=>token.text==='Default')&&candidate.tokens.some(token=>token.text===item.name)))fail('manual and generated Default may overlap');

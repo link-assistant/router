@@ -14,6 +14,7 @@ import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mj
 import {itemConfiguration} from './cfg-profile.mjs';
 import {nominalTypeIdentities,resolveNominalImplTarget} from './project-nominal.mjs';
 import {originalClapQuoteText} from './derive-clap-value-enum.mjs';
+import {originalNestedImplementationObligations} from './nested-implementation-obligations.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),proofs=new WeakMap();let drop;
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),words=tokens=>tokens.filter(token=>token.type!=='comment').map(token=>token.text),fail=message=>{throw new TypeError('Clone-only no-Drop: '+message);};
@@ -45,6 +46,7 @@ export function proveCloneOnlyRecordNoDrop(context,module,item,output){
   // user bang invocations can emit impl items even inside function blocks;
   // this first Clone-only route refuses them rather than assuming inertness.
   const scopes=state.binding.scopes;if(scopes.some(scope=>scope.configurationCondition!=='active'||scope.unresolvedTypeScope||scope.unresolvedAttributeMacroScope))fail('complete caller source type/attribute composition is unresolved');
+  for(const owner of state.modules)if(originalNestedImplementationObligations(owner).length)fail('nested original implementation target or coherence remains unproved');
   for(const owner of state.modules)for(const token of rustTokens(owner.source))if(token.type!=='comment'&&token.text.endsWith('!')&&token.text!=='!')fail('written caller bang expansion remains unproved');
   const identities=nominalTypeIdentities(scopes,state.modules),family=['crate',...original.path,item.name],implementations=[];
   for(const owner of state.modules)for(const implementation of originalSourceModuleItems(owner).filter(entry=>entry.term==='impl')){
