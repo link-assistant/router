@@ -1,5 +1,6 @@
 // Formal AI's pinned item lexer, extended locally for arbitrary Rust source.
-import { lex, topLevelItems } from './vendor/formal-ai/lexer.mjs';
+import { lex } from './vendor/formal-ai/lexer.mjs';
+import {topLevelRustItems} from './rust-item-boundaries.mjs';
 
 // Mask only opaque lexical regions; token coordinates remain UTF-16 offsets.
 // The original text is always used in the resulting source-bearing IR.
@@ -68,7 +69,7 @@ export function rustTokens(source) {
 
 export function sourceItems(source) {
   const tokens = rustTokens(source);
-  return topLevelItems(tokens).map(item => {
+  return topLevelRustItems(tokens).map(item => {
     const significant = item.tokens.filter(token => token.type !== 'comment');
     let keyword = significant.find(token => ['fn', 'struct', 'union', 'enum', 'impl', 'trait', 'mod', 'use', 'const', 'static', 'type', 'macro', 'macro_rules!'].includes(token.text));
     if (keyword?.text === 'const' && significant[significant.indexOf(keyword) + 1]?.text === 'fn') keyword = significant[significant.indexOf(keyword) + 1];

@@ -18,8 +18,12 @@ assert.equal(inventory.originalCommit,originalCommit);assert.equal(inventory.ori
 const originalBytes=readFileSync(new URL('rust-structure.mjs.txt',fixtureRoot));assert.equal(hash(originalBytes),'6195c319a3a01115f160f5519d2f979036ac3845e2774bc25f80e9ab2c26bb18');
 const lexerPath='tools/translation/vendor/formal-ai/lexer.mjs';
 assert.equal(hash(readFileSync(new URL('../vendor/formal-ai/lexer.mjs',import.meta.url))),inventory.lexer.sha256,'the independent original module uses the identical pinned item lexer');assert.equal(inventory.lexer.path,lexerPath);
-const instrument=bytes=>bytes.toString().replace("import { lex, topLevelItems } from './vendor/formal-ai/lexer.mjs';",
-  `import {lex as pinnedLex,topLevelItems} from ${JSON.stringify(new URL('../vendor/formal-ai/lexer.mjs',import.meta.url).href)};const masks=[];const lex=(...args)=>{masks.push(args[0]);return pinnedLex(...args);};export const takeMasks=()=>masks.splice(0);`);
+const instrument=bytes=>{
+  const shim=`import {lex as pinnedLex,topLevelItems} from ${JSON.stringify(new URL('../vendor/formal-ai/lexer.mjs',import.meta.url).href)};const masks=[];const lex=(...args)=>{masks.push(args[0]);return pinnedLex(...args);};export const takeMasks=()=>masks.splice(0);`;
+  return bytes.toString().replace("import { lex, topLevelItems } from './vendor/formal-ai/lexer.mjs';",shim)
+    .replace("import { lex } from './vendor/formal-ai/lexer.mjs';",shim)
+    .replace("import {topLevelRustItems} from './rust-item-boundaries.mjs';",`import {topLevelRustItems} from ${JSON.stringify(new URL('../rust-item-boundaries.mjs',import.meta.url).href)};`);
+};
 const load=bytes=>import('data:text/javascript;base64,'+Buffer.from(instrument(bytes)).toString('base64'));
 const original=await load(originalBytes),optimized=await load(readFileSync(new URL('../rust-structure.mjs',import.meta.url)));
 function outcome(operation,source){try{return {value:operation(source)};}catch(error){return {error:{name:error.name,message:error.message}};}}
