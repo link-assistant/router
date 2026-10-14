@@ -28,6 +28,7 @@ import { constantValue } from './constants.mjs';
 import { guardedScope } from './guards.mjs';
 import { optionalType, joinReturnTypes, closedReturnType } from './return-types.mjs';
 import { validateCharacterClass } from './character-classes.mjs';
+import {validateSequencePattern} from './sequence-patterns.mjs';
 import { staticTableType,mapValueType } from './static-tables.mjs';
 import { recordType,recordShape,errorType,errorShape,canLiftValue,payloadBoundary } from './aggregates.mjs';
 import { checkClosedJson,jsonResponseStatus,closedJsonValue,utf16Link,utf16Of } from './json-responses.mjs';
@@ -492,8 +493,9 @@ function expression(expr, names, table) {
       if (!['string','utf16-string'].includes(receiver.type)) refuse('type', 'codepoint iteration of a non-string');
       return typed({ receiver }, 'number');
     }
+    case 'sequence-test':
     case 'class-test': {
-      validateCharacterClass(expr);
+      if(expr.kind==='sequence-test')validateSequencePattern(expr);else validateCharacterClass(expr);
       const receiver = expression(expr.receiver, names, table);
       if(receiver.type==='utf16-string'&&!names.lossless)refuse('collection','an unimplemented scalar UTF16 observation boundary');
       if (!['string','utf16-string'].includes(receiver.type)) refuse('type', 'a regex test requiring coercion of a non-string');
@@ -578,6 +580,8 @@ function linkOf(expr) {
       return ['length', linkOf(expr.receiver)];
     case 'codepoints':
       return ['codepoints', linkOf(expr.receiver)];
+    case 'sequence-test':
+      return ['sequence-test',['unicode',String(expr.unicode)],['atoms',...expr.atoms.map(atom=>['atom',['negated',String(atom.negated)],['minimum',String(atom.minimum)],['maximum',atom.maximum===null?'unbounded':String(atom.maximum)],['ranges',...atom.ranges.map(range=>[String(range.low),String(range.high)])]])],['receiver',linkOf(expr.receiver)]];
     case 'class-test':
       return ['class-test', ['unicode', String(expr.unicode)], ['negated', String(expr.negated)], ['anchored', String(expr.anchored)], ['ranges', ...expr.ranges.map(range=>[String(range.low), String(range.high)])], ['receiver', linkOf(expr.receiver)]];
     case 'table-set':return ['table-set',...expr.entries.map(linkOf)];
@@ -673,6 +677,16 @@ function exprOf(link) {
       return { kind, receiver: exprOf(rest[0]) };
     case 'codepoints':
       return { kind, receiver: exprOf(rest[0]) };
+    case 'sequence-test': {
+      const unicode=field(link,'unicode')?.[1];if(!['true','false'].includes(unicode))throw Error('invalid sequence Unicode flag');
+      const atoms=field(link,'atoms');if(!atoms)throw Error('missing sequence atoms');
+      return {kind,unicode:unicode==='true',atoms:atoms.slice(1).map(atom=>{
+        if(atom[0]!=='atom')throw Error('invalid sequence atom');
+        const negated=field(atom,'negated')?.[1],maximum=field(atom,'maximum')?.[1];
+        if(!['true','false'].includes(negated))throw Error('invalid sequence negation');
+        return {negated:negated==='true',minimum:Number(field(atom,'minimum')?.[1]),maximum:maximum==='unbounded'?null:Number(maximum),ranges:(field(atom,'ranges')??[]).slice(1).map(range=>({low:Number(range[0]),high:Number(range[1])}))};
+      }),receiver:exprOf(field(link,'receiver')[1])};
+    }
     case 'class-test': {
       const boolean = head => {const value=field(link,head)?.[1];if(!['true','false'].includes(value))throw new Error(`invalid class-test ${head}`);return value==='true';};
       return { kind, unicode:boolean('unicode'), negated:boolean('negated'), anchored:boolean('anchored'), ranges:(field(link,'ranges')??[]).slice(1).map(range=>({low:Number(range[0]),high:Number(range[1])})), receiver:exprOf(field(link,'receiver')[1]) };

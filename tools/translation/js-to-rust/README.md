@@ -380,3 +380,5 @@ compiled `.js` files to `.mjs` paths and never load original runtime modules
 or a Rust fallback. Native feature/endpoint coverage limitations remain those
 of the JavaScript draft. This complete TypeScript target does not expand the
 bounded Rust translator's supported native I/O or service constructs.
+
+Anchored stateless regular sequences are drafted as explicit character ranges and bounded repetition states. `+`, `*`, `?`, `{m}`, `{m,n}` and `{m,}` retain their Boolean matching meaning without a backtracking engine. The network has at most 64 atoms and 4,096 states; finite bounds and unbounded-repeat minimums are at most 512. UTF16 units are observed without `u`; Unicode codepoints (including lone surrogates) are observed with `u`. ECMAScript `\s`, `\d` and `\w` classes have explicit ranges. Stateful flags, groups, alternatives, lookarounds, backreferences, mixed literal/escaped surrogate spellings and non-string coercion remain refused. Previous one-class IR and targets retain their existing representation. Source-owned scoped predicates do not admit their enclosing parent; Rust projections remain uncompiled drafts.

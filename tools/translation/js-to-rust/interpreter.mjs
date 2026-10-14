@@ -1,3 +1,4 @@
+import {matchesSequence} from './vendor/sequence-patterns.mjs';
 // Independent evaluator for the semantic IR. Used alongside authored fixtures
 // and execution of the authoritative source; neither emitter is consulted.
 import {check} from './vendor/ir.mjs';
@@ -61,6 +62,7 @@ export function evaluate(program, functionName, arguments_) {
       case 'method': return get(expr.receiver)[map.methods.get(expr.name).javascript](...expr.args.map(get));
       case 'length': return get(expr.receiver).length;
       case 'codepoints': return [...get(expr.receiver)].length;
+      case 'sequence-test':return matchesSequence(expr,get(expr.receiver));
       case 'class-test': {
         const receiver=get(expr.receiver);
         const units=expr.unicode?[...receiver].map(character=>character.codePointAt(0)):Array.from({length:receiver.length},(_,index)=>receiver.charCodeAt(index));

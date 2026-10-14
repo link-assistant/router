@@ -9,6 +9,7 @@ import { constructMap, idBySpelling, refuse } from './constructs.mjs';
 import { camelFromSnake, canonicalRustName, snakeFromCamel } from './ir.mjs';
 import { constantValue } from './constants.mjs';
 import { parseCharacterClass } from './character-classes.mjs';
+import {parseSequencePattern} from './sequence-patterns.mjs';
 import { parseClosedJson } from './json-responses.mjs';
 
 const UNSUPPORTED_BINARY = new Set(['==', '!=', '**', '??', '&', '|', '^', '<<', '>>', '>>>', 'instanceof', 'in', 'as']);
@@ -506,11 +507,14 @@ function primary(at, language) {
   if (token.type === 'string') return { kind: 'string', value: unquote(token.text) };
   if (token.type === 'template') refuse('template');
   if (token.type === 'regex' && language === 'JavaScript') {
-    const model = parseCharacterClass(token.text);
+    let model,kind='class-test';
+    try {model=parseCharacterClass(token.text);}catch(originalError) {
+      try {model=parseSequencePattern(token.text);kind='sequence-test';}catch {throw originalError;}
+    }
     at.expect('.'); at.expect('test');
     const args = argumentsOf(at, language);
     if (args.length !== 1) refuse('unsupported', 'a character-class test without exactly one argument');
-    return { kind: 'class-test', ...model, receiver: args[0] };
+    return { kind, ...model, receiver: args[0] };
   }
   if (token.type === 'regex' || token.type === 'char') refuse('unsupported', token.text);
   if (token.text === '(') {

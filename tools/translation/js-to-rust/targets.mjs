@@ -3,6 +3,7 @@ import { camelFromSnake,snakeFromCamel,check } from './vendor/ir.mjs';
 import { constantValue } from './vendor/constants.mjs';
 import { optionalType, typescriptType } from './vendor/return-types.mjs';
 import { classPattern } from './vendor/character-classes.mjs';
+import {sequencePattern,sequenceStates,RUST_SEQUENCE_HELPER} from './vendor/sequence-patterns.mjs';
 import { mapValueType } from './vendor/static-tables.mjs';
 import { recordShape,errorShape,carriesValue,payloadBoundary } from './vendor/aggregates.mjs';
 import { closedJsonValue,jsonResponseStatus } from './vendor/json-responses.mjs';
@@ -293,6 +294,13 @@ function emitter(program, target) {
       }
       case 'length': return rust ? expr.receiver.type==='utf16-string'?`(${expression(expr.receiver)}.len() as f64)`:`(${expression(expr.receiver)}.encode_utf16().count() as f64)` : `${expression(expr.receiver)}.length`;
       case 'codepoints': return rust ? expr.receiver.type==='utf16-string'?`(js_payload_points(${expression(expr.receiver)}).len() as f64)`:`(${expression(expr.receiver)}.chars().count() as f64)` : `[...${expression(expr.receiver)}].length`;
+      case 'sequence-test': {
+        if(!rust)return `/${sequencePattern(expr)}/${expr.unicode?'u':''}.test(${expression(expr.receiver)})`;
+        const iterator=expr.receiver.type==='utf16-string'?expr.unicode?'js_payload_points(observed).into_iter()':'observed.iter().map(|unit| *unit as u32)':`observed.${expr.unicode?'chars()':'encode_utf16()'}.map(|unit| unit as u32)`;
+        const some=value=>value===null?'None':`Some(${value})`;
+        const states=sequenceStates(expr).map(state=>`(${state.negated}, &[${state.ranges.map(range=>`(${range.low}, ${range.high})`).join(', ')}], ${some(state.next)}, ${some(state.epsilon)})`).join(', ');
+        return `({ let observed = ${expression(expr.receiver)}; js_sequence_test(${iterator}, &[${states}]) })`;
+      }
       case 'class-test': {
         if (!rust) return `/${classPattern(expr)}/${expr.unicode?'u':''}.test(${expression(expr.receiver)})`;
         const within=expr.ranges.map(({low,high})=>low===high?`unit == ${low}`:`(unit >= ${low} && unit <= ${high})`).join(' || ')||'false';
@@ -411,6 +419,7 @@ impl JsonResponseProjection {
 }`);
   for(const [type,record]of records)declarations.push(`#[derive(Clone)]\npub struct ${record.name}${carriesValue(type)?"<'a>":''} {\n${record.error?'    pub message: Vec<u16>,\n':''}${record.shape.map(([field,type])=>`    pub ${snakeFromCamel(field)}: ${rustContract(type)},`).join('\n')}\n}`);
   const helpers = rust ? [
+    serialized.includes('\"kind\":\"sequence-test\"')?RUST_SEQUENCE_HELPER:'',
     program.some(payloadBoundary)?PAYLOAD_HELPERS:'',
     program.some(item=>item.lossless)?PAYLOAD_GUARD_HELPERS:'',
     program.some(item=>item.params?.some(param=>param.type==='entry-value'))?`#[derive(Clone, Copy)]\npub struct JsEntry<'a> { pub key: &'a [u16], pub value: JsPayload<'a> }`:'',
