@@ -89,11 +89,12 @@ function serialize(ts, sourceFile, checker) {
     count++;
     const children = node.getChildren(sourceFile).map(encode).filter(Boolean);
     if (children.length) return [node.kind, children];
-    const text = node.getText(sourceFile);
+    const start = node.getStart(sourceFile);
+    const text = sourceFile.text.slice(start, node.end);
     if (!text || node.kind === ts.SyntaxKind.EndOfFileToken) return [node.kind, []];
     // Preserve line terminators because JavaScript automatic semicolon
     // insertion and postfix operators observe them; horizontal trivia is free.
-    const leading = sourceFile.text.slice(node.pos, node.getStart(sourceFile));
+    const leading = sourceFile.text.slice(node.pos, start);
     return [node.kind, text, /[\r\n]/u.test(leading) ? 1 : 0];
   };
   const tree=encode(sourceFile);

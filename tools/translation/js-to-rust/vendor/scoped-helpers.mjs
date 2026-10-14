@@ -3,7 +3,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {ownershipSyntax} from './module-syntax.mjs';
 import {parseMeta} from '../translator.mjs';
 import {toLino,lowerSourceClosure} from './ir.mjs';
-import {issueLexicalEnvironment,lexicalClosureName} from './lexical-environments.mjs';
+import {createLexicalEnvironmentIssuer,issueLexicalEnvironmentFrom,lexicalClosureName} from './lexical-environments.mjs';
 import {callbackProducerInputs,withCallbackInputs} from './callback-inputs.mjs';
 
 const globals=new Set(['Math','Number','Buffer','undefined']);
@@ -49,6 +49,7 @@ export function discoverScopedHelpers(source,owners,analyze,sourcePath=null) {
     ts.forEachChild(node,audit);
   };
   audit(file);
+  let lexicalIssuer;
   const items=[],program=[],checkedCallbacks=new Map(),inputFor=callbackProducerInputs({ts,file,checker,checkedCallbacks});
   const visit=node=>{
     if(isFunction(node)&&!isTop(node)) {
@@ -78,7 +79,8 @@ export function discoverScopedHelpers(source,owners,analyze,sourcePath=null) {
         // A failed environment attempt retains the complete previous refusal.
         // Parent execution and closure creation are still outside this draft.
         try {
-          const environment=issueLexicalEnvironment(source,start,end,sourcePath),closure=lowerSourceClosure(environment,lexicalClosureName(environment));
+          lexicalIssuer??=createLexicalEnvironmentIssuer(source,sourcePath);
+          const environment=issueLexicalEnvironmentFrom(lexicalIssuer,start,end),closure=lowerSourceClosure(environment,lexicalClosureName(environment));
           if(!isDeepStrictEqual(parseMeta(toLino(closure)),[closure]))throw Error('closure meta drift');
           program.push(closure);row.name=closure.name;row.status='translated';row.coverageContract='full-domain-body';row.environmentContract={schema:closure.environment.schema,parentCreationLowered:false};reason=null;
         } catch { /* complete original capture census remains authoritative */ }
