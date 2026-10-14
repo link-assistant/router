@@ -70,5 +70,61 @@ test('genuine Debug namespace outputs permit independent ordinary matches in JS 
 test('unchanged complete model source proves all six Debug owners but preserves independent original methods and refusals',{timeout:60000},()=>{
  const source=read('src/model_contract.rs');assert.equal(hash(source),'98bcf7cc0d91d5b0a4f2b30f6f79aebf6d8e761e9cb54372cd135379e5c3e11b');const args=setup(source),output=createDeriveBangContext({deriveContext:args.context});assert.equal(output.certificates.reduce((n,r)=>n+r.actualOwners.length,0),46);assert.equal(output.certificates.reduce((n,r)=>n+r.selectedOwners.length,0),46);assert.equal(output.certificates.reduce((n,r)=>n+r.residualOwners.length,0),0);assert.ok(output.certificates.every(r=>r.selectedOwners.some(o=>o.target.join('::')==='core::Debug')));assert.ok(output.certificates.every(r=>r.dimensions.bangMacroComplete));
  const policy=args.context.certificates.find(c=>c.name==='ModelAccessPolicy'),truth=args.context.certificates.find(c=>c.name==='ModelTruthDescriptor');for(const certificate of [policy,truth]){const attribute=certificate.attributes.find(a=>a.derives?.some(p=>p[0]==='Debug')),proof=proveBuiltinDeriveBangFootprint({...args,certificate,invocation:{path:['Debug'],attributeSpan:attribute.span}});assert.equal(proof.originalHelperOwners.length,certificate===policy?3:0);if(certificate===truth){assert.equal(proof.route.typedSource.fields.length,9);assert.equal(proof.route.branches[2].statements.length,2);}}
- const jsonMacroDependencies=loadJsonMacroSourceProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),result=translateProject({entry:'src/model_contract.rs',paths:['src/model_contract.rs'],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.executable.length,2);assert.equal(result.meta.checkedMethods.length,5);assert.equal(result.meta.refused.length,17);const generatedCloneRefusals=result.meta.refused.filter(row=>row.term==='generated-method'&&row.name.endsWith('.clone'));assert.deepEqual(generatedCloneRefusals.map(row=>row.name),['ModelRouteScope.clone','ModelTruthDescriptor.clone','ModelAccessPolicy.clone','ModelAccessError.clone','ServedModelError.clone']);assert.ok(generatedCloneRefusals.every(row=>/Builtin scalar (field|nested attribute)/.test(row.message)));assert.equal(result.meta.refused.filter(row=>!generatedCloneRefusals.includes(row)).length,12);assert.ok(result.meta.checkedMethods.some(row=>row.name==='ModelSelectorKind.permits_resolution'));assert.match(result.meta.refused.find(r=>r.name==='ModelSelectorKind.deserialize').message,/generic/);assert.match(result.meta.refused.find(r=>r.name==='validate_served_model_for_selector').message,/ok_or_else/);assert.equal(result.meta.checkedMethods.some(r=>r.name.endsWith('.fmt')),false);
+ const jsonMacroDependencies=loadJsonMacroSourceProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')}),result=translateProject({entry:'src/model_contract.rs',paths:['src/model_contract.rs'],readSource:()=>source,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.executable.length,2);assert.equal(result.meta.checkedMethods.length,5);assert.equal(result.meta.refused.length,17);const generatedCloneRefusals=result.meta.refused.filter(row=>row.term==='generated-method'&&row.name.endsWith('.clone'));assert.deepEqual(generatedCloneRefusals.map(row=>row.name),['ModelRouteScope.clone','ModelTruthDescriptor.clone','ModelAccessPolicy.clone','ModelAccessError.clone','ServedModelError.clone']);assert.deepEqual(generatedCloneRefusals.map(({file,name,term,kind,span,message})=>({file,name,term,kind,span,message})),[
+  {
+    "file": "src/model_contract.rs",
+    "name": "ModelRouteScope.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 3161,
+      "end": 3418
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: Option<String>"
+  },
+  {
+    "file": "src/model_contract.rs",
+    "name": "ModelTruthDescriptor.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 3636,
+      "end": 4148
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: Option<String>"
+  },
+  {
+    "file": "src/model_contract.rs",
+    "name": "ModelAccessPolicy.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 4598,
+      "end": 5231
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: Vec<String>"
+  },
+  {
+    "file": "src/model_contract.rs",
+    "name": "ModelAccessError.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 7059,
+      "end": 7267
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: String"
+  },
+  {
+    "file": "src/model_contract.rs",
+    "name": "ServedModelError.clone",
+    "term": "generated-method",
+    "kind": "unsupported",
+    "span": {
+      "start": 8584,
+      "end": 8793
+    },
+    "message": "Original Option Clone fields: requires actual primitive Clone/Copy payload: String"
+  }
+]);assert.equal(result.meta.refused.filter(row=>!generatedCloneRefusals.includes(row)).length,12);assert.ok(result.meta.checkedMethods.some(row=>row.name==='ModelSelectorKind.permits_resolution'));assert.match(result.meta.refused.find(r=>r.name==='ModelSelectorKind.deserialize').message,/generic/);assert.match(result.meta.refused.find(r=>r.name==='validate_served_model_for_selector').message,/ok_or_else/);assert.equal(result.meta.checkedMethods.some(r=>r.name.endsWith('.fmt')),false);
 });
