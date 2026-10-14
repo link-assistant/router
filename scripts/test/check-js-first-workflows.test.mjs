@@ -102,10 +102,11 @@ test('duplicate YAML keys are rejected rather than choosing a convenient one', (
   assert.ok(auditWorkflows(sources).some(error => error.includes('Map keys must be unique')));
 });
 
-test('Bun runtime is required for native JavaScript, compiled TypeScript and reverse translation', () => {
-  for (const id of ['bun-tests', 'typescript', 'reverse-translation']) {
+test('Bun runtime is required for lint engine checks, native JavaScript, compiled TypeScript and reverse translation', () => {
+  for (const id of ['lint', 'bun-tests', 'typescript', 'reverse-translation']) {
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps = workflow.jobs[id].steps.filter(step => !step.uses?.startsWith('oven-sh/setup-bun@')); }, 'pinned Bun runtime');
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.find(step => step.uses?.startsWith('oven-sh/setup-bun@')).with['bun-version'] = 'latest'; }, 'pinned Bun runtime');
+    fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.find(step => step.uses?.startsWith('oven-sh/setup-bun@')).uses = 'oven-sh/setup-bun@main'; }, 'pinned Bun runtime');
   }
 });
 
