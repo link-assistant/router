@@ -94,11 +94,13 @@ test('inner lint scope uses original bounded builtin syntax and retains conflict
   assert.equal(inertInnerLintItem(fake,'#[unknown] struct A;'),null);
 });
 
-test('actual builtin root lints retain independently locked derive namespace evidence',()=>{
+test('actual builtin root lints retain independently locked derive namespace evidence',async()=>{
   const source='#![allow(clippy::redundant_pub_crate)]\n#[derive(serde::Serialize)] pub struct Entry{value:u8} pub fn valid(value:u8)->u8{value}';
   const dependencies=deriveDependencyProfile({manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')}).proof;
   const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
-  assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,1);assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedTypeScope,false);assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedBangMacroScope,true);
+  assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,1);assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedTypeScope,false);assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedBangMacroScope,false);
+  const certificate=result.meta.deriveNamespaceFootprints.certificates[0];assert.equal(certificate.sourceSha256,hash(source));assert.ok(result.meta.executable.some(entry=>entry.name==='valid'));
+  await verifyTypedTargets(result,api=>{for(const value of [0n,7n,255n])assert.equal(api.valid(value),value);assert.throws(()=>api.valid(256n),RangeError);});
 });
 
 test('unchanged reverse-generated policy retains original tool syntax and executes its decimal status predicate',{timeout:30_000},async()=>{

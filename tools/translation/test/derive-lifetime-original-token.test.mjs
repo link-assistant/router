@@ -24,10 +24,10 @@ test('whole original token module translates signed-token carrier selection and 
   const result=project();
   assert.equal(result.meta.sources.length,5);for(const entry of result.meta.sources)assert.equal(entry.sha256,pins.get(entry.source));
   assert.equal(result.meta.runtimeParity,false);assert.ok(result.meta.refused.length,'JWT issuance, storage and generated traits remain unimplemented');
-  assert.ok(result.meta.refused.some(entry=>entry.name==='codex_token_alias'&&entry.message.includes('format!')));
+  const alias=result.executableDeclarations.find(entry=>entry.name==='codex_token_alias');assert.ok(alias);assert.equal(alias.sourceSha256,pins.get('src/token.rs'));assert.equal(alias.source,'src/token.rs');assert.equal(result.meta.refused.some(entry=>entry.name==='codex_token_alias'),false);
   const selector=result.meta.executable.find(entry=>entry.name==='token_jwt');assert.deepEqual(selector.span,{start:1536,end:1698});
   const certificate=result.meta.deriveNamespaceFootprints.certificates.find(entry=>entry.name==='TokenClaims');assert.ok(certificate);assert.equal(certificate.sourceSha256,pins.get('src/token.rs'));assert.equal(certificate.dimensions.bangMacroComplete,false);
-  assert.equal(result.meta.deriveNamespaceFootprints.diagnostics.some(entry=>['IssueRequest','RotateOverrides'].includes(entry.name)),false);
+  const standardDiagnostics=result.meta.deriveNamespaceFootprints.diagnostics.filter(entry=>['IssueRequest','RotateOverrides'].includes(entry.name));assert.deepEqual(standardDiagnostics.map(entry=>({name:entry.name,span:entry.span,message:entry.message})),[{name:'IssueRequest',span:{start:4827,end:6220},message:'Standard-only input retains a generic, helper, configuration or layout obligation'},{name:'RotateOverrides',span:{start:6488,end:7042},message:'Standard-only input retains a generic, helper, configuration or layout obligation'}]);assert.ok(standardDiagnostics.every(entry=>entry.source==='src/token.rs'));assert.equal(result.meta.deriveNamespaceFootprints.certificates.some(entry=>['IssueRequest','RotateOverrides'].includes(entry.name)),false);
   const target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),aliases=[];
   for(const [method,alias,span]of [['may_reach_repository','originalMayReach',{start:4132,end:4400}],['is_admin','originalIsAdmin',{start:4467,end:4555}]]){
     assert.deepEqual(result.meta.checkedMethods.find(entry=>entry.name==='TokenClaims.'+method)?.span,span);
@@ -35,6 +35,9 @@ test('whole original token module translates signed-token carrier selection and 
   }
   const suffix='\nexport {'+aliases.join(',')+'};';
   await verifyTypedTargets({...result,javascript:result.javascript+suffix,typescript:result.typescript+suffix},(api,_result,module)=>{
+    for(const [written,expected]of [['la_sk_signed.jwt','at-signed.jwt'],['la_sk_','at-'],['la_sk_at-x','at-at-x'],['la_sk_Ω😀','at-Ω😀']])assert.deepEqual(api.codex_token_alias(written),tag('Some',{field0:expected}));
+    for(const written of ['','la_sk','at-signed.jwt','LA_SK_x',' la_sk_x','prefix-la_sk_x','other'])assert.deepEqual(api.codex_token_alias(written),tag('None'));
+    for(const written of [null,undefined,0,new String('la_sk_x'),'la_sk_\ud800'])assert.throws(()=>api.codex_token_alias(written),TypeError);
     for(const [written,expected]of [['la_sk_signed.jwt','signed.jwt'],['at-signed.jwt','signed.jwt'],['la_sk_',''],['at-',''],['la_sk_at-x','at-x'],['at-la_sk_x','la_sk_x'],['la_sk_Ω😀','Ω😀'],['at-Ω😀','Ω😀']])assert.deepEqual(api.token_jwt(written),tag('Some',{field0:expected}));
     for(const written of ['','la_sk','at','LA_SK_x','AT-x',' la_sk_x','prefix-la_sk_x','other'])assert.deepEqual(api.token_jwt(written),tag('None'));
     for(const written of [null,undefined,0,new String('la_sk_x'),'la_sk_\ud800'])assert.throws(()=>api.token_jwt(written),TypeError);

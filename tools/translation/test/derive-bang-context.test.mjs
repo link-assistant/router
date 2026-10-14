@@ -116,13 +116,13 @@ test('complete unchanged original library captures its whole original source/der
   const input={modules:graph.modules,deriveContext,externalModules:deriveFootprintExternalModules(deriveContext),compilationProfile:PRODUCTION_PROFILE};
   completeOriginalInput={input,graph,deriveContext};
 });
-test('complete unchanged original library keeps omitted standard owners and unrelated root gaps',{timeout:60_000},()=>{
+test('complete unchanged original library closes CatalogRecord owners and retains unrelated root gaps',{timeout:60_000},()=>{
   assert.ok(completeOriginalInput,'the complete original graph must be captured');
   const {input,graph,deriveContext}=completeOriginalInput;
   const context=createDeriveBangContext(input),record=context.certificates.find(value=>value.source==='src/model_catalog.rs'&&value.span.start===1956);
   assert.ok(record);assert.equal(record.sourceSha256,'2972dab979148c9b1deb3ec2cfb4e2800e8445585044d93c629e83538be01ed5');
   assert.deepEqual(record.span,{start:1956,end:2355});assert.equal(record.itemSha256,'3a3ce14fae59aa072caeee14af08b6e3810b15caccb661c9165ccab3dc43132a');
-  assert.equal(record.dimensions.bangMacroComplete,false);assert.ok(record.residualOwners.some(owner=>owner.path[0]==='Debug'));
+  assert.equal(record.dimensions.bangMacroComplete,true);assert.deepEqual(record.residualOwners,[]);assert.equal(record.selectedOwners.length,6);assert.ok(record.selectedOwners.some(owner=>owner.target.join('::')==='core::Debug'));assert.equal(record.generatedImplBehavior,false);
   const bindings=resolve(input,context);assert.equal(bindings.scopes.find(scope=>scope.path.length===0).unresolvedBangMacroScope,true);
   assert.equal(deriveFootprintSourceContext(deriveContext).modules.length,graph.modules.length);
 });
