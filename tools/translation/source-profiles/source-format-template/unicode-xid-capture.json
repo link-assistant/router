@@ -1,0 +1,50 @@
+{
+  "url": "https://static.crates.io/crates/unicode-xid/unicode-xid-0.2.6.crate",
+  "crateSha256": "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853",
+  "crateBytes": 15744,
+  "source": "Rust1.89 workspace Cargo.lock",
+  "members": [
+    {
+      "path": "unicode-xid-0.2.6/src/lib.rs",
+      "archive": "unicode-xid-0.2.6_src_lib.rs.gz",
+      "bytes": 2979,
+      "sha256": "5ec8dbe7a10106d8798e8469986408ecfb60710e7f6a936e265283753c8d1a94",
+      "archiveBytes": 1173,
+      "archiveSha256": "406489597f95b341bc9548a05ce155da1d8aee61c00fb0fde5ca49244b2ac4d0"
+    },
+    {
+      "path": "unicode-xid-0.2.6/src/tables.rs",
+      "archive": "unicode-xid-0.2.6_src_tables.rs.gz",
+      "bytes": 52866,
+      "sha256": "6a886d9107d42e8dbec81fa7f4acbb6a82adcec4976b56f757551c7a61cf788d",
+      "archiveBytes": 7180,
+      "archiveSha256": "c96dea4ae58be9884a81331a8f0441869af8ca5e94d55da559f0739561522cd7"
+    },
+    {
+      "path": "unicode-xid-0.2.6/Cargo.toml",
+      "archive": "unicode-xid-0.2.6_Cargo.toml.gz",
+      "bytes": 1518,
+      "sha256": "030ed8e60fcd73b831f174ab2df10e0f913d5d1476909c92aee26849323370f3",
+      "archiveBytes": 796,
+      "archiveSha256": "4df08d8c56fd8ab8c50438dc06662103ec95dcbec5e1905bc068d3722c716b26"
+    },
+    {
+      "path": "unicode-xid-0.2.6/LICENSE-MIT",
+      "archive": "unicode-xid-0.2.6_LICENSE-MIT.gz",
+      "bytes": 1071,
+      "sha256": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
+      "archiveBytes": 652,
+      "archiveSha256": "f4865d8e80f887255a0b449f8b0d4d5961ab0b2db8003eae84829d96af02e587"
+    },
+    {
+      "path": "unicode-xid-0.2.6/LICENSE-APACHE",
+      "archive": "unicode-xid-0.2.6_LICENSE-APACHE.gz",
+      "bytes": 10847,
+      "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+      "archiveBytes": 3940,
+      "archiveSha256": "31cd5c988a03f359c79ffd86104335779b692f972595e34078367b1f5f5d77eb"
+    }
+  ],
+  "namespaceAuthority": false,
+  "runtimeAuthority": false
+}

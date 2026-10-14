@@ -4,6 +4,9 @@
 import {TupleRustParser,TupleChecker,TupleEmitter} from './tuples.mjs';
 import {STRING} from '../checked-types.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+import {capturedRustTokenSource} from './lexical.mjs';
+import {loadSourceFormatTemplateControl,executeSourceFormatTemplate,checkedSourceFormatPieces} from '../source-format-template.mjs';
+import {metadataDigest} from './source-links.mjs';
 const span=(first,last)=>({start:first.start,end:last.end});
 const control=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(control):control(value))));
 const identifier=/^(?:[\p{L}_][\p{L}\p{N}_]*)$/u;
@@ -53,7 +56,16 @@ export class FormatRustParser extends TupleRustParser {
       args.push({name,value:this.expr(path)});if(!c.eat(','))break;
     }
     const close=c.expect(closing,'format macro');
-    return {k:'routerFormat',args,pieces:formatParts(template,args,path,(segments,owner)=>this.resolve(segments,owner)),templateProvenance:{span:template.span},span:span(token,close)};
+    let pieces,sourceTemplateControl;
+    const original=capturedRustTokenSource(c.tokens);
+    if(!args.length&&original){
+      const program=loadSourceFormatTemplateControl();
+      try{
+        const execution=executeSourceFormatTemplate(program,original.source.slice(template.span.start,template.span.end),template.value);
+        pieces=checkedSourceFormatPieces(execution,name=>this.resolve([name],path),template.span);sourceTemplateControl=execution;
+      }catch(error){if(!(error instanceof TypeError))throw error;}
+    }
+    return {k:'routerFormat',args,pieces:pieces??formatParts(template,args,path,(segments,owner)=>this.resolve(segments,owner)),...(sourceTemplateControl?{sourceTemplateControl}:{}),templateProvenance:{span:template.span},span:span(token,close)};
   }
 }
 
@@ -62,13 +74,21 @@ export class FormatChecker extends TupleChecker {
     if(node.k==='routerOwnedString'){const value=this.expr(node.value,env,path,expected,allowLiteral);return {...value,type:{...value.type,patternOwnershipRefusal:'owned String construction'}};}
     if(node.k!=='routerFormat')return super.expr(node,env,path,expected,allowLiteral);
     env=this.contextEnvironment(node,env,expected);
+    if(node.sourceTemplateControl){
+      // Parse IR is copied during original source relocation. Its literal
+      // receipt supplies inputs only: run the pinned helpers again to obtain a
+      // fresh private execution identity, and compare the entire result.
+      const receipt=node.sourceTemplateControl,execution=executeSourceFormatTemplate(loadSourceFormatTemplateControl(),receipt.raw,receipt.value);
+      const pieces=checkedSourceFormatPieces(execution,name=>node.pieces.find(piece=>piece.capture?.name===name)?.capture.path,node.templateProvenance.span);
+      if(metadataDigest(execution)!==metadataDigest(receipt)||metadataDigest(pieces)!==metadataDigest(node.pieces)||node.args.length)throw unsupported('source format template proof','requires the original executed capture pieces',node.span);
+    }
     const bindings=[],captures=new Map();
     const bind=value=>{let name;do{name=this.freshName('ml_fmt_');}while(env.has(name));bindings.push({name,value});return {k:'var',name,type:value.type,span:node.span};};
     const arguments_=node.args.map(arg=>{if(control(arg.value))throw unsupported('format argument control','nonlocal exits require statement lowering',arg.value.span);return bind(this.expr(arg.value,env,path));});
     const values=node.pieces.map(piece=>{
       if(Object.hasOwn(piece,'text'))return {k:'lit',value:piece.text,type:STRING,span:node.span};
       let value=arguments_[piece.argument];
-      if(piece.capture){const {name,path:resolved}=piece.capture;if(!captures.has(name))captures.set(name,bind(this.expr({k:'name',path:env.has(name)?[name]:resolved,span:node.span},env,path)));value=captures.get(name);}
+      if(piece.capture){const {name,path:resolved}=piece.capture;if(!captures.has(name))captures.set(name,bind(this.expr({k:'name',path:env.has(name)?[name]:resolved,span:piece.sourcePosition?.span??node.span},env,path)));value=captures.get(name);}
       if(!['fixed','bool','string'].includes(value.type.kind))throw unsupported('format trait','requires an actual checked primitive Display implementation',node.span);
       if(!piece.spec)return {k:'toString',arg:value,type:STRING,span:node.span};
       if(value.type.kind==='string') {
@@ -87,7 +107,7 @@ export class FormatChecker extends TupleChecker {
     const body=values.length?values.reduce((left,right)=>({k:'binary',op:'concat',left,right,type:STRING,span:node.span})):{k:'lit',value:'',type:STRING,span:node.span};
     const type={...STRING,patternOwnershipRefusal:'owned String formatting'};
     const checked=bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type,span:node.span}),{...body,type});
-    return {...checked,formatProvenance:{sourceTemplateSpan:node.templateProvenance.span,sourceMacroSpan:node.span,profile:'checked-primitive-format-v1',explicitArgumentCount:node.args.length}};
+    return {...checked,formatProvenance:{sourceTemplateSpan:node.templateProvenance.span,sourceMacroSpan:node.span,profile:'checked-primitive-format-v1',explicitArgumentCount:node.args.length,...(node.sourceTemplateControl?{sourceControl:{schema:node.sourceTemplateControl.schema,originRanges:node.sourceTemplateControl.originRanges,argPlaces:node.sourceTemplateControl.argPlaces,helperTrace:node.sourceTemplateControl.trace,namespaceAuthority:false,traitSelectionVerified:false}}:{})}};
   }
 }
 
