@@ -13,7 +13,13 @@ import { validateRustValue as ml_validate_rust_value } from "../runtime/type-lay
 
 import { serde_json_value_as_str as ml_host_serde_json_value_as_str, serde_json_value_as_i64 as ml_host_serde_json_value_as_i64 } from "../runtime/json-runtime.mjs";
 
+import { assertImmutableCopy as ml_assert_immutable_copy } from "../runtime/copy-runtime.mjs";
+
 import { stringSplitCharacter as ml_csv_split, stringSplitNext as ml_csv_split_next, allocateStringItem as ml_csv_allocate } from "../runtime/csv-string-runtime.mjs";
+
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
 
 const ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 = {"schemaVersion":1,"types":{"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
 
@@ -28,8 +34,6 @@ function ml_host_result_ok(value) { return value.$ === 'Ok' ? Object.freeze({ $:
 function ml_host_option_map(value, callback) { return value.$ === 'Some' ? Object.freeze({ $: 'Some', field0: callback(value.field0) }) : Object.freeze({ $: 'None' }); }
 
 function ml_host_option_map_or(value, defaultValue, callback) { return value.$ === 'Some' ? callback(value.field0) : defaultValue; }
-
-function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
 
 function rp_766b2e4150495f56455253494f4e() {
   return "5.199";
@@ -90,7 +94,23 @@ function rp_766b2e69735f70726976617465(peer_id, from_id) {
 
 function rp_766b2e6a736f6e5f7473(value) {
   ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
-  return ml_host_option_bind(ml_host_option_map(ml_host_serde_json_value_as_str(value), (ml_standard_callback_0_0) => { return ml_csv_allocate(ml_standard_callback_0_0); }), () => { return ml_host_option_map(ml_host_serde_json_value_as_i64(value), (ts) => { return String(ts); }); }, "or_else");
+  return (() => {
+    const ml_standard_body_3 = ml_host_option_map(ml_host_serde_json_value_as_str(value), (ml_standard_callback_0_0) => { return ml_csv_allocate(ml_standard_callback_0_0); });
+    switch (ml_standard_body_3.$) {
+      case "None": {
+        const ml_standard_capture_domain_2 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+        return ml_host_option_map(ml_host_serde_json_value_as_i64(value), (ts) => { return String(ts); });
+      }
+      case "Some": {
+        const ml_standard_alias_field = ml_standard_body_3.field0;
+        const x = ml_standard_body_3;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_3);
+      }
+    }
+  })();
 }
 
 export const translated = { ["API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["WAIT_SECS"]: rp_766b2e574149545f53454353(), ["ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["LongPollServer"]: ml_make_LongPollServer_LongPollServer, ["is_private"]: rp_766b2e69735f70726976617465, ["json_ts"]: rp_766b2e6a736f6e5f7473 };

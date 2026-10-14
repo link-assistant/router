@@ -8,9 +8,9 @@ import { serde_json_value_get_string as ml_host_serde_json_value_get_string, ser
 
 import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from "../runtime/fixed-integer-runtime.mjs";
 
-import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
+import { assertImmutableCopy as ml_assert_immutable_copy, assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
 
-import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
+import { copyFixedArray as ml_copy_fixed_array } from "../runtime/fixed-array-runtime.mjs";
 
 import { assertImmutableIterator as ml_pattern_immutable_view, assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
 
@@ -80,37 +80,52 @@ try {
   const total = (ml_pattern_1)["field0"];
   const input = (ml_pattern_1)["field1"];
   const output = (ml_pattern_1)["field2"];
-  return ml_host_option_bind(total, () => { return Object.freeze({ $: 'Some', field0: ml_host_rust_fixed_saturating_add_u64((() => {
-    const ml_standard_body_1 = input;
-    const ml_standard_body_2 = 0n;
+  return (() => {
+    const ml_standard_body_1 = total;
     switch (ml_standard_body_1.$) {
       case "None": {
-        return ml_standard_body_2;
+        return Object.freeze({ $: 'Some', field0: ml_host_rust_fixed_saturating_add_u64((() => {
+          const ml_standard_body_1_2 = input;
+          const ml_standard_body_2 = 0n;
+          switch (ml_standard_body_1_2.$) {
+            case "None": {
+              return ml_standard_body_2;
+            }
+            case "Some": {
+              const x = ml_standard_body_1_2.field0;
+              return x;
+            }
+            default: {
+              return ml_router_unexpected(ml_standard_body_1_2);
+            }
+          }
+        })(), (() => {
+          const ml_standard_body_1_3 = output;
+          const ml_standard_body_2_2 = 0n;
+          switch (ml_standard_body_1_3.$) {
+            case "None": {
+              return ml_standard_body_2_2;
+            }
+            case "Some": {
+              const x_2 = ml_standard_body_1_3.field0;
+              return x_2;
+            }
+            default: {
+              return ml_router_unexpected(ml_standard_body_1_3);
+            }
+          }
+        })()) });
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
-        return x;
+        const ml_standard_alias_field = ml_standard_body_1.field0;
+        const x_3 = ml_standard_body_1;
+        return x_3;
       }
       default: {
         return ml_router_unexpected(ml_standard_body_1);
       }
     }
-  })(), (() => {
-    const ml_standard_body_1_2 = output;
-    const ml_standard_body_2_2 = 0n;
-    switch (ml_standard_body_1_2.$) {
-      case "None": {
-        return ml_standard_body_2_2;
-      }
-      case "Some": {
-        const x_2 = ml_standard_body_1_2.field0;
-        return x_2;
-      }
-      default: {
-        return ml_router_unexpected(ml_standard_body_1_2);
-      }
-    }
-  })()) }); }, "or_else");
+  })();
 
 } catch (ml_router_error) { if (ml_router_propagated(ml_router_error)) return ml_router_error.value; throw ml_router_error; }
 }
@@ -153,7 +168,23 @@ function rp_75736167652e746f6b656e5f7061727473(value) {
     }
   } else {
   }
-  return ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(value, "response"), () => { return ml_host_serde_json_value_get_string(value, "message"); }, "or_else"), (ml_host_callback_27_0) => { return rp_75736167652e746f6b656e5f7061727473(ml_host_callback_27_0); }, "and_then");
+  return ml_host_option_bind((() => {
+    const ml_standard_body_29 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(value, "response"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+    switch (ml_standard_body_29.$) {
+      case "None": {
+        const ml_standard_capture_domain_28 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+        return ml_host_serde_json_value_get_string(value, "message");
+      }
+      case "Some": {
+        const ml_standard_alias_field = ml_standard_body_29.field0;
+        const x = ml_standard_body_29;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_29);
+      }
+    }
+  })(), (ml_host_callback_0_0) => { return rp_75736167652e746f6b656e5f7061727473(ml_host_callback_0_0); }, "and_then");
 }
 
 function rp_75736167652e66697273745f753634(value, fields) {

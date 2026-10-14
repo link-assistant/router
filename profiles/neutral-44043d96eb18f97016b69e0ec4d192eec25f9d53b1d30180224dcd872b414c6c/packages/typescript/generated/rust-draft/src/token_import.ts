@@ -38,6 +38,10 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 = Reado
 type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64 = Readonly<{ readonly "$": "Negative" }> | Readonly<{ readonly "$": "OverflowOrNan" }>;
 // Generated draft from src/token_import.rs; sha256=cab8e9946b0f348c195d39ac22b0a90e97e3d254c3d5c3fa2058bbc1742c69c8
 // Carried constructs are data, never runtime parity evidence.
+function rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(): string {
+  return "token-import-backups";
+}
+
 function ml_make_ImportMode_MergeMissing(): Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> {
   return Object.freeze({ $: 'MergeMissing' });
 }
@@ -70,5 +74,5 @@ const serde_json = {
   },
 };
 
-export const translated: { "ImportMode": Readonly<{ "MergeMissing": () => Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }>; "Replace": () => Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> }> } = { ["ImportMode"]: Object.freeze({ ["MergeMissing"]: ml_make_ImportMode_MergeMissing, ["Replace"]: ml_make_ImportMode_Replace }) };
-export const provenance = {"sourcePath":"src/token_import.rs","sourceSha256":"cab8e9946b0f348c195d39ac22b0a90e97e3d254c3d5c3fa2058bbc1742c69c8","executable":1,"executableFunctions":0,"executableConstants":0,"executableTypes":1,"executableConstructors":2,"carried":25,"preserved":27,"runtimeParity":false};
+export const translated: { "BACKUP_DIRECTORY": string; "ImportMode": Readonly<{ "MergeMissing": () => Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }>; "Replace": () => Readonly<{ readonly "$": "MergeMissing" }> | Readonly<{ readonly "$": "Replace" }> }> } = { ["BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["ImportMode"]: Object.freeze({ ["MergeMissing"]: ml_make_ImportMode_MergeMissing, ["Replace"]: ml_make_ImportMode_Replace }) };
+export const provenance = {"sourcePath":"src/token_import.rs","sourceSha256":"cab8e9946b0f348c195d39ac22b0a90e97e3d254c3d5c3fa2058bbc1742c69c8","executable":2,"executableFunctions":0,"executableConstants":1,"executableTypes":1,"executableConstructors":2,"carried":24,"preserved":27,"runtimeParity":false};

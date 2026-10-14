@@ -1,9 +1,11 @@
 // Snapshot source Copy arrays before user code can observe or mutate aliases.
 import {types} from 'node:util';
+import {assertImmutableCopy} from './copy-runtime.mjs';
 export function copyFixedArray(value,type) {
   const active=new Set();let cells=16000;
   function copy(current,expected,depth) {
     if(--cells<0||depth>32)throw new TypeError('Copy array exceeds the checked value bound');
+    if(expected?.kind==='data'){if(!current||typeof current!=='object'||types.isProxy(current)||Array.isArray(current)||Object.getPrototypeOf(current)!==Object.prototype)throw new TypeError('Copy nominal array requires ordinary immutable records');assertImmutableCopy(current);return current;}
     if(expected?.kind!=='array') {
       let valid=false;
       if(expected?.kind==='unit')valid=current===null;

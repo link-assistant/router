@@ -3394,6 +3394,12 @@ function rp_6c6f67696e5f6170692e7265717565737465645f70726f7669646572(value: Read
   }
 }
 
+function rp_6c6f67696e5f6170692e6d6c5f696d706c5f3633373236313734363532653663366636373639366535663631373036393265343236353637363936653463366636373639366535323635373137353635373337345f3634363536363631373536633734(): Readonly<{ readonly "$": "BeginLoginRequest"; readonly "provider": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "mode": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }> {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "BeginLoginRequest", ["provider"]: ml_record1, ["mode"]: ml_record2 });
+}
+
 function rp_6c6f67696e5f7074792e5054595f434f4c53(): bigint {
   return 400n;
 }
@@ -3486,6 +3492,12 @@ function rp_6d616e616765645f7365727665722e72756e5f6c656173652e484541525442454154
 
 function rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259(): string {
   return "server-trust";
+}
+
+function rp_6d6574726963732e6d6c5f696d706c5f3633373236313734363532653664363537343732363936333733326535343666366236353665353537333631363736355f3634363536363631373536633734(): Readonly<{ readonly "$": "TokenUsage"; readonly "label": string; readonly "requests": bigint }> {
+  const ml_record1 = "";
+  const ml_record2 = 0n;
+  return Object.freeze({ $: "TokenUsage", ["label"]: ml_record1, ["requests"]: ml_record2 });
 }
 
 function rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(): Readonly<{ readonly "$": "Duration"; readonly "secs": bigint; readonly "nanos": bigint }> {
@@ -3628,6 +3640,14 @@ function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f3633373236313734363532
   const ml_record2 = requested;
   const ml_record3 = Object.freeze([]);
   return Object.freeze({ $: "ModelAccessError", ["code"]: ml_record1, ["requested_model"]: ml_record2, ["allowed_models"]: ml_record3 });
+}
+
+function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f3633373236313734363532653664366636343635366335663633366636653734373236313633373432653464366636343635366335323666373537343635353336333666373036355f3634363536363631373536633734(): Readonly<{ readonly "$": "ModelRouteScope"; readonly "provider": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "account": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "endpoint": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "protocols": ReadonlyArray<string> }> {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze([]);
+  return Object.freeze({ $: "ModelRouteScope", ["provider"]: ml_record1, ["account"]: ml_record2, ["endpoint"]: ml_record3, ["protocols"]: ml_record4 });
 }
 
 function rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e4d41585f414e5448524f5049435f50414745(): bigint {
@@ -4247,6 +4267,13 @@ function rp_726566726573682e6d6c5f696d706c5f363337323631373436353265373236353636
   return Object.freeze({ $: "ImportRefreshFailure", ["kind"]: ml_record1, ["message"]: ml_record2 });
 }
 
+function rp_726566726573682e6d6c5f696d706c5f363337323631373436353265373236353636373236353733363832653532363536363732363537333638353236353733373036663665373336355f3634363536363631373536633734(): Readonly<{ readonly "$": "RefreshResponse"; readonly "access_token": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "refresh_token": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "expires_in": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> }> {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "RefreshResponse", ["access_token"]: ml_record1, ["refresh_token"]: ml_record2, ["expires_in"]: ml_record3 });
+}
+
 function rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45(): string {
   return "refresh-rejections.lino";
 }
@@ -4518,6 +4545,12 @@ function rp_726573706f6e73655f616666696e6974792e6d6c5f696d706c5f3633373236313734
   }
 }
 
+function rp_726573706f6e73655f616666696e6974792e6d6c5f696d706c5f3633373236313734363532653732363537333730366636653733363535663631363636363639366536393734373932653431363636363639366536393734373934363639366336355f3634363536363631373536633734(): Readonly<{ readonly "$": "AffinityFile"; readonly "version": bigint; readonly "records": ReadonlyArray<Readonly<{ readonly "$": "ResponseAffinity"; readonly "namespace": Readonly<{ readonly "$": "OpenAiResponses" }> | Readonly<{ readonly "$": "CodexResponses" }> | Readonly<{ readonly "$": "QwenResponses" }> | Readonly<{ readonly "$": "OpenAiChat" }> | Readonly<{ readonly "$": "CodexChat" }> | Readonly<{ readonly "$": "QwenChat" }> | Readonly<{ readonly "$": "OpenAiConversations" }> | Readonly<{ readonly "$": "CodexConversations" }> | Readonly<{ readonly "$": "QwenConversations" }> | Readonly<{ readonly "$": "OpenAiConversationItems" }> | Readonly<{ readonly "$": "CodexConversationItems" }> | Readonly<{ readonly "$": "QwenConversationItems" }> | Readonly<{ readonly "$": "OpenAiRealtimeCalls" }> | Readonly<{ readonly "$": "CodexRealtimeCalls" }> | Readonly<{ readonly "$": "AnthropicFiles" }> | Readonly<{ readonly "$": "AnthropicBatches" }> | Readonly<{ readonly "$": "AnthropicSkills" }> | Readonly<{ readonly "$": "AnthropicSkillVersions" }> | Readonly<{ readonly "$": "CodexFiles" }> | Readonly<{ readonly "$": "CodexMcpSessions" }> | Readonly<{ readonly "$": "CodexPluginInstalls" }> | Readonly<{ readonly "$": "CodexPluginUploads" }> | Readonly<{ readonly "$": "CodexWorkspacePlugins" }>; readonly "response_id": string; readonly "owner": Readonly<{ readonly "$": "ResponseOwner"; readonly "client_kind": string; readonly "principal_id": string }>; readonly "destination": Readonly<{ readonly "$": "StoredProvider"; readonly "name": string; readonly "provider_kind": Readonly<{ readonly "$": "OpenAICompatible" }> | Readonly<{ readonly "$": "Lefine" }> | Readonly<{ readonly "$": "ZaiCodingPlan" }>; readonly "base_url": string }> | Readonly<{ readonly "$": "Subscription"; readonly "provider": Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "Qwen" }>; readonly "account": string; readonly "upstream_account_id": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "base_url": string }>; readonly "parent_id": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "created_at": bigint; readonly "expires_at": bigint }>> }> {
+  const ml_record1 = 0n;
+  const ml_record2 = Object.freeze([]);
+  return Object.freeze({ $: "AffinityFile", ["version"]: ml_record1, ["records"]: ml_record2 });
+}
+
 function rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579(event: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): Readonly<{ readonly "$": "Tuple"; readonly "field0": bigint; readonly "field1": bigint }> {
   ml_validate_rust_value(event, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return Object.freeze({ $: 'Tuple', field0: (() => {
@@ -4767,6 +4800,12 @@ function rp_726f7574655f636f6e74726163742e736572766963655f626173655f70617468(ser
 
 function rp_726f7574655f636f6e74726163742e74797065732e52454d4f5645445f524f55544553(): ReadonlyArray<Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": string }>> {
   return Object.freeze(Object.freeze([Object.freeze({ $: 'Tuple', field0: "GET", field1: "/health" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/health/subscriptions" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/v1/messages" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/v1/chat/completions" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/v1/models" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/anthropic/v1/messages" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/openai/v1/responses" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/codex/v1/responses" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/qwen/v1/chat/completions" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/api/gemini/v1beta/models" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/vertex/v1/projects/p/locations/l/models/m:rawPredict" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/invoke" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/api/tokens" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/api/providers" }), Object.freeze({ $: 'Tuple', field0: "POST", field1: "/api/login" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/api/admin/status" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/metrics" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/user" }), Object.freeze({ $: 'Tuple', field0: "GET", field1: "/actor/code" })]));
+}
+
+function rp_726f7574696e675f6170692e6d6c5f696d706c5f36333732363137343635326537323666373537343639366536373566363137303639326534333666366636633634366637373665353236353733363537345f3634363536363631373536633734(): Readonly<{ readonly "$": "CooldownReset"; readonly "account": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "model": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }> {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "CooldownReset", ["account"]: ml_record1, ["model"]: ml_record2 });
 }
 
 function rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(): bigint {
@@ -5297,6 +5336,12 @@ function rp_746f6b656e2e6d6c5f696d706c5f3633373236313734363532653734366636623635
 function rp_746f6b656e2e6d6c5f696d706c5f363337323631373436353265373436663662363536653265353436663662363536653433366336313639366437335f36393733356636313634366436393665(router_self: Readonly<{ readonly "$": "TokenClaims"; readonly "sub": string; readonly "iat": bigint; readonly "exp": bigint; readonly "label": string; readonly "scope": string; readonly "github_repos": ReadonlyArray<string>; readonly "client_kind": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "principal_id": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }>): boolean {
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_746f6b656e2e546f6b656e436c61696d73"}, ml_host_value_schema_69da64c3e990888186d6801a2a09e10e0f0cc8cb0f47c9766f5cfee867f73099, { refinements: ml_host_value_refinements_69da64c3e990888186d6801a2a09e10e0f0cc8cb0f47c9766f5cfee867f73099 });
   return ((router_self).scope === rp_746f6b656e2e41444d494e5f53434f5045());
+}
+
+function rp_746f6b656e5f61646d696e2e6d6c5f696d706c5f3633373236313734363532653734366636623635366535663631363436643639366532653532366637343631373436353534366636623635366535323635373137353635373337345f3634363536363631373536633734(): Readonly<{ readonly "$": "RotateTokenRequest"; readonly "ttl_hours": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>; readonly "label": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }> {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "RotateTokenRequest", ["ttl_hours"]: ml_record1, ["label"]: ml_record2 });
 }
 
 function rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(): string {

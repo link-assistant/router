@@ -122,31 +122,31 @@ function rp_636861745f61646d696e2e4d41585f53455353494f4e53(): bigint {
 function rp_636861745f61646d696e2e6e6f726d616c697365(word: string): string {
   if (!(typeof word === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(word))) throw new TypeError('argument outside supported Rust value domain');
   const word_2 = (() => {
-    const ml_standard_body_1 = (() => {
-      const ml_text_3 = word;
-      const ml_text_4 = "/";
-      return (ml_text_3.startsWith(ml_text_4)?Object.freeze({ $: 'Some', field0: ml_text_3.slice(ml_text_4.length) }):Object.freeze({ $: 'None' }));
+    const ml_standard_body_3 = (() => {
+      const ml_text_1 = word;
+      const ml_text_2 = "/";
+      return (ml_text_1.startsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(ml_text_2.length) }):Object.freeze({ $: 'None' }));
     })();
-    const ml_standard_body_2 = word;
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_4 = word;
+    switch (ml_standard_body_3.$) {
       case "None": {
-        return ml_standard_body_2;
+        return ml_standard_body_4;
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
+        const x = ml_standard_body_3.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_3);
       }
     }
   })();
   const word_3 = ml_host_option_map_or((() => {
-    const ml_text_9 = word_2;
-    const ml_text_10 = "@";
-    return (()=>{const index=ml_text_9.indexOf(ml_text_10);return index<0?Object.freeze({ $: 'None' }):Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: ml_text_9.slice(0,index), field1: ml_text_9.slice(index+ml_text_10.length) }) });})();
-  })(), word_2, (ml_pattern_callback_11) => { ml_pattern_immutable(ml_pattern_callback_11);
-  const name = (ml_pattern_callback_11)["field0"];
+    const ml_text_7 = word_2;
+    const ml_text_8 = "@";
+    return (()=>{const index=ml_text_7.indexOf(ml_text_8);return index<0?Object.freeze({ $: 'None' }):Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Tuple', field0: ml_text_7.slice(0,index), field1: ml_text_7.slice(index+ml_text_8.length) }) });})();
+  })(), word_2, (ml_pattern_callback_9) => { ml_pattern_immutable(ml_pattern_callback_9);
+  const name = (ml_pattern_callback_9)["field0"];
   return name; });
   return word_3.toLowerCase();
 }

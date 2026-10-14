@@ -126,7 +126,7 @@ function rp_6465706c6f792e72756e74696d652e636f6d70616374(text: string): string {
 
 function rp_6465706c6f792e72756e74696d652e70617273655f6e616d6573(rendered: string): ReadonlyArray<string> {
   if (!(typeof rendered === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(rendered))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_collect(ml_router_map(ml_router_filter(ml_router_map(ml_str_lines(rendered), (ml_standard_callback_28_0) => { return (ml_standard_callback_28_0).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''); }), (name) => { return !(name.length === 0); }), (ml_standard_callback_29_0) => { return ml_csv_allocate(ml_standard_callback_29_0); }));
+  return ml_router_collect(ml_router_map(ml_router_filter(ml_router_map(ml_str_lines(rendered), (ml_standard_callback_37_0) => { return (ml_standard_callback_37_0).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''); }), (name) => { return !(name.length === 0); }), (ml_standard_callback_38_0) => { return ml_csv_allocate(ml_standard_callback_38_0); }));
 }
 
 function rp_6465706c6f792e72756e74696d652e69735f616273656e74(error: string): boolean {

@@ -150,22 +150,22 @@ function rp_6769745f70726f78792e73636f70655f61646d697473(allowed_repositories, r
 function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path) {
   if (!(typeof path === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(path))) throw new TypeError('argument outside supported Rust value domain');
   return (() => {
-    const ml_standard_body_1 = (() => {
+    const ml_standard_body_3 = (() => {
       const ml_text_1 = path;
       const ml_text_2 = "/api/services/github";
       return (ml_text_1.startsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(ml_text_2.length) }):Object.freeze({ $: 'None' }));
     })();
-    const ml_standard_body_2 = path;
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_4 = path;
+    switch (ml_standard_body_3.$) {
       case "None": {
-        return ml_standard_body_2;
+        return ml_standard_body_4;
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
+        const x = ml_standard_body_3.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_3);
       }
     }
   })();

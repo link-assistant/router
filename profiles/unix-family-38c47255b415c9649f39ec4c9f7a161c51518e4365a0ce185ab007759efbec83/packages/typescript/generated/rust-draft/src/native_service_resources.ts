@@ -46,9 +46,9 @@ function ml_router_collect<T>(values: Iterable<T>) { return Object.freeze(Array.
 function split_tail(tail: string): ReadonlyArray<string> {
   if (!(typeof tail === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(tail))) throw new TypeError('argument outside supported Rust value domain');
   return ml_router_collect(ml_router_filter(ml_csv_split((() => {
-    const ml_text_17 = tail;
-    const ml_text_18 = "/";
-    return (()=>{let text=ml_text_17;if(ml_text_18.length===0)return text;while(text.startsWith(ml_text_18))text=text.slice(ml_text_18.length);while(text.endsWith(ml_text_18))text=text.slice(0,text.length-ml_text_18.length);return text;})();
+    const ml_text_23 = tail;
+    const ml_text_24 = "/";
+    return (()=>{let text=ml_text_23;if(ml_text_24.length===0)return text;while(text.startsWith(ml_text_24))text=text.slice(ml_text_24.length);while(text.endsWith(ml_text_24))text=text.slice(0,text.length-ml_text_24.length);return text;})();
   })(), "/"), (segment) => { return !(segment.length === 0); }));
 }
 

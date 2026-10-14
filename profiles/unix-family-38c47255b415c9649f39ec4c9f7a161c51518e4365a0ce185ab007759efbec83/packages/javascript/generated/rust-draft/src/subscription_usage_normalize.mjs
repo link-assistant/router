@@ -10,7 +10,7 @@ import { serde_json_value_get_string as ml_host_serde_json_value_get_string, ser
 
 import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from "../runtime/fixed-integer-runtime.mjs";
 
-import { assertImmutableCopy as ml_pattern_immutable } from "../runtime/copy-runtime.mjs";
+import { assertImmutableCopy as ml_pattern_immutable, assertImmutableCopy as ml_assert_immutable_copy } from "../runtime/copy-runtime.mjs";
 
 import { assertImmutableIterator as ml_pattern_immutable_view, assertImmutableIterator as ml_assert_immutable_iterator } from "../runtime/iterator-runtime.mjs";
 
@@ -53,6 +53,10 @@ function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') r
 
 const ml_host_rust_fixed_saturating_add_u64 = ml_create_fixed_integer_runtime({"kind":"fixed","bits":64,"signed":false}).rust_fixed_saturating_add;
 
+function ml_router_unexpected(value) {
+  throw new TypeError(`unexpected constructor ${value.$}`);
+}
+
 function rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e414e5448524f5049435f57494e444f5753() {
   return ml_copy_fixed_array(["five_hour", "seven_day", "seven_day_oauth_apps", "seven_day_opus", "seven_day_sonnet", "cinder_cove"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":6}});
 }
@@ -77,7 +81,23 @@ try {
 
 function rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e72657365745f637265646974735f617661696c61626c65(value) {
   ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
-  return ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits"), () => { return ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits_summary"); }, "or_else"), (credits) => { return ml_host_serde_json_value_get_string(credits, "available_count"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
+  return ml_host_option_bind(ml_host_option_bind((() => {
+    const ml_standard_body_2 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+    switch (ml_standard_body_2.$) {
+      case "None": {
+        const ml_standard_capture_domain_1 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+        return ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits_summary");
+      }
+      case "Some": {
+        const ml_standard_alias_field = ml_standard_body_2.field0;
+        const x = ml_standard_body_2;
+        return x;
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_body_2);
+      }
+    }
+  })(), (credits) => { return ml_host_serde_json_value_get_string(credits, "available_count"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
 }
 
 export const translated = { ["ANTHROPIC_WINDOWS"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e414e5448524f5049435f57494e444f5753(), ["numeric_message_estimate"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e6e756d657269635f6d6573736167655f657374696d617465, ["reset_credits_available"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e72657365745f637265646974735f617661696c61626c65 };

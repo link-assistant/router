@@ -43,18 +43,18 @@ function rp_74656c656772616d2e414c4c4f5745445f55504441544553(): string {
 function rp_74656c656772616d2e7570646174655f6964(update: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): bigint {
   ml_validate_rust_value(update, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return (() => {
-    const ml_standard_body_1 = ml_host_option_bind(ml_host_serde_json_value_get_string(update, "update_id"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_i64(ml_host_callback_0_0); }, "and_then");
-    const ml_standard_body_2 = 0n;
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(update, "update_id"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_i64(ml_host_callback_0_0); }, "and_then");
+    const ml_standard_body_3 = 0n;
+    switch (ml_standard_body_2.$) {
       case "None": {
-        return ml_standard_body_2;
+        return ml_standard_body_3;
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
+        const x = ml_standard_body_2.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_2);
       }
     }
   })();

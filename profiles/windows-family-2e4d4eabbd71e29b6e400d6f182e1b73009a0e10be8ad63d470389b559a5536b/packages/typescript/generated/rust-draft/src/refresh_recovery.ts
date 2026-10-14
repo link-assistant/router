@@ -64,11 +64,6 @@ const ml_host_value_schema_0813c146d3e1de30d2dfd045f0e16841567a25ea2ad5316beb05a
 
 const ml_host_value_refinements_0813c146d3e1de30d2dfd045f0e16841567a25ea2ad5316beb05a7120b527667 = new Map([]);
 
-function ml_host_option_bind<T,U>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>, mode:'and_then'): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:U}>;
-function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: ()=>Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, mode:'or_else'): Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>;
-function ml_host_option_bind<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, operation: (value:T)=>boolean, mode:'is_some_and'): boolean;
-function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...values: any[]) => any, mode: string) { if (mode === 'or_else') return value.$ === 'Some' ? value : operation(); if (value.$ === 'Some') return operation(value.field0); return mode === 'is_some_and' ? false : Object.freeze({ $: 'None' }); }
-
 const ml_host_rust_fixed_saturating_add_i64 = ml_create_fixed_integer_runtime({"kind":"fixed","bits":64,"signed":true}).rust_fixed_saturating_add;
 
 function ml_make_RecoveryRung_AdoptedStoredToken(): Readonly<{ readonly "$": "AdoptedStoredToken" }> | Readonly<{ readonly "$": "DirectExchange" }> | Readonly<{ readonly "$": "AdoptedRotatedLink" }> | Readonly<{ readonly "$": "VendorCliRotation" }> {
@@ -155,7 +150,23 @@ function rp_737562736372697074696f6e2e74797065732e6d6c5f696d706c5f36333732363137
   if (typeof now_ms !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(now_ms, -9223372036854775808n, 9223372036854775807n, "i64 argument now_ms out of range");
   if (!(typeof now_ms === 'bigint' && now_ms >= -9223372036854775808n && now_ms <= 9223372036854775807n)) throw new TypeError('argument outside supported Rust value domain');
-  return ml_host_option_bind((router_self).expires_at_ms, (exp) => { return (exp <= now_ms); }, "is_some_and");
+  return (() => {
+    const ml_standard_callback_self_1 = (router_self).expires_at_ms;
+    switch (ml_standard_callback_self_1.$) {
+      case "None": {
+        return false;
+      }
+      case "Some": {
+        const ml_standard_pattern_2 = ml_standard_callback_self_1.field0;
+        const ml_standard_callback_arg_1 = ml_standard_pattern_2;
+        const exp = ml_standard_callback_arg_1;
+        return (exp <= now_ms);
+      }
+      default: {
+        return ml_router_unexpected(ml_standard_callback_self_1);
+      }
+    }
+  })();
 }
 
 export const translated: { "RecoveryRung": Readonly<{ "AdoptedStoredToken": () => Readonly<{ readonly "$": "AdoptedStoredToken" }> | Readonly<{ readonly "$": "DirectExchange" }> | Readonly<{ readonly "$": "AdoptedRotatedLink" }> | Readonly<{ readonly "$": "VendorCliRotation" }>; "DirectExchange": () => Readonly<{ readonly "$": "AdoptedStoredToken" }> | Readonly<{ readonly "$": "DirectExchange" }> | Readonly<{ readonly "$": "AdoptedRotatedLink" }> | Readonly<{ readonly "$": "VendorCliRotation" }>; "AdoptedRotatedLink": () => Readonly<{ readonly "$": "AdoptedStoredToken" }> | Readonly<{ readonly "$": "DirectExchange" }> | Readonly<{ readonly "$": "AdoptedRotatedLink" }> | Readonly<{ readonly "$": "VendorCliRotation" }>; "VendorCliRotation": () => Readonly<{ readonly "$": "AdoptedStoredToken" }> | Readonly<{ readonly "$": "DirectExchange" }> | Readonly<{ readonly "$": "AdoptedRotatedLink" }> | Readonly<{ readonly "$": "VendorCliRotation" }> }>; "RecoveryMode": Readonly<{ "Proactive": () => Readonly<{ readonly "$": "Proactive" }> | Readonly<{ readonly "$": "AfterRejection" }> | Readonly<{ readonly "$": "ImportValidation" }>; "AfterRejection": () => Readonly<{ readonly "$": "Proactive" }> | Readonly<{ readonly "$": "AfterRejection" }> | Readonly<{ readonly "$": "ImportValidation" }>; "ImportValidation": () => Readonly<{ readonly "$": "Proactive" }> | Readonly<{ readonly "$": "AfterRejection" }> | Readonly<{ readonly "$": "ImportValidation" }> }>; "is_usable": (candidate: Readonly<{ readonly "$": "SubscriptionToken"; readonly "access_token": string; readonly "refresh_token": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "expires_at_ms": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>; readonly "account_id": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "resource_url": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }>, base: Readonly<{ readonly "$": "SubscriptionToken"; readonly "access_token": string; readonly "refresh_token": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "expires_at_ms": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>; readonly "account_id": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "resource_url": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }>, mode: Readonly<{ readonly "$": "Proactive" }> | Readonly<{ readonly "$": "AfterRejection" }> | Readonly<{ readonly "$": "ImportValidation" }>, now_ms: bigint) => boolean } = { ["RecoveryRung"]: Object.freeze({ ["AdoptedStoredToken"]: ml_make_RecoveryRung_AdoptedStoredToken, ["DirectExchange"]: ml_make_RecoveryRung_DirectExchange, ["AdoptedRotatedLink"]: ml_make_RecoveryRung_AdoptedRotatedLink, ["VendorCliRotation"]: ml_make_RecoveryRung_VendorCliRotation }), ["RecoveryMode"]: Object.freeze({ ["Proactive"]: ml_make_RecoveryMode_Proactive, ["AfterRejection"]: ml_make_RecoveryMode_AfterRejection, ["ImportValidation"]: ml_make_RecoveryMode_ImportValidation }), ["is_usable"]: rp_726566726573682e726566726573685f7265636f766572792e69735f757361626c65 };

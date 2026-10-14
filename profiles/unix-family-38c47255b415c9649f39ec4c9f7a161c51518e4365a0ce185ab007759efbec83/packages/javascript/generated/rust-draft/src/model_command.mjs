@@ -19,18 +19,18 @@ function ml_host_option_bind(value, operation, mode) { if (mode === 'or_else') r
 function rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64(entry) {
   ml_validate_rust_value(entry, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
   const label = (() => {
-    const ml_standard_body_1 = ml_host_option_bind(ml_host_option_bind(entry, (value) => { return ml_host_serde_json_value_get_string(value, "selector_kind"); }, "and_then"), (ml_host_callback_2_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_2_0); }, "and_then");
-    const ml_standard_body_2 = "unknown";
-    switch (ml_standard_body_1.$) {
+    const ml_standard_body_2 = ml_host_option_bind(ml_host_option_bind(entry, (value) => { return ml_host_serde_json_value_get_string(value, "selector_kind"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
+    const ml_standard_body_3 = "unknown";
+    switch (ml_standard_body_2.$) {
       case "None": {
-        return ml_standard_body_2;
+        return ml_standard_body_3;
       }
       case "Some": {
-        const x = ml_standard_body_1.field0;
+        const x = ml_standard_body_2.field0;
         return x;
       }
       default: {
-        return ml_router_unexpected(ml_standard_body_1);
+        return ml_router_unexpected(ml_standard_body_2);
       }
     }
   })();

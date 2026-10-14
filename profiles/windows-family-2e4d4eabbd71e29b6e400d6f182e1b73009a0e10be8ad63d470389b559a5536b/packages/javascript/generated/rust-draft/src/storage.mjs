@@ -51,10 +51,10 @@ const serde_json = {
 function rp_73746f726167652e73616e6974697a655f636f6465635f6572726f72(error, contents) {
   if (!(typeof error === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(error))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof contents === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(contents))) throw new TypeError('argument outside supported Rust value domain');
-  return ml_router_fold(ml_router_filter(ml_router_map(ml_str_lines(contents), (ml_standard_callback_8_0) => { return (ml_standard_callback_8_0).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''); }), (line) => { return (BigInt(new TextEncoder().encode(line).length) >= 8n); }), error, (message, line_2) => { const ml_text_10 = message;
-  const ml_text_11 = line_2;
-  const ml_text_12 = "<redacted input>";
-  return (ml_text_11.length===0?(ml_text_10.length===0?ml_text_12:ml_text_12+Array.from(ml_text_10).join(ml_text_12)+ml_text_12):ml_text_10.split(ml_text_11).join(ml_text_12)); });
+  return ml_router_fold(ml_router_filter(ml_router_map(ml_str_lines(contents), (ml_standard_callback_11_0) => { return (ml_standard_callback_11_0).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, ''); }), (line) => { return (BigInt(new TextEncoder().encode(line).length) >= 8n); }), error, (message, line_2) => { const ml_text_13 = message;
+  const ml_text_14 = line_2;
+  const ml_text_15 = "<redacted input>";
+  return (ml_text_14.length===0?(ml_text_13.length===0?ml_text_15:ml_text_15+Array.from(ml_text_13).join(ml_text_15)+ml_text_15):ml_text_13.split(ml_text_14).join(ml_text_15)); });
 }
 
 export const translated = { ["RequestAdmission"]: Object.freeze({ ["Admitted"]: ml_make_RequestAdmission_Admitted, ["RequestLimitExceeded"]: ml_make_RequestAdmission_RequestLimitExceeded, ["TokenLimitExceeded"]: ml_make_RequestAdmission_TokenLimitExceeded, ["RateLimitExceeded"]: ml_make_RequestAdmission_RateLimitExceeded }), ["sanitize_codec_error"]: rp_73746f726167652e73616e6974697a655f636f6465635f6572726f72 };
