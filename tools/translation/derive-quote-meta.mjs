@@ -3,11 +3,11 @@
 // privately checked fragment values. No generated Rust trait body is executed.
 import {createHash} from 'node:crypto';
 import {DERIVE_SOURCE_PROFILE,deriveDependencySource,isDeriveDependencyProof} from './derive-dependencies.mjs';
-import {rustTokens} from './rust-structure.mjs';
+import {rustTokens,sourceItems} from './rust-structure.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
-const inventories=new WeakMap(),templates=new WeakMap();
+const inventories=new WeakMap(),templates=new WeakMap(),matchBlocks=new WeakMap();
 const pairs={'(':')','[':']','{':'}'},quotes=new Set(['quote','quote_expr','quote_block','quote_spanned']);
 const ident=node=>node?.tag==='token'&&node.tokenType==='ident'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(node.text);
 
@@ -104,6 +104,16 @@ export function inventoryDeriveQuoteMeta(dependencies,packageName='serde_derive'
 }
 export const isDeriveQuoteMeta=value=>!!value&&inventories.has(value);
 export function quoteMetaOriginal(template){const state=templates.get(template);if(!state)throw new TypeError('Unsealed original generator template');return state.origin;}
+export function originalSerdeMatchBlockAdapter(inventory){
+  const state=inventories.get(inventory);if(!state||inventory.package!=='serde_derive')throw new TypeError('Match block adapter requires its original Serde inventory');
+  const origin=deriveDependencySource(state.dependencies,'serde_derive','src/fragment.rs'),owners=sourceItems(origin.source).filter(item=>item.term==='impl'&&item.tokens.filter(token=>token.type!=='comment').slice(0,item.tokens.findIndex(token=>token.text==='{')).map(token=>token.text).join('')==='implToTokensforMatch');
+  if(owners.length!==1)throw new TypeError('Original Fragment Match ToTokens owner is absent/ambiguous');
+  const owner=owners[0],open=owner.tokens.find(token=>token.text==='{'),close=owner.tokens.at(-1),body=origin.source.slice(open.end,close.start),methods=sourceItems(body).filter(item=>item.term==='fn'&&item.name==='to_tokens');if(methods.length!==1)throw new TypeError('Original Match ToTokens method is absent/ambiguous');
+  const method=methods[0],text=body.slice(method.start,method.end),tokens=rustTokens(text).filter(token=>token.type!=='comment').map(token=>token.text),pattern=rustTokens('Fragment::Block(block) => { token::Brace::default().surround(out, |out| block.to_tokens(out)); }').filter(token=>token.type!=='comment').map(token=>token.text),hits=[];
+  for(let at=0;at<=tokens.length-pattern.length;at++)if(pattern.every((token,index)=>token===tokens[at+index]))hits.push(at);
+  if(hits.length!==1||!text.includes('<Token![,]>::default().to_tokens(out)'))throw new TypeError('Original Match block/expr adapter branch changed');
+  const evidence=freeze({schema:'original-serde-fragment-match-block-adapter-v1',dependenciesDigest:state.dependencies.digest,source:origin,ownerSpan:{start:owner.start,end:owner.end},methodSpan:{start:open.end+method.start,end:open.end+method.end},originalMethod:text,blockConstructor:'token::Brace::default().surround',expressionConstructor:'original Expr tokens followed by Token![,]',namespaceAuthority:false,generatedImplBehavior:false});matchBlocks.set(evidence,{inventory});return evidence;
+}
 
 // The route compiler owns these bindings; callers cannot assert a fragment's
 // category by putting a string such as "Ident" next to arbitrary tokens.
@@ -223,6 +233,9 @@ export function createQuoteFragmentCompiler(inventory){
     // Pinned Fragment::Match(Expr) appends Token![,]. The selected source
     // route must verify that adapter before using this grammar operation.
     return seal([...value.syntax,{tag:'token',text:',',tokenType:'punct'}],provenance);
+  },matchBlock:(value,adapter,provenance)=>{
+    if(!fragments.has(value)||fragments.get(value).inventory!==inventory||matchBlocks.get(adapter)?.inventory!==inventory)throw new TypeError('Match block requires its private checked fragment and original Serde source adapter');
+    return seal([{tag:'group',delimiter:'{',nodes:value.syntax}],{...provenance,originalMatchBlockAdapter:adapter});
   }});
 }
 export function inspectQuoteFragment(fragment){
