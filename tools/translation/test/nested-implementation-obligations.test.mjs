@@ -56,3 +56,17 @@ test('original opaque parameter and return types do not become implementation de
  const result=compile(source);assert.ok(result.meta.checkedGeneratedMethods.some(row=>row.name==='Payload.clone'));
  await verifyTypedTargets(result,api=>assert.deepEqual(api.duplicate(Object.freeze({$:'Payload',value:7n})),{$:'Payload',value:7n}),{childTimeoutMs:20000});
 });
+test('borrowed opaque types retain their original reference lifetime and mutability grammar',()=>{
+ for(const reference of ['&','&mut ','&\'a ','&\'a mut ','&\'static ','&\'static mut ']){
+  const source="struct Other;impl Other{fn receive<'a>(&self,_:"+reference+'impl Copy){}}';
+  for(const module of views(source))assert.deepEqual(originalNestedImplementationObligations(module),[],reference);
+ }
+ for(const source of ['fn hidden(){impl Drop for Payload{fn drop(&mut self){}}}','fn hidden(){let x=0;impl Payload{fn clone(&self)->Self{Self}}}'])assert.equal(originalNestedImplementationObligations(views(source)[0]).length,1);
+});
+test('whole unchanged Router reference-to-opaque headers retain an empty nested implementation census',()=>{
+ for(const [path,sha256]of [['src/accounts_selection.rs','51157f36c992f5606066c6dee5346cf705a20c31ad4847bad1ee83417d4b8b2a'],['src/audit.rs','63e6f5520be013d18bca0ad1580f1e437fd869926b854e1bd1d30b98d35d3ff1']]){
+  const source=readFileSync(new URL(path,root),'utf8');assert.equal(createHash('sha256').update(source).digest('hex'),sha256);
+  const captured=captureSourceModuleViews({source,sourcePath:path,compilationProfile:PRODUCTION_PROFILE});
+  for(const sourceView of captured.views)assert.deepEqual(originalNestedImplementationObligations({file:path,path:sourceView.modulePath,source,sourceView,compilationProfile:PRODUCTION_PROFILE,configurationCondition:sourceView.configurationCondition}),[],path);
+ }
+});

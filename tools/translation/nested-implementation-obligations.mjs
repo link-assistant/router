@@ -7,6 +7,11 @@ import {itemConfiguration} from './cfg-profile.mjs';
 import {ownData,copyMetadata} from './extensions/source-links.mjs';
 
 const hash=text=>createHash('sha256').update(text).digest('hex');
+function opaqueReferencePrefix(tokens,index){
+ let at=index-1;if(tokens[at]?.text==='mut')at--;
+ if(tokens[at]?.type==='char'&&/^'[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(tokens[at].text))at--;
+ return tokens[at]?.text==='&';
+}
 export function originalNestedImplementationObligations(module){
  if(!module||types.isProxy(module)||![null,Object.prototype].includes(Object.getPrototypeOf(module)))throw new TypeError('Nested implementation census requires an ordinary original module');
  const source=ownData(module,'source'),file=ownData(module,'file'),path=ownData(module,'path');
@@ -19,12 +24,12 @@ export function originalNestedImplementationObligations(module){
   // Genuine module wrappers have independently captured child views. Their
   // module-level impls must retain their actual lexical module identity.
   if(item.term==='mod'||itemConfiguration(item.tokens,module.compilationProfile).status==='inactive')continue;
-  let braces=0,previous=null;
-  for(const token of item.tokens){
-   if(token.type==='comment')continue;
+  let braces=0,previous=null;const tokens=item.tokens.filter(token=>token.type!=='comment');
+  for(let index=0;index<tokens.length;index++){
+   const token=tokens[index];
    // In a written parameter/return type, `impl Trait` introduces an opaque
    // type, not a crate-wide implementation declaration.
-   if(token.text==='impl'&&braces>0&&![':','->','='].includes(previous))rows.push(Object.freeze({
+   if(token.text==='impl'&&braces>0&&![':','->','='].includes(previous)&&!opaqueReferencePrefix(tokens,index))rows.push(Object.freeze({
     source:file,sourceSha256:sourceSha256??=hash(source),module:Object.freeze([...modulePath]),
     enclosingTerm:item.term,enclosingName:item.name??null,
     enclosingSpan:Object.freeze({start:item.start,end:item.end}),
