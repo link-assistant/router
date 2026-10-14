@@ -1,4 +1,5 @@
 import {itemConfiguration} from './cfg-profile.mjs';
+import {bindOriginalStandardImplementationTarget} from './source-implementation-targets.mjs';
 import {moduleScopeKey} from './source-module-views.mjs';
 // A layout-only prepass supplies evidence; final project checking still owns
 // every method body and its dependencies. Failed layouts never supply Copy.
@@ -60,7 +61,9 @@ export function projectCopyEvidence(declarations,modules,aliases,scopes=new Map(
     const actualTarget=implementationTargetPath(implementation,module);
     const path=actualTarget?(binding?[...binding,...implementation.typePath.slice(1)]:implementation.typePath):null;
     let resolvedType=null;try{if(Array.isArray(path)&&path.length&&path.every(part=>typeof part==='string'))resolvedType=checker.resolveType({kind:'named',path},module.path,implementation.headerSpan);}catch(error){if(!(error instanceof TranslationError))throw error;}
-    return bindNonCopyTraitOwner({...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)},module,scopes,dependencies);
+    let selected=bindNonCopyTraitOwner({...implementation,resolvedType,resolvedNominalTarget:resolvedType?null:resolveNominalImplTarget(implementation,module,[...scopes.values()],nominalTypes)},module,scopes,dependencies);
+    if(!selected.resolvedType&&!selected.resolvedNominalTarget&&dependencies?.sourceScopes){try{selected=bindOriginalStandardImplementationTarget(selected,{module,modules,sourceScopes:dependencies.sourceScopes});}catch(error){if(!(error instanceof TypeError||error instanceof TranslationError))throw error;}}
+    return selected;
   }));
   // Preserve every unproved nested declaration as an unresolved obligation;
   // this marker issues no trait, target, Copy or no-Drop authority.

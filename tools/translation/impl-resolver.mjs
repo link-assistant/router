@@ -11,6 +11,7 @@ import {TranslationError} from './vendor/meta-language/translation/diagnostics.j
 import {createHash} from 'node:crypto';
 import {typeKey} from './checked-types.mjs';
 import {nonCopyTraitOwner} from './copy-trait-owners.mjs';
+import {originalStandardImplementationTarget} from './source-implementation-targets.mjs';
 import {proveDefaultOriginalMember,assertDefaultOriginalMember} from './default-trait-source.mjs';
 
 const originalMethodMembers=new WeakMap(),originalMethodLowerings=new WeakMap();
@@ -229,6 +230,8 @@ export function certifyCopyType(type,{declarations,implementations,macroProvenan
       const trait=implementation.traitPath!=null || implementation.diagnostics?.some(diagnostic=>/trait implementation/u.test(diagnostic.message));
       const target=checkedKey(implementation.resolvedType);
       if(trait && !target) {
+        const sourceTarget=originalStandardImplementationTarget(implementation);
+        if(current.kind==='data'&&!current.rustReference&&sourceTarget&&['owned-standard-string','shared-primitive-str'].includes(sourceTarget.kind)){proofs.push({kind:'unequal-original-standard-implementation-target',type:current,target:sourceTarget});continue;}
         const nominal=implementation.resolvedNominalTarget,identity=nominal?.version===1?nominalTypes.get(JSON.stringify(nominal.family)):null;
         const entry=current.kind==='data'?declarations.get(current.name):null;
         const currentFamily=entry?.standardGeneric?.kind==='Option'?['std','option','Option']:entry?.standardGeneric?.kind==='Result'?['std','result','Result']:entry?['crate',...entry.fullName.split('.')]:null;

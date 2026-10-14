@@ -1,0 +1,1 @@
+Parse complete original String and shared str implementation targets with the genuine caller scope and Host type parser. Privately issued target evidence can exclude only a different checked nominal Copy owner; trait bodies, allocator behavior, matching destructors, conditional or procedural targets and unresolved global obligations remain unsupported.
