@@ -21,7 +21,19 @@ const frozen=value=>{if(value && typeof value==='object'){for(const child of Obj
 // Identity permits reuse of immutable namespace setup, never body admission.
 // Copies and caller-created arrays retain the ordinary uncached path.
 const resolvedSourceScopeSets=new WeakSet();
+const resolvedSourceScopeOrigins=new WeakMap();
 export const isResolvedSourceScopeSet=scopes=>!!scopes&&resolvedSourceScopeSets.has(scopes);
+// A genuine array identity alone does not associate a different same-path
+// source with its bindings. This private origin join adds no public metadata.
+export function assertResolvedSourceScopeOrigin(scopes,{modules,compilationProfile:profileInput=null}={}){
+  const origin=resolvedSourceScopeOrigins.get(scopes);
+  if(!origin||!Array.isArray(modules)||modules.length!==origin.modules.length||JSON.stringify(compilationProfile(profileInput))!==JSON.stringify(origin.compilationProfile))throw new TypeError('Resolved source scopes require their exact original module/profile origin');
+  for(let index=0;index<modules.length;index++){
+    const module=modules[index],original=origin.modules[index];
+    if(module.file!==original.file||JSON.stringify(module.path)!==JSON.stringify(original.path)||module.source!==original.source||Object.hasOwn(module,'sourceView')!==original.hasSourceView||module.sourceView!==original.sourceView||Object.hasOwn(module,'compilationProfile')!==original.hasCompilationProfile||JSON.stringify(compilationProfile(module.compilationProfile))!==JSON.stringify(original.moduleCompilationProfile)||Object.hasOwn(module,'configurationCondition')!==original.hasConfigurationCondition||module.configurationCondition!==original.configurationCondition)throw new TypeError('Resolved source scopes belong to a different original source/view/path/profile/condition');
+  }
+  return scopes;
+}
 function tokensOf(item) {
   const input=item.tokens.filter(token=>token.type!=='comment'),result=[];
   for(let index=0;index<input.length;index++) {
@@ -445,5 +457,7 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
     if(!task.glob && result.bindings?.some(binding=>!narrower(task.visibility,binding.visibility)))diagnostic(task.scope,'reexport visibility exceeds the checked target visibility',task.span,{name:task.name});
   }
   const result=frozen(structuredClone({version:1,compilationProfile:profile,editionProfile:'2018+',externPrelude,scopes:[...scopes.values()].map(scope=>({file:scope.file,path:scope.path,compilationProfile:profile,configurationCondition:scope.configurationCondition,bindings:scope.bindings,unresolvedImports:diagnostics.filter(diagnostic=>diagnostic.source===scope.file && key(diagnostic.module)===key(scope.path)),unresolvedTypeScope:scope.unknownType,unresolvedMacroScope:scope.unknownMacro,unresolvedBangMacroScope:scope.unknownBang,unresolvedAttributeMacroScope:scope.unknownAttribute})),diagnostics}));
-  resolvedSourceScopeSets.add(result.scopes);return result;
+  resolvedSourceScopeSets.add(result.scopes);
+  resolvedSourceScopeOrigins.set(result.scopes,frozen({compilationProfile:profile,modules:modules.map(module=>({file:module.file,path:[...module.path],source:module.source,hasSourceView:Object.hasOwn(module,'sourceView'),sourceView:module.sourceView,hasCompilationProfile:Object.hasOwn(module,'compilationProfile'),moduleCompilationProfile:compilationProfile(module.compilationProfile),hasConfigurationCondition:Object.hasOwn(module,'configurationCondition'),configurationCondition:module.configurationCondition}))}));
+  return result;
 }

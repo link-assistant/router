@@ -1,0 +1,7 @@
+# Original conditional module ancestor sources
+
+The two complete new source members are Rust 1.89 originals at immutable revision `29483883eed69d5fb4db01964cdf2af4d86e9cb2`. Complete existing cfg, parser, resolver, declarative-macro, syntax-extension and license members are referenced without changing their bytes or previous profile records.
+
+The selected source chain is `StripUnconfigured::configure` / `in_cfg`, the parser's `parse_item_mod`, `BuildReducedGraphVisitor::build_reduced_graph_for_item` / `visit_item`, and the original macro-definition collector/compiler/subnamespace helpers. Both cfg results are retained: absence, or the unchanged original module. A present module defines its original identifier in the parent's TypeNS, visits its contents in the new child module, then restores the parent module. Ordinary imports and non-exported macros stay in that child. Original macro_rules exports bind at the crate root, and their Bang namespace stays separate from AttrLike.
+
+This chain does not establish conditional availability, complete child contents, global bang completeness, generated trait behavior, or runtime behavior. Unknown procedural/internal builtin effects, macro-use imports, ambiguous source paths, source/view changes and requests for the conditional target or its ancestor remain separate refusal obligations. A hash, namespace label or copied proof cannot issue caller authority.

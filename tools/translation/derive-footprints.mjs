@@ -16,6 +16,7 @@ import {encodeBuiltinSourceMeta,decodeBuiltinSourceMeta} from './builtin-source-
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {registeredDeriveHelperSource} from './derive-helper-namespaces.mjs';
 import {builtinStandardDeriveRegistry,builtinStandardDeriveSourceOwner} from './builtin-derive-standard-inputs.mjs';
+import {createOriginalAncestorAttributeScopeContext,proveOriginalConditionalSiblingScope} from './derive-ancestor-attribute-scope.mjs';
 export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
@@ -112,6 +113,28 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
       return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
     })&&!scope.unresolvedImports.some(entry=>entry.glob));
   }
+  // Preserve the old module-wide closure above. Only an actual owner request
+  // may join a source-proved unrelated conditional module declaration below.
+  let ancestorSourceContext=null;
+  const ownerRequests=(input,names=[])=>{
+    const attributes=[...new Set(['cfg','derive',...input.attributes.map(attribute=>attribute.name),...input.derives.map(invocation=>invocation.path.at(-1)),...names])],types=[...new Set(['core','std',...input.derives.flatMap(invocation=>invocation.path.length>1?[invocation.path[0]]:[invocation.path[0]]),...attributes])];
+    return [...attributes.map(name=>({namespace:'attribute',name})),...types.map(name=>({namespace:'type',name}))];
+  };
+  const activeOriginalItemClosed=(module,scope,candidate)=>{
+    const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
+    const input=moduleInputs.get(moduleScopeKey(module)).get(candidate.start);
+    if(input){const owners=input.derives.map(invocation=>standardOwner(invocation.path,scope)?true:actualOwner(invocation.path,scope,scopes,external,dependencies));if(owners.some(owner=>!owner)||clapSourceRefusals.has(invocationId(module,candidate)))return false;for(const owner of owners.filter(owner=>owner!==true&&owner.target[0]==='clap')){const output=clapSourceOutputs.get(invocationId(module,candidate));if(owner.target.join('::')==='clap::ValueEnum'&&!output?.valueEnum||owner.target.join('::')==='clap::Args'&&!output?.args)return false;}return true;}
+    return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
+  };
+  const requestedAttributeClosure=(scope,caller,requests)=>{
+    const module=modules.find(module=>moduleScopeKey(module)===moduleScopeKey(scope));if(!module||scope.configurationCondition!=='active'||caller.configurationCondition==='unknown'||caller.configurationCondition==='inactive')return null;
+    if(attributeClosure.get(moduleScopeKey(scope)))return {originalAttributeFootprintClosed:true,conditionalSiblingProofs:[]};
+    const names=new Set(requests.map(request=>request.name));if(scope.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))||scope.bindings.some(binding=>names.has(binding.name)&&macroBindingAffects(binding,'attribute')))return null;
+    const conditionalSiblingProofs=[];for(const candidate of module.items){const condition=itemConfiguration(candidate.tokens,profile);if(condition.status==='active'){if(!activeOriginalItemClosed(module,scope,candidate))return null;continue;}
+      try{ancestorSourceContext??=createOriginalAncestorAttributeScopeContext({modules,binding:baseline,dependencies});conditionalSiblingProofs.push(proveOriginalConditionalSiblingScope({context:ancestorSourceContext,module,item:candidate,caller,requests}));}catch{return null;}
+    }
+    return conditionalSiblingProofs.length?{originalAttributeFootprintClosed:false,conditionalSiblingProofs}:null;
+  };
   // Stage complete successful output grammars independently of caller lookup.
   // This discharges the original owner/helper export obligations before resolving
   // the expression-only concat sink. A source quote cannot supply its own owner.
@@ -185,10 +208,11 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           if(input.genericParameters||input.lifetimeParameters||input.absentConditionalAttributes.length||input.inertConditionalAttributes.length||input.attributes.some(attribute=>attribute.helpers||!['derive','doc','allow','warn','deny','forbid','must_use'].includes(attribute.name)))throw new TypeError('Standard-only input retains a generic, helper, configuration or layout obligation');
           const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name)),names=new Set(['core','std',...input.attributes.map(attribute=>attribute.name),...input.derives.map(invocation=>invocation.path[0])]);
           const missingModule=binding=>binding.namespace==='type'&&binding.kind==='mod'&&(binding.status!=='resolved'||binding.via==='declaration'&&binding.target?.[0]==='crate'&&!modules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target)));
-          if(!ancestors.length||ancestors.some(candidate=>candidate.configurationCondition!=='active'||!attributeClosure.get(moduleScopeKey(candidate))||candidate.bindings.some(binding=>missingModule(binding)||names.has(binding.name)&&macroBindingAffects(binding,'attribute')||binding.namespace==='type'&&['core','std'].includes(binding.name))||candidate.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))))throw new TypeError('Standard-only input has an unresolved original ancestor, prelude root or attribute owner');
+          const requested=ownerRequests(input),closures=ancestors.map(candidate=>requestedAttributeClosure(candidate,module,requested));
+          if(!ancestors.length||ancestors.some((candidate,index)=>candidate.configurationCondition!=='active'||!closures[index]||candidate.bindings.some(binding=>missingModule(binding)&&!closures[index].conditionalSiblingProofs.some(proof=>JSON.stringify(proof.originalBinding)===JSON.stringify(binding))||names.has(binding.name)&&macroBindingAffects(binding,'attribute')||binding.namespace==='type'&&['core','std'].includes(binding.name))||candidate.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))))throw new TypeError('Standard-only input has an unresolved original ancestor, prelude root or attribute owner');
           standardRegistry=builtinStandardDeriveRegistry(dependencies);
           const standardOwners=input.derives.map(invocation=>{const owner=builtinStandardDeriveSourceOwner(standardRegistry,dependencies,invocation.path[0]);return {invocation,target:owner.target,declaration:owner.declaration,symbol:owner.symbol,registration:{name:owner.registration.name,callback:owner.registration.callback,deriveModule:owner.registration.deriveModule},corePrelude:owner.corePrelude,stdPrelude:owner.stdPrelude,callbackBodyCompiled:false};});
-          standardInput={schema:'original-standard-only-derive-input-v1',registryDigest:standardRegistry.digest,sourceProfileSha256:standardRegistry.sourceProfileSha256,completeRegistrationEntries:standardRegistry.registration.completeEntries.length,owners:standardOwners,originalScopes:ancestors.map(candidate=>({source:candidate.file,module:candidate.path,configurationCondition:candidate.configurationCondition,resolverScopeSha256:hash(JSON.stringify(candidate)),originalAttributeFootprintClosed:true,unresolvedImports:candidate.unresolvedImports})),namespaceAuthority:false,runtimeAuthority:false,generatedImplBehavior:false};
+          standardInput={schema:'original-standard-only-derive-input-v1',registryDigest:standardRegistry.digest,sourceProfileSha256:standardRegistry.sourceProfileSha256,completeRegistrationEntries:standardRegistry.registration.completeEntries.length,owners:standardOwners,originalScopes:ancestors.map((candidate,index)=>({source:candidate.file,module:candidate.path,configurationCondition:candidate.configurationCondition,resolverScopeSha256:hash(JSON.stringify(candidate)),originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{}),unresolvedImports:candidate.unresolvedImports})),namespaceAuthority:false,runtimeAuthority:false,generatedImplBehavior:false};
         }
         if(!coreOwner)throw new TypeError('Derive error branch has no checked standard core owner');
         let builtinDefault=null;
@@ -206,9 +230,10 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
         let clapGeneratedAttributeOwners=null;
         if(clapValueEnumOutput||clapArgsOutput) {
           const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name));
-          if(ancestors.some(candidate=>!attributeClosure.get(moduleScopeKey(candidate))||candidate.bindings.some(binding=>['allow','automatically_derived'].includes(binding.name)&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Generated Clap builtin attributes have an unresolved or shadowed original ancestor');
+          const requested=ownerRequests(input,['allow','automatically_derived']),closures=ancestors.map(candidate=>requestedAttributeClosure(candidate,module,requested));
+          if(ancestors.some((candidate,index)=>!closures[index]||candidate.bindings.some(binding=>['allow','automatically_derived'].includes(binding.name)&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Generated Clap builtin attributes have an unresolved or shadowed original ancestor');
           if(clapArgsOutput&&ancestors.some(candidate=>candidate.bindings.some(binding=>binding.namespace==='type'&&binding.name==='clap'&&(binding.status!=='resolved'||JSON.stringify(binding.target)!==JSON.stringify(['clap'])))))throw new TypeError('Generated Args Clap macro path is shadowed in an original ancestor');
-          clapGeneratedAttributeOwners={names:['allow','automatically_derived'],scopes:ancestors.map(candidate=>({source:candidate.file,module:candidate.path,originalAttributeFootprintClosed:true})),bindingsDigest:hash(JSON.stringify(baseline)),generatedAttributeOwnersResolved:true};
+          clapGeneratedAttributeOwners={names:['allow','automatically_derived'],scopes:ancestors.map((candidate,index)=>({source:candidate.file,module:candidate.path,originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{} )})),bindingsDigest:hash(JSON.stringify(baseline)),generatedAttributeOwnersResolved:true};
         }
         for(const helper of input.attributes.filter(attribute=>attribute.helpers)) {
           if(helper.name==='schemars'&&!owners.some(owner=>owner.target[0]==='schemars')||helper.name==='serde'&&!owners.some(owner=>['serde','schemars'].includes(owner.target[0])))throw new TypeError('Helper attribute lacks an actual declaring derive owner');
@@ -232,7 +257,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
       ...(Object.hasOwn(module,'sourceView')?{sourceView:module.sourceView}:{}),...(module.configurationCondition?{configurationCondition:module.configurationCondition}:{})};
   }));
   const originalExternal=new Map([...external].map(([path,table])=>[path,freeze(structuredClone(table))]));
-  contexts.set(context,{byId,external:originalExternal,dependencies,originalModules,helperScopes:baseline.scopes,attributeClosure});return context;
+  contexts.set(context,{byId,external:originalExternal,dependencies,originalModules,helperScopes:baseline.scopes,attributeClosure,requestedAttributeClosure,ownerRequests});return context;
 }
 
 export function deriveFootprintAt(context,module,item) {
@@ -255,8 +280,9 @@ export function deriveFootprintHelperAttributeAt(context,module,item,span){
   if(!attribute||!['default','serde','schemars'].includes(attribute.name))return null;
   const ancestors=state.helperScopes.filter(scope=>scope.path.every((part,index)=>certificate.module[index]===part));
   const attributeNames=new Set([...certificate.attributes.map(row=>row.name),...(attribute.name==='default'?['Default']:[])]);
+  const originalModule=state.originalModules.find(candidate=>moduleScopeKey(candidate)===moduleScopeKey(module)),requests=state.ownerRequests({attributes:certificate.attributes,derives:certificate.attributes.filter(row=>row.name==='derive').flatMap(row=>row.derives.map(path=>({path})))},[...attributeNames]),closures=ancestors.map(scope=>state.requestedAttributeClosure(scope,originalModule,requests));
   const missingModule=binding=>binding.namespace==='type'&&binding.kind==='mod'&&(binding.status!=='resolved'||binding.via==='declaration'&&binding.target?.[0]==='crate'&&!state.originalModules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target)));
-  if(!ancestors.length||ancestors.some(scope=>scope.configurationCondition!=='active'||!state.attributeClosure.get(moduleScopeKey(scope))||scope.bindings.some(binding=>missingModule(binding)||attributeNames.has(binding.name)&&macroBindingAffects(binding,'attribute'))||scope.unresolvedImports.some(entry=>entry.glob||attributeNames.has(entry.name))))return null;
+  if(!ancestors.length||ancestors.some((scope,index)=>scope.configurationCondition!=='active'||!closures[index]||scope.bindings.some(binding=>missingModule(binding)&&!closures[index].conditionalSiblingProofs.some(proof=>JSON.stringify(proof.originalBinding)===JSON.stringify(binding))||attributeNames.has(binding.name)&&macroBindingAffects(binding,'attribute'))||scope.unresolvedImports.some(entry=>entry.glob||attributeNames.has(entry.name))))return null;
   const builtin=attribute.name==='default'?certificate.builtinDefault:null;
   if(attribute.name==='default'&&(!builtin||builtin.attributeSpan.start!==attribute.span.start||builtin.attributeSpan.end!==attribute.span.end))return null;
   const owners=builtin?[builtin.owner]:certificate.owners.filter(owner=>attribute.name==='serde'&&owner.target[0]==='serde'&&['Serialize','Deserialize'].includes(owner.target[1])||owner.target.join('::')==='schemars::JsonSchema');
@@ -264,7 +290,7 @@ export function deriveFootprintHelperAttributeAt(context,module,item,span){
   let cache=helperCertificates.get(certificate);if(!cache){cache=new Map();helperCertificates.set(certificate,cache);}const key=attribute.span.start+':'+attribute.span.end;if(cache.has(key))return cache.get(key);
   const registrations=owners.map(owner=>registeredDeriveHelperSource({dependencies:state.dependencies,target:owner.target,helperName:attribute.name,defaultProof:builtin?.dependencyProof}));
   if(registrations.some(proof=>!proof))return null;
-  const evidence={schema:'original-nested-derive-helper-owner-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,sourceViewDigest:certificate.sourceViewDigest,module:certificate.module,compilationProfile:certificate.compilationProfile,invocationSpan:certificate.span,inputCertificateDigest:certificate.digest,attribute,registrations,ancestorScopes:ancestors.map(scope=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,originalAttributeFootprintClosed:true})),exactNestedHelperInert:true,namespaceAuthority:false,bangOutputAuthority:false,copyAuthority:false,generatedImplBehavior:false};
+  const evidence={schema:'original-nested-derive-helper-owner-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,sourceViewDigest:certificate.sourceViewDigest,module:certificate.module,compilationProfile:certificate.compilationProfile,invocationSpan:certificate.span,inputCertificateDigest:certificate.digest,attribute,registrations,ancestorScopes:ancestors.map((scope,index)=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{} )})),exactNestedHelperInert:true,namespaceAuthority:false,bangOutputAuthority:false,copyAuthority:false,generatedImplBehavior:false};
   const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});helperProofs.add(proof);cache.set(key,proof);return proof;
 }
 export const isDeriveFootprintHelperAttributeProof=value=>!!value&&helperProofs.has(value);
