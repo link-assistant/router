@@ -16,9 +16,11 @@ import {loadFormatRegisteredInputs,formatRegisteredInputSource} from './format-r
 import {compileDeclarativeMacro,expandDeclarativeMacro} from './declarative-token-macros.mjs';
 import {originalMacroTrees,originalTopLevelMacroInvocations,originalMacroTreeText,freezeMacroTree} from './macro-token-trees.mjs';
 import {compileFormatSourceControlBodies,formatSourceControlBodyFacts,executeFormatSourceControlBodies,evaluateFormatSourceScalarExpression} from './source-format-template.mjs';
+import {originalMethodSemanticFacts} from './source-method-admission.mjs';
+import {originalMethodTransformFacts} from './source-method-transforms.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b),fail=message=>{throw new TypeError('original Display source: '+message);};
 const syntax=source=>rustTokens(source).filter(token=>token.type!=='comment').map(token=>token.text).join('');
-const pending=new Map(),closures=new WeakMap();let standard;
+const scopes=new WeakMap(),closures=new WeakMap();let standard;
 const root=new URL('./source-profiles/source-format-display/',import.meta.url);
 function body(source,item,offset=0){const tokens=item.tokens.filter(token=>token.type!=='comment'),open=tokens.findIndex(token=>token.text==='{'),last=tokens.at(-1);if(open<0||last.text!=='}')fail('complete original body required');return {text:source.slice(offset+tokens[open].end,offset+last.start),start:offset+tokens[open].end,end:offset+last.start};}
 function method(source,header,name){
@@ -71,13 +73,15 @@ export function captureSourceDisplayScope(parser,callSpan,captureNames){
   originalParameters.push({name,typePath:type.filter(node=>node.text!=='::').map(node=>node.text),originalTokens:parameter.map(node=>({kind:node.kind,type:node.type,text:node.text,sourceSha256:node.sourceSha256,originalRange:{start:owner.start+node.span.start,end:owner.start+node.span.end}})),ownerRange:{start:owner.start,end:owner.end}});
  }
  if(!originalParameters.length)fail('captured original nominal parameter route absent');
- const issued={schema:'original-display-caller-scope-input-v1',source:state.module.file,module:[...state.module.path],sourceSha256:hash(state.module.source),sourceViewDigest:state.module.sourceView.digest,callOriginalRange,originalParameters,scopeSha256:metadataDigest(scope),namespaceAuthority:false,runtimeParity:false},digest=metadataDigest(issued),receipt=freezeMacroTree({...issued,digest});
- // Receipts survive existing IR relocation. A digest replays only a privately
- // captured real caller frame; it cannot create or replace that frame.
- if(pending.size>=256)pending.delete(pending.keys().next().value);pending.set(digest,{state,receipt});return receipt;
+ const originalContext={certificate:state.context,coherenceScopes:state.facts.evidence.scopes.map(owner=>({file:owner.file,path:owner.path,sha256:metadataDigest(owner)}))};
+ const issued={schema:'original-display-caller-scope-input-v2',source:state.module.file,module:[...state.module.path],sourceSha256:hash(state.module.source),sourceViewDigest:state.module.sourceView.digest,callOriginalRange,originalParameters,scopeSha256:metadataDigest(scope),originalContextSha256:metadataDigest(originalContext),namespaceAuthority:false,runtimeParity:false},digest=metadataDigest(issued),receipt=freezeMacroTree({...issued,digest});
+ // Known source relocation preserves this exact frozen evidence object.
+ // Neither public hashes nor equal receipts from another analysis replay it.
+ scopes.set(receipt,{state,parser,receipt});return receipt;
 }
 function scopeFacts(receipt){
- const snapshot=copyMetadata(receipt),state=pending.get(snapshot.digest);if(!state||metadataDigest(Object.fromEntries(Object.entries(snapshot).filter(([name])=>name!=='digest')))!==snapshot.digest||metadataDigest(snapshot)!==metadataDigest(state.receipt))fail('caller Display scope is forged, stale or foreign');return state.state;
+ const issued=scopes.get(receipt);if(!issued)fail('caller Display scope is copied, forged, stale or foreign');
+ const snapshot=copyMetadata(receipt);if(matchesParserFacts(issued.parser)!==issued.state||metadataDigest(Object.fromEntries(Object.entries(snapshot).filter(([name])=>name!=='digest')))!==snapshot.digest)fail('caller Display scope lost its private original parser context');return issued.state;
 }
 function selectedNominal(state,family){
  const scopes=state.facts.evidence.scopes,modules=state.facts.modules.map(module=>({...module,items:originalSourceModuleItems(module)})),identities=nominalTypeIdentities(scopes,modules),matches=[];
@@ -107,6 +111,17 @@ function originalForwarder(selection){
  const actual=selection.method.signatureTokens.map(token=>token.text).join('');if(actual!==expected&&actual!==expectedCore)fail('Display signature Formatter/Result owners remain unresolved');
  return {program,methodName:value.callee.name,padMethod:ir.tail.callee.name,parameters:names};
 }
+function originalInherent(state,family,name){
+ const owners=state.facts.evidence.scopes,modules=state.facts.modules.map(module=>({...module,items:originalSourceModuleItems(module)})),identities=nominalTypeIdentities(owners,modules),matches=[];
+ for(const module of modules){
+  const extracted=extractImplDeclarations(module.source,{sourcePath:module.file,modulePath:module.path,sourceView:module.sourceView,compilationProfile:state.facts.compilationProfile});
+  for(const impl of extracted.implementations){
+   if(impl.traitPath)continue;const nominal=resolveNominalImplTarget(impl,module,owners,identities);if(!nominal||!same(nominal.family,family))continue;
+   for(const method of impl.methods.filter(method=>method.name===name))matches.push({module,impl,nominal,method});
+  }
+ }
+ if(matches.length!==1)fail('one actual original inherent Display source method required');return matches[0];
+}
 function symbolicStringSink(standard,forwarder){
  const sources={...standard.program.sources,nominalDisplay:forwarder.program.sources.nominalDisplay},program=compileFormatSourceControlBodies(sources),methods=new WeakMap(),slot=Object.freeze({kind:'checked-original-inherent-string-result'}),bytes=Object.freeze({kind:'checked-original-string-byte-view',slot}),self={},vector={},writer={vec:vector},writes=[];
  methods.set(self,new Map([[forwarder.methodName,()=>slot]]));methods.set(slot,new Map([['as_bytes',()=>bytes]]));methods.set(writer,new Map([['write_str','stringWrite'],['push_str','stringPush']]));methods.set(vector,new Map([['extend_from_slice',value=>{if(value!==bytes)fail('original source string sink writes an unresolved value');writes.push(slot);}]]));
@@ -114,7 +129,15 @@ function symbolicStringSink(standard,forwarder){
  const run=executeFormatSourceControlBodies(program,'nominalDisplay',[self,formatter],{constants:standard.constants,methods});if(run.result?.tag!=='Ok'||run.result.args.length!==1||!Array.isArray(run.result.args[0])||run.result.args[0].length||writes.length!==1||writes[0]!==slot)fail('original Display control did not produce exactly its checked string slot');
  return {program,options:options.result,formatterControlTrace:[...options.trace,...created.trace,...run.trace],writes,allocatorEffectsVerified:false,nativeWriteAbiVerified:false};
 }
-export function sourceNominalDisplayClosure(receipt,family){
- if(!Array.isArray(family)||family[0]!=='crate')fail('actual checked nominal family required');const state=scopeFacts(receipt),selection=selectedNominal(state,family),forwarder=originalForwarder(selection),original=selectedStandard(),execution=symbolicStringSink(original,forwarder),metadata=freezeMacroTree({schema:'original-nominal-default-display-closure-v1',caller:receipt,nominal:selection.nominal,implementation:{source:selection.module.file,sourceSha256:hash(selection.module.source),span:selection.impl.span,original:selection.module.source.slice(selection.impl.span.start,selection.impl.span.end)},method:selection.method,standard:original.metadata,forwarder:forwarder.program,inherentMethod:forwarder.methodName,padMethod:forwarder.padMethod,execution,namespaceAuthority:false,allocatorEffectsVerified:false,ioEffectsVerified:false,runtimeParity:false});closures.set(metadata,{state,selection,forwarder,execution});return metadata;
+export function sourceNominalDisplayClosure(receipt,family,consumerParser=null){
+ if(!Array.isArray(family)||family[0]!=='crate')fail('actual checked nominal family required');const state=scopeFacts(receipt);if(consumerParser!==null&&matchesParserFacts(consumerParser).context!==state.context)fail('foreign original Display consumer parser context');
+ const selection=selectedNominal(state,family),forwarder=originalForwarder(selection),inherent=originalInherent(state,family,forwarder.methodName),original=selectedStandard(),execution=symbolicStringSink(original,forwarder),metadata=freezeMacroTree({schema:'original-nominal-default-display-closure-v2',caller:receipt,nominal:selection.nominal,implementation:{source:selection.module.file,sourceSha256:hash(selection.module.source),span:selection.impl.span,original:selection.module.source.slice(selection.impl.span.start,selection.impl.span.end)},method:selection.method,originalInherent:{source:inherent.module.file,module:inherent.module.path,sourceSha256:hash(inherent.module.source),sourceViewDigest:inherent.module.sourceView.digest,implementationSpan:inherent.impl.span,method:inherent.method},standard:original.metadata,forwarder:forwarder.program,inherentMethod:forwarder.methodName,padMethod:forwarder.padMethod,execution,namespaceAuthority:false,allocatorEffectsVerified:false,ioEffectsVerified:false,runtimeParity:false});closures.set(metadata,{state,selection,forwarder,inherent,execution});return metadata;
 }
 export function sourceNominalDisplayClosureFacts(closure){const state=closures.get(closure);if(!state)fail('copied or forged nominal Display closure');scopeFacts(closure.caller);return state;}
+export function verifySourceNominalDisplayMethod(closure,semantic,checkedMethod){
+ const {state,inherent}=sourceNominalDisplayClosureFacts(closure),parsed=originalMethodSemanticFacts(semantic),origin=originalMethodTransformFacts(parsed.transform),member=origin.member,method=origin.method;
+ if(origin.context!==state.context)fail('foreign original Display inherent method analysis context');
+ if(member.sourcePath!==inherent.module.file||!same(member.modulePath,inherent.module.path)||member.source!==inherent.module.source||member.sourceView.digest!==inherent.module.sourceView.digest||metadataDigest(member.compilationProfile)!==metadataDigest(state.facts.compilationProfile)||!same(member.implementationSpan,inherent.impl.span)||!same(method.span,inherent.method.span)||!same(method.bodySpan,inherent.method.bodySpan)||method.source!==inherent.method.source||method.name!==closure.inherentMethod||method.receiver!==inherent.method.receiver||!same(origin.proof.owner.owner,closure.nominal.family))fail('checked Display inherent method differs from its exact original implementation/member/source');
+ if(checkedMethod.sourceMethodProof!==semantic.sourceMethodProof||checkedMethod.name!==semantic.name||checkedMethod.impl.method!==method.name||checkedMethod.impl.receiver!==method.receiver||!same(checkedMethod.modulePath,member.modulePath))fail('checked Display inherent method lost its original semantic declaration association');
+ return freezeMacroTree({schema:'original-display-checked-inherent-source-join-v1',originalContextSha256:closure.caller.originalContextSha256,sourcePath:member.sourcePath,modulePath:member.modulePath,sourceSha256:origin.proof.sourceSha256,sourceViewDigest:member.sourceView.digest,implementationSpan:member.implementationSpan,memberSpan:method.span,bodySpan:method.bodySpan,originalMethodDigest:member.methodDigest,originalTransformDigest:metadataDigest(origin.proof),namespaceAuthority:false,runtimeParity:false});
+}
