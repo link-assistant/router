@@ -85,6 +85,10 @@ test('original sparse Git bytes remain visible and linked native source cannot s
   const captured=captureSyncInputs(root),row=captured.files.find(row=>row.path==='src/original.rs');assert.ok(row.bytes>0);assert.equal(row.storage,'original-HEAD-sparse-fallback');
   const target=path.join(root,'packages/javascript/native/core.mjs');fs.unlinkSync(target);fs.symlinkSync(path.join(root,'packages/javascript/portable/policy.mjs'),target);
   assert.throws(()=>captureSyncInputs(root),/Linked original/);
+  fs.unlinkSync(target);fs.symlinkSync(path.join(root,'absent-source.mjs'),target);
+  assert.throws(()=>captureSyncInputs(root),/Linked original/);
+  fs.unlinkSync(target);fs.rmSync(path.join(root,'packages/javascript/native'),{recursive:true});put(root,'packages/javascript/native','blocked ancestor\n');
+  assert.throws(()=>captureSyncInputs(root),/ancestor must be a directory/);
 });
 
 test('the command requires an explicit mode and existing complete receipts cannot be overwritten',t=>{

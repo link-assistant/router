@@ -32,11 +32,24 @@ function protectedInput(name) {
     ||name.startsWith('parity/fixtures/js-first/')
     ||/^packages\/javascript\/[^/]+\.(?:json|d\.ts|mjs|js|cjs)$/u.test(name);
 }
+function originalFileStatus(root,name) {
+  let ancestor=root;
+  const parts=name.split('/');
+  for(const [index,part] of parts.entries()) {
+    ancestor=path.join(ancestor,part);
+    let status;
+    try{status=fs.lstatSync(ancestor);}catch(error){if(error.code==='ENOENT')return null;throw error;}
+    if(status.isSymbolicLink())throw Error('Linked original synchronization source refused: '+name);
+    if(index<parts.length-1&&!status.isDirectory())throw Error('Original source ancestor must be a directory: '+name);
+    if(index===parts.length-1){if(!status.isFile())throw Error('Original synchronization source must be a regular file: '+name);return status;}
+  }
+}
 export function captureSyncInputs(root) {
   const head=git(root,['rev-parse','HEAD']).toString().trim();
   const names=[...new Set(git(root,['ls-files','--cached','--others','--exclude-standard','-z']).toString().split('\0').filter(name=>name&&protectedInput(name)))].sort();
   if(names.length>32768)throw Error('Original synchronization input inventory is too large');
-  const missing=names.filter(name=>!fs.existsSync(path.join(root,name))),blobs=new Map();
+  const status=new Map(names.map(name=>[name,originalFileStatus(root,relativeName(name))]));
+  const missing=names.filter(name=>status.get(name)===null),blobs=new Map();
   if(missing.length) {
     const bytes=git(root,['cat-file','--batch'],missing.map(name=>head+':'+relativeName(name)+'\n').join(''));let offset=0;
     for(const name of missing){const end=bytes.indexOf(10,offset),fields=bytes.subarray(offset,end).toString().split(' '),length=Number(fields[2]);if(end<0||fields[1]!=='blob'||!Number.isSafeInteger(length)||length<0)throw Error('Missing original source input: '+name);offset=end+1;blobs.set(name,bytes.subarray(offset,offset+length));offset+=length;if(bytes[offset++]!==10)throw Error('Invalid original Git object boundary');}
@@ -45,8 +58,6 @@ export function captureSyncInputs(root) {
   let total=0;
   const files=names.map(name=>{
     relativeName(name);const absolute=path.join(root,name);
-    let ancestor=root;for(const part of name.split('/')){ancestor=path.join(ancestor,part);if(fs.existsSync(ancestor)&&fs.lstatSync(ancestor).isSymbolicLink())throw Error('Linked original synchronization source refused: '+name);}
-    if(fs.existsSync(absolute)&&(!fs.lstatSync(absolute).isFile()||fs.lstatSync(absolute).isSymbolicLink()))throw Error('Original synchronization source must be a regular file: '+name);
     const bytes=blobs.get(name)??fs.readFileSync(absolute);total+=bytes.length;
     if(bytes.length>32*1024*1024||total>MAX_INPUT_BYTES)throw Error('Original synchronization inputs exceed bounded capture');
     return {path:name,storage:blobs.has(name)?'original-HEAD-sparse-fallback':'worktree',bytes:bytes.length,sha256:hash(bytes)};
