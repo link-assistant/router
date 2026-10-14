@@ -179,6 +179,40 @@ function originalCloneCheckedNominal(context,module,item,surface,offset) {
   const checked=roundTripProgram(new HostChecker('Rust',[]).program({language:'Rust',items:cloneTree(module.path,[data,generated]),main:null}));
   return {data:checked.declarations.get([...module.path,item.name].join('.')),entry:checked.declarations.get([...module.path,surface.name].join('.'))};
 }
+// Canonical Option layouts come only from fresh parsing of the full original
+// nominal census. Checker state and private Copy/source identities are fresh.
+function originalOptionCloneChecked(context,module,item,surface,offset) {
+  const binding=originalEnumBinding(context),scope=binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),kernel=module.source.slice(item.start,item.end),parser=new HostRustParser(tokenizeRust(kernel)),snapshot=originalHostParserIdentitySnapshot();
+  const configured=configureParserSourceScope(parser,scope,binding.scopes,module.path);parser.aliases=configured.aliases;parser.modulePath=module.path;
+  configureToolAttributes(parser,context.enumToolContext,module,item,kernel);const certificate=deriveFootprintAt(context.derive,module,item);if(certificate)configureDeriveLayout(parser,certificate,kernel,item.start);
+  const guard=()=>{assertOriginalParserIdentity(parser,HostRustParser.prototype,new Map(snapshot.parserMethods));assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});};
+  guard();const parsed=[];parser.items({main:null},parsed,module.path,()=>parser.cursor.atEnd());guard();if(parsed.length!==1||parsed[0].k!=='data'||!parser.cursor.atEnd())throw new Error('Option Clone original record parser mismatch');
+  const data=cloneRelocate(parsed[0],offset+item.start),span={start:offset+item.start,end:offset+item.end};
+  linkProjectDeclaration(parser,parsed[0],data,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:offset,path:module.path,scope:{bindingEvidence:scope,compilationProfile:context.graph.compilationProfile,configurationCondition:module.configurationCondition}});
+  context.optionNominals??=originalEnumNominals(context,module,{start:-1,end:-1},null,offset,binding);
+  const layouts=new Map(context.optionNominals.map(declaration=>[declaration.name,declaration])),needed=new Set(),nominal=[...module.path,item.name].join('.');
+  function requireLayout(name){if(needed.has(name))return;const declaration=layouts.get(name);if(!declaration)throw new Error('Option Clone original dependent layout missing: '+name);needed.add(name);const visit=node=>{if(Array.isArray(node))return node.forEach(visit);if(!node||typeof node!=='object')return;if(node.kind==='named'&&node.path?.[0]==='crate')requireLayout(node.path.slice(1).join('.'));for(const [key,value]of Object.entries(node))if(!['deriveNamespaceProof','toolAttributeProof','copyCertificate'].includes(key))visit(value);};visit(declaration.surface);}
+  requireLayout(nominal);const declarations=[...needed].map(name=>name===nominal?{...layouts.get(name),surface:data}:layouts.get(name));
+  if(surface.impl.cloneSourceProof.selectedBranch==='has_derive_copy=true'){
+    const aliases=new Map(context.state.modules.map(owner=>[moduleScopeKey(owner),configureParserSourceScope(new HostRustParser([]),binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(owner)),binding.scopes,owner.path).aliases])),scopes=new Map(binding.scopes.map(scope=>[moduleScopeKey(scope),scope]));
+    projectCopyEvidence(declarations,context.state.modules,aliases,scopes,{deriveDependencies:context.state.dependencies,jsonMacroDependencies:typeof context.jsonMacroDependencies==='function'?context.jsonMacroDependencies():context.jsonMacroDependencies,sourceScopes:binding.scopes});
+    if(!originalOptionCopyPayload(data))throw new Error('Option Clone Copy branch lacks actual private original Copy/no-Drop');
+  }
+  const tree=[];for(const declaration of declarations){let items=tree;for(const name of declaration.path){let owner=items.find(item=>item.k==='module'&&item.name===name);if(!owner){owner={k:'module',name,items:[]};items.push(owner);}items=owner.items;}items.push(declaration.surface);}
+  const generated=cloneRelocate(surface,offset);linkOriginalCloneSemantic(surface,generated,offset);let items=tree;for(const name of module.path)items=items.find(item=>item.k==='module'&&item.name===name).items;items.push(generated);
+  const checked=roundTripProgram(new HostChecker('Rust',[]).program({language:'Rust',items:tree,main:null}));
+  return {data:checked.declarations.get(nominal),entry:checked.declarations.get([...module.path,surface.name].join('.')),dependencies:[...needed].filter(name=>name!==nominal).map(name=>checked.declarations.get(name))};
+}
+// Only corresponding let slots may rename fresh locals. Their initializers
+// remain outside the new binding; every other node and proof stays exact.
+function optionCloneAlpha(expected,actual,params) {
+  const reserved=new Set(params.map(param=>param.name)),seen=new Set();
+  const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='match')for(const row of node.cases??[])for(const name of row.pattern?.binds??[])reserved.add(name);for(const [key,value]of Object.entries(node))if(!['type','cloneSourceProof'].includes(key))Array.isArray(value)?value.forEach(reserve):reserve(value);};reserve(expected);reserve(actual);
+  const visit=(left,right,names)=>{if(Array.isArray(left)){if(!Array.isArray(right)||left.length!==right.length)throw new Error('Option Clone checked array shape mismatch');return left.map((value,index)=>visit(value,right[index],names));}if(!left||typeof left!=='object')return left;
+    if(left.k==='let'){if(right?.k!=='let'||typeof right.name!=='string'||reserved.has(right.name)||seen.has(right.name))throw new Error('Option Clone checked scoped local mismatch');seen.add(right.name);const nested=new Map(names);nested.set(left.name,right.name);return Object.fromEntries(Object.entries(left).map(([key,value])=>[key,key==='name'?right.name:key==='cloneSourceProof'?value:visit(value,right[key],key==='body'?nested:names)]));}
+    return Object.fromEntries(Object.entries(left).map(([key,value])=>[key,key==='cloneSourceProof'?value:key==='name'&&left.k==='var'&&names.has(value)?names.get(value):visit(value,right?.[key],names)]));
+  };return visit(expected,actual,new Map());
+}
 function cloneAlpha(expected,actual) {
   const names=new Map(),seen=new Set();let left=expected,right=actual.body;
   while(left?.k==='let'){
@@ -203,7 +237,8 @@ function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}
   relativeName(item.source);const proof=item.cloneSourceProof,span=item.span,source=context.sources.get(item.source);
   if(typeof source!=='string'||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new Error('Invalid Clone original declaration boundary');
   const sourceSha256=digest(source),itemSha256=digest(source.slice(span.start,span.end));
-  if(proof?.schema!=='original-generated-clone-ir-v1'||proof.generator!=='core::clone::Clone'||proof.source!==item.source||proof.sourceSha256!==sourceSha256||proof.itemSha256!==itemSha256)throw new Error('Clone original declaration hash/identity mismatch');
+  const option=proof?.schema==='original-generated-option-clone-ir-v1';
+  if(!['original-generated-clone-ir-v1','original-generated-option-clone-ir-v1'].includes(proof?.schema)||proof.generator!=='core::clone::Clone'||proof.source!==item.source||proof.sourceSha256!==sourceSha256||proof.itemSha256!==itemSha256)throw new Error('Clone original declaration hash/identity mismatch');
   cloneSame(proof.span,span,'Clone original declaration span mismatch');
   const candidates=entries.filter(entry=>entry.impl?.cloneSourceProof?.source===item.source&&isDeepStrictEqual(entry.impl.cloneSourceProof.span,span));if(candidates.length!==1||used.has(candidates[0]))throw new Error('Clone metadata is not one-to-one');
   const entry=candidates[0],module=context.graph.modules.find(module=>module.file===item.source&&isDeepStrictEqual(module.path,entry.modulePath));if(!module)throw new Error('Clone source module mismatch');
@@ -212,7 +247,8 @@ function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}
   // Genuine unit compiler outputs include null-prototype profile records.
   // Compare their complete persisted JSON representation; keep the private
   // live source proof intact for reconstruction and every semantic check.
-  const serializedOriginalProof=original.term==='enum'?JSON.parse(JSON.stringify(originalProof)):originalProof;
+  const serializedOriginalProof=original.term==='enum'||option?JSON.parse(JSON.stringify(originalProof)):originalProof;
+  if(option&&(JSON.stringify(proof)!==JSON.stringify(serializedOriginalProof)||JSON.stringify(entry.impl.cloneSourceProof)!==JSON.stringify(serializedOriginalProof)))throw new Error('Option Clone exact persisted original proof mismatch');
   cloneSame(proof,serializedOriginalProof,'Clone original source/AST/primitive/receiver proof mismatch');cloneSame(entry.impl.cloneSourceProof,proof,'Clone checked source proof mismatch');
   const nominal=[...module.path,original.name].join('.'),localName=actual.name;
   if(item.name!==nominal+'.clone'||entry.generated!=='router-source-generated-clone-method'||entry.name!==localName||entry.fullName!==[...module.path,localName].join('.')||entry.impl.method!=='clone'||entry.impl.receiver!=='shared'||entry.params.length!==1||entry.async||entry.constant||entry.constFunction||Object.hasOwn(entry.impl,'defaultSourceProof'))throw new Error('Clone checked generated signature/symbol mismatch');
@@ -220,20 +256,25 @@ function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}
   cloneSame(entry.ret,{kind:'data',name:nominal,rustSourceType:true},'Clone checked owned return mismatch');
   if(!Number.isSafeInteger(entry.span?.start)||!Number.isSafeInteger(entry.span?.end))throw new Error('Clone checked declaration boundary mismatch');const shift=entry.span.start-span.start;if(!Number.isSafeInteger(shift)||shift<0||entry.span.end-span.end!==shift)throw new Error('Clone relocated declaration span mismatch');
   if(meta.checkedMethods.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span))||meta.executable.some(method=>method.source===item.source&&isDeepStrictEqual(method.span,span)))throw new Error('Clone overlaps original fn/method counts');
-  const regenerated=originalCloneCheckedNominal(context,module,original,actual,shift),data=checked.declarations.get(nominal);
+  if(option&&shift!==module.offset)throw new Error('Option Clone original relocation mismatch');
+  const regenerated=option?originalOptionCloneChecked(context,module,original,actual,shift):originalCloneCheckedNominal(context,module,original,actual,shift),data=checked.declarations.get(nominal);
+  for(const dependency of regenerated.dependencies??[]){cloneSame(checked.declarations.get(dependency.fullName),dependency,'Option Clone whole checked canonical generic layout mismatch');cloneSame(target.declarations.get(names.get(dependency.fullName)),{...flattenedCloneNode(dependency,names),name:names.get(dependency.fullName),fullName:names.get(dependency.fullName),modulePath:[],generated:'router-project-flattened'},'Option Clone whole flattened canonical generic layout mismatch');}
   cloneSame(data,regenerated.data,'Clone actual checked original layout mismatch');
   cloneSame(entry.impl,regenerated.entry.impl,'Clone whole original implementation header/receiver mismatch');
   cloneSame({params:entry.params,ret:entry.ret},{params:regenerated.entry.params,ret:regenerated.entry.ret},'Clone checked shared receiver/ownership mismatch');
-  const expected=cloneAlpha(regenerated.entry.body.body,{body:entry.body.body,params:entry.params});
+  const expected=option?optionCloneAlpha(regenerated.entry.body.body,entry.body.body,entry.params):cloneAlpha(regenerated.entry.body.body,{body:entry.body.body,params:entry.params});
   cloneSame(entry.body.body,expected,'Clone whole actual primitive/record computation mismatch');
   const expectedProof={...regenerated.entry.body.cloneSourceProof,computationSha256:metadataDigest(expected)};expectedProof.digest=proof.digest;expectedProof.digest=metadataDigest(expectedProof);
   cloneSame(entry.body.cloneSourceProof,expectedProof,'Clone checked Copy/no-Drop/layout/receiver/body proof mismatch');
   cloneSame({...entry.body,body:expected,cloneSourceProof:expectedProof},{...regenerated.entry.body,body:expected,cloneSourceProof:expectedProof},'Clone checked wrapper ownership/authority mismatch');
+  if(option)cloneSame(entry,{...regenerated.entry,body:{...regenerated.entry.body,body:expected,cloneSourceProof:expectedProof}},'Option Clone complete checked declaration/header/flags mismatch');
   const flattened=target.declarations.get(names.get(entry.fullName));if(!flattened||flattened.generated!=='router-project-flattened'||flattened.impl?.method!=='clone'||flattened.impl.receiver!=='shared'||flattened.name!==flattened.fullName||flattened.modulePath.length)throw new Error('Clone flattened target missing/identity mismatch');
+  if(option&&JSON.stringify(flattened.impl.cloneSourceProof)!==JSON.stringify(serializedOriginalProof))throw new Error('Option Clone exact flattened original proof mismatch');
   cloneSame(flattened.impl.cloneSourceProof,proof,'Clone flattened source proof mismatch');
   cloneSame(flattened.impl,flattenedCloneNode(entry.impl,names),'Clone flattened whole implementation header mismatch');
   cloneSame({params:flattened.params,ret:flattened.ret},flattenedCloneNode({params:entry.params,ret:entry.ret},names),'Clone flattened shared signature mismatch');
   cloneSame(flattened.body,flattenedCloneNode(entry.body,names),'Clone flattened whole body mismatch');cloneSame(flattened.span,entry.span,'Clone flattened span mismatch');
+  if(option)cloneSame(flattened,{...flattenedCloneNode(entry,names),name:names.get(entry.fullName),fullName:names.get(entry.fullName),modulePath:[],generated:'router-project-flattened'},'Option Clone complete flattened declaration/header/flags mismatch');
   const targetData=target.declarations.get(names.get(nominal));if(!targetData||targetData.generated!=='router-project-flattened')throw new Error('Clone flattened nominal layout missing');cloneSame(targetData,{...flattenedCloneNode(data,names),name:names.get(nominal),fullName:names.get(nominal),modulePath:[],generated:'router-project-flattened'},'Clone flattened whole nominal layout mismatch');
   used.add(entry);return {...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
 }
