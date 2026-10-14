@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {originalMacroTrees,macroTreeSource,freezeMacroTree} from './macro-token-trees.mjs';
 import {boundedMacroBlock,boundedMacroExpression} from './macro-fragments.mjs';
 import {boundedMacroItem} from './macro-items.mjs';
+import {originalMacroArrayTypeRules,originalMacroArrayLiteralLength} from './macro-array-type-source.mjs';
 import {originalMacroSequenceFollowRule,assertOriginalMacroSequenceFollowRule} from './macro-follow-source.mjs';
 import {originalMacroMetavarRules,assertOriginalMacroMetavarRules} from './macro-metavar-source.mjs';
 // Each instance keeps separate definition, expansion and forwarding authority.
@@ -193,6 +194,12 @@ function boundedType(trees,start,depth=0) {
   const typeText=tree=>text(transparentTree(tree)),typeIdent=tree=>ident(transparentTree(tree));
   if(typeText(trees[start])==='*'){if(!['const','mut'].includes(typeText(trees[start+1])))return null;return boundedType(trees,start+2,depth+1);}
   const tuple=transparentTree(trees[start]);
+  if(tuple?.kind==='group'&&tuple.delimiter==='[') {
+    const rule=originalMacroArrayTypeRules(),end=boundedType(tuple.children,0,depth+1);
+    if(end===null)return null;
+    if(end===tuple.children.length)return start+1;
+    return typeText(tuple.children[end])===';'&&end+2===tuple.children.length&&originalMacroArrayLiteralLength(rule,tuple.children[end+1])?start+1:null;
+  }
   if(tuple?.kind==='group'&&tuple.delimiter==='(') {
     let at=0;
     while(at<tuple.children.length){const end=boundedType(tuple.children,at,depth+1);if(end===null)return null;at=end;if(at<tuple.children.length&&typeText(tuple.children[at++])!==',')return null;}
