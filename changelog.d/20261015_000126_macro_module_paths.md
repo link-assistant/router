@@ -1,0 +1,1 @@
+Preserve original module directories when reconstructing macro namespaces so independent conditional derive-helper checks agree with the project graph; reject malformed path metadata and retain unresolved scopes when path evidence is absent.

@@ -2,7 +2,17 @@
 import {captureSourceModuleViews,originalSourceModuleItems,originalModuleViewParent} from './source-module-views.mjs';
 import {compilationProfile as normalizeCompilationProfile} from './cfg-profile.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
+import {posix} from 'node:path';
 const states=new WeakMap();
+function originalPathMetadata(module){
+  const result={};
+  for(const key of ['directory','pathDirectory'])if(Object.hasOwn(module,key)){
+    const descriptor=Object.getOwnPropertyDescriptor(module,key),value=descriptor?.value;
+    if(!descriptor||!('value'in descriptor)||typeof value!=='string'||!value||Buffer.byteLength(value)>4096||value.includes('\\')||/[\x00-\x1f:]/u.test(value)||posix.isAbsolute(value)||posix.normalize(value)!==value||value!=='.'&&value.split('/').some(part=>!part||part==='.'||part==='..'))throw new TypeError('Macro module path metadata requires canonical original directories');
+    result[key]=value;
+  }
+  return result;
+}
 export function captureOriginalMacroModules({modules,compilationProfile=null}={}) {
   if(!Array.isArray(modules)||!modules.length||modules.length>512)throw new TypeError('Macro context needs bounded actual original modules');
   const profile=normalizeCompilationProfile(compilationProfile),files=new Map();
@@ -14,7 +24,7 @@ export function captureOriginalMacroModules({modules,compilationProfile=null}={}
     if(module.configurationCondition!==undefined&&!['active','inactive','unknown'].includes(module.configurationCondition))throw new TypeError('Macro module configuration condition is invalid');
     if(files.get(module.file).length>1&&!Object.hasOwn(module,'sourceView'))throw new TypeError('Same-file macro modules require genuine original source views');
     const view=Object.hasOwn(module,'sourceView')?module.sourceView:captureSourceModuleViews({source:module.source,sourcePath:module.file,compilationProfile:profile}).views[0];
-    const snapshot={file:module.file,path:[...module.path],source:module.source,compilationProfile:ownProfile,sourceView:view,...(module.configurationCondition===undefined?{}:{configurationCondition:module.configurationCondition})};
+    const snapshot={file:module.file,path:[...module.path],source:module.source,compilationProfile:ownProfile,sourceView:view,...originalPathMetadata(module),...(module.configurationCondition===undefined?{}:{configurationCondition:module.configurationCondition})};
     originalSourceModuleItems(snapshot); // Validate private view, full bytes, file/path suffix and profile before sealing.
     if(view.configurationCondition==='inactive'&&module.configurationCondition!==undefined&&module.configurationCondition!=='inactive'||view.configurationCondition==='unknown'&&module.configurationCondition==='active')throw new TypeError('Macro module condition contradicts its original source view');
     return snapshot;
@@ -27,7 +37,7 @@ export function captureOriginalMacroModules({modules,compilationProfile=null}={}
     const parentView=originalModuleViewParent(module.sourceView);
     if(parentView&&!original.some(parent=>parent.file===module.file&&parent.sourceView.digest===parentView.digest&&JSON.stringify(parent.path)===JSON.stringify([...prefix,...parentView.modulePath])))throw new TypeError('Macro inline view lacks its genuine original parent context');
   }
-  const certificate=freezeMacroTree({schema:'original-macro-module-snapshots-v1',compilationProfile:profile,views:original.map(module=>({file:module.file,path:module.path,digest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition}))});
+  const certificate=freezeMacroTree({schema:'original-macro-module-snapshots-v1',compilationProfile:profile,views:original.map(module=>({file:module.file,path:module.path,digest:module.sourceView.digest,...originalPathMetadata(module),configurationCondition:module.configurationCondition??module.sourceView.configurationCondition}))});
   states.set(certificate,{modules:original,compilationProfile:profile});return certificate;
 }
 export function originalMacroModules(certificate){const state=states.get(certificate);if(!state)throw new TypeError('Unsealed original macro module snapshots');return state;}
