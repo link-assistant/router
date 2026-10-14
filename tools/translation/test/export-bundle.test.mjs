@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
 import {chmodSync,existsSync,lstatSync,mkdirSync,mkdtempSync,readFileSync,renameSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {exportTranslatorBundle} from '../export-bundle.mjs';
 import {discoverCompilerSourceInputs} from '../compiler-source-inputs.mjs';
 
@@ -49,6 +50,52 @@ test('complete committed offline compiler exports deterministically with full so
     assert.equal(first.manifest.inputs.some(row=>row.path==='tools/translation/check-typescript-fixtures.mjs'),true);
     const exportedPaths=new Set(first.manifest.inputs.map(row=>row.path));
     for(const input of discoverCompilerSourceInputs({root}))assert.ok(exportedPaths.has(input.path),input.path);
+  }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+test('the exported synchronization CLI generates and updates real receiving JavaScript through meta, Rust and strict TypeScript',{timeout:180000},async()=>{
+  const directory=mkdtempSync(join(tmpdir(),'router-export-sync-'));
+  try{
+    const bundle=exportTranslatorBundle({sourceRoot:root,output:join(directory,'bundle')});
+    assert.ok(bundle.manifest.inputs.some(row=>row.path==='scripts/sync-router.mjs'));
+    const receiving=join(directory,'receiving');mkdirSync(receiving);
+    const put=(name,value)=>{const file=join(receiving,name);mkdirSync(join(file,'..'),{recursive:true});writeFileSync(file,value);};
+    const policy='/** @param {number} x @returns {number} */ export function increment(x) { return x + 1; }\n';
+    put('packages/javascript/package.json','{"name":"receiving-sync","version":"1.0.0","type":"module"}\n');
+    put('packages/javascript/portable/policy.mjs',policy);
+    put('packages/javascript/native/core.mjs','export function observed() { return 7; }\n');
+    put('packages/javascript/index.js','export const receiving = true;\n');
+    put('packages/javascript/testing.js','export const testing = true;\n');
+    put('packages/javascript/catalog.json','{"operations":[]}\n');
+    put('parity/fixtures/js-first/policy.json',JSON.stringify({cases:[{id:'increment-seven',function:'increment',args:[7],expected:8}]}));
+    put('parity/fixtures/js-first/unsupported.json','[]\n');
+    const original='pub fn original() -> bool { true }\n';put('src/original.rs',original);
+    const require=createRequire(join(root,'packages/javascript/package.json'));
+    const dependencies=join(require.resolve('typescript/package.json'),'../..');
+    symlinkSync(dependencies,join(receiving,'packages/javascript/node_modules'),'dir');
+    git(receiving,['init','--quiet']);put('.git/info/exclude','node_modules/\n');git(receiving,['add','.']);
+    git(receiving,['-c','user.name=Translation fixture','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Independent receiving sources']);
+    const cli=join(bundle.destination,'scripts/sync-router.mjs');
+    const run=(mode,name)=>JSON.parse(execFileSync(process.execPath,[cli,mode,'--root',receiving,'--direction','javascript-to-rust','--output',join(directory,name)],{cwd:receiving,encoding:'utf8',timeout:30000,stdio:['ignore','pipe','pipe']}));
+    assert.equal(run('--write','first').exitCode,0);
+    const rust=readFileSync(join(receiving,'src/generated_js_first/policy.rs'),'utf8');
+    const {parseMeta}=await import(pathToFileURL(join(bundle.destination,'tools/translation/js-to-rust/translator.mjs')));
+    const {evaluate}=await import(pathToFileURL(join(bundle.destination,'tools/translation/js-to-rust/interpreter.mjs')));
+    const {compileNativeTypeScript}=await import(pathToFileURL(join(bundle.destination,'tools/translation/js-to-rust/native-typescript.mjs')));
+    assert.equal(evaluate(parseMeta(readFileSync(join(receiving,'tools/translation/js-to-rust/generated/policy.lino'),'utf8')),'increment',[7]),8);
+    assert.equal(compileNativeTypeScript(receiving,{sourceRoot:receiving}).compiler,'5.9.3');
+    put('packages/javascript/portable/policy.mjs',policy.replace('x + 1','x + 2'));
+    put('packages/javascript/native/core.mjs','export function observed() { return 9; }\n');
+    put('parity/fixtures/js-first/policy.json',JSON.stringify({cases:[{id:'increment-seven',function:'increment',args:[7],expected:9}]}));
+    const changed=run('--write','changed');assert.equal(changed.exitCode,0);assert.equal(changed.originalInputsUnchanged,true);
+    assert.notEqual(readFileSync(join(receiving,'src/generated_js_first/policy.rs'),'utf8'),rust);
+    assert.equal(evaluate(parseMeta(readFileSync(join(receiving,'tools/translation/js-to-rust/generated/policy.lino'),'utf8')),'increment',[7]),9);
+    assert.equal(compileNativeTypeScript(receiving,{sourceRoot:receiving}).compiler,'5.9.3');
+    const ts=require('typescript'),native=readFileSync(join(receiving,'packages/typescript/native/core.ts'),'utf8');
+    const erased=ts.transpileModule(native,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+    const observed=await import('data:text/javascript;base64,'+Buffer.from(erased).toString('base64'));assert.equal(observed.observed(),9);
+    const fresh=run('--check','fresh');assert.equal(fresh.exitCode,0);assert.equal(fresh.artifactsCurrent,true);assert.equal(fresh.wholeSourceSynchronization,false);assert.equal(fresh.rustExecuted,false);
+    assert.equal(readFileSync(join(receiving,'src/original.rs'),'utf8'),original);
   }finally{rmSync(directory,{recursive:true,force:true});}
 });
 

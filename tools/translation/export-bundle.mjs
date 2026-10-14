@@ -9,7 +9,7 @@ import {isCompilerSourceInputPath} from './compiler-source-inputs.mjs';
 
 export const TRANSLATOR_EXPORT_LIMITS=Object.freeze({files:2048,fileBytes:4*1024*1024,totalBytes:64*1024*1024,gitMilliseconds:10000,gitOutputBytes:4*1024*1024});
 const roots=['tools/translation','scripts/translate-router.mjs','scripts/export-router-translator.mjs',
-  'scripts/regenerate-js-first.mjs','scripts/regenerate-native-typescript.mjs'];
+  'scripts/regenerate-js-first.mjs','scripts/regenerate-native-typescript.mjs','scripts/sync-router.mjs'];
 const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
 const selected=path=>{
   if(roots.slice(1).includes(path))return true;
