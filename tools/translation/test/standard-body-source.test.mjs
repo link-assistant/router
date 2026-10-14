@@ -31,7 +31,7 @@ test('complete original bodies and primitive Default macro expansions retain pri
   for(const owner of ['bool','char','usize','u8','u16','u32','u64','u128','isize','i8','i16','i32','i64','i128','f64']){
     const selected=pinnedDefaultBody(owner),parsed=parsePinnedBody(HostRustParser,selected);assert.equal(selected.evidence.kind,'original-macro-expanded-trait-method');assert.equal(selected.evidence.owner,owner);assert.equal(selected.evidence.expandedTrees.length>0,true);assert.equal(parsedPinnedBodyEvidence(parsed).selection,selected);
   }
-  assert.equal(pinnedDefaultBody('&str').evidence.kind,'original-trait-method');assert.throws(()=>pinnedDefaultBody('String'),/separately checked/u);
+  assert.equal(pinnedDefaultBody('&str').evidence.kind,'original-trait-method');const stringDefault=pinnedDefaultBody('String');assert.equal(stringDefault.evidence.kind,'original-standard-container-trait-method');assert.equal(stringDefault.method.bodySource.includes('String::new()'),true);assert.equal(parsedPinnedBodyEvidence(parsePinnedBody(HostRustParser,stringDefault)).selection,stringDefault);assert.throws(()=>pinnedDefaultBody('Unregistered'),/separately checked/u);
   assert.equal(STANDARD_BODY_SOURCE_PROFILE.wholeCoreTranslated,false);assert.equal(STANDARD_BODY_SOURCE_PROFILE.traitComplete,false);
 });
 

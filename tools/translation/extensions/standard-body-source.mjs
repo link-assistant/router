@@ -13,6 +13,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {compileDeclarativeMacro,expandDeclarativeMacro} from '../declarative-token-macros.mjs';
 import {originalTopLevelMacroInvocations,originalMacroTreeText} from '../macro-token-trees.mjs';
 import {tokenizeRust} from './lexical.mjs';
+import {originalContainerDefaultBody,assertOriginalContainerDefaultBody} from '../default-container-source.mjs';
 
 const root=new URL('../source-profiles/standard-method-bodies/',import.meta.url);
 const manifest=JSON.parse(readFileSync(new URL('manifest.json',root),'utf8'));
@@ -70,7 +71,7 @@ function methodIn(source,header,name){
   return {name,ownerHeader:header,parameters,definitionSpan,bodySpan,signatureSource:source.slice(definitionSpan.start,bodySpan.start),bodySource:source.slice(bodySpan.start,bodySpan.end),definitionSource:source.slice(definitionSpan.start,definitionSpan.end)};
 }
 function seal(key,method,evidence){
-  const value=freeze({profile:manifest.profile,key,method:structuredClone(method),sourceInputs:STANDARD_BODY_SOURCE_PROFILE.sourceInputs.filter((input,index)=>key.startsWith('Result::')?manifest.sources[index].rustPath==='library/core/src/result.rs':manifest.sources[index].rustPath!=='library/core/src/result.rs'),evidence:structuredClone(evidence),bodySha256:hash(method.bodySource),namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false});
+  const value=freeze({profile:manifest.profile,key,method:structuredClone(method),sourceInputs:evidence.sourceInputs??STANDARD_BODY_SOURCE_PROFILE.sourceInputs.filter((input,index)=>key.startsWith('Result::')?manifest.sources[index].rustPath==='library/core/src/result.rs':manifest.sources[index].rustPath!=='library/core/src/result.rs'),evidence:structuredClone(evidence),bodySha256:hash(method.bodySource),namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false});
   selections.set(value,{method,evidence});cache.set(key,value);return value;
 }
 export function pinnedOptionBody(name){
@@ -96,6 +97,7 @@ const scalarNames=new Set(['bool','char','usize','u8','u16','u32','u64','u128','
 let defaultDefinition,defaultInvocations;
 export function pinnedDefaultBody(owner){
   const key='Default::'+owner;if(cache.has(key))return cache.get(key);
+  if(['String','Option','Vec'].includes(owner)){const selected=assertOriginalContainerDefaultBody(originalContainerDefaultBody(owner));return seal(key,selected.method,{...selected.evidence,sourceSelection:selected});}
   if(owner==='&str'){
     const source=sources.get('library/core/src/str/mod.rs'),method=methodIn(source.source,'implDefaultfor&str','default');
     return seal(key,method,{kind:'original-trait-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner:'&str',trait:'core::default::Default'});

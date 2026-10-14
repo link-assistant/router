@@ -59,10 +59,8 @@ test('Default execution preserves independent trait coherence source and field-s
     'struct Payload{value:u32}impl Default for Payload{fn default()->Self{Self{value:1}}}impl Default for Payload{fn default()->Self{Self{value:2}}}pub fn bad()->Payload{Payload::default()}',
     '#[derive(Default)] struct Payload{value:u32}impl Default for Payload{fn default()->Self{Self{value:1}}}pub fn bad()->Payload{Payload::default()}',
     '#[derive(Default)] struct Payload<T>{value:T}pub fn bad()->Payload<u32>{Payload::default()}',
-    '#[derive(Default)] struct Payload{value:String}pub fn bad()->Payload{Payload::default()}',
     '#[derive(Default)] struct Payload{#[unknown] value:u32}pub fn bad()->Payload{Payload::default()}',
     '#[derive(Default)] struct Payload{value:u32=9}pub fn bad()->Payload{Payload::default()}',
-    '#[derive(Default)] struct Payload{a:u32,b:u32,c:u32,d:u32,e:u32,f:u32}pub fn bad()->Payload{Payload::default()}',
     'struct Payload{value:u32}impl Default for Payload{fn default(other:u32)->Self{Self{value:other}}}pub fn bad()->Payload{Payload::default()}',
     'struct Payload{value:u32}impl Default for Payload{fn default()->Self{Self{value:true}}}pub fn bad()->Payload{Payload::default()}',
     'struct Payload{value:u32}impl Default for Payload{fn default()->Self{Self{value:1}}fn other()->u32{3}}pub fn bad()->Payload{Payload::default()}',
@@ -72,3 +70,5 @@ test('Default execution preserves independent trait coherence source and field-s
   ];
   for(const source of sources){const result=compile(source);assert.ok(!result.meta.executable.some(entry=>entry.name==='bad'),source);assert.ok(result.meta.refused.length,source);}
 });
+
+for(const [source,golden]of [['#[derive(Default)] struct Payload{value:String}pub fn bad()->Payload{Payload::default()}',{$:'Payload',value:''}],['#[derive(Default)] struct Payload{a:u32,b:u32,c:u32,d:u32,e:u32,f:u32}pub fn bad()->Payload{Payload::default()}',{$:'Payload',a:0n,b:0n,c:0n,d:0n,e:0n,f:0n}]])test('former field-boundary refusal executes the exact original source '+source,async()=>{const result=compile(source);assert.ok(result.meta.executable.some(row=>row.name==='bad'),JSON.stringify(result.meta.refused));await verifyTypedTargets(result,api=>assert.deepEqual(api.bad(),golden),{childTimeoutMs:30000});});
