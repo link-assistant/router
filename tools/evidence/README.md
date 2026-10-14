@@ -29,3 +29,36 @@ Physical allocation and original logical-container sizes are separate measures. 
 A decoded batch may also remain only in reachable Git when every original indexed container has its own verified Git witness. The same resolver then streams those complete original containers and checks every requested decoded length and hash. Before removing a physical batch, verify its full Git blob and record its commit, path, blob, length and SHA256 in a durable witness receipt; repeat complete integrity and CI measurement checks after removal. A full local history remains required. Integrity reports count declared batches separately from physically present batches, and physical allocation measures only present files. Historical batch bytes and all original compressed containers remain recoverable without recompression.
 
 The summary preserves its existing artifact selection counts and byte totals from the unchanged historical receipt sizes, and labels their scope explicitly. `current_text_manifest_measurement` separately measures current logical containers through the resolver; `storage_physical` counts distinct current inodes and allocation. Neither a missing historical alias nor a historical container-size fact is silently replaced. Existing migrated XZ receipts with `original_gzip_sha256` retain the old `compressed_bytes` fact and use their existing `bytes` field for the current container length; other compressed receipts use `compressed_bytes`. Current content hashes are always checked.
+
+`packet.py` recovers a complete non-CI evidence archive from an exact reachable
+Git commit, path and blob. A case-relative `complete-packet-git-index-v1` index
+maps each archive to its original `bytes`, `sha256`, and `git` witness
+(`commit`, `path`, `blob`). Git paths must equal
+`docs/case-studies/issue-759/` plus the declared relative archive path. Linked
+roots/inputs, missing or foreign witnesses, replacement objects, lazy fetching,
+changed physical archives and malformed/duplicate index keys refuse. The reader
+stages only bounded compressed bytes and verifies their complete hash before
+opening a member stream. TAR decoding stays bounded and streamed; complete
+receipt lengths/hashes, exact member names, backward duplicate hardlinks,
+compression memory and total decoded budgets are checked. Expanded reports are
+never written to disk.
+
+```sh
+python3 tools/evidence/packet.py \
+  --case-root docs/case-studies/issue-759 --repository-root . \
+  --packet raw/current-task/source-variants-batch-v3/complete-evidence.tar.xz \
+  --members-receipt docs/case-studies/issue-759/raw/current-task/source-variants-batch-v3/original-capture-receipt.json.gz
+```
+
+`--copy-to NEW_FILE` restores the complete original archive after full member
+verification and refuses overwriting an existing or linked destination.
+Python consumers can use `PacketStore(...).verified_archive(relative_name)` as a
+seekable, fully verified compressed stream for original member recovery. A
+missing physical archive uses the same unchanged Git bytes; a present archive
+must match them. Keep the original capture and installation receipts unchanged.
+Before removing a physical archive, preserve its exact commit/path/blob/length/
+hash witness, exercise complete member recovery in an absent-file overlay,
+verify all existing consumer and CI measurements, and calculate physical
+allocation under the fixed case cap. Only the archive owner installs that
+reviewed migration between frozen verification jobs. Hash-only claims do not
+replace a complete source variant, raw log or original compressed container.
