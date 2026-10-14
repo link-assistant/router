@@ -71,3 +71,9 @@ export function proveSchemarsDataMacroNamespace({dependencies,source}={}){
 }
 export const isSchemarsDataMacroNamespace=value=>!!value&&dataProofs.has(value);
 export function assertSchemarsDataMacroNamespace(proof,{dependencies,source}={}){const state=dataProofs.get(proof);if(!state||state.dependencies!==dependencies||state.source!==source)throw new TypeError('Unsealed or foreign original Schemars data macro candidate');return proof;}
+
+// Full retained expansions for an exact original generated call; no issuer
+// or namespace/behavior authority is transferred by reading these trees.
+export function originalSchemarsDataMacroExpansions(proof,{dependencies,source}={}){
+ assertSchemarsDataMacroNamespace(proof,{dependencies,source});const state=dataProofs.get(proof);return Object.freeze([...state.expansions]);
+}

@@ -79,3 +79,10 @@ export const isSerdeDeserializeBangFootprint=value=>!!value&&proofs.has(value);
 export function assertSerdeDeserializeBangFootprint(proof,context,certificate){
   const state=proofs.get(proof);if(!state||state.context!==context||state.certificate!==certificate)throw new TypeError('Deserialize output proof requires its original sealed invocation');return proof;
 }
+
+// Read only the complete output belonging to this exact private caller.
+export function originalSerdeDeserializeOutputs(proof,context,certificate,module,item){
+ assertSerdeDeserializeBangFootprint(proof,context,certificate);const original=deriveFootprintOriginalModule(context,certificate),state=proofs.get(proof);
+ if(!module||module.source!==original.source||module.sourceView!==original.sourceView||module.file!==original.file||JSON.stringify(module.path)!==JSON.stringify(original.path)||!item||item.start!==certificate.span.start||item.end!==certificate.span.end||item.name!==certificate.name||item.term!==certificate.kind||hash(original.source)!==certificate.sourceSha256||hash(original.source.slice(item.start,item.end))!==certificate.itemSha256)throw new TypeError('Deserialize output requires its exact original source/view/span');
+ return Object.freeze(state.outputs.map(row=>Object.freeze({...row})));
+}
