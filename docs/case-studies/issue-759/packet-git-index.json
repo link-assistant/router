@@ -9,6 +9,15 @@
         "path": "docs/case-studies/issue-759/raw/current-task/source-variants-batch-v3/complete-evidence.tar.xz",
         "blob": "795eb226a8fb3f756c0545121c1dfe9467ea83f0"
       }
+    },
+    "current/verified-container-review-20261014/complete-evidence.tar.xz": {
+      "bytes": 73593172,
+      "sha256": "a18927beedb86f194b20e20edee463237cd854e8aa5a34b14263cbc42176404d",
+      "git": {
+        "commit": "32ed7213da3495f31fe02db01e1e36c7ad3738ef",
+        "path": "docs/case-studies/issue-759/current/verified-container-review-20261014/complete-evidence.tar.xz",
+        "blob": "90bb2aa28c8921ff124461045d98ae9114ee5f74"
+      }
     }
   }
 }

@@ -1,0 +1,31 @@
+{
+  "schema": "complete-immutable-prior-packet-alias-recovery-v1",
+  "aliasesVerified": 945,
+  "completeOriginalAliasBytes": 404479358,
+  "completeContainersVerified": {
+    "current/verified-container-review-20261014/complete-evidence.tar.xz": {
+      "archive": "current/verified-container-review-20261014/complete-evidence.tar.xz",
+      "completeMembers": 1270,
+      "completeOriginalBytes": 680857769,
+      "allDecodedOriginalsVerified": true,
+      "runtimeParity": false,
+      "semanticAuthority": false
+    }
+  },
+  "allCurrentOriginalAliasFilesExact": true,
+  "negativeControlsRefused": [
+    "changed-hash",
+    "changed-size",
+    "missing-member",
+    "foreign-container",
+    "path-escape",
+    "changed-container-blob",
+    "duplicate-logical-path"
+  ],
+  "elapsedSeconds": 7.656121417006943,
+  "outerDeadlineSeconds": 120,
+  "originalsDeleted": false,
+  "caseInstalled": false,
+  "semanticAuthority": false,
+  "runtimeParity": false
+}
