@@ -16,6 +16,8 @@ import {tokenizeRust} from './lexical.mjs';
 import {originalContainerDefaultBody,assertOriginalContainerDefaultBody} from '../default-container-source.mjs';
 import {originalOptionCloneBody,assertOriginalOptionCloneBody} from '../clone-container-source.mjs';
 import {originalPrimitiveCloneExpansion,assertOriginalPrimitiveCloneExpansion} from './primitive-clone-source.mjs';
+import {originalStringCloneMethod,requireOriginalStringCloneMethod,requireOriginalStringClonePlan} from '../string-clone-source.mjs';
+import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 
 const root=new URL('../source-profiles/standard-method-bodies/',import.meta.url);
 const manifest=JSON.parse(readFileSync(new URL('manifest.json',root),'utf8'));
@@ -72,9 +74,9 @@ function methodIn(source,header,name){
   }
   return {name,ownerHeader:header,parameters,definitionSpan,bodySpan,signatureSource:source.slice(definitionSpan.start,bodySpan.start),bodySource:source.slice(bodySpan.start,bodySpan.end),definitionSource:source.slice(definitionSpan.start,definitionSpan.end)};
 }
-function seal(key,method,evidence){
+function seal(key,method,evidence,cacheValue=true){
   const value=freeze({profile:manifest.profile,key,method:structuredClone(method),sourceInputs:evidence.sourceInputs??STANDARD_BODY_SOURCE_PROFILE.sourceInputs.filter((input,index)=>key.startsWith('Result::')?manifest.sources[index].rustPath==='library/core/src/result.rs':manifest.sources[index].rustPath!=='library/core/src/result.rs'),evidence:structuredClone(evidence),bodySha256:hash(method.bodySource),namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false});
-  selections.set(value,{method,evidence});cache.set(key,value);return value;
+  selections.set(value,{method,evidence});if(cacheValue)cache.set(key,value);return value;
 }
 export function pinnedOptionBody(name){
   if(!['unwrap_or','unwrap_or_default','unwrap_or_else','or_else','as_ref','is_none_or','is_some_and','map_or_else','filter'].includes(name))throw new TypeError('standard method is outside the initial body profile');
@@ -104,6 +106,17 @@ export function pinnedCloneBody(owner){
  const expansion=originalPrimitiveCloneExpansion();assertOriginalPrimitiveCloneExpansion(expansion);const members=expansion.members.filter(member=>member.target===owner);if(members.length!==1)throw new TypeError('Clone owner requires separately checked original source');const member=members[0],tokens=tokenizeRust(member.methodSource),open=tokens.findIndex(token=>token.value==='{'),close=tokens.findLastIndex(token=>token.value==='}');if(open<0||close<open)throw new TypeError('Actual primitive Clone body absent');
  const bodySpan={start:tokens[open].start,end:tokens[close].end},method={name:'clone',ownerHeader:'actual original expanded primitive Clone',parameters:[{name:'self',receiver:true,reference:'shared',rustTypeSyntax:['&','Self']}],definitionSpan:{start:0,end:member.methodSource.length},bodySpan,signatureSource:member.methodSource.slice(0,bodySpan.start),definitionSource:member.methodSource,bodySource:member.methodSource.slice(bodySpan.start,bodySpan.end)};
  return seal(key,method,{kind:'original-macro-expanded-primitive-clone-method',owner,trait:'core::clone::Clone',originalMember:member,expansionDigest:expansion.digest,sourceInputs:[{rustPath:expansion.source.path,sha256:expansion.source.sha256}],sourceCoordinates:'actual original declarative expansion method; full macro/input/opaque type origins retained',wholeTraitTranslated:false,runtimeParity:false});
+}
+// Separate source selection only. Ordinary caller/storage/loan admission stays
+// outside this API, and the existing Clone dispatch is unchanged.
+export function pinnedStringCloneBody(role){
+ const selected=requireOriginalStringCloneMethod(originalStringCloneMethod(role)),key='StringCloneSource::'+role;
+ return seal(key,selected.method,{kind:'original-standard-string-clone-prerequisite',sourceSelection:selected,rustPath:selected.path,sourceSha256:selected.sourceSha256,sourceInputs:[{rustPath:selected.path,sha256:selected.sourceSha256}],callerTypeResolved:false,privateStorageJoined:false,allocatorCompiled:false,unsafeCompiled:false,oomCompiled:false,runtimeParity:false},false);
+}
+export function pinnedStringCloneParsingFrontier(plan,Parser){
+ requireOriginalStringClonePlan(plan);if(Parser!==HostRustParser)throw new TypeError('String Clone parsing requires the actual Host parser');
+ const rows=Object.keys(plan.selections).map(role=>{const selection=pinnedStringCloneBody(role);try{const syntax=parsePinnedBody(Parser,selection);return {role,selection,syntax,evidence:parsedPinnedBodyEvidence(syntax),parsed:true};}catch(error){if(!(error instanceof TranslationError))throw error;return {role,selection,parsed:false,refusal:{name:error.name,message:error.message,span:error.span??null}};}});
+ return freeze({schema:'original-string-clone-parsing-frontier-v1',sourcePlan:plan,rows,callerTypeResolved:false,privateStorageJoined:false,allocatorCompiled:false,unsafeCompiled:false,oomCompiled:false,runtimeParity:false},false);
 }
 export function pinnedDefaultBody(owner){
   const key='Default::'+owner;if(cache.has(key))return cache.get(key);
