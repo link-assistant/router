@@ -23,7 +23,7 @@ const contexts=new WeakMap(),certificates=new WeakMap(),concatCallerSources=new 
 const key=path=>path.join('::');
 const invocationId=(module,item)=>moduleScopeKey(module)+':'+item.start+':'+item.end;
 const standardOwner=(path,scope)=>path.length===1&&STANDARD_LAYOUT_DERIVES.has(path[0])&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.name===path[0]&&binding.macroKind!=='bang');
-function originalDeclarationHeader(item,condition,module) {
+function originalDeclarationHeader(item,condition,module,scope) {
   if(inertInnerLintItem(item,module.source,module.sourceView,module.compilationProfile))return true;
   const tokens=item.tokens.filter(token=>token.type!=='comment'),end=condition.attributes.at(-1)?.span.end??item.start;
   let at=tokens.findIndex(token=>token.start>=end);
@@ -31,6 +31,16 @@ function originalDeclarationHeader(item,condition,module) {
     at++;if(tokens[at]?.text==='('){let depth=0;do{if(tokens[at]?.text==='(')depth++;if(tokens[at]?.text===')')depth--;at++;}while(depth&&at<tokens.length);if(depth)return false;}
   }
   while(['async','unsafe','default'].includes(tokens[at]?.text))at++;
+  if(tokens[at]?.text==='extern'&&tokens[at+1]?.text==='crate') {
+    // The binder owns crate identity. An exact original self alias introduces
+    // one type binding, without importing an external procedural macro crate.
+    // An alias spelling or a structural item's guessed term cannot prove this.
+    const alias=tokens[at+4],tail=tokens.slice(at),rawName=tokens[at+6];
+    const rawAlias=tail.length===8&&alias?.text==='r'&&tokens[at+5]?.text==='#'&&rawName?.type==='ident'&&alias.end===tokens[at+5].start&&tokens[at+5].end===rawName.start;
+    if(!rawAlias&&(tail.length!==6||alias?.type!=='ident')||tokens[at+2]?.text!=='self'||tokens[at+2]?.rawIdentifier||tokens[at+3]?.text!=='as'||tail.at(-1)?.text!==';')return false;
+    const bindings=scope?.bindings.filter(binding=>binding.namespace==='type'&&binding.name===(rawAlias?rawName.text:alias.text));
+    return bindings?.length===1&&bindings[0].status==='resolved'&&bindings[0].externCrateSelf===true&&bindings[0].externCrateBinding===true&&bindings[0].source===module.file&&JSON.stringify(bindings[0].target)===JSON.stringify(['crate'])&&bindings[0].span?.start===item.start&&bindings[0].span?.end===item.end&&bindings[0].declaration?.source===module.file&&bindings[0].declaration?.span?.start===item.start&&bindings[0].declaration?.span?.end===item.end;
+  }
   if(tokens[at]?.text==='extern'&&tokens[at+1]?.type==='string')at+=2;
   // The structural partitioner can classify an item-position macro using a
   // keyword inside its token tree. Its actual outer header is the authority.
@@ -99,7 +109,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           return true;
         }catch(error){clapSourceRefusals.set(invocationId(module,candidate),error.message);return false;}
       }
-      return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module);
+      return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
     })&&!scope.unresolvedImports.some(entry=>entry.glob));
   }
   // Stage complete successful output grammars independently of caller lookup.

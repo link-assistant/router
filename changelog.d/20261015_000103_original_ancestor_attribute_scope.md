@@ -1,0 +1,1 @@
+Recognize an exact original `extern crate self as name` declaration in derive attribute closure only when the existing source resolver proves that declaration's unique self-crate alias. Foreign crates, ambiguous aliases, procedural attributes and unknown conditional owners retain their existing refusals; no runtime or whole-library gain is inferred from the header repair.
