@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {gzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {metadataDigest,copyMetadata} from '../extensions/source-links.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {createDeriveFootprintContext,deriveFootprintHelperAttributeAt} from '../derive-footprints.mjs';
 import {resolveModuleBindings,assertResolvedSourceScopeOrigin} from '../module-bindings.mjs';
@@ -9,7 +11,7 @@ import {resolveModuleGraph} from '../project.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {deriveExternalModules} from '../derive-dependencies.mjs';
-import {createOriginalAncestorAttributeScopeContext,proveOriginalConditionalSiblingScope,assertOriginalConditionalSiblingScope,originalConditionalAncestorSourcePlan,requireOriginalConditionalAncestorSourcePlan} from '../derive-ancestor-attribute-scope.mjs';
+import {createOriginalAncestorAttributeScopeContext,proveOriginalConditionalSiblingScope,assertOriginalConditionalSiblingScope,originalConditionalAncestorSourcePlan,requireOriginalConditionalAncestorSourcePlan,originalConditionalSiblingScopeEvidence} from '../derive-ancestor-attribute-scope.mjs';
 const root=new URL('../../../',import.meta.url),dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
 const originalRoot=readFileSync(new URL('src/lib.rs',root),'utf8'),alias=originalRoot.slice(442,485);
 const model='#[derive(Clone,Default,serde::Deserialize)] pub struct Payload { #[serde(default)] value:u32 }';
@@ -39,16 +41,17 @@ function conditionalFixture({rootSource=alias+'\n#[cfg(unix)] mod sibling;\nmod 
  const sources=new Map([['src/lib.rs',rootSource],['src/model.rs',model],['src/'+name+'.rs',childSource]]),graph=resolveModuleGraph({entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),compilationProfile:profile}),binding=resolveModuleBindings({modules:graph.modules,externalModules:deriveExternalModules(dependencies),compilationProfile:profile}),context=createOriginalAncestorAttributeScopeContext({modules:graph.modules,binding,dependencies}),parent=graph.modules[0],caller=graph.modules.find(row=>row.path.join('.')==='model'),item=originalSourceModuleItems(parent).find(row=>row.term==='mod'&&row.name===name);
  return {sources,graph,binding,context,parent,caller,item};
 }
+function fullConditional(value,proof,ownerRequests=requests){return originalConditionalSiblingScopeEvidence(proof,value.context,value.parent,value.item,value.caller,ownerRequests);}
 function proveConditional(value,ownerRequests=requests){return proveOriginalConditionalSiblingScope({context:value.context,module:value.parent,item:value.item,caller:value.caller,requests:ownerRequests});}
 test('complete original callback chain retains cfg alternatives module restoration and distinct macro subnamespaces',()=>{
  const plan=originalConditionalAncestorSourcePlan();assert.strictEqual(requireOriginalConditionalAncestorSourcePlan(plan),plan);assert.equal(plan.selections.module.path,'compiler/rustc_resolve/src/build_reduced_graph.rs');assert.ok(plan.recipes.some(row=>row.selectedTokenSequence.includes('self.r.define(parent,ident,TypeNS')));assert.ok(plan.recipes.some(row=>row.selectedTokenSequence.includes('MacroKind::Attr|MacroKind::Derive=>SubNS::AttrLike')));assert.deepEqual(plan.cfgBranches,['absent','unchanged original present module']);assert.equal(plan.namespaceAuthority,false);assert.equal(plan.runtimeAuthority,false);assert.throws(()=>requireOriginalConditionalAncestorSourcePlan(structuredClone(plan)),/copied/);retain('full-conditional-source-plan',plan);
 });
 test('unrelated unknown conditional sibling retains child and global bang uncertainty while exact helper ownership succeeds',()=>{
  const value=conditionalFixture(),proof=proveConditional(value);assert.equal(proof.requestedOwnerUnchanged,true);assert.equal(proof.conditionalAvailabilitySelected,false);assert.equal(proof.globalBangComplete,false);assert.equal(proof.childContentsComplete,false);assert.equal(proof.child.configurationCondition,'unknown');assert.equal(proof.namespaceAuthority,false);assert.strictEqual(assertOriginalConditionalSiblingScope(proof,value.context,value.parent,value.item,value.caller,requests),proof);
- const context=createDeriveFootprintContext({modules:value.graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name==='Payload'),span=certificate.attributes.find(row=>row.name==='serde').span,item=originalSourceModuleItems(value.caller).find(row=>row.name==='Payload'),helper=deriveFootprintHelperAttributeAt(context,value.caller,item,span);assert.ok(helper);const rootScope=helper.ancestorScopes.find(row=>row.module.length===0);assert.equal(rootScope.originalAttributeFootprintClosed,false);assert.equal(rootScope.requestedOwnersClosed,true);assert.equal(rootScope.conditionalSiblingScopeProofs[0].unresolvedGlobalBangEffectsRetained,true);retain('conditional-sibling-helper-positive',{sources:[...value.sources],graphDiagnostics:value.graph.diagnostics,binding:value.binding,proof,context,helper});
+ const context=createDeriveFootprintContext({modules:value.graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name==='Payload'),span=certificate.attributes.find(row=>row.name==='serde').span,item=originalSourceModuleItems(value.caller).find(row=>row.name==='Payload'),helper=deriveFootprintHelperAttributeAt(context,value.caller,item,span);assert.ok(helper);const rootScope=helper.ancestorScopes.find(row=>row.module.length===0);assert.equal(rootScope.originalAttributeFootprintClosed,false);assert.equal(rootScope.requestedOwnersClosed,true);assert.equal(rootScope.conditionalSiblingScopeProofs[0].unresolvedGlobalBangEffectsRetained,true);retain('conditional-sibling-helper-positive',{sources:[...value.sources],graphDiagnostics:value.graph.diagnostics,binding:value.binding,proof,fullEvidence:fullConditional(value,proof),context,helper});
 });
 test('exported original bang macro with matching attribute spelling is retained in its distinct subnamespace',()=>{
- const value=conditionalFixture({childSource:'#[macro_export] macro_rules! allow {()=>{}} pub struct Hidden;'}),proof=proveConditional(value);assert.equal(proof.globalBangComplete,false);assert.equal(proof.unresolvedGlobalBangEffectsRetained,true);assert.ok(value.binding.scopes[0].bindings.some(row=>row.name==='allow'&&row.namespace==='macro'&&row.macroKind==='bang'));assert.ok(proof.childAttributes.some(row=>row.attributes.some(attr=>attr.attribute.name==='macro_export')));retain('conditional-bang-export-positive',{sources:[...value.sources],binding:value.binding,proof});
+ const value=conditionalFixture({childSource:'#[macro_export] macro_rules! allow {()=>{}} pub struct Hidden;'}),proof=proveConditional(value);assert.equal(proof.globalBangComplete,false);assert.equal(proof.unresolvedGlobalBangEffectsRetained,true);assert.ok(value.binding.scopes[0].bindings.some(row=>row.name==='allow'&&row.namespace==='macro'&&row.macroKind==='bang'));assert.ok(proof.childAttributes.some(row=>row.attributes.some(attr=>attr.attribute.name==='macro_export')));retain('conditional-bang-export-positive',{sources:[...value.sources],binding:value.binding,proof,fullEvidence:fullConditional(value,proof)});
 });
 test('conditional target and ancestor matching names imports globs and unproved attributes remain refused',()=>{
  const rows=[];
@@ -68,4 +71,34 @@ test('genuine resolver scopes retain their complete original source origin witho
  const changes=[modules=>{modules[0]={...modules[0],source:modules[0].source+'\n'};},modules=>{modules[0]={...modules[0],path:['other']};},modules=>{modules[0]={...modules[0],sourceView:structuredClone(modules[0].sourceView)};},modules=>{modules[0]={...modules[0],compilationProfile:{...PRODUCTION_PROFILE,flags:{test:true}}};},modules=>{modules[0]={...modules[0],configurationCondition:'unknown'};},modules=>modules.reverse()];
  for(const change of changes){const modules=[...value.graph.modules];change(modules);assert.throws(()=>assertResolvedSourceScopeOrigin(value.binding.scopes,{modules,compilationProfile:PRODUCTION_PROFILE}),/different original/);assert.throws(()=>createOriginalAncestorAttributeScopeContext({modules,binding:value.binding,dependencies}),/original/);}
  assert.throws(()=>assertResolvedSourceScopeOrigin(structuredClone(value.binding.scopes),{modules:value.graph.modules,compilationProfile:PRODUCTION_PROFILE}),/exact original/);retain('resolver-origin-cross-source-controls',{binding:value.binding,originalModules:value.graph.modules.map(module=>({file:module.file,path:module.path,source:module.source,profile:module.compilationProfile,condition:module.configurationCondition,sourceViewDigest:module.sourceView.digest})),changedSources:changes.length,copiedScopes:structuredClone(value.binding.scopes)});
+});
+
+test('complete private conditional source evidence is authenticated while public references remain exact storage',()=>{
+ const value=conditionalFixture({childSource:'#[macro_export] macro_rules! allow {()=>{}} #[derive(Clone,Copy,Debug)] pub struct Hidden;'}),proof=proveConditional(value),full=fullConditional(value,proof);
+ assert.equal(proof.sourcePlan.schema,'original-conditional-source-plan-reference-v1');assert.equal(full.sourcePlan.schema,'original-conditional-ancestor-source-plan-v1');assert.equal(full.sourcePlan.recipes.length,16);
+ const original=JSON.stringify(full);assert.equal(proof.fullEvidenceReference.sha256,createHash('sha256').update(original).digest('hex'));assert.equal(proof.fullEvidenceReference.bytes,Buffer.byteLength(original));
+ assert.equal(proof.sourcePlan.sha256,createHash('sha256').update(JSON.stringify(full.sourcePlan)).digest('hex'));assert.ok(full.childAttributes.some(row=>row.attributes.some(attribute=>attribute.originalRegistration?.expansion)));
+ assert.ok(full.childAttributes.some(row=>row.attributes.some(attribute=>attribute.selectedOriginalOwners?.length===3)));
+ for(const fake of [structuredClone(proof),{...proof},new Proxy(proof,{})])assert.throws(()=>fullConditional(value,fake),/copied/);
+ const foreign=conditionalFixture();assert.throws(()=>originalConditionalSiblingScopeEvidence(proof,foreign.context,foreign.parent,foreign.item,foreign.caller,requests),/foreign/);
+ assert.throws(()=>originalConditionalSiblingScopeEvidence(proof,value.context,{...value.parent,source:value.parent.source+' '},value.item,value.caller,requests),/source\/view/);
+ assert.throws(()=>fullConditional(value,proof,[{namespace:'type',name:'sibling'}]),/foreign/);
+ assert.throws(()=>{proof.sourcePlan.profileSha256='forged';},TypeError);
+ retain('complete-authenticated-private-source-evidence',{sources:[...value.sources],proof,fullEvidence:full});
+});
+test('deep original source helpers consume bounded public references without changing metadata limits',{timeout:60000},()=>{
+ const names=['sibling'],rootSource=alias+'\n'+names.map(name=>'#[cfg(unix)] mod '+name+';').join('\n')+'\nmod model;',
+ modelSource='pub mod outer { pub mod inner { pub mod deep {'+model+'} } }',childSource=Array.from({length:90},(_,index)=>'#[macro_export] macro_rules! exported_'+index+' {()=>{}}').join('\n')+'\n#[derive(Clone,Copy,Debug,Default,Eq,PartialEq,Hash)] pub struct Hidden{value:u8}',
+ sources=new Map([['src/lib.rs',rootSource],['src/model.rs',modelSource],...names.map(name=>['src/'+name+'.rs',childSource])]),
+ graph=resolveModuleGraph({entry:'src/lib.rs',paths:[...sources.keys()],readSource:path=>sources.get(path),compilationProfile:PRODUCTION_PROFILE}),
+ binding=resolveModuleBindings({modules:graph.modules,externalModules:deriveExternalModules(dependencies),compilationProfile:PRODUCTION_PROFILE}),
+ sourceContext=createOriginalAncestorAttributeScopeContext({modules:graph.modules,binding,dependencies}),context=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),
+ caller=graph.modules.find(row=>row.path.join('.')==='model.outer.inner.deep'),parent=graph.modules[0],item=originalSourceModuleItems(caller).find(row=>row.name==='Payload'),certificate=context.certificates.find(row=>row.name==='Payload'),attribute=certificate?.attributes.find(row=>row.name==='serde');
+ assert.ok(caller);assert.ok(certificate);assert.ok(attribute);
+ const helper=deriveFootprintHelperAttributeAt(context,caller,item,attribute.span);assert.ok(helper);const selected=helper.ancestorScopes.find(row=>row.module.length===0).conditionalSiblingScopeProofs;assert.equal(selected.length,names.length);
+ const full=names.map(name=>{const originalItem=originalSourceModuleItems(parent).find(row=>row.name===name),proof=proveOriginalConditionalSiblingScope({context:sourceContext,module:parent,item:originalItem,caller,requests:selected[0].requests});return originalConditionalSiblingScopeEvidence(proof,sourceContext,parent,originalItem,caller,selected[0].requests);});
+ const oldShape={...helper,ancestorScopes:helper.ancestorScopes.map(scope=>scope.module.length?scope:{...scope,conditionalSiblingScopeProofs:full})};
+ let oldFailure;try{metadataDigest(oldShape);}catch(error){oldFailure={name:error.name,message:error.message};}retain('deep-duplicate-root-before-assert',{sources:[...sources],helper,fullEvidence:full,priorPublicShape:oldShape,oldFailure:oldFailure??null});assert.ok(oldFailure,'complete historical duplicated witness must hit the unchanged metadata budget');assert.equal(oldFailure.message,'source links: metadata budget exhausted');
+ const digest=metadataDigest(helper);assert.match(digest,/^[a-f0-9]{64}$/);assert.equal(metadataDigest(copyMetadata(helper)),digest);
+ retain('deep-duplicate-root-consumer',{sources:[...sources],sourceProfile:dependencies.digest,helper,fullEvidence:full,priorPublicShape:oldShape,oldFailure,publicMetadataDigest:digest,limits:{cells:200000,bytes:4194304,depth:160},limitsChanged:false});
 });
