@@ -2,6 +2,7 @@
 // Review original inputs and every generated output. This does not certify
 // target behavior, replace regeneration checks or grant a green gate stamp.
 import fs from 'node:fs';
+import {createHistoricalTranslationReview} from './historical-translation-review.mjs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
@@ -473,31 +474,35 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
   let generatedDependencies;const dependencies=()=>generatedDependencies??=loadDeriveDependencyProof({manifest:read('Cargo.toml').toString('utf8'),lock:read('Cargo.lock').toString('utf8')});
   let generatedJsonDependencies;const jsonMacroDependencies=()=>generatedJsonDependencies??=loadJsonMacroSourceProof({manifest:read('Cargo.toml').toString('utf8'),lock:read('Cargo.lock').toString('utf8')});
   const projectIdentity=item=>JSON.stringify([item.source,item.name,item.term??null,item.span.start,item.span.end]);
-  function projectMeta(meta,row) {
+  function projectMeta(meta,row,historical=null,bytes=null) {
     if(!Array.isArray(meta.sources)||!Array.isArray(meta.refused)||!Array.isArray(meta.unloweredItems)||!Array.isArray(meta.checkedMethods)||!Array.isArray(meta.executable)||!Array.isArray(meta.moduleDiagnostics))throw new Error('Incomplete project metadata: '+row.entry);
     if(meta.sources.length!==row.sources||meta.refused.length!==row.refused||meta.unloweredItems.length!==row.unloweredItems||meta.checkedMethods.length!==row.checkedMethods||meta.moduleDiagnostics.length!==row.moduleDiagnostics||meta.executable.filter(item=>item.term==='fn').length!==row.executableFunctions||meta.executable.filter(item=>item.term==='const').length!==row.executableConstants)throw new Error('Project count mismatch: '+row.entry);
     for(const source of meta.sources)if(inputs.get(source.source)?.sha256!==source.sha256)throw new Error('Project source mismatch: '+row.entry);
     for(const item of [...meta.executable,...meta.checkedMethods]){
       if(!tracked.includes(item.source)||!Number.isSafeInteger(item.span?.start)||!Number.isSafeInteger(item.span?.end)||item.span.start<0||item.span.end<item.span.start||item.span.end>new TextDecoder('utf-8',{fatal:true}).decode(read(item.source)).length)throw new Error('Invalid project original item: '+row.entry);
     }
-    return {...meta,reviewedGeneratedMethods:reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies})};
+    return {...meta,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies})};
   }
-  const projects=inventory.projects.map(row=>{
+  const historical=baselineSha?createHistoricalTranslationReview({root,baselineSha,inventoryPath,readSource:read}):null;
+  let historicalBaselineReview=null,projects;
+  try { projects=inventory.projects.map(row=>{
     for(const target of Object.values(row.targets))output(target);
     const meta=projectMeta(parse(read(row.targets.meta)),row);
     let comparison=null;
     if(oldInventory){
       const previousRow=oldInventory.projects.find(previous=>previous.entry===row.entry);
       if(!previousRow)throw new Error('Baseline project missing: '+row.entry);
-      const previous=projectMeta(parse(git(root,['show',baselineSha+':'+relativeName(previousRow.targets.meta)])),previousRow);
+      const previousBytes=git(root,['show',baselineSha+':'+relativeName(previousRow.targets.meta)]);
+      const previous=projectMeta(parse(previousBytes),previousRow,historical,previousBytes);
       const differences=(before,after)=>{const known=new Set(before.map(projectIdentity));return after.filter(item=>!known.has(projectIdentity(item)));};
       comparison={previousCounts:previousRow,countChanges:Object.fromEntries(['sources','executableFunctions','executableConstants','checkedMethods','checkedGeneratedMethods','refused','unloweredItems','moduleDiagnostics'].map(key=>[key,(row[key]??0)-(previousRow[key]??0)])),newlyExecutableItems:differences(previous.executable,meta.executable),lostExecutableItems:differences(meta.executable,previous.executable),newlyCheckedMethods:differences(previous.checkedMethods,meta.checkedMethods),lostCheckedMethods:differences(meta.checkedMethods,previous.checkedMethods),...compareGeneratedMethods(previous.reviewedGeneratedMethods,meta.reviewedGeneratedMethods)};
     }
     return {...row,checkedGeneratedMethods:meta.reviewedGeneratedMethods.length,executableItems:meta.executable,checkedMethodItems:meta.checkedMethods,checkedGeneratedMethodItems:meta.reviewedGeneratedMethods,refusalCategories:categoryCounts(meta.refused),unloweredCategories:categoryCounts(meta.unloweredItems),moduleDiagnosticItems:meta.moduleDiagnostics,comparison};
-  });
+  });historicalBaselineReview=historical?.provenance()??null;
+  } finally {historical?.close();}
   for(const name of [...inputs.keys()])read(name);
   if(git(root,['rev-parse','HEAD']).toString().trim()!==head)throw new Error('Commit changed during review');
-  return {schema:'original-corpus-draft-review-v1',headSha:head,baselineSha,inventoryPath,originalRustInputs:originals,originalCargoInputs:cargo,originalInputsUnchangedFromBaseline:baselineSha?true:null,compilerInputs,outputs:[...outputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),totals,functionCoverage:inventory.functionCoverage,projects,comparison:oldInventory?{previousTotals:oldInventory.totals,totalChanges:Object.fromEntries(Object.entries(totals).map(([key,count])=>[key,count-oldInventory.totals[key]])),newlyExecutableItems:gained,lostExecutableItems:lost}:null,reviewInputs:[...inputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),semanticAuthority:false,runtimeParity:false,fullGatePass:false,rustExecuted:false};
+  return {schema:'original-corpus-draft-review-v1',headSha:head,baselineSha,inventoryPath,historicalBaselineReview,originalRustInputs:originals,originalCargoInputs:cargo,originalInputsUnchangedFromBaseline:baselineSha?true:null,compilerInputs,outputs:[...outputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),totals,functionCoverage:inventory.functionCoverage,projects,comparison:oldInventory?{previousTotals:oldInventory.totals,totalChanges:Object.fromEntries(Object.entries(totals).map(([key,count])=>[key,count-oldInventory.totals[key]])),newlyExecutableItems:gained,lostExecutableItems:lost}:null,reviewInputs:[...inputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),semanticAuthority:false,runtimeParity:false,fullGatePass:false,rustExecuted:false};
 }
 
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
