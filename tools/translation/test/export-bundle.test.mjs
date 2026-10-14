@@ -81,6 +81,14 @@ test('the exported synchronization CLI generates and updates real receiving Java
       const result=spawnSync(process.execPath,[cli,mode,'--root',receiving,'--direction','javascript-to-rust','--output',output],{cwd:receiving,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:join(directory,'unrelated-compiler')},encoding:'utf8',timeout:30000});
       const receipt=existsSync(join(output,'receipt.json'))?JSON.parse(readFileSync(join(output,'receipt.json'))):null;
       const logs=receipt?.records.flatMap(row=>(row.logs??[]).map(log=>({path:log.path,content:readFileSync(join(output,log.path),'utf8')})))??[];
+      if(result.status!==0){
+        const retained=join(root,'packages/javascript/node_modules/.issue-759-verification/exported-sync-child-failures');mkdirSync(retained,{recursive:true});
+        const failure=mkdtempSync(join(retained,'receiving-'));writeFileSync(join(failure,'command.json'),JSON.stringify({mode,name,cli,receiving,exitCode:result.status,error:result.error?.message})+'\n');
+        writeFileSync(join(failure,'stdout.raw.log'),result.stdout??'');writeFileSync(join(failure,'stderr.raw.log'),result.stderr??'');
+        if(receipt)writeFileSync(join(failure,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');
+        for(const log of logs)writeFileSync(join(failure,log.path),log.content);
+        console.error('EXPORTED_SYNC_FAILED_CHILD '+failure);
+      }
       assert.equal(result.status,0,JSON.stringify({stdout:result.stdout,stderr:result.stderr,error:result.error?.message,receipt,logs}));
       return JSON.parse(result.stdout);
     };
