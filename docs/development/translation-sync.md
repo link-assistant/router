@@ -1,0 +1,9 @@
+Run `node scripts/sync-router.mjs --write` to generate the current JavaScript → meta → Rust and TypeScript drafts, then the complete Rust → meta → JavaScript and TypeScript corpus, platform matrix and original serialization descriptors. Every producer runs sequentially with its existing finite execution budget. No Rust compiler runs.
+
+Use `--check` for the same complete producer sequence in freshness mode. `--direction javascript-to-rust` or `--direction rust-to-javascript` selects a direction; `--canonical-only` omits the separate platform matrix from this convenience command. These options do not alter the mandatory CI checks. Both modes require an explicit flag.
+
+The command compares every original tracked or untracked Rust/Cargo and native JavaScript input before and after the sequence. Sparse tracked inputs are read from their exact HEAD blobs. The generator's exact owned paths, `src/generated_js_first/policy.rs` and `src/generated_js_first/mod.rs`, are excluded from original-input preservation; other files in that directory remain protected. The native JavaScript implementation and other handwritten Rust remain input sources. A failed producer prevents dependent producers from using stale outputs, records the remaining stages as unrun, and returns a failure.
+
+Complete raw stdout/stderr, command, deadline, status and input vectors are retained in a new receipt directory. Set `--output NEW_DIRECTORY` to choose it; the default is a fresh temporary directory. Existing receipt directories are never overwritten.
+
+This command automates the existing draft translators. Their retained refusals, dynamic TypeScript annotations and uncompiled Rust projections still block whole-source synchronization and runtime parity. A passing freshness receipt cannot unlock Rust CI or replace the complete JavaScript gate. Continue implementing and testing refused constructs before promoting their coverage.
