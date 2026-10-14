@@ -8,7 +8,7 @@ import {originalMacroSequenceFollowRule,assertOriginalMacroSequenceFollowRule} f
 import {originalMacroMetavarRules,assertOriginalMacroMetavarRules} from './macro-metavar-source.mjs';
 // Each instance keeps separate definition, expansion and forwarding authority.
 export function createDeclarativeMacroEngine(sourceFragmentAdapter=null) {
-const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap();
+const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap(),nestedInvocations=new WeakMap();
 const {isOriginalMacroFragmentContext,originalMacroFragmentDefinition,parseOriginalMacroFragment}=sourceFragmentAdapter??{};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const text=tree=>tree?.kind==='token'?tree.text:null;
@@ -245,7 +245,7 @@ function fragmentEnd(fragment,trees,start) {
   if(fragment==='expr'&&opaque(trees[start],'block'))return start+1;
   const forwarded=trees[start];
   if(forwarded?.kind==='fragment') {
-    if(['ident','lifetime','tt'].includes(forwarded.fragment)&&forwarded.trees.length===1){if(fragment==='ty')return boundedType(trees,start);return fragmentEnd(fragment,forwarded.trees,0)===1?start+1:null;}
+    if(['ident','lifetime','tt'].includes(forwarded.fragment)&&forwarded.trees.length===1){if(fragment==='ty')return boundedType(trees,start);if(fragment==='expr')return boundedMacroExpression(trees,start,boundedType);return fragmentEnd(fragment,forwarded.trees,0)===1?start+1:null;}
     throw new TypeError('Opaque declarative fragments require the same checked fragment kind when forwarded');
   }
   if(fragment==='ident')return ident(trees[start])?start+1:null;
@@ -378,7 +378,7 @@ function checkOutputBudget(trees) {
 function expandDeclarativeMacro(definition,input,{steps=16000,repetitions=128,output=32000}={}) {
   const forwarded=forwardedInputs.get(input),original=macroTreeSource(input);
   if(!definitions.has(definition)||!original&&!forwarded)throw new TypeError('Declarative expansion requires sealed definition and original or privately forwarded input trees');
-  const inputEvidence=forwarded?{kind:'checked-expansion',parentDigest:forwarded.parent.digest,path:forwarded.path,sha256:hash(JSON.stringify(input))}:{kind:'original-source',sha256:original.sha256};
+  const inputEvidence=forwarded?{kind:forwarded.nested?'checked-nested-macro-input':'checked-expansion',parentDigest:forwarded.parent.digest,path:forwarded.path,sha256:hash(JSON.stringify(input))}:{kind:'original-source',sha256:original.sha256};
   const depth=forwarded?expansions.get(forwarded.parent).depth+1:0;
   if(depth>32)throw new TypeError('Declarative recursive expansion depth budget exceeded');
   if(![steps,repetitions,output].every(value=>Number.isSafeInteger(value)&&value>0&&value<=100000))throw new TypeError('Invalid declarative expansion budgets');
@@ -389,7 +389,7 @@ function expandDeclarativeMacro(definition,input,{steps=16000,repetitions=128,ou
     const trees=transcribe(rule.output,captures,definition.owner,budget);
     checkOutputBudget(trees);
     const evidence={schema:'bounded-declarative-expansion-v1',definitionDigest:definition.digest,input:inputEvidence,rule:index,trees,ownerVerified:false,namespaceComplete:false,generatedBehavior:false,remainingBudgets:budget};
-    const proof=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});expansions.set(proof,{definition,input,depth,parent:forwarded?.parent??null,path:forwarded?.path??null});return proof;
+    const proof=freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});expansions.set(proof,{definition,input,depth,parent:forwarded?.parent??null,path:forwarded?.path??null,...(forwarded?.nested?{nested:true}:{})});return proof;
   }
   throw new TypeError('Original invocation does not match a checked declarative rule');
 }
@@ -411,10 +411,47 @@ function declarativeSubInput(proof,path=[]) {
   forwardedInputs.set(trees,{parent:proof,path:[...path]});return trees;
 }
 
+// A nested bang's own delimiter is an independent token-tree input, even
+// when its containing expression remains opaque to an outer matcher. Only
+// complete privately captured invocations can issue this narrower forwarding.
+function declarativeNestedMacroInvocations(proof){
+  if(!expansions.has(proof))throw new TypeError('Nested macro discovery requires a privately checked expansion');
+  const result=[],budget={cells:32000};
+  const word=tree=>{tree=transparentTree(tree);return tree?.kind==='token'&&ident(tree)?tree.text:null;};
+  const punctuation=tree=>text(transparentTree(tree));
+  function visit(trees,path=[],depth=0){
+    if(depth>64)throw new TypeError('Nested macro discovery exceeds its delimiter depth budget');
+    for(let at=0;at<trees.length;at++){
+      if(--budget.cells<0)throw new TypeError('Nested macro discovery exceeds its tree-cell budget');
+      const tree=trees[at],base=transparentTree(tree),first=base.kind==='owner'?[...base.target]:word(tree)?[word(tree)]:null;
+      if(first){
+        let end=at+1;const segments=[...first];
+        while(punctuation(trees[end])==='::'&&word(trees[end+1])){segments.push(word(trees[end+1]));end+=2;}
+        if(punctuation(trees[end])==='!'&&transparentTree(trees[end+1])?.kind==='group'){
+          const input=transparentTree(trees[end+1]),location=[...path,{kind:'macro-input',index:end+1}],row=freezeMacroTree({
+            path:location,writtenPath:segments,delimiter:input.delimiter,
+            hygiene:base.kind==='owner'?'definition-site-dollar-crate':'written-or-forwarded-path',
+            ownerVerified:false,namespaceAuthority:false,runtimeAuthority:false,
+          });
+          nestedInvocations.set(row,{proof,input:input.children,path:location});result.push(row);at=end+1;continue;
+        }
+      }
+      if(base.kind==='group')visit(base.children,[...path,{kind:tree===base?'group':'transparent-group',index:at}],depth+1);
+      else if(tree.kind==='fragment'&&['expr','block','ident','tt'].includes(tree.fragment))visit(tree.trees,[...path,{kind:'opaque-fragment',fragment:tree.fragment,index:at}],depth+1);
+    }
+  }
+  visit(proof.trees);return freezeMacroTree(result);
+}
+function declarativeNestedMacroInput(proof,invocation){
+  const state=nestedInvocations.get(invocation);
+  if(!expansions.has(proof)||!state||state.proof!==proof)throw new TypeError('Nested macro forwarding requires its exact private parent and invocation');
+  forwardedInputs.set(state.input,{parent:proof,path:state.path,nested:true});return state.input;
+}
+
 // Lineage is evidence of actual checked forwarding, never macro path resolution.
 function declarativeExpansionLineage(proof) {
   const state=expansions.get(proof);if(!state)throw new TypeError('Unsealed declarative expansion lineage');
-  return freezeMacroTree({definition:state.definition,parent:state.parent,path:state.path,depth:state.depth});
+  return freezeMacroTree({definition:state.definition,parent:state.parent,path:state.path,depth:state.depth,...(state.nested?{sourceAssociationKind:'checked-nested-macro-input'}:{})});
 }
 
 // Declaration headers are exact source evidence; attribute spellings and a
@@ -441,5 +478,5 @@ function declarativeDefinitionHeader(definition) {
   return freezeMacroTree({sourceSha256:definition.sourceSha256,span:{start:trees[begin].span.start,end:definition.definitionSpan.end},name:definition.name,kind,visibility,attributes,sourceVerified:true,attributeOwnersResolved:false,hygieneVerified:false});
 }
 
-return Object.freeze({compileDeclarativeMacro,expandDeclarativeMacro,isDeclarativeExpansion,declarativeNamespaceObservation,declarativeSubInput,declarativeExpansionLineage,declarativeDefinitionHeader});
+return Object.freeze({compileDeclarativeMacro,expandDeclarativeMacro,isDeclarativeExpansion,declarativeNamespaceObservation,declarativeSubInput,declarativeNestedMacroInvocations,declarativeNestedMacroInput,declarativeExpansionLineage,declarativeDefinitionHeader});
 }
