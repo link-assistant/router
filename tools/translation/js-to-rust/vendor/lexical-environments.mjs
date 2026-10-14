@@ -3,6 +3,7 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual,types} from 'node:util';
 import {ownershipSyntax} from './module-syntax.mjs';
+import {readCapturedPrimitives,reissueCapturedPrimitives} from './captured-primitives.mjs';
 const issued=new WeakMap(),issuers=new WeakMap();
 const fail=message=>{throw Object.assign(new Error(message),{slug:'collection'});};
 const hash=source=>createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex');
@@ -104,10 +105,12 @@ export function lexicalClosureName(handle) {
   return 'scoped_src'+namespace+'_at'+proof.start;
 }
 export function readLexicalEnvironment(handle) {
-  const value=issued.get(handle);if(!value)fail('a copied or foreign lexical environment issuer');return value;
+  const value=issued.get(handle);if(value)return value;
+  return readCapturedPrimitives(handle);
 }
 export function reissueLexicalEnvironment(proof) {
   plain(proof);
+  if(Object.getOwnPropertyDescriptor(proof,'schema')?.value==='original-lexical-primitive-collection-environment-v1')return reissueCapturedPrimitives(proof);
   const handle=issueLexicalEnvironment(proof.sourceUtf16,proof.start,proof.end,proof.sourcePath),value=readLexicalEnvironment(handle);
   if(!isDeepStrictEqual(value.proof,proof))fail('a changed lexical environment source, symbol, span or ancestor');return handle;
 }

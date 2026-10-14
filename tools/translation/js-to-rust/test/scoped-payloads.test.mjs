@@ -9,7 +9,7 @@ import {toLino} from '../vendor/ir.mjs';
 import {evaluate} from '../interpreter.mjs';
 import {loadTypeScript} from '../native-typescript.mjs';
 
-const vectors={schemaVersion:1,host:process.versions.bun?'Bun '+process.versions.bun:'Node '+process.version,rustCompiled:false,topLevel:{sourceItems:788,translatedItems:73},scopedFunctions:{sourceItems:705,translatedItems:63},census:[],bodies:[],negativeSources:[]};
+const vectors={schemaVersion:1,host:process.versions.bun?'Bun '+process.versions.bun:'Node '+process.version,rustCompiled:false,topLevel:{sourceItems:788,translatedItems:73},scopedFunctions:{sourceItems:705,translatedItems:66},census:[],bodies:[],negativeSources:[]};
 const saveVectors=()=>{if(process.env.ROUTER_SCOPED_VECTORS)writeFileSync(process.env.ROUTER_SCOPED_VECTORS,JSON.stringify(vectors,null,2)+'\n');};
 function encoded(value,args=[]){const argument=args.findIndex(input=>Object.is(input,value));if(argument>=0)return {argument};if(typeof value==='number')return {number:Number.isNaN(value)?'NaN':Object.is(value,-0)?'-0':String(value)};if(value===undefined)return {undefined:true};if(Array.isArray(value))return {freshArray:value.map(item=>encoded(item,args))};if(value&&typeof value==='object')return {freshRecord:Object.fromEntries(Object.entries(value).map(([key,item])=>[key,encoded(item,args)]))};return {value};}
 const ROOT=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../../..');
@@ -76,7 +76,7 @@ test('complete 705 scoped census separately retains all prior 34 full-domain bod
   try {
     for(const path of censusPaths){const source=readFileSync(join(ROOT,path),'utf8'),analysis=analyzeJavaScript(source,{sourcePath:path});assert.equal(analysis.scopedFunctions.complete,true,path);total+=analysis.scopedFunctions.sourceItems;top+=analysis.program.length;topItems+=analysis.items.length;assert.deepEqual(analysis.program,analyzeJavaScript(source,{includeScoped:false}).program);for(const item of analysis.scopedFunctions.items){assert.ok(item.owner);assert.ok(item.start>=item.owner.start&&item.end<=item.owner.end);assert.equal(item.sourcePath,path);assert.equal(item.status==='translated',analysis.scopedFunctions.program.some(fn=>fn.name===item.name));}analyses.set(path,{source,analysis});vectors.census.push({path,source,topLevelItems:analysis.items,scopedFunctions:analysis.scopedFunctions});}
     assert.equal(total,705);assert.equal(top,73);assert.equal(topItems,788);
-    assert.equal([...analyses.values()].reduce((n,{analysis})=>n+analysis.scopedFunctions.translatedItems,0),fixtures.length+9+18+2);
+    assert.equal([...analyses.values()].reduce((n,{analysis})=>n+analysis.scopedFunctions.translatedItems,0),fixtures.length+9+18+2+3);
     for(const [path,start,kind]of fixtures) {
       const {source,analysis}=analyses.get('packages/javascript/native/'+path),item=analysis.scopedFunctions.items.find(item=>item.start===start),fn=analysis.scopedFunctions.program.find(fn=>fn.name===item.name);assert.equal(item.status,'translated',path+':'+start);assert.deepEqual(item.captures,[]);assert.equal(item.owner.status,'unsupported');
       const meta=toLino(fn),program=parseMeta(meta);assert.deepEqual(program,[fn]);const typescript=emitTypeScript(program),rust=emitRust(program),camel=fn.name.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());

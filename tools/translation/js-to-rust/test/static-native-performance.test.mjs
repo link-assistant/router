@@ -64,9 +64,9 @@ test('copied, proxy, changed source and foreign span issuers cannot provide lexi
  retain('private-issuer-negatives',{source,proof,hooks,malformedUtf16:{a,b,pa,pb}});
 });
 test('every original native module retains complete top/scoped programs and all705 source refusal identities', {timeout:60000},async()=>{
- const old=(await oracle('scoped-helpers')).module,rows=[];let scoped=0,top=0,modules=0,translatedTop=0,translatedScoped=0,full=0,conditional=0,currentTranslatedScoped=0,currentFull=0;
+ const old=(await oracle('scoped-helpers')).module,rows=[];let scoped=0,top=0,modules=0,translatedTop=0,translatedScoped=0,full=0,conditional=0,currentTranslatedScoped=0,currentFull=0,currentConditional=0;
  for(const path of sourceModules(sourceRoot).filter(path=>path.startsWith('packages/javascript/native/'))){const source=readFileSync(resolve(sourceRoot,path),'utf8'),current=analyzeJavaScript(source,{sourcePath:path}),previous=old.discoverScopedHelpers(source,current.items,analyzeJavaScript,path);
-  const gains=new Map([['packages/javascript/native/github-proxy.mjs',2346],['packages/javascript/native/tokens.mjs',4090]]);
+  const gains=new Map([['packages/javascript/native/client-status.mjs',2581],['packages/javascript/native/config.mjs',15324],['packages/javascript/native/github-proxy.mjs',2346],['packages/javascript/native/provider-manifest.mjs',737],['packages/javascript/native/tokens.mjs',4090]]);
   assert.equal(current.scopedFunctions.sourceItems,previous.sourceItems);
   for(const fn of previous.program)assert.deepEqual(current.scopedFunctions.program.find(row=>row.name===fn.name),fn,path+':'+fn.name);
   for(const before of previous.items){const after=current.scopedFunctions.items.find(row=>row.start===before.start);if(before.start===gains.get(path)){assert.equal(before.status,'unsupported');assert.equal(after.status,'translated');assert.equal(after.end,before.end);assert.deepEqual(after.sourceScope,before.sourceScope);assert.deepEqual(after.captures,before.captures);}else assert.deepEqual(after,before,path+':'+before.start);}
@@ -74,11 +74,11 @@ test('every original native module retains complete top/scoped programs and all7
   // The existing portable producer takes every native .mjs module; the
   // complete TypeScript source set additionally includes four asset .js files.
   // Compare all 56 here, while keeping the published 52-module denominator.
-  const portableCensus=path.endsWith('.mjs');if(portableCensus){modules++;scoped+=previous.sourceItems;top+=current.items.length;translatedTop+=current.program.length;translatedScoped+=previous.program.length;full+=previous.fullDomainTranslatedItems;conditional+=previous.conditionalPrivateBodyDraftItems;currentTranslatedScoped+=current.scopedFunctions.translatedItems;currentFull+=current.scopedFunctions.fullDomainTranslatedItems;}
+  const portableCensus=path.endsWith('.mjs');if(portableCensus){modules++;scoped+=previous.sourceItems;top+=current.items.length;translatedTop+=current.program.length;translatedScoped+=previous.program.length;full+=previous.fullDomainTranslatedItems;conditional+=previous.conditionalPrivateBodyDraftItems;currentTranslatedScoped+=current.scopedFunctions.translatedItems;currentFull+=current.scopedFunctions.fullDomainTranslatedItems;currentConditional+=current.scopedFunctions.conditionalPrivateBodyDraftItems;}
   rows.push({path,sourceSha256:hash(source),portableCensus,topLevel:current.items,topLevelProgram:current.program,previous,current:current.scopedFunctions});
  }
- retain('complete-native-56-source-vectors',{rows,portableCensus:{modules,top,scoped,translatedTop,translatedScoped,full,conditional},currentPortableCensus:{translatedScoped:currentTranslatedScoped,full:currentFull,conditional}});
- assert.equal(rows.length,56);assert.equal(modules,52);assert.equal(rows.filter(row=>!row.portableCensus).length,4);assert.equal(top,788);assert.equal(scoped,705);assert.equal(translatedTop,73);assert.equal(translatedScoped,61);assert.equal(full,52);assert.equal(conditional,9);assert.equal(currentTranslatedScoped,63);assert.equal(currentFull,54);
+ retain('complete-native-56-source-vectors',{rows,portableCensus:{modules,top,scoped,translatedTop,translatedScoped,full,conditional},currentPortableCensus:{translatedScoped:currentTranslatedScoped,full:currentFull,conditional:currentConditional}});
+ assert.equal(rows.length,56);assert.equal(modules,52);assert.equal(rows.filter(row=>!row.portableCensus).length,4);assert.equal(top,788);assert.equal(scoped,705);assert.equal(translatedTop,73);assert.equal(translatedScoped,61);assert.equal(full,52);assert.equal(conditional,9);assert.equal(currentTranslatedScoped,66);assert.equal(currentFull,54);assert.equal(currentConditional,12);
 });
 test('all59 original native TypeScript source trees and full output artifacts match the previous independent producer',{timeout:60000},async()=>{
  const old=(await oracle('native-typescript')).module,ts=loadTypeScript(sourceRoot),rows=[],paths=sourceModules(sourceRoot);assert.equal(paths.length,59);

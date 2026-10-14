@@ -227,7 +227,9 @@ function emitter(program, target) {
         if (expr.operand.type === 'number') return `({ let observed = ${expression(expr.operand)}; observed != 0.0 && !observed.is_nan() })`;
         return `({ let _ = ${expression(expr.operand)}; false })`;
       }
+      case 'primitive-membership':
       case 'includes': {
+        if(!rust&&expr.kind==='primitive-membership')return `((observed: unknown) => ${expr.values.map(value=>`observed === ${expression(value)}`).join(' || ')||'false'})(${expression(expr.argument)})`;
         if (!rust) return `([${expr.values.map(expression).join(', ')}] as readonly unknown[]).includes(${expression(expr.argument)})`;
         if (['null', 'undefined'].includes(expr.argument.type)) return `({ let _ = ${expression(expr.argument)}; false })`;
         if(losslessMode) {
@@ -370,7 +372,10 @@ function emitter(program, target) {
     if(item.kind==='closure') {
       const contract=typescriptType(item.returns),environmentName='JsClosureEnvironment'+itemIndex;
       const qualification='// Source-bound body draft; parent creation/effects remain refused; runtimeParity: false.';
-      if(!rust)return [qualification,`function ${name(item.name)}(${item.captures.map(capture=>`${name(capture.name)}?: unknown`).join(', ')}): (${parameters.join(', ')}) => ${contract} {`,`    return (${parameters.join(', ')}): ${contract} => {`,...body(item.body,2,item.returns),'    };','}'].join('\n');
+      const conditional=item.conditionalCaptures?['// Conditional private body draft: original standard collection intrinsics required.', '// Original has/includes lookup stability and parent execution are unproved.']:[];
+      if(!rust)return [qualification,...conditional,`function ${name(item.name)}(${item.captures.map(capture=>`${name(capture.name)}?: unknown`).join(', ')}): (${parameters.join(', ')}) => ${contract} {`,`    return (${parameters.join(', ')}): ${contract} => {`,...body(item.body,2,item.returns),'    };','}'].join('\n');
+      const bindings=item.params.filter(param=>param.bindings).flatMap(param=>param.bindings.flatMap((binding,index)=>binding===null?[]:[`        let ${name(binding)} = ${name(param.name)}.${index===0?'key':'value'};`]));
+      if(item.conditionalCaptures&&!item.captures.length)return [qualification,...conditional,`pub struct ${environmentName} {}`,`fn ${name(item.name)}() -> ${environmentName} {`,`    ${environmentName} {}`,'}',`impl ${environmentName} {`,`    pub fn call<'a>(&self${parameters.length?', '+parameters.join(', '):''}) -> ${rustContract(item.returns)} {`,...bindings,...body(item.body,2,item.returns),'    }','}'].join('\n');
       const fields=item.captures.map(capture=>`    ${name(capture.name)}: JsPayload<'env>,`);
       const environmentParameters=item.captures.map(capture=>`${name(capture.name)}: JsPayload<'env>`).join(', ');
       return [qualification,`pub struct ${environmentName}<'env> {`,...fields,'}',`fn ${name(item.name)}<'env>(${environmentParameters}) -> ${environmentName}<'env> {`,`    ${environmentName} { ${item.captures.map(capture=>name(capture.name)).join(', ')} }`,'}',`impl<'env> ${environmentName}<'env> {`,`    pub fn call<'a>(&self${parameters.length?', '+parameters.join(', '):''}) -> ${rustContract(item.returns)} where 'env: 'a {`,...item.captures.map(capture=>`        let ${name(capture.name)}: JsPayload<'a> = self.${name(capture.name)};`),...body(item.body,2,item.returns),'    }','}'].join('\n');

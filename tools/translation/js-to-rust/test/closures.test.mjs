@@ -133,5 +133,5 @@ test('all 52 complete native censuses preserve all original 73 top-level and 61 
  for(const [kind,program]of [['top-level',a.program],['scoped',a.scopedFunctions.program]]){const output=module.outputs.find(output=>output.scope===kind&&output.path.endsWith('.lino'));assert.ok(output,kind);assert.equal('# GENERATED: checked portable-router-v1 bodies; no source envelopes.\n'+program.map(toLino).join('\n')+'\n',readFileSync(join(ROOT,output.path),'utf8'));assert.deepEqual(parseMeta(program.map(toLino).join('\n')),program);}
  top+=a.program.length;scope+=a.scopedFunctions.program.length;full+=a.scopedFunctions.fullDomainTranslatedItems;conditional+=a.scopedFunctions.conditionalPrivateBodyDraftItems;vectors.census.push({path:module.path,source,analysis:a});save();
  }
- assert.equal(manifest.modules.length,52);assert.equal(manifest.topLevel.sourceItems,788);assert.equal(manifest.scopedFunctions.sourceItems,705);assert.equal(top,73);assert.equal(scope,63);assert.equal(full,54);assert.equal(conditional,9);
+ assert.equal(manifest.modules.length,52);assert.equal(manifest.topLevel.sourceItems,788);assert.equal(manifest.scopedFunctions.sourceItems,705);assert.equal(top,73);assert.equal(scope,66);assert.equal(full,54);assert.equal(conditional,12);
 });

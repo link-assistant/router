@@ -4,6 +4,7 @@ import {ownershipSyntax} from './module-syntax.mjs';
 import {parseMeta} from '../translator.mjs';
 import {toLino,lowerSourceClosure} from './ir.mjs';
 import {createLexicalEnvironmentIssuer,issueLexicalEnvironmentFrom,lexicalClosureName} from './lexical-environments.mjs';
+import {createCapturedPrimitiveIssuer,issueCapturedPrimitivesFrom} from './captured-primitives.mjs';
 import {callbackProducerInputs,withCallbackInputs} from './callback-inputs.mjs';
 
 const globals=new Set(['Math','Number','Buffer','undefined']);
@@ -49,7 +50,7 @@ export function discoverScopedHelpers(source,owners,analyze,sourcePath=null) {
     ts.forEachChild(node,audit);
   };
   audit(file);
-  let lexicalIssuer;
+  let lexicalIssuer,primitiveIssuer;
   const items=[],program=[],checkedCallbacks=new Map(),inputFor=callbackProducerInputs({ts,file,checker,checkedCallbacks});
   const visit=node=>{
     if(isFunction(node)&&!isTop(node)) {
@@ -85,6 +86,14 @@ export function discoverScopedHelpers(source,owners,analyze,sourcePath=null) {
           program.push(closure);row.name=closure.name;row.status='translated';row.coverageContract='full-domain-body';row.environmentContract={schema:closure.environment.schema,parentCreationLowered:false};reason=null;
         } catch { /* complete original capture census remains authoritative */ }
       }
+      if(reason==='a scoped lexical capture'&&row.captures.every(capture=>capture.bindings.length===1&&capture.bindings[0].kind==='VariableDeclaration')) {
+        try {
+          primitiveIssuer??=createCapturedPrimitiveIssuer(source,sourcePath);
+          const environment=issueCapturedPrimitivesFrom(primitiveIssuer,start,end),closure=lowerSourceClosure(environment,lexicalClosureName(environment));
+          if(!isDeepStrictEqual(parseMeta(toLino(closure)),[closure]))throw Error('captured collection meta drift');
+          program.push(closure);row.name=closure.name;row.status='translated';row.coverageContract='conditional-private-body-draft';row.environmentContract={schema:closure.environment.schema,parentCreationLowered:false,standardCollectionIntrinsicsRequired:true,collectionLookupStabilityProved:false,originalSignatureFullDomainPreserved:false};reason=null;
+        } catch { /* retain every original unproved capture/refusal origin */ }
+      }
       if(!reason&&row.status!=='translated') {
         const text=node.getText(file),temporary='scopedSrc'+namespace+'At'+start,wrapper=ts.isFunctionDeclaration(node)?'function '+temporary+'('+node.parameters.map(param=>param.getText(file)).join(',')+') '+node.body.getText(file):'const '+temporary+'='+text+';';
         let checked=analyze(wrapper,{includeScoped:false,lossless:true});
@@ -103,5 +112,5 @@ export function discoverScopedHelpers(source,owners,analyze,sourcePath=null) {
     ts.forEachChild(node,visit);
   };
   visit(file);
-  return {complete:true,sourceItems:items.length,translatedItems:program.length,fullDomainTranslatedItems:program.filter(fn=>!fn.conditionalInputs).length,conditionalPrivateBodyDraftItems:program.filter(fn=>fn.conditionalInputs).length,unsupportedItems:items.length-program.length,items,program,diagnostics:items.filter(item=>item.diagnostic).map(item=>item.diagnostic)};
+  return {complete:true,sourceItems:items.length,translatedItems:program.length,fullDomainTranslatedItems:program.filter(fn=>!fn.conditionalInputs&&!fn.conditionalCaptures).length,conditionalPrivateBodyDraftItems:program.filter(fn=>fn.conditionalInputs||fn.conditionalCaptures).length,unsupportedItems:items.length-program.length,items,program,diagnostics:items.filter(item=>item.diagnostic).map(item=>item.diagnostic)};
 }

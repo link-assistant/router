@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildNativePortableArtifacts } from '../../tools/translation/js-to-rust/native-portable-artifacts.mjs';
 import { regenerate } from '../regenerate-js-first.mjs';
 import { parseMeta } from '../../tools/translation/js-to-rust/translator.mjs';
-import { camelFromSnake } from '../../tools/translation/js-to-rust/vendor/ir.mjs';
+import { camelFromSnake,toLino } from '../../tools/translation/js-to-rust/vendor/ir.mjs';
 import { loadTypeScript, regenerateNativeTypeScript } from '../../tools/translation/js-to-rust/native-typescript.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -114,4 +114,17 @@ test('bulk census separates conditional private definitions and retains producer
   assert.match(artifacts.get('packages/typescript/native/portable-draft/scoped/conditional.ts'), /conditional/u);
   assert.match(artifacts.get('tools/translation/js-to-rust/generated/native-portable/scoped/conditional.rs.txt'), /conditional/u);
   assert.equal(manifest.contract.runtimeParity, false);
+});
+
+test('producer and captured-collection flags count each privately reissued draft once', () => {
+  const source = 'const owned=new Set(["name"]);export function owner(input){const scalar=key=>owned.has(key);const full=value=>typeof value==="string";return Object.entries(input).filter(([key])=>owned.has(key));}';
+  const {manifest,artifacts}=buildNativePortableArtifacts([row('captured',source)]),scope=manifest.scopedFunctions;
+  assert.deepEqual(scope,{sourceItems:3,translatedItems:3,unsupportedItems:0,fullDomainTranslatedItems:1,conditionalPrivateBodyDraftItems:2});
+  assert.equal(manifest.modules[0].topLevel.items.find(item=>item.start===source.indexOf('export function owner'))?.status,'unsupported');
+  const program=parseMeta(artifacts.get('tools/translation/js-to-rust/generated/native-portable/scoped/captured.lino'));
+  const captured=program.filter(item=>item.conditionalCaptures);assert.equal(captured.length,2);assert.equal(captured.filter(item=>item.conditionalInputs).length,1);
+  for(const item of captured){assert.equal(item.environment.collectionLookupStabilityProved,false);assert.equal(item.environment.originalSignatureFullDomainPreserved,false);assert.deepEqual(item.captures,[]);const wrong=JSON.parse(JSON.stringify(item));wrong.environment.collectionLookupStabilityProved=true;assert.throws(()=>parseMeta(toLino(wrong)));}
+  assert.match(manifest.contract.scopedFunctions,/privately source-checked/u);assert.match(manifest.contract.scopedFunctions,/collection intrinsics/u);assert.equal(manifest.contract.runtimeParity,false);
+  const mutated=buildNativePortableArtifacts([row('mutated',source.replace('const scalar','owned.add("other");const scalar'))]);
+  assert.equal(mutated.manifest.scopedFunctions.translatedItems,1);assert.equal(mutated.manifest.scopedFunctions.conditionalPrivateBodyDraftItems,0);
 });

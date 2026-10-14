@@ -191,10 +191,25 @@ export function lowerSourceClosure(handle,name) {
   const environment=readLexicalEnvironment(handle),source=environment.wrapper(camelFromSnake(name));
   const raw=topLevelItems(lex(source,'JavaScript')).filter(item=>!item.comment);
   if(raw.length!==1)refuse('collection','a noncanonical original closure wrapper');
-  const parsed=parseJavaScriptItem(raw[0].tokens,'',{source});
+  let parsed=parseJavaScriptItem(raw[0].tokens,'',{source,...(environment.callbackInputs?{callbackInputs:environment.callbackInputs}:{})});
+  const collection=environment.proof.schema==='original-lexical-primitive-collection-environment-v1';
+  if(collection) {
+    // This substitution runs only after private source-symbol/escape issuance.
+    // Public metadata never supplies the receiver binding or literal values.
+    const captures=new Map(environment.proof.collections.map(value=>[snakeFromCamel(value.name),value]));
+    const lower=value=>{
+      if(!value||typeof value!=='object')return value;
+      if(Array.isArray(value))return value.map(lower);
+      const receiver=value.kind==='table-has'?value.name:value.kind==='method'&&value.name==='includes'&&value.receiver?.kind==='variable'?value.receiver.name:null;
+      const capture=captures.get(receiver);
+      if(capture&&((value.kind==='table-has'&&capture.kind==='set')||(value.kind==='method'&&capture.kind==='array'&&value.args.length===1)))return {kind:'primitive-membership',values:capture.values,argument:lower(value.kind==='table-has'?value.argument:value.args[0])};
+      return Object.fromEntries(Object.entries(value).map(([key,child])=>[key,lower(child)]));
+    };
+    parsed={...parsed,body:lower(parsed.body)};
+  }
   const checked=check({...parsed,lossless:true},new Map());
-  const count=environment.proof.captures.length;
-  return {...checked,kind:'closure',captures:checked.params.slice(0,count),params:checked.params.slice(count),environment:environment.proof};
+  const count=collection?0:environment.proof.captures.length;
+  return {...checked,kind:'closure',captures:checked.params.slice(0,count),params:checked.params.slice(count),environment:environment.proof,...(collection?{conditionalCaptures:true}:{})};
 }
 export function check(item, table) {
   if(item.kind==='closure') {
@@ -202,6 +217,7 @@ export function check(item, table) {
     if(!Array.isArray(item.captures)||!isDeepStrictEqual(item.captures,expected.captures)||toLino(item)!==toLino(expected))refuse('collection','a changed source-bound closure body, type or signature');
     return expected;
   }
+  if(item.conditionalCaptures)refuse('collection','a conditional capture without private original closure issuance');
   const map = constructMap();
   canonicalRustName(item.name);
   for (const param of item.params ?? []) canonicalRustName(param.name);
@@ -294,7 +310,7 @@ export function check(item, table) {
       if(proved&&callee.params.some(param=>param.type==='value')&&payloadBoundary(callee)!==payload)refuse('collection','a lossless payload/scalar observer call boundary');
     }
     if(item.lossless&&['table-get','table-has','table-size'].includes(node.kind))refuse('collection','an unimplemented lossless/static-table observer boundary');
-    if(payload&&!item.lossless&&(node.projection||['typeof','includes','table-get','table-has'].includes(node.kind)||node.kind==='builtin'&&node.args?.some(arg=>arg.type==='value')))refuse('collection','an unimplemented observation of a lossless payload');
+    if(payload&&!item.lossless&&(node.projection||['typeof','includes','primitive-membership','table-get','table-has'].includes(node.kind)||node.kind==='builtin'&&node.args?.some(arg=>arg.type==='value')))refuse('collection','an unimplemented observation of a lossless payload');
     for(const child of Object.values(node))if(Array.isArray(child))child.forEach(capabilities);else capabilities(child);
   };
   const jsonProjection=JSON.stringify(body).includes('"type":"json-response"');
@@ -380,10 +396,13 @@ function expression(expr, names, table) {
       if (!['number', 'string','utf16-string', 'boolean', 'null', 'undefined'].includes(operand.type)) refuse('type', 'truthiness of a dynamic value');
       return typed({ operand }, 'boolean');
     }
+    case 'primitive-membership':
     case 'includes': {
+      if(expr.kind==='primitive-membership'&&(!Array.isArray(expr.values)||expr.values.length>256))refuse('collection','an oversized or malformed primitive membership');
       const values = expr.values.map(value => expression(value, names, table));
       for (const value of values) {
         if (!['number', 'boolean', 'string'].includes(value.type) || typeof constantValue(value) !== value.type) refuse('collection', 'non-closed primitive includes elements');
+        if(expr.kind==='primitive-membership'&&value.type==='number'&&!Number.isFinite(constantValue(value)))refuse('collection','nonfinite primitive membership literals');
       }
       const argument = expression(expr.argument, names, table);
       if (!['number', 'string','utf16-string', 'boolean', 'value', 'null', 'undefined'].includes(argument.type)) refuse('collection', 'includes of an unsupported nullable argument');
@@ -533,6 +552,7 @@ export function toLino(item) {
     ...flag,
     ...(item.lossless?[['lossless']]:[]),
     ...(item.conditionalInputs?[['conditional-inputs']]:[]),
+    ...(item.conditionalCaptures?[['conditional-captures']]:[]),
     ['parameters', ...item.params.map((param) => [param.name, param.type,...(param.bindings?[['bindings',...param.bindings.map(name=>name??'_')]]:[]),...(param.rest?[['rest']]:[]),...(param.default?[['default',linkOf(param.default)]]:[])])],
     ['returns', encodeWord(item.returns)],
     ['body', ...item.body.map(statementLink)],
@@ -570,8 +590,9 @@ function linkOf(expr) {
       return ['typeof', linkOf(expr.operand)];
     case 'truthy':
       return ['truthy', linkOf(expr.operand)];
+    case 'primitive-membership':
     case 'includes':
-      return ['includes', ['values', ...expr.values.map(linkOf)], ['argument', linkOf(expr.argument)]];
+      return [expr.kind, ['values', ...expr.values.map(linkOf)], ['argument', linkOf(expr.argument)]];
     case 'choose':
       return ['choose', linkOf(expr.cond), linkOf(expr.then), linkOf(expr.else)];
     case 'method':
@@ -624,6 +645,7 @@ function itemOf(link) {
     exported,
     ...(link.some(part=>Array.isArray(part)&&part[0]==='lossless')?{lossless:true}:{}),
     ...(link.some(part=>Array.isArray(part)&&part[0]==='conditional-inputs')?{conditionalInputs:true}:{}),
+    ...(link.some(part=>Array.isArray(part)&&part[0]==='conditional-captures')?{conditionalCaptures:true}:{}),
     params: field(link, 'parameters').slice(1).map(([name, type,...flags]) => ({ name, type,...(flags.find(flag=>flag[0]==='bindings')?{bindings:flags.find(flag=>flag[0]==='bindings').slice(1).map(name=>name==='_'?null:name)}:{}),...(flags.some(flag=>flag[0]==='rest')?{rest:true}:{}),...(flags.find(flag=>flag[0]==='default')?{default:exprOf(flags.find(flag=>flag[0]==='default')[1])}:{}) })),
     returns: textOf(field(link, 'returns')[1]),
     body: field(link, 'body').slice(1).map(statementOf),
@@ -667,6 +689,7 @@ function exprOf(link) {
       return { kind, operand: exprOf(rest[0]) };
     case 'truthy':
       return { kind, operand: exprOf(rest[0]) };
+    case 'primitive-membership':
     case 'includes':
       return { kind, values: rest[0].slice(1).map(exprOf), argument: exprOf(rest[1][1]) };
     case 'choose':

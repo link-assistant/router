@@ -28,6 +28,12 @@ export function evaluate(program, functionName, arguments_) {
       case 'unary': return expr.op === 'not' ? !get(expr.operand) : -get(expr.operand);
       case 'typeof': return typeof get(expr.operand);
       case 'truthy': return Boolean(get(expr.operand));
+      case 'primitive-membership': {
+        const argument=get(expr.argument);
+        // Closed finite literals exclude NaN; strict equality is exactly the
+        // retained SameValueZero cases, including both signed zero values.
+        return expr.values.some(value=>get(value)===argument);
+      }
       case 'includes': {
         const values = expr.values.map(get), argument = get(expr.argument);
         return values.includes(argument);
@@ -114,15 +120,19 @@ export function evaluate(program, functionName, arguments_) {
       const closure=check(fn,table),captured=new Map(closure.captures.map((capture,index)=>[capture.name,args[index]]));
       return (...values)=>{
         const environment=new Map(captured);closure.params.forEach((param,index)=>environment.set(param.name,values[index]));
+        bindEntries(closure,environment);
         const result=block(closure.body,environment);if(!result.returned)throw Error('closure returned no value');return result.value;
       };
     }
     if (!fn || fn.kind !== 'function') throw new Error(`unknown function ${name}`);
     const environment=new Map(fn.params.map((param,index)=>[param.name,param.rest?args.slice(index):args[index]===undefined&&param.default?expression(param.default,new Map()):args[index]]));
-    for(const param of fn.params)if(param.bindings){const argument=environment.get(param.name),slots=param.bindings;let values;if(slots.length===1)values=slots[0]===null?(([,])=>[])(argument):(([key])=>[key])(argument);else if(slots[0]===null)values=slots[1]===null?(([, ,])=>[])(argument):(([,value])=>[undefined,value])(argument);else values=slots[1]===null?(([key,,])=>[key])(argument):(([key,value])=>[key,value])(argument);slots.forEach((name,index)=>{if(name!==null)environment.set(name,values[index]);});}
+    bindEntries(fn,environment);
     const result = block(fn.body, environment);
     if (!result.returned) throw new Error(`function ${name} returned no value`);
     return result.value;
+  };
+  const bindEntries=(fn,environment)=>{
+    for(const param of fn.params)if(param.bindings){const argument=environment.get(param.name),slots=param.bindings;let values;if(slots.length===1)values=slots[0]===null?(([,])=>[])(argument):(([key])=>[key])(argument);else if(slots[0]===null)values=slots[1]===null?(([, ,])=>[])(argument):(([,value])=>[undefined,value])(argument);else values=slots[1]===null?(([key,,])=>[key])(argument):(([key,value])=>[key,value])(argument);slots.forEach((name,index)=>{if(name!==null)environment.set(name,values[index]);});}
   };
   return invoke(functionName, arguments_);
 }

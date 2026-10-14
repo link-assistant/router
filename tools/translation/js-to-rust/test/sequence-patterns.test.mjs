@@ -100,5 +100,5 @@ test('every old complete program survives within unchanged 788 and 705 source ce
     totals.modules++;totals.top+=analysis.items.length;totals.topDefinitions+=analysis.program.length;totals.scoped+=analysis.scopedFunctions.sourceItems;totals.full+=analysis.scopedFunctions.fullDomainTranslatedItems;totals.conditional+=analysis.scopedFunctions.conditionalPrivateBodyDraftItems;
     vectors.census.push({path:previous.path,sourceSha256:previous.sourceSha256,previous,completeCurrentItems:analysis.items,completeCurrentScoped:analysis.scopedFunctions});save();
   }
-  assert.deepEqual(totals,{modules:52,top:788,topDefinitions:73,scoped:705,full:54,conditional:9});assert.deepEqual(gains.map(row=>[row.path,row.start]),[['packages/javascript/native/github-proxy.mjs',2346],['packages/javascript/native/tokens.mjs',4090]]);vectors.gains=gains;save();
+  assert.deepEqual(totals,{modules:52,top:788,topDefinitions:73,scoped:705,full:54,conditional:12});assert.deepEqual(gains.map(row=>[row.path,row.start]),[['packages/javascript/native/client-status.mjs',2581],['packages/javascript/native/config.mjs',15324],['packages/javascript/native/github-proxy.mjs',2346],['packages/javascript/native/provider-manifest.mjs',737],['packages/javascript/native/tokens.mjs',4090]]);vectors.gains=gains;save();
 });
