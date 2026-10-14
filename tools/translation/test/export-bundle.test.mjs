@@ -58,6 +58,7 @@ test('the exported synchronization CLI generates and updates real receiving Java
   try{
     const bundle=exportTranslatorBundle({sourceRoot:root,output:join(directory,'bundle')});
     assert.ok(bundle.manifest.inputs.some(row=>row.path==='scripts/sync-router.mjs'));
+    assert.ok(bundle.manifest.inputs.some(row=>row.path==='tools/translation/js-to-rust/vendor/constructs.lino'));
     const receiving=join(directory,'receiving');mkdirSync(receiving);
     const put=(name,value)=>{const file=join(receiving,name);mkdirSync(join(file,'..'),{recursive:true});writeFileSync(file,value);};
     const policy='/** @param {number} x @returns {number} */ export function increment(x) { return x + 1; }\n';

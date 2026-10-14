@@ -15,7 +15,7 @@ const selected=path=>{
   if(roots.slice(1).includes(path))return true;
   if(!path.startsWith('tools/translation/'))return false;
   const relative=path.slice('tools/translation/'.length);
-  return isCompilerSourceInputPath(path)||['extensions/','vendor/','source-profiles/'].some(prefix=>relative.startsWith(prefix));
+  return isCompilerSourceInputPath(path)||['extensions/','vendor/','js-to-rust/vendor/','source-profiles/'].some(prefix=>relative.startsWith(prefix));
 };
 const git=(root,args,input)=>{
   // Export never borrows an inherited repository, index, object store or config
