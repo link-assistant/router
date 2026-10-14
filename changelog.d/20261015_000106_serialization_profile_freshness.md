@@ -1,0 +1,1 @@
+Regenerate native affinity metadata and the complete serialization registry against the current original dependency source profiles. All 84 previous runtime descriptors and their serialization directions remain equal; the original UsageState layout is newly supported. The native affinity descriptor is unchanged, and both emitted TypeScript registries pass strict compilation.

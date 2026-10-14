@@ -4,7 +4,7 @@
     "crate::response_affinity::AffinityFile"
   ],
   "sourceSetSha256": "4d05b7f90885b0377f1909b3cecc704ba563a7fb0ca3c3ab5b3912f46591aa93",
-  "dependenciesDigest": "0291457e0018c166cb68e568b9e09e523f276d5db73f6b6d1a6940f4c2ed2654",
+  "dependenciesDigest": "b5cd51de398c8286b9ef0454d13eeed6ebefcab7fddef8ad392a793e9bf9aa6d",
   "owners": [
     {
       "owner": "crate::providers::ProviderKind",
@@ -87,7 +87,7 @@
   "comparedActualNativeProjection": true,
   "parsedValueEqualityAllOwners": true,
   "descriptorSha256": "2cb95d3651c8a57ae45afc9c44f8d12952f812f84687ca25b9a379053c59cfe2",
-  "metadataSha256": "d96153f1c9ac51abff9ac36d588e8d6a8b050b27b96f053192d0b52dace941fd",
+  "metadataSha256": "5f66aca6cf4df14d19dc683b6821d11f413b31f06e7ac80a0beb7a402deb32d3",
   "javascriptSha256": "2fd934d7a25e5d34f14807d89c021422f3b05336d3da450833c9b32d01441aa0",
   "typescriptSha256": "b804c12e73c56dd29cf70f5d73a6689f9c1605e16fecc93849c0f61ac279fa65",
   "nativeInterpreterUnchanged": true,
