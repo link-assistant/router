@@ -47,7 +47,7 @@ test('private original unit Default output and surface reject copied changed for
 });
 test('whole original Model source adds only its separately classified unit Default body',{timeout:60000},async()=>{
  const file='src/model_contract.rs',source=readFileSync(new URL(file,root),'utf8'),r=compile(source,file);
- assert.equal(r.meta.executable.filter(row=>row.term==='fn').length,2);assert.equal(r.meta.checkedMethods.length,4);assert.equal(r.meta.refused.length,20);
+ assert.equal(r.meta.executable.filter(row=>row.term==='fn').length,2);assert.equal(r.meta.checkedMethods.length,5);assert.equal(r.meta.refused.length,19);
  const row=r.meta.checkedGeneratedMethods.find(row=>row.name==='ModelSelectorKind.default');assert.ok(row);assert.equal(row.originalDeclarationTerm,'enum');assert.equal(row.generator,'core::default::Default');assert.equal(row.receiver,null);
  assert.equal(r.meta.checkedGeneratedMethods.filter(row=>row.name==='ModelSelectorKind.clone').length,1);
  const program=parseProgram(JSON.stringify(r.meta.targetSemanticProgram)),entry=[...program.declarations.values()].find(value=>value.impl?.method==='default'&&value.impl.defaultSourceProof?.typePath?.at(-1)==='ModelSelectorKind');assert.ok(entry);

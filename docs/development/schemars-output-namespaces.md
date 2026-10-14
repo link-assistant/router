@@ -66,3 +66,47 @@ attribute. The original Syn Field parser and printer establish attribute,
 visibility, name, colon and type order. This is an input candidate, not a Rust
 Span identity or namespace capability. Only the private output issuer can join
 it to the original module and derive invocation.
+
+The selected output route now instantiates the complete original Schemars
+anonymous-const/JsonSchema impl quote. Bounded named structs preserve field
+subschema calls, source-ordered property insertion, each independent default
+and predicate branch, and actual doc TITLE/DESCRIPTION definitions and metadata
+mutators. Externally tagged unit enums preserve the original Map construction
+and source-ordered name pushes. ASCII snake-case names follow the retained
+original Serde-internals table and branch. Identifier value recipes remain
+restricted to ASCII; opaque docs retain bounded Unicode scalar strings.
+
+Each generated core concat/module-path call joins its pinned expression
+constructor proof to the genuine original caller. Named creators and optional
+default serialization expand complete original Schemars macros, their actual
+private serde_json reexport, and all original JSON rules. The explicit 37-rule
+budget retains the whole json_internal definition; the engine default remains
+32. Nested inputs retain private parent expansion lineage. Declaration headers
+and all generated attributes remain evidence rather than public authority.
+Unknown nested macros, configuration, helpers, payload enum layouts, explicit
+discriminants, custom serialization, flattening and generic inputs refuse.
+
+The unchanged complete model_contract source retains 46 original derive
+obligations. On the hydrated Main source baseline, selected outputs increase
+from 40 to 46 and residual outputs decrease from six to zero. All six
+JsonSchema invocations close their bang-output obligation. The existing
+source-owned Copy and const match routes then admit the original
+`ModelSelectorKind.permits_resolution` method: four methods become five,
+while the two executable functions and two generated methods remain unchanged.
+All 19 remaining refusal records are identical to the baseline after removing
+that method's prior refusal. These are complete standalone-source observations;
+whole-library admission remains a separate canonical check.
+
+The original four-variant predicate executes in JavaScript and independently
+strict-compiled TypeScript. Its runtime authority comes from the existing
+original Copy/const match proof. This JsonSchema route authorizes no schema
+methods, default/predicate callbacks, serializer, formatting, allocator,
+Copy/no-Drop or const behavior. Ordinary matches also execute after the
+namespace join under their independent checked body contracts.
+
+Source function syntax is reused only by its genuine frozen dependency source
+identity. Binding inputs are reused only by the genuine immutable derive
+context; every private invocation, source module, helper and shadow check still
+runs. No parser mutable maps or semantic body success are cached. Copies,
+foreign contexts, altered sources, getters and serialized evidence cannot
+reconstruct authority without genuine original issuance.

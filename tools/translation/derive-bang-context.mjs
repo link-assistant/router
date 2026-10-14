@@ -8,6 +8,7 @@ import {proveSerdeSerializeBangFootprint,assertSerdeSerializeBangFootprint} from
 import {proveSerdeDeserializeBangFootprint,assertSerdeDeserializeBangFootprint} from './serde-deserialize-bang-footprints.mjs';
 import {hasBuiltinDeriveBangRoute,proveBuiltinDeriveBangFootprint,assertBuiltinDeriveBangFootprint} from './builtin-derive-bang-footprints.mjs';
 import {proveClapArgsBangFootprint,assertClapArgsBangFootprint} from './clap-args-bang-footprints.mjs';
+import {proveSchemarsBangFootprint,assertSchemarsBangFootprint} from './schemars-bang-footprints.mjs';
 const contexts=new WeakMap(),certificates=new WeakMap(),cachedContexts=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -19,6 +20,7 @@ const routes=new Map([
   ['serde::Serialize',{prove:proveSerdeSerializeBangFootprint,assert:assertSerdeSerializeBangFootprint}],
   ['serde::Deserialize',{prove:proveSerdeDeserializeBangFootprint,assert:assertSerdeDeserializeBangFootprint}],
   ['clap::Args',{prove:proveClapArgsBangFootprint,assert:assertClapArgsBangFootprint}],
+  ['schemars::JsonSchema',{prove:proveSchemarsBangFootprint,assert:assertSchemarsBangFootprint}],
 ]);
 
 export function createDeriveBangContext({deriveContext}={}){

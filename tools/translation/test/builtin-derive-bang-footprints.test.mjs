@@ -107,7 +107,7 @@ test('complete unchanged SubscriptionProvider and CatalogRecord preserve full-gr
   assert.ok(completeOriginalBuiltin,'whole original input and owner proofs must be checked');
   const {context,provider,record}=completeOriginalBuiltin;
   const outputs=createDeriveBangContext({deriveContext:context});
-  const providerOutput=outputs.certificates.find(value=>value.source===provider.source&&value.span.start===provider.span.start);assert.equal(providerOutput.dimensions.bangMacroComplete,false);assert.ok(providerOutput.residualOwners.some(owner=>owner.target?.[0]==='schemars'));
+  const providerOutput=outputs.certificates.find(value=>value.source===provider.source&&value.span.start===provider.span.start);assert.equal(providerOutput.dimensions.bangMacroComplete,false);assert.ok(providerOutput.selectedOwners.some(owner=>owner.target?.join('::')==='schemars::JsonSchema'));assert.equal(providerOutput.residualOwners.some(owner=>owner.target?.[0]==='schemars'),false);assert.ok(providerOutput.residualOwners.length);
   const recordOutput=outputs.certificates.find(value=>value.source===record.source&&value.span.start===record.span.start);assert.equal(recordOutput.dimensions.bangMacroComplete,true);assert.deepEqual(recordOutput.residualOwners,[]);assert.equal(recordOutput.selectedOwners.length,6);assert.equal(recordOutput.generatedImplBehavior,false);
 });
 

@@ -46,9 +46,9 @@ test('an exact registered nested helper span closes; independent sibling and sou
   assert.equal(scope.shadowedBuiltinMacros.has('format'),true,'Closing derive output cannot acquire a custom macro owner');
 });
 
-test('Schemars and generic/custom helper outputs remain residual',()=>{
+test('custom Schemars and generic helper outputs remain residual',()=>{
   for(const source of [
-    '#[derive(serde::Serialize,schemars::JsonSchema)] pub struct Payload { value:u8 }',
+    '#[derive(serde::Serialize,schemars::JsonSchema)] #[schemars(with="String")] pub struct Payload { value:u8 }',
     '#[derive(serde::Deserialize)] #[serde(default)] pub struct Payload { value:u8 }',
   ]){const input=setup(source),context=createDeriveBangContext(input);assert.equal(context.certificates[0].dimensions.bangMacroComplete,false);assert.ok(context.certificates[0].residualOwners.length);assert.equal(model(resolve(input,context)).unresolvedBangMacroScope,true);}
   const generic=setup('#[derive(serde::Serialize)] pub struct Payload<T>{value:T}');

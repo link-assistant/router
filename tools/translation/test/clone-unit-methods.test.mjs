@@ -28,7 +28,7 @@ test('complete unchanged model source checks its own generated unit Clone method
   const source=read('src/model_contract.rs'),jsonMacroDependencies=loadJsonMacroSourceProof({manifest,lock});
   const result=translateProject({entry:'src/model_contract.rs',paths:['src/model_contract.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE});
   retain('complete-original-model-checked-unit-clone',{source,...result});
-  assert.equal(result.meta.executable.length,2);assert.equal(result.meta.checkedMethods.length,4);
+  assert.equal(result.meta.executable.length,2);assert.equal(result.meta.checkedMethods.length,5);
   assert.ok(result.meta.checkedGeneratedMethods.some(value=>value.name==='ModelSelectorKind.clone'&&value.generator==='core::clone::Clone'));
   const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),methods=[...program.declarations.values()].filter(value=>value.body?.k==='routerCheckedCloneBody');
   assert.ok(methods.some(value=>value.body.cloneSourceProof.unitVariants?.length===4));
