@@ -22,6 +22,7 @@ import {originalBuiltinDefaultBangOutput} from './builtin-derive-bang-footprints
 import {validateBuiltinDefaultAstOutput} from './builtin-default-ast-route.mjs';
 import {configureParserSourceScope} from './source-scopes.mjs';
 import {moduleScopeKey} from './source-module-views.mjs';
+import {TranslationError} from './vendor/meta-language/translation/diagnostics.js';
 const generated=new WeakMap(),hash=value=>createHash('sha256').update(value).digest('hex');
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Original Default AST lowering: '+message);};
@@ -30,7 +31,9 @@ function originalFieldType(state,module,field,Parser){
   const parser=new Parser(tokenizeRust(module.source));configureParserSourceScope(parser,scope,state.binding.scopes,module.path);parser.modulePath=[...module.path];
   const snapshot=originalHostParserIdentitySnapshot(),identity=()=>{assertOriginalParserIdentity(parser,HostRustParser.prototype,new Map(snapshot.parserMethods));assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});};identity();
   parser.cursor.index=parser.cursor.tokens.findIndex(token=>token.start===field.typeSpan.start);if(parser.cursor.index<0)fail('field type has no actual original token boundary');
-  const first=parser.cursor.index,type=parser.type(),last=parser.cursor.tokens[parser.cursor.index-1];
+  const first=parser.cursor.index;let type;
+  try{type=parser.type();}catch(error){if(!(error instanceof TranslationError))throw error;fail('field original type remains unproved: '+error.message);}
+  const last=parser.cursor.tokens[parser.cursor.index-1];
   identity();
   if(last?.end!==field.typeSpan.end||module.source.slice(field.typeSpan.start,field.typeSpan.end)!==field.typeSource)fail('field complete original type span differs');
   const syntax=parser.cursor.tokens.slice(first,parser.cursor.index).map(token=>token.value),generic=type.rustGeneratedTypeOwner&&parser.genericTypes.get(type.rustGeneratedTypeOwner.name);

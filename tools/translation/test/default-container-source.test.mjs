@@ -48,6 +48,13 @@ for(const [file,type,golden]of [['src/admin.rs','ClaimFile',{$:'ClaimFile',token
  const targets={...result,javascript:result.javascript+'\nexport {'+entry.fullName+' as originalDefault};',typescript:result.typescript+'\nexport {'+entry.fullName+' as originalDefault};'};vector('whole-original-'+type,{source,result,golden:JSON.stringify(golden,(_,value)=>typeof value==='bigint'?value.toString()+'n':value)});
  await verifyTypedTargets(targets,(_api,_result,module)=>{const first=module.originalDefault();assert.deepEqual(first,golden);assert.notStrictEqual(first,module.originalDefault());},{childTimeoutMs:20000});
 });
+test('unsupported original field types retain generated refusals without aborting independent source bodies',{timeout:60000},async()=>{
+ for(const type of ['BTreeMap<String,u8>','BTreeSet<String>','Mutex<u8>','Arc<u8>']){
+  const source='#[derive(Default)]pub struct Unsupported{value:'+type+'}#[derive(Default)]pub struct Payload{text:String}pub fn value(input:u8)->u8{input}pub fn make()->Payload{Payload::default()}',result=compile(source),refusal=result.meta.refused.find(row=>row.name==='Unsupported.default');
+  assert.ok(refusal,type);assert.equal(refusal.term,'generated-method');assert.equal(refusal.kind,'unsupported');assert.match(refusal.message,/field original type remains unproved/);assert.equal(result.meta.checkedGeneratedMethods.some(row=>row.name==='Unsupported.default'),false);assert.ok(result.meta.checkedGeneratedMethods.some(row=>row.name==='Payload.default'));assert.ok(result.meta.executable.some(row=>row.name==='value'));
+  await verifyTypedTargets(result,api=>{assert.equal(api.value(7n),7n);assert.deepEqual(api.make(),{$:'Payload',text:''});assert.throws(()=>api.value(256n),RangeError);},{childTimeoutMs:20000});
+ }
+});
 test('complete unchanged auth keeps the independently unresolved serde helper owner refused',{timeout:60000},()=>{
  const file='src/auth.rs',source=readFileSync(new URL(file,root),'utf8'),result=translateProject({entry:file,paths:[file],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.checkedGeneratedMethods?.some(row=>row.name==='DeviceErrorResponse.default')??false,false);const row=result.meta.refused.find(row=>row.name==='DeviceErrorResponse.default');assert.match(row.message,/genuine active helper owner/);vector('whole-original-DeviceErrorResponse-refused',{source,result});
 });
