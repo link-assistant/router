@@ -3,6 +3,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,cpSync,rmSync,symlinkSync} from 'nod
 import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
 
 // Execute the emitted JavaScript and the separately strict-compiled TypeScript.
@@ -21,7 +22,12 @@ export async function verifyTypedTargets(result,verify,{childTimeoutMs}={}) {
     writeFileSync(typescript,result.typescript);
     execFileSync(process.execPath,['--check',javascript],childOptions);
     const compiled=join(directory,'compiled');
-    execFileSync(process.env.ROUTER_TRANSLATION_TSC??'tsc',['--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,typescript],childOptions);
+    let compiler=process.env.ROUTER_TRANSLATION_TSC,prefix=[];
+    if(compiler===undefined){
+      try{const require=createRequire(new URL('../../../packages/javascript/package.json',import.meta.url));prefix=[require.resolve('typescript/bin/tsc')];compiler=process.execPath;}
+      catch(error){if(error.code!=='MODULE_NOT_FOUND')throw error;compiler='tsc';}
+    }
+    execFileSync(compiler,[...prefix,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,typescript],childOptions);
     cpSync(join(directory,'runtime'),join(compiled,'runtime'),{recursive:true});
     if(entry===undefined)symlinkSync('../runtime',join(compiled,'src/runtime'),'dir');
     for(const [path,runtimeRoot] of [[javascript,directory],[join(compiled,relative+'.js'),compiled]]) {
