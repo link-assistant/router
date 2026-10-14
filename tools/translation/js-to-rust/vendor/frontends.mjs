@@ -11,6 +11,7 @@ import { constantValue } from './constants.mjs';
 import { parseCharacterClass } from './character-classes.mjs';
 import {parseSequencePattern} from './sequence-patterns.mjs';
 import { parseClosedJson } from './json-responses.mjs';
+import {sourceCallable} from './source-calls.mjs';
 
 const UNSUPPORTED_BINARY = new Set(['==', '!=', '**', '??', '&', '|', '^', '<<', '>>', '>>>', 'instanceof', 'in', 'as']);
 const ASSIGNMENTS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '++', '--', '&&=', '||=', '??=']);
@@ -97,9 +98,10 @@ function jsdocTypes(doc) {
  * @param {string} doc the comments directly before the item
  * @returns {object}
  */
-export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses,callbackInputs,source } = {}) {
+export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses,callbackInputs,source,sourceCalls } = {}) {
   const at = cursor(tokens);
   at.source = source;
+  at.sourceCalls=sourceCalls===true;
   at.shadowedBuiltins = shadowedBuiltins;
   at.errorContracts=errorContracts;
   at.jsonResponses=jsonResponses;
@@ -503,6 +505,7 @@ function argumentsOf(at, language) {
 
 function primary(at, language) {
   const token = at.next();
+  if(token.type==='source-callable'&&language==='JavaScript'&&at.sourceCalls)return sourceCallable(token.environment);
   if (token.type === 'number') return { kind: 'number', text: numberText(token.text, language) };
   if (token.type === 'string') return { kind: 'string', value: unquote(token.text) };
   if (token.type === 'template') refuse('template');
@@ -534,7 +537,13 @@ function primary(at, language) {
       if (!at.is(']')) at.expect(',');
     }
     if(!at.is('.'))return {kind:'array',values};
-    at.expect('.');if(!at.eat('includes'))refuse('collection');
+    at.expect('.');
+    if(at.sourceCalls&&at.eat('some')) {
+      const args=argumentsOf(at,language);
+      if(args.length!==1||args[0].kind!=='source-create')refuse('collection','owned some requires its exact original callback creation');
+      return {kind:'owned-some',values,callback:args[0]};
+    }
+    if(!at.eat('includes'))refuse('collection');
     const args = argumentsOf(at, language);
     if (args.length !== 1) refuse('unsupported', 'array includes with a non-default start index');
     return { kind: 'includes', values, argument: args[0] };

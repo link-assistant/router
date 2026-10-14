@@ -128,3 +128,16 @@ test('producer and captured-collection flags count each privately reissued draft
   const mutated=buildNativePortableArtifacts([row('mutated',source.replace('const scalar','owned.add("other");const scalar'))]);
   assert.equal(mutated.manifest.scopedFunctions.translatedItems,1);assert.equal(mutated.manifest.scopedFunctions.conditionalPrivateBodyDraftItems,0);
 });
+
+test('checked original owned-call bodies keep their intrinsic qualification and separate scoped census', () => {
+  const source='export function owner(value){return [1].some(item=>typeof item===typeof value);}',{manifest,artifacts}=buildNativePortableArtifacts([row('source-calls',source)]);
+  assert.deepEqual(manifest.topLevel,{sourceItems:1,translatedItems:1,unsupportedItems:0});
+  assert.deepEqual(manifest.scopedFunctions,{sourceItems:1,translatedItems:1,unsupportedItems:0,fullDomainTranslatedItems:1,conditionalPrivateBodyDraftItems:0});
+  const program=parseMeta(artifacts.get('tools/translation/js-to-rust/generated/native-portable/top-level/source-calls.lino'));
+  assert.equal(program[0].conditionalCalls,true);assert.equal(program[0].sourceCalls.iterations[0].standardArraySomeRequired,true);assert.equal(program[0].sourceCalls.iterations[0].lookupStabilityProved,false);
+  assert.equal(manifest.modules[0].topLevel.items[0].coverageContract,'conditional-original-body-draft');
+  for(const path of ['packages/typescript/native/portable-draft/top-level/source-calls.ts','tools/translation/js-to-rust/generated/native-portable/top-level/source-calls.rs.txt'])assert.match(artifacts.get(path),/Conditional original body draft/u);
+  for(const mutate of [item=>delete item.conditionalCalls,item=>item.sourceCalls.iterations[0].lookupStabilityProved=true,item=>delete item.sourceCalls]){const wrong=JSON.parse(JSON.stringify(program[0]));mutate(wrong);assert.throws(()=>parseMeta(toLino(wrong)));}
+  const changed=buildNativePortableArtifacts([row('changed','Array.prototype.some=evil;'+source)]);assert.equal(changed.manifest.topLevel.translatedItems,0);assert.equal(changed.manifest.scopedFunctions.translatedItems,0);
+  assert.equal(manifest.contract.runtimeParity,false);
+});

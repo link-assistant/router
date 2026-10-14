@@ -23,7 +23,7 @@ export function buildNativePortableArtifacts(sources) {
       || !Number.isSafeInteger(scoped.fullDomainTranslatedItems) || scoped.fullDomainTranslatedItems < 0
       || !Number.isSafeInteger(scoped.conditionalPrivateBodyDraftItems) || scoped.conditionalPrivateBodyDraftItems < 0
       || scoped.fullDomainTranslatedItems + scoped.conditionalPrivateBodyDraftItems !== scoped.translatedItems
-      || scoped.program.filter((item) => item.conditionalInputs === true || item.conditionalCaptures === true).length !== scoped.conditionalPrivateBodyDraftItems
+      || scoped.program.filter((item) => item.conditionalInputs === true || item.conditionalCaptures === true || item.conditionalCalls === true).length !== scoped.conditionalPrivateBodyDraftItems
       || scoped.translatedItems !== scoped.program.length
       || scoped.sourceItems !== scoped.translatedItems + scoped.unsupportedItems) {
       throw new Error(`incomplete scoped native discovery: ${path}`);
@@ -71,7 +71,7 @@ export function buildNativePortableArtifacts(sources) {
   }, { sourceItems: 0, translatedItems: 0, unsupportedItems: 0, ...(field === 'scopedFunctions' ? { fullDomainTranslatedItems: 0, conditionalPrivateBodyDraftItems: 0 } : {}) });
   const manifest = { schema: 'native-portable-body-draft-v1', fragment: 'portable-router-v1',
     contract: { wholeNativeImplementationTranslated: false, runtimeParity: false, rustCompiled: false,
-      topLevel: 'Original top-level source items; partial module admission does not admit its refused owners.',
+      topLevel: 'Original top-level source items; partial module admission does not admit its refused owners. Source-bound owned-iteration bodies retain explicit conditionalCalls standard-intrinsic obligations.',
       scopedFunctions: 'Additional ArrowFunction, FunctionExpression and FunctionDeclaration bodies, excluding top-level declarations and initializer forms already counted at top level, and excluding method/accessor bodies themselves; privately source-checked lexical environments retain their closed capture contracts. Full-domain helpers and explicitly conditional private producer/captured-container body drafts have separate counts. Conditional drafts require unchanged standard producer/callback/collection intrinsics, with producer effects and lookup stability unproved; parents and public/unqualified callers remain refused.',
       meta: 'Both targets consume the serialized and independently checked meta-language program.',
       targets: 'TypeScript preserves the declared checked fragment; Rust uses explicit payload and host-qualified projections.' },

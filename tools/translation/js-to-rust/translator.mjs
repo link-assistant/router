@@ -14,6 +14,7 @@ import { privateErrorContracts } from './vendor/private-contracts.mjs';
 import { jsonResponseOwnership } from './vendor/json-responses.mjs';
 import {callbackInputsFor} from './vendor/callback-inputs.mjs';
 import { discoverScopedHelpers } from './vendor/scoped-helpers.mjs';
+import {createSourceCallIssuer,issueTopLevelSourceCallsFrom,lowerSourceCalls} from './vendor/source-calls.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -50,6 +51,7 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
   const errors=privateErrorContracts(source);
   const responses=jsonResponseOwnership(source);
   let doc = '';
+  let sourceCallIssuer;
   for (const item of raw) {
     if (item.comment) {
       doc += `${item.tokens[0].text}\n`;
@@ -67,6 +69,13 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
     } catch (error) {
       if (!isRefusal(error) && !error.slug) throw error;
       row.diagnostic = diagnostic(error, item, source);
+      // This fallback checks the complete original owner and every callable
+      // creation/use; isolated child admission never promotes its parent.
+      try {
+        if(error.slug==='async'||!item.tokens.some(token=>token.text==='=>'))throw error;
+        sourceCallIssuer??=createSourceCallIssuer(source,sourcePath);
+        const checked=lowerSourceCalls(issueTopLevelSourceCallsFrom(sourceCallIssuer,item.start,item.end));row.parsed=checked;row.name=checked.name;row.status='parsed';row.coverageContract=checked.conditionalCalls?'conditional-original-body-draft':'full-domain-body';delete row.diagnostic;
+      }catch{ /* retain the complete original unsupported diagnostic */ }
     }
     items.push(row);
     doc = '';
@@ -98,7 +107,7 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
       for(const item of candidates)try{item.checked=check(item.checked,completed);}catch(error){if(!isRefusal(error)&&!error.slug)throw error;item.status='unsupported';item.diagnostic=diagnostic(error,item,source);changed=true;}
     }
   }
-  const censusItems=items.map(({parsed,checked,...item})=>item);
+  const censusItems=items.map(({parsed,checked,...item})=>{if(item.status!=='translated')delete item.coverageContract;return item;});
   const scopedFunctions=includeScoped?discoverScopedHelpers(source,censusItems,analyzeJavaScript,sourcePath):undefined;
   return {
     fragment: FRAGMENT,

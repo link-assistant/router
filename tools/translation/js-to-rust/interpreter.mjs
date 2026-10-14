@@ -3,9 +3,14 @@ import {matchesSequence} from './vendor/sequence-patterns.mjs';
 // and execution of the authoritative source; neither emitter is consulted.
 import {check} from './vendor/ir.mjs';
 import { constructMap } from './vendor/constructs.mjs';
+// Interpreter infrastructure captures the host invocation primitive once. Its
+// argument-list plumbing must not use the source program's Array iterator or
+// perform a Function.prototype.apply lookup on a retained callable.
+const applyCallable=Reflect.apply;
 
 export function evaluate(program, functionName, arguments_) {
-  const table = new Map(program.map((item) => [item.name, item]));
+  const table = new Map();
+  for(let index=0;index<program.length;index++)table.set(program[index].name,program[index]);
   const map = constructMap();
   const tables=new Map();
   const expression = (expr, env) => {
@@ -18,6 +23,18 @@ export function evaluate(program, functionName, arguments_) {
       case 'json-number':return Number(expr.text);
       case 'json-null':return null;
       case 'array':return expr.values.map(get);
+      case 'source-create': {
+        const captured=new Map();
+        for(let index=0;index<expr.closure.captures.length;index++)captured.set(expr.closure.captures[index].name,get(expr.captures[index]));
+        return (...args)=>{const inner=new Map();for(let index=0;index<expr.closure.captures.length;index++){const name=expr.closure.captures[index].name;inner.set(name,captured.get(name));}for(let index=0;index<expr.closure.params.length;index++)inner.set(expr.closure.params[index].name,args[index]);const result=block(expr.closure.body,inner);if(!result.returned)throw Error('source callable returned no value');return result.value;};
+      }
+      case 'owned-some': {
+        // Closed literals have no evaluation effects, so their private IR
+        // values can be observed by index without exposing a host iterator.
+        const callback=get(expr.callback);
+        for(let index=0;index<expr.values.length;index++)if(callback(get(expr.values[index])))return true;
+        return false;
+      }
       case 'record':return Object.fromEntries(expr.fields.map(field=>[field.name,get(field.value)]));
       case 'error':return Object.assign(new Error(get(expr.message)),Object.fromEntries(expr.fields.map(field=>[field.name,get(field.value)])));
       case 'number': return Number(expr.text);
@@ -60,7 +77,7 @@ export function evaluate(program, functionName, arguments_) {
         }
       }
       case 'choose': return get(expr.cond) ? get(expr.then) : get(expr.else);
-      case 'call': if(table.get(expr.name)?.kind==='closure')throw Error('unlowered closure call boundary');return invoke(expr.name, expr.args.map(get));
+      case 'call': if(expr.callable)return applyCallable(env.get(expr.name),undefined,expr.args.map(get));if(table.get(expr.name)?.kind==='closure')throw Error('unlowered closure call boundary');return invoke(expr.name, expr.args.map(get));
       case 'builtin': {
         const [namespace, method] = map.builtins.get(expr.name).javascript.split('.');
         return ({ Math, Number, Buffer })[namespace][method](...expr.args.map(get));
@@ -96,7 +113,8 @@ export function evaluate(program, functionName, arguments_) {
       if (method === 'set') return (key, value) => local.has(key) ? local.set(key, value) : target.set(key, value);
       return Reflect.get(target, method);
     } });
-    for (const statement of statements) {
+    for (let index=0;index<statements.length;index++) {
+      const statement=statements[index];
       if (statement.kind === 'let') local.set(statement.name, expression(statement.value, scope));
       else if (statement.kind === 'assign') scope.set(statement.name, expression(statement.value, scope));
       else if (statement.kind === 'return') return { returned: true, value: expression(statement.value, scope) };
@@ -125,14 +143,15 @@ export function evaluate(program, functionName, arguments_) {
       };
     }
     if (!fn || fn.kind !== 'function') throw new Error(`unknown function ${name}`);
-    const environment=new Map(fn.params.map((param,index)=>[param.name,param.rest?args.slice(index):args[index]===undefined&&param.default?expression(param.default,new Map()):args[index]]));
+    const environment=new Map();
+    for(let index=0;index<fn.params.length;index++){const param=fn.params[index];environment.set(param.name,param.rest?args.slice(index):args[index]===undefined&&param.default?expression(param.default,new Map()):args[index]);}
     bindEntries(fn,environment);
     const result = block(fn.body, environment);
     if (!result.returned) throw new Error(`function ${name} returned no value`);
     return result.value;
   };
   const bindEntries=(fn,environment)=>{
-    for(const param of fn.params)if(param.bindings){const argument=environment.get(param.name),slots=param.bindings;let values;if(slots.length===1)values=slots[0]===null?(([,])=>[])(argument):(([key])=>[key])(argument);else if(slots[0]===null)values=slots[1]===null?(([, ,])=>[])(argument):(([,value])=>[undefined,value])(argument);else values=slots[1]===null?(([key,,])=>[key])(argument):(([key,value])=>[key,value])(argument);slots.forEach((name,index)=>{if(name!==null)environment.set(name,values[index]);});}
+    for(let index=0;index<fn.params.length;index++){const param=fn.params[index];if(param.bindings){const argument=environment.get(param.name),slots=param.bindings;let values;if(slots.length===1)values=slots[0]===null?(([,])=>[])(argument):(([key])=>[key])(argument);else if(slots[0]===null)values=slots[1]===null?(([, ,])=>[])(argument):(([,value])=>[undefined,value])(argument);else values=slots[1]===null?(([key,,])=>[key])(argument):(([key,value])=>[key,value])(argument);slots.forEach((name,index)=>{if(name!==null)environment.set(name,values[index]);});}}
   };
   return invoke(functionName, arguments_);
 }

@@ -388,3 +388,37 @@ Closed primitive collection captures use a privately reissued original lexical e
 The body lowers to explicit primitive membership over the source literals, retaining one argument evaluation, literal order, duplicates and SameValueZero equality for finite numbers (including both signed zeros), booleans and strings. NaN and unsupported literal initializers remain refused. TypeScript uses direct strict comparisons and Rust uses lossless `JsPayload` primitive comparisons. The zero-argument factory has no public captured-data parameter; Rust's empty environment has no borrowed environment lifetime. Its call arguments retain their existing lossless payload/UTF16 lifetime, including private Object.entries key tuples when that genuine original producer contract is reissued.
 
 All captured-container bodies are **conditional private body drafts**. Original `has`/`includes` method lookup stability is unproved when parent/imported effects can change host intrinsics. `conditionalCaptures` is separate from conditional producer inputs, and either qualification contributes only to conditional coverage. Original parent creation/effects and unqualified callers remain refused. Getter and string-coercion counterexamples are retained alongside independent original-JavaScript, IR and strict-TypeScript goldens. These capabilities do not increase full-domain coverage or establish Rust runtime parity.
+
+Source-bound lexical creation and calls reconstruct the complete enclosing
+function from its original UTF16 source, declaration span and private lexical
+bindings. Only exact const-local arrows with immutable enclosing parameter
+captures and direct calls at their original positions are admitted. Caller
+capture maps and copied compiler graphs supply no authority. Calls before
+initialization, aliases, mutation, hoisting, defaults, unknown callees, receiver
+effects and escaping function references remain refused. Creation reads retained
+captures once; direct arguments are evaluated once in source order. The IR
+interpreter creates a fresh callable, TypeScript creates its callable through the
+checked factory, and Rust exposes the corresponding environment and call method.
+Function-object identity, reflection and arbitrary function payload conversion
+are outside the Rust projection.
+
+Dense iteration and the interpreter's callable argument-list plumbing avoid
+Array iterator lookups that the source does not perform. The interpreter captures
+its trusted host Reflect.apply primitive when its module loads; this is internal
+invocation infrastructure, not a proved capability of the original source or an
+extra source Function.prototype.apply lookup.
+
+Dense owned literal `some` is an explicitly ordered, short-circuit IR operation.
+Its one-parameter callback cannot observe the omitted index and array arguments,
+and arbitrary unknown values keep their payload identity. `conditionalCalls`
+requires the original standard Array.prototype.some lookup and checked primitive
+intrinsics to remain unchanged; parent or imported effects do not prove that
+capability. Coverage counts each body once when any input, capture or call
+qualification is present. The targets consume reparsed, privately reissued
+complete source/body proofs. Rust remains uncompiled.
+
+The original resources `terminates` helper is still refused: an unknown input
+can supply an effectful custom `includes` method, its JSON.stringify caller can
+produce undefined or throw, and its dynamic decoder caller does not establish a
+privately proved string-only source contract. The lexical-call prerequisite does
+not admit that helper's I/O parents or narrow its public input domain.

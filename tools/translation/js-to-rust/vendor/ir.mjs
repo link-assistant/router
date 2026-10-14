@@ -29,11 +29,13 @@ import { guardedScope } from './guards.mjs';
 import { optionalType, joinReturnTypes, closedReturnType } from './return-types.mjs';
 import { validateCharacterClass } from './character-classes.mjs';
 import {validateSequencePattern} from './sequence-patterns.mjs';
+import {checkSourceCalls,isOriginalSourceCallCheck,sourceCallItem} from './source-calls.mjs';
 import { staticTableType,mapValueType } from './static-tables.mjs';
 import { recordType,recordShape,errorType,errorShape,canLiftValue,payloadBoundary } from './aggregates.mjs';
 import { checkClosedJson,jsonResponseStatus,closedJsonValue,utf16Link,utf16Of } from './json-responses.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
+function callableOf(type){if(typeof type!=='string'||!type.startsWith('callable:'))return null;return JSON.parse(type.slice(9));}
 
 // The keyword vocabulary of both languages: a portable name is none of
 // these, the rule relative-meta-logic applies across its four languages.
@@ -212,6 +214,9 @@ export function lowerSourceClosure(handle,name) {
   return {...checked,kind:'closure',captures:checked.params.slice(0,count),params:checked.params.slice(count),environment:environment.proof,...(collection?{conditionalCaptures:true}:{})};
 }
 export function check(item, table) {
+  if(sourceCallItem(item))return checkSourceCalls(item);
+  if(item.conditionalCalls&&!isOriginalSourceCallCheck(item))refuse('collection','a conditional call without privately checked original creation');
+  if(!isOriginalSourceCallCheck(item)&&/"kind":"(?:source-create|owned-some)"/u.test(JSON.stringify(item.body)))refuse('collection','a callable creation outside a privately checked original caller');
   if(item.kind==='closure') {
     const expected=lowerSourceClosure(reissueLexicalEnvironment(item.environment),item.name);
     if(!Array.isArray(item.captures)||!isDeepStrictEqual(item.captures,expected.captures)||toLino(item)!==toLino(expected))refuse('collection','a changed source-bound closure body, type or signature');
@@ -304,8 +309,10 @@ export function check(item, table) {
   const capabilities=node=>{
     if(!node||typeof node!=='object')return;
     if(node.kind==='call') {
+      if(node.callable){for(const arg of node.args)capabilities(arg);return;}
       const callee=table.get(node.name);
       if(callee.conditionalInputs&&!item.conditionalInputs)refuse('collection','an unqualified conditional private callback boundary');
+      if(callee.conditionalCalls&&!item.conditionalCalls)refuse('collection','an unqualified original Array.some intrinsic boundary');
       const proved=callee.body.every(statement=>statement.value?.type||statement.cond?.type);
       if(proved&&callee.params.some(param=>param.type==='value')&&payloadBoundary(callee)!==payload)refuse('collection','a lossless payload/scalar observer call boundary');
     }
@@ -464,6 +471,12 @@ function expression(expr, names, table) {
     }
     case 'call': {
       canonicalRustName(expr.name);
+      const callable=callableOf(names.get(expr.name));
+      if(callable){
+        const args=expr.args.map(arg=>expression(arg,names,table));
+        if(args.length!==callable.params.length||args.some((arg,index)=>callable.params[index].type!=='value'||!canLiftValue(arg)))refuse('collection','an unproved direct lexical callable argument');
+        return typed({args,callable},callable.returns);
+      }
       const callee = table.get(expr.name);
       if (!callee || callee.kind !== 'function') return refuse('unknown-call', expr.name);
       if(callee.params.some(param=>param.type==='entry-value'))refuse('collection','an unimplemented private entry call boundary');
@@ -478,6 +491,18 @@ function expression(expr, names, table) {
         refuse('type', `the arguments of ${expr.name}`);
       }
       return typed({ args }, callee.returns);
+    }
+    case 'source-create': {
+      const handle=reissueLexicalEnvironment(expr.environment),closure=lowerSourceClosure(handle,lexicalClosureName(handle));
+      const captures=expr.captures.map(arg=>expression(arg,names,table));
+      if(!expr.environment.sourceCreation||captures.length!==closure.captures.length||captures.some((arg,index)=>arg.kind!=='variable'||arg.name!==closure.captures[index].name||!canLiftValue(arg)))refuse('collection','an unproved original callable capture evaluation');
+      return typed({captures,closure},'callable:'+JSON.stringify(closure));
+    }
+    case 'owned-some': {
+      const callback=expression(expr.callback,names,table),closure=callableOf(callback.type);
+      const values=expr.values.map(value=>expression(value,names,table));
+      if(!closure||closure.params.length!==1||closure.params[0].type!=='value'||closure.returns!=='boolean'||values.length>256||values.some(value=>!['string','number','boolean'].includes(value.type)||value.kind!==value.type||typeof constantValue(value)!==value.type))refuse('collection','owned some requires a boolean callback and dense closed primitive inputs');
+      return typed({values,callback},'boolean');
     }
     case 'builtin': {
       const row = map.builtins.get(expr.name);
@@ -548,6 +573,8 @@ export function toLino(item) {
   return writeLink([
     item.kind==='closure'?'closure':'function',
     item.name,
+    ...(item.sourceCalls?[['source-calls',encodeWord(JSON.stringify(item.sourceCalls))]]:[]),
+    ...(item.conditionalCalls?[['conditional-calls']]:[]),
     ...(item.kind==='closure'?[['environment',encodeWord(JSON.stringify(item.environment))],['captures',...item.captures.map(capture=>[capture.name,capture.type])]]:[]),
     ...flag,
     ...(item.lossless?[['lossless']]:[]),
@@ -571,6 +598,8 @@ function statementLink(statement) {
 
 function linkOf(expr) {
   switch (expr.kind) {
+    case 'source-create':return ['source-create',['environment',encodeWord(JSON.stringify(expr.environment))],['captures',...expr.captures.map(linkOf)]];
+    case 'owned-some':return ['owned-some',['values',...expr.values.map(linkOf)],['callback',linkOf(expr.callback)]];
     case 'number':
       return ['number', expr.text];
     case 'string':
@@ -640,6 +669,8 @@ function itemOf(link) {
   }
   return {
     kind: link[0],
+    ...(field(link,'source-calls')?{sourceCalls:JSON.parse(textOf(field(link,'source-calls')[1]))}:{}),
+    ...(field(link,'conditional-calls')?{conditionalCalls:true}:{}),
     ...(link[0]==='closure'?{environment:JSON.parse(textOf(field(link,'environment')[1])),captures:field(link,'captures').slice(1).map(([name,type])=>({name,type}))}:{}),
     name: link[1],
     exported,
@@ -670,6 +701,8 @@ function statementOf(link) {
 function exprOf(link) {
   const [kind, ...rest] = link;
   switch (kind) {
+    case 'source-create':return {kind,environment:JSON.parse(textOf(field(link,'environment')[1])),captures:field(link,'captures').slice(1).map(exprOf)};
+    case 'owned-some':return {kind,values:field(link,'values').slice(1).map(exprOf),callback:exprOf(field(link,'callback')[1])};
     case 'number':
       return { kind, text: rest[0] };
     case 'string':

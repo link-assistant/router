@@ -112,5 +112,5 @@ export function discoverScopedHelpers(source,owners,analyze,sourcePath=null) {
     ts.forEachChild(node,visit);
   };
   visit(file);
-  return {complete:true,sourceItems:items.length,translatedItems:program.length,fullDomainTranslatedItems:program.filter(fn=>!fn.conditionalInputs&&!fn.conditionalCaptures).length,conditionalPrivateBodyDraftItems:program.filter(fn=>fn.conditionalInputs||fn.conditionalCaptures).length,unsupportedItems:items.length-program.length,items,program,diagnostics:items.filter(item=>item.diagnostic).map(item=>item.diagnostic)};
+  return {complete:true,sourceItems:items.length,translatedItems:program.length,fullDomainTranslatedItems:program.filter(fn=>!fn.conditionalInputs&&!fn.conditionalCaptures&&!fn.conditionalCalls).length,conditionalPrivateBodyDraftItems:program.filter(fn=>fn.conditionalInputs||fn.conditionalCaptures||fn.conditionalCalls).length,unsupportedItems:items.length-program.length,items,program,diagnostics:items.filter(item=>item.diagnostic).map(item=>item.diagnostic)};
 }

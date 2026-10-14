@@ -2,9 +2,13 @@
 // callers cannot provide bindings, types, ASTs or capture values.
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual,types} from 'node:util';
-import {ownershipSyntax} from './module-syntax.mjs';
+import {createRequire} from 'node:module';
+import {dirname,join,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {readCapturedPrimitives,reissueCapturedPrimitives} from './captured-primitives.mjs';
 const issued=new WeakMap(),issuers=new WeakMap();
+const sourceRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../../..');
+const require=createRequire(join(sourceRoot,'packages/javascript/package.json'));
 const fail=message=>{throw Object.assign(new Error(message),{slug:'collection'});};
 const hash=source=>createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -24,7 +28,7 @@ const plain=value=>{
 // No AST, symbol, checker or caller capture map crosses this boundary.
 export function createLexicalEnvironmentIssuer(source,sourcePath=null) {
   if(typeof source!=='string'||sourcePath!==null&&typeof sourcePath!=='string')fail('invalid original lexical source coordinates');
-  const {ts}=ownershipSyntax(source);
+  const ts=require('typescript');
   // Bind a fresh tree, never the public module-syntax cache's mutable tree.
   const file=ts.createSourceFile('closure-source.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
   if(file.parseDiagnostics.length)fail('invalid original lexical source syntax');
@@ -59,7 +63,7 @@ export function createLexicalEnvironmentIssuer(source,sourcePath=null) {
   const events=()=>orderedEvents??=auditEvents();
   const handle=Object.freeze({});issuers.set(handle,{source,sourcePath,sourceHash:hash(source),ts,file,checker,fn,symbol,nonReference,functions,auditEvents:events});return handle;
 }
-export function issueLexicalEnvironmentFrom(issuer,start,end) {
+function issueEnvironment(issuer,start,end,creation=false) {
   const state=issuers.get(issuer);if(!state)fail('a copied or foreign lexical source issuer');
   const {source,sourcePath,ts,file,fn,symbol,nonReference,functions}=state;
   if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start||end>source.length)fail('invalid original lexical source coordinates');
@@ -89,13 +93,17 @@ export function issueLexicalEnvironmentFrom(issuer,start,end) {
   };
   if(target.asteriskToken||target.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.AsyncKeyword)||target.parameters.some(param=>!ts.isIdentifier(param.name)||param.initializer||param.dotDotDotToken||param.type))fail('an effectful or unsupported closure parameter list');
   inspect(target);
-  if(!captures.size)fail('a closure environment without captures');
+  if(!captures.size&&!creation)fail('a closure environment without captures');
   for(const event of state.auditEvents())if(!Object.hasOwn(event,'symbol')||captures.has(event.symbol))fail(event.reason);
   const scope=ancestors.filter(node=>fn(node)||ts.isBlock(node)||ts.isClassDeclaration(node)||ts.isClassExpression(node)||ts.isMethodDeclaration(node)||ts.isCatchClause(node)||ts.isForStatement(node)||ts.isForOfStatement(node)||ts.isForInStatement(node)).reverse().map(node=>({kind:ts.SyntaxKind[node.kind],name:node.name?.getText(file)??null,start:node.getStart(file),end:node.end}));
-  const proof=freeze({schema:'original-lexical-parameter-environment-v1',sourcePath,sourceUtf16:source,sourceUtf16Sha256:state.sourceHash,start,end,sourceScope:scope,captures:[...captures.values()],parentCreationLowered:false});
+  const proof=freeze({schema:'original-lexical-parameter-environment-v1',sourcePath,sourceUtf16:source,sourceUtf16Sha256:state.sourceHash,start,end,sourceScope:scope,captures:[...captures.values()],parentCreationLowered:false,...(creation?{sourceCreation:true}:{})});
   const parameters=[...captures.values()].map(c=>c.name).concat(target.parameters.map(param=>param.getText(file))).join(','),body=target.body.getText(file);
   const handle=Object.freeze({});issued.set(handle,Object.freeze({proof,wrapper:Object.freeze(name=>'const '+name+'=('+parameters+')=>'+body+';')}));return handle;
 }
+export function issueLexicalEnvironmentFrom(issuer,start,end) {return issueEnvironment(issuer,start,end);}
+// The enclosing source-call issuer checks creation placement and every use.
+// This adds no parameter narrowing and grants no escaping callable authority.
+export function issueSourceCallEnvironmentFrom(issuer,start,end) {return issueEnvironment(issuer,start,end,true);}
 export function issueLexicalEnvironment(source,start,end,sourcePath=null) {
   if(typeof source!=='string'||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start||end>source.length||sourcePath!==null&&typeof sourcePath!=='string')fail('invalid original lexical source coordinates');
   return issueLexicalEnvironmentFrom(createLexicalEnvironmentIssuer(source,sourcePath),start,end);
@@ -111,6 +119,7 @@ export function readLexicalEnvironment(handle) {
 export function reissueLexicalEnvironment(proof) {
   plain(proof);
   if(Object.getOwnPropertyDescriptor(proof,'schema')?.value==='original-lexical-primitive-collection-environment-v1')return reissueCapturedPrimitives(proof);
-  const handle=issueLexicalEnvironment(proof.sourceUtf16,proof.start,proof.end,proof.sourcePath),value=readLexicalEnvironment(handle);
+  const issuer=createLexicalEnvironmentIssuer(proof.sourceUtf16,proof.sourcePath);
+  const handle=issueEnvironment(issuer,proof.start,proof.end,proof.sourceCreation===true),value=readLexicalEnvironment(handle);
   if(!isDeepStrictEqual(value.proof,proof))fail('a changed lexical environment source, symbol, span or ancestor');return handle;
 }

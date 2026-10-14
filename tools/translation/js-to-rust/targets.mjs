@@ -8,6 +8,7 @@ import { mapValueType } from './vendor/static-tables.mjs';
 import { recordShape,errorShape,carriesValue,payloadBoundary } from './vendor/aggregates.mjs';
 import { closedJsonValue,jsonResponseStatus } from './vendor/json-responses.mjs';
 import {PAYLOAD_GUARD_HELPERS} from './vendor/payload-guards.mjs';
+import {sourceCallItem} from './vendor/source-calls.mjs';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -164,6 +165,17 @@ fn js_trim(value: &str) -> String {
 }`;
 
 function emitter(program, target) {
+  const children=new Map(),originalClosures=new WeakSet();
+  const collect=(value,sourceBound)=>{if(!value||typeof value!=='object')return;if(['source-create','owned-some'].includes(value.kind)&&!sourceBound)throw Error('unissued original caller creation or iteration');if(value.kind==='source-create'){const old=children.get(value.closure.name);if(old&&JSON.stringify(old)!==JSON.stringify(value.closure))throw Error('conflicting source callable bodies');children.set(value.closure.name,value.closure);}for(const [key,child]of Object.entries(value))if(!['environment','sourceCalls','closure'].includes(key)){if(Array.isArray(child))child.forEach(value=>collect(value,sourceBound));else collect(child,sourceBound);}};
+  program=program.map(item=>{
+    if(sourceCallItem(item))return check(item,new Map());
+    if(item.kind==='closure'){const checked=check(item,new Map());if(checked.environment.sourceCreation)throw Error('standalone internal source callable has no checked parent');originalClosures.add(checked);return checked;}
+    return item;
+  });
+  program.forEach(item=>collect(item,Object.hasOwn(item,'sourceCalls')));
+  const declared=new Set(program.map(item=>item.name));
+  for(const name of children.keys())if(declared.has(name))throw Error('source callable collides with an existing declaration');
+  program=[...program,...children.values()];
   const rust = target === 'rust';
   const map = constructMap();
   const name = (value) => rust ? value : camelFromSnake(value);
@@ -246,6 +258,10 @@ function emitter(program, target) {
         ? `(if ${expression(expr.cond)} { ${converted(expr.then, expr.type)} } else { ${converted(expr.else, expr.type)} })`
         : `(${expression(expr.cond)} ? ${expression(expr.then)} : ${expression(expr.else)})`;
       case 'array':return rust?`std::rc::Rc::new(std::cell::RefCell::new(vec![${expr.values.map(lift).join(', ')}]))`:`[${expr.values.map(expression).join(', ')}]`;
+      case 'source-create':return `${name(expr.closure.name)}(${expr.captures.map(value=>rust?lift(value):expression(value)).join(', ')})`;
+      case 'owned-some':return rust
+        ? `({ let callback = ${expression(expr.callback)}; [${expr.values.map(lift).join(', ')}].into_iter().any(|value| callback.call(value)) })`
+        : `(() => { const values: readonly unknown[] = [${expr.values.map(expression).join(', ')}]; const callback = ${expression(expr.callback)}; for (let index = 0; index < values.length; index++) { if (callback(values[index])) return true; } return false; })()`;
       case 'record': {
         if(!rust)return `({${expr.fields.map(field=>`${JSON.stringify(field.name)}: ${expression(field.value)}`).join(', ')}})`;
         rustContract(expr.type);
@@ -273,8 +289,9 @@ function emitter(program, target) {
         const message=expr.message.kind==='string'?units(expr.message.value):expression(expr.message);
         return `std::rc::Rc::new(std::cell::RefCell::new(${records.get(expr.type).name} { message: (${message}).to_vec()${expr.fields.length?', '+expr.fields.map(field=>`${snakeFromCamel(field.name)}: ${expression(field.value)}`).join(', '):''} }))`;
       }
-      case 'call':return `${name(expr.name)}(${expr.args.map((arg,index)=>{
+      case 'call':return `${name(expr.name)}${rust&&expr.callable?'.call':''}(${expr.args.map((arg,index)=>{
         if(!rust)return expression(arg);
+        if(expr.callable)return lift(arg);
         const callee=globals.get(expr.name),param=callee.params[index];
         if(param.type==='value'&&arg.type!=='value'&&!payloadBoundary(callee)&&arg.type!=='undefined')throw new Error('unimplemented scalar default argument lift');
         let value=param.type==='utf16-string'&&arg.kind==='string'?units(arg.value):param.type==='value'&&arg.type!=='value'?(payloadBoundary(callee)?lift(arg):'JsValue::Undefined'):`${arg.type==='string'?'&':''}${expression(arg)}`;
@@ -345,7 +362,7 @@ function emitter(program, target) {
     return lines;
   };
   const items = program.map((input,itemIndex) => {
-    const item=input.kind==='closure'?check(input,globals):input;
+    const item=input.kind==='closure'&&!originalClosures.has(input)?check(input,globals):input;
     payloadMode=payloadBoundary(item);
     losslessMode=item.lossless===true;
     if (item.kind === 'constant') {
@@ -375,7 +392,7 @@ function emitter(program, target) {
       const conditional=item.conditionalCaptures?['// Conditional private body draft: original standard collection intrinsics required.', '// Original has/includes lookup stability and parent execution are unproved.']:[];
       if(!rust)return [qualification,...conditional,`function ${name(item.name)}(${item.captures.map(capture=>`${name(capture.name)}?: unknown`).join(', ')}): (${parameters.join(', ')}) => ${contract} {`,`    return (${parameters.join(', ')}): ${contract} => {`,...body(item.body,2,item.returns),'    };','}'].join('\n');
       const bindings=item.params.filter(param=>param.bindings).flatMap(param=>param.bindings.flatMap((binding,index)=>binding===null?[]:[`        let ${name(binding)} = ${name(param.name)}.${index===0?'key':'value'};`]));
-      if(item.conditionalCaptures&&!item.captures.length)return [qualification,...conditional,`pub struct ${environmentName} {}`,`fn ${name(item.name)}() -> ${environmentName} {`,`    ${environmentName} {}`,'}',`impl ${environmentName} {`,`    pub fn call<'a>(&self${parameters.length?', '+parameters.join(', '):''}) -> ${rustContract(item.returns)} {`,...bindings,...body(item.body,2,item.returns),'    }','}'].join('\n');
+      if(!item.captures.length)return [qualification,...conditional,`pub struct ${environmentName} {}`,`fn ${name(item.name)}() -> ${environmentName} {`,`    ${environmentName} {}`,'}',`impl ${environmentName} {`,`    pub fn call<'a>(&self${parameters.length?', '+parameters.join(', '):''}) -> ${rustContract(item.returns)} {`,...bindings,...body(item.body,2,item.returns),'    }','}'].join('\n');
       const fields=item.captures.map(capture=>`    ${name(capture.name)}: JsPayload<'env>,`);
       const environmentParameters=item.captures.map(capture=>`${name(capture.name)}: JsPayload<'env>`).join(', ');
       return [qualification,`pub struct ${environmentName}<'env> {`,...fields,'}',`fn ${name(item.name)}<'env>(${environmentParameters}) -> ${environmentName}<'env> {`,`    ${environmentName} { ${item.captures.map(capture=>name(capture.name)).join(', ')} }`,'}',`impl<'env> ${environmentName}<'env> {`,`    pub fn call<'a>(&self${parameters.length?', '+parameters.join(', '):''}) -> ${rustContract(item.returns)} where 'env: 'a {`,...item.captures.map(capture=>`        let ${name(capture.name)}: JsPayload<'a> = self.${name(capture.name)};`),...body(item.body,2,item.returns),'    }','}'].join('\n');
@@ -392,7 +409,7 @@ function emitter(program, target) {
       const fallback=param.type==='utf16-string'?units(param.default.value):param.type==='string'?rustString(constantValue(param.default)):expression(param.default);
       return `    let ${name(param.name)} = ${name(param.name)}.unwrap_or(${fallback});`;
     }):[];
-    return [...(item.conditionalInputs?['// Conditional private body draft: genuine unchanged producer/callback intrinsics required.', '// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.']:[]),...(rust ? ['#[rustfmt::skip]'] : []), signature,...defaults,...(rust?item.params.filter(param=>param.bindings).flatMap(param=>param.bindings.flatMap((binding,index)=>binding===null?[]:[`    let ${name(binding)} = ${name(param.name)}.${index===0?'key':'value'};`])):[]),...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
+    return [...(item.conditionalCalls?['// Conditional original body draft: unchanged standard Array.prototype.some lookup required.', '// Parent body is checked; intrinsic lookup stability and runtimeParity remain unproved.']:[]),...(item.conditionalInputs?['// Conditional private body draft: genuine unchanged producer/callback intrinsics required.', '// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.']:[]),...(rust ? ['#[rustfmt::skip]'] : []), signature,...defaults,...(rust?item.params.filter(param=>param.bindings).flatMap(param=>param.bindings.flatMap((binding,index)=>binding===null?[]:[`    let ${name(binding)} = ${name(param.name)}.${index===0?'key':'value'};`])):[]),...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
   });
   const serialized = JSON.stringify(program);
   payloadMode=true;
