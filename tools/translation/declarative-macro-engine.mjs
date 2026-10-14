@@ -90,6 +90,46 @@ function matcherStartsOverlap(left,right) {
   return true;
 }
 
+// A shared first literal alone cannot distinguish `#[left ...]` from
+// `#[right ...]`. Compare only mandatory fixed matcher terminals: a group
+// consumes exactly one TT, and an interior required literal can prove two
+// same-delimiter groups disjoint. Continuing outside a group requires its
+// entire matcher to be equal fixed terminals; a capture or nullable interior
+// cannot be skipped to inspect a later outside token. Captures are never parsed or looked through.
+// Nullable repetitions retain every possible leading sequence. Unknown or
+// exhausted analysis falls back to the existing ambiguity refusal.
+function matcherLiteralPrefixesDisjoint(left,right) {
+  let cells=32000;
+  function alternatives(nodes,depth){
+    if(depth>8||--cells<0)return null;
+    const first=nodes[0];if(first?.kind!=='repeat')return [nodes];
+    const repeated=alternatives(first.children,depth+1);if(!repeated)return null;
+    if(['*','?'].includes(first.operator)||matcherFirst(first.children).nullable){const suffix=alternatives(nodes.slice(1),depth+1);if(!suffix)return null;return [...repeated,...suffix];}
+    return repeated;
+  }
+  function sequences(a,b,depth){
+    if(depth>8||--cells<0)return false;
+    const lefts=alternatives(a,depth),rights=alternatives(b,depth);if(!lefts||!rights)return false;
+    return lefts.every(x=>rights.every(y=>fixed(x,y,depth+1)));
+  }
+  function equalFixed(a,b,depth){
+    if(depth>8||--cells<0||a.length!==b.length)return false;
+    return a.every((x,index)=>{const y=b[index];if(--cells<0)return false;if(x.kind==='literal'&&y.kind==='literal')return sameLiteral(x.tree,y.tree);return x.kind==='group'&&y.kind==='group'&&x.delimiter===y.delimiter&&equalFixed(x.children,y.children,depth+1);});
+  }
+  function fixed(a,b,depth){
+    if(depth>8||--cells<0)return false;
+    for(let at=0;at<a.length&&at<b.length;at++){
+      const x=a[at],y=b[at];if(--cells<0)return false;
+      if(x.kind==='repeat'||y.kind==='repeat')return sequences(a.slice(at),b.slice(at),depth+1);
+      if(!matcherStartsOverlap(x,y))return true;
+      if(x.kind==='literal'&&y.kind==='literal')continue;
+      if(x.kind==='group'&&y.kind==='group'){if(sequences(x.children,y.children,depth+1))return true;if(!equalFixed(x.children,y.children,depth+1))return false;continue;}
+      return false;
+    }
+    return false;
+  }
+  return sequences(left,right,0);
+}
 function plan(trees,mode,bindings,depth=0,sourceFragments=null) {
   const result=[];
   for(let at=0;at<trees.length;at++) {
@@ -309,12 +349,13 @@ function matchSequence(nodes,trees,start,captures,budget,indices=[],sourceFragme
     }
     if(node.kind==='repeat') {
       const repeatedFirst=matcherFirst(node.children),followingFirst=matcherFirst(nodes.slice(index+1));
-      if(repeatedFirst.starts.some(left=>followingFirst.starts.some(right=>matcherStartsOverlap(left,right))))throw new TypeError('Declarative repetition lookahead may be locally ambiguous');
+      const startsOverlap=repeatedFirst.starts.some(left=>followingFirst.starts.some(right=>matcherStartsOverlap(left,right))),prefixDisjoint=startsOverlap&&matcherLiteralPrefixesDisjoint(node.children,nodes.slice(index+1));
+      if(startsOverlap&&!prefixDisjoint)throw new TypeError('Declarative repetition lookahead may be locally ambiguous');
       let count=0;
       for(const name of names(node.children))captureArray(captures,name,indices);
       for(;;) {
         const next=nodes[index+1];
-        if(next&&next.kind==='literal'&&node.children[0]?.kind==='literal'&&sameLiteral(node.children[0].tree,trees[at])&&sameLiteral(next.tree,trees[at]))throw new TypeError('Declarative repetition has locally ambiguous source tokens');
+        if(next&&next.kind==='literal'&&node.children[0]?.kind==='literal'&&sameLiteral(node.children[0].tree,trees[at])&&sameLiteral(next.tree,trees[at])&&!prefixDisjoint)throw new TypeError('Declarative repetition has locally ambiguous source tokens');
         let candidate=at;
         if(count&&node.separator){if(!sameLiteral(node.separator,trees[candidate]))break;candidate++;}
         const trial=new Map([...captures].map(([name,value])=>[name,copyCapture(value)]));

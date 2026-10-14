@@ -50,7 +50,10 @@ test('source-defined records closures tuples and try remain structured with thei
   assert.equal(find(assign.ir,'assign')[0].evaluationOrderVerified,false);
 });
 test('unsupported source grammar preserves the complete original body and explicit diagnostics',()=>{
-  for(const source of ['{unsafe {read()}}','{async {}}','{let x=callee::<T>();}','{let x=0;use external::*;x}','{let = value;}','{continue value;}','{a < b == c}','{a == b < c}','{a < b < c}']){
+  // Preserve the former generic-call refusal as a syntax-only positive.
+  // Its type arguments, callee effects and execution remain unproved.
+  const generic=compileSymbolicControlSyntax('{let x=callee::<T>();}');assert.equal(generic.controlSyntaxProjected,true);assert.equal(generic.ir.statements[0].initializer.callee.kind,'generic-application');assert.equal(generic.ir.statements[0].initializer.callee.typeArgumentsChecked,false);assert.equal(generic.namespaceAuthority,false);assert.equal(generic.executable,false);
+  for(const source of ['{unsafe {read()}}','{async {}}','{let x=0;use external::*;x}','{let = value;}','{continue value;}','{a < b == c}','{a == b < c}','{a < b < c}']){
     const candidate=compileSymbolicControlSyntax(source);assert.equal(candidate.controlSyntaxProjected,false,source);assert.equal(candidate.ir,null);assert.equal(candidate.source,source);assert.equal(candidate.diagnostics[0].code,'ERR_BUILTIN_SOURCE_CONTROL_UNSUPPORTED');assert.equal(candidate.executable,false);
   }
   const deep=compileSymbolicControlSyntax('{'+ '!'.repeat(200)+'true}');assert.equal(deep.controlSyntaxProjected,false);assert.match(deep.diagnostics[0].reason,/depth.*finite bound/);
