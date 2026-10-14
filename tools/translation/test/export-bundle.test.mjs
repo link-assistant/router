@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {chmodSync,existsSync,lstatSync,mkdirSync,mkdtempSync,readFileSync,renameSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
@@ -76,7 +76,14 @@ test('the exported synchronization CLI generates and updates real receiving Java
     git(receiving,['init','--quiet']);put('.git/info/exclude','node_modules/\n');git(receiving,['add','.']);
     git(receiving,['-c','user.name=Translation fixture','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Independent receiving sources']);
     const cli=join(bundle.destination,'scripts/sync-router.mjs');
-    const run=(mode,name)=>JSON.parse(execFileSync(process.execPath,[cli,mode,'--root',receiving,'--direction','javascript-to-rust','--output',join(directory,name)],{cwd:receiving,encoding:'utf8',timeout:30000,stdio:['ignore','pipe','pipe']}));
+    const run=(mode,name)=>{
+      const output=join(directory,name);
+      const result=spawnSync(process.execPath,[cli,mode,'--root',receiving,'--direction','javascript-to-rust','--output',output],{cwd:receiving,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:join(directory,'unrelated-compiler')},encoding:'utf8',timeout:30000});
+      const receipt=existsSync(join(output,'receipt.json'))?JSON.parse(readFileSync(join(output,'receipt.json'))):null;
+      const logs=receipt?.records.flatMap(row=>(row.logs??[]).map(log=>({path:log.path,content:readFileSync(join(output,log.path),'utf8')})))??[];
+      assert.equal(result.status,0,JSON.stringify({stdout:result.stdout,stderr:result.stderr,error:result.error?.message,receipt,logs}));
+      return JSON.parse(result.stdout);
+    };
     assert.equal(run('--write','first').exitCode,0);
     const rust=readFileSync(join(receiving,'src/generated_js_first/policy.rs'),'utf8');
     const {parseMeta}=await import(pathToFileURL(join(bundle.destination,'tools/translation/js-to-rust/translator.mjs')));

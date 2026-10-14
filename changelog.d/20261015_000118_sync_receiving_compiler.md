@@ -1,0 +1,1 @@
+Resolve synchronization child compiler dependencies from the explicit receiving repository, including exported bundles, and retain complete nested child errors in reusable-bundle regression diagnostics.

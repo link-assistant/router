@@ -98,7 +98,7 @@ export function syncRouter({root=implementationRoot,direction='both',check=false
     onProgress?.({stage:step.id,state:'start',check});
     if(JSON.stringify(captureSyncInputs(root))!==JSON.stringify(before)){records.push({id:step.id,status:'failed',mandatory:true,error:'Original input changed before producer execution',originalInputsUnchanged:false,logs:[]});failed=true;continue;}
     const stageStarted=performance.now();
-    const result=spawnSync(process.execPath,step.args,{cwd:root,timeout:step.timeoutMs,maxBuffer:8*1024*1024});
+    const result=spawnSync(process.execPath,step.args,{cwd:root,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:root},timeout:step.timeoutMs,maxBuffer:8*1024*1024});
     const logs=[];
     for(const [name,bytes] of [['stdout',result.stdout??Buffer.alloc(0)],['stderr',result.stderr??Buffer.alloc(0)]]){const filename=String(index).padStart(2,'0')+'-'+step.id+'.'+name+'.raw.log';fs.writeFileSync(path.join(output,filename),bytes,{flag:'wx'});logs.push({path:filename,bytes:bytes.length,sha256:hash(bytes)});}
     const record={id:step.id,mandatory:true,status:result.status===0&&!result.error?'passed':'failed',command:[process.execPath,...step.args],exitCode:result.status,signal:result.signal,error:result.error?.message??null,timeoutMs:step.timeoutMs,elapsedSeconds:(performance.now()-stageStarted)/1000,logs};
