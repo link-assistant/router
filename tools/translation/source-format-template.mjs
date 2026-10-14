@@ -11,7 +11,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('source format control: '+message);};
 const PROFILE_DIGEST='098331076dab9b8876c110a4a0feb3442bf57aa4adac3f0abc230036c1e839cc';
 const root=new URL('./source-profiles/source-format-template/',import.meta.url);
-const programs=new WeakMap(),executions=new WeakMap();
+const programs=new WeakMap(),executions=new WeakMap(),bodyPrograms=new WeakMap();
 const word=node=>node?.kind==='token'?node.text:null;
 const name=node=>node?.kind==='token'&&node.type==='ident'&&/^(?:r#)?[\p{L}_][\p{L}\p{N}_]*$/u.test(node.text);
 // Original BinOpKind::precedence/fixity separates bitwise groups and gives
@@ -79,8 +79,9 @@ class SourceControlParser {
     }finally{this.budget.expressions--;}
   }
   primary(){const start=this.at,node=this.nodes[this.at++],raw=word(node);let value;
-    if(['unsafe','async','move','yield','await','const'].includes(raw))throw new TypeError('Source control modifier requires additional source grammar: '+raw);
-    if(raw==='if')value=this.conditional(start);
+    if(['async','move','yield','await','const'].includes(raw))throw new TypeError('Source control modifier requires additional source grammar: '+raw);
+    if(raw==='unsafe')value=this.node('unresolved-source-branch',start,{modifier:raw,originalGroup:this.group('{')});
+    else if(raw==='if')value=this.conditional(start);
     else if(raw==='match')value=this.matching(start);
     else if(raw==='while'){const condition=this.condition(),body=this.blockGroup();value=this.node('while',start,{condition,body,terminationVerified:false});}
     else if(raw==='loop')value=this.node('loop',start,{body:this.blockGroup(),terminationVerified:false});
@@ -230,7 +231,7 @@ function parserDefaultLayout(source){
   return {kind:'derived-default-parser-memory',fields,original:body};
 }
 class Machine {
-  constructor(functions,defaultLayout){this.functions=functions;this.defaultLayout=defaultLayout;this.remaining=200000;this.depth=0;this.trace=[];}
+  constructor(functions,defaultLayout,{constants=new Map(),methods=new WeakMap()}={}){this.functions=functions;this.defaultLayout=defaultLayout;this.constants=constants;this.methods=methods;this.remaining=200000;this.depth=0;this.trace=[];}
   tick(){if(--this.remaining<0)fail('execution budget exhausted');}
   call(name,args){
     this.tick();const fn=this.functions.get(name);if(!fn||!fn.ir)fail('unresolved original helper '+name+': '+(fn?.refusal??'absent'));
@@ -254,7 +255,7 @@ class Machine {
     fail('unresolved assignment place');
   }
   binary(op,a,b){
-    switch(op){case '..':return {start:a??0,end:b??null};case '==':return equal(a,b);case '!=':return !equal(a,b);case '+':return a+b;case '-':return a-b;case '*':return a*b;case '/':return a/b;case '<':return a<b;case '>':return a>b;case '<=':return a<=b;case '>=':return a>=b;default:fail('unresolved operator '+op);}
+    switch(op){case '..':return {start:a??0,end:b??null};case '==':return equal(a,b);case '!=':return !equal(a,b);case '+':return a+b;case '-':return a-b;case '*':return a*b;case '/':return a/b;case '<':return a<b;case '>':return a>b;case '<=':return a<=b;case '>=':return a>=b;case '|':return (a|b)>>>0;case '&':return (a&b)>>>0;case '<<':return (a<<b)>>>0;default:fail('unresolved operator '+op);}
   }
   condition(node,env){
     if(node.kind==='condition-let')return bindPattern(node.pattern.tokens,this.eval(node.value,env),env);
@@ -265,7 +266,7 @@ class Machine {
     const run=value=>this.eval(value,env);
     switch(node.kind){
       case 'literal':return literal(node.raw);
-      case 'written-path':{const name=node.path.join('::');if(node.path.length===1&&env.has(name))return env.get(name);if(name==='None')return variant('None');if(['Str','RawStr','Format','ParseMode::Format','Mode::Str','Mode::RawStr'].includes(name))return name.split('::').at(-1);return {sourcePath:name};}
+      case 'written-path':{const name=node.path.join('::');if(node.path.length===1&&env.has(name))return env.get(name);if(this.constants.has(name))return this.constants.get(name);if(name==='None')return variant('None');if(['Str','RawStr','Format','ParseMode::Format','Mode::Str','Mode::RawStr'].includes(name))return name.split('::').at(-1);return {sourcePath:name};}
       case 'parenthesized':return run(node.value);
       case 'tuple':case 'array':return node.items.map(run);
       case 'block-expression':return this.block(node.body,env);
@@ -304,6 +305,7 @@ class Machine {
     fail('unresolved original path '+path);
   }
   method(value,name,args){
+    const original=this.methods.get(value)?.get(name);if(original){if(typeof original==='string')return this.call(original,[value,...args]);return original(...args);}
     if(value?.input_vec&&this.functions.has('parser::'+name))return this.call('parser::'+name,[value,...args]);
     if(['Str','RawStr'].includes(value)&&this.functions.has('escaper::'+name))return this.call('escaper::'+name,[value,...args]);
     if(name==='chars'&&typeof value==='string')return new Chars(value);
@@ -410,4 +412,28 @@ export function checkedSourceFormatPieces(execution,resolve,baseSpan){
   const state=executions.get(execution);if(!state?.trusted||typeof resolve!=='function'||!Number.isSafeInteger(baseSpan?.start))fail('genuine executed original production template required');
   const offset=byte=>baseSpan.start+Buffer.from(execution.raw).subarray(0,byte).toString('utf8').length;
   return execution.pieces.map(piece=>Object.hasOwn(piece,'text')?{text:piece.text}:{capture:{name:piece.captureName,path:resolve(piece.captureName)},spec:'',literalBytePositionSpan:piece.positionSpan,sourcePosition:{span:{start:offset(piece.positionSpan.start),end:offset(piece.positionSpan.end)}},sourcePlaceholder:{span:{start:offset(piece.placeholderSpan.start),end:offset(piece.placeholderSpan.end)}}});
+}
+
+// Generic control candidates carry no source namespace or execution authority.
+// A higher consumer must independently select complete original declarations.
+export function compileFormatSourceControlBodies(sources){
+  if(!sources||typeof sources!=='object'||Object.keys(sources).length>16)fail('bounded source helper map required');
+  const functions=new Map();
+  for(const [key,source] of Object.entries(sources)){
+    if(typeof source!=='string'||utf8(source)>200000)fail('complete source helper budget');
+    const parsed=compileFunctions(source,key+'::');if(parsed.size!==1)fail('one complete original helper per source entry');const fn=[...parsed.values()][0];functions.set(key,fn);
+  }
+  const result=freezeMacroTree({schema:'format-source-control-body-candidates-v1',sources,functions:[...functions].map(([key,fn])=>({key,...fn})),namespaceAuthority:false,traitSelectionVerified:false,runtimeParity:false});bodyPrograms.set(result,{functions});return result;
+}
+export function formatSourceControlBodyFacts(program){const state=bodyPrograms.get(program);if(!state)fail('copied or forged source body program');return program.functions;}
+export function executeFormatSourceControlBodies(program,entry,args,{constants=new Map(),methods=new WeakMap()}={}){
+  const state=bodyPrograms.get(program);if(!state)fail('copied or forged source body program');
+  const machine=new Machine(state.functions,null,{constants,methods}),result=machine.call(entry,args);
+  return {result,trace:machine.trace};
+}
+export function evaluateFormatSourceScalarExpression(source){
+  if(typeof source!=='string'||utf8(source)>1024)fail('bounded original scalar expression required');
+  const nodes=originalMacroTrees(source),parser=new SourceControlParser(nodes,{cells:1024,expressions:0,conditionals:0}),ir=parser.expressionAll(nodes),machine=new Machine(new Map(),null),result=machine.eval(ir,new Scope());
+  if(!Number.isInteger(result)||result<0||result>0xffffffff)fail('original scalar expression is outside u32');
+  return {source,ir,result,namespaceAuthority:false};
 }

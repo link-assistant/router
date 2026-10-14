@@ -7,6 +7,7 @@ import {typeError,unsupported} from '../vendor/meta-language/translation/diagnos
 import {capturedRustTokenSource} from './lexical.mjs';
 import {loadSourceFormatTemplateControl,executeSourceFormatTemplate,checkedSourceFormatPieces} from '../source-format-template.mjs';
 import {metadataDigest} from './source-links.mjs';
+import {captureSourceDisplayScope,sourceNominalDisplayClosure,sourceNominalDisplayClosureFacts} from '../format-display-source.mjs';
 const span=(first,last)=>({start:first.start,end:last.end});
 const control=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(control):control(value))));
 const identifier=/^(?:[\p{L}_][\p{L}\p{N}_]*)$/u;
@@ -65,7 +66,8 @@ export class FormatRustParser extends TupleRustParser {
         pieces=checkedSourceFormatPieces(execution,name=>this.resolve([name],path),template.span);sourceTemplateControl=execution;
       }catch(error){if(!(error instanceof TypeError))throw error;}
     }
-    return {k:'routerFormat',args,pieces:pieces??formatParts(template,args,path,(segments,owner)=>this.resolve(segments,owner)),...(sourceTemplateControl?{sourceTemplateControl}:{}),templateProvenance:{span:template.span},span:span(token,close)};
+    let sourceDisplayScope;if(sourceTemplateControl){try{sourceDisplayScope=captureSourceDisplayScope(this,span(token,close),pieces.flatMap(piece=>piece.capture?[piece.capture.name]:[]));}catch(error){if(!(error instanceof TypeError))throw error;}}
+    return {k:'routerFormat',args,pieces:pieces??formatParts(template,args,path,(segments,owner)=>this.resolve(segments,owner)),...(sourceTemplateControl?{sourceTemplateControl}:{}),...(sourceDisplayScope?{sourceDisplayScope}:{}),templateProvenance:{span:template.span},span:span(token,close)};
   }
 }
 
@@ -82,13 +84,24 @@ export class FormatChecker extends TupleChecker {
       const pieces=checkedSourceFormatPieces(execution,name=>node.pieces.find(piece=>piece.capture?.name===name)?.capture.path,node.templateProvenance.span);
       if(metadataDigest(execution)!==metadataDigest(receipt)||metadataDigest(pieces)!==metadataDigest(node.pieces)||node.args.length)throw unsupported('source format template proof','requires the original executed capture pieces',node.span);
     }
-    const bindings=[],captures=new Map();
+    const bindings=[],captures=new Map(),displayClosures=[];
     const bind=value=>{let name;do{name=this.freshName('ml_fmt_');}while(env.has(name));bindings.push({name,value});return {k:'var',name,type:value.type,span:node.span};};
     const arguments_=node.args.map(arg=>{if(control(arg.value))throw unsupported('format argument control','nonlocal exits require statement lowering',arg.value.span);return bind(this.expr(arg.value,env,path));});
     const values=node.pieces.map(piece=>{
       if(Object.hasOwn(piece,'text'))return {k:'lit',value:piece.text,type:STRING,span:node.span};
       let value=arguments_[piece.argument];
       if(piece.capture){const {name,path:resolved}=piece.capture;if(!captures.has(name))captures.set(name,bind(this.expr({k:'name',path:env.has(name)?[name]:resolved,span:piece.sourcePosition?.span??node.span},env,path)));value=captures.get(name);}
+      if(value.type.kind==='data'&&node.sourceTemplateControl&&node.sourceDisplayScope&&!piece.spec&&!value.type.rustReference){
+        let closure;
+        try{closure=sourceNominalDisplayClosure(node.sourceDisplayScope,['crate',...value.type.name.split('.')]);sourceNominalDisplayClosureFacts(closure);}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('source Display closure',error.message,node.span);}
+        const method=this.resolvedMethod?.(value.type,closure.inherentMethod,'shared');
+        if(!method||method.generated!=='router-checked-inherent-method'||!method.sourceMethodProof)throw unsupported('source Display inherent method','requires the checked original source method for this exact nominal owner',node.span);
+        const methodEnv=new Map(env);methodEnv.set(value.name,value.type);
+        const checked=this.methodCall(method,{k:'name',path:[value.name],span:value.span},[],methodEnv,path,undefined,node.span);
+        if(checked.type.kind!=='string'||checked.type.rustReference||checked.type.rustOwnership?.kind!=='borrowed'||checked.type.rustOwnership.source!=='str')throw unsupported('source Display string result','requires the original method checked as a borrowed str result',node.span);
+        value=bind(checked);
+        displayClosures.push({nominal:closure.nominal,implementation:closure.implementation,originalMethod:closure.method,standardSourceDigest:metadataDigest(closure.standard),sourceProgramDigest:metadataDigest(closure.forwarder),inherentMethod:method.fullName,formatterControlTrace:closure.execution.formatterControlTrace,allocatorEffectsVerified:false,ioEffectsVerified:false,runtimeParity:false});
+      }
       if(!['fixed','bool','string'].includes(value.type.kind))throw unsupported('format trait','requires an actual checked primitive Display implementation',node.span);
       if(!piece.spec)return {k:'toString',arg:value,type:STRING,span:node.span};
       if(value.type.kind==='string') {
@@ -107,7 +120,7 @@ export class FormatChecker extends TupleChecker {
     const body=values.length?values.reduce((left,right)=>({k:'binary',op:'concat',left,right,type:STRING,span:node.span})):{k:'lit',value:'',type:STRING,span:node.span};
     const type={...STRING,patternOwnershipRefusal:'owned String formatting'};
     const checked=bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type,span:node.span}),{...body,type});
-    return {...checked,formatProvenance:{sourceTemplateSpan:node.templateProvenance.span,sourceMacroSpan:node.span,profile:'checked-primitive-format-v1',explicitArgumentCount:node.args.length,...(node.sourceTemplateControl?{sourceControl:{schema:node.sourceTemplateControl.schema,originRanges:node.sourceTemplateControl.originRanges,argPlaces:node.sourceTemplateControl.argPlaces,helperTrace:node.sourceTemplateControl.trace,namespaceAuthority:false,traitSelectionVerified:false}}:{})}};
+    return {...checked,formatProvenance:{sourceTemplateSpan:node.templateProvenance.span,sourceMacroSpan:node.span,profile:'checked-primitive-format-v1',explicitArgumentCount:node.args.length,...(displayClosures.length?{sourceDisplayClosures:displayClosures}:{}),...(node.sourceTemplateControl?{sourceControl:{schema:node.sourceTemplateControl.schema,originRanges:node.sourceTemplateControl.originRanges,argPlaces:node.sourceTemplateControl.argPlaces,helperTrace:node.sourceTemplateControl.trace,namespaceAuthority:false,traitSelectionVerified:false}}:{})}};
   }
 }
 

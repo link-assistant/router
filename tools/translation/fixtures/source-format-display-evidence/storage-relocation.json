@@ -1,0 +1,32 @@
+{
+  "schema": "source-display-fixture-storage-relocation-v1",
+  "from": "tools/translation/source-profiles/source-format-display/execution-evidence",
+  "to": "tools/translation/fixtures/source-format-display-evidence",
+  "compilerBundleInput": false,
+  "preRelocationDraftCommit": "5a7114a2eb6bb2e8746520a0a033408879935210",
+  "archiveCount": 118,
+  "originalArchivedReceipt": {
+    "archive": "original-receipt.json.gz",
+    "decodedBytes": 65111,
+    "decodedSha256": "45f5d9cdc823b901516d0309445bb04e544e2c9c65f762955b441d169e5d8754",
+    "archiveBytes": 9337,
+    "archiveSha256": "620470e60d2017e05a6b3a4d55829327b4efb2207f4815e4da53256194b4e511"
+  },
+  "receipt": {
+    "path": "receipt.json",
+    "bytes": 57913,
+    "sha256": "612f6e122ff8e854343ed78c194a13bc3cef275b7d7919457dce335a1780507e",
+    "formattingOnly": "Same complete receipt fields and records, compacted below the repository 1000-line file limit before the first unpublished draft commit."
+  },
+  "original118ArchiveBytesUnchanged": true,
+  "original118ArchiveHashesReverified": true,
+  "updatedNotice": {
+    "path": "tools/translation/source-profiles/source-format-display/NOTICE.md",
+    "bytes": 1567,
+    "sha256": "4e7715c0bb53e960919547e55d265425550e956c26f9e874ee77716a8d5a67aa"
+  },
+  "executableSourcesUnchanged": true,
+  "productionPinnedInputsUnchanged": true,
+  "enginesRerunForRelocation": false,
+  "runtimeParity": false
+}
