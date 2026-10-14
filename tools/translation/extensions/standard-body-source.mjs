@@ -14,6 +14,8 @@ import {compileDeclarativeMacro,expandDeclarativeMacro} from '../declarative-tok
 import {originalTopLevelMacroInvocations,originalMacroTreeText} from '../macro-token-trees.mjs';
 import {tokenizeRust} from './lexical.mjs';
 import {originalContainerDefaultBody,assertOriginalContainerDefaultBody} from '../default-container-source.mjs';
+import {originalOptionCloneBody,assertOriginalOptionCloneBody} from '../clone-container-source.mjs';
+import {originalPrimitiveCloneExpansion,assertOriginalPrimitiveCloneExpansion} from './primitive-clone-source.mjs';
 
 const root=new URL('../source-profiles/standard-method-bodies/',import.meta.url);
 const manifest=JSON.parse(readFileSync(new URL('manifest.json',root),'utf8'));
@@ -95,6 +97,14 @@ export function pinnedMappedBody(kind,name){
 }
 const scalarNames=new Set(['bool','char','usize','u8','u16','u32','u64','u128','isize','i8','i16','i32','i64','i128','f64']);
 let defaultDefinition,defaultInvocations;
+export function pinnedCloneBody(owner){
+ if(typeof owner!=='string'||owner.length>64||!/^[_A-Za-z][_A-Za-z0-9]*$/u.test(owner))throw new TypeError('Clone owner requires bounded original nominal name');
+ const key='Clone::'+owner;if(cache.has(key))return cache.get(key);
+ if(owner==='Option'){const selected=assertOriginalOptionCloneBody(originalOptionCloneBody());return seal(key,selected.method,{...selected.evidence,sourceSelection:selected});}
+ const expansion=originalPrimitiveCloneExpansion();assertOriginalPrimitiveCloneExpansion(expansion);const members=expansion.members.filter(member=>member.target===owner);if(members.length!==1)throw new TypeError('Clone owner requires separately checked original source');const member=members[0],tokens=tokenizeRust(member.methodSource),open=tokens.findIndex(token=>token.value==='{'),close=tokens.findLastIndex(token=>token.value==='}');if(open<0||close<open)throw new TypeError('Actual primitive Clone body absent');
+ const bodySpan={start:tokens[open].start,end:tokens[close].end},method={name:'clone',ownerHeader:'actual original expanded primitive Clone',parameters:[{name:'self',receiver:true,reference:'shared',rustTypeSyntax:['&','Self']}],definitionSpan:{start:0,end:member.methodSource.length},bodySpan,signatureSource:member.methodSource.slice(0,bodySpan.start),definitionSource:member.methodSource,bodySource:member.methodSource.slice(bodySpan.start,bodySpan.end)};
+ return seal(key,method,{kind:'original-macro-expanded-primitive-clone-method',owner,trait:'core::clone::Clone',originalMember:member,expansionDigest:expansion.digest,sourceInputs:[{rustPath:expansion.source.path,sha256:expansion.source.sha256}],sourceCoordinates:'actual original declarative expansion method; full macro/input/opaque type origins retained',wholeTraitTranslated:false,runtimeParity:false});
+}
 export function pinnedDefaultBody(owner){
   const key='Default::'+owner;if(cache.has(key))return cache.get(key);
   if(['String','Option','Vec'].includes(owner)){const selected=assertOriginalContainerDefaultBody(originalContainerDefaultBody(owner));return seal(key,selected.method,{...selected.evidence,sourceSelection:selected});}

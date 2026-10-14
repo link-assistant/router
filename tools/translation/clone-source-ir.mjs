@@ -19,6 +19,9 @@ import {originalTextCursorGuard} from './extensions/text.mjs';
 import {createOriginalCloneSurface,createOriginalCloneUnitSurface,assertOriginalCloneSurface} from './extensions/clone-source-body.mjs';
 import {originalUnitCloneSource} from './clone-unit-source.mjs';
 import {originalNestedImplementationObligations} from './nested-implementation-obligations.mjs';
+import {originalCloneContainerFields} from './clone-container-fields.mjs';
+import {proveCloneContainerNoDrop} from './clone-container-no-drop.mjs';
+import {createOriginalCloneContainerSurface} from './extensions/clone-container-body.mjs';
 const generated=new WeakMap(),coherence=new WeakMap(),hash=value=>createHash('sha256').update(value).digest('hex'),same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Original Clone AST lowering: '+message);};
 function writtenCloneFamilies(context,state){
@@ -57,7 +60,7 @@ export function originalCloneGeneratedMethod(context,module,item,Parser){
     const unitSource=originalUnitCloneSource(context,original,item),surface=createOriginalCloneUnitSurface(context,original,item,unitSource);
     assertOriginalCloneSurface(surface);generated.set(surface,{context,module:original,item,unitSource,digest:hash(JSON.stringify(surface))});return surface;
   }
-  const args={dependencies:state.dependencies,source:original.source,span:{start:item.start,end:item.end},owner:'Clone'},output=proveBuiltinScalarSourceOutput(args);assertBuiltinScalarSourceOutput(output,args);const plan=builtinScalarOriginalSourcePlan(output);
+  const args={dependencies:state.dependencies,source:original.source,span:{start:item.start,end:item.end},owner:'Clone'};let output;try{output=proveBuiltinScalarSourceOutput(args);}catch(error){if(!(error instanceof TypeError))throw error;const fields=originalCloneContainerFields(context,original,item,Parser),noDrop=fields.hasDeriveCopy?null:proveCloneContainerNoDrop(context,original,item,fields),surface=createOriginalCloneContainerSurface({context,module:original,item,fields,noDrop,Parser});assertOriginalCloneSurface(surface);generated.set(surface,{context,module:original,item,containerFields:fields,digest:hash(JSON.stringify(surface))});return surface;}assertBuiltinScalarSourceOutput(output,args);const plan=builtinScalarOriginalSourcePlan(output);
   for(const [name,expected]of [['name','sym :: clone'],['nonself_args','Vec :: new ()'],['ret_ty','Self_'],['explicit_self','true']]){const field=plan.descriptors.Clone.method.fields.find(field=>field.name===name);if(!field||astSyntaxText(field.expression)!==expected)fail('actual MethodDef signature slot differs: '+name);}
   const hasCopy=input.derives.some(owner=>same(owner.path,['Copy'])),branch=output.branches.find(branch=>branch.feature==='has_derive_copy='+hasCopy);if(!branch||output.branches.length!==2)fail('actual original Clone feature branches differ');
   const primitive=originalPrimitiveCloneExpansion(),bodies=output.input.fields.map(field=>{const members=primitive.members.filter(member=>member.target===field.type);if(members.length!==1)fail('field lacks its actual original primitive Clone implementation');return {field:field.name,type:field.type,typeSpan:field.typeSpan,...primitiveSyntax(Parser,members[0])};});
@@ -65,7 +68,7 @@ export function originalCloneGeneratedMethod(context,module,item,Parser){
   const surface=createOriginalCloneSurface({context,module:original,item,output,branch,plan,primitive,bodies,noDrop,methodName:context.standard.symbols.slots.clone.value});
   assertOriginalCloneSurface(surface);generated.set(surface,{context,module:original,item,output,args,digest:hash(JSON.stringify(surface))});return surface;
 }
-export function assertOriginalCloneGeneratedMethod(surface,context){const state=generated.get(surface);if(!state||state.context!==context||hash(JSON.stringify(surface))!==state.digest)fail('surface is copied, changed or rebound');assertCloneCaller(context,state.module);if(!state.unitSource)assertBuiltinScalarSourceOutput(state.output,state.args);assertOriginalCloneSurface(surface);return surface;}
+export function assertOriginalCloneGeneratedMethod(surface,context){const state=generated.get(surface);if(!state||state.context!==context||hash(JSON.stringify(surface))!==state.digest)fail('surface is copied, changed or rebound');assertCloneCaller(context,state.module);if(!state.unitSource&&!state.containerFields)assertBuiltinScalarSourceOutput(state.output,state.args);assertOriginalCloneSurface(surface);return surface;}
 export function originalCloneGeneratedMethods(context,module,Parser){const state=cloneSourceContextFacts(context),methods=[],refused=[];
   for(const item of originalSourceModuleItems(module).filter(item=>['struct','enum'].includes(item.term)&&itemConfiguration(item.tokens,state.compilationProfile).status==='active')){let input;try{input=inspectDeriveInput(item,state.compilationProfile);}catch{continue;}if(!input.derives.some(owner=>same(owner.path,['Clone'])))continue;try{methods.push({item,surface:originalCloneGeneratedMethod(context,module,item,Parser)});}catch(error){if(!(error instanceof TypeError))throw error;refused.push({item,message:error.message});}}
   return {methods,refused};
