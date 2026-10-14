@@ -50,8 +50,9 @@ test('whole original response affinity selectors retain certified source and lit
   assert.equal(result.meta.runtimeParity,false);
   const footprints=result.meta.deriveNamespaceFootprints;
   assert.deepEqual(footprints.diagnostics,[]);
-  assert.deepEqual(footprints.certificates.map(entry=>entry.name),['ResponseNamespace','ResponseOwner','AffinityDestination','ResponseAffinity','AffinityFile']);
-  for(const certificate of footprints.certificates){
+  assert.deepEqual(footprints.certificates.map(entry=>entry.name),['ResponseNamespace','ResponseOwner','AffinityDestination','ResponseAffinity','RecordOutcome','StoreError','AffinityFile','ResponseAffinityStore']);
+  const standard=footprints.certificates.filter(certificate=>certificate.standardInput);assert.deepEqual(standard.map(certificate=>certificate.name),['RecordOutcome','StoreError','ResponseAffinityStore']);for(const certificate of standard){assert.equal(certificate.sourceSha256,pin.sourceSha256);assert.equal(certificate.itemSha256,hash(source.slice(certificate.span.start,certificate.span.end)));assert.deepEqual(certificate.owners,[]);assert.equal(certificate.generatedImplBehavior,false);assert.deepEqual(certificate.dimensions,{typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:true,bangMacroComplete:false});assert.equal(certificate.standardInput.namespaceAuthority,false);assert.equal(certificate.standardInput.runtimeAuthority,false);}
+  for(const certificate of footprints.certificates.filter(certificate=>!certificate.standardInput)){
     assert.equal(certificate.source,pin.path);assert.equal(certificate.sourceSha256,pin.sourceSha256);
     assert.equal(certificate.itemSha256,hash(source.slice(certificate.span.start,certificate.span.end)));
     assert.strictEqual(assertDeriveFootprintCertificate(certificate,source.slice(certificate.span.start,certificate.span.end),certificate.span.start),certificate);

@@ -11,6 +11,7 @@ import {resolveModuleBindings} from '../module-bindings.mjs';
 import {bindNonCopyTraitOwner,nonCopyTraitOwner} from '../copy-trait-owners.mjs';
 import {captureSourceModuleViews,moduleScopeKey} from '../source-module-views.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {parseProgram} from '../semantic-meta.mjs';
 const root=new URL('../../../',import.meta.url),input={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},deriveDependencies=loadDeriveDependencyProof(input),jsonMacroDependencies=loadJsonMacroSourceProof(input),deps={deriveDependencies,jsonMacroDependencies};
 const tag=$=>Object.freeze({$}),some=field0=>Object.freeze({$:'Some',field0}),none=tag('None');
 const definition='#[derive(Copy,Clone)]enum Choice{A,B}',implementation="impl<'de> Deserialize<'de> for Choice{fn deserialize<D:serde::Deserializer<'de>>(deserializer:D)->Result<Self,D::Error>{Ok(Self::A)}}",run='pub fn chosen(value:Option<u8>)->Choice{value.map_or(Choice::B,|n|Choice::A)}';
@@ -24,9 +25,9 @@ test('genuine retained serde source proves both exact trait routes without certi
 test('lifetime-only manual trait leaves independently source-derived Copy mapping checked in both targets',{timeout:60000},async()=>{
  const r=project('use serde::Deserialize;'+definition+implementation+run);
  assert.deepEqual(r.meta.refused.filter(row=>row.term!=='generated-method'),[{file:'src/lib.rs',name:'Choice.deserialize',term:'method',span:{start:98,end:192},kind:'unsupported',message:'generic implementation requires checked monomorphization; trait implementation needs resolved generic bounds or qualified trait syntax; trait implementation requires declared trait and dispatch checking; generic method requires checked monomorphization'}]);
- assert.deepEqual(r.meta.refused.filter(row=>row.term==='generated-method'),[{file:'src/lib.rs',name:'Choice.clone',term:'generated-method',kind:'unsupported',span:{start:23,end:60},message:'Original unit Clone source: requires its genuine original derive invocation'}]);
- assert.deepEqual(r.meta.checkedGeneratedMethods??[],[]);
- await verifyTypedTargets(r,api=>{assert.deepEqual(api.chosen(none),tag('B'));assert.deepEqual(api.chosen(some(255n)),tag('A'));assert.throws(()=>api.chosen(some(256n)),TypeError);},{childTimeoutMs:20000});
+ assert.deepEqual(r.meta.refused.filter(row=>row.term==='generated-method'),[]);assert.deepEqual(r.meta.checkedGeneratedMethods.map(row=>({name:row.name,generator:row.generator,span:row.span})),[{name:'Choice.clone',generator:'core::clone::Clone',span:{start:23,end:60}}]);
+ const program=parseProgram(JSON.stringify(r.meta.targetSemanticProgram)),clone=[...program.declarations.values()].find(row=>row.impl?.method==='clone');assert.ok(clone);const suffix='\nexport {'+clone.fullName+' as originalClone};';
+ await verifyTypedTargets({...r,javascript:r.javascript+suffix,typescript:r.typescript+suffix},(api,_result,module)=>{assert.deepEqual(api.chosen(none),tag('B'));assert.deepEqual(api.chosen(some(255n)),tag('A'));assert.throws(()=>api.chosen(some(256n)),TypeError);for(const variant of ['A','B'])assert.deepEqual(module.originalClone(tag(variant)),tag(variant));assert.throws(()=>module.originalClone({$:'A'}),TypeError);assert.throws(()=>module.originalClone(tag('Other')),TypeError);},{childTimeoutMs:20000});
 });
 test('qualified and imported alias identities use actual source exports rather than trait spelling',{timeout:60000},async()=>{
  for(const [prefix,trait]of [['','serde::Deserialize'],['use serde::Deserialize as ReadWire;','ReadWire']]){const r=project(prefix+definition+implementation.replace('Deserialize<',trait+'<')+run);assert.ok(r.meta.executable.some(row=>row.name==='chosen'));await verifyTypedTargets(r,api=>{assert.deepEqual(api.chosen(none),tag('B'));assert.deepEqual(api.chosen(some(1n)),tag('A'));},{childTimeoutMs:20000});}

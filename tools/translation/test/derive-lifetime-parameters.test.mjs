@@ -27,7 +27,7 @@ test('derive lifetime-only header retains all exact source names tokens and UTF-
 
 test('an original lifetime-only builtin sibling permits independently owned Serde namespace proof',()=>{
   const proof=context(declarations),module={file:'src/lib.rs',path:[],source:declarations};
-  assert.deepEqual(proof.certificates.map(item=>item.name),['State']);assert.deepEqual(proof.diagnostics,[]);
+  assert.deepEqual(proof.certificates.map(item=>item.name),['State']);assert.deepEqual(proof.diagnostics,[{source:'src/lib.rs',span:{start:0,end:70},name:'Inputs',message:'Standard-only input retains a generic, helper, configuration or layout obligation'}]);
   const evidence=resolveModuleBindings({modules:[module],externalModules:deriveFootprintExternalModules(proof),deriveContext:proof,compilationProfile:PRODUCTION_PROFILE});
   assert.equal(evidence.scopes[0].unresolvedTypeScope,false);assert.equal(evidence.scopes[0].unresolvedAttributeMacroScope,false);assert.equal(evidence.scopes[0].unresolvedBangMacroScope,true);
 });
