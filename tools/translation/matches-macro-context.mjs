@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {types} from 'node:util';
-import {metadataDigest,ownData} from './extensions/source-links.mjs';
+import {copyMetadata,metadataDigest,ownData} from './extensions/source-links.mjs';
 import {captureOriginalMacroModules,originalMacroModules} from './original-macro-module-context.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
@@ -22,9 +22,76 @@ import {itemConfiguration,compilationProfile as normalizeProfile} from './cfg-pr
 import {originalCargoEditionEvidence,configureRustEditionParser} from './cargo-edition-context.mjs';
 const contexts=new WeakMap(),immutableContexts=new WeakMap(),parsers=new WeakMap(),issuedFrames=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
 let standardProfile=null;
-const mapEntries=Map.prototype.entries,mapGet=Map.prototype.get,mapHas=Map.prototype.has,mapSet=Map.prototype.set;
+const mapEntries=Map.prototype.entries,mapGet=Map.prototype.get,mapHas=Map.prototype.has,mapSet=Map.prototype.set,mapDelete=Map.prototype.delete,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,mapNext=Object.getPrototypeOf(new Map().entries()).next;
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
 function namespaceDigest(parser){const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');return metadataDigest(['type','value','macro'].map(namespace=>[namespace,nativeEntries(ownData(aliases,namespace)).map(([path,map])=>[path,nativeEntries(map)])]));}
+// Initial capture may reuse only a privately reconstructed immutable value.
+// Caller Maps never enter this cache, and subsequent parser validation still
+// computes namespaceDigest over the complete mutable namespace each time.
+const namespaceCaptureLimits=Object.freeze({contextEntries:2,entries:8,entryBytes:2097152,bytes:8388608});
+const originalJson=JSON,originalJsonStringify=JSON.stringify;
+const originalMap=Map,originalMapPrototype=Map.prototype,mapDescriptors=Object.freeze(Reflect.ownKeys(Map.prototype).map(key=>Object.freeze([key,Object.freeze(Object.getOwnPropertyDescriptor(Map.prototype,key))]))),mapIteratorPrototype=Object.getPrototypeOf(new Map().entries());
+const iteratorPrototype=Object.getPrototypeOf(mapIteratorPrototype),iteratorMethod=Object.getOwnPropertyDescriptor(iteratorPrototype,Symbol.iterator).value;
+const namespaceCaptureEntries=new Map();let namespaceCaptureBytes=0;
+const namespaceCaptureReleases=new FinalizationRegistry(token=>discardNamespaceCapture(token));
+const registerNamespaceRelease=FinalizationRegistry.prototype.register,unregisterNamespaceRelease=FinalizationRegistry.prototype.unregister;
+function discardNamespaceCapture(token){
+  const entry=mapGet.call(namespaceCaptureEntries,token);if(!entry)return;
+  mapDelete.call(namespaceCaptureEntries,token);namespaceCaptureBytes-=entry.bytes;
+  // Global bookkeeping never retains issuer/module roots. Clearing the data
+  // immediately also prevents inactive issuer slots retaining evicted bytes.
+  entry.snapshot=null;entry.digest=null;entry.active=false;unregisterNamespaceRelease.call(namespaceCaptureReleases,entry);
+}
+const firstMapEntry=map=>mapNext.call(mapEntries.call(map)).value;
+function exactNamespaceTarget(actual,expected){
+  if(types.isProxy(actual)||!Array.isArray(actual)||Object.getPrototypeOf(actual)!==Array.prototype)return false;
+  const descriptors=Object.getOwnPropertyDescriptors(actual),keys=Reflect.ownKeys(descriptors);
+  if(keys.length!==expected.length+1||descriptors.length?.value!==expected.length)return false;
+  for(let index=0;index<expected.length;index++){const descriptor=descriptors[index];if(!descriptor||!('value'in descriptor)||!descriptor.enumerable||descriptor.value!==expected[index]||typeof expected[index]!=='string')return false;}
+  return true;
+}
+function exactNamespaceCapture(parser,snapshot){
+  const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');
+  for(const[namespace,scopes]of snapshot){
+    const actualScopes=nativeEntries(ownData(aliases,namespace));if(actualScopes.length!==scopes.length)return false;
+    for(let index=0;index<scopes.length;index++){
+      const[path,bindings]=scopes[index],[actualPath,map]=actualScopes[index];if(actualPath!==path)return false;
+      const actualBindings=nativeEntries(map);if(actualBindings.length!==bindings.length)return false;
+      for(let at=0;at<bindings.length;at++){const[name,target]=bindings[at],[actualName,actualTarget]=actualBindings[at];if(actualName!==name||!exactNamespaceTarget(actualTarget,target))return false;}
+    }
+  }
+  return true;
+}
+function issuedNamespaceCapture(issued,module,scope){
+  let entry=mapGet.call(issued.namespaceCaptures,module);
+  if(entry?.active){mapDelete.call(issued.namespaceCaptures,module);mapSet.call(issued.namespaceCaptures,module,entry);mapDelete.call(namespaceCaptureEntries,entry.token);mapSet.call(namespaceCaptureEntries,entry.token,entry);return entry;}
+  if(entry)mapDelete.call(issued.namespaceCaptures,module);
+  // The null-prototype carrier cannot consume a caller parser's properties or
+  // setters. The unchanged source-scope builder supplies fresh native Maps.
+  // A private build failure cannot add a refusal to the old capture route.
+  let snapshot,digest,bytes;
+  try{
+    const carrier=Object.create(null);configureParserSourceScope(carrier,scope,issued.evidence.scopes,module.path);
+    snapshot=freezeMacroTree(copyMetadata(['type','value','macro'].map(namespace=>[namespace,nativeEntries(ownData(carrier.sourceNamespaceAliases,namespace)).map(([path,map])=>[path,nativeEntries(map)])])));
+    digest=metadataDigest(snapshot);bytes=Buffer.byteLength(JSON.stringify(snapshot));
+    if(bytes>namespaceCaptureLimits.entryBytes)return null;
+  }catch{return null;}
+  while(mapSize.call(issued.namespaceCaptures)>=namespaceCaptureLimits.contextEntries){const[oldModule,old]=firstMapEntry(issued.namespaceCaptures);mapDelete.call(issued.namespaceCaptures,oldModule);discardNamespaceCapture(old.token);}
+  while(mapSize.call(namespaceCaptureEntries)>=namespaceCaptureLimits.entries||namespaceCaptureBytes+bytes>namespaceCaptureLimits.bytes)discardNamespaceCapture(firstMapEntry(namespaceCaptureEntries)[0]);
+  entry={snapshot,digest,bytes,token:Symbol('private original matches namespace capture'),active:true};
+  mapSet.call(issued.namespaceCaptures,module,entry);mapSet.call(namespaceCaptureEntries,entry.token,entry);namespaceCaptureBytes+=bytes;registerNamespaceRelease.call(namespaceCaptureReleases,issued,entry.token,entry);return entry;
+}
+function initialNamespaceDigest(parser,issued,module,scope){
+  // The original metadata serializer remains the fallback under ambient
+  // serializer/prototype changes. A cached byte digest cannot stand in for a
+  // changed stringify callback or an inherited toJSON hook.
+  if(Object.getOwnPropertyDescriptor(globalThis,'JSON')?.value!==originalJson||Object.getOwnPropertyDescriptor(originalJson,'stringify')?.value!==originalJsonStringify||Object.getOwnPropertyDescriptor(Array.prototype,'toJSON')||Object.getOwnPropertyDescriptor(Object.prototype,'toJSON'))return namespaceDigest(parser);
+  // Avoid an additional private builder call when its public Map machinery
+  // has changed. The original caller construction/capture remains the route.
+  if(Object.getOwnPropertyDescriptor(globalThis,'Map')?.value!==originalMap||Reflect.ownKeys(originalMapPrototype).length!==mapDescriptors.length||mapDescriptors.some(([key,expected])=>{const actual=Object.getOwnPropertyDescriptor(originalMapPrototype,key);return !actual||Reflect.ownKeys(expected).some(field=>actual[field]!==expected[field]);})||Object.getOwnPropertyDescriptor(mapIteratorPrototype,'next')?.value!==mapNext||Object.getPrototypeOf(mapIteratorPrototype)!==iteratorPrototype||Object.getOwnPropertyDescriptor(mapIteratorPrototype,Symbol.iterator)||Object.getOwnPropertyDescriptor(iteratorPrototype,Symbol.iterator)?.value!==iteratorMethod)return namespaceDigest(parser);
+  const capture=issuedNamespaceCapture(issued,module,scope);
+  return capture&&exactNamespaceCapture(parser,capture.snapshot)?capture.digest:namespaceDigest(parser);
+}
 // Only the actual producer's recursively frozen roots qualify for reuse.
 // Publicly exposed context wrappers remain untrusted mutable surfaces.
 function immutableContext(context,facts){
@@ -89,7 +156,7 @@ export function createMatchesMacroContext({modules,compilationProfile=null,deriv
   const certificate=freezeMacroTree({schema:'original-standard-matches-call-context-v1',profileDigest:profile.digest,compilationProfile:original.compilationProfile,originalModules:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source),sourceViewDigest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition})),namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
   const facts={...original,profile,evidence,cargoEditionContext};
   contexts.set(certificate,facts);
-  immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,cargoEditionContext,...immutableNamespaceIndices(original.modules,evidence),moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap()}));
+  immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,cargoEditionContext,...immutableNamespaceIndices(original.modules,evidence),moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap(),namespaceCaptures:new Map()}));
   return certificate;
 }
 export const isMatchesMacroContext=value=>!!value&&contexts.has(value);
@@ -113,7 +180,7 @@ export function configureMatchesMacroParser(parser,context,{file,modulePath=[],o
   // namespace maps consumed by source resolution stay separate and sealed.
   parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));
   configureRustEditionParser(parser,facts.cargoEditionContext);
-  recordParserFrame(parser,{context,facts,module,offset,sourceLength:source.length,captured,tokens:parser.cursor.tokens,namespaceDigest:namespaceDigest(parser)});return parser;
+  recordParserFrame(parser,{context,facts,module,offset,sourceLength:source.length,captured,tokens:parser.cursor.tokens,namespaceDigest:initialNamespaceDigest(parser,issued,module,scope)});return parser;
 }
 export function matchesParserFacts(parser) {
   const facts=parserFrame(parser);
@@ -223,6 +290,6 @@ export function configureMatchesMethodParser(parser,context,method) {
   configureParserSourceScope(parser,namespace.scope,namespace.scopes,namespace.modulePath);parser.modulePath=[...namespace.modulePath];
   parser.aliases=new Map(nativeEntries(parser.sourceNamespaceAliases.type).map(([path,map])=>[path,new Map(nativeEntries(map))]));
   configureRustEditionParser(parser,facts.cargoEditionContext);
-  recordParserFrame(parser,{context,facts,module,offset:0,sourceLength:module.source.length,captured,tokens:parser.cursor.tokens,methodTransform:captured.proof,namespaceDigest:namespaceDigest(parser)});
+  recordParserFrame(parser,{context,facts,module,offset:0,sourceLength:module.source.length,captured,tokens:parser.cursor.tokens,methodTransform:captured.proof,namespaceDigest:initialNamespaceDigest(parser,issued,module,namespace.scope)});
   return parser;
 }
