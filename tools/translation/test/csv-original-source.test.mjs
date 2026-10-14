@@ -56,3 +56,25 @@ for(const pin of methodPins.pins)test(`pending unchanged ${pin.owner}.${pin.name
   await verifyTypedTargets(artifact,api=>{const values=pin.owner==='AnthropicUsage'?[[none,none],[some('standard'),some('default')],[some('priority'),some('priority')],[some('other'),none]]:[[none,none],[some(''),some('')],[some('opaque-😀'),some('opaque-😀')]];for(const [value,expected]of values)assert.deepEqual(api[pin.name](Object.freeze({...base,[field]:value})),expected);},{childTimeoutMs:30_000});
   assert.equal(result.meta.runtimeParity,false);assert.equal(result.executableDeclarations.some(entry=>entry.qualifiedName===method.qualifiedName),false);
 });
+
+// Draft append to csv-original-source.test.mjs ONLY after the original paired
+// benchmark ends. These tests reuse original() and its one actual compilation;
+// they do not construct Rust source or invoke another translateProject.
+for (const [file, owner, start, end, golden] of [
+  ['src/admin.rs','ClaimFile',7430,7931,{$:'ClaimFile',token_sha256:'',token_id:'',ttl_hours:0n,claimed_at:0n}],
+  ['src/model_contract.rs','ModelSelectorKind',1156,1396,{$:'Unknown'}],
+]) test(`unchanged complete graph ${owner}.default executes original generated source body`,{timeout:900_000},async()=>{
+  const context=original(),source=context.source(file),item=sourceItems(source).find(row=>row.name===owner&&['struct','enum'].includes(row.term));
+  assert.ok(item);assert.deepEqual([item.start,item.end],[start,end]);
+  const result=context.result,qualified=owner+'.default',declaration=result.checkedGeneratedMethodDeclarations.find(row=>row.source===file&&row.displayName.endsWith(qualified));
+  assert.ok(declaration,JSON.stringify(result.meta.refused.filter(row=>row.file===file&&row.name?.endsWith(qualified))));
+  assert.equal(declaration.sourceSha256,hash(source));assert.deepEqual(declaration.span,{start,end});
+  assert.equal(declaration.term,'generated-method');assert.equal(declaration.origin,'derive-invocation');
+  assert.equal(declaration.generator,'core::default::Default');assert.equal(declaration.receiver,null);
+  assert.equal(result.checkedMethodDeclarations.some(row=>row.source===file&&row.displayName.endsWith(qualified)),false);
+  const metadata=result.meta.checkedGeneratedMethods.find(row=>row.source===file&&row.name===declaration.displayName);
+  assert.ok(metadata);assert.equal(metadata.semanticBodyChecked,true);assert.deepEqual(metadata.span,declaration.span);
+  const targets=checkedDeclarationTargets(declaration);
+  await verifyTypedTargets(targets,api=>{const first=api.default(),second=api.default();assert.deepEqual(first,golden);assert.deepEqual(second,golden);assert.notStrictEqual(first,second);assert.equal(Object.isFrozen(first),true);},{childTimeoutMs:30_000});
+  assert.equal(result.meta.runtimeParity,false);
+});
