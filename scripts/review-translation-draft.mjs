@@ -7,7 +7,7 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {isDeepStrictEqual} from 'node:util';
+import {isDeepStrictEqual,types as utilTypes} from 'node:util';
 import {parseProgram,roundTripProgram} from '../tools/translation/semantic-meta.mjs';
 import {sourceItems} from '../tools/translation/rust-structure.mjs';
 import {inspectDeriveInput} from '../tools/translation/derive-inputs.mjs';
@@ -288,9 +288,92 @@ function reviewUnitDefaultMethod(meta,item,{checked,target,entries,names,used,co
   used.add(entry);return {...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
 }
 
+// Named container Default is independently rebuilt from the actual caller-bound
+// compiler output. Public schema names select a review route, never authority.
+function originalContainerDefaultChecked(context,module,item,surface,offset) {
+  const binding=originalEnumBinding(context),scope=binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),kernel=module.source.slice(item.start,item.end),parser=new HostRustParser(tokenizeRust(kernel)),snapshot=originalHostParserIdentitySnapshot();
+  const configured=configureParserSourceScope(parser,scope,binding.scopes,module.path);parser.aliases=configured.aliases;parser.modulePath=module.path;
+  configureToolAttributes(parser,context.enumToolContext,module,item,kernel);const certificate=deriveFootprintAt(context.derive,module,item);if(certificate)configureDeriveLayout(parser,certificate,kernel,item.start);
+  const guard=()=>{assertOriginalParserIdentity(parser,HostRustParser.prototype,new Map(snapshot.parserMethods));assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});};
+  guard();const items=[];parser.items({main:null},items,module.path,()=>parser.cursor.atEnd());guard();
+  if(items.length!==1||items[0].k!=='data'||!parser.cursor.atEnd())throw new Error('Container Default original struct parser mismatch');
+  const data=cloneRelocate(items[0],offset+item.start);
+  linkProjectDeclaration(parser,items[0],data,{source:module.source,sourcePath:module.file,itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:offset,path:module.path,scope:{bindingEvidence:scope,compilationProfile:context.graph.compilationProfile,configurationCondition:module.configurationCondition}});
+  // Source-first generic issuance must retain the producer's first owner and
+  // span even when several original records instantiate the same type.
+  context.containerNominals??=originalEnumNominals(context,module,{start:-1,end:-1},null,offset,binding);
+  const sourceLayouts=new Map(context.containerNominals.map(declaration=>[declaration.name,declaration])),needed=new Set();
+  function requireLayout(name){
+    if(needed.has(name))return;const declaration=sourceLayouts.get(name);if(!declaration)throw new Error('Container Default original dependent nominal layout missing: '+name);needed.add(name);
+    function types(node){if(Array.isArray(node)){for(const child of node)types(child);return;}if(!node||typeof node!=='object')return;if(node.kind==='named'&&node.path?.[0]==='crate')requireLayout(node.path.slice(1).join('.'));for(const [key,value]of Object.entries(node))if(!['deriveNamespaceProof','toolAttributeProof','copyCertificate'].includes(key))types(value);}
+    types(declaration.surface);
+  }
+  requireLayout([...module.path,item.name].join('.'));
+  const tree=[],modules=new Map([['',tree]]);
+  function add(path,item){let items=tree;for(let index=0;index<path.length;index++){const key=JSON.stringify(path.slice(0,index+1));let nested=modules.get(key);if(!nested){nested=[];items.push({k:'module',name:path[index],items:nested});modules.set(key,nested);}items=nested;}items.push(item);}
+  for(const name of needed){const declaration=sourceLayouts.get(name);add(declaration.path,declaration.name===[...module.path,item.name].join('.')?data:declaration.surface);}
+  const relocate=node=>{if(Array.isArray(node))return node.map(relocate);if(!node||typeof node!=='object')return node;return Object.fromEntries(Object.entries(node).map(([key,value])=>[key,key==='defaultSourceProof'?value:key==='span'&&value?{start:value.start+offset,end:value.end+offset}:relocate(value)]));};
+  assertOriginalDefaultGeneratedMethod(surface,context.defaultContext);
+  add(module.path,relocate(surface));
+  const checked=roundTripProgram(new HostChecker('Rust',[]).program({language:'Rust',items:tree,main:null}));
+  assertOriginalDefaultGeneratedMethod(surface,context.defaultContext);
+  return {data:checked.declarations.get([...module.path,item.name].join('.')),entry:checked.declarations.get([...module.path,surface.name].join('.')),dependencies:[...needed].filter(name=>name!==[...module.path,item.name].join('.')).map(name=>checked.declarations.get(name))};
+}
+function flattenedDefaultNode(node,names) {
+  if(Array.isArray(node))return node.map(value=>flattenedDefaultNode(value,names));if(!node||typeof node!=='object')return node;
+  if(Object.hasOwn(node,'defaultSourceProof'))return {...flattenedCloneNode({...node,defaultSourceProof:null},names),defaultSourceProof:node.defaultSourceProof};
+  const result=Object.fromEntries(Object.entries(node).map(([key,value])=>[key,flattenedDefaultNode(value,names)]));
+  if(node.kind==='data'&&names.has(node.name))result.name=names.get(node.name);
+  if(node.kind==='named'&&node.path?.[0]==='crate'&&names.has(node.path.slice(1).join('.')))result.path=['crate',names.get(node.path.slice(1).join('.'))];
+  if(['call','routerFutureCall'].includes(node.k))result.fn=names.get(node.fn)??node.fn;
+  if(node.k==='ctor')result.data=names.get(node.data)??node.data;
+  return result;
+}
+function reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,used,context}) {
+  if(item.term!=='generated-method'||item.origin!=='derive-invocation'||item.originalDeclarationTerm!=='struct'||item.generator!=='core::default::Default'||item.receiver!==null||item.semanticBodyChecked!==true||item.runtimeParity===true||item.semanticAuthority===true||typeof item.name!=='string'||Object.hasOwn(item,'cloneSourceProof'))throw new Error('Invalid container Default classification');
+  relativeName(item.source);const proof=item.defaultSourceProof,span=item.span,source=context.sources.get(item.source);
+  if(typeof source!=='string'||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new Error('Invalid container Default original declaration boundary');
+  const sourceSha256=digest(source),itemSha256=digest(source.slice(span.start,span.end));
+  if(proof?.schema!=='original-generated-container-default-ir-v1'||proof.source!==item.source||proof.sourceSha256!==sourceSha256||proof.itemSha256!==itemSha256)throw new Error('Container Default original declaration hash mismatch');
+  same(proof.span,span,'Container Default original span mismatch');
+  const candidates=entries.filter(entry=>entry.impl?.defaultSourceProof?.source===item.source&&isDeepStrictEqual(entry.impl.defaultSourceProof.span,span));if(candidates.length!==1||used.has(candidates[0]))throw new Error('Container Default metadata is not one-to-one');
+  const entry=candidates[0],module=context.graph.modules.find(module=>module.file===item.source&&isDeepStrictEqual(module.path,entry.modulePath));if(!module)throw new Error('Container Default original module mismatch');
+  const original=originalSourceModuleItems(module).find(original=>original.term==='struct'&&original.start===span.start&&original.end===span.end);if(!original)throw new Error('Container Default original classification mismatch');
+  const surface=originalDefaultGeneratedMethod(context.defaultContext,module,original,HostRustParser),expectedProof=JSON.parse(JSON.stringify(surface.impl.defaultSourceProof)),nominal=[...module.path,original.name].join('.');
+  const proofJson=JSON.stringify(expectedProof);if(JSON.stringify(proof)!==proofJson||JSON.stringify(entry.impl.defaultSourceProof)!==proofJson)throw new Error('Container Default exact persisted source/compiler proof mismatch');
+  cloneSame(proof,expectedProof,'Container Default complete original source/compiler/type/helper/body proof mismatch');cloneSame(entry.impl.defaultSourceProof,proof,'Container Default checked proof mismatch');
+  if(item.name!==nominal+'.default'||entry.name!==surface.name||entry.fullName!==[...module.path,surface.name].join('.')||entry.generated!=='router-source-generated-default-method'||entry.params.length||entry.async||entry.constant||entry.constFunction||entry.impl.method!=='default'||entry.impl.receiver!==null||Object.hasOwn(entry.impl,'cloneSourceProof'))throw new Error('Container Default original zero-argument signature mismatch');
+  same(entry.ret,{kind:'data',name:nominal,rustSourceType:true},'Container Default owned return mismatch');
+  const shift=entry.span?.start-span.start;if(!Number.isSafeInteger(shift)||shift!==module.offset||entry.span.end-span.end!==shift)throw new Error('Container Default original relocation mismatch');
+  if(meta.checkedMethods.some(row=>row.source===item.source&&isDeepStrictEqual(row.span,span))||meta.executable.some(row=>row.source===item.source&&isDeepStrictEqual(row.span,span)))throw new Error('Container Default overlaps original fn/method counts');
+  const regenerated=originalContainerDefaultChecked(context,module,original,surface,shift),data=checked.declarations.get(nominal);
+  cloneSame(data,regenerated.data,'Container Default whole checked original layout mismatch');cloneSame(entry,regenerated.entry,'Container Default whole checked constructor/signature/body mismatch');
+  for(const generic of regenerated.dependencies){const actual=checked.declarations.get(generic.fullName);cloneSame(actual,generic,'Container Default whole checked generic layout mismatch');cloneSame(target.declarations.get(names.get(generic.fullName)),{...flattenedDefaultNode(generic,names),name:names.get(generic.fullName),fullName:names.get(generic.fullName),modulePath:[],generated:'router-project-flattened'},'Container Default whole flattened generic layout mismatch');}
+  const flattened=target.declarations.get(names.get(entry.fullName)),targetData=target.declarations.get(names.get(nominal));
+  if(JSON.stringify(flattened?.impl?.defaultSourceProof)!==proofJson)throw new Error('Container Default exact flattened source/compiler proof mismatch');
+  cloneSame(flattened,{...flattenedDefaultNode(entry,names),name:names.get(entry.fullName),fullName:names.get(entry.fullName),modulePath:[],generated:'router-project-flattened'},'Container Default whole flattened constructor/signature/body mismatch');
+  cloneSame(targetData,{...flattenedDefaultNode(data,names),name:names.get(nominal),fullName:names.get(nominal),modulePath:[],generated:'router-project-flattened'},'Container Default whole flattened nominal layout mismatch');
+  used.add(entry);return {...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
+}
+
+// Exported callers must supply inert persisted JSON trees. Check descriptors
+// before JSON.stringify or property reads, so metadata cannot execute hooks.
+function assertGeneratedReviewData(value) {
+  const seen=new Set();let nodes=0;
+  function visit(node,depth){
+    if(node===null)return;
+    if(typeof node!=='object'){if(!['string','number','boolean','undefined'].includes(typeof node))throw new TypeError('Generated review requires inert JSON metadata');return;}
+    if(utilTypes.isProxy(node)||depth>512||++nodes>2_000_000||seen.has(node))throw new TypeError('Generated review requires bounded non-proxy JSON metadata');
+    const prototype=Object.getPrototypeOf(node);if(prototype!==Object.prototype&&prototype!==Array.prototype&&prototype!==null)throw new TypeError('Generated review requires plain JSON metadata');
+    seen.add(node);for(const key of Reflect.ownKeys(node)){const descriptor=Object.getOwnPropertyDescriptor(node,key);if(typeof key!=='string'||!Object.hasOwn(descriptor,'value'))throw new TypeError('Generated review rejects metadata accessors');visit(descriptor.value,depth+1);}seen.delete(node);
+  }
+  visit(value,0);
+}
+
 // Integrity only. Serialized rows never recreate the compiler's private caller
 // brands; source namespace, runtime and whole-trait authority remain false.
 export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies}={}) {
+  assertGeneratedReviewData(meta);assertGeneratedReviewData(row);
   if(meta.runtimeParity===true||meta.semanticAuthority===true)throw new Error('Generated review cannot accept semantic or runtime authority');
   const rows=generatedArray(meta),count=Object.hasOwn(row,'checkedGeneratedMethods')?row.checkedGeneratedMethods:0;
   if(!Number.isSafeInteger(count)||count<0||count!==rows.length)throw new Error('Generated method count mismatch: '+row.entry);
@@ -299,8 +382,13 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMac
   const entries=[...checked.declarations.values()].filter(entry=>entry.generated==='router-source-generated-default-method'||entry.impl?.defaultSourceProof?.schema==='original-generated-default-ir-v1'||entry.generated==='router-source-generated-clone-method'||entry.impl?.cloneSourceProof?.schema==='original-generated-clone-ir-v1');
   if(entries.length!==rows.length)throw new Error('Generated method semantic count mismatch: '+row.entry);
   const names=new Map([...checked.declarations.keys()].map(name=>[name,'rp_'+Buffer.from(name).toString('hex')]));
-  const used=new Set(),identities=new Set(),result=[];let cloneContext=null,unitDefaultContext=null;
+  const used=new Set(),identities=new Set(),result=[];let cloneContext=null,unitDefaultContext=null,containerDefaultContext=null;
   for(const item of rows){
+    if(item?.defaultSourceProof?.schema==='original-generated-container-default-ir-v1'){
+      containerDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies});
+      const reviewed=reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,used,context:containerDefaultContext});
+      const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
+    }
     if(item?.generator==='core::default::Default'&&item.originalDeclarationTerm==='enum'){
       unitDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies});
       const reviewed=reviewUnitDefaultMethod(meta,item,{checked,target,entries,names,used,context:unitDefaultContext});
