@@ -75,6 +75,19 @@ function namespaceCursor(map){
   if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');
   return Reflect.apply(mapEntries,map,[]);
 }
+// Qualified native reflection still visits every live target key/descriptor.
+// Avoid the discarded descriptor-table and index-set allocations; the complete
+// collected implementation above remains the route for observable machinery.
+function streamingNamespaceTarget(actual,expected){
+  if(types.isProxy(actual)||!Array.isArray(actual)||Object.getPrototypeOf(actual)!==Array.prototype)return false;
+  const keys=Reflect.ownKeys(actual),length=Object.getOwnPropertyDescriptor(actual,'length');
+  if(keys.length!==expected.length+1||!length||!Object.hasOwn(length,'value')||length.value!==expected.length)return false;
+  for(let index=0;index<expected.length;index++){
+    const descriptor=Object.getOwnPropertyDescriptor(actual,index);
+    if(!descriptor||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable||descriptor.value!==expected[index]||typeof expected[index]!=='string')return false;
+  }
+  return true;
+}
 function streamingNamespaceCapture(parser,snapshot){
   const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');
   for(let namespaceIndex=0;namespaceIndex<snapshot.length;namespaceIndex++){
@@ -84,7 +97,7 @@ function streamingNamespaceCapture(parser,snapshot){
       const bindings=scope[1],actualBindings=namespaceCursor(nextScope.value[1]);
       for(let at=0;at<bindings.length;at++){
         const binding=bindings[at],nextBinding=Reflect.apply(mapNext,actualBindings,[]);
-        if(nextBinding.done||nextBinding.value[0]!==binding[0]||!exactNamespaceTarget(nextBinding.value[1],binding[1]))return false;
+        if(nextBinding.done||nextBinding.value[0]!==binding[0]||!streamingNamespaceTarget(nextBinding.value[1],binding[1]))return false;
       }
       if(!Reflect.apply(mapNext,actualBindings,[]).done)return false;
     }
