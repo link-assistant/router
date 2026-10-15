@@ -26,7 +26,7 @@ test('documentation comments do not select unknown literal-doc owners or drop ma
  const observations=[];
  for(const prefix of ['/// original documentation\n','/** original documentation */\n','//! original inner documentation\n']){
   for(const profile of [null,compilationProfile({flags:{docs:true}}),compilationProfile({flags:{docs:false}})]){
-   const source=prefix+'#[cfg_attr(docs,doc="candidate")] pub fn value()->u8{1}',result=condition(source),attribute=result.attributes[0];assert.equal(result.status,profile?.flags.docs===false?'active':'unknown');assert.equal(isInertConditionalAttribute(attribute),profile?.flags.docs===false);assert.equal(attribute.evaluation.literalDocumentationCandidate.callerOwnerResolved,false);observations.push({source,profile,result});
+   const source=prefix+'#[cfg_attr(docs,doc="candidate")] pub fn value()->u8{1}',result=condition(source,profile),attribute=result.attributes[0];assert.equal(result.status,profile?.flags.docs===false?'active':'unknown');assert.equal(isInertConditionalAttribute(attribute),profile?.flags.docs===false);assert.equal(attribute.evaluation.literalDocumentationCandidate.callerOwnerResolved,false);observations.push({source,profile,result});
   }
  }
  const source='// before\n#[cfg(not(test,))] pub fn value()->u8{1}',result=condition(source);assert.equal(result.status,'unknown');assert.ok(result.diagnostics.length);retain('03-unresolved-owners-and-grammar',{observations,source,result});
