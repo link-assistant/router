@@ -41,6 +41,7 @@ import {rustFixedType} from '../checked-types.mjs';
 import {checkOriginalOptionEquality} from './option-equality.mjs';
 import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
+import {sharedF64Pointee,originalSharedF64CopySource} from './shared-f64-copy-source.mjs';
 import {floatSignObligation,withFloatZeroSignChecker} from './float-zero-refinements.mjs';
 import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,consumeTemporaryStringCallBorrow,prepareOriginalStringPatternBorrow} from './utf16-fixed-f64.mjs';
 import {checkStringIteratorOperation,requireBorrowedString} from './string-iterators.mjs';
@@ -579,6 +580,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       const value=this.expr(node.value,env,path),reference=value.type.rustReference,pointee=reference?.pointee;
       if(value.type.kind==='string'&&reference?.kind==='shared'&&pointee?.kind==='string'&&pointee.rustOwnership?.kind==='borrowed'&&pointee.rustOwnership.source==='str'&&!pointee.rustGenericIdentityUnresolved)return {...node,value,type:pointee,dereferenceProof:{kind:'shared-str-reference-copy',reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};
       if(value.type.kind==='bool')return {...node,value,type:sharedBooleanPointee(value.type,node.span),dereferenceProof:{kind:'shared-bool-copy',reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};
+      if(value.type.kind==='float'){requireOriginalPrimitiveTryFromChecker(this);return {...node,value,type:sharedF64Pointee(value.type,node.span),dereferenceProof:{kind:'shared-f64-copy',source:originalSharedF64CopySource(),reference:structuredClone(reference),sourceFeature:node.sourceFeature,span:node.span}};}
       const type=sharedFixedPointee(value.type,node.span);
       return {...node,value,type,dereferenceProof:{kind:'shared-fixed-copy',primitiveName:type.rustPrimitiveName,reference:structuredClone(value.type.rustReference),sourceFeature:node.sourceFeature,span:node.span}};
     }

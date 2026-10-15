@@ -1,7 +1,9 @@
 // Registered serde_json 1.0.151 Value instantiations, not Router function copies.
-import {BOOL,STRING,UNIT,FLOAT,fixed,array} from '../checked-types.mjs';
+import {BOOL,STRING,UNIT,fixed,array} from '../checked-types.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {SOURCE_STR,SOURCE_STRING,sourceShared,sourceVector} from './source-contract-types.mjs';
+import {registeredJsonF64Type} from './json-f64-source.mjs';
+const JSON_F64=registeredJsonF64Type();
 const named=(...path)=>({kind:'named',path}),span={start:0,end:0};
 const field=(name,type)=>({name,type}),ctor=(name,type)=>({name,fields:type?[field('field0',type)]:[]});
 const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,generated:'router-json-contract',...(standardGeneric?{standardGeneric}:{})});
@@ -13,12 +15,12 @@ const SHARED_VALUE=sourceShared(VALUE),SHARED_NUMBER=sourceShared(NUMBER),SHARED
 const BORROWED_BYTES={...sourceShared({...array({...fixed(8,false),rustPrimitiveName:'u8'}),rustOwnership:{kind:'borrowed',source:'slice'}}),rustOwnership:{kind:'borrowed',source:'slice'}};
 const option=type=>({...named(monomorphicTypeName('Option',[type])),rustStandardGeneric:{kind:'Option',arguments:[type]}});
 const result=type=>({...named(monomorphicTypeName('Result',[type,ERROR])),rustStandardGeneric:{kind:'Result',arguments:[type,ERROR]}});
-const optionTypes=[VALUE,NUMBER,MAP,SOURCE_STR,BOOL,U64,I64,FLOAT,UNIT,VALUES,SHARED_VALUE,SHARED_NUMBER,SHARED_MAP,SHARED_VALUES];
+const optionTypes=[VALUE,NUMBER,MAP,SOURCE_STR,BOOL,U64,I64,JSON_F64,UNIT,VALUES,SHARED_VALUE,SHARED_NUMBER,SHARED_MAP,SHARED_VALUES];
 const resultTypes=[VALUE,SOURCE_STRING,BYTES];
 export const JSON_DATA=freeze([
   {k:'module',name:'serde_json',span,generated:'router-json-contract',items:[
     declaration('Value',[ctor('Null'),ctor('Bool',BOOL),ctor('Number',NUMBER),ctor('String',SOURCE_STRING),ctor('Array',VALUES),ctor('Object',MAP)]),
-    declaration('Number',[ctor('PosInt',U64),ctor('NegInt',I64),ctor('Float',FLOAT)]),
+    declaration('Number',[ctor('PosInt',U64),ctor('NegInt',I64),ctor('Float',JSON_F64)]),
     declaration('MapEntry',[{name:'MapEntry',fields:[field('key',SOURCE_STRING),field('value',VALUE)]}]),
     declaration('Map_String_Value',[{name:'Map',fields:[field('entries',array(ENTRY))]}]),
     declaration('Error',[{name:'JsonError',fields:[field('category',CATEGORY),field('line',USIZE),field('column',USIZE),field('message',STRING)]}]),
@@ -50,13 +52,13 @@ export const JSON_CONTRACTS=freeze([
   method('value_index_string','Value','index',[SOURCE_STR],SHARED_VALUE,{overload:'string',kind:'index'}),
   method('value_index_usize','Value','index',[USIZE],SHARED_VALUE,{overload:'usize',kind:'index'}),
   method('value_pointer','Value','pointer',[SOURCE_STR],option(SHARED_VALUE)),
-  ...[['str',SOURCE_STR],['bool',BOOL],['u64',U64],['i64',I64],['f64',FLOAT],['null',UNIT],['number',SHARED_NUMBER],['array',SHARED_VALUES],['object',SHARED_MAP]].map(([name,type])=>method(`value_as_${name}`,'Value',`as_${name}`,[],option(type))),
+  ...[['str',SOURCE_STR],['bool',BOOL],['u64',U64],['i64',I64],['f64',JSON_F64],['null',UNIT],['number',SHARED_NUMBER],['array',SHARED_VALUES],['object',SHARED_MAP]].map(([name,type])=>method(`value_as_${name}`,'Value',`as_${name}`,[],option(type))),
   ...['null','boolean','number','string','array','object','u64','i64','f64'].map(name=>method(`value_is_${name}`,'Value',`is_${name}`,[],BOOL)),
-  ...[['u64',U64],['i64',I64],['f64',FLOAT]].map(([name,type])=>method(`number_as_${name}`,'Number',`as_${name}`,[],option(type))),
+  ...[['u64',U64],['i64',I64],['f64',JSON_F64]].map(([name,type])=>method(`number_as_${name}`,'Number',`as_${name}`,[],option(type))),
   ...['u64','i64','f64'].map(name=>method(`number_is_${name}`,'Number',`is_${name}`,[],BOOL)),
   contract('serde_json_number_from_u64','serde_json::Number::from',[U64],NUMBER,{kind:'function',overload:'u64'}),
   contract('serde_json_number_from_i64','serde_json::Number::from',[I64],NUMBER,{kind:'function',overload:'i64'}),
-  contract('serde_json_number_from_f64','serde_json::Number::from_f64',[FLOAT],option(NUMBER),{kind:'function'}),
+  contract('serde_json_number_from_f64','serde_json::Number::from_f64',[JSON_F64],option(NUMBER),{kind:'function'}),
   method('map_get','Map','get',[SOURCE_STR],option(SHARED_VALUE)),method('map_values','Map','values',[],{...VALUES,rustGenericIdentityUnresolved:true}),method('map_keys','Map','keys',[],{...array(SOURCE_STRING),rustGenericIdentityUnresolved:true}),method('map_len','Map','len',[],USIZE),method('map_is_empty','Map','is_empty',[],BOOL),
   method('error_classify','Error','classify',[],CATEGORY),method('error_line','Error','line',[],USIZE),method('error_column','Error','column',[],USIZE),method('error_to_string','Error','to_string',[],SOURCE_STRING),
   ...['io','syntax','data','eof'].map(name=>method(`error_is_${name}`,'Error',`is_${name}`,[],BOOL)),

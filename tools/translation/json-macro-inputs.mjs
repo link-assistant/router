@@ -89,6 +89,26 @@ export function createJsonMacroSourceProof({ manifest, lock, archives } = {}) {
 export function loadJsonMacroSourceProof({ manifest, lock }) {
     return createJsonMacroSourceProof({ manifest, lock, archives: new Map(JSON_MACRO_SOURCE_PROFILE.packages.map(entry => [entry.name + '@' + entry.version, readFileSync(new URL(entry.archive, root))])) });
 }
+// Read-only source reuse. Unlike createJsonMacroSourceProof this accessor
+// issues no Cargo, macro, feature, namespace or expansion capability.
+export function pinnedJsonOriginalSource(packageName, path) {
+    if (typeof packageName !== 'string' || typeof path !== 'string')
+        throw new TypeError('Pinned JSON source requires primitive package/path strings');
+    const entry = JSON_MACRO_SOURCE_PROFILE.packages.find(entry => entry.name === packageName);
+    const pin = entry?.members.find(pin => pin.path === path);
+    if (!entry || !pin)
+        throw new TypeError('Pinned JSON source member is unregistered');
+    const encoded = readFileSync(new URL(entry.archive, root));
+    if (encoded.length !== entry.bytes || hash(encoded) !== entry.sha256)
+        throw new TypeError('Pinned JSON source archive checksum mismatch');
+    const original = archiveMembers(encoded).get(entry.name + '-' + entry.version + '/' + pin.path);
+    if (!original || original.length !== pin.bytes || hash(original) !== pin.sha256)
+        throw new TypeError('Pinned JSON source member checksum mismatch');
+    const source = original.toString('utf8');
+    if (!Buffer.from(source).equals(original))
+        throw new TypeError('Pinned JSON source is not lossless UTF-8');
+    return freezeMacroTree({ ...pin, package: entry.name, version: entry.version, source, archiveSha256: entry.sha256 });
+}
 export function isJsonMacroSourceProof(proof) { return !!proof && proofs.has(proof); }
 export function jsonMacroOriginalSource(proof, packageName, path) {
     const source = proofs.get(proof)?.get(packageName + '/' + path);
