@@ -232,7 +232,12 @@ def plan_shards(inputs, output, *, shard_bytes=SHARD_BYTES, cap_seconds=30,
     _unchanged(records, MAX_MANIFEST, check)
     _outputs_unchanged(output, [row['manifest'] for row in shards], MAX_MANIFEST, check)
     plan = {'schema': 'complete-evidence-shard-plan-v1', 'inputs': [fact for unused, fact in records], 'shards': shards, 'membership': membership, 'pendingRoots': pending, 'logicalShardBytes': shard_bytes, 'completeRows': len(rows), 'completeLogicalBytes': sum(row['bytes'] for row in rows.values()), 'maximumArchivesPerIndexPage': MAX_ARCHIVES, 'provisionalPagesIncludeExistingArchives': False, 'actualPagesRequireAllOrdinaryWitnessInputs': True, 'allDeclaredRowsPreserved': True, 'originalBodiesRead': False, 'gitWitnessesIssued': False, 'archivesCaptured': False, 'completeLatestEvidence': False, 'adoption': False}
-    _fresh(output / 'shard-plan.json', _encoded(plan), MAX_INPUT_BYTES, check)
+    ledger = _fresh(output / 'shard-plan.json', _encoded(plan), MAX_INPUT_BYTES, check)
+    # The final ledger write is an I/O boundary too. Neither an input nor an
+    # earlier component may change during it and still produce a success.
+    _unchanged(records, MAX_MANIFEST, check)
+    _outputs_unchanged(output, [row['manifest'] for row in shards], MAX_MANIFEST, check)
+    _outputs_unchanged(output, [ledger], MAX_INPUT_BYTES, check)
     check()
     return plan
 
@@ -281,7 +286,10 @@ def plan_index_pages(inputs, output, *, cap_seconds=30):
     _unchanged(records, MAX_INDEX, check)
     _outputs_unchanged(output, [row['index'] for row in output_pages], MAX_INDEX, check)
     plan = {'schema': 'complete-ordinary-index-page-plan-v1', 'inputs': [fact for unused, fact in records], 'pages': output_pages, 'membership': membership, 'maximumArchivesPerPage': MAX_ARCHIVES, 'directArchiveWitnesses': len(archives), 'allDeclaredWitnessRowsPreserved': True, 'gitWitnessesAuthenticated': False, 'sourceBodiesOrArchivesRead': False, 'semanticAuthority': False, 'adoption': False}
-    _fresh(output / 'index-page-plan.json', _encoded(plan), MAX_INPUT_BYTES, check)
+    ledger = _fresh(output / 'index-page-plan.json', _encoded(plan), MAX_INPUT_BYTES, check)
+    _unchanged(records, MAX_INDEX, check)
+    _outputs_unchanged(output, [row['index'] for row in output_pages], MAX_INDEX, check)
+    _outputs_unchanged(output, [ledger], MAX_INPUT_BYTES, check)
     check()
     return plan
 

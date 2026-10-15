@@ -13,3 +13,9 @@
   matching-digest unequal-byte counterexamples. All new controls are **UNRUN**;
   no archive capture, compression, case mutation or new fit claim accompanies
   this source-only batch.
+- Retain the initial unrun source seal and correct finalization after peer
+  review: both planners recheck all complete inputs and component outputs after
+  writing their final ledger, then verify that ledger again. New whole controls
+  mutate inputs, earlier components or the ledger at that exact write boundary;
+  failures retain outputs and cannot return success. These controls are also
+  **UNRUN**; no receiving qualification is claimed.

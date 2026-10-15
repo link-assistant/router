@@ -189,6 +189,40 @@ class ShardTests(unittest.TestCase):
             if variant == 'directory':
                 self.assertTrue((preserved / 'capture-manifest-000001.json').exists())
 
+    def test_shard_final_ledger_write_cannot_hide_changed_input_component_or_ledger(self):
+        actual = planner._fresh
+        for variant in ('input', 'component', 'ledger'):
+            source = self.manifest('final-shard-' + variant + '.json', [self.row('a')])
+            original, target = source.read_bytes(), self.target()
+            preserved = source.with_name(source.name + '.preserved')
+
+            def mutate(path, raw, maximum, check):
+                result = actual(path, raw, maximum, check)
+                if path.name == 'shard-plan.json':
+                    if variant == 'input':
+                        source.rename(preserved)
+                        source.write_bytes(original)
+                    elif variant == 'component':
+                        component = target / 'capture-manifest-000001.json'
+                        value = json.loads(component.read_bytes())
+                        value['members'][0]['sha256'] = 'd' * 64
+                        component.write_bytes(planner._encoded(value))
+                    else:
+                        value = json.loads(path.read_bytes())
+                        value['completeRows'] = False
+                        path.write_bytes(planner._encoded(value))
+                return result
+
+            with patch.object(planner, '_fresh', mutate):
+                with self.assertRaisesRegex(ValueError, 'changed'):
+                    planner.plan_shards([source], target)
+            # Failed ledgers/components stay inspectable; their presence is
+            # never enough for the API or CLI to report successful planning.
+            self.assertTrue((target / 'shard-plan.json').exists())
+            self.assertEqual(source.read_bytes(), original)
+            if variant == 'input':
+                self.assertEqual(preserved.read_bytes(), original)
+
     def index(self, name, entries):
         path = self.root / name
         path.write_text(json.dumps({'schema': 'complete-packet-git-index-v1', 'archives': entries}))
@@ -227,6 +261,38 @@ class ShardTests(unittest.TestCase):
         too_many = self.index('too-many.json', {str(i): self.witness(str(i)) for i in range(65)})
         with self.assertRaisesRegex(ValueError, 'ordinary packet index'):
             planner.plan_index_pages([too_many], self.target())
+
+    def test_index_final_ledger_write_cannot_hide_changed_input_page_or_ledger(self):
+        actual = planner._fresh
+        for variant in ('input', 'component', 'ledger'):
+            source = self.index('final-index-' + variant + '.json', {'a.xz': self.witness('a.xz')})
+            original, target = source.read_bytes(), self.target()
+            preserved = source.with_name(source.name + '.preserved')
+
+            def mutate(path, raw, maximum, check):
+                result = actual(path, raw, maximum, check)
+                if path.name == 'index-page-plan.json':
+                    if variant == 'input':
+                        source.rename(preserved)
+                        source.write_bytes(original)
+                    elif variant == 'component':
+                        component = target / 'packet-git-index-000001.json'
+                        value = json.loads(component.read_bytes())
+                        value['archives']['a.xz']['sha256'] = 'd' * 64
+                        component.write_bytes(planner._encoded(value))
+                    else:
+                        value = json.loads(path.read_bytes())
+                        value['directArchiveWitnesses'] = False
+                        path.write_bytes(planner._encoded(value))
+                return result
+
+            with patch.object(planner, '_fresh', mutate):
+                with self.assertRaisesRegex(ValueError, 'changed'):
+                    planner.plan_index_pages([source], target)
+            self.assertTrue((target / 'index-page-plan.json').exists())
+            self.assertEqual(source.read_bytes(), original)
+            if variant == 'input':
+                self.assertEqual(preserved.read_bytes(), original)
 
     def test_actual_unchanged_reader_authenticates_pages_in_both_physical_states(self):
         from packet_test import PacketTests
