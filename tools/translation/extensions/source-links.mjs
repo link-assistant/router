@@ -32,13 +32,15 @@ export function copyMetadata(value,{cells=200000,bytes=4194304,preserveKeyOrder=
   if(!value||typeof value!=='object'||types.isProxy(value)||active.has(value))fail('metadata must be acyclic data');
   const prototype=Object.getPrototypeOf(value);
   if(prototype!==Object.prototype&&prototype!==null&&prototype!==Array.prototype)fail('unexpected metadata prototype');
-  const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(descriptors),array=Array.isArray(value);
-  for(const key of keys){const descriptor=descriptors[key];if(typeof key!=='string'||!Object.hasOwn(descriptor,'value')||(!descriptor.enumerable&&!(array&&key==='length')))fail('accessor, symbol or hidden metadata');}
+  // Reuse this enumeration without adding reflection or coercing a caller's
+  // rebound String result twice; the membership lookup uses the numeric index.
+  const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(descriptors),array=Array.isArray(value),ownIndexes=array?{__proto__:null}:null;
+  for(const key of keys){const descriptor=descriptors[key];if(typeof key!=='string'||!Object.hasOwn(descriptor,'value')||(!descriptor.enumerable&&!(array&&key==='length')))fail('accessor, symbol or hidden metadata');if(array)ownIndexes[key]=true;}
   active.add(value);let result;
   if(array){
     const length=descriptors.length.value;if(!Number.isSafeInteger(length)||length<0||length>budget.cells)fail('array metadata budget exhausted');
     if(keys.length!==length+1)fail('array metadata holes or extra properties');
-    result=[];for(let index=0;index<length;index++){const descriptor=descriptors[String(index)];if(!descriptor)fail('array metadata hole');result.push(copyMetadata(descriptor.value,{preserveKeyOrder},depth+1,active,budget));}
+    result=[];for(let index=0;index<length;index++){const key=String(index);if(ownIndexes[index]!==true)fail('array metadata hole');const descriptor=descriptors[key];if(!descriptor)fail('array metadata hole');result.push(copyMetadata(descriptor.value,{preserveKeyOrder},depth+1,active,budget));}
   }else {
     // Copy certificates hash their original JSON property order. Canonical
     // metadata cloning must retain every signed byte inside those envelopes.

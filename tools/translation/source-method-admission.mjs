@@ -95,10 +95,11 @@ export function validateOriginalMethodAssociations(surface) {
     if(depth>128)throw new TypeError('Original method source module depth exceeds its source bound');
     const items=ownData(container,'items');
     if(types.isProxy(items)||!Array.isArray(items)||Object.getPrototypeOf(items)!==Array.prototype)throw new TypeError('Original method source items require an ordinary data array');
-    const descriptors=Object.getOwnPropertyDescriptors(items),length=descriptors.length.value;
-    if(Reflect.ownKeys(descriptors).length!==length+1||length>budget)throw new TypeError('Original method source item array is sparse, extended or exceeds its bound');
+    const descriptors=Object.getOwnPropertyDescriptors(items),length=descriptors.length.value,keys=Reflect.ownKeys(descriptors);
+    if(keys.length!==length+1||length>budget)throw new TypeError('Original method source item array is sparse, extended or exceeds its bound');
+    const ownIndexes={__proto__:null};for(let at=0;at<keys.length;at++)ownIndexes[keys[at]]=true;
     for(let index=0;index<length;index++){
-      const descriptor=descriptors[String(index)];if(!descriptor||!('value'in descriptor))throw new TypeError('Original method source items cannot invoke accessors');
+      const key=String(index),descriptor=ownIndexes[index]===true?descriptors[key]:undefined;if(!descriptor||!('value'in descriptor))throw new TypeError('Original method source items cannot invoke accessors');
       if(--budget<0)throw new TypeError('Original method source items exceed their bound');
       const entry=descriptor.value,kind=ownData(entry,'k');
       if(kind==='module')visit(entry,depth+1);else if(Object.hasOwn(entry,'sourceMethodProof')){ownData(entry,'sourceMethodProof');originalMethodSemanticFacts(entry);}

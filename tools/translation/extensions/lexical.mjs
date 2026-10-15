@@ -14,9 +14,10 @@ function tokenSnapshot(tokens) {
   if(!Array.isArray(tokens)||types.isProxy(tokens)||Object.getPrototypeOf(tokens)!==Array.prototype)throw new TypeError('source links: expected original tokenizer tokens');
   const descriptors=Object.getOwnPropertyDescriptors(tokens),keys=Reflect.ownKeys(descriptors),length=descriptors.length?.value;
   if(!Number.isSafeInteger(length)||keys.length!==length+1)throw new TypeError('source links: changed tokenizer array');
+  const ownIndexes={__proto__:null};for(let at=0;at<keys.length;at++)ownIndexes[keys[at]]=true;
   const result=[];
   for(let index=0;index<length;index++) {
-    const descriptor=descriptors[index];if(!descriptor||!('value' in descriptor))throw new TypeError('source links: changed tokenizer array');
+    const descriptor=ownIndexes[index]===true?descriptors[index]:undefined;if(!descriptor||!('value' in descriptor))throw new TypeError('source links: changed tokenizer array');
     const token=descriptor.value;if(!token||types.isProxy(token)||Object.getPrototypeOf(token)!==Object.prototype)throw new TypeError('source links: changed tokenizer token');
     const fields=Object.getOwnPropertyDescriptors(token),copy={};
     for(const key of Reflect.ownKeys(fields)) {

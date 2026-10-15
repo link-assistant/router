@@ -50,7 +50,8 @@ function exactNamespaceTarget(actual,expected){
   if(types.isProxy(actual)||!Array.isArray(actual)||Object.getPrototypeOf(actual)!==Array.prototype)return false;
   const descriptors=Object.getOwnPropertyDescriptors(actual),keys=Reflect.ownKeys(descriptors);
   if(keys.length!==expected.length+1||descriptors.length?.value!==expected.length)return false;
-  for(let index=0;index<expected.length;index++){const descriptor=descriptors[index];if(!descriptor||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable||descriptor.value!==expected[index]||typeof expected[index]!=='string')return false;}
+  const ownIndexes={__proto__:null};for(let at=0;at<keys.length;at++)ownIndexes[keys[at]]=true;
+  for(let index=0;index<expected.length;index++){const descriptor=ownIndexes[index]===true?descriptors[index]:undefined;if(!descriptor||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable||descriptor.value!==expected[index]||typeof expected[index]!=='string')return false;}
   return true;
 }
 function exactNamespaceCapture(parser,snapshot){

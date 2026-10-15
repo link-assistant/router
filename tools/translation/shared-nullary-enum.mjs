@@ -52,10 +52,11 @@ function reparseOriginalEnum(layout,original) {
 }
 function collect(items,path,result,budget={remaining:100000}) {
   if(types.isProxy(items)||!Array.isArray(items)||Object.getPrototypeOf(items)!==Array.prototype||path.length>128)throw new TypeError('Shared nullary source requires ordinary bounded module items');
-  const descriptors=Object.getOwnPropertyDescriptors(items),length=descriptors.length.value;
-  if(Reflect.ownKeys(descriptors).length!==length+1||length>budget.remaining)throw new TypeError('Shared nullary source items are sparse, extended or unbounded');
+  const descriptors=Object.getOwnPropertyDescriptors(items),length=descriptors.length.value,keys=Reflect.ownKeys(descriptors);
+  if(keys.length!==length+1||length>budget.remaining)throw new TypeError('Shared nullary source items are sparse, extended or unbounded');
+  const ownIndexes={__proto__:null};for(let at=0;at<keys.length;at++)ownIndexes[keys[at]]=true;
   for(let index=0;index<length;index++) {
-    const descriptor=descriptors[String(index)];if(!descriptor||!Object.hasOwn(descriptor,'value')||--budget.remaining<0)throw new TypeError('Shared nullary source items cannot invoke callbacks');
+    const key=String(index),descriptor=ownIndexes[index]===true?descriptors[key]:undefined;if(!descriptor||!Object.hasOwn(descriptor,'value')||--budget.remaining<0)throw new TypeError('Shared nullary source items cannot invoke callbacks');
     const item=descriptor.value,kind=ownData(item,'k');
     if(kind==='module'){collect(ownData(item,'items'),[...path,ownData(item,'name')],result,budget);continue;}
     // Private lookup precedes every inspection of the declaration's metadata.
