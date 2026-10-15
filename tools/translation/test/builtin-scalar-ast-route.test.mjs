@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {execFileSync} from 'node:child_process';
+import {currentOriginalRustPaths} from './original-rust-census.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {proveBuiltinScalarSourceOutput,isBuiltinScalarSourceOutput,assertBuiltinScalarSourceOutput,builtinScalarOriginalSourcePlan} from '../builtin-scalar-ast-route.mjs';
 import {createDeriveFootprintContext,deriveFootprintExternalModules,deriveFootprintConcatSourceProofs,deriveFootprintClapArgsSourceOutput} from '../derive-footprints.mjs';
@@ -52,5 +52,5 @@ test('selected original builtin namespace routes admit independent borrowed fiel
 });
 
 for(const file of ['src/cli/management_args.rs','src/cli/emergency_args.rs'])test('complete unchanged '+file+' original data survives emitted JS and strict TS',async()=>{
-  const source=readFileSync(new URL(file,root),'utf8'),paths=execFileSync('git',['ls-files','*.rs'],{cwd:root,encoding:'utf8',timeout:10000}).trim().split('\n'),result=translateProject({entry:file,paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(paths.length,804);assert.equal(result.meta.sources.find(row=>row.source===file).sha256,hash(source));assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,1);assert.equal(result.meta.runtimeParity,false);const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),name=file.includes('emergency')?'EmergencyArgs':'ManagementArgs';assert.equal(program.declarations.get(name).k,'data');assert.equal(result.meta.deriveNamespaceFootprints.certificates[0].generatedImplBehavior,false);await verifyTypedTargets(result,()=>{}, {childTimeoutMs:30000});
+  const source=readFileSync(new URL(file,root),'utf8'),paths=currentOriginalRustPaths(root),result=translateProject({entry:file,paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});assert.equal(result.meta.sources.find(row=>row.source===file).sha256,hash(source));assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,1);assert.equal(result.meta.runtimeParity,false);const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),name=file.includes('emergency')?'EmergencyArgs':'ManagementArgs';assert.equal(program.declarations.get(name).k,'data');assert.equal(result.meta.deriveNamespaceFootprints.certificates[0].generatedImplBehavior,false);await verifyTypedTargets(result,()=>{}, {childTimeoutMs:30000});
 });

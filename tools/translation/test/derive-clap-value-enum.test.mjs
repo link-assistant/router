@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {gzipSync} from 'node:zlib';
-import {execFileSync} from 'node:child_process';
+import {currentOriginalRustPaths} from './original-rust-census.mjs';
 import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof,DERIVE_SOURCE_PROFILE,deriveDependencySource} from '../derive-dependencies.mjs';
 import {inventoryDeriveQuoteMeta} from '../derive-quote-meta.mjs';
@@ -63,7 +63,7 @@ test('complete unchanged original ClientKind eight variants preserve exact names
 });
 
 test('whole original clients module admits its data declaration and source constants in emitted JS and strict TS',{timeout:60000},async()=>{
-  const paths=execFileSync('git',['ls-files','*.rs'],{cwd:root,encoding:'utf8',timeout:10000}).trim().split('\n');assert.equal(paths.length,804);
+  const paths=currentOriginalRustPaths(root);
   const result=translateProject({entry:'src/clients.rs',paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
   retain('06-complete-original-client-production',{paths,result});
   const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),type=program.declarations.get('ClientKind');assert.equal(type.k,'data');assert.equal(type.ctors.length,8);assert.equal(result.meta.runtimeParity,false);
