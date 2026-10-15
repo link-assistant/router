@@ -1,0 +1,2 @@
+### Added
+- Draft additive reusable contribution and agent templates covering ordered language/repository rules, checked meta round trips, automated synchronization and freshness, focused JavaScript/strict TypeScript followed by the complete same-SHA gate, source-only Rust regressions under stricter user policies, bounded single-workload resources and coordinated publication. Stage an exact patch outside the case allocation; compiler-only exports remain unchanged. Structural checks are source-drafted and unrun.
