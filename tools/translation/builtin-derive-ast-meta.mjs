@@ -5,6 +5,8 @@ import {gunzipSync} from 'node:zlib';
 import {isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
 import {requireOriginalStandardBangOutputSourcePlan} from './standard-bang-output-source.mjs';
+import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+const collectionInputsInitiallyNative=originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
 const root=new URL('./source-profiles/builtin-derive-bang/',import.meta.url);
 const profileBytes=readFileSync(new URL('manifest.json',root));
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -175,10 +177,42 @@ export function compilerOutputAstSourceAccess(profile,sourcePlan){
     assert:fragment=>assertOriginalAstFunction(child,fragment),
     definition:(path,kind,name)=>originalAstDefinition(child,path,kind,name),
     variant:(definition,name)=>astEnumVariant(child,definition,name)});
-  compilerOutputSources.set(access,{profile,sourcePlan});return access;
+  compilerOutputSources.set(access,{profile,sourcePlan,child});return access;
 }
 export function requireCompilerOutputAstSourceAccess(access,profile=null){
   const state=compilerOutputSources.get(access);if(!state)throw new TypeError('Copied or foreign compiler output source access');
   if(!profiles.has(state.profile)||profile!==null&&state.profile!==profile)throw new TypeError('Original compiler output parent changed');
   requireOriginalStandardBangOutputSourcePlan(state.sourcePlan);return access;
+}
+
+// Source availability for the collection/return-contract lane only. No existing
+// profile factory gains these inputs or an additional semantic domain.
+function collectionInputsGuard(){if(!collectionInputsInitiallyNative||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())throw new TypeError('Original collection source operations changed');}
+export function compilerOutputCollectionSourceAccess(access){
+  collectionInputsGuard();
+  requireCompilerOutputAstSourceAccess(access);const prior=compilerOutputSources.get(access),parent=profiles.get(prior.child);
+  const root=new URL('./source-profiles/compiler-output-collections/',import.meta.url),bytes=readFileSync(new URL('manifest.json',root));
+  if(hash(bytes)!=='95838d907d2550fdbac20c8b1a805336cb0cb7db8fd242e497fa840673a11f85')throw new TypeError('Original collection source inventory changed');
+  const manifest=JSON.parse(bytes),sources=new Map(parent.sources);
+  if(manifest.revision!=='29483883eed69d5fb4db01964cdf2af4d86e9cb2'||manifest.sources.length!==16)throw new TypeError('Original collection source version/count differs');
+  for(const license of manifest.licenses){const original=readFileSync(new URL(license.file,root));if(original.length!==license.bytes||hash(original)!==license.sha256)throw new TypeError('Original collection license changed');}
+  const seen=new Set();let total=0;
+  for(const entry of manifest.sources){
+    if(seen.has(entry.path))throw new TypeError('Original collection source repeated');seen.add(entry.path);
+    const packed=readFileSync(new URL(entry.archive,root));if(packed.length!==entry.archiveBytes||hash(packed)!==entry.archiveSha256)throw new TypeError('Original collection archive changed');
+    const raw=gunzipSync(packed,{maxOutputLength:2*1024*1024});if(raw.length!==entry.bytes||hash(raw)!==entry.sha256)throw new TypeError('Original collection source changed');total+=raw.length;if(total>2*1024*1024)throw new TypeError('Original collection source aggregate bound');
+    const source=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(raw),existing=sources.get(entry.path);
+    if(existing&&(existing.source!==source||existing.sha256!==entry.sha256||existing.bytes!==entry.bytes))throw new TypeError('Original collection source overlap differs');
+    if(!existing)sources.set(entry.path,freeze({...entry,source}));
+  }
+  const child=Object.freeze({digest:hash(JSON.stringify({parent:prior.child.digest,sourceProfileSha256:hash(bytes)})),rustVersion:prior.profile.rustVersion});
+  profiles.set(child,{dependencies:parent.dependencies,sources,functions:new Map(),syntaxRoots:new Map()});
+  const result=Object.freeze({schema:'private-compiler-output-collection-source-access-v1',digest:child.digest,sourceProfileSha256:hash(bytes),
+    original:path=>{collectionInputsGuard();return builtinAstOriginal(child,path);},
+    function:(path,name,selector=null)=>{collectionInputsGuard();return originalAstFunction(child,path,name,selector);},
+    assert:fragment=>{collectionInputsGuard();return assertOriginalAstFunction(child,fragment);},
+    definition:(path,kind,name)=>{collectionInputsGuard();return originalAstDefinition(child,path,kind,name);},
+    variant:(definition,name)=>{collectionInputsGuard();return astEnumVariant(child,definition,name);}});
+  collectionInputsGuard();
+  compilerOutputSources.set(result,{profile:prior.profile,sourcePlan:prior.sourcePlan,child});return result;
 }
