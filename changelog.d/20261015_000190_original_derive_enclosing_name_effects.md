@@ -22,7 +22,19 @@ operations retain the full original plan construction and callback behavior.
 Complete caller output reissue is never cached. Warm identity, late owner/hash
 wrapper fallback and fresh caller-output controls remain within the same cases.
 
-The complete ten-case positive/refusal group is source only and UNRUN. No original
-formatting body gain, scope-wide completion, generated trait behavior, runtime
+The first complete seven-file receiving pair preserved all 81 old cases, but
+failed two of the new ten controls in both Node and Bun. The seven-owner Default
+input was already namespace-complete; its unchanged source remains an explicitly
+already-closed control. A genuine standard-only input with incomplete output
+dimensions now contributes type/value lookup uncertainty even for builtin derive
+spellings. Only the private complete output effect can discharge this item's
+uncertainty. This is a conservative refusal/proof-boundary repair, not a historical
+namespace or body gain. The separate six-owner source exercises that repaired
+boundary, while an unproved Ord output keeps it unresolved. All four unknown-producer/import/conditional observations are retained
+before assertions; the missing conditional sibling retains ancestor bang effects
+without inventing inherited child type uncertainty.
+
+The successor complete ten-case positive/refusal group is source only and UNRUN.
+No original formatting body gain, scope-wide completion, generated trait behavior, runtime
 parity or Rust verification is claimed. All existing deadlines remain unchanged;
 full original census and affected regression qualification are pending.

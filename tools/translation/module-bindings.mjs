@@ -238,6 +238,11 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
           uncertain.type &&= !deriveCertificate.dimensions.typeNamespaceComplete;
           uncertain.attribute &&= !deriveCertificate.dimensions.attributeMacroComplete;
           uncertain.bang &&= !deriveCertificate.dimensions.bangMacroComplete;
+          // A registered standard-only input identifies owners, not their
+          // generated type/value outputs. Incomplete private input evidence
+          // must contribute uncertainty even when the derive spellings are
+          // builtin; only a separate complete output effect may discharge it.
+          if(deriveCertificate.standardInput&&(deriveCertificate.dimensions.typeNamespaceComplete===false||deriveCertificate.dimensions.valueNamespaceComplete===false))uncertain.type=true;
           // Bang closure is per exact original invocation and joins every
           // actual owner; sibling/ancestor uncertainty still accumulates below.
           const bangOutput=deriveBangContext&&deriveBangOutputAt(deriveBangContext,deriveContext,module,item);

@@ -62,18 +62,35 @@ test('stable language rule consumes complete original resolver actions independe
 });
 
 test('all privately closed builtin branches narrow only their original item type uncertainty',()=>{
+ // Preserve the original seven-owner source as an already-closed Default
+ // input control; it never demonstrated a historical namespace gain.
  const row=setup('#[derive(Copy,Clone,Debug,Default,Eq,PartialEq,Hash)]pub struct Payload{value:u8}');
  const before=resolveModuleBindings(row),after=resolve(row),token=effect(row),actual=facts(token,row);
- assert.equal(model(before).unresolvedTypeScope,true);assert.equal(model(after).unresolvedTypeScope,false);
+ const requested=proveDeriveRequestedNameUnchanged(token,row.context,row.deriveContext,row.module,row.item,names),selected=deriveRequestedNameEffectFacts(requested,token,row.context,row.deriveContext,row.module,row.item);
+ const standard=setup('#[derive(Copy,Clone,Debug,Eq,PartialEq,Hash)]pub struct Payload{value:u8}');
+ const standardBefore=resolveModuleBindings(standard),standardAfter=resolve(standard),standardToken=effect(standard),standardFacts=facts(standardToken,standard);
+ const incomplete=setup('#[derive(Ord)]pub struct Payload{value:u8}'),incompleteBefore=resolveModuleBindings(incomplete),incompleteAfter=resolve(incomplete);
+ retain('02-every-builtin-alternative',{row,before,after,token,actual,requested,selected,standard,standardBefore,standardAfter,standardToken,standardFacts,incomplete,incompleteBefore,incompleteAfter});
+ assert.equal(model(before).unresolvedTypeScope,false);assert.equal(model(after).unresolvedTypeScope,false);
  assert.equal(model(after).unresolvedBangMacroScope,false);
  assert.equal(actual.alternatives.length,7);assert.ok(actual.alternatives.every(output=>output.kind==='ItemKind::Impl'));
  assert.ok(actual.alternatives.some(output=>output.originalCompleteOutput.proof.route?.branches?.length>1));
- // Public dimensions keep their historical limited contract.
+ // Public dimensions keep their historical limited contract. The old Default
+ // input is complete; the standard-only input explicitly is not.
  assert.equal(row.context.certificates[0].dimensions.typeNamespaceComplete,false);
- assert.equal(row.deriveContext.certificates[0].dimensions.typeNamespaceComplete,false);
- const requested=proveDeriveRequestedNameUnchanged(token,row.context,row.deriveContext,row.module,row.item,names),selected=deriveRequestedNameEffectFacts(requested,token,row.context,row.deriveContext,row.module,row.item);
+ assert.ok(row.deriveContext.certificates[0].builtinDefault);
+ assert.equal(row.deriveContext.certificates[0].dimensions.typeNamespaceComplete,true);
+ assert.equal(row.deriveContext.certificates[0].dimensions.valueNamespaceComplete,true);
  assert.deepEqual(selected.requests,names);assert.equal(selected.namespaceAuthority,false);
- retain('02-every-builtin-alternative',{row,before,after,token,actual,requested,selected});
+ assert.ok(standard.deriveContext.certificates[0].standardInput);
+ assert.equal(standard.deriveContext.certificates[0].dimensions.typeNamespaceComplete,false);
+ assert.equal(standard.deriveContext.certificates[0].dimensions.valueNamespaceComplete,false);
+ assert.equal(standard.context.certificates[0].dimensions.typeNamespaceComplete,false);
+ assert.equal(model(standardBefore).unresolvedTypeScope,true,'incomplete input must retain its newly repaired conservative boundary');
+ assert.equal(model(standardAfter).unresolvedTypeScope,false,'only the complete private per-invocation output effect discharges that boundary');
+ assert.equal(standardFacts.alternatives.length,6);assert.ok(standardFacts.alternatives.every(output=>output.kind==='ItemKind::Impl'));
+ assert.ok(incomplete.deriveContext.certificates[0].standardInput);
+ assert.equal(model(incompleteBefore).unresolvedTypeScope,true);assert.equal(model(incompleteAfter).unresolvedTypeScope,true,'an unproved output cannot discharge the repaired boundary');
 });
 
 test('unit enum and full data branches retain all alternatives without trait or runtime promotion',()=>{
@@ -110,16 +127,33 @@ test('a requested name proof preserves actual local shadows and never resolves a
 
 test('unknown sibling producers imports and cfg alternatives remain unresolved',()=>{
  const rows=[];
- for(const [source,rootSource,profile]of [
-  ['#[derive(Clone)]pub struct Payload{value:u8}#[unknown]pub struct Other;','mod model;',PRODUCTION_PROFILE],
-  ['#[derive(Clone)]pub struct Payload{value:u8}unknown!();','mod model;',PRODUCTION_PROFILE],
-  ['use unknown::*;#[derive(Clone)]pub struct Payload{value:u8}','mod model;',PRODUCTION_PROFILE],
-  ['#[derive(Clone)]pub struct Payload{value:u8}','mod model;#[cfg(unix)]mod conditional;',compilationProfile({flags:{test:false}})],
+ for(const [label,source,rootSource,profile]of [
+  ['attribute','#[derive(Clone)]pub struct Payload{value:u8}#[unknown]pub struct Other;','mod model;',PRODUCTION_PROFILE],
+  ['bang','#[derive(Clone)]pub struct Payload{value:u8}unknown!();','mod model;',PRODUCTION_PROFILE],
+  ['glob','use unknown::*;#[derive(Clone)]pub struct Payload{value:u8}','mod model;',PRODUCTION_PROFILE],
+  ['cfg','#[derive(Clone)]pub struct Payload{value:u8}','mod model;#[cfg(unix)]mod conditional;',compilationProfile({flags:{test:false}})],
  ]){
-  const row=setup(source,rootSource,profile),resolved=resolve(row);assert.equal(parserSourceScope(model(resolved),resolved.scopes).unresolvedTypeScope,true);
-  rows.push({row,resolved,effectError:failure(()=>effect(row))});
+  const row=setup(source,rootSource,profile),resolved=resolve(row),scope=parserSourceScope(model(resolved),resolved.scopes),rootScope=resolved.scopes.find(scope=>scope.path.length===0);
+  let effectToken=null,effectFacts=null,effectError=null;
+  try{effectToken=effect(row);effectFacts=facts(effectToken,row);}catch(error){effectError={name:error.name,message:error.message,stack:error.stack};}
+  const observed={label,row,resolved,scope,rootScope,effectToken,effectFacts,effectError};rows.push(observed);
+  // Capture every variant before any assertions, including unexpected success.
+  retain('06-unknown-'+label,observed);
  }
  retain('06-unknown-producers-and-conditions',{rows});
+ for(const observed of rows){
+  assert.equal(observed.effectError?.name,'TypeError',observed.label);
+  assert.equal(observed.effectToken,null,observed.label);
+  if(observed.label!=='cfg')assert.equal(observed.scope.unresolvedTypeScope,true,observed.label);
+  else{
+   // The missing conditional sibling contributes ancestor bang uncertainty,
+   // not inherited type uncertainty to this unrelated child module.
+   assert.equal(observed.scope.unresolvedTypeScope,false);
+   assert.equal(observed.rootScope.bindings.find(binding=>binding.name==='conditional'&&binding.namespace==='type')?.status,'unresolved');
+   assert.equal(observed.rootScope.unresolvedBangMacroScope,true);
+   assert.equal(observed.scope.unresolvedBangMacroScope,true);
+  }
+ }
 });
 
 test('opaque bodies types helpers additional derives and generated attributes cannot borrow empty effects',()=>{
