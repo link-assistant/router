@@ -72,6 +72,13 @@ test('corpus review requires complete Rust discovery and bounded ordinary output
     assert.throws(()=>reviewTranslationDraft({root:fixture.directory,inventoryPath:'../inventory.json'}),/bounded relative paths/);
   } finally {fixture.dispose();}
 });
+function installDeadlineFixture(directory) {
+  fs.mkdirSync(path.join(directory, 'scripts'), { recursive: true });
+  for (const name of ['run-node-tests.mjs', 'node-case-deadlines.mjs', 'node-case-deadline-reporter.mjs']) fs.copyFileSync(new URL(`../${name}`, import.meta.url), path.join(directory, 'scripts', name));
+  const dependencyDirectory = path.join(directory, 'packages/javascript/node_modules');
+  fs.mkdirSync(dependencyDirectory, { recursive: true });
+  fs.symlinkSync(fs.realpathSync(new URL('../../packages/javascript/node_modules/typescript', import.meta.url)), path.join(dependencyDirectory, 'typescript'), 'dir');
+}
 test('local reverse stage discovers a new failing test under both engines before freshness', { timeout: 30_000 }, () => {
   const commands = stages.find(([id]) => id === 'reverse-translation')[1];
   assert.deepEqual(commands, [
@@ -87,11 +94,7 @@ test('local reverse stage discovers a new failing test under both engines before
   delete environment.NODE_TEST_CONTEXT;
   try {
     fs.mkdirSync(testDirectory, { recursive: true });
-    fs.mkdirSync(path.join(directory, 'scripts'), { recursive: true });
-    for (const name of ['run-node-tests.mjs', 'node-case-deadlines.mjs', 'node-case-deadline-reporter.mjs']) fs.copyFileSync(new URL(`../${name}`, import.meta.url), path.join(directory, 'scripts', name));
-    const dependencyDirectory = path.join(directory, 'packages/javascript/node_modules');
-    fs.mkdirSync(dependencyDirectory, { recursive: true });
-    fs.symlinkSync(fs.realpathSync(new URL('../../packages/javascript/node_modules/typescript', import.meta.url)), path.join(dependencyDirectory, 'typescript'), 'dir');
+    installDeadlineFixture(directory);
     fs.writeFileSync(path.join(testDirectory, 'existing.test.mjs'), "import test from 'node:test'; test('existing translator', () => {});\n");
     for (const command of commands.slice(0, 2)) {
       const result = spawnSync(command, { cwd: directory, env: environment, shell: true, encoding: 'utf8', timeout: 10_000 });
@@ -159,18 +162,21 @@ test('large tracked path inventories remain fingerprinted beyond the default sub
 });
 
 test('the full translation stage runs every fixture with bounded test-file concurrency',()=>{
-  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'router-gate-concurrency-'));
+  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'router-gate-concurrency-')),outside=fs.mkdtempSync(path.join(os.tmpdir(),'router-gate-unselected-'));
   try {
+    installDeadlineFixture(directory);
     const files=Array.from({length:4},(_,index)=>path.join(directory,`${index}.test.mjs`)),trace=path.join(directory,'trace.jsonl');
     for(const file of files)fs.writeFileSync(file,`import test from 'node:test'; import {appendFileSync} from 'node:fs'; test('bounded worker',async()=>{const record=event=>appendFileSync(${JSON.stringify(trace)},JSON.stringify({event,pid:process.pid})+${JSON.stringify(String.fromCharCode(10))});record('start');await new Promise(resolve=>setTimeout(resolve,100));record('end');});`);
     const command=stages.find(([name])=>name==='translation')[1][0].split(' ');
     assert.equal(command.shift(),'node');assert.equal(command.pop(),'tools/translation/serialization-schema/*.test.mjs');assert.equal(command.pop(),'tools/translation/test/*.test.mjs');
     const environment={...process.env};delete environment.NODE_TEST_CONTEXT;
-    execFileSync('node',[...command,...files],{encoding:'utf8',timeout:10000,env:environment});
+    execFileSync('node',[...command,...files],{cwd:directory,encoding:'utf8',timeout:10000,env:environment});
+    const externalFile=path.join(outside,'outside.test.mjs');fs.writeFileSync(externalFile,"import test from 'node:test';test('must remain unselected',()=>{});\n");
+    const rejected=spawnSync('node',[...command,externalFile],{cwd:directory,encoding:'utf8',timeout:10000,env:environment});assert.ok(!rejected.error,rejected.error?.message);assert.notEqual(rejected.status,0);assert.match(rejected.stdout+rejected.stderr,/Whole Node source must be inside selected root/u);
     const active=new Set();let started=0,peak=0;
     for(const {event,pid} of fs.readFileSync(trace,'utf8').trim().split('\n').map(line=>JSON.parse(line))) {
       if(event==='start'){active.add(pid);started++;peak=Math.max(peak,active.size);}else{assert.ok(active.delete(pid));}
     }
     assert.equal(started,4);assert.equal(active.size,0);assert.ok(peak<=2);
-  } finally {fs.rmSync(directory,{recursive:true,force:true});}
+  } finally {fs.rmSync(directory,{recursive:true,force:true});fs.rmSync(outside,{recursive:true,force:true});}
 });

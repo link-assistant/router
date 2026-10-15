@@ -84,12 +84,21 @@ its receiving fixture; no separate compiler version is introduced. Strict
 TypeScript selection and its existing override
 are unchanged and the override is recorded, not rewritten.
 
-All new source/audit, subprocess and structural controls are **UNRUN**.
+The nine complete core source/audit and subprocess controls passed the receiving
+Node/Bun pair. The related local/workflow integration corrections and their
+additional structural/fixture controls remain **UNRUN**.
 The ninth whole control retains an actual ignored-stdio descendant identity and
 SIGTERM tape, requires SIGKILL escalation and observed group disappearance, and
 provides finally cleanup for its own descendant. This control requires Unix. They
 include actual complete synchronous-overdue, normal nested/duplicate/default,
 large-output and original-failure cohorts, as well as exact-boundary and
-ambiguous/mutated source observations. Receiving qualification under both
-engines is required before relying on this automation. No Rust runs, generated
+ambiguous/mutated source observations. Complete receiving qualification of the related integration suites under both
+engines is still required before relying on the integrated automation. No Rust runs, generated
 compiler artifacts, source case limits or existing archive formats change.
+
+The original nine complete audit controls passed the receiving Node/Bun pair.
+That same integration run exposed an outside-root temp fixture and an auditor
+that rejected the required always-run uploader. Their source-only corrections
+keep selected-root enforcement and every check step unconditional; only the
+unique, fully validated, non-run evidence action receives an `always()` exception.
+The corrected whole local/workflow suites remain UNRUN.

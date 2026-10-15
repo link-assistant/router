@@ -23,3 +23,8 @@
   disappearance within the unchanged outer budget before success. Add a ninth
   complete ignored-stdio/SIGTERM-resistant descendant control with full identity,
   signal tape and finally cleanup. This successor remains **UNRUN**.
+- Nine core controls passed both receiving engines; related integration exposed
+  a temp-root fixture error and an overbroad conditional-step check. Correct the
+  fixture root/cwd and exempt only the exact validated evidence uploader, while
+  retaining forged conditional/check and continue-on-error refusals. These
+  related whole-suite repairs remain **UNRUN**.

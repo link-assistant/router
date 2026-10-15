@@ -77,12 +77,17 @@ export function auditWorkflows(sources) {
       const job = gate.jobs?.[id];
       if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
       const runs = (job?.steps ?? []).map(step => step.run);
+      let deadlineEvidenceUpload = null;
       if (['typescript', 'translation', 'reverse-translation'].includes(id)) {
         const uploads = (job?.steps ?? []).filter(step => step.uses === 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
         const upload = uploads.length === 1 ? uploads[0] : null;
-        if (!upload || Object.hasOwn(upload, 'run') || job.steps.at(-1) !== upload || upload.with?.name !== 'node-case-deadlines-${{ github.job }}-${{ inputs.sha }}' || upload.with?.path !== 'packages/javascript/node_modules/.node-case-deadlines/' || upload.with?.['include-hidden-files'] !== true || upload.with?.['if-no-files-found'] !== 'error') errors.push(`${gateName}/${id}: missing mandatory command evidence uploader for complete Node deadline receipts/raws`);
+        const validShape = upload && !Object.hasOwn(upload, 'run') && job.steps.at(-1) === upload && upload.with?.name === 'node-case-deadlines-${{ github.job }}-${{ inputs.sha }}' && upload.with?.path === 'packages/javascript/node_modules/.node-case-deadlines/' && upload.with?.['include-hidden-files'] === true && upload.with?.['if-no-files-found'] === 'error';
+        if (!validShape) errors.push(`${gateName}/${id}: missing mandatory command evidence uploader for complete Node deadline receipts/raws`);
         if (upload && upload.if !== '${{ always() }}') errors.push(`${gateName}/${id}: conditional deadline evidence loss is forbidden`);
         if (upload?.['continue-on-error']) errors.push(`${gateName}/${id}: deadline evidence uploader cannot ignore failures`);
+        // Only this fully checked non-run action may retain evidence after a
+        // failure. A name/uses marker never exempts an executable check.
+        if (validShape && upload.if === '${{ always() }}' && !upload['continue-on-error']) deadlineEvidenceUpload = upload;
       }
       for (const command of required[id]) if (!runs.includes(command)) errors.push(`${gateName}/${id}: missing mandatory command ${command}`);
       const installations = id === 'lint'
@@ -95,7 +100,7 @@ export function auditWorkflows(sources) {
       }
       if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && normalizeProgram(step.run) === shaVerifier)) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
       for (const step of job?.steps ?? []) {
-        if (step['continue-on-error'] || Object.hasOwn(step, 'if')) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
+        if (step['continue-on-error'] || Object.hasOwn(step, 'if') && step !== deadlineEvidenceUpload) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);
         if (step.uses?.startsWith('actions/checkout@') && step.with?.ref !== '${{ inputs.sha }}') errors.push(`${gateName}/${id}: checkout must use inputs.sha`);
         if (/\b(?:cargo|rustc|rust-script|clippy-driver)\b|rust-toolchain|docker\/(?:build|setup-buildx)/.test(`${step.uses ?? ''}\n${step.run ?? ''}`)) errors.push(`${gateName}/${id}: Rust must not execute inside JavaScript gate`);
       }

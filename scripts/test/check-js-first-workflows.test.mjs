@@ -243,5 +243,9 @@ test('compiler case-deadline audits and complete always-retained raw receipts ca
   const uploader=job.steps.find(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');assert.ok(uploader);
   for(const change of [step=>{step.if='false';},step=>{step['continue-on-error']=true;},step=>{step.with['include-hidden-files']=false;},step=>{step.with.path='unrelated/';},step=>{step.with['if-no-files-found']='ignore';}])fails('javascript-first.yml',workflow=>{change(workflow.jobs[id].steps.find(step=>step.uses===uploader.uses));},'deadline');
   fails('javascript-first.yml',workflow=>{const command=workflow.jobs[id].steps.find(step=>step.run?.startsWith('node scripts/run-node-tests.mjs'));command.run=command.run.replace(/node scripts\/run-node-tests\.mjs --outer-timeout-ms=\d+/u,'node --test');},'mandatory command');
+  for(const bypass of ['if','continue-on-error'])fails('javascript-first.yml',workflow=>{const step=workflow.jobs[id].steps.find(step=>step.run?.startsWith('node scripts/run-node-tests.mjs'));step[bypass]=bypass==='if'?'${{ always() }}':true;step.name=uploader.name;},'conditional or ignore failures');
+  fails('javascript-first.yml',workflow=>{const selected=workflow.jobs[id],step=selected.steps.find(step=>step.run?.startsWith('node scripts/run-node-tests.mjs'));selected.steps=selected.steps.filter(item=>item.uses!==uploader.uses);Object.assign(step,{uses:uploader.uses,with:uploader.with,if:'${{ always() }}'});},'conditional or ignore failures');
+  fails('javascript-first.yml',workflow=>{const step=workflow.jobs[id].steps.find(step=>step.uses===uploader.uses);step.run='echo forged upload and check';},'deadline');
+  fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.unshift({name:uploader.name,uses:'actions/checkout@forged',if:'${{ always() }}',with:{ref:'${{ inputs.sha }}'}});},'conditional or ignore failures');
  }
 });
