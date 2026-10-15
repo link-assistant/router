@@ -22,7 +22,7 @@ Run the complete local gate:
 node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json
 ```
 
-It runs the actual JavaScript lint, native Node and Bun tests, type checks, strict parity, forward translation and reverse regeneration checks. A missing or partial parity entry keeps the gate red. Fix all reported failures together. Individual diagnostics such as `npm test --prefix packages/javascript`, `npm run typecheck --prefix packages/javascript`, `node scripts/check-router-parity.mjs` and `node --test scripts/test/*.test.mjs` help locate failures but do not replace the complete gate.
+It runs the actual JavaScript lint, native Node and Bun tests, type checks, strict parity, forward translation and reverse regeneration checks. A missing or partial parity entry keeps the gate red. Fix all reported failures together. Individual diagnostics such as `npm run native:test --prefix packages/javascript` and `npm run native:test:bun --prefix packages/javascript`, `npm run typecheck --prefix packages/javascript`, `node scripts/check-router-parity.mjs` and `node --test scripts/test/*.test.mjs` help locate failures but do not replace the complete gate.
 
 Use CI for broader Rust verification after the JavaScript gate. Do not run full local Cargo builds, test suites or Clippy. Only an explicitly necessary targeted exception can use the bounded shared build wrapper after a green stamp for the current SHA and file contents:
 
