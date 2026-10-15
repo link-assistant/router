@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {gzipSync} from 'node:zlib';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof,DERIVE_SOURCE_PROFILE,deriveDependencySource} from '../derive-dependencies.mjs';
@@ -14,13 +15,16 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const context=source=>createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE});
+const retain=(name,value)=>{const directory=process.env.ROUTER_OLD_VALUE_ENUM_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+'\n',{mtime:0}));}};
+let contextIndex=0;
+const context=source=>{const result=createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE});retain('context-'+String(++contextIndex).padStart(2,'0'),{source,result});return result;};
 
 test('locked actual Clap archives preserve old profile inputs and inventory every actual Rust member including constructor identifiers',()=>{
   assert.deepEqual(DERIVE_SOURCE_PROFILE.packages.slice(8).map(entry=>[entry.name,entry.bytes]),[['clap',65831],['clap_builder',171709],['clap_derive',33942],['heck',11517]]);
   const inventory=inventoryDeriveQuoteMeta(dependencies,'clap_derive');assert.equal(inventory.sourceMemberCount,16);assert.equal(inventory.quoteCount,170);
   assert.ok(deriveDependencySource(dependencies,'clap_derive','src/derives/args.rs').source.includes('constructor'));
   assert.ok(inventory.members.find(member=>member.source==='src/derives/args.rs').quotes.length>0);
+  retain('01-original-complete-inventory',inventory);
 });
 
 test('actual helper bindings source-order repetitions and Heck ASCII algorithm instantiate original one-impl/two-method quotes',()=>{
@@ -35,6 +39,7 @@ test('actual helper bindings source-order repetitions and Heck ASCII algorithm i
   assert.throws(()=>proveClapValueEnumSourceOutput({dependencies:structuredClone(dependencies),source}),/sealed/);
   for(const escaped of ['\\b','\\f','\\/','\\u0041'])assert.throws(()=>proveClapValueEnumSourceOutput({dependencies,source:'enum Choice {#[value(name="'+escaped+'")] First}'}),/literal escape/);
   const literalOnly=proveClapValueEnumSourceOutput({dependencies,source:'enum Choice {#[value(name="#[macro_export] macro_rules! escape {}",alias="é")] First}'});assert.deepEqual(literalOnly.outputObservation.bangCalls,[]);assert.deepEqual(literalOnly.outputObservation.definitions,[]);
+  retain('02-complete-original-quote-proofs',{source,proof,literalOnly});
 });
 
 test('unsupported variant payloads generics helpers documents and forged original owners remain refused',()=>{
@@ -54,13 +59,15 @@ test('complete unchanged original ClientKind eight variants preserve exact names
   const item=sourceItems(source).find(row=>row.name==='ClientKind');assert.deepEqual(certificate.span,{start:item.start,end:item.end});assert.equal(certificate.itemSha256,hash(source.slice(item.start,item.end)));
   const proof=certificate.clapValueEnumOutput;assert.deepEqual(proof.input.variants.map(row=>[row.name,row.canonicalName,row.aliases]),[['Codex','codex',[]],['ClaudeCode','claude',['claude-code']],['Cursor','cursor-agent',['cursor']],['GeminiCli','gemini',['gemini-cli']],['GrokCli','grok',['grok-cli']],['Opencode','opencode',[]],['QwenCode','qwen',['qwen-code']],['Agent','agent',[]]]);
   assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);
+  retain('05-complete-original-client-output',{source,result,certificate});
 });
 
 test('whole original clients module admits its data declaration and source constants in emitted JS and strict TS',{timeout:60000},async()=>{
   const paths=execFileSync('git',['ls-files','*.rs'],{cwd:root,encoding:'utf8',timeout:10000}).trim().split('\n');assert.equal(paths.length,804);
   const result=translateProject({entry:'src/clients.rs',paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  retain('06-complete-original-client-production',{paths,result});
   const program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),type=program.declarations.get('ClientKind');assert.equal(type.k,'data');assert.equal(type.ctors.length,8);assert.equal(result.meta.runtimeParity,false);
   assert.ok(result.meta.executable.some(row=>row.name==='CODEX_PROVIDER'));assert.ok(result.meta.executable.some(row=>row.name==='CLAUDE_TOKEN_ENV'));
   for(const method of ['ClientKind.legacy_name','ClientKind.from_str_opt'])assert.ok(result.meta.checkedMethods.some(row=>row.name===method));
-  await verifyTypedTargets(result,api=>{assert.equal(api.CODEX_PROVIDER,'link-assistant');assert.equal(api.CLAUDE_TOKEN_ENV,'ANTHROPIC_AUTH_TOKEN');assert.equal(api.CLAUDE_BASE_ENV,'ANTHROPIC_BASE_URL');},{childTimeoutMs:30000});
+  const observations=[];await verifyTypedTargets(result,api=>{const values=[api.CODEX_PROVIDER,api.CLAUDE_TOKEN_ENV,api.CLAUDE_BASE_ENV];observations.push(values);assert.equal(api.CODEX_PROVIDER,'link-assistant');assert.equal(api.CLAUDE_TOKEN_ENV,'ANTHROPIC_AUTH_TOKEN');assert.equal(api.CLAUDE_BASE_ENV,'ANTHROPIC_BASE_URL');},{childTimeoutMs:30000});retain('06-original-client-typed-observations',observations);
 });

@@ -8,6 +8,7 @@ import {proveSerdeSerializeBangFootprint,assertSerdeSerializeBangFootprint} from
 import {proveSerdeDeserializeBangFootprint,assertSerdeDeserializeBangFootprint} from './serde-deserialize-bang-footprints.mjs';
 import {hasBuiltinDeriveBangRoute,proveBuiltinDeriveBangFootprint,assertBuiltinDeriveBangFootprint} from './builtin-derive-bang-footprints.mjs';
 import {proveClapArgsBangFootprint,assertClapArgsBangFootprint} from './clap-args-bang-footprints.mjs';
+import {proveClapValueEnumBangFootprint,assertClapValueEnumBangFootprint} from './clap-value-enum-bang-footprints.mjs';
 import {proveSchemarsBangFootprint,assertSchemarsBangFootprint} from './schemars-bang-footprints.mjs';
 const contexts=new WeakMap(),certificates=new WeakMap(),cachedContexts=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -20,6 +21,7 @@ const routes=new Map([
   ['serde::Serialize',{prove:proveSerdeSerializeBangFootprint,assert:assertSerdeSerializeBangFootprint}],
   ['serde::Deserialize',{prove:proveSerdeDeserializeBangFootprint,assert:assertSerdeDeserializeBangFootprint}],
   ['clap::Args',{prove:proveClapArgsBangFootprint,assert:assertClapArgsBangFootprint}],
+  ['clap::ValueEnum',{prove:proveClapValueEnumBangFootprint,assert:assertClapValueEnumBangFootprint}],
   ['schemars::JsonSchema',{prove:proveSchemarsBangFootprint,assert:assertSchemarsBangFootprint}],
 ]);
 
@@ -105,6 +107,6 @@ export function deriveBangHelperAttributeAt(context,deriveContext,module,item,sp
   // A locked derive declares this inert helper. Its exact original token
   // syntax and namespace were checked by every joined selected output route.
   // Other nested attributes still pass through the ordinary uncertainty scan.
-  const helperNames=new Set(['serde',...(certificate.selectedOwners.some(owner=>owner.target.join('::')==='clap::Args')?['arg']:[])]);
+  const helperNames=new Set(['serde',...(certificate.selectedOwners.some(owner=>owner.target.join('::')==='clap::Args')?['arg']:[]),...(certificate.selectedOwners.some(owner=>owner.target.join('::')==='clap::ValueEnum')?['value']:[])]);
   return input.dimensions.attributeMacroComplete===true&&input.attributes.some(attribute=>attribute.position!=='container'&&helperNames.has(attribute.name)&&attribute.helpers&&attribute.span.start===span.start&&attribute.span.end===span.end);
 }

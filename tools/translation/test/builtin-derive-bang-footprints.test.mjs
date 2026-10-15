@@ -1,18 +1,23 @@
 // Source/AST namespace cases; generated trait execution remains unimplemented.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {createDeriveFootprintContext,deriveFootprintExternalModules} from '../derive-footprints.mjs';
 import {builtinDeriveAstSourceProfile,isBuiltinDeriveAstProfile,builtinAstOriginal,originalAstFunction,assertOriginalAstFunction} from '../builtin-derive-ast-meta.mjs';
 import {planBuiltinDeriveBangOutput,isBuiltinDeriveBangPlan,proveBuiltinDeriveBangFootprint,isBuiltinDeriveBangFootprint} from '../builtin-derive-bang-footprints.mjs';
 import {createDeriveBangContext} from '../derive-bang-context.mjs';
+import {proveSerdeSerializeBangFootprint} from '../serde-bang-footprints.mjs';
+import {proveSerdeDeserializeBangFootprint} from '../serde-deserialize-bang-footprints.mjs';
+import {proveSchemarsBangFootprint} from '../schemars-bang-footprints.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {resolveModuleGraph} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
+const retain=(name,value)=>{const directory=process.env.ROUTER_BUILTIN_BANG_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+'\n',{mtime:0}));}};
 const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
 function input(source){const modules=[{file:'src/lib.rs',path:[],source:'mod model;'},{file:'src/model.rs',path:['model'],source}];return {modules,dependencies,compilationProfile:PRODUCTION_PROFILE};}
 function selected(source,name='Copy'){
@@ -101,14 +106,21 @@ test('complete unchanged SubscriptionProvider and CatalogRecord retain original 
   const recordAttribute=record.attributes.find(value=>value.derives?.some(path=>path[0]==='Eq'));
   const eq=proveBuiltinDeriveBangFootprint({context,certificate:record,invocation:{path:['Eq'],attributeSpan:recordAttribute.span}});assert.equal(eq.selectedOwnerBangComplete,true);assert.equal(eq.route.typedSource.fields.length,8);assert.equal(eq.generatedImplBehavior,false);
   const providerEq=proveBuiltinDeriveBangFootprint({context,certificate:provider,invocation:{path:['Eq'],attributeSpan:attribute.span}});assert.equal(providerEq.route.typedSource.inputStyle,'unit-enum');assert.equal(providerEq.route.typedSource.assertionCount.maximum,0);
-  completeOriginalBuiltin={context,provider,record};
+  completeOriginalBuiltin={context,provider,record,graph};
+  retain('08-complete-original-graph-and-owner-proofs',{originalInputs:original.inputs,modules:graph.modules,context,provider,record,copy:proof,recordEq:eq,providerEq});
 });
 test('complete unchanged SubscriptionProvider and CatalogRecord preserve full-graph residual owners and parents',{timeout:60_000},()=>{
   assert.ok(completeOriginalBuiltin,'whole original input and owner proofs must be checked');
-  const {context,provider,record}=completeOriginalBuiltin;
+  const {context,provider,record,graph}=completeOriginalBuiltin;
   const outputs=createDeriveBangContext({deriveContext:context});
-  const providerOutput=outputs.certificates.find(value=>value.source===provider.source&&value.span.start===provider.span.start);assert.equal(providerOutput.dimensions.bangMacroComplete,false);assert.ok(providerOutput.selectedOwners.some(owner=>owner.target?.join('::')==='schemars::JsonSchema'));assert.equal(providerOutput.residualOwners.some(owner=>owner.target?.[0]==='schemars'),false);assert.ok(providerOutput.residualOwners.length);
-  const recordOutput=outputs.certificates.find(value=>value.source===record.source&&value.span.start===record.span.start);assert.equal(recordOutput.dimensions.bangMacroComplete,true);assert.deepEqual(recordOutput.residualOwners,[]);assert.equal(recordOutput.selectedOwners.length,6);assert.equal(recordOutput.generatedImplBehavior,false);
+  const providerOutput=outputs.certificates.find(value=>value.source===provider.source&&value.span.start===provider.span.start);
+  const recordOutput=outputs.certificates.find(value=>value.source===record.source&&value.span.start===record.span.start);
+  const routes=new Map([['serde::Serialize',proveSerdeSerializeBangFootprint],['serde::Deserialize',proveSerdeDeserializeBangFootprint],['schemars::JsonSchema',proveSchemarsBangFootprint]]),ownerProofs=providerOutput.actualOwners.map(invocation=>{const owner=provider.owners.find(owner=>JSON.stringify(owner.path)===JSON.stringify(invocation.path)),prove=owner?routes.get(owner.target.join('::')):null;return owner?prove({context,certificate:provider}):proveBuiltinDeriveBangFootprint({context,certificate:provider,invocation});});
+  const bindings=resolveModuleBindings({modules:graph.modules,deriveContext:context,deriveBangContext:outputs,externalModules:deriveFootprintExternalModules(context),compilationProfile:PRODUCTION_PROFILE}),parent=bindings.scopes.find(scope=>scope.path.length===0),providerSource=graph.modules.find(module=>module.file===provider.source).source;
+  retain('09-exact-original-provider-all-owner-proofs-and-unresolved-parent',{providerSource,originalDeriveItem:providerSource.slice(provider.span.start,provider.span.end),provider,providerOutput,record,recordOutput,ownerProofs,outputs,bindings,parent});
+  assert.deepEqual(providerOutput.dimensions,{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false});assert.equal(providerOutput.actualOwners.length,9);assert.equal(providerOutput.selectedOwners.length,9);assert.deepEqual(providerOutput.residualOwners,[]);assert.ok(providerOutput.selectedOwners.some(owner=>owner.target?.join('::')==='schemars::JsonSchema'));assert.equal(providerOutput.generatedImplBehavior,false);assert.equal(outputs.scopeWideCompleteness,false);assert.equal(parent.unresolvedBangMacroScope,true);
+  for(const proof of ownerProofs){assert.equal(proof.selectedOwnerBangComplete,true);assert.equal(proof.generatedImplBehavior,false);}
+  assert.equal(recordOutput.dimensions.bangMacroComplete,true);assert.deepEqual(recordOutput.residualOwners,[]);assert.equal(recordOutput.selectedOwners.length,6);assert.equal(recordOutput.generatedImplBehavior,false);
 });
 
 // Additional Eq source bridge cases; no generated trait execution.

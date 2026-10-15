@@ -7,11 +7,12 @@ import {originalMacroTrees,freezeMacroTree} from './macro-token-trees.mjs';
 import {loadPinnedFormatSourceStages,formatSourceStageInput} from './format-source-profiles.mjs';
 import {isSourceLiteralFormatConstructorCandidate} from './format-constructor-inputs.mjs';
 import {RUST_WHITESPACE_CODE_UNITS} from './extensions/whitespace-data.mjs';
+import {isOriginalControlRecord,originalControlRecordPatternFields} from './source-control-records.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('source format control: '+message);};
 const PROFILE_DIGEST='098331076dab9b8876c110a4a0feb3442bf57aa4adac3f0abc230036c1e839cc';
 const root=new URL('./source-profiles/source-format-template/',import.meta.url);
-const programs=new WeakMap(),executions=new WeakMap(),bodyPrograms=new WeakMap();
+const programs=new WeakMap(),executions=new WeakMap(),bodyPrograms=new WeakMap(),originalPatternSlots=new WeakMap();
 const word=node=>node?.kind==='token'?node.text:null;
 const name=node=>node?.kind==='token'&&node.type==='ident'&&/^(?:r#)?[\p{L}_][\p{L}\p{N}_]*$/u.test(node.text);
 // Original BinOpKind::precedence/fixity separates bitwise groups and gives
@@ -37,18 +38,20 @@ function expressionTokens(nodes) {
   }
   return result;
 }
+function expansionOrigins(nodes){const result=new Map();const visit=node=>{for(const origin of node.sourceOrigins??[])result.set(JSON.stringify(origin),origin);if(node.kind==='group')node.children.forEach(visit);};nodes.forEach(visit);return [...result.values()];}
 class SourceControlParser {
-  constructor(nodes,budget,depth=0){if(depth>64)throw new TypeError('Source control depth exceeds its finite bound');this.nodes=expressionTokens(nodes);this.at=0;this.budget=budget;this.depth=depth;this.records=true;}
+  constructor(nodes,budget,depth=0,slots=null){if(depth>64)throw new TypeError('Source control depth exceeds its finite bound');this.nodes=expressionTokens(nodes);this.at=0;this.budget=budget;this.depth=depth;this.records=true;this.slots=slots;}
   current(){return this.nodes[this.at];}
   take(value){if(word(this.current())===value){this.at++;return true;}return false;}
   need(value){if(!this.take(value))throw new TypeError('Source control requires original '+value);}
   group(delimiter){const node=this.nodes[this.at++];if(node?.kind!=='group'||node.delimiter!==delimiter)throw new TypeError('Source control requires original '+delimiter+' group');return node;}
-  child(nodes){return new SourceControlParser(nodes,this.budget,this.depth+1);}
-  blockGroup(group=this.group('{')){return {...this.child(group.children).block(),sourceSpan:group.span};}
-  node(kind,start,fields={}){if(--this.budget.cells<0)throw new TypeError('Source control cell bound exhausted');return {kind,...fields,sourceSpan:range(this.nodes.slice(start,this.at))};}
+  child(nodes){return new SourceControlParser(nodes,this.budget,this.depth+1,this.slots);}
+  coordinates(nodes){return this.slots?{sourceSpan:null,sourceOrigins:expansionOrigins(nodes)}:{sourceSpan:range(nodes)};}
+  blockGroup(group=this.group('{')){return {...this.child(group.children).block(),...this.coordinates([group])};}
+  node(kind,start,fields={}){if(--this.budget.cells<0)throw new TypeError('Source control cell bound exhausted');return {kind,...fields,...this.coordinates(this.nodes.slice(start,this.at))};}
   expressionAll(nodes){const parser=this.child(nodes),result=parser.expression();if(parser.at!==parser.nodes.length)throw new TypeError('Source control expression leaves original tokens at '+parser.current()?.span.start+' ('+String(word(parser.current())).slice(0,64)+')');return result;}
   condition(){const before=this.records;this.records=false;try{return this.expression();}finally{this.records=before;}}
-  pattern(nodes){if(!nodes.length)throw new TypeError('Source control pattern is empty');return {kind:'original-pattern-obligation',tokens:nodes,sourceSpan:range(nodes),bindingSemanticsVerified:false,constructorOwnerResolved:false};}
+  pattern(nodes){if(!nodes.length)throw new TypeError('Source control pattern is empty');if(nodes.some(node=>node.kind==='original-control-ast-slot'&&!originalPatternSlots.has(node)))throw new TypeError('Source control pattern requires its private original AST slot');return {kind:'original-pattern-obligation',tokens:nodes,...this.coordinates(nodes),bindingSemanticsVerified:false,constructorOwnerResolved:false};}
   conditional(start){if(++this.budget.conditionals>64){this.budget.conditionals--;throw new TypeError('Source control conditional depth exceeds its finite bound');}
     try{const condition=this.condition(),then=this.blockGroup();let otherwise=null;
       if(this.take('else'))otherwise=this.take('if')?this.conditional(this.at-1):this.blockGroup();
@@ -64,7 +67,7 @@ class SourceControlParser {
       const pattern=parser.nodes.slice(begin,arrow),guardAt=pattern.findIndex(token=>word(token)==='if');parser.at=arrow+1;
       const value=parser.expression(),end=parser.at;
       if(!parser.take(',')&&parser.at<parser.nodes.length&&!['block-expression','if','match'].includes(value.kind))throw new TypeError('Source match arm requires its original comma');
-      arms.push({pattern:this.pattern(guardAt<0?pattern:pattern.slice(0,guardAt)),guard:guardAt<0?null:this.expressionAll(pattern.slice(guardAt+1)),value,sourceSpan:range(parser.nodes.slice(begin,end))});
+      arms.push({pattern:this.pattern(guardAt<0?pattern:pattern.slice(0,guardAt)),guard:guardAt<0?null:this.expressionAll(pattern.slice(guardAt+1)),value,...parser.coordinates(parser.nodes.slice(begin,end))});
     }
     if(!arms.length)throw new TypeError('Source control match has no original arms');return this.node('match',start,{subject,arms,armBindingVerified:false,exhaustivenessVerified:false});
   }
@@ -79,8 +82,9 @@ class SourceControlParser {
     }finally{this.budget.expressions--;}
   }
   primary(){const start=this.at,node=this.nodes[this.at++],raw=word(node);let value;
-    if(['async','move','yield','await','const'].includes(raw))throw new TypeError('Source control modifier requires additional source grammar: '+raw);
-    if(raw==='unsafe')value=this.node('unresolved-source-branch',start,{modifier:raw,originalGroup:this.group('{')});
+    if(node?.kind==='original-control-ast-slot'){const slot=this.slots?.get(node);if(slot?.fragment!=='expr'||!slot.ir)throw new TypeError('Source control expression requires its private original AST slot');value=slot.ir;}
+    else if(['async','move','yield','await','const'].includes(raw))throw new TypeError('Source control modifier requires additional source grammar: '+raw);
+    else if(raw==='unsafe')value=this.node('unresolved-source-branch',start,{modifier:raw,originalGroup:this.group('{')});
     else if(raw==='if')value=this.conditional(start);
     else if(raw==='match')value=this.matching(start);
     else if(raw==='while'){const condition=this.condition(),body=this.blockGroup();value=this.node('while',start,{condition,body,terminationVerified:false});}
@@ -131,12 +135,12 @@ class SourceControlParser {
       else if(['if','match','while','for','loop','block-expression'].includes(value.kind))statements.push(this.node('expression-statement',start,{value}));
       else throw new TypeError('Source control expression is not followed by its original statement delimiter');
     }
-    return {kind:'control-block',statements,tail,lexicalScopeVerified:false};
+    return {kind:'control-block',statements,tail,lexicalScopeVerified:false,...(this.slots?this.coordinates(this.nodes):{})};
   }
 }
 
 class Scope {
-  constructor(parent=null){this.parent=parent;this.values=new Map();}
+  constructor(parent=null){this.parent=parent;this.values=new Map();this.functionOriginal=parent?.functionOriginal??null;}
   has(name){return this.values.has(name)||!!this.parent?.has(name);}
   get(name){return this.values.has(name)?this.values.get(name):this.parent?.get(name);}
   set(name,value){if(this.values.has(name)||!this.parent?.has(name))this.values.set(name,value);else this.parent.set(name,value);}
@@ -164,6 +168,7 @@ function patternTokens(nodes){
 }
 function bindPattern(nodes,value,env){
   nodes=patternTokens(nodes);
+  if(nodes.length===1&&originalPatternSlots.has(nodes[0]))return bindOriginalAstPattern(originalPatternSlots.get(nodes[0]),value,env);
   const alternatives=split(nodes,'|');if(alternatives.length>1){for(const alternative of alternatives){const local=new Scope(env);if(bindPattern(alternative,value,local)){for(const [key,item] of local.values)env.values.set(key,item);return true;}}return false;}
   if(nodes.length===1){const node=nodes[0],text=word(node);
     if(text==='_')return true;
@@ -179,8 +184,28 @@ function bindPattern(nodes,value,env){
     if(!value||typeof value.start!=='number'||typeof value.end!=='number')return false;
     return split(group.children).every(part=>word(part[0])==='..'||bindPattern(part.length===1?part:part.slice(2),value[word(part[0])],env));
   }
+  if(group?.delimiter==='{'){
+    const fields=split(group.children),rest=fields.some(part=>word(part[0])==='..'),named=fields.filter(part=>word(part[0])!=='..');
+    if(fields.some(part=>word(part[0])==='..'&&part.length!==1)||named.some(part=>!name(part[0])||part.length>1&&word(part[1])!==':'))fail('unresolved original record field pattern');
+    const values=originalControlRecordPatternFields(value,env.functionOriginal,path.split('::'),named.map(part=>word(part[0])),rest);
+    return named.every(part=>bindPattern(part.length===1?part:part.slice(2),values[word(part[0])],env));
+  }
   if(nodes.length===3&&word(nodes[1])==='::'&&['ParseMode','Mode'].includes(word(nodes[0])))return value===word(nodes[2]);
   fail('unresolved original pattern '+nodes.map(node=>word(node)??node.delimiter).join(' '));
+}
+function bindOriginalAstPattern(pattern,value,env){
+ if(pattern.k==='wild')return true;
+ if(['strLit','boolLit','numLit'].includes(pattern.k))return equal(pattern.k==='numLit'?Number(pattern.value)*(pattern.negative?-1:1):pattern.value,value);
+ if(pattern.k==='bind'||pattern.k==='bindOrCtor'){
+  if(pattern.k==='bindOrCtor'&&pattern.name==='None')return value?.tag==='None';
+  if(pattern.k==='bindOrCtor'&&/^[A-Z]/u.test(pattern.name))fail('unresolved original AST constructor '+pattern.name);
+  env.values.set(pattern.name,value);return true;
+ }
+ if(pattern.k==='or'){for(const alternative of pattern.alternatives){const local=new Scope(env);if(bindOriginalAstPattern(alternative,value,local)){for(const [key,item]of local.values)env.values.set(key,item);return true;}}return false;}
+ if(pattern.k==='routerTuplePattern')return Array.isArray(value)&&value.length===pattern.items.length&&pattern.items.every((part,index)=>bindOriginalAstPattern(part,value[index],env));
+ if(pattern.k==='ctor'){if(value?.tag!==pattern.path.join('::')||value.args?.length!==pattern.args.length)return false;return pattern.args.every((part,index)=>bindOriginalAstPattern(part,value.args[index],env));}
+ if(pattern.k==='routerRecordPattern'){const values=originalControlRecordPatternFields(value,env.functionOriginal,pattern.path,pattern.fields.map(field=>field.name),pattern.rest);return pattern.fields.every(field=>bindOriginalAstPattern(field.pattern,values[field.name],env));}
+ fail('unresolved original AST pattern '+pattern.k);
 }
 class Exit {constructor(kind,value){this.kind=kind;this.value=value;}}
 class Chars {
@@ -236,7 +261,7 @@ class Machine {
   call(name,args){
     this.tick();const fn=this.functions.get(name);if(!fn||!fn.ir)fail('unresolved original helper '+name+': '+(fn?.refusal??'absent'));
     if(++this.depth>64)fail('call depth budget exhausted');this.trace.push(name);
-    const env=new Scope();
+    const env=new Scope();env.functionOriginal=fn.original;
     try{
       if(fn.parameters.length!==args.length)fail('source helper arity '+name);
       fn.parameters.forEach((pattern,index)=>{if(!bindPattern(pattern,args[index],env))fail('source helper argument pattern '+name);});
@@ -250,7 +275,7 @@ class Machine {
   }return block.tail?this.eval(block.tail,env):undefined;}
   assign(target,value,env){
     if(target.kind==='written-path'&&target.path.length===1){env.set(target.path[0],value);return;}
-    if(target.kind==='field'){this.eval(target.object,env)[target.name]=value;return;}
+    if(target.kind==='field'){const object=this.eval(target.object,env);if(isOriginalControlRecord(object))fail('candidate original records are immutable; no mutation/borrow authority');object[target.name]=value;return;}
     if(target.kind==='unary'&&target.operation==='*'){this.assign(target.value,value,env);return;}
     fail('unresolved assignment place');
   }
@@ -426,6 +451,27 @@ export function compileFormatSourceControlBodies(sources){
   const result=freezeMacroTree({schema:'format-source-control-body-candidates-v1',sources,functions:[...functions].map(([key,fn])=>({key,...fn})),namespaceAuthority:false,traitSelectionVerified:false,runtimeParity:false});bodyPrograms.set(result,{functions});return result;
 }
 export function formatSourceControlBodyFacts(program){const state=bodyPrograms.get(program);if(!state)fail('copied or forged source body program');return program.functions;}
+export async function compileFormatSourceControlBodiesWithOriginalMacros(sources){
+  const original=compileFormatSourceControlBodies(sources),state=bodyPrograms.get(original),functions=new Map(),expansions=[];
+  // Loading the Host AST adapter only while compiling avoids a module-load
+  // dependency cycle through the real production Host/parser composition.
+  const {expandOriginalControlDeclarative,originalControlDeclarativeFacts,originalControlDeclarativeSlot}=await import('./source-control-declarative.mjs');
+  for(const [key,fn]of state.functions){
+    if(!fn.ir)fail('complete original macro helper grammar: '+fn.refusal);
+    const rewrite=node=>{
+      if(!node||typeof node!=='object')return node;
+      if(node.kind==='opaque-macro'){
+        const proof=expandOriginalControlDeclarative(sources[key],node),facts=originalControlDeclarativeFacts(proof,sources[key],node),slots=new WeakMap();expansions.push(proof);
+        const register=tree=>{if(tree.kind==='original-control-ast-slot'){const slot=originalControlDeclarativeSlot(proof,sources[key],node,tree);slots.set(tree,slot);if(slot.fragment==='pat')originalPatternSlots.set(tree,slot.ast);}if(tree.kind==='group')tree.children.forEach(register);};facts.trees.forEach(register);
+        const parser=new SourceControlParser(facts.trees,{cells:32000,expressions:0,conditionals:0},0,slots);return parser.expressionAll(facts.trees);
+      }
+      if(Array.isArray(node))return node.map(rewrite);
+      return Object.fromEntries(Object.entries(node).map(([name,value])=>[name,rewrite(value)]));
+    };
+    functions.set(key,{...fn,ir:rewrite(fn.ir)});
+  }
+  const result=freezeMacroTree({schema:'format-original-expanded-control-body-candidates-v1',sources,functions:[...functions].map(([key,fn])=>({key,...fn})),expansions,macroOwnerResolved:false,namespaceAuthority:false,typeAuthority:false,traitSelectionVerified:false,applicationEffectCompleteness:false,runtimeParity:false});bodyPrograms.set(result,{functions});return result;
+}
 export function executeFormatSourceControlBodies(program,entry,args,{constants=new Map(),methods=new WeakMap()}={}){
   const state=bodyPrograms.get(program);if(!state)fail('copied or forged source body program');
   const machine=new Machine(state.functions,null,{constants,methods}),result=machine.call(entry,args);
