@@ -219,7 +219,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     }
     if(['is_none_or','is_some_and','map_or_else'].includes(name.value))return {k:'routerPinnedOptionCallbackCall',method:name.value,object,args,span:range};
     if(name.value==='as_ref')return {k:'routerPinnedSharedBodyCall',object,args,span:range};
-    if(['unwrap_or','unwrap_or_default','unwrap_or_else','or_else'].includes(name.value))return {k:'routerPinnedStandardBodyCall',method:name.value,object,args,span:range};
+    if(['unwrap_or','unwrap_or_default','unwrap_or_else','or_else','ok_or_else'].includes(name.value))return {k:'routerPinnedStandardBodyCall',method:name.value,object,args,span:range};
     if(name.value==='bytes')return {k:'routerStringBytesOperation',object,args,span:range};
     if(name.value==='rfind')return {k:'routerReverseStringFind',object,args,span:range};
     if(name.value==='split')return {k:'routerStringIteratorOperation',operation:'split',object,args,span:range};

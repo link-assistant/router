@@ -18,7 +18,7 @@ assert.equal(inventory.originalCommit,originalCommit);assert.equal(inventory.ori
 const originalBytes=readFileSync(new URL('rust-structure.mjs.txt',fixtureRoot));assert.equal(hash(originalBytes),'6195c319a3a01115f160f5519d2f979036ac3845e2774bc25f80e9ab2c26bb18');
 // Complete old bytes remain available when the current source changes, including
 // shallow CI checkouts without originalCommit. Never repin the old inventory.
-const historicalFixtures=new Map([['src/bridge_response_tests.rs','bridge_response_tests.rs.txt']]);
+const historicalFixtures=new Map([['src/bridge_response_tests.rs','bridge_response_tests.rs.txt'],['src/anthropic_nonstream.rs','anthropic_nonstream.rs.txt']]);
 const gitBlob=bytes=>createHash('sha1').update(Buffer.from(`blob ${bytes.length}\0`)).update(bytes).digest('hex');
 const lexerPath='tools/translation/vendor/formal-ai/lexer.mjs';
 assert.equal(hash(readFileSync(new URL('../vendor/formal-ai/lexer.mjs',import.meta.url))),inventory.lexer.sha256,'the independent original module uses the identical pinned item lexer');assert.equal(inventory.lexer.path,lexerPath);

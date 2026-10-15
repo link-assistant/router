@@ -297,4 +297,36 @@ mod tests {
         let sse = b"event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"content\":[null]}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"bad\"}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n";
         assert_eq!(assemble(sse).unwrap_err(), "content block is not an object");
     }
+
+    #[test]
+    fn content_event_index_preserves_unsigned_boundaries_and_unrelated_fields() {
+        for index in [0, 1, u64::MAX] {
+            let event = json!({"index": index, "unrelated": "Ω😀\u{0}"});
+            assert_eq!(event_index(&event), Ok(index));
+        }
+    }
+
+    #[test]
+    fn content_event_index_requires_an_actual_unsigned_integer_member() {
+        for event in [
+            json!({}),
+            json!({"index": null}),
+            json!({"index": false}),
+            json!({"index": -1}),
+            json!({"index": 0.5}),
+            json!({"index": 1.0}),
+            json!({"index": "0"}),
+            json!({"index": ""}),
+            json!({"index": []}),
+            json!({"index": {}}),
+            json!({"índex": 1}),
+            json!(null),
+            json!([]),
+        ] {
+            assert_eq!(
+                event_index(&event),
+                Err("content event omitted index".to_string())
+            );
+        }
+    }
 }
