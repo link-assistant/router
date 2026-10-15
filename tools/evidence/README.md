@@ -222,3 +222,115 @@ that bound. Keep both full gzip streams, original and recovered raw files,
 archives and failed captures until those checks and an explicitly reviewed
 storage migration succeed. There is no new semantic, runtime-parity, Rust or
 publication authority.
+
+## Prepare real ancestor archive candidates without checking out archive copies
+
+`git_archive_candidate.py` prepares an isolated, reachable candidate using the
+existing ordinary packet index and reader. It writes Git objects and one fresh
+`refs/evidence/issue-759/...` ref, plus full command/source receipts in a fresh
+directory outside the repository. It leaves the current HEAD, real index,
+project files and case files unchanged. It does not install a storage migration.
+The complete source archives and their capture receipts remain present.
+
+The strict, at most 4 MiB plan has exactly this shape:
+
+```json
+{
+  "schema": "complete-git-archive-candidate-v1",
+  "base": "<current clean full 40-character commit>",
+  "ref": "refs/evidence/issue-759/<fresh private candidate name>",
+  "index": "packet-git-index.json",
+  "archives": [{
+    "name": "current/<fresh canonical path>/complete.tar.xz",
+    "source": "/absolute/outside-case/complete.tar.xz",
+    "bytes": 123,
+    "sha256": "<complete original archive SHA256>",
+    "receipt": {
+      "source": "/absolute/outside-case/full-capture.json",
+      "bytes": 456,
+      "sha256": "<complete plain capture receipt SHA256>"
+    }
+  }]
+}
+```
+
+```sh
+python3 tools/evidence/git_archive_candidate.py \
+  --repository-root /absolute/existing/assigned-worktree \
+  --manifest /private/tmp/reviewed-full-archive-plan.json \
+  --output-directory /private/tmp/fresh-archive-candidate \
+  --cap-seconds 170
+```
+
+Keep the 180-second outer and 1 GiB sampled process-tree RSS monitor. This helper
+has no recovery or compression option. Each source stays within the existing
+256 MiB compressed bound; at most 64 combined archive witnesses and 1 GiB of
+new compressed source bytes are accepted. Full capture inventories use the
+unchanged 8,192-member, 128 MiB-member and 1 GiB logical-original bounds. Every
+member is verified before any new Git witness is issued. The complete archive is
+then written to Git, streamed back, and compared against every source byte,
+with full SHA256 and descriptor/path identity checks. There is no second loose
+archive spool. Duplicate JSON keys, unknown fields, bool sizes, linked sources,
+namespace collisions, external old witness histories and dirty source checkouts
+refuse. All old index rows are preserved exactly.
+
+The candidate has two actual commits. **D**, parented to the reviewed source HEAD,
+adds the full new archive bytes at their declared case paths. **I**, parented to D,
+removes those newly added paths and updates only the bounded packet index.
+The helper proves that the complete I tree differs from the original source tree
+only at that index. Both commits use the real configured repository/user author
+and committer identities and actual timestamps; observations are recorded.
+Neither commit is checked out by the helper. A fresh ref makes D's complete
+archive blobs reachable through I without placing archive copies in the case.
+Git objects, future transfer and recovery still consume real repository/disk
+space; this is not a zero-cost or digest-only retention claim.
+
+Until an operator explicitly adopts I in an already assigned worktree, D is not
+an ancestor of that checkout's HEAD. The unchanged `PacketStore` must refuse its
+new witnesses there. A depth-one receiver must also fail closed until explicit
+history retrieval makes every declared witness ancestor available (for example,
+the receiving workflow's full-history checkout). Do not add lazy fetching,
+replace ancestry, set skip-worktree flags or synthesize an ours merge. The final
+tree has real archive deletions and remains clean using ordinary Git behavior.
+The complete Python test group uses only small disposable synthetic repositories;
+its Node/Bun wrapper is discovered by `tools/translation/test/*.test.mjs` in the
+existing JavaScript gate and CI. This first candidate source remains untested.
+
+For issue #759 the next executable sequence is concrete but still pending:
+
+1. Keep immutable part 1 unchanged. Capture every remaining full original,
+   including both failed part-2 streams and their complete raw controls, in
+   bounded ordinary append packets outside the case. The proposed 192 MiB
+   unique-payload partition target is only a producer workload choice; the
+   existing hard limits and every original logical row stay unchanged. No
+   successful immutable part 2 exists yet.
+2. Prepare D/I with those complete archives, existing ancestor witnesses and full
+   source receipts. Review the exact candidate tree, commands, sources and ref.
+   Keep all earlier physical originals, failed captures and fresh recovery outputs.
+3. After explicit coordination, use the candidate in an existing assigned
+   checkout and fresh outside-case overlays. Recover every historical 4,853
+   member and reused part-1 1,971 member, plus every new member. Exercise both
+   physical-present and absent/Git fallback paths. Qualify shallow-history
+   failure/recovery explicitly; a source commit name does not replace a blob.
+4. Use the qualified fixed-gzip decoder for the large raw originals. Each decoded
+   index page stays within 1 GiB declared raw bytes, with full 512 MiB-per-output
+   bounds and complete member verification. Retain the plain authenticated
+   capture receipt needed by that decoder and compare every recovered byte.
+   No gzip re-encoding recipe or JSON-body normalization is needed.
+5. Run all three complete CI integrity reads and all three complete measurement
+   reads over baseline/present/absent overlays. Compare all historical semantic,
+   selection and telemetry fields, allowing only explicitly identified physical
+   storage fields to differ. Preserve complete commands, inputs and outputs.
+6. Measure the actual proposed case allocation before any install or retirement.
+   The last observation is 498,085,888 of 500,000,000 bytes, with 1,914,112 bytes
+   headroom. The 116,610,304-byte conditional retirement estimate is available
+   only after full recovery and continuity, not an immediate allowance. The
+   15,284,926-byte full ledger cannot simply be copied loose into that headroom:
+   retain complete control payloads in authenticated packets/Git and measure
+   the small active indexes plus required plain receipts. If even these do not
+   fit, qualify a selected old archive's recovery before proposing its retirement.
+
+No fit, historical continuity, shallow-checkout recovery or real-case adoption is
+established by this source draft. The final integrated HEAD still needs the
+complete same-SHA JavaScript gate before publication. Storage migration grants
+no translator, runtime-parity or Rust authority.
