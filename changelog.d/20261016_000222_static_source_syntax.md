@@ -14,4 +14,7 @@
   cold-freeze report exceeded its unchanged 8 MiB child transport bound. Retain
   that failure and losslessly transport entire reports as gzip after restoring
   observers, with the same child cap and bounded complete logical decoding.
-  This test-only successor is UNRUN; no full qualification or gain is claimed.
+  A later complete Bun trace exposed the shared issuer loading at a different
+  point; preload its exact relocated file URL before both observers. Full failed
+  wires remain retained. This successor is UNRUN; no full qualification or gain
+  is claimed.
