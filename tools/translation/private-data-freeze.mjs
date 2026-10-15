@@ -12,7 +12,7 @@ function plan(value,lookup){
    for(let index=0;index<state.children.length;index++){
     const child=state.children[index];
     if(child!==null&&typeof child==='object'){
-     const cost=lookup(child)??states.get(child);
+     const cost=states.get(child)??lookup(child);
      if(!cost||!cost.done)return null;
      cells+=cost.cells;const nextHeight=1+cost.height;if(nextHeight>height)height=nextHeight;
     }else cells++;
@@ -23,7 +23,7 @@ function plan(value,lookup){
   }
   if(value===null||typeof value!=='object'){if(typeof value==='function')return null;continue;}
   if(types.isProxy(value))return null;
-  const known=lookup(value)??states.get(value);
+  const known=states.get(value)??lookup(value);
   if(known){if(!known.done||frame.depth+known.height>DEPTH_LIMIT)return null;continue;}
   if(frame.depth>=DEPTH_LIMIT||states.size>=NODE_LIMIT)return null;
   const array=Array.isArray(value),prototype=Object.getPrototypeOf(value);
