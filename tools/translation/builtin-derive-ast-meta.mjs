@@ -6,10 +6,12 @@ import {isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
 import {requireOriginalStandardBangOutputSourcePlan} from './standard-bang-output-source.mjs';
 import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 const collectionInputsInitiallyNative=originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
 const root=new URL('./source-profiles/builtin-derive-bang/',import.meta.url);
 const profileBytes=readFileSync(new URL('manifest.json',root));
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+const freezeCompletedFragment=createCompletedDataFreezer(freeze);
 const hash=value=>createHash('sha256').update(value).digest('hex');
 export const BUILTIN_DERIVE_AST_PROFILE=freeze(JSON.parse(profileBytes));
 const profiles=new WeakMap(),cached=new WeakMap(),fragments=new WeakMap();
@@ -63,7 +65,7 @@ export function originalAstFunction(profile,path,name,sourceContains=null){
   const {nodes,span}=matches[0],encoded=JSON.stringify(nodes),syntax=JSON.parse(encoded);
   if(JSON.stringify(syntax)!==encoded)throw new TypeError('Builtin AST source semantic roundtrip changed syntax');
   const evidence={schema:'original-ast-function-meta-v1',source:path,sourceSha256:origin.sha256,span,sha256:hash(origin.source.slice(span.start,span.end)),syntax,syntaxSha256:hash(encoded),semanticSyntaxRoundTrip:true,generatedImplBehavior:false};
-  const fragment=freeze({...evidence,digest:hash(JSON.stringify(evidence))});fragments.set(fragment,{profile,origin});state.functions.set(key,fragment);return fragment;
+  const fragment=freezeCompletedFragment({...evidence,digest:hash(JSON.stringify(evidence))});fragments.set(fragment,{profile,origin});state.functions.set(key,fragment);return fragment;
 }
 export function assertOriginalAstFunction(profile,fragment){if(fragments.get(fragment)?.profile!==profile)throw new TypeError('Unsealed original AST construction fragment');return fragment;}
 export function astFragmentText(fragment){if(!fragments.has(fragment))throw new TypeError('Unsealed AST source fragment');const state=fragments.get(fragment);return state.origin.source.slice(fragment.span.start,fragment.span.end);}
@@ -76,7 +78,7 @@ export function originalAstDefinition(profile,path,kind,name){
   if(matches.length!==1)throw new TypeError('Original AST schema definition is not unique: '+kind+' '+name);
   const syntax=JSON.parse(JSON.stringify(matches[0])),span={start:syntax[0].span.start,end:syntax.at(-1).span.end};
   const evidence={schema:'original-ast-schema-meta-v1',source:path,sourceSha256:origin.sha256,span,sha256:hash(origin.source.slice(span.start,span.end)),syntax,syntaxSha256:hash(JSON.stringify(syntax)),semanticSyntaxRoundTrip:true,generatedImplBehavior:false};
-  const fragment=freeze({...evidence,digest:hash(JSON.stringify(evidence))});fragments.set(fragment,{profile,origin});return fragment;
+  const fragment=freezeCompletedFragment({...evidence,digest:hash(JSON.stringify(evidence))});fragments.set(fragment,{profile,origin});return fragment;
 }
 
 // Extract an actual named Rust struct literal, retaining every source field.
