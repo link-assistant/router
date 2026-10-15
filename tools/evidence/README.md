@@ -200,11 +200,25 @@ ordinary backward-hardlink verification remains unchanged. A present physical
 raw or gzip original corroborates the archive and never bypasses its Git witness.
 Shallow or missing ancestor witnesses still fail closed without lazy fetching.
 
-This source draft and its complete Python/Node/Bun controls are **UNRUN**. It does
-not adopt the two issue-759 raw-file aliases. Before adoption, recover both actual
-raw originals with present and absent overlays, compare every output byte to the
-retained complete originals, preserve full source/gzip/raw/Git/resource receipts,
-and finish all historical/member/CI/measurement continuity and fixed-cap checks.
-Keep both full gzip streams, raw files, archives and failed captures until those
-checks and an explicitly reviewed storage migration succeed. There is no new
-semantic, runtime-parity, Rust or publication authority.
+The complete two-case wrapper (all 20 Python controls and the CLI) and the four
+unchanged legacy packet cases pass under Node and Bun on integrated source
+`dd12d1c4da481562058fc0db068566a5e7ab88e9`. Actual artifact controls on source
+`d88d9bb270b30be894814c0d7d4622c05e78f336` also recover both large raw originals
+with physical archive/raw/gzip overlays present, then absent, using a fresh
+synthetic Git repository containing the exact immutable part 1. All four passes
+verify every one of its 1,971 members and compare every recovered raw byte to the
+retained originals: 1,419,433,434 bytes across four fresh complete outputs. The
+Node-object pair takes 26.250 seconds and the Bun-object pair 24.010 seconds;
+peak sampled aggregate process-tree RSS is 214,728,704 bytes, within unchanged
+170-second internal, 180-second outer and 1.5 GiB bounds. Complete outputs and
+source/gzip/raw/Git/resource receipts remain retained; terminal summary SHA256
+is `6793a19dc11012212234484500bbb3c8f2890577b048bebce001ec3c87777519`.
+
+These controls do not adopt the issue-759 raw aliases or establish a durable
+real-case Git witness. All historical/member/CI/measurement continuity and actual
+fixed-cap storage checks remain pending. Multiple decoded-index pages must each
+obey the existing 1 GiB declared raw total; repeated logical copies do not bypass
+that bound. Keep both full gzip streams, original and recovered raw files,
+archives and failed captures until those checks and an explicitly reviewed
+storage migration succeed. There is no new semantic, runtime-parity, Rust or
+publication authority.
