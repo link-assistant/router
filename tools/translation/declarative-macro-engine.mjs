@@ -7,14 +7,17 @@ import {boundedMacroItem} from './macro-items.mjs';
 import {originalMacroArrayTypeRules,originalMacroArrayLiteralLength} from './macro-array-type-source.mjs';
 import {originalMacroSequenceFollowRule,assertOriginalMacroSequenceFollowRule} from './macro-follow-source.mjs';
 import {originalMacroMetavarRules,assertOriginalMacroMetavarRules} from './macro-metavar-source.mjs';
+import {requireOriginalMacroLiteralGrammar,originalMacroLiteralEnd} from './macro-literal-source.mjs';
 // Each instance keeps separate definition, expansion and forwarding authority.
-export function createDeclarativeMacroEngine(sourceFragmentAdapter=null) {
+export function createDeclarativeMacroEngine(sourceFragmentAdapter=null,literalGrammar=null) {
+if(literalGrammar!==null)requireOriginalMacroLiteralGrammar(literalGrammar);
 const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap(),nestedInvocations=new WeakMap();
 const {isOriginalMacroFragmentContext,originalMacroFragmentDefinition,parseOriginalMacroFragment}=sourceFragmentAdapter??{};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const text=tree=>tree?.kind==='token'?tree.text:null;
 const ident=tree=>tree?.kind==='token'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(tree.text);
 const fragments=new Set(['ident','tt','ty','meta','vis','block','expr','item','lifetime']);
+if(literalGrammar!==null)fragments.add('literal');
 const forbiddenTypes=new Set('as async await break const continue dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return static struct trait true type unsafe use where while abstract become box do final gen macro override priv try typeof unsized virtual yield'.split(' '));
 const names=nodes=>nodes.flatMap(node=>['capture','variable','ignore-variable'].includes(node.kind)?[node.name]:node.children?names(node.children):[]);
 const syntax=(tree,end=tree)=>({sourceSha256:tree.sourceSha256,span:{start:tree.span.start,end:end.span.end},...(tree.sourceFeature?{sourceFeature:tree.sourceFeature}:{})});
@@ -181,6 +184,7 @@ function plan(trees,mode,bindings,depth=0,sourceFragments=null) {
 }
 
 function compileDeclarativeMacro(source,{name,owner=[],sourceFragments=null,maxRules=32}={}) {
+  if(literalGrammar!==null)requireOriginalMacroLiteralGrammar(literalGrammar);
   if(!Number.isSafeInteger(maxRules)||maxRules<1||maxRules>64)throw new TypeError('Declarative explicit rule budget must be an integer from 1 through 64');
   if(!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(name??'')||!Array.isArray(owner)||!owner.length||owner.length>32||owner.some(part=>typeof part!=='string'||part.length>128||!/^[A-Za-z_][A-Za-z0-9_]*$/u.test(part)))throw new TypeError('Declarative definition requires explicit bounded source name and untrusted owner identity');
   if(sourceFragments!==null){
@@ -285,6 +289,7 @@ function fragmentEnd(fragment,trees,start) {
   // Rust's TT parser captures an invisible-delimited nonterminal as one
   // tree. Keep its opaque fragment intact; this never exposes its interior.
   if(fragment==='tt')return start<trees.length?start+1:null;
+  if(fragment==='literal')return originalMacroLiteralEnd(literalGrammar,trees,start)?.end??null;
   if(fragment==='expr'&&(opaque(trees[start],'expr')||opaque(trees[start],'block')))return boundedMacroExpression(trees,start,boundedType);
   if(opaque(trees[start],fragment))return start+1;
   // A checked Block AST is a Rust expression. Retain its opaque AST rather
@@ -424,6 +429,7 @@ function checkOutputBudget(trees) {
 }
 
 function expandDeclarativeMacro(definition,input,{steps=16000,repetitions=128,output=32000}={}) {
+  if(literalGrammar!==null)requireOriginalMacroLiteralGrammar(literalGrammar);
   const forwarded=forwardedInputs.get(input),original=macroTreeSource(input);
   if(!definitions.has(definition)||!original&&!forwarded)throw new TypeError('Declarative expansion requires sealed definition and original or privately forwarded input trees');
   const inputEvidence=forwarded?{kind:forwarded.nested?'checked-nested-macro-input':'checked-expansion',parentDigest:forwarded.parent.digest,path:forwarded.path,sha256:hash(JSON.stringify(input))}:{kind:'original-source',sha256:original.sha256};
