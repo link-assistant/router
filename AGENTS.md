@@ -16,4 +16,6 @@ For issue #759 the user's latest instruction explicitly requests more `gpt-6.1-s
 
 ## Repository conventions
 
+Translation extensions use ordered substitution rules with separately declared reusable language and repository format/quality sequences. Preserve the checked, serialized and reparsed meta boundary in both directions. Read [the rule-layer contract](docs/development/translation-rules.md); add shared behavioral and refusal regressions rather than manually editing generated outputs. Add Rust edge-case test source where needed, but issue #759 forbids every local Rust test/build, including the bounded exception above. Obtain Rust results in CI only after all JavaScript stages pass for the same SHA. Complete focused JavaScript files and strict TypeScript checks are encouraged during drafting; the complete gate remains mandatory before publication.
+
 Use the term **links network**, or **network** where context makes it clear, for Router's token structure. Follow the detailed terminology rule in CONTRIBUTING.md in identifiers and all human languages. Keep files below 1000 lines. Preserve the testing tiers, credential requirements and changelog fragment process. Add targeted behavioral tests for changes, preserve public contracts and document limitations without treating unimplemented behavior as complete.

@@ -2,6 +2,18 @@
 
 Use JavaScript to express and test new behavior before changing Rust. This keeps fast feedback independent of compiling the Rust dependency tree. Router already publishes a JavaScript operations package, but that package alone is not a replacement for the complete Rust runtime. The parity manifest records what is generated, ported, partial, carried or missing. A green inventory check means the inventory is consistent; only its strict mode can establish complete parity.
 
+## Draft with focused JavaScript checks
+
+Run complete small Node/Bun test files and strict TypeScript checks while
+implementing a batch. Read the corresponding Rust and generated bodies, collect
+related failures and fix shared substitution rules before full regeneration.
+Use separate reusable language and repository formatting/quality sequences as
+described in [the rule-layer contract](translation-rules.md). Add matching Rust
+edge-case test source when it defines an independent oracle, and report it as
+unrun until CI executes it. Issue #759 prohibits all local Rust tests and builds;
+the bounded exception below does not override this instruction. CI may execute
+Rust only after every required JavaScript stage passes for the same SHA.
+
 ## Run the complete gate before Rust
 
 Install the checked-in JavaScript package dependencies with `npm ci --prefix packages/javascript`. Node 20 or newer is required; install Bun for the native Bun test stage. Run `node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json` from the repository root. This orchestrates the actual repository lint, native Node and Bun tests, TypeScript checks, strict parity, forward translation checks and reverse regeneration checks. It writes a green stamp only after all stages succeed and the SHA and file contents remain unchanged. A current strict parity failure is a reason to finish the missing implementation, not to downgrade the gate.

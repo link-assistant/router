@@ -1,4 +1,4 @@
-# Contributing to rust-ai-driven-development-pipeline-template
+# Contributing to Router
 
 Thank you for your interest in contributing! This document provides guidelines and instructions for contributing to this project.
 
@@ -33,6 +33,8 @@ bash scripts/bounded-rust-build.sh -- check --lib
 bash scripts/bounded-rust-build.sh --execute --gate-stamp /tmp/router-js-first-gate.json -- check --lib
 ```
 
+For issue #759, the user's explicit instruction prohibits all local Rust tests and builds, including targeted exceptions. Add Rust regression cases as source and obtain their execution results from CI only after every required JavaScript stage passes for the same commit. A JavaScript test pass does not establish that an unexecuted Rust test passes.
+
 The Rust suite continues to define tiers 1-3, which require no credential. The live credentialed tier (tier 4) is a no-op without a subscription and says so rather than passing quietly — see [docs/testing-tiers.md](docs/testing-tiers.md) for what each tier proves. CI runs the relevant Rust checks; the tier documentation also describes targeted diagnostic commands, which must obey the bounded local exception policy.
 
 Changes to stream or request translators, token and credential code, the proxy, storage or keychain lookup also trigger slower path-filtered workflows: benchmarks against the pull request's base (`benches/`), a one-minute soak (`tests/soak_test.rs`), mutation testing of touched lines (`.cargo/mutants.toml`), the macOS Keychain suite and the upgrade matrix over the last three releases. Translator changes can require updated recorded cassettes in `tests/fixtures/vendor/`; the recording tool is `rust-script scripts/record-vendor-fixtures.rs`. Preserve these checks and require the JavaScript gate before Rust compilation.
@@ -54,6 +56,16 @@ Use the existing categories, for example:
 ```
 
 Fragments prevent merge conflicts in CHANGELOG.md when multiple PRs are open. Commit focused changes with descriptive messages. In a coordinated agent task, workers draft commits in their own worktrees and one designated push gate owner integrates and publishes the combined change. The owner reviews the full diff, runs the complete gate, pushes one tested head and waits for all CI jobs to complete. Never cancel the current CI run or push speculative fixes; collect the full failure set and repair it in one coordinated batch before the next push.
+
+## Translation rules and shared regressions
+
+Implement translation as ordered substitution rules over parsed source, checked semantic meta or target syntax. Keep at least two separately declared rule sequences: reusable programming-language rules first, then repository rules for Router's output layout, imports, formatting and quality conventions. Keep language semantics independent of Router paths and declaration names. Repository rules must preserve the meaning established by the checked language rules. Both Rust → meta → JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript must retain the serialized, reparsed meta boundary. See [the rule-layer contract](docs/development/translation-rules.md).
+
+Extend a rule at the shared translation layer when it repairs a class of source constructs. Record its stable identity, prerequisites, order, supported inputs and explicit refusals; add independent positive, negative and boundary fixtures. Exact text substitutions require unique validated anchors against pinned inputs. Semantic substitutions require resolved owners, types, effects and source evidence; matching a familiar name or arbitrary object shape is insufficient. Never grant new semantic authority through a formatting rule, weaken a refusal to inflate coverage, or manually patch generated outputs.
+
+Use complete small JavaScript test files and strict TypeScript execution for quick feedback while drafting a batch. Read the corresponding Rust and generated bodies, collect related failures together and repair the shared rules before expensive full-corpus regeneration. Add Rust edge cases for the same behavior, including overflow, empty values, Unicode, malformed input, ordering and errors where applicable. Distinguish the Rust oracle, JavaScript behavior, executed TypeScript and synchronization freshness in the evidence. Run the complete JavaScript gate on the final integrated tree before treating the batch as publishable; targeted diagnostics do not replace it.
+
+Keep work bounded: run one expensive compiler, test or compression workload at a time, reuse existing worktrees and dependencies, check disk space and retain complete failure evidence with lossless compression. When a command becomes slow, measure it before optimizing shared rules; preserve semantics, test cases and deadlines. Report executable coverage separately from source preservation, and retain explicit parity limitations until the full checks prove them resolved.
 
 ## Code Style Guidelines
 
