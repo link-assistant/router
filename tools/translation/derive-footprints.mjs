@@ -31,6 +31,9 @@ const helperCreateHash=createHash,helperHash=Hash,helperHashPrototype=Hash?.prot
 const helperNative=(fn,name)=>typeof fn==='function'&&!types.isProxy(fn)&&Reflect.apply(helperFunctionText,fn,[])===`function ${name}() { [native code] }`;
 const nativeHelperCrypto=helperNative(helperCreateHash,'createHash')&&helperNative(helperHash,'Hash')&&helperNative(helperData(helperHashUpdate),'update')&&helperNative(helperData(helperHashDigest),'digest');
 function originalHelperCryptoUnchanged(){return nativeHelperCrypto&&createHash===helperCreateHash&&Hash===helperHash&&Hash.prototype===helperHashPrototype&&helperData(helperDescriptor(helperHashPrototype,'update'))===helperData(helperHashUpdate)&&helperData(helperDescriptor(helperHashPrototype,'digest'))===helperData(helperHashDigest)&&Function.prototype.toString===helperFunctionText;}
+// Eligibility only, never a source/caller proof. Other immutable-source
+// consumers can reuse this exact qualification instead of relaxing it.
+export const originalDeriveHelperCryptoUnchanged=originalHelperCryptoUnchanged;
 const originalContextMaps=new WeakMap(),fastHelperProofs=new WeakSet(),weakSetHas=WeakSet.prototype.has,weakSetAdd=WeakSet.prototype.add,mapPrototype=Map.prototype,mapEntries=Map.prototype.entries,mapNext=Object.getPrototypeOf(new Map().entries()).next,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,hasOwn=Object.hasOwn;
 function ownSelection(value,name){if(!value||typeof value!=='object'||types.isProxy(value))throw new TypeError('Original derive selection requires non-proxy own data');const field=descriptor(value,name);if(!field||!hasOwn(field,'value'))throw new TypeError('Original derive selection requires own data: '+name);return field.value;}
 const key=path=>path.join('::');

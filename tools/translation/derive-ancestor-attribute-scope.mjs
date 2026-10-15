@@ -13,6 +13,8 @@ import {compileDeclarativeMacro,expandDeclarativeMacro} from './declarative-toke
 import {builtinStandardDeriveRegistry,builtinStandardDeriveSourceOwner} from './builtin-derive-standard-inputs.mjs';
 import {isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
+import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {originalDeriveHelperCryptoUnchanged} from './derive-footprints.mjs';
 const root=new URL('./source-profiles/derive-ancestor-scope/',import.meta.url),profileBytes=readFileSync(new URL('manifest.json',root)),profile=JSON.parse(profileBytes);
 const hash=value=>createHash('sha256').update(value).digest('hex'),freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;},same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Original conditional ancestor: '+message);},contexts=new WeakMap(),proofs=new WeakMap(),plans=new WeakSet();
@@ -67,8 +69,18 @@ export function originalConditionalAncestorSourcePlan(){
 export function requireOriginalConditionalAncestorSourcePlan(value){if(!plans.has(value))fail('copied or foreign source plan');return value;}
 // Reuse the same complete pinned resolver input, without changing any existing
 // conditional-sibling plan or treating its public namespace flags as authority.
-const implPlans=new WeakSet();
+const implPlans=new WeakSet(),implStringPrototype=Object.getPrototypeOf(''),implIncludes=Object.getOwnPropertyDescriptor(implStringPrototype,'includes');
+let cachedImplPlan=null;
+function reusableImplPlan(){
+ if(!originalLexingIntrinsicsUnchanged()||!originalDeriveHelperCryptoUnchanged()||!implIncludes||!Object.hasOwn(implIncludes,'value'))return false;
+ const current=Object.getOwnPropertyDescriptor(implStringPrototype,'includes');
+ return current&&Object.hasOwn(current,'value')&&current.value===implIncludes.value&&current.writable===implIncludes.writable&&current.enumerable===implIncludes.enumerable&&current.configurable===implIncludes.configurable&&Reflect.apply(Function.prototype.toString,implIncludes.value,[])==='function includes() { [native code] }';
+}
+export function originalImplNamespacePlanCacheFacts(){return Object.freeze({eligible:!!reusableImplPlan(),cached:cachedImplPlan!==null,callerOutputsCached:false});}
 export function originalImplNamespaceSourcePlan(){
+ // Only the immutable, privately pinned compiler-source witness is shared.
+ // Any observable non-native/changed operation retains the complete old path.
+ if(reusableImplPlan()&&cachedImplPlan!==null)return requireOriginalImplNamespaceSourcePlan(cachedImplPlan);
  const graph='compiler/rustc_resolve/src/build_reduced_graph.rs';
  const selections={item:originalFunction(graph,'build_reduced_graph_for_item','BuildReducedGraphVisitor'),associated:originalFunction(graph,'visit_assoc_item','Visitor'),block:originalFunction(graph,'visit_block','Visitor')};
  const recipes=[
@@ -77,7 +89,7 @@ export function originalImplNamespaceSourcePlan(){
   recipe(selections.associated,`if ctxt == AssocCtxt::Trait { let parent = self.parent_scope.module; let expansion = self.parent_scope.expansion; self.r.define(parent, ident, ns, (self.res(def_id), vis, item.span, expansion)); } else if !matches!(&item.kind, AssocItemKind::Delegation(deleg) if deleg.from_glob) { let impl_def_id = self.r.tcx.local_parent(local_def_id); let key = BindingKey::new(ident.normalize_to_macros_2_0(), ns); self.r.impl_binding_keys.entry(impl_def_id).or_default().insert(key); }`,'actual impl associated names stay in impl_binding_keys rather than enclosing module'),
   recipe(selections.block,`let orig_current_module = self.parent_scope.module; let orig_current_macro_rules_scope = self.parent_scope.macro_rules; self.build_reduced_graph_for_block(block); visit::walk_block(self, block); self.parent_scope.module = orig_current_module; self.parent_scope.macro_rules = orig_current_macro_rules_scope;`,'actual block restores enclosing module and textual macro scope'),
  ];
- const value=freeze({schema:'original-impl-enclosing-namespace-source-plan-v1',profileSha256:hash(profileBytes),selections,recipes,wholeCompilerExecuted:false,namespaceAuthority:false,runtimeAuthority:false});implPlans.add(value);return value;
+ const value=freeze({schema:'original-impl-enclosing-namespace-source-plan-v1',profileSha256:hash(profileBytes),selections,recipes,wholeCompilerExecuted:false,namespaceAuthority:false,runtimeAuthority:false});implPlans.add(value);if(reusableImplPlan())cachedImplPlan=value;return value;
 }
 export function requireOriginalImplNamespaceSourcePlan(value){if(!implPlans.has(value))fail('copied or foreign impl namespace source plan');return value;}
 export function createOriginalAncestorAttributeScopeContext({modules,binding,dependencies}={}){

@@ -2,6 +2,7 @@ import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
+import {Hash} from 'node:crypto';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {createDeriveFootprintContext,deriveFootprintExternalModules} from '../derive-footprints.mjs';
 import {createDeriveBangContext} from '../derive-bang-context.mjs';
@@ -9,6 +10,7 @@ import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {parserSourceScope} from '../source-scopes.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
+import {originalImplNamespaceSourcePlan,originalImplNamespacePlanCacheFacts,requireOriginalImplNamespaceSourcePlan} from '../derive-ancestor-attribute-scope.mjs';
 import {DERIVE_EMPTY_ENCLOSING_EFFECT_RULE,proveDeriveEmptyEnclosingEffect,deriveEmptyEnclosingEffectFacts,proveDeriveRequestedNameUnchanged,deriveRequestedNameEffectFacts} from '../derive-output-effects.mjs';
 
 const test=(name,body)=>nodeTest(name,{timeout:60_000},body);
@@ -39,7 +41,24 @@ test('stable language rule consumes complete original resolver actions independe
  assert.equal(actual.sourcePlan.recipes.length,4);assert.equal(actual.sourcePlan.wholeCompilerExecuted,false);
  assert.deepEqual(actual.enclosingTypeBindings,[]);assert.deepEqual(actual.enclosingUsableValueBindings,[]);
  assert.equal(actual.runtimeAuthority,false);assert.deepEqual(Object.keys(token),['schema']);
- retain('01-complete-source-rule',{row,token,actual});
+ const first=originalImplNamespaceSourcePlan(),second=originalImplNamespaceSourcePlan(),cache=originalImplNamespacePlanCacheFacts();
+ assert.deepEqual(first,second);assert.equal(requireOriginalImplNamespaceSourcePlan(first),first);
+ if(cache.eligible)assert.strictEqual(first,second);else assert.notStrictEqual(first,second);
+ assert.throws(()=>requireOriginalImplNamespaceSourcePlan(structuredClone(first)),/copied or foreign/u);
+ const includes=Object.getOwnPropertyDescriptor(String.prototype,'includes'),update=Object.getOwnPropertyDescriptor(Hash.prototype,'update');let ownerCallbacks=0,hashCallbacks=0,fallback,hashFallback;
+ try{
+  Object.defineProperty(String.prototype,'includes',{...includes,value:function(...args){ownerCallbacks++;return Reflect.apply(includes.value,this,args);}});
+  assert.equal(originalImplNamespacePlanCacheFacts().eligible,false);fallback=originalImplNamespaceSourcePlan();
+ }finally{Object.defineProperty(String.prototype,'includes',includes);}
+ assert.ok(ownerCallbacks>=3);assert.notStrictEqual(fallback,first);assert.deepEqual(fallback,first);
+ try{
+  Object.defineProperty(Hash.prototype,'update',{...update,value:function(...args){hashCallbacks++;return Reflect.apply(update.value,this,args);}});
+  assert.equal(originalImplNamespacePlanCacheFacts().eligible,false);hashFallback=originalImplNamespaceSourcePlan();
+ }finally{Object.defineProperty(Hash.prototype,'update',update);}
+ assert.equal(hashCallbacks,1);assert.notStrictEqual(hashFallback,first);assert.deepEqual(hashFallback,first);
+ const next=effect(row),nextFacts=facts(next,row);assert.notStrictEqual(next,token);
+ assert.notStrictEqual(nextFacts.alternatives[0].originalCompleteOutput.proof,actual.alternatives[0].originalCompleteOutput.proof,'complete caller output must still be freshly reissued');
+ retain('01-complete-source-rule',{row,token,actual,first,second,cache,fallback,ownerCallbacks,hashFallback,hashCallbacks,next,nextFacts});
 });
 
 test('all privately closed builtin branches narrow only their original item type uncertainty',()=>{
