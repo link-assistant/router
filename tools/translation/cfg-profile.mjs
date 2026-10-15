@@ -2,7 +2,7 @@
 // is inferred. Validated false predicates prove absence; exact builtin lint
 // alternatives retain their predicate without changing source declarations.
 import {tokenizeRust} from './extensions/lexical.mjs';
-import {inspectConditionalAttribute,CONDITIONAL_ATTRIBUTE_PROFILE} from './conditional-attributes.mjs';
+import {inspectConditionalAttribute,conditionalLiteralDocEvidence,CONDITIONAL_ATTRIBUTE_PROFILE} from './conditional-attributes.mjs';
 const absentAttributes=new WeakSet();
 export const isAbsentConditionalAttribute=attribute=>!!attribute&&absentAttributes.has(attribute);
 const inertAttributes=new WeakSet();
@@ -47,9 +47,9 @@ export function itemConfiguration(tokens,profile){
     if(name==='cfg_attr'){
       try{
         const input=inspectConditionalAttribute(tokens.slice(body,end)),predicate=evaluateConfiguration(input.predicate,profile);
-        const inert=predicate.diagnostics.length===0&&input.inertBuiltinLint;
+        const documentation=conditionalLiteralDocEvidence(input),inert=predicate.diagnostics.length===0&&input.inertBuiltinLint;
         const expansion=predicate.value===false?'absent':inert?'inert-lint-alternatives':'unresolved';
-        evaluation={value:expansion==='unresolved'?null:true,predicate,expansion,inputs:input.attributes,profile:CONDITIONAL_ATTRIBUTE_PROFILE,configurationSelected:predicate.value!==null,diagnostics:expansion==='unresolved'?[...predicate.diagnostics,{message:'active or unknown cfg_attr expansion requires checked attribute transformation',span:range(tokens.slice(begin,at))}]:[]};
+        evaluation={value:expansion==='unresolved'?null:true,predicate,expansion,inputs:input.attributes,profile:CONDITIONAL_ATTRIBUTE_PROFILE,...(documentation?{literalDocumentationCandidate:documentation}:{}),configurationSelected:predicate.value!==null,diagnostics:expansion==='unresolved'?[...predicate.diagnostics,{message:'active or unknown cfg_attr expansion requires checked attribute transformation',span:range(tokens.slice(begin,at))}]:[]};
       }catch(error){evaluation={value:null,diagnostics:[{message:error.message,span:range(tokens.slice(begin,at))}]};}
     }
     const attribute={name,span:range(tokens.slice(begin,at)),tokens:tokens.slice(begin,at).map(text),evaluation};
