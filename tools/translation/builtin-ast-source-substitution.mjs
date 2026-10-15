@@ -67,6 +67,16 @@ function compile(stage,state,fragment){
   function expression(nodes,env,depth){
     count(depth);if(!nodes.length)throw new TypeError('Source substitution does not manufacture missing expressions');
     const source=sourceOf(fragment,nodes);
+    if(state.access&&nodes[0].text==='loop'){
+      if(nodes.length!==2||nodes[1].delimiter!=='{')return unknown('source-loop-grammar',nodes);
+      obligations.push({kind:'source-loop-control-and-effects',source:fragment.source,span:source.span});
+      return {tag:'original-loop-source-control',body:block(nodes[1].children,new Map(env),depth+1,sourceOf(fragment,[nodes[1]])),iterationSemanticsEstablished:false,...source};
+    }
+    if(state.access&&['break','continue'].includes(nodes[0].text)){
+      if(nodes[0].text==='continue'&&nodes.length!==1||nodes[1]?.type==='char')return unknown('source-jump-grammar',nodes);
+      obligations.push({kind:'source-jump-target-and-effects',source:fragment.source,span:source.span});
+      return {tag:'original-source-jump',operation:nodes[0].text,value:nodes.length>1?expression(nodes.slice(1),env,depth+1):null,targetAndEffectsEstablished:false,...source};
+    }
     if(nodes.length===1&&ident(nodes[0])){
       const slot=env.get(nodes[0].text);if(slot)return {tag:'lexical-slot',slotId:slot.id,...source};
       if(['true','false'].includes(nodes[0].text))return {tag:'original-literal',spelling:nodes[0].text,...source};
