@@ -85,6 +85,13 @@ export function pinnedOptionBody(name){
   const source=sources.get('library/core/src/option.rs'),method=methodIn(source.source,'impl<T>Option<T>',name);
   return seal(key,method,{kind:'original-inherent-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner:'core::option::Option<T>',genericParameter:'T'});
 }
+// Selection remains private to this issuer; neither the public header nor a
+// caller's PartialEq spelling can authorize a specialization.
+export function pinnedOptionPartialEqBody(){
+  const key='Option::PartialEq::eq';if(cache.has(key))return cache.get(key);
+  const input=sources.get('library/core/src/option.rs'),method=methodIn(input.source,'impl<T:PartialEq>PartialEqforOption<T>','eq');
+  return seal(key,method,{kind:'original-trait-method',rustPath:input.input.rustPath,sourceSha256:input.input.sha256,owner:'core::option::Option<T>',trait:'core::cmp::PartialEq',genericParameter:'T',sourceInputs:[STANDARD_BODY_SOURCE_PROFILE.sourceInputs[0]]});
+}
 export function pinnedSharedBody(kind){
   if(!['Option','Result'].includes(kind))throw new TypeError('shared body requires an actual canonical standard family');
   if(kind==='Option')return pinnedOptionBody('as_ref');

@@ -1,3 +1,4 @@
+import {originalStandardMatchOrigin,originalStandardTupleLayout} from './standard-method-context.mjs';
 import { originalStandardSharedPatternLayout } from './standard-shared-pattern-source.mjs';
 import { SHARED_REFERENCE_COPY_SOURCE, sharedReferenceCopyIdentity, originalPrimitiveCopySource } from '../shared-reference-copy-source.mjs';
 import { originalStringSharedViewSource } from './string-shared-view-source.mjs';
@@ -102,9 +103,10 @@ export function createOriginalSharedPatternAdapter() {
             throw typeError('Shared source pattern needs its actual checked layout', span);
         if (frame.layouts.has(current.name))
             return entry;
-        const origin = contexts.get(checker)?.data.get(current.name);
+        const origin = contexts.get(checker)?.data.get(current.name),standardTuple=originalStandardTupleLayout(checker,current,entry);
         let proof;
-        if (origin) {
+        if(standardTuple)proof=standardTuple;
+        else if (origin) {
             originalParsedDeclarationEvidence(origin.item);
             if (entry.ctors.length !== origin.item.ctors.length)
                 throw typeError('Original shared pattern constructor layout changed', span);
@@ -164,13 +166,14 @@ export function createOriginalSharedPatternAdapter() {
             if (seen.has(type.name))
                 return false;
             const entry = sourceLayout(checker, type, span);
-            if (!['Option', 'Result'].includes(entry?.standardGeneric?.kind))
+            const product=originalStandardTupleLayout(checker,type,entry);
+            if (!product&&!['Option', 'Result'].includes(entry?.standardGeneric?.kind))
                 return false;
             seen.add(type.name);
             const result = entry.ctors.every(ctor => ctor.fields.every(field => safeValueDomain(checker, field.type, span, seen)));
             seen.delete(type.name);
             if (result)
-                active.get(checker).valueCopies.set(metadataDigest(type), { kind: 'original-standard-derived-copy', type: structuredClone(type), source: originalStandardSharedPatternLayout(entry.standardGeneric.kind), payloadCopyRequired: true });
+                active.get(checker).valueCopies.set(metadataDigest(type), { kind: product?'original-source-shared-copy-product':'original-standard-derived-copy', type: structuredClone(type), source: product??originalStandardSharedPatternLayout(entry.standardGeneric.kind), payloadCopyRequired: true });
             return result;
         }
         if (type.patternOwnershipRefusal)
@@ -193,7 +196,7 @@ export function createOriginalSharedPatternAdapter() {
             return false;
         seen.add(type.name);
         const entry = checker.items.get(type.name);
-        return ['Option', 'Result'].includes(entry?.standardGeneric?.kind) && entry.ctors.some(ctor => ctor.fields.some(field => hasShared(field.type, checker, seen)));
+        return (!!originalStandardTupleLayout(checker,type,entry)||['Option', 'Result'].includes(entry?.standardGeneric?.kind)) && entry.ctors.some(ctor => ctor.fields.some(field => hasShared(field.type, checker, seen)));
     }
     function originalSharedPatternDomain(checker, type, span) {
         const frame = active.get(checker);
@@ -221,6 +224,10 @@ export function createOriginalSharedPatternAdapter() {
         if (!frame?.patterns.has(node))
             return null;
         const location = node.span;
+        if(node.k==='routerTuplePattern'){
+            const entry=sourceLayout(checker,type,location),proof=originalStandardTupleLayout(checker,type,entry);if(!proof||entry.ctors[0].fields.length!==node.items.length)throw unsupported('original shared tuple pattern','requires its complete privately associated standard method product',location);
+            const ctor=entry.ctors[0];return {k:'ctor',path:[type.name,ctor.name],data:type.name,ctor:ctor.name,args:node.items.map((child,index)=>originalSharedPatternOwner(checker,child,ctor.fields[index].type,path,env)),span:location};
+        }
         if (node.k === 'bindOrCtor') {
             const actual = checker.lookup([node.name], path, location);
             const pointee = referencePointee(type, location), entry = checker.items.get(pointee.name), tag = (entry?.standardGeneric?.kind === 'Option' ? ['Some', 'None'] : entry?.standardGeneric?.kind === 'Result' ? ['Ok', 'Err'] : []).includes(node.name);
@@ -320,7 +327,7 @@ export function createOriginalSharedPatternAdapter() {
     function checkOriginalSharedPatternMatch(checker, node, env, path, expected, allowLiteral, lower) {
         if (!['match', 'routerOrderedMatch'].includes(node.k) || node.sourceMacro)
             return null;
-        const captured = contexts.get(checker)?.calls.get(node);
+        const captured = contexts.get(checker)?.calls.get(node)??originalStandardMatchOrigin(checker,node);
         if (!captured)
             return null;
         if (captured.digest !== metadataDigest(node))

@@ -38,6 +38,7 @@ import {JSON_DATA,JSON_CONTRACTS,JSON_TYPES} from './json-contracts.mjs';
 import {INTEGER_DATA,INTEGER_ERROR_CONTRACTS} from './integer-contracts.mjs';
 import {planStandardMethod,completeStandardMethod,mappedStandardFamily} from './standard-method-plans.mjs';
 import {rustFixedType} from '../checked-types.mjs';
+import {checkOriginalOptionEquality} from './option-equality.mjs';
 import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
 import {floatSignObligation,withFloatZeroSignChecker} from './float-zero-refinements.mjs';
@@ -398,6 +399,10 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       return super.normalisePattern({...pattern,path:[type.name,pattern.path.at(-1)]},type,span);
     }
     return super.normalisePattern(pattern,type,span);
+  }
+  binary(node,env,path,expected,allowLiteral){
+    const equality=checkOriginalOptionEquality(this,node,env,path,HostRustParser);
+    return equality??super.binary(node,env,path,expected,allowLiteral);
   }
   hostLambda(node,types,env,path,expected,context) {
     if(node.k==='routerLambda')return this.lambda(node,types,env,path,expected,context);

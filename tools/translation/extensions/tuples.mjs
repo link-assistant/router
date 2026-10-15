@@ -1,4 +1,5 @@
 // Rust tuple products have their own checked layout, distinct from tuple structs.
+import {originalStandardTupleContext,originalStandardTupleField,recordOriginalStandardTuple} from './standard-method-context.mjs';
 import {PatternControlRustParser,PatternControlChecker,PatternControlEmitter} from './pattern-control.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {sameType,UNIT,rustFixedType} from '../checked-types.mjs';
@@ -71,6 +72,7 @@ export class TupleChecker extends PatternControlChecker {
     return program;
   }
   inferredTupleField(type,location,depth,active,verified,budget,referenceContext) {
+    if(originalStandardTupleField(this,referenceContext,type,depth)){if(--budget.cells<0)throw unsupported('original shared tuple budget','exceeds the existing checked product bound',location);return;}
     if(referenceContext?.token===SHARED_ITERATOR_PAIR&&depth===0&&type===referenceContext.itemType) {
       const reference=type.rustReference,pointee=reference?.pointee;
       if(--budget.cells<0||reference?.kind!=='shared'||!pointee||!['fixed','bool'].includes(pointee.kind)||type.rustOwnership||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||type.patternOwnershipRefusal!=='shared source reference')throw unsupported('inferred iterator tuple reference','requires the actual checked immutable scalar Item; no aggregate, mutable or owned field is inferred',location);
@@ -116,7 +118,7 @@ export class TupleChecker extends PatternControlChecker {
       if(!expected) {
         // Check the original field expressions once, in source order. A
         // later result context never supplies missing Rust field identities.
-        const args=node.items.map(item=>this.expr(item,env,path,undefined,true)),{entry,type}=this.inferTuple(args,node.span);
+        const args=node.items.map(item=>this.expr(item,env,path,undefined,true)),context=originalStandardTupleContext(this,node,args),{entry,type}=this.inferTuple(args,node.span,context);if(context)recordOriginalStandardTuple(this,context,entry,type);
         return {k:'ctor',data:entry.fullName,ctor:entry.ctors[0].name,args,type,span:node.span,tupleInference:{kind:'checked-scalar-expression-product',fieldTypes:args.map(argument=>structuredClone(argument.type)),defaultedFields:false}};
       }
       if(expected?.kind==='named')expected=this.resolveType(expected,path,node.span);

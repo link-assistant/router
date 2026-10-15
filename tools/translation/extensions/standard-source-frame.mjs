@@ -4,8 +4,11 @@ import {sharedReferenceCopyIdentity,SHARED_REFERENCE_COPY_SOURCE,STANDARD_OPTION
 import {renameFunction} from '../vendor/meta-language/translation/ir.js';
 import {sameType} from '../checked-types.mjs';
 import {metadataDigest} from './source-links.mjs';
-import {alphaTree,retargetCheckedCallback} from './standard-body-checker.mjs';
-import {parsedPinnedBodyEvidence} from './standard-body-source.mjs';
+import {alphaTree,retargetCheckedCallback,optionPayload} from './standard-body-checker.mjs';
+import {parsedPinnedBodyEvidence,pinnedOptionPartialEqBody} from './standard-body-source.mjs';
+import {originalStandardCallContext} from './original-standard-calls.mjs';
+import {originalOptionPartialEqSource} from './option-equality-source.mjs';
+import {requireOriginalOptionEqualityOperand} from './option-equality.mjs';
 import {typeError} from '../vendor/meta-language/translation/diagnostics.js';
 const frames=new Map(),frameOrigins=new WeakSet(),loans=new Map(),activeFrames=new WeakMap();
 export function originalCallbackLoanType(checker,payload,span){
@@ -22,6 +25,19 @@ export function checkOriginalCallbackLoan(checker,syntax,env,path,expected){
   const type=originalCallbackLoanType(checker,value.type,syntax.span),proof={profile:'original-standard-ephemeral-callback-loan-v1',key:metadataDigest({value:alphaTree(value),type}),escapes:false,mutable:false};
   loans.set(proof.key,{proof:structuredClone(proof),value:structuredClone(value),type:structuredClone(type)});
   return {k:'routerOriginalCallbackLoan',value,type,originalLoanProof:proof,span:syntax.span};
+}
+// Rust's equality operator supplies the shared method operands. This issuer
+// checks the actual source operator and original method signature; a public
+// reference flag cannot manufacture an implicit loan or escape permission.
+export function originalStandardOperandLoan(checker,caller,value,original,index){
+  requireOriginalOptionEqualityOperand(checker,caller,index,value);
+  const context=originalStandardCallContext(checker,caller),evidence=parsedPinnedBodyEvidence(original),selection=pinnedOptionPartialEqBody();
+  if(caller.k!=='binary'||caller.op!=='eq'||evidence.selection!==selection||selection.method.parameters[index]?.rustTypeSyntax.join('')!=='&Self'||optionPayload(checker,value.type,[],caller.span).owner!=='&str')throw new TypeError('Original standard operand loan requires its actual equality operator, shared signature and checked borrowed-str Option');
+  const source=originalOptionPartialEqSource(selection),type=checker.sharedFieldType(value.type,{rustReference:{kind:'shared',span:caller.span}},caller.span);
+  type.patternOwnershipRefusal='shared source reference';type.rustReference.source='original-standard-operator-signature';
+  const proof={profile:'original-standard-operator-shared-loan-v1',selection,syntaxSha256:evidence.syntaxSha256,source,caller:context,parameter:index,escapes:false,mutable:false,key:metadataDigest({value:alphaTree(value),type,source,caller:context,parameter:index})};
+  loans.set(proof.key,{proof:structuredClone(proof),value:structuredClone(value),type:structuredClone(type)});
+  return {k:'routerOriginalCallbackLoan',value,type,originalLoanProof:proof,span:value.span};
 }
 export function checkOriginalSourceFrame(checker,syntax,bindings,resultType,original){
   const evidence=parsedPinnedBodyEvidence(original),env=checker.contextEnvironment(syntax,new Map(bindings),resultType),previous=activeFrames.get(checker),entry=checker.items.get(resultType.name),payload=entry?.standardGeneric?.kind==='Option'&&entry.standardGeneric.arguments.length===1?checker.resolveType(entry.standardGeneric.arguments[0],entry.modulePath,syntax.span):null;let body;activeFrames.set(checker,{selection:evidence.selection,receiver:resultType,payload});try{body=checker.expr(syntax,env,[],resultType);}finally{if(previous)activeFrames.set(checker,previous);else activeFrames.delete(checker);}
