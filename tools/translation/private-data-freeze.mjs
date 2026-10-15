@@ -2,8 +2,8 @@
 // A completed record contains scalar traversal costs only, with weak keys.
 import {types} from 'node:util';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-const SLOT_LIMIT=4096,NODE_LIMIT=32768,CELL_LIMIT=200000,DEPTH_LIMIT=160;
-function plan(value,completed){
+const ROOT_LIMIT=1024,LARGE_LIMIT=2048,SMALL_LIMIT=1024,LARGE_CELLS=64,NODE_LIMIT=32768,CELL_LIMIT=200000,DEPTH_LIMIT=160;
+function plan(value,lookup){
  const states=new Map(),order=[],pending=[{value,depth:0,exit:false}];let uniqueCells=0;
  while(pending.length){
   const frame=pending.pop(),value=frame.value;
@@ -12,7 +12,7 @@ function plan(value,completed){
    for(let index=0;index<state.children.length;index++){
     const child=state.children[index];
     if(child!==null&&typeof child==='object'){
-     const cost=completed?.get(child)??states.get(child);
+     const cost=lookup(child)??states.get(child);
      if(!cost||!cost.done)return null;
      cells+=cost.cells;const nextHeight=1+cost.height;if(nextHeight>height)height=nextHeight;
     }else cells++;
@@ -23,7 +23,7 @@ function plan(value,completed){
   }
   if(value===null||typeof value!=='object'){if(typeof value==='function')return null;continue;}
   if(types.isProxy(value))return null;
-  const known=completed?.get(value)??states.get(value);
+  const known=lookup(value)??states.get(value);
   if(known){if(!known.done||frame.depth+known.height>DEPTH_LIMIT)return null;continue;}
   if(frame.depth>=DEPTH_LIMIT||states.size>=NODE_LIMIT)return null;
   const array=Array.isArray(value),prototype=Object.getPrototypeOf(value);
@@ -44,22 +44,27 @@ function plan(value,completed){
   pending.push({value,depth:frame.depth,exit:true,state});
   for(let index=children.length-1;index>=0;index--){const child=children[index];if(child!==null&&typeof child==='object')pending.push({value:child,depth:frame.depth+1,exit:false});}
  }
- const root=completed?.get(value)??states.get(value);
+ const root=lookup(value)??states.get(value);
  return root&&root.done?{order,root}:null;
 }
 // The caller supplies its unchanged legacy recursive closure, not a callback
 // that participates in the eligible native algorithm. This factory issues no
 // token and is used only by the original private builtin proof construction.
 export function createCompletedDataFreezer(originalFreeze){
- let completed=null,slots=0;
+ let roots=null,large=null,small=null,rootSlots=0,largeSlots=0,smallSlots=0;
+ const lookup=value=>roots?.get(value)??large?.get(value)??small?.get(value);
+ function remember(value,record,isRoot){
+  if(isRoot){if(!roots||rootSlots>=ROOT_LIMIT){roots=new WeakMap();rootSlots=0;}roots.set(value,record);rootSlots++;}
+  else if(record.cells>=LARGE_CELLS){if(!large||largeSlots>=LARGE_LIMIT){large=new WeakMap();largeSlots=0;}large.set(value,record);largeSlots++;}
+  else{if(!small||smallSlots>=SMALL_LIMIT){small=new WeakMap();smallSlots=0;}small.set(value,record);smallSlots++;}
+ }
  return function completedDataFreeze(value){
   if(!value||typeof value!=='object'||!originalDataFreezeIntrinsicsUnchanged())return originalFreeze(value);
-  if(completed?.get(value))return value;
-  const selected=plan(value,completed);if(!selected)return originalFreeze(value);
+  if(lookup(value))return value;
+  const selected=plan(value,lookup);if(!selected)return originalFreeze(value);
   for(let index=0;index<selected.order.length;index++){
    const state=selected.order[index];Object.freeze(state.value);
-   if(!completed||slots>=SLOT_LIMIT){completed=new WeakMap();slots=0;}
-   completed.set(state.value,{height:state.height,cells:state.cells,done:true});slots++;
+   remember(state.value,{height:state.height,cells:state.cells,done:true},state.value===value);
   }
   return value;
  };

@@ -1,0 +1,24 @@
+{
+  "schema": "completed-data-freeze-cohort-original-v1",
+  "commit": "59bbbb91297e4a4314e64b8b5333c6fe00cd8eae",
+  "sources": [
+    {
+      "path": "tools/translation/private-data-freeze.mjs",
+      "storedPath": "raw/private-data-freeze.mjs",
+      "bytes": 3710,
+      "sha256": "4f34eab8fb1daa521cf2e9f86dbb2a737ece22f30079103aa99fafdb8272e6ef",
+      "mode": "100644",
+      "gitBlob": "d52ff08a2aad508fd4d52bb2e51dbbd5579b1eab"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "raw/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "mode": "100644",
+      "gitBlob": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657"
+    }
+  ],
+  "relocation": "Complete source is retained unmodified; test copies relocate only imports and original import.meta.url, with full relocation records.",
+  "scope": "233 bounded native helper baseline only; no original proof, parser or semantic admission authority."
+}
