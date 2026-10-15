@@ -54,6 +54,10 @@ The wrapper shares a locked target directory under the system temporary director
 
 Issue #759 is currently under an explicit no-local-build constraint because disk is nearly full. The wrapper's existence does not authorize a build during this task.
 
+Local pre-commit hooks must not invoke Rust or automatically clean caches. Keep
+source formatting, Clippy and Rust tests in gated CI. Commit-time syntax checks
+provide quick diagnostics; they do not replace the complete JavaScript gate.
+
 ## Measure archived cycles without inventing resource data
 
 Use [the complete evidence packer](../../tools/evidence/README.md) to capture full failed and passed streams, input vectors, executed harnesses and source/report snapshots in a reusable XZ/TAR packet. Every selected original has a pinned length and SHA256, and every archive member is reopened and verified. Original sources and earlier packets remain intact; install the finished packet only within the task's fixed evidence allocation. Storage receipts never authorize semantic admission, Rust verification or publication.
@@ -62,4 +66,4 @@ Run `node scripts/measure-js-first.mjs docs/case-studies/issue-759/raw --output 
 
 The tool also accepts `.json.gz` archives using streamed decompression and streamed top-level arrays, a 32 MiB character bound per JSON value and a 512 MiB decoded expansion bound per file. First fully green latency stays null without a declared required-workflow set and complete same-head coverage; per-workflow first success requires an exact completion timestamp and is labeled separately. Cumulative execution seconds include parallel jobs and are neither elapsed feedback time nor billed minutes. Unique CI heads are a proxy rather than a push count; archived synchronize events provide stronger but still potentially incomplete evidence. Latest-attempt APIs do not reconstruct omitted prior attempts. RSS, target disk, billed minutes and monetary cost remain null without actual telemetry. Supply explicit `resourceSamples` objects with `peakRssBytes` and `peakTargetDiskBytes` from bounded executions when available, retaining collection method and sampling interval. Do not treat missing observations as zero or publish savings from incomparable workloads.
 
-The [reusable standard bundle](../case-studies/issue-759/standard/README.md) contains policy, workflow and parity checker templates with synthetic fixtures. Adapt its placeholders to real repository commands and preserve the same strict gating contract.
+The [reusable standard bundle](../case-studies/issue-759/standard/README.md) contains policy, workflow and parity checker templates with synthetic fixtures. Adapt its placeholders to real repository commands and preserve the same strict gating contract. The newer [reusable translation guidance](reusable-translation-guidance/README.md) adds the layered translation, stricter-user, resource and coordinated publication requirements. Its pinned patch remains outside the case study and has not been applied to the archived standard templates; copy and qualify this guidance separately from the compiler export.
