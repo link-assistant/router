@@ -74,3 +74,29 @@ export function originalNamespaceTraversalIntrinsicsUnchanged(){
  // prototype is also observable and therefore keeps the collected fallback.
  return prototype(traversalEntries.value)===traversalFunctionPrototype&&!descriptor(traversalEntries.value,'call')&&prototype(traversalMapIterator.field.value)===traversalFunctionPrototype&&!descriptor(traversalMapIterator.field.value,'call');
 }
+
+// Successful flat-token validation may avoid allocating a canonical copy only
+// when every skipped copier/coercion operation is genuinely native. This adds
+// no cache or source authority and leaves the existing guard domains unchanged.
+const tokenBuffer=descriptor(globalThis,'Buffer'),tokenString=descriptor(globalThis,'String'),tokenNumber=descriptor(globalThis,'Number');
+const tokenBufferValue=tokenBuffer&&hasOwn(tokenBuffer,'value')&&typeof tokenBuffer.value==='function'&&!types.isProxy(tokenBuffer.value)?tokenBuffer.value:null;
+const tokenNumberValue=tokenNumber&&hasOwn(tokenNumber,'value')&&typeof tokenNumber.value==='function'&&!types.isProxy(tokenNumber.value)?tokenNumber.value:null;
+const tokenSafeInteger=tokenNumberValue?descriptor(tokenNumberValue,'isSafeInteger'):null;
+const tokenRequired=[[originalObject,'create'],[originalObject,'defineProperty'],[originalObject,'keys'],[tokenBufferValue,'byteLength'],[tokenNumberValue,'isSafeInteger']];
+const tokenPins=[];let tokenNative=!!(tokenBufferValue&&tokenString&&hasOwn(tokenString,'value')&&native(tokenString.value,'String')&&tokenNumberValue&&native(tokenNumberValue,'Number')&&tokenSafeInteger&&hasOwn(tokenSafeInteger,'value')&&native(tokenSafeInteger.value,'isSafeInteger'));
+function tokenPrototypeSafe(){
+ // Copier defaults and ToPropertyDescriptor read these inherited properties.
+ if(descriptor(objectPrototype,'cells')||descriptor(objectPrototype,'bytes')||descriptor(objectPrototype,'preserveKeyOrder')||descriptor(objectPrototype,'get')||descriptor(objectPrototype,'set'))return false;
+ // A skipped result.push could otherwise invoke a numeric inherited setter or
+ // fail on inherited nonwritable data. Native key/coercion calls see strings.
+ for(let at=0;at<2;at++){const names=keys(at===0?objectPrototype:arrayPrototype);for(let index=0;index<names.length;index++){const key=names[index];if(typeof key==='string'){const number=tokenNumberValue(key);if(number>=0&&tokenSafeInteger.value(number)&&tokenString.value(number)===key)return false;}}}
+ return true;
+}
+if(tokenNative&&!tokenPrototypeSafe())tokenNative=false;
+if(tokenNative)for(let index=0;index<tokenRequired.length;index++){const owner=tokenRequired[index][0],key=tokenRequired[index][1],field=descriptor(owner,key);tokenPins[index]={owner,key,field};if(!field||!hasOwn(field,'value')||!native(field.value,key))tokenNative=false;}
+if(tokenNative)try{tokenNative=tokenBufferValue.byteLength('')===0&&tokenBufferValue.byteLength('a')===1&&tokenBufferValue.byteLength('\u03bb\ud83d\ude00\ud800')===9&&tokenString.value(0)==='0'&&tokenString.value(12)==='12'&&tokenNumberValue.isSafeInteger(1)&&!tokenNumberValue.isSafeInteger(1.5);}catch{tokenNative=false;}
+export function originalFlatTokenIntrinsicsUnchanged(){
+ if(!tokenNative||!originalNamespaceTraversalIntrinsicsUnchanged()||!same(descriptor(globalThis,'Buffer'),tokenBuffer)||!same(descriptor(globalThis,'String'),tokenString)||!same(descriptor(globalThis,'Number'),tokenNumber))return false;
+ for(let index=0;index<tokenPins.length;index++){const pin=tokenPins[index];if(!same(descriptor(pin.owner,pin.key),pin.field))return false;}
+ return tokenPrototypeSafe();
+}

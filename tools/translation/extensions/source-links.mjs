@@ -2,6 +2,7 @@
 // a caller-supplied file checksum. Private contexts are not semantic IR nodes.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
+import {originalFlatTokenIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {capturedRustTokenSource} from './lexical.mjs';
 
@@ -85,12 +86,50 @@ export function withCapturedSourceParser(Base) {return class extends Base {
     const body=super.block(...args);if(capture)frame.bodySpan.end=c.tokens[c.index-1].end;return body;
   }
 };}
+// This is a successful-only specialization of the unchanged copier below.
+// It re-reads every mutable descriptor/scalar, charges each alias occurrence,
+// and never throws a comparison refusal before full legacy validation.
+function originalFlatTokens(actual,expectedTokens){
+  if(!actual||types.isProxy(actual)||!Array.isArray(actual)||Object.getPrototypeOf(actual)!==Array.prototype)return false;
+  const descriptors=Object.getOwnPropertyDescriptors(actual),keys=Reflect.ownKeys(descriptors),length=Object.hasOwn(descriptors,'length')?descriptors.length.value:null;
+  let cells=199999,bytes=4194304,expectedIndex=0,secondHalf=false,matches=true;
+  if(!Number.isSafeInteger(length)||length<0||length>cells||keys.length!==length+1)return false;
+  for(let at=0;at<keys.length;at++){const key=keys[at],field=descriptors[key];if(typeof key!=='string'||!Object.hasOwn(field,'value')||(!field.enumerable&&key!=='length'))return false;}
+  const equal=(fields,names,expected,half=0)=>{
+    if(!expected||names.length!==Object.keys(expected).length)return false;
+    const wanted=Object.keys(expected);
+    for(let at=0;at<wanted.length;at++){const key=wanted[at];if(!Object.hasOwn(fields,key))return false;const value=half&&key==='value'?'&':half===1&&key==='end'?expected.start+1:half===2&&key==='start'?expected.start+1:expected[key];if(fields[key].value!==value)return false;}
+    return true;
+  };
+  for(let index=0;index<length;index++){
+    if(!Object.hasOwn(descriptors,index))return false;
+    const token=descriptors[index].value;if(--cells<0||!token||typeof token!=='object'||types.isProxy(token)||Array.isArray(token))return false;
+    const prototype=Object.getPrototypeOf(token);if(prototype!==Object.prototype&&prototype!==null&&prototype!==Array.prototype)return false;
+    const fields=Object.getOwnPropertyDescriptors(token),names=Reflect.ownKeys(fields);
+    for(let at=0;at<names.length;at++){
+      const key=names[at],field=fields[key];if(typeof key!=='string'||!Object.hasOwn(field,'value')||!field.enumerable||--cells<0)return false;
+      const value=field.value,type=typeof value;
+      if(type==='string'){bytes-=Buffer.byteLength(value);if(bytes<0)return false;}
+      else if(type==='number'){if(!Number.isSafeInteger(value))return false;}
+      else if(value!==null&&value!==undefined&&type!=='boolean'&&type!=='bigint')return false;
+    }
+    if(!matches)continue;
+    const expected=expectedTokens[expectedIndex];
+    if(secondHalf){if(!equal(fields,names,expected,2))matches=false;secondHalf=false;expectedIndex++;}
+    else if(equal(fields,names,expected))expectedIndex++;
+    else if(expected?.value==='&&'&&expected.end===expected.start+2&&equal(fields,names,expected,1))secondHalf=true;
+    else matches=false;
+  }
+  return matches&&!secondHalf&&expectedIndex===expectedTokens.length;
+}
 function verifyParserTokens(parser) {
   const origin=parserSources.get(parser);if(!origin)return null;
   // Host.type splits one original && token into exactly two positioned &
   // tokens. No other replacement, insertion, deletion or field change is
   // permitted by this source association, even after parser construction.
-  const actual=copyMetadata(ownData(ownData(parser,'cursor'),'tokens'));let index=0;
+  const tokens=ownData(ownData(parser,'cursor'),'tokens');
+  if(originalFlatTokenIntrinsicsUnchanged()&&originalFlatTokens(tokens,origin.tokens))return origin;
+  const actual=copyMetadata(tokens);let index=0;
   // copyMetadata already validates descriptors, scalar domains and budgets.
   // Token snapshots contain scalar fields only: compare those exact fields
   // directly rather than serializing and hashing every token repeatedly.
