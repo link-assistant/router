@@ -15,6 +15,8 @@ import {isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
 import {originalDeriveHelperCryptoUnchanged} from './derive-footprints.mjs';
+import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
+const sourceWitnessJson=createPrivateFrozenJsonCache();
 const root=new URL('./source-profiles/derive-ancestor-scope/',import.meta.url),profileBytes=readFileSync(new URL('manifest.json',root)),profile=JSON.parse(profileBytes);
 const hash=value=>createHash('sha256').update(value).digest('hex'),freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;},same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fail=message=>{throw new TypeError('Original conditional ancestor: '+message);},contexts=new WeakMap(),proofs=new WeakMap(),plans=new WeakSet();
@@ -131,7 +133,7 @@ function childAttributeSources(state,owner,row){
 }
 // References are storage only. The complete original plan and expansions
 // stay in the authenticated context; no digest can issue a namespace proof.
-function sourceReference(value){const original=JSON.stringify(value);return {sha256:hash(original),bytes:Buffer.byteLength(original)};}
+function sourceReference(value){const original=sourceWitnessJson(value);return {sha256:hash(original),bytes:Buffer.byteLength(original)};}
 function sourcePlanReference(plan){return freeze({schema:'original-conditional-source-plan-reference-v1',...sourceReference(plan),profileSha256:plan.profileSha256,
  selections:Object.fromEntries(Object.entries(plan.selections).map(([name,callback])=>[name,{path:callback.path,sourceSha256:callback.sourceSha256,name:callback.name,owner:callback.owner,span:callback.span,originalSha256:hash(callback.original)}])),
  recipes:plan.recipes.map(row=>({role:row.role,callback:sourceReference(row.callback),selectedOriginalSha256:hash(row.selectedOriginal),selectedTokenSequenceSha256:hash(row.selectedTokenSequence),wholeCallbackExecuted:row.wholeCallbackExecuted})),

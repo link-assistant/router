@@ -1,0 +1,24 @@
+{
+  "schema": "complete-source-witness-json-before-v1",
+  "sources": [
+    {
+      "path": "tools/translation/derive-ancestor-attribute-scope.mjs",
+      "storedPath": "raw/derive-ancestor-attribute-scope.mjs",
+      "bytes": 28347,
+      "sha256": "50b1852695eeebddac30c7189f7eef43be6a6783ebc62b0900c1c31d0cc67841",
+      "commit": "deea1883688a4b821768cd2ce44ffd153dd8d65e",
+      "gitBlob": "82eb67ab05fce8d123a672c08e368de329b34bec",
+      "mode": "100644"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "raw/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "commit": "deea1883688a4b821768cd2ce44ffd153dd8d65e",
+      "gitBlob": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657",
+      "mode": "100644"
+    }
+  ],
+  "scope": "Whole unchanged ancestor source and license; test-only import/original-module-URL relocations recorded separately."
+}
