@@ -1,7 +1,7 @@
 // Test-only cache: actual source bytes/Cargo/profile are captured once. No
 // semantic program, profile namespace or private compiler token is transferred
 // between processes, runtime engines, entries or compilation profiles.
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
@@ -36,9 +36,14 @@ export function originalCsvContext(){
   const manifest=capture('Cargo.toml'),lock=capture('Cargo.lock');
   const source=file=>{if(!sources.has(file))throw new TypeError('Original CSV context has no captured tracked source: '+file);return sources.get(file);};
   const inputs=Object.freeze({entry:'src/lib.rs',sourceHead,compilationProfile:PRODUCTION_PROFILE,sources:Object.freeze(receipt),originalBytes:total,digest:hash(JSON.stringify({entry:'src/lib.rs',sourceHead,compilationProfile:PRODUCTION_PROFILE,sources:receipt}))});
+  // Optional verification artifacts retain passing and failing full-graph
+  // observations before any assertion. They supply no compiler authority and
+  // do not trigger another compilation or alter the shared source selection.
+  const vectorDirectory=process.env.ROUTER_ORIGINAL_CSV_VECTORS;
+  const captureResult=result=>{if(!vectorDirectory)return;mkdirSync(vectorDirectory,{recursive:true});writeFileSync(join(vectorDirectory,'inputs.json'),JSON.stringify(inputs),{flag:'wx'});writeFileSync(join(vectorDirectory,'meta.json'),JSON.stringify(result.meta),{flag:'wx'});writeFileSync(join(vectorDirectory,'result.js'),result.javascript,{flag:'wx'});writeFileSync(join(vectorDirectory,'result.ts'),result.typescript,{flag:'wx'});};
   let attempted=false,failed=false,result,failure;
   context=Object.freeze({source,inputs,get result(){
-    if(!attempted){attempted=true;try{const deriveDependencies=loadDeriveDependencyProof({manifest,lock});result=translateProject({entry:inputs.entry,paths:Object.freeze([...paths]),readSource:source,compilationProfile:inputs.compilationProfile,deriveDependencies});}catch(error){failed=true;failure=error;}}
+    if(!attempted){attempted=true;try{const deriveDependencies=loadDeriveDependencyProof({manifest,lock});result=translateProject({entry:inputs.entry,paths:Object.freeze([...paths]),readSource:source,compilationProfile:inputs.compilationProfile,deriveDependencies});captureResult(result);}catch(error){failed=true;failure=error;if(vectorDirectory){mkdirSync(vectorDirectory,{recursive:true});writeFileSync(join(vectorDirectory,'failure.json'),JSON.stringify({inputs,error:{name:error.name,message:error.message,stack:error.stack}}),{flag:'wx'});}}}
     if(failed)throw failure;return result;
   }});
   return context;

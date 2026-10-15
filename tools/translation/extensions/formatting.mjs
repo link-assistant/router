@@ -7,9 +7,6 @@ import {typeError,unsupported} from '../vendor/meta-language/translation/diagnos
 import {capturedRustTokenSource} from './lexical.mjs';
 import {loadSourceFormatTemplateControl,executeSourceFormatTemplate,checkedSourceFormatPieces} from '../source-format-template.mjs';
 import {metadataDigest} from './source-links.mjs';
-import {captureSourceDisplayScope,sourceNominalDisplayClosure,sourceNominalDisplayClosureFacts,verifySourceNominalDisplayMethod} from '../format-display-source.mjs';
-import {originalMethodSemanticFacts} from '../source-method-admission.mjs';
-const sourceDisplayMethods=new WeakMap();
 const span=(first,last)=>({start:first.start,end:last.end});
 const control=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(control):control(value))));
 const identifier=/^(?:[\p{L}_][\p{L}\p{N}_]*)$/u;
@@ -40,6 +37,8 @@ function formatParts(template,args,path,resolve) {
 }
 
 export class FormatRustParser extends TupleRustParser {
+  // Only the higher original Host layer can authenticate nominal Display.
+  originalFormatDisplayScope(_range,_names){return undefined;}
   primary(path,options) {
     const c=this.cursor,owned=c.is('String')&&c.is('::',1)&&c.is('new',2)&&c.is('(',3)&&c.is(')',4)&&!this.builtinShadow('String',path);
     const value=super.primary(path,options);
@@ -68,15 +67,16 @@ export class FormatRustParser extends TupleRustParser {
         pieces=checkedSourceFormatPieces(execution,name=>this.resolve([name],path),template.span);sourceTemplateControl=execution;
       }catch(error){if(!(error instanceof TypeError))throw error;}
     }
-    let sourceDisplayScope;if(sourceTemplateControl){try{sourceDisplayScope=captureSourceDisplayScope(this,span(token,close),pieces.flatMap(piece=>piece.capture?[piece.capture.name]:[]));}catch(error){if(!(error instanceof TypeError))throw error;}}
+    let sourceDisplayScope;if(sourceTemplateControl){try{sourceDisplayScope=this.originalFormatDisplayScope(span(token,close),pieces.flatMap(piece=>piece.capture?[piece.capture.name]:[]));}catch(error){if(!(error instanceof TypeError))throw error;}}
     return {k:'routerFormat',args,pieces:pieces??formatParts(template,args,path,(segments,owner)=>this.resolve(segments,owner)),...(sourceTemplateControl?{sourceTemplateControl}:{}),...(sourceDisplayScope?{sourceDisplayScope}:{}),templateProvenance:{span:template.span},span:span(token,close)};
   }
 }
 
 export class FormatChecker extends TupleChecker {
-  program(surface){sourceDisplayMethods.set(this,new WeakMap());return super.program(surface);}
+  originalFormatDisplayMethod(item,_entry){if(item.sourceMethodProof)throw new TypeError('Original method semantic source is copied, unsealed or caller fabricated');}
+  originalFormatDisplayValue(_node,_piece,_value,_env,_path,_bind,_closures){throw unsupported('format trait','requires an actual checked primitive Display implementation',_node.span);}
   visitDeclaration(item,path,entry,visit,phase){
-    if(phase==='declaration-types'&&item.sourceMethodProof){originalMethodSemanticFacts(item);sourceDisplayMethods.get(this)?.set(entry,item);}
+    if(phase==='declaration-types'&&item.sourceMethodProof)this.originalFormatDisplayMethod(item,entry);
     return super.visitDeclaration(item,path,entry,visit,phase);
   }
   expr(node,env,path,expected,allowLiteral=false) {
@@ -99,18 +99,7 @@ export class FormatChecker extends TupleChecker {
       let value=arguments_[piece.argument];
       if(piece.capture){const {name,path:resolved}=piece.capture;if(!captures.has(name))captures.set(name,bind(this.expr({k:'name',path:env.has(name)?[name]:resolved,span:piece.sourcePosition?.span??node.span},env,path)));value=captures.get(name);}
       if(value.type.kind==='data'&&node.sourceTemplateControl&&node.sourceDisplayScope&&!piece.spec&&!value.type.rustReference){
-        let closure;
-        try{closure=sourceNominalDisplayClosure(node.sourceDisplayScope,['crate',...value.type.name.split('.')]);sourceNominalDisplayClosureFacts(closure);}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('source Display closure',error.message,node.span);}
-        const method=this.resolvedMethod?.(value.type,closure.inherentMethod,'shared');
-        if(!method||method.generated!=='router-checked-inherent-method'||!method.sourceMethodProof)throw unsupported('source Display inherent method','requires the checked original source method for this exact nominal owner',node.span);
-        let sourceJoin;
-        try{sourceJoin=verifySourceNominalDisplayMethod(closure,sourceDisplayMethods.get(this)?.get(method),method);}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('source Display inherent method origin',error.message,node.span);}
-        const methodEnv=new Map(env);methodEnv.set(value.name,value.type);
-        const checked=this.methodCall(method,{k:'name',path:[value.name],span:value.span},[],methodEnv,path,undefined,node.span);
-        if(checked.type.kind!=='string'||checked.type.rustReference||checked.type.rustOwnership?.kind!=='borrowed'||checked.type.rustOwnership.source!=='str')throw unsupported('source Display string result','requires the original method checked as a borrowed str result',node.span);
-        value=bind(checked);
-        const namespaceJoin=closure.namespaceJoins,typeOrigin=proof=>({source:proof.source,module:proof.module,sourceViewDigest:proof.sourceViewDigest,written:proof.written,target:proof.target,originalContextDigest:proof.originalContextDigest,scopeDigest:proof.scopeDigest,originalStandardTypeDigest:proof.originalStandardType.digest,proofDigest:metadataDigest(proof)});
-        displayClosures.push({nominal:closure.nominal,implementation:closure.implementation,originalMethod:closure.method,sourceJoin,typeNamespaceJoin:{trait:typeOrigin(namespaceJoin.trait),formatter:typeOrigin(namespaceJoin.signature.formatter),result:typeOrigin(namespaceJoin.signature.result),signatureSpan:namespaceJoin.signature.signatureSpan,originalSignature:namespaceJoin.signature.originalSignature,signatureDigest:metadataDigest(namespaceJoin.signature),coherenceExclusions:namespaceJoin.coherenceExclusions,namespaceAuthority:false},standardSourceDigest:metadataDigest(closure.standard),sourceProgramDigest:metadataDigest(closure.forwarder),inherentMethod:method.fullName,formatterControlTrace:closure.execution.formatterControlTrace,allocatorEffectsVerified:false,ioEffectsVerified:false,runtimeParity:false});
+        value=this.originalFormatDisplayValue(node,piece,value,env,path,bind,displayClosures);
       }
       if(!['fixed','bool','string'].includes(value.type.kind))throw unsupported('format trait','requires an actual checked primitive Display implementation',node.span);
       if(!piece.spec)return {k:'toString',arg:value,type:STRING,span:node.span};

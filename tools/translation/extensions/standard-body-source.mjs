@@ -17,6 +17,7 @@ import {originalContainerDefaultBody,assertOriginalContainerDefaultBody} from '.
 import {originalOptionCloneBody,assertOriginalOptionCloneBody} from '../clone-container-source.mjs';
 import {originalPrimitiveCloneExpansion,assertOriginalPrimitiveCloneExpansion} from './primitive-clone-source.mjs';
 import {originalStringCloneMethod,requireOriginalStringCloneMethod,requireOriginalStringClonePlan} from '../string-clone-source.mjs';
+import {originalJsonDefaultBody,assertOriginalJsonDefaultBody} from '../json-default-source.mjs';
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 
 const root=new URL('../source-profiles/standard-method-bodies/',import.meta.url);
@@ -134,6 +135,12 @@ export function pinnedDefaultBody(owner){
   const invocation=calls[0],expansion=expandDeclarativeMacro(defaultDefinition,invocation.trees),expandedSource=expansion.trees.map(originalMacroTreeText).join(' ');
   const method=methodIn(expandedSource,'implDefaultfor'+owner,'default');
   return seal(key,method,{kind:'original-macro-expanded-trait-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner,trait:'core::default::Default',definitionDigest:defaultDefinition.digest,definitionSpan:defaultDefinition.definitionSpan,invocationSourceSha256:invocation.sourceSha256,invocationSpan:invocation.sourceSpan,expansionDigest:expansion.digest,expandedSourceSha256:hash(expandedSource),expandedTrees:expansion.trees,macroOwnerNamespaceComplete:false});
+}
+// Kept separate from the scalar owner API: external Default needs the actual
+// Cargo/source owner and cannot borrow an unqualified caller name.
+export function pinnedJsonDefaultBody(dependencies){
+  const selected=assertOriginalJsonDefaultBody(originalJsonDefaultBody(dependencies),dependencies);
+  return seal('serde_json::Value::Default',selected.method,{...selected.evidence,sourceSelection:selected},false);
 }
 export function parsePinnedBody(Parser,selection){
   const state=selections.get(selection);if(!state||Parser!==HostRustParser)throw new TypeError('standard parsing requires an actual privately selected pinned body');

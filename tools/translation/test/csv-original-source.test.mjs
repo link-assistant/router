@@ -1,4 +1,4 @@
-// SOURCE-ONLY DRAFT. Nine original-source assertions share ONE immutable
+// Original-source assertions share ONE immutable
 // library/Cargo/profile compilation attempt within this process. A failed
 // attempt is retained too, so later assertions do not repeat expensive work.
 import test from 'node:test';
@@ -57,12 +57,12 @@ for(const pin of methodPins.pins)test(`pending unchanged ${pin.owner}.${pin.name
   assert.equal(result.meta.runtimeParity,false);assert.equal(result.executableDeclarations.some(entry=>entry.qualifiedName===method.qualifiedName),false);
 });
 
-// Draft append to csv-original-source.test.mjs ONLY after the original paired
-// benchmark ends. These tests reuse original() and its one actual compilation;
-// they do not construct Rust source or invoke another translateProject.
+// These assertions reuse original() and its one actual compilation. They do
+// not construct Rust source or invoke another translateProject.
 for (const [file, owner, start, end, golden] of [
   ['src/admin.rs','ClaimFile',7430,7931,{$:'ClaimFile',token_sha256:'',token_id:'',ttl_hours:0n,claimed_at:0n}],
   ['src/model_contract.rs','ModelSelectorKind',1156,1396,{$:'Unknown'}],
+  ['src/gemini/stream.rs','NativeStreamTranslator',2168,2260,{$:'NativeStreamTranslator',decoder:{$:'SseJsonDecoder',buffered:[]}}],
 ]) test(`unchanged complete graph ${owner}.default executes original generated source body`,{timeout:900_000},async()=>{
   const context=original(),source=context.source(file),item=sourceItems(source).find(row=>row.name===owner&&['struct','enum'].includes(row.term));
   assert.ok(item);assert.deepEqual([item.start,item.end],[start,end]);
@@ -75,6 +75,6 @@ for (const [file, owner, start, end, golden] of [
   const metadata=result.meta.checkedGeneratedMethods.find(row=>row.source===file&&row.name===declaration.displayName);
   assert.ok(metadata);assert.equal(metadata.semanticBodyChecked,true);assert.deepEqual(metadata.span,declaration.span);
   const targets=checkedDeclarationTargets(declaration);
-  await verifyTypedTargets(targets,api=>{const first=api.default(),second=api.default();assert.deepEqual(first,golden);assert.deepEqual(second,golden);assert.notStrictEqual(first,second);assert.equal(Object.isFrozen(first),true);},{childTimeoutMs:30_000});
+  await verifyTypedTargets(targets,api=>{const first=api.default(),second=api.default();assert.deepEqual(first,golden);assert.deepEqual(second,golden);assert.notStrictEqual(first,second);assert.equal(Object.isFrozen(first),true);if(owner==='NativeStreamTranslator'){assert.notStrictEqual(first.decoder,second.decoder);assert.notStrictEqual(first.decoder.buffered,second.decoder.buffered);assert.equal(Object.isFrozen(first.decoder),true);assert.equal(Object.isFrozen(first.decoder.buffered),true);assert.throws(()=>first.decoder.buffered.push(1n),TypeError);assert.deepEqual(api.default().decoder.buffered,[]);}},{childTimeoutMs:30_000});
   assert.equal(result.meta.runtimeParity,false);
 });

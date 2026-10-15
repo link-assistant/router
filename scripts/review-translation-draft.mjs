@@ -28,7 +28,7 @@ import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalMo
 import {createCloneSourceContext,cloneSourceContextFacts} from '../tools/translation/clone-trait-source.mjs';
 import {originalCloneGeneratedMethod} from '../tools/translation/clone-source-ir.mjs';
 import {createDefaultSourceContext,defaultSourceContextFacts} from '../tools/translation/default-trait-source.mjs';
-import {originalDefaultGeneratedMethod,assertOriginalDefaultGeneratedMethod} from '../tools/translation/default-source-ir.mjs';
+import {originalDefaultGeneratedMethod,assertOriginalDefaultGeneratedMethod,originalDefaultGeneratedDependencyEvidence} from '../tools/translation/default-source-ir.mjs';
 import {linkOriginalCloneSemantic} from '../tools/translation/extensions/clone-source-body.mjs';
 import {registeredStandardHostBindings} from '../tools/translation/standard-host-bindings.mjs';
 import {originalMatchesNamespaceBindings} from '../tools/translation/matches-macro-context.mjs';
@@ -375,12 +375,13 @@ function reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,us
   relativeName(item.source);const proof=item.defaultSourceProof,span=item.span,source=context.sources.get(item.source);
   if(typeof source!=='string'||!Number.isSafeInteger(span?.start)||!Number.isSafeInteger(span?.end)||span.start<0||span.end<=span.start||span.end>source.length)throw new Error('Invalid container Default original declaration boundary');
   const sourceSha256=digest(source),itemSha256=digest(source.slice(span.start,span.end));
-  if(proof?.schema!=='original-generated-container-default-ir-v1'||proof.source!==item.source||proof.sourceSha256!==sourceSha256||proof.itemSha256!==itemSha256)throw new Error('Container Default original declaration hash mismatch');
+  if(!['original-generated-container-default-ir-v1','original-generated-dependent-default-ir-v1'].includes(proof?.schema)||proof.source!==item.source||proof.sourceSha256!==sourceSha256||proof.itemSha256!==itemSha256)throw new Error('Container Default original declaration hash mismatch');
   same(proof.span,span,'Container Default original span mismatch');
   const candidates=entries.filter(entry=>entry.impl?.defaultSourceProof?.source===item.source&&isDeepStrictEqual(entry.impl.defaultSourceProof.span,span));if(candidates.length!==1||used.has(candidates[0]))throw new Error('Container Default metadata is not one-to-one');
   const entry=candidates[0],module=context.graph.modules.find(module=>module.file===item.source&&isDeepStrictEqual(module.path,entry.modulePath));if(!module)throw new Error('Container Default original module mismatch');
   const original=originalSourceModuleItems(module).find(original=>original.term==='struct'&&original.start===span.start&&original.end===span.end);if(!original)throw new Error('Container Default original classification mismatch');
   const surface=originalDefaultGeneratedMethod(context.defaultContext,module,original,HostRustParser),expectedProof=JSON.parse(JSON.stringify(surface.impl.defaultSourceProof)),nominal=[...module.path,original.name].join('.');
+  if(proof.schema==='original-generated-dependent-default-ir-v1'){const dependencies=originalDefaultGeneratedDependencyEvidence(surface,context.defaultContext);if(dependencies.schema!=='original-generated-default-dependency-backing-v1'||!dependencies.dependencies.length)throw new Error('Dependent Default has no genuine original generated child');}
   const proofJson=JSON.stringify(expectedProof);if(JSON.stringify(proof)!==proofJson||JSON.stringify(entry.impl.defaultSourceProof)!==proofJson)throw new Error('Container Default exact persisted source/compiler proof mismatch');
   cloneSame(proof,expectedProof,'Container Default complete original source/compiler/type/helper/body proof mismatch');cloneSame(entry.impl.defaultSourceProof,proof,'Container Default checked proof mismatch');
   if(item.name!==nominal+'.default'||entry.name!==surface.name||entry.fullName!==[...module.path,surface.name].join('.')||entry.generated!=='router-source-generated-default-method'||entry.params.length||entry.async||entry.constant||entry.constFunction||entry.impl.method!=='default'||entry.impl.receiver!==null||Object.hasOwn(entry.impl,'cloneSourceProof'))throw new Error('Container Default original zero-argument signature mismatch');
@@ -425,7 +426,7 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMac
   const names=new Map([...checked.declarations.keys()].map(name=>[name,'rp_'+Buffer.from(name).toString('hex')]));
   const used=new Set(),identities=new Set(),result=[];let cloneContext=null,unitDefaultContext=null,containerDefaultContext=null;
   for(const item of rows){
-    if(item?.defaultSourceProof?.schema==='original-generated-container-default-ir-v1'){
+    if(['original-generated-container-default-ir-v1','original-generated-dependent-default-ir-v1'].includes(item?.defaultSourceProof?.schema)){
       containerDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies});
       const reviewed=reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,used,context:containerDefaultContext});
       const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;

@@ -1,3 +1,4 @@
+import {withOriginalFormatDisplayParser,withOriginalFormatDisplayChecker} from './source-display-formatting.mjs';
 import {checkOriginalMappedBody,checkOriginalMappedApplication,prepareOriginalMappedBodies,requireOriginalMappedEmission,finalizeOriginalMappedBodies} from './standard-mapped-body.mjs';
 import {createOriginalSharedPatternAdapter} from './shared-source-patterns.mjs';
 import {captureOriginalMoveTuples} from './standard-move-payload.mjs';
@@ -141,7 +142,7 @@ export function hostData() {
   merge(result,effectData());merge(result,JSON_DATA);merge(result,TIME_DATA);merge(result,INTEGER_DATA);return result;
 }
 const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contract=>contract.rustPath.map((_,index)=>pathKey(contract.rustPath.slice(0,index+1)))).concat(Object.values(JSON_TYPES).map(type=>pathKey(type.path)),['serde_json::json','std::str::FromStr','std::option::Option','std::result::Result']));
-export class HostRustParser extends withJsonMacroParser(withNamedLifetimeParser(withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser))))))) {
+export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacroParser(withNamedLifetimeParser(withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser)))))))) {
   comparison(path,options){return parsePrimitiveComparison(this,path,options);}
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
   genericType(kind,types,range){const type=super.genericType(kind,types,range),entry=this.genericTypes.get(type.path.at(-1));return {...type,rustStandardGeneric:{kind,arguments:structuredClone(entry.standardGeneric.arguments)}};}
@@ -376,7 +377,7 @@ const originalHostParserIdentity=Object.freeze({
 });
 export function originalHostParserIdentitySnapshot(){return originalHostParserIdentity;}
 const sourcePatterns=createOriginalSharedPatternAdapter();
-export class HostChecker extends withJsonMacroChecker(withDeclarationRefusalCollection(withSharedNullaryEnumChecker(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker))))))))))) {
+export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroChecker(withDeclarationRefusalCollection(withSharedNullaryEnumChecker(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {

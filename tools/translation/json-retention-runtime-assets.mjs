@@ -13,6 +13,7 @@ export function jsonRetentionRuntimeAssets() {
   files.set('arithmetic-digit-retention.mjs',source('arithmetic-digit-retention.mjs'));
   files.set('macro-token-trees.mjs',source('macro-token-trees.mjs'));
   files.set('rust-structure.mjs',relocate(source('rust-structure.mjs'),"'./vendor/formal-ai/lexer.mjs'","'./formal-ai-lexer.mjs'"));
+  files.set('rust-item-boundaries.mjs',source('rust-item-boundaries.mjs'));
   files.set('formal-ai-lexer.mjs',source('vendor/formal-ai/lexer.mjs'));
   files.set('formal-ai-lexer-LICENSE',source('vendor/formal-ai/LICENSE'));
   return files;

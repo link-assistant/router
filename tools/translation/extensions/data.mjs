@@ -6,7 +6,7 @@ import { tokenizeRust } from './lexical.mjs';
 import { coerce } from '../checked-coercions.mjs';
 import { data, rustFixedType } from '../checked-types.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
-import {validCopyCertificate} from '../impl-resolver.mjs';
+import {validCopyCertificate} from '../copy-certificate.mjs';
 import {withStandardStringEqualityChecker} from './standard-string-equality.mjs';
 import {readCertifiedDeriveAttribute} from '../derive-layout.mjs';
 import {readCertifiedToolAttribute} from '../tool-attribute-layout.mjs';
