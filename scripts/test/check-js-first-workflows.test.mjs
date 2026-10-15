@@ -17,6 +17,44 @@ function mutate(filename, operation) {
 }
 function fails(filename, operation, expected) { assert.ok(mutate(filename, operation).some(error => error.includes(expected))); }
 test('all repository workflows satisfy the policy', () => assert.deepEqual(auditWorkflows(baseline), []));
+test('locked repository dependencies are installed before every consuming stage, including forward and profile checks', () => {
+  const jobs = parse(baseline['javascript-first.yml']).jobs;
+  const installations = [
+    ['lint', 'npm ci --prefix scripts/ci --ignore-scripts'],
+    ...['node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'].map(id => [id, 'npm ci --prefix packages/javascript --ignore-scripts']),
+    ['typescript', 'npm ci --prefix ui --ignore-scripts'],
+  ];
+  for (const [id, command] of installations) {
+    assert.ok(jobs[id].steps.some(step => step.run === command), `${id}: actual locked installation`);
+    fails('javascript-first.yml', workflow => {
+      workflow.jobs[id].steps = workflow.jobs[id].steps.filter(step => step.run !== command);
+    }, 'locked dependency install must precede');
+    fails('javascript-first.yml', workflow => {
+      const steps = workflow.jobs[id].steps;
+      const index = steps.findIndex(step => step.run === command);
+      steps.push(...steps.splice(index, 1));
+    }, 'locked dependency install must precede');
+    fails('javascript-first.yml', workflow => {
+      workflow.jobs[id].steps.find(step => step.run === command).run = command.replace('npm ci', 'npm install');
+    }, 'locked dependency install must precede');
+  }
+  // An installation between the whole forward suite and canonical check is
+  // still too late, even though it precedes the last command in that stage.
+  fails('javascript-first.yml', workflow => {
+    const steps = workflow.jobs.translation.steps;
+    const index = steps.findIndex(step => step.run === 'npm ci --prefix packages/javascript --ignore-scripts');
+    const [install] = steps.splice(index, 1);
+    steps.splice(steps.findIndex(step => step.run === 'node scripts/translate-router.mjs --check'), 0, install);
+  }, 'locked dependency install must precede');
+});
+test('installed pre-commit hooks preserve generic checks without automatic Rust execution or cache cleanup', () => {
+  const config = parse(fs.readFileSync(new URL('../../.pre-commit-config.yaml', import.meta.url), 'utf8'));
+  const generic = config.repos.find(repo => repo.repo === 'https://github.com/pre-commit/pre-commit-hooks');
+  assert.deepEqual(generic.hooks.map(hook => hook.id), ['trailing-whitespace', 'end-of-file-fixer', 'check-yaml', 'check-added-large-files', 'check-merge-conflict', 'check-toml', 'debug-statements']);
+  for (const repo of config.repos) for (const hook of repo.hooks) {
+    assert.doesNotMatch(`${hook.id}\n${hook.entry ?? ''}`, /\b(?:cargo|rustc|rustup|rust-script|clippy-driver)\b|clear-build-cache|sweep-build-artifacts/);
+  }
+});
 test('explicit top-level conjunction protects against success, skipped, cancelled, failure and always bypasses', () => {
   assert.equal(guarded("needs.javascript.result == 'success'", 'javascript'), true);
   assert.equal(guarded("needs.javascript.result == 'success' && (always() && (true || false))", 'javascript'), true);

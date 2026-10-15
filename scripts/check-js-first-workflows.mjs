@@ -72,11 +72,20 @@ export function auditWorkflows(sources) {
       'profile-matrix': ['node scripts/translate-router.mjs --profile-matrix --check'],
       'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node --test --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'bun test tools/translation/js-to-rust/test/*.test.mjs'],
     };
+    const packageInstall = 'npm ci --prefix packages/javascript --ignore-scripts';
     for (const id of STAGES) {
       const job = gate.jobs?.[id];
       if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
       const runs = (job?.steps ?? []).map(step => step.run);
       for (const command of required[id]) if (!runs.includes(command)) errors.push(`${gateName}/${id}: missing mandatory command ${command}`);
+      const installations = id === 'lint'
+        ? [['npm ci --prefix scripts/ci --ignore-scripts', required[id]]]
+        : [[packageInstall, required[id]]];
+      if (id === 'typescript') installations.push(['npm ci --prefix ui --ignore-scripts', ['node scripts/build-js-first-ui.mjs']]);
+      for (const [install, consumers] of installations) {
+        const position = runs.indexOf(install);
+        if (position < 0 || consumers.some(command => runs.indexOf(command) >= 0 && position >= runs.indexOf(command))) errors.push(`${gateName}/${id}: locked dependency install must precede its mandatory checks: ${install}`);
+      }
       if (!(job?.steps ?? []).some(step => step.env?.EXPECTED_SHA === '${{ inputs.sha }}' && normalizeProgram(step.run) === shaVerifier)) errors.push(`${gateName}/${id}: immutable SHA verification missing`);
       for (const step of job?.steps ?? []) {
         if (step['continue-on-error'] || Object.hasOwn(step, 'if')) errors.push(`${gateName}/${id}: checks cannot be conditional or ignore failures`);

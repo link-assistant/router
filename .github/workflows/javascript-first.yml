@@ -168,6 +168,7 @@ jobs:
             const expected = process.env.EXPECTED_SHA;
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
+      - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: node --test --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
       - run: node scripts/translate-router.mjs --check
   profile-matrix:
@@ -191,6 +192,7 @@ jobs:
             const expected = process.env.EXPECTED_SHA;
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
+      - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: node scripts/translate-router.mjs --profile-matrix --check
   reverse-translation:
     runs-on: ubuntu-24.04
