@@ -1,0 +1,48 @@
+{
+  "schema": "upstream-source-candidate-v1",
+  "status": "UNRUN_NOT_ACTIVE",
+  "repository": "https://github.com/link-foundation/meta-language",
+  "pullRequest": "https://github.com/link-foundation/meta-language/pull/201",
+  "commit": "63e3b27a32f22e64033aedbd5e0bbed3dcc0d71f",
+  "scope": [
+    "complete js/src/** tree",
+    "LICENSE",
+    "js/package.json",
+    "js/package-lock.json"
+  ],
+  "sourceMembers": 344,
+  "decodedBytes": 22558503,
+  "storedSourceBytes": 4458469,
+  "gzipMembers": 58,
+  "memberIndex": "members.jsonl",
+  "memberIndexSha256": "384ff0243b2a9ade0fd15f124ad364afbe3f7ea6417d52865e8cf6b96bf85b56",
+  "storage": {
+    "gzipWhen": "original line count >1000, byte length >32768, or pristine upstream trailing whitespace/blank EOF must remain unchanged",
+    "gzipLevel": 9,
+    "mtime": 0,
+    "filename": "",
+    "python": "3.12.4",
+    "zlib": "1.2.11",
+    "meaning": "original full source bytes; no minification, splitting or semantic normalization"
+  },
+  "license": {
+    "path": "original/LICENSE",
+    "spdx": "Unlicense",
+    "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
+  },
+  "sourceChecks": [
+    "official exact-commit source inventory",
+    "every complete original Git blob SHA1 and byte length",
+    "every decoded source SHA256",
+    "every stored source SHA256",
+    "gzip immediate full decode equality"
+  ],
+  "testsRun": false,
+  "dependenciesInstalled": false,
+  "activeCompilerImportsChanged": false,
+  "runtimeAuthority": false,
+  "namespaceAuthority": false,
+  "copyAuthority": false,
+  "dropAuthority": false,
+  "gainClaim": false
+}

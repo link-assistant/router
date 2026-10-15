@@ -1,0 +1,3 @@
+### Added
+- Retain the complete current meta-language PR201 JavaScript source tree at commit `63e3b27a32f22e64033aedbd5e0bbed3dcc0d71f`, its Unlicense and locked package metadata as an inactive side-by-side source candidate. Complete large originals use deterministic gzip with per-member Git blob, mode, length and SHA256 witnesses.
+- Document recovery/export limits, existing ordered language/repository and checked-meta boundaries, and an actual refused scalar-state body for a future source-associated adapter. Candidate code, dependencies and tests remain UNRUN; active vendors, runtime/source authority and parity are unchanged.
