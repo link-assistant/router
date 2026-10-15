@@ -6,6 +6,7 @@ import {captureConstMatchSources} from './const-match-source-context.mjs';
 import {prepareOriginalSourceFrames,requireOriginalSourceFrameEmission,originalSourceFramePatternRead} from './standard-source-frame.mjs';
 import {checkPinnedOptionCallbackBody,checkOriginalCallbackApplication,requirePinnedOptionCallbackBody,prepareOriginalOptionCallbacks,requireOriginalOptionCallbackEmission} from './standard-option-callback-body.mjs';
 import {captureOriginalStandardCalls} from './original-standard-calls.mjs';
+import {contextualIntegerParseReceiver,contextualIntegerParseTarget} from './contextual-integer-parse.mjs';
 import {checkPinnedSharedBody,checkedSharedMatchPlace,requirePinnedSharedBody,originalStandardRefField,prepareOriginalSharedBodies,requireOriginalSharedEmission} from './standard-borrowed-body.mjs';
 import {STANDARD_OPTION_COPY_SOURCE,SHARED_REFERENCE_COPY_SOURCE,sharedReferenceCopyIdentity,originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
 import {pinnedPrimitiveIdentityFrom,parsePrimitiveIdentityFromBody,requirePrimitiveIdentityFromBody,requirePrimitiveIdentityFromEvidence} from './primitive-identity-from-source.mjs';
@@ -616,7 +617,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       if(node.object){const receiver=this.expr(node.object,env,path);const inherent=this.resolvedMethod(receiver.type,'parse','shared');if(inherent&&!node.instantiation)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);if(receiver.type.kind!=='string')throw typeError('integer parse requires an actual checked str receiver',node.span);}
       const expectedEntry=expected?.kind==='data'?this.items.get(expected.name):null;
       const inferred=expectedEntry?.standardGeneric?.kind==='Result'?this.resolveType(expectedEntry.standardGeneric.arguments[0],expectedEntry.modulePath,node.span):null;
-      const type=node.instantiation?this.resolveType(node.instantiation,path,node.span):inferred;
+      const type=node.instantiation?this.resolveType(node.instantiation,path,node.span):inferred??contextualIntegerParseTarget(this,node);
       if(type?.kind!=='fixed')throw unsupported('integer parse target','requires an actual resolved fixed-integer instantiation',node.span);
       const instance=this.instantiations.integer(type,node.span),operation=node.k==='routerIntegerParse'?'rust_integer_parse':node.operation==='from_str'?'rust_integer_from_str':'rust_integer_from_str_radix';
       return this.hostCall(instance.contracts.filter(contract=>contract.id.startsWith(operation+'_')),(node.object?[node.object,...node.args]:node.args),env,path,expected,node.span,type);
@@ -637,7 +638,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     if(node.k==='routerHostCall')return this.hostCall(HOST_CONTRACTS.filter(contract=>!contract.requiresRefinement&&(node.id?contract.id===node.id:pathKey(contract.rustPath)===pathKey(node.path))),node.args,env,path,expected,node.span,node.instantiation);
     if(['routerDispatchMethod','routerIteratorOperation'].includes(node.k)) {
       if(node.k==='routerDispatchMethod'&&node.object.k==='routerDispatchMethod'&&node.object.fallback?.k==='routerStringView'&&this.expr(node.object.object,env,path).type.kind==='string')return super.expr(node,env,path,expected,allowLiteral);
-      const receiver=this.expr(node.object,env,path,iteratorReceiverExpected(this,node,path,expected)),method=node.method??node.op;
+      const receiver=contextualIntegerParseReceiver(this,node,env,path,expected)??this.expr(node.object,env,path,iteratorReceiverExpected(this,node,path,expected)),method=node.method??node.op;
       const inherent=this.resolvedMethod(receiver.type,method,'shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
       if(method==='as_deref')return checkedOptionAsDeref(this,node,receiver,path);
       if(receiver.type.kind==='float') {
