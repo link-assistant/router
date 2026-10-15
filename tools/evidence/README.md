@@ -12,11 +12,77 @@ python3 tools/evidence/capture-packet.py \
   --receipt /tmp/new-complete-evidence.json --cap-seconds 600
 ```
 
-The tool hashes each original before, during and after streaming, reopens every complete archive member and checks exact decoded lengths/hashes. Duplicate originals use backward TAR hardlinks. The receipt preserves every original path, length and hash, the immutable source commit and harness hash. XZ preset9 uses a 64 MiB dictionary; that setting is not measured peak memory. Resource claims require independent actual telemetry.
+The tool hashes each original before, during and after streaming, reopens every complete archive member and checks exact decoded lengths/hashes. Duplicate candidates use backward TAR hardlinks only after comparing every complete byte, both hashes and stable opened-fd/named-path identities. A matching digest alone cannot authorize an alias. The receipt preserves every original path, length and hash, the immutable source commit and harness hash; aliased rows record `fullByteEqualityBeforeHardlink: true`. XZ preset9 uses a 64 MiB dictionary; that setting is not measured peak memory. Resource claims require independent actual telemetry.
 
 The selected scope is bounded to 8,192 originals, 128 MiB per original, 1 GiB of complete originals and a 16 MiB manifest. The finite deadline is checked between bounded reads and archive operations; use an enclosing process deadline for hard termination. Failed captures keep their output for inspection and issue no successful receipt. System `/tmp` and `/var` aliases on macOS resolve to their real roots; other linked evidence paths are refused.
 
 This tool changes storage only. It does not certify semantic admission, runtime parity, a JavaScript gate or permission to run Rust or publish. Check the destination evidence allocation against the task's fixed budget before installing a packet; keep historical failure packets intact.
+
+## Deterministic complete capture shards and index pages
+
+`shard-packets.py shards` plans smaller captures from complete frozen manifest
+pages in the same four-field input format. It preserves every declared logical
+name and full original path/length/SHA row. It sorts by the exact logical name
+and uses deterministic next-fit placement under 64 MiB of **full logical bytes**,
+8,192 members and the existing 16 MiB manifest bound. Hash-equal rows still count
+in full and remain separate members. `--shard-bytes` may lower the 64 MiB target;
+it cannot raise it. An individual original larger than the target refuses and
+stays intact for separately qualified storage, rather than being silently
+split, dropped or accepted as an oversized shard.
+
+```sh
+python3 tools/evidence/shard-packets.py shards \
+  --input /private/tmp/frozen-members-1.json \
+  --input /private/tmp/frozen-members-2.json \
+  --output-directory /private/tmp/new-shard-plan \
+  --pending-root /private/tmp/still-running-evidence --cap-seconds 30
+```
+
+The fresh output contains complete capture manifests and a full row-to-input
+and row-to-manifest ledger. Input metadata is read through validated directory
+descriptors and rechecked after planning; duplicate JSON keys, nonfinite values,
+boolean byte claims, conflicting logical names, links, changed inputs and
+existing output directories refuse. Limits include 128 input pages, 64 MiB of
+aggregate input metadata, 131,072 declared rows and 4,096 output shards. Each
+input page retains the original 1 GiB logical/8,192-member/128 MiB member limits.
+The planner deadline defaults to 30 seconds and cannot exceed 170 seconds.
+Partial failed outputs remain available; no successful plan is issued on failure.
+
+Planning does not read or hash original bodies, run a compressor, infer source
+authenticity, install evidence, or establish complete latest membership.
+`pendingRoots` stays explicitly pending. Run each planned manifest through the
+unchanged capture CLI, preserving its original time/resource caps and full
+readback. Measure one whole shard before scheduling the rest; smaller logical
+size alone does not establish a compression deadline or physical fit. Keep
+already verified archive parts immutable and append later frozen roots in new
+parts, without recursively archiving an immutable archive and its members again.
+
+`shard-packets.py index-pages` repages explicit **ordinary**
+`complete-packet-git-index-v1` inputs after genuine archive witnesses exist.
+It emits that same ordinary format in pages of at most 64 archives and 4 MiB,
+plus a ledger retaining every input witness occurrence. Conflicting rows for
+one archive refuse. Identical repeated rows retain all input provenance; this
+is metadata consolidation, not payload alias authority. Capture-slot plans,
+ranges, alias chains and foreign Git paths cannot become ordinary witnesses.
+
+```sh
+python3 tools/evidence/shard-packets.py index-pages \
+  --input /private/tmp/actual-ordinary-index-1.json \
+  --input /private/tmp/actual-ordinary-index-2.json \
+  --output-directory /private/tmp/new-ordinary-index-pages
+```
+
+These plans do not authenticate Git objects. For actual recovery use the
+unchanged `packet.py --index PAGE --members-receipt COMPLETE_RECEIPT` with the
+page chosen by the complete ledger. Its existing ancestry/blob/full archive and
+member checks remain mandatory in both physical states. A shallow checkout
+without the declared ancestor still refuses; obtain the genuine published
+history explicitly. No digest or planner metadata replaces a complete archive,
+original, failed partial, receipt or recovery proof. The fixed case allocation,
+full continuity checks and any separately authorized retirement remain unchanged.
+Shard page slots are provisional and count only those new captures. Generate
+actual pages from all real ordinary witness inputs, including retained old
+archives; do not treat an unfilled slot as a witness or omit an old archive.
 
 `storage.py` resolves a CI logical object while preserving its original compressed container and decoded report. `Storage(case_root, repository_root, index=...)` accepts an index path relative to the **case root**, including a custom index location. The `ci-object-batch-index-v1` index maps each CI-relative logical path to original container length/SHA, decoded length/SHA, one case-relative batch archive/member, and a full immutable Git commit/path/blob witness. Archive length/SHA and the exact complete member list are also pinned. Repeated JSON keys, missing/extra targets, links, traversal, nonregular members, inconsistent receipts, incomplete streams and byte-budget violations refuse. Index maps are immutable within each reader.
 

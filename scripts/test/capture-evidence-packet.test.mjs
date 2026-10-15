@@ -35,6 +35,7 @@ test('complete failed/pass originals and duplicate bytes reopen from actual XZ/T
   assert.equal(receipt.allDecodedOriginalsVerified,true);assert.equal(receipt.allSelectedOriginalsUnchanged,true);
   assert.equal(receipt.sourceHead,head);assert.equal(receipt.fullGatePass,false);assert.equal(receipt.runtimeParity,false);assert.equal(receipt.rustExecuted,false);
   assert.ok(receipt.members.some(row=>row.storedAsHardlink));
+  assert.ok(receipt.members.filter(row=>row.storedAsHardlink).every(row=>row.fullByteEqualityBeforeHardlink===true));
   const decoded=spawnSync('python3',['-c','import tarfile,json,sys; t=tarfile.open(sys.argv[1]); print(json.dumps({m.name:t.extractfile(m).read().hex() for m in t}))',join(directory,'complete.tar.xz')],{encoding:'utf8'});
   assert.equal(decoded.status,0,decoded.stderr);const payloads=JSON.parse(decoded.stdout);
   for(const row of rows)assert.deepEqual(Buffer.from(payloads[row.path],'hex'),readFileSync(row.originalPath));
@@ -74,3 +75,21 @@ test('stale source commits and existing output paths cannot replace a reviewed p
     assert.deepEqual(readFileSync(join(directory,'complete.tar.xz')),previous);
   });
 });
+
+test('whole evidence shard and byte-alias Python controls retain complete bounds and ordinary recovery',{timeout:60000},()=>{
+  const result=spawnSync('python3',['tools/evidence/test_shard_packets.py'],{cwd:root,encoding:'utf8',timeout:45000,maxBuffer:4*1024*1024});
+  assert.equal(result.status,0,result.stdout+result.stderr);assert.match(result.stderr,/Ran \d+ tests/u);assert.match(result.stderr,/OK/u);
+});
+
+test('metadata-only shard CLI plans complete declared scope and requires explicit bounded inputs',()=>fixture(directory=>{
+  const source=member(directory,'whole.json','exact full body\u0000\n'),manifest=join(directory,'planning.json');
+  writeFileSync(manifest,JSON.stringify({members:[source]}));
+  const planner=join(root,'tools/evidence/shard-packets.py'),output=join(directory,'planned');
+  const result=spawnSync('python3',[planner,'shards','--input',manifest,'--output-directory',output,'--cap-seconds','5'],{cwd:root,encoding:'utf8',timeout:10000});
+  assert.equal(result.status,0,result.stderr);const plan=JSON.parse(readFileSync(join(output,'shard-plan.json'),'utf8'));
+  assert.equal(plan.completeRows,1);assert.equal(plan.completeLatestEvidence,false);assert.equal(plan.originalBodiesRead,false);
+  assert.deepEqual(JSON.parse(readFileSync(join(output,plan.shards[0].manifest.path),'utf8')).members,[source]);
+  assert.deepEqual(readFileSync(source.originalPath),Buffer.from('exact full body\u0000\n'));
+  const invalid=spawnSync('python3',[planner,'shards','--input',manifest,'--output-directory',join(directory,'never'),'--shard-bytes','67108865'],{cwd:root,encoding:'utf8',timeout:10000});
+  assert.equal(invalid.status,1);assert.match(invalid.stderr,/1\.\.64MiB/u);
+}));

@@ -11,6 +11,8 @@ import sys
 import tarfile
 import time
 
+from archive_range import _parent, _identity, _named_identity
+
 MAX_MEMBERS = 8192
 MAX_MEMBER_BYTES = 128 * 1024 * 1024
 MAX_TOTAL_BYTES = 1024 * 1024 * 1024
@@ -130,6 +132,63 @@ class CheckedReader:
             raise ValueError('Evidence changed during archive streaming: ' + self.row['path'])
 
 
+def compare_duplicate_originals(left, right, expected, deadline):
+    """Require complete equal bytes, both hashes and stable fd/path identities.
+
+    A digest only selects a candidate pair. It cannot authorize a TAR alias.
+    No original is modified and the existing member/deadline bounds remain.
+    """
+    if not isinstance(expected, tuple) or len(expected) != 2 or type(expected[0]) is not int or not 0 <= expected[0] <= MAX_MEMBER_BYTES or not isinstance(expected[1], str) or not re.fullmatch('[a-f0-9]{64}', expected[1]):
+        raise ValueError('Invalid complete duplicate original witness')
+    parents, descriptors, before = [], [], []
+    try:
+        check_deadline(deadline)
+        for value in (left, right):
+            path = canonical_system_path(Path(value))
+            parent = _parent(path)
+            parents.append(parent)
+            descriptor = os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW |
+                                 os.O_NONBLOCK, dir_fd=parent)
+            descriptors.append(descriptor)
+            fact = _identity(descriptor)
+            if fact['st_size'] != expected[0] or _named_identity(path) != fact:
+                raise ValueError('Duplicate original descriptor/length differs')
+            before.append((path, fact))
+        hashes, count = [hashlib.sha256(), hashlib.sha256()], 0
+
+        def complete_block(descriptor):
+            chunks, length = [], 0
+            while length < 1024 * 1024:
+                check_deadline(deadline)
+                chunk = os.read(descriptor, 1024 * 1024 - length)
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                length += len(chunk)
+            return b''.join(chunks)
+
+        while True:
+            check_deadline(deadline)
+            chunks = [complete_block(descriptor) for descriptor in descriptors]
+            if chunks[0] != chunks[1]:
+                raise ValueError('Duplicate originals are not equal in every byte')
+            if not chunks[0]:
+                break
+            count += len(chunks[0])
+            if count > expected[0] or count > MAX_MEMBER_BYTES:
+                raise ValueError('Duplicate original byte budget exceeded')
+            for actual, chunk in zip(hashes, chunks):
+                actual.update(chunk)
+        if count != expected[0] or any(actual.hexdigest() != expected[1] for actual in hashes):
+            raise ValueError('Duplicate original complete hash differs')
+        for descriptor, (path, fact) in zip(descriptors, before):
+            if _identity(descriptor) != fact or _named_identity(path) != fact:
+                raise ValueError('Duplicate original fd/path changed during comparison')
+    finally:
+        for descriptor in descriptors + parents:
+            os.close(descriptor)
+
+
 def write_archive(path, rows, deadline):
     identities = {}
     with path.open('xb') as output:
@@ -144,13 +203,12 @@ def write_archive(path, rows, deadline):
                 entry.mode = 0o644
                 entry.mtime = 0
                 if identity in identities:
-                    # Hash equality is rechecked against both complete originals.
                     previous = identities[identity]
-                    if file_digest(original, deadline) != identity or file_digest(Path(previous['originalPath']), deadline) != identity:
-                        raise ValueError('Duplicate original changed during archive streaming')
+                    compare_duplicate_originals(original, previous['originalPath'], identity, deadline)
                     entry.type = tarfile.LNKTYPE
                     entry.linkname = previous['path']
                     row['storedAsHardlink'] = previous['path']
+                    row['fullByteEqualityBeforeHardlink'] = True
                     tar.addfile(entry)
                 else:
                     entry.size = row['bytes']
