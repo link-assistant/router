@@ -66,20 +66,27 @@ export function auditWorkflows(sources) {
       lint: ['node scripts/lint-js-first.mjs', 'node --test scripts/test/check-js-first-workflows.test.mjs', 'node --test scripts/test/check-js-first-local.test.mjs', 'node scripts/check-js-first-workflows.mjs'],
       'node-tests': ['npm run native:test --prefix packages/javascript'],
       'bun-tests': ['npm run native:test:bun --prefix packages/javascript'],
-      typescript: ['npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node --test tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node tools/translation/serialization-schema/native-descriptor.mjs --check', 'node tools/translation/serialization-schema/check-descriptor-typescript.mjs', 'node tools/translation/serialization-schema/bulk.mjs --check', 'node tools/translation/serialization-schema/check-bulk-typescript.mjs', 'node scripts/build-js-first-ui.mjs'],
+      typescript: ['node scripts/run-node-tests.mjs --outer-timeout-ms=180000 scripts/test/node-case-deadlines.test.mjs', 'npm run typecheck --prefix packages/javascript', 'npm run native:typecheck --prefix packages/javascript', 'node scripts/regenerate-native-typescript.mjs --check', 'node scripts/check-native-typescript.mjs', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs', 'node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json', 'node tools/translation/check-typescript-fixtures.mjs', 'node scripts/check-profile-typescript.mjs', 'node tools/translation/serialization-schema/native-descriptor.mjs --check', 'node tools/translation/serialization-schema/check-descriptor-typescript.mjs', 'node tools/translation/serialization-schema/bulk.mjs --check', 'node tools/translation/serialization-schema/check-bulk-typescript.mjs', 'node scripts/build-js-first-ui.mjs'],
       parity: ['node --test --test-concurrency=2 experiments/issue-759/acceptance/*.test.mjs', 'node scripts/check-router-parity.mjs --strict'],
-      translation: ['node scripts/translate-router.mjs --check', 'node --test --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],
+      translation: ['node scripts/translate-router.mjs --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'],
       'profile-matrix': ['node scripts/translate-router.mjs --profile-matrix --check'],
-      'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node --test --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'bun test tools/translation/js-to-rust/test/*.test.mjs'],
+      'reverse-translation': ['node scripts/regenerate-js-first.mjs --check', 'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs', 'bun test tools/translation/js-to-rust/test/*.test.mjs'],
     };
     const packageInstall = 'npm ci --prefix packages/javascript --ignore-scripts';
     for (const id of STAGES) {
       const job = gate.jobs?.[id];
       if (!job || !job['runs-on'] || Object.hasOwn(job, 'if') || job['continue-on-error'] || job.strategy?.['fail-fast'] === true) errors.push(`${gateName}/${id}: required unconditional failing stage missing`);
       const runs = (job?.steps ?? []).map(step => step.run);
+      if (['typescript', 'translation', 'reverse-translation'].includes(id)) {
+        const uploads = (job?.steps ?? []).filter(step => step.uses === 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');
+        const upload = uploads.length === 1 ? uploads[0] : null;
+        if (!upload || Object.hasOwn(upload, 'run') || job.steps.at(-1) !== upload || upload.with?.name !== 'node-case-deadlines-${{ github.job }}-${{ inputs.sha }}' || upload.with?.path !== 'packages/javascript/node_modules/.node-case-deadlines/' || upload.with?.['include-hidden-files'] !== true || upload.with?.['if-no-files-found'] !== 'error') errors.push(`${gateName}/${id}: missing mandatory command evidence uploader for complete Node deadline receipts/raws`);
+        if (upload && upload.if !== '${{ always() }}') errors.push(`${gateName}/${id}: conditional deadline evidence loss is forbidden`);
+        if (upload?.['continue-on-error']) errors.push(`${gateName}/${id}: deadline evidence uploader cannot ignore failures`);
+      }
       for (const command of required[id]) if (!runs.includes(command)) errors.push(`${gateName}/${id}: missing mandatory command ${command}`);
       const installations = id === 'lint'
-        ? [['npm ci --prefix scripts/ci --ignore-scripts', required[id]]]
+        ? [['npm ci --prefix scripts/ci --ignore-scripts', required[id]], [packageInstall, ['node --test scripts/test/check-js-first-local.test.mjs']]]
         : [[packageInstall, required[id]]];
       if (id === 'typescript') installations.push(['npm ci --prefix ui --ignore-scripts', ['node scripts/build-js-first-ui.mjs']]);
       for (const [install, consumers] of installations) {

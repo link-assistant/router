@@ -32,6 +32,7 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix scripts/ci --ignore-scripts
+      - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: node scripts/lint-js-first.mjs
       - run: node --test scripts/test/check-js-first-workflows.test.mjs
       - run: node --test scripts/test/check-js-first-local.test.mjs
@@ -104,11 +105,12 @@ jobs:
         with:
           bun-version: '1.4.3'
       - run: npm ci --prefix packages/javascript --ignore-scripts
+      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=180000 scripts/test/node-case-deadlines.test.mjs
       - run: npm run typecheck --prefix packages/javascript
       - run: npm run native:typecheck --prefix packages/javascript
       - run: node scripts/regenerate-native-typescript.mjs --check
       - run: node scripts/check-native-typescript.mjs
-      - run: node --test tools/translation/js-to-rust/test/native-typescript.test.mjs
+      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs
       - run: node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json
       - run: node tools/translation/check-typescript-fixtures.mjs
       - run: node scripts/check-profile-typescript.mjs
@@ -118,6 +120,15 @@ jobs:
       - run: node tools/translation/serialization-schema/check-bulk-typescript.mjs
       - run: npm ci --prefix ui --ignore-scripts
       - run: node scripts/build-js-first-ui.mjs
+      - name: Preserve complete Node deadline audit and raw streams
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}
+          path: packages/javascript/node_modules/.node-case-deadlines/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
   parity:
     runs-on: ubuntu-24.04
     # Four complete checkers: three sequential acceptance assertions plus the
@@ -169,8 +180,17 @@ jobs:
             if (!/^[a-f0-9]{40}$/.test(expected) || execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim() !== expected) process.exit(1);
           "
       - run: npm ci --prefix packages/javascript --ignore-scripts
-      - run: node --test --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
+      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
       - run: node scripts/translate-router.mjs --check
+      - name: Preserve complete Node deadline audit and raw streams
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}
+          path: packages/javascript/node_modules/.node-case-deadlines/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
   profile-matrix:
     runs-on: ubuntu-24.04
     # Completed cycle-nine matrix checks reached 2166s. Keep a finite independent
@@ -217,9 +237,18 @@ jobs:
         with:
           bun-version: '1.4.3'
       - run: npm ci --prefix packages/javascript --ignore-scripts
-      - run: node --test --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs
+      - run: node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs
       - run: bun test tools/translation/js-to-rust/test/*.test.mjs
       - run: node scripts/regenerate-js-first.mjs --check
+      - name: Preserve complete Node deadline audit and raw streams
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: node-case-deadlines-${{ github.job }}-${{ inputs.sha }}
+          path: packages/javascript/node_modules/.node-case-deadlines/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
   complete:
     name: JavaScript fully green
     runs-on: ubuntu-24.04

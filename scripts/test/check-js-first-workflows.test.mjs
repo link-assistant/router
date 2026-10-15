@@ -21,6 +21,7 @@ test('locked repository dependencies are installed before every consuming stage,
   const jobs = parse(baseline['javascript-first.yml']).jobs;
   const installations = [
     ['lint', 'npm ci --prefix scripts/ci --ignore-scripts'],
+    ['lint', 'npm ci --prefix packages/javascript --ignore-scripts'],
     ...['node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation'].map(id => [id, 'npm ci --prefix packages/javascript --ignore-scripts']),
     ['typescript', 'npm ci --prefix ui --ignore-scripts'],
   ];
@@ -104,13 +105,15 @@ test('every JavaScript stage and command is mandatory and cannot skip or ignore 
 });
 test('heavy compiler and acceptance cohorts require two workers and every test file', () => {
   for (const [id, glob] of [['translation', 'tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'], ['parity', 'experiments/issue-759/acceptance/*.test.mjs']]) {
-    const command = `node --test --test-concurrency=2 ${glob}`;
+    const prefix = id === 'translation' ? 'node scripts/run-node-tests.mjs --outer-timeout-ms=3600000' : 'node --test';
+    const command = `${prefix} --test-concurrency=2 ${glob}`;
     assert.ok(parse(baseline['javascript-first.yml']).jobs[id].steps.some(step => step.run === command));
     for (const replacement of [
-      `node --test ${glob}`,
-      `node --test --test-concurrency=3 ${glob}`,
-      `node --test --test-concurrency=2 ${glob.replace('*', 'one')}`,
-      `node --test --test-concurrency=2 --test-name-pattern=only-one ${glob}`,
+      `${prefix} ${glob}`,
+      `${prefix} --test-concurrency=3 ${glob}`,
+      `${prefix} --test-concurrency=2 ${glob.replace('*', 'one')}`,
+      `${prefix} --test-concurrency=2 --test-name-pattern=only-one ${glob}`,
+      ...(id === 'translation' ? [`node --test --test-concurrency=2 ${glob}`] : []),
     ]) fails('javascript-first.yml', workflow => {
       workflow.jobs[id].steps.find(step => step.run === command).run = replacement;
     }, 'mandatory command');
@@ -168,7 +171,7 @@ test('Bun runtime is required for lint engine checks, native JavaScript, compile
 test('both reverse translator engines must discover every current and future test file', () => {
   const glob = 'tools/translation/js-to-rust/test/*.test.mjs';
   for (const [command, replacements] of [
-    [`node --test --test-concurrency=2 ${glob}`, [
+    [`node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 ${glob}`, [
       'node --test tools/translation/js-to-rust/test/translator.test.mjs',
       `node --test --test-concurrency=2 --test-name-pattern=one ${glob}`,
     ]],
@@ -232,4 +235,13 @@ test('native and source-discovered schema freshness and strict TS are mandatory'
     assert.ok(parse(baseline['javascript-first.yml']).jobs.typescript.steps.some(step => step.run === command));
     fails('javascript-first.yml', workflow => { workflow.jobs.typescript.steps = workflow.jobs.typescript.steps.filter(step => step.run !== command); }, 'mandatory command');
   }
+});
+
+test('compiler case-deadline audits and complete always-retained raw receipts cannot be bypassed',()=>{
+ for(const id of ['typescript','translation','reverse-translation']){
+  const job=parse(baseline['javascript-first.yml']).jobs[id];
+  const uploader=job.steps.find(step=>step.uses==='actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a');assert.ok(uploader);
+  for(const change of [step=>{step.if='false';},step=>{step['continue-on-error']=true;},step=>{step.with['include-hidden-files']=false;},step=>{step.with.path='unrelated/';},step=>{step.with['if-no-files-found']='ignore';}])fails('javascript-first.yml',workflow=>{change(workflow.jobs[id].steps.find(step=>step.uses===uploader.uses));},'deadline');
+  fails('javascript-first.yml',workflow=>{const command=workflow.jobs[id].steps.find(step=>step.run?.startsWith('node scripts/run-node-tests.mjs'));command.run=command.run.replace(/node scripts\/run-node-tests\.mjs --outer-timeout-ms=\d+/u,'node --test');},'mandatory command');
+ }
 });

@@ -75,18 +75,23 @@ test('corpus review requires complete Rust discovery and bounded ordinary output
 test('local reverse stage discovers a new failing test under both engines before freshness', { timeout: 30_000 }, () => {
   const commands = stages.find(([id]) => id === 'reverse-translation')[1];
   assert.deepEqual(commands, [
-    'node --test --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs',
+    'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs',
     'bun test tools/translation/js-to-rust/test/*.test.mjs',
     'node scripts/regenerate-js-first.mjs --check',
   ]);
   assert.equal(stages.length, 7);
-  assert.ok(stages.find(([id]) => id === 'typescript')[1].includes('node --test tools/translation/js-to-rust/test/native-typescript.test.mjs'));
+  assert.ok(stages.find(([id]) => id === 'typescript')[1].includes('node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs'));
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-reverse-discovery-'));
   const testDirectory = path.join(directory, 'tools/translation/js-to-rust/test');
   const environment = { ...process.env };
   delete environment.NODE_TEST_CONTEXT;
   try {
     fs.mkdirSync(testDirectory, { recursive: true });
+    fs.mkdirSync(path.join(directory, 'scripts'), { recursive: true });
+    for (const name of ['run-node-tests.mjs', 'node-case-deadlines.mjs', 'node-case-deadline-reporter.mjs']) fs.copyFileSync(new URL(`../${name}`, import.meta.url), path.join(directory, 'scripts', name));
+    const dependencyDirectory = path.join(directory, 'packages/javascript/node_modules');
+    fs.mkdirSync(dependencyDirectory, { recursive: true });
+    fs.symlinkSync(fs.realpathSync(new URL('../../packages/javascript/node_modules/typescript', import.meta.url)), path.join(dependencyDirectory, 'typescript'), 'dir');
     fs.writeFileSync(path.join(testDirectory, 'existing.test.mjs'), "import test from 'node:test'; test('existing translator', () => {});\n");
     for (const command of commands.slice(0, 2)) {
       const result = spawnSync(command, { cwd: directory, env: environment, shell: true, encoding: 'utf8', timeout: 10_000 });
