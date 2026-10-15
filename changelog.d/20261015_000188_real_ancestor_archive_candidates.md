@@ -1,3 +1,5 @@
+### Added
+
 Added a reusable, explicitly unverified archive-candidate builder. It validates
 complete existing packet inventories and compares every source archive byte to
 its stored Git blob, then creates real D/I ancestor commits on a fresh private
