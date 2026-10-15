@@ -9,6 +9,9 @@ import { recordShape,errorShape,carriesValue,payloadBoundary } from './vendor/ag
 import { closedJsonValue,jsonResponseStatus } from './vendor/json-responses.mjs';
 import {PAYLOAD_GUARD_HELPERS} from './vendor/payload-guards.mjs';
 import {sourceCallItem} from './vendor/source-calls.mjs';
+import {sourceConstructorItem} from './vendor/constructor-bodies.mjs';
+import {originalImportedErrorConstructor,reissueImportedErrorConstructor} from './vendor/source-constructors.mjs';
+import {posix} from 'node:path';
 
 const numberLiteral = (text) => text.includes('.') || /e/i.test(text) ? text : `${text}.0`;
 function rustString(value) {
@@ -164,11 +167,11 @@ fn js_trim(value: &str) -> String {
     )).to_string()
 }`;
 
-function emitter(program, target) {
+function emitter(program, target,{outputPath}={}) {
   const children=new Map(),originalClosures=new WeakSet();
   const collect=(value,sourceBound)=>{if(!value||typeof value!=='object')return;if(['source-create','owned-some'].includes(value.kind)&&!sourceBound)throw Error('unissued original caller creation or iteration');if(value.kind==='source-create'){const old=children.get(value.closure.name);if(old&&JSON.stringify(old)!==JSON.stringify(value.closure))throw Error('conflicting source callable bodies');children.set(value.closure.name,value.closure);}for(const [key,child]of Object.entries(value))if(!['environment','sourceCalls','closure'].includes(key)){if(Array.isArray(child))child.forEach(value=>collect(value,sourceBound));else collect(child,sourceBound);}};
   program=program.map(item=>{
-    if(sourceCallItem(item))return check(item,new Map());
+    if(sourceCallItem(item)||sourceConstructorItem(item))return check(item,new Map());
     if(item.kind==='closure'){const checked=check(item,new Map());if(checked.environment.sourceCreation)throw Error('standalone internal source callable has no checked parent');originalClosures.add(checked);return checked;}
     return item;
   });
@@ -177,11 +180,38 @@ function emitter(program, target) {
   for(const name of children.keys())if(declared.has(name))throw Error('source callable collides with an existing declaration');
   program=[...program,...children.values()];
   const rust = target === 'rust';
+  const constructorImports=new Map(),emittedIdentifiers=new Set();
+  const reserveIdentifier=value=>{if(typeof value==='string')emittedIdentifiers.add(value.replace(/_([a-z])/gu,(_,letter)=>letter.toUpperCase()));};
+  const reserveIdentifiers=value=>{
+    if(!value||typeof value!=='object')return;
+    if(Array.isArray(value)){value.forEach(reserveIdentifiers);return;}
+    reserveIdentifier(value.name);
+    if(Array.isArray(value.bindings))value.bindings.forEach(reserveIdentifier);
+    for(const [key,child]of Object.entries(value))if(!['sourceConstructors','sourceCalls','environment','constructor'].includes(key))reserveIdentifiers(child);
+  };
+  program.forEach(reserveIdentifiers);
+  let constructorAlias=0;
+  const sourceConstructorName=proof=>{
+    const key=proof.import.target+'#'+proof.import.exported;
+    if(!constructorImports.has(key)) {
+      if(typeof outputPath!=='string'||! /^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.ts$/u.test(outputPath))throw Error('conditional constructor TypeScript requires its exact output module path');
+      const targetPath=proof.import.target.replace(/^packages\/javascript\//u,'packages/typescript/').replace(/\.mjs$/u,'.js');
+      let relative=posix.relative(posix.dirname(outputPath),targetPath);if(!relative.startsWith('.'))relative='./'+relative;
+      let alias;do{alias='routerOriginalError'+constructorAlias++;}while(emittedIdentifiers.has(alias));
+      emittedIdentifiers.add(alias);
+      constructorImports.set(key,{name:alias,relative,exported:proof.import.exported});
+    }
+    return constructorImports.get(key).name;
+  };
+  const rustUnits=value=>`vec![${Array.from({length:value.length},(_,index)=>value.charCodeAt(index)).join(', ')}]`;
+  const sourceScalar=value=>value.kind==='string'?`SourceErrorScalar::Utf16(${rustUnits(value.value)})`
+    :value.kind==='number'?`SourceErrorScalar::Number(${numberLiteral(String(value.value))})`
+      :value.kind==='boolean'?`SourceErrorScalar::Boolean(${value.value})`:value.kind==='null'?'SourceErrorScalar::Null':'SourceErrorScalar::Undefined';
   const map = constructMap();
   const name = (value) => rust ? value : camelFromSnake(value);
   const globals=new Map(program.map(item=>[item.name,item]));
   const records=new Map();
-  let payloadMode=false,losslessMode=false;
+  let payloadMode=false,losslessMode=false,throwingMode=false;
   const rustContract=(type,owned=true,lifetime="'a")=>{
     if(type==='entry-value')return `JsEntry<${lifetime}>`;
     if(type==='value')return `${payloadMode?'JsPayload':'JsValue'}<${lifetime}>`;
@@ -209,6 +239,12 @@ function emitter(program, target) {
   };
   const expression = (expr) => {
     switch (expr.kind) {
+      case 'source-error': {
+        const state=originalImportedErrorConstructor(reissueImportedErrorConstructor(expr.constructor));
+        if(!rust)return `new ${sourceConstructorName(state.proof)}(${state.proof.arguments.map(value=>value.kind==='string'?JSON.stringify(value.value):value.kind==='null'?'null':String(value.value)).join(', ')})`;
+        const identity=state.proof.import.target+'#'+state.proof.original.name+'#'+state.proof.original.sourceUtf16Sha256;
+        return `SourceErrorProjection { source_class: ${rustString(identity)}, message: ${rustUnits(state.message.value)}, own_fields: vec![${state.fields.map(field=>`(${rustUnits(field.name)}, ${sourceScalar(field.value)})`).join(', ')}], identity: std::rc::Rc::new(()) }`;
+      }
       case 'number': return rust ? numberLiteral(expr.text) : expr.text;
       case 'string': return rust ? `${rustString(expr.value)}.to_string()` : JSON.stringify(expr.value);
       case 'boolean': return String(expr.value);
@@ -350,7 +386,11 @@ function emitter(program, target) {
       } else if (statement.kind === 'assign') {
         lines.push(`${pad}${name(statement.name)} = ${expression(statement.value)};`);
       } else if (statement.kind === 'return') {
-        lines.push(`${pad}return ${converted(statement.value, returnType)};`);
+        const result=converted(statement.value,returnType);
+        lines.push(`${pad}return ${rust&&throwingMode?`Ok(${result})`:result};`);
+      } else if(statement.kind==='throw') {
+        if(!throwingMode)throw Error('throw outside a fresh checked original constructor parent');
+        lines.push(`${pad}${rust?'return Err(':'throw '}${expression(statement.value)}${rust?')':''};`);
       } else if (statement.kind === 'while') {
         lines.push(`${pad}while ${rust ? expression(statement.cond) : `(${expression(statement.cond)})`} {`, ...body(statement.body, depth + 1, returnType), `${pad}}`);
       } else if (statement.kind === 'if') {
@@ -365,6 +405,7 @@ function emitter(program, target) {
     const item=input.kind==='closure'&&!originalClosures.has(input)?check(input,globals):input;
     payloadMode=payloadBoundary(item);
     losslessMode=item.lossless===true;
+    throwingMode=item.conditionalConstructors===true;
     if (item.kind === 'constant') {
       const type = map.types.get(item.type);
       if(['table-set','table-map'].includes(item.value.kind)) {
@@ -398,7 +439,7 @@ function emitter(program, target) {
       return [qualification,`pub struct ${environmentName}<'env> {`,...fields,'}',`fn ${name(item.name)}<'env>(${environmentParameters}) -> ${environmentName}<'env> {`,`    ${environmentName} { ${item.captures.map(capture=>name(capture.name)).join(', ')} }`,'}',`impl<'env> ${environmentName}<'env> {`,`    pub fn call<'a>(&self${parameters.length?', '+parameters.join(', '):''}) -> ${rustContract(item.returns)} where 'env: 'a {`,...item.captures.map(capture=>`        let ${name(capture.name)}: JsPayload<'a> = self.${name(capture.name)};`),...body(item.body,2,item.returns),'    }','}'].join('\n');
     }
     const signature = rust
-      ? `${item.exported ? 'pub ' : ''}fn ${name(item.name)}${lifetime?"<'a>":''}(${parameters.join(', ')}) -> ${rustContract(item.returns)} {`
+      ? `${item.exported ? 'pub ' : ''}fn ${name(item.name)}${lifetime?"<'a>":''}(${parameters.join(', ')}) -> ${throwingMode?`Result<${rustContract(item.returns)}, SourceErrorProjection>`:rustContract(item.returns)} {`
       : `${item.exported ? 'export ' : ''}function ${name(item.name)}(${parameters.join(', ')}): ${typescriptType(item.returns)} {`;
     const defaults=rust?item.params.filter(param=>param.default).map(param=>{
       if(param.type==='value') {
@@ -409,11 +450,21 @@ function emitter(program, target) {
       const fallback=param.type==='utf16-string'?units(param.default.value):param.type==='string'?rustString(constantValue(param.default)):expression(param.default);
       return `    let ${name(param.name)} = ${name(param.name)}.unwrap_or(${fallback});`;
     }):[];
-    return [...(item.conditionalCalls?['// Conditional original body draft: unchanged standard Array.prototype.some lookup required.', '// Parent body is checked; intrinsic lookup stability and runtimeParity remain unproved.']:[]),...(item.conditionalInputs?['// Conditional private body draft: genuine unchanged producer/callback intrinsics required.', '// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.']:[]),...(rust ? ['#[rustfmt::skip]'] : []), signature,...defaults,...(rust?item.params.filter(param=>param.bindings).flatMap(param=>param.bindings.flatMap((binding,index)=>binding===null?[]:[`    let ${name(binding)} = ${name(param.name)}.${index===0?'key':'value'};`])):[]),...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
+    return [...(item.conditionalConstructors?['// Conditional original constructor body: unchanged constructor, Error, inherited prototypes and standard intrinsics required.', '// TypeScript imports the actual original class; Rust Result retains only a fresh UTF16/own-field projection.', '// Outside-module prototype closure and runtimeParity are unproved.']:[]),...(item.conditionalCalls?['// Conditional original body draft: unchanged standard Array.prototype.some lookup required.', '// Parent body is checked; intrinsic lookup stability and runtimeParity remain unproved.']:[]),...(item.conditionalInputs?['// Conditional private body draft: genuine unchanged producer/callback intrinsics required.', '// Producer lookup stability and original signature full-domain parity are unproved; runtimeParity: false.']:[]),...(rust ? ['#[rustfmt::skip]'] : []), signature,...defaults,...(rust?item.params.filter(param=>param.bindings).flatMap(param=>param.bindings.flatMap((binding,index)=>binding===null?[]:[`    let ${name(binding)} = ${name(param.name)}.${index===0?'key':'value'};`])):[]),...(rust?item.params.filter(param=>param.rest).map(param=>`    let ${name(param.name)} = std::rc::Rc::new(std::cell::RefCell::new(${name(param.name)}));`):[]), ...body(item.body, 1, item.returns), '}'].join('\n');
   });
   const serialized = JSON.stringify(program);
   payloadMode=true;
   const declarations=[];
+  if(program.some(item=>item.conditionalConstructors))declarations.push(`// Conditional projection only; no JavaScript Error/prototype/stack identity is represented.
+#[derive(Clone)]
+pub enum SourceErrorScalar { Utf16(Vec<u16>), Number(f64), Boolean(bool), Null, Undefined }
+#[derive(Clone)]
+pub struct SourceErrorProjection {
+    pub source_class: &'static str,
+    pub message: Vec<u16>,
+    pub own_fields: Vec<(Vec<u16>, SourceErrorScalar)>,
+    pub identity: std::rc::Rc<()>,
+}`);
   if(serialized.includes('"type":"json-response"'))declarations.push(`// Explicit host-qualified projection; runtimeParity: false.
 #[derive(Clone, Copy)]
 #[allow(non_camel_case_types)]
@@ -453,8 +504,9 @@ impl JsonResponseProjection {
     serialized.includes('"kind":"null"') || serialized.includes('"kind":"undefined"') || serialized.includes('"kind":"table-get"') ? ABSENCE_HELPERS : '',
     serialized.includes('"kind":"table-set"') || serialized.includes('"kind":"table-map"') ? TABLE_HELPERS : '',
   ].filter(Boolean).map(helper => `${helper}\n\n`).join('') : '';
-  return `${helpers}${rust&&declarations.length?declarations.join('\n\n')+'\n\n':''}${items.join('\n\n')}\n`;
+  const imports=!rust?[...constructorImports.values()].map(row=>`import { ${row.exported} as ${row.name} } from ${JSON.stringify(row.relative)};`).join('\n'):'';
+  return `${imports?imports+'\n\n':''}${helpers}${rust&&declarations.length?declarations.join('\n\n')+'\n\n':''}${items.join('\n\n')}\n`;
 }
 
 export const emitRust = (program) => emitter(program, 'rust');
-export const emitTypeScript = (program) => emitter(program, 'typescript');
+export const emitTypeScript = (program,options) => emitter(program, 'typescript',options);

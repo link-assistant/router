@@ -422,3 +422,42 @@ can supply an effectful custom `includes` method, its JSON.stringify caller can
 produce undefined or throw, and its dynamic decoder caller does not establish a
 privately proved string-only source contract. The lexical-call prerequisite does
 not admit that helper's I/O parents or narrow its public input domain.
+
+Imported Error construction has a separate `conditionalConstructors` lane.
+Complete original source records privately bind each actual named import,
+constructor declaration, closed argument/default and ordered field assignment.
+The complete enclosing function is reparsed and checked again before either
+target is emitted. Constructor meta additionally requires the genuine original
+producer graph at `parseMeta(text, {constructorGraph})`; a self-consistent foreign
+source envelope cannot replace that graph. Arbitrary coercions, effectful
+arguments/defaults, copied issuer handles and known source mutation/reflection
+are refused. Public input parameters retain their unknown payload domain.
+
+Qualified normal and throw completions stay distinct. TypeScript requires an
+explicit output module path and imports the actual corresponding native class;
+it never emits a lookalike Error class. The original native TypeScript producer
+uses erasable `declare` fields. Rust emits `Result<T, SourceErrorProjection>`:
+the projection retains a UTF-16 message, ordered primitive own fields and a fresh
+shared allocation identity, without representing JavaScript Error class identity,
+stack or prototypes. These properties are not available as scalar observations.
+
+`evaluateWithOriginalConstructors` is an explicitly opted-in receiving-environment
+operation. Its opaque runtime binds every exact freshly reissued constructor proof,
+including the complete source graph and callsite; matching path/export names do
+not permit a foreign graph or recipe. Multiple proved callsites remain distinct.
+It checks the complete source-byte graph and executes only constructor
+owners and their original relative import closure, including its actual ESM cycle
+order. Ordinary analysis and evaluation never import that graph. Copied module
+maps, external/dynamic bootstrap imports, linked paths and observed changed bytes
+at a cached module filename are refused. This API does not promise dynamic module
+reload convergence or harmless original module initialization.
+
+Constructor, builtin Error, inherited-prototype and collection-intrinsic lookup
+stability remain explicit conditions. Host callsite diagnostic values (stack and
+Bun line/column/sourceURL provenance) are not preserved; the explicit
+`hostDiagnosticLocationsPreserved: false` qualification retains that boundary.
+Behavioral vectors retain their complete raw values while comparing exact own-key
+order, descriptor flags/types, class/prototype, message and assigned own fields.
+Absence of known writes does not prove
+outside-module prototype closure. Conditional constructor drafts have separate
+counts; they admit neither their unqualified callers nor whole native parity.

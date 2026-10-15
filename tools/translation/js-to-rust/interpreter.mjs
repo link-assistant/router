@@ -3,12 +3,14 @@ import {matchesSequence} from './vendor/sequence-patterns.mjs';
 // and execution of the authoritative source; neither emitter is consulted.
 import {check} from './vendor/ir.mjs';
 import { constructMap } from './vendor/constructs.mjs';
+import {sourceConstructorItem} from './vendor/constructor-bodies.mjs';
+import {prepareOriginalConstructorRuntime,constructOriginalError} from './original-constructor-runtime.mjs';
 // Interpreter infrastructure captures the host invocation primitive once. Its
 // argument-list plumbing must not use the source program's Array iterator or
 // perform a Function.prototype.apply lookup on a retained callable.
 const applyCallable=Reflect.apply;
 
-export function evaluate(program, functionName, arguments_) {
+export function evaluate(program, functionName, arguments_,originalConstructorRuntime) {
   const table = new Map();
   for(let index=0;index<program.length;index++)table.set(program[index].name,program[index]);
   const map = constructMap();
@@ -16,6 +18,7 @@ export function evaluate(program, functionName, arguments_) {
   const expression = (expr, env) => {
     const get = (value) => expression(value, env);
     switch (expr.kind) {
+      case 'source-error':return constructOriginalError(expr.constructor,originalConstructorRuntime);
       case 'json-response':return Response.json(get(expr.body),expr.options===null?undefined:get(expr.options));
       case 'json-array':return expr.values.map(get);
       case 'json-record':return Object.fromEntries(expr.fields.map(field=>[field.name,get(field.value)]));
@@ -118,6 +121,7 @@ export function evaluate(program, functionName, arguments_) {
       if (statement.kind === 'let') local.set(statement.name, expression(statement.value, scope));
       else if (statement.kind === 'assign') scope.set(statement.name, expression(statement.value, scope));
       else if (statement.kind === 'return') return { returned: true, value: expression(statement.value, scope) };
+      else if (statement.kind === 'throw') throw expression(statement.value,scope);
       else if (statement.kind === 'if') {
         const result = block(expression(statement.cond, scope) ? statement.then : statement.else ?? [], scope);
         if (result.returned) return result;
@@ -133,7 +137,7 @@ export function evaluate(program, functionName, arguments_) {
     return { returned: false };
   };
   const invoke = (name, args) => {
-    const fn = table.get(name);
+    const raw=table.get(name),fn=raw&&sourceConstructorItem(raw)?check(raw,table):raw;
     if(fn?.kind==='closure') {
       const closure=check(fn,table),captured=new Map(closure.captures.map((capture,index)=>[capture.name,args[index]]));
       return (...values)=>{
@@ -154,4 +158,9 @@ export function evaluate(program, functionName, arguments_) {
     for(let index=0;index<fn.params.length;index++){const param=fn.params[index];if(param.bindings){const argument=environment.get(param.name),slots=param.bindings;let values;if(slots.length===1)values=slots[0]===null?(([,])=>[])(argument):(([key])=>[key])(argument);else if(slots[0]===null)values=slots[1]===null?(([, ,])=>[])(argument):(([,value])=>[undefined,value])(argument);else values=slots[1]===null?(([key,,])=>[key])(argument):(([key,value])=>[key,value])(argument);slots.forEach((name,index)=>{if(name!==null)environment.set(name,values[index]);});}}
   };
   return invoke(functionName, arguments_);
+}
+
+export async function evaluateWithOriginalConstructors(program,functionName,args,options) {
+  const runtime=await prepareOriginalConstructorRuntime(program,options);
+  return evaluate(program,functionName,args,runtime);
 }

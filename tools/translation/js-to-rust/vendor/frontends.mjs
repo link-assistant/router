@@ -12,6 +12,7 @@ import { parseCharacterClass } from './character-classes.mjs';
 import {parseSequencePattern} from './sequence-patterns.mjs';
 import { parseClosedJson } from './json-responses.mjs';
 import {sourceCallable} from './source-calls.mjs';
+import {originalImportedErrorConstructor} from './source-constructors.mjs';
 
 const UNSUPPORTED_BINARY = new Set(['==', '!=', '**', '??', '&', '|', '^', '<<', '>>', '>>>', 'instanceof', 'in', 'as']);
 const ASSIGNMENTS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '++', '--', '&&=', '||=', '??=']);
@@ -98,10 +99,11 @@ function jsdocTypes(doc) {
  * @param {string} doc the comments directly before the item
  * @returns {object}
  */
-export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses,callbackInputs,source,sourceCalls } = {}) {
+export function parseJavaScriptItem(tokens, doc, { shadowedBuiltins,readOnlyTables,errorContracts,jsonResponses,callbackInputs,source,sourceCalls,sourceConstructors } = {}) {
   const at = cursor(tokens);
   at.source = source;
   at.sourceCalls=sourceCalls===true;
+  at.sourceConstructors=sourceConstructors;
   at.shadowedBuiltins = shadowedBuiltins;
   at.errorContracts=errorContracts;
   at.jsonResponses=jsonResponses;
@@ -222,7 +224,7 @@ function arrowAhead(at) {
 // JavaScript ordinary function completion is undefined. Make it explicit
 // before the shared checker; missing/unsupported IR paths remain rejected.
 function completeJavaScriptBody(body,declaredReturns) {
-  const terminates=statements=>{const last=statements.at(-1);return last?.kind==='return'||last?.kind==='if'&&last.else!==null&&terminates(last.then)&&terminates(last.else);};
+  const terminates=statements=>{const last=statements.at(-1);return ['return','throw'].includes(last?.kind)||last?.kind==='if'&&last.else!==null&&terminates(last.then)&&terminates(last.else);};
   if(terminates(body))return body;
   if(declaredReturns!==null&&!['undefined','value'].includes(declaredReturns))refuse('missing-return','normal completion violates the declared nonundefined return contract');
   return [...body,{kind:'return',value:{kind:'undefined'}}];
@@ -241,6 +243,13 @@ function jsBlock(at) {
 
 function jsStatement(at) {
   const token = at.peek();
+  if(at.eat('throw')) {
+    if(typeof at.source!=='string'||/[\n\r\u2028\u2029]/u.test(at.source.slice(token.end,at.peek().start)))refuse('unsupported','a line terminator after throw');
+    const value=expression(at,'JavaScript');
+    if(value.kind!=='source-error')refuse('collection','throw without a source-issued constructor capability');
+    if(!at.eat(';')&&!at.is('}'))at.expect(';');
+    return {kind:'throw',value};
+  }
   if (at.is('const') || at.is('let')) {
     const mutable = at.next().text === 'let';
     const name = snakeFromCamel(at.next().text);
@@ -263,9 +272,9 @@ function jsStatement(at) {
     at.expect('(');
     const cond = expression(at, 'JavaScript');
     at.expect(')');
-    const then = jsBlock(at);
+    const then = at.is('{')?jsBlock(at):[jsStatement(at)];
     let otherwise = null;
-    if (at.eat('else')) otherwise = at.is('if') ? [jsStatement(at)] : jsBlock(at);
+    if (at.eat('else')) otherwise = at.is('{')?jsBlock(at):[jsStatement(at)];
     return { kind: 'if', cond, then, else: otherwise };
   }
   if (at.eat('while')) {
@@ -451,6 +460,11 @@ function unary(at, language) {
     }
   }
   if (language === 'JavaScript' && at.eat('typeof')) return { kind: 'typeof', operand: unary(at, language) };
+  if(language==='JavaScript'&&at.is('new')&&at.sourceConstructors?.has(token.start)) {
+    const capability=at.sourceConstructors.get(token.start),proof=originalImportedErrorConstructor(capability).proof;
+    while(at.peek().type!=='end'&&at.peek().start<proof.caller.end)at.next();
+    return {kind:'source-error',constructor:proof};
+  }
   if(language==='JavaScript'&&at.is('new')&&at.is('Error',1)) {
     if(!at.errorContracts?.owned)refuse('collection',at.errorContracts?.reason??'unproved Error intrinsic ownership');
     at.next();at.next();const args=argumentsOf(at,language);

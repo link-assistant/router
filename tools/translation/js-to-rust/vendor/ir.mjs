@@ -33,6 +33,8 @@ import {checkSourceCalls,isOriginalSourceCallCheck,sourceCallItem} from './sourc
 import { staticTableType,mapValueType } from './static-tables.mjs';
 import { recordType,recordShape,errorType,errorShape,canLiftValue,payloadBoundary } from './aggregates.mjs';
 import { checkClosedJson,jsonResponseStatus,closedJsonValue,utf16Link,utf16Of } from './json-responses.mjs';
+import {sourceConstructorItem,isOriginalConstructorBodyCheck,checkOriginalConstructorBody} from './constructor-bodies.mjs';
+import {reissueImportedErrorConstructor,originalImportedErrorConstructor} from './source-constructors.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
 function callableOf(type){if(typeof type!=='string'||!type.startsWith('callable:'))return null;return JSON.parse(type.slice(9));}
@@ -85,7 +87,7 @@ export function canonicalRustName(name) {
 const terminates = (body) => {
   const last = body[body.length - 1];
   if (!last) return false;
-  if (last.kind === 'return') return true;
+  if (last.kind === 'return'||last.kind==='throw') return true;
   return last.kind === 'if' && last.else !== null && terminates(last.then) && terminates(last.else);
 };
 
@@ -103,7 +105,7 @@ export function normalizeBody(body) {
   for (let index = 0; index < body.length; index += 1) {
     const statement = canonicalStatement(body[index]);
     if (statement.kind !== 'if') {
-      if (statement.kind === 'return' && index < body.length - 1) refuse('unsupported', 'a statement after return');
+      if (['return','throw'].includes(statement.kind) && index < body.length - 1) refuse('unsupported', 'a statement after '+statement.kind);
       out.push(statement);
       continue;
     }
@@ -127,8 +129,8 @@ function canonicalStatement(statement) {
   return {
     kind: 'if',
     cond: value.cond,
-    then: [{ kind: 'return', value: value.then }],
-    else: [{ kind: 'return', value: value.else }],
+    then: [{ kind: statement.kind, value: value.then }],
+    else: [{ kind: statement.kind, value: value.else }],
   };
 }
 
@@ -214,6 +216,7 @@ export function lowerSourceClosure(handle,name) {
   return {...checked,kind:'closure',captures:checked.params.slice(0,count),params:checked.params.slice(count),environment:environment.proof,...(collection?{conditionalCaptures:true}:{})};
 }
 export function check(item, table) {
+  if(sourceConstructorItem(item)&&!isOriginalConstructorBodyCheck(item))return checkOriginalConstructorBody(item);
   if(sourceCallItem(item))return checkSourceCalls(item);
   if(item.conditionalCalls&&!isOriginalSourceCallCheck(item))refuse('collection','a conditional call without privately checked original creation');
   if(!isOriginalSourceCallCheck(item)&&/"kind":"(?:source-create|owned-some)"/u.test(JSON.stringify(item.body)))refuse('collection','a callable creation outside a privately checked original caller');
@@ -283,6 +286,12 @@ export function check(item, table) {
       if(item.lossless&&value.type==='utf16-string'&&!value.borrowed)refuse('collection','an unimplemented owned UTF16 assignment boundary');
       return { ...statement, value };
     }
+    if(statement.kind==='throw') {
+      if(!isOriginalConstructorBodyCheck(item)||!item.conditionalConstructors)refuse('collection','an unqualified abrupt constructor completion');
+      const value=expression(statement.value,names,table);
+      if(value.type!=='source-error')refuse('type','throw without its original imported Error constructor');
+      return {...statement,value};
+    }
     if (statement.kind === 'return') {
       const value = expression(statement.value, names, table);
       if (!closedReturnType(value.type)) refuse('untyped', 'a dynamic return value without a closed primitive contract');
@@ -311,6 +320,7 @@ export function check(item, table) {
     if(node.kind==='call') {
       if(node.callable){for(const arg of node.args)capabilities(arg);return;}
       const callee=table.get(node.name);
+      if(callee.conditionalConstructors)refuse('collection','a constructor completion crossing an unimplemented caller boundary');
       if(callee.conditionalInputs&&!item.conditionalInputs)refuse('collection','an unqualified conditional private callback boundary');
       if(callee.conditionalCalls&&!item.conditionalCalls)refuse('collection','an unqualified original Array.some intrinsic boundary');
       const proved=callee.body.every(statement=>statement.value?.type||statement.cond?.type);
@@ -345,6 +355,10 @@ function expression(expr, names, table) {
   const map = constructMap();
   const typed = (fields, type) => ({ ...expr, ...fields, type });
   switch (expr.kind) {
+    case 'source-error': {
+      originalImportedErrorConstructor(reissueImportedErrorConstructor(expr.constructor));
+      return typed({},'source-error');
+    }
     case 'number':
       if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/u.test(expr.text) || !Number.isFinite(Number(expr.text))) refuse('type', 'a malformed decimal literal');
       return typed({}, 'number');
@@ -575,6 +589,8 @@ export function toLino(item) {
     item.name,
     ...(item.sourceCalls?[['source-calls',encodeWord(JSON.stringify(item.sourceCalls))]]:[]),
     ...(item.conditionalCalls?[['conditional-calls']]:[]),
+    ...(item.sourceConstructors?[['source-constructors',encodeWord(JSON.stringify(item.sourceConstructors))]]:[]),
+    ...(item.conditionalConstructors?[['conditional-constructors']]:[]),
     ...(item.kind==='closure'?[['environment',encodeWord(JSON.stringify(item.environment))],['captures',...item.captures.map(capture=>[capture.name,capture.type])]]:[]),
     ...flag,
     ...(item.lossless?[['lossless']]:[]),
@@ -591,6 +607,7 @@ function statementLink(statement) {
   if (statement.kind === 'assign') return ['assign', statement.name, linkOf(statement.value)];
   if (statement.kind === 'while') return ['while', linkOf(statement.cond), ['body', ...statement.body.map(statementLink)]];
   if (statement.kind === 'return') return ['return', linkOf(statement.value)];
+  if (statement.kind === 'throw') return ['throw', linkOf(statement.value)];
   const link = ['if', linkOf(statement.cond), ['then', ...statement.then.map(statementLink)]];
   if (statement.else !== null) link.push(['else', ...statement.else.map(statementLink)]);
   return link;
@@ -598,6 +615,7 @@ function statementLink(statement) {
 
 function linkOf(expr) {
   switch (expr.kind) {
+    case 'source-error':return ['source-error',encodeWord(JSON.stringify(expr.constructor))];
     case 'source-create':return ['source-create',['environment',encodeWord(JSON.stringify(expr.environment))],['captures',...expr.captures.map(linkOf)]];
     case 'owned-some':return ['owned-some',['values',...expr.values.map(linkOf)],['callback',linkOf(expr.callback)]];
     case 'number':
@@ -671,6 +689,8 @@ function itemOf(link) {
     kind: link[0],
     ...(field(link,'source-calls')?{sourceCalls:JSON.parse(textOf(field(link,'source-calls')[1]))}:{}),
     ...(field(link,'conditional-calls')?{conditionalCalls:true}:{}),
+    ...(field(link,'source-constructors')?{sourceConstructors:JSON.parse(textOf(field(link,'source-constructors')[1]))}:{}),
+    ...(field(link,'conditional-constructors')?{conditionalConstructors:true}:{}),
     ...(link[0]==='closure'?{environment:JSON.parse(textOf(field(link,'environment')[1])),captures:field(link,'captures').slice(1).map(([name,type])=>({name,type}))}:{}),
     name: link[1],
     exported,
@@ -689,6 +709,7 @@ function statementOf(link) {
   if (link[0] === 'assign') return { kind: 'assign', name: link[1], value: exprOf(link[2]) };
   if (link[0] === 'while') return { kind: 'while', cond: exprOf(link[1]), body: field(link, 'body').slice(1).map(statementOf) };
   if (link[0] === 'return') return { kind: 'return', value: exprOf(link[1]) };
+  if (link[0] === 'throw') return { kind: 'throw', value: exprOf(link[1]) };
   const otherwise = field(link, 'else');
   return {
     kind: 'if',
@@ -701,6 +722,7 @@ function statementOf(link) {
 function exprOf(link) {
   const [kind, ...rest] = link;
   switch (kind) {
+    case 'source-error':return {kind,constructor:JSON.parse(textOf(rest[0]))};
     case 'source-create':return {kind,environment:JSON.parse(textOf(field(link,'environment')[1])),captures:field(link,'captures').slice(1).map(exprOf)};
     case 'owned-some':return {kind,values:field(link,'values').slice(1).map(exprOf),callback:exprOf(field(link,'callback')[1])};
     case 'number':

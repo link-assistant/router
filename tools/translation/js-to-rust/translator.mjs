@@ -15,6 +15,7 @@ import { jsonResponseOwnership } from './vendor/json-responses.mjs';
 import {callbackInputsFor} from './vendor/callback-inputs.mjs';
 import { discoverScopedHelpers } from './vendor/scoped-helpers.mjs';
 import {createSourceCallIssuer,issueTopLevelSourceCallsFrom,lowerSourceCalls} from './vendor/source-calls.mjs';
+import {issueOriginalConstructorBody,lowerOriginalConstructorBody,sourceConstructorItem,assertOriginalConstructorGraph} from './vendor/constructor-bodies.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -32,11 +33,11 @@ const diagnostic = (error, item, source) => ({
 });
 
 function returns(body) {
-  return body.some((statement) => statement.kind === 'return' || statement.kind === 'if' && statement.else !== null && returns(statement.then) && returns(statement.else));
+  return body.some((statement) => ['return','throw'].includes(statement.kind) || statement.kind === 'if' && statement.else !== null && returns(statement.then) && returns(statement.else));
 }
 
 /** Discover and independently check every top-level source item. */
-export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,lossless=false}={}) {
+export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,lossless=false,constructorGraph}={}) {
   let raw,tokens;
   try {
     tokens=lex(source,'JavaScript');
@@ -69,9 +70,13 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
     } catch (error) {
       if (!isRefusal(error) && !error.slug) throw error;
       row.diagnostic = diagnostic(error, item, source);
+      if(constructorGraph&&item.tokens.some(token=>token.text==='throw')&&item.tokens.some(token=>token.text==='new'))try {
+        const checked=lowerOriginalConstructorBody(issueOriginalConstructorBody(constructorGraph,sourcePath,item.start,item.end));
+        row.parsed=checked;row.name=checked.name;row.status='parsed';row.coverageContract='conditional-original-constructor-body-draft';delete row.diagnostic;
+      }catch{ /* original source refusal remains authoritative */ }
       // This fallback checks the complete original owner and every callable
       // creation/use; isolated child admission never promotes its parent.
-      try {
+      if(row.status!=='parsed')try {
         if(error.slug==='async'||!item.tokens.some(token=>token.text==='=>'))throw error;
         sourceCallIssuer??=createSourceCallIssuer(source,sourcePath);
         const checked=lowerSourceCalls(issueTopLevelSourceCallsFrom(sourceCallIssuer,item.start,item.end));row.parsed=checked;row.name=checked.name;row.status='parsed';row.coverageContract=checked.conditionalCalls?'conditional-original-body-draft':'full-domain-body';delete row.diagnostic;
@@ -124,11 +129,11 @@ export function translateJavaScript(source,options) {
   if (analyzed.diagnostics.length) throw new TranslationError(analyzed.diagnostics[0]);
   const meta = `${analyzed.program.map(toLino).join('\n')}\n`;
   // Both targets consume the serialized/reparsed meta-language document.
-  const program = parseMeta(meta);
-  return { ...analyzed, meta, rust: emitRust(program), typescript: emitTypeScript(program) };
+  const program = parseMeta(meta,{constructorGraph:options?.constructorGraph});
+  return { ...analyzed, meta, rust: emitRust(program), typescript: emitTypeScript(program,{outputPath:options?.typescriptOutputPath}) };
 }
 
-export function parseMeta(text) {
+export function parseMeta(text,{constructorGraph}={}) {
   const links = parseLinks(text);
   if (links.some((link) => !['function', 'constant','closure'].includes(link[0]))) throw new Error('unsupported top-level meta-language link');
   const items = fromLino(text);
@@ -140,6 +145,7 @@ export function parseMeta(text) {
     if (['function','closure'].includes(item.kind) && !returns(item.body)) throw new Error(`meta-language function ${item.name} has a path without a return`);
   }
   const table = signatures(items);
+  for(const item of items)if(sourceConstructorItem(item))assertOriginalConstructorGraph(item,constructorGraph);
   const checked=items.map(item=>check(item,table)),completed=signatures(checked);
   return checked.map(item=>check(item,completed));
 }
