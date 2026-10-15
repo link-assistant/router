@@ -2,8 +2,8 @@
 import {createHash} from 'node:crypto';
 import {builtinDebugDataInputs} from './builtin-derive-data-inputs.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';
-import {builtinAstOriginal,originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant,originalAstPositiveConstructors} from './builtin-derive-ast-meta.mjs';
-import {originalMacroTrees} from './macro-token-trees.mjs';
+import {originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant,originalAstPositiveConstructors} from './builtin-derive-ast-meta.mjs';
+import {originalBuiltinEnumPatternSource,requireOriginalBuiltinEnumPatternSource} from './builtin-derive-enum-patterns.mjs';
 import {createBuiltinAstBuilderMetaCompiler} from './builtin-ast-builder-meta.mjs';
 const directory='compiler/rustc_builtin_macros/src/deriving/',generic=directory+'generic/mod.rs',build='compiler/rustc_expand/src/build.rs',schema='compiler/rustc_ast/src/ast.rs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),plans=new WeakMap(),inventories=new WeakMap();
@@ -101,39 +101,14 @@ export function liftBuiltinDebugAstRoute({profile,entry,original,certificate,inp
 // Payload enums retain their actual generic match before every callback. The
 // original named-record/unit-enum route above keeps its previous source domain.
 const payloadPlans=new WeakMap();
-function payloadPatternConstructor(profile,fragment,name,parameters){
- // These two actual builders use the original unaliased PatKind import. Keep
- // its complete source item and the ENTIRE builder expression, not a spelling
- // match to an arbitrary constructor in a larger body.
- const origin=builtinAstOriginal(profile,build),roots=originalMacroTrees(origin.source),imports=[];
- for(let index=0;index<roots.length;index++)if(roots[index].text==='use'&&roots[index+1]?.text==='rustc_ast'&&roots[index+2]?.text==='::'&&roots[index+3]?.delimiter==='{'&&roots[index+4]?.text===';'){
-  const group=roots[index+3];if(group.children.some((node,i)=>node.text==='PatKind'&&(i===0||group.children[i-1].text===',')&&(i===group.children.length-1||group.children[i+1].text===',')))imports.push(roots.slice(index,index+5));
- }
- const expected='self . pat (span , PatKind :: '+name+' ('+parameters.join(' , ')+'))',body=fragment.syntax.at(-1);
- if(imports.length!==1||body?.delimiter!=='{'||astSyntaxText(body.children)!==expected)throw new TypeError('Original Debug enum pattern builder/import remains unresolved');
- const matches=[];function visit(nodes){for(let index=0;index<nodes.length;index++){if(nodes[index].text==='PatKind'&&nodes[index+1]?.text==='::'&&nodes[index+2]?.text===name&&nodes[index+3]?.delimiter==='(')matches.push(nodes.slice(index,index+4));if(nodes[index].kind==='group')visit(nodes[index].children);}}visit(body.children);
- if(matches.length!==1)throw new TypeError('Original Debug enum pattern constructor is not unique');const nodes=matches[0],group=nodes[3],args=[];let begin=0;for(let index=0;index<=group.children.length;index++)if(index===group.children.length||group.children[index].text===','){if(index>begin)args.push(group.children.slice(begin,index));begin=index+1;}
- const variant=astEnumVariant(profile,originalAstDefinition(profile,schema,'enum','PatKind'),name);if(args.length!==variant.arity)throw new TypeError('Original Debug enum pattern constructor arity differs');const declaration=imports[0];
- return freeze({source:build,sourceSha256:origin.sha256,span:{start:nodes[0].span.start,end:group.span.end},variant,args,recipeDigest:fragment.digest,originalOwnerImport:{source:build,sourceSha256:origin.sha256,span:{start:declaration[0].span.start,end:declaration.at(-1).span.end},syntax:declaration}});
-}
 function payloadPlan(profile,base){
  if(payloadPlans.has(profile))return payloadPlans.get(profile);
- const extra=[],compiler=createBuiltinAstBuilderMetaCompiler(profile),contracts=[];
- const recipe=(path,name)=>{const value=originalAstFunction(profile,path,name);extra.push(value);return value;};
- const patterns=recipe(generic,'create_struct_patterns'),fields=recipe(generic,'create_struct_pattern_fields'),ident=recipe(generic,'mk_pattern_ident'),intoExpr=recipe(generic,'into_expr');
- contains(patterns,'struct_def.fields().iter().enumerate()','self.mk_pattern_ident(prefix, i)','PatKind::Ident(BindingMode(by_ref, Mutability::Not), path, None)','VariantData::Struct','cx.pat_struct(self.span, struct_path, field_pats)','VariantData::Tuple','cx.pat_tuple_struct(self.span, struct_path, subpats)','VariantData::Unit(..) => cx.pat_path');
- contains(fields,'self.create_fields(struct_def','self.mk_pattern_ident(prefix, i)','cx.expr_path(cx.path_ident(sp, ident))');contains(ident,'Ident::from_str_and_span(&format!("{prefix}_{i}"), self.span)');
- contains(intoExpr,'if self.0.is_empty()','Some(expr) => expr','cx.expr_block(self.into_block(cx, span))');
+ const shared=requireOriginalBuiltinEnumPatternSource(originalBuiltinEnumPatternSource(profile),profile),compiler=createBuiltinAstBuilderMetaCompiler(profile),extra=[...shared.recipes],contracts=[];
  const enumeration=originalAstFunction(profile,generic,'expand_enum_method_body');
  contains(enumeration,'iter::once("__self".to_string())','let fields = trait_.create_struct_pattern_fields','let by_ref = ByRef::No','if subpats.len() == 1','let substructure = EnumMatching(variant, fields)','cx.arm(span, single_pat, arm_expr)','_ if variants.len() > 1 && selflike_args.len() > 1','cx.expr_match(span, match_arg, match_arms)','BlockOrExpr(ThinVec::new(), Some(get_match_expr(selflike_args)))');
- const parser='compiler/rustc_parse/src/parser/item.rs',tuple=recipe(parser,'parse_tuple_struct_body'),variantParser=recipe(parser,'parse_enum_variant');contains(tuple,'let attrs = p.parse_outer_attributes()?','let lo = p.token.span','p.parse_visibility(FollowedByType::Yes)','p.parse_ty()','if p.token == token::Eq','span: lo.to(ty.span)','ident: None','UsePreAttrPos::No');contains(variantParser,'let variant_attrs = self.parse_outer_attributes()?','let vlo = this.token.span','this.parse_tuple_struct_body()','VariantData::Tuple(body, DUMMY_NODE_ID)','VariantData::Struct { fields, recovered }','VariantData::Unit(DUMMY_NODE_ID)');
- const patField=astStructLiteral(profile,patterns,'PatField');field(patField,'is_shorthand','false');field(patField,'attrs','ast :: AttrVec :: new ()');field(patField,'is_placeholder','false');field(patField,'pat','pat');
- const constructors=new Map(base.constructors),builderRecipes=new Map();
- for(const [name,owner,wanted]of [['expr_block','ExprKind','Block'],['pat_tuple_struct','PatKind','TupleStruct'],['pat_struct','PatKind','Struct']]){const selected=recipe(build,name);builderRecipes.set(name,selected);const rows=owner==='PatKind'?[payloadPatternConstructor(profile,selected,wanted,name==='pat_struct'?['None','path','field_pats','ast :: PatFieldsRest :: None']:['None','path','subpats'])]:originalAstPositiveConstructors(profile,selected,owner);if(rows.length!==1||rows[0].variant.name!==wanted)throw new TypeError('Original Debug enum constructor differs: '+name);constructors.set(name,rows[0]);try{contracts.push(compiler.compile(name));}catch(error){contracts.push({recipeDigest:selected.digest,sourceMetaRefusal:error.message,generatedImplBehavior:false});}}
- const tupleBuilder=builderRecipes.get('pat_tuple_struct'),structBuilder=builderRecipes.get('pat_struct');contains(tupleBuilder,'PatKind::TupleStruct(None, path, subpats)');contains(structBuilder,'PatKind::Struct(None, path, field_pats, ast::PatFieldsRest::None)');
- const definitions=[originalAstDefinition(profile,schema,'struct','PatField'),originalAstDefinition(profile,schema,'struct','Block')],kind=originalAstDefinition(profile,schema,'enum','PatKind');
- const selected=[['TupleStruct',3],['Struct',4]].map(([name,arity])=>{const value=astEnumVariant(profile,kind,name);if(value.arity!==arity)throw new TypeError('Original Debug enum pattern schema arity differs');return value;});
- const result={...base,constructors,recipes:[...base.recipes,...extra],compilerMeta:[...base.compilerMeta,...contracts],positiveSchemas:[...base.positiveSchemas,...selected,constructors.get('expr_block').variant],schemas:[...base.schemas,...definitions],parserFieldSpans:{...base.parserFieldSpans,enumRecipes:[tuple,variantParser]},sourceControls:{...base.sourceControls,enumReceiverArguments:1,enumBinderPrefix:'__self',enumBindingMode:{byRef:'No',mutability:'Not'},enumDefaultArm:false,enumFieldTypes:'source-cloned Ty only; no field trait/runtime/Copy authority'}};
+ const constructors=new Map([...base.constructors,...Object.entries(shared.constructors)]),selected=originalAstFunction(profile,build,'expr_block'),rows=originalAstPositiveConstructors(profile,selected,'ExprKind');extra.push(selected);
+ if(rows.length!==1||rows[0].variant.name!=='Block')throw new TypeError('Original Debug enum block constructor differs');constructors.set('expr_block',rows[0]);try{contracts.push(compiler.compile('expr_block'));}catch(error){contracts.push({recipeDigest:selected.digest,sourceMetaRefusal:error.message,generatedImplBehavior:false});}
+ const result={...base,constructors,recipes:[...base.recipes,...extra],compilerMeta:[...base.compilerMeta,...shared.compilerMeta,...contracts],positiveSchemas:[...base.positiveSchemas,...shared.positiveSchemas,constructors.get('expr_block').variant],schemas:[...base.schemas,...shared.schemas,originalAstDefinition(profile,schema,'struct','Block')],parserFieldSpans:{...base.parserFieldSpans,enumRecipes:[shared.parser.tuple,shared.parser.variant]},sourceControls:{...base.sourceControls,enumReceiverArguments:1,enumBinderPrefix:'__self',enumBindingMode:{byRef:'No',mutability:'Not'},enumDefaultArm:false,enumFieldTypes:'source-cloned Ty only; no field trait/runtime/Copy authority'}};
  payloadPlans.set(profile,result);return result;
 }
 function payloadTypes(original,certificate,input){return input.variants.map(variant=>({...variant,fields:typeLeaves(original,certificate,{fields:variant.fields})}));}
@@ -165,7 +140,7 @@ function liftPayloadEnum(profile,base,original,certificate,input){
  const evidence={schema:'original-debug-payload-enum-ast-bridge-v1',profileDigest:profile.digest,input,typedSource:{fields:[],variants,inputStyle:input.style},descriptor:plan.descriptor,method:plan.method,recipes:plan.recipes,compilerMeta:plan.compilerMeta,positiveSchemas:plan.positiveSchemas,schemas:plan.schemas,parserFieldSpans:plan.parserFieldSpans,sourceControls:plan.sourceControls,branches:closePayloadBranches(plan,branches,input,variants).map(branch=>({...branch,outputKind:'ItemKind::Impl',associatedKind:'AssocItemKind::Fn',bodyKind:'Block',associatedItems:1,associatedTypes:0,genericParameters:0,wherePredicates:0,generatedAttributes:['automatically_derived','inline'],lastBodyWrapper:'StmtKind::Expr from original BlockOrExpr::into_block'})),positiveOutputGrammarComplete:true,namespaceAuthority:false,copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['all source builder/callback refusals remain retained in compilerMeta; no complete compiler execution claim','fmt/format/allocator/trait behavior is not translated','actual original caller/helper/ancestor owners require the independent private issuer join','other derives and all nested/global source macros retain independent complete output obligations']};return freeze({...evidence,digest:hash(JSON.stringify(evidence))});
 }
 function closePayloadBranches(plan,branches,input,variants){
- const constructors=new Set(plan.constructors.values()),allFieldless=variants.every(variant=>!variant.fields.length);let nodes=0;
+ const constructors=new Set([...plan.constructors].filter(([name])=>name.startsWith('expr_')).map(([,constructor])=>constructor)),allFieldless=variants.every(variant=>!variant.fields.length);let nodes=0;
  const fail=()=>{throw new TypeError('Original Debug payload enum positive AST grammar differs');};
  const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
  const exact=(value,keys)=>{if(!value||typeof value!=='object'||Array.isArray(value)||!same(Object.keys(value).sort(),[...keys].sort()))fail();};

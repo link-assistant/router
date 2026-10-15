@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
-import {builtinDeriveDataInputs,builtinDebugDataInputs} from './builtin-derive-data-inputs.mjs';
+import {builtinDeriveDataInputs,builtinDebugDataInputs,builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {liftBuiltinHashAstRoute} from './builtin-hash-ast-route.mjs';
 import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
@@ -51,7 +51,7 @@ export function planBuiltinDeriveBangOutput({context,certificate,invocation}={})
 }
 export const isBuiltinDeriveBangPlan=value=>!!value&&plans.has(value);
 function proveCloneDataOutput(state,plan,context,certificate,invocation){
-  const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
+  const input=builtinPayloadDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
   for(const attribute of input.attributes){
     if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
       const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
@@ -78,7 +78,7 @@ function debugDataInput(state,context,certificate){
   }return {input,helpers};
 }
 function partialEqDataInput(state,context,certificate){
-  const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+  const input=builtinPayloadDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
   for(const attribute of input.attributes){
     if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
       if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original PartialEq doc comment differs from its private source invocation');continue;
@@ -144,7 +144,7 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
   }
   if(state.original.name==='Hash')return proveHashDataOutput(state,plan,context,certificate,invocation);
   if(state.original.name==='Eq'){
-    const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
+    const input=builtinPayloadDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(item=>item.start===certificate.span.start&&item.end===certificate.span.end),helpers=[];
     for(const attribute of input.attributes){
       if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
         const declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);

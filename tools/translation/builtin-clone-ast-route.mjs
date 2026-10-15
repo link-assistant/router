@@ -2,7 +2,8 @@
 // This confines generated syntax; it does not execute Clone or certify Copy.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
-import {builtinDeriveDataInputs} from './builtin-derive-data-inputs.mjs';
+import {builtinDeriveDataInputs,builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
+import {originalBuiltinEnumPatternSource,requireOriginalBuiltinEnumPatternSource} from './builtin-derive-enum-patterns.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';
 import {originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant,originalAstPositiveConstructors} from './builtin-derive-ast-meta.mjs';
 import {createBuiltinAstBuilderMetaCompiler} from './builtin-ast-builder-meta.mjs';
@@ -69,12 +70,13 @@ function sourcePlan(profile,entry){
  const result=freeze({...evidence,digest:hash(JSON.stringify(evidence))}),state={entry,profile,result,positive};plans.set(profile,state);return state;
 }
 function originalLeaves(original,certificate,input){
- const actual=builtinDeriveDataInputs({source:original.module.source,span:certificate.span});if(JSON.stringify(input)!==JSON.stringify(actual)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original Clone syntax differs from its private invocation');
+ const actual=(input.style==='payload-enum'?builtinPayloadDataInputs:builtinDeriveDataInputs)({source:original.module.source,span:certificate.span});if(JSON.stringify(input)!==JSON.stringify(actual)||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind)throw new TypeError('Original Clone syntax differs from its private invocation');
  if(input.attributes.some(attribute=>attribute.name==='repr'))throw new TypeError('Original Clone repr/packed data remains outside the selected output grammar');
  let inventory=inventories.get(original.dependencies);if(!inventory){inventory=inventoryDeriveQuoteMeta(original.dependencies);inventories.set(original.dependencies,inventory);}const compiler=createQuoteFragmentCompiler(inventory);
- return {inputSyntax:input,fields:input.fields.map(value=>{const typed=compiler.roundTrip(compiler.sourceType(value.typeSource,{source:certificate.source,sourceSha256:certificate.sourceSha256,span:value.typeSpan,field:value.name,owner:'original Clone field Ty clone'}));return {...value,type:{kind:'SourceTy',sourceSha256:hash(value.typeSource),syntaxSha256:hash(JSON.stringify(typed.syntax)),syntax:typed.syntax,span:value.typeSpan,semanticSyntaxRoundTrip:typed.provenance.semanticRoundTrip===true},fieldInfoSpan:{domain:'actual FieldDef.span with original trait hygiene; identifier and type spans retained separately',span:value.fieldDefinitionSpan,nameSpan:value.nameSpan,typeSpan:value.typeSpan}};}),variants:input.variants};
+ const typedField=value=>{const typed=compiler.roundTrip(compiler.sourceType(value.typeSource,{source:certificate.source,sourceSha256:certificate.sourceSha256,span:value.typeSpan,field:value.name,owner:'original Clone field Ty clone'}));return {...value,type:{kind:'SourceTy',sourceSha256:hash(value.typeSource),syntaxSha256:hash(JSON.stringify(typed.syntax)),syntax:typed.syntax,span:value.typeSpan,semanticSyntaxRoundTrip:typed.provenance.semanticRoundTrip===true},fieldInfoSpan:{domain:'actual FieldDef.span with original trait hygiene; identifier and type spans retained separately',span:value.fieldDefinitionSpan,nameSpan:value.nameSpan,typeSpan:value.typeSpan}};};
+ return {inputSyntax:input,fields:input.fields.map(typedField),variants:input.style==='payload-enum'?input.variants.map(variant=>({...variant,fields:variant.fields.map(typedField)})):input.variants};
 }
-function materialize(state,leaves){
+function materialize(state,leaves,payload=null){
  const constructor=name=>state.positive.get(name)?.[0];
  const expr=(name,slots)=>({kind:'Expr',attrs:[],tokens:null,constructor:constructor(name),slots});
  const path=(segments)=>({kind:'Path',segments});
@@ -83,12 +85,24 @@ function materialize(state,leaves){
  const unit=variant=>expr('expr_path',{qself:null,path:path(variant?[leaves.inputSyntax.name,variant.name]:[leaves.inputSyntax.name])});
  const cloneField=field=>expr('expr_call',{expr:expr('expr_path',{qself:null,path:path([standard,'clone','Clone','clone'])}),args:[expr('expr_addr_of',{borrowKind:'Ref',mutability:'Not',e:expr('source_field',{e:self(),ident:field.name,fieldInfoSpan:field.fieldInfoSpan})})]});
  let full;
- if(leaves.inputSyntax.style==='named-struct')full=expr('expr_struct',{qself:null,path:path([leaves.inputSyntax.name]),fields:leaves.fields.map(field=>({kind:'ExprField',ident:field.name,attrs:[],is_shorthand:false,is_placeholder:false,fieldInfoSpan:field.fieldInfoSpan,expr:cloneField(field)})),rest:'None'});
+ if(payload){
+  const constructorFor=variant=>{const variantPath=path([leaves.inputSyntax.name,variant.name]),clone=field=>expr('expr_call',{expr:expr('expr_path',{qself:null,path:path([standard,'clone','Clone','clone'])}),args:[expr('expr_path',{qself:null,path:path(['__self_'+field.index])})]});
+   if(variant.style==='unit')return expr('expr_path',{qself:null,path:variantPath});
+   if(variant.style==='tuple')return expr('expr_call',{expr:expr('expr_path',{qself:null,path:variantPath}),args:variant.fields.map((field,index)=>clone({...field,index}))});
+   return expr('expr_struct',{qself:null,path:variantPath,fields:variant.fields.map((field,index)=>({kind:'ExprField',ident:field.name,attrs:[],is_shorthand:false,is_placeholder:false,fieldInfoSpan:field.fieldInfoSpan,expr:clone({...field,index})})),rest:'None'});
+  };
+  const pattern=variant=>{const common={kind:'Pat',tokens:null},args={qself:null,path:path([leaves.inputSyntax.name,variant.name])},binders=variant.fields.map((field,index)=>({kind:'PatKind::Ident',bindingMode:{byRef:'No',mutability:'Not'},ident:'__self_'+index,subpattern:null,sourceSpan:field.fieldDefinitionSpan}));
+   if(variant.style==='unit')return {...common,constructor:payload.constructors.pat_path,slots:args};
+   if(variant.style==='tuple')return {...common,constructor:payload.constructors.pat_tuple_struct,slots:{...args,subpatterns:binders}};
+   return {...common,constructor:payload.constructors.pat_struct,slots:{...args,fields:variant.fields.map((field,index)=>({kind:'PatField',ident:field.name,isShorthand:false,attrs:[],isPlaceholder:false,sourceSpan:field.fieldDefinitionSpan,pattern:binders[index]})),rest:'PatFieldsRest::None'}};
+  };
+  full=leaves.variants.length===1&&!leaves.variants[0].fields.length?constructorFor(leaves.variants[0]):expr('expr_match',{arg:self(),matchKind:'Prefix',arms:leaves.variants.map(variant=>({kind:'Arm',attrs:[],guard:null,is_placeholder:false,pat:pattern(variant),body:constructorFor(variant)}))});
+ }else if(leaves.inputSyntax.style==='named-struct')full=expr('expr_struct',{qself:null,path:path([leaves.inputSyntax.name]),fields:leaves.fields.map(field=>({kind:'ExprField',ident:field.name,attrs:[],is_shorthand:false,is_placeholder:false,fieldInfoSpan:field.fieldInfoSpan,expr:cloneField(field)})),rest:'None'});
  else if(leaves.inputSyntax.style==='unit-struct'||leaves.variants.length===1)full=unit(leaves.variants[0]);
  else full=expr('expr_match',{arg:self(),matchKind:'Prefix',arms:leaves.variants.map(variant=>({kind:'Arm',attrs:[],guard:null,is_placeholder:false,pat:{kind:'Pat',tokens:null,constructor:constructor('pat_path'),slots:{qself:null,path:path([leaves.inputSyntax.name,variant.name])}},body:unit(variant)}))});
  // The original is_simple_path predicate/dedup chooses a subsequence of these
  // exact type-only statements. No choice changes any AST node category.
- const candidates=leaves.fields.map(field=>({kind:'Stmt',variant:'Let',local:{kind:'Local',variant:'Decl',initializer:null,attrs:[],tokens:null,pat:{kind:'Pat',tokens:null,constructor:constructor('pat_wild'),slots:{}},ty:{kind:'AssertionTy',path:path([standard,'clone','AssertParamIsClone']),argument:field.type},fieldInfoSpan:field.fieldInfoSpan}}));
+ const assertionFields=payload?leaves.variants.flatMap(variant=>variant.fields):leaves.fields,candidates=assertionFields.map(field=>({kind:'Stmt',variant:'Let',local:{kind:'Local',variant:'Decl',initializer:null,attrs:[],tokens:null,pat:{kind:'Pat',tokens:null,constructor:constructor('pat_wild'),slots:{}},ty:{kind:'AssertionTy',path:path([standard,'clone','AssertParamIsClone']),argument:field.type},fieldInfoSpan:field.fieldInfoSpan}}));
  const body=expression=>({kind:'Block',tokens:null,rules:'Default',statements:[{kind:'Stmt',variant:'Expr',expr:expression}]});
  const method=block=>({kind:'ItemKind::Impl',associatedTypes:[],items:[{kind:'AssocItemKind::Fn',attrs:['inline'],tokens:null,name:'clone',header:{safety:'Default',coroutine_kind:null,constness:'No',ext:'None'},generics:[],contract:null,define_opaque:null,parameters:[{kind:'Param',attrs:[],is_placeholder:false,pat:{kind:'PatKind::Ident',byRef:'No',mutability:'Not',ident:'self',subpattern:null,tokens:null},receiver:{kind:'TyKind::Ref',lifetime:null,mutability:'Not',pointee:'TyKind::ImplicitSelf'}}],returnType:{kind:'OriginalSelfTy',name:leaves.inputSyntax.name},body:block}],attrs:['automatically_derived']});
  return [{feature:'has_derive_copy=false',output:method(body(full))},{feature:'has_derive_copy=true',output:method({...body(expr('expr_deref',{op:'Deref',e:self()})),typeOnlyStatements:{selection:'original is_simple_path/seen_type_names subsequence; both original branches retain only LocalKind::Decl',candidates}})}];
@@ -103,8 +117,10 @@ export function validateBuiltinCloneAstOutput(route,branches){
  visit(branches,state.branches);return true;
 }
 export function liftBuiltinCloneAstRoute({profile,original,certificate,entry,input}={}){
- const state=sourcePlan(profile,entry),leaves=originalLeaves(original,certificate,input),branches=materialize(state,leaves);
- const evidence={schema:'original-clone-positive-ast-output-v1',profileDigest:profile.digest,source:certificate.source,sourceSha256:certificate.sourceSha256,itemSha256:certificate.itemSha256,span:certificate.span,typedSource:leaves,plan:{schema:state.result.schema,digest:state.result.digest,originalCompilerMetaPrivatelyRetained:true},branches,positiveOutputGrammarComplete:true,selectedBodyBangComplete:true,namespaceAuthority:false,copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['actual original derive and all helper/ancestor attribute bindings require independent private joins','Clone field trait calls, Copy assertion validity and borrowed/owned runtime behavior remain uncompiled','unknown layouts/configuration/source-stage errors remain refused']};
+ const state=sourcePlan(profile,entry),leaves=originalLeaves(original,certificate,input),payload=input.style==='payload-enum'?requireOriginalBuiltinEnumPatternSource(originalBuiltinEnumPatternSource(profile),profile):null;
+ if(payload){const original=originalAstFunction(profile,directory+'clone.rs','cs_clone');contains(original,'VariantData::Tuple(..)','let subcalls = all_fields.iter().map(|f| subcall(cx, f)).collect()','cx.expr_call(trait_span, path, subcalls)');}
+ const branches=materialize(state,leaves,payload);
+ const evidence={schema:'original-clone-positive-ast-output-v1',profileDigest:profile.digest,source:certificate.source,sourceSha256:certificate.sourceSha256,itemSha256:certificate.itemSha256,span:certificate.span,typedSource:leaves,plan:{schema:state.result.schema,digest:state.result.digest,originalCompilerMetaPrivatelyRetained:true},...(payload?{payloadPatternSource:payload,payloadFlow:{allVariantsRetained:true,resolverBranches:['has_derive_copy=false','has_derive_copy=true'],full:'actual EnumMatching bound field paths -> Clone call -> source tuple/named/unit constructor',simple:'all actual variant fields -> original global is_simple_path/dedup type-only assertion subsequence',runtimeAuthority:false}}:{}),branches,positiveOutputGrammarComplete:true,selectedBodyBangComplete:true,namespaceAuthority:false,copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['actual original derive and all helper/ancestor attribute bindings require independent private joins','Clone field trait calls, Copy assertion validity and borrowed/owned runtime behavior remain uncompiled','unknown layouts/configuration/source-stage errors remain refused']};
  const result=freeze({...evidence,digest:hash(JSON.stringify(evidence))});outputs.set(result,{state,branches});validateBuiltinCloneAstOutput(result,branches);return result;
 }
 export function builtinCloneOriginalSourcePlan(route){const value=outputs.get(route);if(!value)throw new TypeError('Clone plan requires genuine original output');return value.state.result;}

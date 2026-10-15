@@ -59,7 +59,10 @@ function dataInputs(options,enumPayloads){
  return freezeMacroTree({...evidence,digest:hash(JSON.stringify(evidence))});
 }
 
-// Only Debug's complete enum output grammar opts into payload syntax. This
-// remains unbranded source input; all owner/helper/output proof joins are later.
+// Legacy consumers retain their original unit-enum domain. Opt-in consumers
+// must independently close all payload output branches and private joins.
 export const builtinDeriveDataInputs=options=>dataInputs(options,false);
 export const builtinDebugDataInputs=options=>dataInputs(options,true);
+// Opt-in source syntax for independently closed enum-output consumers. This
+// candidate never selects a derive owner or grants a layout/runtime fact.
+export const builtinPayloadDataInputs=options=>dataInputs(options,true);

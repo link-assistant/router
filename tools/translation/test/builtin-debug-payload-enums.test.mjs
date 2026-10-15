@@ -49,8 +49,9 @@ test('original nested helpers and docs remain exact while opaque, conditional an
  const outcomes=sources.map(original=>({source:original,outcome:attempt(()=>prove(original))}));retain('04-all-independent-refusals',outcomes);for(const row of outcomes){assert.equal(row.outcome.error?.name,'TypeError',row.source);}
 });
 
-test('payload syntax is opt-in to Debug and grants no other derive or callable generated formatter',{timeout:20000},()=>{
- const outcomes=[];for(const owner of ['Clone','Default','PartialEq','Eq','Hash']){const original='#[derive(Debug,'+owner+')]pub enum Payload{V(String)}',args=setup(original,{owner}),outcome=attempt(()=>proveBuiltinDeriveBangFootprint(args));outcomes.push({source:original,owner,outcome});assert.equal(outcome.error?.name,'TypeError',owner);}
+test('payload syntax is opt-in to closed consumers and grants no callable generated trait runtime',{timeout:20000},()=>{
+ const outcomes=[];for(const owner of ['Default','Hash']){const original='#[derive(Debug,'+owner+')]pub enum Payload{V(String)}',args=setup(original,{owner}),outcome=attempt(()=>proveBuiltinDeriveBangFootprint(args));outcomes.push({source:original,owner,outcome});assert.equal(outcome.error?.name,'TypeError',owner);}
+ for(const owner of ['Clone','PartialEq','Eq']){const original='#[derive(Debug,'+owner+')]pub enum Payload{V(String)}',proof=proveBuiltinDeriveBangFootprint(setup(original,{owner}));outcomes.push({source:original,owner,proof});assert.equal(proof.selectedOwnerBangComplete,true);assert.equal(proof.generatedImplBehavior,false);assert.equal(proof.copyAuthority,false);assert.equal(proof.noDropAuthority,false);}
  assert.throws(()=>builtinDeriveDataInputs({source,span:{start:0,end:source.length}}),/payload/);assert.equal(builtinDebugDataInputs({source,span:{start:0,end:source.length}}).style,'payload-enum');const proof=prove(source);assert.equal(proof.copyAuthority,false);assert.equal(proof.noDropAuthority,false);assert.equal(proof.generatedImplBehavior,false);retain('05-other-derive-refusals',{outcomes,source,proof});
 });
 
