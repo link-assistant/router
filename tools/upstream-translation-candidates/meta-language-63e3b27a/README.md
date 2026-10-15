@@ -92,8 +92,9 @@ One actual future adapter target is original
 `src/generated_js_first/policy.rs::retry_backoff` (line 89; declaration bytes
 2680..3017, SHA256
 `9b2e4c622cdf430a03fc46ebe8554b0fdb6419ae7c12084a8dd64d2bbc778d2a`).
-Its current complete-project refusal is `mutable aggregate`; its `js_min` and
-`js_max` callees are already executable, and ordinary f64 floor, arithmetic,
+The initial source audit recorded a `mutable aggregate` complete-project
+refusal; its `js_min` and `js_max` callees were already executable, and ordinary
+f64 floor, arithmetic,
 comparison and primitive Copy operations already exist. This is **not** a
 bool/i32 owned-local-state candidate: actual locals are f64. No matching actual
 body was found in the current four mutation/three syntax frontier rows for the
@@ -104,10 +105,15 @@ Source audit found that Router's existing `extensions/control.mjs` already
 checks and emits direct `while`/`routerSet`; its scalar-eligibility predicate
 omits float. The preferred next rule is therefore **existing checked control
 plus genuine by-value f64 admission**, not a new loop adapter. The separate 171
-candidate owns that rule and its tests. It must preserve exact original AST,
+rule now extends that existing control checker. Complete focused Node and Bun
+files have exercised the unchanged original policy parent, IEEE boundaries,
+evaluation order and strict TypeScript output; the combined current compiler
+and full repository gate still require verification. The rule must preserve
+exact original AST,
 initial bindings, guard, writes, return order and all source/type/effect joins.
 No upstream implementation is called by the active pipeline as a result of
-this copy, and no gain or completed 171 verification is claimed here.
+this copy. Its source-copy status remains UNRUN, and focused rule checks do not
+establish whole-library admission or runtime parity.
 
 The retained `rust-scalar-loops.js` independently supplies useful bool/f64
 proof and ordered-transition machinery for comparison. Its current parser
