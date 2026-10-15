@@ -7,7 +7,7 @@ import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mj
 const baseQualified=originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged()&&originalLexingIntrinsicsUnchanged();
 const descriptor=baseQualified?Object.getOwnPropertyDescriptor:null,prototype=baseQualified?Object.getPrototypeOf:null,own=baseQualified?Object.hasOwn:null,keys=baseQualified?Reflect.ownKeys:null,isArray=baseQualified?Array.isArray:null,isProxy=baseQualified?types.isProxy:null;
 const objectPrototype=baseQualified?Object.prototype:null,arrayPrototype=baseQualified?Array.prototype:null;
-const isFrozen=baseQualified?Object.isFrozen:null;
+const isFrozen=baseQualified?Object.isFrozen:null,stringify=baseQualified?JSON.stringify:null;
 const native=(field,name)=>!!field&&own(field,'value')&&originalCapturedFunctionSource(field.value)==='function '+name+'() { [native code] }';
 const errorField=baseQualified?descriptor(types,'isNativeError'):null,boxedField=baseQualified?descriptor(types,'isBoxedPrimitive'):null,arrayBufferField=baseQualified?descriptor(globalThis,'ArrayBuffer'):null;
 const arrayBufferNative=baseQualified&&native(arrayBufferField,'ArrayBuffer');
@@ -29,17 +29,11 @@ export function privateDataJsonEquality(left,right){
  function stringLength(value){
   const prior=strings.get(value);if(prior!==undefined)return prior;
   stringUnits+=value.length;if(stringUnits>STRINGS)return -1;
-  let length=2;
-  for(let at=0;at<value.length;at++){
-   const unit=value.charCodeAt(at);
-   if(unit===34||unit===92||unit===8||unit===9||unit===10||unit===12||unit===13)length+=2;
-   else if(unit<32)length+=6;
-   else if(unit>=55296&&unit<=56319){
-    const next=value.charCodeAt(at+1);
-    if(next>=56320&&next<=57343){length+=2;at++;}else length+=6;
-   }else length+=unit>=56320&&unit<=57343?6:1;
-   if(length>JSON_UNITS)return -1;
-  }
+  // Primitive strings cannot invoke toJSON or user coercion. The qualified
+  // native serializer supplies exact escaping, including lone surrogates.
+  // Charge unique input units first; even six output units per input unit
+  // stay below JSON_UNITS for the largest eligible primitive string.
+  const length=stringify(value).length;if(length>JSON_UNITS)return -1;
   strings.set(value,length);return length;
  }
  function scalarLength(value){
