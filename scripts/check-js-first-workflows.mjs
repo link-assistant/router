@@ -112,6 +112,8 @@ export function auditWorkflows(sources) {
     if (!js || js.uses !== './.github/workflows/javascript-first.yml' || js.with?.sha !== '${{ github.sha }}' || Object.hasOwn(js, 'if') || js.needs || js['continue-on-error'] || js.strategy) errors.push(`${name}/javascript: unconditional same-SHA reusable gate missing`);
     for (const [id, job] of Object.entries(workflow.jobs)) {
       if (id === 'javascript') continue;
+      if (Object.hasOwn(job, 'continue-on-error') && job['continue-on-error'] !== false) errors.push(`${name}/${id}: gated verification must not ignore failures`);
+      for (const step of job.steps ?? []) if (Object.hasOwn(step, 'continue-on-error') && step['continue-on-error'] !== false) errors.push(`${name}/${id}: gated verification step must not ignore failures`);
       if (job.concurrency?.['cancel-in-progress'] !== undefined && job.concurrency['cancel-in-progress'] !== false) errors.push(`${name}/${id}: job cancellation bypass`);
       if (!dependencies(job).includes('javascript') || !guarded(job.if, 'javascript')) errors.push(`${name}/${id}: explicit JavaScript success dependency missing`);
       if (job.uses === './.github/workflows/javascript-first.yml') {

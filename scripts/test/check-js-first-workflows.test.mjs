@@ -73,6 +73,23 @@ test('obscured cargo and Docker commands still require a gate because every runn
   fails('docker-build.yml', workflow => { delete workflow.jobs.runtime.needs; }, 'success dependency missing');
   fails('release.yml', workflow => { workflow.jobs.test.if = 'always()'; }, 'success dependency missing');
 });
+test('Rust verification after JavaScript preserves hard failures without relying on local hooks', () => {
+  for (const filename of Object.keys(baseline).filter(name => name !== 'javascript-first.yml')) {
+    const workflow = parse(baseline[filename]), id = Object.keys(workflow.jobs).find(name => name !== 'javascript' && workflow.jobs[name].steps?.length);
+    assert.ok(id, filename);
+    for (const ignored of [true, '${{ true }}', '${{ matrix.experimental }}']) {
+      fails(filename, value => { value.jobs[id]['continue-on-error'] = ignored; }, 'verification must not ignore failures');
+      fails(filename, value => { value.jobs[id].steps[0]['continue-on-error'] = ignored; }, 'verification step must not ignore failures');
+    }
+    assert.deepEqual(mutate(filename, value => {
+      value.jobs[id]['continue-on-error'] = false;
+      value.jobs[id].steps[0]['continue-on-error'] = false;
+    }), [], filename);
+  }
+  for (const ignored of [true, '${{ matrix.experimental }}']) fails('release.yml', workflow => {
+    workflow.jobs.test.steps.find(step => /cargo test/.test(step.run ?? ''))['continue-on-error'] = ignored;
+  }, 'verification step must not ignore failures');
+});
 test('every JavaScript stage and command is mandatory and cannot skip or ignore failures', () => {
   for (const id of ['lint', 'node-tests', 'bun-tests', 'typescript', 'parity', 'translation', 'profile-matrix', 'reverse-translation']) {
     fails('javascript-first.yml', workflow => { delete workflow.jobs[id]; }, 'stage missing');

@@ -65,6 +65,10 @@ Issue #759 is currently under an explicit no-local-build constraint because disk
 Local pre-commit hooks must not invoke Rust or automatically clean caches. Keep
 source formatting, Clippy and Rust tests in gated CI. Commit-time syntax checks
 provide quick diagnostics; they do not replace the complete JavaScript gate.
+Disabling a conflicting local hook does not waive Rust verification. After the
+same-commit JavaScript gate passes, Rust failures must fail CI; gated jobs and
+steps must not hide them with `continue-on-error`. The workflow audit checks
+this requirement independently of the developer's installed hooks.
 
 ## Measure archived cycles without inventing resource data
 
