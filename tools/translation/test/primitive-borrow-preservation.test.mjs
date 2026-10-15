@@ -4,7 +4,8 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {translateSource} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
-import {HostChecker,parseRust,checkProgram} from '../extensions/host-contracts.mjs';
+import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
+import {TextChecker} from '../extensions/text.mjs';
 import {rustFixedType} from '../checked-types.mjs';
 import {SOURCE_F64} from '../extensions/primitive-float-contracts.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
@@ -37,8 +38,8 @@ test('original primitive argument boundaries reject direct and inferred borrowed
 test('checked primitive borrow syntax retains pointee identity and exact original ampersand coordinates',{timeout:5000},()=>{
  const source='fn original(value:f64){let borrowed=&value;}fn main(){}',surface=parseRust(source),node=find(surface,'routerTextReference');assert.ok(node);
  const domains=[{kind:'bool'},{kind:'bool',rustSourceType:true},{...rustFixedType('u32'),rustPrimitiveName:'u32',rustSourceType:true},SOURCE_F64],rows=[];
- for(const domain of domains){const value=new HostChecker('Rust',[]).expr(node,new Map([['value',domain]]),[]);assert.equal(value.type.rustReference.kind,'shared');assert.deepEqual(value.type.rustReference.pointee,domain);for(const [key,field]of Object.entries(domain))assert.deepEqual(value.type[key],field);assert.equal(Object.hasOwn(value.type,'rustSourceType'),Object.hasOwn(domain,'rustSourceType'));assert.notEqual(value.type.rustReference.pointee,domain);assert.deepEqual(value.type.rustReference.span,node.span);assert.equal(source.slice(value.type.rustReference.tokens[0].span.start,value.type.rustReference.tokens[0].span.end),'&');assert.equal(value.type.patternOwnershipRefusal,'explicit shared reference expression');rows.push({domain,node,value});}
- const portableDomain={kind:'bool'},portable=new HostChecker('JavaScript',[]).expr(node,new Map([['value',portableDomain]]),[]);assert.equal(Object.hasOwn(portable.type,'rustReference'),false);assert.equal(portable.type.patternOwnershipRefusal,'explicit shared reference expression');
+ for(const domain of domains){const value=new TextChecker('Rust',[]).expr(node,new Map([['value',domain]]),[]);assert.equal(value.type.rustReference.kind,'shared');assert.deepEqual(value.type.rustReference.pointee,domain);for(const [key,field]of Object.entries(domain))assert.deepEqual(value.type[key],field);assert.equal(Object.hasOwn(value.type,'rustSourceType'),Object.hasOwn(domain,'rustSourceType'));assert.notEqual(value.type.rustReference.pointee,domain);assert.deepEqual(value.type.rustReference.span,node.span);assert.equal(source.slice(value.type.rustReference.tokens[0].span.start,value.type.rustReference.tokens[0].span.end),'&');assert.equal(value.type.patternOwnershipRefusal,'explicit shared reference expression');rows.push({domain,node,value});}
+ const portableDomain={kind:'bool'},portable=new TextChecker('JavaScript',[]).expr(node,new Map([['value',portableDomain]]),[]);assert.equal(Object.hasOwn(portable.type,'rustReference'),false);assert.equal(portable.type.patternOwnershipRefusal,'explicit shared reference expression');
  retain('04-primitive-reference-type-witnesses',{source,surface,rows,portableDomain,portable,bodyAdmissionClaim:false});
 });
 

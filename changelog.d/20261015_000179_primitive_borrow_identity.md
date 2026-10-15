@@ -7,3 +7,9 @@ references from values at assignment, argument and return boundaries. String
 and array borrow paths, portable coercion, float Copy/dereference capabilities,
 and the original mutable-f64 negative are unchanged. Source-only candidate;
 new and existing tests remain UNRUN.
+
+The metadata-only case uses the actual lower TextChecker that owns primitive
+reference syntax, without requiring Host program effect state. Keep all six
+cases, source/pointee/portable controls and caps. Initial Main receiving results
+were five of six passing in Node; the context-setup failure is retained, and
+this test-only correction remains UNRUN.
