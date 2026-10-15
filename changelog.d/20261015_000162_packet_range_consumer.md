@@ -1,0 +1,2 @@
+### Added
+- Draft a separate bounded range-index consumer for exact opaque originals backed directly by authenticated packet archives. Reuse the unchanged fresh-file range helper, keep ordinary archive/CI readers intact, and retain full source/index/recovery identities. Add source-only Python and Node controls for both logical originals, full Git/hash joins, malformed metadata, path replacement, fresh outputs and bounded process cleanup. Tests, alias adoption, historical member recovery, CI continuity and final fit remain unverified; no case files or originals are changed.

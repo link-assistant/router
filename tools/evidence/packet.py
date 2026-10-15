@@ -104,7 +104,7 @@ class PacketStore:
         if result.returncode:raise ValueError('Missing or invalid immutable Git packet witness')
         return result.stdout
 
-    def verified_archive(self,name):
+    def verified_archive(self,name,*,_range_stage=False):
         """Stage only compressed bytes; no expanded report or TAR member files."""
         import tempfile
         relative(name)
@@ -115,28 +115,143 @@ class PacketStore:
         entry=self.git('ls-tree',commit,'--',path).decode().strip().split('\t')
         if len(entry)!=2 or entry[1]!=path or entry[0] not in ['100644 blob '+blob,'100755 blob '+blob]:raise ValueError('Packet blob/mode mismatch')
         if self.git('cat-file','-t',blob).decode().strip()!='blob' or int(self.git('cat-file','-s',blob))!=length:raise ValueError('Packet blob type/length mismatch')
-        target=tempfile.SpooledTemporaryFile(max_size=1024*1024,mode='w+b');process=None
+        if _range_stage:
+            directory=canonical(tempfile.gettempdir())
+            if not directory.is_dir() or any(p.is_symlink() for p in [directory,*directory.parents]):raise ValueError('Linked packet range staging directory')
+            target=tempfile.NamedTemporaryFile(prefix='complete-packet-range-',dir=directory,mode='w+b')
+        else:target=tempfile.SpooledTemporaryFile(max_size=1024*1024,mode='w+b')
+        process=None
         try:
-            process=subprocess.Popen(['git','cat-file','blob',blob],cwd=self.repository,env=self.environment(),stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+            options={'start_new_session':True} if _range_stage else {}
+            process=subprocess.Popen(['git','cat-file','blob',blob],cwd=self.repository,env=self.environment(),stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,**options)
             total=0;actual=hashlib.sha256()
-            while chunk:=process.stdout.read(1024*1024):
-                self.check();total+=len(chunk)
-                if total>length:raise ValueError('Packet Git bytes exceed declaration')
-                actual.update(chunk);target.write(chunk)
-            if process.wait(timeout=min(30,max(1,self.deadline-time.monotonic())))!=0 or total!=length or actual.hexdigest()!=expected:raise ValueError('Packet complete Git byte/hash mismatch')
+            if _range_stage:
+                import select
+                descriptor=process.stdout.fileno();os.set_blocking(descriptor,False)
+                while True:
+                    self.check();ready,_,_=select.select([descriptor],[],[],min(1,max(0,self.deadline-time.monotonic())))
+                    if not ready:continue
+                    try:chunk=os.read(descriptor,1024*1024)
+                    except BlockingIOError:continue
+                    if not chunk:break
+                    total+=len(chunk)
+                    if total>length:raise ValueError('Packet Git bytes exceed declaration')
+                    actual.update(chunk);target.write(chunk)
+                self.check();wait_seconds=min(30,max(.001,self.deadline-time.monotonic()))
+            else:
+                while chunk:=process.stdout.read(1024*1024):
+                    self.check();total+=len(chunk)
+                    if total>length:raise ValueError('Packet Git bytes exceed declaration')
+                    actual.update(chunk);target.write(chunk)
+                wait_seconds=min(30,max(1,self.deadline-time.monotonic()))
+            if _range_stage:
+                try:status=process.wait(timeout=wait_seconds)
+                except subprocess.TimeoutExpired as error:raise TimeoutError('Packet Git stage deadline exceeded')from error
+            else:status=process.wait(timeout=wait_seconds)
+            if status!=0 or total!=length or actual.hexdigest()!=expected:raise ValueError('Packet complete Git byte/hash mismatch')
             physical=self.root/name
-            if plain(physical,missing=True) is not None:
+            if _range_stage:self._range_physical(physical,length,expected)
+            elif plain(physical,missing=True) is not None:
                 actual=hashlib.sha256();total=0
                 with physical.open('rb') as stream:
                     while chunk:=stream.read(1024*1024):self.check();total+=len(chunk);actual.update(chunk)
                 if total!=length or actual.hexdigest()!=expected:raise ValueError('Physical packet differs from immutable Git')
             target.seek(0);return target
         except BaseException:
-            target.close()
-            if process and process.poll() is None:process.kill();process.wait()
+            if _range_stage:
+                import signal
+                try:target.close()
+                finally:
+                    if process:
+                        try:os.killpg(process.pid,signal.SIGKILL)
+                        except ProcessLookupError:pass
+                        process.wait(timeout=5)
+            else:
+                target.close()
+                if process and process.poll() is None:process.kill();process.wait()
             raise
         finally:
             if process and process.stdout:process.stdout.close()
+
+    def _range_physical(self,path,length,expected):
+        """New-range-only optional full original check; never follow links."""
+        from archive_range import _parent,_identity,_named_identity
+        state=plain(path,missing=True)
+        if state is None:return False
+        if state.st_size!=length:raise ValueError('Physical packet range/archive length mismatch')
+        parent=descriptor=None
+        try:
+            parent=_parent(path);descriptor=os.open(path.name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=parent)
+            before=_identity(descriptor)
+            if _named_identity(path)!=before or before['st_size']!=length:raise ValueError('Physical packet range/archive identity mismatch')
+            actual=hashlib.sha256();count=0
+            while chunk:=os.read(descriptor,1024*1024):
+                self.check();count+=len(chunk)
+                if count>length:raise ValueError('Physical packet range/archive exceeds declaration')
+                actual.update(chunk)
+            if count!=length or actual.hexdigest()!=expected:raise ValueError('Physical packet range/archive differs from original witness')
+            if _identity(descriptor)!=before or _named_identity(path)!=before:raise ValueError('Physical packet range/archive changed during verification')
+        finally:
+            if descriptor is not None:os.close(descriptor)
+            if parent is not None:os.close(parent)
+        return True
+
+    def recover_range_object(self,name,output,*,range_index='packet-range-index.json'):
+        """Recover opaque complete original bytes, never treat a range as TAR.
+
+        This separate index grants no archive/Git witness authority. All targets
+        must be direct entries in the existing ordinary archive index.
+        """
+        from archive_range import recover_archive_range,_parent,_identity,_named_identity
+        def range_name(value):
+            value=relative(value)
+            if any(ord(c)<32 or ord(c)==127 for c in value):raise ValueError('Invalid packet range path')
+            return value
+        def constant(value):raise ValueError('Nonfinite packet range JSON value')
+        self.check();name=range_name(name);path=self.root/range_name(range_index);parent=descriptor=None
+        try:
+            parent=_parent(path);descriptor=os.open(path.name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=parent);before=_identity(descriptor)
+            if before['st_size']>4*1024*1024:raise ValueError('Packet range index too large')
+            if _named_identity(path)!=before:raise ValueError('Packet range index identity mismatch')
+            chunks=[];count=0
+            while chunk:=os.read(descriptor,65536):
+                self.check();count+=len(chunk)
+                if count>4*1024*1024:raise ValueError('Packet range index too large')
+                chunks.append(chunk)
+            if _identity(descriptor)!=before or _named_identity(path)!=before:raise ValueError('Packet range index changed during read')
+            raw=b''.join(chunks)
+        finally:
+            if descriptor is not None:os.close(descriptor)
+            if parent is not None:os.close(parent)
+        data=json.loads(raw,object_pairs_hook=pairs,parse_constant=constant)
+        if not isinstance(data,dict) or set(data)!={'schema','ranges'} or data['schema']!='complete-packet-range-index-v1' or not isinstance(data['ranges'],dict) or not 1<=len(data['ranges'])<=8192:raise ValueError('Malformed packet range index')
+        ranges={};total=0
+        for logical,row in data['ranges'].items():
+            self.check()
+            range_name(logical)
+            if not isinstance(row,dict) or set(row)!={'archive','offset','bytes','sha256'}:raise ValueError('Malformed packet range witness')
+            archive=range_name(row['archive'])
+            if archive not in self.archives:raise ValueError('Range requires a direct declared complete archive')
+            offset=size(row['offset'],MAX_ARCHIVE);length=size(row['bytes'],MAX_MEMBER);digest(row['sha256'])
+            if offset>self.archives[archive][0] or length>self.archives[archive][0]-offset:raise ValueError('Packet range exceeds complete archive')
+            total+=length
+            if total>MAX_TOTAL:raise ValueError('Packet range original byte bound exceeded')
+            ranges[logical]=(archive,offset,length,row['sha256'])
+        if name not in ranges:raise ValueError('Missing declared packet range object')
+        archive,offset,length,expected=ranges[name]
+        self.check()
+        # A present original is corroboration, never a fallback for bad Git or
+        # archive bytes. Fresh range recovery still runs through the full source.
+        present=self._range_physical(self.root/name,length,expected)
+        # Named staging is new-range-only. It replaces the usual compressed
+        # spool, so Git recovery never creates a second full archive copy.
+        with self.verified_archive(archive,_range_stage=True) as source:
+            source.flush();self.check();remaining=int(self.deadline-time.monotonic())
+            if remaining<1:raise TimeoutError('Insufficient packet range deadline')
+            result=recover_archive_range(source.name,canonical(output),archive_bytes=self.archives[archive][0],archive_sha256=self.archives[archive][1],offset=offset,length=length,range_sha256=expected,cap_seconds=remaining)
+        self.check()
+        archive_bytes,archive_sha256,(commit,git_path,blob)=self.archives[archive]
+        return {'schema':'complete-packet-range-recovery-v1','logicalObject':name,'completeOriginalBytes':length,'originalSha256':expected,'sourceArchive':archive,'archiveWitness':{'bytes':archive_bytes,'sha256':archive_sha256,'git':{'commit':commit,'path':git_path,'blob':blob}},'rangeIndex':{'path':range_index,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()},'physicalOriginalPresentAndVerified':present,'rangeRecovery':result,'archiveDecoded':False,'runtimeParity':False,'semanticAuthority':False}
 
     def verify_members(self,name,members):
         if not isinstance(members,list) or not 1<=len(members)<=8192:raise ValueError('Invalid complete packet member inventory')
@@ -170,7 +285,15 @@ class PacketStore:
         if set(seen)!=set(expected):raise ValueError('Missing complete packet member')
         return {'archive':name,'completeMembers':len(seen),'completeOriginalBytes':decoded,'allDecodedOriginalsVerified':True,'runtimeParity':False,'semanticAuthority':False}
 
+def range_main():
+    parser=argparse.ArgumentParser(description='Recover a complete opaque original from a fully authenticated packet archive range')
+    parser.add_argument('--case-root',required=True);parser.add_argument('--repository-root',required=True);parser.add_argument('--index',default='packet-git-index.json');parser.add_argument('--range-index',default='packet-range-index.json');parser.add_argument('--logical-object',required=True);parser.add_argument('--copy-to',required=True);parser.add_argument('--cap-seconds',type=int,default=120)
+    args=parser.parse_args();store=PacketStore(args.case_root,args.repository_root,args.index,args.cap_seconds)
+    print(json.dumps(store.recover_range_object(args.logical_object,args.copy_to,range_index=args.range_index)))
+
 def main():
+    import sys
+    if any(arg=='--logical-object' or arg.startswith('--logical-object=') for arg in sys.argv[1:]):return range_main()
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--case-root',required=True);parser.add_argument('--repository-root',required=True);parser.add_argument('--index',default='packet-git-index.json');parser.add_argument('--packet',required=True);parser.add_argument('--members-receipt',required=True);parser.add_argument('--cap-seconds',type=int,default=120);parser.add_argument('--copy-to')
     args=parser.parse_args();path=Path(args.members_receipt);plain(path)
     if path.stat().st_size>16*1024*1024:raise ValueError('Packet receipt too large')

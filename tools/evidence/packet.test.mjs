@@ -10,3 +10,10 @@ test('complete packet CLI exposes bounded recovery and refuses undeclared invoca
  const help=spawnSync('python3',['tools/evidence/packet.py','--help'],{cwd:root,encoding:'utf8',timeout:3000});assert.equal(help.status,0);assert.match(help.stdout,/--members-receipt/);
  const invalid=spawnSync('python3',['tools/evidence/packet.py'],{cwd:root,encoding:'utf8',timeout:3000});assert.notEqual(invalid.status,0);assert.match(invalid.stderr,/required/);
 });
+test('opaque range recovery retains all nine unchanged fresh-file guards',{timeout:60000},()=>{
+ const result=spawnSync('python3',['tools/evidence/test_archive_range.py'],{cwd:root,encoding:'utf8',timeout:45000,maxBuffer:4*1024*1024});assert.equal(result.status,0,result.stdout+result.stderr);assert.match(result.stderr,/Ran 9 tests/);assert.match(result.stderr,/OK/);
+});
+test('separate opaque range CLI requires explicit logical identity and fresh output',{timeout:5000},()=>{
+ const help=spawnSync('python3',['tools/evidence/packet.py','--logical-object','example','--help'],{cwd:root,encoding:'utf8',timeout:3000});assert.equal(help.status,0);assert.match(help.stdout,/--range-index/);assert.match(help.stdout,/--copy-to/);
+ const invalid=spawnSync('python3',['tools/evidence/packet.py','--logical-object','example'],{cwd:root,encoding:'utf8',timeout:3000});assert.notEqual(invalid.status,0);assert.match(invalid.stderr,/required/);
+});

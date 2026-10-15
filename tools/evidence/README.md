@@ -62,3 +62,81 @@ verify all existing consumer and CI measurements, and calculate physical
 allocation under the fixed case cap. Only the archive owner installs that
 reviewed migration between frozen verification jobs. Hash-only claims do not
 replace a complete source variant, raw log or original compressed container.
+
+## Complete opaque originals stored as archive byte ranges
+
+The additive `complete-packet-range-index-v1` reader handles an original that is
+an exact byte range of a declared complete compressed archive. It never interprets
+that range as TAR. In particular, an incomplete failed archive can remain a complete
+retained **failed artifact** without becoming a valid packet or member inventory.
+The ordinary archive-v1 reader and the CI container reader retain their existing
+formats and checks.
+
+A separate case-relative index has exactly `schema` and `ranges`. Each canonical
+logical name maps to exactly `archive`, `offset`, `bytes` and `sha256`. `archive`
+must directly name an entry in the existing ordinary packet Git index. A range
+cannot supply a Git witness, point at another range or add an alias chain. For
+example, both a failed original and its independently recovered copy may have
+distinct names and the same full offset/length/hash identity. Populate these
+fields only from the complete original ledger and retained recovery records.
+
+```json
+{
+  "schema": "complete-packet-range-index-v1",
+  "ranges": {
+    "failed/original-v1.tar.xz": {
+      "archive": "raw/complete-part-1.tar.xz",
+      "offset": 0,
+      "bytes": 25372817,
+      "sha256": "<complete-original SHA256>"
+    },
+    "recovered/original-v1.tar.xz": {
+      "archive": "raw/complete-part-1.tar.xz",
+      "offset": 0,
+      "bytes": 25372817,
+      "sha256": "<same complete-original SHA256>"
+    }
+  }
+}
+```
+
+Use `PacketStore(...).recover_range_object(logical_name, fresh_output,
+range_index='packet-range-index.json')`, or the separate CLI mode:
+
+```sh
+python3 tools/evidence/packet.py \
+  --case-root docs/case-studies/issue-759 --repository-root . \
+  --logical-object failed/original-v1.tar.xz \
+  --range-index packet-range-index.json --copy-to /private/tmp/fresh-v1.tar.xz
+```
+
+The reader authenticates the complete reachable Git archive and any physical
+archive using the original reader. The new path stages one private named compressed
+file instead of a second spool. The unchanged `archive_range.py` helper then
+authenticates the full archive again and checks the slice's complete SHA256 while
+writing only a fresh regular output through unlinked directory descriptors. A
+present physical logical original must independently match its declared full
+length/hash; it never bypasses a missing or bad archive witness. Both logical names
+get independent full recovery receipts, including the range-index byte identity,
+archive/Git witness and complete helper receipt. Private staging is closed and
+removed on completion; failed fresh recovery output is retained without success.
+
+The range index is at most 4 MiB, with at most 8,192 rows and 1 GiB of declared
+originals. A source archive is at most 256 MiB and each slice at most 128 MiB.
+Duplicate JSON keys, nonfinite numbers, bool sizes, unknown fields, links, escaped
+names, nonregular indices, changed paths and out-of-bounds ranges refuse. The
+existing shared finite deadline covers index reads, Git staging and the helper;
+the helper receives only whole remaining seconds and refuses when none remain.
+New staging uses a nonblocking deadline-aware pipe and kills/reaps its process
+group on failure, with a bounded five-second cleanup wait. No working deadline,
+member limit or packet admission rule is raised.
+
+This source extension does not adopt the two issue-759 V1 aliases or remove any
+original. Before adoption, retain the complete joined 153 recovery records and
+direct byte comparison, join both rows to the original full ledger, reopen all
+4,853 historical and 1,971 reused packet members, verify physical-present/absent
+reader behavior, repeat every CI/integrity/measurement continuity check and measure
+the final physical allocation under the unchanged 500,000,000-byte case cap.
+Preserve original V1, full V2 and fresh recovered files until those controls and
+the reviewed installation succeed. Storage receipts grant no semantic or Rust
+authority. New Python and Node controls are source-drafted and remain unrun.
