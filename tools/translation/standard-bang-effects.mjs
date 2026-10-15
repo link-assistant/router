@@ -23,8 +23,9 @@ function sameData(left,right,depth=0,budget={cells:200000}){
  if(right===null||typeof right!=='object')return left===right?(left!==0||1/left===1/right):(left!==left&&right!==right);
  if(!left||typeof left!=='object'||types.isProxy(left)||Array.isArray(left)!==Array.isArray(right))return false;
  const parent=Object.getPrototypeOf(left);if(parent!==null&&parent!==Object.prototype&&parent!==Array.prototype)return false;
- const keys=Reflect.ownKeys(left),expected=Reflect.ownKeys(right);if(keys.length!==expected.length)return false;
- for(let at=0;at<keys.length;at++){if(keys[at]!==expected[at])return false;const a=Object.getOwnPropertyDescriptor(left,keys[at]),b=Object.getOwnPropertyDescriptor(right,keys[at]);if(!a||!Object.hasOwn(a,'value')||!Object.hasOwn(b,'value')||a.enumerable!==b.enumerable||!sameData(a.value,b.value,depth+1,budget))return false;}return true;
+ const keys=Reflect.ownKeys(left),expected=Reflect.ownKeys(right);if(keys.length!==expected.length||Array.isArray(right)&&keys.some((key,at)=>key!==expected[at]))return false;
+ // The genuine issuer copyMetadata sorts object keys; array positions remain exact.
+ for(const key of expected){if(!Object.hasOwn(left,key))return false;const a=Object.getOwnPropertyDescriptor(left,key),b=Object.getOwnPropertyDescriptor(right,key);if(!a||!Object.hasOwn(a,'value')||!Object.hasOwn(b,'value')||a.enumerable!==b.enumerable||!sameData(a.value,b.value,depth+1,budget))return false;}return true;
 }
 function sourceOptions(value){const source=value.source;const names=['module','item','memberIndex'];if(!source||typeof source!=='object'||types.isProxy(source)||Reflect.ownKeys(source).length!==names.length||names.some(key=>!Object.hasOwn(source,key)))fail('exact original function options required');return {module:own(source,'module'),item:own(source,'item'),memberIndex:own(source,'memberIndex')};}
 function joined(input){
