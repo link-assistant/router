@@ -7,6 +7,7 @@ import {writeFileSync,mkdirSync,openSync,closeSync,readSync,fstatSync,constants}
 import {join} from 'node:path';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
+import {withIndexedReferenceProof} from './report-reference-file-cursor.mjs';
 const WIRE_BYTES=8*1024*1024,ENVELOPE_BYTES=64*1024*1024,WINDOW_BYTES=64*1024;
 export function packReport(root){
  const strings=[],stringIds=new Map(),nodes=[],objects=[],ids=new Map();
@@ -115,19 +116,8 @@ export function compareReferenceProofFiles(expected,actual){
  }finally{closeSync(left);if(right!==undefined)closeSync(right);}
 }
 
-// Only one compact envelope is parsed. The cursor follows IDs for assertions;
-// it never rebuilds proof objects or a second envelope in the parent process.
-export function withReferenceProof(record,callback,{canonicalJson=false}={}){
- const fd=openSync(record.envelopePath,constants.O_RDONLY|(constants.O_NOFOLLOW??0));let report;
- try{
-  const before=fstatSync(fd);if(!before.isFile()||before.size>ENVELOPE_BYTES||before.size!==record.envelopeBytes||record.envelopeIdentity&&!sameIdentity(record.envelopeIdentity,before))throw Error('reference report read bound/type/identity');const buffer=Buffer.allocUnsafe(before.size);let at=0;while(at<buffer.length){const count=readSync(fd,buffer,at,buffer.length-at,at);if(count===0)throw Error('reference report truncated during parse');at+=count;}const after=fstatSync(fd);if(!sameIdentity(before,after))throw Error('reference report changed during parse');report=JSON.parse(buffer.toString('utf8'));
- }finally{closeSync(fd);}
- assert.equal(report.schema,'validated-reference-proof-report-v1');
- const {strings,nodes,root}=validateReportEnvelope(report.report);
- assert.equal(report.checks.envelopeByteEqual,true);assert.equal(report.checks.dataEqual,true);
- assert.equal(report.checks.roundtrip.representation,'exact-byte-reference');assert.equal(report.checks.roundtrip.target,'report');assert.equal(report.alternative,null);
- if(canonicalJson)assert.equal(report.checks.canonicalJsonByteEqual,true);
- const find=path=>{let ref=root;for(const key of path){if(ref[0]!==5)return [1];const field=nodes[ref[1]][2].find(field=>strings[field[0]]===String(key));if(!field)return [1];ref=field[2];}return ref;};
- const scalar=ref=>{switch(ref[0]){case 0:return null;case 1:return undefined;case 2:return ref[1];case 3:return ref[1]==='NaN'?NaN:ref[1]==='+Infinity'?Infinity:ref[1]==='-Infinity'?-Infinity:ref[1]==='-0'?-0:ref[1];case 4:return strings[ref[1]];case 6:return BigInt(strings[ref[1]]);default:throw Error('reference cursor expected a scalar');}};
- callback({read:(...path)=>scalar(find(path)),has:(...path)=>{const ref=find(path);return ref[0]===5||!!scalar(ref);},arrayLength:(...path)=>{const ref=find(path);if(ref[0]!==5||nodes[ref[1]][0]!==2)throw Error('reference cursor expected an array');return scalar(find([...path,'length']));}});
+// Every byte and codec cell is validated through the bounded file index. All
+// child-side reconstruction and full byte-wise old/current comparison remain.
+export function withReferenceProof(record,callback,options){
+ return withIndexedReferenceProof(record,callback,options);
 }
