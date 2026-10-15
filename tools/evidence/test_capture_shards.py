@@ -38,6 +38,7 @@ class CaptureBatchTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix='router-complete-capture-batch-')
         self.root = Path(self.temp.name).resolve()
         self.next = 0
+        self.default_source = None
 
     def tearDown(self):
         self.temp.cleanup()
@@ -46,7 +47,11 @@ class CaptureBatchTests(unittest.TestCase):
         self.next += 1
         return self.root / (name + '-' + str(self.next))
 
-    def source(self, root=ROOT):
+    def source(self, root=None):
+        if root is None:
+            if self.default_source is None:
+                self.default_source = self.fixture_git()
+            root = self.default_source
         return {'root': str(root), 'head': git(root, 'rev-parse', 'HEAD'),
                 'code': {name: {key: pin(root / 'tools/evidence' / name)[key] for key in ('bytes', 'sha256')} for name in driver.CODE}}
 
@@ -310,6 +315,7 @@ class CaptureBatchTests(unittest.TestCase):
         def link_at_final_ledger(path, value, check):
             written = actual_fresh(path, value, check)
             if path.name == 'terminal.json' and path.parent.name.startswith('run-'):
+                stored.parent.mkdir(parents=True, exist_ok=True)
                 stored.symlink_to(self.root / 'missing-target')
             return written
         with patch.object(driver, '_fresh', side_effect=link_at_final_ledger):
