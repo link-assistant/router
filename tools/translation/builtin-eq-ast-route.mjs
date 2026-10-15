@@ -1,6 +1,7 @@
 // Source-selected Eq callback bridge. These are original construction recipes
 // and typed source leaves; no generated implementation bodies are synthesized.
 import {createHash} from 'node:crypto';
+import {builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';
 import {originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant} from './builtin-derive-ast-meta.mjs';
 const generic='compiler/rustc_builtin_macros/src/deriving/generic/mod.rs';
@@ -15,17 +16,20 @@ function field(recipe,name,expected){
 function contains(fragment,...needles){const text=astFragmentText(fragment);for(const needle of needles)if(!text.includes(needle))throw new TypeError('Original Eq AST recipe flow changed: '+fragment.source+' '+needle);}
 function sourceLeaves(original,certificate,input){
   if(!input||input.wholeSourceSha256!==certificate.sourceSha256||input.itemSha256!==certificate.itemSha256||input.name!==certificate.name||input.kind!==certificate.kind||JSON.stringify(input.span)!==JSON.stringify(certificate.span))throw new TypeError('Original Eq source syntax candidate differs from its private invocation');
+  const fresh=builtinPayloadDataInputs({source:original.module.source,span:certificate.span});
+  if(JSON.stringify(fresh)!==JSON.stringify(input))throw new TypeError('Original Eq complete source fields differ from its private invocation');
   let inventory=inventories.get(original.dependencies);if(!inventory){inventory=inventoryDeriveQuoteMeta(original.dependencies);inventories.set(original.dependencies,inventory);}
   const compiler=createQuoteFragmentCompiler(inventory);
-  const fields=(input.fields??[]).map(value=>{
+  const payload=input.style==='payload-enum',leaves=payload?input.variants.flatMap((variant,variantIndex)=>variant.fields.map((field,fieldIndex)=>({...field,variant:variant.name,variantIndex,fieldIndex,variantSpan:variant.span}))):input.fields;
+  const fields=leaves.map(value=>{
     const span=value.typeSpan;
     const typeSource=original.module.source.slice(span.start,span.end);
     const typed=compiler.roundTrip(compiler.sourceType(typeSource,{source:certificate.source,sourceSha256:certificate.sourceSha256,span,field:value.name,owner:'original Eq field Ty clone'}));
-    return {name:value.name,span,sourceSha256:hash(typeSource),syntaxSha256:hash(JSON.stringify(typed.syntax)),category:typed.provenance.category,syntax:typed.syntax,semanticSyntaxRoundTrip:typed.provenance.semanticRoundTrip===true};
+    return {name:value.name,span,sourceSha256:hash(typeSource),syntaxSha256:hash(JSON.stringify(typed.syntax)),category:typed.provenance.category,syntax:typed.syntax,semanticSyntaxRoundTrip:typed.provenance.semanticRoundTrip===true,...(payload?{variant:value.variant,variantIndex:value.variantIndex,fieldIndex:value.fieldIndex,variantSpan:value.variantSpan}: {})};
   });
   // The actual simple-name dedup branch may omit statements; both branches
   // preserve the same checked type-only statement kind, without enumeration.
-  return {inputStyle:input.style,fields,variants:input.variants,inputSyntaxDigest:input.digest,sourceAttributes:input.attributes,namespaceAuthority:false,assertionCount:{minimum:fields.length?1:0,maximum:fields.length},deduplication:'actual is_simple_path/seen_type_names branch; both preserve LocalKind::Decl'};
+  return {inputStyle:input.style,fields,variants:payload?input.variants.map((variant,index)=>({...variant,fields:fields.filter(field=>field.variantIndex===index)})):input.variants,inputSyntaxDigest:input.digest,sourceAttributes:input.attributes,namespaceAuthority:false,assertionCount:{minimum:fields.length?1:0,maximum:fields.length},deduplication:'actual is_simple_path/seen_type_names branch; both preserve LocalKind::Decl'};
 }
 export function liftBuiltinEqAstRoute({profile,original,certificate,entry,input}={}){
   const descriptor=astStructLiteral(profile,entry,'TraitDef'),method=astStructLiteral(profile,entry,'MethodDef');
@@ -38,7 +42,7 @@ export function liftBuiltinEqAstRoute({profile,original,certificate,entry,input}
   contains(entry,'trait_def.expand_ext(cx, mitem, item, push, true)','cs_total_eq_assert(a, b, c)','cx.with_def_site_ctxt(span)');
   const recipe=(path,name,selector=null)=>originalAstFunction(profile,path,name,selector);
   const callback=recipe('compiler/rustc_builtin_macros/src/deriving/cmp/eq.rs','cs_total_eq_assert');
-  contains(callback,'StaticStruct(vdata, ..)','StaticEnum(enum_def, ..)','process_variant(&variant.data)','field.ty.clone()','&[sym::cmp, sym::AssertParamIsEq]','BlockOrExpr::new_stmts(stmts)','!seen_type_names.insert(name)');
+  contains(callback,'StaticStruct(vdata, ..)','StaticEnum(enum_def, ..)','for variant in &enum_def.variants','for field in variant.fields()','let mut seen_type_names = FxHashSet::default()','process_variant(&variant.data)','field.ty.clone()','&[sym::cmp, sym::AssertParamIsEq]','BlockOrExpr::new_stmts(stmts)','!seen_type_names.insert(name)');
   const assertion=recipe('compiler/rustc_builtin_macros/src/deriving/mod.rs','assert_ty_bounds');
   contains(assertion,'cx.with_def_site_ctxt(span)','vec![GenericArg::Type(ty)]','stmts.push(cx.stmt_let_type_only(span, cx.ty_path(assert_path)))');
   const localBuilder=recipe(build,'stmt_let_type_only'),local=astStructLiteral(profile,localBuilder,'Local');
