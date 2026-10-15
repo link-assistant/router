@@ -10,4 +10,8 @@
   source, callback, state, identity, refusal and JS/strict TypeScript controls.
   Common-issuer initialization is explicit; fresh helper imports preserve
   observer tapes and exact original module URLs retain source-profile assets.
-  All new cases are UNRUN; no executable or performance gain is claimed.
+  Initial receiving passed seven of eight cases in both engines; the complete
+  cold-freeze report exceeded its unchanged 8 MiB child transport bound. Retain
+  that failure and losslessly transport entire reports as gzip after restoring
+  observers, with the same child cap and bounded complete logical decoding.
+  This test-only successor is UNRUN; no full qualification or gain is claimed.
