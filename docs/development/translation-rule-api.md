@@ -69,7 +69,19 @@ seven of eight groups passed in both engines, including strict TypeScript. The
 remaining group reproduced mutable aliases in the original generated
 `DeploySection`, `Run` and `Area` constructors. The separate boundary repair
 passes its complete nine-case focused group in both engines; regenerated
-original-project outputs and the complete integrated gate remain required.
+original-project outputs and the complete integrated gate were still required
+at that checkpoint.
+
+After full canonical and three-profile regeneration, the complete 15-file
+receiving group passed 140/140 cases under both Node and Bun on `a49f625b2`.
+It includes all eight original-body groups against current generated artifacts,
+the constructor boundary tests and strict TypeScript 5.9.3 execution. All 806
+original inputs were physically present and unchanged. Each engine retained
+100 complete vectors: 39 files are byte-identical, 58 gzip files have identical
+complete decoded bytes, and three frontend vectors differ only in the child
+runtime's declared version. Both original compressed streams remain retained.
+The earlier constructor failure remains a separate historical result. These
+receiving passes do not establish the complete gate or full runtime parity.
 
 The 151 paired prehook comparison covers complete **method-free** project
 inputs, including functions, constants, data, refusals, source scopes, callback
