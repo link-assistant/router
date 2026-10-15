@@ -18,8 +18,10 @@ const ENTRY_BYTES=4194304,TOTAL_BYTES=8388608,ENTRIES=16,CELLS=200000,DEPTH=160;
 let retainedBytes=0,entries=0,hits=0,misses=0,captures=0,evictions=0;
 // Eligibility only: weak keys never retain an original owner. Rotation bounds
 // the number of positive scalar records without keeping a strong key list.
-const SUBTREES=4096;
-let subtrees=qualified?new weakConstructor():null,subtreeEntries=0,subtreeHits=0,subtreeMisses=0,subtreeCaptures=0,subtreeRotations=0,subtreeBudgetRefusals=0;
+// Completed roots have an independent partition, so a large AST walk cannot
+// evict every previously validated comparison operand with tiny descendants.
+const SUBTREES=2048,OWNERS=2048;
+let owners=qualified?new weakConstructor():null,ownerEntries=0,subtrees=qualified?new weakConstructor():null,subtreeEntries=0,subtreeHits=0,subtreeMisses=0,subtreeCaptures=0,subtreeRotations=0,subtreeBudgetRefusals=0;
 function intrinsics(){
  if(!qualified||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalLexingIntrinsicsUnchanged())return false;
  const actual=descriptor(Object,'isFrozen');return !!actual&&own(actual,'value')&&actual.value===frozenField.value&&actual.writable===frozenField.writable&&actual.enumerable===frozenField.enumerable&&actual.configurable===frozenField.configurable;
@@ -30,14 +32,21 @@ function immutableJson(value){
  while(stack){const frame=stack;stack=frame.next;const value=frame.value;
   if(frame.exit){
    apply(setDelete,active,[value]);
-   if(subtreeEntries>=SUBTREES){subtrees=new weakConstructor();subtreeEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
-   apply(weakSet,subtrees,[value,{cells:frame.total.cells,height:frame.total.height}]);subtreeEntries++;if(subtreeCaptures<9007199254740991)subtreeCaptures++;
+   const record={cells:frame.total.cells,height:frame.total.height};
+   if(frame.parent===null){
+    if(ownerEntries>=OWNERS){owners=new weakConstructor();ownerEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
+    apply(weakSet,owners,[value,record]);ownerEntries++;
+   }else{
+    if(subtreeEntries>=SUBTREES){subtrees=new weakConstructor();subtreeEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
+    apply(weakSet,subtrees,[value,record]);subtreeEntries++;
+   }
+   if(subtreeCaptures<9007199254740991)subtreeCaptures++;
    charge(frame.parent,frame.total.cells,frame.total.height);continue;
   }
   if(--cells<0||frame.depth>DEPTH)return false;
   if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean'){charge(frame.parent,1,0);continue;}
   if(typeof value!=='object'||isProxy(value)||apply(setHas,active,[value]))return false;
-  const saved=apply(weakGet,subtrees,[value]);
+  const saved=apply(weakGet,owners,[value])||apply(weakGet,subtrees,[value]);
   if(saved){if(saved.cells-1>cells||saved.height>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=saved.cells-1;charge(frame.parent,saved.cells,saved.height);if(subtreeHits<9007199254740991)subtreeHits++;continue;}
   if(subtreeMisses<9007199254740991)subtreeMisses++;
   if(!apply(frozenField.value,Object,[value]))return false;
@@ -68,4 +77,4 @@ export function createPrivateFrozenJsonCache(){
  };
 }
 // Bounded scalar diagnostics only; mutating this returned copy grants nothing.
-export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH},eligibilityMemo:{entries:subtreeEntries,maximumEntries:SUBTREES,hits:subtreeHits,misses:subtreeMisses,captures:subtreeCaptures,rotations:subtreeRotations,budgetRefusals:subtreeBudgetRefusals}};}
+export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH},eligibilityMemo:{entries:ownerEntries+subtreeEntries,maximumEntries:OWNERS+SUBTREES,owners:{entries:ownerEntries,maximumEntries:OWNERS},subtrees:{entries:subtreeEntries,maximumEntries:SUBTREES},hits:subtreeHits,misses:subtreeMisses,captures:subtreeCaptures,rotations:subtreeRotations,budgetRefusals:subtreeBudgetRefusals}};}
