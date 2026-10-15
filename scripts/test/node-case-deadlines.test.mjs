@@ -95,3 +95,23 @@ test('actual complete positive cohort preserves duplicate names nested cases def
  const f=fixture("import test from 'node:test';const LIMIT=2000;const options={timeout:LIMIT};test('same',options,()=>{});test('same',{timeout:LIMIT},async context=>{await context.test('nested',{timeout:LIMIT},()=>{});});test('default whole case',()=>{});const cases=[{name:'dynamic template whole case'}];for(const fixture of cases)test(`${fixture.name}`,()=>{});for(const label of ['left'])test(label+' binary right',()=>{});for(const label of ['right'])test('binary left '+label,()=>{});const suffix=' recursive';test(('nested '+unknownLabel())+suffix,()=>{});function unknownLabel(){return 'binary';}\n");
  try{const {result,terminal,audit,output}=runWhole(f);assert.equal(result.status,0,result.stdout+result.stderr);assert.equal(terminal.exitCode,0);assert.equal(audit.passed,true);assert.equal(audit.allEventsForwardedToBuiltinTap,true);assert.equal(audit.records.filter(row=>row.name==='same').length,2);assert.equal(audit.records.find(row=>row.name==='nested').deadline.milliseconds,2000);assert.equal(audit.records.find(row=>row.name==='default whole case').deadline.kind,'default-no-source-deadline');for(const name of ['dynamic template whole case','left binary right','binary left right','nested binary recursive'])assert.equal(audit.records.find(row=>row.name===name).deadline.kind,'default-no-source-deadline',name);assert.equal(audit.records.length,8);assert.equal(fs.readFileSync(path.join(output,'stdout.raw.tap'),'utf8'),result.stdout);}finally{f.dispose();}
 });
+
+
+test('actual ignored-stdio descendant survives TERM only until awaited owned-group escalation',{timeout:60000},()=>{
+ assert.notEqual(process.platform,'win32','This actual process-group qualification requires Unix');
+ const f=fixture(''),marker=path.join(f.directory,'descendant.json'),signals=path.join(f.directory,'signals.raw.log');
+ const descendant="const fs=require('node:fs');process.on('SIGTERM',()=>fs.appendFileSync(process.argv[2],'SIGTERM\\n'));const temporary=process.argv[1]+'.ready.tmp';fs.writeFileSync(temporary,JSON.stringify({pid:process.pid,ppid:process.ppid,execPath:process.execPath,versions:process.versions,argv:process.argv}),{flag:'wx'});fs.renameSync(temporary,process.argv[1]);setInterval(()=>{},1000);";
+ const source="import test from 'node:test';import {spawn} from 'node:child_process';import fs from 'node:fs';test('owned ignored-stdio descendant',{timeout:5000},async()=>{const child=spawn(process.execPath,['-e',"+JSON.stringify(descendant)+","+JSON.stringify(marker)+","+JSON.stringify(signals)+"],{stdio:'ignore'});child.unref();const until=Date.now()+3000;while(!fs.existsSync("+JSON.stringify(marker)+")){if(Date.now()>until)throw Error('Descendant did not publish identity');await new Promise(resolve=>setTimeout(resolve,10));}});\n";
+ fs.writeFileSync(f.file,source);let identity=null,output=null;
+ const alive=pid=>{try{process.kill(pid,0);return true;}catch(error){if(error.code==='ESRCH')return false;throw error;}};
+ try{
+  const observed=runWhole(f);output=observed.output;const raw=fs.readFileSync(marker);identity=JSON.parse(raw);assert.ok(Number.isSafeInteger(identity.pid)&&identity.pid>0);assert.equal(identity.execPath,observed.terminal.command[0]);
+  fs.writeFileSync(path.join(output,'descendant-marker.raw.json'),raw,{flag:'wx'});const received=fs.readFileSync(signals);fs.writeFileSync(path.join(output,'descendant-signals.raw.log'),received,{flag:'wx'});
+  assert.equal(observed.result.status,0,observed.result.stdout+observed.result.stderr);assert.equal(observed.terminal.groupCleanup.supported,true);assert.equal(observed.terminal.groupCleanup.complete,true);assert.equal(observed.terminal.groupCleanup.error,null);assert.ok(observed.terminal.groupCleanup.signals.some(row=>row.signal==='SIGKILL'));assert.match(received.toString(),/SIGTERM/u);assert.equal(alive(identity.pid),false);assert.ok(observed.terminal.elapsedMs<=observed.terminal.outerTimeoutMs);
+ }finally{
+  if(identity===null&&fs.existsSync(marker))identity=JSON.parse(fs.readFileSync(marker,'utf8'));
+  let finallyKilled=false;if(identity&&Number.isSafeInteger(identity.pid)&&identity.pid>0&&alive(identity.pid)){process.kill(identity.pid,'SIGKILL');finallyKilled=true;}
+  if(output)fs.writeFileSync(path.join(output,'descendant-finally-cleanup.json'),JSON.stringify({identity,finallyKilled,source,descendant,markerRetained:fs.existsSync(path.join(output,'descendant-marker.raw.json'))})+'\n',{flag:'wx'});
+  f.dispose();
+ }
+});

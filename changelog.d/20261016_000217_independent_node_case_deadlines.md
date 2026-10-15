@@ -19,3 +19,7 @@
 - Bound source/control reads before allocation and reject concurrent growth or
   truncation after positional readback and a one-byte EOF probe. The additional
   growth-control source is also **UNRUN**.
+- Retain owned Unix group escalation after direct-child close; await group
+  disappearance within the unchanged outer budget before success. Add a ninth
+  complete ignored-stdio/SIGTERM-resistant descendant control with full identity,
+  signal tape and finally cleanup. This successor remains **UNRUN**.

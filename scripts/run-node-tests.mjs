@@ -43,8 +43,25 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
  const write=(name,value)=>fs.writeFileSync(path.join(outputDirectory,name),JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});
  write('command.json',{root,command,outerTimeoutMs,requestSha256:hash(raw),node:process.versions,codeSources,originalSources,typescriptOverride:process.env.ROUTER_TRANSLATION_TSC??null,caseLimitsChanged:false});
  const env={...process.env,ROUTER_NODE_DEADLINE_REQUEST:requestPath,ROUTER_NODE_DEADLINE_REQUEST_SHA256:hash(raw)};
- let child,killTimer,outerTimer,terminated=false,interrupted=null,outputError=null,launchError=null;
- const terminate=reason=>{interrupted??=reason;if(terminated)return;terminated=true;if(child?.pid){try{if(process.platform==='win32')child.kill('SIGTERM');else process.kill(-child.pid,'SIGTERM');}catch{}killTimer=setTimeout(()=>{try{if(process.platform==='win32')child.kill('SIGKILL');else process.kill(-child.pid,'SIGKILL');}catch{}},1000);killTimer.unref();}};
+ let child,killTimer,outerTimer,interrupted=null,outputError=null,launchError=null,shutdownStarted=null;
+ const groupCleanup={supported:process.platform!=='win32',group:null,signals:[],complete:false,error:null};
+ const signalOwned=signal=>{if(!child?.pid)return;try{if(process.platform==='win32')child.kill(signal);else process.kill(-child.pid,signal);groupCleanup.signals.push({signal,elapsedMs:performance.now()-started});}catch(error){if(error.code!=='ESRCH')groupCleanup.error??=error.stack??error.message;}};
+ const startShutdown=()=>{if(shutdownStarted!==null||!child?.pid)return;shutdownStarted=performance.now();groupCleanup.group=child.pid;signalOwned('SIGTERM');killTimer=setTimeout(()=>signalOwned('SIGKILL'),1000);killTimer.unref();};
+ const terminate=reason=>{interrupted??=reason;startShutdown();};
+ const ownedGroupAlive=()=>{try{process.kill(-child.pid,0);return true;}catch(error){if(error.code==='ESRCH')return false;throw error;}};
+ async function finishShutdown(){
+  if(!child?.pid){groupCleanup.complete=true;return;}
+  startShutdown();
+  if(process.platform==='win32')return; // Direct close is awaited; no Unix group claim.
+  const until=Math.min(started+outerTimeoutMs,shutdownStarted+2000);
+  try{
+   while(ownedGroupAlive()){
+    if(performance.now()>=until){signalOwned('SIGKILL');throw Error('Owned Node process group did not close within unchanged enclosing cleanup budget');}
+    await new Promise(resolve=>setTimeout(resolve,20));
+   }
+   groupCleanup.complete=true;
+  }catch(error){groupCleanup.error??=error.stack??error.message;signalOwned('SIGKILL');}
+ }
  const onInt=()=>terminate('SIGINT'),onTerm=()=>terminate('SIGTERM');process.on('SIGINT',onInt);process.on('SIGTERM',onTerm);
  async function retain(stream,name,destination){
   const filename=path.join(outputDirectory,name),fd=fs.openSync(filename,'wx+',0o600);let bytes=0,observedBytes=0,expected=null,readback=null,identity=null;const digest=createHash('sha256');
@@ -65,15 +82,15 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
  let exit={code:null,signal:null},logs=[];
  try{
   child=spawn(node,command.slice(1),{cwd:root,env,stdio:['ignore','pipe','pipe'],detached:process.platform!=='win32'});
-  child.once('exit',()=>{if(process.platform!=='win32')try{process.kill(-child.pid,'SIGTERM');killTimer=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch{}},1000);killTimer.unref();}catch{}});
+  child.once('exit',startShutdown);
   const closed=new Promise(resolve=>{child.once('error',error=>{launchError=error.stack??error.message;});child.once('close',(code,signal)=>resolve({code,signal}));});
   outerTimer=setTimeout(()=>terminate('unchanged enclosing deadline'),Math.max(1,outerTimeoutMs-(performance.now()-started)));outerTimer.unref();
   const pumps=[retain(child.stdout,'stdout.raw.tap',process.stdout),retain(child.stderr,'stderr.raw.log',process.stderr)];
   exit=await closed;logs=await Promise.all(pumps);
- }finally{clearTimeout(outerTimer);clearTimeout(killTimer);process.removeListener('SIGINT',onInt);process.removeListener('SIGTERM',onTerm);}
+ }finally{await finishShutdown();clearTimeout(outerTimer);clearTimeout(killTimer);process.removeListener('SIGINT',onInt);process.removeListener('SIGTERM',onTerm);}
  let audit=null,auditError=null,auditPin=null,receiptFact=null;
  const verify=()=>{
-  guardOutput();if(performance.now()-started>outerTimeoutMs)throw Error('Complete Node execution and final audit exceeded unchanged outer deadline');
+  guardOutput();if(groupCleanup.error||groupCleanup.supported&&!groupCleanup.complete)throw Error(groupCleanup.error??'Owned Node process group cleanup incomplete');if(performance.now()-started>outerTimeoutMs)throw Error('Complete Node execution and final audit exceeded unchanged outer deadline');
   if(JSON.stringify(readCaseSource(requestPath))!==JSON.stringify(requestFact))throw Error('Deadline request bytes/identity changed');
   for(const before of codeSources)if(JSON.stringify(readCaseSource(before.path))!==JSON.stringify(before))throw Error('Deadline runner/reporter source changed during complete run');
   let bytes=0;if(!Array.isArray(audit?.sourceRecords)||audit.sourceRecords.length>4096)throw Error('Complete bounded source records required');
@@ -88,7 +105,7 @@ export async function runAuditedNodeTests({root,files,flags=[],outputDirectory,o
   if(audit.requestSha256!==hash(raw)||audit.allEventsForwardedToBuiltinTap!==true||audit.passed!==true)throw Error('Independent complete source/deadline audit failed');
   verify();
  }catch(error){auditError=error.stack??error.message;}
- const result={schema:'complete-audited-node-test-run-v1',root,command,outputDirectory,exit,logs,audit:auditPin,auditSummary:audit?{passed:audit.passed,durationBreaches:audit.durationBreaches,errors:audit.errors}:null,auditError,launchError,outputError,interrupted,elapsedMs:performance.now()-started,outerTimeoutMs,childClosed:true,processGroupCleanupSupported:process.platform!=='win32',allCaseLimitsUnchanged:true,allSelectedWholeFiles:files,exitCode:exit.code===0&&!auditError&&!outputError&&!launchError&&!interrupted&&performance.now()-started<=outerTimeoutMs?0:1,runtimeParity:false,rustExecuted:false};
+ const result={schema:'complete-audited-node-test-run-v1',root,command,outputDirectory,exit,logs,audit:auditPin,auditSummary:audit?{passed:audit.passed,durationBreaches:audit.durationBreaches,errors:audit.errors}:null,auditError,launchError,outputError,interrupted,groupCleanup,elapsedMs:performance.now()-started,outerTimeoutMs,childClosed:true,processGroupCleanupSupported:process.platform!=='win32',allCaseLimitsUnchanged:true,allSelectedWholeFiles:files,exitCode:exit.code===0&&!auditError&&!outputError&&!launchError&&!interrupted&&!groupCleanup.error&&(!groupCleanup.supported||groupCleanup.complete)&&performance.now()-started<=outerTimeoutMs?0:1,runtimeParity:false,rustExecuted:false};
  write('terminal.json',result);
  if(result.exitCode===0)try{verify();}catch(error){result.exitCode=1;result.auditError='Final receipt boundary: '+(error.stack??error.message);write('finalization-refusal.json',result);}
  return result;

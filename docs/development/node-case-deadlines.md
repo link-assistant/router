@@ -63,7 +63,11 @@ Each invocation creates a fresh ignored directory under
 stdout TAP and stderr into exclusive raw files while forwarding them unchanged,
 then retains command, full source audit and terminal receipts. The signal and
 finite enclosing timer terminate the owned process group, escalate after one
-second and wait for the direct child's close. Windows does not claim Unix
+second and wait for the direct child's close. Direct close does not cancel
+the escalation while the owned Unix group is still present: its disappearance
+is polled within both a two-second shutdown bound and the unchanged enclosing
+deadline. Cleanup time counts against that deadline; incomplete cleanup fails
+and retains the signal/error observations. Windows does not claim Unix
 process-group cleanup. A 256 MiB per-stream observed stop threshold terminates
 the run on excessive output while retaining the full partial received before
 closure; it cannot produce success. The final source/audit receipt is bounded
@@ -80,7 +84,10 @@ its receiving fixture; no separate compiler version is introduced. Strict
 TypeScript selection and its existing override
 are unchanged and the override is recorded, not rewritten.
 
-All new source/audit, subprocess and structural controls are **UNRUN**. They
+All new source/audit, subprocess and structural controls are **UNRUN**.
+The ninth whole control retains an actual ignored-stdio descendant identity and
+SIGTERM tape, requires SIGKILL escalation and observed group disappearance, and
+provides finally cleanup for its own descendant. This control requires Unix. They
 include actual complete synchronous-overdue, normal nested/duplicate/default,
 large-output and original-failure cohorts, as well as exact-boundary and
 ambiguous/mutated source observations. Receiving qualification under both
