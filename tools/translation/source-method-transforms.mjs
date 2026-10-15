@@ -5,6 +5,7 @@ import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {originalMethodMember,originalMethodLowering} from './impl-resolver.mjs';
 import {originalMethodNamespaceOwner} from './matches-macro-context.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
+import {captureOriginalMethodValidation,originalMethodValidationDigest} from './source-method-validation.mjs';
 const transforms=new WeakMap(),tokensToTransforms=new WeakMap(),parserTokenCopies=new WeakMap();
 const canonical=path=>path[0]==='crate'?path.slice(1):path;
 const equal=(a,b)=>metadataDigest(a)===metadataDigest(b);
@@ -45,15 +46,17 @@ export function createOriginalMethodTokenTransform(context,method,lowered) {
     emit(token,[index],'original-token');
   }
   if(!equal(expected,lowered.tokens))throw new TypeError('Issued method tokens differ from the complete original generic self/Self transform');
-  const proof=freezeMacroTree({schema:'original-method-token-transform-v1',sourcePath:member.sourcePath,modulePath:member.modulePath,sourceViewDigest:member.sourceView.digest,sourceSha256:owner.sourceSha256,memberDigest:member.methodDigest,originalMemberSpan:method.span,originalBodySpan:method.bodySpan,originalImplementationSpan:member.implementationSpan,originalTokenDigest:metadataDigest(original),transformedTokenDigest:metadataDigest(lowered.tokens),owner,receiver,receiverMode:lowering.mode,copyCertificateDigest:lowering.copyCertificate?.digest??null,map,operations,originalTokenTransformVerified:true,parsedSourceAssociation:false,copyAuthority:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
-  transforms.set(proof,Object.freeze({context,method,member,lowered,original,source,proof,tokenDigest:metadataDigest(lowered.tokens)}));tokensToTransforms.set(lowered.tokens,proof);return proof;
+  let originalValidation;
+  const proof=freezeMacroTree({schema:'original-method-token-transform-v1',sourcePath:member.sourcePath,modulePath:member.modulePath,sourceViewDigest:member.sourceView.digest,sourceSha256:owner.sourceSha256,memberDigest:member.methodDigest,originalMemberSpan:method.span,originalBodySpan:method.bodySpan,originalImplementationSpan:member.implementationSpan,originalTokenDigest:(originalValidation=captureOriginalMethodValidation(original)).digest,transformedTokenDigest:metadataDigest(lowered.tokens),owner,receiver,receiverMode:lowering.mode,copyCertificateDigest:lowering.copyCertificate?.digest??null,map,operations,originalTokenTransformVerified:true,parsedSourceAssociation:false,copyAuthority:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
+  const validation=captureOriginalMethodValidation(lowered.tokens);
+  transforms.set(proof,Object.freeze({context,method,member,lowered,original,source,proof,tokenDigest:validation.digest,validation:validation.capture,originalValidation:originalValidation.capture}));tokensToTransforms.set(lowered.tokens,proof);return proof;
 }
 export const isOriginalMethodTokenTransform=proof=>!!proof&&transforms.has(proof);
 export function originalMethodTransformFacts(proof) {
   const state=transforms.get(proof);if(!state)throw new TypeError('Original method token transform is unsealed or copied');
   originalMethodLowering(state.lowered);originalMethodMember(state.method);
-  if(metadataDigest(state.lowered.tokens)!==state.tokenDigest)throw new TypeError('Original method transformed tokens changed');
-  if(metadataDigest(state.original)!==state.proof.originalTokenDigest)throw new TypeError('Original method tokenizer source tokens changed');
+  if(originalMethodValidationDigest(state.lowered.tokens,state.validation)!==state.tokenDigest)throw new TypeError('Original method transformed tokens changed');
+  if(originalMethodValidationDigest(state.original,state.originalValidation)!==state.proof.originalTokenDigest)throw new TypeError('Original method tokenizer source tokens changed');
   originalMethodNamespaceOwner(state.context,state.method);
   return state;
 }

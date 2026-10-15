@@ -1,4 +1,6 @@
 import {createHash} from 'node:crypto';
+import {types} from 'node:util';
+import {originalJsonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
@@ -21,6 +23,8 @@ export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const contexts=new WeakMap(),certificates=new WeakMap(),concatCallerSources=new WeakMap(),helperProofs=new WeakSet(),helperCertificates=new WeakMap();
+const originalContextMaps=new WeakMap(),fastHelperProofs=new WeakSet(),weakSetHas=WeakSet.prototype.has,weakSetAdd=WeakSet.prototype.add,mapPrototype=Map.prototype,mapEntries=Map.prototype.entries,mapNext=Object.getPrototypeOf(new Map().entries()).next,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,hasOwn=Object.hasOwn;
+function ownSelection(value,name){if(!value||typeof value!=='object'||types.isProxy(value))throw new TypeError('Original derive selection requires non-proxy own data');const field=descriptor(value,name);if(!field||!hasOwn(field,'value'))throw new TypeError('Original derive selection requires own data: '+name);return field.value;}
 const key=path=>path.join('::');
 const invocationId=(module,item)=>moduleScopeKey(module)+':'+item.start+':'+item.end;
 const standardOwner=(path,scope)=>path.length===1&&STANDARD_LAYOUT_DERIVES.has(path[0])&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.name===path[0]&&binding.macroKind!=='bang');
@@ -257,7 +261,8 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
       ...(Object.hasOwn(module,'sourceView')?{sourceView:module.sourceView}:{}),...(module.configurationCondition?{configurationCondition:module.configurationCondition}:{})};
   }));
   const originalExternal=new Map([...external].map(([path,table])=>[path,freeze(structuredClone(table))]));
-  contexts.set(context,{byId,external:originalExternal,dependencies,originalModules,helperScopes:baseline.scopes,attributeClosure,requestedAttributeClosure,ownerRequests});return context;
+  const moduleIndices=originalJsonIntrinsicsUnchanged()?{paths:new Set(originalModules.map(module=>JSON.stringify(['crate',...module.path]))),scopes:new Map(originalModules.map(module=>[moduleScopeKey(module),module]))}:null;
+  contexts.set(context,{byId,external:originalExternal,dependencies,originalModules,moduleIndices,helperScopes:baseline.scopes,attributeClosure,requestedAttributeClosure,ownerRequests});return context;
 }
 
 export function deriveFootprintAt(context,module,item) {
@@ -278,20 +283,22 @@ export function deriveFootprintHelperAttributeAt(context,module,item,span){
   if(!certificate||certificate.condition.status!=='active'||certificate.dimensions.attributeMacroComplete!==true)return null;
   const attribute=certificate.attributes.find(row=>row.position!=='container'&&row.span.start===span?.start&&row.span.end===span?.end);
   if(!attribute)return null;
+  let cache=helperCertificates.get(certificate);const key=attribute.span.start+':'+attribute.span.end,fastInputs=state.moduleIndices&&originalJsonIntrinsicsUnchanged();
+  if(fastInputs&&cache?.has(key)&&apply(weakSetHas,fastHelperProofs,[cache.get(key)]))return cache.get(key);
   const ancestors=state.helperScopes.filter(scope=>scope.path.every((part,index)=>certificate.module[index]===part));
   const attributeNames=new Set([...certificate.attributes.map(row=>row.name),...(attribute.name==='default'?['Default']:[])]);
-  const originalModule=state.originalModules.find(candidate=>moduleScopeKey(candidate)===moduleScopeKey(module)),requests=state.ownerRequests({attributes:certificate.attributes,derives:certificate.attributes.filter(row=>row.name==='derive').flatMap(row=>row.derives.map(path=>({path})))},[...attributeNames]),closures=ancestors.map(scope=>state.requestedAttributeClosure(scope,originalModule,requests));
-  const missingModule=binding=>binding.namespace==='type'&&binding.kind==='mod'&&(binding.status!=='resolved'||binding.via==='declaration'&&binding.target?.[0]==='crate'&&!state.originalModules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target)));
+  const originalModule=fastInputs?state.moduleIndices.scopes.get(moduleScopeKey(module)):state.originalModules.find(candidate=>moduleScopeKey(candidate)===moduleScopeKey(module)),requests=state.ownerRequests({attributes:certificate.attributes,derives:certificate.attributes.filter(row=>row.name==='derive').flatMap(row=>row.derives.map(path=>({path})))},[...attributeNames]),closures=ancestors.map(scope=>state.requestedAttributeClosure(scope,originalModule,requests));
+  const missingModule=binding=>binding.namespace==='type'&&binding.kind==='mod'&&(binding.status!=='resolved'||binding.via==='declaration'&&binding.target?.[0]==='crate'&&!(fastInputs?state.moduleIndices.paths.has(JSON.stringify(binding.target)):state.originalModules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target))));
   if(!ancestors.length||ancestors.some((scope,index)=>scope.configurationCondition!=='active'||!closures[index]||scope.bindings.some(binding=>missingModule(binding)&&!closures[index].conditionalSiblingProofs.some(proof=>JSON.stringify(proof.originalBinding)===JSON.stringify(binding))||attributeNames.has(binding.name)&&macroBindingAffects(binding,'attribute'))||scope.unresolvedImports.some(entry=>entry.glob||attributeNames.has(entry.name))))return null;
   const builtin=attribute.name==='default'?certificate.builtinDefault:null;
   if(attribute.name==='default'&&(!builtin||builtin.attributeSpan.start!==attribute.span.start||builtin.attributeSpan.end!==attribute.span.end))return null;
   const owners=builtin?[builtin.owner]:certificate.owners;
   if(!owners.length||attribute.name==='serde'&&!attribute.helpers)return null;
-  let cache=helperCertificates.get(certificate);if(!cache){cache=new Map();helperCertificates.set(certificate,cache);}const key=attribute.span.start+':'+attribute.span.end;if(cache.has(key))return cache.get(key);
+  if(!cache){cache=new Map();helperCertificates.set(certificate,cache);}if(cache.has(key))return cache.get(key);
   const registrations=owners.map(owner=>registeredDeriveHelperSource({dependencies:state.dependencies,target:owner.target,helperName:attribute.name,defaultProof:builtin?.dependencyProof})).filter(Boolean);
   if(!registrations.length)return null;
   const evidence={schema:'original-nested-derive-helper-owner-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,sourceViewDigest:certificate.sourceViewDigest,module:certificate.module,compilationProfile:certificate.compilationProfile,invocationSpan:certificate.span,inputCertificateDigest:certificate.digest,attribute,registrations,ancestorScopes:ancestors.map((scope,index)=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{} )})),exactNestedHelperInert:true,namespaceAuthority:false,bangOutputAuthority:false,copyAuthority:false,generatedImplBehavior:false};
-  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});helperProofs.add(proof);cache.set(key,proof);return proof;
+  const proof=freeze({...evidence,digest:hash(JSON.stringify(evidence))});helperProofs.add(proof);if(fastInputs&&originalJsonIntrinsicsUnchanged())apply(weakSetAdd,fastHelperProofs,[proof]);cache.set(key,proof);return proof;
 }
 export const isDeriveFootprintHelperAttributeProof=value=>!!value&&helperProofs.has(value);
 export function isDeriveFootprintCertificate(certificate){return !!certificate&&certificates.has(certificate);}
@@ -301,7 +308,19 @@ export function isDeriveFootprintContext(context){return !!context&&contexts.has
 export function deriveFootprintOriginalContext(context,certificate){
   const state=contexts.get(context);
   if(!state||![...state.byId.values()].includes(certificate))throw new TypeError('Derive output requires its original sealed input context');
-  return {modules:state.originalModules,dependencies:state.dependencies,externalModules:new Map(state.external),compilationProfile:context.compilationProfile};
+  const externalModules=new Map(state.external);originalContextMaps.set(externalModules,context);
+  return {modules:state.originalModules,dependencies:state.dependencies,externalModules,compilationProfile:context.compilationProfile};
+}
+// Public wrapper objects do not authenticate a cached private binding result.
+// Rejoin every requested selection and native map before any consumer reuse.
+export function assertDeriveFootprintOriginalSelection(original,certificate){
+  const context=ownSelection(original,'context'),expected=deriveFootprintOriginalContext(context,certificate),module=deriveFootprintOriginalModule(context,certificate),external=ownSelection(original,'externalModules');
+  if(ownSelection(original,'modules')!==expected.modules||ownSelection(original,'dependencies')!==expected.dependencies||ownSelection(original,'compilationProfile')!==expected.compilationProfile||ownSelection(original,'module')!==module)throw new TypeError('Original derive selection belongs to different modules, dependencies, profile or caller');
+  const expectedExternal=contexts.get(context).external;
+  if(!external||types.isProxy(external)||Object.getPrototypeOf(external)!==mapPrototype||Reflect.ownKeys(external).length||originalContextMaps.get(external)!==context||apply(mapSize,external,[])!==apply(mapSize,expectedExternal,[]))throw new TypeError('Original derive selection requires its issued native external map');
+  const actualEntries=apply(mapEntries,external,[]),expectedEntries=apply(mapEntries,expectedExternal,[]);
+  for(let index=0;index<apply(mapSize,expectedExternal,[]);index++){const actual=apply(mapNext,actualEntries,[]).value,expected=apply(mapNext,expectedEntries,[]).value;if(actual[0]!==expected[0]||actual[1]!==expected[1])throw new TypeError('Original derive external entries or order differ from their private issuer');}
+  return Object.freeze({...expected,context,module,externalModules:external});
 }
 // The full registered-source lineage stays private and shared. Serialized
 // reference digests alone cannot supply this actual input join.

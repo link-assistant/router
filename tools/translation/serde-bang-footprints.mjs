@@ -2,7 +2,9 @@
 // namespace confinement; Serialize behavior and generated impls stay unlowered.
 import {createHash} from 'node:crypto';
 import {deriveDependencySource} from './derive-dependencies.mjs';
-import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
+import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof,assertDeriveFootprintOriginalSelection} from './derive-footprints.mjs';
+import {originalJsonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {macroBindingAffects,macroScopeUncertain} from './macro-subnamespaces.mjs';
 import {sourceItems} from './rust-structure.mjs';
@@ -17,8 +19,10 @@ const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).for
 const proofs=new WeakMap(),cachedInventories=new WeakMap(),cachedAttributeBindings=new WeakMap();
 const identifier=tree=>tree?.kind==='token'&&tree.type==='ident'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(tree.text);
 const syntaxText=nodes=>nodes.map(node=>node.tag==='slot'?'#'+node.name:node.tag==='repeat'?'#('+syntaxText(node.nodes)+')'+(node.separator?.text??'')+node.quantifier:node.tag==='group'?node.delimiter+syntaxText(node.nodes)+({'(':')','[':']','{':'}'}[node.delimiter]):node.text).join(' ');
-export function originalFunction(dependencies,path,name,predicate=()=>true){
-  const origin=deriveDependencySource(dependencies,'serde_derive',path),roots=sourceItems(origin.source),definitions=[...roots];
+const functionIndices=new WeakMap(),functionIndexSlots=[];let functionIndexBytes=0,functionIndexHits=0,functionIndexBuilds=0,functionIndexFallbacks=0;
+export function originalFunctionIndexFacts(){return Object.freeze({eligible:originalLexingIntrinsicsUnchanged(),entries:functionIndexSlots.length,retainedBytes:functionIndexBytes,hits:functionIndexHits,builds:functionIndexBuilds,fallbacks:functionIndexFallbacks,limits:Object.freeze({entries:16,bytes:1048576,entryBytes:262144})});}
+function originalFunctionDefinitions(origin){
+  const roots=sourceItems(origin.source),definitions=[...roots];
   // Generator methods are real source functions inside actual impl items, not
   // emitted quote bodies. Preserve original absolute positions and attributes.
   for(const implementation of roots.filter(item=>item.term==='impl')){
@@ -26,6 +30,20 @@ export function originalFunction(dependencies,path,name,predicate=()=>true){
     if(!open||close?.text!=='}')throw new TypeError('Original generator impl function boundary remains unresolved');
     definitions.push(...sourceItems(origin.source.slice(open.end,close.start)).map(item=>({...item,start:item.start+open.end,end:item.end+open.end})));
   }
+  return definitions;
+}
+function indexedFunctionDefinitions(origin){
+  if(!originalLexingIntrinsicsUnchanged()){if(functionIndexFallbacks<9007199254740991)functionIndexFallbacks++;return originalFunctionDefinitions(origin);}
+  const previous=functionIndices.get(origin);
+  if(previous?.active){if(functionIndexHits<9007199254740991)functionIndexHits++;const definitions=[];for(let at=0;at<previous.index.length;at++){const item=previous.index[at];definitions.push({term:'fn',name:origin.source.slice(item.nameStart,item.nameEnd),start:item.start,end:item.end});}return definitions;}
+  if(functionIndexBuilds<9007199254740991)functionIndexBuilds++;const definitions=originalFunctionDefinitions(origin),index=[];let bytes=64;
+  for(let at=0;at<definitions.length;at++){const item=definitions[at];if(item.term!=='fn')continue;let token=null,depth=0;for(let at=0;at<item.tokens.length;at++){const part=item.tokens[at];if(depth===0&&part.text==='fn'){let next=at+1;while(item.tokens[next]?.type==='comment')next++;token=item.tokens[next];break;}if(part.type==='punct'){if(['(','[','{'].includes(part.text))depth++;else if([')',']','}'].includes(part.text))depth--;}}if(!token||token.text!==item.name)return definitions;const offset=item.start-item.tokens[0].start,nameStart=token.start+offset,nameEnd=token.end+offset;if(origin.source.slice(nameStart,nameEnd)!==item.name)return definitions;bytes+=128;if(bytes>262144)return definitions;index.push(Object.freeze({start:item.start,end:item.end,nameStart,nameEnd}));}
+  if(!originalLexingIntrinsicsUnchanged())return definitions;
+  while(functionIndexSlots.length>=16||functionIndexBytes+bytes>1048576){const oldest=functionIndexSlots.shift();functionIndexBytes-=oldest.bytes;oldest.active=false;oldest.index=null;}
+  const state={active:true,index:Object.freeze(index),bytes};functionIndices.set(origin,state);functionIndexSlots.push(state);functionIndexBytes+=bytes;return definitions;
+}
+export function originalFunction(dependencies,path,name,predicate=()=>true){
+  const origin=deriveDependencySource(dependencies,'serde_derive',path),definitions=indexedFunctionDefinitions(origin);
   const items=definitions.filter(item=>item.term==='fn'&&item.name===name&&predicate(origin.source.slice(item.start,item.end)));
   if(items.length!==1)throw new TypeError('Selected generator function is not unique: '+path+'::'+name);
   const item=items[0];return {source:path,sourceSha256:origin.sha256,span:{start:item.start,end:item.end},sha256:hash(origin.source.slice(item.start,item.end)),text:origin.source.slice(item.start,item.end)};
@@ -75,14 +93,16 @@ export function boundedInput(certificate,source,owner='Serialize',allowedHelpers
   return {style:'unit-enum',name:{name:name.text,span:name.span},variants};
 }
 export function attributeOwners(original,certificate,names){
-  let bindings=cachedAttributeBindings.get(original.context);
-  if(!bindings){bindings=resolveModuleBindings({...original,deriveContext:original.context});cachedAttributeBindings.set(original.context,bindings);}
+  original=assertDeriveFootprintOriginalSelection(original,certificate);
+  let cached=cachedAttributeBindings.get(original.context);
+  if(!cached){const bindings=resolveModuleBindings({...original,deriveContext:original.context});cached={bindings,digest:originalJsonIntrinsicsUnchanged()?hash(JSON.stringify(bindings)):null};cachedAttributeBindings.set(original.context,cached);}
+  const {bindings}=cached;
   const selected=bindings.scopes.filter(scope=>scope.file===certificate.source&&scope.path.length===original.module.path.length&&scope.path.every((part,index)=>part===original.module.path[index]));
   if(selected.length!==1)throw new TypeError('Generated attribute proof has no unique original source module');
   const ancestors=bindings.scopes.filter(scope=>scope.path.every((part,index)=>selected[0].path[index]===part));
   if(ancestors.some(scope=>macroScopeUncertain(scope,'attribute')))throw new TypeError('Generated builtin attribute namespace retains an unresolved ancestor');
   for(const name of names)if(ancestors.some(scope=>scope.bindings.some(binding=>binding.name===name&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Generated builtin attribute is shadowed: '+name);
-  return {names:[...names].sort(),scopes:ancestors.map(scope=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,unresolvedAttributeMacroScope:scope.unresolvedAttributeMacroScope})),bindingsDigest:hash(JSON.stringify(bindings)),compilationProfile:original.compilationProfile};
+  return {names:[...names].sort(),scopes:ancestors.map(scope=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,unresolvedAttributeMacroScope:scope.unresolvedAttributeMacroScope})),bindingsDigest:cached.digest!==null&&originalJsonIntrinsicsUnchanged()?cached.digest:hash(JSON.stringify(bindings)),compilationProfile:original.compilationProfile};
 }
 export function emptySerdeMacro(dependencies){
   const origin=deriveDependencySource(dependencies,'serde','src/lib.rs'),items=sourceItems(origin.source).filter(item=>item.term==='macro_rules!'&&item.name==='__require_serde_not_serde_core');

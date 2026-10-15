@@ -8,6 +8,7 @@ import {originalMethodParsedFacts} from './source-method-parser.mjs';
 import {originalMethodTransformFacts} from './source-method-transforms.mjs';
 import {originalMethodLowering} from './impl-resolver.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
+import {captureOriginalMethodValidation,originalMethodValidationDigest} from './source-method-validation.mjs';
 const semantics=new WeakMap();
 const opaque=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope']);
 // Validation rejects callbacks/proxies before this descriptor-only clone. Keep
@@ -61,13 +62,13 @@ export function originalMethodSemantic(parsed,options={}) {
   }else if(fieldCertificates.length)throw new TypeError('Original static/consuming method has no shared receiver field annotations');
   surface.impl={type:{kind:'named',path:[...qualifiedType]},method:state.method.name,receiver:state.method.receiver,receiverName:state.lowered.receiverName,...(state.lowered.sharedReceiverSource?{sharedReceiverSource:copyMetadata(state.lowered.sharedReceiverSource)}:{}),...(lowering.copyCertificate?{copyCertificate:originalMetadataCopy(lowering.copyCertificate)}:{}),rewrites:copyMetadata(state.lowered.rewrites),assumptions:copyMetadata(state.lowered.assumptions)};
   surface.sourceMethodProof=freezeMacroTree({schema:'original-method-semantic-source-v1',parse:parsed.proof,originalTokenTransformVerified:true,originalHostParseVerified:true,checkedSourceAssociation:false,copyAuthority:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
-  semantics.set(surface,Object.freeze({parsed,transform:capture.transform,fieldEvidence,offset:0,relocated:false,digest:metadataDigest(surface)}));return surface;
+  const validation=captureOriginalMethodValidation(surface);semantics.set(surface,Object.freeze({parsed,transform:capture.transform,fieldEvidence,offset:0,relocated:false,digest:validation.digest,validation:validation.capture}));return surface;
 }
 export function originalMethodSemanticFacts(surface) {
   const state=semantics.get(surface);if(!state)throw new TypeError('Original method semantic source is copied, unsealed or caller fabricated');
   originalMethodParsedFacts(state.parsed);originalMethodTransformFacts(state.transform);
   if(state.fieldEvidence!==undefined)originalProjectMethodFieldEvidence(state.fieldEvidence,state.transform);
-  if(metadataDigest(surface)!==state.digest)throw new TypeError('Original method semantic body/signature/decorations changed');
+  if(originalMethodValidationDigest(surface,state.validation)!==state.digest)throw new TypeError('Original method semantic body/signature/decorations changed');
   return state;
 }
 // Refusal attribution does not issue checked IR or ownership authority. Only
@@ -86,7 +87,7 @@ export function relocateOriginalMethodSemantic(surface,offset) {
   const state=originalMethodSemanticFacts(surface);
   if(!Number.isSafeInteger(offset)||offset<0||state.relocated)throw new TypeError('Original method source relocation requires one exact nonnegative module offset');
   const semantic=relocate(surface,offset);
-  semantics.set(semantic,Object.freeze({...state,offset,relocated:true,digest:metadataDigest(semantic)}));return semantic;
+  const validation=captureOriginalMethodValidation(semantic);semantics.set(semantic,Object.freeze({...state,offset,relocated:true,digest:validation.digest,validation:validation.capture}));return semantic;
 }
 export function validateOriginalMethodAssociations(surface) {
   let budget=100000;
