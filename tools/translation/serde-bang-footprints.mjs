@@ -95,14 +95,14 @@ export function boundedInput(certificate,source,owner='Serialize',allowedHelpers
 export function attributeOwners(original,certificate,names){
   original=assertDeriveFootprintOriginalSelection(original,certificate);
   let cached=cachedAttributeBindings.get(original.context);
-  if(!cached){const bindings=resolveModuleBindings({...original,deriveContext:original.context});cached={bindings,digest:originalJsonIntrinsicsUnchanged()?hash(JSON.stringify(bindings)):null};cachedAttributeBindings.set(original.context,cached);}
+  if(!cached){const bindings=resolveModuleBindings({...original,deriveContext:original.context});cached={bindings,canonical:originalJsonIntrinsicsUnchanged()?JSON.stringify(bindings):null};cachedAttributeBindings.set(original.context,cached);}
   const {bindings}=cached;
   const selected=bindings.scopes.filter(scope=>scope.file===certificate.source&&scope.path.length===original.module.path.length&&scope.path.every((part,index)=>part===original.module.path[index]));
   if(selected.length!==1)throw new TypeError('Generated attribute proof has no unique original source module');
   const ancestors=bindings.scopes.filter(scope=>scope.path.every((part,index)=>selected[0].path[index]===part));
   if(ancestors.some(scope=>macroScopeUncertain(scope,'attribute')))throw new TypeError('Generated builtin attribute namespace retains an unresolved ancestor');
   for(const name of names)if(ancestors.some(scope=>scope.bindings.some(binding=>binding.name===name&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Generated builtin attribute is shadowed: '+name);
-  return {names:[...names].sort(),scopes:ancestors.map(scope=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,unresolvedAttributeMacroScope:scope.unresolvedAttributeMacroScope})),bindingsDigest:cached.digest!==null&&originalJsonIntrinsicsUnchanged()?cached.digest:hash(JSON.stringify(bindings)),compilationProfile:original.compilationProfile};
+  return {names:[...names].sort(),scopes:ancestors.map(scope=>({source:scope.file,module:scope.path,configurationCondition:scope.configurationCondition,unresolvedAttributeMacroScope:scope.unresolvedAttributeMacroScope})),bindingsDigest:hash(cached.canonical!==null&&originalJsonIntrinsicsUnchanged()?cached.canonical:JSON.stringify(bindings)),compilationProfile:original.compilationProfile};
 }
 export function emptySerdeMacro(dependencies){
   const origin=deriveDependencySource(dependencies,'serde','src/lib.rs'),items=sourceItems(origin.source).filter(item=>item.term==='macro_rules!'&&item.name==='__require_serde_not_serde_core');

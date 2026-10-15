@@ -1,4 +1,4 @@
-import {createHash} from 'node:crypto';
+import {createHash,Hash} from 'node:crypto';
 import {types} from 'node:util';
 import {originalJsonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
@@ -23,6 +23,14 @@ export {createDeriveDependencyProof};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const contexts=new WeakMap(),certificates=new WeakMap(),concatCallerSources=new WeakMap(),helperProofs=new WeakSet(),helperCertificates=new WeakMap();
+// Conditional sibling reproofs perform real hash calls on the legacy path.
+// Only native crypto operations can be skipped; JavaScript wrappers, including
+// ordinary non-native runtime implementations, keep that complete path.
+const helperOwn=Object.hasOwn,helperDescriptor=Object.getOwnPropertyDescriptor,helperData=field=>field&&helperOwn(field,'value')?field.value:null;
+const helperCreateHash=createHash,helperHash=Hash,helperHashPrototype=Hash?.prototype,helperHashUpdate=Object.getOwnPropertyDescriptor(helperHashPrototype??{},'update'),helperHashDigest=Object.getOwnPropertyDescriptor(helperHashPrototype??{},'digest'),helperFunctionText=Function.prototype.toString;
+const helperNative=(fn,name)=>typeof fn==='function'&&!types.isProxy(fn)&&Reflect.apply(helperFunctionText,fn,[])===`function ${name}() { [native code] }`;
+const nativeHelperCrypto=helperNative(helperCreateHash,'createHash')&&helperNative(helperHash,'Hash')&&helperNative(helperData(helperHashUpdate),'update')&&helperNative(helperData(helperHashDigest),'digest');
+function originalHelperCryptoUnchanged(){return nativeHelperCrypto&&createHash===helperCreateHash&&Hash===helperHash&&Hash.prototype===helperHashPrototype&&helperData(helperDescriptor(helperHashPrototype,'update'))===helperData(helperHashUpdate)&&helperData(helperDescriptor(helperHashPrototype,'digest'))===helperData(helperHashDigest)&&Function.prototype.toString===helperFunctionText;}
 const originalContextMaps=new WeakMap(),fastHelperProofs=new WeakSet(),weakSetHas=WeakSet.prototype.has,weakSetAdd=WeakSet.prototype.add,mapPrototype=Map.prototype,mapEntries=Map.prototype.entries,mapNext=Object.getPrototypeOf(new Map().entries()).next,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,hasOwn=Object.hasOwn;
 function ownSelection(value,name){if(!value||typeof value!=='object'||types.isProxy(value))throw new TypeError('Original derive selection requires non-proxy own data');const field=descriptor(value,name);if(!field||!hasOwn(field,'value'))throw new TypeError('Original derive selection requires own data: '+name);return field.value;}
 const key=path=>path.join('::');
@@ -284,7 +292,7 @@ export function deriveFootprintHelperAttributeAt(context,module,item,span){
   const attribute=certificate.attributes.find(row=>row.position!=='container'&&row.span.start===span?.start&&row.span.end===span?.end);
   if(!attribute)return null;
   let cache=helperCertificates.get(certificate);const key=attribute.span.start+':'+attribute.span.end,fastInputs=state.moduleIndices&&originalJsonIntrinsicsUnchanged();
-  if(fastInputs&&cache?.has(key)&&apply(weakSetHas,fastHelperProofs,[cache.get(key)]))return cache.get(key);
+  if(fastInputs&&cache?.has(key)){const proof=cache.get(key);if(apply(weakSetHas,fastHelperProofs,[proof])&&(!proof.ancestorScopes.some(scope=>scope.conditionalSiblingScopeProofs?.length)||originalHelperCryptoUnchanged()))return proof;}
   const ancestors=state.helperScopes.filter(scope=>scope.path.every((part,index)=>certificate.module[index]===part));
   const attributeNames=new Set([...certificate.attributes.map(row=>row.name),...(attribute.name==='default'?['Default']:[])]);
   const originalModule=fastInputs?state.moduleIndices.scopes.get(moduleScopeKey(module)):state.originalModules.find(candidate=>moduleScopeKey(candidate)===moduleScopeKey(module)),requests=state.ownerRequests({attributes:certificate.attributes,derives:certificate.attributes.filter(row=>row.name==='derive').flatMap(row=>row.derives.map(path=>({path})))},[...attributeNames]),closures=ancestors.map(scope=>state.requestedAttributeClosure(scope,originalModule,requests));
