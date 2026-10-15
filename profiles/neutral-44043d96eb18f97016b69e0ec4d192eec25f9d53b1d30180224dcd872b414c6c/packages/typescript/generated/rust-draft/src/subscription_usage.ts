@@ -24,6 +24,8 @@ type MLData_526f75746572526573756c745f33375f6e616d65645f373336353732363436353566
 type MLData_526f75746572526573756c745f33385f6e616d65645f3733373436345f37343639366436355f343437353732363137343639366636655f36345f6e616d65645f3733373436345f37343639366436355f353437323739343637323666366434363663366636313734353336353633373334353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": MLData_7374642e74696d652e4475726174696f6e }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f72 }>;
 type MLData_526f75746572526573756c745f345f756e69745f32385f6e616d65645f3733373436345f363936665f34353732373236663732 = Readonly<{ readonly "$": "Ok"; readonly "field0": null }> | Readonly<{ readonly "$": "Err"; readonly "field0": MLData_7374642e696f2e4572726f72 }>;
 type MLData_5361666543726564656e7469616c4d65746164617461 = Readonly<{ readonly "$": "SafeCredentialMetadata"; readonly "plan": MLData_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67; readonly "subscription_end": MLData_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67 }>;
+type MLData_72705f353236663735373436353732346637303734363936663665356633383330356636653631366436353634356633373333333733353336333233373333333633333337333233363339333733303337333433363339333636363336363533353636333733353337333333363331333633373336333535663337333433373339333733303336333533373333356633353335333733333336333133363337333633353335333033373332333636363337333633363339333633343336333533373332 = Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f37333735363237333633373236393730373436393666366535663735373336313637363532653734373937303635373332653535373336313637363535303732366637363639363436353732 }>;
+type MLData_72705f37333735363237333633373236393730373436393666366535663735373336313637363532653734373937303635373332653535373336313637363535303732366637363639363436353732 = Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "ZAi" }> | Readonly<{ readonly "$": "Lefine" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "Qwen" }>;
 type MLData_73657264655f6a736f6e2e4572726f72 = Readonly<{ readonly "$": "JsonError"; readonly "category": MLData_73657264655f6a736f6e2e6572726f722e43617465676f7279; readonly "line": bigint; readonly "column": bigint; readonly "message": string }>;
 type MLData_73657264655f6a736f6e2e4d6170456e747279 = Readonly<{ readonly "$": "MapEntry"; readonly "key": string; readonly "value": MLData_73657264655f6a736f6e2e56616c7565 }>;
 type MLData_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565 = Readonly<{ readonly "$": "Map"; readonly "entries": ReadonlyArray<MLData_73657264655f6a736f6e2e4d6170456e747279> }>;
@@ -97,5 +99,34 @@ function ml_make_BoundedBodyError_Read(): Readonly<{ readonly "$": "TooLarge" }>
   return Object.freeze({ $: 'Read' });
 }
 
-export const translated: { "SCHEMA_VERSION": bigint; "MAX_USAGE_BODY": bigint; "SafeCredentialMetadata": (plan: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, subscription_end: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>) => Readonly<{ readonly "$": "SafeCredentialMetadata"; readonly "plan": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "subscription_end": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }>; "BoundedBodyError": Readonly<{ "TooLarge": () => Readonly<{ readonly "$": "TooLarge" }> | Readonly<{ readonly "$": "Read" }>; "Read": () => Readonly<{ readonly "$": "TooLarge" }> | Readonly<{ readonly "$": "Read" }> }> } = { ["SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["SafeCredentialMetadata"]: ml_make_SafeCredentialMetadata_SafeCredentialMetadata, ["BoundedBodyError"]: Object.freeze({ ["TooLarge"]: ml_make_BoundedBodyError_TooLarge, ["Read"]: ml_make_BoundedBodyError_Read }) };
-export const provenance = {"sourcePath":"src/subscription_usage.rs","sourceSha256":"d78f65d64a28f22cc247f6716a260aa6c79786b543b3d0ce097b887dce46a1d9","executable":4,"executableFunctions":0,"executableConstants":2,"executableTypes":2,"executableConstructors":3,"carried":54,"preserved":58,"runtimeParity":false};
+function rp_737562736372697074696f6e5f75736167652e70617273655f70726f7669646572(provider: string): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "ZAi" }> | Readonly<{ readonly "$": "Lefine" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "Qwen" }> }> {
+  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
+  if ((provider === "anthropic")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+  } else {
+    if ((provider === "openai")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAi' }) });
+    } else {
+      if ((provider === "z-ai")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZAi' }) });
+      } else {
+        if ((provider === "lefine")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Lefine' }) });
+        } else {
+          if ((provider === "gemini")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+          } else {
+            if ((provider === "qwen")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+            } else {
+              return Object.freeze({ $: 'None' });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+export const translated: { "SCHEMA_VERSION": bigint; "MAX_USAGE_BODY": bigint; "SafeCredentialMetadata": (plan: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, subscription_end: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>) => Readonly<{ readonly "$": "SafeCredentialMetadata"; readonly "plan": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "subscription_end": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> }>; "BoundedBodyError": Readonly<{ "TooLarge": () => Readonly<{ readonly "$": "TooLarge" }> | Readonly<{ readonly "$": "Read" }>; "Read": () => Readonly<{ readonly "$": "TooLarge" }> | Readonly<{ readonly "$": "Read" }> }>; "parse_provider": (provider: string) => Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "Anthropic" }> | Readonly<{ readonly "$": "OpenAi" }> | Readonly<{ readonly "$": "ZAi" }> | Readonly<{ readonly "$": "Lefine" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "Qwen" }> }> } = { ["SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["SafeCredentialMetadata"]: ml_make_SafeCredentialMetadata_SafeCredentialMetadata, ["BoundedBodyError"]: Object.freeze({ ["TooLarge"]: ml_make_BoundedBodyError_TooLarge, ["Read"]: ml_make_BoundedBodyError_Read }), ["parse_provider"]: rp_737562736372697074696f6e5f75736167652e70617273655f70726f7669646572 };
+export const provenance = {"sourcePath":"src/subscription_usage.rs","sourceSha256":"d78f65d64a28f22cc247f6716a260aa6c79786b543b3d0ce097b887dce46a1d9","executable":5,"executableFunctions":1,"executableConstants":2,"executableTypes":2,"executableConstructors":3,"carried":53,"preserved":58,"runtimeParity":false};

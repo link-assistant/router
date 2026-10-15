@@ -57,5 +57,34 @@ function ml_make_BoundedBodyError_Read() {
   return Object.freeze({ $: 'Read' });
 }
 
-export const translated = { ["SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["SafeCredentialMetadata"]: ml_make_SafeCredentialMetadata_SafeCredentialMetadata, ["BoundedBodyError"]: Object.freeze({ ["TooLarge"]: ml_make_BoundedBodyError_TooLarge, ["Read"]: ml_make_BoundedBodyError_Read }) };
-export const provenance = {"sourcePath":"src/subscription_usage.rs","sourceSha256":"d78f65d64a28f22cc247f6716a260aa6c79786b543b3d0ce097b887dce46a1d9","executable":4,"executableFunctions":0,"executableConstants":2,"executableTypes":2,"executableConstructors":3,"carried":54,"preserved":58,"runtimeParity":false};
+function rp_737562736372697074696f6e5f75736167652e70617273655f70726f7669646572(provider) {
+  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
+  if ((provider === "anthropic")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+  } else {
+    if ((provider === "openai")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAi' }) });
+    } else {
+      if ((provider === "z-ai")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZAi' }) });
+      } else {
+        if ((provider === "lefine")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Lefine' }) });
+        } else {
+          if ((provider === "gemini")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+          } else {
+            if ((provider === "qwen")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+            } else {
+              return Object.freeze({ $: 'None' });
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+export const translated = { ["SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["SafeCredentialMetadata"]: ml_make_SafeCredentialMetadata_SafeCredentialMetadata, ["BoundedBodyError"]: Object.freeze({ ["TooLarge"]: ml_make_BoundedBodyError_TooLarge, ["Read"]: ml_make_BoundedBodyError_Read }), ["parse_provider"]: rp_737562736372697074696f6e5f75736167652e70617273655f70726f7669646572 };
+export const provenance = {"sourcePath":"src/subscription_usage.rs","sourceSha256":"d78f65d64a28f22cc247f6716a260aa6c79786b543b3d0ce097b887dce46a1d9","executable":5,"executableFunctions":1,"executableConstants":2,"executableTypes":2,"executableConstructors":3,"carried":53,"preserved":58,"runtimeParity":false};

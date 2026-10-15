@@ -135,6 +135,10 @@ const ml_host_value_schema_b802c5a3192bf4da752841a91d21333d40fe89eb1403d0e6cc208
 
 const ml_host_value_refinements_b802c5a3192bf4da752841a91d21333d40fe89eb1403d0e6cc2087b83f907d87 = new Map([["rp_7374642e74696d652e4475726174696f6e", ml_validate_duration]]);
 
+const ml_host_value_schema_e1e2327d5073fd58ed1bd0eef7f685140f0661f551424a77e7a95d35c2996e87 = {"schemaVersion":1,"types":{"rp_636c69656e74732e436c69656e744b696e64":{"kind":"data","name":"rp_636c69656e74732e436c69656e744b696e64","ctors":[{"name":"Codex","fields":[]},{"name":"ClaudeCode","fields":[]},{"name":"Cursor","fields":[]},{"name":"GeminiCli","fields":[]},{"name":"GrokCli","fields":[]},{"name":"Opencode","fields":[]},{"name":"QwenCode","fields":[]},{"name":"Agent","fields":[]}]}}};
+
+const ml_host_value_refinements_e1e2327d5073fd58ed1bd0eef7f685140f0661f551424a77e7a95d35c2996e87 = new Map([]);
+
 const ml_host_value_schema_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"rp_526f757465724f7074696f6e5f335f693634":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733":{"kind":"data","name":"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573"}}]}]},"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663":{"kind":"data","name":"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c"}}}]}]},"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e436c617564654d6f64656c4361706162696c6974696573","ctors":[{"name":"ClaudeModelCapabilities","fields":[{"name":"behaves_as","type":{"kind":"string"}},{"name":"source","type":{"kind":"string"}}]}]},"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573","ctors":[{"name":"RouterClientCapabilities","fields":[{"name":"claude","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f38325f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f34333663363137353634363534643666363436353663343336313730363136323639366336393734363936353733"}}]}]},"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c","ctors":[{"name":"RouterModel","fields":[{"name":"id","type":{"kind":"string"}},{"name":"owned_by","type":{"kind":"string"}},{"name":"selector_kind","type":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64"}},{"name":"capability_provenance","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}},{"name":"default_reasoning_level","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}},{"name":"provider_created_at","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}},{"name":"supported_reasoning_levels","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f39315f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663"}},{"name":"client_capabilities","type":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572436c69656e744361706162696c6974696573"}},{"name":"router_unavailable_reason","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c","ctors":[{"name":"RouterReasoningLevel","fields":[{"name":"effort","type":{"kind":"string"}},{"name":"description","type":{"kind":"string"}}]}]},"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64":{"kind":"data","name":"rp_6d6f64656c5f636f6e74726163742e4d6f64656c53656c6563746f724b696e64","ctors":[{"name":"Concrete","fields":[]},{"name":"ProviderDynamicAlias","fields":[]},{"name":"OperatorAlias","fields":[]},{"name":"Unknown","fields":[]}]},"rp_73657264655f6a736f6e2e4d6170456e747279":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279","ctors":[{"name":"MapEntry","fields":[{"name":"key","type":{"kind":"string"}},{"name":"value","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}]}]},"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565","ctors":[{"name":"Map","fields":[{"name":"entries","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d6170456e747279"}}}]}]},"rp_73657264655f6a736f6e2e4e756d626572":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572","ctors":[{"name":"PosInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]},{"name":"NegInt","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]},{"name":"Float","fields":[{"name":"field0","type":{"kind":"float"}}]}]},"rp_73657264655f6a736f6e2e56616c7565":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565","ctors":[{"name":"Null","fields":[]},{"name":"Bool","fields":[{"name":"field0","type":{"kind":"bool"}}]},{"name":"Number","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4e756d626572"}}]},{"name":"String","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Array","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}}}]},{"name":"Object","fields":[{"name":"field0","type":{"kind":"data","name":"rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565"}}]}]}}};
 
 const ml_host_value_refinements_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 = new Map([["rp_73657264655f6a736f6e2e4e756d626572", ml_validate_json_number], ["rp_73657264655f6a736f6e2e4d61705f537472696e675f56616c7565", ml_validate_json_map]]);
@@ -283,6 +287,10 @@ const ml_host_value_schema_69da64c3e990888186d6801a2a09e10e0f0cc8cb0f47c9766f5cf
 
 const ml_host_value_refinements_69da64c3e990888186d6801a2a09e10e0f0cc8cb0f47c9766f5cfee867f73099 = new Map([]);
 
+const ml_host_value_schema_77e9e272f8f29a71e20f733cff09c2808a5814f87a6324efeac7f6879c7fffb2 = {"schemaVersion":1,"types":{"rp_766572696669636174696f6e2e436f756e7473":{"kind":"data","name":"rp_766572696669636174696f6e2e436f756e7473","ctors":[{"name":"Counts","fields":[{"name":"passed","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"failed","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"ignored","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
+
+const ml_host_value_refinements_77e9e272f8f29a71e20f733cff09c2808a5814f87a6324efeac7f6879c7fffb2 = new Map([]);
+
 const ml_host_value_schema_a113c5f551c9c7f8f771017692d47d22e0050629dd38a981de94775ced7086fe = {"schemaVersion":1,"types":{"rp_757073747265616d5f67756172642e4e6574776f726b506f6c696379":{"kind":"data","name":"rp_757073747265616d5f67756172642e4e6574776f726b506f6c696379","ctors":[{"name":"NetworkPolicy","fields":[{"name":"loopback","type":{"kind":"bool"}},{"name":"private","type":{"kind":"bool"}},{"name":"link_local","type":{"kind":"bool"}},{"name":"all","type":{"kind":"bool"}}]}]}}};
 
 const ml_host_value_refinements_a113c5f551c9c7f8f771017692d47d22e0050629dd38a981de94775ced7086fe = new Map([]);
@@ -380,8 +388,29 @@ function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f3633373236313734363532
   return (((router_self).windows.length === 0) && ((router_self).representative_claim.$ === 'None'));
 }
 
+function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f363337323631373436353265363136333633366637353665373435663663363936643639373437333265353736393665363436663737346336393664363937345f3634363536363631373536633734() {
+  const ml_record1 = "";
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "WindowLimit", ["name"]: ml_record1, ["status"]: ml_record2, ["reset_unix"]: ml_record3, ["utilization"]: ml_record4 });
+}
+
+function rp_6163636f756e745f6c696d6974732e6d6c5f696d706c5f36333732363137343635326536313633363336663735366537343566366336393664363937343733326535353665363936363639363536343463363936643639373437335f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  const ml_record2 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "UnifiedLimits", ["windows"]: ml_record1, ["representative_claim"]: ml_record2 });
+}
+
 function rp_6163636f756e74732e6c696d6974732e4c494d4954535f534156455f494e54455256414c5f53454353() {
   return 60n;
+}
+
+function rp_6163636f756e74732e6c696d6974732e6d6c5f696d706c5f3633373236313734363532653631363336333666373536653734373332653663363936643639373437333265346636323733363537323736363536343463363936643639373437335f3634363536363631373536633734() {
+  const ml_record1 = false;
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = false;
+  return Object.freeze({ $: "ObservedLimits", ["credential_cooldown"]: ml_record1, ["model_cooldown"]: ml_record2, ["paused"]: ml_record3 });
 }
 
 function rp_6163636f756e74732e6c696d6974732e6d6c5f696d706c5f3633373236313734363532653631363336333666373536653734373332653663363936643639373437333265346336393664363937343433366637353665373437335f3634363536363631373536633734() {
@@ -475,6 +504,15 @@ function rp_6163636f756e74732e73656c656374696f6e2e6d6c5f696d706c5f36333732363137
   }
 }
 
+function rp_6163636f756e74732e6d6c5f696d706c5f363337323631373436353265363136333633366637353665373437333265353236663735373436393665363734333666366537343635373837345f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = Object.freeze([]);
+  return Object.freeze({ $: "RoutingContext", ["session_key"]: ml_record1, ["parent_session_key"]: ml_record2, ["pinned_account"]: ml_record3, ["model"]: ml_record4, ["exclude"]: ml_record5 });
+}
+
 function rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e() {
   return "paused by an operator";
 }
@@ -529,6 +567,19 @@ function rp_61646d696e2e636c616d705f74746c(ttl_hours) {
     return Object.freeze({ $: 'None' });
     })();
   })(), rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253(), (hours_2) => { return ml_host_rust_fixed_min_i64(hours_2, rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253()); });
+}
+
+function rp_61646d696e2e6d6c5f696d706c5f3633373236313734363532653631363436643639366532653433366336313639366434363639366336355f3634363536363631373536633734() {
+  const ml_record1 = "";
+  const ml_record2 = "";
+  const ml_record3 = 0n;
+  const ml_record4 = 0n;
+  return Object.freeze({ $: "ClaimFile", ["token_sha256"]: ml_record1, ["token_id"]: ml_record2, ["ttl_hours"]: ml_record3, ["claimed_at"]: ml_record4 });
+}
+
+function rp_61646d696e5f6170692e6d6c5f696d706c5f363337323631373436353265363136343664363936653566363137303639326535343734366335323635373137353635373337345f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "TtlRequest", ["ttl_hours"]: ml_record1 });
 }
 
 function rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c() {
@@ -694,6 +745,11 @@ function rp_617574682e434f4445585f43414c4c4241434b5f50415448() {
 
 function rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448() {
   return "/deviceauth/callback";
+}
+
+function rp_617574682e6d6c5f696d706c5f3633373236313734363532653631373537343638326534343635373636393633363534353732373236663732353236353733373036663665373336355f3634363536363631373536633734() {
+  const ml_record1 = "";
+  return Object.freeze({ $: "DeviceErrorResponse", ["error"]: ml_record1 });
 }
 
 function rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f43524544454e5449414c() {
@@ -1148,8 +1204,22 @@ function rp_6272696467655f726573706f6e73652e6d6c5f696d706c5f36333732363137343635
   }
 }
 
+function rp_6272696467655f726573706f6e73652e6d6c5f696d706c5f3633373236313734363532653632373236393634363736353566373236353733373036663665373336353265343136653734363837323666373036393633353537333631363736355f3634363536363631373536633734() {
+  const ml_record1 = 0n;
+  const ml_record2 = 0n;
+  const ml_record3 = 0n;
+  const ml_record4 = 0n;
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "AnthropicUsage", ["input_tokens"]: ml_record1, ["cache_creation_input_tokens"]: ml_record2, ["cache_read_input_tokens"]: ml_record3, ["output_tokens"]: ml_record4, ["service_tier"]: ml_record5, ["server_tool_use"]: ml_record6 });
+}
+
 function rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544() {
   return "model_selection_required";
+}
+
+function rp_6272696467655f73656c656374696f6e2e6d6c5f696d706c5f36333732363137343635326536323732363936343637363535663733363536633635363337343639366636653265343237323639363436373635346436663634363536633530366636633639363337395f3634363536363631373536633734() {
+  return Object.freeze({ $: 'FirstAdvertised' });
 }
 
 function rp_6361706162696c69746965732e737562736372697074696f6e(provider, _model) {
@@ -1403,6 +1473,16 @@ function rp_636861745f636f6d6d616e64732e7965735f6e6f(value) {
   }
 }
 
+function rp_636861745f636f6d6d616e64732e6d6c5f696d706c5f363337323631373436353265363336383631373435663633366636643664363136653634373332653439373337333735363534663730373436393666366537335f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "IssueOptions", ["label"]: ml_record1, ["ttl_hours"]: ml_record2, ["max_requests"]: ml_record3, ["max_tokens"]: ml_record4, ["rate_limit_per_minute"]: ml_record5, ["account"]: ml_record6 });
+}
+
 function rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054() {
   return "You are Claude Code, Anthropic's official CLI for Claude.";
 }
@@ -1469,6 +1549,39 @@ function rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f44454c
   return ml_host_std_time_duration_from_millis(20n);
 }
 
+function rp_636c69656e745f6c6966656379636c652e6d61696e74656e616e63652e7061636b616765(client) {
+  ml_validate_rust_value(client, {"kind":"data","name":"rp_636c69656e74732e436c69656e744b696e64"}, ml_host_value_schema_e1e2327d5073fd58ed1bd0eef7f685140f0661f551424a77e7a95d35c2996e87, { refinements: ml_host_value_refinements_e1e2327d5073fd58ed1bd0eef7f685140f0661f551424a77e7a95d35c2996e87 });
+  switch (client.$) {
+    case "Codex": {
+      return Object.freeze({ $: 'Some', field0: "@openai/codex" });
+    }
+    case "ClaudeCode": {
+      return Object.freeze({ $: 'Some', field0: "@anthropic-ai/claude-code" });
+    }
+    case "Cursor": {
+      return Object.freeze({ $: 'None' });
+    }
+    case "GeminiCli": {
+      return Object.freeze({ $: 'Some', field0: "@google/gemini-cli" });
+    }
+    case "GrokCli": {
+      return Object.freeze({ $: 'None' });
+    }
+    case "Opencode": {
+      return Object.freeze({ $: 'Some', field0: "opencode-ai" });
+    }
+    case "QwenCode": {
+      return Object.freeze({ $: 'Some', field0: "@qwen-code/qwen-code" });
+    }
+    case "Agent": {
+      return Object.freeze({ $: 'None' });
+    }
+    default: {
+      return ml_router_unexpected(client);
+    }
+  }
+}
+
 function rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552() {
   return "x-link-assistant-proxied-client";
 }
@@ -1477,8 +1590,123 @@ function rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e
   return "codex";
 }
 
+function rp_636c69656e74732e434f4445585f50524f5649444552() {
+  return "link-assistant";
+}
+
+function rp_636c69656e74732e434f4445585f544f4b454e5f454e56() {
+  return "LINK_ASSISTANT_TOKEN";
+}
+
+function rp_636c69656e74732e434c415544455f544f4b454e5f454e56() {
+  return "ANTHROPIC_AUTH_TOKEN";
+}
+
+function rp_636c69656e74732e434c415544455f424153455f454e56() {
+  return "ANTHROPIC_BASE_URL";
+}
+
+function rp_636c69656e74732e524f555445525f544f4b454e5f454e56() {
+  return "LINK_ASSISTANT_TOKEN";
+}
+
+function rp_636c69656e74732e47524f4b5f544f4b454e5f454e56() {
+  return "GROK_API_KEY";
+}
+
+function rp_636c69656e74732e47524f4b5f424153455f454e56() {
+  return "GROK_BASE_URL";
+}
+
+function rp_636c69656e74732e524f555445525f50524f5649444552() {
+  return "link-assistant";
+}
+
+function rp_636c69656e74732e4f574e4552534849505f4d41524b4552() {
+  return ".link-assistant-router-client.json";
+}
+
+function rp_636c69656e74732e434c415544455f4d4f44454c5f454e56() {
+  return ml_copy_fixed_array(["ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":5}});
+}
+
+function rp_636c69656e74732e434c415544455f474154455741595f5441524745545f454e56() {
+  return ml_copy_fixed_array(["ANTHROPIC_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":2}});
+}
+
+function rp_636c69656e74732e434c415544455f44454641554c545f524f575f454e56() {
+  return ml_copy_fixed_array(["ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}});
+}
+
+function rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552() {
+  return "openai";
+}
+
+function rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552() {
+  return "anthropic";
+}
+
+function rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552() {
+  return "google";
+}
+
+function rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552() {
+  return "qwen";
+}
+
+function rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552() {
+  return "z.ai";
+}
+
+function rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254() {
+  return "xhigh";
+}
+
+function rp_636c69656e74732e444f43544f525f4d41585f544f4b454e53() {
+  return 64n;
+}
+
+function rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254() {
+  return "high";
+}
+
 function rp_636c69656e74732e616e616c797369732e434c415544455f505245434544454e43455f454e56() {
   return ml_copy_fixed_array(["ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL", "ANTHROPIC_DEFAULT_OPUS_MODEL", "ANTHROPIC_DEFAULT_SONNET_MODEL", "ANTHROPIC_DEFAULT_HAIKU_MODEL", "CLAUDE_CODE_SUBAGENT_MODEL", "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":9}});
+}
+
+function rp_636c69656e74732e636174616c6f672e636c617564655f636f6e746578745f76617269616e745f69735f617574686f72697a6564(models, requested) {
+  ml_assert_immutable_iterator(models);
+  ml_validate_rust_value(models, {"kind":"array","element":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c"}}, ml_host_value_schema_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379, { refinements: ml_host_value_refinements_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 });
+  if (!(typeof requested === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(requested))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_pattern_3 = (() => {
+    const ml_standard_callback_self_3 = (() => {
+      const ml_text_1 = requested;
+      const ml_text_2 = "[1m]";
+      return (ml_text_1.endsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(0,ml_text_1.length-ml_text_2.length) }):Object.freeze({ $: 'None' }));
+    })();
+    return (() => {
+    const ml_pattern_1 = ml_standard_callback_self_3;
+    if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
+      const ml_standard_pattern_4 = (ml_pattern_1)["field0"];
+      if ((() => {
+      const ml_standard_callback_arg_2 = ml_standard_pattern_4;
+      const base = ml_standard_callback_arg_2;
+      return !(base.length === 0);
+    })()) {
+        return Object.freeze({ $: 'Some', field0: ml_standard_pattern_4 });
+      } else {
+      }
+    } else {
+    }
+    return Object.freeze({ $: 'None' });
+    })();
+  })();
+  if ((ml_pattern_immutable(ml_pattern_3) && (ml_pattern_3.$ === "Some"))) {
+  } else {
+    return false;
+  }
+  const base_2 = (ml_pattern_3)["field0"];
+  return ml_router_any(ml_router_iter(models, true), (model) => { return (((model).id === base_2) && ((model).owned_by === rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552())); });
 }
 
 function rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c() {
@@ -1488,6 +1716,11 @@ function rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245
 function rp_636c69656e74732e636174616c6f672e6d6c5f696d706c5f3633373236313734363532653633366336393635366537343733326536333631373436313663366636373265353236663735373436353732346436663634363536635f36393733356637333635373237363631363236633635(router_self) {
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f757465724d6f64656c"}, ml_host_value_schema_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379, { refinements: ml_host_value_refinements_53c9e0da3f7623185b48cc1d05251224f3b9286bfb7d43f0786d6b7d511ff379 });
   return ((router_self).router_unavailable_reason.$ === 'None');
+}
+
+function rp_636c69656e74732e636174616c6f672e6d6c5f696d706c5f36333732363137343635326536333663363936353665373437333265363336313734363136633666363732653532366637353734363537323433366336393635366537343433363137303631363236393663363937343639363537335f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "RouterClientCapabilities", ["claude"]: ml_record1 });
 }
 
 function rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552() {
@@ -1500,6 +1733,64 @@ function rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c
 
 function rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e() {
   return Object.freeze({ $: 'Tuple', field0: 2n, field1: 1n, field2: 255n });
+}
+
+function rp_636c69656e74732e6d6c5f696d706c5f3633373236313734363532653633366336393635366537343733326534333663363936353665373434623639366536345f363637323666366435663733373437323566366637303734(value) {
+  if (!(typeof value === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(value))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_s1 = ((value).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '')).replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+  if ((ml_s1 === "codex")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Codex' }) });
+  } else {
+    if ((ml_s1 === "claude")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ClaudeCode' }) });
+    } else {
+      if ((ml_s1 === "claude-code")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ClaudeCode' }) });
+      } else {
+        if ((ml_s1 === "cursor")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Cursor' }) });
+        } else {
+          if ((ml_s1 === "cursor-agent")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Cursor' }) });
+          } else {
+            if ((ml_s1 === "gemini")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'GeminiCli' }) });
+            } else {
+              if ((ml_s1 === "gemini-cli")) {
+                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'GeminiCli' }) });
+              } else {
+                if ((ml_s1 === "grok")) {
+                  return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'GrokCli' }) });
+                } else {
+                  if ((ml_s1 === "grok-cli")) {
+                    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'GrokCli' }) });
+                  } else {
+                    if ((ml_s1 === "opencode")) {
+                      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Opencode' }) });
+                    } else {
+                      if ((ml_s1 === "qwen")) {
+                        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'QwenCode' }) });
+                      } else {
+                        if ((ml_s1 === "qwen-code")) {
+                          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'QwenCode' }) });
+                        } else {
+                          if ((ml_s1 === "agent")) {
+                            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Agent' }) });
+                          } else {
+                            return Object.freeze({ $: 'None' });
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 function rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553() {
@@ -1548,6 +1839,12 @@ function rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253
 
 function rp_636f6465785f6964656e746974792e4f524947494e41544f52() {
   return "codex_cli_rs";
+}
+
+function rp_636f6465785f6964656e746974792e6d6c5f696d706c5f363337323631373436353265363336663634363537383566363936343635366537343639373437393265353436643735373834333663363936353665373434393665363636665f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "TmuxClientInfo", ["termtype"]: ml_record1, ["termname"]: ml_record2 });
 }
 
 function rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554() {
@@ -1867,6 +2164,18 @@ function rp_636f6e6669672e6d6c5f696d706c5f36333732363137343635326536333666366536
   }
 }
 
+function rp_636f6e6669672e6d6c5f696d706c5f363337323631373436353265363336663665363636393637326535353730373337343732363536313664353037323666373636393634363537325f3634363536363631373536633734() {
+  return Object.freeze({ $: 'Auto' });
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f3633373236313734363532653633366636653636363936373265353236663735373436393665363734643666363436355f3634363536363631373536633734() {
+  return Object.freeze({ $: 'Direct' });
+}
+
+function rp_636f6e6669672e6d6c5f696d706c5f363337323631373436353265363336663665363636393637326535333734366637323631363736353530366636633639363337395f3634363536363631373536633734() {
+  return Object.freeze({ $: 'Both' });
+}
+
 function rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c() {
   return "";
 }
@@ -2100,6 +2409,10 @@ function rp_6465706c6f792e72756e74696d652e69735f616273656e74(error) {
   })());
 }
 
+function rp_6465706c6f792e72756e74696d652e6d6c5f696d706c5f3633373236313734363532653634363537303663366637393265373237353665373436393664363532653434366636333662363537325f3634363536363631373536633734() {
+  return Object.freeze({ $: "Docker" });
+}
+
 function rp_6465706c6f792e737465702e6d6c5f696d706c5f36333732363137343635326536343635373036633666373932653733373436353730326534663735373436333666366436355f363436353734363136393663(router_self) {
   ml_pattern_immutable_view(router_self);
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6465706c6f792e737465702e4f7574636f6d65"}, ml_host_value_schema_12547468357cbc91500a27aeb8c3eabbe64b7dfdfc46c26f18391dffa5a9216f, { refinements: ml_host_value_refinements_12547468357cbc91500a27aeb8c3eabbe64b7dfdfc46c26f18391dffa5a9216f });
@@ -2133,6 +2446,59 @@ function rp_6465706c6f792e737465702e6d6c5f696d706c5f3633373236313734363532653634
   ml_assert_immutable_iterator(router_self);
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6465706c6f792e737465702e5265706f7274"}, ml_host_value_schema_0f9d722e991d34ee14bb0f4afbb4c0eb03f2543a5303354b7c2806d4ad4d8885, { refinements: ml_host_value_refinements_0f9d722e991d34ee14bb0f4afbb4c0eb03f2543a5303354b7c2806d4ad4d8885 });
   return ml_router_all(ml_router_iter((router_self).steps, true), (step) => { return !rp_6465706c6f792e737465702e6d6c5f696d706c5f36333732363137343635326536343635373036633666373932653733373436353730326535333734363537303532363537303666373237345f363636313639366336353634(step); });
+}
+
+function rp_6465706c6f792e737465702e6d6c5f696d706c5f3633373236313734363532653634363537303663366637393265373337343635373032653532363537303666373237345f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  return Object.freeze({ $: "Report", ["steps"]: ml_record1 });
+}
+
+function rp_6465706c6f795f636f6e6669672e52455345525645445f454e56() {
+  return Object.freeze(Object.freeze(["TOKEN_SECRET", "DATA_DIR", "STORAGE_POLICY", "HOME", "PATH", "USER", "SHELL", "PWD", "IFS", "CLAUDE_CODE_HOME", "CLAUDE_CONFIG_DIR", "LISTENERS", "ROUTER_HOST", "ROUTER_PORT", "NODE_EXTRA_CA_CERTS"]));
+}
+
+function rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553() {
+  return Object.freeze(Object.freeze(["ROUTER_DEPLOY_", "TLS_", "VERIFY_", "PRESERVATION_"]));
+}
+
+function rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453() {
+  return Object.freeze(Object.freeze(["claude", "codex", "qwen-code", "gemini", "opencode"]));
+}
+
+function rp_6465706c6f795f636f6e6669672e6d6c5f696d706c5f36333732363137343635326536343635373036633666373935663633366636653636363936373265353436663662363536653530366636633639363337395f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = Object.freeze([]);
+  return Object.freeze({ $: "TokenPolicy", ["ttl_hours"]: ml_record1, ["max_requests"]: ml_record2, ["max_tokens"]: ml_record3, ["rate_limit_per_minute"]: ml_record4, ["allowed_models"]: ml_record5 });
+}
+
+function rp_6465706c6f795f636f6e6669672e6d6c5f696d706c5f363337323631373436353265363436353730366336663739356636333666366536363639363732653530373236663736363936343635373234623635373934643666363436355f3634363536363631373536633734() {
+  return Object.freeze({ $: 'Keep' });
+}
+
+function rp_6465706c6f795f636f6e6669672e6d6c5f696d706c5f3633373236313734363532653634363537303663366637393566363336663665363636393637326535303732366637363639363436353732353436353664373036633631373436355f3634363536363631373536633734() {
+  const ml_record1 = "";
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze([]);
+  const ml_record5 = Object.freeze([]);
+  return Object.freeze({ $: "ProviderTemplate", ["kind"]: ml_record1, ["base_url"]: ml_record2, ["default_model"]: ml_record3, ["models"]: ml_record4, ["supported_clients"]: ml_record5 });
+}
+
+function rp_6465706c6f795f636f6e6669672e6d6c5f696d706c5f3633373236313734363532653634363537303663366637393566363336663665363636393637326534343635373036633666373935333635363337343639366636655f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze({ $: 'None' });
+  const ml_record7 = Object.freeze({ $: 'None' });
+  const ml_record8 = Object.freeze({ $: 'None' });
+  const ml_record9 = Object.freeze({ $: 'None' });
+  const ml_record10 = Object.freeze([]);
+  return Object.freeze({ $: "DeploySection", ["server"]: ml_record1, ["instance"]: ml_record2, ["port"]: ml_record3, ["public_port"]: ml_record4, ["image"]: ml_record5, ["build"]: ml_record6, ["root"]: ml_record7, ["mode"]: ml_record8, ["claude_credentials"]: ml_record9, ["seed_credentials"]: ml_record10 });
 }
 
 function rp_6465706c6f795f72656c61792e53544154455f454e56() {
@@ -2338,6 +2704,19 @@ function rp_67656d696e692e726573706f6e7365732e6d6c5f696d706c5f363337323631373436
       return Object.freeze({ $: 'ContentFilter' });
     }
   }
+}
+
+function rp_67656d696e692e73747265616d2e6d6c5f696d706c5f36333732363137343635326536373635366436393665363932653733373437323635363136643265353337333635346137333666366534343635363336663634363537325f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  return Object.freeze({ $: "SseJsonDecoder", ["buffered"]: ml_record1 });
+}
+
+function rp_67656d696e692e73747265616d2e6d6c5f696d706c5f3633373236313734363532653637363536643639366536393265373337343732363536313664326534653631373436393736363535333734373236353631366435343732363136653733366336313734366637325f3634363536363631373536633734() {
+  const ml_record1 = (() => {
+    const ml_record2 = Object.freeze([]);
+    return Object.freeze({ $: "SseJsonDecoder", ["buffered"]: ml_record2 });
+  })();
+  return Object.freeze({ $: "NativeStreamTranslator", ["decoder"]: ml_record1 });
 }
 
 function rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45() {
@@ -2669,6 +3048,12 @@ function rp_676f6e6b612e4d41585f5353455f43415252595f4259544553() {
   return ml_fixed((64n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
 }
 
+function rp_676f6e6b612e6d6c5f696d706c5f36333732363137343635326536373666366536623631326535333733363535343635373236643639366536313663343436353734363536333734366637325f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  const ml_record2 = false;
+  return Object.freeze({ $: "SseTerminalDetector", ["carry"]: ml_record1, ["terminal_in_discarded_prefix"]: ml_record2 });
+}
+
 function rp_6c6566696e652e424153455f55524c() {
   return "https://lefine.pro/v1";
 }
@@ -2744,6 +3129,28 @@ function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f36333732363137343635326536
 function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f3633373236313734363532653663366636373566363136653631366337393733363937333265343537383633363836313665363736355f363937333566373536653734363537323664363936653631373436353634(router_self) {
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6c6f675f616e616c797369732e45786368616e6765"}, ml_host_value_schema_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0, { refinements: ml_host_value_refinements_abd0c16132cbdeccaf8fd57abbda1755457ea6be36f85d4a1424717d4d9570e0 });
   return ((((router_self).streamed && (router_self).inspectable) && ((router_self).stream_outcome.$ === 'None')) && !(router_self).body_terminated);
+}
+
+function rp_6c6f675f616e616c797369732e6d6c5f696d706c5f3633373236313734363532653663366636373566363136653631366337393733363937333265343537383633363836313665363736355f3634363536363631373536633734() {
+  const ml_record1 = "";
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = false;
+  const ml_record6 = false;
+  const ml_record7 = Object.freeze({ $: 'None' });
+  const ml_record8 = false;
+  const ml_record9 = false;
+  const ml_record10 = false;
+  const ml_record11 = Object.freeze({ $: 'None' });
+  const ml_record12 = Object.freeze({ $: 'None' });
+  const ml_record13 = 0n;
+  const ml_record14 = 0n;
+  const ml_record15 = 0n;
+  const ml_record16 = false;
+  const ml_record17 = Object.freeze([]);
+  const ml_record18 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "Exchange", ["correlation_id"]: ml_record1, ["status"]: ml_record2, ["upstream_status"]: ml_record3, ["uri"]: ml_record4, ["streamed"]: ml_record5, ["stream_evidence"]: ml_record6, ["response_media_type"]: ml_record7, ["stream_requested"]: ml_record8, ["body_terminated"]: ml_record9, ["inspectable"]: ml_record10, ["stream_outcome"]: ml_record11, ["stream_complete"]: ml_record12, ["frames"]: ml_record13, ["undecodable_bodies"]: ml_record14, ["records"]: ml_record15, ["stream_error"]: ml_record16, ["encoded_frames"]: ml_record17, ["content_encoding"]: ml_record18 });
 }
 
 function rp_6c6f675f6465636f64652e42524f544c495f425546464552() {
@@ -2907,6 +3314,11 @@ function rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572(c
   return ml_text_1.includes(ml_text_2); });
 }
 
+function rp_6c6f67696e5f7074795f6261636b656e642e6d6c5f696d706c5f363337323631373436353265366336663637363936653566373037343739356636323631363336623635366536343265353437353639353037323666363737323635373337335f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  return Object.freeze({ $: "TuiProgress", ["completed"]: ml_record1 });
+}
+
 function rp_6c6f67696e5f75726c2e415554485f484f535453() {
   return Object.freeze(Object.freeze(["claude.ai", "claude.com", "anthropic.com"]));
 }
@@ -2981,6 +3393,16 @@ function rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f444952
   return "server-trust";
 }
 
+function rp_6d616e616765645f7365727665722e6d6c5f696d706c5f3633373236313734363532653664363136653631363736353634356637333635373237363635373232653530363537323733363937333734363536343533363537323736363537325f3634363536363631373536633734() {
+  const ml_record1 = "";
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "PersistedServer", ["server"]: ml_record1, ["management_server"]: ml_record2, ["token"]: ml_record3, ["run_max_requests"]: ml_record4, ["ca_cert"]: ml_record5, ["management_ca_cert"]: ml_record6 });
+}
+
 function rp_6d6574726963732e6d6c5f696d706c5f3633373236313734363532653664363537343732363936333733326535343666366236353665353537333631363736355f3634363536363631373536633734() {
   const ml_record1 = "";
   const ml_record2 = 0n;
@@ -3042,6 +3464,11 @@ function rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e63616e6f6e
 function rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e6d6c5f696d706c5f36333732363137343635326536643666363436353663356636333631373436313663366636373566373336663735373236333635373332653633366636653636363936373265343336313734363136633666363735333666373537323633363537333433366636653636363936375f36393665373436353732373636313663(router_self) {
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e436174616c6f67536f7572636573436f6e666967"}, ml_host_value_schema_6b42f6f7b1a3de0ab7d6fb2eaa5e22d2bd76d4172af3d496fbbd9307672022ca, { refinements: ml_host_value_refinements_6b42f6f7b1a3de0ab7d6fb2eaa5e22d2bd76d4172af3d496fbbd9307672022ca });
   return ml_host_std_time_duration_from_secs((router_self).refresh_secs);
+}
+
+function rp_6d6f64656c5f636174616c6f675f736f75726365732e6d6c5f696d706c5f3633373236313734363532653664366636343635366335663633363137343631366336663637356637333666373537323633363537333265353336653631373037333638366637345f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  return Object.freeze({ $: "Snapshot", ["sources"]: ml_record1 });
 }
 
 function rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64(entry) {
@@ -3129,12 +3556,23 @@ function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f3633373236313734363532
   return Object.freeze({ $: "ModelAccessError", ["code"]: ml_record1, ["requested_model"]: ml_record2, ["allowed_models"]: ml_record3 });
 }
 
+function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f363337323631373436353265366436663634363536633566363336663665373437323631363337343265346436663634363536633533363536633635363337343666373234623639366536345f3634363536363631373536633734() {
+  return Object.freeze({ $: 'Unknown' });
+}
+
 function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f3633373236313734363532653664366636343635366335663633366636653734373236313633373432653464366636343635366335323666373537343635353336333666373036355f3634363536363631373536633734() {
   const ml_record1 = Object.freeze({ $: 'None' });
   const ml_record2 = Object.freeze({ $: 'None' });
   const ml_record3 = Object.freeze({ $: 'None' });
   const ml_record4 = Object.freeze([]);
   return Object.freeze({ $: "ModelRouteScope", ["provider"]: ml_record1, ["account"]: ml_record2, ["endpoint"]: ml_record3, ["protocols"]: ml_record4 });
+}
+
+function rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f363337323631373436353265366436663634363536633566363336663665373437323631363337343265346436663634363536633431363336333635373337333530366636633639363337395f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  const ml_record2 = false;
+  const ml_record3 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "ModelAccessPolicy", ["allowed_models"]: ml_record1, ["allow_substitution"]: ml_record2, ["substitution_source"]: ml_record3 });
 }
 
 function rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e4d41585f414e5448524f5049435f50414745() {
@@ -3174,6 +3612,23 @@ function rp_6d70702e6d6c5f696d706c5f36333732363137343635326536643730373032653464
 
 function rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554() {
   return ml_host_std_time_duration_from_secs(15n);
+}
+
+function rp_6f617574682e6d6c5f696d706c5f363337323631373436353265366636313735373436383265343336633631373536343635343337323635363436353665373436393631366337335f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "ClaudeCredentials", ["access_token"]: ml_record1, ["oauth_token"]: ml_record2, ["refresh_token"]: ml_record3, ["expires_at"]: ml_record4, ["claude_ai_oauth"]: ml_record5 });
+}
+
+function rp_6f617574682e6d6c5f696d706c5f36333732363137343635326536663631373537343638326534663431373537343638343236633666363336625f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "OAuthBlock", ["access_token"]: ml_record1, ["oauth_token"]: ml_record2, ["refresh_token"]: ml_record3, ["expires_at"]: ml_record4 });
 }
 
 function rp_6f70656e61692e657874726163745f7373655f64617461(block) {
@@ -3348,6 +3803,12 @@ function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536
 function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f3633373236313734363532653666373537343730373537343566366336393664363937343265353236353733373036663665373336353733353337343732363536313664353236353737373236393734363537325f37353730373337343732363536313664356636643666363436353663(router_self) {
   ml_validate_rust_value(router_self, {"kind":"data","name":"rp_6f75747075745f6c696d69742e526573706f6e73657353747265616d5265777269746572"}, ml_host_value_schema_075f4392488bc39453aabb96d5ed6defbd37b115be4e0f5d9d4f08fa49015aa8, { refinements: ml_host_value_refinements_075f4392488bc39453aabb96d5ed6defbd37b115be4e0f5d9d4f08fa49015aa8 });
   return ml_option_string_as_deref((router_self).upstream_model);
+}
+
+function rp_6f75747075745f6c696d69742e6d6c5f696d706c5f36333732363137343635326536663735373437303735373435663663363936643639373432653466373537343730373537343534366636623635366534633639366436393734363537325f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = false;
+  return Object.freeze({ $: "OutputTokenLimiter", ["remaining"]: ml_record1, ["stopped"]: ml_record2 });
 }
 
 function rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453() {
@@ -3525,6 +3986,10 @@ function rp_70726f7669646572732e6d6c5f696d706c5f36333732363137343635326537303732
       }
     }
   }
+}
+
+function rp_70726f7669646572732e6d6c5f696d706c5f36333732363137343635326537303732366637363639363436353732373332653530373236663736363936343635373234623639366536345f3634363536363631373536633734() {
+  return Object.freeze({ $: 'OpenAICompatible' });
 }
 
 function rp_70726f78792e4150495f505245464958() {
@@ -4324,6 +4789,13 @@ function rp_73746f705f73657175656e6365732e6d6c5f696d706c5f3633373236313734363532
   return !((router_self).sequences.length === 0);
 }
 
+function rp_73746f705f73657175656e6365732e6d6c5f696d706c5f3633373236313734363532653733373436663730356637333635373137353635366536333635373332653533373436663730353336353731373536353665363336353436363936633734363537325f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  const ml_record2 = "";
+  const ml_record3 = false;
+  return Object.freeze({ $: "StopSequenceFilter", ["sequences"]: ml_record1, ["pending"]: ml_record2, ["stopped"]: ml_record3 });
+}
+
 function rp_73746f726167652e73616e6974697a655f636f6465635f6572726f72(error, contents) {
   if (!(typeof error === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(error))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof contents === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(contents))) throw new TypeError('argument outside supported Rust value domain');
@@ -4489,6 +4961,12 @@ function rp_73747265616d5f7465726d696e6174696f6e2e6d6c5f696d706c5f36333732363137
   return !((router_self).carry.length === 0);
 }
 
+function rp_73747265616d5f7465726d696e6174696f6e2e6d6c5f696d706c5f36333732363137343635326537333734373236353631366435663734363537323664363936653631373436393666366532653534363537323664363936653631366334353736363536653734343436353734363536333734366637325f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  const ml_record2 = false;
+  return Object.freeze({ $: "TerminalEventDetector", ["carry"]: ml_record1, ["seen"]: ml_record2 });
+}
+
 function rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559() {
   return "_link_assistant_router";
 }
@@ -4587,6 +5065,34 @@ function rp_737562736372697074696f6e2e74797065732e6d6c5f696d706c5f36333732363137
   })();
 }
 
+function rp_737562736372697074696f6e2e6d6c5f696d706c5f3633373236313734363532653733373536323733363337323639373037343639366636653265353236313737343337323635363436353665373436393631366337335f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  const ml_record5 = Object.freeze({ $: 'None' });
+  const ml_record6 = Object.freeze({ $: 'None' });
+  const ml_record7 = Object.freeze({ $: 'None' });
+  const ml_record8 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "RawCredentials", ["access_token"]: ml_record1, ["token"]: ml_record2, ["refresh_token"]: ml_record3, ["expiry_date"]: ml_record4, ["resource_url"]: ml_record5, ["account_id"]: ml_record6, ["tokens"]: ml_record7, ["claude_ai_oauth"]: ml_record8 });
+}
+
+function rp_737562736372697074696f6e2e6d6c5f696d706c5f3633373236313734363532653733373536323733363337323639373037343639366636653265343336663634363537383534366636623635366537335f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "CodexTokens", ["access_token"]: ml_record1, ["refresh_token"]: ml_record2, ["account_id"]: ml_record3, ["id_token"]: ml_record4 });
+}
+
+function rp_737562736372697074696f6e2e6d6c5f696d706c5f3633373236313734363532653733373536323733363337323639373037343639366636653265343336633631373536343635343236633666363336625f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "ClaudeBlock", ["access_token"]: ml_record1, ["token"]: ml_record2, ["refresh_token"]: ml_record3, ["expires_at"]: ml_record4 });
+}
+
 function rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552() {
   return "x-openai-internal-codex-responses-lite";
 }
@@ -4597,6 +5103,35 @@ function rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e()
 
 function rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459() {
   return ml_fixed((ml_fixed((2n * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow") * 1024n), 0n, 18446744073709551615n, "attempt to multiply with overflow");
+}
+
+function rp_737562736372697074696f6e5f75736167652e70617273655f70726f7669646572(provider) {
+  if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
+  if ((provider === "anthropic")) {
+    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Anthropic' }) });
+  } else {
+    if ((provider === "openai")) {
+      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'OpenAi' }) });
+    } else {
+      if ((provider === "z-ai")) {
+        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ZAi' }) });
+      } else {
+        if ((provider === "lefine")) {
+          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Lefine' }) });
+        } else {
+          if ((provider === "gemini")) {
+            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Gemini' }) });
+          } else {
+            if ((provider === "qwen")) {
+              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Qwen' }) });
+            } else {
+              return Object.freeze({ $: 'None' });
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 function rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e414e5448524f5049435f57494e444f5753() {
@@ -4648,6 +5183,12 @@ function rp_737562736372697074696f6e5f75736167652e63616368652e5354414e444152445f
 
 function rp_737562736372697074696f6e5f75736167652e63616368652e414e5448524f5049435f43414348455f54544c() {
   return ml_host_std_time_duration_from_secs(ml_fixed((13n * 60n), 0n, 18446744073709551615n, "attempt to multiply with overflow"));
+}
+
+function rp_737562736372697074696f6e5f75736167652e6d6c5f696d706c5f363337323631373436353265373337353632373336333732363937303734363936663665356637353733363136373635326535333631363636353433373236353634363536653734363936313663346436353734363136343631373436315f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze({ $: 'None' });
+  const ml_record2 = Object.freeze({ $: 'None' });
+  return Object.freeze({ $: "SafeCredentialMetadata", ["plan"]: ml_record1, ["subscription_end"]: ml_record2 });
 }
 
 function rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353() {
@@ -4881,6 +5422,155 @@ function rp_746f6b656e5f7365637265742e7265667573616c() {
 
 function rp_746f6b656e5f7365637265742e46494c455f454e56() {
   return "TOKEN_SECRET_FILE";
+}
+
+function rp_766572696669636174696f6e2e534348454d41() {
+  return "link-assistant-router/verification/v1";
+}
+
+function rp_766572696669636174696f6e2e534b49505f4c4f47() {
+  return "ROUTER_VERIFICATION_SKIPS";
+}
+
+function rp_766572696669636174696f6e2e7465737473(targets) {
+  if (!ml_router_array(targets, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = targets;
+  const ml_record2 = Object.freeze(Object.freeze([]));
+  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record4 = false;
+  return Object.freeze({ $: "Run", ["targets"]: ml_record1, ["unit"]: ml_record2, ["filter"]: ml_record3, ["serial"]: ml_record4 });
+}
+
+function rp_766572696669636174696f6e2e756e6974(unit, filter) {
+  if (!ml_router_array(unit, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  if (!(typeof filter === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(filter))) throw new TypeError('argument outside supported Rust value domain');
+  const ml_record1 = Object.freeze(Object.freeze([]));
+  const ml_record2 = unit;
+  const ml_record3 = Object.freeze({ $: 'Some', field0: filter });
+  const ml_record4 = false;
+  return Object.freeze({ $: "Run", ["targets"]: ml_record1, ["unit"]: ml_record2, ["filter"]: ml_record3, ["serial"]: ml_record4 });
+}
+
+function rp_766572696669636174696f6e2e4152454153() {
+  return Object.freeze(Object.freeze([(() => {
+    const ml_record1 = "catalogs";
+    const ml_record2 = "token-authorized /api/models and /v1/models: entitlement filtering, synthetic and namespaced rows, credential carriers, split origins, live provider catalogs";
+    const ml_record3 = "LEFINE_API_KEY for the live catalog";
+    const ml_record4 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["credential_carrier_test", "synthetic_catalog_test", "gemini_namespace_test", "clients_split_origins_test", "client_ownership_test", "managed_server_test", "lefine_live_test"]))), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "model_catalog")]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record1, ["covers"]: ml_record2, ["enable"]: ml_record3, ["runs"]: ml_record4 });
+  })(), (() => {
+    const ml_record5 = "real-clients";
+    const ml_record6 = "Claude Code, Codex and OpenCode real binaries against a loopback Router, plus the separately gated host CLI lifecycle";
+    const ml_record7 = "ROUTER_REAL_CLIENT_TESTS=1 with the vendor CLIs on PATH; ROUTER_HOST_CLI_TESTS=1 with ROUTER_HOST_CLI_URL and ROUTER_HOST_CLI_TOKEN";
+    const ml_record8 = Object.freeze(Object.freeze([(() => {
+      const ml_record9 = Object.freeze(Object.freeze(["real_clients_test", "host_client_lifecycle_test"]));
+      const ml_record10 = Object.freeze(Object.freeze([]));
+      const ml_record11 = Object.freeze({ $: 'None' });
+      const ml_record12 = true;
+      return Object.freeze({ $: "Run", ["targets"]: ml_record9, ["unit"]: ml_record10, ["filter"]: ml_record11, ["serial"]: ml_record12 });
+    })()]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record5, ["covers"]: ml_record6, ["enable"]: ml_record7, ["runs"]: ml_record8 });
+  })(), (() => {
+    const ml_record13 = "zai-only-entitlements";
+    const ml_record14 = "a token entitled only to z.ai: catalog rows, Claude and Codex launch profiles, pinned selection, usage normalization";
+    const ml_record15 = "ROUTER_LIVE_ZAI_API_KEY (and ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 for the billed probe)";
+    const ml_record16 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["with_router_test", "clients_cli_test", "live_model_selection_test", "subscription_usage_live_test"]))), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "with_command")]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record13, ["covers"]: ml_record14, ["enable"]: ml_record15, ["runs"]: ml_record16 });
+  })(), (() => {
+    const ml_record17 = "anthropic-mock-contracts";
+    const ml_record18 = "Anthropic-enabled and mixed entitlements: native Anthropic surfaces, cross-vendor translation, Claude picker rows";
+    const ml_record19 = "nothing; mocked protocol and authorization contracts only";
+    const ml_record20 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["router_e2e_test", "cross_vendor_translation_test", "claude_auth_test"]))), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "with_command")]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record17, ["covers"]: ml_record18, ["enable"]: ml_record19, ["runs"]: ml_record20 });
+  })(), (() => {
+    const ml_record21 = "anthropic-entitlements";
+    const ml_record22 = "live personal Anthropic and z.ai union catalog, actual Claude picker, exact model identities and successful real responses through a single-owner serving Router";
+    const ml_record23 = "ROUTER_LIVE_CLAUDE_CREDENTIAL_JSON, ROUTER_LIVE_MIXED_URL, ROUTER_LIVE_MIXED_TOKEN and ROUTER_LIVE_MIXED_INFERENCE=1; a safe OS boundary and installed Claude";
+    const ml_record24 = Object.freeze(Object.freeze([(() => {
+      const ml_record25 = Object.freeze(Object.freeze(["mixed_entitlements_live_test", "subscription_usage_live_test"]));
+      const ml_record26 = Object.freeze(Object.freeze([]));
+      const ml_record27 = Object.freeze({ $: 'None' });
+      const ml_record28 = true;
+      return Object.freeze({ $: "Run", ["targets"]: ml_record25, ["unit"]: ml_record26, ["filter"]: ml_record27, ["serial"]: ml_record28 });
+    })()]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record21, ["covers"]: ml_record22, ["enable"]: ml_record23, ["runs"]: ml_record24 });
+  })(), (() => {
+    const ml_record29 = "request-logs";
+    const ml_record30 = "request logging, denied-request records, `router logs`, log format migration, conversation records";
+    const ml_record31 = "nothing";
+    const ml_record32 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["request_logging_test", "request_log_line_test", "denied_request_logging_test", "logs_command_test", "log_format_migration_test", "conversation_record_test"])))]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record29, ["covers"]: ml_record30, ["enable"]: ml_record31, ["runs"]: ml_record32 });
+  })(), (() => {
+    const ml_record33 = "backup-reset-restore";
+    const ml_record34 = "client profile backup, reset and restore, active-profile tracking and maintenance";
+    const ml_record35 = "nothing";
+    const ml_record36 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["clients_lifecycle_test", "clients_maintenance_test", "clients_active_profile_test"])))]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record33, ["covers"]: ml_record34, ["enable"]: ml_record35, ["runs"]: ml_record36 });
+  })(), (() => {
+    const ml_record37 = "rolling-updates";
+    const ml_record38 = "`router deploy`: candidate-first updates that drain streams, TOKEN_SECRET continuity, relay rotation, inconsistent-state recovery, host mode";
+    const ml_record39 = "a container runtime and ROUTER_DEPLOY_TEST_IMAGE (plus ROUTER_DEPLOY_TEST_PREVIOUS_IMAGE for relay rotation)";
+    const ml_record40 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "deploy_local"), (() => {
+      const ml_record41 = Object.freeze(Object.freeze(["deploy_host_test", "deploy_docker_test", "deploy_docker_secret_test", "deploy_docker_relay_test", "deploy_docker_claude_share_test", "deploy_docker_host_test"]));
+      const ml_record42 = Object.freeze(Object.freeze([]));
+      const ml_record43 = Object.freeze({ $: 'None' });
+      const ml_record44 = true;
+      return Object.freeze({ $: "Run", ["targets"]: ml_record41, ["unit"]: ml_record42, ["filter"]: ml_record43, ["serial"]: ml_record44 });
+    })()]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record37, ["covers"]: ml_record38, ["enable"]: ml_record39, ["runs"]: ml_record40 });
+  })(), (() => {
+    const ml_record45 = "deploy-configuration";
+    const ml_record46 = "`router deploy --config`: declarative TOML, runtime env passthrough and its fingerprint, instance names, SSH port/identity/pinned known_hosts/keepalive/deadline, deploy token policy, `--provider-key` validation modes, verification profiles and the `--json` document";
+    const ml_record47 = "nothing; a stand-in ssh records the session";
+    const ml_record48 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["deploy_config_test"]))), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "deploy_config"), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "deploy_remote")]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record45, ["covers"]: ml_record46, ["enable"]: ml_record47, ["runs"]: ml_record48 });
+  })(), (() => {
+    const ml_record49 = "staging";
+    const ml_record50 = "independent disposable primary/candidate Docker namespaces, live GLM stream continuity, real Claude flagship/Flash responses and picker, isolated logs, retained primary tokens/profile/sessions/catalog";
+    const ml_record51 = "ROUTER_STAGING_LIVE_TESTS=1, ROUTER_STAGING_DISPOSABLE_HOST=1, ROUTER_STAGING_ZAI_API_KEY, ROUTER_DEPLOY_TEST_IMAGE and installed Claude; static key only, no copied OAuth";
+    const ml_record52 = Object.freeze(Object.freeze([(() => {
+      const ml_record53 = Object.freeze(Object.freeze(["staging_live_test"]));
+      const ml_record54 = Object.freeze(Object.freeze([]));
+      const ml_record55 = Object.freeze({ $: 'None' });
+      const ml_record56 = true;
+      return Object.freeze({ $: "Run", ["targets"]: ml_record53, ["unit"]: ml_record54, ["filter"]: ml_record55, ["serial"]: ml_record56 });
+    })()]));
+    return Object.freeze({ $: "Area", ["name"]: ml_record49, ["covers"]: ml_record50, ["enable"]: ml_record51, ["runs"]: ml_record52 });
+  })()]));
+}
+
+function rp_766572696669636174696f6e2e737461747573(succeeded, counts, skipped, not_run) {
+  if (!(typeof succeeded === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  ml_validate_rust_value(counts, {"kind":"data","name":"rp_766572696669636174696f6e2e436f756e7473"}, ml_host_value_schema_77e9e272f8f29a71e20f733cff09c2808a5814f87a6324efeac7f6879c7fffb2, { refinements: ml_host_value_refinements_77e9e272f8f29a71e20f733cff09c2808a5814f87a6324efeac7f6879c7fffb2 });
+  if (typeof skipped !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(skipped, 0n, 18446744073709551615n, "u64 argument skipped out of range");
+  if (!(typeof skipped === 'bigint' && skipped >= 0n && skipped <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if (typeof not_run !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
+  ml_fixed(not_run, 0n, 18446744073709551615n, "u64 argument not_run out of range");
+  if (!(typeof not_run === 'bigint' && not_run >= 0n && not_run <= 18446744073709551615n)) throw new TypeError('argument outside supported Rust value domain');
+  if ((!succeeded || ((counts).failed > 0n))) {
+    return "failed";
+  } else {
+    if (((((not_run > 0n) || (skipped > 0n)) || ((counts).ignored > 0n)) || ((counts).passed === 0n))) {
+      return "not-proven";
+    } else {
+      return "proven";
+    }
+  }
+}
+
+function rp_766572696669636174696f6e2e726573756c7473(output) {
+  if (!(typeof output === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(output))) throw new TypeError('argument outside supported Rust value domain');
+  return ml_router_count(ml_router_filter(ml_str_lines(output), (line) => { const ml_text_5 = (line).replace(/^[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+|[\u0009\u000a\u000b\u000c\u000d\u0020\u0085\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000]+$/gu, '');
+  const ml_text_6 = "test result: ";
+  return ml_text_5.startsWith(ml_text_6); }));
+}
+
+function rp_766572696669636174696f6e2e6d6c5f696d706c5f36333732363137343635326537363635373236393636363936333631373436393666366532653433366637353665373437335f3634363536363631373536633734() {
+  const ml_record1 = 0n;
+  const ml_record2 = 0n;
+  const ml_record3 = 0n;
+  return Object.freeze({ $: "Counts", ["passed"]: ml_record1, ["failed"]: ml_record2, ["ignored"]: ml_record3 });
 }
 
 function rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353() {
@@ -5306,6 +5996,18 @@ function rp_617574685f696d706f72742e696d706f72745f726573756c742e6d6c5f696d706c5f
   return Object.freeze({ $: "ImportExecution", ["report"]: ml_record1, ["messages"]: ml_record8, ["error"]: ml_record9, ["failed"]: ml_record10 });
 }
 
+function rp_617574685f696d706f72742e6d6c5f696d706c5f3633373236313734363532653631373537343638356636393664373036663732373432653439366437303666373237343530366636633639363337395f3634363536363631373536633734() {
+  const ml_record1 = false;
+  const ml_record2 = false;
+  const ml_record3 = false;
+  const ml_record4 = Object.freeze({ $: 'PreferFollow' });
+  return Object.freeze({ $: "ImportPolicy", ["if_absent"]: ml_record1, ["capability_asserted"]: ml_record2, ["router_owned_candidate"]: ml_record3, ["sharing"]: ml_record4 });
+}
+
+function rp_617574685f696d706f72742e6d6c5f696d706c5f363337323631373436353265363137353734363835663639366437303666373237343265343337323635363436353665373436393631366335333638363137323639366536375f3634363536363631373536633734() {
+  return Object.freeze({ $: 'PreferFollow' });
+}
+
 function rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559() {
   return rp_6465706c6f792e4c4142454c5f4b4559();
 }
@@ -5360,6 +6062,11 @@ function rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44
 
 function rp_6465706c6f795f6c6f63616c2e686f73742e6d6967726174652e484f53545f52454144595f415454454d505453() {
   return 60n;
+}
+
+function rp_6465706c6f795f6c6f63616c2e696e76656e746f72792e6d6c5f696d706c5f363337323631373436353265363436353730366336663739356636633666363336313663326536393665373636353665373436663732373932653439366537363635366537343666373237395f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  return Object.freeze({ $: "Inventory", ["runs"]: ml_record1 });
 }
 
 function rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56() {
@@ -5460,6 +6167,12 @@ function rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958
   return "ROUTER_DEPLOY_EVENT ";
 }
 
+function rp_6465706c6f795f72656d6f74652e73657373696f6e2e6d6c5f696d706c5f36333732363137343635326536343635373036633666373935663732363536643666373436353265373336353733373336393666366532653433366636633663363536333734363536345f3634363536363631373536633734() {
+  const ml_record1 = Object.freeze([]);
+  const ml_record2 = Object.freeze([]);
+  return Object.freeze({ $: "Collected", ["events"]: ml_record1, ["output"]: ml_record2 });
+}
+
 function rp_6c6f67735f636c692e53484f574e() {
   return 5n;
 }
@@ -5507,5 +6220,5 @@ function rp_6d616e6167656d656e745f636f6e6669672e6d6c5f696d706c5f3633373236313734
   const ml_record4 = true;
   return Object.freeze({ $: "ManagementConfig", ["allow_remote"]: ml_record1, ["lockout_failures"]: ml_record2, ["lockout_secs"]: ml_record3, ["exempt_loopback"]: ml_record4 });
 }
-export const translated = Object.freeze({ ["account_http.DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(), ["account_http.DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(), ["account_http.PROXY_SCHEMES"]: rp_6163636f756e745f687474702e50524f58595f534348454d4553(), ["account_limits.UNIFIED_PREFIX"]: rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958(), ["account_limits.MAX_VENDOR_COOLDOWN"]: rp_6163636f756e745f6c696d6974732e4d41585f56454e444f525f434f4f4c444f574e(), ["account_limits.STATE_FILE"]: rp_6163636f756e745f6c696d6974732e53544154455f46494c45(), ["account_limits.MODEL_FAMILIES"]: rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553(), ["accounts.limits.LIMITS_SAVE_INTERVAL_SECS"]: rp_6163636f756e74732e6c696d6974732e4c494d4954535f534156455f494e54455256414c5f53454353(), ["accounts_cli.DEFAULT_PAUSE_REASON"]: rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e(), ["accounts_cli.LOCAL_NOTE"]: rp_6163636f756e74735f636c692e4c4f43414c5f4e4f5445(), ["activitypub.ACTIVITY_JSON"]: rp_61637469766974797075622e41435449564954595f4a534f4e(), ["admin.ADMIN_TOKEN_PREFIX"]: rp_61646d696e2e41444d494e5f544f4b454e5f505245464958(), ["admin.CLAIM_FILE_NAME"]: rp_61646d696e2e434c41494d5f46494c455f4e414d45(), ["admin.DEFAULT_CANDIDATE_TTL_SECS"]: rp_61646d696e2e44454641554c545f43414e4449444154455f54544c5f53454353(), ["admin.DEFAULT_CLAIM_TTL_HOURS"]: rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253(), ["admin.CLAIM_TOKEN_LABEL"]: rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c(), ["admin.clamp_ttl"]: rp_61646d696e2e636c616d705f74746c, ["admin_recovery.RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["anthropic_bridge.DEFAULT_MAX_TOKENS"]: rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53(), ["anthropic_bridge.usage_field"]: rp_616e7468726f7069635f6272696467652e75736167655f6669656c64, ["anthropic_stream.map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["anthropic_stream.response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579, ["api_error.openai_error_type"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065, ["api_error.openai_error_code"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465, ["auth.CODEX_CLIENT_ID"]: rp_617574682e434f4445585f434c49454e545f4944(), ["auth.CODEX_ISSUER"]: rp_617574682e434f4445585f495353554552(), ["auth.CODEX_CALLBACK_PATH"]: rp_617574682e434f4445585f43414c4c4241434b5f50415448(), ["auth.CODEX_DEVICE_CALLBACK_PATH"]: rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448(), ["auth_diagnostics.reason.MISSING_CREDENTIAL"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f43524544454e5449414c(), ["auth_diagnostics.reason.INVALID_PREFIX"]: rp_617574685f646961676e6f73746963732e726561736f6e2e494e56414c49445f505245464958(), ["auth_diagnostics.reason.MALFORMED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d414c464f524d4544(), ["auth_diagnostics.reason.SIGNATURE_INVALID"]: rp_617574685f646961676e6f73746963732e726561736f6e2e5349474e41545552455f494e56414c4944(), ["auth_diagnostics.reason.ISSUER_SECRET_UNSET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4953535545525f5345435245545f554e534554(), ["auth_diagnostics.reason.EXPIRED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e45585049524544(), ["auth_diagnostics.reason.REVOKED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e5245564f4b4544(), ["auth_diagnostics.reason.MISSING_RECORD"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f5245434f5244(), ["auth_diagnostics.reason.BINDING_MISMATCH"]: rp_617574685f646961676e6f73746963732e726561736f6e2e42494e44494e475f4d49534d41544348(), ["auth_diagnostics.reason.REQUEST_BUDGET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e524551554553545f425544474554(), ["auth_diagnostics.reason.TOKEN_BUDGET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e544f4b454e5f425544474554(), ["auth_diagnostics.reason.RATE_LIMIT"]: rp_617574685f646961676e6f73746963732e726561736f6e2e524154455f4c494d4954(), ["auth_diagnostics.reason.MODEL_POLICY"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d4f44454c5f504f4c494359(), ["auth_diagnostics.reason.INSUFFICIENT_SCOPE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e494e53554646494349454e545f53434f5045(), ["auth_diagnostics.reason.RUN_LEASE_UNRENEWABLE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e52554e5f4c454153455f554e52454e455741424c45(), ["auth_diagnostics.reason.UNSUPPORTED_LEASE_ENDPOINT"]: rp_617574685f646961676e6f73746963732e726561736f6e2e554e535550504f525445445f4c454153455f454e44504f494e54(), ["auth_diagnostics.reason.STORAGE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e53544f52414745(), ["auth_diagnostics.reason.NOT_FOUND"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4e4f545f464f554e44(), ["auth_remote.REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["auth_remote.POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["auth_remote.status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["auth_remote.home_in_accounts"]: rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473, ["bridge_controls.CHAT_FIELDS"]: rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453(), ["bridge_controls.RESPONSE_FIELDS"]: rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453(), ["bridge_controls.untranslatable_moderation"]: rp_6272696467655f636f6e74726f6c732e756e7472616e736c617461626c655f6d6f6465726174696f6e, ["bridge_controls.untranslatable_chat_prediction"]: rp_6272696467655f636f6e74726f6c732e756e7472616e736c617461626c655f636861745f70726564696374696f6e, ["bridge_controls.validate_responses_resource_selectors"]: rp_6272696467655f636f6e74726f6c732e76616c69646174655f726573706f6e7365735f7265736f757263655f73656c6563746f7273, ["bridge_request.nonempty"]: rp_6272696467655f726571756573742e6e6f6e656d707479, ["bridge_response.stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["bridge_response.complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["bridge_response.incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["bridge_response.anthropic_service_tier_from_openai"]: rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169, ["bridge_response.citation_url"]: rp_6272696467655f726573706f6e73652e6369746174696f6e5f75726c, ["bridge_selection.MODEL_SELECTION_REQUIRED"]: rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544(), ["capabilities.subscription"]: rp_6361706162696c69746965732e737562736372697074696f6e, ["capabilities.unsatisfiable_forced_tool_choice"]: rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365, ["chat_admin.DEFAULT_SECRET_TTL_SECS"]: rp_636861745f61646d696e2e44454641554c545f5345435245545f54544c5f53454353(), ["chat_admin.DEFAULT_RATE_LIMIT_PER_MINUTE"]: rp_636861745f61646d696e2e44454641554c545f524154455f4c494d49545f5045525f4d494e555445(), ["chat_admin.RATE_LIMIT_WINDOW"]: rp_636861745f61646d696e2e524154455f4c494d49545f57494e444f57(), ["chat_admin.SESSION_IDLE_TTL"]: rp_636861745f61646d696e2e53455353494f4e5f49444c455f54544c(), ["chat_admin.MAX_SESSIONS"]: rp_636861745f61646d696e2e4d41585f53455353494f4e53(), ["chat_admin.normalise"]: rp_636861745f61646d696e2e6e6f726d616c697365, ["chat_admin.ALREADY_CLAIMED"]: rp_636861745f61646d696e2e414c52454144595f434c41494d4544(), ["chat_admin.RATE_LIMITED"]: rp_636861745f61646d696e2e524154455f4c494d49544544(), ["chat_admin.HELP"]: rp_636861745f61646d696e2e48454c50(), ["chat_commands.DEFAULT_ISSUE_TTL_HOURS"]: rp_636861745f636f6d6d616e64732e44454641554c545f49535355455f54544c5f484f555253(), ["chat_commands.LIST_LIMIT"]: rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954(), ["chat_commands.ISSUE_KEYS"]: rp_636861745f636f6d6d616e64732e49535355455f4b455953(), ["chat_commands.yes_no"]: rp_636861745f636f6d6d616e64732e7965735f6e6f, ["claude_identity.CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["claude_identity.DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["claude_identity.is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["claude_identity.first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479, ["client_command.CLIENT_TOKEN_ENV"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56(), ["client_command.CLIENT_TOKEN_ENV_ALIAS"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e565f414c494153(), ["client_launch.CLAUDE_NATIVE_SERVICES_LIMITATION"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f53455256494345535f4c494d49544154494f4e(), ["client_launch.CLAUDE_NATIVE_SERVICE_REQUEST_ERROR"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52(), ["client_lifecycle.active.PROFILE_VARIABLES"]: rp_636c69656e745f6c6966656379636c652e6163746976652e50524f46494c455f5641524941424c4553(), ["client_lifecycle.active.SETTLE_ATTEMPTS"]: rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f415454454d505453(), ["client_lifecycle.active.SETTLE_DELAY"]: rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f44454c4159(), ["client_policy.PROXIED_CLIENT_EVIDENCE_HEADER"]: rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552(), ["client_policy.PROXIED_CODEX_EVIDENCE_VALUE"]: rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e43455f56414c5545(), ["clients.analysis.CLAUDE_PRECEDENCE_ENV"]: rp_636c69656e74732e616e616c797369732e434c415544455f505245434544454e43455f454e56(), ["clients.catalog.FRESH_ZAI_PREFERRED_MODEL"]: rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c(), ["clients.doctor.DOCTOR_EVIDENCE_HEADER"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552(), ["clients.doctor.DOCTOR_EVIDENCE_VALUE"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c5545(), ["clients.doctor.MINIMUM_CLAUDE_GATEWAY_VERSION"]: rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e(), ["codex_cloudflare_cookies.MAX_COOKIE_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553(), ["codex_cloudflare_cookies.MAX_COOKIE_COUNT"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54(), ["codex_cloudflare_cookies.MAX_COOKIE_HEADER_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553(), ["codex_cloudflare_cookies.EXACT_HOSTS"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), ["codex_cloudflare_cookies.SUBDOMAIN_SUFFIXES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), ["codex_cloudflare_cookies.EXACT_COOKIE_NAMES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(), ["codex_cloudflare_cookies.is_allowed_chatgpt_host"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e69735f616c6c6f7765645f636861746770745f686f7374, ["codex_cloudflare_cookies.is_allowed_cookie_name"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e69735f616c6c6f7765645f636f6f6b69655f6e616d65, ["codex_identity.DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["codex_identity.ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["codex_loopback_bridge.CONNECT_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554(), ["codex_loopback_bridge.START_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544152545f54494d454f5554(), ["codex_loopback_bridge.STOP_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544f505f54494d454f5554(), ["codex_loopback_bridge.POLL_INTERVAL"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e504f4c4c5f494e54455256414c(), ["codex_remote_control.CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["codex_remote_control.FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["codex_remote_control.STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["codex_remote_control.MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["codex_remote_control.ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["codex_remote_control.SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["codex_remote_control.ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["codex_remote_control.REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["codex_remote_control.REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["codex_remote_control.PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["codex_remote_control.PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["codex_remote_control.ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["codex_remote_control.is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468, ["codex_remote_control.hex_digit"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e6865785f6469676974, ["config.DEFAULT_MAX_PROXY_REQUEST_BYTES"]: rp_636f6e6669672e44454641554c545f4d41585f50524f58595f524551554553545f4259544553(), ["config.default_mpp_config"]: rp_636f6e6669672e64656661756c745f6d70705f636f6e666967, ["config.default_activitypub_public_key_pem"]: rp_636f6e6669672e64656661756c745f61637469766974797075625f7075626c69635f6b65795f70656d, ["config.parse_csv"]: rp_636f6e6669672e70617273655f637376, ["config_defaults.default_gonka_model"]: rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c, ["config_defaults.default_openai_compatible_base_url"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c, ["config_defaults.default_openai_compatible_config"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f636f6e666967, ["conversation_record.RECORD_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245434f52445f454e56(), ["conversation_record.REPLAY_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f454e56(), ["conversation_record.REPLAY_TURN_HEADER"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f484541444552(), ["conversation_record.REFRAMED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253(), ["conversation_record.MAX_RECORDED_BODY"]: rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459(), ["conversation_record.matching.IGNORED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253(), ["conversation_record.matching.COMPARED_FIELDS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453(), ["conversation_record.matching.header_is_compared"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e6865616465725f69735f636f6d7061726564, ["conversation_record.matching.RENDERED_LIMIT"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954(), ["conversation_record.store.HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["conversation_record.store.TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["conversation_record.store.read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["conversation_record.store.string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64, ["credential_acceptance.ACCEPTANCE_TIMEOUT"]: rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54494d454f5554(), ["credential_acceptance.STAGING_DIRECTORY"]: rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259(), ["credential_recovery_store.RECOVERY_VERSION"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f56455253494f4e(), ["credential_recovery_store.RECOVERY_DIRECTORY"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259(), ["credential_recovery_store.PRIMARY_ACCOUNT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5052494d4152595f4143434f554e54(), ["credential_recovery_store.CREDENTIAL_LOCK_TIMEOUT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e43524544454e5449414c5f4c4f434b5f54494d454f5554(), ["credential_source.ROUTER_METADATA_KEY"]: rp_63726564656e7469616c5f736f757263652e524f555445525f4d455441444154415f4b4559(), ["credential_source.CREDENTIAL_SOURCE_KEY"]: rp_63726564656e7469616c5f736f757263652e43524544454e5449414c5f534f555243455f4b4559(), ["credential_source.REFRESH_OWNER_KEY"]: rp_63726564656e7469616c5f736f757263652e524546524553485f4f574e45525f4b4559(), ["credential_source.EXTERNAL_REFRESH_OWNER"]: rp_63726564656e7469616c5f736f757263652e45585445524e414c5f524546524553485f4f574e4552(), ["credential_store.LOCK_SUFFIX"]: rp_63726564656e7469616c5f73746f72652e4c4f434b5f535546464958(), ["deploy.CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["deploy.RELAY"]: rp_6465706c6f792e52454c4159(), ["deploy.NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["deploy.BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["deploy.LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["deploy.LABEL"]: rp_6465706c6f792e4c4142454c(), ["deploy.DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["deploy.HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["deploy.DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(), ["deploy.first_line"]: rp_6465706c6f792e66697273745f6c696e65, ["deploy.instance.MAX_INSTANCE_LEN"]: rp_6465706c6f792e696e7374616e63652e4d41585f494e5354414e43455f4c454e(), ["deploy.registry.FILE"]: rp_6465706c6f792e72656769737472792e46494c45(), ["deploy.runtime.compact"]: rp_6465706c6f792e72756e74696d652e636f6d70616374, ["deploy.runtime.parse_names"]: rp_6465706c6f792e72756e74696d652e70617273655f6e616d6573, ["deploy.runtime.is_absent"]: rp_6465706c6f792e72756e74696d652e69735f616273656e74, ["deploy_relay.STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["deploy_relay.LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["deploy_seed.METADATA_KEY"]: rp_6465706c6f795f736565642e4d455441444154415f4b4559(), ["deploy_seed.HANDOVER_KEY"]: rp_6465706c6f795f736565642e48414e444f5645525f4b4559(), ["deployment_preservation.usable"]: rp_6465706c6f796d656e745f707265736572766174696f6e2e757361626c65, ["doctor.latest_version.RELEASE_API"]: rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049(), ["durable_file.ROLLBACK_SUFFIX"]: rp_64757261626c655f66696c652e524f4c4c4241434b5f535546464958(), ["durable_file.COMMIT_SUFFIX"]: rp_64757261626c655f66696c652e434f4d4d49545f535546464958(), ["durable_file.LOCK_POLL_INTERVAL"]: rp_64757261626c655f66696c652e4c4f434b5f504f4c4c5f494e54455256414c(), ["emergency_auth.FLAG"]: rp_656d657267656e63795f617574682e464c4147(), ["emergency_auth.ENV"]: rp_656d657267656e63795f617574682e454e56(), ["emergency_auth.ALLOW_NON_LOOPBACK_ENV"]: rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), ["emergency_auth.DURATION_ENV"]: rp_656d657267656e63795f617574682e4455524154494f4e5f454e56(), ["emergency_auth.ENV_VARS"]: rp_656d657267656e63795f617574682e454e565f56415253(), ["emergency_auth.DEFAULT_DURATION_MINUTES"]: rp_656d657267656e63795f617574682e44454641554c545f4455524154494f4e5f4d494e55544553(), ["emergency_auth.MAX_DURATION_MINUTES"]: rp_656d657267656e63795f617574682e4d41585f4455524154494f4e5f4d494e55544553(), ["emergency_auth.SUBJECT_PREFIX"]: rp_656d657267656e63795f617574682e5355424a4543545f505245464958(), ["emergency_auth.LABEL"]: rp_656d657267656e63795f617574682e4c4142454c(), ["emergency_auth.HEALTH_HEADER"]: rp_656d657267656e63795f617574682e4845414c54485f484541444552(), ["emergency_auth.is_synthetic_id"]: rp_656d657267656e63795f617574682e69735f73796e7468657469635f6964, ["encoded_request_body.MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["encoded_request_body.ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["encoded_request_body.ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["encoded_request_body.MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["entrypoint.STACK_BYTES"]: rp_656e747279706f696e742e535441434b5f4259544553(), ["error_log.DEFAULT_MAX_BYTES"]: rp_6572726f725f6c6f672e44454641554c545f4d41585f4259544553(), ["error_log.MAX_BODY_BYTES"]: rp_6572726f725f6c6f672e4d41585f424f44595f4259544553(), ["error_log.MAX_DOCUMENT_BYTES"]: rp_6572726f725f6c6f672e4d41585f444f43554d454e545f4259544553(), ["gemini.PROJECT_ENV"]: rp_67656d696e692e50524f4a4543545f454e56(), ["gemini.MODEL_OWNER"]: rp_67656d696e692e4d4f44454c5f4f574e4552(), ["gemini.map_finish_reason"]: rp_67656d696e692e6d61705f66696e6973685f726561736f6e, ["gemini.native.parse_native_target"]: rp_67656d696e692e6e61746976652e70617273655f6e61746976655f746172676574, ["gemini_bridge.MODEL_ROLE"]: rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45(), ["gemini_bridge.map_finish_reason"]: rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e, ["gemini_bridge.request.helpers.IMAGE_MEDIA_TYPES"]: rp_67656d696e695f6272696467652e726571756573742e68656c706572732e494d4147455f4d454449415f5459504553(), ["generated_js_first.policy.js_min"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e, ["generated_js_first.policy.js_max"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178, ["generated_js_first.policy.token_budget_permits"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f6275646765745f7065726d697473, ["generated_js_first.policy.cooldown_active"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6f6c646f776e5f616374697665, ["generated_js_first.policy.clamp"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636c616d70, ["generated_js_first.policy.longest_cooldown"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6c6f6e676573745f636f6f6c646f776e, ["generated_js_first.policy.retry_after_deadline"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72657472795f61667465725f646561646c696e65, ["generated_js_first.policy.token_cost"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f636f7374, ["generated_js_first.policy.valid_token_count"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e76616c69645f746f6b656e5f636f756e74, ["generated_js_first.policy.settled_token_usage"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e736574746c65645f746f6b656e5f7573616765, ["generated_js_first.policy.remaining_token_budget"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72656d61696e696e675f746f6b656e5f627564676574, ["generated_js_first.policy.completion_token_limit"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6d706c6574696f6e5f746f6b656e5f6c696d6974, ["generated_js_first.policy.retryable_status"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e726574727961626c655f737461747573, ["generated_js_first.policy.success_status"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e737563636573735f737461747573, ["generated_js_first.policy.weighted_capacity"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e77656967687465645f6361706163697479, ["generated_js_first.policy.token_expired"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f65787069726564, ["generated_js_first.policy.utf16_length"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468, ["generated_js_first.policy.model_name_length_permits"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6d6f64656c5f6e616d655f6c656e6774685f7065726d697473, ["git_proxy.ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["git_proxy.ancestry_from_compare"]: rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265, ["git_proxy.scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["git_proxy.canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468, ["github_proxy.POLICY_HEADER"]: rp_6769746875625f70726f78792e504f4c4943595f484541444552(), ["github_proxy.contains_inline_zero_after_oid"]: rp_6769746875625f70726f78792e636f6e7461696e735f696e6c696e655f7a65726f5f61667465725f6f6964, ["gonka.MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["gonka.CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["gonka.CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["gonka.FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["gonka.MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["gonka.MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["lefine.BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["lefine.COMPATIBLE_CLIENTS"]: rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(), ["lefine.MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["lefine.unavailable"]: rp_6c6566696e652e756e617661696c61626c65, ["lino_json.ARRAY_MARKER"]: rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552(), ["lino_json.OBJECT_MARKER"]: rp_6c696e6f5f6a736f6e2e4f424a4543545f4d41524b4552(), ["lino_json.EMPTY_STRING"]: rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47(), ["log_analysis.stored_bytes"]: rp_6c6f675f616e616c797369732e73746f7265645f6279746573, ["log_analysis.request_asks_for_a_stream"]: rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d, ["log_decode.BROTLI_BUFFER"]: rp_6c6f675f6465636f64652e42524f544c495f425546464552(), ["logging.http_failure"]: rp_6c6f6767696e672e687474705f6661696c757265, ["login_api.requested_provider"]: rp_6c6f67696e5f6170692e7265717565737465645f70726f7669646572, ["login_pty.PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["login_pty.PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["login_pty.POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["login_pty_backend.contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572, ["login_url.AUTH_HOSTS"]: rp_6c6f67696e5f75726c2e415554485f484f535453(), ["login_url.TOKEN_PREFIXES"]: rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553(), ["login_url.REDACTED"]: rp_6c6f67696e5f75726c2e5245444143544544(), ["login_url.SECRET_PREFIXES"]: rp_6c6f67696e5f75726c2e5345435245545f5052454649584553(), ["login_url.redact_value"]: rp_6c6f67696e5f75726c2e7265646163745f76616c7565, ["managed_server.DEFAULT_LOCAL_PORT"]: rp_6d616e616765645f7365727665722e44454641554c545f4c4f43414c5f504f5254(), ["managed_server.CONFIG_DIRECTORY"]: rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259(), ["managed_server.SERVER_CONFIG"]: rp_6d616e616765645f7365727665722e5345525645525f434f4e464947(), ["managed_server.MANAGED_STATE"]: rp_6d616e616765645f7365727665722e4d414e414745445f5354415445(), ["managed_server.MANAGED_LOCK"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4f434b(), ["managed_server.CONTAINER"]: rp_6d616e616765645f7365727665722e434f4e5441494e4552(), ["managed_server.VOLUME"]: rp_6d616e616765645f7365727665722e564f4c554d45(), ["managed_server.IMAGE"]: rp_6d616e616765645f7365727665722e494d414745(), ["managed_server.MANAGED_LABEL"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4142454c(), ["managed_server.run_lease.HEARTBEAT_INTERVAL"]: rp_6d616e616765645f7365727665722e72756e5f6c656173652e4845415254424541545f494e54455256414c(), ["managed_server.selection.TRUST_DIRECTORY"]: rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259(), ["model_catalog.CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["model_catalog.FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["model_catalog.MAX_CATALOG_PAGES"]: rp_6d6f64656c5f636174616c6f672e4d41585f434154414c4f475f5041474553(), ["model_catalog.PERSISTED_CATALOG_VERSION"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f56455253494f4e(), ["model_catalog.PERSISTED_CATALOG_FILE"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(), ["model_catalog.CATALOG_INVALIDATION_DIR"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952(), ["model_catalog.errors.PERMISSION_ERROR_CODES"]: rp_6d6f64656c5f636174616c6f672e6572726f72732e5045524d495353494f4e5f4552524f525f434f444553(), ["model_catalog.startup.INITIAL_REFRESH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e737461727475702e494e495449414c5f524546524553485f54494d454f5554(), ["model_catalog_sources.MAX_DOCUMENT_BYTES"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e4d41585f444f43554d454e545f4259544553(), ["model_catalog_sources.MAX_MODELS"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e4d41585f4d4f44454c53(), ["model_catalog_sources.config.DEFAULT_REFRESH_SECS"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e44454641554c545f524546524553485f53454353(), ["model_catalog_sources.config.canonical_provider"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e63616e6f6e6963616c5f70726f7669646572, ["model_command.selector_kind"]: rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64, ["model_contract.is_false"]: rp_6d6f64656c5f636f6e74726163742e69735f66616c7365, ["model_contract.served_model_from"]: rp_6d6f64656c5f636f6e74726163742e7365727665645f6d6f64656c5f66726f6d, ["model_routing.native_catalog.MAX_ANTHROPIC_PAGE"]: rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e4d41585f414e5448524f5049435f50414745(), ["model_routing.native_catalog.DEFAULT_ANTHROPIC_PAGE"]: rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e44454641554c545f414e5448524f5049435f50414745(), ["model_routing.aggregate.CAPABILITY_FIELDS"]: rp_6d6f64656c5f726f7574696e672e6167677265676174652e4341504142494c4954595f4649454c4453(), ["model_routing.stored.bare_model_id"]: rp_6d6f64656c5f726f7574696e672e73746f7265642e626172655f6d6f64656c5f6964, ["mpp.escape_header_value"]: rp_6d70702e6573636170655f6865616465725f76616c7565, ["native_service.CONNECT_TIMEOUT"]: rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(), ["openai.extract_sse_data"]: rp_6f70656e61692e657874726163745f7373655f64617461, ["openai.done_frame"]: rp_6f70656e61692e646f6e655f6672616d65, ["operational_log.MAX_BYTES"]: rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553(), ["operational_log.BACKUPS"]: rp_6f7065726174696f6e616c5f6c6f672e4241434b555053(), ["output_limit.CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["output_limit.event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["output_limit.data_payload"]: rp_6f75747075745f6c696d69742e646174615f7061796c6f6164, ["pool_failover.DEFAULT_MAX_ATTEMPTS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(), ["pool_failover.DEFAULT_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(), ["pool_failover.MAX_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(), ["pool_failover.classify_status"]: rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573, ["pool_response.MAX_ERROR_BYTES"]: rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553(), ["pool_stream_limits.MAX_EVENT_BYTES"]: rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553(), ["provider_proxy.protocol_for_request"]: rp_70726f76696465725f70726f78792e70726f746f636f6c5f666f725f72657175657374, ["provider_proxy.PROVIDER_CATALOG_TTL"]: rp_70726f76696465725f70726f78792e50524f56494445525f434154414c4f475f54544c(), ["provider_proxy.PROVIDER_FAILED_REFRESH_RETRY"]: rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546524553485f5245545259(), ["providers.default_enabled"]: rp_70726f7669646572732e64656661756c745f656e61626c6564, ["providers.provider_import.unquote"]: rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465, ["proxy.API_PREFIX"]: rp_70726f78792e4150495f505245464958(), ["proxy.REQUIRED_FORWARD_HEADERS"]: rp_70726f78792e52455155495245445f464f52574152445f48454144455253(), ["proxy.HOP_BY_HOP_HEADERS"]: rp_70726f78792e484f505f42595f484f505f48454144455253(), ["proxy.RESPONSE_CREDENTIAL_HEADERS"]: rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253(), ["proxy.ACCEPTED_CREDENTIAL_CARRIERS"]: rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253(), ["proxy.CREDENTIAL_CARRIER_HINT"]: rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54(), ["proxy.upstream_headers.DEFAULT_ANTHROPIC_VERSION"]: rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e(), ["proxy.upstream_headers.OAUTH_BETA_FLAG"]: rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147(), ["proxy.upstream_headers.MAX_PROXY_REQUEST_BYTES"]: rp_70726f78792e757073747265616d5f686561646572732e4d41585f50524f58595f524551554553545f4259544553(), ["proxy.upstream_headers.INGRESS_NETWORK_HEADERS"]: rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253(), ["proxy.upstream_path.resolve_upstream_path"]: rp_70726f78792e757073747265616d5f706174682e7265736f6c76655f757073747265616d5f70617468, ["refresh.CLAUDE_OAUTH_USER_AGENT"]: rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54(), ["refresh.ANTHROPIC_SDK_VERSION"]: rp_726566726573682e414e5448524f5049435f53444b5f56455253494f4e(), ["refresh.GEMINI_CLI_VERSION"]: rp_726566726573682e47454d494e495f434c495f56455253494f4e(), ["refresh.GOOGLE_AUTH_LIBRARY_VERSION"]: rp_726566726573682e474f4f474c455f415554485f4c4942524152595f56455253494f4e(), ["refresh.QWEN_CODE_VERSION"]: rp_726566726573682e5157454e5f434f44455f56455253494f4e(), ["refresh.GEMINI_CLIENT_ID_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f49445f454e56(), ["refresh.GEMINI_CLIENT_SECRET_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f5345435245545f454e56(), ["refresh.GEMINI_CLIENT_ID"]: rp_726566726573682e47454d494e495f434c49454e545f4944(), ["refresh.GEMINI_AUTH_USER_AGENT"]: rp_726566726573682e47454d494e495f415554485f555345525f4147454e54(), ["refresh.GEMINI_API_CLIENT"]: rp_726566726573682e47454d494e495f4150495f434c49454e54(), ["refresh.CLAUDE_CLIENT_ID"]: rp_726566726573682e434c415544455f434c49454e545f4944(), ["refresh.CLAUDE_TOKEN_URL"]: rp_726566726573682e434c415544455f544f4b454e5f55524c(), ["refresh.REFRESH_SKEW_MS"]: rp_726566726573682e524546524553485f534b45575f4d53(), ["refresh.ROTATION_ATTRIBUTION_MS"]: rp_726566726573682e524f544154494f4e5f4154545249425554494f4e5f4d53(), ["refresh.refresh_config"]: rp_726566726573682e726566726573685f636f6e666967, ["refresh.refresh_state.INITIAL_BACKOFF_MS"]: rp_726566726573682e726566726573685f73746174652e494e495449414c5f4241434b4f46465f4d53(), ["refresh.refresh_state.MAX_BACKOFF_MS"]: rp_726566726573682e726566726573685f73746174652e4d41585f4241434b4f46465f4d53(), ["refresh.refresh_state.ROTATION_GRACE_MS"]: rp_726566726573682e726566726573685f73746174652e524f544154494f4e5f47524143455f4d53(), ["refresh.refresh_recovery.is_usable"]: rp_726566726573682e726566726573685f7265636f766572792e69735f757361626c65, ["refresh_rejections.REJECTIONS_FILE_NAME"]: rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45(), ["request_log.management.MAX_LOOKUP_BYTES"]: rp_726571756573745f6c6f672e6d616e6167656d656e742e4d41585f4c4f4f4b55505f4259544553(), ["request_log.redaction.BINARY_BODY_KEY"]: rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f4b4559(), ["request_log.redaction.hex_digit"]: rp_726571756573745f6c6f672e726564616374696f6e2e6865785f6469676974, ["request_log.stream_outcome.STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["request_log.stream_outcome.stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["request_log.stream_outcome.is_streaming_media_type"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e69735f73747265616d696e675f6d656469615f74797065, ["request_log.stream_outcome.text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d, ["request_routing.MAX_RETRY_AFTER"]: rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552(), ["request_routing.bounded_retry_after"]: rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f6166746572, ["resource_capture.MAX_BUFFERED_ID_PREFIX"]: rp_7265736f757263655f636170747572652e4d41585f42554646455245445f49445f505245464958(), ["resource_capture.MAX_BUFFERED_JSON_RESPONSE"]: rp_7265736f757263655f636170747572652e4d41585f42554646455245445f4a534f4e5f524553504f4e5345(), ["response_affinity.FILE_NAME"]: rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45(), ["response_affinity.STORE_VERSION"]: rp_726573706f6e73655f616666696e6974792e53544f52455f56455253494f4e(), ["response_affinity.DEFAULT_TTL"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c(), ["response_affinity.DEFAULT_MAX_RECORDS"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f4d41585f5245434f524453(), ["response_affinity.MAX_RESPONSE_ID_BYTES"]: rp_726573706f6e73655f616666696e6974792e4d41585f524553504f4e53455f49445f4259544553(), ["responses.stream_content_key"]: rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579, ["responses.extract_sse_data"]: rp_726573706f6e7365732e657874726163745f7373655f64617461, ["responses.done_frame"]: rp_726573706f6e7365732e646f6e655f6672616d65, ["responses.chat_input.nonempty_string"]: rp_726573706f6e7365732e636861745f696e7075742e6e6f6e656d7074795f737472696e67, ["responses_websocket.RESPONSES_PATH"]: rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448(), ["responses_websocket.MAX_NAMED_STREAMS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53(), ["responses_websocket.MAX_STREAM_ID_CHARS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253(), ["responses_websocket.MAX_CONNECTION_AGE"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745(), ["responses_websocket.CONNECT_TIMEOUT"]: rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554(), ["responses_websocket.stream_id"]: rp_726573706f6e7365735f776562736f636b65742e73747265616d5f6964, ["responses_websocket.namespace_path"]: rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468, ["route_contract.COMBINED_AND_INFERENCE"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f494e464552454e4345(), ["route_contract.COMBINED_AND_ADMIN"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f41444d494e(), ["route_contract.COMBINED_ONLY"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f4f4e4c59(), ["route_contract.GITHUB_ADAPTER_ONLY"]: rp_726f7574655f636f6e74726163742e4749544855425f414441505445525f4f4e4c59(), ["route_contract.neutral"]: rp_726f7574655f636f6e74726163742e6e65757472616c, ["route_contract.management"]: rp_726f7574655f636f6e74726163742e6d616e6167656d656e74, ["route_contract.ai_service"]: rp_726f7574655f636f6e74726163742e61695f73657276696365, ["route_contract.private_service"]: rp_726f7574655f636f6e74726163742e707269766174655f73657276696365, ["route_contract.github_adapter_service"]: rp_726f7574655f636f6e74726163742e6769746875625f616461707465725f73657276696365, ["route_contract.service_base_path"]: rp_726f7574655f636f6e74726163742e736572766963655f626173655f70617468, ["route_contract.types.REMOVED_ROUTES"]: rp_726f7574655f636f6e74726163742e74797065732e52454d4f5645445f524f55544553(), ["runtime.BOOTSTRAP_ADMIN_TTL_HOURS"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(), ["runtime.BOOTSTRAP_ADMIN_LABEL"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c(), ["safety_identifier.OPENAI_MAX_CHARACTERS"]: rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253(), ["security_headers.CONTENT_SECURITY_POLICY"]: rp_73656375726974795f686561646572732e434f4e54454e545f53454355524954595f504f4c494359(), ["storage.sanitize_codec_error"]: rp_73746f726167652e73616e6974697a655f636f6465635f6572726f72, ["storage.associative.TYPE"]: rp_73746f726167652e6173736f636961746976652e54595045(), ["storage.associative.TOKEN_RECORD"]: rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(), ["storage.associative.SUBTYPE"]: rp_73746f726167652e6173736f636961746976652e53554254595045(), ["storage.associative.VALUE"]: rp_73746f726167652e6173736f636961746976652e56414c5545(), ["storage.associative.STORAGE_FORMAT"]: rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(), ["storage.associative.FORMAT_VERSION"]: rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(), ["storage.associative.RECORD_PREFIX"]: rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(), ["storage.associative.STRING_TAG"]: rp_73746f726167652e6173736f636961746976652e535452494e475f544147(), ["storage.associative.EDGE_TAG"]: rp_73746f726167652e6173736f636961746976652e454447455f544147(), ["storage.associative.EMPTY_SEQUENCE"]: rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(), ["storage.associative.BYTE_NODE_START"]: rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(), ["storage.associative.SCHEMA_NODE_COUNT"]: rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(), ["storage.associative.split_repository_list"]: rp_73746f726167652e6173736f636961746976652e73706c69745f7265706f7369746f72795f6c697374, ["stream_termination.INCOMPLETE_STREAM_MESSAGE"]: rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(), ["stream_termination.MAX_SSE_CARRY_BYTES"]: rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(), ["subscription.external.ROUTER_METADATA_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559(), ["subscription.external.REFRESH_OWNER_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524546524553485f4f574e45525f4b4559(), ["subscription.external.EXTERNAL_REFRESH_OWNER"]: rp_737562736372697074696f6e2e65787465726e616c2e45585445524e414c5f524546524553485f4f574e4552(), ["subscription.external.CREDENTIAL_SOURCE_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e43524544454e5449414c5f534f555243455f4b4559(), ["subscription.external.PROMOTION_RECEIPT_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e50524f4d4f54494f4e5f524543454950545f4b4559(), ["subscription_proxy.CODEX_RESPONSES_LITE_HEADER"]: rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552(), ["subscription_usage.SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["subscription_usage.MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["subscription_usage.normalize.ANTHROPIC_WINDOWS"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e414e5448524f5049435f57494e444f5753(), ["subscription_usage.normalize.numeric_message_estimate"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e6e756d657269635f6d6573736167655f657374696d617465, ["subscription_usage.normalize.reset_credits_available"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e72657365745f637265646974735f617661696c61626c65, ["subscription_usage.cache.STANDARD_CACHE_TTL"]: rp_737562736372697074696f6e5f75736167652e63616368652e5354414e444152445f43414348455f54544c(), ["subscription_usage.cache.ANTHROPIC_CACHE_TTL"]: rp_737562736372697074696f6e5f75736167652e63616368652e414e5448524f5049435f43414348455f54544c(), ["telegram.POLL_TIMEOUT_SECS"]: rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353(), ["telegram.ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["telegram.ALLOWED_UPDATES"]: rp_74656c656772616d2e414c4c4f5745445f55504441544553(), ["telegram.update_id"]: rp_74656c656772616d2e7570646174655f6964, ["thinking.anthropic.CLAUDE_DEFAULT_MAX_TOKENS"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f44454641554c545f4d41585f544f4b454e53(), ["thinking.anthropic.CLAUDE_MIN_THINKING_BUDGET"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4d494e5f5448494e4b494e475f425544474554(), ["thinking.anthropic.CLAUDE_OUTPUT_HEADROOM"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f48454144524f4f4d(), ["thinking.anthropic.CLAUDE_OUTPUT_FLOOR"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f464c4f4f52(), ["thinking.anthropic.CLAUDE_FIXED_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f46495845445f544f4b454e5f4345494c494e47(), ["thinking.anthropic.CLAUDE_ADAPTIVE_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f41444150544956455f544f4b454e5f4345494c494e47(), ["thinking.anthropic.reasoning_budget"]: rp_7468696e6b696e672e616e7468726f7069632e726561736f6e696e675f627564676574, ["thinking.anthropic.adaptive_effort"]: rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274, ["tls.GENERATED_DIRECTORY"]: rp_746c732e47454e4552415445445f4449524543544f5259(), ["tls.GENERATED_CERT"]: rp_746c732e47454e4552415445445f43455254(), ["tls.GENERATED_KEY"]: rp_746c732e47454e4552415445445f4b4559(), ["token.TOKEN_PREFIX"]: rp_746f6b656e2e544f4b454e5f505245464958(), ["token.CODEX_TOKEN_PREFIX"]: rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), ["token.token_jwt"]: rp_746f6b656e2e746f6b656e5f6a7774, ["token.ADMIN_SCOPE"]: rp_746f6b656e2e41444d494e5f53434f5045(), ["token.MAX_TTL_HOURS"]: rp_746f6b656e2e4d41585f54544c5f484f555253(), ["token.run_lease.RUN_LEASE_TTL_SECONDS"]: rp_746f6b656e2e72756e5f6c656173652e52554e5f4c454153455f54544c5f5345434f4e4453(), ["token_import.BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["token_report.HEADERS"]: rp_746f6b656e5f7265706f72742e48454144455253(), ["token_reservation.CHARS_PER_TOKEN"]: rp_746f6b656e5f7265736572766174696f6e2e43484152535f5045525f544f4b454e(), ["token_reservation.DEFAULT_MAX_OUTPUT_TOKENS"]: rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f55545055545f544f4b454e53(), ["token_reservation.declared_output_tokens"]: rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73, ["token_secret.SENTINEL"]: rp_746f6b656e5f7365637265742e53454e54494e454c(), ["token_secret.LEGACY_PLACEHOLDERS"]: rp_746f6b656e5f7365637265742e4c45474143595f504c414345484f4c44455253(), ["token_secret.refusal"]: rp_746f6b656e5f7365637265742e7265667573616c, ["token_secret.FILE_ENV"]: rp_746f6b656e5f7365637265742e46494c455f454e56(), ["upstream_client.DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(), ["upstream_client.parse_timeout_secs"]: rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373, ["upstream_client.parse_upstream_read_timeout"]: rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574, ["upstream_guard.ALLOW_PRIVATE_NETWORKS_ENV"]: rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56(), ["upstream_guard.METADATA_NAMES"]: rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553(), ["usage.token_count"]: rp_75736167652e746f6b656e5f636f756e74, ["usage.token_parts"]: rp_75736167652e746f6b656e5f7061727473, ["usage.ESTIMATED_CHARS_PER_TOKEN"]: rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(), ["usage.first_u64"]: rp_75736167652e66697273745f753634, ["vendor_cli_refresh.DEFAULT_TIMEOUT"]: rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554(), ["vendor_cli_refresh.CLAUDE_PROBE"]: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245(), ["vendor_cli_refresh.CODEX_PROBE"]: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245(), ["vendor_cli_refresh.PROBE_ARGS_ENV"]: rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56(), ["vendor_cli_refresh.probe_for"]: rp_76656e646f725f636c695f726566726573682e70726f62655f666f72, ["verification_client.safety_for"]: rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72, ["verification_client.CLIENTS"]: rp_766572696669636174696f6e5f636c69656e742e434c49454e5453(), ["vk.API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["vk.WAIT_SECS"]: rp_766b2e574149545f53454353(), ["vk.ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["vk.CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["vk.is_private"]: rp_766b2e69735f70726976617465, ["vk.json_ts"]: rp_766b2e6a736f6e5f7473, ["warmup.WARMUP_TEXT"]: rp_7761726d75702e5741524d55505f54455854(), ["with_command.CLAUDE_PRIVACY_DEFAULT_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f505249564143595f44454641554c545f454e56(), ["with_command.CLAUDE_FEATURE_FLAG_BLOCKING_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f464541545552455f464c41475f424c4f434b494e475f454e56(), ["with_command.codex_catalog.model_may_keep_reasoning_effort"]: rp_776974685f636f6d6d616e642e636f6465785f636174616c6f672e6d6f64656c5f6d61795f6b6565705f726561736f6e696e675f6566666f7274, ["with_command.claude_settings.LAST_WORKING_MODEL"]: rp_776974685f636f6d6d616e642e636c617564655f73657474696e67732e4c4153545f574f524b494e475f4d4f44454c(), ["zai_coding_plan.ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["zai_coding_plan.CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["zai_coding_plan.RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["zai_coding_plan.HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["zai_coding_plan.CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["zai_coding_plan.CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["zai_coding_plan.FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["zai_coding_plan.MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["zai_upstream_error.EXHAUSTED_CODES"]: rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(), ["zai_upstream_error.MAX_CLASSIFIED_BODY"]: rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(), ["zai_upstream_error.STATE_FILE"]: rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45(), ["anthropic_nonstream.MAX_BUFFERED_RESPONSE"]: rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345(), ["deploy_local.LABEL_KEY"]: rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559(), ["deploy_local.LEGACY"]: rp_6465706c6f795f6c6f63616c2e4c4547414359(), ["deploy_local.SPEC_VERSION"]: rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e(), ["deploy_local.READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e52454144595f415454454d505453(), ["deploy_local.claude_share.CREDENTIAL_FILE"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45(), ["deploy_local.claude_share.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e4c4142454c5f535546464958(), ["deploy_local.data_backup.LIMIT"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4c494d4954(), ["deploy_local.data_backup.FILES"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e46494c4553(), ["deploy_local.data_backup.DEPTH"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4445505448(), ["deploy_local.data_backup.DEADLINE"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e444541444c494e45(), ["deploy_local.data_backup.COVERED"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e434f5645524544(), ["deploy_local.data_backup.SCHEMA"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e534348454d41(), ["deploy_local.host.ROLLBACK_COMMAND"]: rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44(), ["deploy_local.host.migrate.HOST_READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e686f73742e6d6967726174652e484f53545f52454144595f415454454d505453(), ["deploy_local.preservation.CATALOG_ENV"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56(), ["deploy_local.preservation.CATALOG_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f534352495054(), ["deploy_local.relay_rotation.RELAY_IDLE_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e72656c61795f726f746174696f6e2e52454c41595f49444c455f415454454d505453(), ["deploy_local.runtime_env.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958(), ["deploy_local.secret.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["deploy_local.secret.PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["deploy_local.secret.PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["deploy_local.secret.probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564, ["deploy_local.service.MANAGER_ENV"]: rp_6465706c6f795f6c6f63616c2e736572766963652e4d414e414745525f454e56(), ["deploy_local.service.RECORD"]: rp_6465706c6f795f6c6f63616c2e736572766963652e5245434f5244(), ["deploy_local.service.SECRET"]: rp_6465706c6f795f6c6f63616c2e736572766963652e534543524554(), ["deploy_local.service.xml"]: rp_6465706c6f795f6c6f63616c2e736572766963652e786d6c, ["deploy_local.staging.LABEL"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4c4142454c(), ["deploy_local.staging.MARKER"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4d41524b4552(), ["deploy_remote.AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["deploy_remote.TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["deploy_remote.LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["deploy_remote.session.DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["deploy_remote.session.EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["logs_cli.SHOWN"]: rp_6c6f67735f636c692e53484f574e(), ["account_policy_dispatch.MAX_ERROR_BYTES"]: rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553(), ["account_policy_response.MAX_RESPONSE_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f524553504f4e53455f4259544553(), ["account_policy_response.MAX_EVENT_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f4556454e545f4259544553(), ["account_routing_policy.POLICY_FILE"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45(), ["account_routing_policy.MAX_WEIGHT"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f574549474854(), ["account_routing_policy.MAX_RETRIES"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f52455452494553(), ["account_routing_policy.COPY_HEADER_ALLOW_LIST"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354(), ["management_access.MAX_CLIENTS"]: rp_6d616e6167656d656e745f6163636573732e4d41585f434c49454e5453(), ["management_access.SNAPSHOT"]: rp_6d616e6167656d656e745f6163636573732e534e415053484f54() });
-export const provenance = {"entry":"src/lib.rs","runtimeParity":false,"moduleCount":391,"executableFunctions":130,"executableConstants":391};
+export const translated = Object.freeze({ ["account_http.DEFAULT_ACCOUNT_POOL_IDLE_TIMEOUT_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f504f4f4c5f49444c455f54494d454f55545f53454353(), ["account_http.DEFAULT_ACCOUNT_CONNECTION_MAX_AGE_SECS"]: rp_6163636f756e745f687474702e44454641554c545f4143434f554e545f434f4e4e454354494f4e5f4d41585f4147455f53454353(), ["account_http.PROXY_SCHEMES"]: rp_6163636f756e745f687474702e50524f58595f534348454d4553(), ["account_limits.UNIFIED_PREFIX"]: rp_6163636f756e745f6c696d6974732e554e49464945445f505245464958(), ["account_limits.MAX_VENDOR_COOLDOWN"]: rp_6163636f756e745f6c696d6974732e4d41585f56454e444f525f434f4f4c444f574e(), ["account_limits.STATE_FILE"]: rp_6163636f756e745f6c696d6974732e53544154455f46494c45(), ["account_limits.MODEL_FAMILIES"]: rp_6163636f756e745f6c696d6974732e4d4f44454c5f46414d494c494553(), ["accounts.limits.LIMITS_SAVE_INTERVAL_SECS"]: rp_6163636f756e74732e6c696d6974732e4c494d4954535f534156455f494e54455256414c5f53454353(), ["accounts_cli.DEFAULT_PAUSE_REASON"]: rp_6163636f756e74735f636c692e44454641554c545f50415553455f524541534f4e(), ["accounts_cli.LOCAL_NOTE"]: rp_6163636f756e74735f636c692e4c4f43414c5f4e4f5445(), ["activitypub.ACTIVITY_JSON"]: rp_61637469766974797075622e41435449564954595f4a534f4e(), ["admin.ADMIN_TOKEN_PREFIX"]: rp_61646d696e2e41444d494e5f544f4b454e5f505245464958(), ["admin.CLAIM_FILE_NAME"]: rp_61646d696e2e434c41494d5f46494c455f4e414d45(), ["admin.DEFAULT_CANDIDATE_TTL_SECS"]: rp_61646d696e2e44454641554c545f43414e4449444154455f54544c5f53454353(), ["admin.DEFAULT_CLAIM_TTL_HOURS"]: rp_61646d696e2e44454641554c545f434c41494d5f54544c5f484f555253(), ["admin.CLAIM_TOKEN_LABEL"]: rp_61646d696e2e434c41494d5f544f4b454e5f4c4142454c(), ["admin.clamp_ttl"]: rp_61646d696e2e636c616d705f74746c, ["admin_recovery.RECOVERED_ADMIN_LABEL"]: rp_61646d696e5f7265636f766572792e5245434f56455245445f41444d494e5f4c4142454c(), ["anthropic_bridge.DEFAULT_MAX_TOKENS"]: rp_616e7468726f7069635f6272696467652e44454641554c545f4d41585f544f4b454e53(), ["anthropic_bridge.usage_field"]: rp_616e7468726f7069635f6272696467652e75736167655f6669656c64, ["anthropic_stream.map_stop_reason"]: rp_616e7468726f7069635f73747265616d2e6d61705f73746f705f726561736f6e, ["anthropic_stream.response_content_key"]: rp_616e7468726f7069635f73747265616d2e726573706f6e73655f636f6e74656e745f6b6579, ["api_error.openai_error_type"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f74797065, ["api_error.openai_error_code"]: rp_6170695f6572726f722e6f70656e61695f6572726f725f636f6465, ["auth.CODEX_CLIENT_ID"]: rp_617574682e434f4445585f434c49454e545f4944(), ["auth.CODEX_ISSUER"]: rp_617574682e434f4445585f495353554552(), ["auth.CODEX_CALLBACK_PATH"]: rp_617574682e434f4445585f43414c4c4241434b5f50415448(), ["auth.CODEX_DEVICE_CALLBACK_PATH"]: rp_617574682e434f4445585f4445564943455f43414c4c4241434b5f50415448(), ["auth_diagnostics.reason.MISSING_CREDENTIAL"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f43524544454e5449414c(), ["auth_diagnostics.reason.INVALID_PREFIX"]: rp_617574685f646961676e6f73746963732e726561736f6e2e494e56414c49445f505245464958(), ["auth_diagnostics.reason.MALFORMED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d414c464f524d4544(), ["auth_diagnostics.reason.SIGNATURE_INVALID"]: rp_617574685f646961676e6f73746963732e726561736f6e2e5349474e41545552455f494e56414c4944(), ["auth_diagnostics.reason.ISSUER_SECRET_UNSET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4953535545525f5345435245545f554e534554(), ["auth_diagnostics.reason.EXPIRED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e45585049524544(), ["auth_diagnostics.reason.REVOKED"]: rp_617574685f646961676e6f73746963732e726561736f6e2e5245564f4b4544(), ["auth_diagnostics.reason.MISSING_RECORD"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d495353494e475f5245434f5244(), ["auth_diagnostics.reason.BINDING_MISMATCH"]: rp_617574685f646961676e6f73746963732e726561736f6e2e42494e44494e475f4d49534d41544348(), ["auth_diagnostics.reason.REQUEST_BUDGET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e524551554553545f425544474554(), ["auth_diagnostics.reason.TOKEN_BUDGET"]: rp_617574685f646961676e6f73746963732e726561736f6e2e544f4b454e5f425544474554(), ["auth_diagnostics.reason.RATE_LIMIT"]: rp_617574685f646961676e6f73746963732e726561736f6e2e524154455f4c494d4954(), ["auth_diagnostics.reason.MODEL_POLICY"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4d4f44454c5f504f4c494359(), ["auth_diagnostics.reason.INSUFFICIENT_SCOPE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e494e53554646494349454e545f53434f5045(), ["auth_diagnostics.reason.RUN_LEASE_UNRENEWABLE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e52554e5f4c454153455f554e52454e455741424c45(), ["auth_diagnostics.reason.UNSUPPORTED_LEASE_ENDPOINT"]: rp_617574685f646961676e6f73746963732e726561736f6e2e554e535550504f525445445f4c454153455f454e44504f494e54(), ["auth_diagnostics.reason.STORAGE"]: rp_617574685f646961676e6f73746963732e726561736f6e2e53544f52414745(), ["auth_diagnostics.reason.NOT_FOUND"]: rp_617574685f646961676e6f73746963732e726561736f6e2e4e4f545f464f554e44(), ["auth_remote.REQUEST_TIMEOUT"]: rp_617574685f72656d6f74652e524551554553545f54494d454f5554(), ["auth_remote.POLL_INTERVAL"]: rp_617574685f72656d6f74652e504f4c4c5f494e54455256414c(), ["auth_remote.status_of"]: rp_617574685f72656d6f74652e7374617475735f6f66, ["auth_remote.home_in_accounts"]: rp_617574685f72656d6f74652e686f6d655f696e5f6163636f756e7473, ["bridge_controls.CHAT_FIELDS"]: rp_6272696467655f636f6e74726f6c732e434841545f4649454c4453(), ["bridge_controls.RESPONSE_FIELDS"]: rp_6272696467655f636f6e74726f6c732e524553504f4e53455f4649454c4453(), ["bridge_controls.untranslatable_moderation"]: rp_6272696467655f636f6e74726f6c732e756e7472616e736c617461626c655f6d6f6465726174696f6e, ["bridge_controls.untranslatable_chat_prediction"]: rp_6272696467655f636f6e74726f6c732e756e7472616e736c617461626c655f636861745f70726564696374696f6e, ["bridge_controls.validate_responses_resource_selectors"]: rp_6272696467655f636f6e74726f6c732e76616c69646174655f726573706f6e7365735f7265736f757263655f73656c6563746f7273, ["bridge_request.nonempty"]: rp_6272696467655f726571756573742e6e6f6e656d707479, ["bridge_response.stop_semantics"]: rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373, ["bridge_response.complete"]: rp_6272696467655f726573706f6e73652e636f6d706c657465, ["bridge_response.incomplete"]: rp_6272696467655f726573706f6e73652e696e636f6d706c657465, ["bridge_response.anthropic_service_tier_from_openai"]: rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169, ["bridge_response.citation_url"]: rp_6272696467655f726573706f6e73652e6369746174696f6e5f75726c, ["bridge_selection.MODEL_SELECTION_REQUIRED"]: rp_6272696467655f73656c656374696f6e2e4d4f44454c5f53454c454354494f4e5f5245515549524544(), ["capabilities.subscription"]: rp_6361706162696c69746965732e737562736372697074696f6e, ["capabilities.unsatisfiable_forced_tool_choice"]: rp_6361706162696c69746965732e756e7361746973666961626c655f666f726365645f746f6f6c5f63686f696365, ["chat_admin.DEFAULT_SECRET_TTL_SECS"]: rp_636861745f61646d696e2e44454641554c545f5345435245545f54544c5f53454353(), ["chat_admin.DEFAULT_RATE_LIMIT_PER_MINUTE"]: rp_636861745f61646d696e2e44454641554c545f524154455f4c494d49545f5045525f4d494e555445(), ["chat_admin.RATE_LIMIT_WINDOW"]: rp_636861745f61646d696e2e524154455f4c494d49545f57494e444f57(), ["chat_admin.SESSION_IDLE_TTL"]: rp_636861745f61646d696e2e53455353494f4e5f49444c455f54544c(), ["chat_admin.MAX_SESSIONS"]: rp_636861745f61646d696e2e4d41585f53455353494f4e53(), ["chat_admin.normalise"]: rp_636861745f61646d696e2e6e6f726d616c697365, ["chat_admin.ALREADY_CLAIMED"]: rp_636861745f61646d696e2e414c52454144595f434c41494d4544(), ["chat_admin.RATE_LIMITED"]: rp_636861745f61646d696e2e524154455f4c494d49544544(), ["chat_admin.HELP"]: rp_636861745f61646d696e2e48454c50(), ["chat_commands.DEFAULT_ISSUE_TTL_HOURS"]: rp_636861745f636f6d6d616e64732e44454641554c545f49535355455f54544c5f484f555253(), ["chat_commands.LIST_LIMIT"]: rp_636861745f636f6d6d616e64732e4c4953545f4c494d4954(), ["chat_commands.ISSUE_KEYS"]: rp_636861745f636f6d6d616e64732e49535355455f4b455953(), ["chat_commands.yes_no"]: rp_636861745f636f6d6d616e64732e7965735f6e6f, ["claude_identity.CLAUDE_CODE_SYSTEM_PROMPT"]: rp_636c617564655f6964656e746974792e434c415544455f434f44455f53595354454d5f50524f4d5054(), ["claude_identity.DEFAULT_CLIENT_VERSION"]: rp_636c617564655f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["claude_identity.is_oauth_credential"]: rp_636c617564655f6964656e746974792e69735f6f617574685f63726564656e7469616c, ["claude_identity.first_block_is_identity"]: rp_636c617564655f6964656e746974792e66697273745f626c6f636b5f69735f6964656e74697479, ["client_command.CLIENT_TOKEN_ENV"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e56(), ["client_command.CLIENT_TOKEN_ENV_ALIAS"]: rp_636c69656e745f636f6d6d616e642e434c49454e545f544f4b454e5f454e565f414c494153(), ["client_launch.CLAUDE_NATIVE_SERVICES_LIMITATION"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f53455256494345535f4c494d49544154494f4e(), ["client_launch.CLAUDE_NATIVE_SERVICE_REQUEST_ERROR"]: rp_636c69656e745f6c61756e63682e434c415544455f4e41544956455f534552564943455f524551554553545f4552524f52(), ["client_lifecycle.active.PROFILE_VARIABLES"]: rp_636c69656e745f6c6966656379636c652e6163746976652e50524f46494c455f5641524941424c4553(), ["client_lifecycle.active.SETTLE_ATTEMPTS"]: rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f415454454d505453(), ["client_lifecycle.active.SETTLE_DELAY"]: rp_636c69656e745f6c6966656379636c652e6163746976652e534554544c455f44454c4159(), ["client_lifecycle.maintenance.package"]: rp_636c69656e745f6c6966656379636c652e6d61696e74656e616e63652e7061636b616765, ["client_policy.PROXIED_CLIENT_EVIDENCE_HEADER"]: rp_636c69656e745f706f6c6963792e50524f584945445f434c49454e545f45564944454e43455f484541444552(), ["client_policy.PROXIED_CODEX_EVIDENCE_VALUE"]: rp_636c69656e745f706f6c6963792e50524f584945445f434f4445585f45564944454e43455f56414c5545(), ["clients.CODEX_PROVIDER"]: rp_636c69656e74732e434f4445585f50524f5649444552(), ["clients.CODEX_TOKEN_ENV"]: rp_636c69656e74732e434f4445585f544f4b454e5f454e56(), ["clients.CLAUDE_TOKEN_ENV"]: rp_636c69656e74732e434c415544455f544f4b454e5f454e56(), ["clients.CLAUDE_BASE_ENV"]: rp_636c69656e74732e434c415544455f424153455f454e56(), ["clients.ROUTER_TOKEN_ENV"]: rp_636c69656e74732e524f555445525f544f4b454e5f454e56(), ["clients.GROK_TOKEN_ENV"]: rp_636c69656e74732e47524f4b5f544f4b454e5f454e56(), ["clients.GROK_BASE_ENV"]: rp_636c69656e74732e47524f4b5f424153455f454e56(), ["clients.ROUTER_PROVIDER"]: rp_636c69656e74732e524f555445525f50524f5649444552(), ["clients.OWNERSHIP_MARKER"]: rp_636c69656e74732e4f574e4552534849505f4d41524b4552(), ["clients.CLAUDE_MODEL_ENV"]: rp_636c69656e74732e434c415544455f4d4f44454c5f454e56(), ["clients.CLAUDE_GATEWAY_TARGET_ENV"]: rp_636c69656e74732e434c415544455f474154455741595f5441524745545f454e56(), ["clients.CLAUDE_DEFAULT_ROW_ENV"]: rp_636c69656e74732e434c415544455f44454641554c545f524f575f454e56(), ["clients.OPENAI_MODEL_OWNER"]: rp_636c69656e74732e4f50454e41495f4d4f44454c5f4f574e4552(), ["clients.ANTHROPIC_MODEL_OWNER"]: rp_636c69656e74732e414e5448524f5049435f4d4f44454c5f4f574e4552(), ["clients.GOOGLE_MODEL_OWNER"]: rp_636c69656e74732e474f4f474c455f4d4f44454c5f4f574e4552(), ["clients.QWEN_MODEL_OWNER"]: rp_636c69656e74732e5157454e5f4d4f44454c5f4f574e4552(), ["clients.ZAI_MODEL_OWNER"]: rp_636c69656e74732e5a41495f4d4f44454c5f4f574e4552(), ["clients.DEFAULT_OPENAI_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f4f50454e41495f524541534f4e494e475f4546464f5254(), ["clients.DOCTOR_MAX_TOKENS"]: rp_636c69656e74732e444f43544f525f4d41585f544f4b454e53(), ["clients.DEFAULT_ANTHROPIC_REASONING_EFFORT"]: rp_636c69656e74732e44454641554c545f414e5448524f5049435f524541534f4e494e475f4546464f5254(), ["clients.analysis.CLAUDE_PRECEDENCE_ENV"]: rp_636c69656e74732e616e616c797369732e434c415544455f505245434544454e43455f454e56(), ["clients.catalog.claude_context_variant_is_authorized"]: rp_636c69656e74732e636174616c6f672e636c617564655f636f6e746578745f76617269616e745f69735f617574686f72697a6564, ["clients.catalog.FRESH_ZAI_PREFERRED_MODEL"]: rp_636c69656e74732e636174616c6f672e46524553485f5a41495f5052454645525245445f4d4f44454c(), ["clients.doctor.DOCTOR_EVIDENCE_HEADER"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f484541444552(), ["clients.doctor.DOCTOR_EVIDENCE_VALUE"]: rp_636c69656e74732e646f63746f722e444f43544f525f45564944454e43455f56414c5545(), ["clients.doctor.MINIMUM_CLAUDE_GATEWAY_VERSION"]: rp_636c69656e74732e646f63746f722e4d494e494d554d5f434c415544455f474154455741595f56455253494f4e(), ["codex_cloudflare_cookies.MAX_COOKIE_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4259544553(), ["codex_cloudflare_cookies.MAX_COOKIE_COUNT"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f434f554e54(), ["codex_cloudflare_cookies.MAX_COOKIE_HEADER_BYTES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e4d41585f434f4f4b49455f4845414445525f4259544553(), ["codex_cloudflare_cookies.EXACT_HOSTS"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f484f535453(), ["codex_cloudflare_cookies.SUBDOMAIN_SUFFIXES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e535542444f4d41494e5f5355464649584553(), ["codex_cloudflare_cookies.EXACT_COOKIE_NAMES"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e45584143545f434f4f4b49455f4e414d4553(), ["codex_cloudflare_cookies.is_allowed_chatgpt_host"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e69735f616c6c6f7765645f636861746770745f686f7374, ["codex_cloudflare_cookies.is_allowed_cookie_name"]: rp_636f6465785f636c6f7564666c6172655f636f6f6b6965732e69735f616c6c6f7765645f636f6f6b69655f6e616d65, ["codex_identity.DEFAULT_CLIENT_VERSION"]: rp_636f6465785f6964656e746974792e44454641554c545f434c49454e545f56455253494f4e(), ["codex_identity.ORIGINATOR"]: rp_636f6465785f6964656e746974792e4f524947494e41544f52(), ["codex_loopback_bridge.CONNECT_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e434f4e4e4543545f54494d454f5554(), ["codex_loopback_bridge.START_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544152545f54494d454f5554(), ["codex_loopback_bridge.STOP_TIMEOUT"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e53544f505f54494d454f5554(), ["codex_loopback_bridge.POLL_INTERVAL"]: rp_636f6465785f6c6f6f706261636b5f6272696467652e504f4c4c5f494e54455256414c(), ["codex_remote_control.CONTINUATION_PREFIX"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e434f4e54494e554154494f4e5f505245464958(), ["codex_remote_control.FILE_NAME"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e46494c455f4e414d45(), ["codex_remote_control.STORE_VERSION"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e53544f52455f56455253494f4e(), ["codex_remote_control.MAX_RECORDS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e4d41585f5245434f524453(), ["codex_remote_control.ROOT"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524f4f54(), ["codex_remote_control.SERVER"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e534552564552(), ["codex_remote_control.ENROLL"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e524f4c4c(), ["codex_remote_control.REFRESH"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e52454652455348(), ["codex_remote_control.REFRESH_UPSTREAM"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e524546524553485f555053545245414d(), ["codex_remote_control.PAIR"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e50414952(), ["codex_remote_control.PAIR_STATUS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e504149525f535441545553(), ["codex_remote_control.ENVIRONMENTS"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e454e5649524f4e4d454e5453(), ["codex_remote_control.is_remote_control_path"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e69735f72656d6f74655f636f6e74726f6c5f70617468, ["codex_remote_control.hex_digit"]: rp_636f6465785f72656d6f74655f636f6e74726f6c2e6865785f6469676974, ["config.DEFAULT_MAX_PROXY_REQUEST_BYTES"]: rp_636f6e6669672e44454641554c545f4d41585f50524f58595f524551554553545f4259544553(), ["config.default_mpp_config"]: rp_636f6e6669672e64656661756c745f6d70705f636f6e666967, ["config.default_activitypub_public_key_pem"]: rp_636f6e6669672e64656661756c745f61637469766974797075625f7075626c69635f6b65795f70656d, ["config.parse_csv"]: rp_636f6e6669672e70617273655f637376, ["config_defaults.default_gonka_model"]: rp_636f6e6669675f64656661756c74732e64656661756c745f676f6e6b615f6d6f64656c, ["config_defaults.default_openai_compatible_base_url"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f626173655f75726c, ["config_defaults.default_openai_compatible_config"]: rp_636f6e6669675f64656661756c74732e64656661756c745f6f70656e61695f636f6d70617469626c655f636f6e666967, ["conversation_record.RECORD_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245434f52445f454e56(), ["conversation_record.REPLAY_ENV"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f454e56(), ["conversation_record.REPLAY_TURN_HEADER"]: rp_636f6e766572736174696f6e5f7265636f72642e5245504c41595f5455524e5f484541444552(), ["conversation_record.REFRAMED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e52454652414d45445f48454144455253(), ["conversation_record.MAX_RECORDED_BODY"]: rp_636f6e766572736174696f6e5f7265636f72642e4d41585f5245434f524445445f424f4459(), ["conversation_record.matching.IGNORED_HEADERS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e49474e4f5245445f48454144455253(), ["conversation_record.matching.COMPARED_FIELDS"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e434f4d50415245445f4649454c4453(), ["conversation_record.matching.header_is_compared"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e6865616465725f69735f636f6d7061726564, ["conversation_record.matching.RENDERED_LIMIT"]: rp_636f6e766572736174696f6e5f7265636f72642e6d61746368696e672e52454e44455245445f4c494d4954(), ["conversation_record.store.HEADER_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e4845414445525f5048415345(), ["conversation_record.store.TURN_PHASE"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e5455524e5f5048415345(), ["conversation_record.store.read_provenance"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e726561645f70726f76656e616e6365, ["conversation_record.store.string_field"]: rp_636f6e766572736174696f6e5f7265636f72642e73746f72652e737472696e675f6669656c64, ["credential_acceptance.ACCEPTANCE_TIMEOUT"]: rp_63726564656e7469616c5f616363657074616e63652e414343455054414e43455f54494d454f5554(), ["credential_acceptance.STAGING_DIRECTORY"]: rp_63726564656e7469616c5f616363657074616e63652e53544147494e475f4449524543544f5259(), ["credential_recovery_store.RECOVERY_VERSION"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f56455253494f4e(), ["credential_recovery_store.RECOVERY_DIRECTORY"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5245434f564552595f4449524543544f5259(), ["credential_recovery_store.PRIMARY_ACCOUNT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e5052494d4152595f4143434f554e54(), ["credential_recovery_store.CREDENTIAL_LOCK_TIMEOUT"]: rp_63726564656e7469616c5f7265636f766572795f73746f72652e43524544454e5449414c5f4c4f434b5f54494d454f5554(), ["credential_source.ROUTER_METADATA_KEY"]: rp_63726564656e7469616c5f736f757263652e524f555445525f4d455441444154415f4b4559(), ["credential_source.CREDENTIAL_SOURCE_KEY"]: rp_63726564656e7469616c5f736f757263652e43524544454e5449414c5f534f555243455f4b4559(), ["credential_source.REFRESH_OWNER_KEY"]: rp_63726564656e7469616c5f736f757263652e524546524553485f4f574e45525f4b4559(), ["credential_source.EXTERNAL_REFRESH_OWNER"]: rp_63726564656e7469616c5f736f757263652e45585445524e414c5f524546524553485f4f574e4552(), ["credential_store.LOCK_SUFFIX"]: rp_63726564656e7469616c5f73746f72652e4c4f434b5f535546464958(), ["deploy.CONTAINER"]: rp_6465706c6f792e434f4e5441494e4552(), ["deploy.RELAY"]: rp_6465706c6f792e52454c4159(), ["deploy.NETWORK"]: rp_6465706c6f792e4e4554574f524b(), ["deploy.BACKEND_PREFIX"]: rp_6465706c6f792e4241434b454e445f505245464958(), ["deploy.LABEL_KEY"]: rp_6465706c6f792e4c4142454c5f4b4559(), ["deploy.LABEL"]: rp_6465706c6f792e4c4142454c(), ["deploy.DEFAULT_PORT"]: rp_6465706c6f792e44454641554c545f504f5254(), ["deploy.HEALTH_TIMEOUT"]: rp_6465706c6f792e4845414c54485f54494d454f5554(), ["deploy.DEPLOY_TOKEN_LABEL"]: rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(), ["deploy.first_line"]: rp_6465706c6f792e66697273745f6c696e65, ["deploy.instance.MAX_INSTANCE_LEN"]: rp_6465706c6f792e696e7374616e63652e4d41585f494e5354414e43455f4c454e(), ["deploy.registry.FILE"]: rp_6465706c6f792e72656769737472792e46494c45(), ["deploy.runtime.compact"]: rp_6465706c6f792e72756e74696d652e636f6d70616374, ["deploy.runtime.parse_names"]: rp_6465706c6f792e72756e74696d652e70617273655f6e616d6573, ["deploy.runtime.is_absent"]: rp_6465706c6f792e72756e74696d652e69735f616273656e74, ["deploy_config.RESERVED_ENV"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e56(), ["deploy_config.RESERVED_ENV_PREFIXES"]: rp_6465706c6f795f636f6e6669672e52455345525645445f454e565f5052454649584553(), ["deploy_config.VERIFIABLE_CLIENTS"]: rp_6465706c6f795f636f6e6669672e56455249464941424c455f434c49454e5453(), ["deploy_relay.STATE_ENV"]: rp_6465706c6f795f72656c61792e53544154455f454e56(), ["deploy_relay.LISTENERS_ENV"]: rp_6465706c6f795f72656c61792e4c495354454e4552535f454e56(), ["deploy_seed.METADATA_KEY"]: rp_6465706c6f795f736565642e4d455441444154415f4b4559(), ["deploy_seed.HANDOVER_KEY"]: rp_6465706c6f795f736565642e48414e444f5645525f4b4559(), ["deployment_preservation.usable"]: rp_6465706c6f796d656e745f707265736572766174696f6e2e757361626c65, ["doctor.latest_version.RELEASE_API"]: rp_646f63746f722e6c61746573745f76657273696f6e2e52454c454153455f415049(), ["durable_file.ROLLBACK_SUFFIX"]: rp_64757261626c655f66696c652e524f4c4c4241434b5f535546464958(), ["durable_file.COMMIT_SUFFIX"]: rp_64757261626c655f66696c652e434f4d4d49545f535546464958(), ["durable_file.LOCK_POLL_INTERVAL"]: rp_64757261626c655f66696c652e4c4f434b5f504f4c4c5f494e54455256414c(), ["emergency_auth.FLAG"]: rp_656d657267656e63795f617574682e464c4147(), ["emergency_auth.ENV"]: rp_656d657267656e63795f617574682e454e56(), ["emergency_auth.ALLOW_NON_LOOPBACK_ENV"]: rp_656d657267656e63795f617574682e414c4c4f575f4e4f4e5f4c4f4f504241434b5f454e56(), ["emergency_auth.DURATION_ENV"]: rp_656d657267656e63795f617574682e4455524154494f4e5f454e56(), ["emergency_auth.ENV_VARS"]: rp_656d657267656e63795f617574682e454e565f56415253(), ["emergency_auth.DEFAULT_DURATION_MINUTES"]: rp_656d657267656e63795f617574682e44454641554c545f4455524154494f4e5f4d494e55544553(), ["emergency_auth.MAX_DURATION_MINUTES"]: rp_656d657267656e63795f617574682e4d41585f4455524154494f4e5f4d494e55544553(), ["emergency_auth.SUBJECT_PREFIX"]: rp_656d657267656e63795f617574682e5355424a4543545f505245464958(), ["emergency_auth.LABEL"]: rp_656d657267656e63795f617574682e4c4142454c(), ["emergency_auth.HEALTH_HEADER"]: rp_656d657267656e63795f617574682e4845414c54485f484541444552(), ["emergency_auth.is_synthetic_id"]: rp_656d657267656e63795f617574682e69735f73796e7468657469635f6964, ["encoded_request_body.MAX_DECOMPRESSION_RATIO"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f4445434f4d5052455353494f4e5f524154494f(), ["encoded_request_body.ZSTD_DECODE_TIMEOUT"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f54494d454f5554(), ["encoded_request_body.ZSTD_DECODE_CHUNK_BYTES"]: rp_656e636f6465645f726571756573745f626f64792e5a5354445f4445434f44455f4348554e4b5f4259544553(), ["encoded_request_body.MAX_PARALLEL_ZSTD_DECODES"]: rp_656e636f6465645f726571756573745f626f64792e4d41585f504152414c4c454c5f5a5354445f4445434f444553(), ["entrypoint.STACK_BYTES"]: rp_656e747279706f696e742e535441434b5f4259544553(), ["error_log.DEFAULT_MAX_BYTES"]: rp_6572726f725f6c6f672e44454641554c545f4d41585f4259544553(), ["error_log.MAX_BODY_BYTES"]: rp_6572726f725f6c6f672e4d41585f424f44595f4259544553(), ["error_log.MAX_DOCUMENT_BYTES"]: rp_6572726f725f6c6f672e4d41585f444f43554d454e545f4259544553(), ["gemini.PROJECT_ENV"]: rp_67656d696e692e50524f4a4543545f454e56(), ["gemini.MODEL_OWNER"]: rp_67656d696e692e4d4f44454c5f4f574e4552(), ["gemini.map_finish_reason"]: rp_67656d696e692e6d61705f66696e6973685f726561736f6e, ["gemini.native.parse_native_target"]: rp_67656d696e692e6e61746976652e70617273655f6e61746976655f746172676574, ["gemini_bridge.MODEL_ROLE"]: rp_67656d696e695f6272696467652e4d4f44454c5f524f4c45(), ["gemini_bridge.map_finish_reason"]: rp_67656d696e695f6272696467652e6d61705f66696e6973685f726561736f6e, ["gemini_bridge.request.helpers.IMAGE_MEDIA_TYPES"]: rp_67656d696e695f6272696467652e726571756573742e68656c706572732e494d4147455f4d454449415f5459504553(), ["generated_js_first.policy.js_min"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d696e, ["generated_js_first.policy.js_max"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6a735f6d6178, ["generated_js_first.policy.token_budget_permits"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f6275646765745f7065726d697473, ["generated_js_first.policy.cooldown_active"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6f6c646f776e5f616374697665, ["generated_js_first.policy.clamp"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636c616d70, ["generated_js_first.policy.longest_cooldown"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6c6f6e676573745f636f6f6c646f776e, ["generated_js_first.policy.retry_after_deadline"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72657472795f61667465725f646561646c696e65, ["generated_js_first.policy.token_cost"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f636f7374, ["generated_js_first.policy.valid_token_count"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e76616c69645f746f6b656e5f636f756e74, ["generated_js_first.policy.settled_token_usage"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e736574746c65645f746f6b656e5f7573616765, ["generated_js_first.policy.remaining_token_budget"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e72656d61696e696e675f746f6b656e5f627564676574, ["generated_js_first.policy.completion_token_limit"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e636f6d706c6574696f6e5f746f6b656e5f6c696d6974, ["generated_js_first.policy.retryable_status"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e726574727961626c655f737461747573, ["generated_js_first.policy.success_status"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e737563636573735f737461747573, ["generated_js_first.policy.weighted_capacity"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e77656967687465645f6361706163697479, ["generated_js_first.policy.token_expired"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e746f6b656e5f65787069726564, ["generated_js_first.policy.utf16_length"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e75746631365f6c656e677468, ["generated_js_first.policy.model_name_length_permits"]: rp_67656e6572617465645f6a735f66697273742e706f6c6963792e6d6f64656c5f6e616d655f6c656e6774685f7065726d697473, ["git_proxy.ZERO_OID"]: rp_6769745f70726f78792e5a45524f5f4f4944(), ["git_proxy.ancestry_from_compare"]: rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265, ["git_proxy.scope_admits"]: rp_6769745f70726f78792e73636f70655f61646d697473, ["git_proxy.canonical_git_path"]: rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468, ["github_proxy.POLICY_HEADER"]: rp_6769746875625f70726f78792e504f4c4943595f484541444552(), ["github_proxy.contains_inline_zero_after_oid"]: rp_6769746875625f70726f78792e636f6e7461696e735f696e6c696e655f7a65726f5f61667465725f6f6964, ["gonka.MISSING_API_KEY_MESSAGE"]: rp_676f6e6b612e4d495353494e475f4150495f4b45595f4d455353414745(), ["gonka.CATALOG_TTL"]: rp_676f6e6b612e434154414c4f475f54544c(), ["gonka.CATALOG_REQUEST_TIMEOUT"]: rp_676f6e6b612e434154414c4f475f524551554553545f54494d454f5554(), ["gonka.FAILED_REFRESH_RETRY"]: rp_676f6e6b612e4641494c45445f524546524553485f5245545259(), ["gonka.MAX_CATALOG_BYTES"]: rp_676f6e6b612e4d41585f434154414c4f475f4259544553(), ["gonka.MAX_SSE_CARRY_BYTES"]: rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(), ["lefine.BASE_URL"]: rp_6c6566696e652e424153455f55524c(), ["lefine.COMPATIBLE_CLIENTS"]: rp_6c6566696e652e434f4d50415449424c455f434c49454e5453(), ["lefine.MAX_CATALOG_BODY"]: rp_6c6566696e652e4d41585f434154414c4f475f424f4459(), ["lefine.unavailable"]: rp_6c6566696e652e756e617661696c61626c65, ["lino_json.ARRAY_MARKER"]: rp_6c696e6f5f6a736f6e2e41525241595f4d41524b4552(), ["lino_json.OBJECT_MARKER"]: rp_6c696e6f5f6a736f6e2e4f424a4543545f4d41524b4552(), ["lino_json.EMPTY_STRING"]: rp_6c696e6f5f6a736f6e2e454d5054595f535452494e47(), ["log_analysis.stored_bytes"]: rp_6c6f675f616e616c797369732e73746f7265645f6279746573, ["log_analysis.request_asks_for_a_stream"]: rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d, ["log_decode.BROTLI_BUFFER"]: rp_6c6f675f6465636f64652e42524f544c495f425546464552(), ["logging.http_failure"]: rp_6c6f6767696e672e687474705f6661696c757265, ["login_api.requested_provider"]: rp_6c6f67696e5f6170692e7265717565737465645f70726f7669646572, ["login_pty.PTY_COLS"]: rp_6c6f67696e5f7074792e5054595f434f4c53(), ["login_pty.PTY_ROWS"]: rp_6c6f67696e5f7074792e5054595f524f5753(), ["login_pty.POLL_INTERVAL"]: rp_6c6f67696e5f7074792e504f4c4c5f494e54455256414c(), ["login_pty_backend.contains_marker"]: rp_6c6f67696e5f7074795f6261636b656e642e636f6e7461696e735f6d61726b6572, ["login_url.AUTH_HOSTS"]: rp_6c6f67696e5f75726c2e415554485f484f535453(), ["login_url.TOKEN_PREFIXES"]: rp_6c6f67696e5f75726c2e544f4b454e5f5052454649584553(), ["login_url.REDACTED"]: rp_6c6f67696e5f75726c2e5245444143544544(), ["login_url.SECRET_PREFIXES"]: rp_6c6f67696e5f75726c2e5345435245545f5052454649584553(), ["login_url.redact_value"]: rp_6c6f67696e5f75726c2e7265646163745f76616c7565, ["managed_server.DEFAULT_LOCAL_PORT"]: rp_6d616e616765645f7365727665722e44454641554c545f4c4f43414c5f504f5254(), ["managed_server.CONFIG_DIRECTORY"]: rp_6d616e616765645f7365727665722e434f4e4649475f4449524543544f5259(), ["managed_server.SERVER_CONFIG"]: rp_6d616e616765645f7365727665722e5345525645525f434f4e464947(), ["managed_server.MANAGED_STATE"]: rp_6d616e616765645f7365727665722e4d414e414745445f5354415445(), ["managed_server.MANAGED_LOCK"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4f434b(), ["managed_server.CONTAINER"]: rp_6d616e616765645f7365727665722e434f4e5441494e4552(), ["managed_server.VOLUME"]: rp_6d616e616765645f7365727665722e564f4c554d45(), ["managed_server.IMAGE"]: rp_6d616e616765645f7365727665722e494d414745(), ["managed_server.MANAGED_LABEL"]: rp_6d616e616765645f7365727665722e4d414e414745445f4c4142454c(), ["managed_server.run_lease.HEARTBEAT_INTERVAL"]: rp_6d616e616765645f7365727665722e72756e5f6c656173652e4845415254424541545f494e54455256414c(), ["managed_server.selection.TRUST_DIRECTORY"]: rp_6d616e616765645f7365727665722e73656c656374696f6e2e54525553545f4449524543544f5259(), ["model_catalog.CATALOG_TTL"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f54544c(), ["model_catalog.FETCH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e46455443485f54494d454f5554(), ["model_catalog.MAX_CATALOG_PAGES"]: rp_6d6f64656c5f636174616c6f672e4d41585f434154414c4f475f5041474553(), ["model_catalog.PERSISTED_CATALOG_VERSION"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f56455253494f4e(), ["model_catalog.PERSISTED_CATALOG_FILE"]: rp_6d6f64656c5f636174616c6f672e5045525349535445445f434154414c4f475f46494c45(), ["model_catalog.CATALOG_INVALIDATION_DIR"]: rp_6d6f64656c5f636174616c6f672e434154414c4f475f494e56414c49444154494f4e5f444952(), ["model_catalog.errors.PERMISSION_ERROR_CODES"]: rp_6d6f64656c5f636174616c6f672e6572726f72732e5045524d495353494f4e5f4552524f525f434f444553(), ["model_catalog.startup.INITIAL_REFRESH_TIMEOUT"]: rp_6d6f64656c5f636174616c6f672e737461727475702e494e495449414c5f524546524553485f54494d454f5554(), ["model_catalog_sources.MAX_DOCUMENT_BYTES"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e4d41585f444f43554d454e545f4259544553(), ["model_catalog_sources.MAX_MODELS"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e4d41585f4d4f44454c53(), ["model_catalog_sources.config.DEFAULT_REFRESH_SECS"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e44454641554c545f524546524553485f53454353(), ["model_catalog_sources.config.canonical_provider"]: rp_6d6f64656c5f636174616c6f675f736f75726365732e636f6e6669672e63616e6f6e6963616c5f70726f7669646572, ["model_command.selector_kind"]: rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64, ["model_contract.is_false"]: rp_6d6f64656c5f636f6e74726163742e69735f66616c7365, ["model_contract.served_model_from"]: rp_6d6f64656c5f636f6e74726163742e7365727665645f6d6f64656c5f66726f6d, ["model_routing.native_catalog.MAX_ANTHROPIC_PAGE"]: rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e4d41585f414e5448524f5049435f50414745(), ["model_routing.native_catalog.DEFAULT_ANTHROPIC_PAGE"]: rp_6d6f64656c5f726f7574696e672e6e61746976655f636174616c6f672e44454641554c545f414e5448524f5049435f50414745(), ["model_routing.aggregate.CAPABILITY_FIELDS"]: rp_6d6f64656c5f726f7574696e672e6167677265676174652e4341504142494c4954595f4649454c4453(), ["model_routing.stored.bare_model_id"]: rp_6d6f64656c5f726f7574696e672e73746f7265642e626172655f6d6f64656c5f6964, ["mpp.escape_header_value"]: rp_6d70702e6573636170655f6865616465725f76616c7565, ["native_service.CONNECT_TIMEOUT"]: rp_6e61746976655f736572766963652e434f4e4e4543545f54494d454f5554(), ["openai.extract_sse_data"]: rp_6f70656e61692e657874726163745f7373655f64617461, ["openai.done_frame"]: rp_6f70656e61692e646f6e655f6672616d65, ["operational_log.MAX_BYTES"]: rp_6f7065726174696f6e616c5f6c6f672e4d41585f4259544553(), ["operational_log.BACKUPS"]: rp_6f7065726174696f6e616c5f6c6f672e4241434b555053(), ["output_limit.CHARS_PER_TOKEN"]: rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e(), ["output_limit.event_contains_assistant_content"]: rp_6f75747075745f6c696d69742e6576656e745f636f6e7461696e735f617373697374616e745f636f6e74656e74, ["output_limit.data_payload"]: rp_6f75747075745f6c696d69742e646174615f7061796c6f6164, ["pool_failover.DEFAULT_MAX_ATTEMPTS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(), ["pool_failover.DEFAULT_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e44454641554c545f4255444745545f53454353(), ["pool_failover.MAX_BUDGET_SECS"]: rp_706f6f6c5f6661696c6f7665722e4d41585f4255444745545f53454353(), ["pool_failover.classify_status"]: rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573, ["pool_response.MAX_ERROR_BYTES"]: rp_706f6f6c5f726573706f6e73652e4d41585f4552524f525f4259544553(), ["pool_stream_limits.MAX_EVENT_BYTES"]: rp_706f6f6c5f73747265616d5f6c696d6974732e4d41585f4556454e545f4259544553(), ["provider_proxy.protocol_for_request"]: rp_70726f76696465725f70726f78792e70726f746f636f6c5f666f725f72657175657374, ["provider_proxy.PROVIDER_CATALOG_TTL"]: rp_70726f76696465725f70726f78792e50524f56494445525f434154414c4f475f54544c(), ["provider_proxy.PROVIDER_FAILED_REFRESH_RETRY"]: rp_70726f76696465725f70726f78792e50524f56494445525f4641494c45445f524546524553485f5245545259(), ["providers.default_enabled"]: rp_70726f7669646572732e64656661756c745f656e61626c6564, ["providers.provider_import.unquote"]: rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465, ["proxy.API_PREFIX"]: rp_70726f78792e4150495f505245464958(), ["proxy.REQUIRED_FORWARD_HEADERS"]: rp_70726f78792e52455155495245445f464f52574152445f48454144455253(), ["proxy.HOP_BY_HOP_HEADERS"]: rp_70726f78792e484f505f42595f484f505f48454144455253(), ["proxy.RESPONSE_CREDENTIAL_HEADERS"]: rp_70726f78792e524553504f4e53455f43524544454e5449414c5f48454144455253(), ["proxy.ACCEPTED_CREDENTIAL_CARRIERS"]: rp_70726f78792e41434345505445445f43524544454e5449414c5f4341525249455253(), ["proxy.CREDENTIAL_CARRIER_HINT"]: rp_70726f78792e43524544454e5449414c5f434152524945525f48494e54(), ["proxy.upstream_headers.DEFAULT_ANTHROPIC_VERSION"]: rp_70726f78792e757073747265616d5f686561646572732e44454641554c545f414e5448524f5049435f56455253494f4e(), ["proxy.upstream_headers.OAUTH_BETA_FLAG"]: rp_70726f78792e757073747265616d5f686561646572732e4f415554485f424554415f464c4147(), ["proxy.upstream_headers.MAX_PROXY_REQUEST_BYTES"]: rp_70726f78792e757073747265616d5f686561646572732e4d41585f50524f58595f524551554553545f4259544553(), ["proxy.upstream_headers.INGRESS_NETWORK_HEADERS"]: rp_70726f78792e757073747265616d5f686561646572732e494e47524553535f4e4554574f524b5f48454144455253(), ["proxy.upstream_path.resolve_upstream_path"]: rp_70726f78792e757073747265616d5f706174682e7265736f6c76655f757073747265616d5f70617468, ["refresh.CLAUDE_OAUTH_USER_AGENT"]: rp_726566726573682e434c415544455f4f415554485f555345525f4147454e54(), ["refresh.ANTHROPIC_SDK_VERSION"]: rp_726566726573682e414e5448524f5049435f53444b5f56455253494f4e(), ["refresh.GEMINI_CLI_VERSION"]: rp_726566726573682e47454d494e495f434c495f56455253494f4e(), ["refresh.GOOGLE_AUTH_LIBRARY_VERSION"]: rp_726566726573682e474f4f474c455f415554485f4c4942524152595f56455253494f4e(), ["refresh.QWEN_CODE_VERSION"]: rp_726566726573682e5157454e5f434f44455f56455253494f4e(), ["refresh.GEMINI_CLIENT_ID_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f49445f454e56(), ["refresh.GEMINI_CLIENT_SECRET_ENV"]: rp_726566726573682e47454d494e495f434c49454e545f5345435245545f454e56(), ["refresh.GEMINI_CLIENT_ID"]: rp_726566726573682e47454d494e495f434c49454e545f4944(), ["refresh.GEMINI_AUTH_USER_AGENT"]: rp_726566726573682e47454d494e495f415554485f555345525f4147454e54(), ["refresh.GEMINI_API_CLIENT"]: rp_726566726573682e47454d494e495f4150495f434c49454e54(), ["refresh.CLAUDE_CLIENT_ID"]: rp_726566726573682e434c415544455f434c49454e545f4944(), ["refresh.CLAUDE_TOKEN_URL"]: rp_726566726573682e434c415544455f544f4b454e5f55524c(), ["refresh.REFRESH_SKEW_MS"]: rp_726566726573682e524546524553485f534b45575f4d53(), ["refresh.ROTATION_ATTRIBUTION_MS"]: rp_726566726573682e524f544154494f4e5f4154545249425554494f4e5f4d53(), ["refresh.refresh_config"]: rp_726566726573682e726566726573685f636f6e666967, ["refresh.refresh_state.INITIAL_BACKOFF_MS"]: rp_726566726573682e726566726573685f73746174652e494e495449414c5f4241434b4f46465f4d53(), ["refresh.refresh_state.MAX_BACKOFF_MS"]: rp_726566726573682e726566726573685f73746174652e4d41585f4241434b4f46465f4d53(), ["refresh.refresh_state.ROTATION_GRACE_MS"]: rp_726566726573682e726566726573685f73746174652e524f544154494f4e5f47524143455f4d53(), ["refresh.refresh_recovery.is_usable"]: rp_726566726573682e726566726573685f7265636f766572792e69735f757361626c65, ["refresh_rejections.REJECTIONS_FILE_NAME"]: rp_726566726573685f72656a656374696f6e732e52454a454354494f4e535f46494c455f4e414d45(), ["request_log.management.MAX_LOOKUP_BYTES"]: rp_726571756573745f6c6f672e6d616e6167656d656e742e4d41585f4c4f4f4b55505f4259544553(), ["request_log.redaction.BINARY_BODY_KEY"]: rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f4b4559(), ["request_log.redaction.hex_digit"]: rp_726571756573745f6c6f672e726564616374696f6e2e6865785f6469676974, ["request_log.stream_outcome.STREAM_END_MARKER"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e53545245414d5f454e445f4d41524b4552(), ["request_log.stream_outcome.stream_warrants_a_warning"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e73747265616d5f77617272616e74735f615f7761726e696e67, ["request_log.stream_outcome.is_streaming_media_type"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e69735f73747265616d696e675f6d656469615f74797065, ["request_log.stream_outcome.text_terminates_stream"]: rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e746578745f7465726d696e617465735f73747265616d, ["request_routing.MAX_RETRY_AFTER"]: rp_726571756573745f726f7574696e672e4d41585f52455452595f4146544552(), ["request_routing.bounded_retry_after"]: rp_726571756573745f726f7574696e672e626f756e6465645f72657472795f6166746572, ["resource_capture.MAX_BUFFERED_ID_PREFIX"]: rp_7265736f757263655f636170747572652e4d41585f42554646455245445f49445f505245464958(), ["resource_capture.MAX_BUFFERED_JSON_RESPONSE"]: rp_7265736f757263655f636170747572652e4d41585f42554646455245445f4a534f4e5f524553504f4e5345(), ["response_affinity.FILE_NAME"]: rp_726573706f6e73655f616666696e6974792e46494c455f4e414d45(), ["response_affinity.STORE_VERSION"]: rp_726573706f6e73655f616666696e6974792e53544f52455f56455253494f4e(), ["response_affinity.DEFAULT_TTL"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f54544c(), ["response_affinity.DEFAULT_MAX_RECORDS"]: rp_726573706f6e73655f616666696e6974792e44454641554c545f4d41585f5245434f524453(), ["response_affinity.MAX_RESPONSE_ID_BYTES"]: rp_726573706f6e73655f616666696e6974792e4d41585f524553504f4e53455f49445f4259544553(), ["responses.stream_content_key"]: rp_726573706f6e7365732e73747265616d5f636f6e74656e745f6b6579, ["responses.extract_sse_data"]: rp_726573706f6e7365732e657874726163745f7373655f64617461, ["responses.done_frame"]: rp_726573706f6e7365732e646f6e655f6672616d65, ["responses.chat_input.nonempty_string"]: rp_726573706f6e7365732e636861745f696e7075742e6e6f6e656d7074795f737472696e67, ["responses_websocket.RESPONSES_PATH"]: rp_726573706f6e7365735f776562736f636b65742e524553504f4e5345535f50415448(), ["responses_websocket.MAX_NAMED_STREAMS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f4e414d45445f53545245414d53(), ["responses_websocket.MAX_STREAM_ID_CHARS"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f53545245414d5f49445f4348415253(), ["responses_websocket.MAX_CONNECTION_AGE"]: rp_726573706f6e7365735f776562736f636b65742e4d41585f434f4e4e454354494f4e5f414745(), ["responses_websocket.CONNECT_TIMEOUT"]: rp_726573706f6e7365735f776562736f636b65742e434f4e4e4543545f54494d454f5554(), ["responses_websocket.stream_id"]: rp_726573706f6e7365735f776562736f636b65742e73747265616d5f6964, ["responses_websocket.namespace_path"]: rp_726573706f6e7365735f776562736f636b65742e6e616d6573706163655f70617468, ["route_contract.COMBINED_AND_INFERENCE"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f494e464552454e4345(), ["route_contract.COMBINED_AND_ADMIN"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f414e445f41444d494e(), ["route_contract.COMBINED_ONLY"]: rp_726f7574655f636f6e74726163742e434f4d42494e45445f4f4e4c59(), ["route_contract.GITHUB_ADAPTER_ONLY"]: rp_726f7574655f636f6e74726163742e4749544855425f414441505445525f4f4e4c59(), ["route_contract.neutral"]: rp_726f7574655f636f6e74726163742e6e65757472616c, ["route_contract.management"]: rp_726f7574655f636f6e74726163742e6d616e6167656d656e74, ["route_contract.ai_service"]: rp_726f7574655f636f6e74726163742e61695f73657276696365, ["route_contract.private_service"]: rp_726f7574655f636f6e74726163742e707269766174655f73657276696365, ["route_contract.github_adapter_service"]: rp_726f7574655f636f6e74726163742e6769746875625f616461707465725f73657276696365, ["route_contract.service_base_path"]: rp_726f7574655f636f6e74726163742e736572766963655f626173655f70617468, ["route_contract.types.REMOVED_ROUTES"]: rp_726f7574655f636f6e74726163742e74797065732e52454d4f5645445f524f55544553(), ["runtime.BOOTSTRAP_ADMIN_TTL_HOURS"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f54544c5f484f555253(), ["runtime.BOOTSTRAP_ADMIN_LABEL"]: rp_72756e74696d652e424f4f5453545241505f41444d494e5f4c4142454c(), ["safety_identifier.OPENAI_MAX_CHARACTERS"]: rp_7361666574795f6964656e7469666965722e4f50454e41495f4d41585f43484152414354455253(), ["security_headers.CONTENT_SECURITY_POLICY"]: rp_73656375726974795f686561646572732e434f4e54454e545f53454355524954595f504f4c494359(), ["storage.sanitize_codec_error"]: rp_73746f726167652e73616e6974697a655f636f6465635f6572726f72, ["storage.associative.TYPE"]: rp_73746f726167652e6173736f636961746976652e54595045(), ["storage.associative.TOKEN_RECORD"]: rp_73746f726167652e6173736f636961746976652e544f4b454e5f5245434f5244(), ["storage.associative.SUBTYPE"]: rp_73746f726167652e6173736f636961746976652e53554254595045(), ["storage.associative.VALUE"]: rp_73746f726167652e6173736f636961746976652e56414c5545(), ["storage.associative.STORAGE_FORMAT"]: rp_73746f726167652e6173736f636961746976652e53544f524147455f464f524d4154(), ["storage.associative.FORMAT_VERSION"]: rp_73746f726167652e6173736f636961746976652e464f524d41545f56455253494f4e(), ["storage.associative.RECORD_PREFIX"]: rp_73746f726167652e6173736f636961746976652e5245434f52445f505245464958(), ["storage.associative.STRING_TAG"]: rp_73746f726167652e6173736f636961746976652e535452494e475f544147(), ["storage.associative.EDGE_TAG"]: rp_73746f726167652e6173736f636961746976652e454447455f544147(), ["storage.associative.EMPTY_SEQUENCE"]: rp_73746f726167652e6173736f636961746976652e454d5054595f53455155454e4345(), ["storage.associative.BYTE_NODE_START"]: rp_73746f726167652e6173736f636961746976652e425954455f4e4f44455f5354415254(), ["storage.associative.SCHEMA_NODE_COUNT"]: rp_73746f726167652e6173736f636961746976652e534348454d415f4e4f44455f434f554e54(), ["storage.associative.split_repository_list"]: rp_73746f726167652e6173736f636961746976652e73706c69745f7265706f7369746f72795f6c697374, ["stream_termination.INCOMPLETE_STREAM_MESSAGE"]: rp_73747265616d5f7465726d696e6174696f6e2e494e434f4d504c4554455f53545245414d5f4d455353414745(), ["stream_termination.MAX_SSE_CARRY_BYTES"]: rp_73747265616d5f7465726d696e6174696f6e2e4d41585f5353455f43415252595f4259544553(), ["subscription.external.ROUTER_METADATA_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524f555445525f4d455441444154415f4b4559(), ["subscription.external.REFRESH_OWNER_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e524546524553485f4f574e45525f4b4559(), ["subscription.external.EXTERNAL_REFRESH_OWNER"]: rp_737562736372697074696f6e2e65787465726e616c2e45585445524e414c5f524546524553485f4f574e4552(), ["subscription.external.CREDENTIAL_SOURCE_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e43524544454e5449414c5f534f555243455f4b4559(), ["subscription.external.PROMOTION_RECEIPT_KEY"]: rp_737562736372697074696f6e2e65787465726e616c2e50524f4d4f54494f4e5f524543454950545f4b4559(), ["subscription_proxy.CODEX_RESPONSES_LITE_HEADER"]: rp_737562736372697074696f6e5f70726f78792e434f4445585f524553504f4e5345535f4c4954455f484541444552(), ["subscription_usage.SCHEMA_VERSION"]: rp_737562736372697074696f6e5f75736167652e534348454d415f56455253494f4e(), ["subscription_usage.MAX_USAGE_BODY"]: rp_737562736372697074696f6e5f75736167652e4d41585f55534147455f424f4459(), ["subscription_usage.parse_provider"]: rp_737562736372697074696f6e5f75736167652e70617273655f70726f7669646572, ["subscription_usage.normalize.ANTHROPIC_WINDOWS"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e414e5448524f5049435f57494e444f5753(), ["subscription_usage.normalize.numeric_message_estimate"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e6e756d657269635f6d6573736167655f657374696d617465, ["subscription_usage.normalize.reset_credits_available"]: rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e72657365745f637265646974735f617661696c61626c65, ["subscription_usage.cache.STANDARD_CACHE_TTL"]: rp_737562736372697074696f6e5f75736167652e63616368652e5354414e444152445f43414348455f54544c(), ["subscription_usage.cache.ANTHROPIC_CACHE_TTL"]: rp_737562736372697074696f6e5f75736167652e63616368652e414e5448524f5049435f43414348455f54544c(), ["telegram.POLL_TIMEOUT_SECS"]: rp_74656c656772616d2e504f4c4c5f54494d454f55545f53454353(), ["telegram.ERROR_BACKOFF"]: rp_74656c656772616d2e4552524f525f4241434b4f4646(), ["telegram.ALLOWED_UPDATES"]: rp_74656c656772616d2e414c4c4f5745445f55504441544553(), ["telegram.update_id"]: rp_74656c656772616d2e7570646174655f6964, ["thinking.anthropic.CLAUDE_DEFAULT_MAX_TOKENS"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f44454641554c545f4d41585f544f4b454e53(), ["thinking.anthropic.CLAUDE_MIN_THINKING_BUDGET"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4d494e5f5448494e4b494e475f425544474554(), ["thinking.anthropic.CLAUDE_OUTPUT_HEADROOM"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f48454144524f4f4d(), ["thinking.anthropic.CLAUDE_OUTPUT_FLOOR"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f4f55545055545f464c4f4f52(), ["thinking.anthropic.CLAUDE_FIXED_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f46495845445f544f4b454e5f4345494c494e47(), ["thinking.anthropic.CLAUDE_ADAPTIVE_TOKEN_CEILING"]: rp_7468696e6b696e672e616e7468726f7069632e434c415544455f41444150544956455f544f4b454e5f4345494c494e47(), ["thinking.anthropic.reasoning_budget"]: rp_7468696e6b696e672e616e7468726f7069632e726561736f6e696e675f627564676574, ["thinking.anthropic.adaptive_effort"]: rp_7468696e6b696e672e616e7468726f7069632e61646170746976655f6566666f7274, ["tls.GENERATED_DIRECTORY"]: rp_746c732e47454e4552415445445f4449524543544f5259(), ["tls.GENERATED_CERT"]: rp_746c732e47454e4552415445445f43455254(), ["tls.GENERATED_KEY"]: rp_746c732e47454e4552415445445f4b4559(), ["token.TOKEN_PREFIX"]: rp_746f6b656e2e544f4b454e5f505245464958(), ["token.CODEX_TOKEN_PREFIX"]: rp_746f6b656e2e434f4445585f544f4b454e5f505245464958(), ["token.token_jwt"]: rp_746f6b656e2e746f6b656e5f6a7774, ["token.ADMIN_SCOPE"]: rp_746f6b656e2e41444d494e5f53434f5045(), ["token.MAX_TTL_HOURS"]: rp_746f6b656e2e4d41585f54544c5f484f555253(), ["token.run_lease.RUN_LEASE_TTL_SECONDS"]: rp_746f6b656e2e72756e5f6c656173652e52554e5f4c454153455f54544c5f5345434f4e4453(), ["token_import.BACKUP_DIRECTORY"]: rp_746f6b656e5f696d706f72742e4241434b55505f4449524543544f5259(), ["token_report.HEADERS"]: rp_746f6b656e5f7265706f72742e48454144455253(), ["token_reservation.CHARS_PER_TOKEN"]: rp_746f6b656e5f7265736572766174696f6e2e43484152535f5045525f544f4b454e(), ["token_reservation.DEFAULT_MAX_OUTPUT_TOKENS"]: rp_746f6b656e5f7265736572766174696f6e2e44454641554c545f4d41585f4f55545055545f544f4b454e53(), ["token_reservation.declared_output_tokens"]: rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f746f6b656e73, ["token_secret.SENTINEL"]: rp_746f6b656e5f7365637265742e53454e54494e454c(), ["token_secret.LEGACY_PLACEHOLDERS"]: rp_746f6b656e5f7365637265742e4c45474143595f504c414345484f4c44455253(), ["token_secret.refusal"]: rp_746f6b656e5f7365637265742e7265667573616c, ["token_secret.FILE_ENV"]: rp_746f6b656e5f7365637265742e46494c455f454e56(), ["verification.SCHEMA"]: rp_766572696669636174696f6e2e534348454d41(), ["verification.SKIP_LOG"]: rp_766572696669636174696f6e2e534b49505f4c4f47(), ["verification.tests"]: rp_766572696669636174696f6e2e7465737473, ["verification.unit"]: rp_766572696669636174696f6e2e756e6974, ["verification.AREAS"]: rp_766572696669636174696f6e2e4152454153(), ["verification.status"]: rp_766572696669636174696f6e2e737461747573, ["verification.results"]: rp_766572696669636174696f6e2e726573756c7473, ["upstream_client.DEFAULT_UPSTREAM_READ_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f524541445f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_CONNECT_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f434f4e4e4543545f54494d454f55545f53454353(), ["upstream_client.DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS"]: rp_757073747265616d5f636c69656e742e44454641554c545f555053545245414d5f46495253545f425954455f54494d454f55545f53454353(), ["upstream_client.parse_timeout_secs"]: rp_757073747265616d5f636c69656e742e70617273655f74696d656f75745f73656373, ["upstream_client.parse_upstream_read_timeout"]: rp_757073747265616d5f636c69656e742e70617273655f757073747265616d5f726561645f74696d656f7574, ["upstream_guard.ALLOW_PRIVATE_NETWORKS_ENV"]: rp_757073747265616d5f67756172642e414c4c4f575f505249564154455f4e4554574f524b535f454e56(), ["upstream_guard.METADATA_NAMES"]: rp_757073747265616d5f67756172642e4d455441444154415f4e414d4553(), ["usage.token_count"]: rp_75736167652e746f6b656e5f636f756e74, ["usage.token_parts"]: rp_75736167652e746f6b656e5f7061727473, ["usage.ESTIMATED_CHARS_PER_TOKEN"]: rp_75736167652e455354494d415445445f43484152535f5045525f544f4b454e(), ["usage.first_u64"]: rp_75736167652e66697273745f753634, ["vendor_cli_refresh.DEFAULT_TIMEOUT"]: rp_76656e646f725f636c695f726566726573682e44454641554c545f54494d454f5554(), ["vendor_cli_refresh.CLAUDE_PROBE"]: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245(), ["vendor_cli_refresh.CODEX_PROBE"]: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245(), ["vendor_cli_refresh.PROBE_ARGS_ENV"]: rp_76656e646f725f636c695f726566726573682e50524f42455f415247535f454e56(), ["vendor_cli_refresh.probe_for"]: rp_76656e646f725f636c695f726566726573682e70726f62655f666f72, ["verification_client.safety_for"]: rp_766572696669636174696f6e5f636c69656e742e7361666574795f666f72, ["verification_client.CLIENTS"]: rp_766572696669636174696f6e5f636c69656e742e434c49454e5453(), ["vk.API_VERSION"]: rp_766b2e4150495f56455253494f4e(), ["vk.WAIT_SECS"]: rp_766b2e574149545f53454353(), ["vk.ERROR_BACKOFF"]: rp_766b2e4552524f525f4241434b4f4646(), ["vk.CHAT_PEER_OFFSET"]: rp_766b2e434841545f504545525f4f4646534554(), ["vk.is_private"]: rp_766b2e69735f70726976617465, ["vk.json_ts"]: rp_766b2e6a736f6e5f7473, ["warmup.WARMUP_TEXT"]: rp_7761726d75702e5741524d55505f54455854(), ["with_command.CLAUDE_PRIVACY_DEFAULT_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f505249564143595f44454641554c545f454e56(), ["with_command.CLAUDE_FEATURE_FLAG_BLOCKING_ENV"]: rp_776974685f636f6d6d616e642e434c415544455f464541545552455f464c41475f424c4f434b494e475f454e56(), ["with_command.codex_catalog.model_may_keep_reasoning_effort"]: rp_776974685f636f6d6d616e642e636f6465785f636174616c6f672e6d6f64656c5f6d61795f6b6565705f726561736f6e696e675f6566666f7274, ["with_command.claude_settings.LAST_WORKING_MODEL"]: rp_776974685f636f6d6d616e642e636c617564655f73657474696e67732e4c4153545f574f524b494e475f4d4f44454c(), ["zai_coding_plan.ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["zai_coding_plan.CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["zai_coding_plan.RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["zai_coding_plan.HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["zai_coding_plan.CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["zai_coding_plan.CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["zai_coding_plan.FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["zai_coding_plan.MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["zai_upstream_error.EXHAUSTED_CODES"]: rp_7a61695f757073747265616d5f6572726f722e4558484155535445445f434f444553(), ["zai_upstream_error.MAX_CLASSIFIED_BODY"]: rp_7a61695f757073747265616d5f6572726f722e4d41585f434c41535349464945445f424f4459(), ["zai_upstream_error.STATE_FILE"]: rp_7a61695f757073747265616d5f6572726f722e53544154455f46494c45(), ["anthropic_nonstream.MAX_BUFFERED_RESPONSE"]: rp_616e7468726f7069635f6e6f6e73747265616d2e4d41585f42554646455245445f524553504f4e5345(), ["deploy_local.LABEL_KEY"]: rp_6465706c6f795f6c6f63616c2e4c4142454c5f4b4559(), ["deploy_local.LEGACY"]: rp_6465706c6f795f6c6f63616c2e4c4547414359(), ["deploy_local.SPEC_VERSION"]: rp_6465706c6f795f6c6f63616c2e535045435f56455253494f4e(), ["deploy_local.READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e52454144595f415454454d505453(), ["deploy_local.claude_share.CREDENTIAL_FILE"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e43524544454e5449414c5f46494c45(), ["deploy_local.claude_share.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e636c617564655f73686172652e4c4142454c5f535546464958(), ["deploy_local.data_backup.LIMIT"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4c494d4954(), ["deploy_local.data_backup.FILES"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e46494c4553(), ["deploy_local.data_backup.DEPTH"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e4445505448(), ["deploy_local.data_backup.DEADLINE"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e444541444c494e45(), ["deploy_local.data_backup.COVERED"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e434f5645524544(), ["deploy_local.data_backup.SCHEMA"]: rp_6465706c6f795f6c6f63616c2e646174615f6261636b75702e534348454d41(), ["deploy_local.host.ROLLBACK_COMMAND"]: rp_6465706c6f795f6c6f63616c2e686f73742e524f4c4c4241434b5f434f4d4d414e44(), ["deploy_local.host.migrate.HOST_READY_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e686f73742e6d6967726174652e484f53545f52454144595f415454454d505453(), ["deploy_local.preservation.CATALOG_ENV"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f454e56(), ["deploy_local.preservation.CATALOG_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e707265736572766174696f6e2e434154414c4f475f534352495054(), ["deploy_local.relay_rotation.RELAY_IDLE_ATTEMPTS"]: rp_6465706c6f795f6c6f63616c2e72656c61795f726f746174696f6e2e52454c41595f49444c455f415454454d505453(), ["deploy_local.runtime_env.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e72756e74696d655f656e762e4c4142454c5f535546464958(), ["deploy_local.secret.LABEL_SUFFIX"]: rp_6465706c6f795f6c6f63616c2e7365637265742e4c4142454c5f535546464958(), ["deploy_local.secret.PROBE_ENV"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f454e56(), ["deploy_local.secret.PROBE_SCRIPT"]: rp_6465706c6f795f6c6f63616c2e7365637265742e50524f42455f534352495054(), ["deploy_local.secret.probe_accepted"]: rp_6465706c6f795f6c6f63616c2e7365637265742e70726f62655f6163636570746564, ["deploy_local.service.MANAGER_ENV"]: rp_6465706c6f795f6c6f63616c2e736572766963652e4d414e414745525f454e56(), ["deploy_local.service.RECORD"]: rp_6465706c6f795f6c6f63616c2e736572766963652e5245434f5244(), ["deploy_local.service.SECRET"]: rp_6465706c6f795f6c6f63616c2e736572766963652e534543524554(), ["deploy_local.service.xml"]: rp_6465706c6f795f6c6f63616c2e736572766963652e786d6c, ["deploy_local.staging.LABEL"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4c4142454c(), ["deploy_local.staging.MARKER"]: rp_6465706c6f795f6c6f63616c2e73746167696e672e4d41524b4552(), ["deploy_remote.AGENT_LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4147454e545f4c454153455f45584954(), ["deploy_remote.TRANSPORT_EXIT"]: rp_6465706c6f795f72656d6f74652e5452414e53504f52545f45584954(), ["deploy_remote.LEASE_EXIT"]: rp_6465706c6f795f72656d6f74652e4c454153455f45584954(), ["deploy_remote.session.DEADLINE_EXIT"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e444541444c494e455f45584954(), ["deploy_remote.session.EVENT_PREFIX"]: rp_6465706c6f795f72656d6f74652e73657373696f6e2e4556454e545f505245464958(), ["logs_cli.SHOWN"]: rp_6c6f67735f636c692e53484f574e(), ["account_policy_dispatch.MAX_ERROR_BYTES"]: rp_6163636f756e745f706f6c6963795f64697370617463682e4d41585f4552524f525f4259544553(), ["account_policy_response.MAX_RESPONSE_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f524553504f4e53455f4259544553(), ["account_policy_response.MAX_EVENT_BYTES"]: rp_6163636f756e745f706f6c6963795f726573706f6e73652e4d41585f4556454e545f4259544553(), ["account_routing_policy.POLICY_FILE"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e504f4c4943595f46494c45(), ["account_routing_policy.MAX_WEIGHT"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f574549474854(), ["account_routing_policy.MAX_RETRIES"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e4d41585f52455452494553(), ["account_routing_policy.COPY_HEADER_ALLOW_LIST"]: rp_6163636f756e745f726f7574696e675f706f6c6963792e434f50595f4845414445525f414c4c4f575f4c495354(), ["management_access.MAX_CLIENTS"]: rp_6d616e6167656d656e745f6163636573732e4d41585f434c49454e5453(), ["management_access.SNAPSHOT"]: rp_6d616e6167656d656e745f6163636573732e534e415053484f54() });
+export const provenance = {"entry":"src/lib.rs","runtimeParity":false,"moduleCount":391,"executableFunctions":137,"executableConstants":417};
