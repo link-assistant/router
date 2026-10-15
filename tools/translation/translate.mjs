@@ -12,6 +12,7 @@ import { tokenize } from './vendor/meta-language/translation/lexer.js';
 import { roundTripProgram } from './semantic-meta.mjs';
 import {relocateSourceLink} from './extensions/source-links.mjs';
 import {DEFAULT_JSON_PARSER_PROFILE,actualJsonCapabilityProfile} from './json-capabilities.mjs';
+import {createRulePipeline} from './rule-pipeline.mjs';
 
 export const PIN = 'e46e196db5ec34bf13a73b8645aa38d409737e60';
 export const sha256 = text => createHash('sha256').update(text).digest('hex');
@@ -57,10 +58,11 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   const sourceScope=matchingScopes.length===1?matchingScopes[0]:null;
   const jsonParserProfile=parserProfile??(matchingScopes.length?(sourceScope?.jsonParserProfile??actualJsonCapabilityProfile()):DEFAULT_JSON_PARSER_PROFILE);
   const runtimeModule = posix.relative(posix.dirname(path), 'runtime/effects.mjs');
-  const emit = program => {
-    const emitted = emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule, reserved: [...candidates.keys(), ...layouts.keys()] });
-    return { ...emitted, signatures: [...program.declarations.values()].filter(entry => entry.k === 'fn').map(entry => ({ target: emitted.mappings.find(mapping => mapping.source === entry.fullName)?.target, params: entry.params, ret: entry.async ? { kind: 'routerFuture', value: entry.ret } : entry.ret })) };
-  };
+  const emissionRules=createRulePipeline([
+    {phase:'language',rules:[{id:'rust-source:emit-javascript',apply:program=>emitJavaScript(program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule, reserved: [...candidates.keys(), ...layouts.keys()] })}]},
+    {phase:'repository',rules:[{id:'rust-source:export-signatures',apply:(emitted,program)=>({ ...emitted, signatures: [...program.declarations.values()].filter(entry => entry.k === 'fn').map(entry => ({ target: emitted.mappings.find(mapping => mapping.source === entry.fullName)?.target, params: entry.params, ret: entry.async ? { kind: 'routerFuture', value: entry.ret } : entry.ret })) })}]},
+  ]);
+  const emit=program=>emissionRules.run(program,program).value;
   let structural;
   let structuralDiagnostic = null;
   try { structural = sourceItems(source); }

@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, rmSync, symlinkSync, cpSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { inferenceProgram, returnHint, localHint, typeNode, dynamicIndex } from './native-inference.mjs';
+import {createRulePipeline} from '../rule-pipeline.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const walkFiles = (root, directory) => existsSync(join(root, directory)) ? readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? walkFiles(root, `${directory}/${entry.name}`) : [`${directory}/${entry.name}`]).sort() : [];
@@ -258,15 +259,23 @@ export function emitNativeTypeScript(ts, meta) {
       return f.updateSourceFile(transformed,[...declarations,...transformed.statements]);
     };
   };
-  const result = ts.transform(file, [transform]);
+  let result;
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:[{id:'native-typescript:checked-syntax',apply:input=>{result=ts.transform(input,[transform]);return result;}}]},
+    {phase:'repository',rules:[
+      {id:'native-typescript:print',apply:input=>ts.createPrinter({ newLine: ts.NewLineKind.LineFeed, removeComments: true }).printFile(input.transformed[0])},
+      {id:'native-typescript:output-census',apply:text=>{
+        const typed = ts.createSourceFile(meta.path.replace(/\.m?js$/u, '.ts'), text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+        explicitAny = 0;
+        const countAny = (node) => { if (node.kind === ts.SyntaxKind.AnyKeyword) explicitAny++; ts.forEachChild(node, countAny); };
+        countAny(typed);
+        return { text, explicitAny, inferredReturns, inferredLocals };
+      }},
+    ]},
+  ]);
   try {
-    const text = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed, removeComments: true }).printFile(result.transformed[0]);
-    const typed = ts.createSourceFile(meta.path.replace(/\.m?js$/u, '.ts'), text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-    explicitAny = 0;
-    const countAny = (node) => { if (node.kind === ts.SyntaxKind.AnyKeyword) explicitAny++; ts.forEachChild(node, countAny); };
-    countAny(typed);
-    return { text, explicitAny, inferredReturns, inferredLocals };
-  } finally { result.dispose(); }
+    return pipeline.run(file).value;
+  } finally { if(result)result.dispose(); }
 }
 
 export function buildNativeTypeScript(sourceRoot) {

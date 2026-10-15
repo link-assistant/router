@@ -16,6 +16,7 @@ import {callbackInputsFor} from './vendor/callback-inputs.mjs';
 import { discoverScopedHelpers } from './vendor/scoped-helpers.mjs';
 import {createSourceCallIssuer,issueTopLevelSourceCallsFrom,lowerSourceCalls} from './vendor/source-calls.mjs';
 import {issueOriginalConstructorBody,lowerOriginalConstructorBody,sourceConstructorItem,assertOriginalConstructorGraph} from './vendor/constructor-bodies.mjs';
+import {createRulePipeline} from '../rule-pipeline.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -125,12 +126,24 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
 
 /** Strict executable translation: any unsupported item fails the module. */
 export function translateJavaScript(source,options) {
-  const analyzed = analyzeJavaScript(source,options);
-  if (analyzed.diagnostics.length) throw new TranslationError(analyzed.diagnostics[0]);
-  const meta = `${analyzed.program.map(toLino).join('\n')}\n`;
-  // Both targets consume the serialized/reparsed meta-language document.
-  const program = parseMeta(meta,{constructorGraph:options?.constructorGraph});
-  return { ...analyzed, meta, rust: emitRust(program), typescript: emitTypeScript(program,{outputPath:options?.typescriptOutputPath}) };
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:[
+      {id:'javascript:analyze',apply:input=>{
+        const analyzed=analyzeJavaScript(input,options);
+        if(analyzed.diagnostics.length)throw new TranslationError(analyzed.diagnostics[0]);
+        return analyzed;
+      }},
+      {id:'javascript:checked-meta-roundtrip',apply:analyzed=>{
+        const meta=`${analyzed.program.map(toLino).join('\n')}\n`;
+        // Both targets consume the serialized/reparsed meta-language document.
+        const program=parseMeta(meta,{constructorGraph:options?.constructorGraph});
+        return {analyzed,meta,program};
+      }},
+      {id:'javascript:emit-targets',apply:({analyzed,meta,program})=>({analyzed,meta,rust:emitRust(program),typescript:emitTypeScript(program,{outputPath:options?.typescriptOutputPath})})},
+    ]},
+    {phase:'repository',rules:[{id:'javascript:package-artifacts',apply:({analyzed,meta,rust,typescript})=>({ ...analyzed,meta,rust,typescript })}]},
+  ]);
+  return pipeline.run(source).value;
 }
 
 export function parseMeta(text,{constructorGraph}={}) {
