@@ -45,3 +45,11 @@ export function sourceLiteralFormatConstructorCandidate(plan,inputs,proof,stage)
  return issue({schema:'source-literal-format-constructor-candidate-v1',templateToken:literal,sourceWrapper:stage,sourcePlan:plan,explicitArgumentCount:0,implicitCaptureSourceRecipe:state.recipes.find(row=>row.name==='make_format_args'),templateValueDecoded:false,templateLexicallyVerified:false,implicitCaptureNamesResolved:false,completeArgumentAstVerified:false,...limits},candidates,{plan,inputs,proof,stage,literal});
 }
 export const isSourceLiteralFormatConstructorCandidate=value=>!!value&&candidates.has(value);
+// Original complete source access, authenticated by the same private plan and
+// registration issuer. Public recipe copies never become source capabilities.
+export function formatConstructorInputSource(plan,inputs,proof,path){
+ const state=plans.get(plan);if(!state||state.inputs!==inputs||state.proof!==proof)fail('copied or foreign constructor source association');
+ formatRegisteredInputSource(inputs,proof,'compiler/rustc_builtin_macros/src/lib.rs');
+ const source=state.sources.get(path);if(source)return freezeMacroTree({...source});
+ return formatRegisteredInputSource(inputs,proof,path);
+}
