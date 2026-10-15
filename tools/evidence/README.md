@@ -142,5 +142,13 @@ the reviewed installation succeed. Storage receipts grant no semantic or Rust
 authority. The complete two-file guidance/range group passes all seven cases
 under Node and Bun, including all 23 Python packet controls and the nine unchanged
 range-helper controls, on source `d909397cead5b25f8996325bce014b79c14b63fa`.
-This focused fixture result does not establish real full V1 recovery through the
-new consumer, historical member continuity, installation or final packet fit.
+An additional control on source `bc62cfedc40bfdcedb942d982d19c66edf561766` uses
+the real 58,163,080-byte V2 archive in a fresh temporary synthetic Git repository.
+The new consumer recovers both complete 25,372,817-byte V1 logical artifacts with
+the archive/logical overlay present, then absent, comparing all 50,745,634 output
+bytes directly against the preserved original. Both full outputs and joined source,
+Git, index and recovery records remain retained; original source hashes and file
+identities stay unchanged. The synthetic Git fixture is removed only after success.
+This verifies actual artifact recovery, not a durable real-case Git witness or
+adoption. Historical member continuity, installation and final packet fit remain
+pending; the original V1, V2 and earlier fresh recovery remain intact.
