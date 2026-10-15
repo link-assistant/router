@@ -21,8 +21,16 @@ const digest=value=>metadataDigest(canonical(value));
 function actualChecker(checker){if(!checker||nodeTypes.isProxy(checker)||Object.getPrototypeOf(checker)!==HostChecker.prototype||Object.hasOwn(checker,'expr'))fail('requires the actual original Host checker');requireOriginalPrimitiveTryFromChecker(checker);}
 function checkerContext(checker){let state=contexts.get(checker);if(!state){state={token:Object.freeze({}),error:null};contexts.set(checker,state);}return state;}
 export function captureOriginalPrimitiveTryFrom(checker,surface){
- actualChecker(checker);const nodes=new WeakMap(),visit=node=>{if(!node||typeof node!=='object')return;if(['routerPrimitiveTryFromCall','routerPrimitiveSourceConstant'].includes(node.k))nodes.set(node,metadataDigest(node));for(const [key,value]of Object.entries(node))if(!['type','span','sourceConversionProof'].includes(key))Array.isArray(value)?value.forEach(visit):visit(value);};
- const items=list=>{for(const item of list)if(item.k==='module')items(item.items);else if(item.k==='fn'&&originalParsedDeclarationEvidence(item))visit(item.body);};items(surface.items);callers.set(checker,nodes);
+ // Ordinary Host extensions may check programs without these source bodies.
+ // Identity becomes mandatory before the first actual source-node capture;
+ // every check/issuance/finalization still independently requires it.
+ if(!checker||typeof checker!=='object'||nodeTypes.isProxy(checker))fail('requires the actual original Host checker');
+ let guarded=false;const nodes=new WeakMap(),visit=node=>{if(!node||typeof node!=='object')return;if(['routerPrimitiveTryFromCall','routerPrimitiveSourceConstant'].includes(node.k)){if(!guarded){actualChecker(checker);guarded=true;}nodes.set(node,metadataDigest(node));}for(const [key,value]of Object.entries(node))if(!['type','span','sourceConversionProof'].includes(key))Array.isArray(value)?value.forEach(visit):visit(value);};
+ // Inspect caller containers without invoking accessor/proxy/iterator hooks.
+ // Genuine function evidence validates its complete body before traversal.
+ const items=list=>{if(!Array.isArray(list)||nodeTypes.isProxy(list))fail('requires original source item arrays');const length=ownData(list,'length');for(let at=0;at<length;at++){const item=ownData(list,String(at)),kind=ownData(item,'k');if(kind==='module')items(ownData(item,'items'));else if(kind==='fn'&&originalParsedDeclarationEvidence(item))visit(ownData(item,'body'));}};items(ownData(surface,'items'));
+ // Empty captures also replace the previous surface's source-call identities.
+ callers.set(checker,nodes);
 }
 function requireCaller(checker,node){actualChecker(checker);if(callers.get(checker)?.get(node)!==metadataDigest(node))fail('requires its exact privately captured original caller syntax');if(node.sourceTryFromRefusal)throw unsupported('primitive TryFrom namespace',node.sourceTryFromRefusal,node.span);return requirePrimitiveTryFromScope(node.sourceConversionProof,node.target);}
 function errorType(checker,span){

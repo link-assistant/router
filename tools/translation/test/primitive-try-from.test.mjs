@@ -72,8 +72,31 @@ test('original trait imports shadows unknown cfg macros disabled or missing edit
 });
 test('genuine original caller frames reject copied proofs prototype overrides and mutable namespace maps',{timeout:30000},()=>{
  const source='pub fn convert(value:u64)->i64{i64::try_from(value).unwrap_or(0)}';
- const checker=new HostChecker('rust',[]);captureOriginalPrimitiveTryFrom(checker,{items:[]});checker.declare=()=>{throw Error('forged declare callback');};assert.throws(()=>captureOriginalPrimitiveTryFrom(checker,{items:[]}),/method identity|callbacks/);delete checker.declare;
- const originalResolve=Object.getOwnPropertyDescriptor(HostChecker.prototype,'resolveType');try{Object.defineProperty(HostChecker.prototype,'resolveType',{...originalResolve,value(){throw Error('forged prototype callback');}});assert.throws(()=>captureOriginalPrimitiveTryFrom(checker,{items:[]}),/method identity/);}finally{Object.defineProperty(HostChecker.prototype,'resolveType',originalResolve);}
+ const guardedSurface=parseRust(source+'fn main(){}',{cargoManifest:manifest}),checker=new HostChecker('rust',[]);captureOriginalPrimitiveTryFrom(checker,guardedSurface);checker.declare=()=>{throw Error('forged declare callback');};assert.throws(()=>captureOriginalPrimitiveTryFrom(checker,guardedSurface),/method identity|callbacks/);delete checker.declare;
+ const originalResolve=Object.getOwnPropertyDescriptor(HostChecker.prototype,'resolveType');try{Object.defineProperty(HostChecker.prototype,'resolveType',{...originalResolve,value(){throw Error('forged prototype callback');}});assert.throws(()=>captureOriginalPrimitiveTryFrom(checker,guardedSurface),/method identity/);}finally{Object.defineProperty(HostChecker.prototype,'resolveType',originalResolve);}
  const surface=parseRust(source+'fn main(){}',{cargoManifest:manifest}),actual=new HostChecker(surface.language,surface.externals??[]);actual.program(surface);const call=find(surface,node=>node.k==='routerPrimitiveTryFromCall');assert.ok(call);const internal=[...actual.items].find(([name])=>name==='ml_standard_source_TryFromIntError');assert.ok(internal);const [name,declaration]=internal;actual.items.set(name,{...declaration});assert.throws(()=>checkOriginalPrimitiveTryFrom(actual,call,new Map([['value',type('u64')]]),[]),/cached standard error/);actual.items.set(name,declaration);declaration.ctors[0].fields[0].type={kind:'bool'};assert.throws(()=>checkOriginalPrimitiveTryFrom(actual,call,new Map([['value',type('u64')]]),[]),/cached standard error/);
  const parser=new HostRustParser(tokenizeRust(source)),context=standaloneMatchesMacroContext(source,{cargoEditionContext:captureOriginalCargoEdition(manifest)});configureMatchesMacroParser(parser,context,{file:'src/module.rs'});const issue=()=>capturePrimitiveTryFromScope(parser,type('i64'),source.indexOf('i64::try_from'));const proof=issue();assert.equal(proof.edition.edition,'2024');parser.sourceNamespaceAliases.type.get('').set('i64',['crate','fake']);assert.throws(issue,TypeError);assert.throws(()=>capturePrimitiveTryFromScope(new Proxy(parser,{}),type('i64'),source.indexOf('i64::try_from')),TypeError);vector('private-original-frame-controls',{source,proof});
+});
+
+test('ordinary no-conversion Host extensions check without acquiring numeric source-body authority',{timeout:30000},()=>{
+ class Extension extends HostChecker{program(surface){const program=super.program(surface);this.completed=true;return program;}}
+ const plain='pub const GOOD:u8=1;pub fn unchanged(value:u8)->u8{value}',extension=new Extension('Rust',[]),program=extension.program(parseRust(plain+'fn main(){}'));
+ assert.equal(extension.completed,true);assert.equal(program.declarations.get('GOOD').body.value,'1');assert.ok(program.declarations.has('unchanged'));
+ const sources=['pub fn convert(value:u64)->i64{i64::try_from(value).unwrap_or(0)}','pub fn bound()->i64{i64::MAX}'],outcomes=[];
+ for(const source of sources){
+  const surface=parseRust(source+'fn main(){}',{cargoManifest:manifest}),subclass=new Extension('Rust',[]);
+  assert.throws(()=>subclass.program(surface),/actual original Host checker/);assert.equal(subclass.completed,undefined);
+  const genuine=new HostChecker('Rust',[]);captureOriginalPrimitiveTryFrom(genuine,surface);
+  let reads=0;const fake={get expr(){reads++;throw Error('checker getter');}},proxy=new Proxy(genuine,{get(){reads++;throw Error('checker proxy');},getPrototypeOf(){reads++;throw Error('checker proxy');}});
+  for(const wrong of [fake,proxy,{...genuine}])assert.throws(()=>captureOriginalPrimitiveTryFrom(wrong,surface),/actual original Host checker/);
+  assert.equal(reads,0);
+  const copied=structuredClone(surface),node=find(surface,node=>['routerPrimitiveTryFromCall','routerPrimitiveSourceConstant'].includes(node.k));assert.ok(node);
+  captureOriginalPrimitiveTryFrom(genuine,copied);assert.throws(()=>checkOriginalPrimitiveTryFrom(genuine,node,new Map(),[]),/exact privately captured original caller syntax/);
+  captureOriginalPrimitiveTryFrom(genuine,surface);captureOriginalPrimitiveTryFrom(genuine,parseRust(plain+'fn main(){}'));assert.throws(()=>checkOriginalPrimitiveTryFrom(genuine,node,new Map(),[]),/exact privately captured original caller syntax/);
+  node.span={...node.span,start:node.span.start+1};assert.throws(()=>captureOriginalPrimitiveTryFrom(genuine,surface),/changed after source capture/);
+  outcomes.push({source,subclassRefused:true,copiedSourceUnissued:true,oldCallerRevoked:true,mutatedSourceRefused:true,checkerReads:reads});
+ }
+ let reads=0;const badSurface={get items(){reads++;throw Error('surface getter');}},proxySurface=new Proxy({items:[]},{get(){reads++;throw Error('surface proxy');},getOwnPropertyDescriptor(){reads++;throw Error('surface proxy');}}),proxyItems=new Proxy([],{get(){reads++;throw Error('items proxy');},getOwnPropertyDescriptor(){reads++;throw Error('items proxy');}}),accessorItem={get k(){reads++;throw Error('item getter');}};
+ for(const surface of [badSurface,proxySurface,{items:proxyItems},{items:[accessorItem]}])assert.throws(()=>captureOriginalPrimitiveTryFrom(extension,surface),TypeError);
+ assert.equal(reads,0);vector('conditional-original-capture-controls',{plain,constant:program.declarations.get('GOOD'),outcomes,hostileSurfaceReads:reads});
 });
