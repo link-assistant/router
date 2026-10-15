@@ -85,6 +85,8 @@ This project uses:
 - Keep files under 1000 lines
 - Use meaningful variable and function names
 
+For translator orchestration, follow [the rule API and verification boundaries](docs/development/translation-rule-api.md). Additional logical layers compose rules or pipelines within the two required phase names; the API does not admit arbitrary phase names. A successful rule invocation supplies no source-proof or parity authority.
+
 ### Terminology: it is a links network, never a graph
 
 The structure this project stores its tokens in is a **links network**: links
@@ -122,11 +124,13 @@ the only places that may. Everywhere else — source, `README.md`, the rest of
 `docs/`, workflows — is checked, so do not reach for the changelog as a way to
 say it elsewhere.
 
-Run it locally the way CI does:
+CI runs the terminology check with:
 
 ```bash
 rust-script scripts/check-terminology.rs
 ```
+
+This Rust-backed command is not a local diagnostic during issue #759: the user's no-local-Rust instruction includes `rust-script`. Obtain its result from CI after the same-head JavaScript gate passes.
 
 `dev/log/` and captured third-party text under `docs/case-studies/*/raw/` are
 excluded as records rather than as wording to fix — editing them would falsify
