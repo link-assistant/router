@@ -1,0 +1,25 @@
+{
+  "schema": "complete-cargo-feature-worklist-original-consumers-v1",
+  "sourceHead": "8d9b32735b6a9cee69012d6cd998e86ea8c9408e",
+  "sources": [
+    {
+      "path": "tools/translation/json-macro-features.mjs",
+      "storedPath": "raw/json-macro-features.mjs",
+      "bytes": 5686,
+      "sha256": "9910504694794d03c12a82c136772c8085e250490c0eb9e30a7c750d4cca47c3"
+    },
+    {
+      "path": "tools/translation/json-capabilities.mjs",
+      "storedPath": "raw/json-capabilities.mjs",
+      "bytes": 8077,
+      "sha256": "c81363b52b561ce7b0553efd5a2000417f4c133268312a8706d7d625ce702e9b"
+    }
+  ],
+  "license": {
+    "storedPath": "raw/LICENSE",
+    "bytes": 1211,
+    "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
+  },
+  "relocation": "Only relative import locations and original import.meta.url; complete source preserved",
+  "scope": "Exact pre-extraction feature worklists and their existing independent private source/profile issuers; no Cargo unit role inference"
+}
