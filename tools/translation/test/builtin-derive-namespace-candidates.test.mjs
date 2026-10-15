@@ -47,6 +47,7 @@ test('all eight actual original base64 invocations retain complete original sour
  }
  retain('01-all-eight-complete-candidates',outputs);
  assert.equal(outputs.length,8);assert.deepEqual(outputs.map(row=>row.evidence.invocation.path[0]),['Clone','Copy','Debug','PartialEq','Eq','PartialEq','Eq','Debug']);
+ assert.deepEqual(outputs.map(row=>row.evidence.registeredOwner.registration.callback.join('::')),['clone::expand_deriving_clone','bounds::expand_deriving_copy','debug::expand_deriving_debug','partial_eq::expand_deriving_partial_eq','eq::expand_deriving_eq','partial_eq::expand_deriving_partial_eq','eq::expand_deriving_eq','debug::expand_deriving_debug']);
  assert.equal(module.configurationCondition,'unknown','no_std/conditional documentation still retains its genuine original boundary');
 });
 
@@ -113,6 +114,6 @@ test('complete pre-factor and current owned output leaves preserve full proof by
 test('the shared Copy grammar factoring preserves complete authored checked meta JavaScript and strict TypeScript',{timeout:60000},async()=>{
  const source='#[derive(Clone,Copy,Debug,PartialEq,Eq)]pub enum Mode{First,Second}pub fn bounded(value:u8)->u8{value+1}',result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
  retain('08-whole-authored-translation',{source,result});assert.equal(result.meta.executable.some(row=>row.name==='bounded'),true);const observations=[];
- try{await verifyTypedTargets(result,api=>{for(const input of [0n,127n,254n]){const actual=api.bounded(input);assert.equal(actual,input+1n);observations.push({input:String(input),actual:String(actual)});}assert.throws(()=>api.bounded(255n),RangeError);assert.throws(()=>api.bounded(-1n),TypeError);},{childTimeoutMs:20000});}finally{retain('08-complete-target-observations',observations);}
+ try{await verifyTypedTargets(result,api=>{for(const input of [0n,127n,254n]){const actual=api.bounded(input);assert.equal(actual,input+1n);observations.push({input:String(input),actual:String(actual)});}assert.throws(()=>api.bounded(255n),RangeError);assert.throws(()=>api.bounded(-1n),RangeError);},{childTimeoutMs:20000});}finally{retain('08-complete-target-observations',observations);}
  assert.equal(observations.length,6);
 });

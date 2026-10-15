@@ -25,7 +25,7 @@ const own=(value,key)=>{
  return descriptor.value;
 };
 const recipes=new Map([
- ['copy::expand_deriving_copy',{file:'bounds.rs',name:'expand_deriving_copy',owner:'Copy'}],
+ ['bounds::expand_deriving_copy',{file:'bounds.rs',name:'expand_deriving_copy',owner:'Copy'}],
  ['clone::expand_deriving_clone',{file:'clone.rs',name:'expand_deriving_clone',owner:'Clone',lift:liftBuiltinCloneAstRoute}],
  ['debug::expand_deriving_debug',{file:'debug.rs',name:'expand_deriving_debug',owner:'Debug',lift:liftBuiltinDebugAstRoute}],
  ['partial_eq::expand_deriving_partial_eq',{file:'cmp/partial_eq.rs',name:'expand_deriving_partial_eq',owner:'PartialEq',lift:liftBuiltinPartialEqAstRoute}],
