@@ -310,6 +310,12 @@ export function annotateRuntimeTypes(runtime, parameterTypes = new Map(), dataTy
       for(;body<tokens.length&&depth;body++)if(tokens[body].kind==='punct'){if(tokens[body].value==='(')depth++;else if(tokens[body].value===')')depth--;}
       if(tokens[body]?.value==='{'){let end=body+1;depth=1;for(;end<tokens.length&&depth;end++)if(tokens[end].kind==='punct'){if(tokens[end].value==='{')depth++;else if(tokens[end].value==='}')depth--;}functionRanges.push({name,start:body+1,end:end-1});}
     }
+    if(name==='ml_router_unwrap')annotations.push({offset:tokens[at].start,text:[
+      "function ml_router_unwrap<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, fallback:T, option:true): T;",
+      "function ml_router_unwrap<T>(value: Readonly<{$:'Err';field0:unknown}>, fallback:T, option:false): T;",
+      "function ml_router_unwrap<R extends Readonly<{$:'Err';field0:unknown}>|Readonly<{$:'Ok';field0:unknown}>>(value: R, fallback: Extract<R,Readonly<{$:'Ok';field0:unknown}>>['field0'], option:false): Extract<R,Readonly<{$:'Ok';field0:unknown}>>['field0'];",
+      '',
+    ].join('\n')});
     if(name==='ml_router_try')annotations.push({offset:tokens[at].start,text:[
       "function ml_router_try<T>(value: Readonly<{$:'None'}>|Readonly<{$:'Some';field0:T}>, option:true): T;",
       "function ml_router_try<R extends Readonly<{$:'Err';field0:unknown}>|Readonly<{$:'Ok';field0:unknown}>>(value: R, option:false): Extract<R,Readonly<{$:'Ok';field0:unknown}>>['field0'];",

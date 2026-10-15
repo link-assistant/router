@@ -15,6 +15,8 @@ import {sourcePrimitiveAlias} from './primitive-type-aliases.mjs';
 import {capturePrimitiveBoolFromScope,requirePrimitiveBoolFromScope,pinnedPrimitiveBoolFrom,parsePrimitiveBoolFromBody,requirePrimitiveBoolFromBody} from './primitive-bool-from-source.mjs';
 import {captureSourceConversionScope} from './source-conversion-scope.mjs';
 import {captureOriginalConversions,checkOriginalSourceInto,requireOriginalConversionEmission,prepareOriginalConversionFunction,finalizeOriginalConversions,hasOriginalConversionIssuance} from './source-conversion-body.mjs';
+import {capturePrimitiveTryFromScope} from './primitive-try-from-scope.mjs';
+import {captureOriginalPrimitiveTryFrom,originalPrimitiveTryFromSelfType,checkOriginalPrimitiveTryFrom,checkOriginalPrimitiveConstant,finalizeOriginalPrimitiveTryFrom,prepareOriginalPrimitiveTryFrom,requireOriginalPrimitiveTryFromBody} from './primitive-try-from-body.mjs';
 import {captureOriginalCloneBodies,checkOriginalCloneBody,checkOriginalCloneFieldBorrow,prepareOriginalCloneEmission,requireOriginalCloneEmission,requireOriginalCloneFieldEmission,originalCloneReceiverParameter} from './clone-source-body.mjs';
 import {iteratorReceiverExpected} from './iterators.mjs';
 import {itemConfiguration} from '../cfg-profile.mjs';
@@ -248,7 +250,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     return this.qualifyOwnershipType?.(type,c.tokens.slice(start,c.index))??type;
   }
   hostTypeSyntax(){
-    const c=this.cursor;
+    const c=this.cursor,originalSelf=originalPrimitiveTryFromSelfType(this);if(originalSelf)return originalSelf;
     // && is one lexer token, but two borrows only in a source type position.
     // Split its coordinates here; boolean expression tokens remain untouched.
     if(c.is('&&')){const token=c.peek();c.tokens=[...c.tokens.slice(0,c.index),{...token,value:'&',end:token.start+1},{...token,value:'&',start:token.start+1},...c.tokens.slice(c.index+1)];}
@@ -320,6 +322,14 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     }
     let offset=1;const segments=[first.value];while(c.is('::',offset)&&c.peek(offset+1).kind==='identifier'){segments.push(c.peek(offset+1).value);offset+=2;}
     const resolved=this.resolve(segments,path),owner=segments.slice(0,-1),operation=segments.at(-1),fixed=rustFixedType(owner.at(-1));
+    if(segments.length===2&&fixed&&/^[iu](8|16|32|64|128)$/u.test(owner[0])&&!this.builtinShadow(owner[0],path)&&(operation==='try_from'&&c.is('(',offset)||['MIN','MAX'].includes(operation)&&!c.is('(',offset)&&!c.is('::',offset))){
+      const target={...fixed,rustPrimitiveName:owner[0]};let sourceConversionProof=null,sourceTryFromRefusal=null;
+      try{sourceConversionProof=capturePrimitiveTryFromScope(this,target,first.start);}catch(error){if(!(error instanceof TypeError))throw error;sourceTryFromRefusal=error.message;}
+      for(let index=0;index<offset;index++)c.next();
+      if(operation!=='try_from')return {k:'routerPrimitiveSourceConstant',name:operation,target,sourceConversionProof,sourceTryFromRefusal,span:span(first,c.peek())};
+      c.expect('(','original primitive TryFrom');const args=[];while(!c.is(')')){args.push(this.expr(path));if(!c.eat(','))break;}c.expect(')','original primitive TryFrom');
+      return {k:'routerPrimitiveTryFromCall',target,args,sourceConversionProof,sourceTryFromRefusal,span:span(first,c.peek())};
+    }
     const allocatingItem=allocatingStringFunctionItem(this,segments,path);
     if(allocatingItem&&!c.is('(',offset)&&!c.is('::',offset)){
       for(let index=0;index<offset;index++)c.next();
@@ -466,6 +476,8 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
   sourceSharedPatternBinding(binding){return sourcePatterns.originalSharedPatternBinding(this,binding);}
   sourceSharedPatternProjection(subject,projection,targetType,paths){return sourcePatterns.originalSharedPatternProjection(this,subject,projection,targetType,paths);}
   expr(node,env,path,expected,allowLiteral=false) {
+    if(node.k==='routerPrimitiveTryFromCall')return checkOriginalPrimitiveTryFrom(this,node,env,path,expected);
+    if(node.k==='routerPrimitiveSourceConstant')return checkOriginalPrimitiveConstant(this,node);
     if(node.k==='routerSourceIntoCall'){
       const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,'into','shared');
       if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
@@ -694,6 +706,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     captureOriginalMoveTuples(this,surface);
     captureOriginalStandardCalls(this,surface);
     captureOriginalConversions(this,surface);
+    captureOriginalPrimitiveTryFrom(this,surface);
     captureOriginalCloneBodies(this,surface,assertOriginalCloneChecker);
     captureOptionNominals(this,surface);
     captureStaticArrays(this,surface);
@@ -716,6 +729,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     bindCheckedNominalNoDrop(program,this);
     const sourceLinks=bindCheckedSourceLinks(program,sourceContext,{targetProfile:CONSTANT_EVALUATION_PROFILE});
     if(hasOriginalConversionIssuance(this))finalizeOriginalConversions(this,program,sourceLinks);
+    finalizeOriginalPrimitiveTryFrom(this,program,sourceLinks);
     for(const entry of program.declarations.values())if(entry.constant){
       const result=evaluateCheckedConstant(program,entry.fullName,{sourceLinks,contracts:new Map(HOST_CONTRACTS.map(contract=>[contract.id,contract]))});
       if(result.status!=='value'||!result.proof.sourceLinksVerified)throw unsupported('constant evaluation',result.diagnostic?.reason??'requires fresh original parser source association',entry.span);
@@ -727,6 +741,9 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
 }
 const originalCloneCheckerMethods=originalMethodSnapshot(HostChecker.prototype);
 function assertOriginalCloneChecker(checker){assertOriginalParserIdentity(checker,HostChecker.prototype,originalCloneCheckerMethods);}
+// Reuse the definition-time complete Host checker method snapshot. This
+// read-only guard issues no caller, type or checked-body capability.
+export function requireOriginalPrimitiveTryFromChecker(checker){assertOriginalCloneChecker(checker);return checker;}
 export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.sharedGuardVariable='ml_shared_immutable_value';for(let index=2;state.claimed.has(this.sharedGuardVariable);index++)this.sharedGuardVariable='ml_shared_immutable_value_'+index;state.reserved.add(this.sharedGuardVariable);this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from','ml_integer_cast','ml_integer_shift','ml_static_array_values','ml_static_array_element'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
@@ -758,12 +775,13 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     const schemaName='ml_host_value_schema_'+key,refinementsName='ml_host_value_refinements_'+key;this.state.reserved.add(schemaName).add(refinementsName);
     return `ml_validate_rust_value(${value}, ${JSON.stringify(runtimeValueType(type))}, ${schemaName}, { refinements: ${refinementsName} })`;
   }
-  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry),prior=this.constMatchFunction;this.constMatchFunction=this.state.localName(entry.fullName);try{return super.fn(entry);}finally{this.constMatchFunction=prior;restoreClones?.();restorePatterns?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();}}
+  fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restoreTryFrom=prepareOriginalPrimitiveTryFrom(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry),prior=this.constMatchFunction;this.constMatchFunction=this.state.localName(entry.fullName);try{return super.fn(entry);}finally{this.constMatchFunction=prior;restoreClones?.();restorePatterns?.();restoreTryFrom?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();}}
   statements(node,...args){
     if(node.k==='let'&&typeof node.constMatchSourceEvidence==='string'&&this.checkedLocalBindings)this.checkedLocalBindings.push({function:this.constMatchFunction,name:node.name,type:structuredClone(node.value.type)});
     return super.statements(node,...args);
   }
   expr(node) {
+    if(node.k==='routerOriginalPrimitiveTryFrom')return this.expr(requireOriginalPrimitiveTryFromBody(node,this));
     if(node.k==='routerSourceConversion')return this.expr(requireOriginalConversionEmission(node,this));
     if(node.k==='routerCheckedCloneBody')return this.expr(requireOriginalCloneEmission(node,this));
     if(node.k==='routerCheckedCloneFieldBorrow')return this.expr(requireOriginalCloneFieldEmission(node,this));
