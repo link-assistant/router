@@ -20,8 +20,10 @@ let retainedBytes=0,entries=0,hits=0,misses=0,captures=0,evictions=0;
 // the number of positive scalar records without keeping a strong key list.
 // Completed roots have an independent partition, so a large AST walk cannot
 // evict every previously validated comparison operand with tiny descendants.
-const SUBTREES=2048,OWNERS=2048;
-let owners=qualified?new weakConstructor():null,ownerEntries=0,subtrees=qualified?new weakConstructor():null,subtreeEntries=0,subtreeHits=0,subtreeMisses=0,subtreeCaptures=0,subtreeRotations=0,subtreeBudgetRefusals=0;
+// A separate large-subtree partition also protects shared source recipes from
+// token/span churn; all three partitions together still hold at most4096 rows.
+const SUBTREES=1024,LARGE_SUBTREES=2048,OWNERS=1024,LARGE_CELLS=64;
+let owners=qualified?new weakConstructor():null,ownerEntries=0,ownerHits=0,largeSubtrees=qualified?new weakConstructor():null,largeEntries=0,largeHits=0,smallHits=0,subtrees=qualified?new weakConstructor():null,subtreeEntries=0,subtreeHits=0,subtreeMisses=0,subtreeCaptures=0,subtreeRotations=0,subtreeBudgetRefusals=0;
 function intrinsics(){
  if(!qualified||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalLexingIntrinsicsUnchanged())return false;
  const actual=descriptor(Object,'isFrozen');return !!actual&&own(actual,'value')&&actual.value===frozenField.value&&actual.writable===frozenField.writable&&actual.enumerable===frozenField.enumerable&&actual.configurable===frozenField.configurable;
@@ -36,6 +38,9 @@ function immutableJson(value){
    if(frame.parent===null){
     if(ownerEntries>=OWNERS){owners=new weakConstructor();ownerEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
     apply(weakSet,owners,[value,record]);ownerEntries++;
+   }else if(record.cells>=LARGE_CELLS){
+    if(largeEntries>=LARGE_SUBTREES){largeSubtrees=new weakConstructor();largeEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
+    apply(weakSet,largeSubtrees,[value,record]);largeEntries++;
    }else{
     if(subtreeEntries>=SUBTREES){subtrees=new weakConstructor();subtreeEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
     apply(weakSet,subtrees,[value,record]);subtreeEntries++;
@@ -46,8 +51,8 @@ function immutableJson(value){
   if(--cells<0||frame.depth>DEPTH)return false;
   if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean'){charge(frame.parent,1,0);continue;}
   if(typeof value!=='object'||isProxy(value)||apply(setHas,active,[value]))return false;
-  const saved=apply(weakGet,owners,[value])||apply(weakGet,subtrees,[value]);
-  if(saved){if(saved.cells-1>cells||saved.height>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=saved.cells-1;charge(frame.parent,saved.cells,saved.height);if(subtreeHits<9007199254740991)subtreeHits++;continue;}
+  const owner=apply(weakGet,owners,[value]),large=owner?null:apply(weakGet,largeSubtrees,[value]),saved=owner||large||apply(weakGet,subtrees,[value]);
+  if(saved){if(saved.cells-1>cells||saved.height>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=saved.cells-1;charge(frame.parent,saved.cells,saved.height);if(subtreeHits<9007199254740991)subtreeHits++;if(owner){if(ownerHits<9007199254740991)ownerHits++;}else if(large){if(largeHits<9007199254740991)largeHits++;}else if(smallHits<9007199254740991)smallHits++;continue;}
   if(subtreeMisses<9007199254740991)subtreeMisses++;
   if(!apply(frozenField.value,Object,[value]))return false;
   const proto=prototype(value),array=isArray(value);if(proto!==objectPrototype&&proto!==null&&!(array&&proto===arrayPrototype))return false;
@@ -77,4 +82,4 @@ export function createPrivateFrozenJsonCache(){
  };
 }
 // Bounded scalar diagnostics only; mutating this returned copy grants nothing.
-export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH},eligibilityMemo:{entries:ownerEntries+subtreeEntries,maximumEntries:OWNERS+SUBTREES,owners:{entries:ownerEntries,maximumEntries:OWNERS},subtrees:{entries:subtreeEntries,maximumEntries:SUBTREES},hits:subtreeHits,misses:subtreeMisses,captures:subtreeCaptures,rotations:subtreeRotations,budgetRefusals:subtreeBudgetRefusals}};}
+export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH},eligibilityMemo:{entries:ownerEntries+subtreeEntries+largeEntries,maximumEntries:OWNERS+SUBTREES+LARGE_SUBTREES,owners:{entries:ownerEntries,maximumEntries:OWNERS,hits:ownerHits},subtrees:{entries:subtreeEntries+largeEntries,maximumEntries:SUBTREES+LARGE_SUBTREES,small:{entries:subtreeEntries,maximumEntries:SUBTREES,hits:smallHits},large:{entries:largeEntries,maximumEntries:LARGE_SUBTREES,hits:largeHits,minimumCells:LARGE_CELLS}},hits:subtreeHits,misses:subtreeMisses,captures:subtreeCaptures,rotations:subtreeRotations,budgetRefusals:subtreeBudgetRefusals}};}
