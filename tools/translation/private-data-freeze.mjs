@@ -73,3 +73,10 @@ export function createCompletedDataFreezer(originalFreeze){
   return value;
  };
 }
+
+// Negative-only storage hint, never source or positive JSON eligibility.
+export function completedDataTraversalExceedsBudget(value,budget){
+ if(!value||typeof value!=='object'||typeof budget!=='number'||budget<0||budget%1!==0||!originalDataFreezeIntrinsicsUnchanged())return false;
+ const encoded=lookup(value);
+ return typeof encoded==='number'&&encoded%RECORD_BASE>budget;
+}

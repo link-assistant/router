@@ -4,6 +4,7 @@
 import {types} from 'node:util';
 import {originalNamespaceTraversalIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {completedDataTraversalExceedsBudget} from './private-data-freeze.mjs';
 const enabled=originalNamespaceTraversalIntrinsicsUnchanged()&&originalLexingIntrinsicsUnchanged();
 const descriptor=enabled?Object.getOwnPropertyDescriptor:null,prototype=enabled?Object.getPrototypeOf:null,own=enabled?Object.hasOwn:null,keys=enabled?Reflect.ownKeys:null,apply=enabled?Reflect.apply:null,isProxy=enabled?types.isProxy:null,isArray=enabled?Array.isArray:null;
 const functionPrototype=enabled?prototype(function(){}):null,textField=enabled?descriptor(functionPrototype,'toString'):null;
@@ -15,7 +16,7 @@ const weakGet=qualified?WeakMap.prototype.get:null,weakSet=qualified?WeakMap.pro
 const weakConstructor=qualified?WeakMap:null,setConstructor=qualified?Set:null;
 const storage=qualified?new Map():null,iteratorPrototype=qualified?prototype(apply(mapEntries,storage,[])):null,next=qualified?descriptor(iteratorPrototype,'next').value:null;
 const ENTRY_BYTES=4194304,TOTAL_BYTES=8388608,ENTRIES=16,CELLS=200000,DEPTH=160;
-let retainedBytes=0,entries=0,hits=0,misses=0,captures=0,evictions=0;
+let retainedBytes=0,entries=0,hits=0,misses=0,captures=0,evictions=0,completedBudgetRefusals=0;
 // Eligibility only: weak keys never retain an original owner. Rotation bounds
 // the number of positive scalar records without keeping a strong key list.
 // Completed roots have an independent partition, so a large AST walk cannot
@@ -73,6 +74,7 @@ export function createPrivateFrozenJsonCache(){
   if(!intrinsics()||value===null||typeof value!=='object')return JSON.stringify(value);
   const prior=apply(weakGet,values,[value]);if(prior?.active){apply(mapDelete,storage,[prior]);apply(mapSet,storage,[prior,prior]);if(hits<9007199254740991)hits++;return prior.encoded;}
   if(misses<9007199254740991)misses++;
+  if(completedDataTraversalExceedsBudget(value,CELLS)){if(completedBudgetRefusals<9007199254740991)completedBudgetRefusals++;return JSON.stringify(value);}
   if(!immutableJson(value))return JSON.stringify(value);
   const encoded=JSON.stringify(value);if(typeof encoded!=='string'||encoded.length*2+128>ENTRY_BYTES||!intrinsics())return encoded;
   // No issuer/root is held by global bookkeeping. Weak owner keys may vanish;
@@ -83,4 +85,4 @@ export function createPrivateFrozenJsonCache(){
  };
 }
 // Bounded scalar diagnostics only; mutating this returned copy grants nothing.
-export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH},eligibilityMemo:{entries:ownerEntries+subtreeEntries+largeEntries,maximumEntries:OWNERS+SUBTREES+LARGE_SUBTREES,owners:{entries:ownerEntries,maximumEntries:OWNERS,hits:ownerHits},subtrees:{entries:subtreeEntries+largeEntries,maximumEntries:SUBTREES+LARGE_SUBTREES,small:{entries:subtreeEntries,maximumEntries:SUBTREES,hits:smallHits},large:{entries:largeEntries,maximumEntries:LARGE_SUBTREES,hits:largeHits,minimumCells:LARGE_CELLS}},hits:subtreeHits,misses:subtreeMisses,captures:subtreeCaptures,rotations:subtreeRotations,budgetRefusals:subtreeBudgetRefusals}};}
+export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH},eligibilityMemo:{completedBudgetRefusals,entries:ownerEntries+subtreeEntries+largeEntries,maximumEntries:OWNERS+SUBTREES+LARGE_SUBTREES,owners:{entries:ownerEntries,maximumEntries:OWNERS,hits:ownerHits},subtrees:{entries:subtreeEntries+largeEntries,maximumEntries:SUBTREES+LARGE_SUBTREES,small:{entries:subtreeEntries,maximumEntries:SUBTREES,hits:smallHits},large:{entries:largeEntries,maximumEntries:LARGE_SUBTREES,hits:largeHits,minimumCells:LARGE_CELLS}},hits:subtreeHits,misses:subtreeMisses,captures:subtreeCaptures,rotations:subtreeRotations,budgetRefusals:subtreeBudgetRefusals}};}
