@@ -116,8 +116,8 @@ class ControlParser {
     else if(node?.kind==='group'&&node.delimiter==='('){const parts=split(this.expanded?node.children.map(transparent):node.children),trailingComma=word(node.children.at(-1))===',';value=parts.length===1&&!trailingComma?this.node('parenthesized',start,{value:this.expressionAll(parts[0])}):this.node('tuple',start,{items:parts.map(part=>this.expressionAll(part)),trailingComma});}
     else if(node?.kind==='group'&&node.delimiter==='[')value=this.node('array',start,{items:split(node.children).map(part=>this.expressionAll(part)),allocationVerified:false});
     else if(raw==='true'||raw==='false'||['string','char','number'].includes(node?.type))value=this.node('literal',start,{sourceLiteralKind:raw==='true'||raw==='false'?'bool':node.type,raw,sourceLiteral:node});
-    else if(name(node)){const path=[raw];while(word(this.current())==='::'&&word(this.nodes[this.at+1])!=='<'){this.at++;if(!name(this.current()))throw new TypeError('Source control qualified type arguments require additional source grammar');path.push(word(this.nodes[this.at++]));}
-      value=this.node('written-path',start,{path,ownerResolved:false});
+    else if(name(node)||node?.kind==='owner'){const path=node.kind==='owner'?[...node.target]:[raw];while(word(this.current())==='::'&&word(this.nodes[this.at+1])!=='<'){this.at++;if(!name(this.current()))throw new TypeError('Source control qualified type arguments require additional source grammar');path.push(word(this.nodes[this.at++]));}
+      value=this.node('written-path',start,{path,ownerResolved:false,...(node.kind==='owner'?{definitionSiteOwner:node}:{})});
       if(this.take('!')){const arguments_=this.nodes[this.at++];if(arguments_?.kind!=='group')throw new TypeError('Source macro requires its original delimiter');value=this.node('opaque-macro',start,{path,arguments:arguments_,macroOwnerResolved:false,expansionVerified:false});}
       else if(this.records&&this.current()?.delimiter==='{'){const group=this.group('{'),parts=split(expressionTokens(this.expanded?group.children.map(transparent):group.children)),fields=parts.map((tokens,index)=>{
         if(tokens.length===1&&name(tokens[0]))return {kind:'shorthand',name:word(tokens[0]),tokens};
@@ -189,4 +189,14 @@ export function compileExpandedControlSyntax(expansion,bodyPath){
   let trees=expansion.trees,body;for(const index of bodyPath){body=trees[index];if(body?.kind!=='group')throw new TypeError('Expanded control body path must retain genuine group boundaries');trees=body.children;}
   if(!body||body.delimiter!=='{')throw new TypeError('Expanded control requires a complete genuine body group');
   const projected=projectBody(body,true);return issue({schema:'original-expanded-symbolic-control-v1',expansionDigest:expansion.digest,definitionDigest:lineage.definition.digest,bodyPath:[...bodyPath],spanDomain:'mixed exact original definition and invocation ranges',bodyTree:body,...projected,controlSyntaxProjected:projected.ir!==null,pinnedCompilerFunctionVerified:false,...flags},{inputKind:'private-expanded-source-syntax',expansion,bodyPath:[...bodyPath],body,lineage});
+}
+
+// The entire expansion must be one expression. Unlike a selected body path,
+// this entry cannot omit output items surrounding a convenient nested block.
+export function compileExpandedControlExpression(expansion){
+  const lineage=declarativeExpansionLineage(expansion),budget={cells:32000,expressions:0,conditionals:0};
+  let ir=null,diagnostics=[];
+  try{const parser=new ControlParser(expansion.trees,budget,0,true);ir=parser.expressionAll(parser.nodes);}
+  catch(error){if(!(error instanceof TypeError))throw error;diagnostics=[{code:'ERR_BUILTIN_SOURCE_CONTROL_UNSUPPORTED',reason:error.message,...expandedLocation(expansion.trees)}];}
+  return issue({schema:'original-expanded-control-expression-v1',expansionDigest:expansion.digest,definitionDigest:lineage.definition.digest,spanDomain:'mixed exact original definition and invocation ranges',trees:expansion.trees,ir,diagnostics,controlSyntaxProjected:ir!==null,pinnedCompilerFunctionVerified:false,...flags},{inputKind:'private-expanded-source-expression',expansion,lineage});
 }
