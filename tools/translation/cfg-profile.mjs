@@ -39,6 +39,9 @@ export function evaluateConfiguration(tokens,profile){
 }
 export function itemConfiguration(tokens,profile){
   const attributes=[];let at=0;
+  // Outer comments do not terminate an item's leading attribute sequence.
+  // Keep the original token array and each attribute's exact original span.
+  const skipComments=()=>{while(tokens[at]?.type==='comment')at++;};skipComments();
   while(text(tokens[at])==='#'){
     const begin=at++;if(text(tokens[at])==='!')at++;if(text(tokens[at++])!=='[')return freeze({status:'unknown',attributes,diagnostics:[{message:'unresolved configuration attribute',span:range(tokens)}]});
     const body=at;let depth=1;for(;at<tokens.length;at++){if(text(tokens[at])==='[')depth++;if(text(tokens[at])===']')depth--;if(!depth)break;}
@@ -55,7 +58,7 @@ export function itemConfiguration(tokens,profile){
     const attribute={name,span:range(tokens.slice(begin,at)),tokens:tokens.slice(begin,at).map(text),evaluation};
     if(name==='cfg_attr'&&evaluation.expansion==='absent')absentAttributes.add(attribute);
     if(name==='cfg_attr'&&evaluation.expansion==='inert-lint-alternatives')inertAttributes.add(attribute);
-    attributes.push(attribute);
+    attributes.push(attribute);skipComments();
   }
   const conditions=attributes.filter(attribute=>attribute.evaluation),status=conditions.some(attribute=>attribute.evaluation.value===false)?'inactive':conditions.some(attribute=>attribute.evaluation.value===null)?'unknown':'active';
   return freeze({status,attributes,diagnostics:conditions.flatMap(attribute=>attribute.evaluation.diagnostics??[])});
