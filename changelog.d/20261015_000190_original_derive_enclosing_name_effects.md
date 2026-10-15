@@ -1,3 +1,5 @@
+### Added
+
 Drafted language rule `rust.original-complete-derived-enclosing-name-effect.v1`:
 complete privately issued builtin/Clap/Serde/Schemars outputs join the original
 Rust reduced-graph actions before an exact invocation receives an empty enclosing
