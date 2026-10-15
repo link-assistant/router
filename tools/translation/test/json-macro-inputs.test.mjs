@@ -38,7 +38,7 @@ test('original standard layout source facts are immutable and corrupted retained
     }
     const directory = mkdtempSync(join(tmpdir(), 'router-shared-pattern-source-negative-'));
     try {
-        const files = ['extensions/standard-shared-pattern-source.mjs', 'rust-structure.mjs', 'vendor/formal-ai/lexer.mjs', 'source-profiles/option-deref/core-option.rs.gz', 'source-profiles/result-iterators/core-result.rs.gz'];
+        const files = ['extensions/standard-shared-pattern-source.mjs', 'rust-structure.mjs','rust-item-boundaries.mjs', 'vendor/formal-ai/lexer.mjs', 'source-profiles/option-deref/core-option.rs.gz', 'source-profiles/result-iterators/core-result.rs.gz'];
         for (const file of files) {
             const path = join(directory, file);
             mkdirSync(dirname(path), { recursive: true });

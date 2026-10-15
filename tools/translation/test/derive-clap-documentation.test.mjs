@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof,deriveDependencySource} from '../derive-dependencies.mjs';
@@ -15,6 +16,9 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),manifest=readFileSync(new URL('Cargo.toml',root),'utf8'),lock=readFileSync(new URL('Cargo.lock',root),'utf8'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const hash=value=>createHash('sha256').update(value).digest('hex');
+const historicalRustPaths=JSON.parse(readFileSync(new URL('../fixtures/static-source-performance/original-rust-inputs.json',import.meta.url),'utf8')).rustSources.map(row=>row.path);
+assert.equal(historicalRustPaths.length,804);assert.equal(new Set(historicalRustPaths).size,804);
+const retain=(name,value)=>{const directory=process.env.ROUTER_DERIVE_CLAP_DOCUMENTATION_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value,(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item instanceof Map?{$map:[...item]}:item)+'\n');}};
 const context=source=>createDeriveFootprintContext({modules:[{file:'src/lib.rs',path:[],source}],dependencies,compilationProfile:PRODUCTION_PROFILE});
 const docAttrs=source=>originalMacroTrees(source).filter(node=>node.kind==='group'&&node.delimiter==='[');
 function helpLiterals(nodes) {
@@ -73,8 +77,9 @@ for(const [path,digest,owner,variants,certificateCount,constants]of [
   ['src/deploy_config.rs','3ae8cf1934d158188b5685421eb38e9b39adab01a0d89873ce91ba663ae4483c','ProviderKeyMode',[['Keep','keep'],['IfAbsent','if-absent'],['Replace','replace']],13,['RESERVED_ENV','RESERVED_ENV_PREFIXES','VERIFIABLE_CLIENTS']],
 ])test('complete unchanged '+path+' admits source data and original methods in emitted JS and strict TS',{timeout:60000},async()=>{
   const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),digest);
-  const paths=execFileSync('git',['ls-files','*.rs'],{cwd:root,encoding:'utf8',timeout:10000}).trim().split('\n');assert.equal(paths.length,804);
+  const paths=execFileSync('git',['ls-files','*.rs'],{cwd:root,encoding:'utf8',timeout:10000}).trim().split('\n'),currentPaths=new Set(paths);assert.equal(currentPaths.size,paths.length);assert.ok(currentPaths.has(path));for(const original of historicalRustPaths)assert.ok(currentPaths.has(original),original+' historical input remains present');const addedRustPaths=paths.filter(path=>!historicalRustPaths.includes(path));
   const result=translateProject({entry:path,paths,readSource:path=>readFileSync(new URL(path,root),'utf8'),cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE});
+  retain('complete-'+path.replaceAll('/','-'),{source,path,paths,historicalRustPaths,addedRustPaths,cargoManifest:manifest,lock,result});
   assert.equal(result.meta.sources.find(row=>row.source===path).sha256,digest);assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,certificateCount);assert.equal(result.meta.runtimeParity,false);assert.deepEqual(result.meta.executable.map(row=>row.name),constants);if(path==='src/deploy_config.rs'){const standard=result.meta.deriveNamespaceFootprints.certificates.filter(row=>row.standardInput);assert.deepEqual(standard.map(row=>row.name),['SecretSource','EnvSpec','SshSettings','ProviderKeySpec','DeploySection','DeployConfig','ResolvedProviderKey','ResolvedDeploy','Merged']);for(const row of standard){assert.deepEqual(row.dimensions,{typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:true,bangMacroComplete:false});assert.equal(row.generatedImplBehavior,false);assert.equal(row.standardInput.namespaceAuthority,false);assert.equal(row.standardInput.runtimeAuthority,false);}}
   const certificate=result.meta.deriveNamespaceFootprints.certificates.find(row=>row.name===owner);assert.ok(certificate);const item=sourceItems(source).find(row=>row.name===owner);assert.equal(certificate.itemSha256,hash(source.slice(item.start,item.end)));assert.deepEqual(certificate.span,{start:item.start,end:item.end});assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);
   const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),method=[...program.declarations.values()].find(row=>row.impl?.method==='as_str');assert.ok(result.meta.checkedMethods.some(row=>row.name===owner+'.as_str'));assert.ok(method);assert.equal(method.sourceMethodProof.originalTokenTransformVerified,true);assert.equal(method.impl.copyCertificate.verified,true);

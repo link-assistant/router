@@ -16,6 +16,10 @@ assert.equal(hash(inventoryBytes),'dd3d5e25091c74e980a5529f33a6d5b311264e32769ef
 const inventory=JSON.parse(inventoryBytes);
 assert.equal(inventory.originalCommit,originalCommit);assert.equal(inventory.originalRustFiles,804);
 const originalBytes=readFileSync(new URL('rust-structure.mjs.txt',fixtureRoot));assert.equal(hash(originalBytes),'6195c319a3a01115f160f5519d2f979036ac3845e2774bc25f80e9ab2c26bb18');
+// Complete old bytes remain available when the current source changes, including
+// shallow CI checkouts without originalCommit. Never repin the old inventory.
+const historicalFixtures=new Map([['src/bridge_response_tests.rs','bridge_response_tests.rs.txt']]);
+const gitBlob=bytes=>createHash('sha1').update(Buffer.from(`blob ${bytes.length}\0`)).update(bytes).digest('hex');
 const lexerPath='tools/translation/vendor/formal-ai/lexer.mjs';
 assert.equal(hash(readFileSync(new URL('../vendor/formal-ai/lexer.mjs',import.meta.url))),inventory.lexer.sha256,'the independent original module uses the identical pinned item lexer');assert.equal(inventory.lexer.path,lexerPath);
 const instrument=bytes=>{
@@ -48,14 +52,30 @@ test('prefix and one-pass masking preserve exact raw char comment Unicode and er
   for(const [index,source]of cases.entries())compare(source,'adversarial-'+index);
   const crowded=Array.from({length:1500},(_,index)=>`/*${index}/*nested*/tail*/ r##"\"# ${index}"## '\\x41'`).join('\n');compare(crowded,'many-ordered-replacements');
 });
-test('all804 immutable original Rust files and every actual locked derive member match the independent old module',{timeout:120000},t=>{
+test('all804 immutable original Rust files plus current Rust inputs and locked derive members match the independent old module',{timeout:120000},t=>{
   const paths=git(['ls-files','-z','--','*.rs']).toString().split('\0').filter(Boolean);
-  assert.deepEqual(paths,inventory.rustSources.map(entry=>entry.path),'complete current tracked Rust inventory equals the original804');
-  assert.equal(paths.length,804);
   const batch=execFileSync('git',['cat-file','--batch'],{cwd:root,input:paths.map(path=>'HEAD:'+path+'\n').join(''),maxBuffer:64*1024*1024});
-  const rows=[];let at=0;const started=performance.now();
-  for(const path of paths){const newline=batch.indexOf(10,at),header=batch.subarray(at,newline).toString(),match=/^([a-f0-9]{40}) blob ([0-9]+)$/.exec(header);assert.ok(match,header);const size=Number(match[2]),bytes=batch.subarray(newline+1,newline+1+size);assert.equal(bytes.length,size);const pin=inventory.rustSources[rows.length];assert.equal(size,pin.bytes,path);assert.equal(match[1],pin.gitBlob,path);assert.equal(hash(bytes),pin.sha256,path);const working=new URL('../../../'+path,import.meta.url);if(existsSync(working))assert.deepEqual(readFileSync(working),bytes,path+' existing worktree bytes');rows.push({...compare(bytes.toString('utf8'),path),gitBlob:match[1]});at=newline+size+2;}
+  const rows=[],current=new Map(),currentRows=[];let at=0;const started=performance.now();
+  for(const path of paths){const newline=batch.indexOf(10,at),header=batch.subarray(at,newline).toString(),match=/^([a-f0-9]{40}) blob ([0-9]+)$/.exec(header);assert.ok(match,header);const size=Number(match[2]),bytes=batch.subarray(newline+1,newline+1+size);assert.equal(bytes.length,size);assert.equal(gitBlob(bytes),match[1],path+' current Git blob');const working=new URL('../../../'+path,import.meta.url);if(existsSync(working))assert.deepEqual(readFileSync(working),bytes,path+' existing worktree bytes');current.set(path,{bytes,gitBlob:match[1],sha256:hash(bytes),physicalSourcePresent:existsSync(working)});at=newline+size+2;}
   assert.equal(at,batch.length);
+  assert.equal(current.size,paths.length);
+  for(const pin of inventory.rustSources){
+    const actual=current.get(pin.path),matches=actual&&actual.bytes.length===pin.bytes&&actual.gitBlob===pin.gitBlob&&actual.sha256===pin.sha256;
+    const retained=historicalFixtures.get(pin.path);
+    if(!matches)assert.ok(retained,pin.path+' historical mismatch requires a complete retained original witness');
+    const bytes=matches?actual.bytes:readFileSync(new URL(retained,fixtureRoot));
+    assert.equal(bytes.length,pin.bytes,pin.path);assert.equal(hash(bytes),pin.sha256,pin.path);assert.equal(gitBlob(bytes),pin.gitBlob,pin.path);
+    rows.push({...compare(bytes.toString('utf8'),pin.path),gitBlob:pin.gitBlob,witness:matches?'current-HEAD-bytes-identical-to-historical-pin':retained});
+  }
+  assert.equal(rows.length,804);
+  // Verify the full retained witness even when this checkout still has old bytes.
+  for(const [path,file]of historicalFixtures){const pin=inventory.rustSources.find(row=>row.path===path),bytes=readFileSync(new URL(file,fixtureRoot));assert.ok(pin);assert.equal(bytes.length,pin.bytes);assert.equal(hash(bytes),pin.sha256);assert.equal(gitBlob(bytes),pin.gitBlob);}
+  const historical=new Map(inventory.rustSources.map(pin=>[pin.path,pin]));
+  const currentChanges={changed:[],added:[],deleted:inventory.rustSources.filter(pin=>!current.has(pin.path)).map(pin=>pin.path)};
+  for(const [path,row]of current){
+    const pin=historical.get(path);if(!pin)currentChanges.added.push(path);else if(row.gitBlob!==pin.gitBlob||row.sha256!==pin.sha256||row.bytes.length!==pin.bytes)currentChanges.changed.push(path);
+    currentRows.push({...compare(row.bytes.toString('utf8'),path),gitBlob:row.gitBlob,physicalSourcePresent:row.physicalSourcePresent,historical:pin??null});
+  }
   const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')});
   let members=0;
   for(const entry of DERIVE_SOURCE_PROFILE.packages)for(const path of Object.keys(entry.members)){
@@ -63,8 +83,8 @@ test('all804 immutable original Rust files and every actual locked derive member
   }
   const compilerProfile=JSON.parse(readFileSync(new URL('../source-profiles/builtin-derive-bang/manifest.json',import.meta.url),'utf8'));
   for(const entry of compilerProfile.sources){const packed=readFileSync(new URL('../source-profiles/builtin-derive-bang/'+entry.archive,import.meta.url));assert.equal(packed.length,entry.archiveBytes);assert.equal(hash(packed),entry.archiveSha256);const bytes=gunzipSync(packed,{maxOutputLength:300000});assert.equal(bytes.length,entry.bytes);assert.equal(hash(bytes),entry.sha256);rows.push({...compare(bytes.toString('utf8'),'builtin-compiler/'+entry.path),archiveSha256:entry.archiveSha256});}
-  const receipt={schema:'independent-original-lexer-corpus-v1',originalCommit,originalModuleSha256:hash(originalBytes),originalRustFiles:804,lockedDeriveMembers:members,originalCompilerMembers:compilerProfile.sources.length,elapsedMilliseconds:performance.now()-started,rows};
-  t.diagnostic(JSON.stringify({...receipt,rows:undefined}));
+  const receipt={schema:'independent-original-and-current-lexer-corpus-v2',originalCommit,originalModuleSha256:hash(originalBytes),originalRustFiles:804,currentCommit:git(['rev-parse','HEAD']).toString().trim(),currentRustFiles:paths.length,currentChanges,lockedDeriveMembers:members,originalCompilerMembers:compilerProfile.sources.length,elapsedMilliseconds:performance.now()-started,rows,currentRows};
+  t.diagnostic(JSON.stringify({...receipt,rows:undefined,currentRows:undefined}));
   t.diagnostic('complete-comparison-base64:'+Buffer.from(JSON.stringify(receipt)).toString('base64'));
 });
 test('token and item results remain fresh mutable allocations after caller mutation and changed source',()=>{
