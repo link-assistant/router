@@ -27,3 +27,12 @@ Contextual `Some`/`None` values rejoin their checked constructor and payload to
 an already source-qualified expected Option. The Qwen test now starts from the
 actual `src/lib.rs` root and retains the wrong standalone-entry diagnostics as
 an explicit negative. All successor checks remain UNRUN with the same bounds.
+
+A later receiving attempt passed the actual operand-effect JavaScript and
+strict-TypeScript case, but reported strict-TypeScript narrowing errors for
+literal algebraic operands. The next source-only repair records complete
+checked union types through the existing local-initializer annotation route,
+including original-declaration target consumers. It adds no runtime helper,
+`any` cast or new source authority. The full-root Qwen case remains an honest
+performance boundary; its original case deadline has not changed. This repair
+and its nominal-union regression are UNRUN.

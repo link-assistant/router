@@ -786,7 +786,11 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   }
   fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restoreTryFrom=prepareOriginalPrimitiveTryFrom(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry),prior=this.constMatchFunction;this.constMatchFunction=this.state.localName(entry.fullName);try{return super.fn(entry);}finally{this.constMatchFunction=prior;restoreClones?.();restorePatterns?.();restoreTryFrom?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();}}
   statements(node,...args){
-    if(node.k==='let'&&typeof node.constMatchSourceEvidence==='string'&&this.checkedLocalBindings)this.checkedLocalBindings.push({function:this.constMatchFunction,name:node.name,type:structuredClone(node.value.type)});
+    const declaration=node.k==='let'&&node.value.type.kind==='data'?this.program.declarations.get(node.value.type.name):null;
+    // A concrete constructor initializer must retain its complete checked
+    // union for later exhaustive Rust branches. This is TypeScript-only
+    // annotation evidence; it neither changes JavaScript nor grants a type.
+    if(node.k==='let'&&(typeof node.constMatchSourceEvidence==='string'||declaration?.k==='data'&&declaration.ctors.length>1)&&this.checkedLocalBindings)this.checkedLocalBindings.push({function:this.constMatchFunction,name:node.name,type:structuredClone(node.value.type)});
     return super.statements(node,...args);
   }
   expr(node) {

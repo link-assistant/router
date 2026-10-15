@@ -53,6 +53,6 @@ export function checkedDeclarationTargets(declaration){
   if(!alias)throw new Error('Checked original declaration has no emitted target mapping');
   const dataTypes=[...lowered.program.declarations.values()].filter(entry=>entry.k==='data');
   const javascript=emitted.text+'\nexport const translated=Object.freeze({'+JSON.stringify(declaration.name)+':'+alias.target+'});\n';
-  const typescript=annotateRuntimeTypes(javascript,new Map(emitted.signatures.map(entry=>[entry.target,entry.params])),dataTypes,new Map(emitted.signatures.map(entry=>[entry.target,entry.ret])));
+  const typescript=annotateRuntimeTypes(javascript,new Map(emitted.signatures.map(entry=>[entry.target,entry.params])),dataTypes,new Map(emitted.signatures.map(entry=>[entry.target,entry.ret])),emitted.checkedLocalBindings??[]);
   return {meta:{entry:'src/lib.rs',runtimeParity:false},javascript,typescript,lowered};
 }
