@@ -86,8 +86,8 @@ test('unknown nested output stays refused even behind a literal false branch',()
 test('opaque fragment ASTs and private source controls cannot be replaced by a public observation',()=>{
   const refused=[];
   for(const [kind,input]of [['expr','external()'],['pat','Some(value)'],['ty','Option<bool>'],['meta','allow(unused)']]){
-    const source='macro_rules! original{($value:'+kind+')=>{{$value}}}',fixture=compile(source,'original',input);let error;
-    assert.throws(()=>{try{proveBangOutputScope(observeBangOutput(fixture.expansion));}catch(cause){error={name:cause.name,message:cause.message};throw cause;}},TypeError);refused.push({kind,fixture,error});
+    const source='macro_rules! original{($value:'+kind+')=>{{$value}}}';let fixture,error,stage='original token-engine definition';
+    assert.throws(()=>{try{fixture=compile(source,'original',input);stage='142 complete expression /155 scope';proveBangOutputScope(observeBangOutput(fixture.expansion));}catch(cause){error={name:cause.name,message:cause.message};throw cause;}},TypeError);refused.push({kind,source,input,fixture,stage,error});
   }
   const fixture=single('{true}'),observation=observeBangOutput(fixture.expansion);
   for(const copied of [{...observation},structuredClone(observation),new Proxy(observation,{})])assert.throws(()=>proveBangOutputScope(copied),/copied or foreign/);
