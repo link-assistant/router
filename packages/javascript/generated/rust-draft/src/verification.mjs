@@ -2,6 +2,14 @@
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = {"schemaVersion":1,"types":{}};
+
+const ml_constructor_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = {"schemaVersion":1,"types":{"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_constructor_value_schema_3f3b270fcd3c65570ad02f8c5f95f9903d895b7a7bbf4c59de9e6a8938cac912 = {"schemaVersion":1,"types":{"Run":{"kind":"data","name":"Run","ctors":[{"name":"Run","fields":[{"name":"targets","type":{"kind":"array","element":{"kind":"string"}}},{"name":"unit","type":{"kind":"array","element":{"kind":"string"}}},{"name":"filter","type":{"kind":"data","name":"RouterOption_6_string"}},{"name":"serial","type":{"kind":"bool"}}]}]},"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
 function ml_router_array(values, validate) {
   if (!Array.isArray(values)) return false;
   for (let index = 0; index < values.length; index++) {
@@ -15,9 +23,15 @@ const ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec2
 
 const ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = new Map([]);
 
+const ml_constructor_value_schema_54cda0caedf5940d16ee218bf35f8d1cdc2f11c7187cc7f8c43ec27036ca234e = {"schemaVersion":1,"types":{"Area":{"kind":"data","name":"Area","ctors":[{"name":"Area","fields":[{"name":"name","type":{"kind":"string"}},{"name":"covers","type":{"kind":"string"}},{"name":"enable","type":{"kind":"string"}},{"name":"runs","type":{"kind":"array","element":{"kind":"data","name":"Run"}}}]}]},"Run":{"kind":"data","name":"Run","ctors":[{"name":"Run","fields":[{"name":"targets","type":{"kind":"array","element":{"kind":"string"}}},{"name":"unit","type":{"kind":"array","element":{"kind":"string"}}},{"name":"filter","type":{"kind":"data","name":"RouterOption_6_string"}},{"name":"serial","type":{"kind":"bool"}}]}]},"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
 const ml_host_value_schema_841ec3c7b1648d6aeb3f331f9810ad48d21abbae813db29edde9aae99fd9f31b = {"schemaVersion":1,"types":{"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"Run":{"kind":"data","name":"Run","ctors":[{"name":"Run","fields":[{"name":"targets","type":{"kind":"array","element":{"kind":"string"}}},{"name":"unit","type":{"kind":"array","element":{"kind":"string"}}},{"name":"filter","type":{"kind":"data","name":"RouterOption_6_string"}},{"name":"serial","type":{"kind":"bool"}}]}]}}};
 
 const ml_host_value_refinements_841ec3c7b1648d6aeb3f331f9810ad48d21abbae813db29edde9aae99fd9f31b = new Map([]);
+
+const ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f = {"schemaVersion":1,"types":{"rp_766572696669636174696f6e2e52756e":{"kind":"data","name":"rp_766572696669636174696f6e2e52756e","ctors":[{"name":"Run","fields":[{"name":"targets","type":{"kind":"array","element":{"kind":"string"}}},{"name":"unit","type":{"kind":"array","element":{"kind":"string"}}},{"name":"filter","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"serial","type":{"kind":"bool"}}]}]},"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811 = {"schemaVersion":1,"types":{"rp_766572696669636174696f6e2e41726561":{"kind":"data","name":"rp_766572696669636174696f6e2e41726561","ctors":[{"name":"Area","fields":[{"name":"name","type":{"kind":"string"}},{"name":"covers","type":{"kind":"string"}},{"name":"enable","type":{"kind":"string"}},{"name":"runs","type":{"kind":"array","element":{"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}}}]}]},"rp_766572696669636174696f6e2e52756e":{"kind":"data","name":"rp_766572696669636174696f6e2e52756e","ctors":[{"name":"Run","fields":[{"name":"targets","type":{"kind":"array","element":{"kind":"string"}}},{"name":"unit","type":{"kind":"array","element":{"kind":"string"}}},{"name":"filter","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"serial","type":{"kind":"bool"}}]}]},"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
 
 function ml_fixed(value, min, max, message) {
   if (value < min || value > max) throw new RangeError(message);
@@ -43,11 +57,14 @@ function rp_766572696669636174696f6e2e534b49505f4c4f47() {
 }
 
 function ml_make_Run_Run(targets, unit_2, filter, serial) {
+  ml_assert_constructor_input(targets, {"kind":"array","element":{"kind":"string"}}, ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085);
   if (!ml_router_array(targets, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(unit_2, {"kind":"array","element":{"kind":"string"}}, ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085);
   if (!ml_router_array(unit_2, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(filter, {"kind":"data","name":"RouterOption_6_string"}, ml_constructor_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52);
   ml_validate_rust_value(filter, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   if (!(typeof serial === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "Run", ["targets"]: targets, ["unit"]: unit_2, ["filter"]: filter, ["serial"]: serial });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: targets, ["unit"]: unit_2, ["filter"]: filter, ["serial"]: serial }), {"kind":"data","name":"Run"}, ml_constructor_value_schema_3f3b270fcd3c65570ad02f8c5f95f9903d895b7a7bbf4c59de9e6a8938cac912);
 }
 
 const std = {
@@ -78,8 +95,9 @@ function ml_make_Area_Area(name, covers, enable, runs) {
   if (!(typeof name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(name))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof covers === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(covers))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof enable === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(enable))) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(runs, {"kind":"array","element":{"kind":"data","name":"Run"}}, ml_constructor_value_schema_3f3b270fcd3c65570ad02f8c5f95f9903d895b7a7bbf4c59de9e6a8938cac912);
   ml_validate_rust_value(runs, {"kind":"array","element":{"kind":"data","name":"Run"}}, ml_host_value_schema_841ec3c7b1648d6aeb3f331f9810ad48d21abbae813db29edde9aae99fd9f31b, { refinements: ml_host_value_refinements_841ec3c7b1648d6aeb3f331f9810ad48d21abbae813db29edde9aae99fd9f31b });
-  return Object.freeze({ $: "Area", ["name"]: name, ["covers"]: covers, ["enable"]: enable, ["runs"]: runs });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: name, ["covers"]: covers, ["enable"]: enable, ["runs"]: runs }), {"kind":"data","name":"Area"}, ml_constructor_value_schema_54cda0caedf5940d16ee218bf35f8d1cdc2f11c7187cc7f8c43ec27036ca234e);
 }
 
 function rp_766572696669636174696f6e2e7465737473(targets) {
@@ -88,7 +106,7 @@ function rp_766572696669636174696f6e2e7465737473(targets) {
   const ml_record2 = Object.freeze(Object.freeze([]));
   const ml_record3 = Object.freeze({ $: 'None' });
   const ml_record4 = false;
-  return Object.freeze({ $: "Run", ["targets"]: ml_record1, ["unit"]: ml_record2, ["filter"]: ml_record3, ["serial"]: ml_record4 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record1, ["unit"]: ml_record2, ["filter"]: ml_record3, ["serial"]: ml_record4 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
 }
 
 function rp_766572696669636174696f6e2e756e6974(unit, filter) {
@@ -98,7 +116,7 @@ function rp_766572696669636174696f6e2e756e6974(unit, filter) {
   const ml_record2 = unit;
   const ml_record3 = Object.freeze({ $: 'Some', field0: filter });
   const ml_record4 = false;
-  return Object.freeze({ $: "Run", ["targets"]: ml_record1, ["unit"]: ml_record2, ["filter"]: ml_record3, ["serial"]: ml_record4 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record1, ["unit"]: ml_record2, ["filter"]: ml_record3, ["serial"]: ml_record4 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
 }
 
 function rp_766572696669636174696f6e2e4152454153() {
@@ -107,7 +125,7 @@ function rp_766572696669636174696f6e2e4152454153() {
     const ml_record2 = "token-authorized /api/models and /v1/models: entitlement filtering, synthetic and namespaced rows, credential carriers, split origins, live provider catalogs";
     const ml_record3 = "LEFINE_API_KEY for the live catalog";
     const ml_record4 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["credential_carrier_test", "synthetic_catalog_test", "gemini_namespace_test", "clients_split_origins_test", "client_ownership_test", "managed_server_test", "lefine_live_test"]))), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "model_catalog")]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record1, ["covers"]: ml_record2, ["enable"]: ml_record3, ["runs"]: ml_record4 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record1, ["covers"]: ml_record2, ["enable"]: ml_record3, ["runs"]: ml_record4 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record5 = "real-clients";
     const ml_record6 = "Claude Code, Codex and OpenCode real binaries against a loopback Router, plus the separately gated host CLI lifecycle";
@@ -117,21 +135,21 @@ function rp_766572696669636174696f6e2e4152454153() {
       const ml_record10 = Object.freeze(Object.freeze([]));
       const ml_record11 = Object.freeze({ $: 'None' });
       const ml_record12 = true;
-      return Object.freeze({ $: "Run", ["targets"]: ml_record9, ["unit"]: ml_record10, ["filter"]: ml_record11, ["serial"]: ml_record12 });
+      return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record9, ["unit"]: ml_record10, ["filter"]: ml_record11, ["serial"]: ml_record12 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
     })()]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record5, ["covers"]: ml_record6, ["enable"]: ml_record7, ["runs"]: ml_record8 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record5, ["covers"]: ml_record6, ["enable"]: ml_record7, ["runs"]: ml_record8 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record13 = "zai-only-entitlements";
     const ml_record14 = "a token entitled only to z.ai: catalog rows, Claude and Codex launch profiles, pinned selection, usage normalization";
     const ml_record15 = "ROUTER_LIVE_ZAI_API_KEY (and ROUTER_LIVE_ZAI_CLAUDE_CONTEXT_TEST=1 for the billed probe)";
     const ml_record16 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["with_router_test", "clients_cli_test", "live_model_selection_test", "subscription_usage_live_test"]))), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "with_command")]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record13, ["covers"]: ml_record14, ["enable"]: ml_record15, ["runs"]: ml_record16 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record13, ["covers"]: ml_record14, ["enable"]: ml_record15, ["runs"]: ml_record16 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record17 = "anthropic-mock-contracts";
     const ml_record18 = "Anthropic-enabled and mixed entitlements: native Anthropic surfaces, cross-vendor translation, Claude picker rows";
     const ml_record19 = "nothing; mocked protocol and authorization contracts only";
     const ml_record20 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["router_e2e_test", "cross_vendor_translation_test", "claude_auth_test"]))), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "with_command")]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record17, ["covers"]: ml_record18, ["enable"]: ml_record19, ["runs"]: ml_record20 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record17, ["covers"]: ml_record18, ["enable"]: ml_record19, ["runs"]: ml_record20 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record21 = "anthropic-entitlements";
     const ml_record22 = "live personal Anthropic and z.ai union catalog, actual Claude picker, exact model identities and successful real responses through a single-owner serving Router";
@@ -141,21 +159,21 @@ function rp_766572696669636174696f6e2e4152454153() {
       const ml_record26 = Object.freeze(Object.freeze([]));
       const ml_record27 = Object.freeze({ $: 'None' });
       const ml_record28 = true;
-      return Object.freeze({ $: "Run", ["targets"]: ml_record25, ["unit"]: ml_record26, ["filter"]: ml_record27, ["serial"]: ml_record28 });
+      return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record25, ["unit"]: ml_record26, ["filter"]: ml_record27, ["serial"]: ml_record28 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
     })()]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record21, ["covers"]: ml_record22, ["enable"]: ml_record23, ["runs"]: ml_record24 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record21, ["covers"]: ml_record22, ["enable"]: ml_record23, ["runs"]: ml_record24 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record29 = "request-logs";
     const ml_record30 = "request logging, denied-request records, `router logs`, log format migration, conversation records";
     const ml_record31 = "nothing";
     const ml_record32 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["request_logging_test", "request_log_line_test", "denied_request_logging_test", "logs_command_test", "log_format_migration_test", "conversation_record_test"])))]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record29, ["covers"]: ml_record30, ["enable"]: ml_record31, ["runs"]: ml_record32 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record29, ["covers"]: ml_record30, ["enable"]: ml_record31, ["runs"]: ml_record32 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record33 = "backup-reset-restore";
     const ml_record34 = "client profile backup, reset and restore, active-profile tracking and maintenance";
     const ml_record35 = "nothing";
     const ml_record36 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["clients_lifecycle_test", "clients_maintenance_test", "clients_active_profile_test"])))]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record33, ["covers"]: ml_record34, ["enable"]: ml_record35, ["runs"]: ml_record36 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record33, ["covers"]: ml_record34, ["enable"]: ml_record35, ["runs"]: ml_record36 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record37 = "rolling-updates";
     const ml_record38 = "`router deploy`: candidate-first updates that drain streams, TOKEN_SECRET continuity, relay rotation, inconsistent-state recovery, host mode";
@@ -165,15 +183,15 @@ function rp_766572696669636174696f6e2e4152454153() {
       const ml_record42 = Object.freeze(Object.freeze([]));
       const ml_record43 = Object.freeze({ $: 'None' });
       const ml_record44 = true;
-      return Object.freeze({ $: "Run", ["targets"]: ml_record41, ["unit"]: ml_record42, ["filter"]: ml_record43, ["serial"]: ml_record44 });
+      return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record41, ["unit"]: ml_record42, ["filter"]: ml_record43, ["serial"]: ml_record44 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
     })()]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record37, ["covers"]: ml_record38, ["enable"]: ml_record39, ["runs"]: ml_record40 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record37, ["covers"]: ml_record38, ["enable"]: ml_record39, ["runs"]: ml_record40 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record45 = "deploy-configuration";
     const ml_record46 = "`router deploy --config`: declarative TOML, runtime env passthrough and its fingerprint, instance names, SSH port/identity/pinned known_hosts/keepalive/deadline, deploy token policy, `--provider-key` validation modes, verification profiles and the `--json` document";
     const ml_record47 = "nothing; a stand-in ssh records the session";
     const ml_record48 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e7465737473(Object.freeze(Object.freeze(["deploy_config_test"]))), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "deploy_config"), rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "deploy_remote")]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record45, ["covers"]: ml_record46, ["enable"]: ml_record47, ["runs"]: ml_record48 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record45, ["covers"]: ml_record46, ["enable"]: ml_record47, ["runs"]: ml_record48 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })(), (() => {
     const ml_record49 = "staging";
     const ml_record50 = "independent disposable primary/candidate Docker namespaces, live GLM stream continuity, real Claude flagship/Flash responses and picker, isolated logs, retained primary tokens/profile/sessions/catalog";
@@ -183,9 +201,9 @@ function rp_766572696669636174696f6e2e4152454153() {
       const ml_record54 = Object.freeze(Object.freeze([]));
       const ml_record55 = Object.freeze({ $: 'None' });
       const ml_record56 = true;
-      return Object.freeze({ $: "Run", ["targets"]: ml_record53, ["unit"]: ml_record54, ["filter"]: ml_record55, ["serial"]: ml_record56 });
+      return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record53, ["unit"]: ml_record54, ["filter"]: ml_record55, ["serial"]: ml_record56 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
     })()]));
-    return Object.freeze({ $: "Area", ["name"]: ml_record49, ["covers"]: ml_record50, ["enable"]: ml_record51, ["runs"]: ml_record52 });
+    return ml_snapshot_constructor_value(Object.freeze({ $: "Area", ["name"]: ml_record49, ["covers"]: ml_record50, ["enable"]: ml_record51, ["runs"]: ml_record52 }), {"kind":"data","name":"rp_766572696669636174696f6e2e41726561"}, ml_constructor_value_schema_5dd55336eeb41996a5b93cebbc28ed047c40cbcef44896d48cc62ffa34663811);
   })()]));
 }
 

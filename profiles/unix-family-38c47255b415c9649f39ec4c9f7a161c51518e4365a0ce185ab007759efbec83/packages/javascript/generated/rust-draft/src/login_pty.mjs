@@ -4,6 +4,12 @@ import { std_time_duration_from_millis as ml_host_std_time_duration_from_millis 
 
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 = {"schemaVersion":1,"types":{"RouterOption_3_u32":{"kind":"data","name":"RouterOption_3_u32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
+const ml_constructor_value_schema_46a2ba05e6af91605ab44b4a06f0601c2d0a726a148c1662ecf33d9546d3d8fe = {"schemaVersion":1,"types":{"WaitError":{"kind":"data","name":"WaitError","ctors":[{"name":"Timeout","fields":[]},{"name":"ChildExited","fields":[{"name":"field0","type":{"kind":"data","name":"RouterOption_3_u32"}}]}]},"RouterOption_3_u32":{"kind":"data","name":"RouterOption_3_u32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
+
 const ml_host_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 = {"schemaVersion":1,"types":{"RouterOption_3_u32":{"kind":"data","name":"RouterOption_3_u32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":false}}]}]}}};
 
 const ml_host_value_refinements_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 = new Map([]);
@@ -25,8 +31,9 @@ function ml_make_WaitError_Timeout() {
 }
 
 function ml_make_WaitError_ChildExited(field0) {
+  ml_assert_constructor_input(field0, {"kind":"data","name":"RouterOption_3_u32"}, ml_constructor_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964);
   ml_validate_rust_value(field0, {"kind":"data","name":"RouterOption_3_u32"}, ml_host_value_schema_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964, { refinements: ml_host_value_refinements_d5cb32245d4cbec63e7142460f1766afc5cbbe22f7e03fc49c35d8db29f43964 });
-  return Object.freeze({ $: 'ChildExited', field0: field0 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: 'ChildExited', field0: field0 }), {"kind":"data","name":"WaitError"}, ml_constructor_value_schema_46a2ba05e6af91605ab44b4a06f0601c2d0a726a148c1662ecf33d9546d3d8fe);
 }
 
 const std = {

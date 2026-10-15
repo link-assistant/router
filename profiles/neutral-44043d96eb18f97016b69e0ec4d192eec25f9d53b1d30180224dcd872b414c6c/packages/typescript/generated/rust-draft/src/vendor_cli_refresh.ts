@@ -7,6 +7,10 @@ import { std_time_duration_from_secs as ml_host_std_time_duration_from_secs } fr
 
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_7c0506ee7e7f866ac68e089b95cf87fd7b4750494fad9af98744898431a3dd21 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f32395f7265666572656e63655f7368617265645f61727261795f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f32395f7265666572656e63655f7368617265645f61727261795f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"string"}}}]}]}}};
+
 function ml_router_unexpected(value: any): never {
   throw new TypeError(`unexpected constructor ${value.$}`);
 }
@@ -35,10 +39,10 @@ function rp_76656e646f725f636c695f726566726573682e70726f62655f666f72(provider: R
   ml_validate_rust_value(provider, {"kind":"data","name":"rp_737562736372697074696f6e2e74797065732e537562736372697074696f6e50726f7669646572"}, ml_host_value_schema_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3, { refinements: ml_host_value_refinements_51de05c14267844c78097d64e02c26983c85940fe13c09826e02f97569d6ecb3 });
   switch (provider.$) {
     case "Claude": {
-      return Object.freeze({ $: 'Some', field0: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245() });
+      return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: rp_76656e646f725f636c695f726566726573682e434c415544455f50524f4245() }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f32395f7265666572656e63655f7368617265645f61727261795f737472696e67"}, ml_constructor_value_schema_7c0506ee7e7f866ac68e089b95cf87fd7b4750494fad9af98744898431a3dd21);
     }
     case "Codex": {
-      return Object.freeze({ $: 'Some', field0: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245() });
+      return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: rp_76656e646f725f636c695f726566726573682e434f4445585f50524f4245() }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f32395f7265666572656e63655f7368617265645f61727261795f737472696e67"}, ml_constructor_value_schema_7c0506ee7e7f866ac68e089b95cf87fd7b4750494fad9af98744898431a3dd21);
     }
     case "Gemini": {
       return Object.freeze({ $: 'None' });

@@ -46,6 +46,12 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = {"schemaVersion":1,"types":{}};
+
+const ml_constructor_value_schema_0824dcedca2f82d1c2bcacb0372b9850eb627c5b292c76e613827defec17f9ce = {"schemaVersion":1,"types":{"SseTerminalDetector":{"kind":"data","name":"SseTerminalDetector","ctors":[{"name":"SseTerminalDetector","fields":[{"name":"carry","type":{"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}},{"name":"terminal_in_discarded_prefix","type":{"kind":"bool"}}]}]}}};
+
 function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {
   if (!Array.isArray(values)) return false;
   for (let index = 0; index < values.length; index++) {
@@ -80,9 +86,10 @@ function rp_676f6e6b612e4d41585f5353455f43415252595f4259544553(): bigint {
 }
 
 function ml_make_SseTerminalDetector_SseTerminalDetector(carry: ReadonlyArray<bigint>, terminal_in_discarded_prefix: boolean): Readonly<{ readonly "$": "SseTerminalDetector"; readonly "carry": ReadonlyArray<bigint>; readonly "terminal_in_discarded_prefix": boolean }> {
+  ml_assert_constructor_input(carry, {"kind":"array","element":{"kind":"fixed","bits":8,"signed":false}}, ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085);
   if (!ml_router_array(carry, (element0) => (typeof element0 === 'bigint' && element0 >= 0n && element0 <= 255n))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof terminal_in_discarded_prefix === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "SseTerminalDetector", ["carry"]: carry, ["terminal_in_discarded_prefix"]: terminal_in_discarded_prefix });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "SseTerminalDetector", ["carry"]: carry, ["terminal_in_discarded_prefix"]: terminal_in_discarded_prefix }), {"kind":"data","name":"SseTerminalDetector"}, ml_constructor_value_schema_0824dcedca2f82d1c2bcacb0372b9850eb627c5b292c76e613827defec17f9ce);
 }
 
 const std = {

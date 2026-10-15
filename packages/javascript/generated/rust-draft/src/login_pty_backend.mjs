@@ -2,6 +2,12 @@
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_87a6267650cfe2e4803146b4e53e470cd0c63d3d00fa0bdf99dce9c526d52e7b = {"schemaVersion":1,"types":{"TuiAction":{"kind":"data","name":"TuiAction","ctors":[{"name":"AcceptTheme","fields":[]},{"name":"AcceptWorkspaceTrust","fields":[]},{"name":"SendLogin","fields":[]},{"name":"SelectLoginMethod","fields":[]}]}}};
+
+const ml_constructor_value_schema_7375da9ee24adb7fbff34a76cd1533de48855e11db01e5a66a375c37591c9372 = {"schemaVersion":1,"types":{"TuiProgress":{"kind":"data","name":"TuiProgress","ctors":[{"name":"TuiProgress","fields":[{"name":"completed","type":{"kind":"array","element":{"kind":"data","name":"TuiAction"}}}]}]},"TuiAction":{"kind":"data","name":"TuiAction","ctors":[{"name":"AcceptTheme","fields":[]},{"name":"AcceptWorkspaceTrust","fields":[]},{"name":"SendLogin","fields":[]},{"name":"SelectLoginMethod","fields":[]}]}}};
+
 const ml_host_value_schema_87a6267650cfe2e4803146b4e53e470cd0c63d3d00fa0bdf99dce9c526d52e7b = {"schemaVersion":1,"types":{"TuiAction":{"kind":"data","name":"TuiAction","ctors":[{"name":"AcceptTheme","fields":[]},{"name":"AcceptWorkspaceTrust","fields":[]},{"name":"SendLogin","fields":[]},{"name":"SelectLoginMethod","fields":[]}]}}};
 
 const ml_host_value_refinements_87a6267650cfe2e4803146b4e53e470cd0c63d3d00fa0bdf99dce9c526d52e7b = new Map([]);
@@ -22,8 +28,9 @@ function ml_router_iter(values, immutable) { if (immutable) ml_assert_immutable_
 function ml_router_any(values, predicate) { for (const value of values) if (predicate(value)) return true; return false; }
 
 function ml_make_TuiProgress_TuiProgress(completed) {
+  ml_assert_constructor_input(completed, {"kind":"array","element":{"kind":"data","name":"TuiAction"}}, ml_constructor_value_schema_87a6267650cfe2e4803146b4e53e470cd0c63d3d00fa0bdf99dce9c526d52e7b);
   ml_validate_rust_value(completed, {"kind":"array","element":{"kind":"data","name":"TuiAction"}}, ml_host_value_schema_87a6267650cfe2e4803146b4e53e470cd0c63d3d00fa0bdf99dce9c526d52e7b, { refinements: ml_host_value_refinements_87a6267650cfe2e4803146b4e53e470cd0c63d3d00fa0bdf99dce9c526d52e7b });
-  return Object.freeze({ $: "TuiProgress", ["completed"]: completed });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "TuiProgress", ["completed"]: completed }), {"kind":"data","name":"TuiProgress"}, ml_constructor_value_schema_7375da9ee24adb7fbff34a76cd1533de48855e11db01e5a66a375c37591c9372);
 }
 
 const std = {

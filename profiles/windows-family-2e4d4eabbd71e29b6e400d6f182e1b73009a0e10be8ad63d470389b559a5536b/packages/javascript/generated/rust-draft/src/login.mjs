@@ -2,9 +2,17 @@
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40 = {"schemaVersion":1,"types":{"RouterOption_3_i64":{"kind":"data","name":"RouterOption_3_i64","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]}}};
+
+const ml_constructor_value_schema_8a364b7a3106d76c1bad979d8c934a34fb068dbf489f6a813aea8eb7752195e0 = {"schemaVersion":1,"types":{"Outcome":{"kind":"data","name":"Outcome","ctors":[{"name":"Authorized","fields":[{"name":"expires_at","type":{"kind":"data","name":"RouterOption_3_i64"}}]},{"name":"Failed","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"RouterOption_3_i64":{"kind":"data","name":"RouterOption_3_i64","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]}}};
+
 const ml_host_value_schema_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40 = {"schemaVersion":1,"types":{"RouterOption_3_i64":{"kind":"data","name":"RouterOption_3_i64","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]}}};
 
 const ml_host_value_refinements_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40 = new Map([]);
+
+const ml_constructor_value_schema_0fbc0e9cabea8eee47c0d3f65f9987d42527fc9a555dde140283f795149626ed = {"schemaVersion":1,"types":{"FoundCredential":{"kind":"data","name":"FoundCredential","ctors":[{"name":"FoundCredential","fields":[{"name":"expires_at","type":{"kind":"data","name":"RouterOption_3_i64"}}]}]},"RouterOption_3_i64":{"kind":"data","name":"RouterOption_3_i64","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":true}}]}]}}};
 
 function rp_6c6f67696e2e535543434553535f4d41524b455253() {
   return Object.freeze(Object.freeze(["Loginsuccessful", "successfullyauthenticated", "sk-ant-oat"]));
@@ -35,8 +43,9 @@ function rp_6c6f67696e2e5445524d494e414c5f524554454e54494f4e5f53454353() {
 }
 
 function ml_make_Outcome_Authorized(expires_at) {
+  ml_assert_constructor_input(expires_at, {"kind":"data","name":"RouterOption_3_i64"}, ml_constructor_value_schema_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40);
   ml_validate_rust_value(expires_at, {"kind":"data","name":"RouterOption_3_i64"}, ml_host_value_schema_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40, { refinements: ml_host_value_refinements_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40 });
-  return Object.freeze({ $: "Authorized", ["expires_at"]: expires_at });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "Authorized", ["expires_at"]: expires_at }), {"kind":"data","name":"Outcome"}, ml_constructor_value_schema_8a364b7a3106d76c1bad979d8c934a34fb068dbf489f6a813aea8eb7752195e0);
 }
 
 function ml_make_Outcome_Failed(field0) {
@@ -69,8 +78,9 @@ const serde_json = {
 };
 
 function ml_make_FoundCredential_FoundCredential(expires_at) {
+  ml_assert_constructor_input(expires_at, {"kind":"data","name":"RouterOption_3_i64"}, ml_constructor_value_schema_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40);
   ml_validate_rust_value(expires_at, {"kind":"data","name":"RouterOption_3_i64"}, ml_host_value_schema_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40, { refinements: ml_host_value_refinements_2e3ea161a73aed61f0b1c9ad7d015a638e446c01744828ba8a655b9be3c1fc40 });
-  return Object.freeze({ $: "FoundCredential", ["expires_at"]: expires_at });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "FoundCredential", ["expires_at"]: expires_at }), {"kind":"data","name":"FoundCredential"}, ml_constructor_value_schema_0fbc0e9cabea8eee47c0d3f65f9987d42527fc9a555dde140283f795149626ed);
 }
 
 export const translated = { ["SUCCESS_MARKERS"]: rp_6c6f67696e2e535543434553535f4d41524b455253(), ["FAILURE_MARKERS"]: rp_6c6f67696e2e4641494c5552455f4d41524b455253(), ["THEME_PICKER_MARKER"]: rp_6c6f67696e2e5448454d455f5049434b45525f4d41524b4552(), ["WORKSPACE_TRUST_MARKER"]: rp_6c6f67696e2e574f524b53504143455f54525553545f4d41524b4552(), ["LOGIN_METHOD_MARKER"]: rp_6c6f67696e2e4c4f47494e5f4d4554484f445f4d41524b4552(), ["READY_PROMPT_MARKER"]: rp_6c6f67696e2e52454144595f50524f4d50545f4d41524b4552(), ["TERMINAL_RETENTION_SECS"]: rp_6c6f67696e2e5445524d494e414c5f524554454e54494f4e5f53454353(), ["Outcome"]: Object.freeze({ ["Authorized"]: ml_make_Outcome_Authorized, ["Failed"]: ml_make_Outcome_Failed }), ["FoundCredential"]: ml_make_FoundCredential_FoundCredential };

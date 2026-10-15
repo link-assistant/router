@@ -45,6 +45,14 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = {"schemaVersion":1,"types":{"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = {"schemaVersion":1,"types":{}};
+
+const ml_constructor_value_schema_c37b793a80c49badf8790397c987df00582d455de2ef58985608564a00a0bce5 = {"schemaVersion":1,"types":{"RoutingContext":{"kind":"data","name":"RoutingContext","ctors":[{"name":"RoutingContext","fields":[{"name":"session_key","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"parent_session_key","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"pinned_account","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"model","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"exclude","type":{"kind":"array","element":{"kind":"string"}}}]}]},"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
 function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {
   if (!Array.isArray(values)) return false;
   for (let index = 0; index < values.length; index++) {
@@ -59,12 +67,17 @@ const ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e91205
 const ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = new Map([]);
 
 function ml_make_RoutingContext_RoutingContext(session_key: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, parent_session_key: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, pinned_account: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, model: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, exclude: ReadonlyArray<string>): Readonly<{ readonly "$": "RoutingContext"; readonly "session_key": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "parent_session_key": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "pinned_account": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "model": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "exclude": ReadonlyArray<string> }> {
+  ml_assert_constructor_input(session_key, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(session_key, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
+  ml_assert_constructor_input(parent_session_key, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(parent_session_key, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
+  ml_assert_constructor_input(pinned_account, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(pinned_account, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
+  ml_assert_constructor_input(model, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(model, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
+  ml_assert_constructor_input(exclude, {"kind":"array","element":{"kind":"string"}}, ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085);
   if (!ml_router_array(exclude, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "RoutingContext", ["session_key"]: session_key, ["parent_session_key"]: parent_session_key, ["pinned_account"]: pinned_account, ["model"]: model, ["exclude"]: exclude });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "RoutingContext", ["session_key"]: session_key, ["parent_session_key"]: parent_session_key, ["pinned_account"]: pinned_account, ["model"]: model, ["exclude"]: exclude }), {"kind":"data","name":"RoutingContext"}, ml_constructor_value_schema_c37b793a80c49badf8790397c987df00582d455de2ef58985608564a00a0bce5);
 }
 
 const std = {

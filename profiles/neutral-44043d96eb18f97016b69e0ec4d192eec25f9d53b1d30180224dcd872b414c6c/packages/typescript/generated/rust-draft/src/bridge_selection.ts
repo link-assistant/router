@@ -41,14 +41,21 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb = {"schemaVersion":1,"types":{"SelectionFailure":{"kind":"data","name":"SelectionFailure","ctors":[{"name":"NotDiscovered","fields":[]},{"name":"CredentialUnavailable","fields":[]},{"name":"EmptyCatalog","fields":[]},{"name":"ConfiguredModelUnavailable","fields":[]}]}}};
+
+const ml_constructor_value_schema_e31c6b0a388e92deee9d5dead359cdb5172fbae52abbee02d65303d7fa6976e5 = {"schemaVersion":1,"types":{"ModelSelectionRequired":{"kind":"data","name":"ModelSelectionRequired","ctors":[{"name":"ModelSelectionRequired","fields":[{"name":"provider","type":{"kind":"string"}},{"name":"reason","type":{"kind":"data","name":"SelectionFailure"}}]}]},"SelectionFailure":{"kind":"data","name":"SelectionFailure","ctors":[{"name":"NotDiscovered","fields":[]},{"name":"CredentialUnavailable","fields":[]},{"name":"EmptyCatalog","fields":[]},{"name":"ConfiguredModelUnavailable","fields":[]}]}}};
+
 const ml_host_value_schema_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb = {"schemaVersion":1,"types":{"SelectionFailure":{"kind":"data","name":"SelectionFailure","ctors":[{"name":"NotDiscovered","fields":[]},{"name":"CredentialUnavailable","fields":[]},{"name":"EmptyCatalog","fields":[]},{"name":"ConfiguredModelUnavailable","fields":[]}]}}};
 
 const ml_host_value_refinements_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb = new Map([]);
 
 function ml_make_ModelSelectionRequired_ModelSelectionRequired(provider: string, reason: Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }>): Readonly<{ readonly "$": "ModelSelectionRequired"; readonly "provider": string; readonly "reason": Readonly<{ readonly "$": "NotDiscovered" }> | Readonly<{ readonly "$": "CredentialUnavailable" }> | Readonly<{ readonly "$": "EmptyCatalog" }> | Readonly<{ readonly "$": "ConfiguredModelUnavailable" }> }> {
   if (!(typeof provider === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider))) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(reason, {"kind":"data","name":"SelectionFailure"}, ml_constructor_value_schema_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb);
   ml_validate_rust_value(reason, {"kind":"data","name":"SelectionFailure"}, ml_host_value_schema_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb, { refinements: ml_host_value_refinements_cfe0f078cf4e45a6e9ca2d0c00e7e5af40e8e8c3f94134a8b8b6e1fde4c6eafb });
-  return Object.freeze({ $: "ModelSelectionRequired", ["provider"]: provider, ["reason"]: reason });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "ModelSelectionRequired", ["provider"]: provider, ["reason"]: reason }), {"kind":"data","name":"ModelSelectionRequired"}, ml_constructor_value_schema_e31c6b0a388e92deee9d5dead359cdb5172fbae52abbee02d65303d7fa6976e5);
 }
 
 const std = {

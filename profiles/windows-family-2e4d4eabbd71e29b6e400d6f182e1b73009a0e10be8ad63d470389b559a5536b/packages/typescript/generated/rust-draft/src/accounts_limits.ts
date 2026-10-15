@@ -42,6 +42,12 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = {"schemaVersion":1,"types":{"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_constructor_value_schema_e5181cb5e99a479919d85590efe65881c75ae761d73352284cdfb4d81c6d06a3 = {"schemaVersion":1,"types":{"ObservedLimits":{"kind":"data","name":"ObservedLimits","ctors":[{"name":"ObservedLimits","fields":[{"name":"credential_cooldown","type":{"kind":"bool"}},{"name":"model_cooldown","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"paused","type":{"kind":"bool"}}]}]},"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
 const ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = {"schemaVersion":1,"types":{"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
 
 const ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = new Map([]);
@@ -57,9 +63,10 @@ function rp_6163636f756e74732e6c696d6974732e4c494d4954535f534156455f494e54455256
 
 function ml_make_ObservedLimits_ObservedLimits(credential_cooldown: boolean, model_cooldown: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, paused: boolean): Readonly<{ readonly "$": "ObservedLimits"; readonly "credential_cooldown": boolean; readonly "model_cooldown": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "paused": boolean }> {
   if (!(typeof credential_cooldown === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(model_cooldown, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(model_cooldown, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
   if (!(typeof paused === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "ObservedLimits", ["credential_cooldown"]: credential_cooldown, ["model_cooldown"]: model_cooldown, ["paused"]: paused });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "ObservedLimits", ["credential_cooldown"]: credential_cooldown, ["model_cooldown"]: model_cooldown, ["paused"]: paused }), {"kind":"data","name":"ObservedLimits"}, ml_constructor_value_schema_e5181cb5e99a479919d85590efe65881c75ae761d73352284cdfb4d81c6d06a3);
 }
 
 const std = {

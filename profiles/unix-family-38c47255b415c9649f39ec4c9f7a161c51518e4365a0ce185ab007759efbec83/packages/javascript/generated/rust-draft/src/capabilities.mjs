@@ -2,9 +2,17 @@
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d = {"schemaVersion":1,"types":{"Capability":{"kind":"data","name":"Capability","ctors":[{"name":"Native","fields":[]},{"name":"Emulated","fields":[]},{"name":"Unsupported","fields":[]},{"name":"Unknown","fields":[]}]}}};
+
+const ml_constructor_value_schema_091bd5f156a36baf83a406a0cb0c4ac9b151fc32e727fb7c6cd22f002a093342 = {"schemaVersion":1,"types":{"ProviderCapabilities":{"kind":"data","name":"ProviderCapabilities","ctors":[{"name":"ProviderCapabilities","fields":[{"name":"temperature","type":{"kind":"data","name":"Capability"}},{"name":"top_p","type":{"kind":"data","name":"Capability"}},{"name":"stop_sequences","type":{"kind":"data","name":"Capability"}},{"name":"output_token_limit","type":{"kind":"data","name":"Capability"}},{"name":"reasoning","type":{"kind":"data","name":"Capability"}},{"name":"web_search","type":{"kind":"data","name":"Capability"}},{"name":"web_fetch","type":{"kind":"data","name":"Capability"}}]}]},"Capability":{"kind":"data","name":"Capability","ctors":[{"name":"Native","fields":[]},{"name":"Emulated","fields":[]},{"name":"Unsupported","fields":[]},{"name":"Unknown","fields":[]}]}}};
+
 const ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d = {"schemaVersion":1,"types":{"Capability":{"kind":"data","name":"Capability","ctors":[{"name":"Native","fields":[]},{"name":"Emulated","fields":[]},{"name":"Unsupported","fields":[]},{"name":"Unknown","fields":[]}]}}};
 
 const ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d = new Map([]);
+
+const ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77 = {"schemaVersion":1,"types":{"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573":{"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573","ctors":[{"name":"ProviderCapabilities","fields":[{"name":"temperature","type":{"kind":"data","name":"rp_6361706162696c69746965732e4361706162696c697479"}},{"name":"top_p","type":{"kind":"data","name":"rp_6361706162696c69746965732e4361706162696c697479"}},{"name":"stop_sequences","type":{"kind":"data","name":"rp_6361706162696c69746965732e4361706162696c697479"}},{"name":"output_token_limit","type":{"kind":"data","name":"rp_6361706162696c69746965732e4361706162696c697479"}},{"name":"reasoning","type":{"kind":"data","name":"rp_6361706162696c69746965732e4361706162696c697479"}},{"name":"web_search","type":{"kind":"data","name":"rp_6361706162696c69746965732e4361706162696c697479"}},{"name":"web_fetch","type":{"kind":"data","name":"rp_6361706162696c69746965732e4361706162696c697479"}}]}]},"rp_6361706162696c69746965732e4361706162696c697479":{"kind":"data","name":"rp_6361706162696c69746965732e4361706162696c697479","ctors":[{"name":"Native","fields":[]},{"name":"Emulated","fields":[]},{"name":"Unsupported","fields":[]},{"name":"Unknown","fields":[]}]}}};
 
 function ml_router_unexpected(value) {
   throw new TypeError(`unexpected constructor ${value.$}`);
@@ -98,14 +106,21 @@ const serde_json = {
 };
 
 function ml_make_ProviderCapabilities_ProviderCapabilities(temperature, top_p, stop_sequences, output_token_limit, reasoning, web_search, web_fetch) {
+  ml_assert_constructor_input(temperature, {"kind":"data","name":"Capability"}, ml_constructor_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d);
   ml_validate_rust_value(temperature, {"kind":"data","name":"Capability"}, ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d, { refinements: ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d });
+  ml_assert_constructor_input(top_p, {"kind":"data","name":"Capability"}, ml_constructor_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d);
   ml_validate_rust_value(top_p, {"kind":"data","name":"Capability"}, ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d, { refinements: ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d });
+  ml_assert_constructor_input(stop_sequences, {"kind":"data","name":"Capability"}, ml_constructor_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d);
   ml_validate_rust_value(stop_sequences, {"kind":"data","name":"Capability"}, ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d, { refinements: ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d });
+  ml_assert_constructor_input(output_token_limit, {"kind":"data","name":"Capability"}, ml_constructor_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d);
   ml_validate_rust_value(output_token_limit, {"kind":"data","name":"Capability"}, ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d, { refinements: ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d });
+  ml_assert_constructor_input(reasoning, {"kind":"data","name":"Capability"}, ml_constructor_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d);
   ml_validate_rust_value(reasoning, {"kind":"data","name":"Capability"}, ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d, { refinements: ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d });
+  ml_assert_constructor_input(web_search, {"kind":"data","name":"Capability"}, ml_constructor_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d);
   ml_validate_rust_value(web_search, {"kind":"data","name":"Capability"}, ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d, { refinements: ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d });
+  ml_assert_constructor_input(web_fetch, {"kind":"data","name":"Capability"}, ml_constructor_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d);
   ml_validate_rust_value(web_fetch, {"kind":"data","name":"Capability"}, ml_host_value_schema_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d, { refinements: ml_host_value_refinements_e61df5393e354e433e7bfd5429177c099f0df7b9215d75bc21e321ac59654b7d });
-  return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: temperature, ["top_p"]: top_p, ["stop_sequences"]: stop_sequences, ["output_token_limit"]: output_token_limit, ["reasoning"]: reasoning, ["web_search"]: web_search, ["web_fetch"]: web_fetch });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: temperature, ["top_p"]: top_p, ["stop_sequences"]: stop_sequences, ["output_token_limit"]: output_token_limit, ["reasoning"]: reasoning, ["web_search"]: web_search, ["web_fetch"]: web_fetch }), {"kind":"data","name":"ProviderCapabilities"}, ml_constructor_value_schema_091bd5f156a36baf83a406a0cb0c4ac9b151fc32e727fb7c6cd22f002a093342);
 }
 
 function rp_6361706162696c69746965732e737562736372697074696f6e(provider, _model) {
@@ -120,7 +135,7 @@ function rp_6361706162696c69746965732e737562736372697074696f6e(provider, _model)
       const ml_record5 = Object.freeze({ $: 'Native' });
       const ml_record6 = Object.freeze({ $: 'Native' });
       const ml_record7 = Object.freeze({ $: 'Native' });
-      return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record1, ["top_p"]: ml_record2, ["stop_sequences"]: ml_record3, ["output_token_limit"]: ml_record4, ["reasoning"]: ml_record5, ["web_search"]: ml_record6, ["web_fetch"]: ml_record7 });
+      return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record1, ["top_p"]: ml_record2, ["stop_sequences"]: ml_record3, ["output_token_limit"]: ml_record4, ["reasoning"]: ml_record5, ["web_search"]: ml_record6, ["web_fetch"]: ml_record7 }), {"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573"}, ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77);
     }
     case "Codex": {
       const ml_record8 = Object.freeze({ $: 'Unsupported' });
@@ -130,7 +145,7 @@ function rp_6361706162696c69746965732e737562736372697074696f6e(provider, _model)
       const ml_record12 = Object.freeze({ $: 'Native' });
       const ml_record13 = Object.freeze({ $: 'Native' });
       const ml_record14 = Object.freeze({ $: 'Unsupported' });
-      return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record8, ["top_p"]: ml_record9, ["stop_sequences"]: ml_record10, ["output_token_limit"]: ml_record11, ["reasoning"]: ml_record12, ["web_search"]: ml_record13, ["web_fetch"]: ml_record14 });
+      return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record8, ["top_p"]: ml_record9, ["stop_sequences"]: ml_record10, ["output_token_limit"]: ml_record11, ["reasoning"]: ml_record12, ["web_search"]: ml_record13, ["web_fetch"]: ml_record14 }), {"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573"}, ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77);
     }
     case "Gemini": {
       const ml_record15 = Object.freeze({ $: 'Native' });
@@ -140,7 +155,7 @@ function rp_6361706162696c69746965732e737562736372697074696f6e(provider, _model)
       const ml_record19 = Object.freeze({ $: 'Native' });
       const ml_record20 = Object.freeze({ $: 'Unsupported' });
       const ml_record21 = Object.freeze({ $: 'Unsupported' });
-      return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record15, ["top_p"]: ml_record16, ["stop_sequences"]: ml_record17, ["output_token_limit"]: ml_record18, ["reasoning"]: ml_record19, ["web_search"]: ml_record20, ["web_fetch"]: ml_record21 });
+      return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record15, ["top_p"]: ml_record16, ["stop_sequences"]: ml_record17, ["output_token_limit"]: ml_record18, ["reasoning"]: ml_record19, ["web_search"]: ml_record20, ["web_fetch"]: ml_record21 }), {"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573"}, ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77);
     }
     case "Qwen": {
       const ml_record22 = Object.freeze({ $: 'Native' });
@@ -150,7 +165,7 @@ function rp_6361706162696c69746965732e737562736372697074696f6e(provider, _model)
       const ml_record26 = Object.freeze({ $: 'Native' });
       const ml_record27 = Object.freeze({ $: 'Unsupported' });
       const ml_record28 = Object.freeze({ $: 'Unsupported' });
-      return Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record22, ["top_p"]: ml_record23, ["stop_sequences"]: ml_record24, ["output_token_limit"]: ml_record25, ["reasoning"]: ml_record26, ["web_search"]: ml_record27, ["web_fetch"]: ml_record28 });
+      return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record22, ["top_p"]: ml_record23, ["stop_sequences"]: ml_record24, ["output_token_limit"]: ml_record25, ["reasoning"]: ml_record26, ["web_search"]: ml_record27, ["web_fetch"]: ml_record28 }), {"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573"}, ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77);
     }
     default: {
       return ml_router_unexpected(provider);

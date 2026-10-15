@@ -47,9 +47,17 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = {"schemaVersion":1,"types":{"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_constructor_value_schema_427da8f7a6aedc43d8b6a967415c144f7843ae287e3dd929d349cff80f52a1dc = {"schemaVersion":1,"types":{"StopSemantics":{"kind":"data","name":"StopSemantics","ctors":[{"name":"StopSemantics","fields":[{"name":"chat_finish_reason","type":{"kind":"string"}},{"name":"response_status","type":{"kind":"string"}},{"name":"incomplete_reason","type":{"kind":"data","name":"RouterOption_6_string"}},{"name":"refusal","type":{"kind":"bool"}}]}]},"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
 const ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = {"schemaVersion":1,"types":{"RouterOption_6_string":{"kind":"data","name":"RouterOption_6_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
 
 const ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 = new Map([]);
+
+const ml_constructor_value_schema_4ec858a8063b439504e03d4fed87f23fce61715fc019c6e79a79571e7e074e9a = {"schemaVersion":1,"types":{"rp_6272696467655f726573706f6e73652e53746f7053656d616e74696373":{"kind":"data","name":"rp_6272696467655f726573706f6e73652e53746f7053656d616e74696373","ctors":[{"name":"StopSemantics","fields":[{"name":"chat_finish_reason","type":{"kind":"string"}},{"name":"response_status","type":{"kind":"string"}},{"name":"incomplete_reason","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}},{"name":"refusal","type":{"kind":"bool"}}]}]},"rp_526f757465724f7074696f6e5f365f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
 
 function ml_router_unexpected(value: any): never {
   throw new TypeError(`unexpected constructor ${value.$}`);
@@ -83,9 +91,10 @@ const ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777
 function ml_make_StopSemantics_StopSemantics(chat_finish_reason: string, response_status: string, incomplete_reason: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, refusal: boolean): Readonly<{ readonly "$": "StopSemantics"; readonly "chat_finish_reason": string; readonly "response_status": string; readonly "incomplete_reason": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "refusal": boolean }> {
   if (!(typeof chat_finish_reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(chat_finish_reason))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof response_status === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(response_status))) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(incomplete_reason, {"kind":"data","name":"RouterOption_6_string"}, ml_constructor_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52);
   ml_validate_rust_value(incomplete_reason, {"kind":"data","name":"RouterOption_6_string"}, ml_host_value_schema_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52, { refinements: ml_host_value_refinements_5ac5712071749ac1a8e75b837451552936917907b6671722aaec250f96c4cb52 });
   if (!(typeof refusal === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: chat_finish_reason, ["response_status"]: response_status, ["incomplete_reason"]: incomplete_reason, ["refusal"]: refusal });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: chat_finish_reason, ["response_status"]: response_status, ["incomplete_reason"]: incomplete_reason, ["refusal"]: refusal }), {"kind":"data","name":"StopSemantics"}, ml_constructor_value_schema_427da8f7a6aedc43d8b6a967415c144f7843ae287e3dd929d349cff80f52a1dc);
 }
 
 const std = {
@@ -167,7 +176,7 @@ function rp_6272696467655f726573706f6e73652e636f6d706c657465(chat_finish_reason:
   const ml_record2 = "completed";
   const ml_record3 = Object.freeze({ $: 'None' });
   const ml_record4 = false;
-  return Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 }), {"kind":"data","name":"rp_6272696467655f726573706f6e73652e53746f7053656d616e74696373"}, ml_constructor_value_schema_4ec858a8063b439504e03d4fed87f23fce61715fc019c6e79a79571e7e074e9a);
 }
 
 function rp_6272696467655f726573706f6e73652e696e636f6d706c657465(chat_finish_reason: string, reason: string, refusal: boolean): Readonly<{ readonly "$": "StopSemantics"; readonly "chat_finish_reason": string; readonly "response_status": string; readonly "incomplete_reason": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "refusal": boolean }> {
@@ -178,7 +187,7 @@ function rp_6272696467655f726573706f6e73652e696e636f6d706c657465(chat_finish_rea
   const ml_record2 = "incomplete";
   const ml_record3 = Object.freeze({ $: 'Some', field0: reason });
   const ml_record4 = refusal;
-  return Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 }), {"kind":"data","name":"rp_6272696467655f726573706f6e73652e53746f7053656d616e74696373"}, ml_constructor_value_schema_4ec858a8063b439504e03d4fed87f23fce61715fc019c6e79a79571e7e074e9a);
 }
 
 function rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f746965725f66726f6d5f6f70656e6169(value: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {

@@ -44,6 +44,12 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = {"schemaVersion":1,"types":{"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_constructor_value_schema_d5dd52df7599fa6bfbed0dd930960d9bd72f0e341c3f85dda77dba2602209ca6 = {"schemaVersion":1,"types":{"StreamOutcome":{"kind":"data","name":"StreamOutcome","ctors":[{"name":"StreamOutcome","fields":[{"name":"streamed","type":{"kind":"bool"}},{"name":"terminated","type":{"kind":"bool"}},{"name":"inspectable","type":{"kind":"bool"}},{"name":"detail","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"frames","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"bytes","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"duration_ms","type":{"kind":"fixed","bits":128,"signed":false}}]}]},"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
 function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   if (value < min || value > max) throw new RangeError(message);
   return value;
@@ -71,6 +77,7 @@ function ml_make_StreamOutcome_StreamOutcome(streamed: boolean, terminated: bool
   if (!(typeof streamed === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof terminated === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof inspectable === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(detail, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(detail, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
   if (typeof frames !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(frames, 0n, 18446744073709551615n, "u64 argument frames out of range");
@@ -81,7 +88,7 @@ function ml_make_StreamOutcome_StreamOutcome(streamed: boolean, terminated: bool
   if (typeof duration_ms !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');
   ml_fixed(duration_ms, 0n, 340282366920938463463374607431768211455n, "u128 argument duration_ms out of range");
   if (!(typeof duration_ms === 'bigint' && duration_ms >= 0n && duration_ms <= 340282366920938463463374607431768211455n)) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "StreamOutcome", ["streamed"]: streamed, ["terminated"]: terminated, ["inspectable"]: inspectable, ["detail"]: detail, ["frames"]: frames, ["bytes"]: bytes, ["duration_ms"]: duration_ms });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "StreamOutcome", ["streamed"]: streamed, ["terminated"]: terminated, ["inspectable"]: inspectable, ["detail"]: detail, ["frames"]: frames, ["bytes"]: bytes, ["duration_ms"]: duration_ms }), {"kind":"data","name":"StreamOutcome"}, ml_constructor_value_schema_d5dd52df7599fa6bfbed0dd930960d9bd72f0e341c3f85dda77dba2602209ca6);
 }
 
 const std = {

@@ -45,6 +45,10 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_8ff279016a550dc797baf48d8d9d08934f764674e8c8e9a083d6b10547b28946 = {"schemaVersion":1,"types":{"rp_6d70702e4d7070436f6e666967":{"kind":"data","name":"rp_6d70702e4d7070436f6e666967","ctors":[{"name":"MppConfig","fields":[{"name":"enabled","type":{"kind":"bool"}},{"name":"amount","type":{"kind":"string"}},{"name":"currency","type":{"kind":"string"}},{"name":"recipient","type":{"kind":"string"}},{"name":"method","type":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67"}}]}]},"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67":{"kind":"data","name":"rp_526f757465724f7074696f6e5f31375f727573745f6f776e65645f737472696e67","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
 import { stringSplitCharacter as ml_csv_split, stringSplitNext as ml_csv_split_next, allocateStringItem as ml_csv_allocate } from "../runtime/csv-string-runtime.mjs";
 
 function* ml_router_map<T, U>(values: Iterable<T>, transform: (value: T) => U) { for (const value of values) yield transform(value); }
@@ -99,7 +103,7 @@ function rp_636f6e6669672e64656661756c745f6d70705f636f6e666967(): Readonly<{ rea
   const ml_record3 = "USD";
   const ml_record4 = "";
   const ml_record5 = Object.freeze({ $: 'None' });
-  return Object.freeze({ $: "MppConfig", ["enabled"]: ml_record1, ["amount"]: ml_record2, ["currency"]: ml_record3, ["recipient"]: ml_record4, ["method"]: ml_record5 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "MppConfig", ["enabled"]: ml_record1, ["amount"]: ml_record2, ["currency"]: ml_record3, ["recipient"]: ml_record4, ["method"]: ml_record5 }), {"kind":"data","name":"rp_6d70702e4d7070436f6e666967"}, ml_constructor_value_schema_8ff279016a550dc797baf48d8d9d08934f764674e8c8e9a083d6b10547b28946);
 }
 
 function rp_636f6e6669672e64656661756c745f61637469766974797075625f7075626c69635f6b65795f70656d(): string {

@@ -9,6 +9,12 @@ function ml_fixed(value, min, max, message) {
 
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288 = {"schemaVersion":1,"types":{"ZaiProbeFailureKind":{"kind":"data","name":"ZaiProbeFailureKind","ctors":[{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unverified","fields":[]}]}}};
+
+const ml_constructor_value_schema_70bab43c9662e519aa007f3e580f4b762b9dbc4e8e5ac625739a3f88a42ab265 = {"schemaVersion":1,"types":{"ZaiProbeFailure":{"kind":"data","name":"ZaiProbeFailure","ctors":[{"name":"ZaiProbeFailure","fields":[{"name":"kind","type":{"kind":"data","name":"ZaiProbeFailureKind"}},{"name":"message","type":{"kind":"string"}}]}]},"ZaiProbeFailureKind":{"kind":"data","name":"ZaiProbeFailureKind","ctors":[{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unverified","fields":[]}]}}};
+
 const ml_host_value_schema_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288 = {"schemaVersion":1,"types":{"ZaiProbeFailureKind":{"kind":"data","name":"ZaiProbeFailureKind","ctors":[{"name":"CredentialRejected","fields":[]},{"name":"RateLimited","fields":[]},{"name":"Unverified","fields":[]}]}}};
 
 const ml_host_value_refinements_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288 = new Map([]);
@@ -82,9 +88,10 @@ const serde_json = {
 };
 
 function ml_make_ZaiProbeFailure_ZaiProbeFailure(kind, message) {
+  ml_assert_constructor_input(kind, {"kind":"data","name":"ZaiProbeFailureKind"}, ml_constructor_value_schema_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288);
   ml_validate_rust_value(kind, {"kind":"data","name":"ZaiProbeFailureKind"}, ml_host_value_schema_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288, { refinements: ml_host_value_refinements_21817407e4f47441c513d31711f328cdd8009c5f0784ba37782d9a1e4c37c288 });
   if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "ZaiProbeFailure", ["kind"]: kind, ["message"]: message });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "ZaiProbeFailure", ["kind"]: kind, ["message"]: message }), {"kind":"data","name":"ZaiProbeFailure"}, ml_constructor_value_schema_70bab43c9662e519aa007f3e580f4b762b9dbc4e8e5ac625739a3f88a42ab265);
 }
 
 export const translated = { ["ANTHROPIC_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e414e5448524f5049435f424153455f50415448(), ["CHAT_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e434841545f424153455f50415448(), ["RESPONSES_BASE_PATH"]: rp_7a61695f636f64696e675f706c616e2e524553504f4e5345535f424153455f50415448(), ["HEALTH_PATH"]: rp_7a61695f636f64696e675f706c616e2e4845414c54485f50415448(), ["CATALOG_PATH"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f50415448(), ["CATALOG_TTL"]: rp_7a61695f636f64696e675f706c616e2e434154414c4f475f54544c(), ["FAILED_REFRESH_RETRY"]: rp_7a61695f636f64696e675f706c616e2e4641494c45445f524546524553485f5245545259(), ["MAX_CATALOG_BODY"]: rp_7a61695f636f64696e675f706c616e2e4d41585f434154414c4f475f424f4459(), ["ZaiProbeFailureKind"]: Object.freeze({ ["CredentialRejected"]: ml_make_ZaiProbeFailureKind_CredentialRejected, ["RateLimited"]: ml_make_ZaiProbeFailureKind_RateLimited, ["Unverified"]: ml_make_ZaiProbeFailureKind_Unverified }), ["ZaiProbeFailure"]: ml_make_ZaiProbeFailure_ZaiProbeFailure };

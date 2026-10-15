@@ -6,6 +6,10 @@ import { validateRustValue as ml_validate_rust_value } from "../runtime/type-lay
 
 import { assertImmutableCopy as ml_assert_immutable_copy } from "../runtime/copy-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_6e817ec55fa8f45ca54ad6af4f52b3c6eb27d9ef1456c81b8c53ffca8c1e6f55 = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f3130385f7265666572656e63655f7368617265645f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663":{"kind":"data","name":"rp_526f757465724f7074696f6e5f3130385f7265666572656e63655f7368617265645f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"array","element":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c"}}}]}]},"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c":{"kind":"data","name":"rp_636c69656e74732e636174616c6f672e526f75746572526561736f6e696e674c6576656c","ctors":[{"name":"RouterReasoningLevel","fields":[{"name":"effort","type":{"kind":"string"}},{"name":"description","type":{"kind":"string"}}]}]}}};
+
 function ml_router_unexpected(value) {
   throw new TypeError(`unexpected constructor ${value.$}`);
 }
@@ -34,7 +38,7 @@ function rp_776974685f636f6d6d616e642e636f6465785f636174616c6f672e6d6f64656c5f6d
         }
         case "Some": {
           const x = ml_s1.field0;
-          return Object.freeze({ $: 'Some', field0: x });
+          return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: x }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f3130385f7265666572656e63655f7368617265645f727573745f6f776e65645f7665635f6e616d65645f36333663363936353665373437335f36333631373436313663366636375f35323666373537343635373235323635363137333666366536393665363734633635373636353663"}, ml_constructor_value_schema_6e817ec55fa8f45ca54ad6af4f52b3c6eb27d9ef1456c81b8c53ffca8c1e6f55);
         }
         default: {
           return ml_router_unexpected(ml_s1);

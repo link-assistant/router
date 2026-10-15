@@ -41,6 +41,14 @@ type MLData_7374642e74696d652e54727946726f6d466c6f6174536563734572726f724b696e64
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e = {"schemaVersion":1,"types":{"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
+const ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085 = {"schemaVersion":1,"types":{}};
+
+const ml_constructor_value_schema_88184795cd11d40b6dfffb576e4dac8158b66ecefde6f48d3f83f62703fac96f = {"schemaVersion":1,"types":{"OpenAICompatibleConfig":{"kind":"data","name":"OpenAICompatibleConfig","ctors":[{"name":"OpenAICompatibleConfig","fields":[{"name":"provider_name","type":{"kind":"string"}},{"name":"base_url","type":{"kind":"string"}},{"name":"api_key","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"api_key_env","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"default_model","type":{"kind":"data","name":"RouterOption_17_rust_owned_string"}},{"name":"models","type":{"kind":"array","element":{"kind":"string"}}},{"name":"supported_clients","type":{"kind":"array","element":{"kind":"string"}}}]}]},"RouterOption_17_rust_owned_string":{"kind":"data","name":"RouterOption_17_rust_owned_string","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"string"}}]}]}}};
+
 function ml_router_array(values: ReadonlyArray<any>, validate: (value: any) => boolean) {
   if (!Array.isArray(values)) return false;
   for (let index = 0; index < values.length; index++) {
@@ -57,12 +65,17 @@ const ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e
 function ml_make_OpenAICompatibleConfig_OpenAICompatibleConfig(provider_name: string, base_url: string, api_key: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, api_key_env: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, default_model: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>, models: ReadonlyArray<string>, supported_clients: ReadonlyArray<string>): Readonly<{ readonly "$": "OpenAICompatibleConfig"; readonly "provider_name": string; readonly "base_url": string; readonly "api_key": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "api_key_env": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "default_model": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "models": ReadonlyArray<string>; readonly "supported_clients": ReadonlyArray<string> }> {
   if (!(typeof provider_name === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(provider_name))) throw new TypeError('argument outside supported Rust value domain');
   if (!(typeof base_url === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(base_url))) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(api_key, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(api_key, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
+  ml_assert_constructor_input(api_key_env, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(api_key_env, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
+  ml_assert_constructor_input(default_model, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_constructor_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e);
   ml_validate_rust_value(default_model, {"kind":"data","name":"RouterOption_17_rust_owned_string"}, ml_host_value_schema_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e, { refinements: ml_host_value_refinements_03a1d5eee9bc456aef10a174b0d622b72c95af177d20511e912057751ffdcd7e });
+  ml_assert_constructor_input(models, {"kind":"array","element":{"kind":"string"}}, ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085);
   if (!ml_router_array(models, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
+  ml_assert_constructor_input(supported_clients, {"kind":"array","element":{"kind":"string"}}, ml_constructor_value_schema_7d60ab883a2cc9a1a1432946fb02b6310bf1de9bef16b6697d4977d5ffb24085);
   if (!ml_router_array(supported_clients, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "OpenAICompatibleConfig", ["provider_name"]: provider_name, ["base_url"]: base_url, ["api_key"]: api_key, ["api_key_env"]: api_key_env, ["default_model"]: default_model, ["models"]: models, ["supported_clients"]: supported_clients });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "OpenAICompatibleConfig", ["provider_name"]: provider_name, ["base_url"]: base_url, ["api_key"]: api_key, ["api_key_env"]: api_key_env, ["default_model"]: default_model, ["models"]: models, ["supported_clients"]: supported_clients }), {"kind":"data","name":"OpenAICompatibleConfig"}, ml_constructor_value_schema_88184795cd11d40b6dfffb576e4dac8158b66ecefde6f48d3f83f62703fac96f);
 }
 
 const std = {

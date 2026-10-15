@@ -2,6 +2,12 @@
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_a38ae9b0f048af7d258beba7d2431eaf77d789a509a68d50bd545ce7dd14abe8 = {"schemaVersion":1,"types":{"std.io.Error":{"kind":"data","name":"std.io.Error","ctors":[{"name":"IoError","fields":[{"name":"kind","type":{"kind":"string"}},{"name":"message","type":{"kind":"string"}},{"name":"raw_os_error","type":{"kind":"data","name":"RouterOption_3_i32"}}]}]},"RouterOption_3_i32":{"kind":"data","name":"RouterOption_3_i32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":true}}]}]}}};
+
+const ml_constructor_value_schema_101764fefb93a29d99a9128e7f9142d85c78661755f4badba7cd2edbd52028fa = {"schemaVersion":1,"types":{"LoadError":{"kind":"data","name":"LoadError","ctors":[{"name":"Unreadable","fields":[{"name":"field0","type":{"kind":"data","name":"std.io.Error"}}]},{"name":"MissingHeader","fields":[]}]},"std.io.Error":{"kind":"data","name":"std.io.Error","ctors":[{"name":"IoError","fields":[{"name":"kind","type":{"kind":"string"}},{"name":"message","type":{"kind":"string"}},{"name":"raw_os_error","type":{"kind":"data","name":"RouterOption_3_i32"}}]}]},"RouterOption_3_i32":{"kind":"data","name":"RouterOption_3_i32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":true}}]}]}}};
+
 const ml_host_value_schema_e49a0da85e7ce49f045fe03fa441d61a99c7ff10a47a84b74deba3ff254feafe = {"schemaVersion":1,"types":{"RouterOption_3_i32":{"kind":"data","name":"RouterOption_3_i32","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":32,"signed":true}}]}]},"std.io.Error":{"kind":"data","name":"std.io.Error","ctors":[{"name":"IoError","fields":[{"name":"kind","type":{"kind":"string"}},{"name":"message","type":{"kind":"string"}},{"name":"raw_os_error","type":{"kind":"data","name":"RouterOption_3_i32"}}]}]}}};
 
 const ml_host_value_refinements_e49a0da85e7ce49f045fe03fa441d61a99c7ff10a47a84b74deba3ff254feafe = new Map([]);
@@ -59,8 +65,9 @@ const serde_json = {
 };
 
 function ml_make_LoadError_Unreadable(field0) {
+  ml_assert_constructor_input(field0, {"kind":"data","name":"std.io.Error"}, ml_constructor_value_schema_a38ae9b0f048af7d258beba7d2431eaf77d789a509a68d50bd545ce7dd14abe8);
   ml_validate_rust_value(field0, {"kind":"data","name":"std.io.Error"}, ml_host_value_schema_e49a0da85e7ce49f045fe03fa441d61a99c7ff10a47a84b74deba3ff254feafe, { refinements: ml_host_value_refinements_e49a0da85e7ce49f045fe03fa441d61a99c7ff10a47a84b74deba3ff254feafe });
-  return Object.freeze({ $: 'Unreadable', field0: field0 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: 'Unreadable', field0: field0 }), {"kind":"data","name":"LoadError"}, ml_constructor_value_schema_101764fefb93a29d99a9128e7f9142d85c78661755f4badba7cd2edbd52028fa);
 }
 
 function ml_make_LoadError_MissingHeader() {

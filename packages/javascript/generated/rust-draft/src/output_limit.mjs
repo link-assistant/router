@@ -2,6 +2,12 @@
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3 = {"schemaVersion":1,"types":{"RouterOption_3_u64":{"kind":"data","name":"RouterOption_3_u64","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
+
+const ml_constructor_value_schema_7e0f98d1851e475ca7ace1cf1db37ff812f31009e50df189a6bedef0f9c4a8af = {"schemaVersion":1,"types":{"OutputTokenLimiter":{"kind":"data","name":"OutputTokenLimiter","ctors":[{"name":"OutputTokenLimiter","fields":[{"name":"remaining","type":{"kind":"data","name":"RouterOption_3_u64"}},{"name":"stopped","type":{"kind":"bool"}}]}]},"RouterOption_3_u64":{"kind":"data","name":"RouterOption_3_u64","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
+
 const ml_host_value_schema_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3 = {"schemaVersion":1,"types":{"RouterOption_3_u64":{"kind":"data","name":"RouterOption_3_u64","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
 
 const ml_host_value_refinements_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3 = new Map([]);
@@ -43,9 +49,10 @@ function rp_6f75747075745f6c696d69742e43484152535f5045525f544f4b454e() {
 }
 
 function ml_make_OutputTokenLimiter_OutputTokenLimiter(remaining, stopped) {
+  ml_assert_constructor_input(remaining, {"kind":"data","name":"RouterOption_3_u64"}, ml_constructor_value_schema_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3);
   ml_validate_rust_value(remaining, {"kind":"data","name":"RouterOption_3_u64"}, ml_host_value_schema_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3, { refinements: ml_host_value_refinements_0f463a09cb9641ad0e733a363d149d0149dcdd1579ef09ae0bcca8c2d5ade9c3 });
   if (!(typeof stopped === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
-  return Object.freeze({ $: "OutputTokenLimiter", ["remaining"]: remaining, ["stopped"]: stopped });
+  return ml_snapshot_constructor_value(Object.freeze({ $: "OutputTokenLimiter", ["remaining"]: remaining, ["stopped"]: stopped }), {"kind":"data","name":"OutputTokenLimiter"}, ml_constructor_value_schema_7e0f98d1851e475ca7ace1cf1db37ff812f31009e50df189a6bedef0f9c4a8af);
 }
 
 const std = {

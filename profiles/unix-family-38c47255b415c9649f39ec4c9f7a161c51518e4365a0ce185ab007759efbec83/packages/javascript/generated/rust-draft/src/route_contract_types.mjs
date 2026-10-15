@@ -2,6 +2,12 @@
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_64d2df2203b3b0e74f73fa23ac3fa5796f20b765f29c99be41cec03c3aa9a464 = {"schemaVersion":1,"types":{"ServiceKind":{"kind":"data","name":"ServiceKind","ctors":[{"name":"Anthropic","fields":[]},{"name":"OpenAi","fields":[]},{"name":"Codex","fields":[]},{"name":"Qwen","fields":[]},{"name":"Gemini","fields":[]},{"name":"Vertex","fields":[]},{"name":"Bedrock","fields":[]},{"name":"GitHub","fields":[]},{"name":"Git","fields":[]},{"name":"ActivityPub","fields":[]}]}}};
+
+const ml_constructor_value_schema_ed93991ceb3080cd7d4289b570e5dd51b61779b01265f1a3e6c848f4a6488e9f = {"schemaVersion":1,"types":{"RouteClass":{"kind":"data","name":"RouteClass","ctors":[{"name":"Neutral","fields":[]},{"name":"Management","fields":[]},{"name":"Service","fields":[{"name":"field0","type":{"kind":"data","name":"ServiceKind"}}]}]},"ServiceKind":{"kind":"data","name":"ServiceKind","ctors":[{"name":"Anthropic","fields":[]},{"name":"OpenAi","fields":[]},{"name":"Codex","fields":[]},{"name":"Qwen","fields":[]},{"name":"Gemini","fields":[]},{"name":"Vertex","fields":[]},{"name":"Bedrock","fields":[]},{"name":"GitHub","fields":[]},{"name":"Git","fields":[]},{"name":"ActivityPub","fields":[]}]}}};
+
 const ml_host_value_schema_64d2df2203b3b0e74f73fa23ac3fa5796f20b765f29c99be41cec03c3aa9a464 = {"schemaVersion":1,"types":{"ServiceKind":{"kind":"data","name":"ServiceKind","ctors":[{"name":"Anthropic","fields":[]},{"name":"OpenAi","fields":[]},{"name":"Codex","fields":[]},{"name":"Qwen","fields":[]},{"name":"Gemini","fields":[]},{"name":"Vertex","fields":[]},{"name":"Bedrock","fields":[]},{"name":"GitHub","fields":[]},{"name":"Git","fields":[]},{"name":"ActivityPub","fields":[]}]}}};
 
 const ml_host_value_refinements_64d2df2203b3b0e74f73fa23ac3fa5796f20b765f29c99be41cec03c3aa9a464 = new Map([]);
@@ -15,8 +21,9 @@ function ml_make_RouteClass_Management() {
 }
 
 function ml_make_RouteClass_Service(field0) {
+  ml_assert_constructor_input(field0, {"kind":"data","name":"ServiceKind"}, ml_constructor_value_schema_64d2df2203b3b0e74f73fa23ac3fa5796f20b765f29c99be41cec03c3aa9a464);
   ml_validate_rust_value(field0, {"kind":"data","name":"ServiceKind"}, ml_host_value_schema_64d2df2203b3b0e74f73fa23ac3fa5796f20b765f29c99be41cec03c3aa9a464, { refinements: ml_host_value_refinements_64d2df2203b3b0e74f73fa23ac3fa5796f20b765f29c99be41cec03c3aa9a464 });
-  return Object.freeze({ $: 'Service', field0: field0 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: 'Service', field0: field0 }), {"kind":"data","name":"RouteClass"}, ml_constructor_value_schema_ed93991ceb3080cd7d4289b570e5dd51b61779b01265f1a3e6c848f4a6488e9f);
 }
 
 const std = {

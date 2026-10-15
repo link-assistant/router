@@ -45,6 +45,10 @@ function ml_fixed(value: bigint, min: bigint, max: bigint, message: string) {
   return value;
 }
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_d61951da6f571dcff0fd0e621c9063860b00dcf6511222db8a5ab7f2013ac47f = {"schemaVersion":1,"types":{"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665":{"kind":"data","name":"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"rp_706f6f6c5f6661696c6f7665722e5265747279526561736f6e"}}]}]},"rp_706f6f6c5f6661696c6f7665722e5265747279526561736f6e":{"kind":"data","name":"rp_706f6f6c5f6661696c6f7665722e5265747279526561736f6e","ctors":[{"name":"RateLimited","fields":[]},{"name":"Overloaded","fields":[]},{"name":"ServerError","fields":[]},{"name":"Unauthorized","fields":[]},{"name":"Transport","fields":[]}]}}};
+
 function rp_706f6f6c5f6661696c6f7665722e44454641554c545f4d41585f415454454d505453(): bigint {
   return 3n;
 }
@@ -106,25 +110,25 @@ function rp_706f6f6c5f6661696c6f7665722e636c6173736966795f737461747573(status: b
   ml_fixed(status, 0n, 65535n, "u16 argument status out of range");
   if (!(typeof status === 'bigint' && status >= 0n && status <= 65535n)) throw new TypeError('argument outside supported Rust value domain');
   if ((status === 429n)) {
-    return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RateLimited' }) });
+    return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'RateLimited' }) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665"}, ml_constructor_value_schema_d61951da6f571dcff0fd0e621c9063860b00dcf6511222db8a5ab7f2013ac47f);
   } else {
     if ((status === 529n)) {
-      return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Overloaded' }) });
+      return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Overloaded' }) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665"}, ml_constructor_value_schema_d61951da6f571dcff0fd0e621c9063860b00dcf6511222db8a5ab7f2013ac47f);
     } else {
       if ((status === 500n)) {
-        return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) });
+        return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665"}, ml_constructor_value_schema_d61951da6f571dcff0fd0e621c9063860b00dcf6511222db8a5ab7f2013ac47f);
       } else {
         if ((status === 502n)) {
-          return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) });
+          return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665"}, ml_constructor_value_schema_d61951da6f571dcff0fd0e621c9063860b00dcf6511222db8a5ab7f2013ac47f);
         } else {
           if ((status === 503n)) {
-            return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) });
+            return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665"}, ml_constructor_value_schema_d61951da6f571dcff0fd0e621c9063860b00dcf6511222db8a5ab7f2013ac47f);
           } else {
             if ((status === 504n)) {
-              return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) });
+              return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'ServerError' }) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665"}, ml_constructor_value_schema_d61951da6f571dcff0fd0e621c9063860b00dcf6511222db8a5ab7f2013ac47f);
             } else {
               if ((status === 401n)) {
-                return Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Unauthorized' }) });
+                return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: Object.freeze({ $: 'Unauthorized' }) }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35355f6e616d65645f37303666366636633566363636313639366336663736363537325f35323635373437323739353236353631373336663665"}, ml_constructor_value_schema_d61951da6f571dcff0fd0e621c9063860b00dcf6511222db8a5ab7f2013ac47f);
               } else {
                 return Object.freeze({ $: 'None' });
               }

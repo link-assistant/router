@@ -2,6 +2,14 @@
 // Carried constructs are data, never runtime parity evidence.
 import { validateRustValue as ml_validate_rust_value } from "../runtime/type-layout-runtime.mjs";
 
+import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from "../runtime/constructor-value-runtime.mjs";
+
+const ml_constructor_value_schema_fd3a114ce4304a88516467586605b189cc6f6a6d0b0a2e558b2f5a6532584b93 = {"schemaVersion":1,"types":{"RouterOption_28_named_4578706972794661637473":{"kind":"data","name":"RouterOption_28_named_4578706972794661637473","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"ExpiryFacts"}}]}]},"ExpiryFacts":{"kind":"data","name":"ExpiryFacts","ctors":[{"name":"ExpiryFacts","fields":[{"name":"issued_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"expires_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"ago_seconds","type":{"kind":"fixed","bits":64,"signed":true}}]}]}}};
+
+const ml_constructor_value_schema_1fa858e5fb16b88a24d645e6c654b6e53f8214343cf17d94d36c19472ab6ea24 = {"schemaVersion":1,"types":{"TokenError":{"kind":"data","name":"TokenError","ctors":[{"name":"InvalidPrefix","fields":[]},{"name":"Expired","fields":[{"name":"field0","type":{"kind":"data","name":"RouterOption_28_named_4578706972794661637473"}}]},{"name":"Revoked","fields":[]},{"name":"NotFound","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"Invalid","fields":[{"name":"field0","type":{"kind":"string"}}]},{"name":"SignatureInvalid","fields":[]},{"name":"IssuerSecretUnset","fields":[]},{"name":"MissingRecord","fields":[]},{"name":"BindingMismatch","fields":[]},{"name":"InsufficientScope","fields":[]},{"name":"LimitExceeded","fields":[{"name":"field0","type":{"kind":"data","name":"RouterOption_28_named_4275646765744661637473"}}]},{"name":"TokenLimitExceeded","fields":[{"name":"field0","type":{"kind":"data","name":"RouterOption_28_named_4275646765744661637473"}}]},{"name":"RateLimitExceeded","fields":[]},{"name":"Storage","fields":[{"name":"field0","type":{"kind":"string"}}]}]},"RouterOption_28_named_4578706972794661637473":{"kind":"data","name":"RouterOption_28_named_4578706972794661637473","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"ExpiryFacts"}}]}]},"ExpiryFacts":{"kind":"data","name":"ExpiryFacts","ctors":[{"name":"ExpiryFacts","fields":[{"name":"issued_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"expires_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"ago_seconds","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"RouterOption_28_named_4275646765744661637473":{"kind":"data","name":"RouterOption_28_named_4275646765744661637473","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"BudgetFacts"}}]}]},"BudgetFacts":{"kind":"data","name":"BudgetFacts","ctors":[{"name":"BudgetFacts","fields":[{"name":"used","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"limit","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
+
+const ml_constructor_value_schema_5fe1caf3de9e85e6765107b0e434861f7387de2dc94e399ddc0e37ab404db6f7 = {"schemaVersion":1,"types":{"RouterOption_28_named_4275646765744661637473":{"kind":"data","name":"RouterOption_28_named_4275646765744661637473","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"BudgetFacts"}}]}]},"BudgetFacts":{"kind":"data","name":"BudgetFacts","ctors":[{"name":"BudgetFacts","fields":[{"name":"used","type":{"kind":"fixed","bits":64,"signed":false}},{"name":"limit","type":{"kind":"fixed","bits":64,"signed":false}}]}]}}};
+
 const ml_host_value_schema_631d9e4ca5ac074b15d0ac803d36c2c14c7b0d8e4473a6ad25c6db0780c06347 = {"schemaVersion":1,"types":{"ExpiryFacts":{"kind":"data","name":"ExpiryFacts","ctors":[{"name":"ExpiryFacts","fields":[{"name":"issued_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"expires_at","type":{"kind":"fixed","bits":64,"signed":true}},{"name":"ago_seconds","type":{"kind":"fixed","bits":64,"signed":true}}]}]},"RouterOption_28_named_4578706972794661637473":{"kind":"data","name":"RouterOption_28_named_4578706972794661637473","ctors":[{"name":"None","fields":[]},{"name":"Some","fields":[{"name":"field0","type":{"kind":"data","name":"ExpiryFacts"}}]}]}}};
 
 const ml_host_value_refinements_631d9e4ca5ac074b15d0ac803d36c2c14c7b0d8e4473a6ad25c6db0780c06347 = new Map([]);
@@ -20,8 +28,9 @@ function ml_make_TokenError_InvalidPrefix() {
 }
 
 function ml_make_TokenError_Expired(field0) {
+  ml_assert_constructor_input(field0, {"kind":"data","name":"RouterOption_28_named_4578706972794661637473"}, ml_constructor_value_schema_fd3a114ce4304a88516467586605b189cc6f6a6d0b0a2e558b2f5a6532584b93);
   ml_validate_rust_value(field0, {"kind":"data","name":"RouterOption_28_named_4578706972794661637473"}, ml_host_value_schema_631d9e4ca5ac074b15d0ac803d36c2c14c7b0d8e4473a6ad25c6db0780c06347, { refinements: ml_host_value_refinements_631d9e4ca5ac074b15d0ac803d36c2c14c7b0d8e4473a6ad25c6db0780c06347 });
-  return Object.freeze({ $: 'Expired', field0: field0 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: 'Expired', field0: field0 }), {"kind":"data","name":"TokenError"}, ml_constructor_value_schema_1fa858e5fb16b88a24d645e6c654b6e53f8214343cf17d94d36c19472ab6ea24);
 }
 
 function ml_make_TokenError_Revoked() {
@@ -59,13 +68,15 @@ function ml_make_TokenError_InsufficientScope() {
 }
 
 function ml_make_TokenError_LimitExceeded(field0) {
+  ml_assert_constructor_input(field0, {"kind":"data","name":"RouterOption_28_named_4275646765744661637473"}, ml_constructor_value_schema_5fe1caf3de9e85e6765107b0e434861f7387de2dc94e399ddc0e37ab404db6f7);
   ml_validate_rust_value(field0, {"kind":"data","name":"RouterOption_28_named_4275646765744661637473"}, ml_host_value_schema_a384a55d03e11c49171095b337a899b311e9a87a8fd4882b7dacf93892e0d841, { refinements: ml_host_value_refinements_a384a55d03e11c49171095b337a899b311e9a87a8fd4882b7dacf93892e0d841 });
-  return Object.freeze({ $: 'LimitExceeded', field0: field0 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: 'LimitExceeded', field0: field0 }), {"kind":"data","name":"TokenError"}, ml_constructor_value_schema_1fa858e5fb16b88a24d645e6c654b6e53f8214343cf17d94d36c19472ab6ea24);
 }
 
 function ml_make_TokenError_TokenLimitExceeded(field0) {
+  ml_assert_constructor_input(field0, {"kind":"data","name":"RouterOption_28_named_4275646765744661637473"}, ml_constructor_value_schema_5fe1caf3de9e85e6765107b0e434861f7387de2dc94e399ddc0e37ab404db6f7);
   ml_validate_rust_value(field0, {"kind":"data","name":"RouterOption_28_named_4275646765744661637473"}, ml_host_value_schema_a384a55d03e11c49171095b337a899b311e9a87a8fd4882b7dacf93892e0d841, { refinements: ml_host_value_refinements_a384a55d03e11c49171095b337a899b311e9a87a8fd4882b7dacf93892e0d841 });
-  return Object.freeze({ $: 'TokenLimitExceeded', field0: field0 });
+  return ml_snapshot_constructor_value(Object.freeze({ $: 'TokenLimitExceeded', field0: field0 }), {"kind":"data","name":"TokenError"}, ml_constructor_value_schema_1fa858e5fb16b88a24d645e6c654b6e53f8214343cf17d94d36c19472ab6ea24);
 }
 
 function ml_make_TokenError_RateLimitExceeded() {
