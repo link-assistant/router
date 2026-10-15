@@ -115,3 +115,26 @@ test('public reexport aliases do not grant visibility to a new private written s
   const source='mod left { mod hidden { pub mod bridge { use serde::{Serialize,Deserialize}; #[derive(Serialize,Deserialize)] struct Secret { value:i64 } } } pub use hidden::bridge as Visible; } mod right { use serde::{Serialize,Deserialize}; #[derive(Serialize,Deserialize)] pub struct Record { value:crate::left::Visible::Secret } }';
   fixture(source,options=>assert.throws(()=>projected(options,['crate::right::Record']),/inaccessible/));
 });
+
+
+test('serialization joins complete original sibling outputs without erasing unknown producers or prelude shadows',{timeout:30000},()=>{
+  const selected=imports+'#[derive(Serialize,Deserialize)]struct Record{#[serde(default,skip_serializing_if="Option::is_none")]value:Option<String>,count:u32}';
+  const complete='#[derive(Clone)]struct Sibling{value:u8}',observations=[];
+  const retain=(name='complete-sibling-namespace')=>{const directory=process.env.ROUTER_SERIALIZATION_NAMESPACE_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify({selected,complete,observations})+'\n',{flag:'wx'});}};
+  fixture(complete+selected,options=>{
+    const context=captureSerializationContext(options),text=serializeSerializationMeta(context,{roots:['crate::Record']}),meta=parseSerializationMeta(text,context),descriptor=projectSerializationDescriptor(meta);
+    observations.push({source:complete+selected,context,text,meta,descriptor});retain('positive-sibling-namespace');
+    assert.deepEqual(plain(descriptor.Record.fields),[{name:'value',type:'String',optional:true},{name:'count',type:'u32',optional:false}]);
+    assert.equal(meta.runtimeAuthority,false);assert.equal(meta.generatedTraitBehavior,false);
+    assert.throws(()=>parseSerializationMeta(text,{...context}),/Unsealed/);
+  });
+  // A genuine input registration alone cannot clear these original scopes.
+  for(const prefix of ['#[derive(Ord)]struct Sibling{value:u8}','#[unknown]struct Sibling;','unknown!();','use unknown::*;',complete+'type String=u32;',complete+'struct Option;',complete+'type u32=u64;']){
+    let error=null;
+    fixture(prefix+selected,options=>{try{projected(options);}catch(cause){error=cause;}});
+    observations.push({source:prefix+selected,error:error?{name:error.name,message:error.message,diagnostic:error.diagnostic}:null});
+    // Retain an unexpected acceptance too, before failing the assertion.
+    if(!(error instanceof SerializationRefusal)){retain();assert.fail('Original namespace obligation was not refused: '+prefix);}
+  }
+  retain();
+});

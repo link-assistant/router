@@ -23,18 +23,30 @@ Complete caller output reissue is never cached. Warm identity, late owner/hash
 wrapper fallback and fresh caller-output controls remain within the same cases.
 
 The first complete seven-file receiving pair preserved all 81 old cases, but
-failed two of the new ten controls in both Node and Bun. The seven-owner Default
-input was already namespace-complete; its unchanged source remains an explicitly
-already-closed control. A genuine standard-only input with incomplete output
-dimensions now contributes type/value lookup uncertainty even for builtin derive
-spellings. Only the private complete output effect can discharge this item's
-uncertainty. This is a conservative refusal/proof-boundary repair, not a historical
-namespace or body gain. The separate six-owner source exercises that repaired
-boundary, while an unproved Ord output keeps it unresolved. All four unknown-producer/import/conditional observations are retained
-before assertions; the missing conditional sibling retains ancestor bang effects
-without inventing inherited child type uncertainty.
+failed two of the new ten controls in both Node and Bun. The V5 successor's full
+nine-file run exposed an incorrect Default-control assumption and schema consumers
+that supplied input evidence without complete output evidence. Both failure
+batches, full sources and all produced vectors remain retained. A plain struct's
+Default derive is standard-only; only an actual unit enum `#[default]` helper
+uses the existing complete builtin-Default input path. The corrected controls
+retain both exact seven- and six-owner sources, the genuine unit-helper control,
+and an unproved Ord output that remains unresolved.
 
-The successor complete ten-case positive/refusal group is source only and UNRUN.
-No original formatting body gain, scope-wide completion, generated trait behavior, runtime
-parity or Rust verification is claimed. All existing deadlines remain unchanged;
-full original census and affected regression qualification are pending.
+A genuine standard-only input with incomplete output dimensions now contributes
+type/value lookup uncertainty even for builtin derive spellings. Only the private
+complete output effect can discharge this item's uncertainty. Serialization
+capture registers its authentic JSON source table before issuing the whole derive
+context and consumes the same genuine complete-output context as the project
+resolver. Supported sibling outputs can discharge their own contribution;
+unsupported outputs, unknown producers/imports and actual prelude shadows remain
+refusals. Existing payload-enum output grammars remain unproved, so this shared
+join alone does not restore every original schema consumer; a separate complete
+payload-enum output prerequisite is still required. This is a conservative proof-boundary/consumer repair, not a historical
+namespace or formatting-body gain. All four unknown-producer/import/conditional
+observations are retained before assertions; missing conditional siblings retain
+ancestor bang effects without inventing inherited child type uncertainty.
+
+The successor ten-case effect group and new serialization consumer control are
+source only and UNRUN. No scope-wide completion, generated trait behavior,
+runtime parity or Rust verification is claimed. Existing case deadlines remain
+unchanged; full original census and affected regression qualification are pending.

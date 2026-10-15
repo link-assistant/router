@@ -62,25 +62,26 @@ test('stable language rule consumes complete original resolver actions independe
 });
 
 test('all privately closed builtin branches narrow only their original item type uncertainty',()=>{
- // Preserve the original seven-owner source as an already-closed Default
- // input control; it never demonstrated a historical namespace gain.
+ // Preserve the original seven-owner source. A plain struct Default has no
+ // unit-variant #[default] helper and still needs complete output evidence.
  const row=setup('#[derive(Copy,Clone,Debug,Default,Eq,PartialEq,Hash)]pub struct Payload{value:u8}');
  const before=resolveModuleBindings(row),after=resolve(row),token=effect(row),actual=facts(token,row);
  const requested=proveDeriveRequestedNameUnchanged(token,row.context,row.deriveContext,row.module,row.item,names),selected=deriveRequestedNameEffectFacts(requested,token,row.context,row.deriveContext,row.module,row.item);
  const standard=setup('#[derive(Copy,Clone,Debug,Eq,PartialEq,Hash)]pub struct Payload{value:u8}');
  const standardBefore=resolveModuleBindings(standard),standardAfter=resolve(standard),standardToken=effect(standard),standardFacts=facts(standardToken,standard);
  const incomplete=setup('#[derive(Ord)]pub struct Payload{value:u8}'),incompleteBefore=resolveModuleBindings(incomplete),incompleteAfter=resolve(incomplete);
- retain('02-every-builtin-alternative',{row,before,after,token,actual,requested,selected,standard,standardBefore,standardAfter,standardToken,standardFacts,incomplete,incompleteBefore,incompleteAfter});
- assert.equal(model(before).unresolvedTypeScope,false);assert.equal(model(after).unresolvedTypeScope,false);
+ const unitDefault=setup('#[derive(Default)]pub enum Choice{#[default]First,Other}'),unitDefaultBefore=resolveModuleBindings(unitDefault),unitDefaultAfter=resolve(unitDefault);
+ retain('02-every-builtin-alternative',{row,before,after,token,actual,requested,selected,standard,standardBefore,standardAfter,standardToken,standardFacts,incomplete,incompleteBefore,incompleteAfter,unitDefault,unitDefaultBefore,unitDefaultAfter});
+ assert.equal(model(before).unresolvedTypeScope,true);assert.equal(model(after).unresolvedTypeScope,false);
  assert.equal(model(after).unresolvedBangMacroScope,false);
  assert.equal(actual.alternatives.length,7);assert.ok(actual.alternatives.every(output=>output.kind==='ItemKind::Impl'));
  assert.ok(actual.alternatives.some(output=>output.originalCompleteOutput.proof.route?.branches?.length>1));
- // Public dimensions keep their historical limited contract. The old Default
- // input is complete; the standard-only input explicitly is not.
+ // Public dimensions keep their historical limited contract. Plain struct
+ // Default is standard-only; the actual unit #[default] helper is distinct.
  assert.equal(row.context.certificates[0].dimensions.typeNamespaceComplete,false);
- assert.ok(row.deriveContext.certificates[0].builtinDefault);
- assert.equal(row.deriveContext.certificates[0].dimensions.typeNamespaceComplete,true);
- assert.equal(row.deriveContext.certificates[0].dimensions.valueNamespaceComplete,true);
+ assert.ok(row.deriveContext.certificates[0].standardInput);assert.equal(row.deriveContext.certificates[0].builtinDefault,undefined);
+ assert.equal(row.deriveContext.certificates[0].dimensions.typeNamespaceComplete,false);
+ assert.equal(row.deriveContext.certificates[0].dimensions.valueNamespaceComplete,false);
  assert.deepEqual(selected.requests,names);assert.equal(selected.namespaceAuthority,false);
  assert.ok(standard.deriveContext.certificates[0].standardInput);
  assert.equal(standard.deriveContext.certificates[0].dimensions.typeNamespaceComplete,false);
@@ -89,6 +90,10 @@ test('all privately closed builtin branches narrow only their original item type
  assert.equal(model(standardBefore).unresolvedTypeScope,true,'incomplete input must retain its newly repaired conservative boundary');
  assert.equal(model(standardAfter).unresolvedTypeScope,false,'only the complete private per-invocation output effect discharges that boundary');
  assert.equal(standardFacts.alternatives.length,6);assert.ok(standardFacts.alternatives.every(output=>output.kind==='ItemKind::Impl'));
+ assert.equal(unitDefault.deriveContext.certificates[0].builtinDefault.variant,'First');
+ assert.equal(unitDefault.deriveContext.certificates[0].dimensions.typeNamespaceComplete,true);
+ assert.equal(unitDefault.deriveContext.certificates[0].dimensions.valueNamespaceComplete,true);
+ assert.equal(model(unitDefaultBefore).unresolvedTypeScope,false);assert.equal(model(unitDefaultAfter).unresolvedTypeScope,false);
  assert.ok(incomplete.deriveContext.certificates[0].standardInput);
  assert.equal(model(incompleteBefore).unresolvedTypeScope,true);assert.equal(model(incompleteAfter).unresolvedTypeScope,true,'an unproved output cannot discharge the repaired boundary');
 });

@@ -6,6 +6,7 @@ import { resolveModuleGraph } from '../project.mjs';
 import { loadDeriveDependencyProof, deriveDependencySource } from '../derive-dependencies.mjs';
 import { createDeriveFootprintContext, deriveFootprintAt, deriveFootprintExternalModules } from '../derive-footprints.mjs';
 import { resolveModuleBindings } from '../module-bindings.mjs';
+import { createDeriveBangContext } from '../derive-bang-context.mjs';
 import { originalSourceModuleItems } from '../source-module-views.mjs';
 import { inspectDeriveInput } from '../derive-inputs.mjs';
 import { compilationProfile, itemConfiguration } from '../cfg-profile.mjs';
@@ -33,10 +34,13 @@ export function captureSerializationContext({ root, paths, entry = 'src/lib.rs',
   const corpus = captureSourceCorpus({ root, paths }), profile = compilationProfile(input);
   const graph = resolveModuleGraph({ entry, paths: sourceCorpusPaths(corpus, root), readSource: path => sourceCorpusText(corpus, root, path), compilationProfile: profile });
   const dependencies = loadDeriveDependencyProof({ manifest: sourceCorpusText(corpus, root, 'Cargo.toml'), lock: sourceCorpusText(corpus, root, 'Cargo.lock') });
-  const derive = createDeriveFootprintContext({ modules: graph.modules, dependencies, compilationProfile: profile });
   const json=captureJsonSerializationSources({manifest:sourceCorpusText(corpus,root,'Cargo.toml'),lock:sourceCorpusText(corpus,root,'Cargo.lock'),deriveDependencies:dependencies,compilationProfile:profile});
-  const external=new Map(deriveFootprintExternalModules(derive));external.set('serde_json',jsonSerializationExternalModule(json));
-  const bindings = resolveModuleBindings({ modules: graph.modules, externalModules: external, deriveContext: derive, compilationProfile: profile });
+  // The private complete-output context authenticates the whole original
+  // external composition. Register actual JSON sources before issuing it,
+  // rather than extending its tables after source/owner closure was captured.
+  const derive = createDeriveFootprintContext({ modules: graph.modules, dependencies, externalModules:new Map([['serde_json',jsonSerializationExternalModule(json)]]), compilationProfile: profile });
+  const external=deriveFootprintExternalModules(derive),deriveBangContext=createDeriveBangContext({deriveContext:derive});
+  const bindings = resolveModuleBindings({ modules: graph.modules, externalModules: external, deriveContext: derive, deriveBangContext, compilationProfile: profile });
   const modules = new Map(graph.modules.map(module => [key(['crate', ...module.path]), module]));
   const scopes = new Map(bindings.scopes.map(scope => [key(['crate', ...scope.path]), scope]));
   const caseInput=deriveDependencySource(dependencies,'serde_derive','src/internals/case.rs');
