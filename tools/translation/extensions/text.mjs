@@ -50,7 +50,16 @@ export class TextRustParser extends FormatRustParser {
 export class TextChecker extends FormatChecker {
   defaultNumber() {const type=super.defaultNumber();return this.language==='Rust'?{...type,rustPrimitiveName:'i32'}:type;}
   expr(node,env,path,expected,allowLiteral=false) {
-    if(node.k==='routerTextReference'){if(expected?.kind==='fixed'&&!expected.patternOwnershipRefusal)throw unsupported('primitive reference coercion','a shared reference is not a by-value integer',node.span);const value=this.expr(node.value,env,path,expected,allowLiteral);return {...node,value,type:{...value.type,patternOwnershipRefusal:'explicit shared reference expression'}};}
+    if(node.k==='routerTextReference'){
+      if(expected?.kind==='fixed'&&!expected.patternOwnershipRefusal)throw unsupported('primitive reference coercion','a shared reference is not a by-value integer',node.span);
+      if(this.language==='Rust'&&['bool','float'].includes(expected?.kind)&&!expected.rustReference)throw unsupported('primitive reference coercion','a shared reference is not a by-value primitive',node.span);
+      const value=this.expr(node.value,env,path,expected,allowLiteral),type={...value.type,patternOwnershipRefusal:'explicit shared reference expression'};
+      // A marker is not a reference type: portable scalar equality ignores it.
+      // Retain the actual written borrow without adding source/type authority;
+      // source ownership checks cannot treat an inferred reference as its value.
+      if(this.language==='Rust'&&['fixed','bool','float'].includes(value.type.kind))type.rustReference={kind:'shared',pointee:structuredClone(value.type),span:{...node.span},tokens:[{value:'&',kind:'operator',span:{...node.sourceBorrowToken.span}}]};
+      return {...node,value,type};
+    }
     if(node.k==='cast'&&node.to?.rustPrimitiveName){const value=super.expr(node,env,path,expected,allowLiteral);if(value.type.patternOwnershipRefusal)throw unsupported('primitive cast reference','the source value is a reference, not a primitive integer',node.span);return {...value,type:{...value.type,rustPrimitiveName:node.to.rustPrimitiveName}};}
     if(node.k!=='routerTextPattern'){
       const value=super.expr(node,env,path,expected,allowLiteral);
