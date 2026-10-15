@@ -16,7 +16,7 @@ function plan(value,completed){
      if(!cost||!cost.done)return null;
      cells+=cost.cells;const nextHeight=1+cost.height;if(nextHeight>height)height=nextHeight;
     }else cells++;
-    if(cells>CELL_LIMIT)return null;
+    if(cells>CELL_LIMIT)cells=CELL_LIMIT+1;
    }
    if(frame.depth+height>DEPTH_LIMIT)return null;
    state.cells=cells;state.height=height;state.done=true;order.push(state);continue;
@@ -44,7 +44,7 @@ function plan(value,completed){
   for(let index=children.length-1;index>=0;index--)pending.push({value:children[index],depth:frame.depth+1,exit:false});
  }
  const root=completed?.get(value)??states.get(value);
- return root&&root.done&&root.cells<=CELL_LIMIT?{order,root}:null;
+ return root&&root.done?{order,root}:null;
 }
 // The caller supplies its unchanged legacy recursive closure, not a callback
 // that participates in the eligible native algorithm. This factory issues no

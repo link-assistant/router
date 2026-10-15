@@ -15,3 +15,9 @@
   full-vector writer after the first receiving run failed before case registration.
   The original failed source is retained. All eight cases, bodies and limits and
   all production bytes remain unchanged; this fixture successor is UNRUN.
+- Saturate diagnostic expanded-DAG cost instead of falling back on that cost
+  alone: the original recursive freezer has no expanded-cell limit. Actual
+  unique scratch, own-cell and shared-path depth limits remain unchanged. Retain
+  the same logical DAG input and complete independent legacy/current node/edge
+  census, descriptor, sharing, freezing and precise-coverage controls under the
+  original case and child limits. This successor is UNRUN and unmeasured.
