@@ -18,6 +18,15 @@
         "path": "docs/case-studies/issue-759/current/verified-container-review-20261014/complete-evidence.tar.xz",
         "blob": "90bb2aa28c8921ff124461045d98ae9114ee5f74"
       }
+    },
+    "current/complete-originals-git-backed/immutable-part-1.tar.xz": {
+      "bytes": 58163080,
+      "sha256": "b894b8f4a22717e4257410bb60805b3381078678b4130a28d94b5df1786552af",
+      "git": {
+        "commit": "a057545739dea8df0b5ff6d50df57725689b2fbe",
+        "path": "docs/case-studies/issue-759/current/complete-originals-git-backed/immutable-part-1.tar.xz",
+        "blob": "a4d64aa6995c1e884e20b612dd9f4fb555057449"
+      }
     }
   }
 }
