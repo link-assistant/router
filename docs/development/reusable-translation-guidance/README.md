@@ -26,8 +26,10 @@ Measure before optimizing and retain complete failed/pass originals and limitati
 ## Existing standard templates
 
 `standard-guidance.patch` is an exact additive patch for the two older guidance templates and the workflow scaffold
-under `docs/case-studies/issue-759/standard/`, pinned by the structural test to Git
-commit `62c4ce09c82ce53c39cecba7a978157bf4f12077`. It is staged outside the case
+under `docs/case-studies/issue-759/standard/`. Baseline source provenance is Git
+commit `62c4ce09c82ce53c39cecba7a978157bf4f12077`; the structural test reads current
+HEAD blobs and requires their exact complete SHA256 pins, without needing ancestor
+history in a shallow checkout. It is staged outside the case
 allocation. It has NOT been applied to that case directory. Review its context and
 the case storage allocation before any adoption; later changed templates require
 an updated patch. Copying these standalone files needs no historical source lookup.

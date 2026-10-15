@@ -7,12 +7,13 @@ import {fileURLToPath} from 'node:url';
 
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const directory=new URL('../../docs/development/reusable-translation-guidance/',import.meta.url);
-const revision='62c4ce09c82ce53c39cecba7a978157bf4f12077';
+// Source provenance: 62c4ce09c82ce53c39cecba7a978157bf4f12077. Require
+// the same complete template bytes at CURRENT HEAD, including shallow checkouts.
 const prefix='docs/case-studies/issue-759/standard/';
 const names=['CONTRIBUTING.template.md','AGENTS.template.md','workflow.template.yml'];
 const expectedHashes={"CONTRIBUTING.template.md":"ecbd129f77b7c9bf51d28e8740cd304a68dbc93eca6678a42eb248ba332a2491","AGENTS.template.md":"e0752f29d0e42cb3ea9fadf5c4fe1c4006de34f639d38ed9b81642c0ac36108a","workflow.template.yml":"ac4f3f88c93ebfa7b614a64be2173bfe8d015c84ab0074ee5d32e7922cfc7792"};
 const original=name=>{
-  const bytes=execFileSync('git',['show',revision+':'+prefix+name],{cwd:root,timeout:10000,maxBuffer:1048576});
+  const bytes=execFileSync('git',['show','HEAD:'+prefix+name],{cwd:root,timeout:10000,maxBuffer:1048576});
   assert.equal(createHash('sha256').update(bytes).digest('hex'),expectedHashes[name]);
   return bytes.toString('utf8');
 };
@@ -65,9 +66,18 @@ test('patch refuses stale context and workflow controls reject weakened prerequi
   assert.throws(()=>applyPatch(patch,changed));
   assert.throws(()=>applyPatch(patch.replace('@@ -','@@ -999999'),originals));
   const workflow=applyPatch(patch,originals).get('workflow.template.yml');
-  assert.throws(()=>workflowContract(workflow.replace('required: true\n      types-command:','required: false\n      types-command:')));
-  assert.throws(()=>workflowContract(workflow.replace('needs: javascript-gate','needs: setup')));
-  assert.throws(()=>workflowContract(workflow.replace('cancel-in-progress: false','cancel-in-progress: true')));
+  workflowContract(workflow);
+  for(const [before,after,diagnostic] of [
+    ['required: true\n      types-command:','required: false\n      types-command:',/bun-version/u],
+    ['needs: javascript-gate','needs: setup',/needs: javascript-gate/u],
+    ['cancel-in-progress: false','cancel-in-progress: true',/cancel-in-progress: false/u],
+  ]){
+    assert.equal(workflow.split(before).length,2); // The intended control changes exactly once.
+    const changedWorkflow=workflow.replace(before,after);assert.notEqual(changedWorkflow,workflow);
+    assert.throws(()=>workflowContract(changedWorkflow),error=>{
+      assert.equal(error.code,'ERR_ASSERTION');assert.match(error.message,diagnostic);return true;
+    });
+  }
 });
 
 test('receiving guidance retains both checked directions, stricter policies and bounded coordinated work',()=>{
