@@ -44,5 +44,6 @@
   "namespaceAuthority": false,
   "copyAuthority": false,
   "dropAuthority": false,
-  "gainClaim": false
+  "gainClaim": false,
+  "candidatePath": "tools/upstream-translation-candidates/meta-language-63e3b27a"
 }

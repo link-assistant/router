@@ -52,7 +52,12 @@ explicitly owned directory outside the active vendor tree:
 
 These are recovery requirements, not a newly implemented loader. Mixed stored
 `.js`/`.gz` paths are deliberately not a directly importable active package.
-The current compiler export does not automatically include this directory.
+This candidate lives outside `tools/translation/`, at
+`tools/upstream-translation-candidates/meta-language-63e3b27a/`. The existing
+compiler-input and export root predicates therefore exclude the entire copy.
+Its original location inside `tools/translation/upstream-candidates/` incorrectly
+selected 220 files while omitting 127, including the license and compressed
+originals; moving the complete copy fixes that placement without new exceptions.
 Its existing **4 MiB per-file export bound is unchanged**: the original decoded
 `js/src/data/concept-records.lino` is 13,210,130 bytes even though its stored gzip
 fits that bound. A future exporter must explicitly support a bounded retained
