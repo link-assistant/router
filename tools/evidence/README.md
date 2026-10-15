@@ -400,3 +400,115 @@ No fit, historical continuity, shallow-checkout recovery or real-case adoption i
 established by this source draft. The final integrated HEAD still needs the
 complete same-SHA JavaScript gate before publication. Storage migration grants
 no translator, runtime-parity or Rust authority.
+
+## Sequential captures with authenticated resume
+
+`capture-shards.py` executes a reviewed finite batch of the existing complete
+capture manifests. It starts one child at a time, keeps XZ preset 9 and its
+64 MiB dictionary, and makes no packet-reader or recovery-format change. Each
+`shard` job retains the 64 MiB logical target. A `whole-original` job contains
+exactly one intact original larger than 64 MiB and at most 128 MiB; these objects
+are never split or passed through the smaller shard planner. The existing
+8,192-member, 1 GiB logical-packet and 256 MiB compressed-archive limits remain.
+
+The closed `complete-evidence-capture-batch-v1` JSON plan has exactly these fields:
+
+- `source`: canonical absolute `root`, actual clean `head`, and `code`, an object
+  containing exact `{bytes, sha256}` pins for `capture-shards.py`,
+  `capture-packet.py`, `shard-packets.py`, `archive_range.py`, `packet.py` and
+  `decoded_original.py` in that root's `tools/evidence` directory.
+- `jobs`: ordered `{id, mode, manifest}` entries. Each manifest is an exact
+  `{path, bytes, sha256}` pin for a full four-field `members` object. IDs contain
+  only lowercase ASCII letters, digits and hyphens. Duplicate IDs and logical
+  original names across the complete batch refuse.
+- `capSeconds`: an integer from 1 through 3,600. This is the complete batch's
+  finite budget, including plan reads, source checks and finalization; it does
+  not promise that every selected job will fit.
+- `minimumFreeBytes`: an integer between 512 MiB and 16 GiB. Before a new
+  compressor or Git staging child, the driver additionally requires headroom
+  for one 256 MiB compressed object and 32 MiB of controls. A physical archive
+  reuse needs the reserve plus the control allowance. Disk pressure stops the
+  batch and retains all outputs; no source or previous capture is removed.
+- `pendingRoots`: canonical absolute paths that have not been frozen. They stay
+  pending, and every terminal result retains `completeLatestEvidence: false`.
+
+All metadata and body reads retain strict bounds, duplicate-key rejection,
+full hashes, opened-file/named-path identity checks and linked-path refusal.
+The batch has at most 4,096 jobs, 131,072 original rows and 64 MiB of combined
+manifest metadata. Output must be outside case storage and either fresh or the
+same validated driver output root. Use the exact reviewed plan's SHA256:
+
+```sh
+python3 -B tools/evidence/capture-shards.py \
+  --plan /private/tmp/frozen-complete-batch.json \
+  --plan-sha256 FULL_PLAN_SHA256 \
+  --output-directory /private/tmp/assigned-complete-captures
+```
+
+Run the entire driver where aggregate `ps` observation is permitted; it checks
+that permission before starting a child. Every job has at most 180 seconds for
+capture plus independent authentication. The unchanged capture tool still
+receives its 170-second internal bound; the authentication worker receives only
+the remaining time, at most 170 seconds. One GiB sampled aggregate RSS includes
+the driver and descendants; direct-child `wait4` maximum RSS is also checked.
+Sampling can miss transient peaks. The fixed batch signal and child process-group
+cleanup enforce termination and reaping. Full raw streams, exact commands,
+resource samples, failures and partial archives are retained in fresh files.
+
+An optional `reuse` field on a job contains exactly `archive`, `receipt` and
+`provenance`. `receipt` and every `provenance` row are full small-JSON file pins.
+The archive has exact `bytes`, `sha256` and `source` fields. A physical source is
+`{kind: "file", path: "/absolute/complete.tar.xz"}`. An existing ordinary Git
+packet source is `{kind: "packet", caseRoot: "/absolute/case", index:
+"packet-git-index.json", name: "archives/complete.tar.xz"}`. Only direct ordinary
+archive entries are accepted; range aliases, nested aliases and source-commit
+names cannot substitute for archive bytes. Missing physical ordinary archives
+use the existing authenticated Git fallback and one temporary compressed spool,
+removed by that reader; no payload is copied into the case.
+
+Resume never trusts a prior success marker by itself. It freshly checks the
+full archive SHA, decodes every member through unchanged `PacketStore`, hashes
+all original bodies before and after, validates strict receipt hardlink fields,
+and checks all source/control bytes and identities. Original producer code is
+qualified separately: the receipt's actual original source commit must retain
+the exact `capture-packet.py` and `archive_range.py` Git blobs/bytes that match
+the current pinned producer. That source commit need not be the receiver's
+ancestor after a genuine byte-preserving cherry-pick. Its full identity and the
+current HEAD are retained without an ancestry claim. Ordinary archive witnesses
+still require their actual Git witness commit to be an ancestor of the receiving
+HEAD. Missing history or changed producer bytes fail closed.
+
+Completed outputs remain immutable and are not recompressed. Incomplete prior
+job directories refuse automatic retry; a separately reviewed new attempt must
+use new paths while retaining the failure. After the final batch ledger write,
+the driver repeats source, manifest, completed-original and archive identity
+checks. A failure there retains that ledger and an explicit finalization refusal
+and returns failure. Neither a leftover PASS ledger nor a complete marker is
+standalone authority; the fresh complete process result is required.
+
+The additive Python whole-file controls are discovered through the existing
+`scripts/test/capture-evidence-packet.test.mjs` JavaScript gate entry. They cover
+real tiny captures/resume, full Git fallback with cherry-picked producer source,
+changed bytes, disk/deadline termination, malformed bounds/aliases and mutation
+at the final ledger boundary. This new driver and its controls are **UNRUN**.
+The earlier tool capture and its separate corrected readback remain their own
+qualified observations; they do not qualify this new orchestration.
+
+For the retained issue #759 selection, reuse the first 650-member archive
+unchanged, then plan the remaining 63 complete shards and six separate intact
+oversized originals. The six oversized originals still require their complete
+SHA/manifest freeze before execution. Later evidence is additive and pending.
+The first archive's measured 12,480,364 compressed bytes is not a global ratio
+for the remaining 4,267,245,059 logical bytes. Keep all old failed captures and
+full originals. A batch only produces local captures: ordinary D/I Git witness
+creation/adoption, full present/absent recovery, three CI and three measurement
+continuity reads, shallow-history qualification, actual distinct-inode case fit
+and explicit retirement authorization remain separate. Logical Git blobs and
+retained working archives both cost disk until qualified cleanup; no 500 MB
+case-fit or complete-current-evidence claim is made by this draft.
+Use the existing bounded index-page planner before proposing archive adoption:
+the ordinary limit remains 64 archives per index, including its old witnesses.
+This batch driver neither creates an oversized index nor silently switches an
+existing consumer to another page. The later retained case allocation of
+499,195,904 bytes is an observation from the genuine part-1 index/receipt
+adoption; it does not qualify the remaining captures or authorize more writes.

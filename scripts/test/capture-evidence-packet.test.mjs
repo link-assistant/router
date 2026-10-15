@@ -93,3 +93,9 @@ test('metadata-only shard CLI plans complete declared scope and requires explici
   const invalid=spawnSync('python3',[planner,'shards','--input',manifest,'--output-directory',join(directory,'never'),'--shard-bytes','67108865'],{cwd:root,encoding:'utf8',timeout:10000});
   assert.equal(invalid.status,1);assert.match(invalid.stderr,/1\.\.64MiB/u);
 }));
+
+
+test('whole resumable sequential capture driver authenticates complete archives and preserves failures',{timeout:60000},()=>{
+  const result=spawnSync('python3',['tools/evidence/test_capture_shards.py'],{cwd:root,encoding:'utf8',timeout:45000,maxBuffer:4*1024*1024});
+  assert.equal(result.status,0,result.stdout+result.stderr);assert.match(result.stderr,/Ran \d+ tests/u);assert.match(result.stderr,/OK/u);
+});
