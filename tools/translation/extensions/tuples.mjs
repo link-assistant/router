@@ -1,5 +1,5 @@
 // Rust tuple products have their own checked layout, distinct from tuple structs.
-import {originalStandardTupleContext,originalStandardTupleField,recordOriginalStandardTuple} from './standard-method-context.mjs';
+import {originalStandardTupleContext,originalStandardTupleField,originalStandardTupleIdentity,recordOriginalStandardTuple} from './standard-method-context.mjs';
 import {PatternControlRustParser,PatternControlChecker,PatternControlEmitter} from './pattern-control.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {sameType,UNIT,rustFixedType} from '../checked-types.mjs';
@@ -99,7 +99,7 @@ export class TupleChecker extends PatternControlChecker {
     if(args.length<1||args.length>32)throw unsupported('inferred tuple arity','requires one to thirty-two actual checked fields',location);
     const active=new Set(),verified=new Set(),budget={cells:16000};
     for(const argument of args)this.inferredTupleField(argument.type,location,0,active,verified,budget,referenceContext);
-    const fields=args.map((argument,index)=>({name:'field'+index,type:argument.type})),name=tupleName(fields);
+    const fields=args.map((argument,index)=>({name:'field'+index,type:argument.type})),sourceIdentity=originalStandardTupleIdentity(this,referenceContext,args),name=tupleName(fields)+(sourceIdentity?'_source_'+sourceIdentity:'');
     if(Buffer.byteLength(name)>8192)throw unsupported('inferred tuple identity budget','the source-qualified product name exceeds the checked bound',location);
     let entry=this.items.get(name);
     if(entry) {

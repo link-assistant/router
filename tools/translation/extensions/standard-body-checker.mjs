@@ -266,7 +266,7 @@ export function requirePinnedStandardBody(node,Parser,{Checker,program}={}){
 export function retargetCheckedCallback(value,program){
   if(Array.isArray(value))return value.map(child=>retargetCheckedCallback(child,program));
   if(!value||typeof value!=='object')return value;
-  const opaque=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope','sharedBodyProof','originalCallbackProof','sourceFrameProof','originalLoanProof']);
+  const opaque=new Set(['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceBoolFromScope','sharedBodyProof','originalCallbackProof','sourceFrameProof','originalLoanProof','sourceSharedPatternProof','sourcePatternProjectionProof','sourceSharedStringViewProof']);
   const node=Object.fromEntries(Object.entries(value).map(([key,child])=>[key,opaque.has(key)?child:retargetCheckedCallback(child,program)]));
   const mapped=name=>!program.declarations.has(name)&&program.declarations.has('rp_'+Buffer.from(name).toString('hex'))?'rp_'+Buffer.from(name).toString('hex'):name;
   if(value.kind==='data')node.name=mapped(value.name);

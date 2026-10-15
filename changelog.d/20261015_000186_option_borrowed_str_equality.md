@@ -17,3 +17,13 @@ are unmeasured. Other payloads, `!=`, arbitrary reference/tuple contexts,
 unknown expansions and whole-core trait/namespace closure remain outside this
 rule. Existing output observers grant no admission authority. Repository
 formatting remains in the separate repository rule phase.
+
+The first integrated complete eight-case Node run failed six cases (two passed).
+Its complete source and vectors remain retained. The successor draft keeps full
+field comparisons by giving only privately associated standard-method products
+an additional complete checked-field identity; it also preserves the three
+existing shared-pattern evidence envelopes during ordinary target retargeting.
+Contextual `Some`/`None` values rejoin their checked constructor and payload to
+an already source-qualified expected Option. The Qwen test now starts from the
+actual `src/lib.rs` root and retains the wrong standalone-entry diagnostics as
+an explicit negative. All successor checks remain UNRUN with the same bounds.
