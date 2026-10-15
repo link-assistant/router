@@ -464,6 +464,22 @@ maps, external/dynamic bootstrap imports, linked paths and observed changed byte
 at a cached module filename are refused. This API does not promise dynamic module
 reload convergence or harmless original module initialization.
 
+An original constructor URL may already have been imported by receiving code.
+Before publishing a runtime, the captured intrinsic `Function.prototype.toString`
+must return exactly its freshly reissued authentic class declaration, after a
+TypeScript scanner removes only the actual `export` modifier. Comments, Unicode
+escapes, defaults and field assignments inside the class retain their original
+bytes. A stale externally cached class with different source is refused before
+either normal-return or throwing evaluation; unchanged preloads keep the actual
+class identity and prototype. Exact successful full source lineage remains
+private, alongside the existing before-import source hash guard. The captured
+intrinsic uses the same trusted initial-host boundary as `Reflect.construct`.
+This additional attestation applies only to the already closed constructor
+recipe. It proves neither complete module-cache provenance nor replay of module
+initialization or side effects, and relaxes none of the original source, Error
+intrinsic or prototype conditions. No query URL, replacement class or caller
+constructor map bypasses those boundaries.
+
 Constructor, builtin Error, inherited-prototype and collection-intrinsic lookup
 stability remain explicit conditions. Host callsite diagnostic values (stack and
 Bun line/column/sourceURL provenance) are not preserved; the explicit

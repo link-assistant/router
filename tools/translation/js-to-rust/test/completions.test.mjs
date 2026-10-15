@@ -26,9 +26,9 @@ function retain(name,value) {
   const directory=process.env.ROUTER_CONSTRUCTOR_VECTOR_DIR;
   if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json.gz'),gzipSync(JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$integer:String(item)}:item),{mtime:0}),{flag:'wx'});}
 }
-function fixture(t,source) {
+function fixture(t,source,errorSource="export class Mistake extends Error {constructor(message,status=400){super(message);this.status=status;this.code='bounded';}}") {
   const directory=realpathSync(mkdtempSync(join(tmpdir(),'router-constructor-completion-')));t.after(()=>rmSync(directory,{recursive:true,force:true}));
-  const sources=[{path:'fixture/errors.mjs',source:"export class Mistake extends Error {constructor(message,status=400){super(message);this.status=status;this.code='bounded';}}"},{path:'fixture/owner.mjs',source}];
+  const sources=[{path:'fixture/errors.mjs',source:errorSource},{path:'fixture/owner.mjs',source}];
   put(directory,'package.json','{"type":"module"}');for(const row of sources)put(directory,row.path,row.source);
   const graph=createConstructorSourceGraph(sources),analysis=analyzeJavaScript(source,{sourcePath:'fixture/owner.mjs',constructorGraph:graph});
   const meta=analysis.program.map(toLino).join('\n')+'\n',program=parseMeta(meta,{constructorGraph:graph});return {directory,sources,graph,analysis,meta,program};
@@ -106,6 +106,41 @@ test('receiving source bytes and observed ESM cache versions are immutable and n
   const sources=f.sources.map(row=>({...row,source:row.path.endsWith('errors.mjs')?row.source+'\n':row.source})),graph=createConstructorSourceGraph(sources),analysis=analyzeJavaScript(source,{sourcePath:'fixture/owner.mjs',constructorGraph:graph});
   await assert.rejects(()=>evaluateWithOriginalConstructors(analysis.program,'selected',[3],options),/module cache source changed/);
   retain('runtime-source-cache-refusal',{oldSources:f.sources,changedSources:sources,oldProgram:f.program,changedProgram:analysis.program,noReloadConvergenceClaim:true});
+});
+
+test('unchanged external preloads preserve exact imported class identity and original class token bytes',{timeout:60000},async t=>{
+  const source="import {Mistake} from './errors.mjs';export function selected(value){if(value===null)throw new Mistake('bad');return value;}",rows=[];
+  for(const classPrefix of ['export class Mistake','export /* misleading class Other {} */\nclass Mistake','export class M\\u0069stake']) {
+    const errorSource=classPrefix+" extends Error {constructor(message,status=400){super(message);this.status=status;this.code='bounded';}}",f=fixture(t,source,errorSource);
+    const url=pathToFileURL(join(f.directory,'fixture/errors.mjs')).href,preloaded=await import(url),options={sourceRoot:f.directory,executeOriginalModules:true};
+    const runtime=await prepareOriginalConstructorRuntime(f.program,options),proof=f.program[0].sourceConstructors.constructors[0];
+    const first=constructOriginalError(proof,runtime),second=constructOriginalError(proof,await prepareOriginalConstructorRuntime(f.program,options));
+    assert.equal(first.constructor,preloaded.Mistake);assert.equal(Object.getPrototypeOf(first),preloaded.Mistake.prototype);assert.ok(first instanceof preloaded.Mistake);
+    assert.notEqual(first,second);assert.deepEqual(errorContract(first),errorContract(second));assert.equal(first.message,'bad');assert.equal(first.status,400);assert.equal(first.code,'bounded');
+    const opaque={};assert.equal(evaluate(f.program,'selected',[opaque],runtime),opaque);assert.equal((await import(url)).Mistake,preloaded.Mistake);
+    rows.push({sources:f.sources,program:f.program,meta:f.meta,first:errorFacts(first),second:errorFacts(second),constructorIdentityPreserved:true,originalImportUrl:url});
+  }
+  retain('runtime-unchanged-external-preloads',{rows,queryReloadUsed:false,closedConstructorRecipeOnly:true});
+});
+
+test('external preload A followed by source B refuses before first receiving runtime can claim B',{timeout:60000},async t=>{
+  const source="import {Mistake} from './errors.mjs';export function selected(value){if(value===null)throw new Mistake('bad');return value;}",rows=[];
+  for(const change of ['default','field']) {
+    const f=fixture(t,source),url=pathToFileURL(join(f.directory,'fixture/errors.mjs')).href,preloaded=await import(url);
+    const changed=f.sources[0].source.replace(change==='default'?'status=400':"'bounded'",change==='default'?'status=402':"'changed'");
+    put(f.directory,'fixture/errors.mjs',changed);
+    const sources=f.sources.map(row=>({...row,source:row.path.endsWith('errors.mjs')?changed:row.source})),graph=createConstructorSourceGraph(sources),analysis=analyzeJavaScript(source,{sourcePath:'fixture/owner.mjs',constructorGraph:graph});
+    assert.equal(analysis.program.length,1);const meta=analysis.program.map(toLino).join('\n')+'\n',program=parseMeta(meta,{constructorGraph:graph}),proof=program[0].sourceConstructors.constructors[0];
+    const current=(await import(url)).Mistake;assert.equal(current,preloaded.Mistake);const stale=new current('bad');assert.equal(stale.status,400);assert.equal(stale.code,'bounded');
+    if(change==='default')assert.equal(proof.original.params[1].default.value,402);else assert.equal(proof.original.fields[1].value.value,'changed');
+    const options={sourceRoot:f.directory,executeOriginalModules:true};
+    await assert.rejects(()=>prepareOriginalConstructorRuntime(program,options),/module cache class syntax differs/);
+    await assert.rejects(()=>evaluateWithOriginalConstructors(program,'selected',[7],options),/module cache class syntax differs/);
+    await assert.rejects(()=>evaluateWithOriginalConstructors(program,'selected',[null],options),/module cache class syntax differs/);
+    assert.equal((await import(url)).Mistake,preloaded.Mistake);assert.equal(readFileSync(join(f.directory,'fixture/errors.mjs'),'utf8'),changed);
+    rows.push({change,oldSources:f.sources,changedSources:sources,program,meta,staleOriginalError:errorFacts(stale),originalUrlPreserved:url,firstPrepareRejected:true,normalBranchRejected:true,throwBranchRejected:true});
+  }
+  retain('runtime-foreign-external-preload-source',{rows,noModuleReload:true,constructorSourceAttestationOnly:true,completeModuleCacheProvenanceClaimed:false});
 });
 
 test('receiving runtime binds every exact callsite and full source graph, never only class path and export',{timeout:60000},async t=>{

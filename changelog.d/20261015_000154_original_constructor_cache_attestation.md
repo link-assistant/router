@@ -1,0 +1,3 @@
+### Fixed
+- Draft an additional receiving-runtime check that compares the actual imported class's intrinsic source text with the exact privately reissued original class declaration. Token-based removal affects only the actual export modifier; unchanged external preloads keep constructor identity, while stale default or field recipes refuse before a runtime is issued.
+- Retain private successful full-source lineage without reloading modules or relaxing source, Error, prototype or complete-parent checks. This attests only the supported closed constructor recipe, not whole module-cache provenance or side-effect replay. New receiving controls and the full affected suite remain unrun; no runtime parity or full synchronization claim is made.

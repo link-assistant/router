@@ -9,9 +9,30 @@ import {sourceConstructorItem} from './vendor/constructor-bodies.mjs';
 import {originalImportedErrorConstructor,reissueImportedErrorConstructor,assertConstructorProofData} from './vendor/source-constructors.mjs';
 import {ownershipSyntax} from './vendor/module-syntax.mjs';
 
-const runtimes=new WeakMap(),observedSourceVersions=new Map();
-const construct=Reflect.construct;
+const runtimes=new WeakMap(),observedSourceVersions=new Map(),attestedSourceVersions=new Map();
+// The same trusted initial-host boundary as the existing captured constructor
+// intrinsic. Do not consult an exported class's overridable toString method.
+const construct=Reflect.construct,apply=Reflect.apply,describe=Function.prototype.toString;
 const hash=source=>createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex');
+function authenticClassSyntax(proof) {
+  let source;
+  for(const row of proof.sources)if(row.path===proof.import.target)source=row.source;
+  if(typeof source!=='string'||hash(source)!==proof.original.sourceUtf16Sha256)throw Error('missing authentic original constructor declaration source');
+  const {ts,file}=ownershipSyntax(source);let declaration;
+  for(const statement of file.statements)if(ts.isClassDeclaration(statement)
+    &&statement.name?.text===proof.import.exported
+    &&statement.getStart(file)===proof.original.span.start&&statement.end===proof.original.span.end) {
+    if(declaration)throw Error('duplicate authentic original constructor declaration');
+    declaration=statement;
+  }
+  if(!declaration||declaration.modifiers?.length!==1||declaration.modifiers[0].kind!==ts.SyntaxKind.ExportKeyword)throw Error('missing exact original exported constructor declaration');
+  // Function#toString starts at the class keyword. Remove only the actual
+  // export modifier, using its original tokens; preserve every class byte.
+  const scanner=ts.createScanner(ts.ScriptTarget.Latest,true,ts.LanguageVariant.Standard,source);
+  scanner.setTextPos(declaration.getStart(file));
+  if(scanner.scan()!==ts.SyntaxKind.ExportKeyword||scanner.scan()!==ts.SyntaxKind.ClassKeyword)throw Error('unsupported original exported constructor token boundary');
+  return source.slice(scanner.getTokenPos(),declaration.end);
+}
 async function originalFile(root,path) {
   let current=root;
   for(const [index,part]of path.split('/').entries()) {
@@ -48,6 +69,8 @@ export async function prepareOriginalConstructorRuntime(program,{sourceRoot,exec
       if(await originalFile(root,path)!==source)throw Error('original constructor runtime source differs from its checked graph');
       const before=observedSourceVersions.get(join(root,path));
       if(before!==undefined&&before!==hash(source))throw Error('original constructor module cache source changed; reload convergence is unsupported');
+      const attested=attestedSourceVersions.get(join(root,path));
+      if(attested!==undefined&&attested!==source)throw Error('original constructor attested module source changed; reload convergence is unsupported');
     }
   };
   await verify();
@@ -75,9 +98,15 @@ export async function prepareOriginalConstructorRuntime(program,{sourceRoot,exec
   for(const [key,{proof,proofs}]of definitions) {
     const module=await import(pathToFileURL(join(root,proof.import.target)).href),constructor=module[proof.import.exported];
     if(typeof constructor!=='function')throw Error('missing actual original exported Error constructor');
+    // A receiving environment may have imported this URL before this helper
+    // ever observed it. Current disk bytes alone do not describe that cache.
+    if(apply(describe,constructor,[])!==authenticClassSyntax(proof))throw Error('original constructor module cache class syntax differs from its checked source');
     actual.set(key,{constructor,proofs});
   }
   await verify();
+  // Retain exact successful full source lineage as well as the original
+  // before-import hash guard. This is private runtime state, never proof input.
+  for(const path of closure)attestedSourceVersions.set(join(root,path),expected.get(path));
   const token=Object.freeze({});runtimes.set(token,{constructors:actual,parents});return token;
 }
 export function constructOriginalError(proof,runtime) {
