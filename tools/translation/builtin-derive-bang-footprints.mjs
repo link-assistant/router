@@ -201,4 +201,16 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
 export function assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation){const state=proofs.get(proof);if(!state||state.context!==context||state.certificate!==certificate||JSON.stringify(state.invocation)!==JSON.stringify(invocation))throw new TypeError('Builtin output proof requires its original invocation');return proof;}
 export const isBuiltinDeriveBangFootprint=value=>!!value&&proofs.has(value);
 
+// Complete source reissue, including every existing recursive associated/body,
+// type, helper and generated-attribute check. This accessor accepts no AST or
+// replacement output. An outer Impl spelling alone never issues this fact.
+export function originalBuiltinDeriveEnclosingOutput(proof,context,certificate,invocation){
+ assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);
+ const fresh=proveBuiltinDeriveBangFootprint({context,certificate,invocation});
+ if(JSON.stringify(fresh)!==JSON.stringify(proof))throw new TypeError('Builtin complete original output changed before namespace effect');
+ const sink=fresh.slotProofs?.outputKind;
+ if(sink?.kind!=='ItemKind::Impl')throw new TypeError('Builtin namespace effect requires a source-proved complete Impl sink');
+ return freeze({schema:'original-complete-builtin-enclosing-output-v1',proof:fresh,sink,route:fresh.route??null});
+}
+
 export function originalBuiltinDefaultBangOutput({context,certificate,invocation}={}){const proof=proveBuiltinDeriveBangFootprint({context,certificate,invocation});assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);if(proof.schema!=="builtin-default-bang-output-v1")throw new TypeError("Default data output accessor requires its actual privately joined data route");return freeze({proof,route:proof.route,output:originalBuiltinDefaultAstOutput(proof.route),plan:builtinDefaultOriginalSourcePlan(proof.route)});}

@@ -8,6 +8,7 @@ import {originalSourceModuleItems} from './source-module-views.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
 import {deriveFootprintAt,deriveFootprintHelperAttributeAt,isDeriveFootprintContext} from './derive-footprints.mjs';
 import {deriveBangModules,deriveBangOutputAt,deriveBangHelperAttributeAt,isDeriveBangContext} from './derive-bang-context.mjs';
+import {proveDeriveEmptyEnclosingEffect,deriveEmptyEnclosingEffectFacts} from './derive-output-effects.mjs';
 import {toolAttributeAt,isToolAttributeContext,inertInnerLintItem} from './tool-attributes.mjs';
 import {builtinInnerSourceItem} from './inner-source-attributes.mjs';
 const namespaces=['type','value','macro'];
@@ -240,7 +241,15 @@ export function resolveModuleBindings({modules,externalModules=new Map(),compila
           // Bang closure is per exact original invocation and joins every
           // actual owner; sibling/ancestor uncertainty still accumulates below.
           const bangOutput=deriveBangContext&&deriveBangOutputAt(deriveBangContext,deriveContext,module,item);
-          if(bangOutput)uncertain.bang &&= !bangOutput.dimensions.bangMacroComplete;
+          if(bangOutput){
+            uncertain.bang &&= !bangOutput.dimensions.bangMacroComplete;
+            if(uncertain.type)try{
+              const effect=proveDeriveEmptyEnclosingEffect(deriveBangContext,deriveContext,module,item),facts=deriveEmptyEnclosingEffectFacts(effect,deriveBangContext,deriveContext,module,item);
+              // Only this exact invocation contributes an empty enclosing name
+              // effect. Other items/imports/cfg alternatives still accumulate.
+              if(facts.enclosingTypeBindings.length===0&&facts.enclosingUsableValueBindings.length===0)uncertain.type=false;
+            }catch(error){if(!(error instanceof TypeError))throw error;}
+          }
           uncertain.macro=uncertain.bang||uncertain.attribute;
         }
         uncertain.conditional ||= scope.configurationCondition==='unknown';

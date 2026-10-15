@@ -65,6 +65,21 @@ export function originalConditionalAncestorSourcePlan(){
  const value=freeze({schema:'original-conditional-ancestor-source-plan-v1',profileSha256:hash(profileBytes),sourceInputs:profile.sources,selections,recipes,cfgBranches:['absent','unchanged original present module'],retainedUncompiledBranches:['compile_macro builtin replacement','proc_macro_stub','unknown child contents','unknown global bang exports','conditional availability','compiler error routes'],namespaceAuthority:false,runtimeAuthority:false,wholeCompilerExecuted:false});plans.add(value);return value;
 }
 export function requireOriginalConditionalAncestorSourcePlan(value){if(!plans.has(value))fail('copied or foreign source plan');return value;}
+// Reuse the same complete pinned resolver input, without changing any existing
+// conditional-sibling plan or treating its public namespace flags as authority.
+const implPlans=new WeakSet();
+export function originalImplNamespaceSourcePlan(){
+ const graph='compiler/rustc_resolve/src/build_reduced_graph.rs';
+ const selections={item:originalFunction(graph,'build_reduced_graph_for_item','BuildReducedGraphVisitor'),associated:originalFunction(graph,'visit_assoc_item','Visitor'),block:originalFunction(graph,'visit_block','Visitor')};
+ const recipes=[
+  recipe(selections.item,`ItemKind::Impl(box Impl { of_trait: Some(..), .. }) | ItemKind::Impl { .. } | ItemKind::ForeignMod(..) | ItemKind::GlobalAsm(..) => {}`,'actual Impl alternatives add no enclosing module names'),
+  recipe(selections.item,`ItemKind::Const(box ConstItem { ident, .. }) | ItemKind::Delegation(box Delegation { ident, .. }) | ItemKind::Static(box StaticItem { ident, .. }) => { self.r.define(parent, ident, ValueNS, (res, vis, sp, expansion)); }`,'a const declares only its actual identifier in ValueNS'),
+  recipe(selections.associated,`if ctxt == AssocCtxt::Trait { let parent = self.parent_scope.module; let expansion = self.parent_scope.expansion; self.r.define(parent, ident, ns, (self.res(def_id), vis, item.span, expansion)); } else if !matches!(&item.kind, AssocItemKind::Delegation(deleg) if deleg.from_glob) { let impl_def_id = self.r.tcx.local_parent(local_def_id); let key = BindingKey::new(ident.normalize_to_macros_2_0(), ns); self.r.impl_binding_keys.entry(impl_def_id).or_default().insert(key); }`,'actual impl associated names stay in impl_binding_keys rather than enclosing module'),
+  recipe(selections.block,`let orig_current_module = self.parent_scope.module; let orig_current_macro_rules_scope = self.parent_scope.macro_rules; self.build_reduced_graph_for_block(block); visit::walk_block(self, block); self.parent_scope.module = orig_current_module; self.parent_scope.macro_rules = orig_current_macro_rules_scope;`,'actual block restores enclosing module and textual macro scope'),
+ ];
+ const value=freeze({schema:'original-impl-enclosing-namespace-source-plan-v1',profileSha256:hash(profileBytes),selections,recipes,wholeCompilerExecuted:false,namespaceAuthority:false,runtimeAuthority:false});implPlans.add(value);return value;
+}
+export function requireOriginalImplNamespaceSourcePlan(value){if(!implPlans.has(value))fail('copied or foreign impl namespace source plan');return value;}
 export function createOriginalAncestorAttributeScopeContext({modules,binding,dependencies}={}){
  if(!Array.isArray(modules)||!isResolvedSourceScopeSet(binding?.scopes)||binding.scopes.length!==modules.length||!isDeriveDependencyProof(dependencies))fail('complete private resolver and dependency source scopes required');
  assertResolvedSourceScopeOrigin(binding.scopes,{modules,compilationProfile:binding.compilationProfile});

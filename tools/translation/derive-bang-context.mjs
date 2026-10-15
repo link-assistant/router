@@ -3,13 +3,13 @@
 import {createHash} from 'node:crypto';
 import {compilationProfile} from './cfg-profile.mjs';
 import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
-import {deriveFootprintSourceContext,deriveFootprintAt,isDeriveFootprintContext} from './derive-footprints.mjs';
-import {proveSerdeSerializeBangFootprint,assertSerdeSerializeBangFootprint} from './serde-bang-footprints.mjs';
-import {proveSerdeDeserializeBangFootprint,assertSerdeDeserializeBangFootprint} from './serde-deserialize-bang-footprints.mjs';
-import {hasBuiltinDeriveBangRoute,proveBuiltinDeriveBangFootprint,assertBuiltinDeriveBangFootprint} from './builtin-derive-bang-footprints.mjs';
+import {deriveFootprintSourceContext,deriveFootprintAt,isDeriveFootprintContext,deriveFootprintClapArgsSourceOutput} from './derive-footprints.mjs';
+import {proveSerdeSerializeBangFootprint,assertSerdeSerializeBangFootprint,originalSerdeSerializeOutput} from './serde-bang-footprints.mjs';
+import {proveSerdeDeserializeBangFootprint,assertSerdeDeserializeBangFootprint,originalSerdeDeserializeOutputs} from './serde-deserialize-bang-footprints.mjs';
+import {hasBuiltinDeriveBangRoute,proveBuiltinDeriveBangFootprint,assertBuiltinDeriveBangFootprint,originalBuiltinDeriveEnclosingOutput} from './builtin-derive-bang-footprints.mjs';
 import {proveClapArgsBangFootprint,assertClapArgsBangFootprint} from './clap-args-bang-footprints.mjs';
-import {proveClapValueEnumBangFootprint,assertClapValueEnumBangFootprint} from './clap-value-enum-bang-footprints.mjs';
-import {proveSchemarsBangFootprint,assertSchemarsBangFootprint} from './schemars-bang-footprints.mjs';
+import {proveClapValueEnumBangFootprint,assertClapValueEnumBangFootprint,originalClapValueEnumBangOutput} from './clap-value-enum-bang-footprints.mjs';
+import {proveSchemarsBangFootprint,assertSchemarsBangFootprint,originalSchemarsOutput} from './schemars-bang-footprints.mjs';
 const contexts=new WeakMap(),certificates=new WeakMap(),cachedContexts=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -109,4 +109,28 @@ export function deriveBangHelperAttributeAt(context,deriveContext,module,item,sp
   // Other nested attributes still pass through the ordinary uncertainty scan.
   const helperNames=new Set(['serde',...(certificate.selectedOwners.some(owner=>owner.target.join('::')==='clap::Args')?['arg']:[]),...(certificate.selectedOwners.some(owner=>owner.target.join('::')==='clap::ValueEnum')?['value']:[])]);
   return input.dimensions.attributeMacroComplete===true&&input.attributes.some(attribute=>attribute.position!=='container'&&helperNames.has(attribute.name)&&attribute.helpers&&attribute.span.start===span.start&&attribute.span.end===span.end);
+}
+
+// Return only outputs already owned by this exact private whole invocation.
+// Public certificate dimensions, digests or user-provided output trees are not
+// an input. Every sibling derive owner must have passed its complete bang and
+// generated-attribute issuer before these actual outputs can be inspected.
+export function originalDeriveBangEnclosingOutputs(context,deriveContext,module,item){
+ const certificate=deriveBangOutputAt(context,deriveContext,module,item);
+ if(!certificate)throw new TypeError('Original derive output has unresolved actual owners');
+ const state=certificates.get(certificate),outputs=[];
+ if(state.selected.length>128)throw new TypeError('Original enclosing-output owner bound exceeded');
+ for(const selected of state.selected){
+  const {proof,invocation}=selected;
+  if(selected.builtin){outputs.push({format:'builtin-impl',invocation,output:originalBuiltinDeriveEnclosingOutput(proof,deriveContext,state.input,invocation)});continue;}
+  const target=selected.owner.target.join('::');
+  const quote=output=>outputs.push({format:'quote',invocation,proof,syntax:output.syntax});
+  if(target==='serde::Serialize')quote(originalSerdeSerializeOutput(proof,deriveContext,state.input,module,item));
+  else if(target==='serde::Deserialize')for(const row of originalSerdeDeserializeOutputs(proof,deriveContext,state.input,module,item))quote(row.output);
+  else if(target==='schemars::JsonSchema')quote(originalSchemarsOutput(proof,deriveContext,state.input,module,item));
+  else if(target==='clap::ValueEnum')quote(originalClapValueEnumBangOutput(proof,deriveContext,state.input));
+  else if(target==='clap::Args')for(const row of deriveFootprintClapArgsSourceOutput(deriveContext,state.input).outputs)quote(row);
+  else throw new TypeError('Original derive owner has no complete enclosing-output grammar');
+ }
+ return Object.freeze({certificate,input:state.input,outputs:Object.freeze(outputs.map(row=>Object.freeze(row)))});
 }
