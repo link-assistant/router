@@ -83,7 +83,27 @@ for(const [path,digest,owner,variants,certificateCount,constants]of [
   assert.equal(result.meta.sources.find(row=>row.source===path).sha256,digest);assert.equal(result.meta.deriveNamespaceFootprints.certificates.length,certificateCount);assert.equal(result.meta.runtimeParity,false);assert.deepEqual(result.meta.executable.map(row=>row.name),constants);if(path==='src/deploy_config.rs'){const standard=result.meta.deriveNamespaceFootprints.certificates.filter(row=>row.standardInput);assert.deepEqual(standard.map(row=>row.name),['SecretSource','EnvSpec','SshSettings','ProviderKeySpec','DeploySection','DeployConfig','ResolvedProviderKey','ResolvedDeploy','Merged']);for(const row of standard){assert.deepEqual(row.dimensions,{typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:true,bangMacroComplete:false});assert.equal(row.generatedImplBehavior,false);assert.equal(row.standardInput.namespaceAuthority,false);assert.equal(row.standardInput.runtimeAuthority,false);}}
   const certificate=result.meta.deriveNamespaceFootprints.certificates.find(row=>row.name===owner);assert.ok(certificate);const item=sourceItems(source).find(row=>row.name===owner);assert.equal(certificate.itemSha256,hash(source.slice(item.start,item.end)));assert.deepEqual(certificate.span,{start:item.start,end:item.end});assert.equal(certificate.generatedImplBehavior,false);assert.equal(certificate.dimensions.bangMacroComplete,false);
   const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),method=[...program.declarations.values()].find(row=>row.impl?.method==='as_str');assert.ok(result.meta.checkedMethods.some(row=>row.name===owner+'.as_str'));assert.ok(method);assert.equal(method.sourceMethodProof.originalTokenTransformVerified,true);assert.equal(method.impl.copyCertificate.verified,true);
-  const alias='\nexport {'+method.fullName+' as original_as_str};\n',targets={...result,javascript:result.javascript+alias,typescript:result.typescript+alias};
-  await verifyTypedTargets(targets,(api,_result,module)=>{for(const [variant,value]of variants)assert.equal(module.original_as_str(Object.freeze({$:variant})),value);assert.throws(()=>module.original_as_str(Object.freeze({$:'Unknown'})),TypeError);assert.throws(()=>module.original_as_str({$:variants[0][0]}),TypeError);if(path==='src/deploy_config.rs'){assert.deepEqual(api.VERIFIABLE_CLIENTS,['claude','codex','qwen-code','gemini','opencode']);assert.deepEqual(api.RESERVED_ENV_PREFIXES,['ROUTER_DEPLOY_','TLS_','VERIFY_','PRESERVATION_']);assert.ok(Object.isFrozen(api.RESERVED_ENV));assert.ok(api.RESERVED_ENV.includes('TOKEN_SECRET'));}}, {childTimeoutMs:30000});
-  if(path==='src/subscription_usage_types.rs')assert.ok(result.meta.refused.some(row=>row.message.includes('SubscriptionProvider')));else assert.ok(result.meta.refused.some(row=>row.name==='ProviderKeyMode.parse'&&row.message.includes('format!')));
+  let parse=null;
+  if(path==='src/deploy_config.rs'){
+    const methods=[...program.declarations.values()].filter(row=>row.impl?.method==='parse'&&row.impl.type?.path?.at(-1)===owner);assert.equal(methods.length,1);parse=methods[0];
+    const original=result.meta.checkedMethods.find(row=>row.name===owner+'.parse');assert.ok(original);assert.equal(original.source,path);assert.deepEqual(original.span,{start:10132,end:10475});assert.deepEqual(parse.span,original.span);
+    assert.deepEqual(parse.impl.type.path,['crate',owner]);assert.equal(parse.impl.receiver,null);assert.equal(parse.sourceMethodProof.originalTokenTransformVerified,true);assert.equal(result.meta.refused.some(row=>row.name===owner+'.parse'),false);
+  }
+  const errorInputs=['','Keep','KEEP',' keep','keep ','if_absent','IF-ABSENT','replace\n','é','😀','k\0eep','\0'];
+  const errors=errorInputs.map(input=>({input,expected:'provider key mode `'+input+'` must be keep, if-absent or replace'}));
+  const alias='\nexport {'+method.fullName+' as original_as_str'+(parse?', '+parse.fullName+' as original_parse':'')+'};\n',targets={...result,javascript:result.javascript+alias,typescript:result.typescript+alias},observations=[];
+  retain('checked-method-targets-'+path.replaceAll('/','-'),{path,alias,javascript:targets.javascript,typescript:targets.typescript,variants,errors});
+  try{await verifyTypedTargets(targets,(api,_result,module)=>{
+    const observed={targetIndex:observations.length,parse:[],invalidInputs:[]};observations.push(observed);
+    for(const [variant,value]of variants)assert.equal(module.original_as_str(Object.freeze({$:variant})),value);assert.throws(()=>module.original_as_str(Object.freeze({$:'Unknown'})),TypeError);assert.throws(()=>module.original_as_str({$:variants[0][0]}),TypeError);
+    if(path==='src/deploy_config.rs'){
+      assert.deepEqual(api.VERIFIABLE_CLIENTS,['claude','codex','qwen-code','gemini','opencode']);assert.deepEqual(api.RESERVED_ENV_PREFIXES,['ROUTER_DEPLOY_','TLS_','VERIFY_','PRESERVATION_']);assert.ok(Object.isFrozen(api.RESERVED_ENV));assert.ok(api.RESERVED_ENV.includes('TOKEN_SECRET'));
+      for(const [variant,input]of variants){const actual=module.original_parse(input);observed.parse.push({input,actual});assert.deepEqual(actual,{$:'Ok',field0:{$:variant}});assert.ok(Object.isFrozen(actual));assert.ok(Object.isFrozen(actual.field0));}
+      for(const {input,expected}of errors){const actual=module.original_parse(input);observed.parse.push({input,actual,expected});assert.deepEqual(actual,{$:'Err',field0:expected});assert.ok(Object.isFrozen(actual));}
+      for(const [label,input]of [['undefined',undefined],['null',null],['boolean',true],['number',1],['bigint',1n],['object',{}],['array',[]],['boxed-string',new String('keep')],['lone-high-surrogate','\ud800'],['lone-low-surrogate','\udc00']]){
+        assert.throws(()=>module.original_parse(input),TypeError,label);observed.invalidInputs.push({label,refusedAs:'TypeError'});
+      }
+    }
+  }, {childTimeoutMs:30000});}finally{retain('checked-method-observations-'+path.replaceAll('/','-'),observations);}
+  if(path==='src/subscription_usage_types.rs')assert.ok(result.meta.refused.some(row=>row.message.includes('SubscriptionProvider')));
 });
