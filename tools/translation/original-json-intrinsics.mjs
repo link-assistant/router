@@ -170,3 +170,11 @@ if(dataFreezeNative)try{
 export function originalDataFreezeIntrinsicsUnchanged(){
  return !!(dataFreezeNative&&originalNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
 }
+
+// Observe through this issuer's trusted bootstrap capture, never through a
+// consumer's later Function.prototype.toString. This exposes text only and
+// issues no source/proof token or additional existing guard domain.
+export function originalCapturedFunctionSource(value){
+ if(!pathNative||typeof value!=='function'||pathIsProxy.value(value))return null;
+ return apply(functionText,value,[]);
+}

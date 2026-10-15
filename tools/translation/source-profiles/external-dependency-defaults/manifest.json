@@ -1,0 +1,146 @@
+{
+  "schema": "installed-toml-source-and-external-default-domain-v1",
+  "parser": {
+    "name": "@iarna/toml",
+    "version": "3.0.0",
+    "installedSource": "packages/javascript/node_modules/@iarna/toml",
+    "license": "ISC",
+    "lockfile": "packages/javascript/package-lock.json",
+    "lockEntry": {
+      "version": "3.0.0",
+      "resolved": "https://registry.npmjs.org/@iarna/toml/-/toml-3.0.0.tgz",
+      "integrity": "sha512-td6ZUkz2oS3VeleBcN+m//Q6HlCFCPrnI0FZhrt/h4XqLEdOyYp2u21nd8MdsR+WJy5r9PTDaHTDDfhf4H4l6Q==",
+      "license": "ISC"
+    },
+    "sourceWitnessKind": "complete installed regular files copied byte-for-byte; npm tarball not independently acquired or verified",
+    "files": [
+      {
+        "path": "CHANGELOG.md",
+        "bytes": 11295,
+        "sha256": "b46126574c44bcc69f84380cea2d26d619985e4289551438add0fbc236820335"
+      },
+      {
+        "path": "LICENSE",
+        "bytes": 752,
+        "sha256": "d4dc58571be1260e45f2fb8ab174e0a838c9ca361720e1b0e2ca020c037988b2"
+      },
+      {
+        "path": "README.md",
+        "bytes": 17754,
+        "sha256": "4a0f8cef35fe27ee7d0fd09b2664b97f621da7c682f4a11a221e75ad55e0b91d"
+      },
+      {
+        "path": "index.d.ts",
+        "bytes": 1681,
+        "sha256": "72c6cda658c066bfd9f51a34a077648f11a0d8867050733f2cef365729043bf0"
+      },
+      {
+        "path": "lib/create-date.js",
+        "bytes": 485,
+        "sha256": "3941f4748f25f11c5ccf55c85ddc41e06e85379482e5885a8aff8b964d6a2ad8"
+      },
+      {
+        "path": "lib/create-datetime-float.js",
+        "bytes": 663,
+        "sha256": "aa5ac5619fafcb487edf249d3a8bbd9d672626299966eba6945afbc96470c6c1"
+      },
+      {
+        "path": "lib/create-datetime.js",
+        "bytes": 197,
+        "sha256": "b83215e9dd32e34332c7ddd9b868e03e321dcb28cde830d1b7951df68325bbbf"
+      },
+      {
+        "path": "lib/create-time.js",
+        "bytes": 508,
+        "sha256": "2d40222ea3f60c1c95cf3f60e3b1554f39cc3a0d5ef5ff8bfb031635fa987707"
+      },
+      {
+        "path": "lib/format-num.js",
+        "bytes": 120,
+        "sha256": "b4f02ed3ea839792827aacd1bd1492f0150f53024a006832579cd6ec43e92801"
+      },
+      {
+        "path": "lib/parser-debug.js",
+        "bytes": 1986,
+        "sha256": "3e202f84762b40144f338b1040a597aa2a0fa1537abbb22e13cd5480313df2ce"
+      },
+      {
+        "path": "lib/parser.js",
+        "bytes": 2975,
+        "sha256": "175e4cc273aea2e0505e0f0000bcba471f8da041d219a9ab73978567e8f66029"
+      },
+      {
+        "path": "lib/toml-parser.js",
+        "bytes": 46935,
+        "sha256": "59ac2261f3b40a9780db5cdf99de4fc9b70d462651df2becb2da020c0c59c844"
+      },
+      {
+        "path": "package.json",
+        "bytes": 2715,
+        "sha256": "360a7c4b213f5aedb8efc842bc11cd4f91bc53c34602a6770913315688a4dad0"
+      },
+      {
+        "path": "parse-async.js",
+        "bytes": 863,
+        "sha256": "277f98c122d6f3c6755d2a1bf81bece2472696e0e899f02a193d8ad57255493f"
+      },
+      {
+        "path": "parse-pretty-error.js",
+        "bytes": 1045,
+        "sha256": "4e9783b41b343c62be4d3bf3b21fb7972bfc27523e913a782c4624c008a80eb1"
+      },
+      {
+        "path": "parse-stream.js",
+        "bytes": 1625,
+        "sha256": "b1ce5edabc3a7a4db886c9a5a0903cd2e20ffbcd338405b7b08da853b04c5913"
+      },
+      {
+        "path": "parse-string.js",
+        "bytes": 415,
+        "sha256": "cd9e497870ffda7ad1e266b86580c270388a45c2d04e75acd985a42a0597fdb0"
+      },
+      {
+        "path": "parse.js",
+        "bytes": 227,
+        "sha256": "a103f6919f045c44cddda84af4cd44b94fe4a253f8d07a81d779db06ab081976"
+      },
+      {
+        "path": "stringify.js",
+        "bytes": 7622,
+        "sha256": "fb74cb2cf4504facc60640801dc8127353a362f2db50e5425bbfb2a762920d38"
+      },
+      {
+        "path": "toml.js",
+        "bytes": 97,
+        "sha256": "b6bdf7ac57047ec0a2fab0e34c42d500fb95a3234fa649c3ff5725aef9d09eb0"
+      }
+    ],
+    "totalBytes": 99960,
+    "upstreamLineLimitException": {
+      "path": "lib/toml-parser.js",
+      "lines": 1421,
+      "reason": "complete unmodified copied upstream implementation"
+    }
+  },
+  "packages": [
+    {
+      "name": "base64",
+      "version": "0.23.1",
+      "archiveSha256": "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5",
+      "manifestPath": "Cargo.toml",
+      "manifestBytes": 1983,
+      "manifestSha256": "3951a99756ac9b339501a149c547ce0e24248287a10830298ea319c006090790"
+    }
+  ],
+  "scope": "Registered default ordinary direct string dependency positive features only; no Cargo unit role, closed feature key, namespace, prelude or runtime authority.",
+  "projectSource": {
+    "Cargo.toml": {
+      "bytes": 5296,
+      "sha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476"
+    },
+    "Cargo.lock": {
+      "bytes": 124800,
+      "sha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa"
+    }
+  }
+}
