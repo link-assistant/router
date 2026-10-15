@@ -112,7 +112,11 @@ function affinityDescriptorInput(root) {
       // Planning runs before producer children can bind their source root.
       // Use this receiving project's dependencies, including in an exported
       // CLI whose inherited compiler source-root environment is unrelated.
-      const ts=compiler??=createRequire(path.join(root,'packages/javascript/package.json'))('typescript');
+      if(compiler===undefined){
+        const receivingRequire=createRequire(path.join(root,'packages/javascript/package.json'));
+        compiler=receivingRequire(receivingRequire.resolve('typescript'));
+      }
+      const ts=compiler;
       const file=ts.createSourceFile('module-ownership.mjs',source.toString('utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
       if(file.parseDiagnostics.length)throw new Error('invalid module ownership syntax');
       for(const statement of file.statements) {
