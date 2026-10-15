@@ -7,11 +7,14 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath, pathToFileURL} from 'node:url';
+import {ownershipSyntax} from '../tools/translation/js-to-rust/vendor/module-syntax.mjs';
 
 const implementationRoot=fileURLToPath(new URL('../',import.meta.url));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const directions=new Set(['both','javascript-to-rust','rust-to-javascript']);
 const MAX_INPUT_BYTES=256*1024*1024;
+const MAX_FILE_BYTES=32*1024*1024,MAX_INPUT_PATHS=32768;
+const affinityDescriptor='packages/javascript/native/affinity-schema-descriptor.mjs';
 function git(root,args,input) {
   const result=spawnSync('git',args,{cwd:root,input,maxBuffer:MAX_INPUT_BYTES,timeout:30_000});
   if(result.status!==0)throw Error(result.error?.message??result.stderr.toString()??'Git input capture failed');
@@ -22,9 +25,10 @@ function relativeName(name) {
   return name;
 }
 function protectedInput(name) {
-  // These exact Rust paths are already owned by buildArtifacts(). Other Rust
-  // files in this directory remain protected original inputs.
-  if(name==='src/generated_js_first/policy.rs'||name==='src/generated_js_first/mod.rs')return false;
+  // Exclude only exact producer-owned outputs. Their handwritten neighbors
+  // remain original inputs, including other native descriptors and Rust files.
+  if(name==='src/generated_js_first/policy.rs'||name==='src/generated_js_first/mod.rs'
+    ||name===affinityDescriptor)return false;
   return name.endsWith('.rs')||/(^|\/)Cargo\.(?:toml|lock)$/u.test(name)
     ||name.startsWith('packages/javascript/native/')
     ||name.startsWith('packages/javascript/portable/')
@@ -44,10 +48,26 @@ function originalFileStatus(root,name) {
     if(index===parts.length-1){if(!status.isFile())throw Error('Original synchronization source must be a regular file: '+name);return status;}
   }
 }
+function originalBytes(root,name,status,remaining) {
+  if(status.size>MAX_FILE_BYTES||status.size>remaining)throw Error('Original synchronization inputs exceed bounded capture');
+  const fd=fs.openSync(path.join(root,name),fs.constants.O_RDONLY|(fs.constants.O_NOFOLLOW??0));
+  const chunks=[],buffer=Buffer.alloc(64*1024);let length=0;
+  try {
+    let count;
+    while((count=fs.readSync(fd,buffer,0,Math.min(buffer.length,Math.min(MAX_FILE_BYTES,remaining)-length+1),null))!==0) {
+      length+=count;
+      if(length>MAX_FILE_BYTES||length>remaining)throw Error('Original synchronization inputs exceed bounded capture');
+      chunks.push(Buffer.from(buffer.subarray(0,count)));
+    }
+  } finally {fs.closeSync(fd);}
+  return Buffer.concat(chunks,length);
+}
 export function captureSyncInputs(root) {
+  // Ownership does not permit linked generated inputs or linked ancestors.
+  originalFileStatus(root,affinityDescriptor);
   const head=git(root,['rev-parse','HEAD']).toString().trim();
   const names=[...new Set(git(root,['ls-files','--cached','--others','--exclude-standard','-z']).toString().split('\0').filter(name=>name&&protectedInput(name)))].sort();
-  if(names.length>32768)throw Error('Original synchronization input inventory is too large');
+  if(names.length>MAX_INPUT_PATHS)throw Error('Original synchronization input inventory is too large');
   const status=new Map(names.map(name=>[name,originalFileStatus(root,relativeName(name))]));
   const missing=names.filter(name=>status.get(name)===null),blobs=new Map();
   if(missing.length) {
@@ -57,9 +77,9 @@ export function captureSyncInputs(root) {
   }
   let total=0;
   const files=names.map(name=>{
-    relativeName(name);const absolute=path.join(root,name);
-    const bytes=blobs.get(name)??fs.readFileSync(absolute);total+=bytes.length;
-    if(bytes.length>32*1024*1024||total>MAX_INPUT_BYTES)throw Error('Original synchronization inputs exceed bounded capture');
+    relativeName(name);
+    const bytes=blobs.get(name)??originalBytes(root,name,status.get(name),MAX_INPUT_BYTES-total);total+=bytes.length;
+    if(bytes.length>MAX_FILE_BYTES||total>MAX_INPUT_BYTES)throw Error('Original synchronization inputs exceed bounded capture');
     return {path:name,storage:blobs.has(name)?'original-HEAD-sparse-fallback':'worktree',bytes:bytes.length,sha256:hash(bytes)};
   });
   return {head,files,totalBytes:total};
@@ -68,22 +88,93 @@ function producer(module,expression,root,check) {
   const url=pathToFileURL(path.join(implementationRoot,module)).href;
   return ['--input-type=module','--eval',`import * as producer from ${JSON.stringify(url)};const root=process.argv[1],check=process.argv[2]==='true';${expression}`,root,String(check)];
 }
+function affinityDescriptorInput(root) {
+  const descriptor=path.join(root,affinityDescriptor);
+  if(fs.existsSync(descriptor)||fs.existsSync(path.join(root,'packages/javascript/native/affinity-schema.mjs')))return true;
+  const native=path.join(root,'packages/javascript/native');
+  if(!fs.existsSync(native))return false;
+  let ancestor=root;
+  for(const component of ['packages','javascript','native']) {
+    ancestor=path.join(ancestor,component);
+    if(fs.lstatSync(ancestor).isSymbolicLink())throw Error('Linked original synchronization source refused: '+ancestor);
+  }
+  let visited=1,bytes=0;
+  const visit=directory=>{
+    if(fs.lstatSync(directory).isSymbolicLink())throw Error('Linked original synchronization source refused: '+directory);
+    for(const entry of fs.readdirSync(directory,{withFileTypes:true})) {
+      if(++visited>MAX_INPUT_PATHS)throw Error('Original synchronization input inventory is too large');
+      const filename=path.join(directory,entry.name);
+      if(entry.isSymbolicLink())throw Error('Linked original synchronization source refused: '+filename);
+      if(entry.isDirectory()){if(visit(filename))return true;continue;}
+      if(!entry.isFile()||!entry.name.endsWith('.mjs'))continue;
+      const name=relativeName(path.relative(root,filename)),status=originalFileStatus(root,name);
+      const source=originalBytes(root,name,status,MAX_INPUT_BYTES-bytes);bytes+=source.length;
+      const {ts,file}=ownershipSyntax(source.toString('utf8'));
+      for(const statement of file.statements) {
+        if(!ts.isImportDeclaration(statement)&&!ts.isExportDeclaration(statement))continue;
+        const specifier=statement.moduleSpecifier;
+        if(specifier&&ts.isStringLiteral(specifier)&&(specifier.text.startsWith('./')||specifier.text.startsWith('../'))
+          &&path.resolve(path.dirname(filename),specifier.text)===descriptor)return true;
+      }
+    }
+    return false;
+  };
+  return visit(native);
+}
 export function synchronizationSteps({root,direction='both',check=false,profiles=true}={}) {
   root=path.resolve(root);
   if(!directions.has(direction)||typeof check!=='boolean'||typeof profiles!=='boolean')throw Error('Invalid synchronization options');
+  originalFileStatus(root,affinityDescriptor);
   const steps=[];
+  const reverse=id=>({id,timeoutMs:120_000,args:producer('scripts/regenerate-js-first.mjs',`const result=producer.regenerate(root,{check});console.log(JSON.stringify(result));if(check&&result.changed.length)process.exitCode=1;`,root,check)});
+  const affinity=(checkOnly=false)=>({id:'original-affinity-schema',timeoutMs:600_000,args:producer('tools/translation/serialization-schema/native-descriptor.mjs',`console.log(JSON.stringify(await producer.produceNativeAffinityDescriptor({root,write:!check})));`,root,check||checkOnly)});
+  // The native descriptor is itself a reverse input. Its complete source
+  // context also includes generated policy Rust, so establish that first.
+  // Both full reverse passes retain all artifacts; only their cheap duplicate
+  // work is intentional, never a second canonical or matrix translation.
+  const affinityInput=direction==='javascript-to-rust'&&affinityDescriptorInput(root);
+  if(direction==='both'||direction==='javascript-to-rust'&&affinityInput) {
+    steps.push(reverse('javascript-meta-rust-preparation'));
+    steps.push(affinity(direction==='javascript-to-rust'));
+  } else if(direction==='rust-to-javascript')steps.push(affinity());
   if(direction!=='rust-to-javascript') {
-    steps.push({id:'javascript-meta-rust',timeoutMs:120_000,args:producer('scripts/regenerate-js-first.mjs',`const result=producer.regenerate(root,{check});console.log(JSON.stringify(result));if(check&&result.changed.length)process.exitCode=1;`,root,check)});
+    steps.push(reverse('javascript-meta-rust'));
     steps.push({id:'javascript-meta-typescript',timeoutMs:300_000,args:producer('tools/translation/js-to-rust/native-typescript.mjs',`const result=producer.regenerateNativeTypeScript(root,{sourceRoot:root,check});console.log(JSON.stringify(result));if(check&&(result.changed.length||result.unexpected.length))process.exitCode=1;`,root,check)});
   }
   if(direction!=='javascript-to-rust') {
     const base=[path.join(implementationRoot,'scripts/translate-router.mjs'),'--root',root,'--progress',...(check?['--check']:[])];
     steps.push({id:'rust-meta-javascript-typescript',timeoutMs:2_400_000,args:base});
     if(profiles)steps.push({id:'rust-platform-matrix',timeoutMs:3_600_000,args:[...base,'--profile-matrix']});
-    steps.push({id:'original-affinity-schema',timeoutMs:600_000,args:producer('tools/translation/serialization-schema/native-descriptor.mjs',`console.log(JSON.stringify(await producer.produceNativeAffinityDescriptor({root,write:!check})));`,root,check)});
     steps.push({id:'original-serialization-registry',timeoutMs:600_000,args:producer('tools/translation/serialization-schema/bulk.mjs',`console.log(JSON.stringify(producer.produceBulkSerialization({root,write:!check})));`,root,check)});
   }
   return steps;
+}
+function retainedLog(filename) {
+  const digest=createHash('sha256'),buffer=Buffer.alloc(64*1024);let bytes=0;
+  const fd=fs.openSync(filename,'r');
+  try {let count;while((count=fs.readSync(fd,buffer,0,buffer.length,null))!==0){digest.update(buffer.subarray(0,count));bytes+=count;}}
+  finally {fs.closeSync(fd);}
+  return {bytes,sha256:digest.digest('hex')};
+}
+// The same runner serves the complete CLI and bounded individual producer
+// diagnostics. It never changes a planned command, deadline or check mode.
+export function runSynchronizationProducer({root,step,outputDirectory,index=0}={}) {
+  if(!step||!Array.isArray(step.args)||!step.args.every(value=>typeof value==='string')
+    ||typeof step.id!=='string'||!/^[a-z0-9-]+$/u.test(step.id)
+    ||!Number.isSafeInteger(step.timeoutMs)||step.timeoutMs<1||step.timeoutMs>3_600_000
+    ||!Number.isSafeInteger(index)||index<0||index>32768)throw Error('Invalid synchronization producer');
+  const started=performance.now(),created=[],fds=[];let result,runnerError;
+  try {
+    originalFileStatus(root,affinityDescriptor);
+    for(const stream of ['stdout','stderr']) {
+      const filename=String(index).padStart(2,'0')+'-'+step.id+'.'+stream+'.raw.log';
+      const fd=fs.openSync(path.join(outputDirectory,filename),'wx');fds.push(fd);created.push(filename);
+    }
+    result=spawnSync(process.execPath,step.args,{cwd:root,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:root},timeout:step.timeoutMs,stdio:['ignore',...fds]});
+  } catch(error){runnerError=error;}
+  finally {for(const fd of fds)fs.closeSync(fd);}
+  const logs=created.map(filename=>({path:filename,...retainedLog(path.join(outputDirectory,filename))}));
+  return {id:step.id,mandatory:true,status:result?.status===0&&!result.error&&!runnerError?'passed':'failed',command:[process.execPath,...step.args],exitCode:result?.status??null,signal:result?.signal??null,error:runnerError?.message??result?.error?.message??null,timeoutMs:step.timeoutMs,elapsedSeconds:(performance.now()-started)/1000,logs};
 }
 export function syncRouter({root=implementationRoot,direction='both',check=false,profiles=true,outputDirectory,onProgress}={}) {
   root=fs.realpathSync(path.resolve(root));
@@ -97,11 +188,7 @@ export function syncRouter({root=implementationRoot,direction='both',check=false
     if(failed){records.push({id:step.id,status:'unrun-prerequisite-failure',mandatory:true});continue;}
     onProgress?.({stage:step.id,state:'start',check});
     if(JSON.stringify(captureSyncInputs(root))!==JSON.stringify(before)){records.push({id:step.id,status:'failed',mandatory:true,error:'Original input changed before producer execution',originalInputsUnchanged:false,logs:[]});failed=true;continue;}
-    const stageStarted=performance.now();
-    const result=spawnSync(process.execPath,step.args,{cwd:root,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:root},timeout:step.timeoutMs,maxBuffer:8*1024*1024});
-    const logs=[];
-    for(const [name,bytes] of [['stdout',result.stdout??Buffer.alloc(0)],['stderr',result.stderr??Buffer.alloc(0)]]){const filename=String(index).padStart(2,'0')+'-'+step.id+'.'+name+'.raw.log';fs.writeFileSync(path.join(output,filename),bytes,{flag:'wx'});logs.push({path:filename,bytes:bytes.length,sha256:hash(bytes)});}
-    const record={id:step.id,mandatory:true,status:result.status===0&&!result.error?'passed':'failed',command:[process.execPath,...step.args],exitCode:result.status,signal:result.signal,error:result.error?.message??null,timeoutMs:step.timeoutMs,elapsedSeconds:(performance.now()-stageStarted)/1000,logs};
+    const record=runSynchronizationProducer({root,step,outputDirectory:output,index});
     if(record.status==='passed') {
       try {
         const current=captureSyncInputs(root);fs.writeFileSync(path.join(output,String(index).padStart(2,'0')+'-inputs-after.json'),JSON.stringify(current,null,2)+'\n');
