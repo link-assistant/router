@@ -13,11 +13,14 @@ const byPath=new Map(inputs.map(input=>[input.path,input]));
 function one(rows,message){if(rows.length!==1)fail(message);return rows[0];}
 function item(input,term,name){return one(sourceItems(input.source).filter(item=>item.term===term&&item.name===name),'original '+term+' '+name+' absent or ambiguous');}
 function method(path,owner,name){
- const input=byPath.get(path),impl=one(sourceItems(input.source).filter(item=>{if(item.term!=='impl')return false;const tokens=item.tokens.filter(token=>token.type!=='comment'),start=tokens.findIndex(token=>token.text==='impl'),end=tokens.findIndex((token,index)=>index>start&&token.text==='{');return text(tokens.slice(start,end))==='impl'+owner;}),'original inherent owner absent or ambiguous');
- const implTokens=impl.tokens.filter(token=>token.type!=='comment'),body=implTokens.findIndex(token=>token.text==='{'),bodySpan={start:implTokens[body].end,end:implTokens.at(-1).start};
- const member=one(originalImplMemberItems(input.source,bodySpan).filter(item=>item.term==='fn'&&item.name===name),'original member absent or ambiguous'),tokens=member.tokens.filter(token=>token.type!=='comment'),open=tokens.findIndex(token=>token.text==='{'),start=tokens.findIndex(token=>token.text==='fn');
+ const input=byPath.get(path),impls=sourceItems(input.source).filter(item=>{if(item.term!=='impl')return false;const tokens=item.tokens.filter(token=>token.type!=='comment'),start=tokens.findIndex(token=>token.text==='impl'),end=tokens.findIndex((token,index)=>index>start&&token.text==='{');return text(tokens.slice(start,end))==='impl'+owner;});
+ if(!impls.length)fail('original inherent owner absent');
+ const inherentImplCandidates=impls.map(impl=>{const tokens=impl.tokens.filter(token=>token.type!=='comment'),body=tokens.findIndex(token=>token.text==='{');if(body<0||tokens.at(-1)?.text!=='}')fail('original impl lacks complete original delimiters');return {span:{start:impl.start,end:impl.end},bodySpan:{start:tokens[body].end,end:tokens.at(-1).start}};});
+ const candidates=inherentImplCandidates.flatMap(implementation=>originalImplMemberItems(input.source,implementation.bodySpan).filter(item=>item.term==='fn'&&item.name===name).map(member=>({member,implementation})));
+ const {member,implementation}=one(candidates,'original member absent or ambiguous');
+ const tokens=member.tokens.filter(token=>token.type!=='comment'),open=tokens.findIndex(token=>token.text==='{'),start=tokens.findIndex(token=>token.text==='fn');
  if(open<0||start<0||tokens.at(-1)?.text!=='}')fail('original method lacks complete original delimiters');
- return {source:path,sourceSha256:input.sha256,owner,span:{start:member.start,end:member.end},signature:text(tokens.slice(start,open)),body:text(tokens.slice(open)),originalSource:input.source.slice(member.start,member.end)};
+ return {source:path,sourceSha256:input.sha256,owner,inherentImplCandidates,selectedImplSpan:implementation.span,span:{start:member.start,end:member.end},signature:text(tokens.slice(start,open)),body:text(tokens.slice(open)),originalSource:input.source.slice(member.start,member.end)};
 }
 const root=byPath.get('src/lib.rs'),value=byPath.get('src/value/mod.rs'),number=byPath.get('src/number.rs');
 const exports=[{source:root.path,statement:'#[doc(inline)]pubusecrate::value::{from_value,to_value,Map,Number,Value};'},{source:value.path,statement:'pubusecrate::number::Number;'}].map(route=>{
