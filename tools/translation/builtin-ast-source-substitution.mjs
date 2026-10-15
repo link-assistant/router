@@ -3,8 +3,8 @@
 // cannot close mutation/control/container/hygiene or trait behavior obligations.
 import {createHash} from 'node:crypto';
 import {originalMacroTrees} from './macro-token-trees.mjs';
-import {builtinAstOriginal,assertOriginalAstFunction,originalAstDefinition,astEnumVariant,astSyntaxText} from './builtin-derive-ast-meta.mjs';
-import {createBuiltinAstBuilderMetaCompiler,builtinAstSourceImports,builtinAstFunctionSourceParameters} from './builtin-ast-builder-meta.mjs';
+import {builtinAstOriginal,assertOriginalAstFunction,originalAstDefinition,astEnumVariant,astSyntaxText,requireCompilerOutputAstSourceAccess} from './builtin-derive-ast-meta.mjs';
+import {createBuiltinAstBuilderMetaCompiler,builtinAstSourceImports,builtinAstFunctionSourceParameters,compilerOutputAstSourceImports,compilerOutputAstSourceParameters} from './builtin-ast-builder-meta.mjs';
 import {splitBuiltinCallerSyntax} from './builtin-ast-caller-environments.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -31,22 +31,30 @@ export function createBuiltinAstSourceSubstitution(profile){
   const stage=Object.freeze({compile:fragment=>compile(stage,state,fragment),substitute:program=>substitute(stage,state,program),applyClosure:(caller,callee,callStart)=>applyClosure(stage,state,caller,callee,callStart),assert:value=>assertBuiltinAstSourceSubstitution(value,stage)});
   stages.set(stage,state);return stage;
 }
-export function assertBuiltinAstSourceSubstitution(value,stage){if(results.get(value)?.stage!==stage)throw new TypeError('Substitution requires its original private source stage');return value;}
-export const isBuiltinAstSourceSubstitution=value=>!!value&&results.has(value);
+// Opt-in syntax flow only. No existing factory accepts the private access token.
+export function createCompilerOutputAstSourceSubstitution(profile,access){
+  builtinAstOriginal(profile,'compiler/rustc_ast/src/ast.rs');requireCompilerOutputAstSourceAccess(access,profile);
+  const state={profile,access,compiler:createBuiltinAstBuilderMetaCompiler(profile),cache:new Map()};
+  const stage=Object.freeze({compile:fragment=>compile(stage,state,fragment),substitute:program=>substitute(stage,state,program),assert:value=>assertCompilerOutputSourceResult(value,stage)});
+  stages.set(stage,state);return stage;
+}
+function assertCompilerOutputSourceResult(value,stage){if(results.get(value)?.stage!==stage||!stages.get(stage)?.access)throw new TypeError('Compiler output substitution requires its original private source stage');return value;}
+export function assertBuiltinAstSourceSubstitution(value,stage){if(results.get(value)?.stage!==stage||stages.get(stage)?.access)throw new TypeError('Substitution requires its original private source stage');return value;}
+export const isBuiltinAstSourceSubstitution=value=>!!value&&results.has(value)&&!stages.get(results.get(value).stage)?.access;
 function compile(stage,state,fragment){
-  assertOriginalAstFunction(state.profile,fragment);
+  if(state.access)state.access.assert(fragment);else assertOriginalAstFunction(state.profile,fragment);
   if(fragment.schema!=='original-ast-function-meta-v1')throw new TypeError('Substitution requires original function syntax');
   if(state.cache.has(fragment))return state.cache.get(fragment);
   if(state.cache.size>=limits.contracts)throw new TypeError('Original substitution function budget exceeded');
-  const imports=new Map(builtinAstSourceImports(state.profile,fragment.source).map(value=>[value.name,value]));
-  const parameters=builtinAstFunctionSourceParameters(state.profile,fragment),slots=[],schemas=new Map(),builderContracts=new Map(),obligations=[];let visited=0;
+  const imports=new Map((state.access?compilerOutputAstSourceImports(state.access,fragment.source):builtinAstSourceImports(state.profile,fragment.source)).map(value=>[value.name,value]));
+  const parameters=state.access?compilerOutputAstSourceParameters(state.access,fragment):builtinAstFunctionSourceParameters(state.profile,fragment),slots=[],schemas=new Map(),builderContracts=new Map(),obligations=[];let visited=0;
   function count(depth){if(++visited>limits.nodes||depth>limits.depth)throw new TypeError('Original substitution node/depth budget exceeded');}
   function binding(name,syntax,kind,typeSyntax=[],value=null,mutable=false){
     const slot={id:fragment.digest+':'+syntax[0].span.start+':'+slots.length,name,kind,typeSyntax,value,mutable,...sourceOf(fragment,syntax)};
     slots.push(slot);return slot;
   }
   const environment=new Map(parameters.map(param=>[param.name,binding(param.name,param.syntax,'parameter',param.typeSyntax??[],null,param.mutable)]));
-  function schema(kind,name,path){const key=path+'::'+kind+'::'+name;if(!schemas.has(key))schemas.set(key,originalAstDefinition(state.profile,path,kind,name));return schemas.get(key);}
+  function schema(kind,name,path){const key=path+'::'+kind+'::'+name;if(!schemas.has(key))schemas.set(key,state.access?state.access.definition(path,kind,name):originalAstDefinition(state.profile,path,kind,name));return schemas.get(key);}
   function owner(path){
     const imported=imports.get(path[0]),target=imported?[...imported.target,...path.slice(1)]:null;
     if(target?.[0]==='rustc_ast')return {path:target.slice(1),source:'compiler/rustc_ast/src/ast.rs',import:imported};
@@ -68,7 +76,19 @@ function compile(stage,state,fragment){
     if(nodes.length===1&&nodes[0].kind==='group'){
       if(nodes[0].delimiter==='{')return block(nodes[0].children,new Map(env),depth+1,source);
       if(nodes[0].delimiter==='('){const rows=splitBuiltinCallerSyntax(nodes[0].children);return rows.length===1?{tag:'source-parentheses',value:expression(rows[0],env,depth+1),...source}:unknown('tuple-source-value',nodes);}
+      if(state.access&&nodes[0].delimiter==='['){
+        const parts=splitBuiltinCallerSyntax(nodes[0].children);
+        if(nodes[0].children.some(node=>node.text===';'))return unknown('array-repeat-source-domain',nodes);
+        obligations.push({kind:'array-value-type-and-evaluation',source:fragment.source,span:source.span});
+        return {tag:'original-array-source-construction',elements:parts.map(row=>expression(row,env,depth+1)),valueDomainEstablished:false,...source};
+      }
       return unknown('container-source-value',nodes);
+    }
+    if(state.access&&nodes[0].text==='if'){
+      const body=nodes.findIndex((node,at)=>at>0&&node.delimiter==='{');
+      if(body<2||nodes[body+1]?.text!=='else'||nodes[body+2]?.delimiter!=='{'||body+3!==nodes.length)return unknown('source-if-expression-grammar',nodes);
+      obligations.push({kind:'source-condition-and-branch-selection',source:fragment.source,span:source.span});
+      return {tag:'original-if-expression',condition:expression(nodes.slice(1,body),env,depth+1),thenBody:block(nodes[body].children,new Map(env),depth+1,sourceOf(fragment,[nodes[body]])),elseBody:block(nodes[body+2].children,new Map(env),depth+1,sourceOf(fragment,[nodes[body+2]])),selectionEstablished:false,...source};
     }
     if(nodes[0].text==='&')return {tag:'source-reference',value:expression(nodes.slice(1),env,depth+1),...source};
     if(nodes[0].text==='||')return {tag:'source-closure',parameters:[],capturedSlots:[...env.values()].map(value=>value.id),body:expression(nodes.slice(1),new Map(env),depth+1),...source};
@@ -86,6 +106,10 @@ function compile(stage,state,fragment){
           obligations.push({kind:'closure-pattern-input-domain',source:fragment.source,span:row[0].span});continue;
         }
         const header=colon<0?row:row.slice(0,colon),simpleHeader=header.length===1&&ident(header[0])||header.length===2&&header[0].text==='mut'&&ident(header[1]);
+        if(state.access&&colon<0&&header.length===2&&header[0].text==='&'&&ident(header[1])){
+          const slot=binding(header[1].text,row,'open-shared-closure-pattern-binding');params.push(slot.id);child.set(slot.name,slot);
+          obligations.push({kind:'shared-reference-pattern-copy-and-input-domain',source:fragment.source,span:slot.span});continue;
+        }
         if(names.length!==1||!simpleHeader||row.some(value=>value.kind==='group'))return unknown('closure-binding-pattern',nodes);
         const slot=binding(names[0].text,row,'closure-parameter',colon<0?[]:row.slice(colon+1),null,row.some(value=>value.text==='mut'));params.push(slot.id);child.set(slot.name,slot);
       }
@@ -117,7 +141,7 @@ function compile(stage,state,fragment){
             // its written path has two segments. Keep actual import/call inputs.
             return unknown('source-function-call',nodes,{path,args,import:resolved.import,ownerReason:String(error.message)});
           }
-          const variant=astEnumVariant(state.profile,definition,resolved.path[1]);
+          const variant=state.access?state.access.variant(definition,resolved.path[1]):astEnumVariant(state.profile,definition,resolved.path[1]);
           if(args.length!==variant.arity)throw new TypeError('Original AST constructor arity mismatch');
           return {tag:'original-positive-enum',schema:variant,args,import:resolved.import,...source};
         }
@@ -149,6 +173,7 @@ function compile(stage,state,fragment){
         }
       }
     }
+    if(state.access&&nodes.length>1&&nodes.every((node,at)=>at%2===0?ident(node):node.text==='::'))return unknown('qualified-source-value',nodes,{path:nodes.filter(node=>node.text!=='::').map(node=>node.text),import:imports.get(nodes[0].text)??null,ownerEstablished:false});
     if(nodes.length>=3&&nodes.at(-2).text==='.'&&ident(nodes.at(-1)))return {tag:'lexical-projection',object:expression(nodes.slice(0,-2),env,depth+1),member:nodes.at(-1).text,...source};
     return unknown('source-expression-grammar',nodes);
   }

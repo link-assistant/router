@@ -4,7 +4,7 @@
 import {createHash} from 'node:crypto';
 import {sealBuiltinSourceMeta} from './builtin-source-meta.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
-import {builtinAstOriginal,isBuiltinDeriveAstProfile,originalAstFunction,assertOriginalAstFunction,originalAstDefinition,astEnumVariant,astSyntaxText} from './builtin-derive-ast-meta.mjs';
+import {builtinAstOriginal,isBuiltinDeriveAstProfile,originalAstFunction,assertOriginalAstFunction,originalAstDefinition,astEnumVariant,astSyntaxText,requireCompilerOutputAstSourceAccess} from './builtin-derive-ast-meta.mjs';
 const build='compiler/rustc_expand/src/build.rs',schema='compiler/rustc_ast/src/ast.rs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -37,8 +37,8 @@ function parameters(fragment){
     return {name,span:span(nodes),syntax:nodes,typeSyntax:nodes.slice(colon+1),mutable:nodes.slice(0,colon).some(node=>node.text==='mut')};
   });
 }
-function actualImports(profile,path){
-  const origin=builtinAstOriginal(profile,path),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),result=new Map();
+function actualImports(profile,path,access=null){
+  const origin=access?access.original(path):builtinAstOriginal(profile,path),roots=originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}),result=new Map();
   for(let at=0;at<roots.length;at++){
     if(roots[at].text==='impl')break;
     if(roots[at].text!=='use')continue;
@@ -211,4 +211,13 @@ function compile(state,name,sourcePath){
   const encoded=JSON.stringify(evidence);if(Buffer.byteLength(encoded)>bounds.serializedBytes)throw new TypeError('Original builder metadata byte budget exceeded');
   const roundTrip=JSON.parse(encoded);if(JSON.stringify(roundTrip)!==encoded)throw new TypeError('Original builder structured meta roundtrip changed');
   const contract=freeze({...roundTrip,digest:hash(encoded)});contracts.set(contract,{compiler:state.compiler,profile:state.profile});state.cache.set(key,contract);return contract;
+}
+
+// Separate source-observation ingress; existing profile APIs retain their domain.
+export function compilerOutputAstSourceImports(access,path){
+  requireCompilerOutputAstSourceAccess(access);
+  return freeze([...actualImports(null,path,access)].map(([name,value])=>({name,...value})));
+}
+export function compilerOutputAstSourceParameters(access,fragment){
+  requireCompilerOutputAstSourceAccess(access).assert(fragment);return freeze(parameters(fragment));
 }

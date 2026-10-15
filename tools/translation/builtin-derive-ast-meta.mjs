@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
+import {requireOriginalStandardBangOutputSourcePlan} from './standard-bang-output-source.mjs';
 const root=new URL('./source-profiles/builtin-derive-bang/',import.meta.url);
 const profileBytes=readFileSync(new URL('manifest.json',root));
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -151,4 +152,33 @@ export function astEnumVariant(profile,definition,name){
   const matches=rows.filter(row=>row.name===name);if(matches.length!==1)throw new TypeError('Original positive AST variant is absent/ambiguous: '+name);
   const evidence={schema:'original-positive-ast-variant-v1',source:definition.source,sourceSha256:definition.sourceSha256,definitionDigest:definition.digest,...matches[0],arity:matches[0].fields.length,semanticSyntaxRoundTrip:true,generatedImplBehavior:false};
   return freeze({...evidence,digest:hash(JSON.stringify(evidence))});
+}
+
+// A separate capability extends only source observation. Its child profile never
+// escapes and is not accepted by any existing public profile/fragment issuer.
+const compilerOutputSources=new WeakMap();
+export function compilerOutputAstSourceAccess(profile,sourcePlan){
+  const parent=profiles.get(profile);if(!parent)throw new TypeError('Compiler output source requires its original private profile');
+  requireOriginalStandardBangOutputSourcePlan(sourcePlan);
+  if(sourcePlan.manifest.rust!=='1.89.0'||profile.rustVersion!=='1.89')throw new TypeError('Compiler output source versions differ');
+  const sources=new Map(parent.sources);
+  for(const input of sourcePlan.sources){
+    const prior=sources.get(input.sourcePath);
+    if(prior&&(prior.source!==input.source||prior.sha256!==input.sha256||prior.bytes!==input.bytes))throw new TypeError('Compiler output original source overlap differs');
+    if(!prior)sources.set(input.sourcePath,freeze({...input,path:input.sourcePath}));
+  }
+  const child=Object.freeze({digest:hash(JSON.stringify({parent:profile.digest,plan:sourcePlan.manifestSha256})),rustVersion:profile.rustVersion});
+  profiles.set(child,{dependencies:parent.dependencies,sources,functions:new Map(),syntaxRoots:new Map()});
+  const access=Object.freeze({schema:'private-compiler-output-source-access-v1',digest:child.digest,
+    original:path=>builtinAstOriginal(child,path),
+    function:(path,name,selector=null)=>originalAstFunction(child,path,name,selector),
+    assert:fragment=>assertOriginalAstFunction(child,fragment),
+    definition:(path,kind,name)=>originalAstDefinition(child,path,kind,name),
+    variant:(definition,name)=>astEnumVariant(child,definition,name)});
+  compilerOutputSources.set(access,{profile,sourcePlan});return access;
+}
+export function requireCompilerOutputAstSourceAccess(access,profile=null){
+  const state=compilerOutputSources.get(access);if(!state)throw new TypeError('Copied or foreign compiler output source access');
+  if(!profiles.has(state.profile)||profile!==null&&state.profile!==profile)throw new TypeError('Original compiler output parent changed');
+  requireOriginalStandardBangOutputSourcePlan(state.sourcePlan);return access;
 }
