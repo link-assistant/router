@@ -102,16 +102,20 @@ test('aliases named imports globs and extra conditional target kinds cannot disa
 
 test('unresolved transforms and top-level expansion cannot certify just the two convenient declarations',{timeout:5000},()=>{
  const sources=[
-  '#[custom] '+variants+drop,
-  variants+'#[custom] fn unrelated(){}'+drop,
-  '#[cfg_attr(unix,replace)] '+variants+drop,
-  variants+'create_alias!();'+drop,
-  variants+'macro_rules! create_alias {()=>{type Local=Victim;}}'+drop,
-  variants+'#[custom] '+drop,
-  variants+'#[async_trait::async_trait] impl Task for Local{}'+drop,
- ];const rows=[];
- for(const source of sources){const value=original(source);assert.throws(()=>prove(value),/transformation|declaration grammar|header/);rows.push({source,refused:true});}
+  ['#[custom] '+variants+drop,'original attribute transformation remains unresolved'],
+  [variants+'#[custom] fn unrelated(){}'+drop,'original attribute transformation remains unresolved'],
+  ['#[cfg_attr(unix,replace)] '+variants+drop,'original cfg grammar remains unresolved'],
+  [variants+'create_alias!();'+drop,'module-level output or declaration grammar remains unresolved'],
+  [variants+'macro_rules! create_alias {()=>{type Local=Victim;}}'+drop,'module-level output or declaration grammar remains unresolved'],
+  [variants+'#[custom] '+drop,'original attribute transformation remains unresolved'],
+  [variants+'#[async_trait::async_trait] impl Task for Local{}'+drop,'original attribute transformation remains unresolved'],
+ ];const rows=sources.map(([source,expected])=>{
+  try{return {source,expected,admitted:true,proof:prove(original(source))};}
+  catch(error){return {source,expected,admitted:false,observed:{typeError:error instanceof TypeError,name:error.name,message:error.message}};}
+ });
+ // Preserve every original negative outcome before asserting any one of them.
  retain('transform-and-output-refusals',rows);
+ for(const row of rows){assert.equal(row.admitted,false,row.source);assert.equal(row.observed.typeError,true,row.source);assert.equal(row.observed.message,'Original conditional nominal target: '+row.expected,row.source);}
 });
 
 test('generic binders qualified targets and unknown outer impl or ancestor cfg remain refused',{timeout:5000},()=>{
