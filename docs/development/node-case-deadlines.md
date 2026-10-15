@@ -6,8 +6,8 @@ Treat such an observed duration breach as a failure. Preserve the original
 case, source limit, whole file and concurrency; do not filter cases, move work
 outside the case or normalize its report to obtain a pass.
 
-`node scripts/run-node-tests.mjs` is a source-only draft of that independent
-check. It invokes the same complete Node test files and unchanged concurrency
+`node scripts/run-node-tests.mjs` implements that independent check. It invokes
+the same complete Node test files and unchanged concurrency
 through Node's public reporter API. Its reporter forwards every original event
 to Node's own public TAP reporter, collecting audit errors without aborting the
 stream. Original failed tests and all later events remain in the full TAP.
@@ -84,21 +84,21 @@ its receiving fixture; no separate compiler version is introduced. Strict
 TypeScript selection and its existing override
 are unchanged and the override is recorded, not rewritten.
 
-The nine complete core source/audit and subprocess controls passed the receiving
-Node/Bun pair. The related local/workflow integration corrections and their
-additional structural/fixture controls remain **UNRUN**.
-The ninth whole control retains an actual ignored-stdio descendant identity and
-SIGTERM tape, requires SIGKILL escalation and observed group disappearance, and
-provides finally cleanup for its own descendant. This control requires Unix. They
-include actual complete synchronous-overdue, normal nested/duplicate/default,
-large-output and original-failure cohorts, as well as exact-boundary and
-ambiguous/mutated source observations. Complete receiving qualification of the related integration suites under both
-engines is still required before relying on the integrated automation. No Rust runs, generated
-compiler artifacts, source case limits or existing archive formats change.
+The nine complete core source/audit and subprocess controls passed receiving
+checks under both Node and Bun at `bf861fc931f8fe79482cc2d3c0034d040c3f72c6`.
+They cover synchronous overdue work, nested/duplicate/default cases, large
+output, original failures, exact boundaries and ambiguous or mutated source.
+The ninth control retains an actual ignored-stdio descendant identity and
+SIGTERM tape, requires SIGKILL escalation and observed group disappearance,
+and provides finally cleanup for its own descendant. It requires Unix.
 
-The original nine complete audit controls passed the receiving Node/Bun pair.
-That same integration run exposed an outside-root temp fixture and an auditor
-that rejected the required always-run uploader. Their source-only corrections
-keep selected-root enforcement and every check step unconditional; only the
-unique, fully validated, non-run evidence action receives an `always()` exception.
-The corrected whole local/workflow suites remain UNRUN.
+Receiving checks exposed an outside-root temp fixture and an auditor that
+rejected the required always-run uploader. The corrections keep selected-root
+enforcement and every check step unconditional; only the unique, fully
+validated, non-run evidence action receives an `always()` exception. The
+complete corrected local seven-case and workflow 23-case files passed both
+engines at `96376614a03516296a5786192966e55bc04b9230`, preserving all original
+deadlines and the installed TypeScript 5.9.3. Full compiler cohort, complete
+gate and CI qualification remain separate pending checks. No Rust tools ran
+locally, and no generated artifact or source deadline was changed to obtain
+these receiving results.

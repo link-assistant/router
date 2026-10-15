@@ -57,7 +57,7 @@ Both the local gate and CI require `node scripts/translate-router.mjs --profile-
 
 The strict checker retains each native evidence runner’s 180-second bound and gives its complete canonical comparison 1200 seconds after seven embedded 600-second checks timed out. Acceptance executes three sequential complete checkers before CI runs a fourth. Each outer checker deadline includes all distinct cached test files in the current manifest and 180 seconds for inventory and fixture overhead. CI parity has a finite 240-minute limit, checked structurally against the four complete bounds plus 1200 seconds for other acceptance and 120 seconds for setup. A new evidence file increases each checker bound; the workflow audit rejects an insufficient enclosing limit. Genuine parity failures remain mandatory.
 
-The complete compiler Node cohorts also require the [independent source-declared case deadline audit](node-case-deadlines.md). A synchronous Node pass after its declared timeout remains a failed duration qualification; preserve full TAP, source joins, raw receipts and the original limits. The new audit automation is source-only and **UNRUN** until receiving qualification.
+The complete compiler Node cohorts also require the [independent source-declared case deadline audit](node-case-deadlines.md). A synchronous Node pass after its declared timeout remains a failed duration qualification; preserve full TAP, source joins, raw receipts and the original limits. Its nine core controls and complete seven-case local and 23-case workflow integration suites passed receiving checks under both Node and Bun. This focused qualification does not establish that every compiler cohort, the full gate or CI has passed.
 
 ## Integrate one repair batch per completed CI cycle
 
