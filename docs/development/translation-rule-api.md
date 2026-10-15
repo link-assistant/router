@@ -48,20 +48,23 @@ The 148 candidate uses the two sequences in the following actual paths:
 
 Parsing and checking outside these hooks retain their existing validation. The
 151 candidate adds the tracked-project path: its language rule runs the existing
-graph, parser, checker, meta round trip and target emission. A private closure
+source-module resolution, parser, checker, meta round trip and target emission. A private closure
 then packages exports, annotations, provenance, serialized programs and lazy
 declaration facades in the repository rule. Both rules retain the same checked
 program and original private issuers. The repository finalizer grants no new
 semantic admission. Individual parser and checker extensions are not thereby
 made independently configurable.
 
-These candidates are not a complete verified pipeline or parity claim. The 148
-worker's final group passed 87 tests under Node and 86 of 87 under Bun; the
-unchanged reverse-regeneration case exceeded its original five-second bound.
-Coherent receiving tests remain required. The 150 coverage and 151 project
-drafts have not run local Node/Bun verification. The desired constructor alias
-regression in 150 also requires the separate boundary repair and regenerated
-outputs.
+The integrated 148 and 151 paths passed the complete six-file receiving group
+on `af6bab7d9`: Node 95/95 in 113.359243 seconds and Bun 95/95 in 101.942163
+seconds, with no skips or timeouts. All source, 806 original-input and compiler
+pins remained unchanged; TypeScript was 5.9.3. Bun's reverse three-build case
+took 4694.08 milliseconds under its unchanged 5000-millisecond bound. Complete
+logs and vectors are retained in `coherent-rule-pipelines-148-151-v2`. The prior
+worker Bun timeout remains retained as a distinct failed run. These receiving
+results establish neither current generation freshness, a complete green gate
+nor runtime parity. The 150 coverage draft remains unrun; its desired constructor
+alias regression requires the separate boundary repair and regenerated outputs.
 
 The 151 paired prehook comparison covers complete **method-free** project
 inputs, including functions, constants, data, refusals, source scopes, callback
