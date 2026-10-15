@@ -1,0 +1,2 @@
+### Fixed
+- Correct the source-f64 fixture's registered empty Map constructor and standalone refusal inventory selector, retaining the malformed map as an explicit rejection control. Preserve all eight test callbacks and deadlines while placing the full-original Router case in its own automatically discovered integration file, so complete small-file checks remain useful during compiler optimization. Receiving qualification is pending.
