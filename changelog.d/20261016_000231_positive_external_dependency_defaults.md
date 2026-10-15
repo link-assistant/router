@@ -83,3 +83,30 @@ The exact original multi-key temporal fixture remains an installed/copied parser
 error reproduction. Independent plain local-time EOF and fractional-time
 multi-key positives retain the full temporal and numeric coverage. No upstream
 parser byte changed. All fifteen successor cases and original limits are UNRUN.
+
+A second complete receiving pair remains retained: copied parser 4/5 in each
+engine, private defaults 2/10 in Node and 1/10 in Bun. Its failures identified
+independent copied temporal class identity, private array content-type metadata,
+and actual Bun native accessor shapes. The next source successor is UNRUN:
+
+- Observe the seven exact lexical bookkeeping Symbols after execution of the
+  complete pristine parser module. Only those private identities, original
+  object kinds, exact flags and finite original content labels may be projected;
+  no class or Symbol escapes production. A fresh test-copy observer rejects
+  foreign same-description keys/tags, extra Symbols, wrong flags/content labels
+  and symbol accessors, while retaining the entire source/wrapper and census.
+- Retain exact observed Node shared anonymous and Bun distinct named native
+  poison accessors, Bun's native Symbol description getter and optional native
+  Date.toTemporalInstant field. Every descriptor remains checked live; these
+  operations are never called by parsing. Date's actual instanceof lookup now
+  additionally requires no own hasInstance override and the genuine Function
+  prototype parent, with zero-callback override/proxy-parent controls.
+- Compare independent temporal results by complete own fields, internal Date
+  value, ISO output and full prototype/constructor descriptor-source records,
+  retaining exact copied/installed source provenance. Distinct module class
+  identity is recorded rather than required to coincide. The original complete
+  error reproduction and all numeric/temporal assertions remain.
+
+The broader passive host-family observation is complete and retained separately;
+it executed no translator or parser. No existing source/refusal limit, case
+count, upstream file or namespace acceptance hook changed in this successor.

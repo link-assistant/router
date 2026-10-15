@@ -29,13 +29,26 @@ test('full TOML parser handles quoted and dotted keys multiline strings arrays i
   const actual=parse(source),independent=(await import(new URL('parse-string.js',installed))).default(source);assert.deepEqual(data(actual),expected);assert.deepEqual(data(actual),data(independent));retain('02-independent-whole-TOML-structure',{source,expected,actual,independent});
 });
 
+function temporalData(value){
+  if(value instanceof Date){
+    const field=entry=>{const result={enumerable:entry.enumerable,configurable:entry.configurable};if(Object.hasOwn(entry,'value')){result.writable=entry.writable;result.value=typeof entry.value==='function'?{kind:'function',source:Reflect.apply(Function.prototype.toString,entry.value,[])}:{kind:typeof entry.value,value:entry.value};}else{result.get=entry.get?Reflect.apply(Function.prototype.toString,entry.get,[]):null;result.set=entry.set?Reflect.apply(Function.prototype.toString,entry.set,[]):null;}return result;};
+    const own=object=>Reflect.ownKeys(object).map(key=>({key:typeof key==='symbol'?{symbol:String(key)}:key,descriptor:field(Object.getOwnPropertyDescriptor(object,key))})),prototypes=[];
+    for(let prototype=Object.getPrototypeOf(value);prototype!==null;prototype=Object.getPrototypeOf(prototype))prototypes.push({nativeDatePrototype:prototype===Date.prototype,nativeObjectPrototype:prototype===Object.prototype,fields:own(prototype)});
+    return {kind:'Date',tag:Object.prototype.toString.call(value),epoch:Date.prototype.getTime.call(value),iso:value.toISOString(),ownFields:own(value),prototypes};
+  }
+  if(Array.isArray(value))return value.map(temporalData);
+  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([key,value])=>[key,temporalData(value)]));
+  return typeof value==='bigint'?{kind:'bigint',decimal:String(value)}:value;
+}
 test('dates exact integers alternate bases and numeric syntax use the complete parser rather than a Cargo line scanner',async()=>{
   const source='date=1979-05-27\ntime=07:32:00\ninstant=1979-05-27T07:32:00Z\nlarge=9007199254740993\nhex=0xDEAD_BEEF\noctal=0o755\nbinary=0b1010\nfloat=1_000.25\n';
   const independent=(await import(new URL('parse-string.js',installed))).default,errors=[];
   for(const [name,parser]of [['copied',parse],['installed',independent]]){let error;try{parser(source);}catch(cause){error={name:cause.name,message:cause.message,code:cause.code??null,pos:cause.pos,line:cause.line,col:cause.col};}assert.ok(error);assert.match(error.message,/expected only whitespace or comments till end of line/);errors.push({name,error});}
   assert.deepEqual(errors[0].error,errors[1].error);
-  const fractional=source.replace('time=07:32:00\n','time=07:32:00.000\n'),actual=parse(fractional),installedActual=independent(fractional),eofSource='time=07:32:00',eof=parse(eofSource),installedEof=independent(eofSource);assert.deepEqual(data(actual),data(installedActual));assert.deepEqual(data(eof),data(installedEof));assert.equal(eof.time.toISOString(),'07:32:00.000');assert.equal(actual.large,9007199254740993n);assert.equal(actual.hex,3735928559);assert.equal(actual.octal,493);assert.equal(actual.binary,10);assert.equal(actual.float,1000.25);assert.equal(actual.instant.toISOString(),'1979-05-27T07:32:00.000Z');assert.equal(actual.date.toISOString(),'1979-05-27');assert.equal(actual.time.toISOString(),'07:32:00.000');
-  retain('03-full-numeric-and-temporal-TOML',{source,errors,fractional,eofSource,eof:data(eof),actual:{...actual,large:actual.large.toString()},installedActual:{...installedActual,large:installedActual.large.toString()},integerType:typeof actual.large,upstreamPlainTimeFollowedByDeclarationDefectRetained:true});
+  const fractional=source.replace('time=07:32:00\n','time=07:32:00.000\n'),actual=parse(fractional),installedActual=independent(fractional),eofSource='time=07:32:00',eof=parse(eofSource),installedEof=independent(eofSource);const actualData=temporalData(actual),installedData=temporalData(installedActual),eofData=temporalData(eof),installedEofData=temporalData(installedEof);assert.deepEqual(actualData,installedData);assert.deepEqual(eofData,installedEofData);
+  const prototypeSources=[];for(const path of ['lib/create-date.js','lib/create-time.js','lib/create-datetime.js']){const copied=readFileSync(new URL('../vendor/iarna-toml/'+path,import.meta.url)),upstream=readFileSync(new URL(path,installed));assert.deepEqual(copied,upstream);prototypeSources.push({path,copiedURL:new URL('../vendor/iarna-toml/'+path,import.meta.url).href,installedURL:new URL(path,installed).href,bytes:copied.length,sha256:hash(copied),completeSource:copied.toString('utf8')});}
+  assert.equal(eof.time.toISOString(),'07:32:00.000');assert.equal(actual.large,9007199254740993n);assert.equal(actual.hex,3735928559);assert.equal(actual.octal,493);assert.equal(actual.binary,10);assert.equal(actual.float,1000.25);assert.equal(actual.instant.toISOString(),'1979-05-27T07:32:00.000Z');assert.equal(actual.date.toISOString(),'1979-05-27');assert.equal(actual.time.toISOString(),'07:32:00.000');
+  retain('03-full-numeric-and-temporal-TOML',{source,errors,fractional,eofSource,eofData,installedEofData,actualData,installedData,prototypeSources,actual:{...actual,large:actual.large.toString()},installedActual:{...installedActual,large:installedActual.large.toString()},integerType:typeof actual.large,upstreamPlainTimeFollowedByDeclarationDefectRetained:true});
 });
 
 test('duplicate keys tables malformed arrays mixed trailing syntax and invalid values all refuse as complete files',()=>{

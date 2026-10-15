@@ -66,7 +66,7 @@ function initialize(){
     ['Symbol',descriptor(globals.Symbol,'prototype')?.value,['constructor','toString','valueOf','description',symbols.toPrimitive,symbols.toStringTag]],
     ['Error',descriptor(globals.Error,'prototype')?.value,['constructor','name','message','toString']],
     ['TypeError',descriptor(globals.TypeError,'prototype')?.value,['constructor','name','message']],
-    ['Date',descriptor(globals.Date,'prototype')?.value,['constructor','toString','toDateString','toTimeString','toISOString','toUTCString','toGMTString','getDate','setDate','getDay','getFullYear','setFullYear','getHours','setHours','getMilliseconds','setMilliseconds','getMinutes','setMinutes','getMonth','setMonth','getSeconds','setSeconds','getTime','setTime','getTimezoneOffset','getUTCDate','setUTCDate','getUTCDay','getUTCFullYear','setUTCFullYear','getUTCHours','setUTCHours','getUTCMilliseconds','setUTCMilliseconds','getUTCMinutes','setUTCMinutes','getUTCMonth','setUTCMonth','getUTCSeconds','setUTCSeconds','valueOf','getYear','setYear','toJSON','toLocaleString','toLocaleDateString','toLocaleTimeString',symbols.toPrimitive]],
+    ['Date',descriptor(globals.Date,'prototype')?.value,['constructor','toString','toDateString','toTimeString','toISOString','toUTCString','toGMTString','getDate','setDate','getDay','getFullYear','setFullYear','getHours','setHours','getMilliseconds','setMilliseconds','getMinutes','setMinutes','getMonth','setMonth','getSeconds','setSeconds','getTime','setTime','getTimezoneOffset','getUTCDate','setUTCDate','getUTCDay','getUTCFullYear','setUTCFullYear','getUTCHours','setUTCHours','getUTCMilliseconds','setUTCMilliseconds','getUTCMinutes','setUTCMinutes','getUTCMonth','setUTCMonth','getUTCSeconds','setUTCSeconds','valueOf','getYear','setYear','toJSON','toLocaleString','toLocaleDateString','toLocaleTimeString','toTemporalInstant',symbols.toPrimitive]],
   ];
   for(const [kind,owner,allowed]of kinds){
     if(!owner||isProxy(owner))fail('proxy feature prototype');
@@ -76,16 +76,22 @@ function initialize(){
       const key=names[at],field=before[key];if(!allowed.includes(key))fail('unknown feature prototype property');
       if(own(field,'value')){
         if(typeof field.value==='function'){
+          if(kind==='Date'&&key==='toTemporalInstant'&&(field.enumerable||field.configurable!==true||field.writable!==true))fail('unproved temporal native descriptor');
           const name=key==='constructor'?kind:key===symbols.hasInstance?'[Symbol.hasInstance]':key===symbols.toPrimitive?'[Symbol.toPrimitive]':key==='toGMTString'?'toUTCString':key;
           if(!native(field.value,name))fail('unqualified feature prototype method');
         }else if(!['length','name','message'].includes(key)&&key!==symbols.toStringTag)fail('unknown feature scalar');
       }else if(kind==='Function'&&['arguments','caller'].includes(key)){
         // These fixed poison accessors are never called by the copied graph.
-        if(field.get!==field.set||typeof field.get!=='function'||isProxy(field.get)||originalCapturedFunctionSource(field.get)!=='function () { [native code] }')fail('function poison accessors changed');
+        const node=field.get===field.set&&typeof field.get==='function'&&!isProxy(field.get)&&originalCapturedFunctionSource(field.get)==='function () { [native code] }',bun=field.get!==field.set&&typeof field.get==='function'&&typeof field.set==='function'&&!isProxy(field.get)&&!isProxy(field.set)&&native(field.get,key)&&native(field.set,key);
+        if(field.enumerable||field.configurable!==true||!node&&!bun)fail('function poison accessors changed');
+      }else if(kind==='Symbol'&&key==='description'){
+        if(field.enumerable||field.configurable!==true||field.set!==undefined||!native(field.get,'get description')&&!native(field.get,'description'))fail('unqualified description getter');
       }else if(field.get!==undefined&&!native(field.get,'get '+key)||field.set!==undefined&&!native(field.set,'set '+key))fail('unqualified feature getter');
     }
     families.push({owner,before,names,parent});
   }
+  const dateParent=prototype(globals.Date);if(dateParent!==functionPrototype||descriptor(globals.Date,symbols.hasInstance))fail('Date instance check changed');
+  pins.push({owner:globals.Date,key:symbols.hasInstance,field:null});
   // Array/RegExp/String whole prototypes are qualified by the existing shared
   // source guard. Extra operations used by this exact parser are explicit.
   pin(arrayPrototype,'pop','pop');pin(arrayPrototype,'push','push');
@@ -115,11 +121,12 @@ function initialize(){
   if(apply(numberText,number,[16])!=='ff'||apply(numberValue,number,[])!==255||apply(globals.String,undefined,['feature'])!=='feature'||apply(globals.Number,undefined,['123'])!==123||apply(globals.isNaN,undefined,['not a number'])!==true||apply(globals.parseInt,undefined,['41',16])!==65)fail('native scalar family differs');
   // The existing shared guard proves the actual native Array iterator/next.
   // Prototype structure and every pin are rechecked before each source read.
-  guard={pins,families,globals,prepare,length,typedPrototype,typedParent};return guard;
+  guard={pins,families,globals,prepare,length,typedPrototype,typedParent,dateParent};return guard;
 }
 function checked(){
   const state=guard??initialize();if(!originalStaticSourceIntrinsicsUnchanged())fail('live source operations changed');
   const hasOwnProperty=descriptor(prototype({}),'hasOwnProperty')?.value;if(prototype(hasOwnProperty)!==functionPrototype||descriptor(hasOwnProperty,'call'))fail('live own property receiver call changed');
+  if(prototype(state.globals.Date)!==state.dateParent)fail('live Date constructor ancestry changed');
   if(prototype(state.typedPrototype)!==state.typedParent)fail('live byte ancestry changed');
   for(const pin of state.pins){const now=descriptor(pin.owner,pin.key);if(pin.field===null?now!==undefined:!same(now,pin.field))fail('live native operation changed');}
   for(const family of state.families){if(isProxy(family.owner)||prototype(family.owner)!==family.parent)fail('live feature ancestry changed');const names=keys(family.owner);if(names.length!==family.names.length)fail('live feature shape changed');for(let at=0;at<names.length;at++)if(names[at]!==family.names[at]||!same(descriptor(family.owner,names[at]),family.before[names[at]]))fail('live feature descriptor changed');}
@@ -144,7 +151,7 @@ function sources(){
 }
 function unchanged(records){for(const record of records){const now=lstatSync(record.path);if(!now.isFile()||now.isSymbolicLink()||!equalIdentity(identity(now),record.identity))fail('complete parser source identity changed');}}
 function execute(files,state){
-  const cache=new Map(),g=state.globals,host={Buffer:undefined,BigInt:g.BigInt,Date:g.Date};
+  const cache=new Map(),g=state.globals,host={Buffer:undefined,BigInt:g.BigInt,Date:g.Date};let bookkeeping=null;
   Object.freeze(host);
   const names=['require','module','exports','global','Object','Array','String','Number','BigInt','Symbol','Date','RegExp','Error','TypeError','Math','JSON','parseInt','isNaN','eval'];
   function load(path){
@@ -163,12 +170,15 @@ function execute(files,state){
     };
     // The outer wrapper is non-strict so it can bind native eval. Original
     // source directives remain inside the returned function, unchanged.
-    const outer=apply(g.Function,undefined,[...names,'return (function(){\n'+ascii(files.get(path))+'\n});']);
-    const code=apply(outer,undefined,[require,module,module.exports,host,g.Object,g.Array,g.String,g.Number,g.BigInt,g.Symbol,g.Date,g.RegExp,g.Error,g.TypeError,g.Math,JSON,g.parseInt,g.isNaN,g.eval]);apply(code,undefined,[]);return module.exports;
+    // This fixed suffix only observes lexical identities in the SAME complete
+    // pristine module. No caller code, names or source fragments enter it.
+    const suffix=path==='lib/toml-parser.js'?'\nreturn {type:_type,declared:_declared,contentType:_contentType,table:TABLE,inlineTable:INLINE_TABLE,list:LIST,inlineList:INLINE_LIST};':'';
+    const outer=apply(g.Function,undefined,[...names,'return (function(){\n'+ascii(files.get(path))+suffix+'\n});']);
+    const code=apply(outer,undefined,[require,module,module.exports,host,g.Object,g.Array,g.String,g.Number,g.BigInt,g.Symbol,g.Date,g.RegExp,g.Error,g.TypeError,g.Math,JSON,g.parseInt,g.isNaN,g.eval]);const observed=apply(code,undefined,[]);if(path==='lib/toml-parser.js'){const values=Object.values(observed);if(values.length!==7||values.some(value=>typeof value!=='symbol')||new Set(values).size!==7)fail('private parser lexical bookkeeping differs');bookkeeping=Object.freeze(observed);}return module.exports;
   }
-  return load('parse-string.js');
+  const parse=load('parse-string.js');if(!bookkeeping)fail('private parser lexical identity observation absent');return {parse,bookkeeping};
 }
-function cargoData(parsed){
+function cargoData(parsed,bookkeeping){
   let cells=32768,characters=262144;
   function data(value,depth=0){
     if(--cells<0||depth>64)fail('Cargo data bound');
@@ -177,8 +187,13 @@ function cargoData(parsed){
     if(typeof value==='number'&&Number.isSafeInteger(value))return value;
     if(!value||typeof value!=='object'||isProxy(value))fail('plain closed Cargo data required');
     const array=Array.isArray(value),parent=prototype(value);if(parent!==(array?Array.prototype:Object.prototype))fail('non-Cargo TOML value');
-    const fields=Object.getOwnPropertyDescriptors(value),result=array?[]:Object.create(null);
-    for(const key of keys(fields)){const field=fields[key];if(!own(field,'value'))fail('non-data parser result');if(typeof key==='symbol'){if(!['symbol','boolean'].includes(typeof field.value))fail('unknown parser bookkeeping');continue;}if(array&&key==='length')continue;if(!field.enumerable||array&&key!==''+result.length)fail('incomplete Cargo data');characters-=utf8Size(key);if(characters<0)fail('Cargo key bound');Object.defineProperty(result,key,{value:data(field.value,depth+1),enumerable:true,writable:true,configurable:true});}
+    const fields=Object.getOwnPropertyDescriptors(value),result=array?[]:Object.create(null),tag=fields[bookkeeping.type];
+    if(!tag||!own(tag,'value')||tag.enumerable||tag.configurable||tag.writable||!((array?[bookkeeping.inlineList,bookkeeping.list]:[bookkeeping.inlineTable,bookkeeping.table]).includes(tag.value)))fail('private parser object kind differs');
+    const expected=[bookkeeping.type];
+    if(tag.value===bookkeeping.table){const declared=fields[bookkeeping.declared];if(!declared||!own(declared,'value')||declared.enumerable||declared.configurable||declared.writable!==true||typeof declared.value!=='boolean')fail('private table declaration metadata differs');expected.push(bookkeeping.declared);}
+    if(tag.value===bookkeeping.inlineList){const content=fields[bookkeeping.contentType];if(!content||!own(content,'value')||content.enumerable||content.configurable||content.writable||content.value!==undefined&&!['undefined','boolean','number','bigint','string','symbol','function','object','null','datetime','inline-table','inline-list','table','list','float','integer'].includes(content.value))fail('private inline-list content metadata differs');expected.push(bookkeeping.contentType);}
+    const actual=keys(fields).filter(key=>typeof key==='symbol');if(actual.length!==expected.length||actual.some(key=>!expected.includes(key)))fail('foreign parser bookkeeping identity');
+    for(const key of keys(fields)){const field=fields[key];if(!own(field,'value'))fail('non-data parser result');if(typeof key==='symbol')continue;if(array&&key==='length')continue;if(!field.enumerable||array&&key!==''+result.length)fail('incomplete Cargo data');characters-=utf8Size(key);if(characters<0)fail('Cargo key bound');Object.defineProperty(result,key,{value:data(field.value,depth+1),enumerable:true,writable:true,configurable:true});}
     if(array&&result.length!==value.length)fail('incomplete Cargo array');return result;
   }return data(parsed);
 }
@@ -196,7 +211,7 @@ export function parsePrivateOriginalCargoToml(source,options){
   checked();unchanged(records);
   if(!compiled){compiled=execute(files,state);compiledSources=files;}else for(const [path,bytes]of files){const prior=compiledSources.get(path),length=guard.length(bytes);if(!prior||guard.length(prior)!==length)fail('compiled private parser source changed');for(let at=0;at<length;at++)if(bytes[at]!==prior[at])fail('compiled private parser source changed');}
   let result;
-  try{result=cargoData(apply(compiled,undefined,[source]));}catch(error){throw new Failure('Private original Cargo TOML refused: '+(typeof error?.message==='string'?error.message:'unavailable parsed data'));}
+  try{result=cargoData(apply(compiled.parse,undefined,[source]),compiled.bookkeeping);}catch(error){throw new Failure('Private original Cargo TOML refused: '+(typeof error?.message==='string'?error.message:'unavailable parsed data'));}
   checked();unchanged(records);return result;
 }
 export function assertPrivateOriginalCargoTomlExecution(){checked();}
