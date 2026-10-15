@@ -1,0 +1,11 @@
+{
+  "schema": "complete-original-private-frozen-json-classifier-v1",
+  "commit": "0a428f70906f1781d5032031bf9831500f0973a6",
+  "path": "tools/translation/private-frozen-json.mjs",
+  "mode": "100644",
+  "blob": "80e2f80e9fc2174bb75d763d2ac3a06ee96f6f2d",
+  "bytes": 5963,
+  "sha256": "531b1bf385c0242f2a89426754e1656745e8c1a219404819b8f700376434207c",
+  "storedPath": "private-frozen-json.mjs.original.txt",
+  "scope": "Complete old/current helper leaves, exact relative imports relocated to SAME active native/private issuers; cold tests start after those common issuers initialize."
+}

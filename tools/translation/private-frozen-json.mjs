@@ -16,23 +16,37 @@ const weakConstructor=qualified?WeakMap:null,setConstructor=qualified?Set:null;
 const storage=qualified?new Map():null,iteratorPrototype=qualified?prototype(apply(mapEntries,storage,[])):null,next=qualified?descriptor(iteratorPrototype,'next').value:null;
 const ENTRY_BYTES=4194304,TOTAL_BYTES=8388608,ENTRIES=16,CELLS=200000,DEPTH=160;
 let retainedBytes=0,entries=0,hits=0,misses=0,captures=0,evictions=0;
+// Eligibility only: weak keys never retain an original owner. Rotation bounds
+// the number of positive scalar records without keeping a strong key list.
+const SUBTREES=4096;
+let subtrees=qualified?new weakConstructor():null,subtreeEntries=0,subtreeHits=0,subtreeMisses=0,subtreeCaptures=0,subtreeRotations=0,subtreeBudgetRefusals=0;
 function intrinsics(){
  if(!qualified||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalLexingIntrinsicsUnchanged())return false;
  const actual=descriptor(Object,'isFrozen');return !!actual&&own(actual,'value')&&actual.value===frozenField.value&&actual.writable===frozenField.writable&&actual.enumerable===frozenField.enumerable&&actual.configurable===frozenField.configurable;
 }
 function immutableJson(value){
- let stack={value,depth:0,exit:false,next:null},cells=CELLS;const active=new setConstructor();
+ let stack={value,depth:0,exit:false,parent:null,next:null},cells=CELLS;const active=new setConstructor();
+ const charge=(parent,count,height)=>{if(parent){parent.cells+=count;if(height+1>parent.height)parent.height=height+1;}};
  while(stack){const frame=stack;stack=frame.next;const value=frame.value;
-  if(frame.exit){apply(setDelete,active,[value]);continue;}
+  if(frame.exit){
+   apply(setDelete,active,[value]);
+   if(subtreeEntries>=SUBTREES){subtrees=new weakConstructor();subtreeEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
+   apply(weakSet,subtrees,[value,{cells:frame.total.cells,height:frame.total.height}]);subtreeEntries++;if(subtreeCaptures<9007199254740991)subtreeCaptures++;
+   charge(frame.parent,frame.total.cells,frame.total.height);continue;
+  }
   if(--cells<0||frame.depth>DEPTH)return false;
-  if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean')continue;
-  if(typeof value!=='object'||isProxy(value)||apply(setHas,active,[value])||!apply(frozenField.value,Object,[value]))return false;
+  if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean'){charge(frame.parent,1,0);continue;}
+  if(typeof value!=='object'||isProxy(value)||apply(setHas,active,[value]))return false;
+  const saved=apply(weakGet,subtrees,[value]);
+  if(saved){if(saved.cells-1>cells||saved.height>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=saved.cells-1;charge(frame.parent,saved.cells,saved.height);if(subtreeHits<9007199254740991)subtreeHits++;continue;}
+  if(subtreeMisses<9007199254740991)subtreeMisses++;
+  if(!apply(frozenField.value,Object,[value]))return false;
   const proto=prototype(value),array=isArray(value);if(proto!==objectPrototype&&proto!==null&&!(array&&proto===arrayPrototype))return false;
   const fields=descriptors(value),names=keys(fields);if(own(fields,'toJSON'))return false;
   if(array){if(!own(fields,'length'))return false;const length=fields.length.value;if(length<0||length>cells||names.length!==length+1)return false;for(let at=0;at<length;at++)if(!own(fields,at))return false;}
   for(let at=0;at<names.length;at++){const key=names[at],field=fields[key];if(typeof key!=='string'||!own(field,'value')||!field.enumerable&&!(array&&key==='length'))return false;}
-  apply(setAdd,active,[value]);stack={value,depth:frame.depth,exit:true,next:stack};
-  for(let at=names.length-1;at>=0;at--){const key=names[at];if(array&&key==='length')continue;stack={value:fields[key].value,depth:frame.depth+1,exit:false,next:stack};}
+  const total={cells:1,height:0};apply(setAdd,active,[value]);stack={value,depth:frame.depth,exit:true,parent:frame.parent,total,next:stack};
+  for(let at=names.length-1;at>=0;at--){const key=names[at];if(array&&key==='length')continue;stack={value:fields[key].value,depth:frame.depth+1,exit:false,parent:total,next:stack};}
  }
  return true;
 }
@@ -54,4 +68,4 @@ export function createPrivateFrozenJsonCache(){
  };
 }
 // Bounded scalar diagnostics only; mutating this returned copy grants nothing.
-export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH}};}
+export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH},eligibilityMemo:{entries:subtreeEntries,maximumEntries:SUBTREES,hits:subtreeHits,misses:subtreeMisses,captures:subtreeCaptures,rotations:subtreeRotations,budgetRefusals:subtreeBudgetRefusals}};}
