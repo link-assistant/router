@@ -3,7 +3,7 @@
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
-import {sourceItems} from '../rust-structure.mjs';
+import {createStaticSourceItemReader} from '../static-source-items.mjs';
 import {itemConfiguration,isInertConditionalAttribute} from '../cfg-profile.mjs';
 import {originalDeclarationHeader,originalUseDeclarationLeaves} from '../module-bindings.mjs';
 import {deriveDependencyOriginalInputs} from '../derive-dependencies.mjs';
@@ -73,8 +73,9 @@ function lockedPackage(dependencies,name){
  return {...selected,inputProof:{manifestSha256:hash(inputs.manifest),lockSha256:hash(inputs.lock),package:name,version:pin.version,requirement,archiveSha256:pin.sha256,profileSha256:hash(profileBytes)}};
 }
 const allowed=new Set(['cfg','doc','allow','warn','deny','forbid','inline','cold','track_caller','must_use','deprecated','no_std']);
+const originalSourceItems=createStaticSourceItemReader();
 function originalNamespace(pin){
- const items=sourceItems(pin.source);
+ const items=originalSourceItems(pin);
  for(const item of items){if(item.comment)continue;
   const tokens=significant(item),inner=tokens[0]?.text==='#'&&tokens[1]?.text==='!';
   const head=originalDeclarationHeader(item),condition=itemConfiguration(item.tokens,null);

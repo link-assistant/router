@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {sourceItems} from '../rust-structure.mjs';
+import {createStaticSourceItemReader} from '../static-source-items.mjs';
 import {itemConfiguration,isInertConditionalAttribute,evaluateConfiguration} from '../cfg-profile.mjs';
 import {originalUseDeclarationLeaves,originalDeclarationHeader} from '../module-bindings.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
@@ -16,7 +17,7 @@ const hash=raw=>createHash('sha256').update(raw).digest('hex');
 const same=(a,b)=>a.length===b.length&&a.every((part,index)=>part===b[index]);
 const significant=item=>item.tokens.filter(token=>token.type!=='comment');
 const fail=message=>{throw new TypeError('Original primitive trait closure: '+message);};
-let registry,prelude;const coreProofs=new Map();
+let registry,prelude;const coreProofs=new Map(),originalSourceItems=createStaticSourceItemReader();
 function originals(){
   if(registry)return registry;const files=originalPrimitiveNamespaceSources();
   for(const suffix of ['marker.rs','fmt/mod.rs']){
@@ -42,16 +43,16 @@ const normalize=(segments,owner)=>{
 };
 function commonPrelude(){
   if(prelude)return prelude;primitiveFromNamespace();const pin=primitiveFromPinnedSource('library/core/src/prelude/v1.rs'),map=new Map();
-  for(const item of sourceItems(pin.source).filter(item=>item.term==='use'&&publicItem(item)))for(const leaf of originalUseDeclarationLeaves(item))if(!leaf.glob&&leaf.name!=='_'){
+  for(const item of originalSourceItems(pin).filter(item=>item.term==='use'&&publicItem(item)))for(const leaf of originalUseDeclarationLeaves(item))if(!leaf.glob&&leaf.name!=='_'){
     if(map.has(leaf.name))fail('common original prelude has an ambiguous trait name');map.set(leaf.name,{path:normalize(leaf.segments,['core']),source:pin.path,sourceSha256:pin.sha256,span:{start:item.start,end:item.end}});
   }
   prelude=map;return map;
 }
 function coreDeclaration(path,seen=new Set()){
   if(path[0]!=='core'||path.length<3||seen.has(path.join('::'))||seen.size>=32)fail('standard trait route is absent, cyclic or over its bound');seen.add(path.join('::'));
-  const root=originalCorePreludeRootSource();if(!sourceItems(root.source).some(item=>item.term==='mod'&&item.name===path[1]&&publicItem(item)))fail('standard trait has no original public core module');
+  const root=originalCorePreludeRootSource();if(!originalSourceItems(root).some(item=>item.term==='mod'&&item.name===path[1]&&publicItem(item)))fail('standard trait has no original public core module');
   const owner=path.slice(0,-1),base='library/core/src/'+owner.slice(1).join('/'),pin=originals().get(base+'/mod.rs')??originals().get(base+'.rs');if(!pin)fail('standard trait source is unavailable');
-  const items=sourceItems(pin.source),own=items.filter(item=>item.term==='trait'&&item.name===path.at(-1)&&publicItem(item));if(own.length===1)return {pin,item:own[0],owner,route:[]};if(own.length>1)fail('standard trait declaration is ambiguous');
+  const items=originalSourceItems(pin),own=items.filter(item=>item.term==='trait'&&item.name===path.at(-1)&&publicItem(item));if(own.length===1)return {pin,item:own[0],owner,route:[]};if(own.length>1)fail('standard trait declaration is ambiguous');
   const candidates=[];
   for(const item of items.filter(item=>item.term==='use'&&publicItem(item)))for(const leaf of originalUseDeclarationLeaves(item,owner))if(!leaf.glob&&leaf.name===path.at(-1))candidates.push({path:normalize(leaf.segments,owner),item});
   if(candidates.length!==1)fail('standard trait requires a unique original named reexport');
@@ -122,7 +123,7 @@ function reference(tokens){
 }
 function coreName(owner,name){
   const base='library/core/src/'+owner.slice(1).join('/'),pin=originals().get(base+'/mod.rs')??originals().get(base+'.rs');if(!pin)fail('standard trait owner source is missing');
-  const items=sourceItems(pin.source);if(items.some(item=>item.term==='trait'&&item.name===name))return [...owner,name];
+  const items=originalSourceItems(pin);if(items.some(item=>item.term==='trait'&&item.name===name))return [...owner,name];
   const imports=[];
   for(const item of items.filter(item=>item.term==='use'))for(const leaf of originalUseDeclarationLeaves(item,owner))if(!leaf.glob&&leaf.name===name)imports.push(normalize(leaf.segments,owner));
   if(imports.length===1)return imports[0];if(imports.length>1)fail('standard supertrait import is ambiguous');

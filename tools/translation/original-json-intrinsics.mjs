@@ -100,3 +100,56 @@ export function originalFlatTokenIntrinsicsUnchanged(){
  for(let index=0;index<tokenPins.length;index++){const pin=tokenPins[index];if(!same(descriptor(pin.owner,pin.key),pin.field))return false;}
  return tokenPrototypeSafe();
 }
+
+// The static lexer memo skips only native allocation/control flow. Qualify
+// every String/RegExp operation used by the complete source lexer, separately
+// from Buffer-dependent metadata copying. Consumer oracle leaves share this
+// issuer bootstrap; this is not a whole-compiler bootstrap equivalence claim.
+const syntaxString=descriptor(globalThis,'String'),syntaxRegExp=descriptor(globalThis,'RegExp');
+const syntaxFreeze=descriptor(originalObject,'freeze'),syntaxIsFrozen=descriptor(originalObject,'isFrozen');
+const syntaxDefine=descriptor(originalObject,'defineProperty');
+let syntaxStringPrototype=null,syntaxRegExpPrototype=null,syntaxStrings=null,syntaxRegexps=null;
+let syntaxNative=!!(traversalNative&&syntaxString&&hasOwn(syntaxString,'value')&&!types.isProxy(syntaxString.value)&&native(syntaxString.value,'String')&&syntaxRegExp&&hasOwn(syntaxRegExp,'value')&&!types.isProxy(syntaxRegExp.value)&&native(syntaxRegExp.value,'RegExp')&&syntaxFreeze&&hasOwn(syntaxFreeze,'value')&&native(syntaxFreeze.value,'freeze')&&syntaxIsFrozen&&hasOwn(syntaxIsFrozen,'value')&&native(syntaxIsFrozen.value,'isFrozen')&&syntaxDefine&&hasOwn(syntaxDefine,'value')&&native(syntaxDefine.value,'defineProperty'));
+function syntaxPrototypeNative(entries,kind){
+ for(let index=0;index<entries.length;index++){
+  const key=entries[index][0],field=entries[index][1];
+  if(hasOwn(field,'value')){
+   if(typeof field.value!=='function')continue;
+   const name=key==='constructor'?kind:typeof key!=='symbol'?key:key===Symbol.iterator?'[Symbol.iterator]':key===Symbol.match?'[Symbol.match]':key===Symbol.matchAll?'[Symbol.matchAll]':key===Symbol.replace?'[Symbol.replace]':key===Symbol.search?'[Symbol.search]':key===Symbol.split?'[Symbol.split]':null;
+   if(name===null||!native(field.value,name)&&!(kind==='String'&&key==='trimLeft'&&native(field.value,'trimStart'))&&!(kind==='String'&&key==='trimRight'&&native(field.value,'trimEnd')))return false;
+  }else if(field.get!==undefined&&!native(field.get,'get '+String(key))||field.set!==undefined&&!native(field.set,'set '+String(key)))return false;
+ }
+ return true;
+}
+// Numeric inherited cells can make native Array.push or out-of-range String
+// indexing observable. Primitive arithmetic here does not invoke a global
+// Number/String hook, or a regexp that would disturb the lexer's final state.
+function syntaxNumericPrototypeSafe(){
+ const owners=[objectPrototype,arrayPrototype,syntaxStringPrototype];
+ for(let index=0;index<owners.length;index++){
+  const names=keys(owners[index]);
+  for(let at=0;at<names.length;at++){const key=names[at];if(typeof key==='string'){const value=+key;if(value>=0&&value<=9007199254740991&&value%1===0&&''+value===key)return false;}}
+ }
+ return true;
+}
+if(syntaxNative){
+ syntaxStringPrototype=syntaxString.value.prototype;syntaxRegExpPrototype=syntaxRegExp.value.prototype;
+ if(types.isProxy(syntaxStringPrototype)||types.isProxy(syntaxRegExpPrototype))syntaxNative=false;
+ else if(!syntaxNumericPrototypeSafe())syntaxNative=false;
+ else{syntaxStrings=snapshot(syntaxStringPrototype);syntaxRegexps=snapshot(syntaxRegExpPrototype);syntaxNative=prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&syntaxPrototypeNative(syntaxStrings,'String')&&syntaxPrototypeNative(syntaxRegexps,'RegExp')&&syntaxNumericPrototypeSafe();}
+}
+// Native names alone do not establish receiver brands (Array.slice and
+// String.slice are different). These probes use only private primitives after
+// all of their operations qualify, once in the shared issuer bootstrap.
+if(syntaxNative)try{
+ const strings=syntaxStringPrototype,regexps=syntaxRegExpPrototype,rx=/a(b)/u,match=apply(regexps.exec,rx,['ab']);
+ syntaxNative=apply(strings.slice,'éabc',[1,3])==='ab'&&apply(strings.indexOf,'éabc',['a'])===1&&apply(strings.startsWith,'éabc',['é'])===true&&apply(strings.charCodeAt,'éabc',[0])===233&&apply(regexps.test,/\s/u,['\n'])===true&&match.length===2&&match[0]==='ab'&&match[1]==='b'&&apply(syntaxIsFrozen.value,originalObject,[{}])===false;
+ const frozen=apply(syntaxFreeze.value,originalObject,[{}]);syntaxNative=syntaxNative&&apply(syntaxIsFrozen.value,originalObject,[frozen])===true;
+}catch{syntaxNative=false;}
+export function originalStaticSourceIntrinsicsUnchanged(){
+ return !!(syntaxNative&&originalNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&samePrototype(syntaxStringPrototype,syntaxStrings)&&samePrototype(syntaxRegExpPrototype,syntaxRegexps)&&syntaxNumericPrototypeSafe());
+}
+
+// Diagnostic metadata belongs to the shared issuer bootstrap. Reader budgets
+// are lexical constants; even a replaced freeze cannot widen their domain.
+export const STATIC_SOURCE_ITEM_LIMITS=Object.freeze({entries:16,sourceChars:128000,entryCells:200000,cells:400000,chars:1000000});
