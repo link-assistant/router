@@ -1,10 +1,10 @@
 import {createHash,Hash} from 'node:crypto';
 import {types} from 'node:util';
-import {originalJsonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalJsonIntrinsicsUnchanged,originalPathMembershipIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
-import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
+import {originalSourceModuleItems,moduleScopeKey,isSourceModuleView} from './source-module-views.mjs';
 import {createDeriveDependencyProof,deriveExternalModules,isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {inspectDeriveInput,STANDARD_LAYOUT_DERIVES} from './derive-inputs.mjs';
 import {inertInnerLintItem} from './tool-attributes.mjs';
@@ -36,6 +36,38 @@ function originalHelperCryptoUnchanged(){return nativeHelperCrypto&&createHash==
 export const originalDeriveHelperCryptoUnchanged=originalHelperCryptoUnchanged;
 const originalContextMaps=new WeakMap(),fastHelperProofs=new WeakSet(),weakSetHas=WeakSet.prototype.has,weakSetAdd=WeakSet.prototype.add,mapPrototype=Map.prototype,mapEntries=Map.prototype.entries,mapNext=Object.getPrototypeOf(new Map().entries()).next,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,hasOwn=Object.hasOwn;
 function ownSelection(value,name){if(!value||typeof value!=='object'||types.isProxy(value))throw new TypeError('Original derive selection requires non-proxy own data');const field=descriptor(value,name);if(!field||!hasOwn(field,'value'))throw new TypeError('Original derive selection requires own data: '+name);return field.value;}
+// This index lives only between requested-closure construction and the first
+// missing/unresolved module. No source hashing or caller callback runs in that
+// interval. A miss retires it before the old conditional-proof JSON walk.
+const pathObjectPrototype=Object.prototype,pathArrayPrototype=Array.prototype;
+function ordinaryPathArray(value,strings=false){
+  if(types.isProxy(value)||!Array.isArray(value)||Object.getPrototypeOf(value)!==pathArrayPrototype)return false;
+  const length=descriptor(value,'length');if(!length||!hasOwn(length,'value'))return false;
+  const fields=Reflect.ownKeys(value);if(fields.length!==length.value+1)return false;
+  for(let index=0;index<length.value;index++){const field=descriptor(value,''+index);if(!field||!hasOwn(field,'value')||strings&&typeof field.value!=='string')return false;}
+  return true;
+}
+function standardModulePathIndex(modules,ancestors){
+  if(!originalPathMembershipIntrinsicsUnchanged())return null;
+  // The working module wrappers are private, but their path arrays can still
+  // belong to the caller. Inspect them without freezing, cloning or getters.
+  for(let index=0;index<modules.length;index++){
+    const module=modules[index];if(types.isProxy(module)||Object.getPrototypeOf(module)!==pathObjectPrototype)return null;
+    const path=descriptor(module,'path'),view=descriptor(module,'sourceView');
+    if(!path||!hasOwn(path,'value')||!view||!hasOwn(view,'value')||!isSourceModuleView(view.value)||!ordinaryPathArray(path.value,true))return null;
+  }
+  // All queries must qualify before any index is used. Otherwise one legacy
+  // target serializer could mutate caller paths before a later cached query.
+  for(let index=0;index<ancestors.length;index++){
+    const bindings=ancestors[index].bindings;if(!ordinaryPathArray(bindings))return null;
+    for(let at=0;at<bindings.length;at++){
+      const binding=bindings[at];if(types.isProxy(binding)||Object.getPrototypeOf(binding)!==pathObjectPrototype)return null;
+      for(const name of ['namespace','kind','status','via','target']){const field=descriptor(binding,name);if(field?!hasOwn(field,'value'):descriptor(pathObjectPrototype,name))return null;}
+      if(binding.namespace==='type'&&binding.kind==='mod'&&binding.status==='resolved'&&binding.via==='declaration'&&!ordinaryPathArray(binding.target,true))return null;
+    }
+  }
+  const paths=new Set();for(let index=0;index<modules.length;index++)paths.add(JSON.stringify(['crate',...modules[index].path]));return paths;
+}
 const key=path=>path.join('::');
 const invocationId=(module,item)=>moduleScopeKey(module)+':'+item.start+':'+item.end;
 const standardOwner=(path,scope)=>path.length===1&&STANDARD_LAYOUT_DERIVES.has(path[0])&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.name===path[0]&&binding.macroKind!=='bang');
@@ -222,8 +254,16 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
         if(!owners.length&&!input.builtinDefault){
           if(input.genericParameters||input.lifetimeParameters||input.absentConditionalAttributes.length||input.inertConditionalAttributes.length||input.attributes.some(attribute=>attribute.helpers||!['derive','doc','allow','warn','deny','forbid','must_use'].includes(attribute.name)))throw new TypeError('Standard-only input retains a generic, helper, configuration or layout obligation');
           const ancestors=[...scopes.values()].filter(candidate=>candidate.path.every((name,index)=>scope.path[index]===name)),names=new Set(['core','std',...input.attributes.map(attribute=>attribute.name),...input.derives.map(invocation=>invocation.path[0])]);
-          const missingModule=binding=>binding.namespace==='type'&&binding.kind==='mod'&&(binding.status!=='resolved'||binding.via==='declaration'&&binding.target?.[0]==='crate'&&!modules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target)));
           const requested=ownerRequests(input),closures=ancestors.map(candidate=>requestedAttributeClosure(candidate,module,requested));
+          let modulePaths=standardModulePathIndex(modules,ancestors);
+          const missingModule=binding=>{
+            if(binding.namespace!=='type'||binding.kind!=='mod')return false;
+            if(binding.status!=='resolved'){modulePaths=null;return true;}
+            if(binding.via!=='declaration'||binding.target?.[0]!=='crate')return false;
+            const present=modulePaths?modulePaths.has(JSON.stringify(binding.target)):modules.some(module=>JSON.stringify(['crate',...module.path])===JSON.stringify(binding.target));
+            if(!present)modulePaths=null;
+            return !present;
+          };
           if(!ancestors.length||ancestors.some((candidate,index)=>candidate.configurationCondition!=='active'||!closures[index]||candidate.bindings.some(binding=>missingModule(binding)&&!closures[index].conditionalSiblingProofs.some(proof=>JSON.stringify(proof.originalBinding)===JSON.stringify(binding))||names.has(binding.name)&&macroBindingAffects(binding,'attribute')||binding.namespace==='type'&&['core','std'].includes(binding.name))||candidate.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))))throw new TypeError('Standard-only input has an unresolved original ancestor, prelude root or attribute owner');
           standardRegistry=builtinStandardDeriveRegistry(dependencies);
           const standardOwners=input.derives.map(invocation=>{const owner=builtinStandardDeriveSourceOwner(standardRegistry,dependencies,invocation.path[0]);return {invocation,target:owner.target,declaration:owner.declaration,symbol:owner.symbol,registration:{name:owner.registration.name,callback:owner.registration.callback,deriveModule:owner.registration.deriveModule},corePrelude:owner.corePrelude,stdPrelude:owner.stdPrelude,callbackBodyCompiled:false};});
