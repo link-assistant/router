@@ -152,3 +152,58 @@ identities stay unchanged. The synthetic Git fixture is removed only after succe
 This verifies actual artifact recovery, not a durable real-case Git witness or
 adoption. Historical member continuity, installation and final packet fit remain
 pending; the original V1, V2 and earlier fresh recovery remain intact.
+
+## Exact originals decoded from existing gzip members
+
+The separate `decoded_original.py` lane reconstructs opaque raw bytes with one
+fixed operation: gzip decoding of a direct regular member in an ordinary packet.
+It accepts no commands, code, codec options, text interpretation or JSON-body
+normalization. This does not change ordinary packet, range or CI reader behavior.
+The existing CI decoded-member limit remains 128 MiB. This new output-only lane
+has the already qualified gzip-proof 512 MiB raw-file bound; packet members stay
+at 128 MiB and archives retain all existing member/count/decoded-byte limits.
+
+A separate, strict `complete-packet-gzip-decoded-index-v1` JSON index has exactly
+`schema` and `objects`. Each canonical logical name maps to exactly `archive`,
+`member`, `codec` (only `gzip`), `gzipBytes`, `gzipSha256`, `bytes`, `sha256` and
+`membersReceipt`. The latter has exactly `path`, `bytes` and `sha256` naming a
+complete plain JSON `complete-evidence-packet-v1` capture receipt relative to the
+case root. Its archive identity, full inventory and totals must match the direct
+ordinary archive witness. Both the complete original gzip and raw length/hash
+are retained, rather than substituting the original's digest for its body.
+
+```sh
+python3 tools/evidence/decoded_original.py \
+  --case-root docs/case-studies/issue-759 --repository-root . \
+  --logical-original recovered/full-original.raw \
+  --copy-to /private/tmp/fresh-original.raw
+```
+
+Every archive member is first verified through the unchanged complete packet
+verifier. A second fully authenticated compressed stream extracts only the
+declared direct regular gzip member. The existing deadline-aware named Git stage
+is used for both passes; staging, full verification and gzip decoding share the
+170-second internal deadline. The caller must retain the 180-second outer and
+1.5 GiB RSS monitor. One private compressed stage exists at a time. The decoder
+hashes/counts every gzip byte and every raw byte while writing only a fresh regular
+`O_EXCL` output through unlinked directory descriptors. Both index and capture
+receipt identities, stage identity and output path are checked again before a
+successful receipt. Failed fresh outputs are retained without success.
+
+The decoded index is at most 4 MiB and 8,192 objects, declaring at most 1 GiB of
+raw originals in total; a capture receipt is at most 16 MiB. Duplicate/unknown
+keys, booleans or nonfinite sizes, links, escaping names, nonregular sources,
+wrong gzip/raw witnesses, decompression overflow and source/path replacement
+refuse. Source hardlinks are deliberately unsupported in this new lane; existing
+ordinary backward-hardlink verification remains unchanged. A present physical
+raw or gzip original corroborates the archive and never bypasses its Git witness.
+Shallow or missing ancestor witnesses still fail closed without lazy fetching.
+
+This source draft and its complete Python/Node/Bun controls are **UNRUN**. It does
+not adopt the two issue-759 raw-file aliases. Before adoption, recover both actual
+raw originals with present and absent overlays, compare every output byte to the
+retained complete originals, preserve full source/gzip/raw/Git/resource receipts,
+and finish all historical/member/CI/measurement continuity and fixed-cap checks.
+Keep both full gzip streams, raw files, archives and failed captures until those
+checks and an explicitly reviewed storage migration succeed. There is no new
+semantic, runtime-parity, Rust or publication authority.
