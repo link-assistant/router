@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,mkdirSync,writeFileSync,mkdtempSync} from 'node:fs';
+import {readFileSync,mkdirSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -82,7 +82,7 @@ test('whole source module path profile and actual invocation are freshly rejoine
 
 test('proxy accessor and copied span ingress cannot invoke hostile metadata or obtain an owned output',()=>{
  const row=authored('#[derive(Copy)]pub struct Payload{value:u8}');let callbacks=0;
- const getter=Object.defineProperty({},'module',{get(){callbacks++;throw Error('getter');}}),proxy=new Proxy(row.module,{get(){callbacks++;throw Error('proxy');},getOwnPropertyDescriptor(){callbacks++;throw Error('descriptor');}});
+ const getter=Object.defineProperty({...options(row)},'module',{get(){callbacks++;throw Error('getter');}}),proxy=new Proxy(row.module,{get(){callbacks++;throw Error('proxy');},getOwnPropertyDescriptor(){callbacks++;throw Error('descriptor');}});
  assert.throws(()=>captureOriginalBuiltinNamespaceCandidate(getter));
  assert.throws(()=>captureOriginalBuiltinNamespaceCandidate(options({...row,module:proxy})));
  const itemGetter=Object.defineProperty({},'start',{get(){callbacks++;throw Error('item getter');}});assert.throws(()=>captureOriginalBuiltinNamespaceCandidate(options({...row,item:itemGetter})),/exact issued original item/);
@@ -95,11 +95,11 @@ test('unsupported owners helpers conditional layout and hidden macro/type output
  retain('06-complete-refused-inputs',outputs);assert.equal(outputs.length,sources.length);
 });
 
-test('complete pre-factor and current owned output leaves preserve full proof bytes and crypto callbacks',{timeout:60000},async()=>{
+test('complete pre-factor and current owned output leaves preserve full proof bytes and crypto callbacks',{timeout:60000},async t=>{
  const fixture=new URL('./fixtures/builtin-derive-namespace-candidates/',import.meta.url),manifest=JSON.parse(readFileSync(new URL('manifest.json',fixture),'utf8')),original=readFileSync(new URL('builtin-derive-bang-footprints.mjs.original.txt',fixture),'utf8');
  assert.equal(Buffer.byteLength(original),manifest.bytes);assert.equal(hash(original),manifest.sha256);
  const actualUrl=new URL('../builtin-derive-bang-footprints.mjs',import.meta.url),relocated=original.replace(/from (['"])(\.\/[^'"]+)\1/g,(_whole,quote,specifier)=>'from '+quote+new URL(specifier,actualUrl).href+quote);
- const directory=mkdtempSync(join(tmpdir(),'router-complete-builtin-original-')),path=join(directory,'builtin-derive-bang-footprints.mjs');writeFileSync(path,relocated,{flag:'wx'});
+ const directory=mkdtempSync(join(tmpdir(),'router-complete-builtin-original-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const path=join(directory,'builtin-derive-bang-footprints.mjs');writeFileSync(path,relocated,{flag:'wx'});
  const old=await import(pathToFileURL(path).href),row=authored('#[derive(Copy)]pub struct Payload{value:u8}'),context=createDeriveFootprintContext({modules:[row.module],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates[0];assert.ok(certificate);
  const invocation=certificate.attributes.filter(attribute=>attribute.name==='derive').flatMap(attribute=>attribute.derives.map(path=>({path,attributeSpan:attribute.span})))[0];
  const sharedIssuerWarmup={old:old.proveBuiltinDeriveBangFootprint({context,certificate,invocation}),current:proveBuiltinDeriveBangFootprint({context,certificate,invocation})};
