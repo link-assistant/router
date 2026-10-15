@@ -39,9 +39,11 @@ export const ORIGINAL_NAMESPACE_PARSER_LIMITS=Object.freeze({sourceBytes:256000,
 const nodeKinds=new Set(['Function','Parameter','Generics','GenericParameter','Where','Bound','ReferenceType','PointerType','TupleType','SliceType','ArrayType','PathType','NeverType','InferType','FunctionType','TypeArguments','AssociatedTypeArgument','Lifetime','BoundType','OpaqueBang','Attribute','Block','Statement','Let','Use','UseTree','MacroDefinition','Path','Literal','Unary','Binary','Call','Index','Field','Try','Cast','Tuple','Array','RepeatArray','Struct','StructField','If','Match','Arm','Closure','Jump','Loop','While','For','Pattern','PatternField','Empty']);
 function normalize(raw){
  const result=[];
- for(const token of raw){
+ for(let at=0;at<raw.length;at++){
+  const token=raw[at];
   if(token.type==='comment')continue;
-  if(token.type==='ident'&&token.text.endsWith('!')){result.push({...token,text:token.text.slice(0,-1),end:token.end-1});result.push({type:'punct',text:'!',start:token.end-1,end:token.end});}
+  if(token.type==='punct'&&token.text==='.'&&raw[at+1]?.type==='punct'&&raw[at+1].text==='.'&&token.end===raw[at+1].start){const second=raw[++at],third=raw[at+1],inclusive=third?.type==='punct'&&third.text==='='&&second.end===third.start;if(inclusive)at++;result.push({...token,text:inclusive?'..=':'..',end:inclusive?third.end:second.end,originalPunctuation:inclusive?[token,second,third]:[token,second]});}
+  else if(token.type==='ident'&&token.text.endsWith('!')){result.push({...token,text:token.text.slice(0,-1),end:token.end-1});result.push({type:'punct',text:'!',start:token.end-1,end:token.end});}
   else if(token.type==='punct'&&['>>','>>>','&&'].includes(token.text)){for(let index=0;index<token.text.length;index++)result.push({...token,text:token.text[index],start:token.start+index,end:token.start+index+1});}
   else result.push({...token});
  }
