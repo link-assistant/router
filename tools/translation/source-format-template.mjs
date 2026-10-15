@@ -439,6 +439,45 @@ export function checkedSourceFormatPieces(execution,resolve,baseSpan){
   return execution.pieces.map(piece=>Object.hasOwn(piece,'text')?{text:piece.text}:{capture:{name:piece.captureName,path:resolve(piece.captureName)},spec:'',literalBytePositionSpan:piece.positionSpan,sourcePosition:{span:{start:offset(piece.positionSpan.start),end:offset(piece.positionSpan.end)}},sourcePlaceholder:{span:{start:offset(piece.placeholderSpan.start),end:offset(piece.placeholderSpan.end)}}});
 }
 
+// Separate entry point: keep the established capture-only receipt byte for
+// byte unchanged. These positions come from the same original Parser helpers;
+// association with genuine caller ASTs is a separate consumer obligation.
+const argumentExecutions=new WeakMap();
+export function executeSourceFormatArgumentTemplate(program,raw,expected){
+  const state=programs.get(program);if(!state)fail('copied or forged control program');
+  if(typeof raw!=='string'||utf8(raw)>32768||typeof expected!=='string'||utf8(expected)>32768)fail('literal input budget');
+  const machine=new Machine(state.functions,state.defaultLayout);let value='',style=variant('None');const ranges=[];
+  const rawMatch=/^r(#{0,255})"([\s\S]*)"\1$/u.exec(raw);
+  let contents,quoteOffset;
+  if(rawMatch){contents=rawMatch[2];style=variant('Some',rawMatch[1].length);quoteOffset=rawMatch[1].length+2;}
+  else if(raw.startsWith('"')&&raw.endsWith('"')){contents=raw.slice(1,-1);quoteOffset=1;}
+  else fail('direct source string literal required');
+  machine.call('escaper::unescape_unicode',[contents,rawMatch?'RawStr':'Str',(range,result)=>{
+    if(result.tag!=='Ok')fail('original literal escaper error');value+=result.args[0];ranges.push({range:{start:range.start+quoteOffset,end:range.end+quoteOffset},character:result.args[0]});
+  }]);
+  if(value!==expected)fail('original literal decode differs from parser value');
+  const parser=machine.call('parser::new',[value,style,variant('Some',raw),false,'Format']);
+  if(!parser.is_source_literal)fail('original parser refused literal origin');
+  const pieces=[];let loops=0;
+  while(true){if(++loops>32769)fail('piece count budget');const next=machine.call('parser::next',[parser]);if(next.tag==='None')break;
+    const piece=next.args[0];if(piece.tag==='Piece::Lit'){pieces.push({text:piece.args[0]});continue;}
+    if(piece.tag!=='Piece::NextArgument')fail('unresolved original piece');
+    const argument=piece.args[0],position=argument.position;
+    if(position.tag==='ArgumentNamed'){
+      const name=position.args[0];if(!name||name==='_'||Array.from(name).some(character=>utf8(character)!==1))fail('ASCII argument identifier required');
+    }else if(!['ArgumentIs','ArgumentImplicitlyIs'].includes(position.tag)||!Number.isSafeInteger(position.args[0])||position.args[0]<0)fail('unresolved original argument position');
+    if(argument.format.ty!==''||argument.format.fill.tag!=='None'||argument.format.width!=='CountImplied'||argument.format.precision!=='CountImplied')fail('format specification remains outside bounded control');
+    pieces.push({position,positionSpan:argument.position_span,placeholderSpan:parser.arg_places.at(-1),spec:''});
+  }
+  if(parser.errors.length)fail('original parser error');
+  const result=freezeMacroTree({schema:'executed-source-format-argument-template-v1',raw,value,pieces,originRanges:ranges,argPlaces:parser.arg_places,lineSpans:parser.line_spans,trace:machine.trace,argumentAstAssociationVerified:false,namespaceAuthority:false,traitSelectionVerified:false,runtimeParity:false});
+  argumentExecutions.set(result,{program,trusted:state.trusted});return result;
+}
+export function originalSourceFormatArgumentTemplate(execution){
+  if(!argumentExecutions.get(execution)?.trusted)fail('genuine original argument template execution required');
+  return execution;
+}
+
 // Generic control candidates carry no source namespace or execution authority.
 // A higher consumer must independently select complete original declarations.
 export function compileFormatSourceControlBodies(sources){
