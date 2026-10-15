@@ -22,6 +22,15 @@ complete repair batch. Record upstream defects with exact versions, a minimal
 reproduction, full failed output and any workaround before the designated owner
 publishes an authorized report.
 
+Compare reported case durations with their declared deadlines. Synchronous
+Node tests can block timeout callbacks and still report a pass after a deadline
+breach; a zero exit code does not qualify that case's performance. Retain the
+complete report and fix the shared implementation without filtering tests,
+raising limits or moving the original workload outside the case. A separately
+bounded diagnostic is not the original test. Keep failed comparisons, source
+differences, shared warmup and retained-context memory costs explicit; none
+establishes a measured speed gain.
+
 ## Run the complete gate before Rust
 
 Install the checked-in JavaScript package dependencies with `npm ci --prefix packages/javascript`. Node 20 or newer is required; install Bun for the native Bun test stage. Run `node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json` from the repository root. This orchestrates the actual repository lint, native Node and Bun tests, TypeScript checks, strict parity, forward translation checks and reverse regeneration checks. It writes a green stamp only after all stages succeed and the SHA and file contents remain unchanged. A current strict parity failure is a reason to finish the missing implementation, not to downgrade the gate.
