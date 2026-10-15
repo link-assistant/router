@@ -42,11 +42,11 @@ export function observeBangOutput(expansion,options={}){
   const lineage=declarativeExpansionLineage(expansion);
   if(!options||types.isProxy(options)||Object.getPrototypeOf(options)!==Object.prototype||Reflect.ownKeys(options).some(key=>key!=='children'))fail('own child observation options required');
   const option=Object.getOwnPropertyDescriptor(options,'children');if(option&&!Object.hasOwn(option,'value'))fail('child observation accessor');
-  const children=option?option.value:[],control=compileExpandedControlExpression(expansion);
+  const childList=denseDataArray(option?option.value:[]),control=compileExpandedControlExpression(expansion);
   if(!control.controlSyntaxProjected)fail(control.diagnostics[0]?.reason??'complete expression output grammar is unproved');
   const original=builtinSourceControlFacts(control);
   if(original.expansion!==expansion||original.inputKind!=='private-expanded-source-expression')fail('foreign complete expression projection');
-  const records=declarativeNestedMacroInvocations(expansion),childList=denseDataArray(children),used=new Set(),links=[];
+  const records=declarativeNestedMacroInvocations(expansion),used=new Set(),links=[];
   const available=childList.map(child=>{
     const state=observations.get(child);if(!state)fail('copied or foreign nested output observation');
     const actual=declarativeExpansionLineage(state.expansion);
