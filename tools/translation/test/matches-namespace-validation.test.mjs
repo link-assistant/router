@@ -24,6 +24,22 @@ test('later hostile target descriptors and proxies remain rejected without execu
  }
  const parser=configured(),original=parser.sourceNamespaceAliases.value;parser.sourceNamespaceAliases.value=proxy(original);assert.throws(()=>matchesParserFacts(parser),TypeError);parser.sourceNamespaceAliases.value=original;assert.equal(callbacks,0);assert.equal(matchesParserFacts(parser).namespaceDigest,reference(parser));
 });
+test('inherited descriptor values cannot replace original namespace target data',()=>{
+ const parser=configured(),map=parser.sourceNamespaceAliases.type.get(''),original=map.get('A'),target=[...original];let ownReads=0,inheritedReads=0;
+ Object.defineProperty(target,0,{enumerable:true,configurable:true,get(){ownReads++;return original[0];}});map.set('A',target);
+ const previous=Object.getOwnPropertyDescriptor(Object.prototype,'value'),poison=Object.create(null);poison.configurable=true;poison.get=()=>{inheritedReads++;return original[0];};
+ try{Object.defineProperty(Object.prototype,'value',poison);assert.throws(()=>matchesParserFacts(parser),TypeError);}
+ finally{if(previous)Object.defineProperty(Object.prototype,'value',previous);else delete Object.prototype.value;map.set('A',original);}
+ assert.equal(ownReads,0);assert.equal(inheritedReads,0);assert.equal(matchesParserFacts(parser).namespaceDigest,reference(parser));
+});
+test('inherited descriptor values cannot replace an original parser frame data field',()=>{
+ const parser=configured(),frame=matchesParserFacts(parser),original=Object.getOwnPropertyDescriptor(frame,'sourceLength');let ownReads=0,inheritedReads=0;
+ Object.defineProperty(frame,'sourceLength',{enumerable:original.enumerable,configurable:true,get(){ownReads++;return original.value;}});
+ const previous=Object.getOwnPropertyDescriptor(Object.prototype,'value'),poison=Object.create(null);poison.configurable=true;poison.get=()=>{inheritedReads++;return original.value;};
+ try{Object.defineProperty(Object.prototype,'value',poison);assert.throws(()=>matchesParserFacts(parser),/frame fields/);}
+ finally{if(previous)Object.defineProperty(Object.prototype,'value',previous);else delete Object.prototype.value;Object.defineProperty(frame,'sourceLength',original);}
+ assert.equal(ownReads,0);assert.equal(inheritedReads,0);assert.strictEqual(matchesParserFacts(parser),frame);
+});
 test('serializer changes after initial capture use the original complete digest behavior',()=>{
  const parser=configured(),baseline=matchesParserFacts(parser).namespaceDigest,descriptor=Object.getOwnPropertyDescriptor(JSON,'stringify'),stringify=descriptor.value;let namespaceCalls=0;
  Object.defineProperty(JSON,'stringify',{...descriptor,value(...args){const namespace=Array.isArray(args[0])&&args[0][0]?.[0]==='type';if(namespace)namespaceCalls++;return stringify(...args)+(namespace?' ':'');}});

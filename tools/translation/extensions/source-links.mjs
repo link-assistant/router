@@ -15,7 +15,7 @@ export const ordinal=(a,b)=>a<b?-1:a>b?1:0;
 export function ownData(value,key) {
   if(!value||typeof value!=='object'||types.isProxy(value))fail('expected non-proxy metadata');
   const descriptor=Object.getOwnPropertyDescriptor(value,key);
-  if(!descriptor||!('value' in descriptor))fail('missing data property '+key);
+  if(!descriptor||!Object.hasOwn(descriptor,'value'))fail('missing data property '+key);
   return descriptor.value;
 }
 export function snapshotMap(value) {
@@ -33,7 +33,7 @@ export function copyMetadata(value,{cells=200000,bytes=4194304,preserveKeyOrder=
   const prototype=Object.getPrototypeOf(value);
   if(prototype!==Object.prototype&&prototype!==null&&prototype!==Array.prototype)fail('unexpected metadata prototype');
   const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(descriptors),array=Array.isArray(value);
-  for(const key of keys){const descriptor=descriptors[key];if(typeof key!=='string'||!('value'in descriptor)||(!descriptor.enumerable&&!(array&&key==='length')))fail('accessor, symbol or hidden metadata');}
+  for(const key of keys){const descriptor=descriptors[key];if(typeof key!=='string'||!Object.hasOwn(descriptor,'value')||(!descriptor.enumerable&&!(array&&key==='length')))fail('accessor, symbol or hidden metadata');}
   active.add(value);let result;
   if(array){
     const length=descriptors.length.value;if(!Number.isSafeInteger(length)||length<0||length>budget.cells)fail('array metadata budget exhausted');

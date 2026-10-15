@@ -50,7 +50,7 @@ function exactNamespaceTarget(actual,expected){
   if(types.isProxy(actual)||!Array.isArray(actual)||Object.getPrototypeOf(actual)!==Array.prototype)return false;
   const descriptors=Object.getOwnPropertyDescriptors(actual),keys=Reflect.ownKeys(descriptors);
   if(keys.length!==expected.length+1||descriptors.length?.value!==expected.length)return false;
-  for(let index=0;index<expected.length;index++){const descriptor=descriptors[index];if(!descriptor||!('value'in descriptor)||!descriptor.enumerable||descriptor.value!==expected[index]||typeof expected[index]!=='string')return false;}
+  for(let index=0;index<expected.length;index++){const descriptor=descriptors[index];if(!descriptor||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable||descriptor.value!==expected[index]||typeof expected[index]!=='string')return false;}
   return true;
 }
 function exactNamespaceCapture(parser,snapshot){
@@ -143,7 +143,7 @@ function originalParserFrame(frame){
   const keys=Reflect.ownKeys(frame);
   if(keys.length!==issued.keys.length||keys.some(key=>!issued.keys.includes(key))||issued.keys.some(key=>{
     const actual=Object.getOwnPropertyDescriptor(frame,key),expected=issued.descriptors[key];
-    return !actual||!('value'in actual)||actual.value!==expected.value||actual.enumerable!==expected.enumerable||actual.writable!==expected.writable||actual.configurable!==expected.configurable;
+    return !actual||!Object.hasOwn(actual,'value')||actual.value!==expected.value||actual.enumerable!==expected.enumerable||actual.writable!==expected.writable||actual.configurable!==expected.configurable;
   }))throw new TypeError('Matches parser frame fields differ from their private issuance');
   immutableContext(issued.fields.context,issued.fields.facts);
   return frame;

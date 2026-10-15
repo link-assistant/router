@@ -9,7 +9,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {parseRust,checkProgram,HostRustParser} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
-import {copyMetadata,snapshotMap,bindCheckedSourceLinks,linkedSourceContext,linkParsedFile,linkProjectDeclaration,relocateSourceLink} from '../extensions/source-links.mjs';
+import {copyMetadata,ownData,snapshotMap,bindCheckedSourceLinks,linkedSourceContext,linkParsedFile,linkProjectDeclaration,relocateSourceLink} from '../extensions/source-links.mjs';
 import {translateSource} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {serializeProgram,parseProgram} from '../semantic-meta.mjs';
@@ -114,6 +114,22 @@ test('metadata normalization invokes no getters, proxy traps or overridden Map m
   const proxy=new Proxy({}, {ownKeys(){reads++;return [];},getPrototypeOf(){reads++;return Object.prototype;}});assert.throws(()=>copyMetadata(proxy),/acyclic data/);
   const map=new Map();Object.defineProperty(map,'get',{value:()=>{reads++;return 'override';}});assert.throws(()=>snapshotMap(map),/unmodified native Map/);
   assert.throws(()=>copyMetadata([,]),/holes|hole/);assert.throws(()=>copyMetadata({[Symbol('evidence')]:1}),/symbol/);assert.equal(reads,0);
+});
+test('inherited descriptor values cannot disguise accessors or missing own metadata',()=>{
+  let ownReads=0,inheritedReads=0;
+  const record=Object.defineProperty({},'field',{enumerable:true,get(){ownReads++;return 'original';}}),array=Object.defineProperty([],0,{enumerable:true,get(){ownReads++;return 'original';}}),absent={};
+  const previous=Object.getOwnPropertyDescriptor(Object.prototype,'value'),poison=Object.create(null);
+  poison.configurable=true;poison.get=()=>{inheritedReads++;return 'original';};
+  try{
+    Object.defineProperty(Object.prototype,'value',poison);
+    assert.throws(()=>ownData(record,'field'),/missing data property/);
+    assert.throws(()=>ownData(absent,'field'),/missing data property/);
+    assert.throws(()=>copyMetadata(record),/accessor/);
+    assert.throws(()=>copyMetadata(array),/accessor/);
+    assert.equal(ownData({field:'own'},'field'),'own');
+    assert.equal(copyMetadata({field:'own'}).field,'own');
+  }finally{if(previous)Object.defineProperty(Object.prototype,'value',previous);else delete Object.prototype.value;}
+  assert.equal(ownReads,0);assert.equal(inheritedReads,0);
 });
 test('source links bind the actual tokenizer bytes and reject token replacement before or after parsing',()=>{
   const original='const VALUE:u8=1u8;fn main(){}',changed=original.replace('1u8','2u8');
