@@ -3,6 +3,14 @@
 import {types} from 'node:util';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 const ROOT_LIMIT=1024,LARGE_LIMIT=2048,SMALL_LIMIT=1024,LARGE_CELLS=64,NODE_LIMIT=32768,CELL_LIMIT=200000,DEPTH_LIMIT=160;
+// Shared scalar-only weak records; no owner or proof root is retained.
+let roots=null,large=null,small=null,rootSlots=0,largeSlots=0,smallSlots=0;
+const lookup=value=>roots?.get(value)??large?.get(value)??small?.get(value);
+function remember(value,record,isRoot){
+ if(isRoot){if(!roots||rootSlots>=ROOT_LIMIT){roots=new WeakMap();rootSlots=0;}roots.set(value,record);rootSlots++;}
+ else if(record.cells>=LARGE_CELLS){if(!large||largeSlots>=LARGE_LIMIT){large=new WeakMap();largeSlots=0;}large.set(value,record);largeSlots++;}
+ else{if(!small||smallSlots>=SMALL_LIMIT){small=new WeakMap();smallSlots=0;}small.set(value,record);smallSlots++;}
+}
 function plan(value,lookup){
  const states=new Map(),order=[],pending=[{value,depth:0,exit:false}];let uniqueCells=0;
  while(pending.length){
@@ -51,13 +59,6 @@ function plan(value,lookup){
 // that participates in the eligible native algorithm. This factory issues no
 // token and is used only by the original private builtin proof construction.
 export function createCompletedDataFreezer(originalFreeze){
- let roots=null,large=null,small=null,rootSlots=0,largeSlots=0,smallSlots=0;
- const lookup=value=>roots?.get(value)??large?.get(value)??small?.get(value);
- function remember(value,record,isRoot){
-  if(isRoot){if(!roots||rootSlots>=ROOT_LIMIT){roots=new WeakMap();rootSlots=0;}roots.set(value,record);rootSlots++;}
-  else if(record.cells>=LARGE_CELLS){if(!large||largeSlots>=LARGE_LIMIT){large=new WeakMap();largeSlots=0;}large.set(value,record);largeSlots++;}
-  else{if(!small||smallSlots>=SMALL_LIMIT){small=new WeakMap();smallSlots=0;}small.set(value,record);smallSlots++;}
- }
  return function completedDataFreeze(value){
   if(!value||typeof value!=='object'||!originalDataFreezeIntrinsicsUnchanged())return originalFreeze(value);
   if(lookup(value))return value;

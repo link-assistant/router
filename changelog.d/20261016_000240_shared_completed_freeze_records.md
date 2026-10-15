@@ -1,0 +1,4 @@
+### Changed
+
+- Draft one module-private pool of completed native-data traversal records shared by builtin output consumers. The three lazy weak cohorts retain a combined 4096 scalar-only rows across all factories. Fully validated Debug and PartialEq route roots can therefore be reused by the enclosing proof traversal. Exactly four outer route freezes use the helper; their original self-recursive seen-WeakSet fallback closures remain byte-exact.
+- Every live native guard, whole-input refusal, cycle-specific factory fallback, incoming height/cell charge and real traversal limit remains unchanged. No public object identity, source check, fresh hash, JSON serialization or full output reissue is cached. Complete before sources and four independent equivalence/coverage controls are retained; the old eight, three and thirteen cases remain unchanged. This source-only draft is UNRUN and makes no performance or qualification claim.
