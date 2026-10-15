@@ -12,6 +12,8 @@ npm ci --prefix packages/javascript
 
 Rust, rustfmt, Clippy and rust-script remain tools for the Rust implementation and its CI checks. Install them when working on that surface, rather than compiling the project as the first setup step. Optional pre-commit hooks use `pip install pre-commit` and `pre-commit install`. Local hooks must remain free of Rust execution and automatic build-cache cleanup; obtain Rust results through the gated workflow below and perform authorized cleanup separately.
 
+Disabling a conflicting local hook does not waive CI verification. Rust check failures must still fail CI after every required JavaScript stage passes for the same commit. Gated jobs and steps must not ignore failures with `continue-on-error`; the workflow audit enforces this independently of installed local hooks.
+
 ## Development Workflow
 
 Create a feature branch or isolated worktree, implement behavior in JavaScript, add targeted behavioral tests and update documentation. Read [the JavaScript-first workflow](docs/development/javascript-first.md) for the parity boundary and generation limitations. Router's JavaScript operations package and a valid parity inventory do not by themselves establish complete Rust runtime parity.
