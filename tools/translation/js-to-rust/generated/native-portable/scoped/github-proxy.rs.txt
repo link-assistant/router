@@ -1,6 +1,27 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/github-proxy.mjs; source sha256=3e4fbfa5c8eb7ac8140beb47c150726e774e620a1334eb7a4e3c45f7dc838db8; IR sha256=e66ef2b80f78d271cab2464b2334ec00d6934441b35dbd447277e5bc3a95dcb7.
+// Independently checked scoped bodies from packages/javascript/native/github-proxy.mjs; source sha256=3e4fbfa5c8eb7ac8140beb47c150726e774e620a1334eb7a4e3c45f7dc838db8; IR sha256=be72172536d67b0238055a2cb46ffbd99a1046c8bcd039567398baeab2d48004.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[rustfmt::skip]
+fn js_sequence_test<I: Iterator<Item = u32>>(input: I, states: &[(bool, &[(u32, u32)], Option<usize>, Option<usize>)]) -> bool {
+    let close = |active: &mut Vec<bool>| {
+        for index in 0..states.len() {
+            if active[index] { if let Some(next) = states[index].3 { active[next] = true; } }
+        }
+    };
+    let mut active = vec![false; states.len()]; active[0] = true; close(&mut active);
+    for unit in input {
+        let mut next = vec![false; states.len()];
+        for index in 0..states.len() {
+            let (negated, ranges, target, _) = states[index];
+            if active[index] && negated != ranges.iter().any(|(low, high)| unit >= *low && unit <= *high) {
+                if let Some(target) = target { next[target] = true; }
+            }
+        }
+        close(&mut next); active = next;
+    }
+    active[states.len()-1]
+}
+
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
     String(&'a [u16]), Number(f64), Boolean(bool), Null, Undefined,
@@ -113,6 +134,11 @@ fn scoped_src38db8cde9674d040_at2097<'a>(name: JsPayload<'a>) -> bool {
 #[rustfmt::skip]
 fn scoped_src38db8cde9674d040_at2207<'a>(key: JsPayload<'a>, v: JsPayload<'a>) -> bool {
     return (key.strict_primitive(JsPayload::String(&[102, 111, 114, 99, 101])) && v.strict_primitive(JsPayload::Boolean(true)));
+}
+
+#[rustfmt::skip]
+fn scoped_src38db8cde9674d040_at2346<'a>(key: JsPayload<'a>, v: JsPayload<'a>) -> bool {
+    return ((key.strict_primitive(JsPayload::String(&[97, 102, 116, 101, 114, 111, 105, 100])) && (v.type_name().to_string() == "string".to_string())) && ({ let observed = v.as_utf16(); js_sequence_test(observed.iter().map(|unit| *unit as u32), &[(false, &[(48, 48)], Some(1), None), (false, &[(48, 48)], Some(2), None), (false, &[(48, 48)], Some(3), None), (false, &[(48, 48)], Some(4), None), (false, &[(48, 48)], Some(5), None), (false, &[(48, 48)], Some(6), None), (false, &[(48, 48)], Some(7), None), (false, &[(48, 48)], Some(8), None), (false, &[(48, 48)], Some(9), None), (false, &[(48, 48)], Some(10), None), (false, &[(48, 48)], Some(11), None), (false, &[(48, 48)], Some(12), None), (false, &[(48, 48)], Some(13), None), (false, &[(48, 48)], Some(14), None), (false, &[(48, 48)], Some(15), None), (false, &[(48, 48)], Some(16), None), (false, &[(48, 48)], Some(17), None), (false, &[(48, 48)], Some(18), None), (false, &[(48, 48)], Some(19), None), (false, &[(48, 48)], Some(20), None), (false, &[(48, 48)], Some(21), None), (false, &[(48, 48)], Some(22), None), (false, &[(48, 48)], Some(23), None), (false, &[(48, 48)], Some(24), None), (false, &[(48, 48)], Some(25), None), (false, &[(48, 48)], Some(26), None), (false, &[(48, 48)], Some(27), None), (false, &[(48, 48)], Some(28), None), (false, &[(48, 48)], Some(29), None), (false, &[(48, 48)], Some(30), None), (false, &[(48, 48)], Some(31), None), (false, &[(48, 48)], Some(32), None), (false, &[(48, 48)], Some(33), None), (false, &[(48, 48)], Some(34), None), (false, &[(48, 48)], Some(35), None), (false, &[(48, 48)], Some(36), None), (false, &[(48, 48)], Some(37), None), (false, &[(48, 48)], Some(38), None), (false, &[(48, 48)], Some(39), None), (false, &[(48, 48)], Some(40), None), (false, &[(48, 48)], Some(40), Some(41)), (false, &[], None, None)]) }));
 }
 
 #[rustfmt::skip]

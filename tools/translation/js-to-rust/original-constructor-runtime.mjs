@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {check} from './vendor/ir.mjs';
 import {sourceConstructorItem} from './vendor/constructor-bodies.mjs';
-import {originalImportedErrorConstructor,reissueImportedErrorConstructor} from './vendor/source-constructors.mjs';
+import {originalImportedErrorConstructor,reissueImportedErrorConstructor,assertConstructorProofData} from './vendor/source-constructors.mjs';
 import {ownershipSyntax} from './vendor/module-syntax.mjs';
 
 const runtimes=new WeakMap(),observedSourceVersions=new Map();
@@ -24,9 +24,11 @@ export async function prepareOriginalConstructorRuntime(program,{sourceRoot,exec
   if(executeOriginalModules!==true||typeof sourceRoot!=='string')throw Error('original constructor evaluation requires an explicit receiving source root and module-execution opt-in');
   const root=resolve(sourceRoot);
   if(await realpath(root)!==root)throw Error('linked original constructor receiving root');
-  const expected=new Map(),definitions=new Map();
+  const expected=new Map(),definitions=new Map(),parents=new Map();
   for(const item of program)if(sourceConstructorItem(item)) {
     const checked=check(item,new Map());
+    if(parents.has(checked.name))throw Error('duplicate original constructor runtime parent');
+    parents.set(checked.name,JSON.stringify(checked));
     for(const source of checked.sourceConstructors.sources) {
       if(expected.has(source.path)&&expected.get(source.path)!==source.source)throw Error('conflicting original constructor runtime sources');
       expected.set(source.path,source.source);
@@ -76,11 +78,11 @@ export async function prepareOriginalConstructorRuntime(program,{sourceRoot,exec
     actual.set(key,{constructor,proofs});
   }
   await verify();
-  const token=Object.freeze({});runtimes.set(token,actual);return token;
+  const token=Object.freeze({});runtimes.set(token,{constructors:actual,parents});return token;
 }
 export function constructOriginalError(proof,runtime) {
   const state=originalImportedErrorConstructor(reissueImportedErrorConstructor(proof)),actual=runtimes.get(runtime);
-  const entry=actual?.get(state.proof.import.target+'#'+state.proof.import.exported);
+  const entry=actual?.constructors.get(state.proof.import.target+'#'+state.proof.import.exported);
   if(!entry)throw Error('original constructor evaluation requires its verified receiving runtime');
   if(!entry.proofs.has(JSON.stringify(state.proof)))throw Error('foreign original constructor runtime graph, caller or proof');
   const args=[];
@@ -88,4 +90,23 @@ export function constructOriginalError(proof,runtime) {
     const value=state.proof.arguments[index];args[index]=value.kind==='null'?null:value.kind==='undefined'?undefined:value.value;
   }
   return construct(entry.constructor,args);
+}
+
+
+// New receiving-runtime mode authenticates the complete original parent before
+// either a normal branch or construction. An ordinary/copied map cannot issue it.
+export function checkedOriginalConstructorRuntimeFunction(item,runtime) {
+  const actual=runtimes.get(runtime);if(!actual)throw Error('original constructor evaluation requires its verified receiving runtime');
+  assertConstructorProofData(item);
+  const checked=check(item,new Map()),expected=actual.parents.get(checked.name);
+  if(expected===undefined||JSON.stringify(checked)!==expected)throw Error('foreign original constructor runtime parent, changed or missing');
+  return checked;
+}
+
+
+export function assertOriginalConstructorRuntimeProgram(program,runtime) {
+  if(!runtimes.has(runtime))throw Error('original constructor evaluation requires its verified receiving runtime');
+  // Reject proxies/accessors before the interpreter reads declaration names.
+  // Payload arguments are deliberately outside this metadata validation.
+  assertConstructorProofData(program);
 }

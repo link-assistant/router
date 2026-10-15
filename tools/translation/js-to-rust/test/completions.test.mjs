@@ -123,9 +123,23 @@ test('receiving runtime binds every exact callsite and full source graph, never 
     assert.equal(proof.import.target,proofs[0].import.target);assert.equal(proof.import.exported,proofs[0].import.exported);
     assert.throws(()=>constructOriginalError(proof,runtime),/foreign original constructor runtime/);
     assert.throws(()=>evaluate(program,'selected',[null],runtime),/foreign original constructor runtime/);
+    assert.throws(()=>evaluate(program,'selected',[7],runtime),/foreign original constructor runtime/);
     foreign.push({change,sources,program,meta,rejected:true});
   }
-  retain('runtime-complete-proof-lineage',{sources:f.sources,program:f.program,meta:f.meta,first:errorFacts(first),second:errorFacts(second),foreign});
+  const parentForgeries=[];
+  for(const mode of ['missing-proof','hidden-normal-parent','body','name','return-type']) {
+    const wrong=structuredClone(f.program);
+    if(mode==='missing-proof'||mode==='hidden-normal-parent'){delete wrong[0].sourceConstructors;delete wrong[0].conditionalConstructors;}
+    if(mode==='hidden-normal-parent')wrong[0].body=[{kind:'return',value:{kind:'variable',name:'value'}}];
+    if(mode==='body')wrong[0].body.at(-1).value={kind:'null'};
+    if(mode==='name')wrong[0].name='changed';
+    if(mode==='return-type')wrong[0].returns='number';
+    assert.throws(()=>evaluate(wrong,mode==='name'?'changed':'selected',[7],runtime));parentForgeries.push({mode,program:wrong,rejectedBeforeNormalReturn:true});
+  }
+  assert.throws(()=>evaluate(f.program,'selected',[7],{}),/verified receiving runtime/);
+  let traps=0;const proxied=new Proxy(f.program[0],{get(){traps++;throw Error('program getter');}});assert.throws(()=>evaluate([proxied],'selected',[7],runtime));assert.equal(traps,0);
+  await assert.rejects(()=>prepareOriginalConstructorRuntime([f.program[0],f.program[0]],{sourceRoot:f.directory,executeOriginalModules:true}),/duplicate.*parent/);
+  retain('runtime-complete-proof-lineage',{sources:f.sources,program:f.program,meta:f.meta,first:errorFacts(first),second:errorFacts(second),foreign,parentForgeries,proxyTraps:traps});
 });
 
 test('actual TypeScript class import aliases avoid all legal parameter local and top-level names',{timeout:60000},async t=>{

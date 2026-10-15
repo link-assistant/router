@@ -1,6 +1,27 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/tokens.mjs; source sha256=7c1488138ed098852d6f00054385683d746d0fa67fff9a50ee722593e7490cca; IR sha256=388e2b029f8aede8587784ebf4de0f0b6f8cb27a1dde5b495ecb6da8884e8d74.
+// Independently checked scoped bodies from packages/javascript/native/tokens.mjs; source sha256=7c1488138ed098852d6f00054385683d746d0fa67fff9a50ee722593e7490cca; IR sha256=7dad2a40e5b8233d403d616a0ee06f308816ff757738cd5ed2629b752e52eb21.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[rustfmt::skip]
+fn js_sequence_test<I: Iterator<Item = u32>>(input: I, states: &[(bool, &[(u32, u32)], Option<usize>, Option<usize>)]) -> bool {
+    let close = |active: &mut Vec<bool>| {
+        for index in 0..states.len() {
+            if active[index] { if let Some(next) = states[index].3 { active[next] = true; } }
+        }
+    };
+    let mut active = vec![false; states.len()]; active[0] = true; close(&mut active);
+    for unit in input {
+        let mut next = vec![false; states.len()];
+        for index in 0..states.len() {
+            let (negated, ranges, target, _) = states[index];
+            if active[index] && negated != ranges.iter().any(|(low, high)| unit >= *low && unit <= *high) {
+                if let Some(target) = target { next[target] = true; }
+            }
+        }
+        close(&mut next); active = next;
+    }
+    active[states.len()-1]
+}
+
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
     String(&'a [u16]), Number(f64), Boolean(bool), Null, Undefined,
@@ -111,6 +132,11 @@ fn js_trim(value: &str) -> String {
 #[rustfmt::skip]
 fn scoped_srcd5b89cec18e0c4bb_at1846<'a>(model: JsPayload<'a>) -> bool {
     return ((model.type_name().to_string() != "string".to_string()) || (!!(js_payload_trim(model.as_utf16())).is_empty()));
+}
+
+#[rustfmt::skip]
+fn scoped_srcd5b89cec18e0c4bb_at4090<'a>(repo: JsPayload<'a>) -> bool {
+    return ((repo.type_name().to_string() != "string".to_string()) || (!({ let observed = repo.as_utf16(); js_sequence_test(observed.iter().map(|unit| *unit as u32), &[(true, &[(9, 13), (32, 32), (160, 160), (5760, 5760), (8192, 8202), (8232, 8232), (8233, 8233), (8239, 8239), (8287, 8287), (12288, 12288), (65279, 65279), (47, 47)], Some(1), None), (true, &[(9, 13), (32, 32), (160, 160), (5760, 5760), (8192, 8202), (8232, 8232), (8233, 8233), (8239, 8239), (8287, 8287), (12288, 12288), (65279, 65279), (47, 47)], Some(1), Some(2)), (false, &[(47, 47)], Some(3), None), (false, &[(47, 47)], None, Some(4)), (true, &[(9, 13), (32, 32), (160, 160), (5760, 5760), (8192, 8202), (8232, 8232), (8233, 8233), (8239, 8239), (8287, 8287), (12288, 12288), (65279, 65279), (47, 47)], Some(5), None), (true, &[(9, 13), (32, 32), (160, 160), (5760, 5760), (8192, 8202), (8232, 8232), (8233, 8233), (8239, 8239), (8287, 8287), (12288, 12288), (65279, 65279), (47, 47)], Some(5), Some(6)), (false, &[], None, None)]) })));
 }
 
 #[rustfmt::skip]

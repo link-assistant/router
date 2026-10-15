@@ -3,14 +3,14 @@ import {matchesSequence} from './vendor/sequence-patterns.mjs';
 // and execution of the authoritative source; neither emitter is consulted.
 import {check} from './vendor/ir.mjs';
 import { constructMap } from './vendor/constructs.mjs';
-import {sourceConstructorItem} from './vendor/constructor-bodies.mjs';
-import {prepareOriginalConstructorRuntime,constructOriginalError} from './original-constructor-runtime.mjs';
+import {prepareOriginalConstructorRuntime,constructOriginalError,checkedOriginalConstructorRuntimeFunction,assertOriginalConstructorRuntimeProgram} from './original-constructor-runtime.mjs';
 // Interpreter infrastructure captures the host invocation primitive once. Its
 // argument-list plumbing must not use the source program's Array iterator or
 // perform a Function.prototype.apply lookup on a retained callable.
 const applyCallable=Reflect.apply;
 
 export function evaluate(program, functionName, arguments_,originalConstructorRuntime) {
+  if(originalConstructorRuntime!==undefined)assertOriginalConstructorRuntimeProgram(program,originalConstructorRuntime);
   const table = new Map();
   for(let index=0;index<program.length;index++)table.set(program[index].name,program[index]);
   const map = constructMap();
@@ -137,7 +137,9 @@ export function evaluate(program, functionName, arguments_,originalConstructorRu
     return { returned: false };
   };
   const invoke = (name, args) => {
-    const raw=table.get(name),fn=raw&&sourceConstructorItem(raw)?check(raw,table):raw;
+    // The original three-argument evaluator keeps its exact raw-function path.
+    // Only the explicit receiving-runtime API performs new source-parent work.
+    const raw=table.get(name),fn=raw&&originalConstructorRuntime!==undefined?checkedOriginalConstructorRuntimeFunction(raw,originalConstructorRuntime):raw;
     if(fn?.kind==='closure') {
       const closure=check(fn,table),captured=new Map(closure.captures.map((capture,index)=>[capture.name,args[index]]));
       return (...values)=>{

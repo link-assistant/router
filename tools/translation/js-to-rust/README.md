@@ -433,6 +433,13 @@ source envelope cannot replace that graph. Arbitrary coercions, effectful
 arguments/defaults, copied issuer handles and known source mutation/reflection
 are refused. Public input parameters retain their unknown payload domain.
 
+Private weak associations let freshly issued proofs and genuine parsed/checked
+parents retain their original graph syntax and checker. Every recheck still
+validates complete source strings, original callsite/import/class/effects,
+source hashes and exact expected proof/body/signature. Persisted copies and
+foreign objects reconstruct their graphs; mutable parent IR never supplies
+cache authority. No parser/checker graph is exposed to metadata or callers.
+
 Qualified normal and throw completions stay distinct. TypeScript requires an
 explicit output module path and imports the actual corresponding native class;
 it never emits a lookalike Error class. The original native TypeScript producer
@@ -445,6 +452,11 @@ stack or prototypes. These properties are not available as scalar observations.
 operation. Its opaque runtime binds every exact freshly reissued constructor proof,
 including the complete source graph and callsite; matching path/export names do
 not permit a foreign graph or recipe. Multiple proved callsites remain distinct.
+The receiving runtime additionally registers each exact freshly checked enclosing
+function. An explicit fourth runtime argument to `evaluate` validates that parent
+before either a normal return or a throw; missing, changed and foreign parents
+cannot reuse the runtime. Existing three-argument evaluation retains its ordinary
+callback behavior and does not perform these receiving-environment checks.
 It checks the complete source-byte graph and executes only constructor
 owners and their original relative import closure, including its actual ESM cycle
 order. Ordinary analysis and evaluation never import that graph. Copied module
@@ -461,3 +473,28 @@ order, descriptor flags/types, class/prototype, message and assigned own fields.
 Absence of known writes does not prove
 outside-module prototype closure. Conditional constructor drafts have separate
 counts; they admit neither their unqualified callers nor whole native parity.
+
+Only the new constructor-proof IR words use a licensed copy of the percent
+encoder with an optional native byte loop. Ordinary IR keeps the unchanged
+upstream encoder. The constructor adapter always calls the actual `Buffer.from`
+once; it does not assume that anonymous or bound native-looking functions are
+pure. Only afterward does it qualify the actual byte view/iterator, named native
+operations, live global String, and every internal flag/source/lastIndex of its
+own private regular expression. Otherwise the copied original loop consumes the
+same bytes with the original callback, error and IteratorClose order. Its private
+regular-expression object has a different identity from the upstream instance.
+The initial host global and descriptor/apply/function-source bootstrap use the same trusted host
+infrastructure boundary as the other private source helpers; feature-global
+qualification is lazy and adds no initialization to ordinary encoding. This
+optimization never skips a JSON serializer, source hash, body or proof check.
+
+If a replaced Buffer producer returns a noniterable, the copied adapter preserves
+one producer call and a TypeError, but native diagnostic expression text and
+stack locations can name its saved bytes instead of the upstream call expression
+(`nativeDiagnosticExpressionTextPreserved: false`). Complete host diagnostics
+are retained separately; they are not rewritten to resemble another expression.
+
+The initial host-global reference belongs to that bootstrap boundary (Bun marks
+its own global wrapper as a proxy). Replacing it before module initialization is
+outside this claim. This does not admit caller-supplied roots: every derived
+feature prototype and public byte value still rejects proxies before probing.

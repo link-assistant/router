@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/client-status.mjs; source sha256=cfd6afd52b809baa8478dd1df89a34e44dcf1f12529c76cc6b73f85bd0da2c84; IR sha256=6c3586a5180660ddd4104a278251f0c5ea540a5e0ae748d93e94eb9516cdb760.
+// Independently checked scoped bodies from packages/javascript/native/client-status.mjs; source sha256=cfd6afd52b809baa8478dd1df89a34e44dcf1f12529c76cc6b73f85bd0da2c84; IR sha256=b0ea219acf85b6b5e2301ad64974b5d8bf111a895a1c6c14b1b5411f1ce5cf65.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -97,6 +97,19 @@ impl<'a> JsValue<'a> {
             (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
             _ => false,
         }
+    }
+}
+
+// Source-bound body draft; parent creation/effects remain refused; runtimeParity: false.
+// Conditional private body draft: original standard collection intrinsics required.
+// Original has/includes lookup stability and parent execution are unproved.
+pub struct JsClosureEnvironment0 {}
+fn scoped_src0cef2b40b0bcdecd_at2581() -> JsClosureEnvironment0 {
+    JsClosureEnvironment0 {}
+}
+impl JsClosureEnvironment0 {
+    pub fn call<'a>(&self, key: JsPayload<'a>) -> bool {
+        return (!({ let observed = key; JsPayload::String(&[65, 78, 84, 72, 82, 79, 80, 73, 67, 95, 77, 79, 68, 69, 76]).same_primitive(observed) || JsPayload::String(&[65, 78, 84, 72, 82, 79, 80, 73, 67, 95, 68, 69, 70, 65, 85, 76, 84, 95, 79, 80, 85, 83, 95, 77, 79, 68, 69, 76]).same_primitive(observed) || JsPayload::String(&[65, 78, 84, 72, 82, 79, 80, 73, 67, 95, 68, 69, 70, 65, 85, 76, 84, 95, 83, 79, 78, 78, 69, 84, 95, 77, 79, 68, 69, 76]).same_primitive(observed) || JsPayload::String(&[65, 78, 84, 72, 82, 79, 80, 73, 67, 95, 68, 69, 70, 65, 85, 76, 84, 95, 72, 65, 73, 75, 85, 95, 77, 79, 68, 69, 76]).same_primitive(observed) || JsPayload::String(&[67, 76, 65, 85, 68, 69, 95, 67, 79, 68, 69, 95, 83, 85, 66, 65, 71, 69, 78, 84, 95, 77, 79, 68, 69, 76]).same_primitive(observed) }));
     }
 }
 

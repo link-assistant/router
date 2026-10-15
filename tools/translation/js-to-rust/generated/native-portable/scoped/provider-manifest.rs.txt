@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/provider-manifest.mjs; source sha256=e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e; IR sha256=27360af78cb3365a41a69f37c53abdaba55500faf78e16013090677b30e9ee6e.
+// Independently checked scoped bodies from packages/javascript/native/provider-manifest.mjs; source sha256=e2202d46ff724740d8250ecfad06df4c980b658aa2162f89143cd72caa4fca5e; IR sha256=9e3125e3979418525ee7ccb76d50d7c0e37f5be267fb97a2f6d2e5ea1da6c920.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -67,6 +67,9 @@ fn js_payload_utf8_length(value: &[u16]) -> f64 {
 }
 
 #[derive(Clone, Copy)]
+pub struct JsEntry<'a> { pub key: &'a [u16], pub value: JsPayload<'a> }
+
+#[derive(Clone, Copy)]
 pub enum JsValue<'a> {
     String(&'a str), Number(f64), Boolean(bool), Undefined,
     Object, Function, BigInt, Symbol,
@@ -106,6 +109,20 @@ fn js_trim(value: &str) -> String {
         '\u{9}'..='\u{d}' | '\u{20}' | '\u{a0}' | '\u{1680}' | '\u{2000}'..='\u{200a}' |
         '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}'
     )).to_string()
+}
+
+// Source-bound body draft; parent creation/effects remain refused; runtimeParity: false.
+// Conditional private body draft: original standard collection intrinsics required.
+// Original has/includes lookup stability and parent execution are unproved.
+pub struct JsClosureEnvironment0 {}
+fn scoped_src98be18dc03f1b299_at737() -> JsClosureEnvironment0 {
+    JsClosureEnvironment0 {}
+}
+impl JsClosureEnvironment0 {
+    pub fn call<'a>(&self, scoped_entry_at738: JsEntry<'a>) -> bool {
+        let key = scoped_entry_at738.key;
+        return ({ let observed = key; JsPayload::String(&[110, 97, 109, 101]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[107, 105, 110, 100]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[98, 97, 115, 101, 95, 117, 114, 108]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[100, 101, 102, 97, 117, 108, 116, 95, 109, 111, 100, 101, 108]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[109, 111, 100, 101, 108, 115]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[115, 117, 112, 112, 111, 114, 116, 101, 100, 95, 99, 108, 105, 101, 110, 116, 115]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[97, 112, 105, 95, 107, 101, 121]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[97, 112, 105, 95, 107, 101, 121, 95, 101, 110, 118]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[101, 110, 99, 114, 121, 112, 116, 101, 100, 95, 97, 112, 105, 95, 107, 101, 121]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[101, 110, 97, 98, 108, 101, 100]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[115, 117, 98, 115, 99, 114, 105, 98, 101, 114, 95, 105, 100]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[97, 99, 107, 110, 111, 119, 108, 101, 100, 103, 101, 95, 105, 110, 116, 101, 114, 109, 101, 100, 105, 97, 114, 121, 95, 114, 105, 115, 107]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[97, 99, 107, 110, 111, 119, 108, 101, 100, 103, 101, 95, 117, 110, 115, 117, 112, 112, 111, 114, 116, 101, 100, 95, 99, 108, 105, 101, 110, 116, 115]).same_primitive(JsPayload::String(observed)) || JsPayload::String(&[105, 102, 95, 97, 98, 115, 101, 110, 116]).same_primitive(JsPayload::String(observed)) });
+    }
 }
 
 #[rustfmt::skip]

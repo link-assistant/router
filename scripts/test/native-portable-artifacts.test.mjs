@@ -8,6 +8,7 @@ import { buildNativePortableArtifacts } from '../../tools/translation/js-to-rust
 import { regenerate } from '../regenerate-js-first.mjs';
 import { parseMeta } from '../../tools/translation/js-to-rust/translator.mjs';
 import { camelFromSnake,toLino } from '../../tools/translation/js-to-rust/vendor/ir.mjs';
+import {createConstructorSourceGraph} from '../../tools/translation/js-to-rust/vendor/source-constructors.mjs';
 import { loadTypeScript, regenerateNativeTypeScript } from '../../tools/translation/js-to-rust/native-typescript.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -22,7 +23,7 @@ test('bulk drafts retain refused owners and independent lexical bodies, with det
   const a = buildNativePortableArtifacts([row('two'), row()]);
   const b = buildNativePortableArtifacts([row(), row('two')]);
   assert.deepEqual([...a.artifacts], [...b.artifacts]);
-  assert.deepEqual(a.manifest.topLevel, { sourceItems: 4, translatedItems: 2, unsupportedItems: 2 });
+  assert.deepEqual(a.manifest.topLevel, { sourceItems: 4, translatedItems: 2, unsupportedItems: 2, fullDomainTranslatedItems: 2, conditionalPrivateBodyDraftItems: 0 });
   assert.deepEqual(a.manifest.scopedFunctions, { sourceItems: 2, translatedItems: 2, unsupportedItems: 0, fullDomainTranslatedItems: 2, conditionalPrivateBodyDraftItems: 0 });
   assert.equal(a.manifest.contract.runtimeParity, false);
   const identities = a.manifest.modules.flatMap((module) => module.scopedFunctions.items.map((item) => item.name));
@@ -131,7 +132,7 @@ test('producer and captured-collection flags count each privately reissued draft
 
 test('checked original owned-call bodies keep their intrinsic qualification and separate scoped census', () => {
   const source='export function owner(value){return [1].some(item=>typeof item===typeof value);}',{manifest,artifacts}=buildNativePortableArtifacts([row('source-calls',source)]);
-  assert.deepEqual(manifest.topLevel,{sourceItems:1,translatedItems:1,unsupportedItems:0});
+  assert.deepEqual(manifest.topLevel,{sourceItems:1,translatedItems:1,unsupportedItems:0,fullDomainTranslatedItems:0,conditionalPrivateBodyDraftItems:1});
   assert.deepEqual(manifest.scopedFunctions,{sourceItems:1,translatedItems:1,unsupportedItems:0,fullDomainTranslatedItems:1,conditionalPrivateBodyDraftItems:0});
   const program=parseMeta(artifacts.get('tools/translation/js-to-rust/generated/native-portable/top-level/source-calls.lino'));
   assert.equal(program[0].conditionalCalls,true);assert.equal(program[0].sourceCalls.iterations[0].standardArraySomeRequired,true);assert.equal(program[0].sourceCalls.iterations[0].lookupStabilityProved,false);
@@ -140,4 +141,22 @@ test('checked original owned-call bodies keep their intrinsic qualification and 
   for(const mutate of [item=>delete item.conditionalCalls,item=>item.sourceCalls.iterations[0].lookupStabilityProved=true,item=>delete item.sourceCalls]){const wrong=JSON.parse(JSON.stringify(program[0]));mutate(wrong);assert.throws(()=>parseMeta(toLino(wrong)));}
   const changed=buildNativePortableArtifacts([row('changed','Array.prototype.some=evil;'+source)]);assert.equal(changed.manifest.topLevel.translatedItems,0);assert.equal(changed.manifest.scopedFunctions.translatedItems,0);
   assert.equal(manifest.contract.runtimeParity,false);
+});
+
+
+test('genuine imported constructor bodies stay conditional and require the original complete producer graph', () => {
+  const sources=[row('constructor-error',"export class Failure extends Error {constructor(message,status=400){super(message);this.status=status;this.code='bounded';}}"),row('constructor-owner',"import {Failure} from './constructor-error.mjs';export function selected(value){if(value===null)throw new Failure('bad');return value;}export function caller(value){return selected(value);}")];
+  const graph=createConstructorSourceGraph(sources),{manifest,artifacts}=buildNativePortableArtifacts(sources);
+  assert.deepEqual(manifest.topLevel,{sourceItems:4,translatedItems:1,unsupportedItems:3,fullDomainTranslatedItems:0,conditionalPrivateBodyDraftItems:1});
+  assert.deepEqual(manifest.scopedFunctions,{sourceItems:0,translatedItems:0,unsupportedItems:0,fullDomainTranslatedItems:0,conditionalPrivateBodyDraftItems:0});
+  const path='tools/translation/js-to-rust/generated/native-portable/top-level/constructor-owner.lino',meta=artifacts.get(path),program=parseMeta(meta,{constructorGraph:graph});
+  assert.equal(program.length,1);assert.equal(program[0].name,'selected');assert.equal(program[0].conditionalConstructors,true);assert.equal(program[0].params[0].type,'value');assert.equal(program[0].returns,'value');
+  const errorModule=manifest.modules.find(module=>module.path.endsWith('constructor-error.mjs')),ownerModule=manifest.modules.find(module=>module.path.endsWith('constructor-owner.mjs'));assert.equal(errorModule.topLevel.items.length,1);assert.equal(errorModule.topLevel.items[0].diagnostic.kind,'class');assert.equal(ownerModule.topLevel.items.length,3);assert.equal(ownerModule.topLevel.items.find(item=>item.start===0).diagnostic.kind,'no-definition');assert.equal(ownerModule.topLevel.items.find(item=>item.name==='caller').status,'unsupported');
+  const proof=program[0].sourceConstructors;assert.equal(proof.runtimeParity,false);assert.equal(proof.constructors[0].conditions.hostDiagnosticLocationsPreserved,false);assert.equal(proof.constructors[0].conditions.outsideModulePrototypeClosureProved,false);
+  assert.equal(manifest.modules.find(module=>module.path.endsWith('constructor-owner.mjs')).topLevel.items.find(item=>item.name==='selected').coverageContract,'conditional-original-constructor-body-draft');
+  assert.throws(()=>parseMeta(meta),/copied or foreign/u);
+  const foreign=createConstructorSourceGraph(sources.map(source=>({...source,source:source.source.replace('status=400','status=401')})));assert.throws(()=>parseMeta(meta,{constructorGraph:foreign}),/producer graph/u);
+  for(const changed of [sources.slice(1),sources.map(source=>({...source,source:source.source+';Array.prototype.includes=evil;'}))]){const current=buildNativePortableArtifacts(changed);assert.equal(current.manifest.topLevel.translatedItems,0);assert.equal(current.manifest.topLevel.conditionalPrivateBodyDraftItems,0);}
+  const typescript=artifacts.get('packages/typescript/native/portable-draft/top-level/constructor-owner.ts');assert.match(typescript,/import \{ Failure as routerOriginalError0 \} from "\.\.\/\.\.\/constructor-error\.js"/u);assert.match(typescript,/unknown/u);
+  assert.match(artifacts.get('tools/translation/js-to-rust/generated/native-portable/top-level/constructor-owner.rs.txt'),/Result<JsPayload<'a>, SourceErrorProjection>/u);assert.equal(manifest.contract.runtimeParity,false);
 });

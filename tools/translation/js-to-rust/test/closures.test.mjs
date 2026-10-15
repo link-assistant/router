@@ -9,6 +9,7 @@ import {toLino,check,lowerSourceClosure} from '../vendor/ir.mjs';
 import {issueLexicalEnvironment,readLexicalEnvironment,reissueLexicalEnvironment,lexicalClosureName} from '../vendor/lexical-environments.mjs';
 import {evaluate} from '../interpreter.mjs';
 import {loadTypeScript} from '../native-typescript.mjs';
+import {createConstructorSourceGraph} from '../vendor/source-constructors.mjs';
 const ROOT=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??resolve(dirname(fileURLToPath(import.meta.url)),'../../../..');
 const vectors={schema:'original-scoped-closure-fixtures-v1',host:process.versions.bun?'Bun '+process.versions.bun:'Node '+process.version,rustCompiled:false,parentCreationLowered:false,positive:[],negative:[],census:[]};
 const save=()=>{if(process.env.ROUTER_CLOSURE_VECTORS)writeFileSync(process.env.ROUTER_CLOSURE_VECTORS,JSON.stringify(vectors,null,2)+'\n');};
@@ -27,6 +28,9 @@ const positives=[
  ['null','export function make(value){return function named(){if(typeof value===\'undefined\'){return null;}return value;};}'],
  ['completion','export function make(value){return ()=>{const saved=value;};}'],
  ['old-completion','export function owner(captured){const callback=()=>{const value=captured;};}'],
+ ['unbraced-if','export function make(value){return ()=>{if(typeof value===\'undefined\')return null;return value;};}'],
+ ['unbraced-else','export function make(value){return ()=>{if(typeof value===\'undefined\')return null;else return value;};}'],
+ ['dangling-else','export function make(value){return other=>{if(typeof other===\'boolean\')if(other)return value;else return null;return undefined;};}'],
 ];
 const values=()=>{const revoked=Proxy.revocable({},{});revoked.revoke();return [undefined,null,false,true,0,-0,NaN,Infinity,-Infinity,42,'',' \ud800x\udc00\t','\ud800','\udc00',String.fromCodePoint(0x1f600),0n,2n**4096n,Symbol('opaque'),()=>{},new String('box'),new Number(1),{},[],revoked.proxy,{get value(){throw Error('getter');},[Symbol.toPrimitive](){throw Error('coercion');}}];};
 function same(actual,want){if(Object.is(actual,want))return;if(Array.isArray(want)){assert.ok(Array.isArray(actual));assert.equal(actual.length,want.length);want.forEach((v,i)=>same(actual[i],v));}else if(want&&typeof want==='object'&&Object.getPrototypeOf(want)===Object.prototype&&Object.keys(want).join(',')==='first,second'){assert.equal(Object.getPrototypeOf(actual),Object.prototype);assert.deepEqual(Object.keys(actual),['first','second']);same(actual.first,want.first);same(actual.second,want.second);}else assert.ok(Object.is(actual,want));}
@@ -35,10 +39,10 @@ async function compile(typescript,dir,name){const ts=loadTypeScript(ROOT),path=j
 test('source-bound environments preserve the original call arity, lossless payloads and fresh closure/aggregate allocation',{timeout:60000},async()=>{
  const dir=mkdtempSync(join(tmpdir(),'router-closure-tests-'));
  try{for(const [label,source]of positives){const analysis=analyzeJavaScript(source,{sourcePath:'fixtures/closure.mjs'});const fn=analysis.scopedFunctions.program.find(fn=>fn.kind==='closure');assert.ok(fn,label);assert.equal(analysis.program.length,0);const meta=toLino(fn),program=parseMeta(meta);assert.deepEqual(program,[fn]);assert.equal(fn.captures.every(capture=>capture.type==='value'),true);const name=fn.name.replace(/_([a-z])/g,(_,c)=>c.toUpperCase());const typescript=emitTypeScript(program)+'\nexport { '+name+' as factory };\n',rust=emitRust(program),typed=(await compile(typescript,dir,label)).factory;const originalPath=join(dir,label+'-original.mjs');writeFileSync(originalPath,source);const original=label==='old-completion'?Function('captured','return ('+source.slice(fn.environment.start,fn.environment.end)+');'):(await import(pathToFileURL(originalPath).href)).make;const observations=[];
- for(const captured of values())for(const arg of [undefined,null,true,Symbol('call'),2n**4096n,'\ud800']){
+ for(const captured of values())for(const arg of [undefined,null,true,false,Symbol('call'),2n**4096n,'\ud800']){
    const second=Symbol('second');let native=original(captured,second);if(label==='twoAncestors'||label==='shadow')native=native(second);
    const environment=fn.captures.map(capture=>capture.name==='second'||capture.name==='other'?second:captured),ir=evaluate(program,fn.name,environment),target=typed(...environment),args=fn.params.length?[arg]:[];
-   const authored=label==='pair'?{first:captured,second:arg}:label==='array'?[captured,second,captured,null,undefined]:label==='twoAncestors'?[captured,second,arg]:label==='multiple'?[captured,arg,captured]:label==='shadow'?second:['completion','old-completion'].includes(label)?undefined:label==='branch'?(arg===true?captured:undefined):label==='null'?(captured===undefined?null:captured):label==='primitive'&&typeof captured==='string'?(captured===' \ud800x\udc00\t'?'\ud800x\udc00':captured):captured;
+   const authored=label==='pair'?{first:captured,second:arg}:label==='array'?[captured,second,captured,null,undefined]:label==='twoAncestors'?[captured,second,arg]:label==='multiple'?[captured,arg,captured]:label==='shadow'?second:['completion','old-completion'].includes(label)?undefined:label==='branch'?(arg===true?captured:undefined):['null','unbraced-if','unbraced-else'].includes(label)?(captured===undefined?null:captured):label==='dangling-else'?(typeof arg==='boolean'?(arg?captured:null):undefined):label==='primitive'&&typeof captured==='string'?(captured===' \ud800x\udc00\t'?'\ud800x\udc00':captured):captured;
    const want=native(...args);same(want,authored);assert.equal(target.length,native.length,label);assert.equal(typed.length,fn.captures.length,label);for(const invoke of [target,ir]){const actual=invoke(...args);same(actual,want);if(['pair','array','twoAncestors','multiple'].includes(label)){assert.notEqual(actual,invoke(...args));}}
    assert.notEqual(target,typed(...environment));assert.notEqual(ir,evaluate(program,fn.name,environment));observations.push({captureType:typeof captured,callType:typeof arg,expectedType:typeof want,captureIdentity:want===captured});
  }
@@ -47,7 +51,9 @@ test('source-bound environments preserve the original call arity, lossless paylo
 });
 
 const negativeSources=[
- ['unbraced-if','export function make(value){return ()=>{if(typeof value===\'undefined\')return null;return value;};}'],
+ // Exact failed V3 fixture: its mixed primitive return join is unsupported.
+ ['mixed-return-dangling-else','export function make(value){return other=>{if(typeof value===\'string\')if(typeof other===\'boolean\')return other;else return value;return null;};}'],
+ ['unbraced-lexical','export function make(value){return ()=>{if(typeof value===\'undefined\')const wrong=1;return value;};}'],
  ['nested-construction','export function make(value){return ()=>[value,[value]];}'],
  ['reassign-before','export function make(value){value=1;return ()=>value;}'],
  ['reassign-after','export function make(value){const fn=()=>value;value=1;return fn;}'],
@@ -85,6 +91,10 @@ const negativeSources=[
  ['computed-prototype','export function make(value){String["proto"+"type"].trim=evil;return ()=>typeof value===\'string\'?value.trim():value;}'],
 ];
 test('mutable, effectful, coercive, captured globals and unproved scalar equality remain refused',()=>{
+ for(const keyword of ['const','let'])for(const branch of ['then','else']) {
+   const body=branch==='then'?`if(ok)${keyword} value=1;return 0;`:`if(ok)return 0;else ${keyword} value=1;return 0;`,source=`/** @param {boolean} ok @returns {number} */ export function invalid(ok){${body}}`;
+   assert.throws(()=>Function(source.replace('export ','')),SyntaxError);const analysis=analyzeJavaScript(source);assert.equal(analysis.program.length,0);vectors.negative.push({label:'unbraced-'+branch+'-'+keyword,source,analysis});
+ }
  const nestedSource='export function make(value){return ()=>()=>value;}',nested=scoped(nestedSource);assert.equal(nested.items[0].status,'unsupported');assert.equal(nested.items[1].status,'translated');assert.equal(nested.program.length,1);assert.equal(nested.items[1].owner.status,'unsupported');vectors.negative.push({label:'nested-parent-stays-refused',source:nestedSource,census:nested});
  for(const [label,source]of negativeSources){const census=scoped(source);assert.equal(census.program.filter(fn=>fn.kind==='closure').length,0,label);vectors.negative.push({label,source,census});save();}
 });
@@ -127,11 +137,12 @@ test('private issuance rejects copied/foreign handles and exact-source metadata 
  const typed=copy(fn);typed.body[0].value.fields[0].value.type='number';assert.deepEqual(check(typed,new Map()),fn);
 });
 
-test('all 52 complete native censuses preserve all original 73 top-level and 61 scoped programs',{timeout:60000},()=>{
- const manifest=JSON.parse(readFileSync(join(ROOT,'parity/js-native-portable-draft.json'),'utf8'));let top=0,scope=0,full=0,conditional=0;
- for(const module of manifest.modules){const source=readFileSync(join(ROOT,module.path),'utf8'),a=analyzeJavaScript(source,{sourcePath:module.path});assert.deepEqual(a.items,module.topLevel.items);assert.deepEqual(a.scopedFunctions.items,module.scopedFunctions.items);assert.equal(a.scopedFunctions.sourceItems,module.scopedFunctions.sourceItems);
- for(const [kind,program]of [['top-level',a.program],['scoped',a.scopedFunctions.program]]){const output=module.outputs.find(output=>output.scope===kind&&output.path.endsWith('.lino'));assert.ok(output,kind);assert.equal('# GENERATED: checked portable-router-v1 bodies; no source envelopes.\n'+program.map(toLino).join('\n')+'\n',readFileSync(join(ROOT,output.path),'utf8'));assert.deepEqual(parseMeta(program.map(toLino).join('\n')),program);}
- top+=a.program.length;scope+=a.scopedFunctions.program.length;full+=a.scopedFunctions.fullDomainTranslatedItems;conditional+=a.scopedFunctions.conditionalPrivateBodyDraftItems;vectors.census.push({path:module.path,source,analysis:a});save();
+test('all 52 complete native censuses preserve legacy programs and separately qualify generated constructor drafts',{timeout:60000},()=>{
+ const manifest=JSON.parse(readFileSync(join(ROOT,'parity/js-native-portable-draft.json'),'utf8')),sources=manifest.modules.map(module=>({path:module.path,source:readFileSync(join(ROOT,module.path),'utf8')})),constructorGraph=createConstructorSourceGraph(sources);let top=0,scope=0,full=0,conditional=0,currentTop=0,constructorCount=0;const constructorBodies=[];
+ for(const module of manifest.modules){const source=sources.find(row=>row.path===module.path).source,legacy=analyzeJavaScript(source,{sourcePath:module.path}),a=analyzeJavaScript(source,{sourcePath:module.path,constructorGraph});assert.deepEqual(a.items,module.topLevel.items);assert.deepEqual(a.scopedFunctions.items,module.scopedFunctions.items);assert.equal(a.scopedFunctions.sourceItems,module.scopedFunctions.sourceItems);assert.deepEqual(a.scopedFunctions,legacy.scopedFunctions);assert.deepEqual(a.program.filter(item=>!item.conditionalConstructors),legacy.program,'complete old top programs '+module.path);
+ for(const item of a.program.filter(item=>item.conditionalConstructors)){assert.equal(item.sourceConstructors.runtimeParity,false);assert.equal(item.sourceConstructors.constructors.every(proof=>proof.conditions.hostDiagnosticLocationsPreserved===false&&proof.conditions.originalSignatureFullDomainPreserved===false),true);constructorCount++;constructorBodies.push({path:module.path,item});}
+ for(const [kind,program]of [['top-level',a.program],['scoped',a.scopedFunctions.program]]){const output=module.outputs.find(output=>output.scope===kind&&output.path.endsWith('.lino'));assert.ok(output,kind);assert.equal('# GENERATED: checked portable-router-v1 bodies; no source envelopes.\n'+program.map(toLino).join('\n')+'\n',readFileSync(join(ROOT,output.path),'utf8'));assert.deepEqual(parseMeta(program.map(toLino).join('\n'),{constructorGraph}),program);}
+ top+=legacy.program.length;currentTop+=a.program.length;scope+=a.scopedFunctions.program.length;full+=a.scopedFunctions.fullDomainTranslatedItems;conditional+=a.scopedFunctions.conditionalPrivateBodyDraftItems;vectors.census.push({path:module.path,source,legacy,analysis:a});save();
  }
- assert.equal(manifest.modules.length,52);assert.equal(manifest.topLevel.sourceItems,788);assert.equal(manifest.scopedFunctions.sourceItems,705);assert.equal(top,73);assert.equal(scope,66);assert.equal(full,54);assert.equal(conditional,12);
+ assert.equal(manifest.modules.length,52);assert.equal(manifest.topLevel.sourceItems,788);assert.equal(manifest.scopedFunctions.sourceItems,705);assert.equal(top,73);assert.equal(scope,66);assert.equal(full,54);assert.equal(conditional,12);assert.equal(currentTop,top+constructorCount);assert.equal(currentTop,manifest.topLevel.translatedItems);assert.ok(constructorBodies.some(row=>row.path.endsWith('/gemini-protocol.mjs')&&row.item.name==='image_media'));
 });

@@ -1,5 +1,5 @@
 // GENERATED: node scripts/regenerate-js-first.mjs
-// Independently checked scoped bodies from packages/javascript/native/config.mjs; source sha256=9ccee21407af4d93b63600400fc5fdd32f43d24d2317fd4c0f88834d3bbb0e0a; IR sha256=e39e4d036627671d2a6e3f596e9f9ac9e8b34350b2effdba8039438c1c004eb9.
+// Independently checked scoped bodies from packages/javascript/native/config.mjs; source sha256=9ccee21407af4d93b63600400fc5fdd32f43d24d2317fd4c0f88834d3bbb0e0a; IR sha256=ea0074988f075c515a57e075f2440eb88d6d4897e7d0ef30ca1d0a110880e37d.
 // Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
 #[derive(Clone, Copy)]
 pub enum JsPayload<'a> {
@@ -121,4 +121,17 @@ fn scoped_src9e6ccb245fdd0dc2_at5003<'a>(client: JsPayload<'a>) -> bool {
 #[rustfmt::skip]
 fn scoped_src9e6ccb245fdd0dc2_at13245() -> bool {
     return false;
+}
+
+// Source-bound body draft; parent creation/effects remain refused; runtimeParity: false.
+// Conditional private body draft: original standard collection intrinsics required.
+// Original has/includes lookup stability and parent execution are unproved.
+pub struct JsClosureEnvironment3 {}
+fn scoped_src78faa77434f4adae_at15324() -> JsClosureEnvironment3 {
+    JsClosureEnvironment3 {}
+}
+impl JsClosureEnvironment3 {
+    pub fn call<'a>(&self, client: JsPayload<'a>) -> bool {
+        return (!({ let observed = client; JsPayload::String(&[99, 111, 100, 101, 120]).same_primitive(observed) || JsPayload::String(&[99, 108, 97, 117, 100, 101]).same_primitive(observed) || JsPayload::String(&[103, 101, 109, 105, 110, 105]).same_primitive(observed) || JsPayload::String(&[113, 119, 101, 110]).same_primitive(observed) || JsPayload::String(&[103, 114, 111, 107]).same_primitive(observed) || JsPayload::String(&[111, 112, 101, 110, 99, 111, 100, 101]).same_primitive(observed) || JsPayload::String(&[97, 103, 101, 110, 116]).same_primitive(observed) || JsPayload::String(&[99, 117, 114, 115, 111, 114, 45, 97, 103, 101, 110, 116]).same_primitive(observed) }));
+    }
 }

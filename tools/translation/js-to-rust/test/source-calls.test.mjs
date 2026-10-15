@@ -48,7 +48,12 @@ test('source-issued lexical creation and direct calls preserve full unknown inpu
     const iterator=Array.prototype[Symbol.iterator];let originalNoIterator,targetNoIterator,irNoIterator,iteratorCalls=0;
     try{Array.prototype[Symbol.iterator]=function(){iteratorCalls++;throw Error('unproved Array iterator');};originalNoIterator=runtime.original[name](7,false);targetNoIterator=runtime.typed[name](7,false);irNoIterator=evaluate(runtime.program,name,[7,false]);}finally{Array.prototype[Symbol.iterator]=iterator;}
     same(targetNoIterator,originalNoIterator);same(irNoIterator,originalNoIterator);assert.equal(iteratorCalls,0);
-    assert.equal(runtime.original[name].length,runtime.typed[name].length);assert.match(runtime.rust,/\.call\(/u);assert.match(runtime.rust,/pub struct JsClosureEnvironment/u);assert.doesNotMatch(runtime.rust,/dyn Fn|unsafe/u);retain(name,{source,...runtime,observations,rustCompiled:false,iteratorCounterexample:{iteratorCalls,originalNoIterator,targetNoIterator,irNoIterator}});
+    const stringify=JSON.stringify;let stringifyCalls=0,sourceNoJson,targetNoJson,irNoJson,plainNoJson;
+    const opaque={},plain=[{kind:'function',name:'ordinary',params:[{name:'value'}],body:[{kind:'return',value:{kind:'variable',name:'value'}}]}];
+    try{JSON.stringify=function(...args){stringifyCalls++;return Reflect.apply(stringify,this,args);};sourceNoJson=runtime.original[name](7,false);targetNoJson=runtime.typed[name](7,false);irNoJson=evaluate(runtime.program,name,[7,false]);plainNoJson=evaluate(plain,'ordinary',[opaque]);}finally{JSON.stringify=stringify;}
+    same(targetNoJson,sourceNoJson);same(irNoJson,sourceNoJson);assert.equal(plainNoJson,opaque);assert.equal(stringifyCalls,0);
+
+    assert.equal(runtime.original[name].length,runtime.typed[name].length);assert.match(runtime.rust,/\.call\(/u);assert.match(runtime.rust,/pub struct JsClosureEnvironment/u);assert.doesNotMatch(runtime.rust,/dyn Fn|unsafe/u);retain(name,{source,...runtime,observations,rustCompiled:false,iteratorCounterexample:{iteratorCalls,originalNoIterator,targetNoIterator,irNoIterator},jsonCounterexample:{stringifyCalls,sourceNoJson,targetNoJson,irNoJson,plainIdentity:plainNoJson===opaque}});
   }assert.equal(unknown.hooks(),0);}finally{rmSync(directory,{recursive:true,force:true});}
 });
 

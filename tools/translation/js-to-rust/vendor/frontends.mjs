@@ -241,10 +241,20 @@ function jsBlock(at) {
   return body;
 }
 
+function jsStatementBody(at) {
+  if(at.is('{'))return jsBlock(at);
+  // A lexical declaration is a StatementListItem, not an unbraced Statement.
+  if(at.is('const')||at.is('let'))refuse('unsupported','a lexical declaration in an unbraced statement');
+  return [jsStatement(at)];
+}
+
 function jsStatement(at) {
   const token = at.peek();
   if(at.eat('throw')) {
     if(typeof at.source!=='string'||/[\n\r\u2028\u2029]/u.test(at.source.slice(token.end,at.peek().start)))refuse('unsupported','a line terminator after throw');
+    // Preserve legacy unqualified throw diagnostics before an unproved operand
+    // can produce a different refusal. A context is never proof by itself.
+    if(!at.sourceConstructors)refuse('unsupported','throw without a source-issued constructor capability');
     const value=expression(at,'JavaScript');
     if(value.kind!=='source-error')refuse('collection','throw without a source-issued constructor capability');
     if(!at.eat(';')&&!at.is('}'))at.expect(';');
@@ -272,9 +282,9 @@ function jsStatement(at) {
     at.expect('(');
     const cond = expression(at, 'JavaScript');
     at.expect(')');
-    const then = at.is('{')?jsBlock(at):[jsStatement(at)];
+    const then = jsStatementBody(at);
     let otherwise = null;
-    if (at.eat('else')) otherwise = at.is('{')?jsBlock(at):[jsStatement(at)];
+    if (at.eat('else')) otherwise = jsStatementBody(at);
     return { kind: 'if', cond, then, else: otherwise };
   }
   if (at.eat('while')) {

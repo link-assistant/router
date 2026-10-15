@@ -3,10 +3,10 @@
 import {createHash} from 'node:crypto';
 import {types,isDeepStrictEqual} from 'node:util';
 import {posix} from 'node:path';
-import {ownershipSyntax} from './module-syntax.mjs';
+import {ownershipCompiler} from './module-syntax.mjs';
 import {SOURCE_CONSTRUCTOR_CONDITIONS} from './completions.mjs';
 
-const graphs=new WeakMap(),constructors=new WeakMap();
+const graphs=new WeakMap(),constructors=new WeakMap(),proofGraphs=new WeakMap();
 const fail=message=>{throw Object.assign(new Error(message),{slug:'collection'});};
 const sha=source=>createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
@@ -66,13 +66,24 @@ export function createConstructorSourceGraph(records) {
     const path=own(record,'path'),source=own(record,'source');
     if(!filename(path)||typeof source!=='string'||files.has(path))fail('invalid or duplicate original constructor source path');
     bytes+=source.length*2;if(bytes>4194304)fail('original constructor source graph exceeds its byte bound');
-    const {ts}=ownershipSyntax(source);
+    const ts=ownershipCompiler();
     const file=ts.createSourceFile(path,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
-    if(file.parseDiagnostics.length)fail('invalid original constructor module syntax');
+    // Preserve the old ownershipSyntax parse failure contract, now without
+    // allocating its otherwise discarded dummy-filename AST first.
+    if(file.parseDiagnostics.length)throw new Error('invalid module ownership syntax');
     // TypeScript's parse diagnostics do not reject every JavaScript restricted
     // production. A line terminator inside a comment still separates throw
     // from its operand and must never acquire a recovered-AST capability.
+    // Keep occurrences, never semantic/effect decisions. These linked entries
+    // use only fresh own-data literals; no collection callback sees private AST.
+    const traversal={children:ts.forEachChild,identifier:ts.isIdentifier,property:ts.isPropertyAccessExpression};
+    let effectHead=null,effectTail=null;
     const validateThrow=node=>{
+      if(ts.isPropertyAccessExpression(node)||ts.isIdentifier(node)) {
+        const occurrence={node,next:null};
+        if(effectTail===null)effectHead=occurrence;else effectTail.next=occurrence;
+        effectTail=occurrence;
+      }
       if(ts.isThrowStatement(node)) {
         const operand=node.expression;
         // TS parseThrowStatement recovers a restricted-production newline by
@@ -81,7 +92,7 @@ export function createConstructorSourceGraph(records) {
       }
       ts.forEachChild(node,validateThrow);
     };validateThrow(file);
-    sources.push({path,source});files.set(path,{ts,file,source});
+    sources.push({path,source});files.set(path,{ts,file,source,effectHead,traversal});
   }
   sources.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
   // This private checker joins identifiers to actual lexical declarations. It
@@ -148,14 +159,16 @@ function classRecipe(graph,owner) {
 // events does not prove unknown imported/host effects or outside code pure.
 function rejectKnownConstructorEffects(graph,owner) {
   const {ts}=graph,checker=graph.checker(),targetSymbol=checker.getSymbolAtLocation(owner.klass.name);
-  for(const [path,{file}]of graph.files) {
-    const aliases=new Set();
-    if(path===owner.target)aliases.add(targetSymbol);
+  for(const [path,{file,effectHead,traversal}]of graph.files) {
+    const aliases=new Set(),candidateNames=new Set(['Error','eval','Function']);
+    // Necessary lexical spellings only; no symbol or effect result is cached.
+    // A shadow with a matching spelling still takes the original fresh lookup.
+    if(path===owner.target){aliases.add(targetSymbol);candidateNames.add(owner.klass.name.text);}
     for(const statement of file.statements)if(ts.isImportDeclaration(statement)&&statement.importClause?.namedBindings&&ts.isNamedImports(statement.importClause.namedBindings)) {
       for(const binding of statement.importClause.namedBindings.elements) {
         if((binding.propertyName?.text??binding.name.text)!==owner.klass.name.text)continue;
         const module=statement.moduleSpecifier;
-        if(ts.isStringLiteral(module)&&posix.normalize(posix.join(posix.dirname(path),module.text))===owner.target)aliases.add(checker.getSymbolAtLocation(binding.name));
+        if(ts.isStringLiteral(module)&&posix.normalize(posix.join(posix.dirname(path),module.text))===owner.target){aliases.add(checker.getSymbolAtLocation(binding.name));candidateNames.add(binding.name.text);}
       }
     }
     const visit=node=>{
@@ -168,7 +181,7 @@ function rejectKnownConstructorEffects(graph,owner) {
           ||ts.isDeleteExpression(parent)||ts.isPrefixUnaryExpression(parent)||ts.isPostfixUnaryExpression(parent)
           ||ts.isVariableDeclaration(parent)||ts.isCallExpression(parent)&&parent.arguments.some(argument=>argument===use))fail('a known inherited prototype or collection intrinsic mutation/escape');
       }
-      if(ts.isIdentifier(node)&&!propertyName(ts,node)) {
+      if(ts.isIdentifier(node)&&!propertyName(ts,node)&&candidateNames.has(node.text)) {
         const symbol=checker.getSymbolAtLocation(node),parent=node.parent;
         if(aliases.has(symbol)&&symbol) {
           const declaration=ts.isClassDeclaration(parent)&&parent.name===node||ts.isImportSpecifier(parent);
@@ -184,8 +197,15 @@ function rejectKnownConstructorEffects(graph,owner) {
         }
         if(['eval','Function'].includes(node.text)&&!symbol)fail('unproved dynamic constructor scope');
       }
-      ts.forEachChild(node,visit);
-    };visit(file);
+    };
+    if(ts.forEachChild===traversal.children&&ts.isIdentifier===traversal.identifier&&ts.isPropertyAccessExpression===traversal.property) {
+      // Original preorder, including duplicate occurrences. Every applicable
+      // original predicate/symbol/effect check above runs afresh on every audit.
+      for(let occurrence=effectHead;occurrence!==null;occurrence=occurrence.next)visit(occurrence.node);
+    } else {
+      // A changed compiler helper cannot use a selection made by old helpers.
+      const walk=node=>{visit(node);ts.forEachChild(node,walk);};walk(file);
+    }
   }
 }
 
@@ -195,17 +215,27 @@ export function issueImportedErrorConstructor(handle,path,start,end) {
   const {ts}=graph;let expression;
   const visit=node=>{if(ts.isNewExpression(node)&&node.getStart(module.file)===start&&node.end===end)expression=node;ts.forEachChild(node,visit);};visit(module.file);
   if(!expression||!ts.isIdentifier(expression.expression)||expression.typeArguments?.length||!expression.arguments)fail('an unsupported original constructor expression');
-  const owner=resolveImport(graph,path,expression.expression),recipe=classRecipe(graph,owner);
-  rejectKnownConstructorEffects(graph,owner);
-  if(expression.arguments.length>recipe.params.length)fail('unmodeled original constructor extra arguments');
+  // Every supported recipe has at most eight parameters. Keep this existing
+  // bound ahead of mapping even though its precise arity requires the recipe.
+  if(expression.arguments.length>8)fail('unmodeled original constructor extra arguments');
+  // Literal syntax can refuse an expression before expensive lexical/class
+  // resolution; no constructor capability exists until all following checks.
   const arguments_=expression.arguments.map(arg=>scalar(ts,arg));
+  const owner=resolveImport(graph,path,expression.expression),recipe=classRecipe(graph,owner);
+  if(expression.arguments.length>recipe.params.length)fail('unmodeled original constructor extra arguments');
   const effective=recipe.params.map((param,index)=>arguments_[index]??param.default??{kind:'undefined'});
   if(effective[recipe.message].kind!=='string')fail('an original Error message without a primitive UTF16 literal contract');
+  // Inadmissible arguments cannot issue a capability. Every candidate that
+  // survives still performs the complete fresh original effect audit below.
+  rejectKnownConstructorEffects(graph,owner);
   const proof=freeze({schema:'original-imported-error-constructor-v1',sources:graph.sources,
     caller:{path,sourceUtf16Sha256:sha(module.source),start,end},
     import:{span:span(owner.statement,module.file),binding:owner.binding.name.text,target:owner.target,exported:owner.klass.name.text},
     original:{sourceUtf16Sha256:sha(owner.original.source),...recipe},arguments:arguments_,
     conditions:{...SOURCE_CONSTRUCTOR_CONDITIONS},runtimeParity:false});
+  // Only this exact frozen privately issued proof may retain its genuine
+  // graph. Reissuance still recomputes every original recipe and effect check.
+  proofGraphs.set(proof,handle);
   const token=Object.freeze({});constructors.set(token,freeze({proof,effective,message:effective[recipe.message],fields:recipe.fields.map(field=>({name:field.name,value:field.value.kind==='parameter'?effective[field.value.index]:field.value}))}));return token;
 }
 
@@ -220,7 +250,13 @@ export function originalConstructorSourceGraph(handle) {
 export function reissueImportedErrorConstructor(proof) {
   plain(proof);
   if(!proof||typeof proof!=='object')fail('missing original constructor proof');
-  const graph=createConstructorSourceGraph(own(proof,'sources')),caller=own(proof,'caller');
+  // Persisted/copied proofs have no association and reconstruct all sources.
+  // Even privately associated proofs join every complete source row to the
+  // immutable captured graph before its private syntax/checker can be reused.
+  const sources=own(proof,'sources'),associated=proofGraphs.get(proof);
+  const graph=associated??createConstructorSourceGraph(sources),captured=originalConstructorSourceGraph(graph);
+  if(!isDeepStrictEqual(sources,captured)||JSON.stringify(sources)!==JSON.stringify(captured))fail('constructor proof sources differ from its genuine original graph');
+  const caller=own(proof,'caller');
   const token=issueImportedErrorConstructor(graph,own(caller,'path'),own(caller,'start'),own(caller,'end'));
   const expected=originalImportedErrorConstructor(token).proof;
   if(!isDeepStrictEqual(proof,expected)||JSON.stringify(proof)!==JSON.stringify(expected))fail('changed, missing or foreign original constructor proof');

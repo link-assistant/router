@@ -24,6 +24,7 @@ import {lex,topLevelItems} from './lexer.mjs';
 import {readLexicalEnvironment,reissueLexicalEnvironment,lexicalClosureName} from './lexical-environments.mjs';
 import { constructMap, refuse } from './constructs.mjs';
 import { encodeWord, field, parseLinks, textOf, writeLink } from './lino.mjs';
+import {encodeConstructorProofWord} from './constructor-proof-encoding.mjs';
 import { constantValue } from './constants.mjs';
 import { guardedScope } from './guards.mjs';
 import { optionalType, joinReturnTypes, closedReturnType } from './return-types.mjs';
@@ -589,7 +590,7 @@ export function toLino(item) {
     item.name,
     ...(item.sourceCalls?[['source-calls',encodeWord(JSON.stringify(item.sourceCalls))]]:[]),
     ...(item.conditionalCalls?[['conditional-calls']]:[]),
-    ...(item.sourceConstructors?[['source-constructors',encodeWord(JSON.stringify(item.sourceConstructors))]]:[]),
+    ...(item.sourceConstructors?[['source-constructors',encodeConstructorProofWord(JSON.stringify(item.sourceConstructors))]]:[]),
     ...(item.conditionalConstructors?[['conditional-constructors']]:[]),
     ...(item.kind==='closure'?[['environment',encodeWord(JSON.stringify(item.environment))],['captures',...item.captures.map(capture=>[capture.name,capture.type])]]:[]),
     ...flag,
@@ -615,7 +616,7 @@ function statementLink(statement) {
 
 function linkOf(expr) {
   switch (expr.kind) {
-    case 'source-error':return ['source-error',encodeWord(JSON.stringify(expr.constructor))];
+    case 'source-error':return ['source-error',encodeConstructorProofWord(JSON.stringify(expr.constructor))];
     case 'source-create':return ['source-create',['environment',encodeWord(JSON.stringify(expr.environment))],['captures',...expr.captures.map(linkOf)]];
     case 'owned-some':return ['owned-some',['values',...expr.values.map(linkOf)],['callback',linkOf(expr.callback)]];
     case 'number':
