@@ -113,8 +113,37 @@ function affinityDescriptorInput(root) {
       // Use this receiving project's dependencies, including in an exported
       // CLI whose inherited compiler source-root environment is unrelated.
       if(compiler===undefined){
-        const receivingRequire=createRequire(path.join(root,'packages/javascript/package.json'));
-        compiler=receivingRequire(receivingRequire.resolve('typescript'));
+        const receivingPackage=path.join(root,'packages/javascript/package.json');
+        const receivingRequire=createRequire(receivingPackage);
+        const missing=()=>{
+          const error=new Error("Cannot find module 'typescript' in receiving dependency search paths\nRequire stack:\n- "+receivingPackage);
+          error.code='MODULE_NOT_FOUND';return error;
+        };
+        let installed;
+        for(const searchRoot of receivingRequire.resolve.paths('typescript')??[]){
+          const candidate=path.join(searchRoot,'typescript');
+          if(fs.existsSync(candidate)&&fs.statSync(candidate).isDirectory()){installed=fs.realpathSync(candidate);break;}
+        }
+        // Bun can auto-resolve a missing bare package from its cache. Never
+        // request that resolution before finding a real receiving dependency.
+        if(installed===undefined)throw missing();
+        const metadata=path.join(installed,'package.json');
+        const descriptor=fs.openSync(metadata,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
+        let packageData;
+        try{
+          const status=fs.fstatSync(descriptor);
+          if(!status.isFile()||status.size>1048576)throw Error('Receiving TypeScript package metadata exceeds its bounded scope');
+          const bytes=Buffer.alloc(1048577);let count=0;
+          while(count<bytes.length){const read=fs.readSync(descriptor,bytes,count,bytes.length-count,null);if(!read)break;count+=read;}
+          if(count>1048576)throw Error('Receiving TypeScript package metadata exceeds its bounded scope');
+          packageData=JSON.parse(bytes.subarray(0,count).toString('utf8'));
+        }finally{fs.closeSync(descriptor);}
+        if(packageData===null||typeof packageData!=='object'||Array.isArray(packageData))throw Error('Invalid receiving TypeScript package metadata');
+        if(Object.hasOwn(packageData,'exports'))throw Error('Unsupported receiving TypeScript package exports; pinned compiler main resolution is required');
+        const resolved=receivingRequire.resolve(installed),actual=fs.realpathSync(resolved);
+        const relative=path.relative(installed,actual);
+        if(relative===''||relative==='..'||relative.startsWith('..'+path.sep)||path.isAbsolute(relative))throw missing();
+        compiler=receivingRequire(resolved);
       }
       const ts=compiler;
       const file=ts.createSourceFile('module-ownership.mjs',source.toString('utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);

@@ -111,9 +111,9 @@ try {
 }
 `;
   put(root,'compiler-root-controls/driver.mjs',script);
-  const child=label=>{
-    const args=[driver,root],result=spawnSync(process.execPath,args,{cwd:root,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:unrelated},encoding:'utf8',timeout:20_000});
-    put(root,`compiler-root-controls/${label}.command.json`,JSON.stringify({command:[process.execPath,...args],source:script,receivingRoot:root,inheritedRoot:unrelated,typescriptOverride:overrideBefore,exitCode:result.status,signal:result.signal,error:result.error?.message})+'\n');
+  const child=(label,receivingRoot=root)=>{
+    const args=[driver,receivingRoot],result=spawnSync(process.execPath,args,{cwd:root,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:unrelated},encoding:'utf8',timeout:20_000});
+    put(root,`compiler-root-controls/${label}.command.json`,JSON.stringify({command:[process.execPath,...args],source:script,receivingRoot,inheritedRoot:unrelated,typescriptOverride:overrideBefore,exitCode:result.status,signal:result.signal,error:result.error?.message})+'\n');
     put(root,`compiler-root-controls/${label}.stdout.raw.log`,result.stdout??'');
     put(root,`compiler-root-controls/${label}.stderr.raw.log`,result.stderr??'');
     assert.equal(result.error,undefined,JSON.stringify({message:result.error?.message,stdout:result.stdout,stderr:result.stderr}));
@@ -141,7 +141,33 @@ try {
   assert.equal(missing.result.status,1);assert.equal(missing.observation.stage,'plan');
   assert.match(missing.observation.error.message,/typescript/u);
   assert.ok(missing.observation.error.stack.includes(path.join(root,'packages/javascript/package.json')),missing.observation.error.stack);
+  assert.equal(missing.observation.error.code,'MODULE_NOT_FOUND');
+  // A package entry that escapes its installed package must be refused BEFORE
+  // its body can execute, including a Bun automatic-cache resolution result.
+  const marker=path.join(root,'foreign-compiler-executed.txt');
+  put(root,'packages/javascript/node_modules/typescript/package.json','{"name":"typescript","main":"../../foreign-compiler.cjs"}\n');
+  put(root,'packages/javascript/foreign-compiler.cjs','require("node:fs").writeFileSync('+JSON.stringify(marker)+',"executed");module.exports={};\n');
+  const escaped=child('escaped-installed-compiler-entry');
+  assert.equal(escaped.result.status,1);assert.equal(escaped.observation.stage,'plan');
+  assert.equal(escaped.observation.error.code,'MODULE_NOT_FOUND');assert.match(escaped.observation.error.message,/typescript/u);
+  assert.equal(fs.existsSync(marker),false,'outside-package compiler must not execute');
+  // Absolute directory resolution must not silently ignore a package's exports.
+  put(root,'packages/javascript/node_modules/typescript/package.json','{"name":"typescript","main":"index.cjs","exports":"./index.cjs"}\n');
+  put(root,'packages/javascript/node_modules/typescript/index.cjs','require("node:fs").writeFileSync('+JSON.stringify(marker)+',"executed");module.exports={};\n');
+  const exported=child('declared-package-exports');
+  assert.equal(exported.result.status,1);assert.equal(exported.observation.stage,'plan');
+  assert.match(exported.observation.error.message,/receiving TypeScript package exports/u);
+  assert.equal(fs.existsSync(marker),false,'unsupported package exports must not execute');
+  fs.rmSync(path.join(root,'packages/javascript/node_modules'),{recursive:true});
   fs.symlinkSync(dependencies,path.join(root,'packages/javascript/node_modules'),'dir');
+  // The normal ancestor search remains supported; only Bun's unrelated cache
+  // fallback lacks an installed package in this receiving search list.
+  const nested=path.join(root,'packages/javascript/nested/receiving');
+  put(nested,'packages/javascript/package.json','{"type":"module"}\n');
+  put(nested,'packages/javascript/native/core.mjs','export function observed() { return 5; }\n');
+  const ancestor=child('installed-ancestor-compiler',nested);
+  assert.equal(ancestor.result.status,0,ancestor.result.stderr);assert.equal(ancestor.observation.compiler,'5.9.3');
+  assert.equal(fs.realpathSync(ancestor.observation.compilerPath),fs.realpathSync(positive.observation.compilerPath));
   put(root,'packages/javascript/native/core.mjs','export function broken() { const = ; }\n');
   const malformed=child('invalid-receiving-native-syntax');
   assert.equal(malformed.result.status,1);assert.equal(malformed.observation.stage,'plan');
