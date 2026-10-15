@@ -15,7 +15,7 @@
   "storedSourceBytes": 4458469,
   "gzipMembers": 58,
   "memberIndex": "members.jsonl",
-  "memberIndexSha256": "384ff0243b2a9ade0fd15f124ad364afbe3f7ea6417d52865e8cf6b96bf85b56",
+  "memberIndexSha256": "281f57fdec7c8e8d3252abd94a0463659220dbc1b0ea6b311cfc10381f242cdc",
   "storage": {
     "gzipWhen": "original line count >1000, byte length >32768, or pristine upstream trailing whitespace/blank EOF must remain unchanged",
     "gzipLevel": 9,
@@ -26,7 +26,7 @@
     "meaning": "original full source bytes; no minification, splitting or semantic normalization"
   },
   "license": {
-    "path": "original/LICENSE",
+    "path": "raw/original/LICENSE",
     "spdx": "Unlicense",
     "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
   },

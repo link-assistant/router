@@ -18,7 +18,12 @@ upstream whitespace diagnostics are retained whole as deterministic gzip
 Other originals are exact plain files. The source index is one JSON record per
 original module/data file, rather than splitting or minifying implementations.
 The upstream CLI's executable mode is retained in the index and plain file.
-The complete [Unlicense](original/LICENSE) remains inspectable.
+All pristine originals live under `raw/original/`, the existing source-record
+exclusion used by the terminology check. This preserves upstream names and
+phrases without rewriting them or extending the scanner exceptions. The initial
+plain-source placement had 201 disallowed occurrences across 31 originals; the
+complete pre-move index and hit list are retained as verification evidence.
+The complete [Unlicense](raw/original/LICENSE) remains inspectable.
 
 This is the complete **repository JavaScript source tree**, not an installed
 npm dependency closure, all upstream test corpora, a Rust implementation copy or
