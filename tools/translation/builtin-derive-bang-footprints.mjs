@@ -1,6 +1,7 @@
 // Bounded actual builtin generator routes. Copy and Eq close source-selected associated
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
+import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {builtinDeriveDataInputs,builtinDebugDataInputs,builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
@@ -16,6 +17,7 @@ import {attributeOwners} from './serde-bang-footprints.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal,originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText} from './builtin-derive-ast-meta.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+const originalJson=createPrivateFrozenJsonCache();
 const plans=new WeakMap(),proofs=new WeakMap();
 const directory='compiler/rustc_builtin_macros/src/deriving/';
 const routes=new Map([
@@ -207,7 +209,7 @@ export const isBuiltinDeriveBangFootprint=value=>!!value&&proofs.has(value);
 export function originalBuiltinDeriveEnclosingOutput(proof,context,certificate,invocation){
  assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);
  const fresh=proveBuiltinDeriveBangFootprint({context,certificate,invocation});
- if(JSON.stringify(fresh)!==JSON.stringify(proof))throw new TypeError('Builtin complete original output changed before namespace effect');
+ if(JSON.stringify(fresh)!==originalJson(proof))throw new TypeError('Builtin complete original output changed before namespace effect');
  const sink=fresh.slotProofs?.outputKind;
  if(sink?.kind!=='ItemKind::Impl')throw new TypeError('Builtin namespace effect requires a source-proved complete Impl sink');
  return freeze({schema:'original-complete-builtin-enclosing-output-v1',proof:fresh,sink,route:fresh.route??null});
