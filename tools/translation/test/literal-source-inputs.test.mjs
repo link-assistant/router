@@ -41,8 +41,8 @@ test('relative literal paths use the original physical file even inside inline m
 });
 
 test('path escapes untracked targets and nonliteral nested expansion never become source edges',{timeout:5000},()=>{
- const invocations=['include!("../../escape.rs")','include!("/absolute.rs")','include!("C:\\x.rs")','include!("missing.rs")','include!(concat!("child", ".rs"))','include!(env!("INPUT"))','include!("child.rs", "extra.rs")','include!("child.txt")'],observed=[];
- for(const invocation of invocations){const sources={'src/lib.rs':invocation+';','src/child.rs':'fn child(){}','src/child.txt':'fn child(){}'},context=create(sources);let error;try{plan(context,'src/lib.rs',invocation);}catch(caught){error={name:caught.name,message:caught.message};}observed.push({invocation,sources,error});}retain('04-complete-invalid-inputs',observed);for(const row of observed){assert.equal(row.error?.name,'TypeError',row.invocation);assert.match(row.error.message,/path|target|literal|input/i);}
+ const invalidEscape='include!("C:\\x.rs")',invocations=['include!("../../escape.rs")','include!("/absolute.rs")',invalidEscape,'include!(r#"C:\\x.rs"#)','include!("missing.rs")','include!(concat!("child", ".rs"))','include!(env!("INPUT"))','include!("child.rs", "extra.rs")','include!("child.txt")'],observed=[];
+ for(const invocation of invocations){const sources={'src/lib.rs':invocation+';','src/child.rs':'fn child(){}','src/child.txt':'fn child(){}'},context=create(sources);let error;try{plan(context,'src/lib.rs',invocation);}catch(caught){error={name:caught.name,message:caught.message};}observed.push({invocation,sources,error});}retain('04-complete-invalid-inputs',observed);for(const row of observed){assert.equal(row.error?.name,row.invocation===invalidEscape?'TranslationError':'TypeError',row.invocation);assert.match(row.error.message,row.invocation===invalidEscape?/unsupported string escape/:/path|target|literal|input/i);}
 });
 
 test('candidate cycles fail and inactive versus unknown cfg retain distinct original evidence',{timeout:5000},()=>{
