@@ -27,3 +27,9 @@
   same explicit common issuer bootstrap and genuine source context. Retain full
   cold/warm/reissue tapes and compressed reports under the original limits.
   Prior failing reports remain retained; this test-only successor is UNRUN.
+- Add one explicit nonrecursive original `freeze(null)` reporting probe after
+  inspector coverage starts. Require its null return and exact one script and
+  function; retain raw totals and the separate probe/optimizer call counts.
+  Optimized inputs still require zero optimizer legacy calls, while uncertain
+  bounds require additional original calls. No missing report becomes zero.
+  All existing inputs, limits and complete before-assert reports remain.
