@@ -6,7 +6,7 @@ use link_assistant_router::generated_js_first::policy::retry_backoff;
 #[test]
 fn retry_backoff_floors_failure_counts_and_stops_at_the_maximum() {
     for (failures, base, maximum, expected) in [
-        (0.0, 10.0, 100.0, 10.0),
+        (0.0, 10.0, 100.0, 10.0_f64),
         (0.9, 10.0, 100.0, 10.0),
         (1.0, 10.0, 100.0, 20.0),
         (2.0, 10.0, 100.0, 40.0),
@@ -19,7 +19,10 @@ fn retry_backoff_floors_failure_counts_and_stops_at_the_maximum() {
         (1.0, -1.0, 100.0, -2.0),
         (2.0, -1.0, 100.0, -4.0),
     ] {
-        assert_eq!(retry_backoff(failures, base, maximum), expected);
+        assert_eq!(
+            retry_backoff(failures, base, maximum).to_bits(),
+            expected.to_bits()
+        );
     }
 }
 
@@ -42,7 +45,10 @@ fn retry_backoff_preserves_defined_zero_signs() {
 
 #[test]
 fn retry_backoff_distinguishes_nan_failures_from_nan_delay_or_maximum() {
-    assert_eq!(retry_backoff(f64::NAN, 10.0, 100.0), 10.0);
+    assert_eq!(
+        retry_backoff(f64::NAN, 10.0, 100.0).to_bits(),
+        10.0_f64.to_bits()
+    );
     assert!(retry_backoff(3.0, f64::NAN, 100.0).is_nan());
     assert!(retry_backoff(3.0, 10.0, f64::NAN).is_nan());
     assert!(retry_backoff(f64::NAN, f64::NAN, f64::NAN).is_nan());
