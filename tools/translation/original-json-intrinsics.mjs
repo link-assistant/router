@@ -83,7 +83,7 @@ const tokenBufferValue=tokenBuffer&&hasOwn(tokenBuffer,'value')&&typeof tokenBuf
 const tokenNumberValue=tokenNumber&&hasOwn(tokenNumber,'value')&&typeof tokenNumber.value==='function'&&!types.isProxy(tokenNumber.value)?tokenNumber.value:null;
 const tokenSafeInteger=tokenNumberValue?descriptor(tokenNumberValue,'isSafeInteger'):null;
 const tokenRequired=[[originalObject,'create'],[originalObject,'defineProperty'],[originalObject,'keys'],[tokenBufferValue,'byteLength'],[tokenNumberValue,'isSafeInteger']];
-const tokenPins=[];let tokenNative=!!(tokenBufferValue&&tokenString&&hasOwn(tokenString,'value')&&native(tokenString.value,'String')&&tokenNumberValue&&native(tokenNumberValue,'Number')&&tokenSafeInteger&&hasOwn(tokenSafeInteger,'value')&&native(tokenSafeInteger.value,'isSafeInteger'));
+const tokenPins=[];let tokenNative=!!(traversalNative&&tokenBufferValue&&tokenString&&hasOwn(tokenString,'value')&&native(tokenString.value,'String')&&tokenNumberValue&&native(tokenNumberValue,'Number')&&tokenSafeInteger&&hasOwn(tokenSafeInteger,'value')&&native(tokenSafeInteger.value,'isSafeInteger'));
 function tokenPrototypeSafe(){
  // Copier defaults and ToPropertyDescriptor read these inherited properties.
  if(descriptor(objectPrototype,'cells')||descriptor(objectPrototype,'bytes')||descriptor(objectPrototype,'preserveKeyOrder')||descriptor(objectPrototype,'get')||descriptor(objectPrototype,'set'))return false;
