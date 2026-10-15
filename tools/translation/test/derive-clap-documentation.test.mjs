@@ -85,9 +85,10 @@ for(const [path,digest,owner,variants,certificateCount,constants]of [
   const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),method=[...program.declarations.values()].find(row=>row.impl?.method==='as_str');assert.ok(result.meta.checkedMethods.some(row=>row.name===owner+'.as_str'));assert.ok(method);assert.equal(method.sourceMethodProof.originalTokenTransformVerified,true);assert.equal(method.impl.copyCertificate.verified,true);
   let parse=null;
   if(path==='src/deploy_config.rs'){
-    const methods=[...program.declarations.values()].filter(row=>row.impl?.method==='parse'&&row.impl.type?.path?.at(-1)===owner);assert.equal(methods.length,1);parse=methods[0];
-    const original=result.meta.checkedMethods.find(row=>row.name===owner+'.parse');assert.ok(original);assert.equal(original.source,path);assert.deepEqual(original.span,{start:10132,end:10475});assert.deepEqual(parse.span,original.span);
-    assert.deepEqual(parse.impl.type.path,['crate',owner]);assert.equal(parse.impl.receiver,null);assert.equal(parse.sourceMethodProof.originalTokenTransformVerified,true);assert.equal(result.meta.refused.some(row=>row.name===owner+'.parse'),false);
+    const original=result.meta.checkedMethods.find(row=>row.name===owner+'.parse');assert.ok(original);assert.equal(original.source,path);assert.deepEqual(original.span,{start:10132,end:10475});assert.equal(original.receiver,null);
+    const methods=[...program.declarations.values()].filter(row=>{const origin=row.sourceMethodProof?.parse?.transform?.owner;return row.impl?.method==='parse'&&origin?.owner?.length===2&&origin.owner[0]==='crate'&&origin.owner[1]===owner&&origin.file===original.source&&origin.sourceSha256===digest&&origin.originalSpan?.start===original.span.start&&origin.originalSpan?.end===original.span.end;});assert.equal(methods.length,1);parse=methods[0];
+    const transform=parse.sourceMethodProof.parse.transform;assert.deepEqual(transform.owner.owner,['crate',owner]);assert.equal(transform.owner.schema,'original-method-namespace-owner-v1');assert.equal(transform.sourcePath,path);assert.equal(transform.sourceSha256,digest);assert.deepEqual(transform.owner.originalSpan,original.span);assert.deepEqual(parse.span,original.span);
+    assert.equal(parse.impl.receiver,null);assert.equal(parse.sourceMethodProof.originalTokenTransformVerified,true);assert.equal(result.meta.refused.some(row=>row.name===owner+'.parse'),false);
   }
   const errorInputs=['','Keep','KEEP',' keep','keep ','if_absent','IF-ABSENT','replace\n','é','😀','k\0eep','\0'];
   const errors=errorInputs.map(input=>({input,expected:'provider key mode `'+input+'` must be keep, if-absent or replace'}));
