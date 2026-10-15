@@ -84,6 +84,57 @@ test('actual JavaScript edits synchronize reparsed meta, Rust and executable str
   assert.equal(changed.originalInputsUnchanged,true);assert.equal(changed.wholeSourceSynchronization,false);assert.equal(changed.rustExecuted,false);
 });
 
+test('receiving dependency resolution precedes inherited compiler roots during synchronization planning', {timeout:60_000},t=>{
+  const root=fixture(t),unrelated=path.join(root,'unrelated-compiler');
+  const inheritedBefore=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT,overrideBefore=process.env.ROUTER_TRANSLATION_TSC;
+  const driver=path.join(root,'compiler-root-controls/driver.mjs');
+  const script=`import {createRequire} from 'node:module';
+const root=process.argv[2],before=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT,override=process.env.ROUTER_TRANSLATION_TSC;
+let stage='plan';
+try {
+  const {synchronizationSteps}=await import(${JSON.stringify(pathToFileURL(path.join(repository,'scripts/sync-router.mjs')).href)});
+  const steps=synchronizationSteps({root,direction:'javascript-to-rust'});
+  stage='compiler-observation';
+  const require=createRequire(root+'/packages/javascript/package.json'),ts=require('typescript');
+  console.log(JSON.stringify({ok:true,stage,steps:steps.map(step=>step.id),compiler:ts.version,compilerPath:require.resolve('typescript'),before,after:process.env.ROUTER_NATIVE_TS_SOURCE_ROOT,override,overrideAfter:process.env.ROUTER_TRANSLATION_TSC}));
+} catch(error) {
+  console.log(JSON.stringify({ok:false,stage,error:{name:error.name,code:error.code,message:error.message,stack:error.stack},before,after:process.env.ROUTER_NATIVE_TS_SOURCE_ROOT,override,overrideAfter:process.env.ROUTER_TRANSLATION_TSC}));
+  console.error(error.stack);process.exitCode=1;
+}
+`;
+  put(root,'compiler-root-controls/driver.mjs',script);
+  const child=label=>{
+    const args=[driver,root],result=spawnSync(process.execPath,args,{cwd:root,env:{...process.env,ROUTER_NATIVE_TS_SOURCE_ROOT:unrelated},encoding:'utf8',timeout:20_000});
+    put(root,`compiler-root-controls/${label}.command.json`,JSON.stringify({command:[process.execPath,...args],source:script,receivingRoot:root,inheritedRoot:unrelated,typescriptOverride:overrideBefore,exitCode:result.status,signal:result.signal,error:result.error?.message})+'\n');
+    put(root,`compiler-root-controls/${label}.stdout.raw.log`,result.stdout??'');
+    put(root,`compiler-root-controls/${label}.stderr.raw.log`,result.stderr??'');
+    assert.equal(result.error,undefined,JSON.stringify({message:result.error?.message,stdout:result.stdout,stderr:result.stderr}));
+    const observation=JSON.parse(result.stdout);
+    assert.equal(observation.before,unrelated);assert.equal(observation.after,unrelated);
+    assert.equal(observation.override,overrideBefore);assert.equal(observation.overrideAfter,overrideBefore);
+    return {result,observation};
+  };
+  // The explicit root succeeds even when the inherited compiler root is absent.
+  const positive=child('explicit-receiving-root');
+  assert.equal(positive.result.status,0,positive.result.stderr);assert.equal(positive.observation.compiler,'5.9.3');
+  assert.deepEqual(positive.observation.steps,['javascript-meta-rust','javascript-meta-typescript']);
+  // A valid unrelated compiler cannot substitute missing receiving dependencies.
+  put(unrelated,'packages/javascript/package.json','{"type":"module"}\n');
+  fs.symlinkSync(dependencies,path.join(unrelated,'packages/javascript/node_modules'),'dir');
+  fs.unlinkSync(path.join(root,'packages/javascript/node_modules'));
+  const missing=child('missing-receiving-dependencies');
+  assert.equal(missing.result.status,1);assert.equal(missing.observation.stage,'plan');
+  assert.match(missing.observation.error.message,/typescript/u);
+  assert.ok(missing.observation.error.stack.includes(path.join(root,'packages/javascript/package.json')),missing.observation.error.stack);
+  fs.symlinkSync(dependencies,path.join(root,'packages/javascript/node_modules'),'dir');
+  put(root,'packages/javascript/native/core.mjs','export function broken() { const = ; }\n');
+  const malformed=child('invalid-receiving-native-syntax');
+  assert.equal(malformed.result.status,1);assert.equal(malformed.observation.stage,'plan');
+  assert.equal(malformed.observation.error.message,'invalid module ownership syntax');
+  assert.equal(process.env.ROUTER_NATIVE_TS_SOURCE_ROOT,inheritedBefore);
+  assert.equal(process.env.ROUTER_TRANSLATION_TSC,overrideBefore);
+});
+
 test('freshness rejects an edited Rust projection and retains the complete failed child output without running dependent producers', {timeout:60_000},t=>{
   const root=fixture(t);assert.equal(run(root,'initial').exitCode,0);
   put(root,'src/generated_js_first/policy.rs','stale generated Rust\n');

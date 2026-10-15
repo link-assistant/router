@@ -6,8 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {createRequire} from 'node:module';
 import {fileURLToPath, pathToFileURL} from 'node:url';
-import {ownershipSyntax} from '../tools/translation/js-to-rust/vendor/module-syntax.mjs';
 
 const implementationRoot=fileURLToPath(new URL('../',import.meta.url));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -98,7 +98,7 @@ function affinityDescriptorInput(root) {
     ancestor=path.join(ancestor,component);
     if(fs.lstatSync(ancestor).isSymbolicLink())throw Error('Linked original synchronization source refused: '+ancestor);
   }
-  let visited=1,bytes=0;
+  let visited=1,bytes=0,compiler;
   const visit=directory=>{
     if(fs.lstatSync(directory).isSymbolicLink())throw Error('Linked original synchronization source refused: '+directory);
     for(const entry of fs.readdirSync(directory,{withFileTypes:true})) {
@@ -109,7 +109,12 @@ function affinityDescriptorInput(root) {
       if(!entry.isFile()||!entry.name.endsWith('.mjs'))continue;
       const name=relativeName(path.relative(root,filename)),status=originalFileStatus(root,name);
       const source=originalBytes(root,name,status,MAX_INPUT_BYTES-bytes);bytes+=source.length;
-      const {ts,file}=ownershipSyntax(source.toString('utf8'));
+      // Planning runs before producer children can bind their source root.
+      // Use this receiving project's dependencies, including in an exported
+      // CLI whose inherited compiler source-root environment is unrelated.
+      const ts=compiler??=createRequire(path.join(root,'packages/javascript/package.json'))('typescript');
+      const file=ts.createSourceFile('module-ownership.mjs',source.toString('utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+      if(file.parseDiagnostics.length)throw new Error('invalid module ownership syntax');
       for(const statement of file.statements) {
         if(!ts.isImportDeclaration(statement)&&!ts.isExportDeclaration(statement))continue;
         const specifier=statement.moduleSpecifier;
