@@ -150,15 +150,16 @@ test('unit Eq and Clone fieldless routes close independently without trait execu
 });
 
 test('Eq cloned field Type macros and nested conditional fields retain output obligations',()=>{
-  for(const source of [
-    '#[derive(Eq,serde::Serialize)] pub struct Payload { value:generated!() }',
-    '#[derive(Eq,serde::Serialize)] pub struct Payload { #[cfg(flag)] value:u8 }',
-    '#[derive(Eq,serde::Serialize)] pub enum Payload { A(u8) }',
+  const observations=[];for(const [source,eqComplete] of [
+    ['#[derive(Eq,serde::Serialize)] pub struct Payload { value:generated!() }',false],
+    ['#[derive(Eq,serde::Serialize)] pub struct Payload { #[cfg(flag)] value:u8 }',false],
+    ['#[derive(Eq,serde::Serialize)] pub enum Payload { A(u8) }',true],
   ]){
     const context=createDeriveFootprintContext(input(source)),certificate=context.certificates[0];
-    if(certificate){const attribute=certificate.attributes.find(value=>value.derives?.some(path=>path[0]==='Eq'));assert.throws(()=>proveBuiltinDeriveBangFootprint({context,certificate,invocation:{path:['Eq'],attributeSpan:attribute.span}}));}
-    assert.equal(createDeriveBangContext({deriveContext:context}).certificates.some(value=>value.dimensions.bangMacroComplete),false);
+    let proof=null;if(certificate){const attribute=certificate.attributes.find(value=>value.derives?.some(path=>path[0]==='Eq')),args={context,certificate,invocation:{path:['Eq'],attributeSpan:attribute.span}};if(eqComplete){proof=proveBuiltinDeriveBangFootprint(args);assert.equal(proof.selectedOwnerBangComplete,true);assert.equal(proof.generatedImplBehavior,false);assert.equal(proof.route.typedSource.fields.length,1);assert.equal(proof.route.typedSource.fields[0].semanticSyntaxRoundTrip,true);}else assert.throws(()=>proveBuiltinDeriveBangFootprint(args));}
+    if(eqComplete)assert.ok(proof);const output=createDeriveBangContext({deriveContext:context});assert.equal(output.certificates.some(value=>value.dimensions.bangMacroComplete),false);observations.push({source,eqComplete,context,proof,output});
   }
+  retain('12-eq-owner-and-independent-output-obligations',observations);
 });
 
 test('Eq per-invocation proofs retain exact original field spans and private ownership',()=>{

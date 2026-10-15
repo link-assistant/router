@@ -13,6 +13,7 @@ import {liftBuiltinEqAstRoute} from '../builtin-eq-ast-route.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from '../cfg-profile.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {originalPayloadDeriveSelection} from './original-payload-derive-context.mjs';
 
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 function read(path){try{return readFileSync(new URL(path,root),'utf8');}catch(error){if(error.code!=='ENOENT')throw error;return execFileSync('git',['show','HEAD:'+path],{cwd:root,encoding:'utf8',maxBuffer:16*1024*1024});}}
@@ -42,7 +43,7 @@ test('empty layouts, repeated simple types and the complete 128-field budget pre
 
 test('actual complete affinity and subscription sources retain every private Eq payload owner',{timeout:60000},()=>{
  for(const [file,name,digest,variants,count]of [['src/response_affinity.rs','AffinityDestination','e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41',['StoredProvider','Subscription'],7],['src/subscription.rs','InstallDocumentResult','e0949d81ba1a62586fd99dc79fb3e889346bc2fb60e17aa5e3e30f252018ce28',['Installed','AlreadyPresent'],2]]){
-  const original=read(file);assert.equal(hash(original),digest);const {args,proof}=prove(original,{file,name});assert.equal(proof.source,file);assert.equal(proof.sourceSha256,digest);assert.deepEqual(proof.route.typedSource.variants.map(row=>row.name),variants);assert.equal(proof.route.typedSource.fields.length,count);assert.ok(proof.route.typedSource.fields.every(row=>row.semanticSyntaxRoundTrip));assert.equal(originalBuiltinDeriveEnclosingOutput(proof,args.context,args.certificate,args.invocation).proof.generatedImplBehavior,false);
+  const original=read(file);assert.equal(hash(original),digest);const args=originalPayloadDeriveSelection({file,name,owner:'Eq'}),proof=proveBuiltinDeriveBangFootprint(args);retain('complete-original-'+name,{source:original,args,proof});assert.equal(proof.source,file);assert.equal(proof.sourceSha256,digest);assert.deepEqual(proof.route.typedSource.variants.map(row=>row.name),variants);assert.equal(proof.route.typedSource.fields.length,count);assert.ok(proof.route.typedSource.fields.every(row=>row.semanticSyntaxRoundTrip));assert.equal(originalBuiltinDeriveEnclosingOutput(proof,args.context,args.certificate,args.invocation).proof.generatedImplBehavior,false);
  }
 });
 
