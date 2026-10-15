@@ -80,7 +80,7 @@ function seal(key,method,evidence,cacheValue=true){
   selections.set(value,{method,evidence});if(cacheValue)cache.set(key,value);return value;
 }
 export function pinnedOptionBody(name){
-  if(!['unwrap_or','unwrap_or_default','unwrap_or_else','or_else','ok_or_else','as_ref','is_none_or','is_some_and','map_or_else','filter'].includes(name))throw new TypeError('standard method is outside the initial body profile');
+  if(!['unwrap_or','unwrap_or_default','unwrap_or_else','or_else','ok_or','ok_or_else','as_ref','is_none_or','is_some_and','map_or_else','filter'].includes(name))throw new TypeError('standard method is outside the initial body profile');
   const key='Option::'+name;if(cache.has(key))return cache.get(key);
   const source=sources.get('library/core/src/option.rs'),method=methodIn(source.source,'impl<T>Option<T>',name);
   return seal(key,method,{kind:'original-inherent-method',rustPath:source.input.rustPath,sourceSha256:source.input.sha256,owner:'core::option::Option<T>',genericParameter:'T'});

@@ -1,0 +1,93 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {join} from 'node:path';
+import {createHash} from 'node:crypto';
+import {gunzipSync} from 'node:zlib';
+import {translateProject} from '../project.mjs';
+import {translateSource} from '../translate.mjs';
+import {parseProgram} from '../semantic-meta.mjs';
+import {HostRustParser,HostChecker,parseRust} from '../extensions/host-contracts.mjs';
+import {pinnedOptionBody,parsePinnedBody,parsedPinnedBodyEvidence,STANDARD_BODY_SOURCE_PROFILE} from '../extensions/standard-body-source.mjs';
+import {requirePinnedStandardBody,checkPinnedOptionBody} from '../extensions/standard-body-checker.mjs';
+import {requireOriginalStandardCall} from '../extensions/original-standard-calls.mjs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
+import {serde_json_from_str} from '../extensions/json-runtime.mjs';
+import {sourceItems} from '../rust-structure.mjs';
+import {originalCsvContext} from './original-csv-context.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
+
+const hash=value=>createHash('sha256').update(value).digest('hex'),rule='rust.option.ok-or.original-body.v1';
+const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
+const tag=($,field0)=>Object.freeze(field0===undefined?{$}:{$,field0});
+const some=value=>tag('Some',value),none=tag('None'),ok=value=>tag('Ok',value),err=value=>tag('Err',value);
+const retain=(name,value)=>{const directory=process.env.ROUTER_OPTION_OK_OR_VECTOR_DIR;if(!directory)return;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),JSON.stringify(value,(_key,item)=>typeof item==='bigint'?{$bigint:item.toString()}:item instanceof Map?{$map:[...item]}:item)+'\n',{flag:'wx'});};
+function find(node,predicate){if(!node||typeof node!=='object')return null;if(predicate(node))return node;for(const [key,value]of Object.entries(node))if(!['type','span','patternControl','pinnedStandardBodyProof'].includes(key))for(const child of Array.isArray(value)?value:[value]){const found=find(child,predicate);if(found)return found;}return null;}
+function refused(source,index){const result=translateSource(source);retain('06-refused-'+index,{source,result});assert.equal(result.meta.functions.find(row=>row.name==='bad')?.status,'carried',source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);}
+
+test('eager ok_or selects the complete original core method and authenticates its entire parse',()=>{
+ const selection=pinnedOptionBody('ok_or'),body=parsePinnedBody(HostRustParser,selection),evidence=parsedPinnedBodyEvidence(body),root=new URL('../source-profiles/standard-method-bodies/',import.meta.url),manifest=JSON.parse(readFileSync(new URL('manifest.json',root),'utf8'));
+ const inputs=manifest.sources.map(input=>{const encoded=readFileSync(new URL(input.file,root)),raw=gunzipSync(encoded,{maxOutputLength:128000});assert.equal(encoded.length,input.compressedBytes);assert.equal(hash(encoded),input.compressedSha256);assert.equal(raw.length,input.bytes);assert.equal(hash(raw),input.sha256);return {input,source:raw.toString('utf8')};});
+ retain('01-original-core',{selection,body,evidence,inputs,manifest,profile:STANDARD_BODY_SOURCE_PROFILE});
+ assert.equal(selection.method.ownerHeader,'impl<T>Option<T>');assert.equal(selection.evidence.owner,'core::option::Option<T>');assert.equal(selection.evidence.sourceSha256,'4c172731ebf0ef2ae6fc3e9b5127096d3c5c400c3757cfe5e38223de91bc3efd');assert.equal(evidence.selection,selection);
+ assert.match(selection.method.signatureSource,/pub fn ok_or<E>\(self, err: E\) -> Result<T, E>/u);assert.match(selection.method.bodySource,/Some\(v\)\s*=>\s*Ok\(v\)/u);assert.match(selection.method.bodySource,/None\s*=>\s*Err\(err\)/u);
+ for(const name of ['namespaceComplete','traitComplete','wholeCoreTranslated'])assert.equal(selection[name],false);
+ assert.throws(()=>parsePinnedBody(HostRustParser,structuredClone(selection)),/privately selected/u);assert.throws(()=>parsedPinnedBodyEvidence(structuredClone(body)),/private actual parse/u);body.span.end++;assert.throws(()=>parsedPinnedBodyEvidence(body),/private actual parse/u);
+});
+
+test('checked serialized eager Result bodies preserve integer boundaries borrowed strings and owned error values',{timeout:60_000},async()=>{
+ const source='pub fn convert(value:Option<u64>)->Result<u64,String>{value.ok_or("missing Ω😀".to_string())}pub fn inferred(value:Option<u8>)->Result<u8,bool>{let result=value.ok_or(true);result}pub fn borrowed(value:Option<&str>)->Result<&str,u8>{value.ok_or(7u8)}pub fn arithmetic(value:Option<u8>,n:u8)->Result<u8,u8>{value.ok_or(n+1u8)}',result=project(source),observations=[];
+ retain('02-authored-project',{source,result});assert.deepEqual(result.meta.refused,[]);
+ const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram));for(const name of ['convert','inferred','borrowed','arithmetic']){const node=find(checked.declarations.get(name).body,node=>node.k==='routerPinnedStandardBody');assert.ok(node);assert.equal(node.pinnedStandardBodyProof.languageRule,rule);assert.equal(node.body.k,'let');assert.equal(node.body.body.k,'let');assert.ok(find(node.body,node=>node.k==='match'));requirePinnedStandardBody(node,HostRustParser,{Checker:HostChecker,program:checked});}
+ try{await verifyTypedTargets(result,api=>{for(const n of [0n,1n,(1n<<64n)-1n])assert.deepEqual(api.convert(some(n)),ok(n));assert.deepEqual(api.convert(none),err('missing Ω😀'));assert.deepEqual(api.inferred(none),err(true));assert.deepEqual(api.inferred(some(255n)),ok(255n));for(const text of ['','Ω😀','a\0b']){assert.deepEqual(api.borrowed(some(text)),ok(text));observations.push({text,result:api.borrowed(some(text))});}assert.deepEqual(api.borrowed(none),err(7n));assert.deepEqual(api.arithmetic(some(8n),0n),ok(8n));assert.deepEqual(api.arithmetic(none,254n),err(255n));for(const value of [some(8n),none])assert.throws(()=>api.arithmetic(value,255n),RangeError);for(const invalid of [null,{},tag('Other'),some(-1n),some(1n<<64n),some(1),some('1')])assert.throws(()=>api.convert(invalid),TypeError);},{childTimeoutMs:20_000});}finally{retain('02-target-observations',observations);}
+});
+
+test('receiver then eager error evaluate once for both variants and preserve exact thrown identities',{timeout:60_000},async()=>{
+ const source='fn receive(value:Option<u8>)->Option<u8>{let ignored=std::fs::read_to_string("receiver").is_ok();value}fn failure()->bool{std::fs::read_to_string("error").is_ok()}pub fn order(value:Option<u8>)->Result<u8,bool>{receive(value).ok_or(failure())}',result=project(source),observations=[];retain('03-complete-effects',{source,result});assert.deepEqual(result.meta.refused,[]);
+ try{await verifyTypedTargets(result,(api,_result,_module,{effects:{withEffectCapabilities}})=>{
+  for(const [value,wanted]of [[some(8n),ok(8n)],[none,err(true)]]){const calls=[],actual=withEffectCapabilities({fs:{sync:{readFileSync(path){calls.push(path);return new Uint8Array();}}}},()=>api.order(value));assert.deepEqual(actual,wanted);assert.deepEqual(calls,['receiver','error']);observations.push({value,wanted,actual,calls});}
+  for(const value of [some(8n),none])for(const at of ['receiver','error']){const calls=[],defect=new Error('adapter defect '+at),capability={fs:{sync:{readFileSync(path){calls.push(path);if(path===at)throw defect;return new Uint8Array();}}}};assert.throws(()=>withEffectCapabilities(capability,()=>api.order(value)),actual=>actual===defect);assert.deepEqual(calls,at==='receiver'?['receiver']:['receiver','error']);observations.push({value,at,calls,exactThrownIdentity:true});}
+  const calls=[],actual=withEffectCapabilities({fs:{sync:{readFileSync(path){calls.push(path);if(path==='error')throw Object.assign(new Error('absent'),{code:'ENOENT'});return new Uint8Array();}}}},()=>api.order(none));assert.deepEqual(actual,err(false));assert.deepEqual(calls,['receiver','error']);observations.push({actual,calls});
+ },{childTimeoutMs:20_000});}finally{retain('03-eager-once-observations',observations);}
+});
+
+test('complete original ActivityPub parent executes require_string and dependent validate_activity through genuine project scopes',{timeout:60_000},async()=>{
+ const corpus=originalCsvContext(),entry=corpus.inputs.entry,file='src/activitypub.rs',source=corpus.source(file),items=sourceItems(source),required=items.find(item=>item.term==='fn'&&item.name==='require_string'),validate=items.find(item=>item.term==='fn'&&item.name==='validate_activity');assert.equal(entry,'src/lib.rs');assert.ok(required);assert.ok(validate);
+ assert.equal(Buffer.byteLength(source),8842);assert.equal(hash(source),'1eec701e38326ba002bea83922b861fb8c4cae773384fe8c27d7a6a6adba0645');assert.equal(hash(source.slice(required.start,required.end)),'3035d244a59027a0e631ae13903af34c3a75eceb969c4c22806f6fb8bd86db0e');
+ const manifest=corpus.source('Cargo.toml'),lock=corpus.source('Cargo.lock'),paths=corpus.inputs.sources.filter(row=>row.source.endsWith('.rs')).map(row=>row.source);retain('04-complete-original-inputs',{inputs:corpus.inputs,allOriginals:corpus.inputs.sources.map(row=>({...row,content:corpus.source(row.source)})),paths,source,required,validate});
+ const result=translateProject({entry,paths,readSource:corpus.source,cargoManifest:manifest,deriveDependencies:loadDeriveDependencyProof({manifest,lock}),jsonMacroDependencies:loadJsonMacroSourceProof({manifest,lock}),compilationProfile:corpus.inputs.compilationProfile});
+ retain('04-complete-original-project',result);assert.equal(result.meta.entry,entry);assert.equal(result.meta.sources.find(row=>row.source===file).sha256,hash(source));assert.equal(result.meta.runtimeParity,false);
+ const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),aliases=[];
+ for(const item of [required,validate]){const name='activitypub.'+item.name,row=result.meta.executable.find(row=>row.source===file&&row.name===name);assert.ok(row,JSON.stringify(result.meta.refused));assert.deepEqual(row.span,{start:item.start,end:item.end});const original=checked.declarations.get(name);assert.ok(original);if(item===required)assert.ok(find(original.body,node=>node.k==='routerPinnedStandardBody'&&node.pinnedStandardBodyProof.method==='ok_or'));const candidates=[...target.declarations.values()].filter(row=>row.k==='fn'&&!row.impl&&row.span?.start===original.span.start&&row.span?.end===original.span.end);assert.equal(candidates.length,1);aliases.push(`${candidates[0].fullName} as original_${item.name}`);}
+ const suffix='\nexport {'+aliases.join(',')+'};\n',observations=[];
+ try{await verifyTypedTargets({...result,javascript:result.javascript+suffix,typescript:result.typescript+suffix},(_api,_result,module)=>{
+  for(const [text,field,wanted]of [['{"id":"abc"}','id',ok('abc')],['{"type":"Create"}','type',ok('Create')],['{"other":"Ω😀\\u0000"}','other',ok('Ω😀\0')],['{"id":" "}','id',ok(' ')],['{}','id',err('activity id is required')],['{"id":""}','id',err('activity id is required')],['{"type":false}','type',err('activity type is required')],['{"other":0}','other',err('required field is missing')],['null','other',err('required field is missing')]]){const parsed=serde_json_from_str(text);assert.equal(parsed.$,'Ok');const actual=module.original_require_string(parsed.field0,field);assert.deepEqual(actual,wanted);observations.push({text,field,wanted,actual});}
+  for(const [text,wanted]of [['{}',err('activity id is required')],['{"id":"1"}',err('activity type is required')],['{"id":"1","type":"Create"}',err('activity must include actor or attributedTo')],['{"id":"1","type":"Create","actor":false}',err('activity must include actor or attributedTo')],['{"id":"1","type":"Create","actor":""}',ok(null)],['{"id":"1","type":"Create","attributedTo":"Ω😀"}',ok(null)],['{"id":"1","type":"Create","actor":"a","attributedTo":"b"}',ok(null)]]){const parsed=serde_json_from_str(text);assert.equal(parsed.$,'Ok');const actual=module.original_validate_activity(parsed.field0);assert.deepEqual(actual,wanted);observations.push({text,wanted,actual});}
+  for(const value of [null,{},Object.freeze({$:'Object',field0:{}})])assert.throws(()=>module.original_validate_activity(value),TypeError);
+ },{childTimeoutMs:20_000});}finally{retain('04-original-observations',observations);}
+});
+
+test('original inherent methods keep priority and only genuine canonical aliases enter the standard rule',{timeout:60_000},async()=>{
+ const source='use std::option::Option as O;struct Counter{n:u8}impl Counter{fn ok_or(&self,other:u8)->u8{self.n+other}}pub fn own(n:u8)->u8{Counter{n}.ok_or(1u8)}pub fn alias(value:O<u8>)->Result<u8,bool>{value.ok_or(false)}',result=project(source);retain('05-inherent-and-alias',{source,result});assert.deepEqual(result.meta.refused,[]);await verifyTypedTargets(result,api=>{assert.equal(api.own(9n),10n);assert.deepEqual(api.alias(none),err(false));assert.deepEqual(api.alias(some(255n)),ok(255n));},{childTimeoutMs:20_000});
+});
+
+test('foreign owners borrowed escapes incomplete destruction control and malformed arities retain full refusals',()=>{
+ const sources=['enum Option{Other}fn bad(value:Option)->Result<u8,bool>{value.ok_or(true)}','struct Fake{n:u8}fn bad(value:Fake)->Result<u8,bool>{value.ok_or(true)}','use unknown::Option;fn bad(value:Option<u8>)->Result<u8,bool>{value.ok_or(true)}','enum Result{Other}fn bad(value:Option<u8>)->Result{value.ok_or(true)}','fn bad(value:Option<u64>)->Result<u32,bool>{value.ok_or(true)}','fn bad(value:Option<u64>)->Result<u64,String>{value.ok_or(true)}','fn bad(value:&Option<u64>)->Result<u64,bool>{value.ok_or(true)}','fn bad(value:Option<u64>,error:&u64)->Result<u64,&u64>{value.ok_or(error)}','fn bad(value:Option<String>)->Result<String,bool>{value.ok_or(true)}','struct Failure{n:u8}fn bad(value:Option<u64>)->Result<u64,Failure>{value.ok_or(Failure{n:0u8})}','pub const fn bad(value:Option<u64>)->Result<u64,bool>{value.ok_or(true)}','fn bad(value:Option<u64>)->Result<u64,bool>{value.ok_or()}','fn bad(value:Option<u64>)->Result<u64,bool>{value.ok_or(true,false)}','fn bad(value:Option<u64>)->Result<u64,bool>{value.ok_or(return Err(true))}'];
+ sources.forEach(refused);
+});
+
+test('new eager caller association requires the exact original checker and unchanged source-call syntax',()=>{
+ const source='fn actual(value:Option<u8>)->Result<u8,bool>{value.ok_or(true)}fn main(){}',surface=parseRust(source),entry=surface.items.find(item=>item.name==='actual'),call=find(entry.body,node=>node.k==='routerPinnedStandardBodyCall'),checker=new HostChecker('Rust',[]);assert.ok(call);const checked=checker.program(surface);requireOriginalStandardCall(checker,call);retain('07-actual-caller',{source,surface,checked,call});
+ assert.throws(()=>requireOriginalStandardCall(new HostChecker('Rust',[]),call),/unchanged actual privately captured/u);assert.throws(()=>requireOriginalStandardCall(checker,structuredClone(call)),/unchanged actual privately captured/u);call.args[0].value=false;assert.throws(()=>requireOriginalStandardCall(checker,call),/unchanged actual privately captured/u);
+ const fresh=parseRust(source),freshChecker=new HostChecker('Rust',[]);class ForeignChecker extends HostChecker{}assert.throws(()=>new ForeignChecker('Rust',[]).program(fresh),/actual original|original.*checker|Host checker|source class changed/u);freshChecker.program(fresh);
+ const originalCall=find(fresh.items.find(item=>item.name==='actual').body,node=>node.k==='routerPinnedStandardBodyCall'),replacement=new HostChecker('Rust',[]);replacement.expr=()=>{throw new Error('must not run');};let traps=0;const proxy=new Proxy(freshChecker,{get(){traps++;throw new Error('must not run');}});
+ for(const foreign of [replacement,proxy])assert.throws(()=>checkPinnedOptionBody(foreign,originalCall,null,new Map(),[],null,HostRustParser),/source class changed|method identity changed|callbacks or accessors/u);assert.equal(traps,0);
+});
+
+test('serialized meta rechecks full eager bindings and original body and refuses fresh-process proof replay',()=>{
+ const source='pub fn actual(value:Option<u8>,other:Option<u8>,error:bool,other_error:bool)->Result<u8,bool>{value.ok_or(error)}',result=project(source),program=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),node=find(program.declarations.get('actual').body,node=>node.k==='routerPinnedStandardBody');retain('08-complete-kernel',{source,result,node});assert.ok(node);requirePinnedStandardBody(node,HostRustParser,{Checker:HostChecker,program});
+ for(const [index,mutate]of [value=>{value.body.value.name='other';},value=>{value.body.body.value.name='other_error';},value=>{value.pinnedStandardBodyProof.languageRule='foreign';},value=>{value.pinnedStandardBodyProof.selection.method.bodySource='{}';},value=>{value.body.body.body={k:'unit',type:value.type};},value=>{value.pinnedStandardBodyProof.namespaceComplete=true;},value=>{value.body.body.value.type={kind:'unit'};}].entries()){const changed=structuredClone(node);mutate(changed);retain('08-mutated-'+index,changed);assert.throws(()=>requirePinnedStandardBody(changed,HostRustParser,{Checker:HostChecker,program}),/body|proof|receiver|error|specialization/u);}
+ const standard=new URL('../extensions/standard-body-checker.mjs',import.meta.url).href,host=new URL('../extensions/host-contracts.mjs',import.meta.url).href,script=`import {requirePinnedStandardBody} from ${JSON.stringify(standard)};import {HostRustParser} from ${JSON.stringify(host)};let text='';for await(const part of process.stdin)text+=part;let observation;try{requirePinnedStandardBody(JSON.parse(text),HostRustParser);observation={accepted:true};}catch(error){observation={accepted:false,name:error.name,message:error.message};}console.log(JSON.stringify(observation));`,child=spawnSync('node',['--input-type=module','-e',script],{input:JSON.stringify(node),encoding:'utf8',timeout:20_000,maxBuffer:4*1024*1024});retain('08-fresh-process',{script,child});assert.equal(child.error,undefined);assert.equal(child.status,0,child.stderr);assert.deepEqual(JSON.parse(child.stdout),{accepted:false,name:'Error',message:'standard body validation requires actual checked declaration context'});
+});

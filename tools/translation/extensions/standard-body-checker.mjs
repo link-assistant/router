@@ -15,8 +15,10 @@ import {tokenizeRust} from './lexical.mjs';
 import {TranslationError,unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
 import {pinnedOptionBody,pinnedDefaultBody,parsePinnedBody,parsedPinnedBodyEvidence,STANDARD_BODY_SOURCE_PROFILE} from './standard-body-source.mjs';
 import {canonicalResult,knownResultDrop} from './result-iterators.mjs';
+import {requireOriginalPrimitiveTryFromChecker} from './host-contracts.mjs';
 
 const OPTION_RESULT_RULE='rust.option.ok-or-else.original-body.v1';
+const EAGER_OPTION_RESULT_RULE='rust.option.ok-or.original-body.v1';
 
 const refuse=span=>{throw unsupported('pinned standard body owner','requires an actual by-value canonical Option with a checked scalar, borrowed str, or privately certified Copy nominal payload',span);};
 function scalarOwner(type,span){
@@ -160,7 +162,32 @@ function checkPinnedOptionResult(checker,node,receiver,env,path,expected,Parser)
   issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),callbackBinding:structuredClone(callback.binding),receiverBinding:structuredClone(receiver),data:optionResultDependencies(checker.items,receiver.type.name,resultType.name)});
   return {k:'routerPinnedStandardBody',body,type:resultType,constEligible:false,pinnedStandardBodyProof:proof,span:node.span};
 }
+// Both original parameters are evaluated before the match, including err for
+// Some. This is a source specialization, not a lazy callback substitution.
+function checkPinnedEagerOptionResult(checker,node,receiver,env,path,expected,Parser){
+  requireOriginalPrimitiveTryFromChecker(checker);
+  requireOriginalStandardCall(checker,node);
+  const {payload,owner}=optionPayload(checker,receiver.type,path,node.span),selection=pinnedOptionBody('ok_or'),parameters=selection.method.parameters;
+  if(parameters.length!==2||parameters[0].receiver!==true||parameters[1].rustTypeSyntax.join('')!=='E'||node.args.length!==1)throw typeError('Option ok_or arguments differ from its original signature',node.span);
+  if(nonlocal(node.object)||node.args.some(nonlocal))throw unsupported('standard body call control','nonlocal argument exits require independent statement lowering',node.span);
+  const wanted=expected?optionResultContext(checker,expected,payload,path,node.span):null,error=checker.expr(node.args[0],env,path,wanted?.error);
+  const resultType=wanted?.type??checker.instantiations.result(payload,error.type,node.span),result=optionResultContext(checker,resultType,payload,path,node.span);
+  if(!sameType(error.type,result.error)||!knownResultDrop(error.type,node.span))throw typeError('Option ok_or eager error differs from its checked destruction domain',node.span);
+  checker.expectedOwnership(error.type,result.error,path,node.span);checker.expectedPrimitiveIdentity(error.type,result.error,path,node.span);
+  const original=parsePinnedBody(Parser,selection),syntax=parsedPinnedBodyEvidence(original),values=[receiver,error],reserved=new Set(env.keys()),names=new Map();
+  for(const parameter of parameters){let name;do{name=checker.freshName('ml_standard_body_');}while(reserved.has(name));reserved.add(name);names.set(parameter.name,name);}
+  let body;
+  try{body=checker.expr(optionResultTree(original),new Map(parameters.map((parameter,index)=>[parameter.name,values[index].type])),[],resultType);}catch(failure){if(!(failure instanceof TranslationError))throw failure;throw new TranslationError(failure.kind,failure.reason,node.span,{...failure.details,originalStandardDiagnostic:{span:failure.span,reason:failure.reason,bodySpan:selection.method.bodySpan,sourceInputs:selection.sourceInputs}});}
+  if(!sameType(body.type,resultType))throw typeError('Original Option ok_or body returned a distinct Result',node.span);
+  checker.expectedOwnership(body.type,resultType,path,node.span);checker.expectedPrimitiveIdentity(body.type,resultType,path,node.span);
+  body=freeNames({...body,type:{...resultType,...body.type}},names);
+  for(let index=values.length-1;index>=0;index--)body={k:'let',name:names.get(parameters[index].name),value:values[index],body,type:resultType,span:node.span};
+  const proof={languageRule:EAGER_OPTION_RESULT_RULE,profile:STANDARD_BODY_SOURCE_PROFILE.id,method:'ok_or',owner,selection,syntaxSha256:syntax.syntaxSha256,defaultSelection:null,defaultSyntaxSha256:null,evaluationOrder:'actual-source-parameters-left-to-right-once; selected-original-body',constEligible:false,namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false,checkedBodyDigest:bodyDigest(body)};
+  issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),receiverBinding:structuredClone(receiver),errorBinding:structuredClone(error),data:optionResultDependencies(checker.items,receiver.type.name,resultType.name)});
+  return {k:'routerPinnedStandardBody',body,type:resultType,constEligible:false,pinnedStandardBodyProof:proof,span:node.span};
+}
 export function checkPinnedOptionBody(checker,node,receiver,env,path,expected,Parser){
+  if(node.method==='ok_or')return checkPinnedEagerOptionResult(checker,node,receiver,env,path,expected,Parser);
   if(node.method==='ok_or_else')return checkPinnedOptionResult(checker,node,receiver,env,path,expected,Parser);
   const reserved=new Set([...env.keys()].filter(name=>typeof name==='string')),fresh=prefix=>{let name;do{name=checker.freshName(prefix);}while(reserved.has(name));reserved.add(name);return name;};const method=node.method,moving=method==='or_else',{payload,owner}=optionPayload(checker,receiver.type,path,node.span,{allowShared:moving,allowMove:moving}),selection=pinnedOptionBody(method),parameters=selection.method.parameters,lazy=['unwrap_or_else','or_else'].includes(method),resultType=method==='or_else'?receiver.type:payload;
   if(parameters[0]?.receiver!==true||parameters.some((param,index)=>index>0&&param.rustTypeSyntax.join('')!==(lazy?'F':'T'))||node.args.length!==parameters.length-1)throw typeError('standard method arguments differ from its actual original signature',node.span);
@@ -211,7 +238,7 @@ export function alphaTree(node,env=new Map(),counter={next:0}){
 }
 export function requirePinnedStandardBody(node,Parser,{Checker,program}={}){
   const proof=node.pinnedStandardBodyProof;
-  if(node.k!=='routerPinnedStandardBody'||!proof||!['unwrap_or','unwrap_or_default','unwrap_or_else','or_else','ok_or_else'].includes(proof.method)||node.constEligible!==false||proof.profile!==STANDARD_BODY_SOURCE_PROFILE.id||proof.constEligible!==false||proof.namespaceComplete!==false||proof.traitComplete!==false||proof.wholeCoreTranslated!==false||proof.evaluationOrder!=='actual-source-parameters-left-to-right-once; selected-original-body'||proof.method==='ok_or_else'&&proof.languageRule!==OPTION_RESULT_RULE)throw new Error('missing pinned standard body proof');
+  if(node.k!=='routerPinnedStandardBody'||!proof||!['unwrap_or','unwrap_or_default','unwrap_or_else','or_else','ok_or','ok_or_else'].includes(proof.method)||node.constEligible!==false||proof.profile!==STANDARD_BODY_SOURCE_PROFILE.id||proof.constEligible!==false||proof.namespaceComplete!==false||proof.traitComplete!==false||proof.wholeCoreTranslated!==false||proof.evaluationOrder!=='actual-source-parameters-left-to-right-once; selected-original-body'||proof.method==='ok_or_else'&&proof.languageRule!==OPTION_RESULT_RULE||proof.method==='ok_or'&&proof.languageRule!==EAGER_OPTION_RESULT_RULE)throw new Error('missing pinned standard body proof');
   const selection=pinnedOptionBody(proof.method),original=parsePinnedBody(Parser,selection),syntax=parsedPinnedBodyEvidence(original);
   if(!isDeepStrictEqual(proof.selection,selection)||proof.syntaxSha256!==syntax.syntaxSha256)throw new Error('standard body proof differs from its actual source');
   const expected=proof.method==='unwrap_or_default'?pinnedDefaultBody(proof.owner):null;
@@ -225,27 +252,38 @@ export function requirePinnedStandardBody(node,Parser,{Checker,program}={}){
   const issued=issuedContexts.get(proof.checkedBodyDigest),ActualChecker=Checker??issued?.Checker;
   const entry=program?.declarations.get(bindings[0].value.type.name)??issued?.entry;
   if(typeof ActualChecker!=='function'||!entry||entry.fullName!==bindings[0].value.type.name)throw new Error('standard body validation requires actual checked declaration context');
-  if(proof.method==='ok_or_else'){
+  const optionResult=['ok_or','ok_or_else'].includes(proof.method);
+  if(optionResult){
     const receiver=issued?.receiverBinding&&(program?retargetCheckedCallback(issued.receiverBinding,program):issued.receiverBinding);
     if(!receiver||!isDeepStrictEqual(alphaTree(bindings[0].value),alphaTree(receiver)))throw new Error('Option ok_or_else receiver differs from its privately checked source');
+    if(proof.method==='ok_or'){
+      const error=issued?.errorBinding&&(program?retargetCheckedCallback(issued.errorBinding,program):issued.errorBinding);
+      if(!error||!isDeepStrictEqual(alphaTree(bindings[1].value),alphaTree(error)))throw new Error('Option ok_or eager error differs from its privately checked source');
+    }
   }
   const language=program?.sourceLanguage??program?.language??issued?.language;
   if(language!=='Rust')throw new Error('standard body validation requires the actual Rust program language');
   const checker=new ActualChecker(language,program?.externals??[]);
+  if(proof.method==='ok_or')requireOriginalPrimitiveTryFromChecker(checker);
   // Recheck every canonical layout used by the selected original body,
   // including Result for ok_or_else. Payload and constructor identities come
   // from the actual declaration registry, rather than public proof claims.
-  const dependencies=program?(proof.method==='ok_or_else'?optionResultDependencies(program.declarations,entry.fullName,node.type.name):dataDependencies(program.declarations,entry.fullName)):issued?.data??[entry];
+  const dependencies=program?(optionResult?optionResultDependencies(program.declarations,entry.fullName,node.type.name):dataDependencies(program.declarations,entry.fullName)):issued?.data??[entry];
   checker.program({language:checker.language,items:dependencies.map(item=>({...structuredClone(item),name:item.fullName})),main:null});
   if(issued?.nominals)restoreOptionNominals(checker,issued.nominals);if(proof.payloadMode){if(proof.method!=='or_else'||proof.payloadMode!=='original-whole-Some-move-no-payload-copy-or-drop'||!issued)throw new Error('Whole Option move requires its private original source context');restoreOriginalMoves(checker,issued.moves);requireOriginalOrElseMove(selection);}
   const {payload,owner}=optionPayload(checker,bindings[0].value.type,[],node.span,{allowShared:proof.method==='or_else',allowMove:proof.method==='or_else'});
-  const resultType=proof.method==='ok_or_else'?optionResultContext(checker,node.type,payload,[],node.span).type:proof.method==='or_else'?bindings[0].value.type:payload;
+  const resultType=optionResult?optionResultContext(checker,node.type,payload,[],node.span).type:proof.method==='or_else'?bindings[0].value.type:payload;
   if(owner!==proof.owner&&!(owner.startsWith('nominal:rp_')&&proof.owner==='nominal:'+Buffer.from(owner.slice('nominal:rp_'.length),'hex').toString('utf8'))&&!(owner.startsWith('shared:')&&proof.owner==='shared:'+owner.slice(7).replace(/data:rp_([a-f0-9]+)/gu,(_,name)=>'data:'+Buffer.from(name,'hex').toString('utf8')))||!sameType(resultType,node.type))throw new Error('standard body actual payload differs from its source owner');
   for(const binding of bindings.slice(1)){
+    if(proof.method==='ok_or'){
+      const error=optionResultContext(checker,resultType,payload,[],node.span).error;
+      if(!sameType(binding.value.type,error)||!knownResultDrop(binding.value.type,node.span))throw new Error('Option ok_or eager error has a distinct Result error type');
+      checker.expectedOwnership(binding.value.type,error,[],node.span);checker.expectedPrimitiveIdentity(binding.value.type,error,[],node.span);continue;
+    }
     if(!sameType(binding.value.type,payload)||payloadOwner(checker,binding.value.type,node.span)!==owner)throw new Error('standard body eager argument differs from its source payload');
     checker.expectedOwnership(binding.value.type,payload,[],node.span);checker.expectedPrimitiveIdentity(binding.value.type,payload,[],node.span);
   }
-  let specialized=replaceTraitCall(proof.method==='ok_or_else'?optionResultTree(original):sourceTree(original),selection.evidence.genericParameter,defaultBody,syntax);
+  let specialized=replaceTraitCall(optionResult?optionResultTree(original):sourceTree(original),selection.evidence.genericParameter,defaultBody,syntax);
   if(lazy){
     if(!issued?.callbackBinding||!isDeepStrictEqual(alphaTree(proof.callbackBinding),alphaTree(issued.callbackBinding)))throw new Error('Standard lazy callback differs from its privately checked source');
     const callback=program?retargetCheckedCallback(issued.callbackBinding,program):issued.callbackBinding;
@@ -278,13 +316,13 @@ export function retargetCheckedCallback(value,program){
 
 const emitterFunctions=new WeakMap();
 export function preparePinnedStandardFunction(emitter,entry,Parser,Checker){
-  const find=(node,result=[])=>{if(!node||typeof node!=='object')return result;if(node.k==='routerPinnedStandardBody'&&['or_else','unwrap_or_else','ok_or_else'].includes(node.pinnedStandardBodyProof?.method))result.push(node);for(const [key,value]of Object.entries(node))if(!['type','pinnedStandardBodyProof'].includes(key)){if(Array.isArray(value))value.forEach(child=>find(child,result));else find(value,result);}return result;};
+  const find=(node,result=[])=>{if(!node||typeof node!=='object')return result;if(node.k==='routerPinnedStandardBody'&&['or_else','unwrap_or_else','ok_or','ok_or_else'].includes(node.pinnedStandardBodyProof?.method))result.push(node);for(const [key,value]of Object.entries(node))if(!['type','pinnedStandardBodyProof'].includes(key)){if(Array.isArray(value))value.forEach(child=>find(child,result));else find(value,result);}return result;};
   const original=find(entry.body);if(!original.length)return null;
   for(const node of original)requirePinnedStandardBody(node,Parser,{Checker,program:emitter.program});
   const previous=emitterFunctions.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());
   emitterFunctions.set(emitter,find(renamed.body).map(node=>alphaTree(node)));return ()=>{if(previous)emitterFunctions.set(emitter,previous);else emitterFunctions.delete(emitter);};
 }
 export function requirePinnedStandardEmission(emitter,node,Parser,Checker){
-  if(['or_else','unwrap_or_else','ok_or_else'].includes(node.pinnedStandardBodyProof?.method)){const expected=emitterFunctions.get(emitter);if(!expected?.some(value=>isDeepStrictEqual(value,alphaTree(node))))throw new Error('Lazy standard body differs from the exact validated source function rename');return;}
+  if(['or_else','unwrap_or_else','ok_or','ok_or_else'].includes(node.pinnedStandardBodyProof?.method)){const expected=emitterFunctions.get(emitter);if(!expected?.some(value=>isDeepStrictEqual(value,alphaTree(node))))throw new Error('Lazy standard body differs from the exact validated source function rename');return;}
   requirePinnedStandardBody(node,Parser,{Checker,program:emitter.program});
 }
