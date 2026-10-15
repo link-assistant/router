@@ -128,9 +128,11 @@ class OutputParser{
     if(this.current()?.delimiter==='{'){
       const branches=this.sequence('{',parser=>parser.useTree(prefix));if(!branches.length)fail('empty use group');return this.node('use-group',start,{prefix,branches});
     }
-    const path=[...prefix,this.name()];
-    if(this.take('::'))return this.node('use-branch',start,{path,tail:this.useTree(path)});
-    let alias=null;if(this.take('as'))alias=this.name();return this.node('use-leaf',start,{path,alias,namespaceResolved:false});
+    const owner=this.current()?.kind==='owner'?this.nodes[this.at++]:null;
+    if(owner&&prefix.length)fail('definition-site owner requires the original use root');
+    const path=owner?[...owner.target]:[...prefix,this.name()];if(path.length>64)fail('use tree path bound');
+    if(this.take('::'))return this.node('use-branch',start,{path,owner,tail:this.useTree(path)});
+    let alias=null;if(this.take('as'))alias=this.name();return this.node('use-leaf',start,{path,owner,alias,namespaceResolved:false});
   }
   block(group=this.group('{')){
     const parser=this.child(group.children),statements=[];let tail=null;
