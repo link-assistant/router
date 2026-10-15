@@ -110,3 +110,23 @@ and actual Bun native accessor shapes. The next source successor is UNRUN:
 The broader passive host-family observation is complete and retained separately;
 it executed no translator or parser. No existing source/refusal limit, case
 count, upstream file or namespace acceptance hook changed in this successor.
+
+V5's complete parser/default fifteen-case group passed in both receiving engines,
+while broader original-proof deadline/resource failures remain separate. A later
+source review found a cold-import ingress gap not covered by those passing
+cases: reflection operations were captured and called before qualification.
+
+The next UNRUN successor checks the same common issuer guard before capturing
+or calling reflection. Both helper and consumer latch failed cold qualification
+permanently, even if the host is restored before first use. Registry and source
+URL work begins only after checked entry. One appended common diagnostic
+capability uses its trusted captured TypeError ancestry and own primitive data;
+it calls no late reflection, coercion or native Error constructor. Existing
+common bootstrap/qualifier bodies remain byte-identical.
+
+The existing ninth case now covers cold, late and poison-import/restore-before-
+parse descriptor/prototype/apply/isProxy substitutions for helper and consumer,
+including Proxy isProxy and accessor variants. Every import stays inert, every
+use refuses with actual TypeError ancestry, and reflection plus stack-limit
+getter counters must remain zero. All fifteen cases, old inputs, source pins,
+upstream parser files and original case/child deadlines remain unchanged.

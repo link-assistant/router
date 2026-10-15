@@ -7,15 +7,16 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {dirname,join} from 'node:path';
 import {types} from 'node:util';
-import {originalStaticSourceIntrinsicsUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
+import {originalStaticSourceIntrinsicsUnchanged,originalCapturedFunctionSource,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
 import {deriveDependencyOriginalInputs} from './derive-dependencies.mjs';
 import {originalExternalTraitPackageInputs} from './extensions/external-trait-sources.mjs';
+// This SAME common issuer guard uses its captured operations. A poisoned
+// cold import is inert and permanently disqualified, even after restoration.
+const initialQualified=originalStaticSourceIntrinsicsUnchanged();
 const hostRoot=globalThis; // Existing trusted initial host root; Bun exposes this as a Proxy.
-const descriptor=Object.getOwnPropertyDescriptor,prototype=Object.getPrototypeOf,own=Object.hasOwn,keys=Reflect.ownKeys,apply=Reflect.apply,isProxy=types.isProxy;
-const functionPrototype=prototype(function(){}),Failure=descriptor(globalThis,'TypeError')?.value;
-const failurePrototype=typeof Failure==='function'&&!isProxy(Failure)?descriptor(Failure,'prototype')?.value:null;
-const base=fileURLToPath(new URL('./vendor/iarna-toml/',import.meta.url));
-const profilePath=fileURLToPath(new URL('./source-profiles/external-dependency-defaults/manifest.json',import.meta.url));
+const descriptor=initialQualified?Object.getOwnPropertyDescriptor:null,prototype=initialQualified?Object.getPrototypeOf:null,own=initialQualified?Object.hasOwn:null,keys=initialQualified?Reflect.ownKeys:null,apply=initialQualified?Reflect.apply:null,isProxy=initialQualified?types.isProxy:null;
+const functionPrototype=initialQualified?prototype(function(){}):null,Failure=initialQualified?descriptor(hostRoot,'TypeError')?.value:null;
+let base=null,profilePath=null;
 const profileHash='d6b391594e58f0639235fbd2b7008e189d8b65ae2f76e1b43a8b176168cffba5';
 const dependencies={
   'parse-string.js':['./lib/toml-parser.js','./parse-pretty-error.js'],
@@ -24,15 +25,12 @@ const dependencies={
   'lib/create-datetime.js':[],'lib/format-num.js':[],'lib/parser.js':[],'parse-pretty-error.js':[],
 };
 const hash=value=>createHash('sha256').update(value).digest('hex');
-// Refusal itself must not call a native Error constructor while an Error
-// stack-limit accessor is being rejected. The own diagnostic data preserves
-// the captured TypeError ancestry; no native stack-text equivalence is claimed.
-const fail=message=>{const text='Private original Cargo TOML: '+message;if(native(Failure,'TypeError'))throw {__proto__:failurePrototype,name:'TypeError',message:text};throw text;};
+const fail=message=>throwOriginalCapturedTypeError('Private original Cargo TOML: '+message);
 const native=(value,name)=>typeof value==='function'&&!isProxy(value)&&originalCapturedFunctionSource(value)===`function ${name}() { [native code] }`;
 const same=(left,right)=>left&&right&&own(left,'value')===own(right,'value')&&left.value===right.value&&left.get===right.get&&left.set===right.set&&left.writable===right.writable&&left.enumerable===right.enumerable&&left.configurable===right.configurable;
 let guard=null,compiled=null,compiledSources=null;
 function initialize(){
-  if(!originalStaticSourceIntrinsicsUnchanged())fail('native source operations unavailable');
+  if(!initialQualified||!originalStaticSourceIntrinsicsUnchanged())fail('native source operations unavailable');
   const pins=[],families=[],create=descriptor(Object,'create');
   if(!create||!own(create,'value')||!native(create.value,'create'))fail('qualified private record allocation required');
   const globals=apply(create.value,Object,[null]);
@@ -144,6 +142,7 @@ function ascii(bytes){let text='';const length=guard.length(bytes);for(let at=0;
 function utf8Size(value){let bytes=0;for(let at=0;at<value.length;at++){const code=apply(guard.globals.charCodeAt,value,[at]);if(code<128)bytes++;else if(code<2048)bytes+=2;else if(code>=55296&&code<=56319&&at+1<value.length){const next=apply(guard.globals.charCodeAt,value,[at+1]);if(next>=56320&&next<=57343){bytes+=4;at++;}else bytes+=3;}else bytes+=3;}return bytes;}
 function sourceHash(bytes){const length=guard.length(bytes),copy=new guard.globals.Uint8Array(length);for(let at=0;at<length;at++)copy[at]=bytes[at];const result=hash(copy);checked();return result;}
 function sources(){
+  base??=fileURLToPath(new URL('./vendor/iarna-toml/',import.meta.url));profilePath??=fileURLToPath(new URL('./source-profiles/external-dependency-defaults/manifest.json',import.meta.url));
   const records=[],bytes=original(profilePath,32768,records);if(sourceHash(bytes)!==profileHash)fail('parser registry changed');const profile=apply(guard.globals.parseJSON,undefined,[ascii(bytes)]),files=new Map();let total=0;
   if(profile.parser.files.length!==20)fail('complete copied parser census differs');
   for(const row of profile.parser.files){if(typeof row.path!=='string'||!row.path||row.path.startsWith('/')||row.path.split('/').some(part=>!part||part==='.'||part==='..'))fail('parser source path escapes');const raw=original(join(base,row.path),100000,records),length=guard.length(raw);total+=length;if(length!==row.bytes||sourceHash(raw)!==row.sha256||total>100000)fail('parser source differs');files.set(row.path,raw);}

@@ -15,21 +15,26 @@ import {originalSourceModuleItems} from './source-module-views.mjs';
 import {compilationProfile,evaluateConfiguration} from './cfg-profile.mjs';
 import {inspectConditionalAttribute} from './conditional-attributes.mjs';
 import {rustTokens} from './rust-structure.mjs';
+import {originalStaticSourceIntrinsicsUnchanged,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
 
-let profiles=null,proofs=null;
-const descriptor=Object.getOwnPropertyDescriptor,prototype=Object.getPrototypeOf,keys=Reflect.ownKeys,own=Object.hasOwn,isArray=Array.isArray,isProxy=types.isProxy;
-const objectType=Object,objectPrototype=prototype({}),arrayPrototype=prototype([]),objectValues=Object.values,objectFreeze=Object.freeze;
+const initialQualified=originalStaticSourceIntrinsicsUnchanged();
+let profiles=null,proofs=null,bytes=null,registry=null;
+const descriptor=initialQualified?Object.getOwnPropertyDescriptor:null,prototype=initialQualified?Object.getPrototypeOf:null,keys=initialQualified?Reflect.ownKeys:null,own=initialQualified?Object.hasOwn:null,isArray=initialQualified?Array.isArray:null,isProxy=initialQualified?types.isProxy:null;
+const objectType=initialQualified?Object:null,objectPrototype=initialQualified?prototype({}):null,arrayPrototype=initialQualified?prototype([]):null,objectValues=initialQualified?Object.values:null,objectFreeze=initialQualified?Object.freeze:null;
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const fail=message=>{throw new TypeError('Original external dependency defaults: '+message);};
-const bytes=readFileSync(new URL('./source-profiles/external-dependency-defaults/manifest.json',import.meta.url));
-if(hash(bytes)!=='d6b391594e58f0639235fbd2b7008e189d8b65ae2f76e1b43a8b176168cffba5')fail('source domain changed');
-const registry=JSON.parse(bytes);
+const fail=message=>throwOriginalCapturedTypeError('Original external dependency defaults: '+message);
+function originalRegistry(){
+  assertPrivateOriginalCargoTomlExecution();
+  if(!initialQualified)fail('native source operations unavailable at import');
+  if(!registry){bytes=readFileSync(new URL('./source-profiles/external-dependency-defaults/manifest.json',import.meta.url));if(hash(bytes)!=='d6b391594e58f0639235fbd2b7008e189d8b65ae2f76e1b43a8b176168cffba5')fail('source domain changed');assertPrivateOriginalCargoTomlExecution();registry=JSON.parse(bytes);assertPrivateOriginalCargoTomlExecution();}
+  return registry;
+}
 function freeze(value){
   assertPrivateOriginalCargoTomlExecution();
   if(descriptor(globalThis,'Object')?.value!==objectType||descriptor(objectType,'values')?.value!==objectValues||descriptor(objectType,'freeze')?.value!==objectFreeze)fail('captured native data operations differ');
   function visit(value){if(value&&typeof value==='object'){for(const child of objectValues(value))visit(child);objectFreeze(value);}return value;}return visit(value);
 }
-function stateMaps(){assertPrivateOriginalCargoTomlExecution();profiles??=new WeakMap();proofs??=new WeakMap();}
+function stateMaps(){originalRegistry();profiles??=new WeakMap();proofs??=new WeakMap();}
 const noAuthority={closedFeatureKey:false,dependencyUnitRoleProved:false,testConfigurationProved:false,operatingSystemProved:false,stdPreludeAuthority:false,namespaceAuthority:false,attributeOwnerResolved:false,runtimeAuthority:false,runtimeParity:false};
 function record(value,names){
   if(!value||typeof value!=='object'||types.isProxy(value)||Array.isArray(value))fail('own data options required');

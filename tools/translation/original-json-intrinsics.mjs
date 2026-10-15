@@ -178,3 +178,14 @@ export function originalCapturedFunctionSource(value){
  if(!pathNative||typeof value!=='function'||pathIsProxy.value(value))return null;
  return apply(functionText,value,[]);
 }
+
+// Refuse through own primitive diagnostic data without a late native Error
+// constructor, reflection operation, coercion or native function exposure.
+const diagnosticTypeField=pathNative?descriptor(globalThis,'TypeError'):null;
+const diagnosticType=diagnosticTypeField&&hasOwn(diagnosticTypeField,'value')&&native(diagnosticTypeField.value,'TypeError')?diagnosticTypeField.value:null;
+const diagnosticPrototypeField=diagnosticType?descriptor(diagnosticType,'prototype'):null;
+const diagnosticPrototype=diagnosticPrototypeField&&hasOwn(diagnosticPrototypeField,'value')&&diagnosticPrototypeField.value&&typeof diagnosticPrototypeField.value==='object'&&!pathIsProxy.value(diagnosticPrototypeField.value)?diagnosticPrototypeField.value:null;
+export function throwOriginalCapturedTypeError(message){
+ const text=typeof message==='string'?message:'Original captured diagnostic requires primitive text';
+ throw {__proto__:diagnosticPrototype,name:'TypeError',message:text};
+}
