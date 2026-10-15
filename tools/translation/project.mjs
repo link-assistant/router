@@ -1,3 +1,4 @@
+import {createRulePipeline} from './rule-pipeline.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
@@ -263,7 +264,7 @@ function declarationProgram(program, root) {
   return roundTripProgram({ ...program, declarations, items: [...declarations.values()], main: null });
 }
 
-export function translateProject(options) {
+function compileProjectLanguage(options) {
   const progress=translationProgressReporter(options.progress);
   progress({stage:'project-graph',state:'start',entry:options.entry});
   const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest);
@@ -481,6 +482,9 @@ export function translateProject(options) {
   const target = flatten(checked);
   const runtimeModule = posix.relative(posix.dirname(options.entry.replace(/\.rs$/u,'.mjs')), 'runtime/effects.mjs');
   const emitted = emitJavaScript(target.program, { runtimeModule: runtimeModule.startsWith('.') ? runtimeModule : './' + runtimeModule });
+  // This private closure retains the same checked program and original issuers.
+  // Repository packaging cannot grant source or semantic admission.
+  return function finalizeProjectRepository() {
   const methods = active.filter(declaration => declaration.term === 'method');
   const generatedMethods = active.filter(declaration => declaration.term === 'generated-method');
   const entries = active.filter(declaration => ['fn', 'const'].includes(declaration.term));
@@ -527,4 +531,13 @@ export function translateProject(options) {
   progress({stage:'project-serialize',state:'end',entry:options.entry});
   const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.surface.impl.method,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,entry.surface.impl.method)});});
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, checkedGeneratedMethodDeclarations, sourceScopes };
+  };
+}
+
+const projectTranslationRules=createRulePipeline([
+  {phase:'language',rules:[{id:'rust-project:checked-language',apply:compileProjectLanguage}]},
+  {phase:'repository',rules:[{id:'rust-project:exports-types-provenance',apply:finalize=>finalize()}]},
+]);
+export function translateProject(options) {
+  return projectTranslationRules.run(options).value;
 }
