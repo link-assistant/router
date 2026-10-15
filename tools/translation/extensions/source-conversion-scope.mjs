@@ -25,7 +25,7 @@ export function captureSourceConversionScope(parser,start){
   });
   for(const item of containing){const tokens=significant(item.tokens),open=tokens.findIndex(token=>token.text==='{'),local=tokens.slice(open+1);if(open>=0&&local.some((token,i)=>['use','extern','trait','impl','type','mod','macro','macro_rules!'].includes(token.text)||token.text.length>1&&token.text.endsWith('!')||token.text==='!'&&local[i-1]?.type==='ident'&&['(','[','{'].includes(local[i+1]?.text)))fail('function-local declarations/imports/macros require original lexical trait resolution');}
   for(const module of facts.modules.filter(module=>module.path.every((name,i)=>consumer.path[i]===name))){const inner=originalSourceModuleItems(module).filter(item=>item.tokens[1]?.text==='!').flatMap(item=>significant(item.tokens)),outer=module.sourceView.declaration?significant(rustTokens(module.source.slice(module.sourceView.declaration.span.start,module.sourceView.bodySpan.start))):[];if([...inner,...outer].some((token,i,tokens)=>['no_implicit_prelude','no_core'].includes(token.text)&&tokens[i-1]?.text==='['))fail('disabled original common prelude');}
-  const visibleTraits=[],conditionalNonTraitImports=[],anonymousTraits=originalAnonymousTraitScope(facts,consumer);
+  const visibleTraits=[],conditionalNonTraitImports=[],anonymousTraits=originalAnonymousTraitScope(facts,consumer,parser);
   const nonoverlappingOriginalImpls=[];
   // An explicit generic/standard conversion impl must not be silently replaced
   // by the selected standard body, even when Rust would reject its coherence.

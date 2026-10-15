@@ -39,7 +39,7 @@ export function capturePrimitiveBoolFromScope(parser,target,start){
     const outer=module.sourceView.declaration?significant(rustTokens(module.source.slice(module.sourceView.declaration.span.start,module.sourceView.bodySpan.start))):[];
     if([...inner,...outer].some((token,index,tokens)=>['no_implicit_prelude','no_core'].includes(token.text)&&tokens[index-1]?.text==='['))fail('disabled implicit/core prelude requires an explicit proven trait route');
   }
-  const traits=[],conditionalNonTraitImports=[],anonymousOriginalTraits=originalAnonymousTraitScope(facts,consumer);
+  const traits=[],conditionalNonTraitImports=[],anonymousOriginalTraits=originalAnonymousTraitScope(facts,consumer,parser);
   for(const binding of scope.bindings.filter(binding=>binding.namespace==='type')){
     if(binding.name==='From'||['std','core'].includes(binding.name))fail('trait or standard source namespace is shadowed/imported without this proof');
     if(binding.status!=='resolved'){

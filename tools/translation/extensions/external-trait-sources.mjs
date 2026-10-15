@@ -8,6 +8,8 @@ import {itemConfiguration,isInertConditionalAttribute} from '../cfg-profile.mjs'
 import {originalDeclarationHeader,originalUseDeclarationLeaves} from '../module-bindings.mjs';
 import {deriveDependencyOriginalInputs} from '../derive-dependencies.mjs';
 import {originalTraitMemberShape,originalCorePreludeTraitClosure,originalConditionalNamespaceAttribute} from './primitive-trait-closure.mjs';
+import {requireOriginalExternalTraitDefaultContext} from './external-trait-default-context.mjs';
+import {assertPrivateOriginalCargoTomlExecution} from '../private-cargo-toml.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Original external trait source: '+message);};
 const root=new URL('../source-profiles/external-traits/',import.meta.url);
@@ -74,11 +76,17 @@ function lockedPackage(dependencies,name){
 }
 const allowed=new Set(['cfg','doc','allow','warn','deny','forbid','inline','cold','track_caller','must_use','deprecated','no_std']);
 const originalSourceItems=createStaticSourceItemReader();
-function originalNamespace(pin){
+function originalNamespace(pin,projection=null){
+ if(projection)assertPrivateOriginalCargoTomlExecution();
  const items=originalSourceItems(pin);
  for(const item of items){if(item.comment)continue;
   const tokens=significant(item),inner=tokens[0]?.text==='#'&&tokens[1]?.text==='!';
-  const head=originalDeclarationHeader(item),condition=itemConfiguration(item.tokens,null);
+  const head=originalDeclarationHeader(item);let condition=itemConfiguration(item.tokens,null);
+  if(projection?.source===pin&&item.start===projection.refinement.item.start&&item.end===projection.refinement.item.end){
+   const expected=projection.refinement.item;
+   if(item.term!==expected.term||item.name!==expected.name||item.comment!==expected.comment||item.tokens.length!==expected.tokens.length||item.tokens.some((token,index)=>['text','type','start','end'].some(key=>token[key]!==expected.tokens[index][key])))fail('complete original conditional item differs');
+   condition=projection.refinement.condition;
+  }
   const union=condition.attributes.some(attribute=>attribute.name==='cfg_attr')&&condition.attributes.every(attribute=>attribute.name==='cfg_attr'?originalConditionalNamespaceAttribute(attribute,{allowNoStd:inner}):!attribute.evaluation?.diagnostics.length);
   if(condition.diagnostics.length&&!union||condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&!(union&&attribute.name==='cfg_attr')&&!allowed.has(attribute.name)))fail('original outer item has an unproved attribute producer');
   if(inner)continue;
@@ -99,46 +107,49 @@ function normalize(path,owner){
  while(path[at]==='super'){if(!result.length)fail('original route escapes package');result.pop();at++;}
  return [...result,...path.slice(at)];
 }
-function moduleSource(selected,path){
+function moduleSource(selected,path,projection=null){
  let pin=selected.sources.get(selected.pin.crateRoot),owner=[];if(!pin)fail('original crate root is absent');
  for(const segment of path){
-  const declarations=originalNamespace(pin).filter(item=>item.term==='mod'&&item.name===segment&&publicItem(item));if(declarations.length!==1)fail('original public module is absent or ambiguous');
+  const declarations=originalNamespace(pin,projection).filter(item=>item.term==='mod'&&item.name===segment&&publicItem(item));if(declarations.length!==1)fail('original public module is absent or ambiguous');
   unconditional(declarations[0]);const tokens=significant(declarations[0]);if(tokens.at(-1)?.text!==';')fail('inline original module requires its separate source-view rule');
   owner.push(segment);const base='src/'+owner.join('/'),candidates=[selected.sources.get(base+'.rs'),selected.sources.get(base+'/mod.rs')].filter(Boolean);if(candidates.length!==1)fail('original module file is absent or ambiguous');pin=candidates[0];
  }
  return pin;
 }
-function declaration(selected,path,seen=new Set()){
+function declaration(selected,path,seen=new Set(),projection=null){
  const key=path.join('::');if(!path.length||seen.has(key)||seen.size>=32)fail('original export route is cyclic or over its bound');seen.add(key);
- const owner=path.slice(0,-1),pin=moduleSource(selected,owner),items=originalNamespace(pin),name=path.at(-1);
+ const owner=path.slice(0,-1),pin=moduleSource(selected,owner,projection),items=originalNamespace(pin,projection),name=path.at(-1);
  const own=items.filter(item=>item.name===name&&item.term==='trait'&&publicItem(item)),imports=[];
  for(const item of items.filter(item=>item.term==='use'&&publicItem(item)))for(const leaf of originalUseDeclarationLeaves(item,owner))if(!leaf.glob&&leaf.name===name)imports.push({item,path:normalize(leaf.segments,owner)});
  const other=items.filter(item=>originalDeclarationHeader(item)?.name===name&&item.term!=='trait');
  if(own.length+imports.length!==1||other.length)fail('original trait name is absent or ambiguous');
  if(own.length){unconditional(own[0]);return {pin,item:own[0],owner,route:[]};}
- unconditional(imports[0].item);const next=declaration(selected,imports[0].path,new Set(seen));
+ unconditional(imports[0].item);const next=declaration(selected,imports[0].path,new Set(seen),projection);
  return {...next,route:[{source:pin.path,sourceSha256:pin.sha256,originalSpan:{start:imports[0].item.start,end:imports[0].item.end},path:imports[0].path},...next.route]};
 }
-function closure(selected,path,seen=new Set()){
+function closure(selected,path,seen=new Set(),projection=null){
  const key=path.join('::');if(seen.has(key)||seen.size>=32)fail('original supertrait closure is cyclic or over its bound');seen.add(key);
- const original=declaration(selected,path),shape=originalTraitMemberShape(original.pin,original.item,{allowGenerics:true,local:true,localProfile:null,ownerPath:original.owner,conditionalNamespaceAttributes:true});
+ const original=declaration(selected,path,new Set(),projection),shape=originalTraitMemberShape(original.pin,original.item,{allowGenerics:true,local:true,localProfile:null,ownerPath:original.owner,conditionalNamespaceAttributes:true});
  const supertraits=shape.clauses.map(tokens=>{
   const words=tokens.map(token=>token.text);if(words.some((word,index)=>index%2===0?tokens[index].type!=='ident':word!=='::')||words.length%2!==1)fail('original supertrait arguments need a separate source rule');
   const segments=words.filter((word,index)=>index%2===0);
   if(segments.length===1){
    // Resolve the actual owner imports/declarations before the core prelude.
-   const items=originalNamespace(original.pin),imports=items.filter(item=>item.term==='use').flatMap(item=>originalUseDeclarationLeaves(item,original.owner)).filter(leaf=>leaf.name===segments[0]);
+   const items=originalNamespace(original.pin,projection),imports=items.filter(item=>item.term==='use').flatMap(item=>originalUseDeclarationLeaves(item,original.owner)).filter(leaf=>leaf.name===segments[0]);
    if(imports.length||items.some(item=>originalDeclarationHeader(item)?.name===segments[0]))fail('original supertrait local/import route needs its explicit closure');
    return {path:segments,...originalCorePreludeTraitClosure(segments[0])};
   }
-  return {path:segments,closure:closure(selected,normalize(segments,original.owner),new Set(seen))};
+  return {path:segments,closure:closure(selected,normalize(segments,original.owner),new Set(seen),projection)};
  });
  return {...shape.evidence,originalRoute:original.route,supertraits,wholeTraitAuthority:false,runtimeParity:false};
 }
-export function originalExternalTraitClosure(dependencies,path){
+export function originalExternalTraitClosure(dependencies,path,defaultContext=undefined){
+ const scoped=arguments.length>=3,projection=scoped?requireOriginalExternalTraitDefaultContext(defaultContext,dependencies,path):null;
  if(!Array.isArray(path)||path.length<2||path.some(name=>typeof name!=='string'||!/^[_A-Za-z][_A-Za-z0-9]*$/u.test(name)))fail('original external path is unproved');
  const selected=lockedPackage(dependencies,path[0]);
- return {schema:'locked-original-external-trait-member-closure-v1',originalDependency:selected.inputProof,declaration:closure(selected,path.slice(1)),wholeTraitAuthority:false,runtimeParity:false};
+ const result={schema:'locked-original-external-trait-member-closure-v1',originalDependency:selected.inputProof,declaration:closure(selected,path.slice(1),new Set(),projection),wholeTraitAuthority:false,runtimeParity:false};
+ if(scoped){result.originalDefaultNamespace=projection.evidence;requireOriginalExternalTraitDefaultContext(defaultContext,dependencies,path);}
+ return result;
 }
 // A reusable original-source input boundary for the missing conditional
 // namespace projection. Capturing bytes does not close that projection.
