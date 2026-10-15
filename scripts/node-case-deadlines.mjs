@@ -20,8 +20,10 @@ export function readCaseSource(filename,maximum=MAX_FILE){
  try{
   const before=fs.fstatSync(fd);if(!before.isFile()||before.size>maximum)throw Error('Bounded regular deadline source required');
   if(JSON.stringify(identity(before))!==JSON.stringify(identity(fs.lstatSync(absolute))))throw Error('Deadline source fd/path differs');
-  const bytes=fs.readFileSync(fd),after=fs.fstatSync(fd);
-  if(bytes.length!==before.size||JSON.stringify(identity(before))!==JSON.stringify(identity(after))||JSON.stringify(identity(before))!==JSON.stringify(identity(fs.lstatSync(absolute))))throw Error('Deadline source changed during read');
+  const bytes=Buffer.alloc(before.size);let offset=0;
+  while(offset<bytes.length){const count=fs.readSync(fd,bytes,offset,bytes.length-offset,offset);if(count===0)throw Error('Deadline source shortened during bounded read');offset+=count;}
+  const trailing=Buffer.alloc(1),extra=fs.readSync(fd,trailing,0,1,offset),after=fs.fstatSync(fd);
+  if(extra!==0||offset!==before.size||JSON.stringify(identity(before))!==JSON.stringify(identity(after))||JSON.stringify(identity(before))!==JSON.stringify(identity(fs.lstatSync(absolute))))throw Error('Deadline source changed during read');
   const source=bytes.toString('utf8');if(!Buffer.from(source).equals(bytes))throw Error('Complete deadline source/control must have lossless UTF8 bytes');
   return {path:absolute,bytes:bytes.length,sha256:hash(bytes),identity:identity(before),source};
  }finally{fs.closeSync(fd);}

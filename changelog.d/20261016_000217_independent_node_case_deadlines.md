@@ -16,3 +16,6 @@
   this isolated source-only draft.
 - Preserve existing string fixture names through explicit template registration;
   qualify string-producing addition while refusing arbitrary dynamic options.
+- Bound source/control reads before allocation and reject concurrent growth or
+  truncation after positional readback and a one-byte EOF probe. The additional
+  growth-control source is also **UNRUN**.

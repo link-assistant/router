@@ -26,7 +26,10 @@ Selected source bodies and identities are frozen before the child starts and
 rechecked against the complete audit after it closes. A reported callsite in an
 unselected helper refuses rather than receiving an after-the-fact source claim.
 Only the OS-owned macOS `/tmp` and `/var` aliases are canonicalized; other linked
-source/output paths refuse. No module loader or source execution is replaced.
+source/output paths refuse. Reads allocate only the prechecked file size, use
+bounded positional reads and a one-byte EOF probe, then require unchanged
+fd/path identity; growth or truncation refuses. No module loader or source
+execution is replaced.
 
 Supported source limits include numeric literals, closed arithmetic and lexical
 `const` numeric bindings. Simple const option objects/aliases may be shared only

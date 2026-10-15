@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
-import {createCaseDeadlineAudit} from '../node-case-deadlines.mjs';
+import {createCaseDeadlineAudit,readCaseSource} from '../node-case-deadlines.mjs';
 import {nodeTestArguments} from '../run-node-tests.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 function fixture(source){
@@ -63,6 +63,10 @@ test('complete source identity changes invalid syntax links and forbidden runner
  try{const audit=createCaseDeadlineAudit({root,files:[f.file]});fs.writeFileSync(f.file,fs.readFileSync(f.file,'utf8')+'\n');assert.equal(audit.finish().passed,false);
  const alias=path.join(f.directory,'alias.test.mjs');fs.symlinkSync(f.file,alias);assert.equal(createCaseDeadlineAudit({root,files:[alias]}).finish().passed,false);
  fs.writeFileSync(f.file,"import test from 'node:test';test('invalid',{");assert.equal(createCaseDeadlineAudit({root,files:[f.file]}).finish().passed,false);
+ fs.writeFileSync(f.file,'// initially bounded source\n');const initial=fs.statSync(f.file),originalRead=fs.readSync;let grew=false,largestRequested=0;
+ assert.throws(()=>readCaseSource(f.file,initial.size-1),/Bounded regular/u);
+ try{fs.readSync=function(fd,buffer,offset,length,position){const state=fs.fstatSync(fd);if(state.dev===initial.dev&&state.ino===initial.ino){largestRequested=Math.max(largestRequested,length);if(!grew){grew=true;fs.appendFileSync(f.file,'extra'.repeat(8192));}}return originalRead(fd,buffer,offset,length,position);};assert.throws(()=>readCaseSource(f.file,initial.size),/changed during read/u);}
+ finally{fs.readSync=originalRead;}assert.equal(grew,true);assert.ok(largestRequested<=initial.size);assert.ok(fs.statSync(f.file).size>initial.size);
  }finally{f.dispose();}
  assert.throws(()=>nodeTestArguments(['--test-name-pattern=x','whole.test.mjs']),/whole source/u);assert.throws(()=>nodeTestArguments([]),/explicit/u);assert.deepEqual(nodeTestArguments(['--test-concurrency=2','a.test.mjs','b.test.mjs']),{files:['a.test.mjs','b.test.mjs'],flags:['--test-concurrency=2']});
 });
