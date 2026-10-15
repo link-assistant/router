@@ -37,7 +37,7 @@ For issue #759, the user's explicit instruction prohibits all local Rust tests a
 
 The Rust suite continues to define tiers 1-3, which require no credential. The live credentialed tier (tier 4) is a no-op without a subscription and says so rather than passing quietly — see [docs/testing-tiers.md](docs/testing-tiers.md) for what each tier proves. CI runs the relevant Rust checks; the tier documentation also describes targeted diagnostic commands, which must obey the bounded local exception policy.
 
-Changes to stream or request translators, token and credential code, the proxy, storage or keychain lookup also trigger slower path-filtered workflows: benchmarks against the pull request's base (`benches/`), a one-minute soak (`tests/soak_test.rs`), mutation testing of touched lines (`.cargo/mutants.toml`), the macOS Keychain suite and the upgrade matrix over the last three releases. Translator changes can require updated recorded cassettes in `tests/fixtures/vendor/`; the recording tool is `rust-script scripts/record-vendor-fixtures.rs`. Preserve these checks and require the JavaScript gate before Rust compilation.
+Changes to stream or request translators, token and credential code, the proxy, storage or keychain lookup also trigger slower path-filtered workflows: benchmarks against the pull request's base (`benches/`), a one-minute soak (`tests/soak_test.rs`), mutation testing of touched lines (`.cargo/mutants.toml`), the macOS Keychain suite and the upgrade matrix over the last three releases. Translator changes can require updated recorded cassettes in `tests/fixtures/vendor/`; the recording tool is `rust-script scripts/record-vendor-fixtures.rs`. During issue #759 this Rust-backed tool may run only in gated CI. Preserve these checks and require the JavaScript gate before Rust compilation.
 
 For user-facing changes, add a changelog fragment in `changelog.d/` named `YYYYMMDD_HHMMSS_description.md`:
 
@@ -65,6 +65,8 @@ Extend a rule at the shared translation layer when it repairs a class of source 
 
 Use complete small JavaScript test files under Node and Bun and strict TypeScript execution for quick feedback while drafting a batch. Use the repository's lockfile-installed compiler and record its actual version; do not downgrade the compiler or strictness to obtain a pass. Read the corresponding Rust and generated bodies, collect related failures together and repair the shared rules before expensive full-corpus regeneration. Add Rust edge cases for the same behavior, including overflow, empty values, Unicode, malformed input, ordering and errors where applicable. Distinguish the Rust oracle, JavaScript behavior, executed TypeScript and synchronization freshness in the evidence. Run the complete JavaScript gate on the final integrated tree before treating the batch as publishable; targeted diagnostics do not replace it.
 
+Track every requested requirement through its source changes, generated artifacts, checks and remaining gaps. While remote CI runs, continue source review and independent draft work in assigned worktrees without changing the published head or starting a second expensive workload. Collect the complete CI results before integrating the next repair batch. A bulk draft or an unexecuted test remains a draft until the corresponding checks pass.
+
 Keep work bounded: run one expensive compiler, test or compression workload at a time, reuse existing worktrees and dependencies, check disk space and retain complete failure evidence with lossless compression. Assign that workload explicitly before a worker starts it. Retain actual source versions, full vectors, commands, compiler identities, logs and resource receipts; a digest alone does not preserve the original evidence. When a command becomes slow, measure it before optimizing shared rules; preserve semantics, complete test cases and deadlines. Do not filter failures, raise limits or weaken refusals to obtain a pass. Report executable coverage separately from source preservation, and retain explicit parity limitations until the full checks prove them resolved.
 
 For issue #759, keep at most three active workers and reuse the assigned worktrees; do not clone more repositories. The designated push owner and current assignments are recorded in [AGENTS.md](AGENTS.md). Keep the case study below its fixed 500,000,000-byte filesystem allocation and measure allocation without counting shared inodes twice. Preserve complete recovery and continuity evidence before retiring an archive. The user authorized removal of this task's own inactive Rust caches and build directories regardless of age; identify each owned path, check that no worker uses it, and record reclaimed space. Never remove another worker's active directory or lock. Freed space does not authorize a local Rust build.
@@ -72,6 +74,8 @@ For issue #759, keep at most three active workers and reuse the assigned worktre
 Use [the reusable translation guidance](docs/development/reusable-translation-guidance/README.md) when copying this workflow to another repository. Copy its contribution and agent guidance separately from the compiler export, preserve the receiving repository's conventions and stricter user constraints, and qualify the receiving project independently. Reused upstream implementations must retain pinned source bytes, notices and licenses; a copied approach or successful export is not evidence of complete translation.
 
 Inspect existing upstream implementations and tests for reusable rules before drafting new translator machinery. Reference comparisons include [formal-ai PR 1188](https://github.com/link-assistant/formal-ai/pull/1188), [meta-language PR 201](https://github.com/link-foundation/meta-language/pull/201), and [relative-meta-logic](https://github.com/link-foundation/relative-meta-logic). Pin the actual reviewed commits. Keep complete source copies outside the active compiler tree until receiving qualification passes; the [retained meta-language candidate](tools/upstream-translation-candidates/meta-language-63e3b27a/README.md) documents its inactive status and recovery requirements. Store pristine third-party source under the existing raw-record convention instead of editing it to satisfy local terminology or formatting rules.
+
+For a discovered upstream or tooling defect, retain a minimal reproducible case, exact source and tool versions, complete failed output and any local workaround. Link that record to the affected requirement. Draft the report for review; external reporting requires the user's authorization and belongs to the designated publication owner.
 
 ## Code Style Guidelines
 
@@ -262,7 +266,8 @@ Fragments are automatically collected into CHANGELOG.md during the release proce
 ├── src/
 │   ├── lib.rs            # Library entry point
 │   └── main.rs           # Binary entry point
-├── tests/                # Rust integration tests; JS tests live under packages/ and scripts/
+├── tests/                # Rust integration tests
+├── tools/translation/    # Forward test/, reverse js-to-rust/test/, serialization-schema/*.test.mjs
 ├── .gitignore            # Git ignore patterns
 ├── .pre-commit-config.yaml  # Pre-commit hooks
 ├── Cargo.toml            # Project configuration

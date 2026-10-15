@@ -43,3 +43,12 @@ the single heavy-workload lease explicit. Only the publication owner pushes or u
 pull requests. Retain complete metadata and raw logs for every finished CI job/attempt;
 no second push or cancellation while the current batch is active. An edit invalidates
 a green stamp. Report draft coverage and all remaining parity gaps candidly.
+
+Track every requested requirement through source changes, generated artifacts,
+checks and remaining gaps. Continue independent source review and drafting while
+remote CI runs without changing the published head or starting a second heavy
+workload; integrate the next batch after all results arrive. Inspect reusable
+upstream source and tests, retain pinned copies and licenses, and qualify candidates
+before activation. Retain exact versions, a minimal reproduction, full failed output
+and workarounds for upstream defects; only the publication owner reports them within
+the user's authorization.

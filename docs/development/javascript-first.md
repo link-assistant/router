@@ -14,6 +14,14 @@ unrun until CI executes it. Issue #759 prohibits all local Rust tests and builds
 the bounded exception below does not override this instruction. CI may execute
 Rust only after every required JavaScript stage passes for the same SHA.
 
+Keep a requirement-to-change-and-check record for the complete requested batch,
+including unresolved gaps. While remote CI runs, continue source review and
+independent drafting in assigned worktrees under the single-workload policy.
+Preserve the published head, wait for all CI results and then integrate the
+complete repair batch. Record upstream defects with exact versions, a minimal
+reproduction, full failed output and any workaround before the designated owner
+publishes an authorized report.
+
 ## Run the complete gate before Rust
 
 Install the checked-in JavaScript package dependencies with `npm ci --prefix packages/javascript`. Node 20 or newer is required; install Bun for the native Bun test stage. Run `node scripts/check-js-first-local.mjs --stamp /tmp/router-js-first-gate.json` from the repository root. This orchestrates the actual repository lint, native Node and Bun tests, TypeScript checks, strict parity, forward translation checks and reverse regeneration checks. It writes a green stamp only after all stages succeed and the SHA and file contents remain unchanged. A current strict parity failure is a reason to finish the missing implementation, not to downgrade the gate.

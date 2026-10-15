@@ -28,6 +28,12 @@ without repairing them, and both preserve original inputs. Never patch generated
 outputs to conceal a source-rule defect. Freshness and carried source are separate
 from executable behavior and full runtime parity.
 
+Inspect existing upstream implementations and tests before adding translator
+machinery. Pin reviewed commits and retain complete source, notices and licenses;
+keep candidate copies inactive until receiving qualification passes. For an upstream
+or tooling defect, retain exact versions, a minimal reproduction, full failed output
+and any workaround. The publication owner reports it within the user's authorization.
+
 ## Verification and Rust policy
 
 Begin with complete focused JavaScript test files under Node and Bun and execute
@@ -69,3 +75,9 @@ and logs for every job and attempt after the whole batch finishes; no repeated p
 or cancellation while CI is active. Preserve draft status and honest missing coverage.
 An explicitly authorized incomplete feedback draft cannot claim a green gate or
 permit Rust before its same-SHA JavaScript prerequisites pass.
+
+Track each requested requirement through its source changes, generated artifacts,
+checks and remaining gaps. Continue source review and independent drafting in
+assigned worktrees while remote CI runs, preserving the published head and the
+single-workload policy. Wait for complete CI results before integrating the next
+repair batch. Distinguish drafted work and unexecuted checks from verified behavior.

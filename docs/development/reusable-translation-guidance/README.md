@@ -22,6 +22,9 @@ rapid feedback, add meaningful Rust regression source, then run the complete gat
 on the integrated immutable SHA. Rust CI depends on every same-SHA JavaScript stage.
 One heavy workload and one publication owner remain separate resource responsibilities.
 Measure before optimizing and retain complete failed/pass originals and limitations.
+Track every requested requirement and continue independent source review while CI
+runs, preserving the tested head. Inspect pinned upstream implementations before
+adding machinery and retain reproducible upstream defects for authorized reporting.
 
 ## Existing standard templates
 
