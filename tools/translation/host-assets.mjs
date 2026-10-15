@@ -37,6 +37,8 @@ export function hostRuntimeAssets() {
   files.set('primitive-operator-runtime.d.mts','export declare function integerCast(value:bigint,inputBits:number,inputSigned:boolean,targetBits:number,targetSigned:boolean):bigint;\nexport declare function integerShift(value:bigint,count:bigint,bits:number,signed:boolean,countBits:number,countSigned:boolean,operation:string):bigint;\n');
   files.set('fixed-array-runtime.d.mts',"export declare function copyFixedArray<T, N extends number>(value: ReadonlyArray<T>, type: Readonly<{kind:'array';rustFixedArray:Readonly<{length:N}>;element:unknown}>): ReadonlyArray<T> & { readonly length:N };\n");
   files.set('copy-runtime.d.mts','export declare function assertImmutableCopy(value: unknown): true;\n');
+  files.set('constructor-value-runtime.mjs',readFileSync(new URL('./extensions/constructor-value-runtime.mjs',import.meta.url),'utf8'));
+  files.set('constructor-value-runtime.d.mts','export declare function assertConstructorInput(value: unknown, type: unknown, schema: unknown): true;\nexport declare function snapshotConstructorValue<T>(value: T, type: unknown, schema: unknown): T;\n');
   files.set('vector-runtime.d.mts',`type RustOption<T> = Readonly<{ $: 'None' }> | Readonly<{ $: 'Some'; field0: T }>;
 export declare function createVectorRuntime(validate: (value: unknown) => true): Readonly<{
   rust_vec_get<T>(value: readonly T[], index: bigint): RustOption<T>;

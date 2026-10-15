@@ -10,6 +10,8 @@ import {validCopyCertificate} from '../copy-certificate.mjs';
 import {withStandardStringEqualityChecker} from './standard-string-equality.mjs';
 import {readCertifiedDeriveAttribute} from '../derive-layout.mjs';
 import {readCertifiedToolAttribute} from '../tool-attribute-layout.mjs';
+import {createHash} from 'node:crypto';
+import {valueSchema} from '../type-layout.mjs';
 
 const span = (start, end) => ({ start: start.start, end: end.end });
 const LAYOUT_DERIVES = new Set(['Clone', 'Copy', 'Debug', 'PartialEq', 'Eq', 'Hash', 'PartialOrd', 'Ord']);
@@ -312,10 +314,46 @@ export class DataChecker extends withStandardStringEqualityChecker(TextChecker) 
   }
 }
 
+const constructorValueType=type=>type.kind==='array'?{kind:'array',element:constructorValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
 export class DataEmitter extends TextEmitter {
+  constructor(program,state){
+    super(program,state);this.constructorValueSchemas=new Map();this.constructorBoundary=null;
+    for(const name of ['ml_snapshot_constructor_value','ml_assert_constructor_input'])state.reserved.add(name);
+  }
+  constructorSchema(type){
+    const all=valueSchema(this.program.declarations),types=Object.create(null),visit=type=>{
+      if(type.kind==='array')return visit(type.element);
+      const name=type.kind==='data'?type.name:type.kind==='named'?(type.path[0]==='crate'?type.path.slice(1):type.path).join('.'):null;
+      if(!name||Object.hasOwn(types,name))return;
+      const entry=all.types[name];if(!entry)throw new Error('missing checked constructor field layout');types[name]=entry;
+      for(const ctor of entry.ctors)for(const field of ctor.fields)visit(field.type);
+    };visit(type);
+    const schema={schemaVersion:1,types},key=createHash('sha256').update(JSON.stringify(schema)).digest('hex'),name='ml_constructor_value_schema_'+key;
+    this.constructorValueSchemas.set(name,schema);this.state.reserved.add(name);return name;
+  }
+  fn(entry){
+    const prior=this.constructorBoundary;
+    this.constructorBoundary=entry.k==='fn'&&entry.generated==='router-data-constructor'&&this.program.declarations.get(entry.fullName)===entry?{entry,guarded:new WeakSet()}:null;
+    try{return super.fn(entry);}finally{this.constructorBoundary=prior;}
+  }
+  constructorParameterGuards(param){
+    if(!this.constructorBoundary||!['array','data','named'].includes(param.type.kind)||this.constructorBoundary.guarded.has(param))return [];
+    this.constructorBoundary.guarded.add(param);const schema=this.constructorSchema(param.type);
+    return [`ml_assert_constructor_input(${param.name}, ${JSON.stringify(constructorValueType(param.type))}, ${schema});`];
+  }
+  parameterGuard(param){return [...this.constructorParameterGuards(param),...super.parameterGuard(param)];}
   ctorObject(entry, ctor, args) {
-    if (!entry.record && ctor.ctorStyle !== 'named') return super.ctorObject(entry, ctor, args);
-    return `Object.freeze({ $: ${JSON.stringify(ctor.name)}${ctor.fields.map((field, index) => `, [${JSON.stringify(field.name)}]: ${args[index]}`).join('')} })`;
+    const value=!entry.record&&ctor.ctorStyle!=='named'?super.ctorObject(entry,ctor,args):`Object.freeze({ $: ${JSON.stringify(ctor.name)}${ctor.fields.map((field,index)=>`, [${JSON.stringify(field.name)}]: ${args[index]}`).join('')} })`;
+    if(!ctor.fields.some(field=>['array','data','named'].includes(field.type.kind)))return value;
+    const type={kind:'data',name:entry.fullName},schema=this.constructorSchema(type);
+    this.state.encode('constructor-value-isolation','Constructed Rust values snapshot dense own-data aggregates without retaining mutable caller arrays; existing immutable nominal inputs keep their checked identity');
+    return `ml_snapshot_constructor_value(${value}, ${JSON.stringify(type)}, ${schema})`;
+  }
+  file(){
+    const result=super.file();if(!this.constructorValueSchemas.size)return result;
+    const runtime=(this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'constructor-value-runtime.mjs');
+    const extra=[`import { snapshotConstructorValue as ml_snapshot_constructor_value, assertConstructorInput as ml_assert_constructor_input } from ${JSON.stringify(runtime)};`,...[...this.constructorValueSchemas].map(([name,schema])=>`const ${name} = ${JSON.stringify(schema)};`)];
+    return {...result,preludes:[...extra,...result.preludes],text:[...extra,result.text].join('\n')};
   }
 
   expr(node) {

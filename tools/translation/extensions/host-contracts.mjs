@@ -747,19 +747,20 @@ export function requireOriginalPrimitiveTryFromChecker(checker){assertOriginalCl
 export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   constructor(program,state){const reserve=node=>{if(!node||typeof node!=='object')return;if(node.k==='routerHostCall'&&node.contract)state.reserved.add('ml_host_'+node.id);for(const value of Object.values(node))Array.isArray(value)?value.forEach(reserve):reserve(value);};program.items.forEach(reserve);super(program,state);this.copyTypes=new Set(program.items.filter(entry=>entry.impl?.copyCertificate?.verified).map(entry=>entry.params.find(param=>param.copyReceiver)?.type.name));this.hosts=new Set();this.schemas=new Map();this.instantiations=new Map();this.optionCallbacks=false;this.sharedGuardVariable='ml_shared_immutable_value';for(let index=2;state.claimed.has(this.sharedGuardVariable);index++)this.sharedGuardVariable='ml_shared_immutable_value_'+index;state.reserved.add(this.sharedGuardVariable);this.stringBytesHelper='ml_string_bytes';for(let index=2;state.claimed.has(this.stringBytesHelper);index++)this.stringBytesHelper='ml_string_bytes_'+index;state.reserved.add(this.stringBytesHelper);for(const name of ['ml_string_bytes','ml_reverse_split_find','ml_option_string_as_deref','ml_result_collect','ml_result_map_err','ml_csv_split','ml_csv_split_next','ml_csv_allocate','ml_str_lines','ml_str_split_whitespace','ml_str_next','ml_str_join','ml_copy_fixed_array','ml_assert_immutable_copy','ml_validate_rust_value','ml_validate_json_number','ml_validate_json_map','ml_validate_duration','ml_host_duration_as_secs','ml_host_option_bind','ml_create_vector_runtime','ml_create_integer_runtime','ml_create_fixed_integer_runtime','ml_host_option_map','ml_host_option_map_or','ml_host_result_ok','ml_host_bool_then','ml_host_bool_then_some','ml_primitive_bool_from','ml_integer_cast','ml_integer_shift','ml_static_array_values','ml_static_array_element'])state.reserved.add(name);for(const contract of HOST_CONTRACTS)state.reserved.add('ml_host_'+contract.id);}
   parameterGuard(param) {
-    if(originalCloneReceiverParameter(this,param)){this.copyReceivers=true;return [`ml_assert_immutable_copy(${param.name});`,this.valueGuard(param.name,param.type)+';'];}
+    const constructorGuards=this.constructorParameterGuards(param);
+    if(originalCloneReceiverParameter(this,param)){this.copyReceivers=true;return [...constructorGuards,`ml_assert_immutable_copy(${param.name});`,this.valueGuard(param.name,param.type)+';'];}
     if(param.type.kind==='array'&&param.type.rustFixedArray) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
-      return [`${param.name} = ml_copy_fixed_array(${param.name}, ${JSON.stringify(runtimeValueType(param.type))});`,this.valueGuard(param.name,param.type)+';'];
+      return [...constructorGuards,`${param.name} = ml_copy_fixed_array(${param.name}, ${JSON.stringify(runtimeValueType(param.type))});`,this.valueGuard(param.name,param.type)+';'];
     }
     // The portable bounds helper compares values. Reject non-BigInts before
     // that helper can invoke a hostile object's conversion hooks.
-    if(param.type.kind==='fixed')return [`if (typeof ${param.name} !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');`,...super.parameterGuard(param)];
+    if(param.type.kind==='fixed')return [...constructorGuards,`if (typeof ${param.name} !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');`,...super.parameterGuard(param)];
     const hasData=type=>type.kind==='data'||type.kind==='named'||type.kind==='array'&&(type.rustFixedArray||hasData(type.element));
-    if(!hasData(param.type)&&param.type.kind!=='float')return [...(this.iteratorParameterGuards?.(param)??[]),...super.parameterGuard(param)];
+    if(!hasData(param.type)&&param.type.kind!=='float')return [...constructorGuards,...(this.iteratorParameterGuards?.(param)??[]),...super.parameterGuard(param)];
     // A helper's guard must depend only on its actual reachable parameter
     // layout, not on unrelated callers in another checked dependency closure.
-    return [...(this.iteratorParameterGuards?.(param)??[]),...(this.patternParameterGuards?.(param)??[]),...((param.copyReceiver||param.type.kind==='data'&&this.copyTypes.has(param.type.name))?(this.copyReceivers=true,[`ml_assert_immutable_copy(${param.name});`]):[]),this.valueGuard(param.name,param.type)+';'];
+    return [...constructorGuards,...(this.iteratorParameterGuards?.(param)??[]),...(this.patternParameterGuards?.(param)??[]),...((param.copyReceiver||param.type.kind==='data'&&this.copyTypes.has(param.type.name))?(this.copyReceivers=true,[`ml_assert_immutable_copy(${param.name});`]):[]),this.valueGuard(param.name,param.type)+';'];
   }
   valueGuard(value,type) {
     const all=valueSchema(this.program.declarations),types={};
