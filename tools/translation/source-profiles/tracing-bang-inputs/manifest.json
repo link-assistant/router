@@ -1,0 +1,111 @@
+{
+  "schema": "locked-tracing-macro-source-inputs-v1",
+  "cargoManifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "cargoLockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+  "memberInventory": {
+    "path": "members.json",
+    "bytes": 36602,
+    "sha256": "f0fa536e1e54e8c8557286dca6f4eb65986f6fa09433e9a4dae1977597519667"
+  },
+  "bounds": {
+    "archives": 2,
+    "membersPerArchive": 1024,
+    "memberBytes": 2097152,
+    "unpackedBytesPerArchive": 16777216
+  },
+  "archives": [
+    {
+      "package": "tracing",
+      "version": "0.1.44",
+      "archive": "tracing-0.1.44.crate",
+      "archiveBytes": 463135,
+      "archiveSha256": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "lockedArchiveChecksum": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "registry": "registry+https://github.com/rust-lang/crates.io-index",
+      "unpackedBytes": 9818203,
+      "url": "https://static.crates.io/crates/tracing/tracing-0.1.44.crate",
+      "memberCount": 93,
+      "licenses": [
+        {
+          "path": "tracing-0.1.44-LICENSE",
+          "archiveMember": "tracing-0.1.44/LICENSE",
+          "bytes": 1062,
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1"
+        }
+      ],
+      "sourceFeaturesObservedNotSelected": {
+        "async-await": [],
+        "attributes": [
+          "tracing-attributes"
+        ],
+        "default": [
+          "std",
+          "attributes"
+        ],
+        "log-always": [
+          "log"
+        ],
+        "max_level_debug": [],
+        "max_level_error": [],
+        "max_level_info": [],
+        "max_level_off": [],
+        "max_level_trace": [],
+        "max_level_warn": [],
+        "release_max_level_debug": [],
+        "release_max_level_error": [],
+        "release_max_level_info": [],
+        "release_max_level_off": [],
+        "release_max_level_trace": [],
+        "release_max_level_warn": [],
+        "std": [
+          "tracing-core/std"
+        ],
+        "valuable": [
+          "tracing-core/valuable"
+        ]
+      }
+    },
+    {
+      "package": "tracing-core",
+      "version": "0.1.36",
+      "archive": "tracing-core-0.1.36.crate",
+      "archiveBytes": 63967,
+      "archiveSha256": "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a",
+      "lockedArchiveChecksum": "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a",
+      "registry": "registry+https://github.com/rust-lang/crates.io-index",
+      "unpackedBytes": 255338,
+      "url": "https://static.crates.io/crates/tracing-core/tracing-core-0.1.36.crate",
+      "memberCount": 28,
+      "licenses": [
+        {
+          "path": "tracing-core-0.1.36-LICENSE",
+          "archiveMember": "tracing-core-0.1.36/LICENSE",
+          "bytes": 1062,
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1"
+        },
+        {
+          "path": "tracing-core-0.1.36-spin-LICENSE",
+          "archiveMember": "tracing-core-0.1.36/src/spin/LICENSE",
+          "bytes": 1085,
+          "sha256": "58545fed1565e42d687aecec6897d35c6d37ccb71479a137c0deb2203e125c79"
+        }
+      ],
+      "sourceFeaturesObservedNotSelected": {
+        "default": [
+          "std",
+          "valuable?/std"
+        ],
+        "std": [
+          "once_cell"
+        ]
+      }
+    }
+  ],
+  "featuresClosed": false,
+  "macroExpansionExecuted": false,
+  "conditionalBangOwnershipProved": false,
+  "namespaceAuthority": false,
+  "runtimeAuthority": false,
+  "ioEffectsVerified": false,
+  "runtimeParity": false
+}
