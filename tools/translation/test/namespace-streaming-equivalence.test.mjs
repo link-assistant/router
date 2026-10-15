@@ -137,7 +137,7 @@ if(hook==='descriptors'){owner=Object;key='getOwnPropertyDescriptors';}
 if(hook==='wrong-entries'){owner=Map.prototype;key='entries';replacement=Set.prototype.entries;}
 if(hook==='wrong-next'){owner=mapIterator;key='next';replacement=arrayIterator.next;}
 const previous=descriptor(owner,key),native=previous.value,functionText=Function.prototype.toString;
-const setup=()=>{if(replacement)define(owner,key,{...previous,value:replacement});else if(hook==='iterator-getter')define(owner,key,{configurable:previous.configurable,enumerable:previous.enumerable,get(){tape[tape.length]='get-iterator';return function(){tape[tape.length]='iterate';return apply(native,this,arguments);};}});else define(owner,key,{...previous,value:function(...args){if(hook==='call'||hook==='apply'){if(hook==='call'?this===functionText:args[0]===functionText)tape[tape.length]='function-text';}else tape[tape.length]=mode;return apply(native,this,args);}});};
+const setup=()=>{if(replacement)define(owner,key,{...previous,value:replacement});else if(hook==='iterator-getter')define(owner,key,{configurable:previous.configurable,enumerable:previous.enumerable,get(){tape[tape.length]='get-iterator';return function(){tape[tape.length]='iterate';return apply(native,this,arguments);};}});else define(owner,key,{...previous,value:function(...args){const value=apply(native,this,args);if(hook==='call'||hook==='apply'){if(hook==='call'?this===functionText:args[0]===functionText)tape[tape.length]=value;}else tape[tape.length]=mode;return value;}});};
 let before,HostRustParser,tokenizeRust,qualifier;
 if(mode.startsWith('initial-'))setup();
 ({HostRustParser}=await import(${json(new URL('../extensions/host-contracts.mjs',import.meta.url).href)}));
