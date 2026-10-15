@@ -24,3 +24,13 @@ and source mutation refusals, hidden output/capture syntax and zero-callback
 ingress. An independent ordinary checked program exercises JS and strict TS; it
 does not execute Vec output. All new tests are UNRUN. No executable-body gain,
 whole compiler gate, regeneration or parity result is claimed.
+
+The first complete receiving file registered nine cases in each engine and
+finished 4/9 in both; the actual complete Engine two-call case passed. Full
+failed sources, logs and vectors remain retained. A fixture-only successor keeps
+all original statement-position calls as exact refusals, places intended
+positives and negative controls in original let-expression contexts, retains the
+binary capture as the unchanged token engine's explicit unsupported frontier,
+and uses a complete supported method-call capture for the independent positive.
+All nine cases and deadlines remain; production bytes are unchanged. This
+successor is UNRUN and grants no additional authority.
