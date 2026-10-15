@@ -6,6 +6,7 @@ import {copyMetadata,ownData} from './extensions/source-links.mjs';
 import {originalSourceModuleItems,isSourceModuleView} from './source-module-views.mjs';
 import {originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';
 import {rustTokens} from './rust-structure.mjs';
+import {captureOriginalNamespaceFunction,originalNamespaceFunctionMembers,originalNamespaceFunctionFacts,originalNamespaceFunctionInvocationPosition,originalNamespacePositionFacts} from './original-namespace-parser.mjs';
 import {inspectConditionalAttribute} from './conditional-attributes.mjs';
 import {evaluateConfiguration} from './cfg-profile.mjs';
 import {isDeriveDependencyProof} from './derive-dependencies.mjs';
@@ -40,6 +41,7 @@ function input(options){
 function current(state,options){
  const actual=input(options),prior=state.input;
  if(actual.dependencies!==prior.dependencies||actual.carrier.sourceView!==prior.carrier.sourceView||actual.carrier.source!==prior.carrier.source||actual.carrier.file!==prior.carrier.file||!isDeepStrictEqual(actual.carrier.path,prior.carrier.path)||!isDeepStrictEqual(actual.carrier.compilationProfile,prior.carrier.compilationProfile)||actual.items!==prior.items)fail('original source/view/path/profile/dependency association changed');
+ for(const join of state.positionJoins){originalNamespaceFunctionFacts(join.token,join.options);for(const proof of join.proofs)originalNamespacePositionFacts(proof,join.token,join.options);}
  return state;
 }
 function alternatives(body,profile,source,depth=0){
@@ -121,11 +123,39 @@ function declarations(state,syntax){
  }
  return {declarations:result,outputs};
 }
+function parsedPositions(state,syntax){
+ const frames=[],positions=[],joins=[];
+ function capture(item,memberIndex){
+  const options={module:state.carrier,item,memberIndex};
+  try{
+   const token=captureOriginalNamespaceFunction(options),facts=originalNamespaceFunctionFacts(token,options);frames.push({token,facts});const proofs=[];joins.push({token,options,proofs});
+   for(let index=0;index<facts.opaqueInvocations.length;index++){
+    const proof=originalNamespaceFunctionInvocationPosition(token,options,index),position=originalNamespacePositionFacts(proof,token,options);positions.push({proof,frame:token,index,facts:position});proofs.push(proof);
+   }
+  }catch(error){if(!(error instanceof TypeError))throw error;frames.push({itemSpan:{start:item.start,end:item.end},memberIndex,refusal:{name:error.name,message:error.message},sourcePositionUnproved:true});}
+ }
+ for(const item of state.items){
+  let header;try{header=originalDeclarationHeader(item,state.carrier.path);}catch(error){if(!(error instanceof Error))throw error;frames.push({itemSpan:{start:item.start,end:item.end},refusal:{name:error.name,message:error.message},sourcePositionUnproved:true});continue;}
+  if(header?.kind==='fn')capture(item,null);
+  else if(['trait','impl'].includes(header?.kind)){
+   let members;try{members=originalNamespaceFunctionMembers({module:state.carrier,item});}catch(error){if(!(error instanceof TypeError))throw error;frames.push({itemSpan:{start:item.start,end:item.end},refusal:{name:error.name,message:error.message},sourcePositionUnproved:true});continue;}
+   for(const member of members)if(member.kind==='fn')capture(item,member.memberIndex);
+  }
+ }
+ const bangs=syntax.bangs.map(bang=>{
+  if(bang.kind!=='unresolved-bang-output')return bang;
+  const matching=positions.filter(position=>position.facts.invocation.span.start===bang.span.start&&position.facts.invocation.span.end===bang.span.end);
+  if(matching.length!==1)return bang;
+  const position=matching[0];return {...bang,parsedExpansionPosition:true,originalPosition:position,
+   dimensions:{...bang.dimensions,enclosingAttributeEffect:'ordinary-bindings-block-local; global-generated-macro-kind-pending',globalAttributeEffect:'unresolved-generated-export-kind-and-original-attribute-transformations',ordinaryGeneratedImportsAndProcStubsRemainBlockLocal:true}};
+ });
+ return {frames,bangs,joins};
+}
 export function captureOriginalNamespaceSourceSuperset(options){
- const selected=input(options),syntax=lexical(selected),written=declarations(selected,syntax),token=Object.freeze({schema:'private-original-namespace-source-superset-v1'});
- const facts=freeze({schema:'original-namespace-source-superset-v1',source:{file:selected.carrier.file,path:selected.carrier.path,sourceSha256:hash(selected.carrier.source),sourceViewDigest:selected.carrier.sourceView.digest,bodySpan:selected.carrier.sourceView.bodySpan,compilationProfile:selected.carrier.compilationProfile},...syntax,...written,
+ const selected=input(options),syntax=lexical(selected),written=declarations(selected,syntax),positions=parsedPositions(selected,syntax),token=Object.freeze({schema:'private-original-namespace-source-superset-v1'});
+ const facts=freeze({schema:'original-namespace-source-superset-v1',source:{file:selected.carrier.file,path:selected.carrier.path,sourceSha256:hash(selected.carrier.source),sourceViewDigest:selected.carrier.sourceView.digest,bodySpan:selected.carrier.sourceView.bodySpan,compilationProfile:selected.carrier.compilationProfile},...syntax,...written,bangs:positions.bangs,originalFunctionFrames:positions.frames,
   originalTokenCensusComplete:true,allWrittenAlternativesRetained:true,allConditionalAlternativesRetained:true,wholePackageComplete:false,callerScopeComplete:false,attributeOwnersResolved:false,namespaceAuthority:false,runtimeAuthority:false,
   obligations:['exact genuine complete package/module/profile/edition origin','private original parser expansion-position association for dimension-specific output effects','actual builtin doc AND lint namespace noncompetition','complete fresh190 output reissue for every selected original derive','unknown custom and generated source alternatives remain pending']});
- states.set(token,{input:selected,facts});return token;
+ const state={input:selected,facts,positionJoins:positions.joins};current(state,options);states.set(token,state);return token;
 }
 export function originalNamespaceSourceSupersetFacts(token,options){const state=states.get(token);if(!state)fail('copied or unissued source superset');return current(state,options).facts;}

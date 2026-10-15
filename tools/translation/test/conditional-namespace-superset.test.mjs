@@ -26,7 +26,7 @@ test('complete actual Engine source retains all8 builtin syntax candidates besid
  assert.equal(result.facts.source.sourceSha256,hash(module.source));assert.equal(result.facts.outputs.length,8);
  for(const output of result.facts.outputs){assert.equal(output.ownerResolved,false);assert.equal(output.alternatives[0].kind,'unresolved-custom-or-ambiguous-owner');assert.equal(output.alternatives[1].kind,'registered-builtin-source-syntax-candidate');}
  for(const text of ['vec!','unreachable!','panic!'])assert.equal(result.facts.bangs.some(call=>call.original.startsWith(text)),true,text);
- for(const call of result.facts.bangs){assert.equal(module.source.slice(call.span.start,call.span.end),call.original);assert.equal(call.parsedExpansionPosition,false);assert.equal(call.dimensions.globalBangEffect,'unresolved');assert.equal(call.dimensions.enclosingAttributeEffect,'pending-authentic-position');}
+ for(const call of result.facts.bangs){assert.equal(module.source.slice(call.span.start,call.span.end),call.original);assert.equal(call.parsedExpansionPosition,true);assert.equal(call.originalPosition.facts.position,'Expr');assert.equal(call.originalPosition.facts.enclosingAttributeBindingsUnchanged,false);assert.equal(call.originalPosition.facts.unresolvedGlobalMacroExportKindsRetained,true);assert.equal(call.dimensions.globalBangEffect,'unresolved');assert.equal(call.dimensions.enclosingAttributeEffect,'ordinary-bindings-block-local; global-generated-macro-kind-pending');}
  assertNoAuthority(result.facts);assert.equal(module.configurationCondition,'unknown');
 });
 
@@ -66,7 +66,7 @@ test('hidden exports imports definitions dead branches and nested source produce
  assert.equal(result.facts.attributes.some(row=>row.attribute.name==='macro_export'),true);
  assert.equal(result.facts.bangs.some(row=>row.kind==='written-declarative-definition'),true);
  for(const name of ['outer!','inner!'])assert.equal(result.facts.bangs.some(row=>row.original.startsWith(name)),true);
- assert.equal(result.facts.bangs.every(row=>row.parsedExpansionPosition===false),true);assertNoAuthority(result.facts);
+ assert.equal(result.facts.bangs.find(row=>row.original.startsWith('outer!')).parsedExpansionPosition,true);for(const row of result.facts.bangs.filter(row=>row.kind==='written-declarative-definition'||row.original.startsWith('inner!')))assert.equal(row.parsedExpansionPosition,false);assert.equal(result.facts.bangs.find(row=>row.original.startsWith('outer!')).originalPosition.facts.enclosingAttributeBindingsUnchanged,false);assertNoAuthority(result.facts);
 });
 
 test('copied foreign or changed dependency source item view path and profile cannot reuse the private source superset',()=>{
