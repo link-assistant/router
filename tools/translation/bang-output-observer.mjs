@@ -2,13 +2,25 @@
 // a caller-selected definition or matching public digest cannot resolve it.
 import {types} from 'node:util';
 import {createHash} from 'node:crypto';
-import {compileExpandedControlExpression,builtinSourceControlFacts} from './builtin-source-control.mjs';
+import {compileExpandedControlExpression,builtinSourceControlFacts,originalExpandedMacroInvocation} from './builtin-source-control.mjs';
 import {declarativeExpansionLineage,declarativeNestedMacroInvocations,declarativeNestedMacroInput} from './declarative-token-macros.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 
 const observations=new WeakMap(),hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=message=>{throw new TypeError('Bang output observation: '+message);};
-const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+function equal(left,right){
+  let cells=1024;
+  function compare(a,b,depth=0){
+    if(--cells<0||depth>8)return false;
+    if(a===null||typeof a!=='object')return a===b;
+    if(!b||typeof b!=='object'||types.isProxy(a)||types.isProxy(b)||Array.isArray(a)!==Array.isArray(b))return false;
+    const first=Object.getOwnPropertyDescriptors(a),second=Object.getOwnPropertyDescriptors(b),keys=Reflect.ownKeys(first);
+    if(keys.length!==Reflect.ownKeys(second).length)return false;
+    for(const key of keys)if(typeof key!=='string'||!Object.hasOwn(second,key)||!Object.hasOwn(first[key],'value')||!Object.hasOwn(second[key],'value')||!compare(first[key].value,second[key].value,depth+1))return false;
+    return true;
+  }
+  return compare(left,right);
+}
 const word=tree=>tree?.kind==='token'?tree.text:null;
 const reserved=new Set('as async await break const continue dyn else enum extern false fn for if impl in let loop match mod move mut pub ref return static struct trait true type unsafe use where while abstract become box do final gen macro override priv try typeof unsized virtual yield'.split(' '));
 const identifier=value=>typeof value==='string'&&/^(?:r#)?[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(value)&&(!reserved.has(value)||value.startsWith('r#'));
@@ -16,7 +28,7 @@ function denseDataArray(array){
   if(!array||types.isProxy(array)||!Array.isArray(array)||Object.getPrototypeOf(array)!==Array.prototype)fail('bounded original child list required');
   const fields=Object.getOwnPropertyDescriptors(array),names=Reflect.ownKeys(fields),length=fields.length;
   if(!length||!Object.hasOwn(length,'value')||!Number.isSafeInteger(length.value)||length.value>128||names.length!==length.value+1)fail('dense bounded original child list required');
-  for(let at=0;at<length.value;at++)if(!fields[at]||!Object.hasOwn(fields[at],'value'))fail('child list accessor or hole');
+  for(let at=0;at<length.value;at++)if(!Object.hasOwn(fields,String(at))||!Object.hasOwn(fields[at],'value'))fail('child list accessor or hole');
   return array;
 }
 function path(parts){
@@ -75,8 +87,11 @@ export function observeBangOutput(expansion,options={}){
     }
   }
   function nested(node){
-    const row=records.find(record=>!used.has(record)&&equal(record.writtenPath,node.path)&&record.delimiter===node.arguments.delimiter&&equal(declarativeNestedMacroInput(expansion,record),node.arguments.children));
-    if(!row)fail('macro node lacks its exact original invocation lineage');
+    const association=originalExpandedMacroInvocation(control,node);
+    const matching=records.filter(record=>association.argumentGroup.children===declarativeNestedMacroInput(expansion,record));
+    if(matching.length!==1)fail('original argument-group occurrence is missing or alias-ambiguous');
+    const row=matching[0];
+    if(used.has(row)||!equal(row.writtenPath,association.originalNode.path)||row.delimiter!==association.argumentGroup.delimiter)fail('macro node lacks its exact original invocation lineage');
     const child=available.find(child=>equal(child.lineage.path,row.path));
     if(!child)fail('unproved nested macro '+node.path.join('::'));
     const expectedOwner=row.writtenPath.length===1?lineage.definition.owner:row.writtenPath.slice(0,-1);

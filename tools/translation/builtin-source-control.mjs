@@ -5,7 +5,7 @@ import {originalMacroTrees,freezeMacroTree} from './macro-token-trees.mjs';
 import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {declarativeExpansionLineage} from './declarative-token-macros.mjs';
 import {isFormatCallbackDataflow} from './format-builtin-dataflow.mjs';
-const states=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
+const states=new WeakMap(),expandedInvocations=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
 const word=node=>node?.kind==='token'?node.text:null;
 const name=node=>node?.kind==='token'&&node.type==='ident'&&/^(?:r#)?[\p{L}_][\p{L}\p{N}_]*$/u.test(node.text);
 // Original BinOpKind::precedence/fixity separates bitwise groups and gives
@@ -198,5 +198,35 @@ export function compileExpandedControlExpression(expansion){
   let ir=null,diagnostics=[];
   try{const parser=new ControlParser(expansion.trees,budget,0,true);ir=parser.expressionAll(parser.nodes);}
   catch(error){if(!(error instanceof TypeError))throw error;diagnostics=[{code:'ERR_BUILTIN_SOURCE_CONTROL_UNSUPPORTED',reason:error.message,...expandedLocation(expansion.trees)}];}
-  return issue({schema:'original-expanded-control-expression-v1',expansionDigest:expansion.digest,definitionDigest:lineage.definition.digest,spanDomain:'mixed exact original definition and invocation ranges',trees:expansion.trees,ir,diagnostics,controlSyntaxProjected:ir!==null,pinnedCompilerFunctionVerified:false,...flags},{inputKind:'private-expanded-source-expression',expansion,lineage});
+  const result=issue({schema:'original-expanded-control-expression-v1',expansionDigest:expansion.digest,definitionDigest:lineage.definition.digest,spanDomain:'mixed exact original definition and invocation ranges',trees:expansion.trees,ir,diagnostics,controlSyntaxProjected:ir!==null,pinnedCompilerFunctionVerified:false,...flags},{inputKind:'private-expanded-source-expression',expansion,lineage});
+  // Pair the issuer's entire original/copy structures now, while both are
+  // available. Never rediscover an opaque invocation from its printed bytes.
+  let cells=200000;const pairs=[];
+  function pair(before,after,depth=0){
+    if(--cells<0||depth>160)throw new TypeError('Expanded invocation association metadata budget exhausted');
+    if(before===null||typeof before!=='object'){
+      if(before!==after)throw new TypeError('Expanded invocation association scalar changed');return;
+    }
+    if(!after||typeof after!=='object'||Array.isArray(before)!==Array.isArray(after))throw new TypeError('Expanded invocation association node changed');
+    const left=Object.getOwnPropertyDescriptors(before),right=Object.getOwnPropertyDescriptors(after),keys=Reflect.ownKeys(left);
+    if(keys.length!==Reflect.ownKeys(right).length)throw new TypeError('Expanded invocation association has missing or extra fields');
+    for(const key of keys){
+      if(typeof key!=='string'||!Object.hasOwn(right,key)||!Object.hasOwn(left[key],'value')||!Object.hasOwn(right[key],'value'))throw new TypeError('Expanded invocation association requires exact own data');
+      pair(left[key].value,right[key].value,depth+1);
+    }
+    if(Object.hasOwn(left,'kind')&&left.kind.value==='opaque-macro'){
+      const group=Object.hasOwn(left,'arguments')?left.arguments.value:null,kind=group&&Object.getOwnPropertyDescriptor(group,'kind');
+      if(!kind||!Object.hasOwn(kind,'value')||kind.value!=='group')throw new TypeError('Expanded invocation lacks its original argument group');
+      pairs.push([after,before,group]);
+    }
+  }
+  pair(ir,result.ir);
+  for(const [node,originalNode,argumentGroup]of pairs)expandedInvocations.set(node,Object.freeze({control:result,expansion,node,originalNode:freezeMacroTree(originalNode),argumentGroup}));
+  return result;
+}
+
+export function originalExpandedMacroInvocation(control,node){
+  const facts=builtinSourceControlFacts(control),record=expandedInvocations.get(node);
+  if(facts.inputKind!=='private-expanded-source-expression'||!record||record.control!==control||record.expansion!==facts.expansion)throw new TypeError('Expanded invocation requires its exact private control and issued IR node');
+  return record;
 }
