@@ -63,8 +63,13 @@ took 4694.08 milliseconds under its unchanged 5000-millisecond bound. Complete
 logs and vectors are retained in `coherent-rule-pipelines-148-151-v2`. The prior
 worker Bun timeout remains retained as a distinct failed run. These receiving
 results establish neither current generation freshness, a complete green gate
-nor runtime parity. The 150 coverage draft remains unrun; its desired constructor
-alias regression requires the separate boundary repair and regenerated outputs.
+nor runtime parity. The complete 150 behavior suite ran against the explicitly
+pinned historical generation `75508fd418cef2b7dc710700b9305bbe116ffe49`:
+seven of eight groups passed in both engines, including strict TypeScript. The
+remaining group reproduced mutable aliases in the original generated
+`DeploySection`, `Run` and `Area` constructors. The separate boundary repair
+passes its complete nine-case focused group in both engines; regenerated
+original-project outputs and the complete integrated gate remain required.
 
 The 151 paired prehook comparison covers complete **method-free** project
 inputs, including functions, constants, data, refusals, source scopes, callback
