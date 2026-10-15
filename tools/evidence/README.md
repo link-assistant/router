@@ -186,7 +186,7 @@ is used for both passes; staging, full verification and gzip decoding share the
 170-second internal deadline. The caller must retain the 180-second outer and
 1.5 GiB RSS monitor. One private compressed stage exists at a time. The decoder
 hashes/counts every gzip byte and every raw byte while writing only a fresh regular
-`O_EXCL` output through unlinked directory descriptors. Both index and capture
+`O_EXCL` output through validated directory descriptors. Both index and capture
 receipt identities, stage identity and output path are checked again before a
 successful receipt. Failed fresh outputs are retained without success.
 
@@ -194,7 +194,8 @@ The decoded index is at most 4 MiB and 8,192 objects, declaring at most 1 GiB of
 raw originals in total; a capture receipt is at most 16 MiB. Duplicate/unknown
 keys, booleans or nonfinite sizes, links, escaping names, nonregular sources,
 wrong gzip/raw witnesses, decompression overflow and source/path replacement
-refuse. Source hardlinks are deliberately unsupported in this new lane; existing
+refuse. Empty encoded input is not a gzip frame and refuses; a genuine gzip frame
+may decode to an empty raw original. Source hardlinks are deliberately unsupported in this new lane; existing
 ordinary backward-hardlink verification remains unchanged. A present physical
 raw or gzip original corroborates the archive and never bypasses its Git witness.
 Shallow or missing ancestor witnesses still fail closed without lazy fetching.

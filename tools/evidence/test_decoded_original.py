@@ -143,6 +143,24 @@ class DecodedOriginalTests(unittest.TestCase):
         self.recover()
         self.assertEqual(self.target.read_bytes(), self.raw)
 
+    def test_empty_encoded_input_is_not_a_gzip_frame(self):
+        self.raw, self.gzip = b'', b''
+        self.pack()
+        self.publish('empty encoded bytes are not gzip')
+        with self.assertRaisesRegex(ValueError, 'nonempty encoded'):
+            self.recover()
+        self.assertFalse(self.target.exists())
+
+    def test_genuine_gzip_frame_can_decode_an_empty_original(self):
+        self.raw = b''
+        self.gzip = gzip.compress(self.raw, mtime=0)
+        self.pack()
+        self.publish('genuine gzip frame for empty raw original')
+        result = self.recover()
+        self.assertEqual(self.target.read_bytes(), b'')
+        self.assertGreater(result['gzipBytes'], 0)
+        self.assertEqual(result['sha256'], sha(b''))
+
     def test_fresh_output_and_symlink_controls(self):
         self.target.write_bytes(b'preserved existing output')
         with self.assertRaises(FileExistsError):

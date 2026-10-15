@@ -7,7 +7,7 @@ const root=fileURLToPath(new URL('../../../',import.meta.url));
 test('fixed gzip original recovery keeps every complete Python storage control',{timeout:60000},()=>{
   const result=spawnSync('python3',['tools/evidence/test_decoded_original.py'],{cwd:root,encoding:'utf8',timeout:45000,maxBuffer:4*1024*1024});
   assert.equal(result.status,0,result.stdout+result.stderr);
-  assert.match(result.stderr,/Ran 18 tests/u);assert.match(result.stderr,/OK/u);
+  assert.match(result.stderr,/Ran 20 tests/u);assert.match(result.stderr,/OK/u);
 });
 
 test('decoded-original CLI exposes only fixed bounded recovery',{timeout:5000},()=>{

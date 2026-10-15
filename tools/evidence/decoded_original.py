@@ -165,7 +165,8 @@ def recover_gzip_decoded_original(case_root, repository_root, logical_name, outp
         if _name(row['archive']) not in store.archives:
             raise ValueError('Decoded original needs a direct declared archive')
         _name(row['member'])
-        size(row['gzipBytes'], MAX_MEMBER)
+        if size(row['gzipBytes'], MAX_MEMBER) == 0:
+            raise ValueError('Source gzip requires nonempty encoded bytes')
         total += size(row['bytes'], MAX_RAW)
         digest(row['gzipSha256'])
         digest(row['sha256'])
