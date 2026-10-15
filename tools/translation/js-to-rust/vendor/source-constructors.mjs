@@ -55,6 +55,13 @@ function propertyName(ts,node) {
     ||(ts.isPropertyAssignment(parent)||ts.isMethodDeclaration(parent))&&parent.name===node;
 }
 
+function constructorSyntaxChecker(ts,files) {
+  const host={getSourceFile:name=>files.get(name)?.file,fileExists:name=>files.has(name),readFile:name=>files.get(name)?.source,
+    getDefaultLibFileName:()=>'',writeFile:()=>{},getCurrentDirectory:()=>'',getDirectories:()=>[],directoryExists:()=>true,
+    getCanonicalFileName:name=>name,useCaseSensitiveFileNames:()=>true,getNewLine:()=> '\n'};
+  return ts.createProgram([...files.keys()],{allowJs:true,noLib:true,noResolve:true},host).getTypeChecker();
+}
+
 export function createConstructorSourceGraph(records) {
   if(!records||typeof records!=='object'||types.isProxy(records)||!Array.isArray(records))fail('a foreign original constructor source graph');
   const length=Object.getOwnPropertyDescriptor(records,'length');
@@ -98,11 +105,8 @@ export function createConstructorSourceGraph(records) {
   // This private checker joins identifiers to actual lexical declarations. It
   // never executes imported modules or invokes their exported constructors.
   const ts=files.values().next().value.ts;
-  const host={getSourceFile:name=>files.get(name)?.file,fileExists:name=>files.has(name),readFile:name=>files.get(name)?.source,
-    getDefaultLibFileName:()=>'',writeFile:()=>{},getCurrentDirectory:()=>'',getDirectories:()=>[],directoryExists:()=>true,
-    getCanonicalFileName:name=>name,useCaseSensitiveFileNames:()=>true,getNewLine:()=> '\n'};
   let checker;
-  const handle=Object.freeze({});graphs.set(handle,{sources:freeze(sources),files,ts,checker:()=>checker??=ts.createProgram([...files.keys()],{allowJs:true,noLib:true,noResolve:true},host).getTypeChecker()});
+  const handle=Object.freeze({});graphs.set(handle,{sources:freeze(sources),files,ts,checker:()=>checker??=constructorSyntaxChecker(ts,files)});
   return handle;
 }
 
@@ -123,7 +127,10 @@ function resolveImport(graph,path,node) {
 }
 
 function classRecipe(graph,owner) {
-  const {ts}=graph,{klass,original}=owner,file=original.file,checker=graph.checker();
+  return closedClassRecipe(graph.ts,owner.original.file,owner.klass,graph.checker());
+}
+
+function closedClassRecipe(ts,file,klass,checker) {
   if(klass.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword)||klass.typeParameters?.length)fail('an unsupported original constructor class modifier or generic');
   const heritage=klass.heritageClauses;
   if(heritage?.length!==1||heritage[0].token!==ts.SyntaxKind.ExtendsKeyword||heritage[0].types.length!==1
@@ -261,4 +268,34 @@ export function reissueImportedErrorConstructor(proof) {
   const expected=originalImportedErrorConstructor(token).proof;
   if(!isDeepStrictEqual(proof,expected)||JSON.stringify(proof)!==JSON.stringify(expected))fail('changed, missing or foreign original constructor proof');
   return token;
+}
+
+function semanticClassRecipe(recipe) {
+  // Source positions stay in both complete recipes below. Only provenance
+  // coordinates differ; every closed executable recipe field compares here.
+  return {name:recipe.name,params:recipe.params,message:recipe.message,
+    fields:recipe.fields.map(field=>({name:field.name,value:field.value}))};
+}
+
+export function observeOriginalImportedErrorConstructorClass(token,reflectedSource) {
+  const issued=originalImportedErrorConstructor(token);
+  const expected=originalImportedErrorConstructor(reissueImportedErrorConstructor(issued.proof)).proof;
+  if(typeof reflectedSource!=='string'||reflectedSource.length*2>4194304)fail('an oversized or foreign reflected constructor class');
+  const ts=ownershipCompiler(),name='reflected-constructor-observation.mjs';
+  const file=ts.createSourceFile(name,reflectedSource,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  if(file.parseDiagnostics.length||file.statements.length!==1||!ts.isClassDeclaration(file.statements[0])
+    ||file.statements[0].modifiers?.length)fail('an incomplete or effectful reflected constructor class');
+  // Reflection receives a fresh syntax/checker view but never a graph handle,
+  // source token or constructor capability. Original issuance stays above.
+  const files=new Map([[name,{file,source:reflectedSource}]]);
+  const observed=closedClassRecipe(ts,file,file.statements[0],constructorSyntaxChecker(ts,files));
+  const originalSemantic=semanticClassRecipe(expected.original),reflectedSemantic=semanticClassRecipe(observed);
+  if(!isDeepStrictEqual(originalSemantic,reflectedSemantic))fail('original constructor module cache class syntax differs from its checked source');
+  let originalSource;
+  for(const row of expected.sources)if(row.path===expected.import.target)originalSource=row.source;
+  return freeze({schema:'original-constructor-class-observation-v1',originalSource,
+    originalClassSource:originalSource.slice(expected.original.span.start,expected.original.span.end),
+    reflectedSource,originalRecipe:expected.original,reflectedRecipe:observed,
+    originalSemanticRecipe:originalSemantic,reflectedSemanticRecipe:reflectedSemantic,
+    recipesEqual:true,sourceProofIssued:false,semanticAuthority:false});
 }

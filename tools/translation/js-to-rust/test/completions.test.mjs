@@ -11,7 +11,7 @@ import {gzipSync} from 'node:zlib';
 import {analyzeJavaScript,parseMeta,emitRust,emitTypeScript} from '../translator.mjs';
 import {evaluate,evaluateWithOriginalConstructors} from '../interpreter.mjs';
 import {prepareOriginalConstructorRuntime,constructOriginalError} from '../original-constructor-runtime.mjs';
-import {createConstructorSourceGraph} from '../vendor/source-constructors.mjs';
+import {createConstructorSourceGraph,reissueImportedErrorConstructor,observeOriginalImportedErrorConstructorClass} from '../vendor/source-constructors.mjs';
 import {toLino} from '../vendor/ir.mjs';
 import {terminatesCompletion} from '../vendor/completions.mjs';
 import {parseJavaScriptItem} from '../vendor/frontends.mjs';
@@ -141,6 +141,46 @@ test('external preload A followed by source B refuses before first receiving run
     rows.push({change,oldSources:f.sources,changedSources:sources,program,meta,staleOriginalError:errorFacts(stale),originalUrlPreserved:url,firstPrepareRejected:true,normalBranchRejected:true,throwBranchRejected:true});
   }
   retain('runtime-foreign-external-preload-source',{rows,noModuleReload:true,constructorSourceAttestationOnly:true,completeModuleCacheProvenanceClaimed:false});
+});
+
+test('closed reflected recipes grant no source authority and cached ancestry rejects proxies and getters without invoking them',{timeout:60000},async t=>{
+  const source="import {Mistake} from './errors.mjs';export function selected(value){if(value===null)throw new Mistake('bad');return value;}",rows=[];
+  const describe=Function.prototype.toString,apply=Reflect.apply;
+  for(const mode of ['unchanged','shadowed-base','prototype-parent','static-parent','prototype-constructor-getter','prototype-field-getter','static-getter']) {
+    const f=fixture(t,source),original=f.sources[0].source,url=pathToFileURL(join(f.directory,'fixture/errors.mjs')).href;
+    const cachedSource=mode==='shadowed-base'?'const Error=class LocalError extends globalThis.Error {};\n'+original:original;
+    put(f.directory,'fixture/errors.mjs',cachedSource);const module=await import(url),constructor=module.Mistake;put(f.directory,'fixture/errors.mjs',original);
+    const proof=f.program[0].sourceConstructors.constructors[0],token=reissueImportedErrorConstructor(proof),reflectedSource=apply(describe,constructor,[]),observation=observeOriginalImportedErrorConstructorClass(token,reflectedSource);
+    assert.equal(observation.recipesEqual,true);assert.equal(observation.sourceProofIssued,false);assert.equal(observation.semanticAuthority,false);
+    assert.deepEqual(observation.originalSemanticRecipe,observation.reflectedSemanticRecipe);
+    assert.equal(observation.originalSource,original);assert.equal(observation.reflectedSource,reflectedSource);
+    let traps=0;
+    const proxied=value=>new Proxy(value,{get(){traps++;throw Error('unexpected proxy get');},getOwnPropertyDescriptor(){traps++;throw Error('unexpected proxy descriptor');},ownKeys(){traps++;throw Error('unexpected proxy keys');},getPrototypeOf(target){traps++;return Object.getPrototypeOf(target);}});
+    if(mode==='prototype-parent')Object.setPrototypeOf(constructor.prototype,proxied(Error.prototype));
+    if(mode==='static-parent')Object.setPrototypeOf(constructor,proxied(Error));
+    if(mode==='prototype-constructor-getter')Object.defineProperty(constructor.prototype,'constructor',{configurable:true,get(){traps++;throw Error('unexpected constructor getter');}});
+    if(mode==='prototype-field-getter')Object.defineProperty(constructor.prototype,'status',{configurable:true,get(){traps++;throw Error('unexpected field getter');},set(){traps++;throw Error('unexpected field setter');}});
+    if(mode==='static-getter')Object.defineProperty(constructor,'extra',{configurable:true,get(){traps++;throw Error('unexpected static getter');}});
+    const setupTraps=traps;traps=0;const options={sourceRoot:f.directory,executeOriginalModules:true};
+    if(mode==='unchanged') {
+      const runtime=await prepareOriginalConstructorRuntime(f.program,options),error=constructOriginalError(proof,runtime);
+      assert.equal(error.constructor,constructor);assert.equal(error.status,400);assert.equal(error.code,'bounded');
+    } else {
+      if(mode==='shadowed-base')assert.notEqual(Object.getPrototypeOf(constructor),Error,'the identical reflected class has a foreign lexical superclass');
+      await assert.rejects(()=>prepareOriginalConstructorRuntime(f.program,options),/runtime ancestry or prototype differs/);
+      await assert.rejects(()=>evaluateWithOriginalConstructors(f.program,'selected',[7],options),/runtime ancestry or prototype differs/);
+    }
+    assert.equal(traps,0);assert.equal(readFileSync(join(f.directory,'fixture/errors.mjs'),'utf8'),original);
+    rows.push({mode,cachedSource,currentSources:f.sources,program:f.program,meta:f.meta,observation,setupTraps,guardTraps:traps});
+    if(mode==='unchanged') {
+      const unsupported=[reflectedSource+';sideEffect();',reflectedSource+'\nclass Other {}',"class Mistake extends Error {constructor(message,status=400){super(message);this.status=status;this.code='bounded';sideEffect();}}","class Mistake extends Error {constructor(message,status=400){super(message);this.status=status;this.code='bounded';}get hidden(){return 1;}}","class Mistake extends Error {constructor(message,status=400){super(message);this.status=sideEffect();this.code='bounded';}}","class Mistake extends Error {constructor(message,status=400){super(message);this.code='bounded';this.status=status;}}"];
+      for(const text of unsupported)assert.throws(()=>observeOriginalImportedErrorConstructorClass(token,text));
+      assert.throws(()=>observeOriginalImportedErrorConstructorClass({},reflectedSource),/copied or foreign/);
+      const proxy=new Proxy(token,{get(){traps++;throw Error('unexpected token getter');}});assert.throws(()=>observeOriginalImportedErrorConstructorClass(proxy,reflectedSource),/copied or foreign/);assert.equal(traps,0);
+      rows.at(-1).unsupportedReflections=unsupported;
+    }
+  }
+  retain('runtime-reflected-recipes-and-ancestry',{rows,reflectionIssuesSourceTokens:false,normalizationUsed:false,completeModuleCacheProvenanceClaimed:false});
 });
 
 test('receiving runtime binds every exact callsite and full source graph, never only class path and export',{timeout:60000},async t=>{

@@ -465,20 +465,27 @@ at a cached module filename are refused. This API does not promise dynamic modul
 reload convergence or harmless original module initialization.
 
 An original constructor URL may already have been imported by receiving code.
-Before publishing a runtime, the captured intrinsic `Function.prototype.toString`
-must return exactly its freshly reissued authentic class declaration, after a
-TypeScript scanner removes only the actual `export` modifier. Comments, Unicode
-escapes, defaults and field assignments inside the class retain their original
-bytes. A stale externally cached class with different source is refused before
-either normal-return or throwing evaluation; unchanged preloads keep the actual
-class identity and prototype. Exact successful full source lineage remains
-private, alongside the existing before-import source hash guard. The captured
-intrinsic uses the same trusted initial-host boundary as `Reflect.construct`.
-This additional attestation applies only to the already closed constructor
-recipe. It proves neither complete module-cache provenance nor replay of module
-initialization or side effects, and relaxes none of the original source, Error
-intrinsic or prototype conditions. No query URL, replacement class or caller
-constructor map bypasses those boundaries.
+Before publishing a runtime, captured intrinsic `Function.prototype.toString`
+provides a separate observation. Bun reformats class source, including quotes
+and Unicode escapes, so textual equality cannot certify it. A fresh parser checks
+the complete reflected class with the same closed constructor grammar used by
+original source issuance. Its entire semantic recipe (name, parameters/defaults,
+message parameter and ordered field assignments) must directly equal the freshly
+source-issued recipe. The observation retains both complete sources, recipes and
+all spans separately; it issues no source token, constructor token or graph and
+does not normalize a signed proof or compare normalized digests.
+
+Descriptor-only checks also require the captured builtin Error ancestry and the
+original class/prototype structure. A module-local Error binding with identical
+class text, altered prototype, proxy or added accessor cannot borrow that ancestry.
+Unchanged preloads keep actual class identity; stale constructor recipes refuse
+before either normal-return or throwing evaluation. Exact successful full source
+lineage remains private alongside the existing before-import source hash guard.
+Captured intrinsics use the same trusted initial-host boundary as the existing
+`Reflect.construct` reference. This attests only the already closed constructor
+recipe, not complete module-cache provenance or replay of initialization or side
+effects. Source, Error and outside-module prototype stability conditions remain.
+No query URL, replacement class or caller constructor map bypasses those limits.
 
 Constructor, builtin Error, inherited-prototype and collection-intrinsic lookup
 stability remain explicit conditions. Host callsite diagnostic values (stack and

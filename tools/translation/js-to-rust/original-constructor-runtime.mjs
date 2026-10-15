@@ -4,34 +4,46 @@ import {readFile,lstat,realpath} from 'node:fs/promises';
 import {resolve,join,posix} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
+import {types} from 'node:util';
 import {check} from './vendor/ir.mjs';
 import {sourceConstructorItem} from './vendor/constructor-bodies.mjs';
-import {originalImportedErrorConstructor,reissueImportedErrorConstructor,assertConstructorProofData} from './vendor/source-constructors.mjs';
+import {originalImportedErrorConstructor,reissueImportedErrorConstructor,assertConstructorProofData,observeOriginalImportedErrorConstructorClass} from './vendor/source-constructors.mjs';
 import {ownershipSyntax} from './vendor/module-syntax.mjs';
 
 const runtimes=new WeakMap(),observedSourceVersions=new Map(),attestedSourceVersions=new Map();
 // The same trusted initial-host boundary as the existing captured constructor
 // intrinsic. Do not consult an exported class's overridable toString method.
 const construct=Reflect.construct,apply=Reflect.apply,describe=Function.prototype.toString;
+const trustedRoot=globalThis,trustedError=Error,trustedErrorPrototype=Error.prototype;
+const ownDescriptor=Object.getOwnPropertyDescriptor,prototypeOf=Object.getPrototypeOf,keysOf=Reflect.ownKeys,hasOwn=Object.hasOwn,isProxy=types.isProxy;
+const trustedErrorPrototypeParent=prototypeOf(trustedErrorPrototype);
 const hash=source=>createHash('sha256').update(Buffer.from(source,'utf16le')).digest('hex');
-function authenticClassSyntax(proof) {
-  let source;
-  for(const row of proof.sources)if(row.path===proof.import.target)source=row.source;
-  if(typeof source!=='string'||hash(source)!==proof.original.sourceUtf16Sha256)throw Error('missing authentic original constructor declaration source');
-  const {ts,file}=ownershipSyntax(source);let declaration;
-  for(const statement of file.statements)if(ts.isClassDeclaration(statement)
-    &&statement.name?.text===proof.import.exported
-    &&statement.getStart(file)===proof.original.span.start&&statement.end===proof.original.span.end) {
-    if(declaration)throw Error('duplicate authentic original constructor declaration');
-    declaration=statement;
-  }
-  if(!declaration||declaration.modifiers?.length!==1||declaration.modifiers[0].kind!==ts.SyntaxKind.ExportKeyword)throw Error('missing exact original exported constructor declaration');
-  // Function#toString starts at the class keyword. Remove only the actual
-  // export modifier, using its original tokens; preserve every class byte.
-  const scanner=ts.createScanner(ts.ScriptTarget.Latest,true,ts.LanguageVariant.Standard,source);
-  scanner.setTextPos(declaration.getStart(file));
-  if(scanner.scan()!==ts.SyntaxKind.ExportKeyword||scanner.scan()!==ts.SyntaxKind.ClassKeyword)throw Error('unsupported original exported constructor token boundary');
-  return source.slice(scanner.getTokenPos(),declaration.end);
+function data(object,key) {
+  const descriptor=ownDescriptor(object,key);
+  return descriptor&&hasOwn(descriptor,'value')?descriptor:null;
+}
+function constructorStructure(constructor,proof) {
+  const refuse=()=>{throw new trustedError('original constructor runtime ancestry or prototype differs from its checked source');};
+  // The initial host root is trusted infrastructure, never caller supplied.
+  // Descriptor checks must not invoke a replaced global Error accessor.
+  const liveError=data(trustedRoot,'Error'),errorPrototype=data(trustedError,'prototype');
+  if(!liveError||liveError.value!==trustedError||!errorPrototype||errorPrototype.value!==trustedErrorPrototype
+    ||isProxy(constructor)||prototypeOf(constructor)!==trustedError)refuse();
+  const prototype=data(constructor,'prototype');
+  if(!prototype||prototype.writable!==false||prototype.enumerable!==false||prototype.configurable!==false
+    ||!prototype.value||typeof prototype.value!=='object'||isProxy(prototype.value)
+    ||prototypeOf(prototype.value)!==trustedErrorPrototype||prototypeOf(trustedErrorPrototype)!==trustedErrorPrototypeParent)refuse();
+  const inheritedConstructor=data(trustedErrorPrototype,'constructor'),ownConstructor=data(prototype.value,'constructor');
+  if(!inheritedConstructor||inheritedConstructor.value!==trustedError||!ownConstructor||ownConstructor.value!==constructor
+    ||ownConstructor.writable!==true||ownConstructor.enumerable!==false||ownConstructor.configurable!==true)refuse();
+  const prototypeKeys=keysOf(prototype.value),staticKeys=keysOf(constructor);
+  if(prototypeKeys.length!==1||prototypeKeys[0]!=='constructor'||staticKeys.length!==3
+    ||staticKeys[0]!=='length'||staticKeys[1]!=='name'||staticKeys[2]!=='prototype')refuse();
+  let length=0;
+  for(let index=0;index<proof.original.params.length;index++){if(hasOwn(proof.original.params[index],'default'))break;length++;}
+  const actualLength=data(constructor,'length'),actualName=data(constructor,'name');
+  if(!actualLength||actualLength.value!==length||actualLength.writable!==false||actualLength.enumerable!==false||actualLength.configurable!==true
+    ||!actualName||actualName.value!==proof.original.name||actualName.writable!==false||actualName.enumerable!==false||actualName.configurable!==true)refuse();
 }
 async function originalFile(root,path) {
   let current=root;
@@ -100,8 +112,9 @@ export async function prepareOriginalConstructorRuntime(program,{sourceRoot,exec
     if(typeof constructor!=='function')throw Error('missing actual original exported Error constructor');
     // A receiving environment may have imported this URL before this helper
     // ever observed it. Current disk bytes alone do not describe that cache.
-    if(apply(describe,constructor,[])!==authenticClassSyntax(proof))throw Error('original constructor module cache class syntax differs from its checked source');
-    actual.set(key,{constructor,proofs});
+    constructorStructure(constructor,proof);
+    const observation=observeOriginalImportedErrorConstructorClass(reissueImportedErrorConstructor(proof),apply(describe,constructor,[]));
+    actual.set(key,{constructor,proofs,observation});
   }
   await verify();
   // Retain exact successful full source lineage as well as the original
