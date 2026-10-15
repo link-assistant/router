@@ -6,7 +6,7 @@ import test,{before,after} from 'node:test';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
-import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,readdirSync,lstatSync,cpSync,rmSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,readdirSync,lstatSync,openSync,closeSync,fstatSync,readSync,constants,cpSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -18,7 +18,20 @@ if(generation!==null&&!/^[0-9a-f]{40}$/u.test(generation))throw new Error('Actua
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const pin=(path,bytes)=>({path,bytes:bytes.length,sha256:hash(bytes)});
 const relative=path=>{assert.ok(typeof path==='string'&&!path.includes('\\')&&!path.includes('\0')&&!path.includes('\n')&&!path.includes(':')&&path.split('/').every(part=>part&&part!=='.'&&part!=='..'),'safe artifact path');return path;};
-const read=path=>{relative(path);let file=SOURCE;for(const part of path.split('/')){file=join(file,part);assert.ok(!lstatSync(file).isSymbolicLink(),path);}assert.ok(lstatSync(file).isFile(),path);const bytes=readFileSync(file);assert.ok(bytes.length<=32*1024*1024,path);return bytes;};
+const read=path=>{
+  relative(path);let file=SOURCE;for(const part of path.split('/')){file=join(file,part);assert.ok(!lstatSync(file).isSymbolicLink(),path);}
+  const initial=lstatSync(file,{bigint:true});assert.ok(initial.isFile()&&initial.size<=32n*1024n*1024n,path);
+  const descriptor=openSync(file,constants.O_RDONLY|constants.O_NOFOLLOW);
+  try{
+    const before=fstatSync(descriptor,{bigint:true});assert.equal(before.dev,initial.dev);assert.equal(before.ino,initial.ino);assert.equal(before.size,initial.size);
+    const bytes=Buffer.alloc(Number(before.size));let at=0;
+    while(at<bytes.length){const count=readSync(descriptor,bytes,at,bytes.length-at,null);assert.ok(count>0,'artifact shortened during read '+path);at+=count;}
+    assert.equal(readSync(descriptor,Buffer.alloc(1),0,1,null),0,'artifact grew during read '+path);
+    const after=fstatSync(descriptor,{bigint:true}),current=lstatSync(file,{bigint:true});
+    for(const key of ['dev','ino','size','mtimeNs','ctimeNs']){assert.equal(after[key],before[key],'artifact changed during read '+path);assert.equal(current[key],before[key],'artifact identity changed '+path);}
+    return bytes;
+  }finally{closeSync(descriptor);}
+};
 const git=paths=>{
   const bytes=execFileSync('git',['cat-file','--batch'],{cwd:SOURCE,input:paths.map(path=>generation+':'+relative(path)+'\n').join(''),maxBuffer:128*1024*1024});
   let at=0;const result=new Map();
@@ -83,10 +96,10 @@ before(async()=>{
     completeArtifacts.push({source,sourceBytes:sourceBytes.toString('utf8'),metaBytes:metaBytes.toString('utf8'),javascript:javascript.toString('utf8'),typescript:typescript.toString('utf8')});
   }
   assert.equal(coverage.length,37);assert.equal(coverage.filter(row=>row.term==='fn').length,7);assert.equal(coverage.filter(row=>row.term==='const').length,26);assert.equal(coverage.filter(row=>row.term==='struct').length,4);
-  let compiler=process.env.ROUTER_TRANSLATION_TSC;
-  if(compiler===undefined)compiler=createRequire(join(SOURCE,'packages/javascript/package.json')).resolve('typescript/bin/tsc');
-  const version=execFileSync(process.execPath,[compiler,'--version'],{encoding:'utf8',timeout:30_000}).trim();assert.equal(version,'Version 5.9.3');
-  const compiled=join(directory,'compiled');execFileSync(process.execPath,[compiler,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,...rows.map(row=>join(directory,row.relative+'.ts'))],{stdio:'pipe',timeout:30_000});
+  let compiler=process.env.ROUTER_TRANSLATION_TSC,prefix=[];
+  if(compiler===undefined){prefix=[createRequire(join(SOURCE,'packages/javascript/package.json')).resolve('typescript/bin/tsc')];compiler=process.execPath;}
+  const version=execFileSync(compiler,[...prefix,'--version'],{encoding:'utf8',timeout:30_000}).trim();assert.equal(version,'Version 5.9.3');
+  const compiled=join(directory,'compiled');execFileSync(compiler,[...prefix,'--strict','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--skipLibCheck','--rootDir',directory,'--outDir',compiled,...rows.map(row=>join(directory,row.relative+'.ts'))],{stdio:'pipe',timeout:30_000});
   cpSync(join(directory,'runtime'),join(compiled,'runtime'),{recursive:true});
   for(const row of rows){const modules=[];for(const path of [row.targetJS,join(compiled,row.relative+'.js')]){const module=await import(pathToFileURL(path).href);assert.deepEqual(module.provenance,{sourcePath:row.source,sourceSha256:row.meta.sourceSha256,...row.meta.counts,runtimeParity:false});assert.equal(Object.keys(module.translated).length,row.meta.counts.executable);modules.push(module.translated);}loaded.set(row.source,modules);}
   retain('complete-original-artifacts',{generation,inventoryBytes:inventoryBytes.toString('utf8'),compilerEvidence,runtimeEvidence,coverage,completeArtifacts,companionSources,compilerVersion:version,localRustExecuted:false});
