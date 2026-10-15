@@ -5,6 +5,10 @@ import {gunzipSync} from 'node:zlib';
 import {rustFixedType} from '../checked-types.mjs';
 import {unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
 import {SOURCE_F64} from './primitive-float-contracts.mjs';
+import {requireOriginalPrimitiveTryFromChecker} from './host-contracts.mjs';
+import {requireOriginalStandardCall} from './original-standard-calls.mjs';
+import {metadataDigest} from './source-links.mjs';
+import {originalStringPatternForwarding,requireOriginalStringPatternForwarding} from './string-pattern-forwarding-source.mjs';
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const hash=value=>createHash('sha256').update(value).digest('hex');
 export const UTF16_FIXED_F64_PROFILE=freeze({id:'rust-1.89-utf16-fixed-f64',rust:'1.89.0',usizeBits:64,constantEvaluation:false,sources:[
@@ -31,7 +35,8 @@ export function checkedFixedF64Cast(object,target,range) {
   if(target.kind!=='float'||target.rustPrimitiveName!=='f64'||target.rustReference||target.rustOwnership||target.patternOwnershipRefusal||target.rustGenericIdentityUnresolved)throw unsupported('fixed primitive float cast target','only the actual source f64 primitive is registered',range);
   return {k:'routerFixedF64Cast',object,type:SOURCE_F64,sourceType:structuredClone(type),constEligible:false,fixedFloatCastProof:{profile:UTF16_FIXED_F64_PROFILE.id,verified:true,rounding:'roundTiesToEven',source: type.rustPrimitiveName,span:range},span:range};
 }
-const callBorrows=new WeakMap();
+const callBorrows=new WeakMap(),patternFrames=new WeakMap();
+const patternExits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(patternExits):patternExits(value))));
 export function prepareTemporaryStringCall(checker,entry,args,env,path,range) {
   if(entry?.k!=='fn'||!entry.body||entry.async||!['fixed','bool','float','unit'].includes(entry.ret?.kind)||entry.ret.rustReference||entry.ret.rustOwnership||entry.ret.patternOwnershipRefusal||entry.ret.rustGenericIdentityUnresolved)throw unsupported('temporary String call borrow','requires an actual resolved scalar-returning source function; no borrow may escape',range);
   if(args.length!==entry.params.length)throw typeError('temporary String borrow needs the complete checked function signature',range);
@@ -47,6 +52,29 @@ export function prepareTemporaryStringCall(checker,entry,args,env,path,range) {
   });
 }
 export function consumeTemporaryStringCallBorrow(node) {
+  const frame=patternFrames.get(node);if(frame){requireOriginalPrimitiveTryFromChecker(frame.checker);requireOriginalStandardCall(frame.checker,frame.original);if(metadataDigest(callBorrows.get(node))!==frame.digest)throw unsupported('temporary String Pattern proof','prepared source computation changed',node.span);requireOriginalStringPatternForwarding(frame.proof,frame.original.op);}
   const value=callBorrows.get(node);if(!value)throw unsupported('temporary String call proof','requires this compiler invocation’s checked scalar-call argument',node.span);
   return value;
+}
+
+// This exported entry checks the actual Host itself; a supplied checker,
+// callback, public type flag or copied prepared surface cannot issue a view.
+export function prepareOriginalStringPatternBorrow(checker,node,env,path) {
+  requireOriginalPrimitiveTryFromChecker(checker);requireOriginalStandardCall(checker,node);
+  const refuse=()=>{throw unsupported('temporary String Pattern borrow','requires the genuine nonescaping standard bool Pattern operation and one actual owned String temporary in a closed source scope',node.span);};
+  if(node.k!=='routerTextPattern'||!['contains','starts_with'].includes(node.op)||node.args.length!==1)refuse();
+  const scope=node.sourceMethodScope;
+  if(!scope||scope.unresolvedTypeScope!==false||scope.unresolvedAttributeMacroScope!==false||scope.unresolvedBangMacroScope!==false||!Array.isArray(scope.bindings)||scope.bindings.some(binding=>binding.namespace!=='value'))refuse();
+  const argument=node.args[0],ampersand=argument.sourceAmpersand;
+  if(patternExits(node.object)||patternExits(argument))throw unsupported('string method control','nonlocal exits require statement lowering',node.span);
+  if(argument.k!=='routerTextReference'||ampersand?.value!=='&'||ampersand.span?.end-ampersand.span?.start!==1||argument.value?.k==='routerTextReference')refuse();
+  const proof=originalStringPatternForwarding(node.op),forwarding=requireOriginalStringPatternForwarding(proof,node.op);
+  const owned=type=>type?.kind==='string'&&type.rustSourceType===true&&!type.rustReference&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String';
+  const receiver=checker.expr(node.object,env,path);if(!owned(receiver.type))refuse();
+  const object=checker.expr(argument.value,env,path);if(!owned(object.type))refuse();
+  const reference={...structuredClone(object.type),patternOwnershipRefusal:'shared source reference',rustReference:{kind:'shared',pointee:structuredClone(object.type),span:{...argument.span},tokens:[{value:'&',kind:'operator',span:{...ampersand.span}}]}};
+  const view={kind:'string',rustSourceType:true,rustOwnership:{kind:'borrowed',source:'str'},rustBorrowLifetime:{kind:'elided',source:'original-standard-String-RangeFull-Pattern-view',span:{...argument.span}}};
+  const checked={k:'routerTemporaryStringCallBorrow',object,type:view,constEligible:false,temporaryStringBorrowProof:{profile:UTF16_FIXED_F64_PROFILE.id,verified:true,callee:'original standard str::'+node.op,parameter:0,origin:'call-local-temporary',sourceAmpersand:ampersand,sourceOwner:structuredClone(object.type),originalReference:reference,forwarding,span:argument.span},span:argument.span};
+  const prepare=(value,span)=>{const surface={k:'routerPreparedStringCallBorrow',span};callBorrows.set(surface,value);patternFrames.set(surface,{checker,original:node,proof,digest:metadataDigest(value)});return surface;};
+  return {...node,object:prepare(receiver,node.object.span),args:[prepare(checked,argument.span)]};
 }

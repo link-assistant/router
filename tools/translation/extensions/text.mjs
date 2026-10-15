@@ -43,7 +43,7 @@ export class TextRustParser extends FormatRustParser {
     if(STRIPS.has(name.value)&&typeof this.registeredGenericKind!=='function')return super.method(object,name,args,span);
     if(args.length!==METHODS.get(name.value))throw typeError(`${name.value} expects ${METHODS.get(name.value)} arguments`,span);
     const tupleType=SPLITS.has(name.value)?this.tupleType([0,1].map(index=>({name:`field${index}`,type:SOURCE_STR,rustTypeSyntax:['&','str']})),span):null;
-    const methodScope=name.value==='contains'&&this.sourceNamespaceEvidence?{...structuredClone(this.sourceNamespaceEvidence),unresolvedTypeScope:this.unresolvedImportScope!==false,unresolvedAttributeMacroScope:this.unresolvedAttributeMacroScope!==false}:null;
+    const methodScope=['contains','starts_with'].includes(name.value)&&this.sourceNamespaceEvidence?{...structuredClone(this.sourceNamespaceEvidence),unresolvedTypeScope:this.unresolvedImportScope!==false,unresolvedAttributeMacroScope:this.unresolvedAttributeMacroScope!==false,unresolvedBangMacroScope:this.unresolvedMacroScope!==false}:null;
     return {k:'routerTextPattern',op:name.value,object,args,...(tupleType?{tupleType}:{}),...(methodScope?{sourceMethodScope:methodScope}:{}),span};
   }
 }

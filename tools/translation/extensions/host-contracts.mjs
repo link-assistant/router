@@ -41,7 +41,7 @@ import {rustFixedType} from '../checked-types.mjs';
 import {decodeRustFloat,RUST_FLOAT_LITERAL_PROFILE} from './rust-float.mjs';
 import {FLOAT_CONTRACTS,SOURCE_F64,primitiveFloatContract,primitiveFloatConstant,requirePrimitiveFloat,qualifyPrimitiveFloatResult,checkedPrimitiveFloatConstant} from './primitive-float-contracts.mjs';
 import {floatSignObligation,withFloatZeroSignChecker} from './float-zero-refinements.mjs';
-import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,consumeTemporaryStringCallBorrow} from './utf16-fixed-f64.mjs';
+import {checkedUtf16Iterator,checkedFixedF64Cast,prepareTemporaryStringCall,consumeTemporaryStringCallBorrow,prepareOriginalStringPatternBorrow} from './utf16-fixed-f64.mjs';
 import {checkStringIteratorOperation,requireBorrowedString} from './string-iterators.mjs';
 import {checkedStringBytes,requireStringBytesProof} from './string-bytes.mjs';
 import {sourceByteLiteral,requireByteLiteral} from './rust-byte-character.mjs';
@@ -469,6 +469,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     const contracts=head.k==='name'?HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(head.path)):[];
     return contracts.length?this.hostCall(contracts,args,env,path,expected,range):super.application(head,args,env,path,expected,range);
   }
+  prepareOriginalStringPatternBorrow(node,env,path){requireOriginalPrimitiveTryFromChecker(this);return prepareOriginalStringPatternBorrow(this,node,env,path);}
   sourceSharedPatternProofOrigin(node){return sourcePatterns.hasOriginalSharedPatternFrame(node)?'frame':sourcePatterns.hasOriginalPatternProjection(node)?'projection':sourcePatterns.hasOriginalSharedPatternView(node)?'string-view':null;}
   sourceSharedPatternDomain(type,span){return sourcePatterns.originalSharedPatternDomain(this,type,span);}
   sourceSharedPatternOwner(node,type,path,env){return sourcePatterns.originalSharedPatternOwner(this,node,type,path,env);}
@@ -499,6 +500,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
+    if(node.k==='routerTextPattern'&&['contains','starts_with'].includes(node.op)&&node.args?.length===1&&node.args[0].k==='routerTextReference'&&node.args[0].sourceAmpersand)return super.expr(this.prepareOriginalStringPatternBorrow(node,env,path),env,path,expected,allowLiteral);
     if(node.k==='routerStaticArrayElementBorrow')return checkStaticArrayElement(this,node,env,path,expected);
     if(node.k==='routerPrimitiveShift')return checkedPrimitiveShift(this,node,env,path,expected);
     if(node.k==='routerReverseStringFind'){
