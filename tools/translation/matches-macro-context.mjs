@@ -1,6 +1,7 @@
 // Per-call proof from genuine original module views. No caller-closed flags or
 // external namespace tables are accepted as authority.
 import {createHash} from 'node:crypto';
+import {originalNamespaceTraversalIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {types} from 'node:util';
@@ -54,7 +55,7 @@ function exactNamespaceTarget(actual,expected){
   for(let index=0;index<expected.length;index++){const descriptor=ownIndexes[index]===true?descriptors[index]:undefined;if(!descriptor||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable||descriptor.value!==expected[index]||typeof expected[index]!=='string')return false;}
   return true;
 }
-function exactNamespaceCapture(parser,snapshot){
+function collectedNamespaceCapture(parser,snapshot){
   const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');
   for(const[namespace,scopes]of snapshot){
     const actualScopes=nativeEntries(ownData(aliases,namespace));if(actualScopes.length!==scopes.length)return false;
@@ -66,6 +67,31 @@ function exactNamespaceCapture(parser,snapshot){
   }
   return true;
 }
+// Native cursors keep every live map entry/target comparison in source order
+// without allocating the discarded outer and per-scope entry collections.
+// The complete collected route remains unchanged for observable machinery.
+function namespaceCursor(map){
+  if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');
+  return Reflect.apply(mapEntries,map,[]);
+}
+function streamingNamespaceCapture(parser,snapshot){
+  const aliases=ownData(parser,'sourceNamespaceAliases');if(types.isProxy(aliases))throw new TypeError('Matches namespace evidence is a proxy');
+  for(let namespaceIndex=0;namespaceIndex<snapshot.length;namespaceIndex++){
+    const namespace=snapshot[namespaceIndex][0],scopes=snapshot[namespaceIndex][1],actualScopes=namespaceCursor(ownData(aliases,namespace));
+    for(let index=0;index<scopes.length;index++){
+      const scope=scopes[index],nextScope=Reflect.apply(mapNext,actualScopes,[]);if(nextScope.done||nextScope.value[0]!==scope[0])return false;
+      const bindings=scope[1],actualBindings=namespaceCursor(nextScope.value[1]);
+      for(let at=0;at<bindings.length;at++){
+        const binding=bindings[at],nextBinding=Reflect.apply(mapNext,actualBindings,[]);
+        if(nextBinding.done||nextBinding.value[0]!==binding[0]||!exactNamespaceTarget(nextBinding.value[1],binding[1]))return false;
+      }
+      if(!Reflect.apply(mapNext,actualBindings,[]).done)return false;
+    }
+    if(!Reflect.apply(mapNext,actualScopes,[]).done)return false;
+  }
+  return true;
+}
+function exactNamespaceCapture(parser,snapshot){return originalNamespaceTraversalIntrinsicsUnchanged()?streamingNamespaceCapture(parser,snapshot):collectedNamespaceCapture(parser,snapshot);}
 function issuedNamespaceCapture(issued,module,scope){
   let entry=mapGet.call(issued.namespaceCaptures,module);
   if(entry?.active){mapDelete.call(issued.namespaceCaptures,module);mapSet.call(issued.namespaceCaptures,module,entry);mapDelete.call(namespaceCaptureEntries,entry.token);mapSet.call(namespaceCaptureEntries,entry.token,entry);return entry;}

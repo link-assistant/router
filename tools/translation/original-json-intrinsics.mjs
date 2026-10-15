@@ -48,3 +48,26 @@ if(pathNative)try{const map=new pathWeakMap.value(),value={};pathNative=apply(pa
 export function originalPathMembershipIntrinsicsUnchanged(){
  return !!(pathNative&&originalJsonIntrinsicsUnchanged()&&same(descriptor(originalObject,'getPrototypeOf'),pathGetPrototypeOf)&&same(descriptor(globalThis,'Reflect'),pathReflect)&&same(descriptor(pathReflect.value,'ownKeys'),pathOwnKeys)&&same(descriptor(originalArray,'isArray'),pathIsArray)&&same(descriptor(types,'isProxy'),pathIsProxy)&&same(descriptor(globalThis,'WeakMap'),pathWeakMap)&&pathWeakMap.value.prototype===pathWeakPrototype&&same(descriptor(pathWeakPrototype,'has'),pathWeakHas));
 }
+
+// This separate qualification permits invocation-local streaming of namespace
+// maps. It does not skip a digest, metadata copy, target check or proof join.
+// All common issuers initialize before a consumer's cold-leaf observer tests;
+// those tests do not claim equivalence of the whole issuer bootstrap.
+const traversalFunctionPrototype=pathNative?prototype(functionText):null;
+const traversalCall=pathNative?descriptor(traversalFunctionPrototype,'call'):null;
+const traversalDescriptors=pathNative?descriptor(originalObject,'getOwnPropertyDescriptors'):null;
+const traversalApply=pathNative?descriptor(pathReflect.value,'apply'):null;
+const traversalEntries=pathNative?descriptor(mapPrototype,'entries'):null;
+const traversalMapIterator=pathNative?iteratorPins[1]:null;
+let traversalNative=!!(pathNative&&traversalCall&&hasOwn(traversalCall,'value')&&native(traversalCall.value,'call')&&traversalDescriptors&&hasOwn(traversalDescriptors,'value')&&native(traversalDescriptors.value,'getOwnPropertyDescriptors')&&traversalApply&&hasOwn(traversalApply,'value')&&traversalApply.value===apply&&native(apply,'apply')&&traversalEntries&&hasOwn(traversalEntries,'value')&&traversalEntries.value===descriptor(mapPrototype,Symbol.iterator)?.value&&traversalMapIterator);
+if(traversalNative)try{
+ const map=new globalMap.value(),key={},value={};map.set(key,value);
+ const cursor=apply(traversalEntries.value,map,[]),first=apply(traversalMapIterator.field.value,cursor,[]),end=apply(traversalMapIterator.field.value,cursor,[]);
+ traversalNative=prototype(cursor)===traversalMapIterator.owner&&first.done===false&&first.value.length===2&&first.value[0]===key&&first.value[1]===value&&end.done===true;
+}catch{traversalNative=false;}
+export function originalNamespaceTraversalIntrinsicsUnchanged(){
+ if(!traversalNative||!originalPathMembershipIntrinsicsUnchanged()||!same(descriptor(traversalFunctionPrototype,'call'),traversalCall)||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(pathReflect.value,'apply'),traversalApply)||!same(descriptor(mapPrototype,'entries'),traversalEntries))return false;
+ // The old route calls entries.call; a function's own call hook or changed
+ // prototype is also observable and therefore keeps the collected fallback.
+ return prototype(traversalEntries.value)===traversalFunctionPrototype&&!descriptor(traversalEntries.value,'call')&&prototype(traversalMapIterator.field.value)===traversalFunctionPrototype&&!descriptor(traversalMapIterator.field.value,'call');
+}
