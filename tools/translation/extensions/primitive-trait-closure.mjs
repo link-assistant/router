@@ -4,13 +4,14 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {sourceItems} from '../rust-structure.mjs';
-import {itemConfiguration,isInertConditionalAttribute} from '../cfg-profile.mjs';
+import {itemConfiguration,isInertConditionalAttribute,evaluateConfiguration} from '../cfg-profile.mjs';
 import {originalUseDeclarationLeaves,originalDeclarationHeader} from '../module-bindings.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
 import {COPY_TRAIT_OWNER_PROFILE} from '../copy-trait-owners.mjs';
 import {originalPrimitiveNamespaceSources} from './primitive-namespace-sources.mjs';
 import {originalCorePreludeRootSource} from './core-prelude-source.mjs';
 import {primitiveFromPinnedSource,primitiveFromNamespace} from './primitive-from-source.mjs';
+import {inspectConditionalAttribute} from '../conditional-attributes.mjs';
 const hash=raw=>createHash('sha256').update(raw).digest('hex');
 const same=(a,b)=>a.length===b.length&&a.every((part,index)=>part===b[index]);
 const significant=item=>item.tokens.filter(token=>token.type!=='comment');
@@ -28,7 +29,8 @@ function originals(){
 }
 const publicItem=item=>{
   const words=significant(item).map(token=>token.text),at=words.indexOf(item.term);
-  return at>0&&(words[at-1]==='pub'||words[at-1]==='unsafe'&&words[at-2]==='pub');
+  let begin=at;while(begin>0&&['unsafe','auto'].includes(words[begin-1]))begin--;
+  return begin>0&&words[begin-1]==='pub';
 };
 const normalize=(segments,owner)=>{
   if(segments[0]==='crate')return ['core',...segments.slice(1)];
@@ -55,7 +57,7 @@ function coreDeclaration(path,seen=new Set()){
   if(candidates.length!==1)fail('standard trait requires a unique original named reexport');
   const result=coreDeclaration(candidates[0].path,new Set(seen));return {...result,route:[{source:pin.path,sourceSha256:pin.sha256,span:{start:candidates[0].item.start,end:candidates[0].item.end}},...result.route]};
 }
-function traitHeader(pin,item,{allowGenerics=false,localProfile=null,local=false,ownerPath=[]}={}){
+function traitHeader(pin,item,{allowGenerics=false,localProfile=null,local=false,ownerPath=[],conditionalNamespaceAttributes=false}={}){
   const head=originalDeclarationHeader(item,ownerPath),tokens=significant(item),begin=head?tokens.findIndex(token=>token.start===head.keywordSpan.start):-1;
   if(head?.kind!=='trait'||head.name!==item.name||begin<0||tokens[begin+1]?.text!==item.name)fail('original trait header differs');
   let at=begin+2;
@@ -86,10 +88,31 @@ function traitHeader(pin,item,{allowGenerics=false,localProfile=null,local=false
     // Absence of `from` is checked against every original member, including
     // both alternatives of an unresolved cfg. This does not select a target
     // or grant conditional member availability. Attribute producers still fail.
-    if(condition.diagnostics.length||condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&!['cfg','doc','allow','warn','deny','forbid','inline','cold','track_caller','must_use','deprecated'].includes(attribute.name)))fail('local trait member namespace is unproved: '+item.name+'.'+member.name+' ('+condition.status+'/'+condition.attributes.map(attribute=>attribute.name).join(',')+')');
+    const union=conditionalNamespaceAttributes&&condition.attributes.some(attribute=>attribute.name==='cfg_attr')&&condition.attributes.every(attribute=>attribute.name==='cfg_attr'?originalConditionalNamespaceAttribute(attribute):!attribute.evaluation?.diagnostics.length);
+    if(condition.diagnostics.length&&!union||condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&!(union&&attribute.name==='cfg_attr')&&!['cfg','doc','allow','warn','deny','forbid','inline','cold','track_caller','must_use','deprecated'].includes(attribute.name)))fail('local trait member namespace is unproved: '+item.name+'.'+member.name+' ('+condition.status+'/'+condition.attributes.map(attribute=>attribute.name).join(',')+')');
     memberConditions.push({name:memberHeads.get(member).name,status:condition.status,attributes:condition.attributes.map(attribute=>({name:attribute.name,tokens:attribute.tokens})),availabilitySelected:false});
   }
   return {clauses,evidence:{name:item.name,source:pin.path,sourceSha256:pin.sha256,originalSpan:{start:item.start,end:item.end},fromMemberAbsent:true,originalMemberNames:[...memberHeads.values()].map(head=>({kind:head.kind,name:head.name})),memberConditions}};
+}
+// Original syntax census only. A caller must independently authenticate the
+// source, public route, outer namespace and every inherited trait owner.
+export const originalTraitMemberShape=(pin,item,options)=>traitHeader(pin,item,options);
+// Both conditional alternatives preserve the written member namespace. This
+// syntax fact selects neither feature availability nor an attribute owner.
+export function originalConditionalNamespaceAttribute(attribute,{allowNoStd=false}={}){
+ if(attribute?.name!=='cfg_attr'||!Array.isArray(attribute.tokens))return false;
+ try{
+  const begin=attribute.tokens.indexOf('cfg_attr');if(begin<0)return false;
+  const tokens=attribute.tokens.slice(begin,-1).map(text=>({text})),input=inspectConditionalAttribute(tokens);
+  return evaluateConfiguration(input.predicate,null).diagnostics.length===0&&input.attributes.length>0&&input.attributes.every(({tokens})=>
+   tokens[0]==='doc'&&tokens.length===3&&tokens[1]==='='||
+   ['allow','warn','deny','forbid'].includes(tokens[0])&&tokens[1]==='('&&tokens.at(-1)===')'||
+   allowNoStd&&tokens.length===1&&tokens[0]==='no_std');
+ }catch{return false;}
+}
+export function originalCorePreludeTraitClosure(name){
+  const route=commonPrelude().get(name);if(!route)fail('trait lacks an original common prelude route');
+  return {originalPreludeRoute:route,closure:originalCoreTraitClosure(route.path)};
 }
 function reference(tokens){
   const open=tokens.findIndex(token=>token.text==='<'),head=open<0?tokens:tokens.slice(0,open),path=[];

@@ -22,6 +22,7 @@ import {configureParserSourceScope} from './source-scopes.mjs';
 import {itemConfiguration,compilationProfile as normalizeProfile} from './cfg-profile.mjs';
 import {originalCargoEditionEvidence,configureRustEditionParser} from './cargo-edition-context.mjs';
 const contexts=new WeakMap(),immutableContexts=new WeakMap(),parsers=new WeakMap(),issuedFrames=new WeakMap(),calls=new WeakMap(),hash=text=>createHash('sha256').update(text).digest('hex');
+const originalDependencies=new WeakMap();
 let standardProfile=null;
 const mapEntries=Map.prototype.entries,mapGet=Map.prototype.get,mapHas=Map.prototype.has,mapSet=Map.prototype.set,mapDelete=Map.prototype.delete,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,mapNext=Object.getPrototypeOf(new Map().entries()).next;
 function nativeEntries(map){if(!map||types.isProxy(map)||Object.getPrototypeOf(map)!==Map.prototype||Reflect.ownKeys(map).length)throw new TypeError('Matches namespace resolution requires original native binding maps');return [...mapEntries.call(map)];}
@@ -202,11 +203,17 @@ export function createMatchesMacroContext({modules,compilationProfile=null,deriv
   const evidence=freezeMacroTree(resolveModuleBindings({modules:original.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:original.compilationProfile}));
   const certificate=freezeMacroTree({schema:'original-standard-matches-call-context-v1',profileDigest:profile.digest,compilationProfile:original.compilationProfile,originalModules:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source),sourceViewDigest:module.sourceView.digest,configurationCondition:module.configurationCondition??module.sourceView.configurationCondition})),namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
   const facts={...original,profile,evidence,cargoEditionContext};
+  originalDependencies.set(facts,deriveDependencies);
   contexts.set(certificate,facts);
   immutableContexts.set(certificate,Object.freeze({facts,...original,profile,evidence,cargoEditionContext,...immutableNamespaceIndices(original.modules,evidence),moduleHashes:new WeakMap(original.modules.map((module,index)=>[module,certificate.originalModules[index].sha256])),scopes:new WeakSet(evidence.scopes),scopeHashes:new WeakMap(),namespaceCaptures:new Map()}));
   return certificate;
 }
 export const isMatchesMacroContext=value=>!!value&&contexts.has(value);
+// Public metadata or a caller-added property cannot replace this association.
+export function originalMatchesDependencyProof(facts){
+  if(!originalDependencies.has(facts))throw new TypeError('Original dependency selection requires genuine private source facts');
+  return originalDependencies.get(facts);
+}
 export function standaloneMatchesMacroContext(source,{file='src/module.rs',compilationProfile=null,cargoEditionContext=null}={}) {
   const captured=captureSourceModuleViews({source,sourcePath:file,compilationProfile});
   return createMatchesMacroContext({modules:captured.views.map(sourceView=>({file,path:[...sourceView.modulePath],source,sourceView,compilationProfile,configurationCondition:sourceView.configurationCondition})),compilationProfile,cargoEditionContext});

@@ -1,0 +1,212 @@
+{
+  "schema": "complete-locked-external-trait-sources-v1",
+  "packages": [
+    {
+      "name": "base64",
+      "version": "0.23.1",
+      "archive": "base64-0.23.1.crate",
+      "bytes": 93605,
+      "sha256": "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5",
+      "url": "https://static.crates.io/crates/base64/base64-0.23.1.crate",
+      "crateRoot": "src/lib.rs",
+      "members": [
+        {
+          "path": "base64-0.23.1/.cargo_vcs_info.json",
+          "bytes": 94,
+          "sha256": "da5065eb9aebc01c4df84bcd11af890c9cd03b7b7f61df224e876d30759989f2"
+        },
+        {
+          "path": "base64-0.23.1/.circleci/config.yml",
+          "bytes": 8980,
+          "sha256": "a79313f9e1df0abd31a0c05edc92ea64034b823d4838b544928b31ed719040ef"
+        },
+        {
+          "path": "base64-0.23.1/.github/ISSUE_TEMPLATE/general-purpose-issue.md",
+          "bytes": 268,
+          "sha256": "9e89c069e50dc24a09ece40bd6d02618ab044b2b53d2e5221defd6c884c96964"
+        },
+        {
+          "path": "base64-0.23.1/.gitignore",
+          "bytes": 103,
+          "sha256": "fdddacd3d2271f3adb2a0a64c0cdff47503f19c54e8bd2af3b8c876aeb8bcc51"
+        },
+        {
+          "path": "base64-0.23.1/Cargo.lock",
+          "bytes": 25204,
+          "sha256": "90b6ae83c1c6b662eb8e2ccdc28cabde439f3bde7c6cb7e5899a479c7b590440"
+        },
+        {
+          "path": "base64-0.23.1/Cargo.toml",
+          "bytes": 1983,
+          "sha256": "3951a99756ac9b339501a149c547ce0e24248287a10830298ea319c006090790"
+        },
+        {
+          "path": "base64-0.23.1/Cargo.toml.orig",
+          "bytes": 1599,
+          "sha256": "cf1d96ff463ee2680db8948e5bd5fcf2b7241381b4c530008d5e6d292bf9f186"
+        },
+        {
+          "path": "base64-0.23.1/LICENSE-APACHE",
+          "bytes": 10847,
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "path": "base64-0.23.1/LICENSE-MIT",
+          "bytes": 1093,
+          "sha256": "ab499c75a0f0da8e0fe83bf9ba3a27e5c39705310f07107c6c66b69958d2401c"
+        },
+        {
+          "path": "base64-0.23.1/README.md",
+          "bytes": 9190,
+          "sha256": "e215f222008381c7e16c7616aea20c03e091f68f995699ca319e7f016463d905"
+        },
+        {
+          "path": "base64-0.23.1/RELEASE-NOTES.md",
+          "bytes": 11930,
+          "sha256": "2caa288e216c82d7bea1ff8dcdd5f21cb9dfae7fbe4f79526ebf5aafef3a0b57"
+        },
+        {
+          "path": "base64-0.23.1/benches/benchmarks.rs",
+          "bytes": 8951,
+          "sha256": "d4f47781e6b477c8d0a5ba87bb8a4b4f7d9fa7bda135172bc976caf953da930e"
+        },
+        {
+          "path": "base64-0.23.1/clippy.toml",
+          "bytes": 16,
+          "sha256": "9992b0c89d1c43170379460a0b63e1e25732d218e64d5b66392f83337576dc5b"
+        },
+        {
+          "path": "base64-0.23.1/examples/base64.rs",
+          "bytes": 2298,
+          "sha256": "42361a044181d278a841fdc4af7eec9698ab4887d17c4c27202bd804847c913b"
+        },
+        {
+          "path": "base64-0.23.1/icon_CLion.svg",
+          "bytes": 2244,
+          "sha256": "cffa044ba75cb998ee3306991dc4a3755ec2f39ab95ddd4b74bc21988389020f"
+        },
+        {
+          "path": "base64-0.23.1/src/alphabet.rs",
+          "bytes": 12435,
+          "sha256": "57c482d72d440b6d9f14916f20ec37c441a06908304e3752249969a5096abd81"
+        },
+        {
+          "path": "base64-0.23.1/src/chunked_encoder.rs",
+          "bytes": 5308,
+          "sha256": "5fcb620338587fd04874ba60ce665004b1a0936e305269057532052b95f10ce6"
+        },
+        {
+          "path": "base64-0.23.1/src/decode.rs",
+          "bytes": 14901,
+          "sha256": "f739f2d143700cd8fec8c299e61bb500ab4bced6f8a9a0f5f75e4681cdea9515"
+        },
+        {
+          "path": "base64-0.23.1/src/display.rs",
+          "bytes": 2731,
+          "sha256": "31bf3e19274a0b80dd8948a81ea535944f756ef5b88736124c940f5fe1e8c71c"
+        },
+        {
+          "path": "base64-0.23.1/src/encode.rs",
+          "bytes": 15855,
+          "sha256": "77048ba481faa9ee8f69a2e50a455cf2054c4e4b568a7e2509954e904954345a"
+        },
+        {
+          "path": "base64-0.23.1/src/engine/general_purpose/decode.rs",
+          "bytes": 13574,
+          "sha256": "43309c606181b6bb67ebd25867df1a2c0ba708423f5e822bfddc87ad07092dbf"
+        },
+        {
+          "path": "base64-0.23.1/src/engine/general_purpose/decode_suffix.rs",
+          "bytes": 7133,
+          "sha256": "640a1f57c970de4640a8263a4f9e339ffaed1094785fdeb732b744a0ccb03147"
+        },
+        {
+          "path": "base64-0.23.1/src/engine/general_purpose/mod.rs",
+          "bytes": 20506,
+          "sha256": "5cf527f5fe331553c373fbd1d9ddb598de319d831cffe60aa91e41c669b270f9"
+        },
+        {
+          "path": "base64-0.23.1/src/engine/mod.rs",
+          "bytes": 19038,
+          "sha256": "6ce97ed46c6548e97e45d5b67ad41a2028ff2353f0311ed32317e9fe3b83532b"
+        },
+        {
+          "path": "base64-0.23.1/src/engine/naive.rs",
+          "bytes": 6742,
+          "sha256": "1afa649f854d05753b465d0da57d5c1ecf8bc507cbf8c6bc26973f324f9f87c6"
+        },
+        {
+          "path": "base64-0.23.1/src/engine/simd.rs",
+          "bytes": 32820,
+          "sha256": "15a28ec933c6d8bd37df823b486b2d7f40a030d35458ffa0f46364480e2f6806"
+        },
+        {
+          "path": "base64-0.23.1/src/engine/tests.rs",
+          "bytes": 72932,
+          "sha256": "2e2dc283e0147f622154b0d0a715100a9d4407e2fb898cab7c4163196c024b7f"
+        },
+        {
+          "path": "base64-0.23.1/src/lib.rs",
+          "bytes": 12483,
+          "sha256": "181e64750ab1ddfc80e1c1f8e1fb4ce7ef63a21bc27d26d5a974b65454a66724"
+        },
+        {
+          "path": "base64-0.23.1/src/prelude.rs",
+          "bytes": 920,
+          "sha256": "78cdbae61663dad4b9bbd201ab57b751e8a27daefe20f6363721226d44c4f401"
+        },
+        {
+          "path": "base64-0.23.1/src/read/decoder.rs",
+          "bytes": 14362,
+          "sha256": "f9a12a0c6fb992ef3eec4905c18e1fc72acc7201bc5b8a846a4820d863e0a2bc"
+        },
+        {
+          "path": "base64-0.23.1/src/read/decoder_tests.rs",
+          "bytes": 15854,
+          "sha256": "3c685f5d08caf7d379c41c256d6d4d534d86b7c4f28aa304aee5290df2f9e942"
+        },
+        {
+          "path": "base64-0.23.1/src/read/mod.rs",
+          "bytes": 150,
+          "sha256": "e0b714eda02d16b1ffa6f78fd09b2f963e01c881b1f7c17b39db4e904be5e746"
+        },
+        {
+          "path": "base64-0.23.1/src/tests.rs",
+          "bytes": 3941,
+          "sha256": "daa2fa7edcd33e32991d86e750da3075c3c49934b1d2c50e9741485474c2ad6b"
+        },
+        {
+          "path": "base64-0.23.1/src/write/encoder.rs",
+          "bytes": 17289,
+          "sha256": "e49481470ae685a98c8943c5c90650e0240e0d64c8260fe79f7c05faa881d57e"
+        },
+        {
+          "path": "base64-0.23.1/src/write/encoder_string_writer.rs",
+          "bytes": 6244,
+          "sha256": "77cd9faaa52e5feeed51c27e3d9d16d48a7fa0610a7d97c31374c7900cae5191"
+        },
+        {
+          "path": "base64-0.23.1/src/write/encoder_tests.rs",
+          "bytes": 17080,
+          "sha256": "9a730fbd91305609b36716568ac862419e8b25524f4d93d8ae84f6764972890f"
+        },
+        {
+          "path": "base64-0.23.1/src/write/mod.rs",
+          "bytes": 251,
+          "sha256": "73cd98dadc9d712b3fefd9449d97e825e097397441b90588e0051e4d3b0911b9"
+        },
+        {
+          "path": "base64-0.23.1/tests/encode.rs",
+          "bytes": 2755,
+          "sha256": "5309f4538b1df611436f7bfba7409c725161b6f841b1bbf8d9890ae185de7d88"
+        },
+        {
+          "path": "base64-0.23.1/tests/tests.rs",
+          "bytes": 4759,
+          "sha256": "0f9ec361f9c87a2c629c433fe4a179b66162d5d8f33caa57660f4714ff1d6e8b"
+        }
+      ]
+    }
+  ],
+  "scope": "Original module, named reexport and complete trait/supertrait member closure only; no trait-call, implementation, feature-selection or runtime parity authority."
+}
