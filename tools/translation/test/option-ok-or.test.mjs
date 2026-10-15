@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {readFileSync,mkdirSync,writeFileSync,appendFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -59,7 +59,9 @@ test('complete original ActivityPub parent executes require_string and dependent
  const corpus=originalCsvContext(),entry=corpus.inputs.entry,file='src/activitypub.rs',source=corpus.source(file),items=sourceItems(source),required=items.find(item=>item.term==='fn'&&item.name==='require_string'),validate=items.find(item=>item.term==='fn'&&item.name==='validate_activity');assert.equal(entry,'src/lib.rs');assert.ok(required);assert.ok(validate);
  assert.equal(Buffer.byteLength(source),8842);assert.equal(hash(source),'1eec701e38326ba002bea83922b861fb8c4cae773384fe8c27d7a6a6adba0645');assert.equal(hash(source.slice(required.start,required.end)),'3035d244a59027a0e631ae13903af34c3a75eceb969c4c22806f6fb8bd86db0e');
  const manifest=corpus.source('Cargo.toml'),lock=corpus.source('Cargo.lock'),paths=corpus.inputs.sources.filter(row=>row.source.endsWith('.rs')).map(row=>row.source);retain('04-complete-original-inputs',{inputs:corpus.inputs,allOriginals:corpus.inputs.sources.map(row=>({...row,content:corpus.source(row.source)})),paths,source,required,validate});
- const result=translateProject({entry,paths,readSource:corpus.source,cargoManifest:manifest,deriveDependencies:loadDeriveDependencyProof({manifest,lock}),jsonMacroDependencies:loadJsonMacroSourceProof({manifest,lock}),compilationProfile:corpus.inputs.compilationProfile});
+ const progressDirectory=process.env.ROUTER_OPTION_OK_OR_VECTOR_DIR,progressStarted=progressDirectory?process.hrtime.bigint():null;
+ const progress=progressDirectory?event=>{appendFileSync(join(progressDirectory,'04-project-progress.jsonl'),JSON.stringify({elapsedNanoseconds:String(process.hrtime.bigint()-progressStarted),event})+'\n');}:undefined;
+ const result=translateProject({entry,paths,readSource:corpus.source,cargoManifest:manifest,deriveDependencies:loadDeriveDependencyProof({manifest,lock}),jsonMacroDependencies:loadJsonMacroSourceProof({manifest,lock}),compilationProfile:corpus.inputs.compilationProfile,progress});
  retain('04-complete-original-project',result);assert.equal(result.meta.entry,entry);assert.equal(result.meta.sources.find(row=>row.source===file).sha256,hash(source));assert.equal(result.meta.runtimeParity,false);
  const checked=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)),target=parseProgram(JSON.stringify(result.meta.targetSemanticProgram)),aliases=[];
  for(const item of [required,validate]){const name='activitypub.'+item.name,row=result.meta.executable.find(row=>row.source===file&&row.name===name);assert.ok(row,JSON.stringify(result.meta.refused));assert.deepEqual(row.span,{start:item.start,end:item.end});const original=checked.declarations.get(name);assert.ok(original);if(item===required)assert.ok(find(original.body,node=>node.k==='routerPinnedStandardBody'&&node.pinnedStandardBodyProof.method==='ok_or'));const candidates=[...target.declarations.values()].filter(row=>row.k==='fn'&&!row.impl&&row.span?.start===original.span.start&&row.span?.end===original.span.end);assert.equal(candidates.length,1);aliases.push(`${candidates[0].fullName} as original_${item.name}`);}
