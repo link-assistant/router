@@ -10,8 +10,9 @@ import {originalDeclarationHeader} from './module-bindings.mjs';
 import {originalImplMemberItems} from './rust-member-boundaries.mjs';
 import {rustTokens} from './rust-structure.mjs';
 import {isPlainSourceIdentifier} from './module-paths.mjs';
+import {originalMacroInvocation} from './macro-token-trees.mjs';
 import {originalNamespaceParserSourcePlan,requireOriginalNamespaceParserSourcePlan} from './namespace-parser-source.mjs';
-const hash=value=>createHash('sha256').update(value).digest('hex'),frames=new WeakMap(),confinements=new WeakMap();
+const hash=value=>createHash('sha256').update(value).digest('hex'),frames=new WeakMap(),confinements=new WeakMap(),invocationInputs=new WeakMap(),expressionCaptures=new WeakMap();
 const parsers=new WeakSet(),cursors=new WeakSet(),nodes=new WeakMap(),trees=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const fail=message=>{throw new TypeError('Original namespace parser: '+message);};
@@ -241,3 +242,38 @@ export function originalNamespaceFunctionInvocationPosition(token,options,index)
  const proof=Object.freeze({schema:'private-original-namespace-position-v1'}),facts=freeze({schema:'original-namespace-position-v1',source:state.facts.source,invocation:node,position:node.fields.position,ordinaryGeneratedImportsAndProcStubsRemainBlockLocal:true,enclosingAttributeBindingsUnchanged:false,unresolvedGlobalMacroExportKindsRetained:true,outerAttributeTransformationsResolved:false,globalBangComplete:false,globalBangExportsRemainPending:true,macroOwnerResolved:false,typeAuthority:false,runtimeAuthority:false,sourcePlan:state.sourcePlan});confinements.set(proof,{token,state,index,node,facts});return proof;
 }
 export function originalNamespacePositionFacts(proof,token,options){intrinsicGuard();const record=confinements.get(proof);if(!record||record.token!==token)fail('copied or foreign confinement proof');fresh(record.state,options);if(record.state.parser.invocations[record.index]!==record.node)fail('private original invocation changed');return record.facts;}
+
+
+// A source-fragment lane over the exact whole original invocation, never a
+// rendered expansion or a caller-supplied AST/parser callback.
+export function captureOriginalNamespaceInvocationInput(position,token,options){
+ const positionFacts=originalNamespacePositionFacts(position,token,options),state=frames.get(token),node=positionFacts.invocation;
+ const original=state.input.carrier.source.slice(node.span.start,node.span.end),invocation=originalMacroInvocation(original);intrinsicGuard();
+ if(invocation.path.length!==node.fields.path.fields.segments.length||invocation.path.some((part,index)=>part!==node.fields.path.fields.segments[index]))fail('original invocation path changed');
+ const proof=Object.freeze({schema:'private-original-namespace-invocation-input-v1'}),facts=freeze({schema:'original-namespace-invocation-input-v1',source:state.facts.source,invocationSpan:node.span,original,trees:invocation.trees,originalTree:node.fields.tree,callerMacroOwnerResolved:false,namespaceAuthority:false,runtimeAuthority:false});
+ invocationInputs.set(proof,{position,token,node,invocation,facts});return proof;
+}
+function currentInvocationInput(input,position,token,options){
+ intrinsicGuard();const state=invocationInputs.get(input);if(!state||state.position!==position||state.token!==token)fail('copied or foreign original invocation input');
+ const actual=originalNamespacePositionFacts(position,token,options);if(actual.invocation!==state.node||frames.get(token).input.carrier.source.slice(state.node.span.start,state.node.span.end)!==state.facts.original)fail('original invocation/frame association changed');return state;
+}
+export function originalNamespaceInvocationInputFacts(input,position,token,options){return currentInvocationInput(input,position,token,options).facts;}
+function captureTrees(value){
+ if(!value||types.isProxy(value)||!Array.isArray(value)||Object.getPrototypeOf(value)!==Array.prototype)fail('ordinary original capture tree sequence required');
+ const fields=Object.getOwnPropertyDescriptors(value),length=fields.length;if(!length||!Object.hasOwn(length,'value')||!Number.isSafeInteger(length.value)||length.value<1||length.value>32000||Reflect.ownKeys(fields).length!==length.value+1)fail('bounded dense original capture trees required');
+ const result=[];for(let at=0;at<length.value;at++){if(!Object.hasOwn(fields,String(at))||!Object.hasOwn(fields[at],'value'))fail('capture tree accessor or hole');result.push(fields[at].value);}return result;
+}
+export function captureOriginalNamespaceInvocationExpression(input,position,token,options,providedTrees){
+ intrinsicGuard();const selected=captureTrees(providedTrees),context=currentInvocationInput(input,position,token,options),trees=context.invocation.trees,matches=[];
+ for(let at=0;at+selected.length<=trees.length;at++)if(selected.every((tree,index)=>tree===trees[at+index]))matches.push(at);
+ if(matches.length!==1)fail('capture is not one exact contiguous original invocation sequence');
+ const source=frames.get(token).input.carrier.source,offset=context.node.span.start,start=offset+selected[0].span.start,end=offset+selected.at(-1).span.end,raw=frames.get(token).input.raw.filter(part=>part.start>=start&&part.end<=end);
+ if(!raw.length||raw.length>ORIGINAL_NAMESPACE_PARSER_LIMITS.tokens||raw[0].start!==start||raw.at(-1).end!==end)fail('complete original expression token boundaries/bound');
+ intrinsicGuard();const parser=new NamespaceParser(source,freeze(raw));identity(parser);const ast=parser.expression();if(parser.cursor.peek()!==null)fail('full original capture expression EOF required');identity(parser);positive(parser,ast);freeze(ast);
+ const proof=Object.freeze({schema:'private-original-namespace-expression-capture-v1'}),facts=freeze({schema:'original-namespace-expression-capture-v1',source:frames.get(token).facts.source,span:{start,end},original:source.slice(start,end),trees:selected,originalTokens:raw,ast,documentation:raw.filter(part=>part.type==='comment'&&(part.text.startsWith('///')||part.text.startsWith('//!')||part.text.startsWith('/**')||part.text.startsWith('/*!'))),opaqueInvocations:parser.invocations,fullOriginalExpressionParsed:true,typeAuthority:false,runtimeAuthority:false,namespaceAuthority:false});
+ currentInvocationInput(input,position,token,options);identity(parser);positive(parser,ast);expressionCaptures.set(proof,{input,position,token,parser,ast,facts});return proof;
+}
+export function originalNamespaceInvocationExpressionFacts(proof,input,position,token,options){
+ intrinsicGuard();const record=expressionCaptures.get(proof);if(!record||record.input!==input||record.position!==position||record.token!==token)fail('copied or foreign original expression capture');
+ currentInvocationInput(input,position,token,options);identity(record.parser);positive(record.parser,record.ast);return record.facts;
+}

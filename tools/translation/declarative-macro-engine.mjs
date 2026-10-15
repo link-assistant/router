@@ -502,6 +502,14 @@ function declarativeExpansionLineage(proof) {
   return freezeMacroTree({definition:state.definition,parent:state.parent,path:state.path,depth:state.depth,...(state.nested?{sourceAssociationKind:'checked-nested-macro-input'}:{})});
 }
 
+// A new observer can join an exact original invocation input without looking
+// it up by a public digest. Forwarded/generated arrays are a different lane.
+function declarativeExpansionOriginalInput(proof,input){
+ const state=expansions.get(proof),original=macroTreeSource(input);
+ if(!state||state.input!==input||state.parent!==null||state.depth!==0||forwardedInputs.has(input)||!original?.span)throw new TypeError('Expansion requires its exact private original invocation input');
+ return state.input;
+}
+
 // Declaration headers are exact source evidence; attribute spellings and a
 // public/export annotation never grant their own owner or hygiene semantics.
 function declarativeDefinitionHeader(definition) {
@@ -526,5 +534,5 @@ function declarativeDefinitionHeader(definition) {
   return freezeMacroTree({sourceSha256:definition.sourceSha256,span:{start:trees[begin].span.start,end:definition.definitionSpan.end},name:definition.name,kind,visibility,attributes,sourceVerified:true,attributeOwnersResolved:false,hygieneVerified:false});
 }
 
-return Object.freeze({compileDeclarativeMacro,expandDeclarativeMacro,isDeclarativeExpansion,declarativeNamespaceObservation,declarativeSubInput,declarativeNestedMacroInvocations,declarativeNestedMacroInput,declarativeExpansionLineage,declarativeDefinitionHeader});
+return Object.freeze({compileDeclarativeMacro,expandDeclarativeMacro,isDeclarativeExpansion,declarativeNamespaceObservation,declarativeSubInput,declarativeNestedMacroInvocations,declarativeNestedMacroInput,declarativeExpansionLineage,declarativeDefinitionHeader,declarativeExpansionOriginalInput});
 }
