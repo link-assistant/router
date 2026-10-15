@@ -31,17 +31,18 @@ function plan(value,completed){
   if(array&&value.length>=CELL_LIMIT)return null;
   const keys=Reflect.ownKeys(value);uniqueCells+=1+keys.length;if(uniqueCells>CELL_LIMIT)return null;
   if(array&&(keys.length!==value.length+1||keys.at(-1)!=='length'))return null;
-  const descriptors=Object.getOwnPropertyDescriptors(value),children=[];
+  const children=[];
   for(let index=0;index<keys.length;index++){
-   const key=keys[index],field=descriptors[key];
-   if(typeof key!=='string'||!Object.hasOwn(field,'value'))return null;
+   const key=keys[index];if(typeof key!=='string')return null;
+   const field=Object.getOwnPropertyDescriptor(value,key);
+   if(!field||!Object.hasOwn(field,'value'))return null;
    if(array&&key==='length'){if(field.enumerable||field.value!==value.length)return null;continue;}
    if(!field.enumerable||array&&key!==''+index||typeof field.value==='function')return null;
    children.push(field.value);
   }
   const state={value,children,cells:0,height:0,done:false};states.set(value,state);
   pending.push({value,depth:frame.depth,exit:true,state});
-  for(let index=children.length-1;index>=0;index--)pending.push({value:children[index],depth:frame.depth+1,exit:false});
+  for(let index=children.length-1;index>=0;index--){const child=children[index];if(child!==null&&typeof child==='object')pending.push({value:child,depth:frame.depth+1,exit:false});}
  }
  const root=completed?.get(value)??states.get(value);
  return root&&root.done?{order,root}:null;

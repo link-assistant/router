@@ -77,7 +77,7 @@ test('accessors proxies hidden symbol cyclic opaque and mutable descendant input
 });
 
 test('changed native operations preserve full original callback function identity text and order including getter reentrancy',{timeout:20000},()=>{
- const observations=[],controls=[[Object,'values'],[Object,'freeze'],[Object,'isFrozen'],[Object,'getOwnPropertyDescriptors'],[Reflect,'ownKeys'],[Array.prototype,'forEach'],[Map.prototype,'get'],[WeakMap.prototype,'get'],[WeakMap.prototype,'set']];
+ const observations=[],controls=[[Object,'values'],[Object,'freeze'],[Object,'isFrozen'],[Object,'getOwnPropertyDescriptor'],[Object,'getOwnPropertyDescriptors'],[Reflect,'ownKeys'],[Array.prototype,'forEach'],[Map.prototype,'get'],[WeakMap.prototype,'get'],[WeakMap.prototype,'set']];
  for(const [owner,key]of controls){
   function run(fast){const freeze=legacyFreeze,read=fast?createCompletedDataFreezer(freeze):freeze,input=model(),prior=descriptor(owner,key),tape=[];let result,probe;
    try{define(owner,key,{...prior,value(...args){const returned=apply(prior.value,this,args);tape[tape.length]={operation:key,args:args.map(value=>typeof value==='function'?{name:value.name,source:apply(text,value,[]),sameOriginal:value===freeze}:typeof value==='object'?json(value):value),same:returned===args[0]};return returned;}});
