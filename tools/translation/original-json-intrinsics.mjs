@@ -153,3 +153,20 @@ export function originalStaticSourceIntrinsicsUnchanged(){
 // Diagnostic metadata belongs to the shared issuer bootstrap. Reader budgets
 // are lexical constants; even a replaced freeze cannot widen their domain.
 export const STATIC_SOURCE_ITEM_LIMITS=Object.freeze({entries:16,sourceChars:128000,entryCells:200000,cells:400000,chars:1000000});
+
+// Completed deep-data freezing skips only native recursive refreezing. Every
+// skipped/added operation qualifies here; existing guard domains are unchanged.
+const dataFreeze=descriptor(originalObject,'freeze'),dataIsFrozen=descriptor(originalObject,'isFrozen');
+const dataWeakGet=pathWeakPrototype?descriptor(pathWeakPrototype,'get'):null,dataWeakSet=pathWeakPrototype?descriptor(pathWeakPrototype,'set'):null;
+let dataFreezeNative=!!(traversalNative&&dataFreeze&&hasOwn(dataFreeze,'value')&&native(dataFreeze.value,'freeze')&&dataIsFrozen&&hasOwn(dataIsFrozen,'value')&&native(dataIsFrozen.value,'isFrozen')&&dataWeakGet&&hasOwn(dataWeakGet,'value')&&native(dataWeakGet.value,'get')&&dataWeakSet&&hasOwn(dataWeakSet,'value')&&native(dataWeakSet.value,'set'));
+function dataFreezeNumericSafe(){
+ const owners=[objectPrototype,arrayPrototype];for(let index=0;index<owners.length;index++){
+  const names=keys(owners[index]);for(let at=0;at<names.length;at++){const key=names[at];if(typeof key==='string'){const number=+key;if(number>=0&&number<=9007199254740991&&number%1===0&&''+number===key)return false;}}
+ }return true;
+}
+if(dataFreezeNative)try{
+ const value={},map=new pathWeakMap.value();dataFreezeNative=apply(dataWeakGet.value,map,[value])===undefined&&apply(dataWeakSet.value,map,[value,7])===map&&apply(dataWeakGet.value,map,[value])===7&&apply(dataIsFrozen.value,originalObject,[value])===false&&apply(dataFreeze.value,originalObject,[value])===value&&apply(dataIsFrozen.value,originalObject,[value])===true&&dataFreezeNumericSafe();
+}catch{dataFreezeNative=false;}
+export function originalDataFreezeIntrinsicsUnchanged(){
+ return !!(dataFreezeNative&&originalNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
+}
