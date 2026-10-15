@@ -66,3 +66,20 @@ only text and leaving all existing qualifier domains unchanged. A whole child
 control combines the exact spoof with a fake constructor and requires zero
 spoof or fake-execution callbacks. All fifteen cases and their limits remain
 unchanged and UNRUN.
+
+The first complete receiving pair is retained candidly: copied parser 4/5 and
+private defaults 1/10 under each engine. Node 20.19.4 has its own JavaScript
+ErrorPrepareStackTrace function, and Bun 1.4.3 exposes the initial host root as
+a Proxy. A bounded builtin-only observation retained full descriptors, function
+text and both runtime versions. The source successor permits only the captured
+initial host root in internal global acquisition; all derived/caller proxies
+still refuse. An unused own-data, nonproxy stack formatter is descriptor-pinned
+live. The copied grammar never reads native error .stack; cold/late formatter
+controls cover genuine complete Cargo, private malformed-input refusal and the
+pristine parser's malformed route without executing the hook. Accessors, proxies
+and descriptor changes still refuse.
+
+The exact original multi-key temporal fixture remains an installed/copied parser
+error reproduction. Independent plain local-time EOF and fractional-time
+multi-key positives retain the full temporal and numeric coverage. No upstream
+parser byte changed. All fifteen successor cases and original limits are UNRUN.

@@ -10,6 +10,7 @@ import {types} from 'node:util';
 import {originalStaticSourceIntrinsicsUnchanged,originalCapturedFunctionSource} from './original-json-intrinsics.mjs';
 import {deriveDependencyOriginalInputs} from './derive-dependencies.mjs';
 import {originalExternalTraitPackageInputs} from './extensions/external-trait-sources.mjs';
+const hostRoot=globalThis; // Existing trusted initial host root; Bun exposes this as a Proxy.
 const descriptor=Object.getOwnPropertyDescriptor,prototype=Object.getPrototypeOf,own=Object.hasOwn,keys=Reflect.ownKeys,apply=Reflect.apply,isProxy=types.isProxy;
 const functionPrototype=prototype(function(){}),Failure=descriptor(globalThis,'TypeError')?.value;
 const failurePrototype=typeof Failure==='function'&&!isProxy(Failure)?descriptor(Failure,'prototype')?.value:null;
@@ -36,7 +37,7 @@ function initialize(){
   if(!create||!own(create,'value')||!native(create.value,'create'))fail('qualified private record allocation required');
   const globals=apply(create.value,Object,[null]);
   function pin(owner,key,name){
-    if(!owner||isProxy(owner))fail('proxy host operation');
+    if(!owner||owner!==hostRoot&&isProxy(owner))fail('proxy host operation');
     const field=descriptor(owner,key);if(!field||!own(field,'value')||!native(field.value,name))fail('unqualified native '+name);
     pins.push({owner,key,field});return field.value;
   }
@@ -99,7 +100,11 @@ function initialize(){
   const view=new globals.Uint8Array(1);if(length(view)!==1)fail('byte brand differs');view[0]=231;if(view[0]!==231)fail('byte data differs');
   const capture=descriptor(globals.Error,'captureStackTrace');
   if(capture&&(!own(capture,'value')||!native(capture.value,'captureStackTrace')))fail('stack constructor hook changed');pins.push({owner:globals.Error,key:'captureStackTrace',field:capture??null});
-  const prepare=descriptor(globals.Error,'prepareStackTrace');if(prepare&&(!own(prepare,'value')||prepare.value!==undefined))fail('stack formatter hook present');
+  // The complete copied graph never reads native error .stack. Its own
+  // parser.stack is a state array, unrelated to native stack formatting.
+  // Keep an unused own formatter descriptor live-pinned; getters/proxies
+  // remain forbidden, and changing it after initialization still refuses.
+  const prepare=descriptor(globals.Error,'prepareStackTrace');if(prepare&&(!own(prepare,'value')||prepare.value!==undefined&&(typeof prepare.value!=='function'||isProxy(prepare.value))))fail('unproved stack formatter descriptor');
   pins.push({owner:globals.Error,key:'prepareStackTrace',field:prepare??null});
   const stackLimit=descriptor(globals.Error,'stackTraceLimit');if(stackLimit&&(!own(stackLimit,'value')||typeof stackLimit.value!=='number'))fail('stack limit accessor present');
   pins.push({owner:globals.Error,key:'stackTraceLimit',field:stackLimit??null});

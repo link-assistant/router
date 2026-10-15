@@ -29,10 +29,13 @@ test('full TOML parser handles quoted and dotted keys multiline strings arrays i
   const actual=parse(source),independent=(await import(new URL('parse-string.js',installed))).default(source);assert.deepEqual(data(actual),expected);assert.deepEqual(data(actual),data(independent));retain('02-independent-whole-TOML-structure',{source,expected,actual,independent});
 });
 
-test('dates exact integers alternate bases and numeric syntax use the complete parser rather than a Cargo line scanner',()=>{
+test('dates exact integers alternate bases and numeric syntax use the complete parser rather than a Cargo line scanner',async()=>{
   const source='date=1979-05-27\ntime=07:32:00\ninstant=1979-05-27T07:32:00Z\nlarge=9007199254740993\nhex=0xDEAD_BEEF\noctal=0o755\nbinary=0b1010\nfloat=1_000.25\n';
-  const actual=parse(source);assert.equal(actual.large,9007199254740993n);assert.equal(actual.hex,3735928559);assert.equal(actual.octal,493);assert.equal(actual.binary,10);assert.equal(actual.float,1000.25);assert.equal(actual.instant.toISOString(),'1979-05-27T07:32:00.000Z');assert.equal(actual.date.toISOString(),'1979-05-27');assert.equal(actual.time.toISOString(),'07:32:00.000');
-  retain('03-full-numeric-and-temporal-TOML',{source,actual:{...actual,large:actual.large.toString()},integerType:typeof actual.large});
+  const independent=(await import(new URL('parse-string.js',installed))).default,errors=[];
+  for(const [name,parser]of [['copied',parse],['installed',independent]]){let error;try{parser(source);}catch(cause){error={name:cause.name,message:cause.message,code:cause.code??null,pos:cause.pos,line:cause.line,col:cause.col};}assert.ok(error);assert.match(error.message,/expected only whitespace or comments till end of line/);errors.push({name,error});}
+  assert.deepEqual(errors[0].error,errors[1].error);
+  const fractional=source.replace('time=07:32:00\n','time=07:32:00.000\n'),actual=parse(fractional),installedActual=independent(fractional),eofSource='time=07:32:00',eof=parse(eofSource),installedEof=independent(eofSource);assert.deepEqual(data(actual),data(installedActual));assert.deepEqual(data(eof),data(installedEof));assert.equal(eof.time.toISOString(),'07:32:00.000');assert.equal(actual.large,9007199254740993n);assert.equal(actual.hex,3735928559);assert.equal(actual.octal,493);assert.equal(actual.binary,10);assert.equal(actual.float,1000.25);assert.equal(actual.instant.toISOString(),'1979-05-27T07:32:00.000Z');assert.equal(actual.date.toISOString(),'1979-05-27');assert.equal(actual.time.toISOString(),'07:32:00.000');
+  retain('03-full-numeric-and-temporal-TOML',{source,errors,fractional,eofSource,eof:data(eof),actual:{...actual,large:actual.large.toString()},installedActual:{...installedActual,large:installedActual.large.toString()},integerType:typeof actual.large,upstreamPlainTimeFollowedByDeclarationDefectRetained:true});
 });
 
 test('duplicate keys tables malformed arrays mixed trailing syntax and invalid values all refuse as complete files',()=>{
