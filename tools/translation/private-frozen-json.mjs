@@ -5,7 +5,7 @@ import {types} from 'node:util';
 import {originalNamespaceTraversalIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
 const enabled=originalNamespaceTraversalIntrinsicsUnchanged()&&originalLexingIntrinsicsUnchanged();
-const descriptor=enabled?Object.getOwnPropertyDescriptor:null,descriptors=enabled?Object.getOwnPropertyDescriptors:null,prototype=enabled?Object.getPrototypeOf:null,own=enabled?Object.hasOwn:null,keys=enabled?Reflect.ownKeys:null,apply=enabled?Reflect.apply:null,isProxy=enabled?types.isProxy:null,isArray=enabled?Array.isArray:null;
+const descriptor=enabled?Object.getOwnPropertyDescriptor:null,prototype=enabled?Object.getPrototypeOf:null,own=enabled?Object.hasOwn:null,keys=enabled?Reflect.ownKeys:null,apply=enabled?Reflect.apply:null,isProxy=enabled?types.isProxy:null,isArray=enabled?Array.isArray:null;
 const functionPrototype=enabled?prototype(function(){}):null,textField=enabled?descriptor(functionPrototype,'toString'):null;
 const frozenField=enabled?descriptor(Object,'isFrozen'):null;
 const native=(value,name)=>typeof value==='function'&&!isProxy(value)&&apply(textField.value,value,[])===`function ${name}() { [native code] }`;
@@ -56,11 +56,12 @@ function immutableJson(value){
   if(subtreeMisses<9007199254740991)subtreeMisses++;
   if(!apply(frozenField.value,Object,[value]))return false;
   const proto=prototype(value),array=isArray(value);if(proto!==objectPrototype&&proto!==null&&!(array&&proto===arrayPrototype))return false;
-  const fields=descriptors(value),names=keys(fields);if(own(fields,'toJSON'))return false;
-  if(array){if(!own(fields,'length'))return false;const length=fields.length.value;if(length<0||length>cells||names.length!==length+1)return false;for(let at=0;at<length;at++)if(!own(fields,at))return false;}
-  for(let at=0;at<names.length;at++){const key=names[at],field=fields[key];if(typeof key!=='string'||!own(field,'value')||!field.enumerable&&!(array&&key==='length'))return false;}
-  const total={cells:1,height:0};apply(setAdd,active,[value]);stack={value,depth:frame.depth,exit:true,parent:frame.parent,total,next:stack};
-  for(let at=names.length-1;at>=0;at--){const key=names[at];if(array&&key==='length')continue;stack={value:fields[key].value,depth:frame.depth+1,exit:false,parent:total,next:stack};}
+  const names=keys(value);if(own(value,'toJSON'))return false;
+  if(array){const field=descriptor(value,'length');if(!field||!own(field,'value'))return false;const length=field.value;if(length<0||length>cells||names.length!==length+1)return false;for(let at=0;at<length;at++)if(!own(value,at))return false;}
+  const total={cells:1,height:0};let first=null,last=null;
+  for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string')return false;const field=descriptor(value,key);if(!field||!own(field,'value')||!field.enumerable&&!(array&&key==='length'))return false;if(!(array&&key==='length')){const child={value:field.value,depth:frame.depth+1,exit:false,parent:total,next:null};if(last)last.next=child;else first=child;last=child;}}
+  apply(setAdd,active,[value]);const exit={value,depth:frame.depth,exit:true,parent:frame.parent,total,next:stack};
+  if(last){last.next=exit;stack=first;}else stack=exit;
  }
  return true;
 }
