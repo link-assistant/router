@@ -1,7 +1,8 @@
 // Bounded actual builtin generator routes. Copy and Eq close source-selected associated
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
+import {createPrivateFrozenJsonCache,privateFrozenJsonCacheFacts} from './private-frozen-json.mjs';
+import {privateDataJsonEquality} from './private-data-json-equality.mjs';
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
@@ -21,6 +22,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const freezeCompleted=createCompletedDataFreezer(freeze);
 const originalJson=createPrivateFrozenJsonCache();
+const originalJsonMaxCodeUnits=(privateFrozenJsonCacheFacts().limits.entryBytes-128)/2;
 const plans=new WeakMap(),proofs=new WeakMap();
 const directory='compiler/rustc_builtin_macros/src/deriving/';
 const routes=new Map([
@@ -191,7 +193,12 @@ export const isBuiltinDeriveBangFootprint=value=>!!value&&proofs.has(value);
 export function originalBuiltinDeriveEnclosingOutput(proof,context,certificate,invocation){
  assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);
  const fresh=proveBuiltinDeriveBangFootprint({context,certificate,invocation});
- if(JSON.stringify(fresh)!==originalJson(proof))throw new TypeError('Builtin complete original output changed before namespace effect');
+ const comparison=privateDataJsonEquality(fresh,proof);
+ if(comparison){
+  // Preserve bounded operand-cache warming and its diagnostics. Oversized
+  // equal data need neither a fresh string nor a discarded cache candidate.
+  if(comparison.logicalJsonCodeUnits<=originalJsonMaxCodeUnits)originalJson(proof);
+ }else if(JSON.stringify(fresh)!==originalJson(proof))throw new TypeError('Builtin complete original output changed before namespace effect');
  const sink=fresh.slotProofs?.outputKind;
  if(sink?.kind!=='ItemKind::Impl')throw new TypeError('Builtin namespace effect requires a source-proved complete Impl sink');
  return freezeCompleted({schema:'original-complete-builtin-enclosing-output-v1',proof:fresh,sink,route:fresh.route??null});
