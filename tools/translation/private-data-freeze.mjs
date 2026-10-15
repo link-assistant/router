@@ -19,14 +19,12 @@ function plan(value,lookup){
  while(pending.length){
   const state=pending.pop(),depth=pending.pop(),value=pending.pop();
   if(state!==null){
-   let cells=1,height=1;
+   let cells=state.cells,height=1;
    for(let index=0;index<state.children.length;index++){
     const child=state.children[index];
-    if(child!==null&&typeof child==='object'){
-     const cost=states.get(child)??lookup(child);
-     if(!cost||typeof cost!=='number'&&!cost.done)return null;
-     cells+=typeof cost==='number'?cost%RECORD_BASE:cost.cells;const nextHeight=1+(typeof cost==='number'?(cost/RECORD_BASE)|0:cost.height);if(nextHeight>height)height=nextHeight;
-    }else cells++;
+    const cost=states.get(child)??lookup(child);
+    if(!cost||typeof cost!=='number'&&!cost.done)return null;
+    cells+=typeof cost==='number'?cost%RECORD_BASE:cost.cells;const nextHeight=1+(typeof cost==='number'?(cost/RECORD_BASE)|0:cost.height);if(nextHeight>height)height=nextHeight;
     if(cells>CELL_LIMIT)cells=CELL_LIMIT+1;
    }
    if(depth+height>DEPTH_LIMIT)return null;
@@ -42,18 +40,23 @@ function plan(value,lookup){
   if(array&&value.length>=CELL_LIMIT)return null;
   const keys=Reflect.ownKeys(value);uniqueCells+=1+keys.length;if(uniqueCells>CELL_LIMIT)return null;
   if(array&&(keys.length!==value.length+1||keys.at(-1)!=='length'))return null;
-  const children=[];
+  // Reuse the private own-key array; only object edges need a later cost join.
+  // Scalar occurrences still count once each, including repeated values.
+  const children=keys;let objectChildren=0,scalarCells=1;
   for(let index=0;index<keys.length;index++){
    const key=keys[index];if(typeof key!=='string')return null;
    const field=Object.getOwnPropertyDescriptor(value,key);
    if(!field||!Object.hasOwn(field,'value'))return null;
    if(array&&key==='length'){if(field.enumerable||field.value!==value.length)return null;continue;}
    if(!field.enumerable||array&&key!==''+index||typeof field.value==='function')return null;
-   children.push(field.value);
+   if(field.value!==null&&typeof field.value==='object')children[objectChildren++]=field.value;
+   else scalarCells++;
   }
-  const selected={value,children,cells:0,height:0,done:false};states.set(value,selected);
+  children.length=objectChildren;
+  const selected={value,children,cells:scalarCells,height:objectChildren===0?1:0,done:objectChildren===0};states.set(value,selected);
+  if(objectChildren===0){order.push(selected);continue;}
   pending.push(value,depth,selected);
-  for(let index=children.length-1;index>=0;index--){const child=children[index];if(child!==null&&typeof child==='object')pending.push(child,depth+1,null);}
+  for(let index=children.length-1;index>=0;index--)pending.push(children[index],depth+1,null);
  }
  const root=lookup(value)??states.get(value);
  return root&&(typeof root==='number'||root.done)?{order,root:typeof root==='number'?{height:(root/RECORD_BASE)|0,cells:root%RECORD_BASE,done:true}:root}:null;
