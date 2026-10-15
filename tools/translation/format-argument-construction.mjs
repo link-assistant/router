@@ -97,7 +97,7 @@ function values(args){
   if(typeof value==='string'){bytes+=Buffer.byteLength(value);if(bytes>32768)fail('candidate value byte bound');return value;}
   if(!Array.isArray(value)||types.isProxy(value)||Object.getPrototypeOf(value)!==Array.prototype)fail('candidate values must be scalar or ordinary dense arrays');
   const descriptors=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(descriptors);if(keys.length!==value.length+1||!Object.hasOwn(descriptors,'length')||!Object.hasOwn(descriptors.length,'value'))fail('candidate array descriptors');
-  const out=[];for(let index=0;index<value.length;index++){const descriptor=descriptors[index];if(!descriptor||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable)fail('candidate dense own values required');out.push(copy(descriptor.value,depth+1));}return out;
+  const out=[];for(let index=0;index<value.length;index++){if(!Object.hasOwn(descriptors,String(index)))fail('candidate dense own values required');const descriptor=descriptors[index];if(!descriptor||!Object.hasOwn(descriptor,'value')||!descriptor.enumerable)fail('candidate dense own values required');out.push(copy(descriptor.value,depth+1));}return out;
  };
  if(!Array.isArray(args)||types.isProxy(args))fail('candidate argument array required');return copy(args);
 }

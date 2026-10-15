@@ -54,3 +54,9 @@ test('unresolved original macros and candidate getter proxy sparse cyclic values
  const original=setup(),add=original.program.helpers.find(helper=>helper.name==='add'),candidate=compileFormatArgumentControlCandidate({add:add.original});assert.throws(()=>executeFormatArgumentControlCandidate(candidate,'add',[[],0]));const program=compileFormatArgumentControlCandidate(authored);let reads=0;const getter=[];Object.defineProperty(getter,'0',{get(){reads++;return 'foreign';},enumerable:true});const sparse=new Array(1),cycle=[];cycle.push(cycle);
  for(const args of [[getter,'a','b'],[new Proxy([],{}),'a','b'],[sparse,'a','b'],[cycle,'a','b']])assert.throws(()=>executeFormatArgumentControlCandidate(program,'construct',args));assert.equal(reads,0);assert.throws(()=>executeFormatArgumentControlCandidate(original.program,'construct',[[],'a','b']),/copied or foreign/);denied(original.program);retain('08-complete-unresolved-frontiers-and-value-refusals',{program,original:original.program,reads});
 });
+test('same-key-count candidate holes cannot read inherited numeric descriptor getters',()=>{
+ const program=compileFormatArgumentControlCandidate(authored),hole=new Array(1);hole.unrelated='same key count';const args=[hole,'first','second'];let reads=0;const previous=Object.getOwnPropertyDescriptor(Object.prototype,'0');
+ try{Object.defineProperty(Object.prototype,'0',{configurable:true,get(){reads++;return {value:'foreign',enumerable:true};}});assert.throws(()=>executeFormatArgumentControlCandidate(program,'construct',args),/^TypeError: Original format argument construction: candidate dense own values required$/);}
+ finally{if(previous)Object.defineProperty(Object.prototype,'0',previous);else delete Object.prototype[0];}
+ assert.equal(reads,0);denied(program);retain('09-inherited-descriptor-own-hole-boundary',{authored,program,reads,rejectedAt:'candidate-own-index-descriptor',holeLength:hole.length,ownKeys:Reflect.ownKeys(hole)});
+});
