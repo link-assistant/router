@@ -5,6 +5,7 @@ import {gunzipSync} from 'node:zlib';
 import {isDeepStrictEqual} from 'node:util';
 import {sourceItems,rustTokens} from '../rust-structure.mjs';
 import {originalMacroTrees} from '../macro-token-trees.mjs';
+import {originalImplMemberItems} from '../rust-member-boundaries.mjs';
 const issued=new WeakMap(),cached=new Map(),inputs=new Map();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
@@ -27,8 +28,8 @@ function ownerHeader(owner){const tokens=significant(owner.tokens),at=tokens.fin
 function owner(origin,header){const rows=sourceItems(origin.source).filter(item=>item.term==='impl'&&ownerHeader(item)===header);if(rows.length!==1)fail('complete original impl absent or ambiguous');return rows[0];}
 function member(origin,container,name){
  const tokens=significant(container.tokens),open=tokens.find(token=>token.text==='{'),last=tokens.at(-1);if(!open||last?.text!=='}')fail('original impl boundary incomplete');
- const rows=sourceItems(origin.source.slice(open.end,last.start)).filter(item=>item.term==='fn'&&item.name===name);if(rows.length!==1)fail('complete original member absent or ambiguous');
- const row=rows[0],offset=open.end,all=significant(row.tokens),fn=all.findIndex(token=>token.text==='fn'),body=all.findIndex((token,index)=>index>fn&&token.text==='{'),end=all.at(-1);if(fn<0||body<0||end?.text!=='}')fail('original method body incomplete');
+ const rows=originalImplMemberItems(origin.source,{start:open.end,end:last.start}).filter(item=>item.term==='fn'&&item.name===name);if(rows.length!==1)fail('complete original member absent or ambiguous');
+ const row=rows[0],offset=0,all=significant(row.tokens),fn=all.findIndex(token=>token.text==='fn'),body=all.findIndex((token,index)=>index>fn&&token.text==='{'),end=all.at(-1);if(fn<0||body<0||end?.text!=='}')fail('original method body incomplete');
  const span={start:offset+row.start,end:offset+row.end},bodySpan={start:offset+all[body].start,end:offset+end.end};
  return freeze({path:origin.descriptor.path,sourceSha256:origin.descriptor.sha256,ownerSpan:{start:container.start,end:container.end},ownerHeader:ownerHeader(container),ownerOriginal:origin.source.slice(container.start,container.end),name,span,original:origin.source.slice(span.start,span.end),signature:spelling(all.slice(fn,body)),bodySpan,bodySource:origin.source.slice(bodySpan.start,bodySpan.end)});
 }
