@@ -139,4 +139,8 @@ reader behavior, repeat every CI/integrity/measurement continuity check and meas
 the final physical allocation under the unchanged 500,000,000-byte case cap.
 Preserve original V1, full V2 and fresh recovered files until those controls and
 the reviewed installation succeed. Storage receipts grant no semantic or Rust
-authority. New Python and Node controls are source-drafted and remain unrun.
+authority. The complete two-file guidance/range group passes all seven cases
+under Node and Bun, including all 23 Python packet controls and the nine unchanged
+range-helper controls, on source `d909397cead5b25f8996325bce014b79c14b63fa`.
+This focused fixture result does not establish real full V1 recovery through the
+new consumer, historical member continuity, installation or final packet fit.
