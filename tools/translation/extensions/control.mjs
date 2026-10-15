@@ -18,7 +18,10 @@ const statementMatches = new WeakSet();
 export const checkingStatementMatch = node => statementMatches.has(node);
 const compound = { '+=': 'add', '-=': 'sub', '*=': 'mul', '/=': 'div', '%=': 'rem' };
 const range = (start, end) => ({ start: start.start, end: end.end });
-const scalar = type => ['fixed', 'bool', 'string', 'unit'].includes(type.kind);
+// The Host frontend qualifies actual Rust f64 types before this layer. Its
+// by-value primitive has no aggregate alias/storage obligation; plain portable
+// float shapes, f32, references and unresolved owners gain no such permission.
+const scalar = type => ['fixed', 'bool', 'string', 'unit'].includes(type.kind)||type.kind==='float'&&type.rustPrimitiveName==='f64'&&type.rustSourceType===true&&!type.rustReference&&!type.rustOwnership&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved&&!type.rustBorrowingUnresolved&&!type.rustBorrowLifetime;
 
 function containsControl(node) {
   if (!node || typeof node !== 'object') return false;
