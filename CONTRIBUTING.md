@@ -71,6 +71,8 @@ For issue #759, keep at most three active workers and reuse the assigned worktre
 
 Use [the reusable translation guidance](docs/development/reusable-translation-guidance/README.md) when copying this workflow to another repository. Copy its contribution and agent guidance separately from the compiler export, preserve the receiving repository's conventions and stricter user constraints, and qualify the receiving project independently. Reused upstream implementations must retain pinned source bytes, notices and licenses; a copied approach or successful export is not evidence of complete translation.
 
+Inspect existing upstream implementations and tests for reusable rules before drafting new translator machinery. Reference comparisons include [formal-ai PR 1188](https://github.com/link-assistant/formal-ai/pull/1188), [meta-language PR 201](https://github.com/link-foundation/meta-language/pull/201), and [relative-meta-logic](https://github.com/link-foundation/relative-meta-logic). Pin the actual reviewed commits. Keep complete source copies outside the active compiler tree until receiving qualification passes; the [retained meta-language candidate](tools/upstream-translation-candidates/meta-language-63e3b27a/README.md) documents its inactive status and recovery requirements. Store pristine third-party source under the existing raw-record convention instead of editing it to satisfy local terminology or formatting rules.
+
 ## Code Style Guidelines
 
 This project uses:
