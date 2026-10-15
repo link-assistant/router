@@ -59,14 +59,17 @@ const traversalDescriptors=pathNative?descriptor(originalObject,'getOwnPropertyD
 const traversalApply=pathNative?descriptor(pathReflect.value,'apply'):null;
 const traversalEntries=pathNative?descriptor(mapPrototype,'entries'):null;
 const traversalMapIterator=pathNative?iteratorPins[1]:null;
-let traversalNative=!!(pathNative&&traversalCall&&hasOwn(traversalCall,'value')&&native(traversalCall.value,'call')&&traversalDescriptors&&hasOwn(traversalDescriptors,'value')&&native(traversalDescriptors.value,'getOwnPropertyDescriptors')&&traversalApply&&hasOwn(traversalApply,'value')&&traversalApply.value===apply&&native(apply,'apply')&&traversalEntries&&hasOwn(traversalEntries,'value')&&traversalEntries.value===descriptor(mapPrototype,Symbol.iterator)?.value&&traversalMapIterator);
+const traversalIteratorPrototype=traversalMapIterator?prototype(traversalMapIterator.owner):null;
+const traversalIteratorParent=traversalIteratorPrototype&&!types.isProxy(traversalIteratorPrototype)?prototype(traversalIteratorPrototype):null;
+const traversalIteratorMethod=traversalIteratorPrototype&&!types.isProxy(traversalIteratorPrototype)?descriptor(traversalIteratorPrototype,Symbol.iterator):null;
+let traversalNative=!!(pathNative&&traversalCall&&hasOwn(traversalCall,'value')&&native(traversalCall.value,'call')&&traversalDescriptors&&hasOwn(traversalDescriptors,'value')&&native(traversalDescriptors.value,'getOwnPropertyDescriptors')&&traversalApply&&hasOwn(traversalApply,'value')&&traversalApply.value===apply&&native(apply,'apply')&&traversalEntries&&hasOwn(traversalEntries,'value')&&traversalEntries.value===descriptor(mapPrototype,Symbol.iterator)?.value&&traversalMapIterator&&!types.isProxy(traversalMapIterator.owner)&&!descriptor(traversalMapIterator.owner,Symbol.iterator)&&traversalIteratorMethod&&hasOwn(traversalIteratorMethod,'value')&&native(traversalIteratorMethod.value,'[Symbol.iterator]'));
 if(traversalNative)try{
  const map=new globalMap.value(),key={},value={};map.set(key,value);
  const cursor=apply(traversalEntries.value,map,[]),first=apply(traversalMapIterator.field.value,cursor,[]),end=apply(traversalMapIterator.field.value,cursor,[]);
  traversalNative=prototype(cursor)===traversalMapIterator.owner&&first.done===false&&first.value.length===2&&first.value[0]===key&&first.value[1]===value&&end.done===true;
 }catch{traversalNative=false;}
 export function originalNamespaceTraversalIntrinsicsUnchanged(){
- if(!traversalNative||!originalPathMembershipIntrinsicsUnchanged()||!same(descriptor(traversalFunctionPrototype,'call'),traversalCall)||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(pathReflect.value,'apply'),traversalApply)||!same(descriptor(mapPrototype,'entries'),traversalEntries))return false;
+ if(!traversalNative||!originalPathMembershipIntrinsicsUnchanged()||!same(descriptor(traversalFunctionPrototype,'call'),traversalCall)||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(pathReflect.value,'apply'),traversalApply)||!same(descriptor(mapPrototype,'entries'),traversalEntries)||prototype(traversalMapIterator.owner)!==traversalIteratorPrototype||descriptor(traversalMapIterator.owner,Symbol.iterator)||prototype(traversalIteratorPrototype)!==traversalIteratorParent||!same(descriptor(traversalIteratorPrototype,Symbol.iterator),traversalIteratorMethod))return false;
  // The old route calls entries.call; a function's own call hook or changed
  // prototype is also observable and therefore keeps the collected fallback.
  return prototype(traversalEntries.value)===traversalFunctionPrototype&&!descriptor(traversalEntries.value,'call')&&prototype(traversalMapIterator.field.value)===traversalFunctionPrototype&&!descriptor(traversalMapIterator.field.value,'call');

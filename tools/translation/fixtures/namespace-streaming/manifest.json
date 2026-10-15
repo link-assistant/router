@@ -1,0 +1,11 @@
+{
+  "schema": "complete-original-namespace-leaf-v1",
+  "commit": "0ba0b689935a5e85d997f506298167107fcb31ef",
+  "path": "tools/translation/matches-macro-context.mjs",
+  "storedPath": "matches-macro-context.original.txt",
+  "bytes": 34388,
+  "sha256": "2fbfee2857500edcda3b254594cd01f269fadd1dd04a75c0384e6df6ec92a607",
+  "relocation": "Only complete relative import specifiers are changed to the same active issuer URLs. Original body and public API unchanged.",
+  "mode": "100644",
+  "blob": "5c7d056e00a8693e0c57cdccf19e65de0a56a412"
+}
