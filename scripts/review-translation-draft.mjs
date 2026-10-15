@@ -13,6 +13,7 @@ import {loadProjectMetaStorage} from '../tools/translation/project-meta-storage.
 import {sourceItems} from '../tools/translation/rust-structure.mjs';
 import {inspectDeriveInput} from '../tools/translation/derive-inputs.mjs';
 import {loadDeriveDependencyProof} from '../tools/translation/derive-dependencies.mjs';
+import {reviewInitialSourceGenericLayouts,reviewSourceAdmittedHostLayouts} from './review-source-generic-layouts.mjs';
 import {loadJsonMacroSourceProof} from '../tools/translation/json-macro-inputs.mjs';
 import {proveBuiltinScalarSourceOutput,builtinScalarOriginalSourcePlan} from '../tools/translation/builtin-scalar-ast-route.mjs';
 import {pinnedDefaultBody,parsePinnedBody,parsedPinnedBodyEvidence} from '../tools/translation/extensions/standard-body-source.mjs';
@@ -280,7 +281,7 @@ function reviewCloneMethod(meta,item,{checked,target,entries,names,used,context}
   used.add(entry);return {...item,sourceSha256,itemSha256,qualifiedName:entry.fullName,targetName:flattened.fullName,checkedSignatureSha256:digest(JSON.stringify({params:entry.params,ret:entry.ret})),checkedBodySha256:digest(JSON.stringify(entry.body)),targetBodySha256:digest(JSON.stringify(flattened.body)),semanticAuthority:false,runtimeParity:false};
 }
 
-function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies}) {
+function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest}) {
   const proof=typeof dependencies==='function'?dependencies():dependencies;
   if(!Array.isArray(meta.sources)||!meta.sources.length)throw new Error('Unit Default review requires complete original source modules');
   const paths=[...new Set(meta.sources.map(item=>{relativeName(item.source);return item.source;}))],sources=new Map(paths.map(name=>[name,readSource(name)]));
@@ -288,7 +289,15 @@ function originalUnitDefaultReviewContext(meta,row,{readSource,dependencies}) {
   const graph=resolveModuleGraph({entry:row.entry,paths,readSource:name=>sources.get(name),compilationProfile:meta.compilationProfile});
   cloneSame(graph.modules.map(module=>({source:module.file,sha256:digest(module.source),module:module.path})),meta.sources,'Unit Default complete original source module layout mismatch');
   const externalModules=registeredStandardHostBindings([...originalMatchesNamespaceBindings(),...lockedTomlValueNamespaceBindings(proof)]),derive=createDeriveFootprintContext({modules:graph.modules,dependencies:proof,externalModules,compilationProfile:graph.compilationProfile}),defaultContext=createDefaultSourceContext(derive);
-  return {graph,derive,defaultContext,state:defaultSourceContextFacts(defaultContext),sources};
+  return {graph,derive,defaultContext,state:defaultSourceContextFacts(defaultContext),sources,genericReviewInputs:{
+    deriveDependencies:proof,
+    // The review caller supplies the producer's actual manifest explicitly.
+    // A null producer input stays null even when dependency Cargo bytes exist.
+    cargoManifest:cargoManifest??null,
+    expectedCargoEdition:meta.originalCargoEditionInput??null,
+    jsonMacroDependencies:jsonMacroDependencies??null,
+    expectedJsonContext:meta.jsonMacroContext??null,
+  }};
 }
 function originalUnitDefaultChecked(context,module,item,surface,offset) {
   const binding=originalEnumBinding(context),scope=binding.scopes.find(scope=>moduleScopeKey(scope)===moduleScopeKey(module)),kernel=module.source.slice(item.start,item.end),parser=new HostRustParser(tokenizeRust(kernel)),snapshot=originalHostParserIdentitySnapshot();
@@ -344,10 +353,17 @@ function originalContainerDefaultChecked(context,module,item,surface,offset) {
   // Source-first generic issuance must retain the producer's first owner and
   // span even when several original records instantiate the same type.
   context.containerNominals??=originalEnumNominals(context,module,{start:-1,end:-1},null,offset,binding);
-  const sourceLayouts=new Map(context.containerNominals.map(declaration=>[declaration.name,declaration])),needed=new Set();
+  context.containerInitialGenerics??=reviewInitialSourceGenericLayouts({graph:context.graph,binding,toolContext:context.enumToolContext,deriveContext:context.derive,...context.genericReviewInputs});
+  // Retain the nominal/Copy reconstruction above; only canonical generic
+  // layouts are independently rebuilt in their true initial issuance order.
+  const sourceLayouts=new Map(context.containerNominals.filter(declaration=>declaration.term!=='generated-type').map(declaration=>[declaration.name,declaration]));
+  for(const declaration of context.containerInitialGenerics.declarations)sourceLayouts.set(declaration.name,declaration);
+  const support=reviewSourceAdmittedHostLayouts([...context.containerNominals,...context.containerInitialGenerics.declarations,...context.containerInitialGenerics.shadowDeclarations]);
+  for(const declaration of support)if(!sourceLayouts.has(declaration.name))sourceLayouts.set(declaration.name,declaration);
+  const needed=new Set();
   function requireLayout(name){
-    if(needed.has(name))return;const declaration=sourceLayouts.get(name);if(!declaration)throw new Error('Container Default original dependent nominal layout missing: '+name);needed.add(name);
-    function types(node){if(Array.isArray(node)){for(const child of node)types(child);return;}if(!node||typeof node!=='object')return;if(node.kind==='named'&&node.path?.[0]==='crate')requireLayout(node.path.slice(1).join('.'));for(const [key,value]of Object.entries(node))if(!['deriveNamespaceProof','toolAttributeProof','copyCertificate'].includes(key))types(value);}
+    if(needed.has(name))return;if(context.containerInitialGenerics.collisions.some(row=>row.name===name))throw new Error('Container Default original canonical generic name collides with a source declaration: '+name);const declaration=sourceLayouts.get(name);if(!declaration)throw new Error('Container Default original dependent layout missing from initial source issuance; method-first generic layouts require original method replay: '+name);needed.add(name);
+    function types(node){if(Array.isArray(node)){for(const child of node)types(child);return;}if(!node||typeof node!=='object')return;if(node.kind==='named'&&Array.isArray(node.path))requireLayout(node.path.filter((part,index)=>index!==0||part!=='crate').join('.'));for(const [key,value]of Object.entries(node))if(!['deriveNamespaceProof','toolAttributeProof','copyCertificate'].includes(key))types(value);}
     types(declaration.surface);
   }
   requireLayout([...module.path,item.name].join('.'));
@@ -366,7 +382,7 @@ function flattenedDefaultNode(node,names) {
   if(Object.hasOwn(node,'defaultSourceProof'))return {...flattenedCloneNode({...node,defaultSourceProof:null},names),defaultSourceProof:node.defaultSourceProof};
   const result=Object.fromEntries(Object.entries(node).map(([key,value])=>[key,flattenedDefaultNode(value,names)]));
   if(node.kind==='data'&&names.has(node.name))result.name=names.get(node.name);
-  if(node.kind==='named'&&node.path?.[0]==='crate'&&names.has(node.path.slice(1).join('.')))result.path=['crate',names.get(node.path.slice(1).join('.'))];
+  if(node.kind==='named'&&Array.isArray(node.path)){const owner=node.path.filter((part,index)=>index!==0||part!=='crate').join('.');if(names.has(owner))result.path=['crate',names.get(owner)];}
   if(['call','routerFutureCall'].includes(node.k))result.fn=names.get(node.fn)??node.fn;
   if(node.k==='ctor')result.data=names.get(node.data)??node.data;
   return result;
@@ -415,7 +431,9 @@ function assertGeneratedReviewData(value) {
 
 // Integrity only. Serialized rows never recreate the compiler's private caller
 // brands; source namespace, runtime and whole-trait authority remain false.
-export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies}={}) {
+// Direct callers must supply the actual cargoManifest when the producer used
+// one. The CLI supplies its verified original input; metadata is no substitute.
+export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest}={}) {
   assertGeneratedReviewData(meta);assertGeneratedReviewData(row);
   if(meta.runtimeParity===true||meta.semanticAuthority===true)throw new Error('Generated review cannot accept semantic or runtime authority');
   const rows=generatedArray(meta),count=Object.hasOwn(row,'checkedGeneratedMethods')?row.checkedGeneratedMethods:0;
@@ -428,12 +446,12 @@ export function reviewGeneratedMethods(meta,row,{readSource,dependencies,jsonMac
   const used=new Set(),identities=new Set(),result=[];let cloneContext=null,unitDefaultContext=null,containerDefaultContext=null;
   for(const item of rows){
     if(['original-generated-container-default-ir-v1','original-generated-dependent-default-ir-v1'].includes(item?.defaultSourceProof?.schema)){
-      containerDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies});
+      containerDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest});
       const reviewed=reviewContainerDefaultMethod(meta,item,{checked,target,entries,names,used,context:containerDefaultContext});
       const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
     }
     if(item?.generator==='core::default::Default'&&item.originalDeclarationTerm==='enum'){
-      unitDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies});
+      unitDefaultContext??=originalUnitDefaultReviewContext(meta,row,{readSource,dependencies,jsonMacroDependencies,cargoManifest});
       const reviewed=reviewUnitDefaultMethod(meta,item,{checked,target,entries,names,used,context:unitDefaultContext});
       const identity=generatedIdentity(reviewed);if(identities.has(identity))throw new Error('Duplicate generated method identity');identities.add(identity);result.push(reviewed);continue;
     }
@@ -630,7 +648,7 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     for(const item of [...meta.executable,...meta.checkedMethods]){
       if(!tracked.includes(item.source)||!Number.isSafeInteger(item.span?.start)||!Number.isSafeInteger(item.span?.end)||item.span.start<0||item.span.end<item.span.start||item.span.end>new TextDecoder('utf-8',{fatal:true}).decode(read(item.source)).length)throw new Error('Invalid project original item: '+row.entry);
     }
-    return {...meta,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies})};
+    return {...meta,reviewedGeneratedMethods:historical?historical.reviewProject(bytes,row):reviewGeneratedMethods(meta,row,{readSource:name=>new TextDecoder('utf-8',{fatal:true}).decode(read(name)),dependencies,jsonMacroDependencies,cargoManifest:cargo.some(input=>input.path==='Cargo.toml')?read('Cargo.toml').toString('utf8'):null})};
   }
   const historical=baselineSha?createHistoricalTranslationReview({root,baselineSha,inventoryPath,readSource:read}):null;
   let historicalBaselineReview=null,projects;

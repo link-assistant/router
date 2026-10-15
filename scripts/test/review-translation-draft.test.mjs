@@ -140,7 +140,7 @@ const cloneInputs=[
 ];
 const cloneFixtures=new Map(cloneInputs.map(([label,source])=>[label,{source,meta:JSON.parse(JSON.stringify(translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,compilationProfile:PRODUCTION_PROFILE}).meta))}]));
 const cloneChecked=meta=>meta.checkedSemanticProgram.program.declarations.$map.find(([,entry])=>entry.impl?.cloneSourceProof)[1],cloneTarget=meta=>meta.targetSemanticProgram.program.declarations.$map.find(([,entry])=>entry.impl?.cloneSourceProof)[1],cloneRow=meta=>meta.checkedGeneratedMethods.find(row=>row.generator==='core::clone::Clone');
-const cloneReview=(fixture)=>reviewGeneratedMethods(fixture.meta,{entry:fixture.meta.entry,checkedGeneratedMethods:fixture.meta.checkedGeneratedMethods?.length??0},{readSource:()=>fixture.source,dependencies,...(fixture.jsonMacroDependencies?{jsonMacroDependencies:fixture.jsonMacroDependencies}:{})});
+const cloneReview=(fixture)=>reviewGeneratedMethods(fixture.meta,{entry:fixture.meta.entry,checkedGeneratedMethods:fixture.meta.checkedGeneratedMethods?.length??0},{readSource:()=>fixture.source,dependencies,cargoManifest:manifest,...(fixture.jsonMacroDependencies?{jsonMacroDependencies:fixture.jsonMacroDependencies}:{})});
 function cloneRetain(label,value){if(process.env.ROUTER_CLONE_REVIEW_VECTORS){const directory=process.env.ROUTER_CLONE_REVIEW_VECTORS;mkdirSync(directory,{recursive:true});writeFileSync(join(directory,label+'.json.gz'),gzipSync(JSON.stringify(value,null,2)+'\n'));}}
 for(const [label,fixture]of cloneFixtures)test('original generated Clone '+label+' independently rejoins source AST, receiver, private proof and whole body',()=>{
   const rows=cloneReview(fixture);assert.equal(rows.filter(row=>row.generator==='core::clone::Clone').length,1);assert.equal(rows.find(row=>row.generator==='core::clone::Clone').receiver,'shared');for(const row of rows){assert.equal(row.semanticAuthority,false);assert.equal(row.runtimeParity,false);}assert.equal(fixture.meta.checkedMethods.length,0);assert.equal(fixture.meta.executable.length,1);
@@ -282,7 +282,24 @@ unitFailure('mirrored-unit-copy-profile-missing-flag',meta=>{for(const proof of 
 unitFailure('mirrored-unit-source-profile-missing-values',meta=>{for(const proof of cloneProofs(meta))delete proof.unitSource.sourceOutput.compilationProfile.values;});
 test('complete original model source requires genuine independent JSON/Serde proof for its manual non-Drop trait',{timeout:60000},()=>{
   const source=readFileSync(new URL('src/model_contract.rs',root),'utf8'),jsonMacroDependencies=loadJsonMacroSourceProof({manifest,lock}),result=translateProject({entry:'src/model_contract.rs',paths:['src/model_contract.rs'],readSource:()=>source,cargoManifest:manifest,deriveDependencies:dependencies,jsonMacroDependencies,compilationProfile:PRODUCTION_PROFILE}),meta=JSON.parse(JSON.stringify(result.meta));
-  for(const proof of [undefined,structuredClone(jsonMacroDependencies),dependencies]){assert.throws(()=>cloneReview({source,meta,jsonMacroDependencies:proof}),/genuine original private Copy/);cloneRetain(proof===dependencies?'unit-model-foreign-serde-proof':proof?'unit-model-copied-serde-proof':'unit-model-missing-serde-proof',{source,result,suppliedJsonMacroDependencies:proof??null});}
+  // This API joins every genuine row one-to-one; row order is not a source
+  // authority. Preserve both complete programs and every row, then put Clone
+  // first solely to exercise its independent original private Copy guard.
+  const cloneFirst=structuredClone(meta),all=cloneFirst.checkedGeneratedMethods;
+  cloneFirst.checkedGeneratedMethods=all.sort((left,right)=>Number(right.generator==='core::clone::Clone')-Number(left.generator==='core::clone::Clone'));
+  assert.equal(cloneFirst.checkedGeneratedMethods.length,meta.checkedGeneratedMethods.length);
+  assert.deepEqual(cloneFirst.checkedGeneratedMethods.map(row=>JSON.stringify(row)).sort(),meta.checkedGeneratedMethods.map(row=>JSON.stringify(row)).sort());
+  assert.deepEqual({...cloneFirst,checkedGeneratedMethods:meta.checkedGeneratedMethods},meta);
+  const programHashes={checked:hash(JSON.stringify(meta.checkedSemanticProgram)),target:hash(JSON.stringify(meta.targetSemanticProgram))};
+  assert.equal(JSON.stringify(cloneFirst.checkedSemanticProgram),JSON.stringify(meta.checkedSemanticProgram));assert.equal(JSON.stringify(cloneFirst.targetSemanticProgram),JSON.stringify(meta.targetSemanticProgram));
+  const genuine=cloneReview({source,meta:cloneFirst,jsonMacroDependencies});assert.equal(genuine.length,meta.checkedGeneratedMethods.length);
+  cloneRetain('unit-model-clone-first-genuine-full',{source,result,originalMeta:meta,cloneFirstMeta:cloneFirst,genuine,programHashes,projection:'none; stable full-row permutation only',programsUnchanged:true});
+  function refused(candidate,proof,message){let error;try{cloneReview({source,meta:candidate,jsonMacroDependencies:proof});}catch(thrown){error=thrown;}assert.ok(error);assert.equal(error.message,message);return {name:error.name,message:error.message,stack:error.stack};}
+  for(const proof of [undefined,structuredClone(jsonMacroDependencies),dependencies]){
+    const mixedFailure=refused(meta,proof,'Review initial generic issuance original JSON macro context mismatch');
+    const copyFailure=refused(cloneFirst,proof,'Clone Copy branch lacks its genuine original private Copy/no-Drop layout');
+    cloneRetain(proof===dependencies?'unit-model-foreign-serde-proof':proof?'unit-model-copied-serde-proof':'unit-model-missing-serde-proof',{source,result,originalMeta:meta,cloneFirstMeta:cloneFirst,suppliedJsonMacroDependencies:proof??null,mixedFailure,copyFailure,programHashes,projection:'none; every original generated row retained',programsUnchanged:true});
+  }
 });
 unitFailure('foreign-original-source-scope',meta=>meta.sources[0].module=['foreign']);
 unitFailure('mirrored-copy-source-scope-uncertainty',meta=>{for(const body of cloneBodies(meta))body.cloneSourceProof.checkedCopyProof.proof.certificate.proofs.find(proof=>proof.kind==='source-derived').attributeMacroProvenance.sourceScopes[0].unresolvedTypeScope=true;});
