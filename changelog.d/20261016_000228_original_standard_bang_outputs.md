@@ -34,3 +34,12 @@ binary capture as the unchanged token engine's explicit unsupported frontier,
 and uses a complete supported method-call capture for the independent positive.
 All nine cases and deadlines remain; production bytes are unchanged. This
 successor is UNRUN and grants no additional authority.
+
+The next complete receiving file finished 8/9 in both engines. Its remaining
+case expected the narrow arm refusal where the unchanged engine instead stops
+at the original repetition-lookahead frontier. A second test-only correction
+retains each complete arm/input and both direct-engine and consumer outcomes
+before assertions, requires that exact TypeError for the four affected inputs,
+and keeps the empty arm's separate selected-rule refusal. Original statement,
+binary and EOF controls and every deadline remain. This correction is UNRUN;
+no engine or production rule changed.
