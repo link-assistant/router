@@ -46,7 +46,9 @@ namespace or formatting-body gain. All four unknown-producer/import/conditional
 observations are retained before assertions; missing conditional siblings retain
 ancestor bang effects without inventing inherited child type uncertainty.
 
-The successor ten-case effect group and new serialization consumer control are
-source only and UNRUN. No scope-wide completion, generated trait behavior,
-runtime parity or Rust verification is claimed. Existing case deadlines remain
-unchanged; full original census and affected regression qualification are pending.
+The complete ten-case effect group now passes under Node and Bun. The new
+serialization consumer control remains unrun, and restoring the complete
+original schema fixtures still requires the payload-enum proof prerequisite.
+No scope-wide completion, generated trait behavior, runtime parity or Rust
+verification is claimed. Existing case deadlines remain unchanged; all 810
+original Rust/Cargo inputs were unchanged during the focused receiving pair.

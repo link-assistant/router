@@ -11,9 +11,12 @@
   `Some`/`None`, operand effects, source ownership and proof mutation controls.
   Add CI-only Cargo integration source for the actual public Telegram caller.
 
-This is an **unverified source draft**. No JavaScript, TypeScript or Rust test
-has been run for this change. Production gains and current-project admission
-are unmeasured. Other payloads, `!=`, arbitrary reference/tuple contexts,
+This is a **partially verified translator draft**. The small complete union
+behavior file passes under Node and Bun with strict TypeScript 5.9.3, as do
+53 cases in eight existing affected files. The complete eight-case original
+caller file remains unqualified: its full-library Qwen compilation exceeded
+the unchanged 60-second case bound. Rust cases remain unrun, and production
+gains and current-project admission are unmeasured. Other payloads, `!=`, arbitrary reference/tuple contexts,
 unknown expansions and whole-core trait/namespace closure remain outside this
 rule. Existing output observers grant no admission authority. Repository
 formatting remains in the separate repository rule phase.
@@ -26,7 +29,8 @@ existing shared-pattern evidence envelopes during ordinary target retargeting.
 Contextual `Some`/`None` values rejoin their checked constructor and payload to
 an already source-qualified expected Option. The Qwen test now starts from the
 actual `src/lib.rs` root and retains the wrong standalone-entry diagnostics as
-an explicit negative. All successor checks remain UNRUN with the same bounds.
+an explicit negative. Those successor checks were unrun at that checkpoint;
+the subsequent results and limits are recorded below.
 
 A later receiving attempt passed the actual operand-effect JavaScript and
 strict-TypeScript case, but reported strict-TypeScript narrowing errors for
@@ -34,5 +38,7 @@ literal algebraic operands. The next source-only repair records complete
 checked union types through the existing local-initializer annotation route,
 including original-declaration target consumers. It adds no runtime helper,
 `any` cast or new source authority. The full-root Qwen case remains an honest
-performance boundary; its original case deadline has not changed. This repair
-and its nominal-union regression are UNRUN.
+performance boundary; its original case deadline has not changed. The small
+independent nominal/Option union regression now passes in both engines with
+strict TypeScript. The incomplete full-library run and all failed streams
+remain retained; no CI run or Rust execution was started or cancelled.
