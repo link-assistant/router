@@ -9,6 +9,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual,types as utilTypes} from 'node:util';
 import {parseProgram,roundTripProgram} from '../tools/translation/semantic-meta.mjs';
+import {loadProjectMetaStorage} from '../tools/translation/project-meta-storage.mjs';
 import {sourceItems} from '../tools/translation/rust-structure.mjs';
 import {inspectDeriveInput} from '../tools/translation/derive-inputs.mjs';
 import {loadDeriveDependencyProof} from '../tools/translation/derive-dependencies.mjs';
@@ -494,14 +495,14 @@ export function compareGeneratedMethods(before,after) {
   return {newlyCheckedGeneratedMethods:after.filter(item=>!old.has(generatedIdentity(item))),lostCheckedGeneratedMethods:before.filter(item=>!current.has(generatedIdentity(item))),changedGeneratedMethodBodies:after.filter(item=>{const prior=old.get(generatedIdentity(item));return prior&&(prior.checkedBodySha256!==item.checkedBodySha256||prior.checkedSignatureSha256!==item.checkedSignatureSha256);}).map(item=>({identity:generatedIdentity(item),previous:old.get(generatedIdentity(item)),current:item}))};
 }
 
-export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inventoryPath='parity/rust-source-inventory.json'}={}) {
+export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inventoryPath='parity/rust-source-inventory.json',projectMetaStorageLimits}={}) {
   root=fs.realpathSync(root);
   if(baselineSha!==null&&!/^[a-f0-9]{40}$/u.test(baselineSha))throw new TypeError('Baseline must be an immutable full Git SHA');
   relativeName(inventoryPath);
   const profile=/^(profiles\/[A-Za-z0-9_-]+\/)?parity\/rust-source-inventory\.json$/u.exec(inventoryPath);
   if(!profile)throw new TypeError('Review requires a canonical or profile Rust inventory');
   const prefix=profile[1]??'',roots=outputRoots.map(name=>prefix+name),head=git(root,['rev-parse','HEAD']).toString().trim();
-  const inputs=new Map();let inputBytes=0;
+  const inputs=new Map(),baselineProjectInputs=new Map();let inputBytes=0;
   function read(name) {
     relativeName(name);let absolute=root;
     for(const part of name.split('/')){absolute=path.join(absolute,part);if(fs.lstatSync(absolute).isSymbolicLink())throw new TypeError('Review refuses linked inputs: '+name);}
@@ -511,7 +512,7 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     if(bytes.length!==before.size||before.dev!==after.dev||before.ino!==after.ino||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs)throw new Error('Input changed during review: '+name);
     const row={path:name,bytes:bytes.length,sha256:digest(bytes)},old=inputs.get(name);
     if(old&&JSON.stringify(old)!==JSON.stringify(row))throw new Error('Input changed during review: '+name);
-    if(!old){inputBytes+=bytes.length;if(inputs.size>=MAX_FILES||inputBytes>MAX_TOTAL_BYTES)throw new RangeError('Review complete-input budget');inputs.set(name,row);}
+    if(!old){inputBytes+=bytes.length;if(inputs.size+baselineProjectInputs.size>=MAX_FILES||inputBytes>MAX_TOTAL_BYTES)throw new RangeError('Review complete-input budget');inputs.set(name,row);}
     return bytes;
   }
   const inventory=parse(read(inventoryPath));
@@ -538,6 +539,24 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
     compilerInputs.push(inputs.get(name));
   }
   const oldInventory=baselineSha?parse(git(root,['show',baselineSha+':'+inventoryPath])):null;
+  const projectComponents=new Set(),baselineComponents=new Set();
+  function baselineProjectRead(name){
+    relativeName(name);if(!baselineSha||!roots.some(directory=>name.startsWith(directory+'/')))throw new TypeError('Baseline project target is outside generated roots: '+name);
+    const listing=git(root,['ls-tree','-l','-z',baselineSha,'--',name]).toString().split('\0').filter(Boolean);
+    const match=listing.length===1?/^(100644|100755) blob ([a-f0-9]{40})\s+(\d+)\t(.+)$/u.exec(listing[0]):null;
+    if(!match||match[4]!==name)throw new TypeError('Missing or linked baseline project input: '+name);
+    const bytes=Number(match[3]);if(!Number.isSafeInteger(bytes)||bytes>MAX_FILE_BYTES)throw new RangeError('Baseline project file byte budget: '+name);
+    const value=git(root,['show',baselineSha+':'+name]);if(value.length!==bytes)throw new Error('Baseline project input changed: '+name);
+    const row={path:name,commit:baselineSha,bytes,sha256:digest(value)},old=baselineProjectInputs.get(name);
+    if(old&&JSON.stringify(old)!==JSON.stringify(row))throw new Error('Baseline project input changed: '+name);
+    if(!old){inputBytes+=bytes;if(inputs.size+baselineProjectInputs.size>=MAX_FILES||inputBytes>MAX_TOTAL_BYTES)throw new RangeError('Review complete-input budget');baselineProjectInputs.set(name,row);}
+    return value;
+  }
+  function storedProject(row,reader,seen){
+    const raw=reader(row.targets.meta),loaded=loadProjectMetaStorage(raw,{metaPath:row.targets.meta,targets:row.targets,read:reader,storageLimits:projectMetaStorageLimits});
+    for(const component of loaded.components)seen.add(component.path);
+    return {raw,meta:loaded.meta};
+  }
   const oldRows=new Map((oldInventory?.sources??[]).map(row=>[row.source,row]));
   if(oldInventory&&(oldInventory.sources.length!==tracked.length||JSON.stringify([...oldRows.keys()].sort())!==JSON.stringify(tracked)))throw new Error('Baseline must cover the same original Rust source set');
   const originals=[],gained=[],lost=[],totals=Object.fromEntries(Object.keys(inventory.totals).map(key=>[key,0]));
@@ -617,22 +636,27 @@ export function reviewTranslationDraft({root=process.cwd(),baselineSha=null,inve
   let historicalBaselineReview=null,projects;
   try { projects=inventory.projects.map(row=>{
     for(const target of Object.values(row.targets))output(target);
-    const meta=projectMeta(parse(read(row.targets.meta)),row);
+    const current=storedProject(row,read,projectComponents),meta=projectMeta(current.meta,row);
     let comparison=null;
     if(oldInventory){
       const previousRow=oldInventory.projects.find(previous=>previous.entry===row.entry);
       if(!previousRow)throw new Error('Baseline project missing: '+row.entry);
-      const previousBytes=git(root,['show',baselineSha+':'+relativeName(previousRow.targets.meta)]);
-      const previous=projectMeta(parse(previousBytes),previousRow,historical,previousBytes);
+      const previousStored=storedProject(previousRow,baselineProjectRead,baselineComponents);
+      const previous=projectMeta(previousStored.meta,previousRow,historical,previousStored.raw);
       const differences=(before,after)=>{const known=new Set(before.map(projectIdentity));return after.filter(item=>!known.has(projectIdentity(item)));};
       comparison={previousCounts:previousRow,countChanges:Object.fromEntries(['sources','executableFunctions','executableConstants','checkedMethods','checkedGeneratedMethods','refused','unloweredItems','moduleDiagnostics'].map(key=>[key,(row[key]??0)-(previousRow[key]??0)])),newlyExecutableItems:differences(previous.executable,meta.executable),lostExecutableItems:differences(meta.executable,previous.executable),newlyCheckedMethods:differences(previous.checkedMethods,meta.checkedMethods),lostCheckedMethods:differences(meta.checkedMethods,previous.checkedMethods),...compareGeneratedMethods(previous.reviewedGeneratedMethods,meta.reviewedGeneratedMethods)};
     }
     return {...row,checkedGeneratedMethods:meta.reviewedGeneratedMethods.length,executableItems:meta.executable,checkedMethodItems:meta.checkedMethods,checkedGeneratedMethodItems:meta.reviewedGeneratedMethods,refusalCategories:categoryCounts(meta.refused),unloweredCategories:categoryCounts(meta.unloweredItems),moduleDiagnosticItems:meta.moduleDiagnostics,comparison};
   });historicalBaselineReview=historical?.provenance()??null;
   } finally {historical?.close();}
+  for(const name of outputs.keys())if(name.includes('.meta.json.parts/')&&!projectComponents.has(name))throw new Error('Unexpected project metadata component: '+name);
+  if(baselineSha){
+    const entries=git(root,['ls-tree','-r','-z',baselineSha,'--',...roots]).toString().split('\0').filter(Boolean);
+    for(const entry of entries){const name=entry.slice(entry.indexOf('\t')+1);if(name.includes('.meta.json.parts/')&&!baselineComponents.has(name))throw new Error('Unexpected baseline project metadata component: '+name);}
+  }
   for(const name of [...inputs.keys()])read(name);
   if(git(root,['rev-parse','HEAD']).toString().trim()!==head)throw new Error('Commit changed during review');
-  return {schema:'original-corpus-draft-review-v1',headSha:head,baselineSha,inventoryPath,historicalBaselineReview,originalRustInputs:originals,originalCargoInputs:cargo,originalInputsUnchangedFromBaseline:baselineSha?true:null,compilerInputs,outputs:[...outputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),totals,functionCoverage:inventory.functionCoverage,projects,comparison:oldInventory?{previousTotals:oldInventory.totals,totalChanges:Object.fromEntries(Object.entries(totals).map(([key,count])=>[key,count-oldInventory.totals[key]])),newlyExecutableItems:gained,lostExecutableItems:lost}:null,reviewInputs:[...inputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),semanticAuthority:false,runtimeParity:false,fullGatePass:false,rustExecuted:false};
+  return {schema:'original-corpus-draft-review-v1',headSha:head,baselineSha,inventoryPath,historicalBaselineReview,originalRustInputs:originals,originalCargoInputs:cargo,originalInputsUnchangedFromBaseline:baselineSha?true:null,compilerInputs,outputs:[...outputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),totals,functionCoverage:inventory.functionCoverage,projects,comparison:oldInventory?{previousTotals:oldInventory.totals,totalChanges:Object.fromEntries(Object.entries(totals).map(([key,count])=>[key,count-oldInventory.totals[key]])),newlyExecutableItems:gained,lostExecutableItems:lost}:null,reviewInputs:[...inputs.values()].sort((a,b)=>a.path.localeCompare(b.path)),...(baselineProjectInputs.size?{baselineProjectInputs:[...baselineProjectInputs.values()].sort((a,b)=>a.path.localeCompare(b.path))}:{}),semanticAuthority:false,runtimeParity:false,fullGatePass:false,rustExecuted:false};
 }
 
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

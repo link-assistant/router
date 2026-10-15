@@ -14,6 +14,7 @@ import {TranslationError} from '../vendor/meta-language/translation/diagnostics.
 import {createCompilationMatrix,compilationMatrixDescription,DECLARED_FAMILY_PROFILES} from '../compilation-matrix.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {loadProjectMetaStorage} from '../project-meta-storage.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const source='pub struct Counter{value:u8}impl Counter{pub fn read(&self)->u8{self.value}}pub fn plus(v:u8)->u8{Counter{value:v}.read()}pub fn bad()->u8{unknown()}';
 const fields=new Set(['schema','stage','state','entry','source','profile','declaration','phase','completed','total','attempt','remaining','outputs','bytes']);
@@ -95,7 +96,7 @@ test('actual canonical and all three profile CLIs report monotonic diagnostics w
       if(args.length){
         assert.deepEqual(events.filter(row=>row.stage==='profile'&&row.state==='end').map(row=>row.profile),['neutral','unix-family','windows-family']);
         for(const member of JSON.parse(traced.stdout).profiles){
-          const meta=JSON.parse(readFileSync(join(root,member.projects[0].targets.meta),'utf8'));
+          const project=member.projects[0],meta=loadProjectMetaStorage(readFileSync(join(root,project.targets.meta)),{metaPath:project.targets.meta,targets:project.targets,read:name=>readFileSync(join(root,name))}).meta;
           assert.deepEqual(meta.compilationProfile,expectedProfiles.find(row=>row.name===member.name).compilationProfile);assert.equal(meta.sources[0].sha256,hash(fullSource));assert.equal(meta.runtimeParity,false);
           const items=meta.configurationEvidence.find(row=>row.source==='src/lib.rs').items;
           for(const [name,family]of [['unix_only','unix-family'],['windows_only','windows-family']]){

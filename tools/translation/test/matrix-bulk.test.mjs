@@ -11,6 +11,7 @@ import {captureSourceCorpus,trackedSource} from '../source-corpus.mjs';
 import {regenerate,planRegeneration,validateRegenerationPlan,applyRegenerationPlan,OUTPUT_ROOTS} from '../bulk.mjs';
 import {regenerateCompilationMatrix} from '../matrix-bulk.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {loadProjectMetaStorage} from '../project-meta-storage.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const matrix=()=>createCompilationMatrix({profiles:DECLARED_FAMILY_PROFILES});
 const paths=['src/lib.rs','src/windows.rs'];
@@ -32,7 +33,7 @@ test('full profile drafts execute independent original families through meta int
     const result=regenerateCompilationMatrix({root:directory,matrix:selection,sourceCorpus:corpus});assert.deepEqual(result.failures,[]);assert.deepEqual(snapshot(directory),baseline);
     assert.equal(result.manifest.sourceSetSha256,corpus.sourceSetSha256);assert.equal(result.manifest.runtimeParity,false);assert.equal(result.manifest.commonExecutableOutput,false);assert.equal(result.manifest.platformDomainComplete,false);
     for(const member of result.manifest.profiles){
-      const project=member.projects.find(project=>project.entry==='src/lib.rs'),meta=JSON.parse(readFileSync(join(directory,project.targets.meta),'utf8'));
+      const project=member.projects.find(project=>project.entry==='src/lib.rs'),meta=loadProjectMetaStorage(readFileSync(join(directory,project.targets.meta)),{metaPath:project.targets.meta,targets:project.targets,read:name=>readFileSync(join(directory,name))}).meta;
       const target={meta,javascript:readFileSync(join(directory,project.targets.javascript),'utf8'),typescript:readFileSync(join(directory,project.targets.typescript),'utf8')};
       await verifyTypedTargets(target,api=>{assert.equal(api.SHARED,7n);if(member.name==='neutral')assert.equal(api.result,undefined);else assert.equal(api.result(),member.name==='unix-family'?18n:30n);});
       const inventory=JSON.parse(readFileSync(join(directory,member.inventory),'utf8'));
@@ -112,7 +113,7 @@ test('whole unchanged lib and Unix listener retain separate original configured 
     for(const [path,expected]of Object.entries(originals)){const source=trackedSource(repository,path);assert.equal(hash(source),expected);writeFileSync(join(directory,path),source);}
     const result=regenerateCompilationMatrix({root:directory,matrix:matrix(),sources:Object.keys(originals)});
     for(const member of result.manifest.profiles){
-      const project=member.projects.find(project=>project.entry==='src/lib.rs'),meta=JSON.parse(readFileSync(join(directory,project.targets.meta),'utf8'));
+      const project=member.projects.find(project=>project.entry==='src/lib.rs'),meta=loadProjectMetaStorage(readFileSync(join(directory,project.targets.meta)),{metaPath:project.targets.meta,targets:project.targets,read:name=>readFileSync(join(directory,name))}).meta;
       const edge=meta.moduleEdges.find(edge=>edge.to==='src/unix_listener.rs');
       assert.equal(Boolean(edge),member.name!=='windows-family');
       if(edge){assert.equal(edge.pathSelection.availabilitySelected,member.name==='unix-family');assert.equal(edge.pathSelection.configurationCondition,member.name==='unix-family'?'active':'unknown');assert.equal(edge.pathSelection.runtimeAuthority,false);}

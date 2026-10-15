@@ -6,6 +6,7 @@ import {cpSync,mkdirSync,mkdtempSync,readFileSync,rmSync,writeFileSync} from 'no
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import {loadProjectMetaStorage} from '../project-meta-storage.mjs';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 test('source-only relocated bulk translator regenerates a separate tracked repository and executes both targets',{timeout:600000},async()=>{
@@ -32,7 +33,8 @@ test('source-only relocated bulk translator regenerates a separate tracked repos
     const relocatedArtifacts=new Map([...relocatedInventory.sources,...relocatedInventory.projects].flatMap(row=>Object.values(row.targets)).map(path=>[path,readFileSync(join(repository,path))]));
     assert.equal(written.sources,3);assert.equal(written.executableFunctions,6);assert.equal(checked.mode,'check');
     assert.equal(written.projects[0].executableFunctions,6);assert.equal(written.projects[0].moduleEdges,2);assert.equal(written.runtimeParity,false);
-    const projectMeta=JSON.parse(readFileSync(join(repository,'tools/translation/projects/src/lib.meta.json'),'utf8'));
+    const projectRow=relocatedInventory.projects.find(row=>row.entry==='src/lib.rs');
+    const projectMeta=loadProjectMetaStorage(readFileSync(join(repository,projectRow.targets.meta)),{metaPath:projectRow.targets.meta,targets:projectRow.targets,read:name=>readFileSync(join(repository,name))}).meta;
     assert.equal(projectMeta.deriveDependencyProfile.available,false);assert.equal(projectMeta.deriveDependencyProfile.digest,null);assert.equal(projectMeta.deriveDependencyProfile.diagnostics[0].kind,'unsupported-profile');
     const meta=JSON.parse(readFileSync(join(repository,'tools/translation/meta/src/lib.meta.json'),'utf8'));
     assert.equal(meta.items.map(item=>item.source).join(''),source);
