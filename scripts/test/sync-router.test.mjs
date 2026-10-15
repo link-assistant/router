@@ -18,10 +18,18 @@ const compilerPath=require.resolve('typescript/package.json');
 const dependencies=path.dirname(path.dirname(compilerPath));
 const source='/** @param {number} x @returns {number} */ export function adjust(x) { return x + 1; }\n';
 function put(root,name,value){const target=path.join(root,name);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,value);}
-function fixture(t) {
+function fixture(t,{isolated=false}={}) {
   const retained=process.env.ROUTER_SYNC_FIXTURE_DIR;
-  const root=fs.mkdtempSync(path.join(retained??os.tmpdir(),'router-sync-test-'));
+  const root=fs.mkdtempSync(path.join(isolated?fs.realpathSync(os.tmpdir()):(retained??os.tmpdir()),'router-sync-test-'));
   if(!retained)t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  else if(isolated){
+    const copy=path.join(retained,path.basename(root)+'-isolated-retained');
+    fs.writeFileSync(path.join(retained,path.basename(root)+'.external-fixture.json'),JSON.stringify({originalRoot:root,retainedCopy:copy,symlinks:'verbatim; dependency contents are not copied'})+'\n',{flag:'wx'});
+    t.after(()=>{
+      assert.equal(fs.existsSync(copy),false,'retained fixture must be fresh');
+      fs.cpSync(root,copy,{recursive:true,dereference:false,verbatimSymlinks:true,errorOnExist:true,force:false});
+    });
+  }
   put(root,'packages/javascript/package.json',JSON.stringify({name:'sync-fixture',version:'1.0.0',type:'module'}));
   put(root,'packages/javascript/portable/policy.mjs',source);
   put(root,'packages/javascript/native/core.mjs','export function observed() { return 5; }\n');
@@ -85,7 +93,7 @@ test('actual JavaScript edits synchronize reparsed meta, Rust and executable str
 });
 
 test('receiving dependency resolution precedes inherited compiler roots during synchronization planning', {timeout:60_000},t=>{
-  const root=fixture(t),unrelated=path.join(root,'unrelated-compiler');
+  const root=fixture(t,{isolated:true}),unrelated=path.join(root,'unrelated-compiler');
   const inheritedBefore=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT,overrideBefore=process.env.ROUTER_TRANSLATION_TSC;
   const driver=path.join(root,'compiler-root-controls/driver.mjs');
   const script=`import {createRequire} from 'node:module';
@@ -122,6 +130,13 @@ try {
   put(unrelated,'packages/javascript/package.json','{"type":"module"}\n');
   fs.symlinkSync(dependencies,path.join(unrelated,'packages/javascript/node_modules'),'dir');
   fs.unlinkSync(path.join(root,'packages/javascript/node_modules'));
+  // Retaining a fixture below the repository's node_modules would let ordinary
+  // Node resolution find an ancestor compiler after removing the local link.
+  const receivingRequire=createRequire(path.join(root,'packages/javascript/package.json'));
+  const candidates=receivingRequire.resolve.paths('typescript');
+  assert.ok(Array.isArray(candidates));
+  for(const candidate of candidates)assert.equal(fs.existsSync(path.join(candidate,'typescript')),false,'isolated receiving fixture has an ancestor compiler: '+candidate);
+  put(root,'compiler-root-controls/missing-receiving-dependencies.search-paths.json',JSON.stringify({root:fs.realpathSync(root),candidates})+'\n');
   const missing=child('missing-receiving-dependencies');
   assert.equal(missing.result.status,1);assert.equal(missing.observation.stage,'plan');
   assert.match(missing.observation.error.message,/typescript/u);
