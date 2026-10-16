@@ -1,5 +1,5 @@
 // Compose existing resolver/output rules without merging public scope flags.
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveModuleBindings,assertResolvedSourceScopeOrigin} from './module-bindings.mjs';
 import {deriveFootprintSourceContext} from './derive-footprints.mjs';
 import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
@@ -8,13 +8,16 @@ const pipeline=createRulePipeline([
   {phase:'language',rules:[
     {id:'rust.derived-source-binding.enriched-resolution.v1',apply(state){
       state.binding=resolveModuleBindings(state.input);
+      state.source=deriveFootprintSourceContext(state.input.deriveContext);
+      // Even the unchanged fast path must belong to this genuine context's
+      // complete original graph/views/profile, not a foreign input certificate.
+      assertResolvedSourceScopeOrigin(state.binding.scopes,{modules:state.source.modules,compilationProfile:state.source.compilationProfile});
       state.uncertain=state.binding.scopes.some(scope=>scope.unresolvedTypeScope);
       return state;
     }},
     {id:'rust.derived-source-binding.complete-resolution-equivalence.v1',apply(state){
       if(!state.uncertain)return state;
-      const original=deriveFootprintSourceContext(state.input.deriveContext);
-      const input={...state.input,externalModules:original.externalModules};
+      const input={...state.input,externalModules:state.source.externalModules};
       const binding=resolveModuleBindings(input);
       // Every binding, diagnostic, condition, flag, ordering and extern-prelude
       // entry must agree. An enrichment that affects lookup keeps the old result.

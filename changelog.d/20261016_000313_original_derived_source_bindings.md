@@ -16,3 +16,10 @@ strict TypeScript, genuine output composition, conservative enrichment, copied
 or changed contexts, independent refusals and ordinary manual Default bodies.
 Tests are source-only until coordinator receiving; the existing whole bulk
 fingerprint-order fixture and its coverage assertions are unchanged.
+
+Receiving exposed incorrect new-test assumptions: genuine output legitimately
+resolves the original type binding, and manual-only metadata omits generated
+method rows. Those assertions now check the actual complete result and manual
+method contract. The resolver also joins its genuine private source-scope origin
+to the derive context before the fast path, rejecting foreign or changed original
+modules/views/profiles even when baseline lookup has no type uncertainty.

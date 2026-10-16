@@ -51,7 +51,7 @@ test('complete original binding equality precedes the genuine per-invocation out
   const expected=resolveModuleBindings({...input,deriveBangContext:createDeriveBangContext({deriveContext})});
   retain('04-resolvers',{source,before,expected,actual:state.binding,certificate:deriveContext.certificates[0]});
   assert.equal(before.scopes[0].unresolvedTypeScope,true);assert.ok(before.diagnostics.length);assert.equal(deriveContext.certificates[0].dimensions.typeNamespaceComplete,false);assert.equal(deriveContext.certificates[0].dimensions.bangMacroComplete,false);
-  assert.equal(JSON.stringify(state.binding),JSON.stringify(expected));clear(state.binding);assert.equal(expected.diagnostics.length,0);assert.deepEqual(state.binding.scopes[0].bindings,before.scopes[0].bindings);
+  assert.equal(JSON.stringify(state.binding),JSON.stringify(expected));clear(state.binding);assert.equal(expected.diagnostics.length,0);const prior=before.scopes[0].bindings.find(row=>row.name==='Payload'),current=state.binding.scopes[0].bindings.find(row=>row.name==='Payload');assert.equal(prior.status,'unresolved');assert.equal(prior.target,null);assert.equal(current.status,'resolved');assert.deepEqual(current.target,['crate','Payload']);assert.deepEqual(current.span,prior.span);assert.deepEqual(current.declaration,prior.declaration);
 });
 test('a namespace enrichment that changes any resolution keeps the complete old refusal result',{timeout:60000},()=>{
   const source='use extra::Thing; #[derive(Default)] pub struct Payload{flag:bool,count:u32}',{input}=setup(source);
@@ -81,6 +81,6 @@ test('unknown owners siblings imports and trait shadows retain genuine Default a
 test('already resolved original manual Default keeps the entire baseline and genuine checked body',{timeout:60000},async()=>{
   const source='pub struct Payload{flag:bool,count:u32}impl Default for Payload{fn default()->Self{Self{flag:true,count:17}}}pub fn make()->Payload{Payload::default()}',{input}=setup(source),baseline=resolveModuleBindings(input),actual=resolveDerivedSourceBindings(input);
   retain('08-manual-baseline',{source,baseline,actual});clear(baseline);assert.equal(JSON.stringify(actual),JSON.stringify(baseline));
-  const result=compile(source);retain('08-manual-targets',result);assert.deepEqual(result.meta.refused,[]);assert.equal(result.meta.checkedGeneratedMethods.length,0);assert.ok(result.meta.checkedMethods.some(row=>row.name==='Payload.default'));
+  const result=compile(source);retain('08-manual-targets',result);assert.deepEqual(result.meta.refused,[]);assert.equal(Object.hasOwn(result.meta,'checkedGeneratedMethods'),false);assert.deepEqual(result.checkedGeneratedMethodDeclarations,[]);assert.ok(result.meta.checkedMethods.some(row=>row.name==='Payload.default'));
   await verifyTypedTargets(result,api=>assert.deepEqual(api.make(),{$:'Payload',flag:true,count:17n}),{childTimeoutMs:20000});
 });
