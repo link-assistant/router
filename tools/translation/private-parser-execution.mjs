@@ -768,3 +768,39 @@ export function transportPrivateConcreteMetaChunks(input){
     batchInputCurrent(request.snapshots);return result;
   }finally{active=false;}
 }
+
+
+// Explicit data-only token batch. This is a new authentication transaction;
+// the old single and serialized/reparsed CST operations above are unchanged.
+export function lexPrivateConcreteSources(input){
+  const current=checked();if(active)fail('recursive source transaction');
+  const request=batchSnapshot(input,current);active=true;
+  try{
+    const before=authenticate();checked();
+    if(!compiled){compiled=compile(before);compiledSources=before.sources;}
+    const selected=compiled,selectedSources=compiledSources,modules=selected.modules,rust=modules.rust.rustTokens,javascript=modules.javascript.tokenize;
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled complete source changed');}
+    const rows=[];let tokens=0;
+    for(let at=0;at<request.rows.length;at++){
+      checked();const row=request.rows[at];let result;
+      try{
+        const value=row.language==='Rust'?rust(row.source):javascript(row.source,'JavaScript');
+        tokens+=row.language==='Rust'?value.length:value.tokens.length+value.comments.length;
+        if(tokens>BATCH_NODES)fail('batch aggregate token budget');
+        result=data(value);
+      }catch(error){
+        checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
+        throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
+      }
+      checked();
+      rows.push({source:row.source,language:row.language,tokens:result});
+    }
+    const result={rows,totals:{rows:rows.length,sourceCodeUnits:request.units,utf8Bytes:request.bytes,tokens}};
+    const after=authenticate();checked();if(before.text!==after.text)fail('current manifest differs');
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(before.sources[row.id]!==after.sources[row.id])fail('current complete source differs');}
+    finalIdentities(before.records,before.ancestors);finalIdentities(after.records,after.ancestors);checked();
+    if(compiled!==selected||compiledSources!==selectedSources||selected.modules!==modules||modules.rust.rustTokens!==rust||modules.javascript.tokenize!==javascript)fail('batch token transaction association changed');
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled source association changed');}
+    batchInputCurrent(request.snapshots);return result;
+  }finally{active=false;}
+}

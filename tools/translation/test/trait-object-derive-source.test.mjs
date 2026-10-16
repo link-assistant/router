@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {createHash} from 'node:crypto';
+import {createHash,Hash} from 'node:crypto';
 import {translateProject,resolveModuleGraph} from '../project.mjs';
 import {loadDeriveDependencyProof,deriveDependencySource} from '../derive-dependencies.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from '../derive-quote-meta.mjs';
@@ -15,7 +15,8 @@ import {proveBuiltinDeriveBangFootprint,assertBuiltinDeriveBangFootprint,origina
 import {builtinDefaultOriginalSourcePlan,validateBuiltinDefaultAstOutput} from '../builtin-default-ast-route.mjs';
 import {builtinVisitorFunctionText} from '../builtin-visitor-source.mjs';
 import {originalSourceModuleItems} from '../source-module-views.mjs';
-import {sourceItems} from '../rust-structure.mjs';
+import {sourceItems,rustTokens} from '../rust-structure.mjs';
+import {lexPrivateConcreteSources} from '../private-parser-execution.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {captureSerializationContext} from '../serialization-schema/extract.mjs';
 import {serializeSerializationMeta,parseSerializationMeta} from '../serialization-schema/meta.mjs';
@@ -27,6 +28,16 @@ const manifest=read('Cargo.toml'),lock=read('Cargo.lock'),dependencies=loadDeriv
 const compiler=createQuoteFragmentCompiler(inventoryDeriveQuoteMeta(dependencies));
 function retain(name,value){const path=process.env.ROUTER_TRAIT_OBJECT_SOURCE_VECTOR_DIR;if(path){mkdirSync(path,{recursive:true});writeFileSync(join(path,name+'.json'),JSON.stringify(value),{flag:'wx'});}}
 function observation(callback){try{return {value:callback()};}catch(error){return {error:{name:error.name,message:error.message}};}}
+function observedOperation(callback,mutate=null){
+  const update=Object.getOwnPropertyDescriptor(Hash.prototype,'update'),digest=Object.getOwnPropertyDescriptor(Hash.prototype,'digest'),tape=[];let result;
+  try{
+    Object.defineProperty(Hash.prototype,'update',{...update,value:function(...args){const returned=Reflect.apply(update.value,this,args);tape.push({phase:'update',input:typeof args[0]==='string'?args[0]:args[0].toString('base64'),kind:typeof args[0],args:args.length,returnedThis:returned===this});if(mutate)mutate();return returned;}});
+    Object.defineProperty(Hash.prototype,'digest',{...digest,value:function(...args){const returned=Reflect.apply(digest.value,this,args);tape.push({phase:'digest',args,value:returned});return returned;}});
+    result=observation(callback);
+  }finally{Object.defineProperty(Hash.prototype,'update',update);Object.defineProperty(Hash.prototype,'digest',digest);}
+  return {result,tape};
+}
+const observedTokens=(input,mutate=null)=>observedOperation(()=>lexPrivateConcreteSources(input),mutate);
 function setup(source,name='Record',owner='Debug'){
   const modules=[{file:'src/lib.rs',path:[],source}],context=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE});
   const certificate=context.certificates.find(row=>row.name===name),attribute=certificate?.attributes.find(row=>row.derives?.some(path=>path.join('::')===owner));
@@ -43,12 +54,20 @@ function declaration(file,name){const source=read(file),items=sourceItems(source
 function fixture(t,source){const path=mkdtempSync(join(tmpdir(),'router-trait-object-schema-'));mkdirSync(join(path,'src'));writeFileSync(join(path,'Cargo.toml'),manifest);writeFileSync(join(path,'Cargo.lock'),lock);writeFileSync(join(path,'src/lib.rs'),source);t.after(()=>rmSync(path,{recursive:true,force:true}));return captureSerializationContext({root:path,paths:['src/lib.rs'],compilationProfile:PRODUCTION_PROFILE});}
 
 test('single explicit trait paths preserve complete original Syn tokens and serialized fragments',{timeout:60000},()=>{
+  const originals=['src/ty.rs','src/generics.rs'].map(path=>deriveDependencySource(dependencies,'syn',path)),request=originals.map(row=>({source:row.source,language:'Rust'})),captured=observedTokens(request),expected=originals.map(row=>rustTokens(row.source));
+  retain('01-complete-two-source-transaction',{originals,request,captured,expected});assert.ok(captured.result.value,captured.result.error?.message);assert.deepEqual(captured.result.value.rows.map(row=>row.tokens),expected);assert.deepEqual(captured.result.value.rows.map(row=>row.source),originals.map(row=>row.source));
+  assert.equal(captured.tape.filter(row=>row.phase==='update').length,60);assert.equal(captured.tape.filter(row=>row.phase==='digest').length,60);assert.ok(captured.tape.filter(row=>row.phase==='update').every(row=>row.returnedThis));
+  const selected=observedOperation(()=>compiler.sourceType('Arc<dyn Store>',{}));retain('01-complete-selected-hash-order',selected);assert.ok(selected.result.value,selected.result.error?.message);
+  const updates=selected.tape.filter(row=>row.phase==='update'),digests=selected.tape.filter(row=>row.phase==='digest'),selections=selected.result.value.provenance.traitObjectSyntax.sources;
+  assert.equal(updates.length,68);assert.equal(digests.length,68);assert.equal(updates[0].input,'Arc<dyn Store>');assert.deepEqual(updates.slice(-7).map(row=>row.input),selections.map(row=>deriveDependencySource(dependencies,'syn',row.source).source.slice(row.span.start,row.span.end)));assert.deepEqual(digests.slice(-7).map(row=>row.value),selections.map(row=>row.sha256));
   const rows=[];
   for(const source of ['dyn Store','dyn crate::service::Store','Arc<dyn Store>','Mutex<HashMap<Key,Arc<dyn service::Store<Value>>>>',"&'static dyn service::Store<Value>"]){
     const result=observation(()=>compiler.roundTrip(compiler.sourceType(source,{role:'independent syntax regression'})));rows.push({source,result});
     assert.ok(result.value,source);assert.equal(result.value.provenance.semanticRoundTrip,true);assert.equal(result.value.provenance.sourceSha256,hash(source));
     const proof=result.value.provenance.traitObjectSyntax;assert.equal(proof.schema,'original-single-trait-object-syntax-v1');assert.equal(proof.traitOwnerResolved,false);assert.equal(proof.generatedImplBehavior,false);assert.equal(proof.sources.length,7);
     for(const selected of proof.sources){const input=deriveDependencySource(dependencies,'syn',selected.source);assert.equal(input.sha256,selected.sourceSha256);assert.equal(hash(input.source.slice(selected.span.start,selected.span.end)),selected.sha256);}
+    assert.deepEqual(proof.sourceSelection,{contract:'private-authenticated-token-batch-v1',completeOriginals:2,tokenizations:2,selectedSliceHashes:7});
+    for(const selected of proof.sources){const input=deriveDependencySource(dependencies,'syn',selected.source),tokens=rustTokens(input.source.slice(selected.span.start));let depth=0,end=-1;for(const token of tokens){if(token.type!=='punct')continue;if(token.text==='{')depth++;else if(token.text==='}'&&!--depth){end=selected.span.start+token.end;break;}}assert.equal(end,selected.span.end);}
     assert.deepEqual(compiler.roundTrip(result.value).syntax,result.value.syntax);
   }
   retain('01-source-fragments',rows);
@@ -87,12 +106,23 @@ test('unsupported trait bounds macros binders and malformed source remain explic
   for(const type of ['dyn crate::Store','dyn self::Store','dyn super::Store','dyn super::super::Store','dyn ::external::Store','dyn module::Store<crate::Value>']){
     const source='#[derive(Default)]pub struct Record{value:Arc<'+type+'>}',result=observation(()=>proveBuiltinDeriveBangFootprint(setup(source,'Record','Default')));rows.push({source,result});assert.ok(result.value,result.error?.message);noBehavior(result.value);
   }
-  retain('05-complete-refusals',rows);
+  let reads=0;const getter=[];Object.defineProperty(getter,'0',{enumerable:true,get(){reads++;return {source:'',language:'Rust'};}});const proxy=new Proxy([],{get(){reads++;throw Error('unexpected get');},ownKeys(){reads++;throw Error('unexpected keys');}});
+  for(const input of [[],getter,proxy,[{source:'fn x(){}',language:'unknown'}],[{source:3,language:'Rust'}],[{source:'fn x(){}',language:'Rust',unknown:true}]]){const result=observation(()=>lexPrivateConcreteSources(input));rows.push({inputKind:input===getter?'getter':input===proxy?'proxy':'data',result});assert.ok(result.error);}
+  assert.equal(reads,0);retain('05-complete-refusals',rows);
 });
 
 test('copied fragments changed source and unknown producers cannot manufacture namespace closure',{timeout:60000},()=>{
   const source='#[derive(Debug,Default)]pub struct Record{value:Arc<dyn Store>}',args=setup(source),proof=proveBuiltinDeriveBangFootprint(args),fragment=compiler.sourceType('Arc<dyn Store>',{}),copied=structuredClone(fragment);
   assert.throws(()=>compiler.roundTrip(copied),/checked original/);assert.throws(()=>assertBuiltinDeriveBangFootprint(structuredClone(proof),args.context,args.certificate,args.invocation));
+  const changing=[{source:'pub struct First{}',language:'Rust'},{source:'pub struct Second{}',language:'Rust'}];let changed=false;const observed=observedTokens(changing,()=>{if(!changed){changed=true;changing[1].source='pub struct Changed{}';}});retain('06-late-source-mutation',{changing,observed});assert.ok(changed);assert.ok(observed.result.error);assert.ok(observed.tape.some(row=>row.phase==='update'));
+  const find=Object.getOwnPropertyDescriptor(Array.prototype,'find');let escaped=null,field=null,index=-1,publicResult,privateResult;
+  try{
+    Object.defineProperty(Array.prototype,'find',{...find,value:function(...args){if(escaped===null&&this.includes('{')&&this.includes('}'))escaped=this;return Reflect.apply(find.value,this,args);}});
+    try{rustTokens('{}');}finally{Object.defineProperty(Array.prototype,'find',find);}
+    index=escaped.indexOf('{');field=Object.getOwnPropertyDescriptor(escaped,String(index));Object.defineProperty(escaped,String(index),{...field,value:'unreachable-punctuation'});
+    publicResult=observation(()=>rustTokens('{}'));privateResult=observation(()=>lexPrivateConcreteSources([{source:'{}',language:'Rust'}]));
+  }finally{Object.defineProperty(Array.prototype,'find',find);if(field)Object.defineProperty(escaped,String(index),field);}
+  retain('06-public-table-versus-private-operation',{publicResult,privateResult});assert.ok(publicResult.error);assert.ok(privateResult.value,privateResult.error?.message);assert.deepEqual(privateResult.value.rows[0].tokens.map(row=>row.text),['{','}']);
   const other=setup(source.replace('dyn Store','dyn Other'));assert.throws(()=>assertBuiltinDeriveBangFootprint(proof,other.context,other.certificate,other.invocation));
   const rows=[];for(const text of ['use custom::Debug;'+source,'use custom::automatically_derived;'+source,source+' unknown!();',source.replace('value:','#[unknown]value:')]){const selected=setup(text),bang=createDeriveBangContext({deriveContext:selected.context});rows.push({source:text,context:selected.context,bang});assert.equal(bang.certificates.some(row=>row.dimensions.bangMacroComplete),false,text);}retain('06-forgery-and-producers',{source,proof,fragment,copied,rows});
 });

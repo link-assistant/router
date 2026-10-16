@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {DERIVE_SOURCE_PROFILE,deriveDependencySource,isDeriveDependencyProof} from './derive-dependencies.mjs';
 import {rustTokens,sourceItems} from './rust-structure.mjs';
 import {originalMacroTrees} from './macro-token-trees.mjs';
+import {lexPrivateConcreteSources} from './private-parser-execution.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const inventories=new WeakMap(),templates=new WeakMap(),matchBlocks=new WeakMap();
@@ -120,10 +121,15 @@ export function originalSerdeMatchBlockAdapter(inventory){
 // inferred from retaining `dyn Path` tokens.
 function originalTraitObjectSyntax(dependencies){
   const ty=deriveDependencySource(dependencies,'syn','src/ty.rs'),generics=deriveDependencySource(dependencies,'syn','src/generics.rs');
+  // One explicit private token operation over both complete originals. Its
+  // authentication callbacks are additional to the seven selected-slice hashes;
+  // it deliberately does not reuse the public lexer's escaped mutable tables.
+  const captured=lexPrivateConcreteSources([{source:ty.source,language:'Rust'},{source:generics.source,language:'Rust'}]);
+  if(captured.rows.length!==2||captured.rows[0].source!==ty.source||captured.rows[1].source!==generics.source||captured.rows[0].language!=='Rust'||captured.rows[1].language!=='Rust')throw new TypeError('Original trait-object source transaction changed');
   const select=(origin,anchor,needles)=>{
     const start=origin.source.indexOf(anchor);if(start<0||origin.source.indexOf(anchor,start+1)>=0)throw new TypeError('Original trait-object source selection is absent or ambiguous');
-    const tokens=rustTokens(origin.source.slice(start));let depth=0,end=-1;
-    for(const token of tokens){if(token.type!=='punct')continue;if(token.text==='{')depth++;else if(token.text==='}'&&!--depth){end=start+token.end;break;}}
+    const tokens=captured.rows[origin===ty?0:1].tokens;let depth=0,end=-1;
+    for(let at=0;at<tokens.length;at++){const token=tokens[at];if(token.start<start||token.type!=='punct')continue;if(token.text==='{')depth++;else if(token.text==='}'&&!--depth){end=token.end;break;}}
     if(end<0)throw new TypeError('Original trait-object source selection is incomplete');
     const text=origin.source.slice(start,end);for(const needle of needles)if(!text.includes(needle))throw new TypeError('Original trait-object schema/parser/printer changed');
     return {package:origin.package,version:origin.version,source:origin.path,sourceSha256:origin.sha256,span:{start,end},sha256:hash(text)};
@@ -136,7 +142,7 @@ function originalTraitObjectSyntax(dependencies){
     select(ty,'impl ToTokens for TypeTraitObject {',['self.dyn_token.to_tokens(tokens)','self.bounds.to_tokens(tokens)']),
     select(generics,'pub struct TraitBound {',['pub lifetimes: Option<BoundLifetimes>','pub modifiers: TraitBoundModifiers','pub maybe: Option<Token![?]>','pub path: Path']),
     select(generics,'impl TraitBound {',['fn do_parse','let mut lifetimes: Option<BoundLifetimes> = input.parse()?','let mut path: Path = input.parse()?']),
-  ],domain:'explicit dyn; one unmodified named/path trait bound; no higher-ranked lifetimes, bounds list, associated bindings, macro or executable syntax',traitOwnerResolved:false,generatedImplBehavior:false};
+  ],sourceSelection:{contract:'private-authenticated-token-batch-v1',completeOriginals:2,tokenizations:2,selectedSliceHashes:7},domain:'explicit dyn; one unmodified named/path trait bound; no higher-ranked lifetimes, bounds list, associated bindings, macro or executable syntax',traitOwnerResolved:false,generatedImplBehavior:false};
 }
 
 // The route compiler owns these bindings; callers cannot assert a fragment's
