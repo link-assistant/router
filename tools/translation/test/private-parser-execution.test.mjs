@@ -372,7 +372,7 @@ test('independent SHA256 and strict Unicode binding do not trust decoder or Node
   const workInput='\u0000\u00ff\u0800😀'+ 'z'.repeat(129),workExpected=nativeHash(workInput),hookRows=[];
   const hookModes=[
     ['global-get',globalThis,'Uint32Array','accessor'],['global-JS',globalThis,'Uint32Array','javascript'],['global-proxy',globalThis,'Uint32Array','proxy'],['global-wrong-native',globalThis,'Uint32Array','wrong-native'],
-    ['constructor-name',workCtor,'name','accessor'],['constructor-length',workCtor,'length','accessor'],['prototype-constructor',workConcrete,'constructor','accessor'],['shared-length',workShared,'length','accessor'],['brand-get',workTypes,'isUint32Array','accessor'],
+    ['constructor-name',workCtor,'name','accessor'],['constructor-length',workCtor,'length','accessor'],['prototype-constructor',workConcrete,'constructor','accessor'],['shared-length',workShared,'length','accessor'],['brand-get',workTypes,'isUint32Array','accessor',true],
     ['constructor-parent',workCtor,null,'parent'],['concrete-parent',workConcrete,null,'parent'],['numeric-prototype',workConcrete,'0','accessor'],
     ['unused-species',workParent,Symbol.species,'accessor',true],['unused-from',workParent,'from','accessor',true],['unused-set',workShared,'set','accessor',true],['unused-ArrayBuffer',globalThis,'ArrayBuffer','accessor',true],
   ];

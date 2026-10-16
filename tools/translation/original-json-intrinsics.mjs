@@ -303,8 +303,8 @@ function captureParserUint32Storage(){
  if(!types||typeof types!=='object'||pathIsProxy.value(types))return null;
  // Do not initialize 287's expected plans earlier than their original caller.
  if(!originalPrivateParserCommonIntrinsicsUnchanged())return null;
- const global=parserUint32Data(parserIngressRoot,'Uint32Array'),brand=parserUint32Data(types,'isUint32Array');
- if(!global||!brand||!parserUint32Native(global.value,'Uint32Array')||!parserUint32Native(brand.value,'isUint32Array'))return null;
+ const global=parserUint32Data(parserIngressRoot,'Uint32Array');
+ if(!global||!parserUint32Native(global.value,'Uint32Array'))return null;
  const ctor=global.value,ctorKeys=parserUint32Keys(ctor,['length','name','prototype','BYTES_PER_ELEMENT']);if(!ctorKeys)return null;
  const length=parserUint32Data(ctor,'length'),name=parserUint32Data(ctor,'name'),pointee=parserUint32Data(ctor,'prototype'),bytes=parserUint32Data(ctor,'BYTES_PER_ELEMENT');
  if(!length||length.value!==3||!name||name.value!=='Uint32Array'||!pointee||!pointee.value||typeof pointee.value!=='object'||pathIsProxy.value(pointee.value)||pointee.writable||pointee.configurable||pointee.enumerable||!bytes||bytes.value!==4||bytes.writable||bytes.configurable||bytes.enumerable)return null;
@@ -312,17 +312,17 @@ function captureParserUint32Storage(){
  const back=parserUint32Data(concrete,'constructor'),element=parserUint32Data(concrete,'BYTES_PER_ELEMENT');
  if(!back||back.value!==ctor||!element||element.value!==4||element.writable||element.configurable||element.enumerable)return null;
  const literalFunction=prototype(function(){}),sharedCtor=prototype(ctor),shared=prototype(concrete);
- if(!sharedCtor||!shared||pathIsProxy.value(sharedCtor)||pathIsProxy.value(shared)||!parserUint32Native(sharedCtor,'TypedArray')||prototype(sharedCtor)!==literalFunction||prototype(shared)!==objectPrototype||prototype(brand.value)!==literalFunction)return null;
+ if(!sharedCtor||!shared||pathIsProxy.value(sharedCtor)||pathIsProxy.value(shared)||!parserUint32Native(sharedCtor,'TypedArray')||prototype(sharedCtor)!==literalFunction||prototype(shared)!==objectPrototype)return null;
  const sharedPrototype=parserUint32Data(sharedCtor,'prototype'),size=descriptor(shared,'length');
  if(!sharedPrototype||sharedPrototype.value!==shared||sharedPrototype.writable||sharedPrototype.configurable||sharedPrototype.enumerable||!size||hasOwn(size,'value')||!hasOwn(size,'get')||!hasOwn(size,'set')||size.set!==undefined||!parserUint32Native(size.get,'get length')||prototype(size.get)!==literalFunction)return null;
  // Genuine native Number-length construction does not consult an iterable,
  // species, global ArrayBuffer, inherited index setter or a source object.
  const small=new ctor(8),large=new ctor(64);
- if(brand.value(small)!==true||brand.value(large)!==true||brand.value([])!==false||brand.value({})!==false||apply(size.get,small,[])!==8||apply(size.get,large,[])!==64||prototype(small)!==concrete||prototype(large)!==concrete)return null;
+ if(apply(size.get,small,[])!==8||apply(size.get,large,[])!==64||prototype(small)!==concrete||prototype(large)!==concrete)return null;
  const inputs=[0,2147483647,2147483648,4294967295,-1,4294967296,4294967297],expected=[0,2147483647,2147483648,4294967295,4294967295,0,1];
  for(let at=0;at<inputs.length;at++){small[at]=inputs[at];large[at]=inputs[at];if(small[at]!==expected[at]||large[at]!==expected[at])return null;}
  if(!originalPrivateParserCommonIntrinsicsUnchanged())return null;
- return {typeOwner:types,fields:[[parserIngressRoot,'Uint32Array',global],[types,'isUint32Array',brand],[ctor,'length',length],[ctor,'name',name],[ctor,'prototype',pointee],[ctor,'BYTES_PER_ELEMENT',bytes],[concrete,'constructor',back],[concrete,'BYTES_PER_ELEMENT',element],[sharedCtor,'prototype',sharedPrototype],[shared,'length',size]],parents:[[ctor,sharedCtor],[concrete,shared],[sharedCtor,literalFunction],[shared,objectPrototype],[brand.value,literalFunction],[size.get,literalFunction]],keys:[[ctor,ctorKeys],[concrete,concreteKeys]]};
+ return {typeOwner:types,fields:[[parserIngressRoot,'Uint32Array',global],[ctor,'length',length],[ctor,'name',name],[ctor,'prototype',pointee],[ctor,'BYTES_PER_ELEMENT',bytes],[concrete,'constructor',back],[concrete,'BYTES_PER_ELEMENT',element],[sharedCtor,'prototype',sharedPrototype],[shared,'length',size]],parents:[[ctor,sharedCtor],[concrete,shared],[sharedCtor,literalFunction],[shared,objectPrototype],[size.get,literalFunction]],keys:[[ctor,ctorKeys],[concrete,concreteKeys]]};
 }
 // A negative is optional-feature birth eligibility, never a semantic refusal.
 const parserUint32Storage=captureParserUint32Storage();
