@@ -86,8 +86,9 @@ import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {validateOriginalMethodAssociations,withCheckedMethodCopyReceivers} from '../source-method-admission.mjs';
 import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
 import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern} from '../router-core-algebraic.mjs';
+import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
 
-export const HOST_CONTRACTS=[ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
+export const HOST_CONTRACTS=[ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
 const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
@@ -325,6 +326,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
   }
   primary(path,options) {
     const algebraic=parseRouterCoreAlgebraicExpression(this,path);if(algebraic)return algebraic;
+    const coreScalar=parseRouterCoreScalarCall(this,path);if(coreScalar)return coreScalar;
     const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
     const coreFormat=parseRouterCoreFormatting(this,path);if(coreFormat)return coreFormat;
     const expandedMatches=parseOriginalMatchesCandidate(this,path);if(expandedMatches)return expandedMatches;
@@ -384,7 +386,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
       if(targetType){try{sourceBoolFromScope=capturePrimitiveBoolFromScope(this,targetType,first.start);}catch(error){if(!(error instanceof TypeError))throw error;sourceBoolFromRefusal=error.message;}}
       return {k:'routerBuiltinConversion',operation:segments.join('::'),value:args[0],target:targetType,targetName:segments[0],sourceBoolFromScope,sourceBoolFromRefusal,constEligible:false,span:span(first,c.peek())};
     }
-    const contracts=HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(resolved));
+    const contracts=HOST_CONTRACTS.filter(contract=>!contract.requiresRefinement&&contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(resolved));
     if(!contracts.length)return super.primary(path,options);
     if(!c.is('(',offset)&&!(c.is('::',offset)&&c.is('<',offset+1)))return super.primary(path,options);
     if(resolved[0]==='crate'||this.shadowedEffectRoots?.has(resolved[0]))throw unsupported('shadowed host namespace','requires actual crate resolution',span(first,c.peek()));
@@ -485,7 +487,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       const entry=head.k==='name'?this.lookup(head.path,path,range):null;
       args=prepareTemporaryStringCall(this,entry,args,env,path,range);
     }
-    const contracts=head.k==='name'?HOST_CONTRACTS.filter(contract=>contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(head.path)):[];
+    const contracts=head.k==='name'?HOST_CONTRACTS.filter(contract=>!contract.requiresRefinement&&contract.family!=='float'&&pathKey(contract.rustPath)===pathKey(head.path)):[];
     return contracts.length?this.hostCall(contracts,args,env,path,expected,range):super.application(head,args,env,path,expected,range);
   }
   prepareOriginalStringPatternBorrow(node,env,path){requireOriginalPrimitiveTryFromChecker(this);return prepareOriginalStringPatternBorrow(this,node,env,path);}
@@ -581,6 +583,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
         }
       }
     }
+    if(node.k==='routerCoreScalarCountCall')return checkRouterCoreScalarCall(this,node,env,path,expected);
     if(node.k==='routerCoreF64InclusiveCall')return checkRouterCoreRangeCall(this,node,env,path,expected);
     if(node.k==='routerPrimitiveFloatConstant')return checkedPrimitiveFloatConstant(node);
     if(node.k==='routerPrimitiveFloatCall') {
@@ -727,6 +730,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
   }
   sourceFixedArrayCells(type,span){return fixedArrayCopyCells(type,span,0,(element,range)=>{checkedOptionNominal(this,element,range);const count=(type,active=new Set())=>{if(type.rustReference)return 1;if(type.kind==='array')return 1+(fixedArrayLength(type)??0)*count(type.element,active);if(type.kind!=='data')return 1;if(active.has(type.name))throw unsupported('static array cell budget','recursive owned layouts remain unproved',range);const entry=this.items.get(type.name),inner=new Set(active).add(type.name);return 1+Math.max(...entry.ctors.map(ctor=>ctor.fields.reduce((sum,field)=>sum+count(field.type,inner),0)));};return count(element);});}
   program(surface) {
+    captureRouterCoreScalarCalls(this,surface);
     captureRouterCoreRangeCalls(this,surface);
     captureConstMatchSources(this,surface);
     sourcePatterns.captureOriginalSharedPatterns(this,surface);
@@ -907,7 +911,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_integer_')))preludes.unshift(`import { createIntegerRuntime as ml_create_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_vec_')))preludes.unshift(`import { createVectorRuntime as ml_create_vector_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'vector-runtime.mjs'))};`);
-    for(const family of ['json','time','integer','float']) {
+    for(const family of ['json','time','integer','float','string-iterator']) {
       const used=HOST_CONTRACTS.filter(contract=>contract.family===family&&this.hosts.has(contract.id));
       if(used.length)preludes.unshift(`import { ${used.map(contract=>`${contract.jsExport} as ml_host_${contract.id}`).join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,`${family}-runtime.mjs`))};`);
     }

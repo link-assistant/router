@@ -16,3 +16,10 @@ pub type Maybe<T> = ::std::option::Option<T>;
 
 /// Success and failure values retain both payloads and their ownership behavior.
 pub type Outcome<T, E> = ::std::result::Result<T, E>;
+
+/// Count Unicode scalar values, not UTF-8 bytes, UTF-16 units or graphemes.
+/// The library iterator implementation remains intentionally untranslated.
+#[must_use]
+pub fn unicode_scalar_count(value: &Str) -> usize {
+    value.chars().count()
+}
