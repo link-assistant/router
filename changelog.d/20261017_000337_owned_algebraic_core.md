@@ -25,3 +25,10 @@ locally. All JavaScript and strict TypeScript checks are also UNRUN in this
 source draft. No executable application gains, parity or complete gate result
 are claimed before coherent receiving and actual corpus regeneration. The
 changed Host input row requires the coordinator's actual class-entry producer.
+
+Restrict bare constructor adoption to direct calls in bodies without local
+binders, closure or pattern-control syntax and with an unshadowed registered
+constructor namespace. Preserve method/field/raw identifiers, record keys and
+shorthand, unit variants and uncertain bindings. Qualified owner paths still
+adopt independently. Existing whole-case context controls retain complete
+source, inverse and refusal evidence; these new controls remain UNRUN.

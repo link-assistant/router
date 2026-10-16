@@ -45,7 +45,7 @@ function selectedPath(parts,scope,known){
 function typedEdits(tokens,scope,known){
   const edits=[];
   for(let at=0;at<tokens.length;at++){
-    if(!identifier(tokens[at])||tokens[at-1]?.text==='::')continue;
+    if(!identifier(tokens[at])||['::','#','.'].includes(tokens[at-1]?.text))continue;
     const begin=at,parts=[tokens[at].text];while(tokens[at+1]?.text==='::'&&identifier(tokens[at+2])){parts.push(tokens[at+2].text);at+=2;}
     const core=selectedPath(parts,scope,known);if(!core)continue;
     const generic=tokens[at+1]?.text==='<';if(core==='Json'&&generic||core!=='Json'&&!generic)continue;
@@ -61,17 +61,19 @@ function bodyEdits(item,scope,known){
   const macroName=token=>token?.type==='ident'&&/^[\p{ID_Start}_][\p{ID_Continue}_]*!?$/u.test(token.text)&&!keywords.has(token.text.replace(/!$/u,''));
   if(body.some(token=>reserved.has(token.text)||macroName(token)&&token.text.endsWith('!'))||body.some((token,index)=>token.text==='!'&&macroName(body[index-1])))return {edits:[],skipped:[{span:[item.start,item.end],reason:'body-local item or macro producer; constructors and associated paths preserved'}]};
   const edits=[],constructors={Some:'Maybe',None:'Maybe',Ok:'Outcome',Err:'Outcome'};
-  const closure=body.some(token=>token.text==='|'||token.text==='||');
+  // The type-position grammar does not bind expression-local names. Limit
+  // bare call adoption to bodies without any such binders; fields, methods,
+  // raw identifiers and unit/shorthand spellings are never constructors here.
+  const localBindings=body.some(token=>['let','for','match','if','while','|','||'].includes(token.text));
+  const expressionBefore=new Set(['return','==','!=','=','(',',','=>','&&','||','!']);
   for(let at=0;at<body.length;at++){
-    if(!identifier(body[at])||body[at-1]?.text==='::')continue;
+    if(!identifier(body[at])||['::','#','.'].includes(body[at-1]?.text))continue;
     const token=body[at],bound=scope.bindings.find(binding=>binding.namespace==='value'&&binding.name===token.text);
     if(Object.hasOwn(constructors,token.text)){
-      if(closure)continue;
+      if(localBindings||token.text==='None'||body[at+1]?.text!=='('||at>0&&!expressionBefore.has(body[at-1].text))continue;
       const core=constructors[token.text],owner=targets[core];
       if(bound&&(bound.status!=='resolved'||!same(bound.target,[...owner,token.text])))continue;
-      // Parameter/binding spellings must not become enum constructors. Tuple
-      // variant patterns are retained; an ordinary same-named binder refuses.
-      if(tokens.slice(0,open).some((row,index)=>row.text===token.text&&tokens[index+1]?.text===':')||body.some((row,index)=>row.text==='let'&&body[index+1]?.text===token.text&&body[index+2]?.text!=='('))continue;
+      if(tokens.slice(0,open).some(row=>row.text===token.text))continue;
       if(!known.has(core==='Maybe'?'Option':'Result')&&!bound)continue;
       edits.push({span:[token.start,token.end],expected:token.text,replacement:`crate::translation_core::${core}::${token.text}`,alias:core});continue;
     }

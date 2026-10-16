@@ -60,6 +60,20 @@ test('ambiguous imported and produced types preserve source and explicit skip ev
     const proposal=retain('complete-ambiguous-type-proposal',proposeCoreAlgebraicCorpus({files:files(source)})),row=proposal.proposals.find(row=>row.file==='src/lib.rs');assert.equal(row.after.source,row.before.source);assert.equal(inverse(row),row.before.source);
   }
   assert.throws(()=>proposeCoreAlgebraicCorpus({files:files('pub fn f()->bool{true}',{'src/translation_core/primitives.rs':'pub type Json=bool;'})}),/owned core/);
+  // Full source proposals preserve nonconstructor spelling and every binder
+  // context; only separately closed simple constructor calls are selected.
+  const bodies=['v.Some()','v.None','None()','Record{None:true}','Record{None}','Record{Some:true}','Record{Some}','r#Some(true)','let mut Some=true;Some','let mut None=true;None','for Some in values{}None','for Some(value) in values{}None','let Some(value)=v;Some(value)','match v{Some(value)=>Some(value),None=>None}','let value:Some=v;value','if v{Some(true)}else{None}'];
+  for(const body of bodies){
+    const source=`pub fn f(v:Option<bool>)->Option<bool>{${body}}`,proposal=retain('complete-constructor-context-preservation',proposeCoreAlgebraicCorpus({files:files(source)})),row=proposal.proposals.find(row=>row.file==='src/lib.rs');
+    assert.equal(inverse(row),row.before.source);assert.equal(row.after.source.endsWith('{'+body+'}'),true,body);assert.equal(row.edits.some(edit=>['Some','None','Ok','Err'].includes(edit.expected)),false,body);
+  }
+  for(const [body,type,member] of [['Some(true)','Option<bool>','Maybe::Some'],['return Ok(true);','Result<bool,bool>','Outcome::Ok'],['Option::Some(true)','Option<bool>','Maybe::Some']]){
+    const source=`pub fn f()->${type}{${body}}`,proposal=retain('complete-closed-constructor-selection',proposeCoreAlgebraicCorpus({files:files(source)})),row=proposal.proposals.find(row=>row.file==='src/lib.rs');assert.equal(inverse(row),row.before.source);assert.ok(row.after.source.includes(C+member));
+  }
+  for(const source of ['fn Some(v:bool)->bool{v}pub fn f()->Option<bool>{Some(true)}','pub fn f(Some:bool)->Option<bool>{Some(true)}']){
+    const proposal=retain('complete-shadowed-constructor-preservation',proposeCoreAlgebraicCorpus({files:files(source)})),row=proposal.proposals.find(row=>row.file==='src/lib.rs');assert.equal(inverse(row),row.before.source);assert.equal(row.edits.some(edit=>edit.expected==='Some'),false);
+  }
+
 });
 
 // Complete current Router helper bodies, retained as portable authored source.

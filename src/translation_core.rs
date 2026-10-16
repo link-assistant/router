@@ -4,7 +4,7 @@
 //! translator binds this complete facade and checks its supported operand domain.
 
 mod primitives;
-pub use self::primitives::{Str, Json, Maybe, Outcome};
+pub use self::primitives::{Json, Maybe, Outcome, Str};
 
 mod ranges;
 pub use self::ranges::f64_inclusive_contains;

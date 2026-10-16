@@ -75,13 +75,18 @@ fn native_alias_destruction_and_lazy_defaults_are_ordinary_rust() {
     use std::cell::Cell;
     struct Dropped<'a>(&'a Cell<usize>);
     impl Drop for Dropped<'_> {
-        fn drop(&mut self) { self.0.set(self.0.get() + 1); }
+        fn drop(&mut self) {
+            self.0.set(self.0.get() + 1);
+        }
     }
     let drops = Cell::new(0);
     let calls = Cell::new(0);
     {
         let value: Maybe<Dropped<'_>> = Maybe::Some(Dropped(&drops));
-        let _owned = value.unwrap_or_else(|| { calls.set(calls.get() + 1); Dropped(&drops) });
+        let _owned = value.unwrap_or_else(|| {
+            calls.set(calls.get() + 1);
+            Dropped(&drops)
+        });
         assert_eq!(calls.get(), 0);
         assert_eq!(drops.get(), 0);
     }
