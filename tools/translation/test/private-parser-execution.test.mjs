@@ -158,7 +158,9 @@ test('native transitive read write species iterator and diagnostic hooks refuse 
     const f=fixture(t,'03-early-core-'+mode),source=readFileSync(join(base,'concrete-syntax-meta.mjs'),'utf8'),relocations=[];let copied=source;
     for(const path of ['./private-parser-execution.mjs','./original-json-intrinsics.mjs']){
       const before="from '"+path+"'",after="from '"+new URL(path,pathToFileURL(join(base,'concrete-syntax-meta.mjs'))).href+"'";
-      assert.equal(copied.split(before).length,2);copied=copied.replace(before,after);relocations.push({before,after});
+      const count=path==='./private-parser-execution.mjs'?4:1;
+      assert.equal(copied.split(before).length,count+1);
+      for(let at=0;at<count;at++){copied=copied.replace(before,after);relocations.push({before,after});}
     }
     let reversed=copied;for(const row of [...relocations].reverse())reversed=reversed.replace(row.after,row.before);
     const path=join(f.root,'fresh-public-core.mjs');writeFileSync(path,copied);
