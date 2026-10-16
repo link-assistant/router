@@ -70,6 +70,8 @@ destruction, type checking or later body refusals.
 | `Outcome<T, E>` | `std::result::Result<T, E>` | Existing checked success/error variants and supported payloads; no blanket error-conversion support. |
 | `format!` | `std::format!` | Existing checked literal format grammar and supported primitive operands. |
 | `json!` | `serde_json::json!` | Bounded literal objects, arrays and scalars; checked borrowed text, booleans, canonical JSON copies and fixed integers through 64 bits. Each interpolation retains its actual type, effects and outer `?` behavior. Custom `Serialize`, floating point, owned text and effectful interpolation remain refused. |
+| `json_copy(&Json) -> Json` | `Clone::clone` on the canonical JSON type | Explicit qualified shared copy into independent checked canonical storage; no general `.clone()` dispatch or custom `Clone` admission. |
+| `json_with_field(Json, &Str, Json) -> Json` | By-value native JSON indexing and replacement | Object or null base, literal or checked borrowed scalar-text key and canonical JSON value; null promotes to an object. Other base kinds abort. Copies/results retain the JSON bounds and independent storage. |
 | `f64_inclusive_contains` | Same-type `Into<f64> + Copy` arguments, widened once before ordered comparisons | Checked `f64` inputs only; IEEE NaN, infinity and signed-zero behavior with once-only left-to-right arguments. Native Rust also accepts `f32`; that does not admit translated `f32` callers. |
 | `unicode_scalar_count` | Borrowed `str::chars().count()` | Validated Unicode scalar text to the existing 64-bit `usize` BigInt ABI; one input evaluation, with no general iterator admission. |
 
@@ -79,6 +81,29 @@ copies. Dense containers also retain their 4,096-element limit. Individually
 valid inputs can exceed the aggregate result limit; those executions remain
 outside the translated profile. Literal syntax keeps its separate 65,536-byte,
 16-level and 256-node limits. Extending the literal grammar does not raise them.
+
+The two copy/update operations bind the complete owned facade and primitive
+source. Direct call arguments evaluate once, left to right. The assignment
+adopter first evaluates the complete original RHS in a hygienic local, then
+moves the old local into `json_with_field` and reinitializes that same outer
+binding. Conditional assignments keep the updated value outside the branch.
+Dynamic/nested assignees, nonfresh receivers and unknown aliases remain unchanged
+with explicit proposal refusals; no implicit `IndexMut` or `.clone()` theorem is
+created.
+
+Functions using these operations also pass a private source-bound whole-function
+flow rule. It tracks lexical binding identity, available/moved state,
+reinitialization and joins of continuing branches; returning branches and existing
+checked enclosing `?` propagation keep their own exit behavior. Only genuine
+fresh checked JSON producers open the mutable-JSON local lane. Double moves,
+use after move, borrowed-pointee moves, retained loans (including borrowed text
+projected from JSON), loops, closures, opaque transfers and unknown aggregate
+Drop remain refused in this initial domain. JSON reader results carrying source
+loans also remain outside this initial flow domain, even when used inline.
+This does not waive the ordinary
+checker or establish a general Rust borrow checker, arbitrary `Serialize`,
+allocator/OOM or payload Drop equivalence. Native library internals stay
+intentionally untranslated.
 
 ## Produce portable source-adoption proposals
 
@@ -104,6 +129,10 @@ node tools/translation/propose-core-adoption-corpus.mjs \
 node tools/translation/propose-core-adoption-corpus.mjs \
   --root /path/to/receiving-repository --output /outside/fresh-json-proposal \
   --sequence json-algebraic-primitives
+
+node tools/translation/propose-core-adoption-corpus.mjs \
+  --root /path/to/receiving-repository --output /outside/fresh-json-updates \
+  --sequence json-updates
 ```
 
 The fixed sequences adopt literal text conversions alone, or literal text
@@ -126,6 +155,24 @@ runtime. Import uncertainty and declaration producers retain explicit refusals.
 An exact function body checked inside an authored isolated carrier demonstrates
 that body's behavior; it does not establish its original parent module or crate
 is translated. Use full-corpus generation to measure application coverage.
+
+The standalone `json-updates` sequence invokes the actual
+`proposeCoreJsonUpdateCorpus` API on a fresh complete receiving source graph and
+writes the same complete sequence packet schema. It does not append a fourth
+stage to the three-stage JSON sequence or change any old default. To compose the
+operations, review and apply the complete `json-algebraic-primitives` proposal
+first, then run `json-updates` into a separate fresh output directory. Retain the
+full source chain across both operations and undo mappings in reverse operation
+and stage order. Each operation retains the original 1 GiB output quota and
+other source/packet bounds; actual time, heap and RSS still require receiving
+measurements. A proposed update is not evidence that the complete enclosing
+Router function has passed later body checks.
+
+The update API accepts `dependencyInputs: {manifest, lock}` too. Its CLI captures
+the receiving repository's complete physical Cargo sources and rechecks them
+along with the source tree before atomic index publication. They are not
+substituted with the compiler repository's dependency inputs. Missing or unknown
+producer evidence keeps the same source uncertainty and refusals.
 
 The literal, scalar and JSON corpus APIs also accept optional own-data
 `dependencyInputs: {manifest, lock}` containing the caller's complete Cargo
