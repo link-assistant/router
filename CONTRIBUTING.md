@@ -59,6 +59,8 @@ Use the existing categories, for example:
 
 Fragments prevent merge conflicts in CHANGELOG.md when multiple PRs are open. Commit focused changes with descriptive messages. In a coordinated agent task, workers draft commits in their own worktrees and one designated push gate owner integrates and publishes the combined change. The owner reviews the full diff, runs the complete gate, pushes one tested head and waits for all CI jobs to complete. Never cancel the current CI run or push speculative fixes; collect the full failure set and repair it in one coordinated batch before the next push.
 
+During active work on issue #759, make reviewable checkpoint commits at least once every six hours. Commit coherent source batches even when the larger translation or parity task is incomplete; record which checks passed, failed or remain unrun. Keep worker commits in their assigned worktrees and integration with the coordinator. Checkpoint commits preserve the existing publication gate and same-commit JavaScript-first CI requirements.
+
 ## Translation rules and shared regressions
 
 Implement translation as ordered substitution rules over parsed source, checked semantic meta or target syntax. Keep at least two separately declared rule sequences: reusable programming-language rules first, then repository rules for Router's output layout, imports, formatting and quality conventions. Keep language semantics independent of Router paths and declaration names. Repository rules must preserve the meaning established by the checked language rules. Both Rust → meta → JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript must retain the serialized, reparsed meta boundary. See [the rule-layer contract](docs/development/translation-rules.md).

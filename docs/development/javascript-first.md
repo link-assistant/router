@@ -61,6 +61,13 @@ The complete compiler Node cohorts also require the [independent source-declared
 
 ## Integrate one repair batch per completed CI cycle
 
+During active issue #759 development, create reviewable checkpoint commits at
+least once every six hours. Commit coherent source batches while larger
+translation, generation or parity obligations remain open, and record passed,
+failed and unrun checks. Workers commit in their assigned worktrees and the
+coordinator integrates completed changes. This cadence preserves the publication
+gate below and the same-commit JavaScript-first requirements for Rust CI.
+
 Assign work to isolated worktrees, keep ownership explicit and send draft commits to one push gate owner. The owner integrates the complete batch, runs the full JavaScript gate, reviews generated diffs and publishes one tested head. Leave running CI intact. After CI finishes, collect failures from every required job, separate code defects from infrastructure or missing evidence, repair the complete failure set and rerun the gate before the next push. Repeated pushes while checks are still running obscure which head was verified and spend additional runner time.
 
 Every CI job capable of compiling Rust must depend on the JavaScript gate. It must check the current head and strict parity, not accept an inventory-only result or a stamp from another SHA. Workflow structure checks guard bypass paths; they complement the behavioral tests. Publication belongs to the push gate owner, including PR updates. Preserve draft or blocked status when complete parity is unavailable.
