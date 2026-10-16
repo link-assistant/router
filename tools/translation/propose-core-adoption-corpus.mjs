@@ -136,7 +136,66 @@ export function proposeCoreAdoptionCorpus(input){
     rejoin(original);write.complete(text);return {schema:index.schema,complete:true,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:write.bytes,semanticAdmission:false};
   }catch(error){try{write.failure(error,stage);}catch(reportFailure){const failure=new Error('combined proposal failed and its incomplete receipt could not be written');failure.cause=error;failure.reportFailure=reportFailure;throw failure;}throw error;}
 }
+// These fixed sequences deliberately have their own packet schema. No caller
+// callbacks, rule lists or configuration selectors enter the producer.
+function assertAdoptionInverse(row){
+  if(typeof row.before?.source!=='string'||typeof row.after?.source!=='string'||!Array.isArray(row.mapping))fail('complete file proposal required');
+  let old=0,current=0,restored=row.after.source;
+  for(const part of row.mapping){
+    if(part.before[0]!==old||part.after[0]!==current)fail('inverse partition gap');
+    const before=row.before.source.slice(...part.before),after=row.after.source.slice(...part.after);
+    if(part.kind==='unchanged'){if(before!==after)fail('unchanged source partition differs');}
+    else if(part.kind==='substitution'){if(before!==part.expected||after!==part.replacement)fail('substitution source partition differs');}
+    else fail('unknown source partition kind');old=part.before[1];current=part.after[1];
+  }
+  if(old!==row.before.source.length||current!==row.after.source.length)fail('inverse partition endpoint');
+  for(let at=row.mapping.length-1;at>=0;at--){const part=row.mapping[at];if(part.kind==='substitution')restored=restored.slice(0,part.after[0])+part.expected+restored.slice(part.after[1]);}
+  if(restored!==row.before.source)fail('whole source inverse differs');
+}
+function completeAdoptionPackets(proposal,write,files,name){
+  const graph=proposal.moduleGraph,excluded=['before','after','inputs','moduleGraph','proposals'];
+  if(!graph||Object.keys(proposal.before).length!==Object.keys(files).length||Object.keys(proposal.after).length!==Object.keys(files).length)fail('complete returned source census differs');
+  for(const path of Object.keys(files))if(proposal.before[path]!==files[path]||typeof proposal.after[path]!=='string')fail('returned source chain differs');
+  const packets={metadata:write.json(name+'/metadata.json',{keys:Object.keys(proposal),values:fieldsExcept(proposal,excluded)}),before:Object.entries(proposal.before).map(([path,source],at)=>write.json(name+'/before/'+numbered(at)+'.json',{path,source})),after:Object.entries(proposal.after).map(([path,source],at)=>write.json(name+'/after/'+numbered(at)+'.json',{path,source})),inputs:proposal.inputs.map((row,at)=>write.json(name+'/inputs/'+numbered(at)+'.json',row)),proposals:[],moduleGraph:{metadata:write.json(name+'/graph/metadata.json',{keys:Object.keys(graph),values:fieldsExcept(graph,['modules','edges','diagnostics','concreteSyntaxMeta'])}),modules:graph.modules.map((row,at)=>write.json(name+'/graph/modules/'+numbered(at)+'.json',row)),edges:write.json(name+'/graph/edges.json',graph.edges),diagnostics:write.json(name+'/graph/diagnostics.json',graph.diagnostics),concreteSyntaxMeta:graph.concreteSyntaxMeta.map((row,at)=>write.json(name+'/graph/concrete/'+numbered(at)+'.json',row))}};
+  for(let at=0;at<proposal.proposals.length;at++){const row=proposal.proposals[at];if(row.before.source!==files[row.file]||row.after.source!==proposal.after[row.file])fail('per-file source chain differs');assertAdoptionInverse(row);packets.proposals.push(write.json(name+'/proposals/'+numbered(at)+'.json',row));}
+  return packets;
+}
+function fixedAdoptionStage(name,files,propose,original,write){
+  // The full proposal/graph is reachable only in this call. Return the next
+  // primitive source map and packet references, never the live proposal.
+  return createRulePipeline([
+    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>propose({entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE})}]},
+    {phase:'repository',rules:[{id:'core-adoption:'+name+'-complete-packets',apply:proposal=>{
+      rejoin(original);const packets=completeAdoptionPackets(proposal,write,files,name);
+      return {files:proposal.after,packets,summary:{sourceFiles:Object.keys(proposal.before).length,proposals:proposal.proposals.length,selections:proposal.proposals.reduce((sum,row)=>sum+row.selections.length,0),edits:proposal.proposals.reduce((sum,row)=>sum+row.edits.length,0),changedFiles:proposal.proposals.filter(row=>row.before.source!==row.after.source).length,skippedFiles:proposal.skipped.length}};
+    }}]},
+  ]).run(null);
+}
+export async function proposeCoreAdoptionSequence(input,sequence='literal'){
+  if(sequence!=='literal'&&sequence!=='literal-algebraic')fail('fixed sequence must be literal or literal-algebraic');
+  if(!['darwin','linux'].includes(process.platform))fail('POSIX source-proposal receiving required');
+  const requested=options(input);
+  // Lazy imports preserve the old API's module initialization graph. Both
+  // imports finish before taking the operation's complete source snapshot.
+  const {proposeCoreLiteralTextCorpus}=await import('./migrate-core-literal-text.mjs');
+  const algebraic=sequence==='literal-algebraic'?(await import('./migrate-core-algebraic.mjs')).proposeCoreAlgebraicCorpus:null;
+  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),write=writer(target),stages=[];
+  let stage='literal',after=original.files;
+  try{
+    for(const name of sequence==='literal'?['literal']:['literal','algebraic']){
+      stage=name;rejoin(original);const next=fixedAdoptionStage(name,after,name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write);
+      after=next.value.files;stages.push({name,packets:next.value.packets,summary:next.value.summary,trace:next.trace});
+    }
+    stage='final-source-and-index';const inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
+    for(const [path,source]of Object.entries(after)){pathName(path);if(!Object.hasOwn(original.files,path))fail('unexpected adopted source path');if(source!==original.files[path])changes.push({path,beforeSha256:hash(original.files[path]),afterSha256:hash(source),source:write.text('after/'+path,source)});}
+    if(Object.keys(after).length!==original.rows.length)fail('adopted source path census differs');
+    const index={schema:'router-core-adoption-sequence-packets-v1',complete:true,sequence,entry:'src/lib.rs',sourceRoot:root,compilationProfile:PRODUCTION_PROFILE,limits:L,inputs,census,stages,changes,packets:[...write.records],packetBytes:write.bytes,semanticAdmission:false,installation:'proposal only; review every complete stage and inverse before application; this CLI never applies sources',sourceChain:'each stage before equals previous complete after; reverse stage order and full per-file mappings to recover original sources',hostBoundary:'stock Node/Bun filesystem/JSON/rule runner; exclusive owned output lifetime; non-atomic source snapshots, no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim',memory:'one full API proposal/graph at a time; per-packet serialization; actual live heap/RSS requires receiving evidence'};
+    const text=JSON.stringify(index)+'\n';rejoin(original);write.complete(text);
+    return {schema:index.schema,complete:true,sequence,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:stages.map(({name,summary})=>({name,...summary})),packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:write.bytes,semanticAdmission:false};
+  }catch(error){try{write.failure(error,stage);}catch(reportFailure){const failure=new Error('sequence proposal failed and its incomplete receipt could not be written');failure.cause=error;failure.reportFailure=reportFailure;throw failure;}throw error;}
+}
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  const args=process.argv.slice(2);if(args.length!==4||args[0]!=='--root'||args[2]!=='--output')fail('usage: --root SOURCE_ROOT --output FRESH_OUTSIDE_DIRECTORY');
-  console.log(JSON.stringify(proposeCoreAdoptionCorpus({root:args[1],output:args[3]})));
+  const args=process.argv.slice(2);
+  if(args.length===6&&args[0]==='--root'&&args[2]==='--output'&&args[4]==='--sequence')proposeCoreAdoptionSequence({root:args[1],output:args[3]},args[5]).then(receipt=>console.log(JSON.stringify(receipt)));
+  else {if(args.length!==4||args[0]!=='--root'||args[2]!=='--output')fail('usage: --root SOURCE_ROOT --output FRESH_OUTSIDE_DIRECTORY');console.log(JSON.stringify(proposeCoreAdoptionCorpus({root:args[1],output:args[3]})));}
 }

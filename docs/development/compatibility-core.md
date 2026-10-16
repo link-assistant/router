@@ -53,3 +53,58 @@ runtime feature parity and intentionally untranslated library implementations
 separately. A successful primitive fixture does not establish that every caller
 is translated. Regenerate the full corpus, inspect remaining refusals and run the
 complete JavaScript gate before claiming full coverage or synchronization.
+
+## Owned interface families
+
+The Rust library internals below remain intentionally untranslated. Qualified
+owned API uses are source-bound to the complete facade and checked again against
+the JavaScript runtime's supported domain; aliases do not waive borrowing,
+destruction, type checking or later body refusals.
+
+| Owned interface | Rust delegation | Checked JavaScript domain |
+| --- | --- | --- |
+| `Text` | `std::string::String` | Existing owned UTF-8 text representation and operations. |
+| `Str` | `std::primitive::str` | Existing borrowed text references with supported source lifetimes; distinct from owned `Text`. |
+| `Json` | `serde_json::Value` | Existing registered tagged immutable JSON values, supported scalar/accessor operations and numeric domains. |
+| `Maybe<T>` | `std::option::Option<T>` | Existing canonical variants and supported payload, lifetime, ownership and Drop rules; no blanket `Try` support. |
+| `Outcome<T, E>` | `std::result::Result<T, E>` | Existing checked success/error variants and supported payloads; no blanket error-conversion support. |
+| `format!` | `std::format!` | Existing checked literal format grammar and supported primitive operands. |
+| `f64_inclusive_contains` | Same-type `Into<f64> + Copy` arguments, widened once before ordered comparisons | Checked `f64` inputs only; IEEE NaN, infinity and signed-zero behavior with once-only left-to-right arguments. Native Rust also accepts `f32`; that does not admit translated `f32` callers. |
+
+## Produce portable source-adoption proposals
+
+The checked-in producer reads a complete physical `src` tree, requires a fresh
+output directory outside the receiving repository, and never installs sources.
+Its parent directory must already exist. Temporary receiving repositories need
+no Git metadata. The coordinator separately records the actual source revision,
+compiler closure and TypeScript dependency used for an integrated run.
+
+```sh
+node tools/translation/propose-core-adoption-corpus.mjs \
+  --root /path/to/receiving-repository --output /outside/fresh-literal-proposal \
+  --sequence literal
+
+node tools/translation/propose-core-adoption-corpus.mjs \
+  --root /path/to/receiving-repository --output /outside/fresh-composed-proposal \
+  --sequence literal-algebraic
+```
+
+The fixed sequences adopt literal text conversions alone, or literal text
+followed by transparent algebraic aliases. The second stage uses the complete
+first-stage result and constructs a fresh module graph. Each stage writes all
+returned fields in their original key order, full source and graph/CST records,
+selections, uncertainty reports and per-file substitutions with verified complete
+inverses. Reverse stage order to recover the original source. A single full API
+proposal is retained at a time; actual memory use still needs receiving checks.
+The async API is `proposeCoreAdoptionSequence({root, output}, sequence)`.
+
+The original `proposeCoreAdoptionCorpus({root, output})` API and CLI without
+`--sequence` keep the original formatting-then-borrowed-text sequence and packet
+schema. New sequences use `router-core-adoption-sequence-packets-v1`. All share
+the existing source, packet and output quotas, exclusive output ownership and
+atomic final `index.json` publication. On failure, partially written evidence
+has an incomplete receipt rather than a completed index. Inspect every packet,
+source chain and inverse before applying actual producer bytes. A selected edit
+or a successful proposal is not an executable coverage gain: regenerate checked
+meta and targets, measure actual application functions, and run receiving checks
+before reporting gains or parity.
