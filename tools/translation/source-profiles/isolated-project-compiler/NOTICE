@@ -1,9 +1,9 @@
 Original project compiler isolation registration (ID 300)
 
-The complete registered original compiler is 56d0a0d877bc91a36414d180fb98ea66d554b6fe.
-Actual reviewed preparation proposal: 1185 files, 39665902 raw source bytes.
-Registry raw: 295478 B, SHA256 c909ec23a66ffbe6779824e7110cd6aa28db2cb0d36af78d284cc80d7ba5ac60.
-Registry gzip: 295521 B, SHA256 c357e4029d6094ee02268f4d8ead2ea0692c500b2512f6e5916ef2c4e156cb5d.
+The complete registered original compiler is f6b67627f5d06ddf3caed26d0a70e417b8b8081a.
+Actual reviewed preparation proposal: 1185 files, 39667028 raw source bytes.
+Registry raw: 295478 B, SHA256 3b2a15bb0400a1fb8dccee8e1b6c2f2d1e6a0f5555e4a06de88ae03199fd37f2.
+Registry gzip: 295521 B, SHA256 da2463da8dbc79de6bd2d02d07d0d697ccc19208fe27f7eda9d292451161e911.
 The initial c24 registration and full source candidate remain retained separately.
 
 The registry contains raw byte length, SHA-256, regular-file mode and original
