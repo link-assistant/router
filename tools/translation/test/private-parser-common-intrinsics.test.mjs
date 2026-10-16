@@ -13,7 +13,8 @@ import {assertPrivateParserExecution,lexPrivateConcreteSource} from '../private-
 // to authenticate a common module first evaluated under a poisoned bootstrap.
 const root=globalThis,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty;
 const parent=Object.getPrototypeOf,setParent=Object.setPrototypeOf,remove=Reflect.deleteProperty;
-const apply=Reflect.apply,stringify=JSON.stringify;
+const apply=Reflect.apply,stringify=JSON.stringify,keys=Reflect.ownKeys,own=Object.hasOwn;
+const arrayPrototype=Array.prototype,functionText=Function.prototype.toString,symbolText=String;
 const source='fn answer() -> u8 { 7 }';
 const directory=process.env.ROUTER_PRIVATE_PARSER_COMMON_VECTOR_DIR;
 function retain(name,value){if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),stringify(value)+'\n',{flag:'wx'});}}
@@ -32,15 +33,45 @@ function errorFacts(error){
 function outcome(result){return result.error===undefined?{value:result.value}:{error:errorFacts(result.error)};}
 function restored(){assert.deepEqual(facts(),{ingress:true,static:true,data:true,legacy:true,combined:true});}
 function positive(){assertPrivateParserExecution();return lexPrivateConcreteSource(source,'Rust');}
+function ownState(owner){
+  const names=keys(owner),rows=[];for(let at=0;at<names.length;at++)rows.push({key:names[at],field:descriptor(owner,names[at])});return rows;
+}
+function sameOwnState(before,after){
+  if(before.length!==after.length)return false;
+  for(let at=0;at<before.length;at++){
+    const left=before[at],right=after[at];if(left.key!==right.key)return false;
+    const fields=keys(left.field),other=keys(right.field);if(fields.length!==other.length)return false;
+    for(let index=0;index<fields.length;index++){const name=fields[index];if(name!==other[index]||!own(right.field,name)||left.field[name]!==right.field[name])return false;}
+  }return true;
+}
+function stateOracle(rows,original){
+  const result=[];for(let at=0;at<rows.length;at++){
+    const row=rows[at],reference=original[at],names=keys(row.field),fields=[];
+    for(let index=0;index<names.length;index++){
+      const name=names[index],value=row.field[name],type=typeof value;
+      fields.push({name,type,sameOriginalIdentity:!!reference&&own(reference.field,name)&&value===reference.field[name],
+        primitive:type==='function'||type==='object'&&value!==null?undefined:value,
+        functionSource:type==='function'?apply(functionText,value,[]):undefined});
+    }
+    result.push({keyType:typeof row.key,key:typeof row.key==='symbol'?symbolText(row.key):row.key,fields});
+  }return result;
+}
 function mutation(owner,key,field){
-  const before=descriptor(owner,key);let observed;
-  try{define(owner,key,field);observed=facts();}
-  finally{if(before)define(owner,key,before);else remove(owner,key);}
-  return {key:typeof key==='symbol'?'symbol':key,observed,restored:facts()};
+  const before=descriptor(owner,key),length=owner===arrayPrototype?descriptor(owner,'length'):null;
+  const beforeOwn=length?ownState(owner):null;let observed,lengthDuring;
+  try{define(owner,key,field);lengthDuring=length?descriptor(owner,'length'):null;observed=facts();}
+  finally{
+    try{if(before)define(owner,key,before);else remove(owner,key);}
+    finally{if(length)define(owner,'length',length);}
+  }
+  const afterOwn=length?ownState(owner):null;
+  const arrayRestoration=length?{before:stateOracle(beforeOwn,beforeOwn),lengthDuring,after:stateOracle(afterOwn,beforeOwn),fullKeyOrderAndDescriptorIdentityEqual:sameOwnState(beforeOwn,afterOwn)}:null;
+  return {key:typeof key==='symbol'?'symbol':key,observed,restored:facts(),arrayRestoration};
 }
 function rejected(row,expectedStatic,expectedData){
   assert.equal(row.observed.ingress,true);assert.equal(row.observed.static,expectedStatic);assert.equal(row.observed.data,expectedData);
   assert.equal(row.observed.legacy,false);assert.equal(row.observed.combined,false);assert.equal(row.restored.combined,true);
+  if(row.arrayRestoration){assert.equal(row.arrayRestoration.fullKeyOrderAndDescriptorIdentityEqual,true);if(row.key==='1234567')assert.equal(row.arrayRestoration.lengthDuring.value,1234568);}
 }
 
 test('private parser combined guard preserves the complete healthy conjunction and output',{timeout:60000},()=>{
