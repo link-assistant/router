@@ -70,6 +70,11 @@ semantic limits, complete test files, strict compiler versions and deadlines
 remain unchanged. This source draft requires receiving checks and qualified
 regeneration before any current-tree freshness or parity claim.
 
+For stored or edited documents and explicit corpus batching, use the
+[bulk CST transport contracts](concrete-syntax-bulk.md). Their grouped source
+authentication schedules and whole-call budgets remain distinct from standalone
+calls and project component storage. Batch results grant no semantic permit.
+
 ## Rule contracts
 
 Give each rule a stable unique identity and a deterministic position. State its
