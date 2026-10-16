@@ -166,7 +166,7 @@ fn diagnostic(id: &crate::translation_core::Str, client: ClientKind, catalog: &c
             .and_then(Value::as_str)
             .map(str::to_string),
     };
-    let diagnostic = json!({
+    let diagnostic = crate::translation_core::json!({
         "contract_version": 1,
         "model_descriptor": descriptor,
         "requested_selector": id,

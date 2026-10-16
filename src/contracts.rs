@@ -110,7 +110,7 @@ pub fn operations() -> Vec<crate::translation_core::Json> {
 /// HTTP routes with their original method, path, authentication and dialect.
 #[must_use]
 pub fn routes() -> Vec<crate::translation_core::Json> {
-    crate::route_contract::route_specs().iter().map(|route| json!({
+    crate::route_contract::route_specs().iter().map(|route| crate::translation_core::json!({
         "name":crate::translation_core::format!("{:?}",route.id),"method":route.method.as_str(),"path":route.template,
         "auth":crate::translation_core::format!("{:?}",route.auth),"dialect":crate::translation_core::format!("{:?}",route.dialect),
         "class":crate::translation_core::format!("{:?}",route.class),"listeners":route.listeners.iter().map(|listener|crate::translation_core::format!("{listener:?}")).collect::<Vec<_>>()
@@ -120,7 +120,7 @@ pub fn routes() -> Vec<crate::translation_core::Json> {
 /// Generated contract document; checked-in publications must match this source.
 #[must_use]
 pub fn document() -> crate::translation_core::Json {
-    json!({"schema":"link-assistant-router/operation-catalog/v1", "version":crate::VERSION,
+    crate::translation_core::json!({"schema":"link-assistant-router/operation-catalog/v1", "version":crate::VERSION,
         "operations":operations(),"routes":routes(),"languages":["rust","javascript","typescript","python"], "types": types()})
 }
 
@@ -167,7 +167,7 @@ pub fn operation_name(command: crate::translation_core::Maybe<&Command>) -> crat
 /// JSON Schemas derived from public HTTP and CLI data types.
 #[must_use]
 pub fn types() -> crate::translation_core::Json {
-    json!({
+    crate::translation_core::json!({
         "ModelCatalogDocument":crate::model_catalog_sources::document_schema(),
         "ModelDefinitionsResponse":schemars::schema_for!(crate::model_catalog_sources::ModelDefinitionsResponse),
         "OperationResult":schemars::schema_for!(crate::operations::OperationResult),

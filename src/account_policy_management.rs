@@ -80,7 +80,7 @@ fn missing() -> Response {
 /// The same JSON representation for CLI and management account listings.
 pub(crate) fn fields(router: &crate::accounts::AccountRouter, account: &crate::translation_core::Str) -> crate::translation_core::Json {
     match router.routing_policy(account) {
-        Ok(policy) => serde_json::json!({"routing_policy": policy}),
-        Err(error) => serde_json::json!({"routing_policy_error": error}),
+        Ok(policy) => crate::translation_core::json!({"routing_policy": policy}),
+        Err(error) => crate::translation_core::json!({"routing_policy_error": error}),
     }
 }

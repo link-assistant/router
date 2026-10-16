@@ -232,7 +232,7 @@ fn single_account_view(state: &AppState) -> crate::translation_core::Json {
                 now_ms,
                 Some(&state.subscription_cache),
             );
-            serde_json::json!({
+            crate::translation_core::json!({
                 "name": reader.provider().to_string(),
                 "home": reader.home().display().to_string(),
                 "credential": credential.label(),
@@ -240,7 +240,7 @@ fn single_account_view(state: &AppState) -> crate::translation_core::Json {
             })
         })
         .collect();
-    serde_json::json!({
+    crate::translation_core::json!({
         "accounts": [],
         "credentials": credentials,
         "note": "single-account mode (no AccountRouter configured)",

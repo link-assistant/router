@@ -17,7 +17,7 @@ use link_assistant_router::token::TokenManager;
 /// capture the credential without scraping a banner — and that is the only place
 /// it appears.
 fn success_envelope(recovery: &Recovery) -> crate::translation_core::Json {
-    serde_json::json!({
+    crate::translation_core::json!({
         "recovered": true,
         "token": recovery.token,
         "token_id": recovery.token_id,
@@ -31,7 +31,7 @@ fn success_envelope(recovery: &Recovery) -> crate::translation_core::Json {
 /// Same envelope with `recovered: false`, so a caller reads one shape and never
 /// has to distinguish "failed" from "printed something else entirely".
 fn failure_envelope(error: &crate::translation_core::Str) -> crate::translation_core::Json {
-    serde_json::json!({ "recovered": false, "error": error })
+    crate::translation_core::json!({ "recovered": false, "error": error })
 }
 
 /// Mint a replacement administrator for a store this machine owns (issue #573).

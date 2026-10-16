@@ -538,7 +538,7 @@ fn item_not_found() -> Response {
 fn resource_not_found(message: &crate::translation_core::Str, code: &crate::translation_core::Str) -> Response {
     (
         StatusCode::NOT_FOUND,
-        axum::Json(serde_json::json!({
+        axum::Json(crate::translation_core::json!({
             "error": {
                 "message": format!("{message} not found"),
                 "type": "invalid_request_error",

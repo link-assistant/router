@@ -47,7 +47,7 @@ pub async fn emergency_disable(State(state): State<AppState>) -> Response {
 pub async fn auth_diagnostics(State(state): State<AppState>) -> Response {
     (
         StatusCode::OK,
-        axum::Json(serde_json::json!({
+        axum::Json(crate::translation_core::json!({
             "diagnostics": state.token_manager.diagnostics().snapshot(),
             "emergency_auth": state.token_manager.emergency().status(),
         })),

@@ -58,8 +58,8 @@ pub fn chat_to_responses_format(value: crate::translation_core::Maybe<&crate::tr
     };
     let kind = required_type(value, "response_format")?;
     match kind {
-        "text" => Ok(Some(json!({"type": "text"}))),
-        "json_object" => Ok(Some(json!({"type": "json_object"}))),
+        "text" => Ok(Some(crate::translation_core::json!({"type": "text"}))),
+        "json_object" => Ok(Some(crate::translation_core::json!({"type": "json_object"}))),
         "json_schema" => {
             let definition = value
                 .get("json_schema")
@@ -76,7 +76,7 @@ pub fn chat_to_responses_format(value: crate::translation_core::Maybe<&crate::tr
                 .ok_or_else(|| {
                     crate::translation_core::format!("{}", "response_format.json_schema.schema must be an object")
                 })?;
-            let mut format = json!({
+            let mut format = crate::translation_core::json!({
                 "type": "json_schema",
                 "name": definition["name"],
                 "schema": schema,
@@ -101,15 +101,15 @@ pub fn responses_to_chat_format(text: crate::translation_core::Maybe<&crate::tra
         return Ok(None);
     };
     match required_type(format, "text.format")? {
-        "text" => Ok(Some(json!({"type": "text"}))),
-        "json_object" => Ok(Some(json!({"type": "json_object"}))),
+        "text" => Ok(Some(crate::translation_core::json!({"type": "text"}))),
+        "json_object" => Ok(Some(crate::translation_core::json!({"type": "json_object"}))),
         "json_schema" => {
             validate_name_and_strict(format.get("name"), format.get("strict"), "text.format")?;
             let schema = format
                 .get("schema")
                 .filter(|schema| schema.is_object())
                 .ok_or_else(|| crate::translation_core::format!("{}", "text.format.schema must be an object"))?;
-            let mut definition = json!({
+            let mut definition = crate::translation_core::json!({
                 "name": format["name"],
                 "schema": schema,
             });
@@ -117,7 +117,7 @@ pub fn responses_to_chat_format(text: crate::translation_core::Maybe<&crate::tra
                 definition["strict"] = strict.clone();
             }
             Ok(Some(
-                json!({"type": "json_schema", "json_schema": definition}),
+                crate::translation_core::json!({"type": "json_schema", "json_schema": definition}),
             ))
         }
         other => Err(crate::translation_core::format!("unsupported text.format type: {other}")),
@@ -239,11 +239,11 @@ fn schema_format(schema: crate::translation_core::Maybe<&crate::translation_core
     let schema = schema
         .filter(|schema| schema.is_object())
         .ok_or_else(|| crate::translation_core::format!("{path} must be an object"))?;
-    Ok(json!({"type": "json_schema", "schema": schema}))
+    Ok(crate::translation_core::json!({"type": "json_schema", "schema": schema}))
 }
 
 fn generic_object_format() -> crate::translation_core::Json {
-    json!({
+    crate::translation_core::json!({
         "type": "json_schema",
         "schema": {"type": "object", "additionalProperties": true}
     })
