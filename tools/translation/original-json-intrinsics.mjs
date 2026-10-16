@@ -211,3 +211,75 @@ export function originalPrivateParserCommonIntrinsicsUnchanged(){
  if(!originalPrivateParserIngressUnchanged())return false;
  return !!(syntaxNative&&originalNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&samePrototype(syntaxStringPrototype,syntaxStrings)&&samePrototype(syntaxRegExpPrototype,syntaxRegexps)&&syntaxNumericPrototypeSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
 }
+
+// Only EXPECTED descriptor shape is stored. No current guard/source verdict is
+// retained: every warm call still reads each current descriptor in old order.
+let privateExpectedPlans=null;
+function makePrivateExpectedPlans(){
+ const snapshots=[arrayDescriptors,mapDescriptors,setDescriptors,weakSetDescriptors,syntaxStrings,syntaxRegexps];let count=0;
+ for(let slot=0;slot<snapshots.length;slot++){
+  const entries=snapshots[slot];if(!entries)return false;count+=entries.length;if(count>512)return false;
+  for(let index=0;index<entries.length;index++){
+   const entry=entries[index],field=entry[1];
+   if(entry[0]==='stack'||!field||!hasOwn(field,'enumerable')||!hasOwn(field,'configurable')||typeof field.enumerable!=='boolean'||typeof field.configurable!=='boolean')return false;
+   if(hasOwn(field,'value')){if(!hasOwn(field,'writable')||typeof field.writable!=='boolean'||hasOwn(field,'get')||hasOwn(field,'set'))return false;}
+   else if(!hasOwn(field,'get')||!hasOwn(field,'set')||hasOwn(field,'writable'))return false;
+  }
+ }
+ // The complete old guard has just qualified captured freeze/apply and both
+ // numeric domains. Only new dense private arrays are shallow-frozen here;
+ // original payload objects/functions/prototypes remain exactly as before.
+ const plans=[];
+ for(let slot=0;slot<snapshots.length;slot++){
+  const entries=snapshots[slot],rows=[];
+  for(let index=0;index<entries.length;index++){
+   const entry=entries[index],field=entry[1],data=hasOwn(field,'value');
+   rows[index]=apply(syntaxFreeze.value,originalObject,[[entry[0],data,field.enumerable,field.configurable,data?field.value:field.get,data?field.writable:field.set]]);
+  }
+  plans[slot]=apply(syntaxFreeze.value,originalObject,[rows]);
+ }
+ return apply(syntaxFreeze.value,originalObject,[plans]);
+}
+function expectedSamePrototype(owner,entries,rows){
+ if(!(owner===arrayPrototype&&entries===arrayDescriptors&&rows===privateExpectedPlans[0]||owner===mapPrototype&&entries===mapDescriptors&&rows===privateExpectedPlans[1]||owner===setPrototype&&entries===setDescriptors&&rows===privateExpectedPlans[2]||owner===weakSetPrototype&&entries===weakSetDescriptors&&rows===privateExpectedPlans[3]||owner===syntaxStringPrototype&&entries===syntaxStrings&&rows===privateExpectedPlans[4]||owner===syntaxRegExpPrototype&&entries===syntaxRegexps&&rows===privateExpectedPlans[5]))return false;
+ const names=keys(owner);if(names.length!==rows.length)return false;
+ for(let index=0;index<names.length;index++){
+  const row=rows[index],key=row[0];if(names[index]!==key)return false;
+  // Preserve the exact old per-key descriptor read, before the NEXT key test.
+  const actual=descriptor(owner,key);if(!actual||hasOwn(actual,'value')!==row[1])return false;
+  if(actual.enumerable!==row[2]||actual.configurable!==row[3])return false;
+  if(row[1]){if(actual.value!==row[4]||actual.writable!==row[5])return false;}
+  else if(!hasOwn(actual,'get')||!hasOwn(actual,'set')||actual.get!==row[4]||actual.set!==row[5])return false;
+ }
+ return true;
+}
+
+function expectedJsonIntrinsicsUnchanged(){
+ if(!ordinaryNative)return false;for(let index=0;index<iteratorPins.length;index++){const pin=iteratorPins[index];if(!same(descriptor(pin.owner,'next'),pin.field))return false;}for(let index=0;index<objectPins.length;index++){const name=objectPins[index][0],field=objectPins[index][1];if(!same(descriptor(originalObject,name),field))return false;}
+ return same(descriptor(originalArray,Symbol.species),species)&&same(descriptor(globalThis,'WeakSet'),globalWeakSet)&&expectedSamePrototype(weakSetPrototype,weakSetDescriptors,privateExpectedPlans[3])&&same(descriptor(globalThis,'JSON'),globalJson)&&same(descriptor(globalThis,'Object'),globalObject)&&same(descriptor(globalThis,'Array'),globalArray)&&same(descriptor(globalThis,'Map'),globalMap)&&same(descriptor(globalThis,'Set'),globalSet)&&same(descriptor(originalObject,'hasOwn'),objectHasOwn)&&same(descriptor(originalObject,'getOwnPropertyDescriptor'),objectDescriptor)&&same(descriptor(originalJson,'stringify'),stringify)&&originalObject.prototype===objectPrototype&&originalArray.prototype===arrayPrototype&&prototype(objectPrototype)===null&&prototype(arrayPrototype)===objectPrototype&&!descriptor(objectPrototype,'toJSON')&&!descriptor(arrayPrototype,'toJSON')&&expectedSamePrototype(arrayPrototype,arrayDescriptors,privateExpectedPlans[0])&&expectedSamePrototype(mapPrototype,mapDescriptors,privateExpectedPlans[1])&&expectedSamePrototype(setPrototype,setDescriptors,privateExpectedPlans[2]);
+}
+
+function expectedPathMembershipIntrinsicsUnchanged(){
+ return !!(pathNative&&expectedJsonIntrinsicsUnchanged()&&same(descriptor(originalObject,'getPrototypeOf'),pathGetPrototypeOf)&&same(descriptor(globalThis,'Reflect'),pathReflect)&&same(descriptor(pathReflect.value,'ownKeys'),pathOwnKeys)&&same(descriptor(originalArray,'isArray'),pathIsArray)&&same(descriptor(types,'isProxy'),pathIsProxy)&&same(descriptor(globalThis,'WeakMap'),pathWeakMap)&&pathWeakMap.value.prototype===pathWeakPrototype&&same(descriptor(pathWeakPrototype,'has'),pathWeakHas));
+}
+
+function expectedNamespaceTraversalIntrinsicsUnchanged(){
+ if(!traversalNative||!expectedPathMembershipIntrinsicsUnchanged()||!same(descriptor(traversalFunctionPrototype,'call'),traversalCall)||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(pathReflect.value,'apply'),traversalApply)||!same(descriptor(mapPrototype,'entries'),traversalEntries)||prototype(traversalMapIterator.owner)!==traversalIteratorPrototype||descriptor(traversalMapIterator.owner,Symbol.iterator)||prototype(traversalIteratorPrototype)!==traversalIteratorParent||!same(descriptor(traversalIteratorPrototype,Symbol.iterator),traversalIteratorMethod))return false;
+ // The old route calls entries.call; a function's own call hook or changed
+ // prototype is also observable and therefore keeps the collected fallback.
+ return prototype(traversalEntries.value)===traversalFunctionPrototype&&!descriptor(traversalEntries.value,'call')&&prototype(traversalMapIterator.field.value)===traversalFunctionPrototype&&!descriptor(traversalMapIterator.field.value,'call');
+}
+
+export function originalPrivateParserExpectedCommonIntrinsicsUnchanged(){
+ if(!originalPrivateParserIngressUnchanged())return false;
+ if(privateExpectedPlans===null){
+  // A FALSE live result is never stored. Building data after TRUE performs no
+  // callbacks, current-owner reflection or original-object mutations.
+  if(!originalPrivateParserCommonIntrinsicsUnchanged())return false;
+  privateExpectedPlans=makePrivateExpectedPlans();return true;
+ }
+ // FALSE here classifies only the private expected shape, not current state.
+ // Every fallback call performs the COMPLETE original guard again.
+ if(privateExpectedPlans===false)return originalPrivateParserCommonIntrinsicsUnchanged();
+ return !!(syntaxNative&&expectedNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&expectedSamePrototype(syntaxStringPrototype,syntaxStrings,privateExpectedPlans[4])&&expectedSamePrototype(syntaxRegExpPrototype,syntaxRegexps,privateExpectedPlans[5])&&syntaxNumericPrototypeSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
+}
