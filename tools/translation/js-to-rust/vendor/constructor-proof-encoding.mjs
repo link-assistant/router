@@ -162,7 +162,13 @@ export function encodeConstructorProofWord(text) {
   const count=guard(bytes);
   let out='';
   if(count>=0) {
-    for(let index=0;index<count;index++)out+=ENCODED_BYTES[bytes[index]];
+    // Bound the per-byte accumulator without another native call or array.
+    // This changes string construction only, not eligibility or byte order.
+    for(let index=0;index<count;){
+      const end=index+4096<count?index+4096:count;let block='';
+      for(;index<end;index++)block+=ENCODED_BYTES[bytes[index]];
+      out+=block;
+    }
     return out;
   }
   // Byte-for-byte copied original loop, using this adapter's private BARE and

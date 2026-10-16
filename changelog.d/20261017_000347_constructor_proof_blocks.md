@@ -1,0 +1,3 @@
+Constructor-proof percent encoding now accumulates bounded blocks of bytes before extending its output string. The existing byte table, Buffer callback, complete eligibility checks, fallback loop and source/proof serialization calls remain unchanged. Boundary oracles compare complete old/new outputs for bare, escaped and Unicode data and offset native byte views, alongside every existing callback and refusal control.
+
+This is an unmeasured string-construction experiment motivated by the complete Bun profile. It does not establish quadratic behavior in the previous engine implementation, a speed gain or a fixed regeneration deadline. Whole-file Node/Bun and strict TypeScript verification remain UNRUN for this draft; no local Rust was executed.

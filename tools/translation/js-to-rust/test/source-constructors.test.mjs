@@ -203,6 +203,14 @@ async function encoderOracle(adapterSource,oldSource,proofText) {
   for(const [text,expected]of authored){const actual=baseline.actual.encodeConstructorProofWord(text),old=baseline.old.encodeWord(text);report.values.push({text,expected,actual,old});assert.equal(actual,expected);assert.equal(old,expected);}
   let allUnits='';for(let unit=0;unit<65536;unit++)allUnits+=originalString.fromCharCode(unit);
   for(const text of [allUnits,proofText.repeat(12)]){const actual=baseline.actual.encodeConstructorProofWord(text),old=baseline.old.encodeWord(text);report.values.push({text,actual,old});assert.equal(actual,old);}
+  const blockBoundaries=[];
+  for(const count of [4095,4096,4097]){
+    const pairs=(count-count%2)/2;
+    const remainder=(count-1)%4,quads=(count-1-remainder)/4;
+    const vectors=[['bare','A'.repeat(count),'A'.repeat(count)],['escaped','?'.repeat(count),'%3F'.repeat(count)],['UTF8','é'.repeat(pairs)+(count%2?'A':''),'%C3%A9'.repeat(pairs)+(count%2?'A':'')],['astral-offset','A'+'😀'.repeat(quads)+'B'.repeat(remainder),'A'+'%F0%9F%98%80'.repeat(quads)+'B'.repeat(remainder)]];
+    for(const [kind,text,expected]of vectors){const actual=baseline.actual.encodeConstructorProofWord(text),old=baseline.old.encodeWord(text);blockBoundaries.push({kind,count,text,expected,actual,old});assert.equal(actual,expected);assert.equal(old,expected);}
+  }
+  report.blockBoundaries=blockBoundaries;
   assert.ok(baseline.actual.encodedFastCount()>0,'native defaults must exercise the fast branch on each actual host');
   const compare=async(label,setup,{warm=true,text='A ?é',expectFast=false}={})=>{
     const modules=await pair();if(warm){modules.actual.encodeConstructorProofWord('warm');modules.old.encodeWord('warm');}
@@ -249,6 +257,16 @@ async function encoderOracle(adapterSource,oldSource,proofText) {
   await compare('coercive-byte-values',trace=>property(Buffer,'from',()=>[{valueOf(){trace.push('valueOf');return 255;},toString(radix){trace.push(['byte-toString',radix]);return'ff';}}]));
   await compare('proxy-byte-container',trace=>property(Buffer,'from',()=>new Proxy([65,255],{get(target,key){trace.push(['proxy-get',typeof key==='symbol'?'iterator':key]);return Reflect.get(target,key);}})));
   await compare('all-256-real-byte-values',()=>property(Buffer,'from',()=>{const bytes=new Uint8Array(256);for(let index=0;index<256;index++)bytes[index]=index;return bytes;}),{expectFast:true});
+  for(const count of [4095,4096,4097]){
+    let expected='';for(let index=0;index<count;index++)expected+=index%3===0?'A':index%3===1?'%20':'%FF';
+    await compare('offset-native-byte-view-'+count,trace=>property(Buffer,'from',function(...args){
+      trace.push(['Buffer.from',args]);const backing=new Uint8Array(count+4);
+      for(let index=0;index<count;index++)backing[index+2]=index%3===0?65:index%3===1?32:255;
+      const bytes=new Uint8Array(backing.buffer,2,count);define(bytes,'length',{value:0,configurable:true});return bytes;
+    }),{expectFast:true});
+    const observed=report.tapes[report.tapes.length-1];for(const row of observed.rows)assert.equal(row.comparison.value,expected);
+    report.blockBoundaries.push({kind:'native-byte-view',count,byteOffset:2,ownLength:0,expected,label:observed.label});
+  }
   if(typeof SharedArrayBuffer==='function')await compare('shared-byte-view',()=>property(Buffer,'from',()=>new Uint8Array(new SharedArrayBuffer(2))));
   for(const [family,wrong]of [['Object',Object.prototype.toString],['String',String.prototype.toString],['BigInt',BigInt.prototype.toString],['Array',Array.prototype.toString]]) {
     await compare('cold-wrong-native-number-'+family,trace=>{
@@ -318,5 +336,5 @@ test('constructor-only encoding matches complete old byte results and callback e
   catch(error){failure=error;stdout=error.stdout?.toString()??'';}
   await retainRaw('constructor-proof-encoding',{script,adapterSource,oldSource,stdout,stderr:failure?.stderr?.toString()??'',failure:failure?{message:failure.message,status:failure.status,signal:failure.signal}:null});
   if(failure)throw failure;
-  const result=JSON.parse(stdout);assert.ok(result.values.length>=9);assert.ok(result.tapes.length>=30);
+  const result=JSON.parse(stdout);assert.ok(result.values.length>=9);assert.ok(result.tapes.length>=30);assert.equal(result.blockBoundaries.length,15);
 });
