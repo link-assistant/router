@@ -52,7 +52,7 @@ function sourcePlan(profile,entry){
 }
 function typePath(source){
  const nodes=originalMacroTrees(source);let at=0;
- function path(depth=0){
+ function path(depth=0,traitInput=false){
   if(depth>24)throw new TypeError('Default type-path input depth exceeded');
   if(nodes[at]?.text==='&'){
    // No lifetime inference, mutable reference, nested direct reference or
@@ -61,14 +61,19 @@ function typePath(source){
   }
   // Explicit single plain trait-object bound; its actual original visitor
   // reaches only default modifiers, an empty binder list and the path below.
-  if(nodes[at]?.text==='dyn')at++;
-  if(nodes[at]?.text==='::')at++;
-  const identifier=()=>/^[A-Za-z_][A-Za-z0-9_]*$/u.test(nodes[at]?.text??'')&&!['mut','const','dyn','impl','fn','extern','unsafe','for','async'].includes(nodes[at]?.text);
+  if(nodes[at]?.text==='dyn'){traitInput=true;at++;}
+  const absolute=nodes[at]?.text==='::';if(absolute)at++;
+  if(traitInput&&!absolute&&['crate','self','super'].includes(nodes[at]?.text)){
+   const root=nodes[at++].text;
+   if(root==='super')while(nodes[at]?.text==='::'&&nodes[at+1]?.text==='super')at+=2;
+   if(nodes[at++]?.text!=='::')return false;
+  }
+  const identifier=()=>/^[A-Za-z_][A-Za-z0-9_]*$/u.test(nodes[at]?.text??'')&&!['mut','const','dyn','impl','fn','extern','unsafe'].includes(nodes[at]?.text)&&(!traitInput||nodes[at].text!=='_'&&!(' as break const continue crate else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while abstract become box do final macro override priv typeof unsized virtual yield async await dyn gen try ').includes(' '+nodes[at].text+' '));
   if(!identifier())return false;at++;
   for(;;){
    if(nodes[at]?.text==='<'){
-    at++;if(!path(depth+1))return false;
-    while(nodes[at]?.text===','){at++;if(nodes[at]?.text==='>')break;if(!path(depth+1))return false;}
+    at++;if(!path(depth+1,traitInput))return false;
+    while(nodes[at]?.text===','){at++;if(nodes[at]?.text==='>')break;if(!path(depth+1,traitInput))return false;}
     if(nodes[at++]?.text!=='>')return false;
    }
    if(nodes[at]?.text!=='::')return true;at++;if(!identifier())return false;at++;

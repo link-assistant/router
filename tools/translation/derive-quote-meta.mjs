@@ -162,27 +162,36 @@ export function createQuoteFragmentCompiler(inventory){
     const roots=originalMacroTrees(source,{maxBytes:4096,maxTokens:512,maxDepth:32});let traitObjects=0;
     const identifier=node=>node?.kind==='token'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(node.text)&&!['impl','dyn','fn','const','macro','where','extern','Self','mut'].includes(node.text);
     const lifetime=node=>/^'[_\p{L}][_\p{L}\p{N}]*$/u.test(node?.text??'');
-    function type(nodes,start=0,depth=0){
+    // Rust 1.89 strict/reserved names (including edition-2024 names), only
+    // for the new trait-object path and its recursive type arguments.
+    const traitName=node=>identifier(node)&&node.text!=='_'&&!(' as break const continue crate else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while abstract become box do final macro override priv typeof unsized virtual yield async await dyn gen try ').includes(' '+node.text+' ');
+    function type(nodes,start=0,depth=0,traitInput=false){
       if(depth>32)throw new TypeError('Original syn Type recursion exceeds its profile');let at=start;
-      if(nodes[at]?.text==='&'){at++;if(lifetime(nodes[at]))at++;if(nodes[at]?.text==='mut')at++;return type(nodes,at,depth+1);}
+      if(nodes[at]?.text==='&'){at++;if(lifetime(nodes[at]))at++;if(nodes[at]?.text==='mut')at++;return type(nodes,at,depth+1,traitInput);}
       const node=nodes[at];
       if(node?.kind==='group'){
         if(!['(','['].includes(node.delimiter))throw new TypeError('Original syn Type excludes executable groups');
         let inner=0;const children=node.children;
-        if(node.delimiter==='['){inner=type(children,0,depth+1);if(children[inner]?.text===';'){inner++;if(!/^\d+$/u.test(children[inner]?.text??''))throw new TypeError('Array Type requires a literal length');inner++;}}
-        else while(inner<children.length){inner=type(children,inner,depth+1);if(inner<children.length&&children[inner++]?.text!==',')throw new TypeError('Tuple Type separator is unresolved');}
+        if(node.delimiter==='['){inner=type(children,0,depth+1,traitInput);if(children[inner]?.text===';'){inner++;if(!/^\d+$/u.test(children[inner]?.text??''))throw new TypeError('Array Type requires a literal length');inner++;}}
+        else while(inner<children.length){inner=type(children,inner,depth+1,traitInput);if(inner<children.length&&children[inner++]?.text!==',')throw new TypeError('Tuple Type separator is unresolved');}
         if(inner!==children.length)throw new TypeError('Original syn Type has trailing group syntax');return at+1;
       }
-      const traitObject=nodes[at]?.text==='dyn';if(traitObject){traitObjects++;at++;}
-      if(nodes[at]?.text==='::')at++;
-      if(!identifier(nodes[at])||traitObject&&['for','async','unsafe'].includes(nodes[at].text))throw new TypeError('Original syn Type requires a named, reference, product or single trait-object leaf');at++;
+      const traitObject=nodes[at]?.text==='dyn';if(traitObject){traitObjects++;at++;}traitInput ||= traitObject;
+      const absolute=nodes[at]?.text==='::';if(absolute)at++;
+      // Relative roots are prefixes, never trait names or later segments.
+      if(traitInput&&!absolute&&['crate','self','super'].includes(nodes[at]?.text)){
+        const root=nodes[at++].text;
+        if(root==='super')while(nodes[at]?.text==='::'&&nodes[at+1]?.text==='super')at+=2;
+        if(nodes[at++]?.text!=='::')throw new TypeError('Original trait-object root requires a qualified named path');
+      }
+      if(!(traitInput?traitName(nodes[at]):identifier(nodes[at])))throw new TypeError('Original syn Type requires a named, reference, product or single trait-object leaf');at++;
       while(true){
         if(nodes[at]?.text==='<'){
           at++;if(nodes[at]?.text==='>')throw new TypeError('Original Type has empty generic arguments');
-          while(true){at=lifetime(nodes[at])?at+1:type(nodes,at,depth+1);if(nodes[at]?.text===','){at++;if(nodes[at]?.text==='>')break;}else break;}
+          while(true){at=lifetime(nodes[at])?at+1:type(nodes,at,depth+1,traitInput);if(nodes[at]?.text===','){at++;if(nodes[at]?.text==='>')break;}else break;}
           if(nodes[at++]?.text!=='>')throw new TypeError('Original syn Type generic arguments remain unresolved');
         }
-        if(nodes[at]?.text!=='::')break;at++;if(!identifier(nodes[at])||traitObject&&['for','async','unsafe'].includes(nodes[at].text))throw new TypeError('Original syn Type path segment is unresolved');at++;
+        if(nodes[at]?.text!=='::')break;at++;if(!(traitInput?traitName(nodes[at]):identifier(nodes[at])))throw new TypeError('Original syn Type path segment is unresolved');at++;
       }return at;
     }
     if(type(roots)!==roots.length)throw new TypeError('Original syn Type has unproved trailing syntax');
