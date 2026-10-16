@@ -59,7 +59,12 @@ test('single explicit trait paths preserve complete original Syn tokens and seri
   assert.equal(captured.tape.filter(row=>row.phase==='update').length,60);assert.equal(captured.tape.filter(row=>row.phase==='digest').length,60);assert.ok(captured.tape.filter(row=>row.phase==='update').every(row=>row.returnedThis));
   const selected=observedOperation(()=>compiler.sourceType('Arc<dyn Store>',{}));retain('01-complete-selected-hash-order',selected);assert.ok(selected.result.value,selected.result.error?.message);
   const updates=selected.tape.filter(row=>row.phase==='update'),digests=selected.tape.filter(row=>row.phase==='digest'),selections=selected.result.value.provenance.traitObjectSyntax.sources;
-  assert.equal(updates.length,68);assert.equal(digests.length,68);assert.equal(updates[0].input,'Arc<dyn Store>');assert.deepEqual(updates.slice(-7).map(row=>row.input),selections.map(row=>deriveDependencySource(dependencies,'syn',row.source).source.slice(row.span.start,row.span.end)));assert.deepEqual(digests.slice(-7).map(row=>row.value),selections.map(row=>row.sha256));
+  assert.equal(updates.length,69);assert.equal(digests.length,69);
+  const inputUpdate={phase:'update',input:'Arc<dyn Store>',kind:'string',args:1,returnedThis:true},inputDigest={phase:'digest',args:['hex'],value:hash('Arc<dyn Store>')};
+  // Macro token-tree provenance precedes the sourceType provenance hash;
+  // both finish before the private source selection transaction begins.
+  assert.deepEqual(selected.tape.slice(0,4),[inputUpdate,inputDigest,inputUpdate,inputDigest]);assert.deepEqual(selected.tape.slice(4,-14),captured.tape);
+  assert.deepEqual(selected.tape.slice(-14),selections.flatMap(row=>[{phase:'update',input:deriveDependencySource(dependencies,'syn',row.source).source.slice(row.span.start,row.span.end),kind:'string',args:1,returnedThis:true},{phase:'digest',args:['hex'],value:row.sha256}]));
   const rows=[];
   for(const source of ['dyn Store','dyn crate::service::Store','Arc<dyn Store>','Mutex<HashMap<Key,Arc<dyn service::Store<Value>>>>',"&'static dyn service::Store<Value>"]){
     const result=observation(()=>compiler.roundTrip(compiler.sourceType(source,{role:'independent syntax regression'})));rows.push({source,result});
