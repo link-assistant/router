@@ -7,6 +7,7 @@ import {translateProject} from '../project.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {parseRust,checkProgram,emitJavaScript,HostChecker} from '../extensions/host-contracts.mjs';
 import {createOriginalSharedPatternAdapter} from '../extensions/shared-source-patterns.mjs';
+import {assertOriginalSourceFrameEnvelope} from '../extensions/standard-source-frame.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE} from '../router-core-source-data.mjs';
 import {proposeCoreJsonCorpus} from '../migrate-core-json.mjs';
 import {proposeCoreAlgebraicCorpus} from '../migrate-core-algebraic.mjs';
@@ -79,16 +80,42 @@ test('existing discarded unit ordered matches and value-only shared matches pres
   await targets(result,api=>{assert.equal(api.discarded(some(true)),true);assert.equal(api.discarded(some(false)),false);assert.equal(api.discarded(none),false);assert.equal(api.ordinary(item('')),true);assert.equal(api.ordinary(item('x')),false);assert.equal(api.ordinary(empty),false);});
 });
 test('copied source and overridden checker readers cannot issue a function-tail frame or call virtual hooks',()=>{
-  const source=nominal+'pub fn checked(v:&Item)->bool{match v{Item::Text(text)=>{if text.is_empty(){return true;}false},_=>false}}fn main(){}',surface=parseRust(source),original=checkProgram(surface);retain('complete-genuine-checked-program',serializeProgram(original));assert.throws(()=>checkProgram(structuredClone(surface)),/source|original|captur|authority/i);
+  const source=nominal+'pub fn checked(v:&Item)->bool{match v{Item::Text(text)=>{if text.is_empty(){return true;}false},_=>false}}fn main(){}',surface=parseRust(source),original=checkProgram(surface);retain('complete-genuine-checked-program',serializeProgram(original));assert.throws(()=>checkProgram(structuredClone(surface)),/source|original|captur|authority|nested match-arm control: only direct function-return arms have a checked join contract/i);
   const foreign=createOriginalSharedPatternAdapter();assert.equal(foreign.originalSharedPatternFunctionTail({},{}),false);assert.equal(foreign.originalSharedPatternFunctionTail({},undefined),false);
   for(const kind of ['value','get']){const fresh=parseRust(source),checker=new HostChecker(fresh.language,fresh.externals??[]);let calls=0;const descriptor={configurable:true,...(kind==='get'?{get(){calls++;return ()=>true;}}:{writable:true,value(){calls++;return true;}})};Object.defineProperty(checker,'sourceSharedPatternFunctionTail',descriptor);let caught;try{checker.program(fresh);}catch(error){caught=error;}finally{delete checker.sourceSharedPatternFunctionTail;}retain('complete-own-reader-refusal',{kind,message:caught?.message,calls});assert.ok(caught);assert.equal(calls,0);assert.doesNotThrow(()=>checkProgram(parseRust(source)));}
 });
-test('modified or moved checked tail frames and foreign issuers cannot manufacture emission authority',()=>{
-  const result=project(nominal+'pub fn checked(v:&Item)->bool{match v{Item::Text(text)=>{if text.is_empty(){return true;}false},_=>false}}'),base=result.meta.targetSemanticProgram;assert.equal(has(result,'checked'),true);assert.doesNotThrow(()=>emitJavaScript(parseProgram(JSON.stringify(base))));
-  for(const [index,mutate]of [p=>{find(p,'routerOriginalSharedPatternMatch').sourceSharedPatternProof.functionTail=false;},p=>{find(p,'routerOrderedMatchArms').functionTail=false;},p=>{find(p,'routerReturn').value={k:'bool',value:false,type:{kind:'bool'}};},p=>{const entry=[...p.declarations.values()].find(row=>row.k==='fn');entry.body={k:'if',cond:{k:'bool',value:true,type:{kind:'bool'}},then:entry.body,else:{k:'bool',value:false,type:{kind:'bool'}},type:{kind:'bool'}};}].entries()){
-    const program=parseProgram(JSON.stringify(base));mutate(program);retain('complete-modified-meta',{index,wire:serializeProgram(program)});assert.throws(()=>emitJavaScript(program),/Shared source pattern|pattern.*changed|authority|invalid checked|original/i,'mutation '+index);
+test('modified or moved checked tail frames and foreign issuers cannot manufacture emission authority',async()=>{
+  const source='use serde_json::Value;pub fn checked(v:&Value)->bool{match v{Value::Object(map)=>{if map.get("type").and_then(Value::as_str)==Some("yes"){return true;}false},_=>false}}pub fn other(v:&Value)->bool{match v{Value::Object(map)=>{if map.get("type").and_then(Value::as_str)==Some("no"){return true;}false},_=>false}}',result=project(source),base=result.meta.targetSemanticProgram;
+  for(const name of ['checked','other'])assert.equal(has(result,name),true,JSON.stringify(result.meta.refused));
+  const entry=program=>{const rows=[...program.declarations.values()].filter(row=>row.k==='fn'&&row.fullName==='checked');assert.equal(rows.length,1);return rows[0];};
+  const nested=entry=>{const node=find(entry.body,'routerOriginalStandardFrame');assert.ok(node,'actual checked declaration contains an issued standard frame');return node;};
+  const replace=(value,target,replacement)=>{if(value===target)return replacement;if(Array.isArray(value))return value.map(child=>replace(child,target,replacement));if(!value||typeof value!=='object')return value;return Object.fromEntries(Object.entries(value).map(([key,child])=>[key,replace(child,target,replacement)]));};
+  const actual=parseProgram(JSON.stringify(base));nested(entry(actual));assert.ok(find(entry(actual).body,'routerOriginalCallbackLoan'));
+  assert.doesNotThrow(()=>assertOriginalSourceFrameEnvelope(nested(entry(actual)),actual));
+  for(const kind of ['proof','type']){const node=structuredClone(nested(entry(actual)));if(kind==='proof')node.sourceFrameProof.key='not-an-issued-frame';else node.type={kind:'unit'};assert.throws(()=>assertOriginalSourceFrameEnvelope(node,actual),/Original standard frame/);}
+  const envelopeOnly=structuredClone(nested(entry(actual))),free=find(envelopeOnly.body,'var');assert.ok(free);free.name='no-enclosing-body-authority';assert.doesNotThrow(()=>assertOriginalSourceFrameEnvelope(envelopeOnly,actual));assert.equal(createOriginalSharedPatternAdapter().originalSharedPatternNestedFrameEmission({},envelopeOnly),false);
+  assert.equal(find(entry(actual).body,'routerOriginalSharedPatternMatch').sourceSharedPatternProof.functionTail,true);assert.doesNotThrow(()=>emitJavaScript(actual));
+  await targets(result,api=>{for(const [value,yes,no]of [[{type:'yes'},true,false],[{type:'no'},false,true],[{type:'other'},false,false],[{},false,false],[null,false,false]]){const input=canonical(value),before=structuredClone(input);assert.equal(api.checked(input),yes);assert.equal(api.other(input),no);assert.deepEqual(input,before);}});
+  const mutations=[
+    p=>{find(entry(p).body,'routerOriginalSharedPatternMatch').sourceSharedPatternProof.functionTail=false;},
+    p=>{find(entry(p).body,'routerOrderedMatchArms').functionTail=false;},
+    p=>{find(entry(p).body,'routerReturn').value={k:'bool',value:false,type:{kind:'bool'}};},
+    p=>{const fn=entry(p);fn.body={k:'if',cond:{k:'bool',value:true,type:{kind:'bool'}},then:fn.body,else:{k:'bool',value:false,type:{kind:'bool'}},type:{kind:'bool'}};},
+    p=>{nested(entry(p)).sourceFrameProof.key='not-an-issued-frame';},
+    p=>{nested(entry(p)).type={kind:'unit'};},
+    p=>{const node=nested(entry(p)),variable=find(node.body,'var');assert.ok(variable);variable.name='foreign_match_binding';},
+    p=>{entry(p).body=structuredClone(nested(entry(p)));},
+    p=>{const other=p.declarations.get('other');assert.ok(other);const fn=entry(p);fn.body=replace(fn.body,nested(fn),structuredClone(nested(other)));},
+    p=>{p.declarations.get('other').body=structuredClone(entry(p).body);},
+    p=>{nested(entry(p)).sourceFrameProof.callerPermit=true;},
+    p=>{find(entry(p).body,'routerOriginalCallbackLoan').originalLoanProof.key='not-an-issued-loan';},
+    p=>{find(entry(p).body,'routerOriginalCallbackLoan').type={kind:'unit'};},
+    p=>{const node=find(entry(p).body,'routerOriginalCallbackLoan'),variable=find(node.value,'var');assert.ok(variable);variable.name='foreign_loan_binding';},
+  ];
+  for(const [index,mutate]of mutations.entries()){
+    const program=parseProgram(JSON.stringify(base)),before=serializeProgram(program);mutate(program);const wire=serializeProgram(program);assert.notEqual(wire,before,'actual declaration mutation '+index);retain('complete-modified-executed-declaration',{index,before,wire,checkedBody:entry(program).body});assert.throws(()=>emitJavaScript(program),/Shared source pattern|pattern.*changed|authority|invalid checked|original/i,'mutation '+index);
   }
-  const foreign=createOriginalSharedPatternAdapter(),program=parseProgram(JSON.stringify(base)),entry=[...program.declarations.values()].find(row=>row.k==='fn');assert.throws(()=>foreign.prepareOriginalSharedPatterns({program},entry),/private original authority/);
+  const foreign=createOriginalSharedPatternAdapter(),program=parseProgram(JSON.stringify(base)),selected=entry(program);assert.equal(foreign.originalSharedPatternNestedFrameEmission({},nested(selected)),false);assert.throws(()=>foreign.prepareOriginalSharedPatterns({program},selected),/private original authority/);
 });
 
 // Complete immutable provider, selected by source structure above; no hand-authored replacement body.

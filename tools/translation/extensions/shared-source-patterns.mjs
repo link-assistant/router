@@ -55,7 +55,7 @@ function functionTailMatches(body) {
     };tail(body);return tails;
 }
 export function createOriginalSharedPatternAdapter() {
-    const contexts = new WeakMap(), active = new WeakMap(), issued = new Map(), projectionOrigins = new WeakSet(), frameOrigins = new WeakSet(), viewOrigins = new WeakSet(), fieldReferences = new WeakSet(), functions = new WeakMap(), emissionScopes = new WeakMap();
+    const contexts = new WeakMap(), active = new WeakMap(), issued = new Map(), projectionOrigins = new WeakSet(), frameOrigins = new WeakSet(), viewOrigins = new WeakSet(), fieldReferences = new WeakSet(), functions = new WeakMap(), emissionScopes = new WeakMap(), tailScopes = new WeakSet(), tailEmissionScopes = new WeakMap();
     function captureOriginalSharedPatterns(checker, surface) {
         const calls = new WeakMap(), data = new Map(), visit = (items, path = []) => {
             for (const item of items) {
@@ -462,9 +462,10 @@ export function createOriginalSharedPatternAdapter() {
         for (const frame of framed(renamed.body)) {
             const nodes = new Set();
             walk(frame.body, node => {
-                if (['routerSourcePatternProjection', 'routerSourcePatternStringView'].includes(node.k)||node.k==='routerOrderedMatchArms'&&node.functionTail===true)
+                if (['routerSourcePatternProjection', 'routerSourcePatternStringView'].includes(node.k)||node.k==='routerOrderedMatchArms'&&node.functionTail===true||frame.sourceSharedPatternProof.functionTail===true&&['routerOriginalStandardFrame','routerOriginalCallbackLoan'].includes(node.k))
                     nodes.add(metadataDigest(node));
             });
+            if(frame.sourceSharedPatternProof.functionTail===true)tailScopes.add(nodes);
             prepared.set(metadataDigest(frame), nodes);
         }
         functions.set(emitter, prepared);
@@ -479,8 +480,9 @@ export function createOriginalSharedPatternAdapter() {
         const allowed = functions.get(emitter)?.get(metadataDigest(node));
         if (!allowed)
             throw new Error('Shared source pattern changed from the exact validated original function rename');
-        const previous = emissionScopes.get(emitter);
+        const previous = emissionScopes.get(emitter), previousTail = tailEmissionScopes.get(emitter);
         emissionScopes.set(emitter, allowed);
+        if(tailScopes.has(allowed))tailEmissionScopes.set(emitter,allowed);
         try {
             return emit(node.body);
         }
@@ -489,12 +491,15 @@ export function createOriginalSharedPatternAdapter() {
                 emissionScopes.set(emitter, previous);
             else
                 emissionScopes.delete(emitter);
+            if(previousTail)tailEmissionScopes.set(emitter,previousTail);
+            else tailEmissionScopes.delete(emitter);
         }
     }
     function requireOriginalSharedPatternNodeEmission(emitter, node) {
         if (!emissionScopes.get(emitter)?.has(metadataDigest(node)))
             throw new Error('Shared pattern projection/view requires its exact active privately validated original frame');
     }
+    const originalSharedPatternNestedFrameEmission=(emitter,node)=>{const scope=tailEmissionScopes.get(emitter);return ['routerOriginalStandardFrame','routerOriginalCallbackLoan'].includes(node.k)&&tailScopes.has(scope)&&scope.has(metadataDigest(node));};
     const originalSharedPatternFunctionTail=(checker,node)=>{const frame=active.get(checker);return Boolean(frame&&frame.functionTail===node);};
-    return Object.freeze({ originalSharedPatternFunctionTail, captureOriginalSharedPatterns, checkOriginalSharedPatternMatch, originalSharedPatternDomain, originalSharedPatternOwner, originalSharedPatternFieldType, originalSharedPatternBinding, originalSharedPatternRecord, originalSharedPatternProjection, finalizeOriginalSharedPatterns, prepareOriginalSharedPatterns, withOriginalSharedPatternEmission, requireOriginalSharedPatternNodeEmission, hasOriginalPatternProjection, hasOriginalSharedPatternFrame, originalSharedPatternCoercion, hasOriginalSharedPatternView });
+    return Object.freeze({ originalSharedPatternNestedFrameEmission, originalSharedPatternFunctionTail, captureOriginalSharedPatterns, checkOriginalSharedPatternMatch, originalSharedPatternDomain, originalSharedPatternOwner, originalSharedPatternFieldType, originalSharedPatternBinding, originalSharedPatternRecord, originalSharedPatternProjection, finalizeOriginalSharedPatterns, prepareOriginalSharedPatterns, withOriginalSharedPatternEmission, requireOriginalSharedPatternNodeEmission, hasOriginalPatternProjection, hasOriginalSharedPatternFrame, originalSharedPatternCoercion, hasOriginalSharedPatternView });
 }

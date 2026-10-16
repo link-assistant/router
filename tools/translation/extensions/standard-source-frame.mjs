@@ -49,7 +49,19 @@ export function checkOriginalSourceFrame(checker,syntax,bindings,resultType,orig
 }
 export const hasOriginalSourceFrame=node=>frameOrigins.has(node.sourceFrameProof);
 export function hasOriginalCallbackLoan(node){const state=loans.get(node.originalLoanProof?.key);return Boolean(state&&metadataDigest(node.originalLoanProof)===metadataDigest(state.proof));}
-const nodes=(value,result=[])=>{if(!value||typeof value!=='object')return result;if(['routerOriginalStandardFrame','routerOriginalCallbackLoan'].includes(value.k))result.push(value);for(const [key,child]of Object.entries(value))if(!['type','sourceFrameProof','originalLoanProof','pinnedStandardBodyProof','sharedBodyProof','originalCallbackProof'].includes(key))Array.isArray(child)?child.forEach(item=>nodes(item,result)):nodes(child,result);return result;};
+// The tail boundary changes traversal only. Host still authenticates the entire
+// enclosing checked function before opening the private nested emission scope.
+const nodes=(value,result=[])=>{if(!value||typeof value!=='object')return result;if(value.k==='routerOriginalSharedPatternMatch'&&value.sourceSharedPatternProof?.functionTail===true)return result;if(['routerOriginalStandardFrame','routerOriginalCallbackLoan'].includes(value.k))result.push(value);for(const [key,child]of Object.entries(value))if(!['type','sourceFrameProof','originalLoanProof','pinnedStandardBodyProof','sharedBodyProof','originalCallbackProof'].includes(key))Array.isArray(child)?child.forEach(item=>nodes(item,result)):nodes(child,result);return result;};
+// A function-tail shared frame authenticates its complete checked body after
+// the closed ordered-arm rename. Its nested standard frame keeps this issuer's
+// proof/type envelope; the enclosing private issuer must separately require
+// exact whole nested-node membership before using the renamed body. This reader
+// alone grants neither a body comparison exception nor emission scope.
+export function assertOriginalSourceFrameEnvelope(node,program){
+  if(!['routerOriginalStandardFrame','routerOriginalCallbackLoan'].includes(node.k))throw new Error('Original standard frame/loan kind changed');
+  const frame=node.k==='routerOriginalStandardFrame',proof=frame?node.sourceFrameProof:node.originalLoanProof,state=(frame?frames:loans).get(proof?.key);
+  if(!state||metadataDigest(proof)!==metadataDigest(state.proof)||metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,program)))throw new Error('Original standard frame/loan changed or lacks private source authority');
+}
 const functions=new WeakMap();
 export function prepareOriginalSourceFrames(emitter,entry){
   const found=nodes(entry.body);if(!found.length)return null;

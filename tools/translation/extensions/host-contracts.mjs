@@ -7,7 +7,7 @@ import {checkOriginalMappedBody,checkOriginalMappedApplication,prepareOriginalMa
 import {createOriginalSharedPatternAdapter} from './shared-source-patterns.mjs';
 import {captureOriginalMoveTuples} from './standard-move-payload.mjs';
 import {captureConstMatchSources} from './const-match-source-context.mjs';
-import {prepareOriginalSourceFrames,requireOriginalSourceFrameEmission,originalSourceFramePatternRead} from './standard-source-frame.mjs';
+import {prepareOriginalSourceFrames,requireOriginalSourceFrameEmission,assertOriginalSourceFrameEnvelope,originalSourceFramePatternRead} from './standard-source-frame.mjs';
 import {checkPinnedOptionCallbackBody,checkOriginalCallbackApplication,requirePinnedOptionCallbackBody,prepareOriginalOptionCallbacks,requireOriginalOptionCallbackEmission} from './standard-option-callback-body.mjs';
 import {captureOriginalStandardCalls,hasOriginalStandardCall} from './original-standard-calls.mjs';
 import {contextualIntegerParseReceiver,contextualIntegerParseTarget} from './contextual-integer-parse.mjs';
@@ -841,6 +841,11 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if(node.k==='routerSourceConversion')return this.expr(requireOriginalConversionEmission(node,this));
     if(node.k==='routerCheckedCloneBody')return this.expr(requireOriginalCloneEmission(node,this));
     if(node.k==='routerCheckedCloneFieldBorrow')return this.expr(requireOriginalCloneFieldEmission(node,this));
+    if(['routerOriginalCallbackLoan','routerOriginalStandardFrame'].includes(node.k)&&sourcePatterns.originalSharedPatternNestedFrameEmission(this,node)){
+      assertOriginalSourceFrameEnvelope(node,this.program);
+      if(!sourcePatterns.originalSharedPatternNestedFrameEmission(this,node))throw new Error('Original standard frame/loan changed inside its private shared tail frame');
+      return node.k==='routerOriginalCallbackLoan'?this.expr(node.value):`(() => {\n${this.statements(node.body).join('\n')}\n})()`;
+    }
     if(node.k==='routerOriginalCallbackLoan')return this.expr(requireOriginalSourceFrameEmission(this,node));
     if(node.k==='routerOriginalStandardFrame')return `(() => {\n${this.statements(requireOriginalSourceFrameEmission(this,node)).join('\n')}\n})()`;
     if(node.k==='routerOriginalSharedDomainGuard'){this.copyReceivers=true;return `(() => { const ${this.sharedGuardVariable} = ${this.expr(node.value)}; ml_assert_immutable_copy(${this.sharedGuardVariable}); return ${this.sharedGuardVariable}; })()`;}
