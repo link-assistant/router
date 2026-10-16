@@ -1,0 +1,4 @@
+### Changed
+
+- Restore the two complete native JSON comparison expressions used before the bounded JSON equality experiment: full builtin output source/proof/hash reissue still precedes comparison, and module item carriers keep their exact original checks and left-before-right serialization order. Existing bounded immutable operand storage and every refusal remain.
+- Keep the generic equality helper and its whole tests as unadopted code. The complete profiled receiving run found about 18.1 seconds of sampled equality traversal/string-length work while the older private JSON work remained about 10.3 seconds; the original case still exceeded its 60-second deadline. This source-only restoration makes no measured wall-time or deadline improvement claim. No source proof, owner result, new across-call state or storage limit is changed.

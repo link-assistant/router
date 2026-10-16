@@ -1,8 +1,7 @@
 // Per-original-invocation namespace use of sealed generated bang outputs.
 // Output owners are joined here; executable traits and other dimensions are not.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonCache,privateFrozenJsonCacheFacts} from './private-frozen-json.mjs';
-import {privateDataJsonFieldEquality} from './private-data-json-equality.mjs';
+import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
 import {compilationProfile} from './cfg-profile.mjs';
 import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {deriveFootprintSourceContext,deriveFootprintAt,isDeriveFootprintContext,deriveFootprintClapArgsSourceOutput} from './derive-footprints.mjs';
@@ -13,7 +12,6 @@ import {proveClapArgsBangFootprint,assertClapArgsBangFootprint} from './clap-arg
 import {proveClapValueEnumBangFootprint,assertClapValueEnumBangFootprint,originalClapValueEnumBangOutput} from './clap-value-enum-bang-footprints.mjs';
 import {proveSchemarsBangFootprint,assertSchemarsBangFootprint,originalSchemarsOutput} from './schemars-bang-footprints.mjs';
 const originalJson=createPrivateFrozenJsonCache();
-const originalJsonMaxCodeUnits=(privateFrozenJsonCacheFacts().limits.entryBytes-128)/2;
 const contexts=new WeakMap(),certificates=new WeakMap(),cachedContexts=new WeakMap();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -78,12 +76,7 @@ export const isDeriveBangContext=value=>!!value&&contexts.has(value);
 function validateItemCarrier(module,original){
   // The authoritative original scoped selection remains private. An omitted
   // carrier is harmless; a provided carrier cannot erase/retype its items.
-  for(const name of ['items','allItems'])if(Object.hasOwn(module,name)){
-    const comparison=privateDataJsonFieldEquality(module,original,name);
-    if(comparison){
-      if(comparison.logicalJsonCodeUnits<=originalJsonMaxCodeUnits)originalJson(comparison.operand);
-    }else if(JSON.stringify(module[name])!==originalJson(original[name]))throw new TypeError('Bang original scoped item carrier changed');
-  }
+  for(const name of ['items','allItems'])if(Object.hasOwn(module,name)&&JSON.stringify(module[name])!==originalJson(original[name]))throw new TypeError('Bang original scoped item carrier changed');
 }
 export function deriveBangModules(context,{deriveContext,modules,externalModules,compilationProfile:profileInput}){
   const state=contexts.get(context);
