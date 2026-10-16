@@ -241,3 +241,69 @@ export function analyzeJavaScriptBatched(source,options){
   try{const result=pipeline.run(source);assertPrivateParserExecution();assertReverseConcreteSourceHost();Object.defineProperty(result.value.concreteSyntaxBatch,'trace',{__proto__:null,value:result.trace,enumerable:true,writable:true,configurable:true});return result.value;}
   finally{live=false;plan=null;batch=null;analysis=null;}
 }
+
+
+import {prepareReverseConcreteSourceChunks} from './concrete-source.mjs';
+import {captureNativeCorpusSources} from './native-corpus-sources.mjs';
+/** New explicit corpus observer contract; every actual attempt is still fresh. */
+export function analyzeJavaScriptCorpusBatched(input,options){
+  const snapshot=captureNativeCorpusSources(input,options),sources=[...snapshot.sources].sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
+  let live=true,plans=[],coordinates=[],chunks=[],batch=null,pool=[],analyses=[],currentModule=-1;
+  function associated(globalRow,source,moduleIndex){
+    const coordinate=coordinates[globalRow],stage=pool[globalRow],plan=plans[moduleIndex];
+    if(!live||!coordinate||!stage||!plan||coordinate.module!==moduleIndex||coordinate.source!==source||coordinate.language!=='JavaScript'||stage.source!==source||stage.concreteSyntax.language!==coordinate.language||plan.source!==sources[moduleIndex].source||plan.sourcePath!==sources[moduleIndex].path)throw Error('private corpus source/occurrence association differs');
+    return stage;
+  }
+  const consume=(wrapper,attemptOptions)=>{
+    const resolved=readAnalysisOptions(attemptOptions),moduleIndex=currentModule,plan=plans[moduleIndex];
+    if(!live||!plan||typeof wrapper!=='string')throw Error('private same-call corpus stage unavailable');
+    let occurrence=null;
+    for(let at=0;at<plan.occurrences.length;at++){const row=plan.occurrences[at];if(row.source===wrapper){if(occurrence)throw Error('ambiguous corpus wrapper occurrence');occurrence=row;}}
+    if(!occurrence)throw Error('unplanned corpus wrapper occurrence');
+    const globalRow=plan.globalStart+occurrence.row,stage=associated(globalRow,wrapper,moduleIndex);
+    assertPrivateParserExecution();assertReverseConcreteSourceHost();const result=analyzeReconstructedSource(stage,resolved);assertPrivateParserExecution();assertReverseConcreteSourceHost();
+    if(currentModule!==moduleIndex||plans[moduleIndex]!==plan||associated(globalRow,wrapper,moduleIndex)!==stage)throw Error('corpus final wrapper association differs');
+    assertReverseConcreteSourceHost();return result;
+  };
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:[
+      {id:'native-corpus:plan-original-scoped-cst',apply:()=>{
+        let units=0;
+        for(let mi=0;mi<sources.length;mi++){
+          if(mi&&sources[mi-1].path===sources[mi].path)throw Error('duplicate corpus source path');
+          assertPrivateParserExecution();assertReverseConcreteSourceHost();const row=sources[mi],plan=collectScopedWrapperSources(row.source,row.path);assertPrivateParserExecution();assertReverseConcreteSourceHost();
+          plan.globalStart=coordinates.length;plans.push(plan);
+          for(let at=0;at<plan.rows.length;at++){
+            const value=plan.rows[at];units+=value.source.length;if(units>2097152||coordinates.length>=768)throw Error('corpus planned row/source budget');
+            if(coordinates.length%256===0)chunks.push([]);chunks[chunks.length-1].push({source:value.source,language:value.language});
+            coordinates.push({module:mi,row:at,source:value.source,language:value.language});
+          }
+        }
+        return chunks;
+      }},
+      {id:'native-corpus:checked-concrete-chunks',apply:value=>{
+        batch=prepareReverseConcreteSourceChunks(value);
+        for(let ci=0;ci<batch.chunks.length;ci++){const chunk=batch.chunks[ci];for(let at=0;at<chunk.stages.length;at++)pool.push(chunk.stages[at]);}
+        if(pool.length!==coordinates.length||batch.totals.rows!==pool.length)throw Error('corpus reconstructed row census differs');
+        for(let at=0;at<pool.length;at++)associated(at,coordinates[at].source,coordinates[at].module);
+        return batch;
+      }},
+      {id:'native-corpus:fresh-authoritative-analysis',apply:()=>{
+        for(let mi=0;mi<sources.length;mi++){
+          currentModule=mi;const row=sources[mi],plan=plans[mi],stage=associated(plan.globalStart,row.source,mi),resolved={includeScoped:true,sourcePath:row.path,lossless:false,constructorGraph:snapshot.constructorGraph};
+          assertPrivateParserExecution();assertReverseConcreteSourceHost();const analysis=analyzeReconstructedSource(stage,resolved,consume);assertPrivateParserExecution();assertReverseConcreteSourceHost();
+          if(currentModule!==mi||plans[mi]!==plan||associated(plan.globalStart,row.source,mi)!==stage)throw Error('corpus final module association differs');
+          analyses.push({path:row.path,source:row.source,analysis});
+        }
+        currentModule=-1;return analyses;
+      }},
+    ]},
+    {phase:'repository',rules:[{id:'native-corpus:package-source-analyses',apply:value=>({analyses:value,concreteSyntaxCorpus:{schema:'native-portable-corpus-cst-v1',totals:batch.totals,chunks:batch.chunks.map(chunk=>chunk.totals),modules:plans.map((plan,index)=>({path:sources[index].path,sourceSha256:plan.sourceSha256,namespace:plan.namespace,globalStart:plan.globalStart,rows:plan.rows.length,occurrences:plan.occurrences.map(({row,start,end,kind,temporary,language})=>({row,globalRow:plan.globalStart+row,start,end,kind,temporary,language}))})),authority:{type:false,owner:false,executable:false}}})}]},
+  ]);
+  try{
+    const result=pipeline.run(undefined);assertPrivateParserExecution();assertReverseConcreteSourceHost();
+    for(let at=0;at<coordinates.length;at++)associated(at,coordinates[at].source,coordinates[at].module);
+    Object.defineProperty(result.value.concreteSyntaxCorpus,'trace',{__proto__:null,value:result.trace,enumerable:true,writable:true,configurable:true});
+    snapshot.requireCurrent();return result.value;
+  }finally{live=false;plans=null;coordinates=null;chunks=null;batch=null;pool=null;analyses=null;currentModule=-1;}
+}

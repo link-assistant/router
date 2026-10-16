@@ -206,3 +206,89 @@ export function buildNativePortableArtifactsBulk(input) {
   const result={artifacts,manifest};
   assertPrivateParserExecution();snapshot.requireCurrent();return result;
 }
+
+
+import {analyzeJavaScriptCorpusBatched} from './translator.mjs';
+import {captureNativeCorpusSources} from './native-corpus-sources.mjs';
+// Explicit whole-corpus sibling; both existing assemblers above stay unchanged.
+export function buildNativePortableArtifactsCorpusBulk(input) {
+  const snapshot=captureNativeCorpusSources(input),sources=snapshot.sources;
+  const artifacts = new Map();
+  const modules = [];
+  const names = new Set();
+  // A refused graph never grants a partial constructor capability. Existing
+  // per-module discovery below retains its exact census and syntax failures.
+  let constructorGraph;try{constructorGraph=createConstructorSourceGraph(sources);}catch{}
+  const corpus=analyzeJavaScriptCorpusBatched(sources,{constructorGraph});let analysisIndex=0;
+  for (const { path, source } of [...sources].sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0)) {
+    if (!safeSource.test(path) || names.has(path) || typeof source !== 'string') {
+      throw new Error('invalid or duplicate native portable source');
+    }
+    names.add(path);
+    const checked=corpus.analyses[analysisIndex++];if(!checked||checked.path!==path||checked.source!==source)throw Error('corpus ordinary analysis association differs');
+    const analyzed = checked.analysis;
+    const scoped = analyzed.scopedFunctions;
+    if (!scoped?.complete || scoped.sourceItems !== scoped.items.length
+      || !Number.isSafeInteger(scoped.fullDomainTranslatedItems) || scoped.fullDomainTranslatedItems < 0
+      || !Number.isSafeInteger(scoped.conditionalPrivateBodyDraftItems) || scoped.conditionalPrivateBodyDraftItems < 0
+      || scoped.fullDomainTranslatedItems + scoped.conditionalPrivateBodyDraftItems !== scoped.translatedItems
+      || scoped.program.filter((item) => item.conditionalInputs === true || item.conditionalCaptures === true || item.conditionalCalls === true).length !== scoped.conditionalPrivateBodyDraftItems
+      || scoped.translatedItems !== scoped.program.length
+      || scoped.sourceItems !== scoped.translatedItems + scoped.unsupportedItems) {
+      throw new Error(`incomplete scoped native discovery: ${path}`);
+    }
+    if (!isDeepStrictEqual(scoped.items.filter((item) => item.status === 'translated').map((item) => item.name),
+      scoped.program.map((item) => item.name))) throw new Error(`scoped native identity drift: ${path}`);
+    const topLevel = {
+      sourceItems: analyzed.items.length,
+      translatedItems: analyzed.program.length,
+      fullDomainTranslatedItems: analyzed.program.filter(item=>!item.conditionalConstructors&&!item.conditionalInputs&&!item.conditionalCaptures&&!item.conditionalCalls).length,
+      conditionalPrivateBodyDraftItems: analyzed.program.filter(item=>item.conditionalConstructors||item.conditionalInputs||item.conditionalCaptures||item.conditionalCalls).length,
+      unsupportedItems: analyzed.items.filter((item) => item.status === 'unsupported').length,
+      items: analyzed.items,
+      diagnostics: analyzed.diagnostics,
+    };
+    if (topLevel.sourceItems !== topLevel.translatedItems + topLevel.unsupportedItems) {
+      throw new Error(`incomplete top-level native discovery: ${path}`);
+    }
+    const stem = path.slice('packages/javascript/native/'.length, -4);
+    const outputs = [];
+    for (const [scope, program] of [['top-level', analyzed.program], ['scoped', scoped.program]]) {
+      const meta = `${program.map(toLino).join('\n')}\n`;
+      const decoded = parseMeta(meta,{constructorGraph});
+      if (!isDeepStrictEqual(decoded, program)) throw new Error(`native meta roundtrip drift: ${path} ${scope}`);
+      const header = `// GENERATED: node scripts/regenerate-js-first.mjs\n// Independently checked ${scope} bodies from ${path}; source sha256=${hash(source)}; IR sha256=${hash(meta)}.\n// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.\n`;
+      for (const [outputPath, content] of [
+        [`tools/translation/js-to-rust/generated/native-portable/${scope}/${stem}.lino`, `# GENERATED: checked portable-router-v1 bodies; no source envelopes.\n${meta}`],
+        [`tools/translation/js-to-rust/generated/native-portable/${scope}/${stem}.rs.txt`, `${header}${emitRust(decoded)}`],
+        [`packages/typescript/native/portable-draft/${scope}/${stem}.ts`, `${header}export {};\n${emitTypeScript(decoded,{outputPath:`packages/typescript/native/portable-draft/${scope}/${stem}.ts`})}`],
+      ]) {
+        if (artifacts.has(outputPath)) throw new Error(`duplicate native portable output: ${outputPath}`);
+        artifacts.set(outputPath, content);
+        outputs.push({ path: outputPath, bytes: Buffer.byteLength(content), sha256: hash(content), scope, definitions: decoded.length });
+      }
+    }
+    modules.push({ path, bytes: Buffer.byteLength(source), sha256: hash(source), topLevel,
+      scopedFunctions: { complete: true, sourceItems: scoped.sourceItems, translatedItems: scoped.translatedItems,
+        fullDomainTranslatedItems: scoped.fullDomainTranslatedItems, conditionalPrivateBodyDraftItems: scoped.conditionalPrivateBodyDraftItems,
+        unsupportedItems: scoped.unsupportedItems, items: scoped.items, diagnostics: scoped.diagnostics }, outputs });
+  }
+  const totals = (field) => modules.reduce((sum, module) => {
+    const census = module[field];
+    return { sourceItems: sum.sourceItems + census.sourceItems, translatedItems: sum.translatedItems + census.translatedItems,
+      unsupportedItems: sum.unsupportedItems + census.unsupportedItems,
+        fullDomainTranslatedItems: sum.fullDomainTranslatedItems + census.fullDomainTranslatedItems,
+        conditionalPrivateBodyDraftItems: sum.conditionalPrivateBodyDraftItems + census.conditionalPrivateBodyDraftItems };
+  }, { sourceItems: 0, translatedItems: 0, unsupportedItems: 0, fullDomainTranslatedItems: 0, conditionalPrivateBodyDraftItems: 0 });
+  const manifest = { schema: 'native-portable-body-draft-v1', fragment: 'portable-router-v1',
+    contract: { wholeNativeImplementationTranslated: false, runtimeParity: false, rustCompiled: false,
+      topLevel: 'Original top-level source items; partial module admission does not admit its refused owners. Source-bound owned-iteration bodies retain explicit conditionalCalls standard-intrinsic obligations. Imported Error construction retains conditionalConstructors; external constructor/global Error/prototype lookup stability remains unproved and Rust exposes only normal/throw projections. Conditional drafts have separate counts.',
+      scopedFunctions: 'Additional ArrowFunction, FunctionExpression and FunctionDeclaration bodies, excluding top-level declarations and initializer forms already counted at top level, and excluding method/accessor bodies themselves; privately source-checked lexical environments retain their closed capture contracts. Full-domain helpers and explicitly conditional private producer/captured-container body drafts have separate counts. Conditional drafts require unchanged standard producer/callback/collection intrinsics, with producer effects and lookup stability unproved; parents and public/unqualified callers remain refused.',
+      meta: 'Both targets consume the serialized and independently checked meta-language program.',
+      targets: 'TypeScript preserves the declared checked fragment; Rust uses explicit payload and host-qualified projections.' },
+    topLevel: totals('topLevel'), scopedFunctions: totals('scopedFunctions'), modules };
+  artifacts.set('parity/js-native-portable-draft.json', json(manifest));
+  const result={artifacts,manifest};
+  if(analysisIndex!==corpus.analyses.length)throw Error('corpus ordinary analysis count differs');
+  assertPrivateParserExecution();snapshot.requireCurrent();return result;
+}

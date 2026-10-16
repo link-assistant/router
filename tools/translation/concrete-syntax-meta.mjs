@@ -380,3 +380,8 @@ export function transportConcreteSyntaxSources(rows){
 
 /** Live host qualification only, never source/grammar/type authority. */
 export function assertConcreteSyntaxHost(){checked();}
+
+
+import {transportPrivateConcreteChunks} from './private-parser-execution.mjs';
+/** Explicit corpus fidelity contract, without changing single/batch ingress. */
+export function transportConcreteSyntaxChunks(chunks){checked();const result=transportPrivateConcreteChunks(chunks);checked();return result;}

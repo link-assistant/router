@@ -5,7 +5,7 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzeJavaScript, translateJavaScript, parseMeta, emitRust, emitTypeScript } from '../tools/translation/js-to-rust/translator.mjs';
 import { camelFromSnake } from '../tools/translation/js-to-rust/vendor/ir.mjs';
-import { buildNativePortableArtifactsBulk } from '../tools/translation/js-to-rust/native-portable-artifacts.mjs';
+import { buildNativePortableArtifactsCorpusBulk } from '../tools/translation/js-to-rust/native-portable-artifacts.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
@@ -72,7 +72,7 @@ export function buildArtifacts(root = ROOT) {
     const source = readFileSync(join(root, path), 'utf8');
     return { path, source };
   });
-  const nativeDraft = buildNativePortableArtifactsBulk(nativeSources);
+  const nativeDraft = buildNativePortableArtifactsCorpusBulk(nativeSources);
   const nativeCoverage = nativeDraft.manifest.modules.map(({ path, sha256, topLevel }) => ({ path, sha256,
     sourceItems: topLevel.sourceItems, translatedItems: topLevel.translatedItems,
     unsupportedItems: topLevel.unsupportedItems, diagnostics: topLevel.diagnostics }));

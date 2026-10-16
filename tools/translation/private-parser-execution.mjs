@@ -497,3 +497,86 @@ export function transportPrivateConcreteSources(input){
     batchInputCurrent(request.snapshots);return result;
   }finally{active=false;}
 }
+
+
+// A separate corpus contract: <=3 independently authenticated256-row chunks.
+// The complete old executor and all old single/batch APIs above stay unchanged.
+function chunkSnapshot(input,current){
+  if(!input||typeof input!=='object'||proxy(input)||!current.g.Array.isArray(input)||prototype(input)!==current.g.Array.prototype)fail('corpus dense chunk array required');
+  const length=descriptor(input,'length');
+  if(!length||!own(length,'value')||typeof length.value!=='number'||length.value<1||length.value>3||length.value%1)fail('corpus chunk budget');
+  const names=keys(input),expected=[];for(let at=0;at<length.value;at++)expected.push(''+at);expected.push('length');
+  if(names.length!==expected.length)fail('corpus exact chunk shape required');
+  for(let at=0;at<names.length;at++)if(names[at]!==expected[at])fail('corpus exact chunk names required');
+  const fields=[];for(let at=0;at<names.length;at++){const field=descriptor(input,names[at]);if(!field||!own(field,'value')||at<length.value&&field.enumerable!==true)fail('corpus own-data chunks required');fields.push(field);}
+  const snapshots=[{value:input,parent:current.g.Array.prototype,names,fields}],chunks=[];let units=0,bytes=0,rows=0;
+  for(let at=0;at<length.value;at++){
+    const request=batchSnapshot(fields[at].value,current);units+=request.units;bytes+=request.bytes;rows+=request.rows.length;
+    if(units>BATCH_SOURCE||bytes>BATCH_UTF8)fail('corpus aggregate source/UTF8 budget');
+    for(let index=0;index<request.snapshots.length;index++)snapshots.push(request.snapshots[index]);chunks.push(request);
+  }
+  return {chunks,snapshots,units,bytes,rows};
+}
+/** Data-only chunked fidelity transport. No caller callback or reusable epoch. */
+export function transportPrivateConcreteChunks(input){
+  const current=checked();if(active)fail('recursive source transaction');
+  const request=chunkSnapshot(input,current);active=true;
+  try{
+    const chunks=[],joins=[];let nodes=0,canonicalUnits=0;
+    for(let ci=0;ci<request.chunks.length;ci++){
+      const chunk=request.chunks[ci],before=authenticate();checked();
+      if(!compiled){compiled=compile(before);compiledSources=before.sources;}
+      const selected=compiled,selectedSources=compiledSources,modules=selected.modules,transport=modules.concrete.originalIdentityTransport;
+      for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled complete source changed');}
+      const rows=[];let chunkNodes=0,chunkCanonical=0;
+      for(let at=0;at<chunk.rows.length;at++){
+        checked();const row=chunk.rows[at];let result;
+        try{result=transport(row.source,row.language,false);}catch(error){
+          checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
+          throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
+        }
+        checked();if(result.source!==row.source||result.document.language!==row.language)fail('corpus source association differs');
+        nodes+=result.document.nodes.length;canonicalUnits+=result.meta.length;chunkNodes+=result.document.nodes.length;chunkCanonical+=result.meta.length;
+        if(nodes>BATCH_NODES||canonicalUnits>BATCH_SERIAL)fail('corpus aggregate node/canonical budget');
+        rows.push(result);
+      }
+      const after=authenticate();checked();if(before.text!==after.text)fail('current manifest differs');
+      for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(before.sources[row.id]!==after.sources[row.id])fail('current complete source differs');}
+      finalIdentities(before.records,before.ancestors);finalIdentities(after.records,after.ancestors);checked();
+      joins.push({before,after,selected,selectedSources,modules,transport});
+      chunks.push({rows,totals:{rows:rows.length,sourceCodeUnits:chunk.units,utf8Bytes:chunk.bytes,nodes:chunkNodes,canonicalCodeUnits:chunkCanonical}});
+    }
+    // Later chunk callbacks may invalidate an earlier chunk's paths or inputs.
+    for(let ci=0;ci<joins.length;ci++){const join=joins[ci];finalIdentities(join.before.records,join.before.ancestors);finalIdentities(join.after.records,join.after.ancestors);}checked();
+    const result={chunks,totals:{chunks:chunks.length,rows:request.rows,sourceCodeUnits:request.units,utf8Bytes:request.bytes,nodes,canonicalCodeUnits:canonicalUnits}};
+    for(let ci=0;ci<joins.length;ci++){
+      const join=joins[ci];if(compiled!==join.selected||compiledSources!==join.selectedSources||join.selected.modules!==join.modules||join.modules.concrete.originalIdentityTransport!==join.transport||join.before.text!==join.after.text)fail('corpus final source transaction association changed');
+      for(let at=0;at<join.before.manifest.sources.length;at++){const row=join.before.manifest.sources[at];if(join.selectedSources[row.id]!==join.before.sources[row.id]||join.before.sources[row.id]!==join.after.sources[row.id])fail('corpus final complete source association changed');}
+    }
+    batchInputCurrent(request.snapshots);return result;
+  }finally{active=false;}
+}
+
+/** Storage only: never accepted as a source, grammar, owner or skip permit. */
+export function capturePrivateParserCorpusSources(input,options){
+  const current=checked(),records=[];
+  function shape(value,expected,namesExpected){
+    if(!value||typeof value!=='object'||proxy(value))fail('corpus module own data required');
+    const parent=prototype(value);if(parent!==expected&&!(expected===current.g.Object.prototype&&parent===null))fail('corpus module ancestry differs');
+    const names=keys(value);if(names.length!==namesExpected.length)fail('corpus module exact own shape required');
+    for(let at=0;at<names.length;at++)if(names[at]!==namesExpected[at])fail('corpus module exact own names required');
+    const fields=[];for(let at=0;at<names.length;at++){const field=descriptor(value,names[at]);if(!field||!own(field,'value')||names[at]!=='length'&&field.enumerable!==true)fail('corpus module own data fields required');fields.push(field);}
+    records.push({value,parent,names,fields});return fields;
+  }
+  if(!input||typeof input!=='object'||proxy(input)||!current.g.Array.isArray(input))fail('corpus module array required');
+  const length=descriptor(input,'length');if(!length||!own(length,'value')||typeof length.value!=='number'||length.value<1||length.value>256||length.value%1)fail('corpus module count');
+  const positions=[];for(let at=0;at<length.value;at++)positions.push(''+at);positions.push('length');const outer=shape(input,current.g.Array.prototype,positions),sources=[];let units=0,pathUnits=0;
+  for(let at=0;at<length.value;at++){
+    const row=shape(outer[at].value,current.g.Object.prototype,['path','source']),path=row[0].value,source=row[1].value;
+    if(typeof path!=='string'||typeof source!=='string')fail('corpus module primitive path/source required');
+    units+=source.length;pathUnits+=path.length;if(units>BATCH_SOURCE)fail('corpus module source budget');if(pathUnits>BATCH_SOURCE)fail('corpus module path budget');sources.push({path,source});
+  }
+  let constructorGraph;
+  if(options!==undefined){const fields=shape(options,current.g.Object.prototype,['constructorGraph']);constructorGraph=fields[0].value;}
+  return {sources,constructorGraph,requireCurrent(){checked();batchInputCurrent(records);}};
+}

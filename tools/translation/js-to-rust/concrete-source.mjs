@@ -35,3 +35,19 @@ export function prepareReverseConcreteSources(rows){
 
 /** Recheck the original adapter/core host epoch without reusing source truth. */
 export function assertReverseConcreteSourceHost(){guard();assertConcreteSyntaxHost();guard();}
+
+
+import {transportConcreteSyntaxChunks} from '../concrete-syntax-meta.mjs';
+/** Chunk order is explicit; stages grant no grammar, host or owner epoch. */
+export function prepareReverseConcreteSourceChunks(chunks){
+ guard();const result=transportConcreteSyntaxChunks(chunks);guard();const groups=[];
+ for(let ci=0;ci<result.chunks.length;ci++){
+  const chunk=result.chunks[ci],stages=[];
+  for(let at=0;at<chunk.rows.length;at++){
+   const {source,document,meta,trace}=chunk.rows[at];language(document.language);
+   stages.push({source,concreteSyntax:{schema:'router-reverse-concrete-stage-v1',language:document.language,representationLevel:document.representationLevel,status:document.status,meta,trace}});
+  }
+  groups.push({stages,totals:chunk.totals});
+ }
+ guard();return {chunks:groups,totals:result.totals};
+}
