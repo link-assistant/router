@@ -9,7 +9,7 @@ import {captureOriginalMoveTuples} from './standard-move-payload.mjs';
 import {captureConstMatchSources} from './const-match-source-context.mjs';
 import {prepareOriginalSourceFrames,requireOriginalSourceFrameEmission,originalSourceFramePatternRead} from './standard-source-frame.mjs';
 import {checkPinnedOptionCallbackBody,checkOriginalCallbackApplication,requirePinnedOptionCallbackBody,prepareOriginalOptionCallbacks,requireOriginalOptionCallbackEmission} from './standard-option-callback-body.mjs';
-import {captureOriginalStandardCalls} from './original-standard-calls.mjs';
+import {captureOriginalStandardCalls,hasOriginalStandardCall} from './original-standard-calls.mjs';
 import {contextualIntegerParseReceiver,contextualIntegerParseTarget} from './contextual-integer-parse.mjs';
 import {checkPinnedSharedBody,checkedSharedMatchPlace,requirePinnedSharedBody,originalStandardRefField,prepareOriginalSharedBodies,requireOriginalSharedEmission} from './standard-borrowed-body.mjs';
 import {STANDARD_OPTION_COPY_SOURCE,SHARED_REFERENCE_COPY_SOURCE,sharedReferenceCopyIdentity,originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
@@ -508,7 +508,10 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     }
     const view=sourcePatterns.originalSharedPatternCoercion(this,node,env,path,expected);if(view)return view;
     const sharedPattern=sourcePatterns.checkOriginalSharedPatternMatch(this,node,env,path,expected,allowLiteral,syntax=>checkOrderedMatch(this,syntax,env,path,expected,allowLiteral));if(sharedPattern)return sharedPattern;
+    const sharedLetElse=node.k==='routerLetElse'&&hasOriginalStandardCall(this,node);
+    if(sharedLetElse)assertOriginalCloneChecker(this);
     let value=this.hostExpression(node,env,path,expected,allowLiteral);
+    if(sharedLetElse)assertOriginalCloneChecker(this);
     if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};
     value=this.qualifyOwnershipResult?.(node,value,expected,path)??value;
     value=qualifyPrimitiveFloatResult(value);

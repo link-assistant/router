@@ -14,7 +14,7 @@ import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {isDeepStrictEqual} from 'node:util';
 import {sourceWhileLetCondition,requireSourceWhileLet} from './while-let-source.mjs';
 import {hasSourceLetChain,parseSourceLetChain,requireSourceLetChain} from './let-chain-source.mjs';
-import {requireOriginalStandardCall} from './original-standard-calls.mjs';
+import {hasOriginalStandardCall,requireOriginalStandardCall} from './original-standard-calls.mjs';
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&node.k!=='routerLambda'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
@@ -36,11 +36,10 @@ export function immutableBinding(type,checker,active=new Set()) {
 // The normal pattern owner/layout and source lifetime checks still run. A
 // standalone pattern checker without the registered host proof stays scalar.
 function sharedJsonLetElse(node,type,plan,checker,path,span) {
-  if(typeof checker.sourceStandardFieldCopy!=='function'||typeof checker.hostType!=='function'||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;
+  if(type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||!hasOriginalStandardCall(checker,node))return null;
   if(plan.bindings.length!==1||plan.test.kind!=='ctor'||plan.test.data!==type.name||plan.test.ctor!=='Some'||plan.test.projection.length)return null;
   const binding=plan.bindings[0];
   if(binding.projection.length!==1||binding.projection[0]!=='field0')return null;
-  requireOriginalStandardCall(checker,node);
   const copy=checker.sourceStandardFieldCopy({type},span),payload=copy?.payload,reference=payload?.rustReference,pointee=reference?.pointee;
   if(copy?.kind!=='source-standard-option-payload-copy'||copy.referenceDepth!==1||!copy.referenceSource||reference?.kind!=='shared'||payload.kind!=='data'||pointee?.kind!=='data'||pointee.rustReference||payload.name!==pointee.name||payload.rustGenericIdentityUnresolved||payload.rustBorrowingUnresolved||pointee.rustGenericIdentityUnresolved||pointee.rustBorrowingUnresolved)return null;
   // These are the two existing closed JSON ABI declarations, resolved through
@@ -50,6 +49,7 @@ function sharedJsonLetElse(node,type,plan,checker,path,span) {
   if(!entry||entry.generated!=='router-json-contract'||!isDeepStrictEqual(entry.hostTypePath,candidate.path))return null;
   if(!sameType(binding.type,payload)||!isDeepStrictEqual(binding.type.rustReference,reference))return null;
   checker.expectedOwnership(binding.type,payload,path,span);
+  requireOriginalStandardCall(checker,node);
   return {profile:'canonical-option-shared-json-let-else-v1',copy,pointee:canonical,pointeeMoveAuthority:false,pointeeDropAuthority:false,lifetimeAuthority:false};
 }
 const owned=new Set(['Box','Vec','String','Arc','Rc','Cell','RefCell','UnsafeCell','Mutex','RwLock','Pin','ManuallyDrop','MaybeUninit']);

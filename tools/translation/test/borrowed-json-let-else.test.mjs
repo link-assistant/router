@@ -9,7 +9,10 @@ import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_RANGES_SOURCE} from '../router-core-source-data.mjs';
 import {serde_json_from_str} from '../extensions/json-runtime.mjs';
-import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
+import {parseRust,checkProgram,HostChecker} from '../extensions/host-contracts.mjs';
+import {parseRust as parseScalarPattern,checkProgram as checkScalarPattern} from '../extensions/pattern-control.mjs';
+import {captureOriginalStandardCalls} from '../extensions/original-standard-calls.mjs';
+import {BOOL} from '../checked-types.mjs';
 import {originalParsedSyntaxNode} from '../extensions/source-links.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
@@ -72,7 +75,11 @@ test('escaping borrows counterfeit source layouts and cross-analysis syntax cann
   // proof. Swapping a different parse's node after capture invalidates it.
   const source='pub fn selected(body:&serde_json::Value)->bool{let Some(value)=body.get("x") else{return false;};value.is_null()} fn main(){}',left=parseRust(source),right=parseRust(source),leftFn=left.items.find(row=>row.k==='fn'&&row.name==='selected'),rightFn=right.items.find(row=>row.k==='fn'&&row.name==='selected');assert.ok(leftFn);assert.ok(rightFn);
   const leftCall=nodes(leftFn.body,node=>node.k==='routerLetElse')[0],rightCall=nodes(rightFn.body,node=>node.k==='routerLetElse')[0];assert.ok(leftCall);assert.ok(rightCall);assert.strictEqual(originalParsedSyntaxNode(leftFn,leftCall).actual,leftCall);assert.equal(originalParsedSyntaxNode(leftFn,rightCall),null);assert.equal(originalParsedSyntaxNode(structuredClone(leftFn),leftCall),null);const clone=structuredClone(left);assert.throws(()=>checkProgram(clone));
-  const previous=leftFn.body;leftFn.body=rightFn.body;assert.throws(()=>checkProgram(left));leftFn.body=previous;retain('complete-source-association-controls',{source,left,right,cloned:structuredClone(leftFn)});const checked=checkProgram(left);assert.equal(checked.declarations.has('selected'),true);
+  const previous=leftFn.body;try{leftFn.body=rightFn.body;assert.throws(()=>checkProgram(left));}finally{leftFn.body=previous;}retain('complete-source-association-controls',{source,left,right,cloned:structuredClone(leftFn)});
+  const checker=new HostChecker('Rust',[]),checked=checker.program(left);assert.equal(checked.declarations.has('selected'),true);const env=new Map(checked.declarations.get('selected').params.map(param=>[param.name,param.type])),controls=[];
+  for(const name of ['sourceStandardFieldCopy','hostType','expectedOwnership'])for(const mode of ['method','getter']){let calls=0;const saved=Object.getOwnPropertyDescriptor(checker,name),hook=()=>{calls++;throw Error('must not invoke '+name);};Object.defineProperty(checker,name,mode==='method'?{value:hook,configurable:true}:{get:hook,configurable:true});let message;try{assert.throws(()=>checker.expr(leftCall,env,[],BOOL),error=>{message=error.message;return /Original parser\/cursor/.test(message);});}finally{if(saved)Object.defineProperty(checker,name,saved);else delete checker[name];}assert.equal(calls,0);controls.push({name,mode,calls,message});}
+  const scalar=checkScalarPattern(parseScalarPattern('pub fn scalar(value:Option<u8>)->u8{let Some(value)=value else{return 7;};value} fn main(){}'));assert.equal(scalar.declarations.get('scalar').body.patternControl.kind,'let-else');assert.equal(scalar.declarations.get('scalar').body.patternControl.sharedCopy,undefined);retain('standalone-scalar-path',scalar);
+  let fakeCalls=0;const fake=Object.defineProperty({},'contextEnvironment',{get(){fakeCalls++;throw Error('fake checker callback');}});captureOriginalStandardCalls(fake,left);assert.throws(()=>HostChecker.prototype.expr.call(fake,leftCall,env,[],BOOL),/Original parser\/cursor/);assert.equal(fakeCalls,0);retain('complete-live-checker-override-refusals',{controls,fakeCalls,restored:checker.expr(leftCall,env,[],BOOL)});
 });
 
 // Complete original inputs captured at a87d66cd; hashes bind every byte, including
