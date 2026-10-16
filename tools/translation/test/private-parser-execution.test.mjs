@@ -148,10 +148,33 @@ test('native transitive read write species iterator and diagnostic hooks refuse 
     }finally{if(oldReturn)define(iterator,'return',oldReturn);else delete iterator.return;define(globalThis,'Number',oldNumber);if(oldObjectIterator)define(Object.prototype,Symbol.iterator,oldObjectIterator);else delete Object.prototype[Symbol.iterator];}
     early.push({mode,source,copied,relocations,reversed,readback:readFileSync(path,'utf8'),calls,result,coldResult,restored:outcome(()=>lexPrivateConcreteSource('pub fn restored() {}','Rust'))});
   }
-  retain('03-transitive-hook-outcomes',{source,records,cold,early});
+  const compatibleSource='pub fn inherited_get()->u32 { 7 }',expected=transportPrivateConcreteSource(compatibleSource,'Rust');
+  const getFixture=fixture(t,'03-cold-inherited-get'),priorGet=descriptor(Object.prototype,'get');let getCalls=0,warmGet,coldGet,publicGet;
+  try{
+    define(Object.prototype,'get',{get(){getCalls++;throw Error('unused inherited descriptor get');},configurable:true});
+    warmGet=outcome(()=>transportPrivateConcreteSource(compatibleSource,'Rust'));
+    publicGet=outcome(()=>createConcreteSyntaxMeta(compatibleSource,{language:'Rust'}));
+    const fresh=await import(pathToFileURL(getFixture.path).href);coldGet=outcome(()=>fresh.transportPrivateConcreteSource(compatibleSource,'Rust'));
+  }finally{if(priorGet)define(Object.prototype,'get',priorGet);else delete Object.prototype.get;}
+  const getCompatibility={compatibleSource,expected,getCalls,warmGet,coldGet,publicGet,restored:outcome(()=>transportPrivateConcreteSource(compatibleSource,'Rust'))};
+  const sharedIterator=Object.getPrototypeOf(iteratorPrototype),fallbackAccessor=descriptor(Object.prototype,'__proto__'),iteratorAccessors=[];
+  for(const key of ['constructor',Symbol.toStringTag])for(const stage of ['warm','cold'])for(const variant of ['get','set','wrong-native']){
+    const prior=descriptor(sharedIterator,key),baseline=prior&&!Object.hasOwn(prior,'value')?prior:{...fallbackAccessor,enumerable:false,configurable:true};
+    const f=stage==='cold'?fixture(t,'03-iterator-'+String(key)+'-'+stage+'-'+variant):null;let calls=0,result,fresh;
+    const bad=variant==='wrong-native'?{...fallbackAccessor,enumerable:false,configurable:true}:{...baseline,[variant]:function(){calls++;throw Error('unqualified iterator accessor ran');}};
+    try{
+      define(sharedIterator,key,bad);
+      if(f){fresh=await import(pathToFileURL(f.path).href);result=outcome(()=>fresh.lexPrivateConcreteSource('{}','Rust'));}
+      else result=outcome(()=>lexPrivateConcreteSource('{}','Rust'));
+    }finally{if(prior)define(sharedIterator,key,prior);else delete sharedIterator[key];}
+    iteratorAccessors.push({key:String(key),stage,variant,originalKind:prior?Object.hasOwn(prior,'value')?'data':'accessor':'absent',calls,result,restored:outcome(()=>lexPrivateConcreteSource('{}','Rust'))});
+  }
+  retain('03-transitive-hook-outcomes',{source,records,cold,early,getCompatibility,iteratorAccessors});
   for(const row of records){assert.ok(row.result.error,row.key);assert.equal(row.calls,0,row.key);assert.ok(row.restored.value,row.key);}
   for(const row of cold){assert.ok(row.result.error,row.mode);assert.equal(row.calls,0,row.mode);assert.ok(row.restored.value,row.mode);}
   for(const row of early){assert.ok(row.result.error,row.mode);assert.ok(row.coldResult.error,row.mode);assert.equal(row.calls,0,row.mode);assert.ok(row.restored.value,row.mode);assert.equal(row.readback,row.copied);assert.equal(row.reversed,row.source);}
+  assert.equal(getCompatibility.getCalls,0);assert.deepEqual(getCompatibility.warmGet.value,expected);assert.deepEqual(getCompatibility.coldGet.value,expected);assert.deepEqual(getCompatibility.publicGet.value,expected.document);assert.deepEqual(getCompatibility.restored.value,expected);
+  for(const row of iteratorAccessors){assert.ok(row.result.error,row.key+' '+row.stage+' '+row.variant);assert.equal(row.calls,0);assert.ok(row.restored.value);}
 });
 
 test('all complete source manifest license notice and path identities are freshly authenticated',{timeout:60000},async t=>{

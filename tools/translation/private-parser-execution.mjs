@@ -20,6 +20,15 @@ function native(value,name){
   return typeof value==='function'&&!proxy(value)&&originalCapturedFunctionSource(value)===`function ${name}() { [native code] }`;
 }
 function same(a,b){return !!a===!!b&&(!a||own(a,'value')===own(b,'value')&&a.enumerable===b.enumerable&&a.configurable===b.configurable&&(own(a,'value')?a.value===b.value&&a.writable===b.writable:a.get===b.get&&a.set===b.set));}
+// The fixed graph never reads an inherited multi-character `get` slot. All
+// descriptor inputs have null prototypes; accessor descriptors own their get.
+// Preserve the original CST's harmless inherited-getter positive without
+// relaxing any other prototype key, descriptor, ancestry or hook check.
+function featureKeys(owner,ignoreGet){
+  const names=keys(owner);if(!ignoreGet)return names;
+  const selected=[];for(let at=0;at<names.length;at++)if(names[at]!=='get')selected.push(names[at]);
+  return selected;
+}
 function initialize(){
   if(!initial||!originalPrivateParserIngressUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())fail('native source operations unavailable');
   const pins=[],families=[],constructorParents=[],g={__proto__:null};
@@ -70,7 +79,7 @@ function initialize(){
   ];
   for(let ki=0;ki<kinds.length;ki++){
     const row=kinds[ki],kind=row[0],owner=row[1],allowed=row[2];
-    const parent=prototype(owner),names=keys(owner),fields=[];
+    const parent=prototype(owner),names=featureKeys(owner,kind==='Object'),fields=[];
     if(parent!==(kind==='Object'?null:kind==='TypeError'?g.Error.prototype:g.Object.prototype))fail('feature prototype ancestry changed');
     for(let at=0;at<names.length;at++){
       const key=names[at],field=descriptor(owner,key);if(!allowed.includes(key))fail('unknown feature prototype field');
@@ -113,8 +122,15 @@ function initialize(){
     if(!owner||proxy(owner)||descriptor(owner,'return'))fail('unqualified iterator close');
     const names=keys(owner),fields=[];
     for(let at=0;at<names.length;at++){
-      const key=names[at],field=descriptor(owner,key);if(!field||!own(field,'value'))fail('iterator accessor');
-      if((key==='next'||key===symbols.iterator)&&!native(field.value,key===symbols.iterator?'[Symbol.iterator]':'next'))fail('unqualified iterator method');
+      const key=names[at],field=descriptor(owner,key);if(!field)fail('iterator descriptor missing');
+      if(!own(field,'value')){
+        // Bun's shared Iterator prototype has these two stock accessors. They
+        // are never invoked by the fixed graph; retain exact native identities.
+        const name=key==='constructor'?'constructor':key===symbols.toStringTag?'':null;
+        if(iteratorOwners.length!==1||prototype(owner)!==g.Object.prototype||name===null||field.enumerable!==false||field.configurable!==true||
+          !native(field.get,name)||!native(field.set,name)||prototype(field.get)!==literalFunctionPrototype||prototype(field.set)!==literalFunctionPrototype)fail('iterator accessor');
+        constructorParents.push({value:field.get,parent:literalFunctionPrototype},{value:field.set,parent:literalFunctionPrototype});
+      }else if((key==='next'||key===symbols.iterator)&&!native(field.value,key===symbols.iterator?'[Symbol.iterator]':'next'))fail('unqualified iterator method');
       fields.push(field);
     }
     iteratorOwners.push(owner);families.push({owner,parent:prototype(owner),names,fields});
@@ -132,7 +148,7 @@ function checked(){
   for(let pi=0;pi<current.pins.length;pi++){const pin=current.pins[pi];if(!same(descriptor(pin.owner,pin.key),pin.field))fail('live native operation changed');}
   for(let fi=0;fi<current.families.length;fi++){const family=current.families[fi];
     if(proxy(family.owner)||prototype(family.owner)!==family.parent)fail('live feature ancestry changed');
-    const names=keys(family.owner);if(names.length!==family.names.length)fail('live feature shape changed');
+    const names=featureKeys(family.owner,family.owner===current.g.Object.prototype);if(names.length!==family.names.length)fail('live feature shape changed');
     for(let at=0;at<names.length;at++)if(names[at]!==family.names[at]||!same(descriptor(family.owner,names[at]),family.fields[at]))fail('live feature descriptor changed');
   }
   for(let ci=0;ci<current.constructorParents.length;ci++){const item=current.constructorParents[ci];if(prototype(item.value)!==item.parent)fail('live constructor ancestry changed');}
