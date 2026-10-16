@@ -500,6 +500,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
   }
   prepareOriginalStringPatternBorrow(node,env,path){requireOriginalPrimitiveTryFromChecker(this);return prepareOriginalStringPatternBorrow(this,node,env,path);}
   sourceSharedPatternProofOrigin(node){return sourcePatterns.hasOriginalSharedPatternFrame(node)?'frame':sourcePatterns.hasOriginalPatternProjection(node)?'projection':sourcePatterns.hasOriginalSharedPatternView(node)?'string-view':null;}
+  sourceSharedPatternFunctionTail(node){return sourcePatterns.originalSharedPatternFunctionTail(this,node);}
   sourceSharedPatternDomain(type,span){return sourcePatterns.originalSharedPatternDomain(this,type,span);}
   sourceSharedPatternOwner(node,type,path,env){return sourcePatterns.originalSharedPatternOwner(this,node,type,path,env);}
   sourceSharedPatternFieldType(field,parent,ctor,span){return sourcePatterns.originalSharedPatternFieldType(this,field,parent,ctor,span);}
@@ -825,6 +826,8 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
   }
   fn(entry){const restore=preparePinnedStandardFunction(this,entry,HostRustParser,HostChecker),restoreShared=prepareOriginalSharedBodies(this,entry,HostRustParser,HostChecker),restoreMapped=prepareOriginalMappedBodies(this,entry,HostRustParser,HostChecker),restoreCallbacks=prepareOriginalOptionCallbacks(this,entry,HostRustParser,HostChecker),restoreFrames=prepareOriginalSourceFrames(this,entry),restoreConversions=prepareOriginalConversionFunction(this,entry),restoreTryFrom=prepareOriginalPrimitiveTryFrom(this,entry),restorePatterns=sourcePatterns.prepareOriginalSharedPatterns(this,entry),restoreClones=prepareOriginalCloneEmission(this,entry),prior=this.constMatchFunction;this.constMatchFunction=this.state.localName(entry.fullName);try{return super.fn(entry);}finally{this.constMatchFunction=prior;restoreClones?.();restorePatterns?.();restoreTryFrom?.();restoreConversions?.();restoreFrames?.();restoreCallbacks?.();restoreMapped?.();restoreShared?.();restore?.();}}
   statements(node,...args){
+    if(node.k==='routerOriginalSharedPatternMatch'&&node.sourceSharedPatternProof?.functionTail===true)return sourcePatterns.withOriginalSharedPatternEmission(this,node,body=>this.statements(body,...args));
+    if(node.k==='routerOrderedMatchArms'&&node.functionTail===true)sourcePatterns.requireOriginalSharedPatternNodeEmission(this,node);
     const declaration=node.k==='let'&&node.value.type.kind==='data'?this.program.declarations.get(node.value.type.name):null;
     // A concrete constructor initializer must retain its complete checked
     // union for later exhaustive Rust branches. This is TypeScript-only

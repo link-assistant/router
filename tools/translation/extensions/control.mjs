@@ -336,6 +336,7 @@ export class ControlEmitter extends StringEmitter {
     if (node.k === 'if') return [`if (${this.expr(node.cond)}) {`, ...indent(this.statements(node.then, unit)), '} else {', ...indent(this.statements(node.else, unit)), '}'];
     if (node.k==='match'&&unit)return this.discardedMatchStatements(node);
     if (node.k==='routerOrderedMatchArms'&&unit)return this.discardedOrderedMatchStatements(node);
+    if (node.k==='routerOrderedMatchArms'&&node.functionTail===true)return this.functionTailOrderedMatchStatements(node);
     if (unit) return [`${this.expr(node)};`];
     return super.statements(node);
   }
@@ -380,6 +381,19 @@ export class ControlEmitter extends StringEmitter {
     }
     if(!terminal)lines.push('else { throw new TypeError("unexpected checked match constructor"); }');
     return lines;
+  }
+
+  functionTailOrderedMatchStatements(node) {
+    const lines=[];
+    for(const branch of node.branches) {
+      const selected=[];let arm=branch.body;
+      while(arm.k==='let'){selected.push(`const ${arm.name} = ${this.expr(arm.value)};`);arm=arm.body;}
+      if(arm.k!=='routerOrderedArm')throw new Error('function-tail ordered match requires its actual checked arm');
+      const body=this.statements(arm.body,false);
+      if(arm.guard)selected.push(`if (${this.expr(arm.guard)}) {`,...indent(body),'}');else selected.push(...body);
+      lines.push(`if (${this.expr(branch.cond)}) {`,...indent(selected),'}');
+    }
+    return [...lines,'throw new Error("unreachable exhaustive ordered function-tail match");'];
   }
 
   discardedOrderedMatchStatements(node) {

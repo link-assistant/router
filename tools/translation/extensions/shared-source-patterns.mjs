@@ -1,10 +1,12 @@
 import {originalStandardMatchOrigin,originalStandardTupleLayout} from './standard-method-context.mjs';
+import {requireOriginalPrimitiveTryFromChecker} from './host-contracts.mjs';
 import { originalStandardSharedPatternLayout } from './standard-shared-pattern-source.mjs';
 import { SHARED_REFERENCE_COPY_SOURCE, sharedReferenceCopyIdentity, originalPrimitiveCopySource } from '../shared-reference-copy-source.mjs';
 import { originalStringSharedViewSource } from './string-shared-view-source.mjs';
 import { JSON_DATA } from './json-contracts.mjs';
 // Borrow-only pattern projections begin at genuine original caller syntax.
-// This module imports data/proof readers, never a parser/checker/emitter class.
+// This module imports proof readers and the existing complete checker guard,
+// never a parser/checker/emitter class or a caller-supplied authority.
 import { originalParsedDeclarationEvidence, metadataDigest } from './source-links.mjs';
 import { isJsonMacroSourceProof, jsonMacroOriginalSource } from '../json-macro-inputs.mjs';
 import { proveJsonMacroFeatures, isJsonMacroFeatureProof } from '../json-macro-features.mjs';
@@ -32,6 +34,26 @@ export function associateOriginalSharedPatternDependencies(surface, proof) {
         throw new TypeError('Shared JSON patterns require actual source feature activation');
     dependencies.set(surface, { proof, features });
 }
+// Only continuation positions in one original function can return from that
+// function. Operands, subjects, guards, loop bodies and closures are excluded.
+function functionTailMatches(body) {
+    const tails=new WeakSet();let budget=200000;
+    const returns=node=>{
+        if(!node||typeof node!=='object'||node.k==='routerLambda')return false;
+        if(--budget<0)throw unsupported('function-tail match bounds','exceeds the finite source position census',node.span);
+        if(node.k==='routerReturn')return true;
+        return Object.entries(node).some(([key,value])=>!['type','span'].includes(key)&&(Array.isArray(value)?value.some(returns):returns(value)));
+    };
+    const tail=(node,depth=0)=>{
+        if(!node||typeof node!=='object')return;
+        if(--budget<0||depth>256)throw unsupported('function-tail match bounds','exceeds the finite source position census',node.span);
+        if(node.k==='match'||node.k==='routerOrderedMatch'){
+            if(node.rows.some(row=>returns(row.body)))tails.add(node);
+            for(const row of node.rows)tail(row.body,depth+1);
+        }else if(node.k==='if'){tail(node.then,depth+1);tail(node.else,depth+1);}
+        else if(['let','routerDiscard','routerIf','routerSet','routerWhile','routerFor','routerLetElse'].includes(node.k))tail(node.body,depth+1);
+    };tail(body);return tails;
+}
 export function createOriginalSharedPatternAdapter() {
     const contexts = new WeakMap(), active = new WeakMap(), issued = new Map(), projectionOrigins = new WeakSet(), frameOrigins = new WeakSet(), viewOrigins = new WeakSet(), fieldReferences = new WeakSet(), functions = new WeakMap(), emissionScopes = new WeakMap();
     function captureOriginalSharedPatterns(checker, surface) {
@@ -45,11 +67,13 @@ export function createOriginalSharedPatternAdapter() {
                         continue;
                     if (item.k === 'data')
                         data.set([...path, item.name].join('.'), { item, evidence, path });
-                    if (item.k === 'fn')
+                    if (item.k === 'fn') {
+                        const tails=functionTailMatches(item.body);
                         walk(item.body, node => {
                             if (['match', 'routerOrderedMatch'].includes(node.k))
-                                calls.set(node, { digest: metadataDigest(node), evidence, owner: [...path, item.name].join('.') });
+                                calls.set(node, { digest: metadataDigest(node), evidence, owner: [...path, item.name].join('.'), functionTail:tails.has(node) });
                         });
+                    }
                 }
             }
         };
@@ -330,8 +354,10 @@ export function createOriginalSharedPatternAdapter() {
         const captured = contexts.get(checker)?.calls.get(node)??originalStandardMatchOrigin(checker,node);
         if (!captured)
             return null;
+        if(captured.functionTail)requireOriginalPrimitiveTryFromChecker(checker);
         if (captured.digest !== metadataDigest(node))
             throw unsupported('original shared pattern source', 'requires unchanged privately captured complete match syntax', node.span);
+        if(captured.functionTail)requireOriginalPrimitiveTryFromChecker(checker);
         if (node.k === 'match' && node.scrutinees.length !== 1)
             return null;
         const syntax = node.k === 'match' ? node.scrutinees[0] : node.subject;
@@ -350,13 +376,16 @@ export function createOriginalSharedPatternAdapter() {
             return null;
         const rows = node.k === 'match' ? node.rows.map(row => ({ ...row, pattern: unwrapPattern(row.patterns[0]), sourcePattern: { pattern: structuredClone(row.patterns[0]), span: row.span } })) : node.rows.map(row => ({ ...row, pattern: unwrapPattern(row.pattern) })), patterns = new WeakSet();
         rows.forEach(row => walk(row.pattern, node => patterns.add(node)));
-        const frame = { patterns, subjectType: subject.type, span: node.span, layouts: new Map(), valueCopies: new Map(), domain: true, sourceMatchDigest: captured.digest }, previous = active.get(checker);
+        const lowered={...node,k:'routerOrderedMatch',subject:syntax,rows};
+        const frame = { patterns, subjectType: subject.type, span: node.span, layouts: new Map(), valueCopies: new Map(), domain: true, sourceMatchDigest: captured.digest, functionTail:captured.functionTail?lowered:null }, previous = active.get(checker);
         active.set(checker, frame);
         let body;
         try {
             if (!safeValueDomain(checker, subject.type, node.span))
                 throw unsupported('shared pattern owned subject', 'requires a shared source place or a canonical value containing only checked shared/Copy fields', node.span);
-            body = lower({ ...node, k: 'routerOrderedMatch', subject: syntax, rows });
+            if(frame.functionTail)requireOriginalPrimitiveTryFromChecker(checker);
+            body = lower(lowered);
+            if(frame.functionTail)requireOriginalPrimitiveTryFromChecker(checker);
         }
         finally {
             if (previous)
@@ -371,8 +400,10 @@ export function createOriginalSharedPatternAdapter() {
             throw new TypeError('Original shared pattern caller signature is absent');
         const signature = { params: owner.params, ret: owner.ret, async: Boolean(owner.async), constFunction: Boolean(owner.constFunction) };
         const proof = { profile: 'original-source-shared-pattern-read-v1', owner: captured.owner, source: captured.evidence, sourceMatchDigest: captured.digest, key: metadataDigest({ source: captured.evidence, body, layouts: [...frame.layouts] }), subjectType: structuredClone(subject.type), layouts: [...frame.layouts.values()].map(value => structuredClone(value)), valueCopies: [...frame.valueCopies.values()].map(value => structuredClone(value)), borrowOnly: true, pointeeMoveAuthority: false, pointeeDropAuthority: false, constEligible: false };
+        if(frame.functionTail)proof.functionTail=true;
         frameOrigins.add(proof);
         issued.set(proof.key, { proof: structuredClone(proof), body: structuredClone(body), type: structuredClone(body.type), signature: structuredClone(signature) });
+        if(frame.functionTail)requireOriginalPrimitiveTryFromChecker(checker);
         return { k: 'routerOriginalSharedPatternMatch', body, type: body.type, sourceSharedPatternProof: proof, constEligible: false, span: node.span };
     }
     function retarget(value, program) {
@@ -431,7 +462,7 @@ export function createOriginalSharedPatternAdapter() {
         for (const frame of framed(renamed.body)) {
             const nodes = new Set();
             walk(frame.body, node => {
-                if (['routerSourcePatternProjection', 'routerSourcePatternStringView'].includes(node.k))
+                if (['routerSourcePatternProjection', 'routerSourcePatternStringView'].includes(node.k)||node.k==='routerOrderedMatchArms'&&node.functionTail===true)
                     nodes.add(metadataDigest(node));
             });
             prepared.set(metadataDigest(frame), nodes);
@@ -464,5 +495,6 @@ export function createOriginalSharedPatternAdapter() {
         if (!emissionScopes.get(emitter)?.has(metadataDigest(node)))
             throw new Error('Shared pattern projection/view requires its exact active privately validated original frame');
     }
-    return Object.freeze({ captureOriginalSharedPatterns, checkOriginalSharedPatternMatch, originalSharedPatternDomain, originalSharedPatternOwner, originalSharedPatternFieldType, originalSharedPatternBinding, originalSharedPatternRecord, originalSharedPatternProjection, finalizeOriginalSharedPatterns, prepareOriginalSharedPatterns, withOriginalSharedPatternEmission, requireOriginalSharedPatternNodeEmission, hasOriginalPatternProjection, hasOriginalSharedPatternFrame, originalSharedPatternCoercion, hasOriginalSharedPatternView });
+    const originalSharedPatternFunctionTail=(checker,node)=>{const frame=active.get(checker);return Boolean(frame&&frame.functionTail===node);};
+    return Object.freeze({ originalSharedPatternFunctionTail, captureOriginalSharedPatterns, checkOriginalSharedPatternMatch, originalSharedPatternDomain, originalSharedPatternOwner, originalSharedPatternFieldType, originalSharedPatternBinding, originalSharedPatternRecord, originalSharedPatternProjection, finalizeOriginalSharedPatterns, prepareOriginalSharedPatterns, withOriginalSharedPatternEmission, requireOriginalSharedPatternNodeEmission, hasOriginalPatternProjection, hasOriginalSharedPatternFrame, originalSharedPatternCoercion, hasOriginalSharedPatternView });
 }

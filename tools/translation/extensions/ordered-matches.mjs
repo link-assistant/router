@@ -14,6 +14,7 @@ import {originalPrimitiveCopySource} from '../shared-reference-copy-source.mjs';
 import {checkedOptionNominal} from './option-nominal-proof.mjs';
 const LIMIT=256;
 const exits=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(exits):exits(value))));
+const nonReturnExit=node=>node&&typeof node==='object'&&node.k!=='routerLambda'&&(['routerBreak','routerContinue','routerTry','routerAwait'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(nonReturnExit):nonReturnExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type.kind)&&!type.patternOwnershipRefusal&&!type.rustGenericIdentityUnresolved&&!type.rustReference&&type.rustOwnership?.kind!=='owned'&&(type.kind!=='string'||type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str');
 export const ORDERED_MATCH_PROFILE=Object.freeze({id:'rust-1.89-ordered-scalar-match',rust:'1.89.0',reference:'https://doc.rust-lang.org/reference/expressions/match-expr.html#match-guards',macroSource:'https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/macros/mod.rs',macroSourceSha256:'9a950cfa3735eef653b7f9a6a4701e7b218f9876141701dac72ccb8b8e8d3862',macroSourceLines:Object.freeze([444,453]),alternativeLimit:LIMIT,guards:'checked-bool-no-nonlocal-control',exhaustiveness:'unguarded-source-patterns-only'});
 const tokens=(cursor,start)=>cursor.tokens.slice(start,cursor.index).map(token=>({kind:token.kind,value:token.value,...(token.raw?{raw:token.raw}:{}),span:{start:token.start,end:token.end}}));
@@ -147,8 +148,9 @@ function originalConstBody(checker,node,subject,variable,attempts,branches,type,
 }
 export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=false) {
   env=checker.contextEnvironment(node,env,expected);
-  const statement=checkingStatementMatch(node);
-  if(exits(node.subject)||node.rows.some(row=>exits(row.guard)||!statement&&exits(row.body)))throw unsupported('ordered match control','nonlocal control needs a separately checked statement join',node.span);
+  const statement=checkingStatementMatch(node),functionTail=checker.sourceSharedPatternFunctionTail?.(node)===true;
+  if(functionTail&&(!expected||!checker.functionResult(env)||!sameType(expected,checker.functionResult(env))))throw unsupported('function-tail ordered match result','requires the actual enclosing function result type',node.span);
+  if(exits(node.subject)||node.rows.some(row=>exits(row.guard)||!statement&&(!functionTail&&exits(row.body)||functionTail&&nonReturnExit(row.body))))throw unsupported('ordered match control','nonlocal control needs a separately checked statement join',node.span);
   if(statement&&node.rows.some(row=>exits(row.body)))expected??=UNIT;
   const subject=checker.expr(node.subject,env,path);checker.patternDomain(subject.type,node.span);
   const integerRange=node.rows.some(row=>containsIntegerRange(row.pattern));
@@ -202,7 +204,7 @@ export function checkOrderedMatch(checker,node,env,path,expected,allowLiteral=fa
   if(constBody)return constBody;
   // A linear list avoids copying all following attempts into both paths of
   // every guarded alternative. Each branch's ordinary let tree owns binders.
-  let result={k:'routerOrderedMatchArms',branches,type,span:node.span};
+  let result={k:'routerOrderedMatchArms',branches,type,span:node.span,...(functionTail?{functionTail:true}:{})};
   if(subject.type.kind==='data')result={k:'routerDiscard',value:{k:'routerPatternImmutable',object:variable,type:BOOL,borrowedAggregate:checker.sharedPatternView(subject.type),span:node.span},body:result,type,span:node.span};
   return {k:'let',name,value:subject,body:result,type,mutable:false,span:node.span,constEligible:false,patternControl:{kind:'ordered-scalar-match',profile:ORDERED_MATCH_PROFILE.id,subjectType:subject.type,rows:evidence,expandedRows:attempts.length,exhaustiveness:'unguarded-source-patterns-only',...(intervalProof?{intervalProof}:{}),...(node.sourceMacro?{sourceMacro:node.sourceMacro}:{})}};
 }
