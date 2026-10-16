@@ -55,7 +55,7 @@ import {sourceByteLiteral,requireByteLiteral} from './rust-byte-character.mjs';
 import {captureStaticArrays,finalizeStaticArrays,checkStaticArrayElement,requireStaticArrayElement} from './static-array-element.mjs';
 import {checkUnitEnumCast,requireUnitEnumCast} from './unit-enum-cast.mjs';
 import {captureOptionNominals,bindCheckedNominalNoDrop,checkedOptionNominal}  from './option-nominal-proof.mjs';
-import {checkPinnedOptionBody,requirePinnedStandardBody,checkPinnedCallbackApplication,preparePinnedStandardFunction,requirePinnedStandardEmission} from './standard-body-checker.mjs';
+import {checkPinnedOptionBody,requirePinnedStandardBody,checkPinnedCallbackApplication,contextualOptionMapResultReceiver,contextualOptionMapExpected,preparePinnedStandardFunction,requirePinnedStandardEmission} from './standard-body-checker.mjs';
 import {CSV_STRING_PROFILE,checkCharacterSplit,checkCharacterSplitNext,allocatingStringFunctionItem,checkedAllocatingStringItem,requireCsvEmitterProof} from './csv-strings.mjs';
 import {canonicalResult,checkResultMapError,requireResultIteratorProof} from './result-iterators.mjs';
 import {checkedOptionAsDeref,requireOptionDerefProof} from './option-deref.mjs';
@@ -667,7 +667,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     if(node.k==='routerPinnedSharedBodyCall'){const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,'as_ref','shared');if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);return checkPinnedSharedBody(this,node,receiver,path,expected,HostRustParser);}
     if(node.k==='routerPinnedCallbackApplication')return checkPinnedCallbackApplication(this,node);
     if(node.k==='routerPinnedStandardBodyCall'){
-      const receiver=this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,node.method,'shared');
+      const receiver=contextualOptionMapResultReceiver(this,node,env,path,expected)??this.expr(node.object,env,path),inherent=this.resolvedMethod(receiver.type,node.method,'shared');
       if(inherent)return this.methodCall(inherent,node.object,node.args,env,path,expected,node.span);
       if(node.method==='unwrap_or'&&receiver.type.kind==='data'&&this.items.get(receiver.type.name)?.standardGeneric?.kind==='Result')return super.expr({k:'routerAlgebraicOperation',op:'unwrap_or',object:node.object,args:node.args,span:node.span},env,path,expected,allowLiteral);
       return checkPinnedOptionBody(this,node,receiver,env,path,expected,HostRustParser);
@@ -699,6 +699,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       if(mapOr&&nonlocalDefault(node.args[0]))throw unsupported('Option.map_or default control','nonlocal exits require separately checked statement lowering',node.args[0].span);
       const defaultValue=mapOr?this.expr(node.args[0],env,path,expected):null;
       if(mapOr&&defaultValue.type.kind==='data')return checkOriginalMappedBody(this,node,receiver,env,path,expected,HostRustParser,'Option',defaultValue);
+      expected=contextualOptionMapExpected(this,node,receiver,path)??expected;
       const plan=['bool','data'].includes(receiver.type.kind)?planStandardMethod(receiver.type,method,{declarations:this.items,resolveType:(type,range)=>this.resolveType(type,path,range),expected,defaultType:defaultValue?.type,span:node.span,argumentCount:node.args.length}):null;
       if(plan?.operation==='bool_then_some'){
         if(nonlocalDefault(node.args[0]))throw unsupported('bool.then_some argument control','nonlocal exits require separately checked statement lowering',node.args[0].span);

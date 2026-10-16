@@ -1,5 +1,5 @@
 import {originalMoveOwner,originalMoveContext,restoreOriginalMoves,requireOriginalOrElseMove} from './standard-move-payload.mjs';
-import {requireOriginalStandardCall} from './original-standard-calls.mjs';
+import {hasOriginalStandardCall,requireOriginalStandardCall} from './original-standard-calls.mjs';
 import {originalSharedDomainGuard,sharedDomainGuardNeeded} from './standard-borrowed-body.mjs';
 import {hasMutableScalarBinding} from './control.mjs';
 import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
@@ -32,22 +32,26 @@ function scalarOwner(type,span){
   if(type.kind==='float'&&type.rustPrimitiveName==='f64')return 'f64';
   return refuse(span);
 }
-export function payloadOwner(checker,type,span,{allowShared=false,allowMove=false}={}){
+export function payloadOwner(checker,type,span,{allowShared=false,allowMove=false,allowNestedOptions=false,depth=0,budget={remaining:512}}={}){
+  if(allowNestedOptions&&type?.kind==='data'&&checker.items.get(type.name)?.standardGeneric?.kind==='Option'){
+    if(depth>=32||--budget.remaining<0)refuse(span);
+    return 'nested-option<'+optionPayload(checker,type,[],span,{allowNestedOptions:true,depth:depth+1,budget}).owner+'>';
+  }
   if(allowMove){const owner=originalMoveOwner(checker,type,span);if(owner)return owner;}
   if(allowShared&&type?.rustReference){const identity=sharedReferenceCopyIdentity(type);if(!identity)refuse(span);return 'shared:'+identity;}
   if(type?.kind==='data'){checkedOptionNominal(checker,type,span);return 'nominal:'+type.name;}
   return scalarOwner(type,span);
 }
-export function optionPayload(checker,type,path,span,{allowShared=false,allowMove=false}={}){
+export function optionPayload(checker,type,path,span,{allowShared=false,allowMove=false,allowNestedOptions=false,depth=0,budget={remaining:512}}={}){
   if(type?.kind!=='data'||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse(span);
   const entry=checker.items.get(type.name),source=type.rustStandardGeneric;
   if(entry?.k!=='data'||entry.fullName!==type.name||!Array.isArray(entry.modulePath)||entry.standardGeneric?.kind!=='Option'||entry.standardGeneric.arguments?.length!==1||source?.kind!=='Option'||source.arguments?.length!==1||entry.ctors?.length!==2)refuse(span);
   const some=entry.ctors.filter(ctor=>ctor.name==='Some'),none=entry.ctors.filter(ctor=>ctor.name==='None');
   if(some.length!==1||none.length!==1||some[0].fields?.length!==1||some[0].fields[0].name!=='field0'||none[0].fields?.length)refuse(span);
-  const payload=checker.resolveType(source.arguments[0],entry.modulePath,span),owner=payloadOwner(checker,payload,span,{allowShared,allowMove});
+  const payload=checker.resolveType(source.arguments[0],entry.modulePath,span),owner=payloadOwner(checker,payload,span,{allowShared,allowMove,allowNestedOptions,depth,budget});
   for(const written of [entry.standardGeneric.arguments[0],some[0].fields[0].type]){
     const actual=checker.resolveType(written,entry.modulePath,span);
-    if(!sameType(payload,actual)||payloadOwner(checker,actual,span,{allowShared,allowMove})!==owner)refuse(span);
+    if(!sameType(payload,actual)||payloadOwner(checker,actual,span,{allowShared,allowMove,allowNestedOptions,depth,budget})!==owner)refuse(span);
     checker.expectedOwnership(actual,payload,path,span);checker.expectedPrimitiveIdentity(actual,payload,path,span);
   }
   return {payload,owner};
@@ -139,9 +143,45 @@ function optionResultDependencies(entries,receiver,result){
   const all=[...dataDependencies(entries,receiver),...dataDependencies(entries,result)],seen=new Set();
   return all.filter(entry=>{if(seen.has(entry.fullName))return false;seen.add(entry.fullName);return true;});
 }
+// Expected types flow through only the exact original outer call and its
+// immediate map. This private interval is revoked even when checking fails;
+// it supplies no overload selection or permission to reuse checked syntax.
+const optionMapContexts=new WeakMap();
+export function contextualOptionMapResultReceiver(checker,node,env,path,expected){
+  if(!hasOriginalStandardCall(checker,node))return null;
+  if(node.k!=='routerPinnedStandardBodyCall'||node.method!=='ok_or_else'||node.args.length!==1||expected==null)return null;
+  const map=node.object;
+  if(!(map?.k==='routerIteratorOperation'&&map.op==='map'||map?.k==='routerDispatchMethod'&&map.method==='map')||map.args.length!==1||!hasOriginalStandardCall(checker,map))return null;
+  requireOriginalPrimitiveTryFromChecker(checker);requireOriginalStandardCall(checker,node);requireOriginalStandardCall(checker,map);requireOriginalPrimitiveTryFromChecker(checker);
+  const result=canonicalResult(checker,expected,path,node.span,false);if(!result)return null;
+  if(!knownResultDrop(result.error,node.span))throw unsupported('contextual Option map error','requires the existing checked standard error destruction domain',node.span);
+  const previous=optionMapContexts.get(checker),state={node,map,result,used:false};let receiver;
+  optionMapContexts.set(checker,state);
+  try{receiver=checker.expr(map,env,path);}
+  finally{if(previous)optionMapContexts.set(checker,previous);else optionMapContexts.delete(checker);}
+  if(!state.used)return receiver;
+  requireOriginalStandardCall(checker,node);requireOriginalStandardCall(checker,map);requireOriginalPrimitiveTryFromChecker(checker);
+  if(receiver.k!=='routerStandardMethod'||receiver.operation!=='option_map'||checker.resolvedMethod(receiver.type,'ok_or_else','shared'))throw unsupported('contextual Option map receiver','requires the independently checked original Option map and standard ok_or_else',node.span);
+  const actual=optionPayload(checker,receiver.type,path,node.span,{allowNestedOptions:true}).payload;
+  if(!sameType(actual,result.success))throw typeError('contextual Option map success differs from the expected Result',node.span);
+  checker.expectedOwnership(actual,result.success,path,node.span);checker.expectedPrimitiveIdentity(actual,result.success,path,node.span);
+  requireOriginalStandardCall(checker,node);requireOriginalStandardCall(checker,map);requireOriginalPrimitiveTryFromChecker(checker);
+  return receiver;
+}
+// Host calls this only after checking the real receiver and inherent method.
+// Missing/foreign syntax and calls outside the private interval yield no hint.
+export function contextualOptionMapExpected(checker,node,receiver,path){
+  const state=optionMapContexts.get(checker);if(!state||state.map!==node)return null;
+  requireOriginalStandardCall(checker,state.node);requireOriginalStandardCall(checker,node);requireOriginalPrimitiveTryFromChecker(checker);
+  optionPayload(checker,receiver.type,path,node.span);
+  const expected=checker.instantiations.option(state.result.success,node.span);
+  optionPayload(checker,expected,path,node.span,{allowNestedOptions:true});
+  requireOriginalStandardCall(checker,state.node);requireOriginalStandardCall(checker,node);requireOriginalPrimitiveTryFromChecker(checker);
+  state.used=true;return expected;
+}
 function checkPinnedOptionResult(checker,node,receiver,env,path,expected,Parser){
-  requireOriginalStandardCall(checker,node);
-  const {payload,owner}=optionPayload(checker,receiver.type,path,node.span),selection=pinnedOptionBody('ok_or_else'),parameters=selection.method.parameters;
+  requireOriginalPrimitiveTryFromChecker(checker);requireOriginalStandardCall(checker,node);requireOriginalPrimitiveTryFromChecker(checker);
+  const {payload,owner}=optionPayload(checker,receiver.type,path,node.span,{allowNestedOptions:true}),selection=pinnedOptionBody('ok_or_else'),parameters=selection.method.parameters;
   if(parameters.length!==2||parameters[0].receiver!==true||parameters[1].rustTypeSyntax.join('')!=='F'||node.args.length!==1)throw typeError('Option ok_or_else arguments differ from its original signature',node.span);
   const wanted=expected?optionResultContext(checker,expected,payload,path,node.span):null;
   const callback=checker.hostLambda(node.args[0],[],env,path,wanted?.error,{source:'standard-option',receiverType:receiver.type});
@@ -160,6 +200,7 @@ function checkPinnedOptionResult(checker,node,receiver,env,path,expected,Parser)
   body={k:'let',name,value:receiver,body:{...body,type:{...resultType,...body.type}},type:resultType,span:node.span};
   const proof={languageRule:OPTION_RESULT_RULE,callbackBinding:callback.binding,profile:STANDARD_BODY_SOURCE_PROFILE.id,method:'ok_or_else',owner,selection,syntaxSha256:syntax.syntaxSha256,defaultSelection:null,defaultSyntaxSha256:null,evaluationOrder:'actual-source-parameters-left-to-right-once; selected-original-body',constEligible:false,namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false,checkedBodyDigest:bodyDigest(body)};
   issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),callbackBinding:structuredClone(callback.binding),receiverBinding:structuredClone(receiver),data:optionResultDependencies(checker.items,receiver.type.name,resultType.name)});
+  requireOriginalPrimitiveTryFromChecker(checker);
   return {k:'routerPinnedStandardBody',body,type:resultType,constEligible:false,pinnedStandardBodyProof:proof,span:node.span};
 }
 // Both original parameters are evaluated before the match, including err for
@@ -271,7 +312,7 @@ export function requirePinnedStandardBody(node,Parser,{Checker,program}={}){
   const dependencies=program?(optionResult?optionResultDependencies(program.declarations,entry.fullName,node.type.name):dataDependencies(program.declarations,entry.fullName)):issued?.data??[entry];
   checker.program({language:checker.language,items:dependencies.map(item=>({...structuredClone(item),name:item.fullName})),main:null});
   if(issued?.nominals)restoreOptionNominals(checker,issued.nominals);if(proof.payloadMode){if(proof.method!=='or_else'||proof.payloadMode!=='original-whole-Some-move-no-payload-copy-or-drop'||!issued)throw new Error('Whole Option move requires its private original source context');restoreOriginalMoves(checker,issued.moves);requireOriginalOrElseMove(selection);}
-  const {payload,owner}=optionPayload(checker,bindings[0].value.type,[],node.span,{allowShared:proof.method==='or_else',allowMove:proof.method==='or_else'});
+  const {payload,owner}=optionPayload(checker,bindings[0].value.type,[],node.span,{allowShared:proof.method==='or_else',allowMove:proof.method==='or_else',allowNestedOptions:proof.method==='ok_or_else'});
   const resultType=optionResult?optionResultContext(checker,node.type,payload,[],node.span).type:proof.method==='or_else'?bindings[0].value.type:payload;
   if(owner!==proof.owner&&!(owner.startsWith('nominal:rp_')&&proof.owner==='nominal:'+Buffer.from(owner.slice('nominal:rp_'.length),'hex').toString('utf8'))&&!(owner.startsWith('shared:')&&proof.owner==='shared:'+owner.slice(7).replace(/data:rp_([a-f0-9]+)/gu,(_,name)=>'data:'+Buffer.from(name,'hex').toString('utf8')))||!sameType(resultType,node.type))throw new Error('standard body actual payload differs from its source owner');
   for(const binding of bindings.slice(1)){
