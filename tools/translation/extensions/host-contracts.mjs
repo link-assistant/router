@@ -34,6 +34,7 @@ import {withNestedMatchPatternsParser,withNestedMatchPatternsChecker} from './ma
 import {parseStandardMatches,emitOrderedMatch,checkOrderedMatch} from './ordered-matches.mjs';
 import {withSourceOwnershipParser,withSourceOwnershipChecker} from './ownership.mjs';
 import {withSourceLifetimeChecker} from './source-lifetimes.mjs';
+import {normalizeGeneratedTypeOwner} from './generated-type-owners.mjs';
 import {withNamedLifetimeParser} from './named-lifetimes.mjs';
 import {withSharedArrayBorrowChecker} from './array-borrows.mjs';
 import {withFixedArrayParser,withFixedArrayChecker,fixedArrayCopyCells} from './fixed-arrays.mjs';
@@ -156,7 +157,12 @@ const builtins=()=>new Set([...HOST_CONTRACTS,...EFFECT_CONTRACTS].flatMap(contr
 export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacroParser(withNamedLifetimeParser(withCapturedSourceParser(withSourceNamespaceParser(withNestedMatchPatternsParser(withSourceOwnershipParser(withFixedArrayParser(MethodRustParser)))))))) {
   comparison(path,options){return parsePrimitiveComparison(this,path,options);}
   tupleType(fields,location) {return {...super.tupleType(fields,location),rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))};}
-  genericType(kind,types,range){const type=super.genericType(kind,types,range),entry=this.genericTypes.get(type.path.at(-1));return {...type,rustStandardGeneric:{kind,arguments:structuredClone(entry.standardGeneric.arguments)}};}
+  genericType(kind,types,range){
+    const type=super.genericType(kind,types,range);
+    // The monomorphic declaration shares a runtime layout, not the lifetimes
+    // or source spans written at a later use of that same layout.
+    return {...type,rustStandardGeneric:{kind,arguments:this.inSourceNamespace('type',()=>types.map(argument=>structuredClone(normalizeGeneratedTypeOwner(this,argument,this.modulePath,range))))}};
+  }
   attributes(options={}) {
     if(!this.compilationProfile)return super.attributes(options);
     const c=this.cursor,result=[];

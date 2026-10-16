@@ -78,6 +78,30 @@ test('escaping borrows counterfeit source layouts and cross-analysis syntax cann
     'mod serde_json{pub enum Value{Null}} pub fn bad(body:Option<&serde_json::Value>)->bool{let Some(value)=body else{return false;};true}',
     'enum Option<T>{Some(T),None} use serde_json::Value; pub fn bad(body:Option<&Value>)->bool{let Some(value)=body else{return false;};true}',
   ])refuse(source);
+  // Equal portable layouts must retain each written argument's own lifetime
+  // and span, independently of which declaration first filled the layout table.
+  const declarations=[
+    {name:'elided',kind:'elided',written:'&str',depth:1,source:'pub fn elided(value:Option<&str>)->Result<Option<&str>,String>{Ok(value)}'},
+    {name:'fixed',kind:'static',written:"&'static str",depth:1,source:"pub fn fixed(value:Option<&'static str>)->Result<Option<&'static str>,String>{Ok(value)}"},
+    {name:'named',kind:'named:a',written:"&'a str",depth:1,source:"pub fn named<'a>(value:Option<&'a str>)->Result<Option<&'a str>,String>{Ok(value)}"},
+    {name:'deeper',kind:'elided',written:'&str',depth:2,source:'pub fn deeper(value:Option<Option<&str>>)->Result<Option<Option<&str>>,String>{Ok(value)}'},
+  ];
+  const argument=(type,depth)=>{for(let at=0;at<depth;at++)type=type.rustStandardGeneric.arguments[0];return type;};
+  for(const ordered of [declarations,[...declarations].reverse()]){
+    const source=ordered.map(row=>row.source).join(' ')+' fn main(){}',surface=parseRust(source),observed=[];
+    for(const row of ordered){
+      const entry=surface.items.find(item=>item.k==='fn'&&item.name===row.name);assert.ok(entry);
+      const input=argument(entry.params[0].type,row.depth),output=argument(entry.ret,row.depth+1),start=source.indexOf(row.source),first=source.indexOf(row.written,start),second=source.indexOf(row.written,first+row.written.length);
+      for(const [type,offset]of [[input,first],[output,second]]){const lifetime=type.rustBorrowLifetime;assert.equal(lifetime.kind,row.kind);assert.deepEqual(lifetime.span,{start:offset,end:offset+row.written.length});assert.equal(source.slice(lifetime.span.start,lifetime.span.end),row.written);}
+      assert.notStrictEqual(input,output);observed.push({name:row.name,input,output});
+    }
+    retain('complete-per-use-generic-lifetime-syntax',{source,surface,observed});
+  }
+  for(const prefix of ['',"fn seed(value:Option<&'static str>)->Option<&'static str>{value} ",'fn seed(value:Option<&str>)->Option<&str>{value} '])for(const body of [
+    "pub fn bad(value:Option<&str>)->Option<&'static str>{value}",
+    "pub fn bad(value:Result<Option<&str>,String>)->Result<Option<&'static str>,String>{value}",
+    "fn needs(value:Option<&'static str>)->u8{1} pub fn bad(value:Option<&str>)->u8{needs(value)}",
+  ])refuse(prefix+body);
   // Original parser association is object-specific, not a hash or a copied
   // proof. Swapping a different parse's node after capture invalidates it.
   const source='pub fn selected(body:&serde_json::Value)->bool{let Some(value)=body.get("x") else{return false;};value.is_null()} fn main(){}',left=parseRust(source),right=parseRust(source),leftFn=left.items.find(row=>row.k==='fn'&&row.name==='selected'),rightFn=right.items.find(row=>row.k==='fn'&&row.name==='selected');assert.ok(leftFn);assert.ok(rightFn);
