@@ -9,6 +9,7 @@ import {originalMethodTransformFacts,originalMethodTokenTransformSnapshot,origin
 import {originalMethodParserNamespace,configureMatchesMethodParser} from './matches-macro-context.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {captureOriginalMethodValidation,originalMethodValidationDigest} from './source-method-validation.mjs';
+import {requestImmutableNamespaceTargets} from './source-scopes.mjs';
 const parses=new WeakMap();
 function identity(parser) {
   // Read only during an actual call, after cyclic module initialization. The
@@ -17,9 +18,10 @@ function identity(parser) {
   assertOriginalParserIdentity(parser,HostRustParser.prototype,new Map(snapshot.parserMethods));
   assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});
 }
-export function parseOriginalMethodTransform(transform) {
+export function parseOriginalMethodTransform(transform,{immutableNamespaceTargets=false}={}) {
   const state=originalMethodTransformFacts(transform),namespace=originalMethodParserNamespace(state.context,state.method),tokens=originalMethodParserTokens(transform);
   const parser=new HostRustParser(tokens);identity(parser);
+  if(immutableNamespaceTargets)requestImmutableNamespaceTargets(parser);
   configureMatchesMethodParser(parser,state.context,state.method);
   parser.shadowedEffectRoots=new Set(namespace.shadowedEffectRoots);
   const namespaceValidation=captureOriginalMethodValidation(parser.sourceNamespaceEvidence),namespaceDigest=namespaceValidation.digest,attributes=parser.attributes(),visibility=parser.visibility();

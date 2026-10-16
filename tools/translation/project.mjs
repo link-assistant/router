@@ -12,7 +12,7 @@ import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {lockedTomlValueNamespaceBindings} from './toml-value-namespace.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {STANDARD_NAMESPACE_EVIDENCE} from './namespace-standard.mjs';
-import {configureParserSourceScope} from './source-scopes.mjs';
+import {configureParserSourceScope,requestImmutableNamespaceTargets} from './source-scopes.mjs';
 import { HostRustParser as MethodRustParser, checkProjectProgram, emitJavaScript,hostData as effectData } from './extensions/host-contracts.mjs';
 import {declarationRefusals} from './extensions/declaration-refusals.mjs';
 import { extractImplDeclarations, lowerSharedMethodTokens, lowerCopyMethodTokens,originalMethodMember,originalMethodLowering } from './impl-resolver.mjs';
@@ -285,7 +285,7 @@ function compileProjectLanguage(options) {
   const deriveBangContext=deriveContext?createDeriveBangContext({deriveContext}):null;
   const bindingEvidence=resolveModuleBindings({modules:graph.modules,externalModules:resolvedExternal,deriveContext,deriveBangContext,toolContext,compilationProfile:graph.compilationProfile});
   const scopes=new Map(bindingEvidence.scopes.map(scope=>[moduleScopeKey(scope),scope]));
-  const configureSourceScope=(parser,module)=>configureParserSourceScope(parser,scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
+  const configureSourceScope=(parser,module)=>configureParserSourceScope(requestImmutableNamespaceTargets(parser),scopes.get(moduleScopeKey(module)),bindingEvidence.scopes,module.path);
   const matchesMacroContext=createMatchesMacroContext({modules:graph.modules,compilationProfile:graph.compilationProfile,deriveDependencies:options.deriveDependencies??null,cargoEditionContext});
   progress({stage:'namespace',state:'end',entry:options.entry,total:bindingEvidence.scopes.length});
   const declarations = [], refused = [], imports = [], unloweredItems = [], moduleAliases = new Map();
@@ -375,7 +375,7 @@ function compileProjectLanguage(options) {
           // its unconfigured original macro route still refuses explicitly.
           try{transform=createOriginalMethodTokenTransform(matchesMacroContext,method,lowered);}catch(error){if(!(error instanceof OriginalMethodOwnerUnproved))throw error;}
           let originalParsed=null;
-          if(transform){try{originalParsed=parseOriginalMethodTransform(transform);}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
+          if(transform){try{originalParsed=parseOriginalMethodTransform(transform,{immutableNamespaceTargets:true});}catch(error){if(error instanceof TypeError)throw new TranslationError('unsupported','original method source contract: '+error.message,method.span);throw error;}}
           const parser = originalParsed?originalMethodParsedFacts(originalParsed).parser:new MethodRustParser(copyMetadata(lowered.tokens));
           if(!originalParsed){
           parser.modulePath = module.path;
