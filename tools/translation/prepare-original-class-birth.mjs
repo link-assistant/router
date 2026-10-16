@@ -75,7 +75,7 @@ function observer(definitions,bindings='[]'){return '\nexport function originalC
 function moduleEdits(definitions,text){
   const edits=[],vars=[];
   for(let at=0;at<definitions.length;at++){
-    const d=definitions[at];if(d.factory){vars.push(d.slot,d.counter);edits.push({start:d.factoryBodyStart,end:d.factoryBodyStart,expected:'',replacement:'\n  '+d.counter+'='+d.counter+'===undefined?1:2;\n'});edits.push({start:d.returned.start,end:d.start,expected:text.slice(d.returned.start,d.start),replacement:'const '+d.local+'=(0,'});edits.push({start:d.end,end:d.returned.end,expected:text.slice(d.end,d.returned.end),replacement:');\n  if('+d.slot+'===undefined)'+d.slot+'='+tuple(d,d.local)+';\n  return '+d.local+';'});}
+    const d=definitions[at];if(d.factory){vars.push(d.slot,d.counter);edits.push({start:d.factoryBodyStart,end:d.factoryBodyStart,expected:'',replacement:'\n  '+d.counter+'='+d.counter+'===undefined?1:2;\n'});edits.push({start:d.returned.start,end:d.start,expected:text.slice(d.returned.start,d.start),replacement:'const '+d.local+'=(function(item){return item;})('});edits.push({start:d.end,end:d.returned.end,expected:text.slice(d.end,d.returned.end),replacement:');\n  if('+d.slot+'===undefined)'+d.slot+'='+tuple(d,d.local)+';\n  return '+d.local+';'});}
     else{edits.push({start:d.end,end:d.end,expected:'',replacement:'\nconst '+d.slot+'='+tuple(d,d.className)+';\n'});}
   }
   if(vars.length)edits.push({start:0,end:0,expected:'',replacement:'// Hoisted undefined slots do not add a module lexical TDZ. Never overwritten.\nvar '+vars.join(',')+';\n'});

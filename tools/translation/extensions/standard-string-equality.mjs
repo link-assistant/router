@@ -52,7 +52,7 @@ export function planStandardStringEquality(left,right,context) {
 export function withStandardStringEqualityChecker(Base) {
   __routerOriginalFactoryCalls286_StandardStringEqualityChecker=__routerOriginalFactoryCalls286_StandardStringEqualityChecker===undefined?1:2;
 
-  const __routerOriginalReturned286_StandardStringEqualityChecker=(0,class StandardStringEqualityChecker extends Base {
+  const __routerOriginalReturned286_StandardStringEqualityChecker=(function(item){return item;})(class StandardStringEqualityChecker extends Base {
     binary(node,env,path,expected,allowLiteral) {
       if(this.language!=='Rust'||!['eq','ne'].includes(node.op))return super.binary(node,env,path,expected,allowLiteral);
       const left=this.expr(node.left,env,path,undefined,true),right=this.expr(node.right,env,path,undefined,true);

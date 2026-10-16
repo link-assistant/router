@@ -75,7 +75,7 @@ function ownershipRefusal(tokens) {
 export function withPatternControlParser(Base=ControlRustParser) {
   __routerOriginalFactoryCalls286_PatternControlRustParser=__routerOriginalFactoryCalls286_PatternControlRustParser===undefined?1:2;
 
-  const __routerOriginalReturned286_PatternControlRustParser=(0,class extends Base {
+  const __routerOriginalReturned286_PatternControlRustParser=(function(item){return item;})(class extends Base {
     type() {
       const first=this.cursor.index,type=super.type(),tokens=this.cursor.tokens.slice(first,this.cursor.index),reason=ownershipRefusal(tokens);
       return reason?{...type,patternOwnershipRefusal:reason}:type;
@@ -252,7 +252,7 @@ export function withPatternControlParser(Base=ControlRustParser) {
 export function withPatternControlChecker(Base=ControlChecker) {
   __routerOriginalFactoryCalls286_PatternControlChecker=__routerOriginalFactoryCalls286_PatternControlChecker===undefined?1:2;
 
-  const __routerOriginalReturned286_PatternControlChecker=(0,class extends Base {
+  const __routerOriginalReturned286_PatternControlChecker=(function(item){return item;})(class extends Base {
     bindingConstructorEnvironment(env,name,value,mutable){
       const facts=new Map(env.get(KNOWN_CONSTRUCTORS)??[]);facts.delete(name);
       if(!mutable&&value.k==='ctor')facts.set(name,{data:value.data,ctor:value.ctor});

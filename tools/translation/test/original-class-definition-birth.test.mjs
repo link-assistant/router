@@ -68,6 +68,21 @@ function fullShape(value){
 async function namespaces(){const p=program(),result={};for(const row of p.modules)result[row.id]=await import(new URL('../extensions/'+row.file.slice(2),import.meta.url));return result;}
 function reports(p,spaces){const result=[];for(const row of p.modules){const value=spaces[row.id].originalClassDefinitionBirths();result.push({module:row.id,factoryCalls:value.factoryCalls,bindings:value.bindings.length,records:value.records.map((entry,index)=>({id:row.definitions[index],className:descriptor(entry[0],'name').value,classLength:descriptor(entry[0],'length').value,classShape:fullShape(entry[0]),prototypeShape:fullShape(entry[1]),methods:entry[3].map(([key,fn])=>({key,source:apply(functionText,fn,[])}))}))});}return result;}
 function definitions(p,spaces){const result={};for(const row of p.modules){const records=spaces[row.id].originalClassDefinitionBirths().records;for(let at=0;at<row.definitions.length;at++)result[row.definitions[at]]=records[at];}return result;}
+// Normalize only cross-graph reference provenance; retain actual complete
+// classes/bases separately in each full evidence report before assertions.
+function factoryClassFacts(ctor,base){
+  const proto=descriptor(ctor,'prototype').value;
+  function fields(owner){return keys(owner).map(key=>{
+    const field=descriptor(owner,key),data=Object.hasOwn(field,'value');let value;
+    if(data){const item=field.value;if(item===ctor)value={reference:'returned-constructor'};else if(item===proto)value={reference:'returned-prototype'};
+      else if(typeof item==='function')value={kind:'method',source:apply(functionText,item,[]),ownShape:fullShape(item),functionParent:parent(item)===Function.prototype};
+      else {assert.ok(item===null||typeof item!=='object');value={primitive:item};}}
+    return {key,data,writable:field.writable,enumerable:field.enumerable,configurable:field.configurable,value,
+      get:data?undefined:field.get&&apply(functionText,field.get,[]),set:data?undefined:field.set&&apply(functionText,field.set,[])};
+  });}
+  return {source:apply(functionText,ctor,[]),constructorFields:fields(ctor),prototypeFields:fields(proto),
+    constructorParentIsActualBase:parent(ctor)===base,prototypeParentIsActualBasePrototype:parent(proto)===descriptor(base,'prototype').value};
+}
 function reverseSource(text,row){for(let at=row.reverse.length-1;at>=0;at--){const edit=row.reverse[at];assert.equal(text.slice(edit.start,edit.end),edit.expected);text=text.slice(0,edit.start)+edit.replacement+text.slice(edit.end);}return text;}
 
 // These are bounded temporary SOURCE fixtures, never another checkout/worktree.
@@ -105,6 +120,7 @@ test('source-time class program covers all24 full definitions and exact source r
   assert.deepEqual(proposal.trace,[{phase:'language',id:'select-complete-classes-and-plan-lexical-births'},{phase:'repository',id:'bind-core-urls-materialize-sources-and-package-program'}]);
   assert.deepEqual(facts,{schema:'original-class-definition-identity-v1',classes:24,type:false,owner:false,cfg:false,body:false,executable:false});
   for(const row of proposal.files){assert.equal(applyOriginalClassBirthEdits(row.beforeSource,row.edits).value,row.afterSource);assert.equal(reverseSource(row.afterSource,row),row.beforeSource);}
+  const factories=proposal.selections.filter(row=>row.factory);assert.equal(factories.length,4);for(const row of factories){const file=proposal.files.find(file=>'tools/translation/'+file.path===row.path);assert.ok(file);assert.ok(file.afterSource.includes('const '+row.local+'=(function(item){return item;})('+row.source+');'));assert.equal(row.name,row.id==='StandardStringEqualityChecker'?'StandardStringEqualityChecker':'');}
   for(const row of proposal.selections){assert.ok(row.source.length>0);assert.ok(row.memberSpans.length>0);for(const member of row.memberSpans)assert.equal(row.source.includes(member.source),true);}
   for(const row of complete)for(const count of row.factoryCalls)assert.ok(count===0||count===1);restored();
 });
@@ -142,6 +158,17 @@ test('cold-shaped ancestry accessors additions and write slots refuse with zero 
 
 test('first factory records reject extra before after and recursive calls in independent graphs',{timeout:60000},async()=>{
   const rows=[];
+  const factoryComparisons=[];
+  for(const original of [true,false]){const g=graph('04-factory-names-'+(original?'original':'current'),{before:original});try{
+    await g.module('host-contracts');const control=await g.module('control'),pattern=await g.module('pattern-control'),text=await g.module('text'),parameters=await g.module('parameter-patterns'),equality=await g.module('standard-string-equality');
+    const bases=[control.ControlRustParser,control.ControlChecker,pattern.PatternControlRustParser,text.TextChecker];
+    const classes=[pattern.withPatternControlParser(bases[0]),pattern.withPatternControlChecker(bases[1]),parameters.withParameterPatternParser(bases[2]),equality.withStandardStringEqualityChecker(bases[3])];
+    const facts=classes.map((ctor,index)=>factoryClassFacts(ctor,bases[index]));factoryComparisons.push({original,classes,bases,facts});
+    retain('04-factory-names-'+(original?'original':'current'),{row:factoryComparisons[factoryComparisons.length-1]});
+  }finally{g.close();}}
+  retain('04-factory-name-comparison',{factoryComparisons});
+  assert.deepEqual(factoryComparisons[1].facts,factoryComparisons[0].facts);
+  for(const row of factoryComparisons){assert.deepEqual(row.classes.map(ctor=>descriptor(ctor,'name').value),['','','','StandardStringEqualityChecker']);for(const fact of row.facts){assert.equal(fact.constructorParentIsActualBase,true);assert.equal(fact.prototypeParentIsActualBasePrototype,true);}}
   const before=graph('04-before');try{
     const factory=await before.module('parameter-patterns'),foreign=class {},value=factory.withParameterPatternParser(foreign),leaf=await import(before.url);let error;try{await leaf.captureOriginalClassDefinitionContext();}catch(caught){error=caught;}
     rows.push({kind:'before',publicResultType:typeof value,factory:factory.originalClassDefinitionBirths().factoryCalls,error:errorFacts(error)});retain('04-before-outcome',{row:rows[rows.length-1]});assert.ok(error);

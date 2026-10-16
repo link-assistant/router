@@ -14,7 +14,7 @@ function bindingNames(pattern) {
 export function withParameterPatternParser(Base) {
   __routerOriginalFactoryCalls286_ParameterPatternRustParser=__routerOriginalFactoryCalls286_ParameterPatternRustParser===undefined?1:2;
 
-  const __routerOriginalReturned286_ParameterPatternRustParser=(0,class extends Base {
+  const __routerOriginalReturned286_ParameterPatternRustParser=(function(item){return item;})(class extends Base {
     fn(path) {
       const c=this.cursor,start=c.expect('fn','function'),name=c.identifier('function').value;
       const sourceLifetimeParameters=c.is('<')?this.sourceLifetimeParameters?.():null;
