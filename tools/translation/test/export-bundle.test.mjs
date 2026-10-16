@@ -129,7 +129,18 @@ test('the complete exported CST extension feeds edited source into both checked 
     const paths=new Set(bundle.manifest.inputs.map(row=>row.path));
     for(const name of ['concrete-syntax-meta.mjs','forward-concrete-syntax.mjs','js-to-rust/concrete-source.mjs'])assert.ok(paths.has('tools/translation/'+name),name);
     const load=name=>import(pathToFileURL(join(bundle.destination,'tools/translation',name)).href);
-    const concrete=await load('concrete-syntax-meta.mjs'),forward=await load('translate.mjs'),reverse=await load('js-to-rust/translator.mjs'),interpreter=await load('js-to-rust/interpreter.mjs');
+    // The receiving application supplies the installed native grammar/compiler
+    // dependency; the exported source manifest never pretends to vendor it.
+    const receivingPackage=join(bundle.destination,'packages/javascript');mkdirSync(receivingPackage,{recursive:true});
+    writeFileSync(join(receivingPackage,'package.json'),'{"type":"module","private":true}\n');
+    const require=createRequire(join(root,'packages/javascript/package.json'));
+    symlinkSync(join(require.resolve('typescript/package.json'),'../..'),join(receivingPackage,'node_modules'),'dir');
+    const concrete=await load('concrete-syntax-meta.mjs'),forward=await load('translate.mjs');
+    const priorCompilerRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT;let reverse,interpreter;
+    try{
+      process.env.ROUTER_NATIVE_TS_SOURCE_ROOT=bundle.destination;
+      reverse=await load('js-to-rust/translator.mjs');interpreter=await load('js-to-rust/interpreter.mjs');
+    }finally{if(priorCompilerRoot===undefined)delete process.env.ROUTER_NATIVE_TS_SOURCE_ROOT;else process.env.ROUTER_NATIVE_TS_SOURCE_ROOT=priorCompilerRoot;}
     const rust='\ufeff// receiving source: \u03bb\r\npub fn choose(flag: bool) -> u8 { if flag { 7 } else { 9 } }\r\n';
     const javascript='\ufeff/** @param {boolean} flag @returns {number} */\r\n// receiving source: \u03bb\r\nexport function choose(flag) { return flag ? 7 : 9; }\r\n';
     const inputs=[],observations=[];
