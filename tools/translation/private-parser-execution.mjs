@@ -7,9 +7,9 @@ import {fileURLToPath,URL as SourceURL} from 'node:url';
 import {dirname,join} from 'node:path';
 import {independentParserSha256} from './private-parser-sha256.mjs';
 import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,
-  originalCapturedFunctionSource,throwOriginalCapturedTypeError,originalPrivateParserBulkCommonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+  originalCapturedFunctionSource,throwOriginalCapturedTypeError,originalPrivateParserCommonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 
-const initial=originalPrivateParserBulkCommonIntrinsicsUnchanged();
+const initial=originalPrivateParserCommonIntrinsicsUnchanged();
 const root=initial?globalThis:null;
 const descriptor=initial?Object.getOwnPropertyDescriptor:null,prototype=initial?Object.getPrototypeOf:null;
 const keys=initial?Reflect.ownKeys:null,apply=initial?Reflect.apply:null,own=initial?Object.hasOwn:null;
@@ -30,7 +30,7 @@ function featureKeys(owner,ignoreGet){
   return selected;
 }
 function initialize(){
-  if(!initial||!originalPrivateParserBulkCommonIntrinsicsUnchanged())fail('native source operations unavailable');
+  if(!initial||!originalPrivateParserCommonIntrinsicsUnchanged())fail('native source operations unavailable');
   const pins=[],families=[],constructorParents=[],g={__proto__:null};
   function pin(owner,key,name){
     if(owner!==root&&(owner===null||typeof owner!=='object'&&typeof owner!=='function'||proxy(owner)))fail('proxy native owner');
@@ -143,7 +143,7 @@ function initialize(){
 }
 
 function checked(){
-  if(!initial||!originalPrivateParserBulkCommonIntrinsicsUnchanged())fail('native source operations changed');
+  if(!initial||!originalPrivateParserCommonIntrinsicsUnchanged())fail('native source operations changed');
   const current=state??initialize();
   for(let pi=0;pi<current.pins.length;pi++){const pin=current.pins[pi];if(!same(descriptor(pin.owner,pin.key),pin.field))fail('live native operation changed');}
   for(let fi=0;fi<current.families.length;fi++){const family=current.families[fi];
@@ -156,7 +156,7 @@ function checked(){
   return current;
 }
 
-const manifestSha256='94ba02ed2bde608d0296034ee4e6c63159738e5d93d579a89c8d1f76666d0115';
+const manifestSha256='b9c6ac17ed866449a64707ec9835330bbae6b82abfc36fc369808eb8410b33b0';
 let paths=null,compiled=null,compiledSources=null,active=false;
 function statIdentity(value){
   if(!value||typeof value!=='object'||proxy(value))fail('own primitive source stat required');
