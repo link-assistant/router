@@ -115,6 +115,30 @@ export function originalSerdeMatchBlockAdapter(inventory){
   const evidence=freeze({schema:'original-serde-fragment-match-block-adapter-v1',dependenciesDigest:state.dependencies.digest,source:origin,ownerSpan:{start:owner.start,end:owner.end},methodSpan:{start:open.end+method.start,end:open.end+method.end},originalMethod:text,blockConstructor:'token::Brace::default().surround',expressionConstructor:'original Expr tokens followed by Token![,]',namespaceAuthority:false,generatedImplBehavior:false});matchBlocks.set(evidence,{inventory});return evidence;
 }
 
+// Single unmodified named trait bounds are syntax only. Rejoin the matching
+// locked Syn schema/parser/printer; no trait lookup or generated-body fact is
+// inferred from retaining `dyn Path` tokens.
+function originalTraitObjectSyntax(dependencies){
+  const ty=deriveDependencySource(dependencies,'syn','src/ty.rs'),generics=deriveDependencySource(dependencies,'syn','src/generics.rs');
+  const select=(origin,anchor,needles)=>{
+    const start=origin.source.indexOf(anchor);if(start<0||origin.source.indexOf(anchor,start+1)>=0)throw new TypeError('Original trait-object source selection is absent or ambiguous');
+    const tokens=rustTokens(origin.source.slice(start));let depth=0,end=-1;
+    for(const token of tokens){if(token.type!=='punct')continue;if(token.text==='{')depth++;else if(token.text==='}'&&!--depth){end=start+token.end;break;}}
+    if(end<0)throw new TypeError('Original trait-object source selection is incomplete');
+    const text=origin.source.slice(start,end);for(const needle of needles)if(!text.includes(needle))throw new TypeError('Original trait-object schema/parser/printer changed');
+    return {package:origin.package,version:origin.version,source:origin.path,sourceSha256:origin.sha256,span:{start,end},sha256:hash(text)};
+  };
+  return {schema:'original-single-trait-object-syntax-v1',sources:[
+    select(ty,'pub enum Type {',['TraitObject(TypeTraitObject)']),
+    select(generics,'pub enum TypeParamBound {',['Trait(TraitBound)']),
+    select(ty,'pub struct TypeTraitObject {',['pub attrs: Vec<Attribute>','pub dyn_token: Option<Token![dyn]>','pub bounds: Punctuated<TypeParamBound, Token![+]>']),
+    select(ty,'impl TypeTraitObject {',['let dyn_token: Option<Token![dyn]> = input.parse()?','let allow_precise_capture = false','let allow_const = false','TypeParamBound::Trait(_)','if !at_least_one_trait']),
+    select(ty,'impl ToTokens for TypeTraitObject {',['self.dyn_token.to_tokens(tokens)','self.bounds.to_tokens(tokens)']),
+    select(generics,'pub struct TraitBound {',['pub lifetimes: Option<BoundLifetimes>','pub modifiers: TraitBoundModifiers','pub maybe: Option<Token![?]>','pub path: Path']),
+    select(generics,'impl TraitBound {',['fn do_parse','let mut lifetimes: Option<BoundLifetimes> = input.parse()?','let mut path: Path = input.parse()?']),
+  ],domain:'explicit dyn; one unmodified named/path trait bound; no higher-ranked lifetimes, bounds list, associated bindings, macro or executable syntax',traitOwnerResolved:false,generatedImplBehavior:false};
+}
+
 // The route compiler owns these bindings; callers cannot assert a fragment's
 // category by putting a string such as "Ident" next to arbitrary tokens.
 export const GENERATOR_FRAGMENT_LIMITS=Object.freeze({cells:16000,depth:64,tokenBytes:256000,metadataBytes:524288});
@@ -135,7 +159,7 @@ export function createQuoteFragmentCompiler(inventory){
   };
   const sourceType=(source,provenance)=>{
     if(typeof source!=='string'||Buffer.byteLength(source)>4096)throw new TypeError('Original syn Type source exceeds its bounded grammar');
-    const roots=originalMacroTrees(source,{maxBytes:4096,maxTokens:512,maxDepth:32});
+    const roots=originalMacroTrees(source,{maxBytes:4096,maxTokens:512,maxDepth:32});let traitObjects=0;
     const identifier=node=>node?.kind==='token'&&/^[_\p{L}][_\p{L}\p{N}]*$/u.test(node.text)&&!['impl','dyn','fn','const','macro','where','extern','Self','mut'].includes(node.text);
     const lifetime=node=>/^'[_\p{L}][_\p{L}\p{N}]*$/u.test(node?.text??'');
     function type(nodes,start=0,depth=0){
@@ -149,20 +173,21 @@ export function createQuoteFragmentCompiler(inventory){
         else while(inner<children.length){inner=type(children,inner,depth+1);if(inner<children.length&&children[inner++]?.text!==',')throw new TypeError('Tuple Type separator is unresolved');}
         if(inner!==children.length)throw new TypeError('Original syn Type has trailing group syntax');return at+1;
       }
+      const traitObject=nodes[at]?.text==='dyn';if(traitObject){traitObjects++;at++;}
       if(nodes[at]?.text==='::')at++;
-      if(!identifier(nodes[at]))throw new TypeError('Original syn Type requires a named, reference or product leaf');at++;
+      if(!identifier(nodes[at])||traitObject&&['for','async','unsafe'].includes(nodes[at].text))throw new TypeError('Original syn Type requires a named, reference, product or single trait-object leaf');at++;
       while(true){
         if(nodes[at]?.text==='<'){
           at++;if(nodes[at]?.text==='>')throw new TypeError('Original Type has empty generic arguments');
           while(true){at=lifetime(nodes[at])?at+1:type(nodes,at,depth+1);if(nodes[at]?.text===','){at++;if(nodes[at]?.text==='>')break;}else break;}
           if(nodes[at++]?.text!=='>')throw new TypeError('Original syn Type generic arguments remain unresolved');
         }
-        if(nodes[at]?.text!=='::')break;at++;if(!identifier(nodes[at]))throw new TypeError('Original syn Type path segment is unresolved');at++;
+        if(nodes[at]?.text!=='::')break;at++;if(!identifier(nodes[at])||traitObject&&['for','async','unsafe'].includes(nodes[at].text))throw new TypeError('Original syn Type path segment is unresolved');at++;
       }return at;
     }
     if(type(roots)!==roots.length)throw new TypeError('Original syn Type has unproved trailing syntax');
     const lift=nodes=>nodes.map(node=>node.kind==='group'?{tag:'group',delimiter:node.delimiter,nodes:lift(node.children),span:node.span}:{tag:'token',text:node.text,tokenType:lifetime(node)?'lifetime':node.type,span:node.span});
-    return seal(lift(roots),{...provenance,category:'original syn::Type',sourceSha256:hash(source)});
+    return seal(lift(roots),{...provenance,category:'original syn::Type',sourceSha256:hash(source),...(traitObjects?{traitObjectSyntax:originalTraitObjectSyntax(state.dependencies)}:{})});
   };
   const sourceExpression=(source,provenance)=>{
     if(typeof source!=='string'||Buffer.byteLength(source)>4096)throw new TypeError('Original syn Expr exceeds its bounded source grammar');
