@@ -369,3 +369,61 @@ export function originalPrivateParserNumericCommonIntrinsicsUnchanged(){
  // those same owners between these observations in the trusted stock domain.
  return !!(syntaxNative&&expectedNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&expectedSamePrototype(syntaxStringPrototype,syntaxStrings,privateExpectedPlans[4])&&expectedSamePrototype(syntaxRegExpPrototype,syntaxRegexps,privateExpectedPlans[5])&&parserObjectNumericSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet));
 }
+
+
+// Optional native descriptor collection; all live comparisons remain fresh.
+// The fixed private owner list is data, never a retained current verdict.
+const batchedDescriptorOwners=[arrayPrototype,mapPrototype,setPrototype,weakSetPrototype,syntaxStringPrototype,syntaxRegExpPrototype];
+function batchedExpectedSamePrototype(owner,entries,rows){
+ if(!(owner===arrayPrototype&&entries===arrayDescriptors&&rows===privateExpectedPlans[0]||owner===mapPrototype&&entries===mapDescriptors&&rows===privateExpectedPlans[1]||owner===setPrototype&&entries===setDescriptors&&rows===privateExpectedPlans[2]||owner===weakSetPrototype&&entries===weakSetDescriptors&&rows===privateExpectedPlans[3]||owner===syntaxStringPrototype&&entries===syntaxStrings&&rows===privateExpectedPlans[4]||owner===syntaxRegExpPrototype&&entries===syntaxRegexps&&rows===privateExpectedPlans[5]))return false;
+ const names=keys(owner);if(names.length!==rows.length)return expectedSamePrototype(owner,entries,rows);
+ // Unknown/reordered keys keep the complete old helper. This preflight never
+ // obtains the descriptor of any newly attached native lazy stack field.
+ for(let index=0;index<names.length;index++)if(names[index]!==rows[index][0])return expectedSamePrototype(owner,entries,rows);
+ // The caller freshly qualified this captured native and all six fixed owners.
+ // All keys are now the immutable expected set (which excludes stack).
+ const fields=apply(traversalDescriptors.value,originalObject,[owner]);
+ for(let index=0;index<names.length;index++){
+  const row=rows[index],key=row[0];
+  const actual=fields[key];if(!actual||hasOwn(actual,'value')!==row[1])return false;
+  if(actual.enumerable!==row[2]||actual.configurable!==row[3])return false;
+  if(row[1]){if(actual.value!==row[4]||actual.writable!==row[5])return false;}
+  else if(!hasOwn(actual,'get')||!hasOwn(actual,'set')||actual.get!==row[4]||actual.set!==row[5])return false;
+ }
+ return true;
+}
+
+function batchedExpectedJsonIntrinsicsUnchanged(){
+ if(!ordinaryNative)return false;for(let index=0;index<iteratorPins.length;index++){const pin=iteratorPins[index];if(!same(descriptor(pin.owner,'next'),pin.field))return false;}for(let index=0;index<objectPins.length;index++){const name=objectPins[index][0],field=objectPins[index][1];if(!same(descriptor(originalObject,name),field))return false;}
+ return same(descriptor(originalArray,Symbol.species),species)&&same(descriptor(globalThis,'WeakSet'),globalWeakSet)&&batchedExpectedSamePrototype(weakSetPrototype,weakSetDescriptors,privateExpectedPlans[3])&&same(descriptor(globalThis,'JSON'),globalJson)&&same(descriptor(globalThis,'Object'),globalObject)&&same(descriptor(globalThis,'Array'),globalArray)&&same(descriptor(globalThis,'Map'),globalMap)&&same(descriptor(globalThis,'Set'),globalSet)&&same(descriptor(originalObject,'hasOwn'),objectHasOwn)&&same(descriptor(originalObject,'getOwnPropertyDescriptor'),objectDescriptor)&&same(descriptor(originalJson,'stringify'),stringify)&&originalObject.prototype===objectPrototype&&originalArray.prototype===arrayPrototype&&prototype(objectPrototype)===null&&prototype(arrayPrototype)===objectPrototype&&!descriptor(objectPrototype,'toJSON')&&!descriptor(arrayPrototype,'toJSON')&&batchedExpectedSamePrototype(arrayPrototype,arrayDescriptors,privateExpectedPlans[0])&&batchedExpectedSamePrototype(mapPrototype,mapDescriptors,privateExpectedPlans[1])&&batchedExpectedSamePrototype(setPrototype,setDescriptors,privateExpectedPlans[2]);
+}
+
+function batchedExpectedPathMembershipIntrinsicsUnchanged(){
+ return !!(pathNative&&batchedExpectedJsonIntrinsicsUnchanged()&&same(descriptor(originalObject,'getPrototypeOf'),pathGetPrototypeOf)&&same(descriptor(globalThis,'Reflect'),pathReflect)&&same(descriptor(pathReflect.value,'ownKeys'),pathOwnKeys)&&same(descriptor(originalArray,'isArray'),pathIsArray)&&same(descriptor(types,'isProxy'),pathIsProxy)&&same(descriptor(globalThis,'WeakMap'),pathWeakMap)&&pathWeakMap.value.prototype===pathWeakPrototype&&same(descriptor(pathWeakPrototype,'has'),pathWeakHas));
+}
+
+function batchedExpectedNamespaceTraversalIntrinsicsUnchanged(){
+ if(!traversalNative||!batchedExpectedPathMembershipIntrinsicsUnchanged()||!same(descriptor(traversalFunctionPrototype,'call'),traversalCall)||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(pathReflect.value,'apply'),traversalApply)||!same(descriptor(mapPrototype,'entries'),traversalEntries)||prototype(traversalMapIterator.owner)!==traversalIteratorPrototype||descriptor(traversalMapIterator.owner,Symbol.iterator)||prototype(traversalIteratorPrototype)!==traversalIteratorParent||!same(descriptor(traversalIteratorPrototype,Symbol.iterator),traversalIteratorMethod))return false;
+ // The old route calls entries.call; a function's own call hook or changed
+ // prototype is also observable and therefore keeps the collected fallback.
+ return prototype(traversalEntries.value)===traversalFunctionPrototype&&!descriptor(traversalEntries.value,'call')&&prototype(traversalMapIterator.field.value)===traversalFunctionPrototype&&!descriptor(traversalMapIterator.field.value,'call');
+}
+
+export function originalPrivateParserDescriptorCommonIntrinsicsUnchanged(){
+ if(!originalPrivateParserIngressUnchanged())return false;
+ // Extra optional work eligibility observes only fixed owners through captured
+ // natives. Failure retains the complete old guard, including its fallbacks.
+ if(!traversalNative||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(types,'isProxy'),pathIsProxy))return originalPrivateParserNumericCommonIntrinsicsUnchanged();
+ for(let slot=0;slot<batchedDescriptorOwners.length;slot++)if(pathIsProxy.value(batchedDescriptorOwners[slot]))return originalPrivateParserNumericCommonIntrinsicsUnchanged();
+ // Cold first success and every unknown expected shape take the WHOLE old
+ // route. No current success or refusal is retained across calls.
+ if(privateExpectedPlans===null)return originalPrivateParserExpectedCommonIntrinsicsUnchanged();
+ if(privateExpectedPlans===false)return originalPrivateParserExpectedCommonIntrinsicsUnchanged();
+ if(parserExpectedNonnumeric===null)parserExpectedNonnumeric=parserExpectedNumericSubset();
+ if(!parserExpectedNonnumeric)return originalPrivateParserExpectedCommonIntrinsicsUnchanged();
+ // Fresh full Array/String key equality above proves their numeric absence.
+ // From this Object scan to the data-freeze tail only captured native fixed-
+ // owner descriptor reads/primitive comparisons occur; no callback can mutate
+ // those same owners between these observations in the trusted stock domain.
+ return !!(syntaxNative&&batchedExpectedNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&batchedExpectedSamePrototype(syntaxStringPrototype,syntaxStrings,privateExpectedPlans[4])&&batchedExpectedSamePrototype(syntaxRegExpPrototype,syntaxRegexps,privateExpectedPlans[5])&&parserObjectNumericSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet));
+}

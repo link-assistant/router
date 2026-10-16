@@ -1,12 +1,12 @@
 // Independent SHA-256 for executable-source authentication. Node crypto calls
 // remain required separately; their observer-returned digest is not authority.
-import {originalPrivateParserNumericCommonIntrinsicsUnchanged,originalPrivateParserUint32WorkStorageUnchanged,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
-const initial=originalPrivateParserNumericCommonIntrinsicsUnchanged();
+import {originalPrivateParserDescriptorCommonIntrinsicsUnchanged,originalPrivateParserUint32WorkStorageUnchanged,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
+const initial=originalPrivateParserDescriptorCommonIntrinsicsUnchanged();
 const uint32AtBirth=initial&&originalPrivateParserUint32WorkStorageUnchanged();
 const privateUint32Constructor=uint32AtBirth?Object.getOwnPropertyDescriptor(globalThis,'Uint32Array').value:null;
 let constants=null;
 function checked(){
-  if(!initial||!originalPrivateParserNumericCommonIntrinsicsUnchanged())throwOriginalCapturedTypeError('Independent parser SHA256 host operations changed');
+  if(!initial||!originalPrivateParserDescriptorCommonIntrinsicsUnchanged())throwOriginalCapturedTypeError('Independent parser SHA256 host operations changed');
 }
 const rotate=(value,count)=>(value>>>count)|(value<<(32-count));
 export function independentParserSha256(source){
