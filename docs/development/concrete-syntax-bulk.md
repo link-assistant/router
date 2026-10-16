@@ -73,6 +73,10 @@ Project CST component storage is separate. Its 64 MiB per-component and 512 MiB
 aggregate storage limits do not increase these source transport limits or
 establish that a stored project is semantically translatable.
 
+For a complete compiler operation over an explicit source batch, see
+[fresh-process bulk translation](isolated-project-bulk.md). Its source packet
+registration is separate from these CST transport contracts.
+
 Receiving checks must run the complete canonical-chunk, corpus, concrete syntax
 and transaction test files under Node and Bun with their original deadlines.
 Execute emitted JavaScript and strict TypeScript independently. Preserve opaque
