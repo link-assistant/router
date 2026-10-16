@@ -12,6 +12,7 @@ import {ROUTER_CORE_SCALAR_CONTRACT,checkRouterCoreScalarCall,captureRouterCoreS
 import {proposeCoreScalarsCorpus} from '../migrate-core-scalars.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {serde_json_from_str} from '../extensions/json-runtime.mjs';
 import {HostRustParser,HostChecker} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
 import {sourceItems} from '../rust-structure.mjs';
