@@ -38,6 +38,15 @@ test('genuine owned JSON facade delegates Rust library and checked literal gramm
 test('all admitted fixed widths widen exactly to existing signed and unsigned JSON number ABI',async()=>{
   const rows=[['i8',-128n,127n],['u8',0n,255n],['i16',-32768n,32767n],['u16',0n,65535n],['i32',-(1n<<31n),(1n<<31n)-1n],['u32',0n,(1n<<32n)-1n],['i64',-(1n<<63n),(1n<<63n)-1n],['u64',0n,(1n<<64n)-1n],['isize',-(1n<<63n),(1n<<63n)-1n],['usize',0n,(1n<<64n)-1n]],source=rows.map(([type])=>`pub fn value_${type}(v:${type})->${T}{${J}({"value":v})}`).join('\n')+`pub fn zero()->${T}{${J}({"value":0,"negative":-1,"small":1u8})}`,result=project(files(source));retain('independent-fixed-domain',rows);
   for(const [type]of rows)assert.equal(has(result,'value_'+type),true,type);assert.equal(has(result,'zero'),true);await targets(result,api=>{for(const [type,min,max]of rows)for(const value of [min,max]){const object=api['value_'+type](value),number=object.field0.entries[0].value;assert.equal(number.$,'Number');assert.equal(number.field0.$,value<0n?'NegInt':'PosInt');assert.equal(number.field0.field0,value);}assert.deepEqual(native(api.zero()),{value:0,negative:-1,small:1});for(const [type,min,max]of rows){assert.throws(()=>api['value_'+type](min-1n));assert.throws(()=>api['value_'+type](max+1n));}});
+  const operations=project(files(`pub fn arithmetic(value:u64,other:u64)->${T}{${J}({"add":value.saturating_add(other),"sub":value.saturating_sub(other),"mul":value.saturating_mul(other)})}pub fn from_json(value:&${T})->${T}{let value=value.as_u64().unwrap_or(0);${J}({"sub":value.saturating_sub(2u64)})}`));
+  for(const name of ['arithmetic','from_json'])assert.equal(has(operations,name),true,JSON.stringify(operations.meta.refused));
+  await targets(operations,api=>{
+    const values=value=>Object.fromEntries(value.field0.entries.map(row=>[row.key,row.value.field0.field0]));
+    const max=(1n<<64n)-1n;
+    for(const [left,right,wanted]of [[10n,20n,{add:30n,sub:0n,mul:200n}],[max,1n,{add:max,sub:max-1n,mul:max}],[0n,max,{add:max,sub:0n,mul:0n}]])assert.deepEqual(values(api.arithmetic(left,right)),wanted);
+    assert.deepEqual(native(api.from_json(canonical(10))),{sub:8});assert.deepEqual(native(api.from_json(canonical(null))),{sub:0});
+  });
+
 });
 test('borrowed Unicode and canonical JSON copies retain typed ownership and outer Option short circuit',async()=>{
   const source=`pub fn text(v:${S},b:bool)->${T}{${J}({"text":v,"flag":b})}pub fn copy(v:&${T})->${T}{${J}(v)}pub fn optional(a:${M}<${S}>,b:${M}<${S}>)->${M}<${T}>{Some(${J}({"a":a?,"b":b?}))}`,result=project(files(source));for(const name of ['text','copy','optional'])assert.equal(has(result,name),true,name);

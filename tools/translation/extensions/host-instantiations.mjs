@@ -68,6 +68,12 @@ export class HostInstantiations {
     return {...this.checker.resolveType({kind:'named',path:[name]},[],span),rustStandardGeneric:{kind:'Result',arguments:structuredClone(arguments_)}};
   }
   vector(element, span) { return this.register('vector', element, vectorContracts, span); }
-  fixed(type,span) {return this.register('fixed',type,fixedIntegerContracts,span);}
+  fixed(type,span) {
+    // The runtime/layout key deliberately erases source qualifiers. Reuse its
+    // implementation, but never reuse the first caller's source type evidence.
+    const current={kind:type.kind,bits:type.bits,signed:type.signed,...(type.rustPrimitiveName?{rustPrimitiveName:type.rustPrimitiveName}:{}),...(type.rustSourceType===true?{rustSourceType:true}:{})};
+    const instance=this.register('fixed',current,fixedIntegerContracts,span),option=this.option(current,span);
+    return {...instance,type:current,contracts:instance.contracts.map(contract=>({...contract,receiver:current,params:contract.params.map(()=>current),ret:contract.jsExport.startsWith('rust_fixed_checked_')?option:current,instantiation:current}))};
+  }
   integer(type, span) { return this.register('integer', type, integerContracts, span); }
 }

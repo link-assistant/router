@@ -19,6 +19,22 @@ test('factory data is declared and checked once per actual monomorphic receiver'
   assert.equal(entry.ctors[1].fields[0].type.bits,8);
   assert.equal(registry.items.filter(item=>item.k==='data').length,2);
   assert.throws(()=>registry.vector({kind:'named',path:['Unknown']},span),error=>error.kind==='unsupported'&&error.span.start===7);
+  // Portable layout reuse must not reuse a prior caller's source identity.
+  for(const sourceFirst of [false,true]){
+    const current=new HostInstantiations(checker),portable={...fixed(64,false),rustPrimitiveName:'u64'},source={...portable,rustSourceType:true};
+    const order=sourceFirst?[source,portable,fixed(64,false),source]:[fixed(64,false),source,portable,fixed(64,false)];
+    let declared;
+    for(const input of order){
+      const instance=current.fixed(input,span),expected=input.rustSourceType===true?true:undefined;
+      for(const contract of instance.contracts){
+        assert.equal(contract.receiver.rustSourceType,expected);assert.equal(contract.receiver.rustPrimitiveName,input.rustPrimitiveName);
+        for(const parameter of contract.params)assert.deepEqual(parameter,instance.type);
+        const output=contract.jsExport.startsWith('rust_fixed_checked_')?contract.ret.rustStandardGeneric.arguments[0]:contract.ret;
+        assert.deepEqual(output,instance.type);assert.equal(output.rustSourceType,expected);
+      }
+      assert.equal(current.instances.size,1);declared??=current.items.length;assert.equal(current.items.length,declared);
+    }
+  }
 });
 
 import { translateProject } from '../project.mjs';

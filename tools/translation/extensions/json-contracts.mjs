@@ -10,7 +10,8 @@ const declaration=(name,ctors,standardGeneric)=>({k:'data',name,ctors,span,gener
 function freeze(value){if(value && typeof value === 'object'){for(const item of Object.values(value))freeze(item);Object.freeze(value);}return value;}
 export const JSON_TYPES=freeze({value:named('serde_json','Value'),number:named('serde_json','Number'),map:named('serde_json','Map_String_Value'),entry:named('serde_json','MapEntry'),error:named('serde_json','Error'),category:named('serde_json','error','Category')});
 const {value:VALUE,number:NUMBER,map:MAP,entry:ENTRY,error:ERROR,category:CATEGORY}=JSON_TYPES;
-const U64={...fixed(64,false),rustPrimitiveName:'u64'},I64={...fixed(64,true),rustPrimitiveName:'i64'},USIZE={...fixed(64,false),rustPrimitiveName:'usize'},BYTES=sourceVector({...fixed(8,false),rustPrimitiveName:'u8'}),VALUES=sourceVector(VALUE);
+// These are the written primitive identities of the registered serde_json signatures.
+const U64={...fixed(64,false),rustPrimitiveName:'u64',rustSourceType:true},I64={...fixed(64,true),rustPrimitiveName:'i64',rustSourceType:true},USIZE={...fixed(64,false),rustPrimitiveName:'usize',rustSourceType:true},BYTES=sourceVector({...fixed(8,false),rustPrimitiveName:'u8'}),VALUES=sourceVector(VALUE);
 const SHARED_VALUE=sourceShared(VALUE),SHARED_NUMBER=sourceShared(NUMBER),SHARED_MAP=sourceShared(MAP),SHARED_VALUES=sourceShared(VALUES);
 const BORROWED_BYTES={...sourceShared({...array({...fixed(8,false),rustPrimitiveName:'u8'}),rustOwnership:{kind:'borrowed',source:'slice'}}),rustOwnership:{kind:'borrowed',source:'slice'}};
 const option=type=>({...named(monomorphicTypeName('Option',[type])),rustStandardGeneric:{kind:'Option',arguments:[type]}});

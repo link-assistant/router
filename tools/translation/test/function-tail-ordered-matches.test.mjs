@@ -87,7 +87,8 @@ test('copied source and overridden checker readers cannot issue a function-tail 
 test('modified or moved checked tail frames and foreign issuers cannot manufacture emission authority',async()=>{
   const source='use serde_json::Value;pub fn checked(v:&Value)->bool{match v{Value::Object(map)=>{if map.get("type").and_then(Value::as_str)==Some("yes"){return true;}false},_=>false}}pub fn other(v:&Value)->bool{match v{Value::Object(map)=>{if map.get("type").and_then(Value::as_str)==Some("no"){return true;}false},_=>false}}',result=project(source),base=result.meta.targetSemanticProgram;
   for(const name of ['checked','other'])assert.equal(has(result,name),true,JSON.stringify(result.meta.refused));
-  const entry=program=>{const rows=[...program.declarations.values()].filter(row=>row.k==='fn'&&row.fullName==='checked');assert.equal(rows.length,1);return rows[0];};
+  // project.mjs flattens each genuine source full name to rp_ + UTF-8 hex.
+  const entry=(program,name='checked')=>{const originals=result.meta.executable.filter(row=>row.term==='fn'&&row.name===name);assert.equal(originals.length,1);const key='rp_'+Buffer.from(originals[0].name,'utf8').toString('hex'),row=program.declarations.get(key);assert.ok(row);assert.equal(row.k,'fn');assert.equal(row.fullName,key);assert.equal(row.generated,'router-project-flattened');return row;};
   const nested=entry=>{const node=find(entry.body,'routerOriginalStandardFrame');assert.ok(node,'actual checked declaration contains an issued standard frame');return node;};
   const replace=(value,target,replacement)=>{if(value===target)return replacement;if(Array.isArray(value))return value.map(child=>replace(child,target,replacement));if(!value||typeof value!=='object')return value;return Object.fromEntries(Object.entries(value).map(([key,child])=>[key,replace(child,target,replacement)]));};
   const actual=parseProgram(JSON.stringify(base));nested(entry(actual));assert.ok(find(entry(actual).body,'routerOriginalCallbackLoan'));
@@ -105,8 +106,8 @@ test('modified or moved checked tail frames and foreign issuers cannot manufactu
     p=>{nested(entry(p)).type={kind:'unit'};},
     p=>{const node=nested(entry(p)),variable=find(node.body,'var');assert.ok(variable);variable.name='foreign_match_binding';},
     p=>{entry(p).body=structuredClone(nested(entry(p)));},
-    p=>{const other=p.declarations.get('other');assert.ok(other);const fn=entry(p);fn.body=replace(fn.body,nested(fn),structuredClone(nested(other)));},
-    p=>{p.declarations.get('other').body=structuredClone(entry(p).body);},
+    p=>{const other=entry(p,'other');assert.ok(other);const fn=entry(p);fn.body=replace(fn.body,nested(fn),structuredClone(nested(other)));},
+    p=>{entry(p,'other').body=structuredClone(entry(p).body);},
     p=>{nested(entry(p)).sourceFrameProof.callerPermit=true;},
     p=>{find(entry(p).body,'routerOriginalCallbackLoan').originalLoanProof.key='not-an-issued-loan';},
     p=>{find(entry(p).body,'routerOriginalCallbackLoan').type={kind:'unit'};},
