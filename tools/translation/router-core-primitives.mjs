@@ -2,6 +2,8 @@
 // its library internals are intentionally outside translation. This adapter
 // creates the existing borrowed-text type only for the genuine qualified edge.
 import {STRING} from './checked-types.mjs';
+import {ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_PRIMITIVES_SHA256} from './router-core-source-data.mjs';
+export {ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_PRIMITIVES_SHA256};
 import {matchesParserFacts} from './matches-macro-context.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {transportConcreteSyntaxSource} from './concrete-syntax-meta.mjs';
@@ -9,8 +11,8 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {requireRouterCoreFacade,requireRouterCoreFacadeCurrent} from './router-core-formatting.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 
-export const ROUTER_CORE_PRIMITIVES_SOURCE="//! Primitive types in the owned Rust/JavaScript compatibility interface.\n\n/// A borrowed UTF-8 string slice, with ordinary Rust reference lifetimes.\n///\n/// The alias allocates no storage and does not transfer ownership. The checked\n/// translation binds qualified references to its existing borrowed-text domain;\n/// it does not translate the standard library implementation of `str`.\npub type Str = ::std::primitive::str;\n";
-export const ROUTER_CORE_PRIMITIVES_SHA256="e917e86de845ebe981094dad72260b2425da7e2a223a83de63033fa6e932e4c0";
+
+
 const fail=()=>{throw new TypeError('Router borrowed text requires its actual owned primitive alias and qualified source binding');};
 const range=(first,last)=>({start:first.start,end:last.end});
 const tokenCopy=token=>({kind:token.kind,value:token.value,span:range(token,token)});

@@ -168,7 +168,7 @@ function typeEdits(original){
   }
   type(0);if(at!==tokens.length)throw new Error('unconsumed source type syntax');return edits;
 }
-function functionEdits(item,header){
+function functionEdits(item,header,parseType=typeEdits){
   const rows=significant(item),name=rows.findIndex(token=>token.start===header.nameSpan.start),open=name+1;
   if(rows[open]?.text!=='(')throw new Error('generic function binders require separate integration');
   const close=matchesClose(rows,open),selected=[];
@@ -184,17 +184,17 @@ function functionEdits(item,header){
       throw new Error('parameter requires an actual type annotation');
     }
     if(!colon)throw new Error('missing parameter pattern');
-    selected.push(...typeEdits(parameter.slice(colon+1)));
+    selected.push(...parseType(parameter.slice(colon+1)));
   }
   let at=close+1;
   if(rows[at]?.text==='->'){
     const begin=++at;while(at<rows.length&&rows[at].text!=='{'&&rows[at].text!==';')at++;
-    selected.push(...typeEdits(rows.slice(begin,at)));
+    selected.push(...parseType(rows.slice(begin,at)));
   }
   if(rows[at]?.text!=='{'||matchesClose(rows,at)!==rows.length-1)throw new Error('function body or where grammar requires separate integration');
   return selected;
 }
-function constantEdits(item,header){
+function constantEdits(item,header,parseType=typeEdits){
   const rows=significant(item),name=rows.findIndex(token=>token.start===header.nameSpan.start);
   if(rows[name+1]?.text!==':')throw new Error('constant type annotation unavailable');
   let at=name+2;
@@ -203,7 +203,7 @@ function constantEdits(item,header){
     if(rows[at].text==='=')break;
   }
   if(rows[at]?.text!=='='||rows.at(-1)?.text!==';')throw new Error('complete constant initializer unavailable');
-  return typeEdits(rows.slice(name+2,at));
+  return parseType(rows.slice(name+2,at));
 }
 function itemBody(item){
   const rows=significant(item),open=rows.findIndex(token=>token.text==='{');
@@ -279,4 +279,40 @@ export function proposeCorePrimitivesCorpus({entry='src/lib.rs',files:input,comp
     const result=proposal(files[file],modules,profile,blockers);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;
   }
   return {schema:'router-core-primitives-corpus-proposal-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,migrationSemantics:'explicit-owned-API-adoption; every rewritten source requires fresh semantic checking',executableAdmission:false};
+}
+
+// Reusable source-only typed-position census. Every selected token list passes
+// the same complete type grammar as borrowed-text adoption. Positions and skip
+// records are proposal inputs only; fresh semantic checking remains mandatory.
+export function inspectCoreTypePositions(source,{file='src/migration_input.rs',compilationProfile:input=null}={}){
+  bounded(source);const profile=normalizeProfile(input),positions=[],skipped=[];
+  const visit=(items,inherited,module,path=[],depth=0)=>{
+    if(depth>MAX_DEPTH)fail('declaration owner nesting exceeds bound');
+    const blockers=[...inherited,...scopeProblems(items,profile,module)];
+    for(const item of items){
+      const condition=conditions(item,profile);let header;
+      try{header=originalDeclarationHeader(item,module);}catch(error){skipped.push({module,path,span:span(item),reason:error.message});continue;}
+      if(!header||!['fn','const','impl'].includes(header.kind))continue;
+      const record={module:[...module],path:[...path],name:header.name,kind:header.kind,span:span(item)};
+      if(condition.status!=='active'||blockers.length){skipped.push({...record,reason:'source binding or producer uncertainty',blockers});continue;}
+      try{
+        if(header.kind==='impl'){
+          const body=itemBody(item),keyword=body.rows.findIndex(token=>token.start===header.keywordSpan.start),owner=body.rows.slice(keyword+1,body.open),names=owner[0]?.text==='::'?owner.slice(1):owner;
+          const reserved=new Set(['for','where','as','dyn','impl','trait','const','unsafe','extern','async','default','mut','fn','pub','auto','type']);
+          if(!names.length||names.length%2!==1||names.some((token,index)=>index%2===0?!identifier(token)||reserved.has(token.text):token.text!=='::'))throw new Error('trait, generic or conditional impl owner requires separate integration');
+          const offset=body.start,nested=sourceItems(source.slice(body.start,body.end)).map(child=>({...child,start:child.start+offset,end:child.end+offset,tokens:child.tokens.map(token=>({...token,start:token.start+offset,end:token.end+offset}))}));
+          visit(nested,blockers,module,[...path,'impl '+owner.map(token=>token.text).join('')],depth+1);continue;
+        }
+        const selected=[];const parse=tokens=>{typeEdits(tokens);selected.push(tokens);return [];};
+        if(header.kind==='fn')functionEdits(item,header,parse);else constantEdits(item,header,parse);
+        for(const tokens of selected)positions.push({...record,tokens});
+      }catch(error){skipped.push({...record,reason:error.message});}
+    }
+  };
+  const modules=localViews(source,file,profile);
+  for(const module of modules){const ancestors=modules.filter(parent=>parent.path.length<module.path.length&&parent.path.every((name,index)=>module.path[index]===name));visit(originalSourceModuleItems(module),ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path)),module.path);}
+  return {positions,skipped};
+}
+export function coreTypeProducerProblems(source,{compilationProfile:input=null}={}){
+  bounded(source);return scopeProblems(sourceItems(source),normalizeProfile(input));
 }

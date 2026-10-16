@@ -85,6 +85,7 @@ import {originalMethodSnapshot,assertOriginalParserIdentity} from '../original-p
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {validateOriginalMethodAssociations,withCheckedMethodCopyReceivers} from '../source-method-admission.mjs';
 import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
+import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern} from '../router-core-algebraic.mjs';
 
 export const HOST_CONTRACTS=[ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -201,6 +202,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     const value=super.expressionMacro(token,path);return ['format','vec'].includes(token.value)?{k:'routerConstObligation',value,constEligible:false,sourceFeature:token.value+'!',span:value.span}:value;
   }
   pattern(path,aliases) {
+    const algebraic=parseRouterCoreAlgebraicPattern(this,path,aliases);if(algebraic)return algebraic;
     const first=this.cursor.peek();if(first.kind!=='identifier')return super.pattern(path,aliases);
     const segments=[first.value];let offset=1;while(this.cursor.is('::',offset)&&this.cursor.peek(offset+1).kind==='identifier'){segments.push(this.cursor.peek(offset+1).value);offset+=2;}
     const resolved=this.resolve(segments,path);
@@ -257,6 +259,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     return this.qualifyOwnershipType?.(type,c.tokens.slice(start,c.index))??type;
   }
   hostTypeSyntax(){
+    const algebraic=parseRouterCoreAlgebraicType(this);if(algebraic)return algebraic;
     const coreText=parseRouterCoreText(this);if(coreText)return coreText;
     const coreStr=parseRouterCoreStrReference(this);if(coreStr)return coreStr;
     const character=parseCharacterType(this);if(character)return character;
@@ -321,6 +324,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     tree([]);c.expect(';','use');
   }
   primary(path,options) {
+    const algebraic=parseRouterCoreAlgebraicExpression(this,path);if(algebraic)return algebraic;
     const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
     const coreFormat=parseRouterCoreFormatting(this,path);if(coreFormat)return coreFormat;
     const expandedMatches=parseOriginalMatchesCandidate(this,path);if(expandedMatches)return expandedMatches;
