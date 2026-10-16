@@ -89,7 +89,7 @@ import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
 import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern} from '../router-core-algebraic.mjs';
 import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
 import {parseRouterCoreJson,captureRouterCoreJsonCalls,checkRouterCoreJson} from '../router-core-json.mjs';
-import {parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
+import {parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,visitRouterCoreJsonUpdateFunction,checkRouterCoreJsonMutableLet,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
 
 export const HOST_CONTRACTS=[...ROUTER_CORE_JSON_UPDATE_CONTRACTS,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -417,6 +417,7 @@ export function originalHostParserIdentitySnapshot(){return originalHostParserId
 const sourcePatterns=createOriginalSharedPatternAdapter();
 export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroChecker(withDeclarationRefusalCollection(withSharedNullaryEnumChecker(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
+  visitDeclaration(item,path,entry,visit,phase){return super.visitDeclaration(item,path,entry,visitRouterCoreJsonUpdateFunction(this,item,path,entry,visit,phase),phase);}
   resolveType(type,path,range){if(type?.kind==='char')return checkedCharacterType(type,range);const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
     if(pattern.registeredGenericOwner){
@@ -537,6 +538,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
+    const mutableJson=checkRouterCoreJsonMutableLet(this,node,env,path,expected,allowLiteral);if(mutableJson)return mutableJson;
     const character=checkCharacterExpression(this,node,env,path,expected);if(character)return character;
     if(node.k==='routerTextPattern'&&['contains','starts_with'].includes(node.op)&&node.args?.length===1&&node.args[0].k==='routerTextReference'&&node.args[0].sourceAmpersand)return super.expr(this.prepareOriginalStringPatternBorrow(node,env,path),env,path,expected,allowLiteral);
     if(node.k==='routerStaticArrayElementBorrow')return checkStaticArrayElement(this,node,env,path,expected);
