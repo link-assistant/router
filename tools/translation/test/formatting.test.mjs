@@ -103,10 +103,14 @@ test('original humanize_minutes retains source spans, early returns and literal 
   await verifyTypedTargets(result,api=>{for(const [value,expected] of [[-1n,'-1 minutes'],[89n,'89 minutes'],[90n,'1 hours'],[2879n,'47 hours'],[2880n,'2 days'],[9223372036854775807n,'6405119470038038 days'],[-9223372036854775808n,'-9223372036854775808 minutes']])assert.equal(api[item.name](value),expected);});
 });
 
-test('original accounts header translates unchanged through literal string alignment',async()=>{
+test('actual accounts header translates through its source-bound formatting interface',async()=>{
   const original=readFileSync(new URL('../../../src/accounts_cli.rs',import.meta.url),'utf8'),item=sourceItems(original).find(item=>item.name==='header');
-  assert.ok(item);const body=original.slice(item.start,item.end),result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>body});
+  assert.ok(item);const body=original.slice(item.start,item.end),files={
+    'src/lib.rs':'pub mod translation_core;\n'+body,
+    'src/translation_core.rs':readFileSync(new URL('../../../src/translation_core.rs',import.meta.url),'utf8'),
+    'src/translation_core/primitives.rs':readFileSync(new URL('../../../src/translation_core/primitives.rs',import.meta.url),'utf8'),
+  },result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
   assert.deepEqual(result.meta.refused,[]);const executable=result.meta.executable.find(entry=>entry.name==='header');
-  assert.equal(sha256(body.slice(executable.span.start,executable.span.end)),sha256(body));
+  assert.equal(sha256(files['src/lib.rs'].slice(executable.span.start,executable.span.end)),sha256(body));
   await verifyTypedTargets(result,api=>assert.equal(api.header(),'name              healthy   credential    used    limit      remaining  home'));
 });
