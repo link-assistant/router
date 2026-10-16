@@ -99,7 +99,28 @@ test('stored private prototypes retain all six own data accessor value flag and 
   rows.push(mutation(owner,key,{__proto__:null,get:field.get,set(){callbacks++;},enumerable:field.enumerable,configurable:true}));
   rows.push(mutation(owner,key,{__proto__:null,get:field.get,set:field.set,enumerable:!field.enumerable,configurable:true}));
  }
- retain('02-six-owner-descriptor-failures',{rows,callbacks});assert.equal(rows.length,33);assert.equal(callbacks,0);checkRows(rows);
+ const boundaryRows=[],runs=[];
+ for(let slot=0;slot<owners.length;slot++){
+  const owner=owners[slot],ordered=keys(owner);let start=0;
+  while(start<ordered.length){
+   const first=descriptor(owner,ordered[start]);
+   if(!own(first,'value')||first.enumerable!==false||first.configurable!==true||first.writable!==true){start++;continue;}
+   let end=start+1;
+   while(end<ordered.length){const field=descriptor(owner,ordered[end]);if(!own(field,'value')||field.enumerable!==false||field.configurable!==true||field.writable!==true)break;end++;}
+   const positions=[start,start+((end-start-1)>>1),end-1],selected=[];
+   for(let at=0;at<positions.length;at++)if(!selected.includes(positions[at]))selected.push(positions[at]);
+   runs.push({owner:ownerNames[slot],start,end,positions:selected,keys:selected.map(index=>typeof ordered[index]==='symbol'?String(ordered[index]):ordered[index])});
+   for(const index of selected){const key=ordered[index],field=descriptor(owner,key);
+    boundaryRows.push({owner:ownerNames[slot],index,start,end,change:'value',...mutation(owner,key,{__proto__:null,value:field.value===undefined?null:undefined,writable:true,enumerable:false,configurable:true})});
+    boundaryRows.push({owner:ownerNames[slot],index,start,end,change:'writable',...mutation(owner,key,{__proto__:null,value:field.value,writable:false,enumerable:false,configurable:true})});
+    boundaryRows.push({owner:ownerNames[slot],index,start,end,change:'enumerable',...mutation(owner,key,{__proto__:null,value:field.value,writable:true,enumerable:true,configurable:true})});
+    boundaryRows.push({owner:ownerNames[slot],index,start,end,change:'accessor',...mutation(owner,key,{__proto__:null,get(){callbacks++;return field.value;},set:undefined,enumerable:false,configurable:true})});
+   }
+   start=end;
+  }
+ }
+ retain('02-six-owner-descriptor-failures',{rows,boundaryRows,runs,callbacks});assert.equal(rows.length,33);assert.equal(callbacks,0);checkRows(rows);checkRows(boundaryRows);
+ assert.ok(boundaryRows.length>0);for(const name of ownerNames)assert.ok(runs.some(run=>run.owner===name));
 });
 
 test('stored private prototypes reject extra keys symbols ancestry and exact reordered owner keys',{timeout:60000},()=>{

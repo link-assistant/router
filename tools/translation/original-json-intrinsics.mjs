@@ -231,10 +231,11 @@ function makePrivateExpectedPlans(){
  // original payload objects/functions/prototypes remain exactly as before.
  const plans=[];
  for(let slot=0;slot<snapshots.length;slot++){
-  const entries=snapshots[slot],rows=[];
+  const entries=snapshots[slot],rows=[];let standardEnd=0;
   for(let index=0;index<entries.length;index++){
    const entry=entries[index],field=entry[1],data=hasOwn(field,'value');
-   rows[index]=apply(syntaxFreeze.value,originalObject,[[entry[0],data,field.enumerable,field.configurable,data?field.value:field.get,data?field.writable:field.set]]);
+   if(index>=standardEnd)standardEnd=privateExpectedStandardRunEnd(entries,index);
+   rows[index]=apply(syntaxFreeze.value,originalObject,[[entry[0],data,field.enumerable,field.configurable,data?field.value:field.get,data?field.writable:field.set,standardEnd]]);
   }
   plans[slot]=apply(syntaxFreeze.value,originalObject,[rows]);
  }
@@ -244,6 +245,16 @@ function expectedSamePrototype(owner,entries,rows){
  if(!(owner===arrayPrototype&&entries===arrayDescriptors&&rows===privateExpectedPlans[0]||owner===mapPrototype&&entries===mapDescriptors&&rows===privateExpectedPlans[1]||owner===setPrototype&&entries===setDescriptors&&rows===privateExpectedPlans[2]||owner===weakSetPrototype&&entries===weakSetDescriptors&&rows===privateExpectedPlans[3]||owner===syntaxStringPrototype&&entries===syntaxStrings&&rows===privateExpectedPlans[4]||owner===syntaxRegExpPrototype&&entries===syntaxRegexps&&rows===privateExpectedPlans[5]))return false;
  const names=keys(owner);if(names.length!==rows.length)return false;
  for(let index=0;index<names.length;index++){
+  const end=rows[index][6];
+  if(end){
+   for(;index<end;index++){
+    const row=rows[index],key=row[0];if(names[index]!==key)return false;
+    const actual=descriptor(owner,key);if(!actual||!hasOwn(actual,'value'))return false;
+    if(actual.enumerable!==false||actual.configurable!==true)return false;
+    if(actual.value!==row[4]||actual.writable!==true)return false;
+   }
+   index--;continue;
+  }
   const row=rows[index],key=row[0];if(names[index]!==key)return false;
   // Preserve the exact old per-key descriptor read, before the NEXT key test.
   const actual=descriptor(owner,key);if(!actual||hasOwn(actual,'value')!==row[1])return false;
@@ -426,4 +437,16 @@ export function originalPrivateParserDescriptorCommonIntrinsicsUnchanged(){
  // owner descriptor reads/primitive comparisons occur; no callback can mutate
  // those same owners between these observations in the trusted stock domain.
  return !!(syntaxNative&&batchedExpectedNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&batchedExpectedSamePrototype(syntaxStringPrototype,syntaxStrings,privateExpectedPlans[4])&&batchedExpectedSamePrototype(syntaxRegExpPrototype,syntaxRegexps,privateExpectedPlans[5])&&parserObjectNumericSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet));
+}
+
+// Only immutable EXPECTED flags determine these runs. Live keys, descriptors,
+// own-value checks and comparison order are still observed on every call.
+function privateExpectedStandardRunEnd(entries,start){
+ let end=start;
+ while(end<entries.length){
+  const field=entries[end][1];
+  if(!hasOwn(field,'value')||field.enumerable!==false||field.configurable!==true||field.writable!==true)break;
+  end++;
+ }
+ return end>start?end:0;
 }
