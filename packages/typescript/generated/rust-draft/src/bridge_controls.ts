@@ -55,14 +55,14 @@ function rp_6272696467655f636f6e74726f6c732e756e7472616e736c617461626c655f6d6f64
   ml_pattern_immutable_view(value);
   ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
   return ml_host_option_map((() => {
-    const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+    const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_1;
+    const ml_pattern_1 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
     if ((ml_pattern_immutable_view(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-      const ml_standard_pattern_2 = (ml_pattern_1)["field0"];
+      const ml_standard_pattern_2 = (ml_pattern_1)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
       if ((() => {
-      const ml_standard_callback_arg_2 = ml_standard_pattern_2;
-      const value_2 = ml_standard_callback_arg_2;
+      const ml_standard_callback_arg_2 = ml_standard_pattern_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+      const value_2 = ml_standard_callback_arg_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
       return !ml_host_serde_json_value_is_null(value_2);
     })()) {
         return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_2 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
@@ -82,14 +82,14 @@ function rp_6272696467655f636f6e74726f6c732e756e7472616e736c617461626c655f636861
   ml_pattern_immutable_view(value);
   ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
   return ml_host_option_map((() => {
-    const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+    const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_1;
+    const ml_pattern_1 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
     if ((ml_pattern_immutable_view(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
-      const ml_standard_pattern_2 = (ml_pattern_1)["field0"];
+      const ml_standard_pattern_2 = (ml_pattern_1)["field0"] as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
       if ((() => {
-      const ml_standard_callback_arg_2 = ml_standard_pattern_2;
-      const value_2 = ml_standard_callback_arg_2;
+      const ml_standard_callback_arg_2 = ml_standard_pattern_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+      const value_2 = ml_standard_callback_arg_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
       return !ml_host_serde_json_value_is_null(value_2);
     })()) {
         return ml_snapshot_constructor_value(Object.freeze({ $: 'Some', field0: ml_standard_pattern_2 }), {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_constructor_value_schema_29d733eba4a5e6f1b84f992cff81c67fc7370447788c0c9a2c733cb2257e3e67);
@@ -109,15 +109,15 @@ function rp_6272696467655f636f6e74726f6c732e76616c69646174655f726573706f6e736573
   ml_pattern_immutable_view(body);
   ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   if ((() => {
-    const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(body, "prompt"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+    const ml_standard_callback_self_1 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(body, "prompt"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
     switch (ml_standard_callback_self_1.$) {
       case "None": {
         return false;
       }
       case "Some": {
         const ml_standard_pattern_2 = ml_standard_callback_self_1.field0;
-        const ml_standard_callback_arg_1 = ml_standard_pattern_2;
-        const value = ml_standard_callback_arg_1;
+        const ml_standard_callback_arg_1 = ml_standard_pattern_2 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
+        const value = ml_standard_callback_arg_1 as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         return !ml_host_serde_json_value_is_null(value);
       }
       default: {
@@ -132,7 +132,7 @@ function rp_6272696467655f636f6e74726f6c732e76616c69646174655f726573706f6e736573
   } else {
   }
   return (() => {
-    const ml_ordered_match_1 = ml_host_serde_json_value_get_string(body, "include");
+    const ml_ordered_match_1 = ml_host_serde_json_value_get_string(body, "include") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
     ml_pattern_immutable_view(ml_ordered_match_1);
     return (() => {
       if ((ml_ordered_match_1.$ === "None")) {

@@ -141,15 +141,15 @@ function rp_766b2e69735f70726976617465(peer_id: bigint, from_id: bigint): boolea
 function rp_766b2e6a736f6e5f7473(value: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {
   ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return (() => {
-    const ml_standard_body_3 = ml_host_option_map(ml_host_serde_json_value_as_str(value), (ml_standard_callback_0_0) => { return ml_csv_allocate(ml_standard_callback_0_0); });
+    const ml_standard_body_3 = ml_host_option_map(ml_host_serde_json_value_as_str(value), (ml_standard_callback_0_0) => { return ml_csv_allocate(ml_standard_callback_0_0); }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     switch (ml_standard_body_3.$) {
       case "None": {
-        const ml_standard_capture_domain_2 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+        const ml_standard_capture_domain_2 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         return ml_host_option_map(ml_host_serde_json_value_as_i64(value), (ts) => { return String(ts); });
       }
       case "Some": {
         const ml_standard_alias_field = ml_standard_body_3.field0;
-        const x = ml_standard_body_3;
+        const x = ml_standard_body_3 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
         return x;
       }
       default: {

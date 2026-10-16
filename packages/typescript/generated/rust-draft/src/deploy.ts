@@ -49,7 +49,7 @@ function rp_6465706c6f792e4445504c4f595f544f4b454e5f4c4142454c(): string {
 function rp_6465706c6f792e66697273745f6c696e65(text: string): string {
   if (!(typeof text === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(text))) throw new TypeError('argument outside supported Rust value domain');
   return ((() => {
-    const ml_standard_body_1 = ml_str_next(ml_str_lines(text));
+    const ml_standard_body_1 = ml_str_next(ml_str_lines(text)) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     const ml_standard_body_2 = "";
     switch (ml_standard_body_1.$) {
       case "None": {

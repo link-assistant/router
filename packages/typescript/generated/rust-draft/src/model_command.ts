@@ -34,7 +34,7 @@ function ml_host_option_bind(value: { $: string; field0?: any }, operation: (...
 function rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64(entry: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>): Readonly<{ readonly "$": "Tuple"; readonly "field0": string; readonly "field1": Readonly<{ readonly "$": "Concrete" }> | Readonly<{ readonly "$": "ProviderDynamicAlias" }> | Readonly<{ readonly "$": "OperatorAlias" }> | Readonly<{ readonly "$": "Unknown" }> }> {
   ml_validate_rust_value(entry, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
   const label = (() => {
-    const ml_standard_body_2 = ml_host_option_bind(ml_host_option_bind(entry, (value) => { return ml_host_serde_json_value_get_string(value, "selector_kind"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
+    const ml_standard_body_2 = ml_host_option_bind(ml_host_option_bind(entry, (value) => { return ml_host_serde_json_value_get_string(value, "selector_kind"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     const ml_standard_body_3 = "unknown";
     switch (ml_standard_body_2.$) {
       case "None": {
@@ -49,7 +49,7 @@ function rp_6d6f64656c5f636f6d6d616e642e73656c6563746f725f6b696e64(entry: Readon
       }
     }
   })();
-  const kind = rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f363337323631373436353265366436663634363536633566363336663665373437323631363337343265346436663634363536633533363536633635363337343666373234623639366536345f363637323666366435663737363937323635(label);
+  const kind = rp_6d6f64656c5f636f6e74726163742e6d6c5f696d706c5f363337323631373436353265366436663634363536633566363336663665373437323631363337343265346436663634363536633533363536633635363337343666373234623639366536345f363637323666366435663737363937323635(label) as Readonly<{ readonly "$": "Concrete" }> | Readonly<{ readonly "$": "ProviderDynamicAlias" }> | Readonly<{ readonly "$": "OperatorAlias" }> | Readonly<{ readonly "$": "Unknown" }>;
   return ml_snapshot_constructor_value(Object.freeze({ $: 'Tuple', field0: label, field1: kind }), {"kind":"data","name":"rp_526f757465725475706c655f365f737472696e675f36395f6e616d65645f366436663634363536633566363336663665373437323631363337345f346436663634363536633533363536633635363337343666373234623639366536345f727573745f35623762323237333666373537323633363534663737366536353732373336383639373032323361376232323662363936653634323233613232363236663732373236663737363536343232326332323733366637353732363336353232336132323733373437323232376437643263376237643564"}, ml_constructor_value_schema_d14d28ce0e1e0b5e38c6208f540dff3b28dd559da3783fcb8dc017b4551d3ae5);
 }
 

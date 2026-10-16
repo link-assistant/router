@@ -41,10 +41,13 @@ export function originalMacroTrees(source,{maxBytes=128000,maxTokens=16000,maxDe
       // The structural lexer fuses this spelling; retain its two exact TT
       // punctuators, without admitting compound **= or other operators.
       append('*',token.start,token.start+1);append('*',token.start+1,token.end);
-    } else if(token.text==='>>') {
+    } else if(token.text==='>>'||token.text==='>>>') {
       // Rust TT punctuation consists of individual punctuators, even when
       // their original lexical spacing forms a compound type close token.
-      append('>',token.start,token.start+1);append('>',token.start+1,token.end);
+      // The structural JS lexer also fuses >>>, which has no single Rust
+      // TokenKind. Keep the same individual Gt projection for all three
+      // original positions; compound assignments retain their old domain.
+      for(let index=0;index<token.text.length;index++)append('>',token.start+index,token.start+index+1);
     } else append(token.text,token.start,token.end);
   }
   if(tokens.length>maxTokens)throw new TypeError('Declarative macro token budget exceeded');

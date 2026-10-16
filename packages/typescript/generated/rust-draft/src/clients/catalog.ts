@@ -43,9 +43,9 @@ function rp_636c69656e74732e636174616c6f672e636c617564655f636f6e746578745f766172
       const ml_text_1 = requested;
       const ml_text_2 = "[1m]";
       return (ml_text_1.endsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(0,ml_text_1.length-ml_text_2.length) }):Object.freeze({ $: 'None' }));
-    })();
+    })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_3;
+    const ml_pattern_1 = ml_standard_callback_self_3 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
       const ml_standard_pattern_4 = (ml_pattern_1)["field0"];
       if ((() => {
@@ -60,7 +60,7 @@ function rp_636c69656e74732e636174616c6f672e636c617564655f636f6e746578745f766172
     }
     return Object.freeze({ $: 'None' });
     })();
-  })();
+  })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
   if ((ml_pattern_immutable(ml_pattern_3) && (ml_pattern_3.$ === "Some"))) {
   } else {
     return false;

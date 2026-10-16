@@ -151,9 +151,9 @@ function rp_61646d696e2e636c616d705f74746c(ttl_hours: Readonly<{ readonly "$": "
   ml_pattern_immutable(ttl_hours);
   ml_validate_rust_value(ttl_hours, {"kind":"data","name":"rp_526f757465724f7074696f6e5f335f693634"}, ml_host_value_schema_1a340518623ce749a9afa850fc2a5764a531ec3758ac3f7bbad5cb4d3da2a03e, { refinements: ml_host_value_refinements_1a340518623ce749a9afa850fc2a5764a531ec3758ac3f7bbad5cb4d3da2a03e });
   return ml_host_option_map_or((() => {
-    const ml_standard_callback_self_1 = ttl_hours;
+    const ml_standard_callback_self_1 = ttl_hours as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
     return (() => {
-    const ml_pattern_1 = ml_standard_callback_self_1;
+    const ml_pattern_1 = ml_standard_callback_self_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
     if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
       const ml_standard_pattern_2 = (ml_pattern_1)["field0"];
       if ((() => {

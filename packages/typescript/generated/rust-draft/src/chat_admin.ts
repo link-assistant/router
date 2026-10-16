@@ -130,7 +130,7 @@ function rp_636861745f61646d696e2e6e6f726d616c697365(word: string): string {
       const ml_text_1 = word;
       const ml_text_2 = "/";
       return (ml_text_1.startsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(ml_text_2.length) }):Object.freeze({ $: 'None' }));
-    })();
+    })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     const ml_standard_body_4 = word;
     switch (ml_standard_body_3.$) {
       case "None": {

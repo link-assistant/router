@@ -20,7 +20,7 @@ const ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d5580
 function rp_6c6f67696e5f6170692e7265717565737465645f70726f7669646572(value: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": Readonly<{ readonly "$": "Claude" }> | Readonly<{ readonly "$": "Codex" }> | Readonly<{ readonly "$": "Gemini" }> | Readonly<{ readonly "$": "Qwen" }> }> {
   ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
   const ml_s1 = (((() => {
-    const ml_standard_body_1 = value;
+    const ml_standard_body_1 = value as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     const ml_standard_body_2 = "claude";
     switch (ml_standard_body_1.$) {
       case "None": {

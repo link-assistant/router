@@ -158,10 +158,10 @@ function rp_6769745f70726f78792e616e6365737472795f66726f6d5f636f6d70617265(paylo
   ml_pattern_immutable_view(payload);
   ml_validate_rust_value(payload, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   const ml_s4 = (() => {
-    const ml_match_subject7 = ml_host_option_bind(ml_host_serde_json_value_get_string(payload, "status"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
+    const ml_match_subject7 = ml_host_option_bind(ml_host_serde_json_value_get_string(payload, "status"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     ml_pattern_immutable(ml_match_subject7);
     return ml_match_subject7;
-  })();
+  })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
   switch (ml_s4.$) {
     case "None": {
       return Object.freeze({ $: 'Unknown' });
@@ -205,7 +205,7 @@ function rp_6769745f70726f78792e63616e6f6e6963616c5f6769745f70617468(path: strin
       const ml_text_1 = path;
       const ml_text_2 = "/api/services/github";
       return (ml_text_1.startsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(ml_text_2.length) }):Object.freeze({ $: 'None' }));
-    })();
+    })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     const ml_standard_body_4 = path;
     switch (ml_standard_body_3.$) {
       case "None": {

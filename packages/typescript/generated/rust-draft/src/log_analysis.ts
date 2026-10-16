@@ -186,7 +186,7 @@ function rp_726571756573745f6c6f672e726564616374696f6e2e42494e4152595f424f44595f
 function rp_6c6f675f616e616c797369732e726571756573745f61736b735f666f725f615f73747265616d(record: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): boolean {
   ml_validate_rust_value(record, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return (() => {
-    const ml_standard_body_2 = ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(record, "body"), (body) => { return ml_host_serde_json_value_get_string(body, "json"); }, "and_then"), (body_2) => { return ml_host_serde_json_value_get_string(body_2, "stream"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_bool(ml_host_callback_0_0); }, "and_then");
+    const ml_standard_body_2 = ml_host_option_bind(ml_host_option_bind(ml_host_option_bind(ml_host_serde_json_value_get_string(record, "body"), (body) => { return ml_host_serde_json_value_get_string(body, "json"); }, "and_then"), (body_2) => { return ml_host_serde_json_value_get_string(body_2, "stream"); }, "and_then"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_bool(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": boolean }>;
     const ml_standard_body_3 = false;
     switch (ml_standard_body_2.$) {
       case "None": {

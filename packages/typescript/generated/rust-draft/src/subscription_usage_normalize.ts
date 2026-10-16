@@ -78,7 +78,7 @@ try {
   ml_assert_immutable_iterator(value);
   ml_pattern_immutable_view(value);
   ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
-  const ml_pattern_1 = ml_host_serde_json_value_as_u64(value);
+  const ml_pattern_1 = ml_host_serde_json_value_as_u64(value) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
   if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
     const count = (ml_pattern_1)["field0"];
     return Object.freeze({ $: 'Some', field0: count });
@@ -94,15 +94,15 @@ try {
 function rp_737562736372697074696f6e5f75736167652e6e6f726d616c697a652e72657365745f637265646974735f617661696c61626c65(value: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }> {
   ml_validate_rust_value(value, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   return ml_host_option_bind(ml_host_option_bind((() => {
-    const ml_standard_body_2 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+    const ml_standard_body_2 = (() => { const ml_shared_immutable_value = ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits"); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
     switch (ml_standard_body_2.$) {
       case "None": {
-        const ml_standard_capture_domain_1 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+        const ml_standard_capture_domain_1 = (() => { const ml_shared_immutable_value = value; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as MLData_72705f3733363537323634363535663661373336663665326535363631366337353635;
         return ml_host_serde_json_value_get_string(value, "rate_limit_reset_credits_summary");
       }
       case "Some": {
         const ml_standard_alias_field = ml_standard_body_2.field0;
-        const x = ml_standard_body_2;
+        const x = ml_standard_body_2 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": MLData_72705f3733363537323634363535663661373336663665326535363631366337353635 }>;
         return x;
       }
       default: {

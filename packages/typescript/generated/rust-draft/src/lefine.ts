@@ -129,7 +129,7 @@ function rp_6c6566696e652e756e617661696c61626c65(message: string): Readonly<{ re
 function rp_6c6566696e652e6d6c5f696d706c5f3633373236313734363532653663363536363639366536353265343336313734363136633666363734363631363936633735373236355f366536353737(kind: Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>, message: string): Readonly<{ readonly "$": "CatalogFailure"; readonly "kind": Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>; readonly "message": string }> {
   ml_validate_rust_value(kind, {"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c7572654b696e64"}, ml_host_value_schema_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e25f6db0bdda197e61, { refinements: ml_host_value_refinements_571631ada2bf76346eaf7948abd0ec3d28ff64858585f8e25f6db0bdda197e61 });
   if (!(typeof message === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(message))) throw new TypeError('argument outside supported Rust value domain');
-  const ml_record1 = kind;
+  const ml_record1 = kind as Readonly<{ readonly "$": "CredentialRejected" }> | Readonly<{ readonly "$": "RateLimited" }> | Readonly<{ readonly "$": "Unavailable" }>;
   const ml_record2 = message;
   return ml_snapshot_constructor_value(Object.freeze({ $: "CatalogFailure", ["kind"]: ml_record1, ["message"]: ml_record2 }), {"kind":"data","name":"rp_6c6566696e652e436174616c6f674661696c757265"}, ml_constructor_value_schema_b1dcba45f86d22f78d36c4524144916181cc22ccbffdf6cbc00b60de8b22a990);
 }

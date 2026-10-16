@@ -124,7 +124,7 @@ const serde_json = {
 function rp_6272696467655f726573706f6e73652e73746f705f73656d616e74696373(reason: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>): Readonly<{ readonly "$": "StopSemantics"; readonly "chat_finish_reason": string; readonly "response_status": string; readonly "incomplete_reason": Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>; readonly "refusal": boolean }> {
   ml_validate_rust_value(reason, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
   const ml_s1 = (() => {
-    const ml_standard_body_1 = reason;
+    const ml_standard_body_1 = reason as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     const ml_standard_body_2 = "end_turn";
     switch (ml_standard_body_1.$) {
       case "None": {
@@ -174,7 +174,7 @@ function rp_6272696467655f726573706f6e73652e636f6d706c657465(chat_finish_reason:
   if (!(typeof chat_finish_reason === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(chat_finish_reason))) throw new TypeError('argument outside supported Rust value domain');
   const ml_record1 = chat_finish_reason;
   const ml_record2 = "completed";
-  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
   const ml_record4 = false;
   return ml_snapshot_constructor_value(Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 }), {"kind":"data","name":"rp_6272696467655f726573706f6e73652e53746f7053656d616e74696373"}, ml_constructor_value_schema_4ec858a8063b439504e03d4fed87f23fce61715fc019c6e79a79571e7e074e9a);
 }
@@ -185,7 +185,7 @@ function rp_6272696467655f726573706f6e73652e696e636f6d706c657465(chat_finish_rea
   if (!(typeof refusal === 'boolean')) throw new TypeError('argument outside supported Rust value domain');
   const ml_record1 = chat_finish_reason;
   const ml_record2 = "incomplete";
-  const ml_record3 = Object.freeze({ $: 'Some', field0: reason });
+  const ml_record3 = Object.freeze({ $: 'Some', field0: reason }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
   const ml_record4 = refusal;
   return ml_snapshot_constructor_value(Object.freeze({ $: "StopSemantics", ["chat_finish_reason"]: ml_record1, ["response_status"]: ml_record2, ["incomplete_reason"]: ml_record3, ["refusal"]: ml_record4 }), {"kind":"data","name":"rp_6272696467655f726573706f6e73652e53746f7053656d616e74696373"}, ml_constructor_value_schema_4ec858a8063b439504e03d4fed87f23fce61715fc019c6e79a79571e7e074e9a);
 }
@@ -194,10 +194,10 @@ function rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f
   ml_pattern_immutable(value);
   ml_validate_rust_value(value, {"kind":"data","name":"rp_526f757465724f7074696f6e5f35345f7265666572656e63655f7368617265645f6e616d65645f37333635373236343635356636613733366636655f35363631366337353635"}, ml_host_value_schema_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77, { refinements: ml_host_value_refinements_431a38a3c179b8f2f6e2ddc9601e02946483f7baccf5b72b0b5271fcd25f9a77 });
   const ml_s4 = (() => {
-    const ml_match_subject7 = ml_host_option_bind(value, (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
+    const ml_match_subject7 = ml_host_option_bind(value, (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     ml_pattern_immutable(ml_match_subject7);
     return ml_match_subject7;
-  })();
+  })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
   switch (ml_s4.$) {
     case "None": {
       return Object.freeze({ $: 'None' });
@@ -227,7 +227,7 @@ function rp_6272696467655f726573706f6e73652e616e7468726f7069635f736572766963655f
 function rp_6272696467655f726573706f6e73652e6369746174696f6e5f75726c(citation: MLData_72705f3733363537323634363535663661373336663665326535363631366337353635): Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }> {
   ml_pattern_immutable_view(citation);
   ml_validate_rust_value(citation, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
-  const ml_s2 = ml_host_option_bind(ml_host_serde_json_value_get_string(citation, "type"), (ml_host_callback_3_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_3_0); }, "and_then");
+  const ml_s2 = ml_host_option_bind(ml_host_serde_json_value_get_string(citation, "type"), (ml_host_callback_3_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_3_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
   switch (ml_s2.$) {
     case "None": {
       return Object.freeze({ $: 'None' });
@@ -239,9 +239,9 @@ function rp_6272696467655f726573706f6e73652e6369746174696f6e5f75726c(citation: M
       } else {
         if ((ml_f1 === "search_result_location")) {
           return (() => {
-        const ml_standard_callback_self_11 = ml_host_option_bind(ml_host_serde_json_value_get_string(citation, "source"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then");
+        const ml_standard_callback_self_11 = ml_host_option_bind(ml_host_serde_json_value_get_string(citation, "source"), (ml_host_callback_5_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_5_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
         return (() => {
-        const ml_pattern_1 = ml_standard_callback_self_11;
+        const ml_pattern_1 = ml_standard_callback_self_11 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
         if ((ml_pattern_immutable(ml_pattern_1) && (ml_pattern_1.$ === "Some"))) {
           const ml_standard_pattern_12 = (ml_pattern_1)["field0"];
           if ((() => {

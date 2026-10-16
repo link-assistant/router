@@ -148,7 +148,7 @@ function rp_766572696669636174696f6e2e7465737473(targets: ReadonlyArray<string>)
   if (!ml_router_array(targets, (element0) => (typeof element0 === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(element0)))) throw new TypeError('argument outside supported Rust value domain');
   const ml_record1 = targets;
   const ml_record2 = Object.freeze(Object.freeze([]));
-  const ml_record3 = Object.freeze({ $: 'None' });
+  const ml_record3 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
   const ml_record4 = false;
   return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record1, ["unit"]: ml_record2, ["filter"]: ml_record3, ["serial"]: ml_record4 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
 }
@@ -158,7 +158,7 @@ function rp_766572696669636174696f6e2e756e6974(unit: ReadonlyArray<string>, filt
   if (!(typeof filter === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(filter))) throw new TypeError('argument outside supported Rust value domain');
   const ml_record1 = Object.freeze(Object.freeze([]));
   const ml_record2 = unit;
-  const ml_record3 = Object.freeze({ $: 'Some', field0: filter });
+  const ml_record3 = Object.freeze({ $: 'Some', field0: filter }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
   const ml_record4 = false;
   return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record1, ["unit"]: ml_record2, ["filter"]: ml_record3, ["serial"]: ml_record4 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
 }
@@ -177,7 +177,7 @@ function rp_766572696669636174696f6e2e4152454153(): ReadonlyArray<Readonly<{ rea
     const ml_record8 = Object.freeze(Object.freeze([(() => {
       const ml_record9 = Object.freeze(Object.freeze(["real_clients_test", "host_client_lifecycle_test"]));
       const ml_record10 = Object.freeze(Object.freeze([]));
-      const ml_record11 = Object.freeze({ $: 'None' });
+      const ml_record11 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
       const ml_record12 = true;
       return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record9, ["unit"]: ml_record10, ["filter"]: ml_record11, ["serial"]: ml_record12 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
     })()]));
@@ -201,7 +201,7 @@ function rp_766572696669636174696f6e2e4152454153(): ReadonlyArray<Readonly<{ rea
     const ml_record24 = Object.freeze(Object.freeze([(() => {
       const ml_record25 = Object.freeze(Object.freeze(["mixed_entitlements_live_test", "subscription_usage_live_test"]));
       const ml_record26 = Object.freeze(Object.freeze([]));
-      const ml_record27 = Object.freeze({ $: 'None' });
+      const ml_record27 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
       const ml_record28 = true;
       return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record25, ["unit"]: ml_record26, ["filter"]: ml_record27, ["serial"]: ml_record28 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
     })()]));
@@ -225,7 +225,7 @@ function rp_766572696669636174696f6e2e4152454153(): ReadonlyArray<Readonly<{ rea
     const ml_record40 = Object.freeze(Object.freeze([rp_766572696669636174696f6e2e756e6974(Object.freeze(Object.freeze(["--lib"])), "deploy_local"), (() => {
       const ml_record41 = Object.freeze(Object.freeze(["deploy_host_test", "deploy_docker_test", "deploy_docker_secret_test", "deploy_docker_relay_test", "deploy_docker_claude_share_test", "deploy_docker_host_test"]));
       const ml_record42 = Object.freeze(Object.freeze([]));
-      const ml_record43 = Object.freeze({ $: 'None' });
+      const ml_record43 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
       const ml_record44 = true;
       return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record41, ["unit"]: ml_record42, ["filter"]: ml_record43, ["serial"]: ml_record44 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
     })()]));
@@ -243,7 +243,7 @@ function rp_766572696669636174696f6e2e4152454153(): ReadonlyArray<Readonly<{ rea
     const ml_record52 = Object.freeze(Object.freeze([(() => {
       const ml_record53 = Object.freeze(Object.freeze(["staging_live_test"]));
       const ml_record54 = Object.freeze(Object.freeze([]));
-      const ml_record55 = Object.freeze({ $: 'None' });
+      const ml_record55 = Object.freeze({ $: 'None' }) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
       const ml_record56 = true;
       return ml_snapshot_constructor_value(Object.freeze({ $: "Run", ["targets"]: ml_record53, ["unit"]: ml_record54, ["filter"]: ml_record55, ["serial"]: ml_record56 }), {"kind":"data","name":"rp_766572696669636174696f6e2e52756e"}, ml_constructor_value_schema_34b543047b0ee97cd4236ef370c7ed4a0326686bfffb3a7f432357f1a93ddd1f);
     })()]));

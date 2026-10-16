@@ -183,43 +183,43 @@ function rp_6361706162696c69746965732e737562736372697074696f6e(provider: Readonl
   ml_validate_rust_value(_model, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
   switch (provider.$) {
     case "Claude": {
-      const ml_record1 = Object.freeze({ $: 'Unknown' });
-      const ml_record2 = Object.freeze({ $: 'Native' });
-      const ml_record3 = Object.freeze({ $: 'Native' });
-      const ml_record4 = Object.freeze({ $: 'Native' });
-      const ml_record5 = Object.freeze({ $: 'Native' });
-      const ml_record6 = Object.freeze({ $: 'Native' });
-      const ml_record7 = Object.freeze({ $: 'Native' });
+      const ml_record1 = Object.freeze({ $: 'Unknown' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record2 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record3 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record4 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record5 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record6 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record7 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
       return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record1, ["top_p"]: ml_record2, ["stop_sequences"]: ml_record3, ["output_token_limit"]: ml_record4, ["reasoning"]: ml_record5, ["web_search"]: ml_record6, ["web_fetch"]: ml_record7 }), {"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573"}, ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77);
     }
     case "Codex": {
-      const ml_record8 = Object.freeze({ $: 'Unsupported' });
-      const ml_record9 = Object.freeze({ $: 'Unsupported' });
-      const ml_record10 = Object.freeze({ $: 'Emulated' });
-      const ml_record11 = Object.freeze({ $: 'Emulated' });
-      const ml_record12 = Object.freeze({ $: 'Native' });
-      const ml_record13 = Object.freeze({ $: 'Native' });
-      const ml_record14 = Object.freeze({ $: 'Unsupported' });
+      const ml_record8 = Object.freeze({ $: 'Unsupported' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record9 = Object.freeze({ $: 'Unsupported' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record10 = Object.freeze({ $: 'Emulated' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record11 = Object.freeze({ $: 'Emulated' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record12 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record13 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record14 = Object.freeze({ $: 'Unsupported' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
       return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record8, ["top_p"]: ml_record9, ["stop_sequences"]: ml_record10, ["output_token_limit"]: ml_record11, ["reasoning"]: ml_record12, ["web_search"]: ml_record13, ["web_fetch"]: ml_record14 }), {"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573"}, ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77);
     }
     case "Gemini": {
-      const ml_record15 = Object.freeze({ $: 'Native' });
-      const ml_record16 = Object.freeze({ $: 'Native' });
-      const ml_record17 = Object.freeze({ $: 'Native' });
-      const ml_record18 = Object.freeze({ $: 'Native' });
-      const ml_record19 = Object.freeze({ $: 'Native' });
-      const ml_record20 = Object.freeze({ $: 'Unsupported' });
-      const ml_record21 = Object.freeze({ $: 'Unsupported' });
+      const ml_record15 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record16 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record17 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record18 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record19 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record20 = Object.freeze({ $: 'Unsupported' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record21 = Object.freeze({ $: 'Unsupported' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
       return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record15, ["top_p"]: ml_record16, ["stop_sequences"]: ml_record17, ["output_token_limit"]: ml_record18, ["reasoning"]: ml_record19, ["web_search"]: ml_record20, ["web_fetch"]: ml_record21 }), {"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573"}, ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77);
     }
     case "Qwen": {
-      const ml_record22 = Object.freeze({ $: 'Native' });
-      const ml_record23 = Object.freeze({ $: 'Native' });
-      const ml_record24 = Object.freeze({ $: 'Native' });
-      const ml_record25 = Object.freeze({ $: 'Native' });
-      const ml_record26 = Object.freeze({ $: 'Native' });
-      const ml_record27 = Object.freeze({ $: 'Unsupported' });
-      const ml_record28 = Object.freeze({ $: 'Unsupported' });
+      const ml_record22 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record23 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record24 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record25 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record26 = Object.freeze({ $: 'Native' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record27 = Object.freeze({ $: 'Unsupported' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
+      const ml_record28 = Object.freeze({ $: 'Unsupported' }) as Readonly<{ readonly "$": "Native" }> | Readonly<{ readonly "$": "Emulated" }> | Readonly<{ readonly "$": "Unsupported" }> | Readonly<{ readonly "$": "Unknown" }>;
       return ml_snapshot_constructor_value(Object.freeze({ $: "ProviderCapabilities", ["temperature"]: ml_record22, ["top_p"]: ml_record23, ["stop_sequences"]: ml_record24, ["output_token_limit"]: ml_record25, ["reasoning"]: ml_record26, ["web_search"]: ml_record27, ["web_fetch"]: ml_record28 }), {"kind":"data","name":"rp_6361706162696c69746965732e50726f76696465724361706162696c6974696573"}, ml_constructor_value_schema_18b50893ea821ccb3439a66bc921fa151b3fcbd486b6e835e8e16affc2227e77);
     }
     default: {
@@ -243,7 +243,7 @@ try {
   } else {
   }
   const has_function = ml_router_any(ml_router_iter(tools_2, true), (tool) => { const kind = (() => {
-    const ml_standard_body_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then");
+    const ml_standard_body_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(tool, "type"), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_str(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     const ml_standard_body_3 = "custom";
     switch (ml_standard_body_2.$) {
       case "None": {

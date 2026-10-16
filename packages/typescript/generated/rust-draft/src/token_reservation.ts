@@ -118,7 +118,7 @@ function rp_746f6b656e5f7265736572766174696f6e2e6465636c617265645f6f75747075745f
   ml_pattern_immutable_view(body);
   ml_validate_rust_value(body, {"kind":"data","name":"rp_73657264655f6a736f6e2e56616c7565"}, ml_host_value_schema_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32, { refinements: ml_host_value_refinements_b06bcea6d2cad40d73e818122a7dbed699c3b1b782df0777263a5df8e71e6a32 });
   for (const field of ml_router_iter(ml_copy_fixed_array(["max_output_tokens", "max_completion_tokens", "max_tokens"], {"kind":"array","element":{"kind":"string"},"rustFixedArray":{"length":3}}), false)) {
-    const ml_pattern_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(body, field), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then");
+    const ml_pattern_2 = ml_host_option_bind(ml_host_serde_json_value_get_string(body, field), (ml_host_callback_0_0) => { return ml_host_serde_json_value_as_u64(ml_host_callback_0_0); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": bigint }>;
     if ((ml_pattern_immutable(ml_pattern_2) && (ml_pattern_2.$ === "Some"))) {
       const value = (ml_pattern_2)["field0"];
       return Object.freeze({ $: 'Some', field0: value });

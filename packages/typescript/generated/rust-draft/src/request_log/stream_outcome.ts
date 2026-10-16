@@ -136,7 +136,7 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e6d6c5f696d706c
 function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e69735f73747265616d696e675f6d656469615f74797065(content_type: Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>): boolean {
   ml_validate_rust_value(content_type, {"kind":"data","name":"rp_526f757465724f7074696f6e5f365f737472696e67"}, ml_host_value_schema_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0, { refinements: ml_host_value_refinements_0d401b33cd6c621a6940d2ce41455df809addfafd24d55809a2c1e9d0d6391a0 });
   return (() => {
-    const ml_standard_callback_self_1 = content_type;
+    const ml_standard_callback_self_1 = content_type as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     switch (ml_standard_callback_self_1.$) {
       case "None": {
         return true;
@@ -146,7 +146,7 @@ function rp_726571756573745f6c6f672e73747265616d5f6f7574636f6d652e69735f73747265
         const ml_standard_callback_arg_1 = ml_standard_pattern_2;
         const value = ml_standard_callback_arg_1;
         return ((((() => {
-          const ml_standard_body_1 = ml_csv_split_next(ml_csv_split(value, ";"));
+          const ml_standard_body_1 = ml_csv_split_next(ml_csv_split(value, ";")) as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
           switch (ml_standard_body_1.$) {
             case "None": {
               return "";

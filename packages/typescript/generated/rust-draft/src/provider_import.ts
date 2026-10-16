@@ -19,7 +19,7 @@ function rp_70726f7669646572732e70726f76696465725f696d706f72742e756e71756f7465(v
       return (ml_text_1.startsWith(ml_text_2)?Object.freeze({ $: 'Some', field0: ml_text_1.slice(ml_text_2.length) }):Object.freeze({ $: 'None' }));
     })(), (v) => { const ml_text_3 = v;
     const ml_text_4 = "\"";
-    return (ml_text_3.endsWith(ml_text_4)?Object.freeze({ $: 'Some', field0: ml_text_3.slice(0,ml_text_3.length-ml_text_4.length) }):Object.freeze({ $: 'None' })); }, "and_then");
+    return (ml_text_3.endsWith(ml_text_4)?Object.freeze({ $: 'Some', field0: ml_text_3.slice(0,ml_text_3.length-ml_text_4.length) }):Object.freeze({ $: 'None' })); }, "and_then") as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": string }>;
     const ml_standard_body_6 = value;
     switch (ml_standard_body_5.$) {
       case "None": {

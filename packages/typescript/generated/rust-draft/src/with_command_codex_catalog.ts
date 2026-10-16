@@ -44,8 +44,8 @@ function rp_776974685f636f6d6d616e642e636f6465785f636174616c6f672e6d6f64656c5f6d
   if (!(typeof effort === 'string' && !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/u.test(effort))) throw new TypeError('argument outside supported Rust value domain');
   return (() => {
     const ml_standard_callback_self_2 = (() => { const ml_shared_immutable_value = (() => {
-      const ml_standard_shared_1 = (() => { const ml_shared_immutable_value = (model).supported_reasoning_levels; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
-      const ml_s1 = ml_standard_shared_1;
+      const ml_standard_shared_1 = (() => { const ml_shared_immutable_value = (model).supported_reasoning_levels; ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<Readonly<{ readonly "$": "RouterReasoningLevel"; readonly "effort": string; readonly "description": string }>> }>;
+      const ml_s1 = ml_standard_shared_1 as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<Readonly<{ readonly "$": "RouterReasoningLevel"; readonly "effort": string; readonly "description": string }>> }>;
       switch (ml_s1.$) {
         case "None": {
           return Object.freeze({ $: 'None' });
@@ -58,7 +58,7 @@ function rp_776974685f636f6d6d616e642e636f6465785f636174616c6f672e6d6f64656c5f6d
           return ml_router_unexpected(ml_s1);
         }
       }
-    })(); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })();
+    })(); ml_assert_immutable_copy(ml_shared_immutable_value); return ml_shared_immutable_value; })() as Readonly<{ readonly "$": "None" }> | Readonly<{ readonly "$": "Some"; readonly "field0": ReadonlyArray<Readonly<{ readonly "$": "RouterReasoningLevel"; readonly "effort": string; readonly "description": string }>> }>;
     switch (ml_standard_callback_self_2.$) {
       case "None": {
         return true;
