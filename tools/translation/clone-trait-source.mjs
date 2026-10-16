@@ -9,7 +9,7 @@ import {compileDeclarativeMacro,expandDeclarativeMacro} from './declarative-toke
 import {deriveFootprintSourceContext} from './derive-footprints.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal} from './builtin-derive-ast-meta.mjs';
 import {originalPrimitiveCloneExpansion} from './extensions/primitive-clone-source.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveDerivedSourceBindings} from './derived-source-bindings.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {moduleScopeKey,originalSourceModuleItems} from './source-module-views.mjs';
 import {macroBindingAffects} from './macro-subnamespaces.mjs';
@@ -79,7 +79,7 @@ export function createCloneSourceContext(deriveContext){
   const original=deriveFootprintSourceContext(deriveContext),defaultContext=createDefaultSourceContext(deriveContext),standard=standardClone(original.dependencies,defaultContext);
   const descriptors=['std','core'].flatMap(root=>[{name:'Clone',namespace:'type',kind:'trait',target:[root,'clone','Clone'],source:'original-core-clone-trait',originalSourceSha256:standard.trait.sourceSha256},{name:'Default',namespace:'type',kind:'trait',target:[root,'default','Default'],source:'original-core-default-trait',originalSourceSha256:defaultContext.trait.sha256}]);
   const external=registeredStandardHostBindings(descriptors);for(const [key,table]of original.externalModules)if(!external.has(key))external.set(key,table);
-  const binding=resolveModuleBindings({modules:original.modules,externalModules:external,deriveContext,compilationProfile:original.compilationProfile}),evidence={schema:'original-clone-source-context-v1',dependenciesDigest:original.dependencies.digest,profileSha256:hash(manifestBytes),standard,sources:original.modules.map(module=>({source:module.file,module:module.path,sha256:hash(module.source)})),namespaceAuthority:false,generatedImplBehavior:false};
+  const binding=resolveDerivedSourceBindings({modules:original.modules,externalModules:external,deriveContext,compilationProfile:original.compilationProfile}),evidence={schema:'original-clone-source-context-v1',dependenciesDigest:original.dependencies.digest,profileSha256:hash(manifestBytes),standard,sources:original.modules.map(module=>({source:module.file,module:module.path,sha256:hash(module.source)})),namespaceAuthority:false,generatedImplBehavior:false};
   const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,{...original,deriveContext,defaultContext,binding:freeze(binding),standard});return context;
 }
 export function cloneSourceContextFacts(context){const state=contexts.get(context);if(!state)fail('context is copied or unsealed');return state;}

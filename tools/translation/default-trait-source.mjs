@@ -7,7 +7,7 @@ import {sourceItems} from './rust-structure.mjs';
 import {deriveFootprintSourceContext} from './derive-footprints.mjs';
 import {builtinDefaultDependencyProof,BUILTIN_DEFAULT_SOURCE_PROFILE} from './derive-builtin-default.mjs';
 import {builtinDeriveAstSourceProfile,builtinAstOriginal} from './builtin-derive-ast-meta.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveDerivedSourceBindings} from './derived-source-bindings.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {originalSourceModuleItems,moduleScopeKey} from './source-module-views.mjs';
 import {itemConfiguration} from './cfg-profile.mjs';
@@ -77,7 +77,7 @@ function originalStandardDefault(dependencies){
 export function createDefaultSourceContext(deriveContext){
   const original=deriveFootprintSourceContext(deriveContext),{dependency,profile,pin,source,trait,syntax,routes,descriptors,keywordSymbols}=originalStandardDefault(original.dependencies);
   const external=registeredStandardHostBindings(descriptors);for(const [key,table]of original.externalModules)if(!external.has(key))external.set(key,table);
-  const binding=resolveModuleBindings({modules:original.modules,externalModules:external,deriveContext,compilationProfile:original.compilationProfile});
+  const binding=resolveDerivedSourceBindings({modules:original.modules,externalModules:external,deriveContext,compilationProfile:original.compilationProfile});
   const evidence={schema:'original-default-source-context-v1',dependencyDigest:dependency.digest,trait:{source:'library/core/src/default.rs',sha256:pin.sha256,span:{start:trait.start,end:trait.end},signature:syntax,original:source.slice(trait.start,trait.end)},routes,keywordSymbols,sources:original.modules.map(module=>({file:module.file,path:module.path,sha256:hash(module.source)})),namespaceAuthority:false,generatedImplBehavior:false};
   const context=freeze({...evidence,digest:hash(JSON.stringify(evidence))});contexts.set(context,Object.freeze({...original,deriveContext,binding:freeze(binding),profile}));return context;
 }
