@@ -17,7 +17,7 @@ use crate::config::{ConfigError, parse_u64_env};
 ///
 /// Returns [`ConfigError::InvalidPort`] for an unparseable `ADMIN_PORT` and
 /// [`ConfigError::InvalidAddress`] when host and port do not form an address.
-pub fn admin_ui_from_env() -> Result<crate::admin::AdminUiConfig, ConfigError> {
+pub fn admin_ui_from_env() -> crate::translation_core::Outcome<crate::admin::AdminUiConfig, ConfigError> {
     let port = crate::operation_context::var("ADMIN_PORT")
         .ok()
         .filter(|value| !value.trim().is_empty())
@@ -40,10 +40,10 @@ pub fn admin_ui_from_env() -> Result<crate::admin::AdminUiConfig, ConfigError> {
 /// Returns [`ConfigError::InvalidAddress`] when `host` and `port` do not parse
 /// as a socket address.
 pub fn admin_ui_config(
-    port: Option<u16>,
+    port: crate::translation_core::Maybe<u16>,
     host: &crate::translation_core::Str,
     candidate_ttl_secs: u64,
-) -> Result<crate::admin::AdminUiConfig, ConfigError> {
+) -> crate::translation_core::Outcome<crate::admin::AdminUiConfig, ConfigError> {
     let default = crate::admin::AdminUiConfig::default();
     let enabled = port.is_some_and(|value| value != 0);
     let listen_addr = match port.filter(|value| *value != 0) {

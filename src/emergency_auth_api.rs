@@ -58,7 +58,7 @@ pub async fn auth_diagnostics(State(state): State<AppState>) -> Response {
 /// Value of the [`crate::emergency_auth::HEALTH_HEADER`] liveness header, or
 /// `None` while the mode is off.
 #[must_use]
-pub fn health_header(state: &AppState) -> Option<String> {
+pub fn health_header(state: &AppState) -> crate::translation_core::Maybe<String> {
     state
         .token_manager
         .emergency()

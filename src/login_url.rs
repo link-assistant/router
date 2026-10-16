@@ -39,7 +39,7 @@ pub fn unwrap_terminal_lines(transcript: &crate::translation_core::Str) -> Strin
 /// Returns the last `https://` URL on a known Anthropic host, which is the
 /// most recently painted one.
 #[must_use]
-pub fn extract_login_url(transcript: &crate::translation_core::Str) -> Option<String> {
+pub fn extract_login_url(transcript: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     let text = unwrap_terminal_lines(transcript);
     let mut found = None;
     let mut rest = text.as_str();
@@ -59,7 +59,7 @@ pub fn extract_login_url(transcript: &crate::translation_core::Str) -> Option<St
 
 /// Find the long-lived token a successful `setup-token` run printed, if any.
 #[must_use]
-pub fn extract_token(transcript: &crate::translation_core::Str) -> Option<String> {
+pub fn extract_token(transcript: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     let text = unwrap_terminal_lines(transcript);
     let mut found = None;
     for prefix in TOKEN_PREFIXES {

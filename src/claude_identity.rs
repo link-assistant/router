@@ -57,17 +57,17 @@ pub fn ensure_claude_code_system(body: &mut Value) {
     }
 }
 
-fn first_block_is_identity(blocks: &[Value]) -> bool {
+fn first_block_is_identity(blocks: &[crate::translation_core::Json]) -> bool {
     blocks
         .first()
         .and_then(|block| block.get("text"))
-        .and_then(Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
         .is_some_and(|text| text.starts_with(CLAUDE_CODE_SYSTEM_PROMPT))
 }
 
 /// Apply [`ensure_claude_code_system`] to a body forwarded as raw bytes.
 #[must_use]
-pub fn ensure_claude_code_system_bytes(parsed: &Value, raw: Bytes) -> Bytes {
+pub fn ensure_claude_code_system_bytes(parsed: &crate::translation_core::Json, raw: Bytes) -> Bytes {
     if !parsed.is_object() {
         return raw;
     }

@@ -72,16 +72,16 @@ const RESPONSE_FIELDS: &[&crate::translation_core::Str] = &[
 ];
 
 #[must_use]
-pub fn unknown_chat_field(body: &Value) -> Option<String> {
+pub fn unknown_chat_field(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
     unknown_field(body, CHAT_FIELDS)
 }
 
 #[must_use]
-pub fn unknown_responses_field(body: &Value) -> Option<String> {
+pub fn unknown_responses_field(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
     unknown_field(body, RESPONSE_FIELDS)
 }
 
-fn unknown_field(body: &Value, known: &[&crate::translation_core::Str]) -> Option<String> {
+fn unknown_field(body: &crate::translation_core::Json, known: &[&crate::translation_core::Str]) -> crate::translation_core::Maybe<String> {
     let object = body.as_object()?;
     object
         .keys()
@@ -89,7 +89,7 @@ fn unknown_field(body: &Value, known: &[&crate::translation_core::Str]) -> Optio
         .map(|field| crate::translation_core::format!("unsupported translated request field: {field}"))
 }
 
-pub fn reject_anthropic_provider_controls(body: &Value) -> Result<(), String> {
+pub fn reject_anthropic_provider_controls(body: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
     const FIELDS: &[&str] = &[
         "model",
         "max_tokens",
@@ -143,7 +143,7 @@ pub fn reject_anthropic_provider_controls(body: &Value) -> Result<(), String> {
     Ok(())
 }
 
-fn reject_nonempty_object(body: &Value, field: &crate::translation_core::Str) -> Result<(), String> {
+fn reject_nonempty_object(body: &crate::translation_core::Json, field: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
     match body.get(field) {
         None | Some(Value::Null) => Ok(()),
         Some(Value::Object(value)) if value.is_empty() => Ok(()),
@@ -154,7 +154,7 @@ fn reject_nonempty_object(body: &Value, field: &crate::translation_core::Str) ->
 }
 
 #[must_use]
-pub fn untranslatable_chat_participant_name(body: &Value) -> Option<String> {
+pub fn untranslatable_chat_participant_name(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
     for (index, message) in body
         .get("messages")
         .and_then(Value::as_array)
@@ -186,7 +186,7 @@ pub fn untranslatable_chat_participant_name(body: &Value) -> Option<String> {
 
 /// Return why an `OpenAI` service tier cannot cross a non-OpenAI bridge.
 #[must_use]
-pub fn untranslatable_openai_service_tier(value: Option<&Value>) -> Option<String> {
+pub fn untranslatable_openai_service_tier(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Maybe<String> {
     match value {
         None | Some(Value::Null) => None,
         Some(Value::String(tier)) if matches!(tier.as_str(), "auto" | "default") => None,
@@ -198,34 +198,34 @@ pub fn untranslatable_openai_service_tier(value: Option<&Value>) -> Option<Strin
 }
 
 #[must_use]
-pub fn untranslatable_moderation(value: Option<&Value>) -> Option<String> {
+pub fn untranslatable_moderation(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Maybe<String> {
     value
         .filter(|value| !value.is_null())
         .map(|_| "moderation cannot be represented by the selected provider".into())
 }
 
 #[must_use]
-pub fn untranslatable_chat_prediction(value: Option<&Value>) -> Option<String> {
+pub fn untranslatable_chat_prediction(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Maybe<String> {
     value
         .filter(|value| !value.is_null())
         .map(|_| "prediction cannot be represented by the selected provider".into())
 }
 
-pub fn validate_responses_resource_selectors(body: &Value) -> Result<(), String> {
+pub fn validate_responses_resource_selectors(body: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
     if body.get("prompt").is_some_and(|value| !value.is_null()) {
         return Err("prompt templates cannot be resolved by the selected provider bridge".into());
     }
     match body.get("include") {
-        None | Some(Value::Null) => Ok(()),
-        Some(Value::Array(values)) if values.is_empty() => Ok(()),
-        Some(Value::Array(_)) => {
+        None | Some(crate::translation_core::Json::Null) => Ok(()),
+        Some(crate::translation_core::Json::Array(values)) if values.is_empty() => Ok(()),
+        Some(crate::translation_core::Json::Array(_)) => {
             Err("include selectors cannot be represented by the selected provider".into())
         }
         Some(_) => Err("include must be an array".into()),
     }
 }
 
-pub fn validate_openai_prompt_cache(body: &Value, anthropic_target: bool) -> Result<(), String> {
+pub fn validate_openai_prompt_cache(body: &crate::translation_core::Json, anthropic_target: bool) -> crate::translation_core::Outcome<(), String> {
     for field in ["prompt_cache_key", "prompt_cache_retention"] {
         if body.get(field).is_some_and(|value| !value.is_null()) {
             return Err(crate::translation_core::format!(
@@ -261,9 +261,9 @@ pub fn validate_openai_prompt_cache(body: &Value, anthropic_target: bool) -> Res
 /// targets can preserve these fields directly, while provider bridges choose
 /// whether the target has an exact semantic equivalent.
 pub fn validate_openai_prompt_cache_breakpoints(
-    body: &Value,
+    body: &crate::translation_core::Json,
     target_supports_breakpoints: bool,
-) -> Result<(), String> {
+) -> crate::translation_core::Outcome<(), String> {
     let mut breakpoints = Vec::new();
     collect_named_values(body, "prompt_cache_breakpoint", &mut breakpoints);
     if breakpoints.len() > 4 {
@@ -278,7 +278,7 @@ pub fn validate_openai_prompt_cache_breakpoints(
         let Some(object) = breakpoint.as_object() else {
             return Err("prompt_cache_breakpoint must be an object".into());
         };
-        if object.len() != 1 || object.get("mode").and_then(Value::as_str) != Some("explicit") {
+        if object.len() != 1 || object.get("mode").and_then(crate::translation_core::Json::as_str) != Some("explicit") {
             return Err("only prompt_cache_breakpoint mode=explicit is supported".into());
         }
     }
@@ -286,7 +286,7 @@ pub fn validate_openai_prompt_cache_breakpoints(
 }
 
 #[must_use]
-pub fn codex_instruction_cache_breakpoint(body: &Value) -> Option<String> {
+pub fn codex_instruction_cache_breakpoint(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<String> {
     for (index, message) in body
         .get("messages")
         .and_then(Value::as_array)
@@ -333,7 +333,7 @@ fn collect_named_values<'a>(value: &'a Value, name: &str, found: &mut Vec<&'a Va
     }
 }
 
-pub fn validate_responses(request: &crate::responses::OpenAIResponseRequest) -> Result<(), String> {
+pub fn validate_responses(request: &crate::responses::OpenAIResponseRequest) -> crate::translation_core::Outcome<(), String> {
     crate::safety_identifier::validate_openai(request.safety_identifier.as_deref())?;
     crate::safety_identifier::validate_openai_user(request.user.as_deref())?;
     if request

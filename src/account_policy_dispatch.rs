@@ -16,7 +16,7 @@ pub async fn send(
     correlation: &crate::translation_core::Str,
     fallback_client: &reqwest::Client,
     original: reqwest::Request,
-) -> Result<reqwest::Response, UpstreamSendError> {
+) -> crate::translation_core::Outcome<reqwest::Response, UpstreamSendError> {
     let scope = crate::account_policy_scope::current().expect("policy scope");
     let router = scope.state.account_router.as_ref().expect("policy pool");
     let mut selected = scope
@@ -358,7 +358,7 @@ fn replay_model(
     account: &crate::translation_core::Str,
     requested: &crate::translation_core::Str,
     native: &crate::translation_core::Str,
-) -> Option<String> {
+) -> crate::translation_core::Maybe<String> {
     let resolved = router.upstream_model(account, requested)?;
     if resolved == requested && native != requested {
         (!router.routing_policy(account).ok()?.excluded(native)).then(|| native.to_string())

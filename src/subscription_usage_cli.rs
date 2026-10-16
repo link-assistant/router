@@ -7,8 +7,8 @@ use crate::subscription_usage::{SubscriptionUsage, UsageEnvelope, UsageProvider}
 
 pub async fn run(
     base_url: &crate::translation_core::Str,
-    token: Option<&crate::translation_core::Str>,
-    provider: Option<UsageProvider>,
+    token: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    provider: crate::translation_core::Maybe<UsageProvider>,
     json: bool,
 ) -> ExitCode {
     let client = reqwest::Client::new();
@@ -26,7 +26,7 @@ pub async fn run(
 /// Run usage against a selected Router with its origin-specific trust.
 pub async fn run_selected(
     server: &crate::managed_server::ResolvedServer,
-    provider: Option<UsageProvider>,
+    provider: crate::translation_core::Maybe<UsageProvider>,
     json: bool,
 ) -> ExitCode {
     let client = match server.inference_client() {
@@ -50,8 +50,8 @@ pub async fn run_selected(
 async fn run_with_limit(
     client: &reqwest::Client,
     base_url: &crate::translation_core::Str,
-    token: Option<&crate::translation_core::Str>,
-    provider: Option<UsageProvider>,
+    token: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    provider: crate::translation_core::Maybe<UsageProvider>,
     json: bool,
     response_limit: usize,
 ) -> ExitCode {
@@ -128,7 +128,7 @@ async fn run_with_limit(
     ExitCode::SUCCESS
 }
 
-fn format_envelope(envelope: &UsageEnvelope, json: bool) -> Result<String, String> {
+fn format_envelope(envelope: &UsageEnvelope, json: bool) -> crate::translation_core::Outcome<String, String> {
     if json {
         return serde_json::to_string_pretty(envelope)
             .map(|mut output| {

@@ -215,7 +215,7 @@ fn codex_root_boolean_option(argument: &crate::translation_core::Str) -> bool {
     )
 }
 
-fn codex_subcommand(arguments: &[OsString]) -> Option<&crate::translation_core::Str> {
+fn codex_subcommand(arguments: &[OsString]) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
     let mut index = 0;
     while let Some(argument) = arguments.get(index).and_then(|value| value.to_str()) {
         if argument == "--" {
@@ -299,7 +299,7 @@ fn claude_native_service_request(arguments: &[OsString]) -> bool {
 /// Commands whose vendor control plane cannot be routed through a supported
 /// split-auth boundary. Detect these before server lookup or token mint.
 #[must_use]
-pub fn unsupported_native_command(args: &WithArgs) -> Option<&'static crate::translation_core::Str> {
+pub fn unsupported_native_command(args: &WithArgs) -> crate::translation_core::Maybe<&'static crate::translation_core::Str> {
     if args.client == ClientKind::ClaudeCode && claude_native_service_request(&args.client_args) {
         return Some(CLAUDE_NATIVE_SERVICE_REQUEST_ERROR);
     }
@@ -331,7 +331,7 @@ pub fn attached_to_a_terminal() -> bool {
 /// `resolved_model` is `None` unless the user asked for a model or the client
 /// cannot start without one; the router no longer picks one by catalog order
 /// on the user's behalf (issue #295).
-pub fn plan(args: &WithArgs, resolved_model: Option<&crate::translation_core::Str>, attached_to_a_terminal: bool) -> Launch {
+pub fn plan(args: &WithArgs, resolved_model: crate::translation_core::Maybe<&crate::translation_core::Str>, attached_to_a_terminal: bool) -> Launch {
     let integration = args.client.integration();
     let mut forwarded = args.client_args.clone();
     let exact_argv = forwarded.first().is_some_and(|value| value == "--");
@@ -450,7 +450,7 @@ fn contains_model_argument(arguments: &[OsString]) -> bool {
 ///
 /// This is inspected before server discovery or token minting so two model
 /// authorities cannot disagree after a credential already exists.
-pub fn forwarded_model(arguments: &[OsString]) -> Result<Option<String>, String> {
+pub fn forwarded_model(arguments: &[OsString]) -> crate::translation_core::Outcome<crate::translation_core::Maybe<String>, String> {
     let mut found: Option<String> = None;
     let mut index = 0;
     while index < arguments.len() {

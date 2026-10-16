@@ -18,7 +18,7 @@ use crate::config::{ConfigError, parse_u64_env};
 ///
 /// Returns [`ConfigError::InvalidPort`] when `VK_GROUP_ID` is not a number —
 /// the nearest existing variant for "a numeric setting did not parse".
-pub fn chat_admin_from_env() -> Result<ChatAdminConfig, ConfigError> {
+pub fn chat_admin_from_env() -> crate::translation_core::Outcome<ChatAdminConfig, ConfigError> {
     let vk_group_id = crate::operation_context::var("VK_GROUP_ID")
         .ok()
         .map(|value| value.trim().to_string())
@@ -44,9 +44,9 @@ pub fn chat_admin_from_env() -> Result<ChatAdminConfig, ConfigError> {
 /// compose file means "off" rather than "on with an empty token".
 #[must_use]
 pub fn chat_admin_config(
-    telegram_bot_token: Option<String>,
-    vk_bot_token: Option<String>,
-    vk_group_id: Option<u64>,
+    telegram_bot_token: crate::translation_core::Maybe<String>,
+    vk_bot_token: crate::translation_core::Maybe<String>,
+    vk_group_id: crate::translation_core::Maybe<u64>,
     secret_ttl_secs: u64,
     rate_limit_per_minute: u64,
 ) -> ChatAdminConfig {

@@ -27,8 +27,8 @@ pub struct ResolvedUpstreamCredential {
 /// base model's account eligibility and cooldown identity.
 pub fn request_routing_context(
     headers: &HeaderMap,
-    body: &serde_json::Value,
-    pinned_account: Option<String>,
+    body: &crate::translation_core::Json,
+    pinned_account: crate::translation_core::Maybe<String>,
 ) -> RoutingContext {
     const SESSION_HEADERS: [&str; 4] = [
         "x-claude-code-session-id",
@@ -102,7 +102,7 @@ pub fn request_routing_context(
 }
 
 /// Parse the standard `Retry-After` delta-seconds or HTTP-date forms.
-pub fn retry_after_duration(headers: &HeaderMap) -> Option<Duration> {
+pub fn retry_after_duration(headers: &HeaderMap) -> crate::translation_core::Maybe<Duration> {
     let value = headers.get("retry-after")?.to_str().ok()?.trim();
     if let Ok(seconds) = value.parse::<u64>() {
         return Some(bounded_retry_after(Duration::from_secs(seconds)));
@@ -123,8 +123,8 @@ pub fn retry_after_duration(headers: &HeaderMap) -> Option<Duration> {
 /// works; see [`crate::refresh::CredentialEvidence`].
 pub async fn record_claude_evidence(
     state: &crate::app_state::AppState,
-    account: Option<&crate::translation_core::Str>,
-    credential: Option<&crate::subscription::SubscriptionToken>,
+    account: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    credential: crate::translation_core::Maybe<&crate::subscription::SubscriptionToken>,
     status: u16,
 ) {
     if crate::account_policy_scope::active() {

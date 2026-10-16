@@ -309,7 +309,7 @@ pub async fn item(
 fn authenticate(
     state: &AppState,
     headers: &HeaderMap,
-) -> Result<(crate::token::TokenClaims, ResponseOwner), Response> {
+) -> crate::translation_core::Outcome<(crate::token::TokenClaims, ResponseOwner), Response> {
     let claims = crate::proxy::authenticate_client_error(state, headers)
         .map_err(|error| error.render(crate::api_error::ApiDialect::OpenAi))?;
     let owner = ResponseOwner::from_claims(&claims)
@@ -367,7 +367,7 @@ async fn forward(
     client_path: &crate::translation_core::Str,
     upstream_path: &crate::translation_core::Str,
     destination: &AffinityDestination,
-) -> Result<Forwarded, Response> {
+) -> crate::translation_core::Outcome<Forwarded, Response> {
     let correlation_id = crate::request_log::correlation_id(headers);
     let (upstream, account) = match destination {
         AffinityDestination::StoredProvider {
@@ -421,10 +421,10 @@ async fn forward(
 async fn read_upstream(
     state: &AppState,
     upstream: reqwest::Response,
-    account: Option<&crate::translation_core::Str>,
+    account: crate::translation_core::Maybe<&crate::translation_core::Str>,
     bytes_sent: u64,
     correlation_id: &crate::translation_core::Str,
-) -> Result<Forwarded, Response> {
+) -> crate::translation_core::Outcome<Forwarded, Response> {
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let headers = crate::proxy::relay_response_headers(upstream.headers());
@@ -454,7 +454,7 @@ async fn read_upstream(
     })
 }
 
-async fn bounded_request_body(state: &AppState, body: Body) -> Result<Bytes, Response> {
+async fn bounded_request_body(state: &AppState, body: Body) -> crate::translation_core::Outcome<Bytes, Response> {
     axum::body::to_bytes(body, state.max_proxy_request_bytes)
         .await
         .map_err(|error| {
@@ -470,7 +470,7 @@ fn remove_conversation(
     state: &AppState,
     affinity: &ResponseAffinity,
     item_namespace: ResponseNamespace,
-) -> Result<(), Response> {
+) -> crate::translation_core::Outcome<(), Response> {
     let store = state.provider_store.response_affinities();
     store
         .remove_children(
@@ -486,7 +486,7 @@ fn remove_conversation(
     Ok(())
 }
 
-fn root_id(body: &[u8]) -> Option<String> {
+fn root_id(body: &[u8]) -> crate::translation_core::Maybe<String> {
     serde_json::from_slice::<serde_json::Value>(body)
         .ok()?
         .get("id")?
@@ -501,14 +501,14 @@ fn list_ids(body: &[u8]) -> Vec<String> {
         .and_then(|value| {
             value
                 .get("data")
-                .and_then(serde_json::Value::as_array)
+                .and_then(crate::translation_core::Json::as_array)
                 .cloned()
         })
         .unwrap_or_default()
         .into_iter()
         .filter_map(|item| {
             item.get("id")
-                .and_then(serde_json::Value::as_str)
+                .and_then(crate::translation_core::Json::as_str)
                 .map(str::to_string)
         })
         .filter(|id| !id.is_empty())

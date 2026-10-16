@@ -41,7 +41,7 @@ const POLL_INTERVAL: Duration = Duration::from_millis(20);
 /// `None` means "no selection" — the caller keeps its local behaviour. An
 /// unreachable *selected* server is an error rather than a silent fallback:
 /// falling back to a local directory is exactly the surprise this fixes.
-pub async fn selected_server(force_managed: bool) -> Result<Option<ResolvedServer>, String> {
+pub async fn selected_server(force_managed: bool) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedServer>, String> {
     if force_managed {
         // `--managed` asks for a disposable container, which is what the local
         // path already provides for `auth`.
@@ -70,9 +70,9 @@ pub async fn selected_server(force_managed: bool) -> Result<Option<ResolvedServe
 pub async fn target_for(
     local: bool,
     managed: bool,
-    server: Option<&crate::translation_core::Str>,
-    management_server: Option<&crate::translation_core::Str>,
-) -> Result<Option<ResolvedServer>, String> {
+    server: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    management_server: crate::translation_core::Maybe<&crate::translation_core::Str>,
+) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedServer>, String> {
     if local || managed {
         return Ok(None);
     }
@@ -112,8 +112,8 @@ fn has_selection() -> bool {
 pub async fn authorize(
     server: &ResolvedServer,
     provider: &crate::translation_core::Str,
-    mode: Option<&crate::translation_core::Str>,
-    code: Option<String>,
+    mode: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    code: crate::translation_core::Maybe<String>,
 ) -> ExitCode {
     match authorize_inner(server, provider, mode, code).await {
         Ok(()) => ExitCode::SUCCESS,
@@ -127,9 +127,9 @@ pub async fn authorize(
 async fn authorize_inner(
     server: &ResolvedServer,
     provider: &crate::translation_core::Str,
-    mode: Option<&crate::translation_core::Str>,
-    code: Option<String>,
-) -> Result<(), String> {
+    mode: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    code: crate::translation_core::Maybe<String>,
+) -> crate::translation_core::Outcome<(), String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| format!("could not build an HTTP client: {error}"))?;
@@ -208,7 +208,7 @@ async fn poll_until_authorized(
     server: &ResolvedServer,
     login_id: &crate::translation_core::Str,
     provider: &crate::translation_core::Str,
-) -> Result<(), String> {
+) -> crate::translation_core::Outcome<(), String> {
     let deadline = std::time::Instant::now() + Duration::from_secs(10 * 60);
     while std::time::Instant::now() < deadline {
         tokio::time::sleep(POLL_INTERVAL).await;
@@ -245,9 +245,9 @@ fn finish(provider: &crate::translation_core::Str, server: &ResolvedServer) {
     );
 }
 
-fn status_of(view: &serde_json::Value) -> &crate::translation_core::Str {
+fn status_of(view: &crate::translation_core::Json) -> &crate::translation_core::Str {
     view.get("status")
-        .and_then(serde_json::Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
         .unwrap_or("unknown")
 }
 
@@ -298,7 +298,7 @@ pub async fn status(server: &ResolvedServer) -> ExitCode {
     }
 }
 
-fn report_status_credentials(body: &serde_json::Value) -> bool {
+fn report_status_credentials(body: &crate::translation_core::Json) -> bool {
     let entries = body
         .get("credentials")
         .and_then(serde_json::Value::as_array)
@@ -340,7 +340,7 @@ fn report_status_credentials(body: &serde_json::Value) -> bool {
 /// `None` when the router cannot be reached or does not report homes — the
 /// refusal is still correct without it, so this never turns into a hard
 /// failure of its own.
-pub async fn credential_home(server: &ResolvedServer, provider: &crate::translation_core::Str) -> Option<String> {
+pub async fn credential_home(server: &ResolvedServer, provider: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .ok()?;
@@ -390,7 +390,7 @@ pub async fn accounts(server: &ResolvedServer) -> ExitCode {
 ///
 /// Returns an operator-readable message when the call cannot be made or the
 /// router answers with a failure.
-pub async fn get(server: &ResolvedServer, path: &crate::translation_core::Str) -> Result<serde_json::Value, String> {
+pub async fn get(server: &ResolvedServer, path: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -406,8 +406,8 @@ pub async fn get(server: &ResolvedServer, path: &crate::translation_core::Str) -
 pub async fn post(
     server: &ResolvedServer,
     path: &crate::translation_core::Str,
-    body: serde_json::Value,
-) -> Result<serde_json::Value, String> {
+    body: crate::translation_core::Json,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -423,8 +423,8 @@ pub async fn post(
 pub async fn post_response(
     server: &ResolvedServer,
     path: &crate::translation_core::Str,
-    body: serde_json::Value,
-) -> Result<(reqwest::StatusCode, serde_json::Value), String> {
+    body: crate::translation_core::Json,
+) -> crate::translation_core::Outcome<(reqwest::StatusCode, crate::translation_core::Json), String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -454,7 +454,7 @@ pub async fn post_response(
 ///
 /// Returns an operator-readable message when the call cannot be made or the
 /// router answers with a failure.
-pub async fn delete(server: &ResolvedServer, path: &crate::translation_core::Str) -> Result<serde_json::Value, String> {
+pub async fn delete(server: &ResolvedServer, path: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -474,7 +474,7 @@ pub async fn delete(server: &ResolvedServer, path: &crate::translation_core::Str
 /// path is the instruction. It is omitted rather than guessed when the router
 /// does not say (issue #291).
 #[must_use]
-pub fn remote_import_refusal(base_url: &crate::translation_core::Str, home: Option<&crate::translation_core::Str>) -> Vec<String> {
+pub fn remote_import_refusal(base_url: &crate::translation_core::Str, home: crate::translation_core::Maybe<&crate::translation_core::Str>) -> Vec<String> {
     let mut lines = vec![format!(
         "error: import installs a credential into the credential home of the machine running \
          it, so it cannot provision {base_url} from here."
@@ -499,18 +499,18 @@ pub fn remote_import_refusal(base_url: &crate::translation_core::Str, home: Opti
 /// server: single-account deployments report under `credentials` and pooled
 /// ones under `accounts`, and a router predating either simply omits both.
 #[must_use]
-pub fn home_in_accounts(body: &serde_json::Value, provider: &crate::translation_core::Str) -> Option<String> {
+pub fn home_in_accounts(body: &crate::translation_core::Json, provider: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     ["credentials", "accounts"]
         .into_iter()
-        .filter_map(|key| body.get(key).and_then(serde_json::Value::as_array))
+        .filter_map(|key| body.get(key).and_then(crate::translation_core::Json::as_array))
         .flatten()
         .find(|entry| {
             entry
                 .get("name")
-                .and_then(serde_json::Value::as_str)
+                .and_then(crate::translation_core::Json::as_str)
                 .is_some_and(|name| name.eq_ignore_ascii_case(provider))
         })
-        .and_then(|entry| entry.get("home").and_then(serde_json::Value::as_str))
+        .and_then(|entry| entry.get("home").and_then(crate::translation_core::Json::as_str))
         .map(str::to_owned)
 }
 
@@ -555,7 +555,7 @@ async fn send<T: serde::de::DeserializeOwned>(
 /// Duplicated from the local path rather than shared: the two prompts differ in
 /// what they say about where the pending login lives, and the shared half is
 /// one `read_line`.
-async fn read_code() -> Result<String, String> {
+async fn read_code() -> crate::translation_core::Outcome<String, String> {
     use std::io::BufRead as _;
 
     println!("Paste authorization code:");
@@ -587,14 +587,14 @@ mod tests;
 /// the router sends them, and the server's own `note` when it explains an empty
 /// array — in that order. The last two are what an older router does not send,
 /// and falling through to the original sentence keeps this readable against one.
-fn report_credentials(body: &serde_json::Value) {
+fn report_credentials(body: &crate::translation_core::Json) {
     for line in credential_report(body) {
         println!("{line}");
     }
 }
 
 /// [`report_credentials`] as lines, so what it prints can be asserted.
-fn credential_report(body: &serde_json::Value) -> Vec<String> {
+fn credential_report(body: &crate::translation_core::Json) -> Vec<String> {
     let rows = |key: &str| {
         body.get(key)
             .and_then(serde_json::Value::as_array)

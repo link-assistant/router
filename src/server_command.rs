@@ -130,7 +130,7 @@ fn configure(selection: Selection<'_>) -> Result<(), AnyError> {
     Ok(())
 }
 
-async fn status() -> Result<(), AnyError> {
+async fn status() -> crate::translation_core::Outcome<(), AnyError> {
     let (selection, selection_text) = crate::managed_server::status::selection().await?;
     let (managed, managed_text) = crate::managed_server::status::managed()?;
     crate::operation_output::report(crate::operation_reports::ServerStatusReport {
@@ -143,7 +143,7 @@ async fn status() -> Result<(), AnyError> {
     Ok(())
 }
 
-pub fn read_token() -> Result<String, AnyError> {
+pub fn read_token() -> crate::translation_core::Outcome<String, AnyError> {
     let mut input = String::new();
     std::io::stdin().read_to_string(&mut input)?;
     let token = input.lines().next().unwrap_or_default().trim();

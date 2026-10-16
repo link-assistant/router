@@ -19,29 +19,29 @@ const WARMUP_TEXT: &crate::translation_core::Str = "Warmup";
 /// Whether `body` is a warmup probe: its messages are exactly one user message
 /// whose text — a string or text blocks — is `Warmup`.
 #[must_use]
-pub fn is_warmup_request(body: &Value) -> bool {
+pub fn is_warmup_request(body: &crate::translation_core::Json) -> bool {
     let Some([message]) = body
         .get("messages")
-        .and_then(Value::as_array)
+        .and_then(crate::translation_core::Json::as_array)
         .map(Vec::as_slice)
     else {
         return false;
     };
-    if message.get("role").and_then(Value::as_str) != Some("user") {
+    if message.get("role").and_then(crate::translation_core::Json::as_str) != Some("user") {
         return false;
     }
     let text = match message.get("content") {
-        Some(Value::String(text)) => text.clone(),
-        Some(Value::Array(blocks)) if !blocks.is_empty() => {
+        Some(crate::translation_core::Json::String(text)) => text.clone(),
+        Some(crate::translation_core::Json::Array(blocks)) if !blocks.is_empty() => {
             let mut text = String::new();
             for block in blocks {
-                if block.get("type").and_then(Value::as_str) != Some("text") {
+                if block.get("type").and_then(crate::translation_core::Json::as_str) != Some("text") {
                     return false;
                 }
                 text.push_str(
                     block
                         .get("text")
-                        .and_then(Value::as_str)
+                        .and_then(crate::translation_core::Json::as_str)
                         .unwrap_or_default(),
                 );
             }
@@ -54,7 +54,7 @@ pub fn is_warmup_request(body: &Value) -> bool {
 
 /// The synthetic reply for a warmup probe, in the shape the request asked for.
 #[must_use]
-pub fn warmup_response(body: &Value) -> Response {
+pub fn warmup_response(body: &crate::translation_core::Json) -> Response {
     let model = body
         .get("model")
         .and_then(Value::as_str)
@@ -82,7 +82,7 @@ pub fn warmup_response(body: &Value) -> Response {
     response
 }
 
-fn sse_response(message: &Value) -> Response {
+fn sse_response(message: &crate::translation_core::Json) -> Response {
     let mut start = message.clone();
     start["content"] = json!([]);
     start["stop_reason"] = Value::Null;

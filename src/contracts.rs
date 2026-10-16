@@ -60,7 +60,7 @@ pub fn command() -> clap::Command {
 
 /// Complete operation catalog, including option metadata used by bindings.
 #[must_use]
-pub fn operations() -> Vec<Value> {
+pub fn operations() -> Vec<crate::translation_core::Json> {
     fn visit(command: &clap::Command, path: &[String], globals: &[Value], result: &mut Vec<Value>) {
         let own: Vec<_> = command.get_arguments().filter(|arg| arg.get_long() != Some("json"))
             .map(|argument| {
@@ -109,7 +109,7 @@ pub fn operations() -> Vec<Value> {
 
 /// HTTP routes with their original method, path, authentication and dialect.
 #[must_use]
-pub fn routes() -> Vec<Value> {
+pub fn routes() -> Vec<crate::translation_core::Json> {
     crate::route_contract::route_specs().iter().map(|route| json!({
         "name":crate::translation_core::format!("{:?}",route.id),"method":route.method.as_str(),"path":route.template,
         "auth":crate::translation_core::format!("{:?}",route.auth),"dialect":crate::translation_core::format!("{:?}",route.dialect),
@@ -119,14 +119,14 @@ pub fn routes() -> Vec<Value> {
 
 /// Generated contract document; checked-in publications must match this source.
 #[must_use]
-pub fn document() -> Value {
+pub fn document() -> crate::translation_core::Json {
     json!({"schema":"link-assistant-router/operation-catalog/v1", "version":crate::VERSION,
         "operations":operations(),"routes":routes(),"languages":["rust","javascript","typescript","python"], "types": types()})
 }
 
 /// Canonical operation name for an already-parsed library request.
 #[must_use]
-pub fn operation_name(command: Option<&Command>) -> crate::translation_core::Text {
+pub fn operation_name(command: crate::translation_core::Maybe<&Command>) -> crate::translation_core::Text {
     fn name(debug: &str) -> String {
         let first = debug.split([' ', '{', '(']).next().unwrap_or_default();
         let mut result = String::new();
@@ -166,7 +166,7 @@ pub fn operation_name(command: Option<&Command>) -> crate::translation_core::Tex
 
 /// JSON Schemas derived from public HTTP and CLI data types.
 #[must_use]
-pub fn types() -> Value {
+pub fn types() -> crate::translation_core::Json {
     json!({
         "ModelCatalogDocument":crate::model_catalog_sources::document_schema(),
         "ModelDefinitionsResponse":schemars::schema_for!(crate::model_catalog_sources::ModelDefinitionsResponse),

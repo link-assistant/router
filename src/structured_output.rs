@@ -2,7 +2,7 @@
 
 use serde_json::{Value, json};
 
-pub fn chat_format(value: Option<&Value>) -> Result<Option<Value>, String> {
+pub fn chat_format(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Outcome<crate::translation_core::Maybe<crate::translation_core::Json>, String> {
     let Some(value) = value else {
         return Ok(None);
     };
@@ -30,7 +30,7 @@ pub fn chat_format(value: Option<&Value>) -> Result<Option<Value>, String> {
     }
 }
 
-pub fn responses_format(text: Option<&Value>) -> Result<Option<Value>, String> {
+pub fn responses_format(text: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Outcome<crate::translation_core::Maybe<crate::translation_core::Json>, String> {
     let Some(text) = text else {
         return Ok(None);
     };
@@ -52,7 +52,7 @@ pub fn responses_format(text: Option<&Value>) -> Result<Option<Value>, String> {
     }
 }
 
-pub fn chat_to_responses_format(value: Option<&Value>) -> Result<Option<Value>, String> {
+pub fn chat_to_responses_format(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Outcome<crate::translation_core::Maybe<crate::translation_core::Json>, String> {
     let Some(value) = value else {
         return Ok(None);
     };
@@ -90,7 +90,7 @@ pub fn chat_to_responses_format(value: Option<&Value>) -> Result<Option<Value>, 
     }
 }
 
-pub fn responses_to_chat_format(text: Option<&Value>) -> Result<Option<Value>, String> {
+pub fn responses_to_chat_format(text: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Outcome<crate::translation_core::Maybe<crate::translation_core::Json>, String> {
     let Some(text) = text else {
         return Ok(None);
     };
@@ -149,7 +149,7 @@ pub fn install_parallel_tool_policy(
 
 pub fn unsupported_chat_output_contract(
     request: &crate::openai::OpenAIChatCompletionRequest,
-) -> Option<String> {
+) -> crate::translation_core::Maybe<String> {
     if request.n.is_some_and(|count| count != 1) {
         return Some("n must be 1 on the selected translated provider route".into());
     }
@@ -184,7 +184,7 @@ pub fn unsupported_chat_output_contract(
 /// only semantically neutral representations on a translated route.
 pub fn unsupported_chat_generation_control(
     request: &crate::openai::OpenAIChatCompletionRequest,
-) -> Option<String> {
+) -> crate::translation_core::Maybe<String> {
     for (name, value) in [
         ("frequency_penalty", request.frequency_penalty),
         ("presence_penalty", request.presence_penalty),
@@ -222,10 +222,10 @@ fn required_type<'a>(value: &'a Value, path: &crate::translation_core::Str) -> R
 }
 
 fn validate_name_and_strict(
-    name: Option<&Value>,
-    strict: Option<&Value>,
+    name: crate::translation_core::Maybe<&crate::translation_core::Json>,
+    strict: crate::translation_core::Maybe<&crate::translation_core::Json>,
     path: &crate::translation_core::Str,
-) -> Result<(), String> {
+) -> crate::translation_core::Outcome<(), String> {
     if name.and_then(Value::as_str).is_none_or(str::is_empty) {
         return Err(crate::translation_core::format!("{path}.name must be a non-empty string"));
     }
@@ -235,14 +235,14 @@ fn validate_name_and_strict(
     Ok(())
 }
 
-fn schema_format(schema: Option<&Value>, path: &crate::translation_core::Str) -> Result<Value, String> {
+fn schema_format(schema: crate::translation_core::Maybe<&crate::translation_core::Json>, path: &crate::translation_core::Str) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let schema = schema
         .filter(|schema| schema.is_object())
         .ok_or_else(|| crate::translation_core::format!("{path} must be an object"))?;
     Ok(json!({"type": "json_schema", "schema": schema}))
 }
 
-fn generic_object_format() -> Value {
+fn generic_object_format() -> crate::translation_core::Json {
     json!({
         "type": "json_schema",
         "schema": {"type": "object", "additionalProperties": true}

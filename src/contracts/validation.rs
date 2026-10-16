@@ -6,7 +6,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 static VALIDATORS: LazyLock<Mutex<BTreeMap<String, Arc<jsonschema::Validator>>>> =
     LazyLock::new(|| Mutex::new(BTreeMap::new()));
 
-fn validate(key: &crate::translation_core::Str, schema: &Value, document: &Value) -> Result<(), String> {
+fn validate(key: &crate::translation_core::Str, schema: &crate::translation_core::Json, document: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
     let validator = {
         let mut validators = VALIDATORS.lock().map_err(|_| "contract cache poisoned")?;
         if let Some(validator) = validators.get(key) {
@@ -24,7 +24,7 @@ fn validate(key: &crate::translation_core::Str, schema: &Value, document: &Value
 }
 
 /// Validate the complete versioned CLI result, including operation-owned fields.
-pub fn operation(name: &crate::translation_core::Str, document: &Value) -> Result<(), String> {
+pub fn operation(name: &crate::translation_core::Str, document: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), String> {
     let (_, schema) = super::generated::CLI_SCHEMAS
         .iter()
         .find(|(operation, _)| *operation == name)
@@ -39,8 +39,8 @@ pub fn http(
     method: &axum::http::Method,
     path: &crate::translation_core::Str,
     status: u16,
-    document: &Value,
-) -> Result<(), String> {
+    document: &crate::translation_core::Json,
+) -> crate::translation_core::Outcome<(), String> {
     let route = crate::route_contract::route_for_path(method, path)
         .ok_or_else(|| crate::translation_core::format!("undocumented HTTP route {method} {path}"))?;
     let spec: Value =

@@ -16,17 +16,17 @@ use serde_json::{Map, Number, Value};
 
 /// Convert a JSON value into its links-notation equivalent.
 #[must_use]
-pub fn to_lino(value: &Value) -> LinoValue {
+pub fn to_lino(value: &crate::translation_core::Json) -> LinoValue {
     match value {
-        Value::Null => LinoValue::Null,
-        Value::Bool(flag) => LinoValue::Bool(*flag),
-        Value::Number(number) => number.as_i64().map_or_else(
+        crate::translation_core::Json::Null => LinoValue::Null,
+        crate::translation_core::Json::Bool(flag) => LinoValue::Bool(*flag),
+        crate::translation_core::Json::Number(number) => number.as_i64().map_or_else(
             || number.as_f64().map_or(LinoValue::Null, LinoValue::Float),
             LinoValue::Int,
         ),
-        Value::String(text) => LinoValue::String(text.clone()),
-        Value::Array(items) => LinoValue::Array(items.iter().map(to_lino).collect()),
-        Value::Object(fields) => LinoValue::object(
+        crate::translation_core::Json::String(text) => LinoValue::String(text.clone()),
+        crate::translation_core::Json::Array(items) => LinoValue::Array(items.iter().map(to_lino).collect()),
+        crate::translation_core::Json::Object(fields) => LinoValue::object(
             fields
                 .iter()
                 .map(|(key, child)| (key.as_str(), to_lino(child))),
@@ -40,15 +40,15 @@ pub fn to_lino(value: &Value) -> LinoValue {
 /// distinction is carried by content: this is the inverse of [`to_lino`] for
 /// any value it produced.
 #[must_use]
-pub fn from_lino(value: &LinoValue) -> Value {
+pub fn from_lino(value: &LinoValue) -> crate::translation_core::Json {
     match value {
-        LinoValue::Null => Value::Null,
-        LinoValue::Bool(flag) => Value::Bool(*flag),
-        LinoValue::Int(number) => Value::Number((*number).into()),
-        LinoValue::Float(number) => Number::from_f64(*number).map_or(Value::Null, Value::Number),
-        LinoValue::String(text) => Value::String(text.clone()),
-        LinoValue::Array(items) => Value::Array(items.iter().map(from_lino).collect()),
-        LinoValue::Object(fields) => Value::Object(
+        LinoValue::Null => crate::translation_core::Json::Null,
+        LinoValue::Bool(flag) => crate::translation_core::Json::Bool(*flag),
+        LinoValue::Int(number) => crate::translation_core::Json::Number((*number).into()),
+        LinoValue::Float(number) => Number::from_f64(*number).map_or(crate::translation_core::Json::Null, crate::translation_core::Json::Number),
+        LinoValue::String(text) => crate::translation_core::Json::String(text.clone()),
+        LinoValue::Array(items) => crate::translation_core::Json::Array(items.iter().map(from_lino).collect()),
+        LinoValue::Object(fields) => crate::translation_core::Json::Object(
             fields
                 .iter()
                 .map(|(key, child)| (key.clone(), from_lino(child)))
@@ -253,7 +253,7 @@ fn unescape(text: &crate::translation_core::Str) -> String {
 /// The middle generation is the one issue #350 removed, and it is still read:
 /// a file written by v0.123.2 keeps every record it had.
 #[must_use]
-pub fn decode_line(text: &crate::translation_core::Str) -> Option<Value> {
+pub fn decode_line(text: &crate::translation_core::Str) -> crate::translation_core::Maybe<crate::translation_core::Json> {
     let text = text.trim();
     if text.is_empty() {
         return None;

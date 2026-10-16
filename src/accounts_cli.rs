@@ -19,7 +19,7 @@ use crate::cli::AccountOp;
 #[must_use]
 pub fn run(
     router: &AccountRouter,
-    refreshes: Option<&crate::refresh::TokenCache>,
+    refreshes: crate::translation_core::Maybe<&crate::refresh::TokenCache>,
     op: &AccountOp,
 ) -> ExitCode {
     match op {
@@ -140,7 +140,7 @@ const DEFAULT_PAUSE_REASON: &crate::translation_core::Str = "paused by an operat
 const LOCAL_NOTE: &crate::translation_core::Str = "note: recorded in this machine's data directory; a router started \
      from it applies the change at startup. Pass --server <URL> to change a running router.";
 
-fn pause_message(name: &crate::translation_core::Str, until: Option<u64>) -> crate::translation_core::Text {
+fn pause_message(name: &crate::translation_core::Str, until: crate::translation_core::Maybe<u64>) -> crate::translation_core::Text {
     until.map_or_else(
         || crate::translation_core::format!("paused {name} until it is resumed"),
         |until| {
@@ -317,7 +317,7 @@ pub fn row(account: &AccountRow<'_>) -> crate::translation_core::Text {
 
 fn read_policy(
     path: &std::path::Path,
-) -> Result<crate::account_routing_policy::AccountRoutingPolicy, String> {
+) -> crate::translation_core::Outcome<crate::account_routing_policy::AccountRoutingPolicy, String> {
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     let policy: crate::account_routing_policy::AccountRoutingPolicy =
         serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;

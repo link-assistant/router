@@ -23,7 +23,7 @@ use crate::subscription::{SubscriptionReader, SubscriptionToken};
 pub(crate) fn ensure_refreshable_origin(
     provider: crate::subscription::SubscriptionProvider,
     origin: crate::platform_keychain::Origin,
-) -> Result<(), String> {
+) -> crate::translation_core::Outcome<(), String> {
     match origin {
         crate::platform_keychain::Origin::File | crate::platform_keychain::Origin::AdoptedFile => {
             Ok(())

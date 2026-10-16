@@ -22,7 +22,7 @@ type AnyError = Box<dyn std::error::Error + Send + Sync>;
 /// Reported and skipped rather than treated as a failure: a workstation being
 /// pointed at a deployment wants the clients that can be configured, and being
 /// told which ones cannot is more useful than stopping at the first.
-fn unconfigurable(client: ClientKind) -> Option<String> {
+fn unconfigurable(client: ClientKind) -> crate::translation_core::Maybe<String> {
     match client {
         ClientKind::Cursor | ClientKind::GeminiCli => Some(
             client
@@ -49,7 +49,7 @@ pub async fn run(args: &ConfigureArgs) -> ExitCode {
 }
 
 /// Run with an optional explicit client-home isolation boundary.
-pub async fn run_with_home(args: &ConfigureArgs, home: Option<&Path>) -> ExitCode {
+pub async fn run_with_home(args: &ConfigureArgs, home: crate::translation_core::Maybe<&Path>) -> ExitCode {
     match run_inner(args, home).await {
         Ok(code) => code,
         Err(error) => {
@@ -62,7 +62,7 @@ pub async fn run_with_home(args: &ConfigureArgs, home: Option<&Path>) -> ExitCod
     }
 }
 
-async fn run_inner(args: &ConfigureArgs, home: Option<&Path>) -> Result<ExitCode, AnyError> {
+async fn run_inner(args: &ConfigureArgs, home: crate::translation_core::Maybe<&Path>) -> crate::translation_core::Outcome<ExitCode, AnyError> {
     let manager = match home {
         Some(home) => ClientManager::isolated(home),
         None => ClientManager::from_env()?,
@@ -122,8 +122,8 @@ async fn run_inner(args: &ConfigureArgs, home: Option<&Path>) -> Result<ExitCode
 /// client while a different router was selected.
 async fn target(
     args: &ConfigureArgs,
-    explicit_token: Option<String>,
-) -> Result<ResolvedServer, AnyError> {
+    explicit_token: crate::translation_core::Maybe<String>,
+) -> crate::translation_core::Outcome<ResolvedServer, AnyError> {
     if args.target.local {
         let mut server = crate::managed_server::discovered_local_router()
             .await
@@ -152,7 +152,7 @@ async fn configure_one(
     manager: &ClientManager,
     server: &ResolvedServer,
     client: ClientKind,
-) -> Result<(), AnyError> {
+) -> crate::translation_core::Outcome<(), AnyError> {
     crate::client_launch::report_claude_native_services_limitation(client);
     let inference_client = server.inference_client()?;
     let bridge = if client == ClientKind::Codex
@@ -368,7 +368,7 @@ async fn configure_one(
     Ok(())
 }
 
-async fn undo(args: &ConfigureArgs, manager: &ClientManager) -> Result<ExitCode, AnyError> {
+async fn undo(args: &ConfigureArgs, manager: &ClientManager) -> crate::translation_core::Outcome<ExitCode, AnyError> {
     let mut restored = 0_usize;
     let mut failed = Vec::new();
     for client in args.clients() {
@@ -411,7 +411,7 @@ async fn undo_one(
     args: &ConfigureArgs,
     manager: &ClientManager,
     client: ClientKind,
-) -> Result<bool, AnyError> {
+) -> crate::translation_core::Outcome<bool, AnyError> {
     let record = manager.credential_metadata(client).ok().flatten();
     // The configuration comes back first. A hash-verified restore can
     // refuse — an edit made after `configure` is preserved rather than
@@ -514,7 +514,7 @@ fn management_origin_for(args: &ConfigureArgs, router: &crate::translation_core:
 ///
 /// Undo removes local files and must keep working offline, so this never
 /// resolves a target: it asks only what is already to hand.
-fn admin_token_for(args: &ConfigureArgs, router: &crate::translation_core::Str) -> Option<String> {
+fn admin_token_for(args: &ConfigureArgs, router: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     if let Some(token) = args.token.clone() {
         return Some(token);
     }

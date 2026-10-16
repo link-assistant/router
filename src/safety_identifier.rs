@@ -5,7 +5,7 @@ use serde_json::Value;
 /// `OpenAI` accepts at most 64 Unicode characters for `safety_identifier`.
 const OPENAI_MAX_CHARACTERS: usize = 64;
 
-pub fn validate_openai(identifier: Option<&crate::translation_core::Str>) -> Result<(), String> {
+pub fn validate_openai(identifier: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Outcome<(), String> {
     if identifier.is_some_and(|value| value.chars().count() > OPENAI_MAX_CHARACTERS) {
         return Err(crate::translation_core::format!(
             "safety_identifier must contain at most {OPENAI_MAX_CHARACTERS} characters"
@@ -14,15 +14,15 @@ pub fn validate_openai(identifier: Option<&crate::translation_core::Str>) -> Res
     Ok(())
 }
 
-pub fn validate_openai_value(value: Option<&Value>) -> Result<(), String> {
+pub fn validate_openai_value(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Outcome<(), String> {
     match value {
-        None | Some(Value::Null) => Ok(()),
-        Some(Value::String(identifier)) => validate_openai(Some(identifier)),
+        None | Some(crate::translation_core::Json::Null) => Ok(()),
+        Some(crate::translation_core::Json::String(identifier)) => validate_openai(Some(identifier)),
         Some(_) => Err("safety_identifier must be a string".into()),
     }
 }
 
-pub fn validate_openai_user(user: Option<&crate::translation_core::Str>) -> Result<(), String> {
+pub fn validate_openai_user(user: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Outcome<(), String> {
     if user.is_some_and(|value| value.chars().count() > OPENAI_MAX_CHARACTERS) {
         return Err(crate::translation_core::format!(
             "user must contain at most {OPENAI_MAX_CHARACTERS} characters"
@@ -31,16 +31,16 @@ pub fn validate_openai_user(user: Option<&crate::translation_core::Str>) -> Resu
     Ok(())
 }
 
-pub fn validate_openai_user_value(value: Option<&Value>) -> Result<(), String> {
+pub fn validate_openai_user_value(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Outcome<(), String> {
     match value {
-        None | Some(Value::Null) => Ok(()),
-        Some(Value::String(user)) => validate_openai_user(Some(user)),
+        None | Some(crate::translation_core::Json::Null) => Ok(()),
+        Some(crate::translation_core::Json::String(user)) => validate_openai_user(Some(user)),
         Some(_) => Err("user must be a string".into()),
     }
 }
 
 /// Read and validate Anthropic's optional metadata identifier for an `OpenAI` target.
-pub fn anthropic_user_id(body: &Value) -> Result<Option<&crate::translation_core::Str>, String> {
+pub fn anthropic_user_id(body: &crate::translation_core::Json) -> crate::translation_core::Outcome<crate::translation_core::Maybe<&crate::translation_core::Str>, String> {
     let Some(metadata) = body.get("metadata") else {
         return Ok(None);
     };

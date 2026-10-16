@@ -82,7 +82,7 @@ pub fn forwarded_header_report() -> Vec<String> {
 }
 
 /// Locate an executable on `PATH`, as the process spawner would.
-fn resolve_in_path(command: &crate::translation_core::Str) -> Option<std::path::PathBuf> {
+fn resolve_in_path(command: &crate::translation_core::Str) -> crate::translation_core::Maybe<std::path::PathBuf> {
     let candidate = std::path::Path::new(command);
     if candidate.is_absolute() {
         return candidate.is_file().then(|| candidate.to_path_buf());
@@ -152,7 +152,7 @@ pub async fn subscription_catalog_diagnostics(
     active_provider: SubscriptionProvider,
     claude_home: &crate::translation_core::Str,
     user_home: &crate::translation_core::Str,
-    data_dir: Option<&std::path::Path>,
+    data_dir: crate::translation_core::Maybe<&std::path::Path>,
 ) -> bool {
     subscription_catalog_diagnostics_with_token_url(
         active_provider,
@@ -168,8 +168,8 @@ async fn subscription_catalog_diagnostics_with_token_url(
     _active_provider: SubscriptionProvider,
     claude_home: &crate::translation_core::Str,
     user_home: &crate::translation_core::Str,
-    data_dir: Option<&std::path::Path>,
-    token_url: Option<(SubscriptionProvider, &crate::translation_core::Str)>,
+    data_dir: crate::translation_core::Maybe<&std::path::Path>,
+    token_url: crate::translation_core::Maybe<(SubscriptionProvider, &crate::translation_core::Str)>,
 ) -> bool {
     let readers = all_subscription_readers(claude_home, user_home);
     subscription_catalog_diagnostics_for_readers_with_token_url(readers, data_dir, token_url).await
@@ -178,15 +178,15 @@ async fn subscription_catalog_diagnostics_with_token_url(
 /// Diagnose exact credential roots already resolved by CLI configuration.
 pub async fn subscription_catalog_diagnostics_for_readers(
     readers: Vec<SubscriptionReader>,
-    data_dir: Option<&std::path::Path>,
+    data_dir: crate::translation_core::Maybe<&std::path::Path>,
 ) -> bool {
     subscription_catalog_diagnostics_for_readers_with_token_url(readers, data_dir, None).await
 }
 
 async fn subscription_catalog_diagnostics_for_readers_with_token_url(
     readers: Vec<SubscriptionReader>,
-    data_dir: Option<&std::path::Path>,
-    token_url: Option<(SubscriptionProvider, &crate::translation_core::Str)>,
+    data_dir: crate::translation_core::Maybe<&std::path::Path>,
+    token_url: crate::translation_core::Maybe<(SubscriptionProvider, &crate::translation_core::Str)>,
 ) -> bool {
     catalog_report_with_token_url(readers, data_dir, token_url)
         .await
@@ -196,15 +196,15 @@ async fn subscription_catalog_diagnostics_for_readers_with_token_url(
 /// Exact credential acceptance and model inventory used by the doctor report.
 pub async fn subscription_catalog_report(
     readers: Vec<SubscriptionReader>,
-    data_dir: Option<&std::path::Path>,
+    data_dir: crate::translation_core::Maybe<&std::path::Path>,
 ) -> (bool, Vec<crate::operation_reports::ProviderHealth>) {
     catalog_report_with_token_url(readers, data_dir, None).await
 }
 
 async fn catalog_report_with_token_url(
     readers: Vec<SubscriptionReader>,
-    data_dir: Option<&std::path::Path>,
-    token_url: Option<(SubscriptionProvider, &crate::translation_core::Str)>,
+    data_dir: crate::translation_core::Maybe<&std::path::Path>,
+    token_url: crate::translation_core::Maybe<(SubscriptionProvider, &crate::translation_core::Str)>,
 ) -> (bool, Vec<crate::operation_reports::ProviderHealth>) {
     let client = reqwest::Client::new();
     let token_cache = data_dir.map_or_else(
@@ -377,7 +377,7 @@ pub async fn subscription_catalog_diagnostics_in(
     user_home: &crate::translation_core::Str,
     data_dir: &std::path::Path,
 ) -> bool {
-    subscription_catalog_diagnostics(active_provider, claude_home, user_home, Some(data_dir)).await
+    subscription_catalog_diagnostics(active_provider, claude_home, user_home, crate::translation_core::Maybe::Some(data_dir)).await
 }
 
 /// Return the complete doctor operation without printing or exiting.
@@ -389,7 +389,7 @@ pub async fn subscription_catalog_diagnostics_in(
 /// ```
 pub async fn report(
     context: crate::operation_context::OperationContext,
-) -> Result<crate::operations::OperationResult, crate::operations::OperationError> {
+) -> crate::translation_core::Outcome<crate::operations::OperationResult, crate::operations::OperationError> {
     crate::operations::request(
         context,
         crate::cli::Command::Doctor {

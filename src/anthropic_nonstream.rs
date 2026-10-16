@@ -57,14 +57,14 @@ fn upstream_error(surface: crate::metrics::Surface, message: &crate::translation
     )
 }
 
-fn is_event_stream(content_type: Option<&HeaderValue>) -> bool {
+fn is_event_stream(content_type: crate::translation_core::Maybe<&HeaderValue>) -> bool {
     content_type
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.split(';').next())
         .is_some_and(|value| value.trim().eq_ignore_ascii_case("text/event-stream"))
 }
 
-fn assemble(body: &[u8]) -> Result<Value, String> {
+fn assemble(body: &[u8]) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     let mut buffer = Vec::new();
     let mut message = None;
     let mut blocks = BTreeMap::<u64, Value>::new();
@@ -149,10 +149,10 @@ fn assemble(body: &[u8]) -> Result<Value, String> {
     Ok(message)
 }
 
-fn event_index(event: &Value) -> Result<u64, String> {
+fn event_index(event: &crate::translation_core::Json) -> crate::translation_core::Outcome<u64, String> {
     event
         .get("index")
-        .and_then(Value::as_u64)
+        .and_then(crate::translation_core::Json::as_u64)
         .ok_or_else(|| "content event omitted index".to_string())
 }
 

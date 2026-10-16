@@ -59,7 +59,7 @@ pub fn refusal() -> String {
 /// # Errors
 ///
 /// Returns [`refusal`] when `secret` is a stand-in.
-pub fn ensure_real(secret: &crate::translation_core::Str) -> Result<(), String> {
+pub fn ensure_real(secret: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
     if is_placeholder(secret) {
         return Err(refusal());
     }
@@ -77,7 +77,7 @@ pub const FILE_ENV: &crate::translation_core::Str = "TOKEN_SECRET_FILE";
 /// # Errors
 ///
 /// When the file cannot be read, is not UTF-8, or holds no secret.
-pub fn read_file(path: &std::path::Path) -> Result<String, String> {
+pub fn read_file(path: &std::path::Path) -> crate::translation_core::Outcome<String, String> {
     let text = std::fs::read_to_string(path)
         .map_err(|error| format!("{FILE_ENV}={} could not be read: {error}", path.display()))?;
     let secret = text.strip_suffix('\n').map_or(text.as_str(), |text| {
@@ -97,7 +97,7 @@ pub fn read_file(path: &std::path::Path) -> Result<String, String> {
 /// # Errors
 ///
 /// When `TOKEN_SECRET_FILE` is set and cannot supply a secret.
-pub fn or_from_file(secret: Option<String>) -> Result<Option<String>, String> {
+pub fn or_from_file(secret: crate::translation_core::Maybe<String>) -> crate::translation_core::Outcome<crate::translation_core::Maybe<String>, String> {
     if secret.as_deref().is_some_and(|secret| !secret.is_empty()) {
         return Ok(secret);
     }

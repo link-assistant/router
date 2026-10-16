@@ -25,7 +25,7 @@ impl RuntimeDebug {
         enabled: bool,
         ttl: Duration,
         audit: Arc<crate::audit::AuditLog>,
-    ) -> Result<(), String> {
+    ) -> crate::translation_core::Outcome<(), String> {
         let mut generation = self
             .generation
             .lock()

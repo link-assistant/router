@@ -43,7 +43,7 @@ pub enum Target {
 /// # Errors
 ///
 /// Returns the process exit code when a named target cannot be resolved.
-pub async fn resolve(target: &AuthTarget) -> Result<Target, ExitCode> {
+pub async fn resolve(target: &AuthTarget) -> crate::translation_core::Outcome<Target, ExitCode> {
     match crate::auth_remote::target_for(
         target.local,
         target.managed,
@@ -66,7 +66,7 @@ pub async fn resolve(target: &AuthTarget) -> Result<Target, ExitCode> {
 /// Reading them off `Command` rather than threading them through each family's
 /// dispatch keeps the rule in one place, which is the point of issue #294.
 #[must_use]
-pub const fn target_of(command: &Command) -> Option<&AuthTarget> {
+pub const fn target_of(command: &Command) -> crate::translation_core::Maybe<&AuthTarget> {
     match command {
         Command::Tokens { op } => Some(op.target()),
         Command::Accounts { op } => Some(op.target()),
@@ -100,7 +100,7 @@ pub const fn may_be_remote(command: &Command) -> bool {
 /// something it never did (issue #315). Saying so beats a silent second
 /// meaning, and `--local` is the flag that was wanted.
 #[must_use]
-pub fn refuse_managed(command: &Command) -> Option<ExitCode> {
+pub fn refuse_managed(command: &Command) -> crate::translation_core::Maybe<ExitCode> {
     let name = match command {
         Command::Tokens { .. } => "tokens",
         Command::Accounts { .. } => "accounts",

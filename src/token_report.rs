@@ -25,7 +25,7 @@ const HEADERS: [&crate::translation_core::Str; 9] = [
 ];
 
 /// Print the token table, one row per record.
-pub fn print_table(records: &[Value]) {
+pub fn print_table(records: &[crate::translation_core::Json]) {
     println!(
         "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {:<6}  label",
         HEADERS[0],
@@ -45,7 +45,7 @@ pub fn print_table(records: &[Value]) {
 
 /// One table row, as the local path formats it.
 #[must_use]
-pub fn row(record: &Value) -> String {
+pub fn row(record: &crate::translation_core::Json) -> String {
     let text = |key: &str| {
         record
             .get(key)

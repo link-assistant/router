@@ -10,11 +10,11 @@ use crate::clients::{
 
 pub async fn repair(
     manager: &ClientManager,
-    client: Option<ClientKind>,
+    client: crate::translation_core::Maybe<ClientKind>,
     all: bool,
     dry_run: bool,
     json: bool,
-    rollback: Option<&crate::translation_core::Str>,
+    rollback: crate::translation_core::Maybe<&crate::translation_core::Str>,
 ) -> ExitCode {
     let clients = if all {
         ClientKind::ALL.to_vec()
@@ -128,7 +128,7 @@ pub async fn repair(
 }
 
 fn print_repair_result(
-    result: Result<RepairResult, crate::clients::ClientError>,
+    result: crate::translation_core::Outcome<RepairResult, crate::clients::ClientError>,
     json: bool,
     verb: &crate::translation_core::Str,
 ) -> ExitCode {

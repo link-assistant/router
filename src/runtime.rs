@@ -200,7 +200,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
 /// Construct the persistent token store and the optional multi-account router
 /// for the given [`Config`]. Both are needed by both the server and the CLI
 /// subcommands.
-fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
+fn build_shared_state(config: &Config) -> crate::translation_core::Outcome<SharedState, AnyError> {
     if !config.data_dir.exists() {
         std::fs::create_dir_all(&config.data_dir)?;
     }
