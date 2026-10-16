@@ -167,11 +167,11 @@ function sequenceDependencies(root){
   const rows=capture(),inputs=rows.every(row=>!row.absent)?{manifest:rows[0].source,lock:rows[1].source}:undefined;
   return {rows,inputs,verify(){const current=capture();for(let at=0;at<rows.length;at++){const a=rows[at],b=current[at];if(a.path!==b.path||a.absent!==b.absent||a.source!==b.source||!a.absent&&!fileSame(a.identity,b.identity))fail('complete optional Cargo input changed');}}};
 }
-function fixedAdoptionStage(name,files,propose,original,write,dependencies){
+function fixedAdoptionStage(name,files,propose,original,write,dependencies,producerDependencies=false){
   // The full proposal/graph is reachable only in this call. Return the next
   // primitive source map and packet references, never the live proposal.
   return createRulePipeline([
-    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>propose({entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE,...((name==='literal'||name==='scalar-count'||name==='json')&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})})}]},
+    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>propose({entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE,...((name==='literal'||name==='scalar-count'||name==='json'||producerDependencies)&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})})}]},
     {phase:'repository',rules:[{id:'core-adoption:'+name+'-complete-packets',apply:proposal=>{
       rejoin(original);dependencies.verify();const packets=completeAdoptionPackets(proposal,write,files,name);
       return {files:proposal.after,packets,summary:{sourceFiles:Object.keys(proposal.before).length,proposals:proposal.proposals.length,selections:proposal.proposals.reduce((sum,row)=>sum+row.selections.length,0),edits:proposal.proposals.reduce((sum,row)=>sum+row.edits.length,0),changedFiles:proposal.proposals.filter(row=>row.before.source!==row.after.source).length,skippedFiles:proposal.skipped.length}};
@@ -193,7 +193,7 @@ export async function proposeCoreAdoptionSequence(input,sequence='literal'){
   let stage=sequence==='scalar-count'?'scalar-count':jsonSequence?'json':'literal',after=original.files;
   try{
     for(const name of jsonSequence?['json','algebraic','primitives']:sequence==='scalar-count'?['scalar-count']:sequence==='literal'?['literal']:['literal','algebraic']){
-      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='json'?json:name==='primitives'?proposeCorePrimitivesCorpus:name==='scalar-count'?scalars:name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies);
+      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='json'?json:name==='primitives'?proposeCorePrimitivesCorpus:name==='scalar-count'?scalars:name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies,jsonSequence);
       after=next.value.files;stages.push({name,packets:next.value.packets,summary:next.value.summary,trace:next.trace});
     }
     stage='final-source-and-index';const dependencyInputs=dependencies.rows.map((row,at)=>write.json('dependency-inputs/'+numbered(at)+'.json',row)),inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];

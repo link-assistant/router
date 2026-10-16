@@ -11,6 +11,7 @@ import {captureSourceModuleViews,originalSourceModuleItems} from './source-modul
 import {originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';
 import {compilationProfile as normalizeProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
+import {createCoreAdoptionProducerContext,coreAdoptionDeriveAttributeClosed,coreAdoptionProducerBindings,finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
 
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const fail=message=>{throw new TypeError('Core borrowed-text migration: '+message);};
@@ -35,11 +36,12 @@ function sourceMap(input){
   return files;
 }
 function conditions(item,profile){return itemConfiguration(item.tokens,profile);}
-function attributeProblems(item,condition){
+function attributeProblems(item,condition,producer=null){
   if(condition.status==='inactive')return [];
   const problems=[];
   for(const attribute of condition.attributes){
     if(attribute.name==='cfg'||isInertConditionalAttribute(attribute)||harmless.has(attribute.name))continue;
+    if(producer&&coreAdoptionDeriveAttributeClosed(producer.context,producer.source,producer.file,producer.localPath,item,attribute))continue;
     // Importing textual macro names does not itself import type names. Actual
     // module-level invocations and unknown attribute/derive producers below
     // remain explicit uncertainty, without inspecting macro template bodies.
@@ -76,11 +78,11 @@ function otherDeclarationProblem(item,condition){
   }
   return 'unresolved declaration producer';
 }
-function scopeProblems(items,profile,owner=[]){
+function scopeProblems(items,profile,owner=[],producer=null){
   const problems=[];
   for(const item of items){
     const condition=conditions(item,profile);if(condition.status==='inactive')continue;
-    problems.push(...attributeProblems(item,condition));
+    problems.push(...attributeProblems(item,condition,producer));
     let header;try{header=originalDeclarationHeader(item,owner);}catch(error){problems.push(problem(item,'unresolved declaration header: '+error.message));continue;}
     if(!header){
       let reason;try{reason=otherDeclarationProblem(item,condition);}catch(error){reason='unresolved declaration producer: '+error.message;}
@@ -210,9 +212,9 @@ function itemBody(item){
   if(open<0||matchesClose(rows,open)!==rows.length-1)throw new Error('complete owner body unavailable');
   return {rows,open,start:rows[open].end,end:rows.at(-1).start};
 }
-function visitItems(source,items,profile,inherited,path,edits,selections,skipped,depth=0,modulePath=path){
+function visitItems(source,items,profile,inherited,path,edits,selections,skipped,depth=0,modulePath=path,producer=null){
   if(depth>MAX_DEPTH)fail('declaration owner nesting exceeds bound');
-  const blockers=[...inherited,...scopeProblems(items,profile,modulePath)];
+  const blockers=[...inherited,...scopeProblems(items,profile,modulePath,producer)];
   for(const item of items){
     const condition=conditions(item,profile);let header;
     try{header=originalDeclarationHeader(item,modulePath);}catch(error){skipped.push({path:[...path],span:span(item),reason:error.message});continue;}
@@ -226,7 +228,7 @@ function visitItems(source,items,profile,inherited,path,edits,selections,skipped
         const names=owner[0]?.text==='::'?owner.slice(1):owner,unsupported=new Set(['for','where','as','dyn','impl','trait','const','unsafe','extern','async','default','mut','fn','pub','auto','type']);
         if(!names.length||names.length%2!==1||names.some((token,index)=>index%2===0?!identifier(token)||unsupported.has(token.text):token.text!=='::'))throw new Error('trait, generic or conditional impl owner requires separate integration');
         const offset=body.start,nested=sourceItems(source.slice(body.start,body.end)).map(child=>({...child,start:child.start+offset,end:child.end+offset,tokens:child.tokens.map(token=>({...token,start:token.start+offset,end:token.end+offset}))}));
-        visitItems(source,nested,profile,blockers,[...path,'impl '+owner.map(token=>token.text).join('')],edits,selections,skipped,depth+1,modulePath);continue;
+        visitItems(source,nested,profile,blockers,[...path,'impl '+owner.map(token=>token.text).join('')],edits,selections,skipped,depth+1,modulePath,producer);continue;
       }
       if(header.rawIdentifier)throw new Error('raw declaration identity requires separate integration');
       const selected=header.kind==='fn'?functionEdits(item,header):constantEdits(item,header);
@@ -234,13 +236,14 @@ function visitItems(source,items,profile,inherited,path,edits,selections,skipped
     }catch(error){skipped.push({...record,reason:error.message});}
   }
 }
-function proposal(source,modules,profile,ancestorProblems=[]){
+const producerSelection=(context,module)=>context?{context,source:module.source,file:module.file,localPath:module.sourceView?.modulePath??module.path}:null;
+function proposal(source,modules,profile,ancestorProblems=[],producerContext=null){
   const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[];
   for(const module of modules){
     if(module.configurationCondition!=='active'){skipped.push({path:module.path,reason:'module configuration '+module.configurationCondition});continue;}
     const ancestors=modules.filter(parent=>parent!==module&&parent.path.length<module.path.length&&parent.path.every((name,index)=>module.path[index]===name));
-    const inherited=[...ancestorProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path))];
-    visitItems(source,originalSourceModuleItems(module),profile,inherited,module.path,edits,selections,skipped);
+    const inherited=[...ancestorProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,producerSelection(producerContext,parent)))];
+    visitItems(source,originalSourceModuleItems(module),profile,inherited,module.path,edits,selections,skipped,0,module.path,producerSelection(producerContext,module));
   }
   edits.sort((left,right)=>left.span[0]-right.span[0]);
   for(let at=0;at<edits.length;at++)if(source.slice(...edits[at].span)!==edits[at].expected||at&&edits[at-1].span[1]>edits[at].span[0])fail('selected source edits overlap or changed');
@@ -261,7 +264,7 @@ export function migrateCorePrimitives(source,{rootSource='',compilationProfile:i
   const ancestors=rootSource?scopeProblems(sourceItems(rootSource),profile):[];
   return proposal(source,localViews(source,'src/migration_input.rs',profile),profile,ancestors);
 }
-export function proposeCorePrimitivesCorpus({entry='src/lib.rs',files:input,compilationProfile:inputProfile=null}={}){
+export function proposeCorePrimitivesCorpus({entry='src/lib.rs',files:input,compilationProfile:inputProfile=null,dependencyInputs}={}){
   const files=sourceMap(input),profile=normalizeProfile(inputProfile);
   if(!Object.hasOwn(files,entry))fail('entry must select an original tracked source');
   const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),proposals=[],skipped=[],after={...files};
@@ -271,24 +274,26 @@ export function proposeCorePrimitivesCorpus({entry='src/lib.rs',files:input,comp
   const declarations=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');
   if(declarations.length!==1||roots[0].source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core declaration required');
   if(originalSourceModuleItems(roots[0]).some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_core')))fail('competing root core alias is unsupported');
+  const producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});
   for(const file of Object.keys(files)){
     const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);
     if(!modules.length||origins.length!==1){skipped.push({file,reason:modules.length?'physical source has multiple or unknown module origins':'source is outside the selected original module graph'});continue;}
     const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,index)=>origin.path[index]===name));
-    const blockers=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path));
-    const result=proposal(files[file],modules,profile,blockers);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;
+    const blockers=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,producerSelection(producerContext,module)));
+    const result=proposal(files[file],modules,profile,blockers,producerContext);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;
   }
-  return {schema:'router-core-primitives-corpus-proposal-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,migrationSemantics:'explicit-owned-API-adoption; every rewritten source requires fresh semantic checking',executableAdmission:false};
+  const inputs=Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),producerEffects=finishCoreAdoptionProducerContext(producerContext);
+  return {schema:'router-core-primitives-corpus-proposal-v1',entry,compilationProfile:profile,...(producerEffects?{producerEffects}:{}),before:{...files},after,inputs,moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,migrationSemantics:'explicit-owned-API-adoption; every rewritten source requires fresh semantic checking',executableAdmission:false};
 }
 
 // Reusable source-only typed-position census. Every selected token list passes
 // the same complete type grammar as borrowed-text adoption. Positions and skip
 // records are proposal inputs only; fresh semantic checking remains mandatory.
-export function inspectCoreTypePositions(source,{file='src/migration_input.rs',compilationProfile:input=null}={}){
+function inspectTypePositions(source,{file='src/migration_input.rs',compilationProfile:input=null}={},producerContext=null){
   bounded(source);const profile=normalizeProfile(input),positions=[],skipped=[];
   const visit=(items,inherited,module,path=[],depth=0)=>{
     if(depth>MAX_DEPTH)fail('declaration owner nesting exceeds bound');
-    const blockers=[...inherited,...scopeProblems(items,profile,module)];
+    const blockers=[...inherited,...scopeProblems(items,profile,module,producerContext?{context:producerContext,source,file,localPath:module}:null)];
     for(const item of items){
       const condition=conditions(item,profile);let header;
       try{header=originalDeclarationHeader(item,module);}catch(error){skipped.push({module,path,span:span(item),reason:error.message});continue;}
@@ -310,9 +315,16 @@ export function inspectCoreTypePositions(source,{file='src/migration_input.rs',c
     }
   };
   const modules=localViews(source,file,profile);
-  for(const module of modules){const ancestors=modules.filter(parent=>parent.path.length<module.path.length&&parent.path.every((name,index)=>module.path[index]===name));visit(originalSourceModuleItems(module),ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path)),module.path);}
+  for(const module of modules){const ancestors=modules.filter(parent=>parent.path.length<module.path.length&&parent.path.every((name,index)=>module.path[index]===name));visit(originalSourceModuleItems(module),ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,producerSelection(producerContext,parent))),module.path);}
   return {positions,skipped};
 }
 export function coreTypeProducerProblems(source,{compilationProfile:input=null}={}){
   bounded(source);return scopeProblems(sourceItems(source),normalizeProfile(input));
+}
+
+export function inspectCoreTypePositions(source,options={}){return inspectTypePositions(source,options);}
+export function inspectCoreTypePositionsWithProducerContext(context,source,options={}){const binding=coreAdoptionProducerBindings(context);if(binding&&JSON.stringify(binding.compilationProfile)!==JSON.stringify(normalizeProfile(options.compilationProfile)))fail('producer context profile differs');return inspectTypePositions(source,options,context);}
+export function coreTypeProducerProblemsForModule(context,module){
+ if(context===null)return coreTypeProducerProblems(module.source,{compilationProfile:module.compilationProfile});
+ const binding=coreAdoptionProducerBindings(context),profile=normalizeProfile(module.compilationProfile);if(JSON.stringify(binding.compilationProfile)!==JSON.stringify(profile))fail('producer context profile differs');return scopeProblems(originalSourceModuleItems(module),profile,module.path,producerSelection(context,module));
 }

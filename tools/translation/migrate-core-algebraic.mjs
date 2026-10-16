@@ -5,7 +5,8 @@ import {resolveModuleGraph} from './project.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
-import {inspectCoreTypePositions,coreTypeProducerProblems} from './migrate-core-primitives.mjs';
+import {inspectCoreTypePositions,inspectCoreTypePositionsWithProducerContext,coreTypeProducerProblemsForModule} from './migrate-core-primitives.mjs';
+import {createCoreAdoptionProducerContext,coreAdoptionProducerBindings,finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from './router-core-source-data.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {compilationProfile as normalizeProfile} from './cfg-profile.mjs';
@@ -83,8 +84,8 @@ function bodyEdits(item,scope,known){
   }
   return {edits,skipped:[]};
 }
-function migrate(source,moduleRows,scopes,profile,ancestorProblems){
-  const before=transportConcreteSyntaxSource(source,{language:'Rust'}),inspection=inspectCoreTypePositions(source,{compilationProfile:profile}),edits=[],skipped=[...inspection.skipped],selections=[];
+function migrate(source,moduleRows,scopes,profile,ancestorProblems,producerContext=null){
+  const before=transportConcreteSyntaxSource(source,{language:'Rust'}),inspection=producerContext?inspectCoreTypePositionsWithProducerContext(producerContext,source,{file:moduleRows[0].file,compilationProfile:profile}):inspectCoreTypePositions(source,{compilationProfile:profile}),edits=[],skipped=[...inspection.skipped],selections=[];
   const origin=moduleRows.find(module=>module.sourceView.modulePath.length===0);
   if(!origin)fail('requires one complete physical module origin');
   const selectedItems=new Map();
@@ -108,21 +109,23 @@ function migrate(source,moduleRows,scopes,profile,ancestorProblems){
   let inverse=after.source;for(const row of [...mapping].reverse())if(row.kind==='substitution')inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);if(inverse!==source)fail('complete inverse changed');
   return {schema:'router-core-algebraic-migration-v1',before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},edits:ordered,mapping,selections,skipped,trace:changed.trace,migrationSemantics:'source-qualified transparent owned API adoption; native library internals untranslated',executableAdmission:false};
 }
-export function proposeCoreAlgebraicCorpus({entry='src/lib.rs',files:input,compilationProfile:inputProfile=null}={}){
+export function proposeCoreAlgebraicCorpus({entry='src/lib.rs',files:input,compilationProfile:inputProfile=null,dependencyInputs}={}){
   const files=sourceMap(input),profile=normalizeProfile(inputProfile);if(!Object.hasOwn(files,entry))fail('entry source is missing');
   const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile});
   const root=graph.modules.filter(module=>!module.path.length),core=graph.modules.filter(module=>same(module.path,['translation_core'])),leaf=graph.modules.filter(module=>same(module.path,['translation_core','primitives']));
   if(root.length!==1||core.length!==1||leaf.length!==1||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].file!=='src/translation_core.rs'||leaf[0].file!=='src/translation_core/primitives.rs'||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('requires complete current owned core sources');
   const declarations=originalSourceModuleItems(root[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(declarations.length!==1||root[0].source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_core;')fail('requires the actual unqualified public core edge');
   if(originalSourceModuleItems(root[0]).some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_core')))fail('core root reexport competes with the owned edge');
-  const evidence=resolveModuleBindings({modules:graph.modules,externalModules:registeredStandardHostBindings(),compilationProfile:profile}),proposals=[],skipped=[],after={...files};
+  const producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});
+  const evidence=coreAdoptionProducerBindings(producerContext)??resolveModuleBindings({modules:graph.modules,externalModules:registeredStandardHostBindings(),compilationProfile:profile}),proposals=[],skipped=[],after={...files};
   for(const file of Object.keys(files)){
     if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;
     const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView.modulePath.length===0);
     if(origins.length!==1){skipped.push({file,reason:'missing or multiple physical module origins'});continue;}
     const origin=origins[0],parents=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name));
-    const blockers=parents.flatMap(module=>coreTypeProducerProblems(module.source,{compilationProfile:profile}));
-    const result=migrate(files[file],modules,evidence.scopes,profile,blockers);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;
+    const blockers=parents.flatMap(module=>coreTypeProducerProblemsForModule(producerContext,module));
+    const result=migrate(files[file],modules,evidence.scopes,profile,blockers,producerContext);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;
   }
-  return {schema:'router-core-algebraic-corpus-proposal-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([path,source])=>({path,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
+  const inputs=Object.entries(files).map(([path,source])=>({path,source,sha256:hash(source)})),producerEffects=finishCoreAdoptionProducerContext(producerContext);
+  return {schema:'router-core-algebraic-corpus-proposal-v1',entry,compilationProfile:profile,...(producerEffects?{producerEffects}:{}),before:{...files},after,inputs,moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
 }

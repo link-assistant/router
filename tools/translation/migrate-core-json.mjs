@@ -7,7 +7,8 @@ import {originalDeclarationHeader,originalUseDeclarationLeaves} from './module-b
 import {createLiteralTextImportRoles,verifyLiteralTextImportRoles} from './literal-text-import-roles.mjs';
 import {jsonMacroDependencyProfile,jsonMacroOriginalSource} from './json-macro-inputs.mjs';
 import {jsonMacroSourceDefinition,jsonMacroDefinitionSource} from './json-macro-sources.mjs';
-import {coreTypeProducerProblems} from './migrate-core-primitives.mjs';
+import {coreTypeProducerProblemsForModule} from './migrate-core-primitives.mjs';
+import {createCoreAdoptionProducerContext,finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
 import {itemConfiguration,compilationProfile as normalizeProfile,PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE} from './router-core-source-data.mjs';
@@ -57,6 +58,7 @@ export function proposeCoreJsonCorpus(options={}){
   const roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs),dependency=dependencyInputs===undefined?null:jsonMacroDependencyProfile(dependencyInputs),proof=dependency?.proof??null;
   let macroSource=null,definition=null;
   if(proof){const original=jsonMacroOriginalSource(proof,'serde_json','src/macros.rs'),compiled=jsonMacroSourceDefinition(proof);definition=jsonMacroDefinitionSource(compiled);if(definition.sourceSha256!==original.sha256)fail('macro original differs');macroSource={path:'serde_json/src/macros.rs',sha256:original.sha256,definition};}
+  const producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});
   const proposals=[],skipped=[],after={...files};
   for(const file of Object.keys(files)){
     if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;
@@ -64,7 +66,7 @@ export function proposeCoreJsonCorpus(options={}){
     if(origins.length!==1){skipped.push({file,reason:'missing or multiple physical source origins'});continue;}
     for(const module of modules){
       const ancestors=graph.modules.filter(parent=>parent.path.length<=module.path.length&&parent.path.every((part,at)=>part===module.path[at]));
-      const producers=ancestors.flatMap(parent=>coreTypeProducerProblems(parent.source,{compilationProfile:profile}));
+      const producers=ancestors.flatMap(parent=>coreTypeProducerProblemsForModule(producerContext,parent));
       const alias=new Map(),blocked=new Set();let rootShadow=false;
       for(const parent of ancestors)for(const item of originalSourceModuleItems(parent)){
         if(item.comment||itemConfiguration(item.tokens,profile).status==='inactive')continue;
@@ -120,6 +122,6 @@ export function proposeCoreJsonCorpus(options={}){
     }
     const proposal=apply(files[file],edits);proposals.push({file,...proposal,selections,preserved,imports,importRemovals});after[file]=proposal.after.source;
   }
-  verifyLiteralTextImportRoles(roleFor);snapshot.current();
-  return {schema:'router-owned-json-adoption-corpus-v1',entry,compilationProfile:profile,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),before:{...files},after,proposals,skipped,macroSource,moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},executableAdmission:false};
+  const capturedInputs=producerContext?Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})):null,producerEffects=finishCoreAdoptionProducerContext(producerContext);verifyLiteralTextImportRoles(roleFor);snapshot.current();
+  return {schema:'router-owned-json-adoption-corpus-v1',entry,compilationProfile:profile,...(producerEffects?{producerEffects}:{}),inputs:capturedInputs??Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),before:{...files},after,proposals,skipped,macroSource,moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},executableAdmission:false};
 }
