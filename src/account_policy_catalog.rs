@@ -52,7 +52,7 @@ pub fn project(
 }
 
 /// Durable grants always refer to the vendor identity, including projected catalogs.
-pub fn native_id(record: &CatalogRecord) -> &str {
+pub fn native_id(record: &CatalogRecord) -> &crate::translation_core::Str {
     record
         .raw
         .get("_router_policy_upstream")
@@ -63,7 +63,7 @@ pub fn native_id(record: &CatalogRecord) -> &str {
 pub fn permitted(
     policy: &crate::model_contract::ModelAccessPolicy,
     provider: SubscriptionProvider,
-    native: &str,
+    native: &crate::translation_core::Str,
 ) -> bool {
     policy.permits(native)
         || (provider == SubscriptionProvider::Gemini

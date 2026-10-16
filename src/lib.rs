@@ -231,7 +231,7 @@ mod token_admin_tests;
 mod zai_coding_plan_tests;
 
 /// Package version (matches Cargo.toml version).
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const VERSION: &crate::translation_core::Str = env!("CARGO_PKG_VERSION");
 
 /// Shared operational implementation for `auth_cli`.
 pub mod auth_cli;
@@ -264,7 +264,7 @@ pub mod recover_admin_cli;
 pub mod shutdown;
 
 /// Source commit embedded at build time.
-pub const SOURCE_COMMIT: &str = env!("ROUTER_SOURCE_COMMIT");
+pub const SOURCE_COMMIT: &crate::translation_core::Str = env!("ROUTER_SOURCE_COMMIT");
 
 /// Importable request-log operations.
 pub mod logs;

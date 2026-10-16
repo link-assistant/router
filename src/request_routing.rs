@@ -123,7 +123,7 @@ pub fn retry_after_duration(headers: &HeaderMap) -> Option<Duration> {
 /// works; see [`crate::refresh::CredentialEvidence`].
 pub async fn record_claude_evidence(
     state: &crate::app_state::AppState,
-    account: Option<&str>,
+    account: Option<&crate::translation_core::Str>,
     credential: Option<&crate::subscription::SubscriptionToken>,
     status: u16,
 ) {

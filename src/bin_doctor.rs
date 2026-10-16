@@ -57,7 +57,7 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
     println!(
         "admin_ui               : {}",
         if config.admin_ui.enabled {
-            format!("enabled on {}", config.admin_ui.listen_addr)
+            crate::translation_core::format!("enabled on {}", config.admin_ui.listen_addr)
         } else {
             "disabled".to_string()
         }
@@ -74,7 +74,7 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
             match status.credential_kind {
                 link_assistant_router::admin::CredentialKind::Environment =>
                     "provisioned by environment".to_string(),
-                link_assistant_router::admin::CredentialKind::Jwt => format!(
+                link_assistant_router::admin::CredentialKind::Jwt => crate::translation_core::format!(
                     "claimed admin JWT {} (first-visitor bootstrap closed)",
                     status.token_id.as_deref().unwrap_or("<unknown>")
                 ),

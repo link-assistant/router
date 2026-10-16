@@ -4,11 +4,11 @@ use std::ffi::OsStr;
 use std::time::Duration;
 
 /// Verify a cached default image or registry manifest before deployment planning.
-pub fn ensure_default(image: &str, version: &str) -> Result<(), String> {
+pub fn ensure_default(image: &crate::translation_core::Str, version: &crate::translation_core::Str) -> Result<(), String> {
     inspect_with(OsStr::new("docker"), image, version)
 }
 
-fn inspect_with(docker: &OsStr, image: &str, version: &str) -> Result<(), String> {
+fn inspect_with(docker: &OsStr, image: &crate::translation_core::Str, version: &crate::translation_core::Str) -> Result<(), String> {
     // An immutable image already cached on the target is usable offline.
     let local = crate::operation_context::bounded_output(
         crate::operation_context::command(docker).args(["image", "inspect", image]),

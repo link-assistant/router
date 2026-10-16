@@ -20,7 +20,7 @@ pub fn model_info(model: &ModelDescription<'_>, priority: usize) -> Value {
     json!({
         "slug": model.id,
         "display_name": model.display_name,
-        "description": format!("{} via Link.Assistant.Router", model.owner),
+        "description": crate::translation_core::format!("{} via Link.Assistant.Router", model.owner),
         "default_reasoning_level": model.default_reasoning_level,
         "supported_reasoning_levels": model.supported_reasoning_levels,
         "shell_type": "unified_exec",

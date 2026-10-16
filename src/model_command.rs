@@ -37,7 +37,7 @@ async fn run_inner(operation: &ModelOp) -> Result<bool, AnyError> {
     }
 }
 
-async fn explain(id: &str, client: ClientKind, target: &AuthTarget) -> Result<bool, AnyError> {
+async fn explain(id: &crate::translation_core::Str, client: ClientKind, target: &AuthTarget) -> Result<bool, AnyError> {
     if id.is_empty() {
         return Err("model selector must not be empty".into());
     }
@@ -46,7 +46,7 @@ async fn explain(id: &str, client: ClientKind, target: &AuthTarget) -> Result<bo
 }
 
 async fn explain_at(
-    id: &str,
+    id: &crate::translation_core::Str,
     client: ClientKind,
     server: &crate::managed_server::ResolvedServer,
 ) -> Result<bool, AnyError> {
@@ -81,7 +81,7 @@ async fn explain_at(
     Ok(found)
 }
 
-fn diagnostic(id: &str, client: ClientKind, catalog: &Value) -> (Value, bool) {
+fn diagnostic(id: &crate::translation_core::Str, client: ClientKind, catalog: &Value) -> (Value, bool) {
     let mut matches = catalog
         .get("data")
         .and_then(Value::as_array)
@@ -194,7 +194,7 @@ fn diagnostic(id: &str, client: ClientKind, catalog: &Value) -> (Value, bool) {
     (diagnostic, found)
 }
 
-fn selector_kind(entry: Option<&Value>) -> (&str, ModelSelectorKind) {
+fn selector_kind(entry: Option<&Value>) -> (&crate::translation_core::Str, ModelSelectorKind) {
     let label = entry
         .and_then(|value| value.get("selector_kind"))
         .and_then(Value::as_str)

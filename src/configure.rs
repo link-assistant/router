@@ -493,7 +493,7 @@ async fn report_revocation(args: &ConfigureArgs, record: &ManagedCredential) {
     }
 }
 
-fn management_origin_for(args: &ConfigureArgs, router: &str) -> String {
+fn management_origin_for(args: &ConfigureArgs, router: &crate::translation_core::Str) -> String {
     if let Some(origin) = args.target.management_server.as_deref()
         && let Ok(origin) = crate::managed_server::canonical_server_origin(origin)
     {
@@ -514,7 +514,7 @@ fn management_origin_for(args: &ConfigureArgs, router: &str) -> String {
 ///
 /// Undo removes local files and must keep working offline, so this never
 /// resolves a target: it asks only what is already to hand.
-fn admin_token_for(args: &ConfigureArgs, router: &str) -> Option<String> {
+fn admin_token_for(args: &ConfigureArgs, router: &crate::translation_core::Str) -> Option<String> {
     if let Some(token) = args.token.clone() {
         return Some(token);
     }

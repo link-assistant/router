@@ -63,5 +63,5 @@ pub fn health_header(state: &AppState) -> Option<String> {
         .token_manager
         .emergency()
         .active_until()
-        .map(|until| format!("active; expires_at={until}"))
+        .map(|until| crate::translation_core::format!("active; expires_at={until}"))
 }

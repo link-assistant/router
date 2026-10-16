@@ -13,7 +13,7 @@ const MAX_ERROR_BYTES: usize = 16 * 1024;
 
 pub async fn send(
     log: &crate::request_log::RequestLog,
-    correlation: &str,
+    correlation: &crate::translation_core::Str,
     fallback_client: &reqwest::Client,
     original: reqwest::Request,
 ) -> Result<reqwest::Response, UpstreamSendError> {
@@ -103,7 +103,7 @@ pub async fn send(
         if attempt > 1 {
             request.headers_mut().insert(
                 "authorization",
-                HeaderValue::from_str(&format!("Bearer {}", selected.token.access_token))
+                HeaderValue::from_str(&crate::translation_core::format!("Bearer {}", selected.token.access_token))
                     .map_err(|e| UpstreamSendError::Egress(e.to_string()))?,
             );
             if request.headers_mut().remove("chatgpt-account-id").is_some()
@@ -126,7 +126,7 @@ pub async fn send(
                         .as_str()
                         .strip_prefix(first.trim_end_matches('/'))
                 {
-                    *request.url_mut() = format!("{}{suffix}", next.trim_end_matches('/'))
+                    *request.url_mut() = crate::translation_core::format!("{}{suffix}", next.trim_end_matches('/'))
                         .parse()
                         .map_err(|e: url::ParseError| UpstreamSendError::Egress(e.to_string()))?;
                 }
@@ -355,9 +355,9 @@ pub async fn send(
 
 fn replay_model(
     router: &crate::accounts::AccountRouter,
-    account: &str,
-    requested: &str,
-    native: &str,
+    account: &crate::translation_core::Str,
+    requested: &crate::translation_core::Str,
+    native: &crate::translation_core::Str,
 ) -> Option<String> {
     let resolved = router.upstream_model(account, requested)?;
     if resolved == requested && native != requested {

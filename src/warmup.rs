@@ -14,7 +14,7 @@ use axum::response::Response;
 use serde_json::{Value, json};
 
 /// The probe's text.
-const WARMUP_TEXT: &str = "Warmup";
+const WARMUP_TEXT: &crate::translation_core::Str = "Warmup";
 
 /// Whether `body` is a warmup probe: its messages are exactly one user message
 /// whose text — a string or text blocks — is `Warmup`.

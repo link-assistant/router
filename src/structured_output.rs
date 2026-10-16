@@ -26,7 +26,7 @@ pub fn chat_format(value: Option<&Value>) -> Result<Option<Value>, String> {
             )
             .map(Some)
         }
-        other => Err(format!("unsupported response_format type: {other}")),
+        other => Err(crate::translation_core::format!("unsupported response_format type: {other}")),
     }
 }
 
@@ -48,7 +48,7 @@ pub fn responses_format(text: Option<&Value>) -> Result<Option<Value>, String> {
             validate_name_and_strict(format.get("name"), format.get("strict"), "text.format")?;
             schema_format(format.get("schema"), "text.format.schema").map(Some)
         }
-        other => Err(format!("unsupported text.format type: {other}")),
+        other => Err(crate::translation_core::format!("unsupported text.format type: {other}")),
     }
 }
 
@@ -86,7 +86,7 @@ pub fn chat_to_responses_format(value: Option<&Value>) -> Result<Option<Value>, 
             }
             Ok(Some(format))
         }
-        other => Err(format!("unsupported response_format type: {other}")),
+        other => Err(crate::translation_core::format!("unsupported response_format type: {other}")),
     }
 }
 
@@ -120,7 +120,7 @@ pub fn responses_to_chat_format(text: Option<&Value>) -> Result<Option<Value>, S
                 json!({"type": "json_schema", "json_schema": definition}),
             ))
         }
-        other => Err(format!("unsupported text.format type: {other}")),
+        other => Err(crate::translation_core::format!("unsupported text.format type: {other}")),
     }
 }
 
@@ -191,10 +191,10 @@ pub fn unsupported_chat_generation_control(
     ] {
         if let Some(value) = value {
             if !(-2.0..=2.0).contains(&value) {
-                return Some(format!("{name} must be between -2 and 2"));
+                return Some(crate::translation_core::format!("{name} must be between -2 and 2"));
             }
             if value != 0.0 {
-                return Some(format!(
+                return Some(crate::translation_core::format!(
                     "{name} cannot be represented by the selected translated provider"
                 ));
             }
@@ -212,33 +212,33 @@ pub fn unsupported_chat_generation_control(
         .map(|_| "seed cannot be represented by the selected translated provider".to_string())
 }
 
-fn required_type<'a>(value: &'a Value, path: &str) -> Result<&'a str, String> {
+fn required_type<'a>(value: &'a Value, path: &crate::translation_core::Str) -> Result<&'a str, String> {
     value
         .as_object()
         .and_then(|object| object.get("type"))
         .and_then(Value::as_str)
         .filter(|kind| !kind.is_empty())
-        .ok_or_else(|| format!("{path}.type must be a non-empty string"))
+        .ok_or_else(|| crate::translation_core::format!("{path}.type must be a non-empty string"))
 }
 
 fn validate_name_and_strict(
     name: Option<&Value>,
     strict: Option<&Value>,
-    path: &str,
+    path: &crate::translation_core::Str,
 ) -> Result<(), String> {
     if name.and_then(Value::as_str).is_none_or(str::is_empty) {
-        return Err(format!("{path}.name must be a non-empty string"));
+        return Err(crate::translation_core::format!("{path}.name must be a non-empty string"));
     }
     if strict.is_some_and(|value| !value.is_boolean()) {
-        return Err(format!("{path}.strict must be a boolean"));
+        return Err(crate::translation_core::format!("{path}.strict must be a boolean"));
     }
     Ok(())
 }
 
-fn schema_format(schema: Option<&Value>, path: &str) -> Result<Value, String> {
+fn schema_format(schema: Option<&Value>, path: &crate::translation_core::Str) -> Result<Value, String> {
     let schema = schema
         .filter(|schema| schema.is_object())
-        .ok_or_else(|| format!("{path} must be an object"))?;
+        .ok_or_else(|| crate::translation_core::format!("{path} must be an object"))?;
     Ok(json!({"type": "json_schema", "schema": schema}))
 }
 

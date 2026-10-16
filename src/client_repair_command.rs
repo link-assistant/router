@@ -14,7 +14,7 @@ pub async fn repair(
     all: bool,
     dry_run: bool,
     json: bool,
-    rollback: Option<&str>,
+    rollback: Option<&crate::translation_core::Str>,
 ) -> ExitCode {
     let clients = if all {
         ClientKind::ALL.to_vec()
@@ -64,7 +64,7 @@ pub async fn repair(
                     if plan.conflicts.is_empty() {
                         String::new()
                     } else {
-                        format!("; conflicts={}", plan.conflicts.join(","))
+                        crate::translation_core::format!("; conflicts={}", plan.conflicts.join(","))
                     }
                 );
             }
@@ -130,7 +130,7 @@ pub async fn repair(
 fn print_repair_result(
     result: Result<RepairResult, crate::clients::ClientError>,
     json: bool,
-    verb: &str,
+    verb: &crate::translation_core::Str,
 ) -> ExitCode {
     match result {
         Ok(result) => {
@@ -218,7 +218,7 @@ async fn repair_one(
             if let Some(id) = result.backup_id.as_deref() {
                 manager.rollback_repair(client, id)?;
             }
-            return Err(format!("post-repair catalog validation failed: {error}").into());
+            return Err(crate::translation_core::format!("post-repair catalog validation failed: {error}").into());
         }
         if client == ClientKind::Codex && bridge.is_none() {
             crate::codex_loopback_bridge::stop_persistent(
@@ -237,7 +237,7 @@ async fn repair_one(
     let candidate = crate::managed_server::prepare_repair_credential(
         &server,
         client,
-        &format!("client-repair-{client}"),
+        &crate::translation_core::format!("client-repair-{client}"),
         24,
     )
     .await?;
@@ -248,7 +248,7 @@ async fn repair_one(
         token_id: candidate.id(),
         label: candidate
             .was_minted()
-            .then(|| format!("client-repair-{client}")),
+            .then(|| crate::translation_core::format!("client-repair-{client}")),
         issued_at: candidate
             .was_minted()
             .then(|| crate::operation_context::now().timestamp()),
@@ -282,14 +282,14 @@ async fn repair_one(
             };
             return match crate::managed_server::cleanup_run_credential(candidate).await {
                 Ok(()) if bridge_cleanup.is_none() => Err(error.into()),
-                Ok(()) => Err(format!(
+                Ok(()) => Err(crate::translation_core::format!(
                     "{error}; the unused Codex bridge could not be removed: {}",
                     bridge_cleanup.expect("checked above")
                 )
                 .into()),
-                Err(cleanup) => Err(format!(
+                Err(cleanup) => Err(crate::translation_core::format!(
                     "{error}; the unused minted repair credential could not be revoked: {cleanup}{}",
-                    bridge_cleanup.map_or_else(String::new, |bridge| format!(
+                    bridge_cleanup.map_or_else(String::new, |bridge| crate::translation_core::format!(
                         "; the unused Codex bridge could not be removed: {bridge}"
                     ))
                 )
@@ -312,7 +312,7 @@ async fn repair_one(
             .as_deref()
             .map_or(Ok(()), |id| manager.rollback_repair(client, id).map(|_| ()));
         let cleanup = crate::managed_server::cleanup_run_credential(candidate).await;
-        let mut message = format!("post-repair catalog validation failed: {error}");
+        let mut message = crate::translation_core::format!("post-repair catalog validation failed: {error}");
         if let Err(rollback) = rollback {
             let _ = write!(message, "; automatic rollback also failed: {rollback}");
         }

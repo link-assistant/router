@@ -48,7 +48,7 @@ pub async fn collect_response(response: Response, surface: crate::metrics::Surfa
     Response::from_parts(parts, Body::from(body))
 }
 
-fn upstream_error(surface: crate::metrics::Surface, message: &str) -> Response {
+fn upstream_error(surface: crate::metrics::Surface, message: &crate::translation_core::Str) -> Response {
     crate::api_error::error_response_for_surface(
         surface,
         StatusCode::BAD_GATEWAY,

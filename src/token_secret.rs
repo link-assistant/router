@@ -18,13 +18,13 @@
 ///
 /// The NUL prefix is what makes it unforgeable: `std::env::var` cannot return
 /// a value containing one, and neither can argv.
-const SENTINEL: &str = "\u{0}link-assistant-router:no-token-secret:";
+const SENTINEL: &crate::translation_core::Str = "\u{0}link-assistant-router:no-token-secret:";
 
 /// Values that were written into stores before the sentinel existed.
 ///
 /// Kept so a record encrypted under one can be recognised and named, rather
 /// than surfacing as an opaque decryption failure (issue #300).
-pub const LEGACY_PLACEHOLDERS: [&str; 3] = [
+pub const LEGACY_PLACEHOLDERS: [&crate::translation_core::Str; 3] = [
     "unused-by-remote-command",
     "unused-by-auth",
     "unused-by-this-client-command",
@@ -32,13 +32,13 @@ pub const LEGACY_PLACEHOLDERS: [&str; 3] = [
 
 /// A stand-in secret for a command that will not sign, naming why.
 #[must_use]
-pub fn placeholder(reason: &str) -> String {
+pub fn placeholder(reason: &crate::translation_core::Str) -> String {
     format!("{SENTINEL}{reason}")
 }
 
 /// Whether this secret is a stand-in rather than a real signing key.
 #[must_use]
-pub fn is_placeholder(secret: &str) -> bool {
+pub fn is_placeholder(secret: &crate::translation_core::Str) -> bool {
     secret.starts_with(SENTINEL) || LEGACY_PLACEHOLDERS.contains(&secret)
 }
 
@@ -59,7 +59,7 @@ pub fn refusal() -> String {
 /// # Errors
 ///
 /// Returns [`refusal`] when `secret` is a stand-in.
-pub fn ensure_real(secret: &str) -> Result<(), String> {
+pub fn ensure_real(secret: &crate::translation_core::Str) -> Result<(), String> {
     if is_placeholder(secret) {
         return Err(refusal());
     }
@@ -70,7 +70,7 @@ pub fn ensure_real(secret: &str) -> Result<(), String> {
 ///
 /// A service unit references the file, so the secret never appears in the
 /// unit, in `systemctl show`, or in any process's argv.
-pub const FILE_ENV: &str = "TOKEN_SECRET_FILE";
+pub const FILE_ENV: &crate::translation_core::Str = "TOKEN_SECRET_FILE";
 
 /// The secret in `path`, without one trailing line break.
 ///

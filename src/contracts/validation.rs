@@ -6,7 +6,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 static VALIDATORS: LazyLock<Mutex<BTreeMap<String, Arc<jsonschema::Validator>>>> =
     LazyLock::new(|| Mutex::new(BTreeMap::new()));
 
-fn validate(key: &str, schema: &Value, document: &Value) -> Result<(), String> {
+fn validate(key: &crate::translation_core::Str, schema: &Value, document: &Value) -> Result<(), String> {
     let validator = {
         let mut validators = VALIDATORS.lock().map_err(|_| "contract cache poisoned")?;
         if let Some(validator) = validators.get(key) {
@@ -24,11 +24,11 @@ fn validate(key: &str, schema: &Value, document: &Value) -> Result<(), String> {
 }
 
 /// Validate the complete versioned CLI result, including operation-owned fields.
-pub fn operation(name: &str, document: &Value) -> Result<(), String> {
+pub fn operation(name: &crate::translation_core::Str, document: &Value) -> Result<(), String> {
     let (_, schema) = super::generated::CLI_SCHEMAS
         .iter()
         .find(|(operation, _)| *operation == name)
-        .ok_or_else(|| format!("undocumented operation {name}"))?;
+        .ok_or_else(|| crate::translation_core::format!("undocumented operation {name}"))?;
     let schema = serde_json::from_str(schema).map_err(|error| error.to_string())?;
     validate(name, &schema, document)
 }
@@ -37,12 +37,12 @@ pub fn operation(name: &str, document: &Value) -> Result<(), String> {
 /// Vendor-defined model payloads deliberately permit native extensions.
 pub fn http(
     method: &axum::http::Method,
-    path: &str,
+    path: &crate::translation_core::Str,
     status: u16,
     document: &Value,
 ) -> Result<(), String> {
     let route = crate::route_contract::route_for_path(method, path)
-        .ok_or_else(|| format!("undocumented HTTP route {method} {path}"))?;
+        .ok_or_else(|| crate::translation_core::format!("undocumented HTTP route {method} {path}"))?;
     let spec: Value =
         serde_json::from_str(super::generated::HTTP).map_err(|error| error.to_string())?;
     let template = route.template.replace("{*", "{");
@@ -54,7 +54,7 @@ pub fn http(
             .as_str()
             .and_then(|reference| reference.strip_prefix('#'))
             .and_then(|pointer| spec.pointer(pointer))
-            .ok_or_else(|| format!("undocumented catch-all response {method} {path}"))?;
+            .ok_or_else(|| crate::translation_core::format!("undocumented catch-all response {method} {path}"))?;
     }
     let response = if status < 400 {
         &operation["responses"]["200"]
@@ -63,13 +63,13 @@ pub fn http(
     };
     let mut schema = response["content"]["application/json"]["schema"].clone();
     if schema.is_null() {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "undocumented JSON response {method} {path} ({status})"
         ));
     }
     schema["components"] = spec["components"].clone();
     validate(
-        &format!("http:{method}:{template}:{}", status < 400),
+        &crate::translation_core::format!("http:{method}:{template}:{}", status < 400),
         &schema,
         document,
     )

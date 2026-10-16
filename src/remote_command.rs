@@ -183,7 +183,7 @@ pub fn relax_token_secret_for_cli(mut cli: crate::cli::Cli) -> crate::cli::Cli {
 /// not. `alternative` says what *can* be done instead, because a refusal that
 /// leaves the operator without a next step is only half an answer.
 #[must_use]
-pub fn no_remote_form(command: &str, server: &ResolvedServer, alternative: &str) -> Vec<String> {
+pub fn no_remote_form(command: &crate::translation_core::Str, server: &ResolvedServer, alternative: &crate::translation_core::Str) -> Vec<String> {
     vec![
         format!(
             "error: `{command}` reports on the machine it runs on, so it cannot answer for {} \

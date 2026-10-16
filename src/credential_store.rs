@@ -44,7 +44,7 @@ pub(crate) fn ensure_refreshable_origin(
 /// would attach the lock to an inode that [`crate::durable_file`] replaces by
 /// rename on every write, so two holders could each end up locking a different
 /// file and believing they were alone.
-const LOCK_SUFFIX: &str = ".router-refresh.lock";
+const LOCK_SUFFIX: &crate::translation_core::Str = ".router-refresh.lock";
 
 /// A durable home for one subscription credential.
 ///

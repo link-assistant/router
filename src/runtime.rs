@@ -181,7 +181,7 @@ pub async fn dispatch(cli: crate::cli::Cli) -> ExitCode {
             let token = crate::operation_context::var("LINK_ASSISTANT_ROUTER_TOKEN")
                 .or_else(|_| crate::operation_context::var("LINK_ASSISTANT_TOKEN"))
                 .ok();
-            let base_url = format!("http://{}", config.listen_addr);
+            let base_url = crate::translation_core::format!("http://{}", config.listen_addr);
             link_assistant_router::subscription_usage_cli::run(
                 &base_url,
                 token.as_deref(),
@@ -229,7 +229,7 @@ fn build_shared_state(config: &Config) -> Result<SharedState, AnyError> {
 const BOOTSTRAP_ADMIN_TTL_HOURS: i64 = 24 * 365;
 
 /// Label recorded on the auto-generated bootstrap admin token.
-const BOOTSTRAP_ADMIN_LABEL: &str = "bootstrap-admin";
+const BOOTSTRAP_ADMIN_LABEL: &crate::translation_core::Str = "bootstrap-admin";
 
 /// Make sure the deployment starts with a closed, reachable admin surface.
 ///

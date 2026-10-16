@@ -134,10 +134,10 @@ pub fn run(
 
 /// The reason recorded when the operator gives none; the management API uses
 /// the same words.
-const DEFAULT_PAUSE_REASON: &str = "paused by an operator";
+const DEFAULT_PAUSE_REASON: &crate::translation_core::Str = "paused by an operator";
 
 /// The local form edits the persisted pool state, not a running process.
-const LOCAL_NOTE: &str = "note: recorded in this machine's data directory; a router started \
+const LOCAL_NOTE: &crate::translation_core::Str = "note: recorded in this machine's data directory; a router started \
      from it applies the change at startup. Pass --server <URL> to change a running router.";
 
 fn pause_message(name: &crate::translation_core::Str, until: Option<u64>) -> crate::translation_core::Text {
@@ -161,11 +161,11 @@ fn resume_message(name: &crate::translation_core::Str, was_paused: bool) -> crat
 }
 
 /// The account-name placeholder in the pause/resume route templates.
-const NAME_PLACEHOLDER: &str = concat!("{", "name", "}");
+const NAME_PLACEHOLDER: &crate::translation_core::Str = concat!("{", "name", "}");
 
 /// Percent-encode an account name for one URL path segment, so a name can
 /// never reach a different route.
-fn path_segment(name: &str) -> String {
+fn path_segment(name: &crate::translation_core::Str) -> String {
     use std::fmt::Write as _;
 
     let mut encoded = String::with_capacity(name.len());

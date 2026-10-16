@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-const CHAT_FIELDS: &[&str] = &[
+const CHAT_FIELDS: &[&crate::translation_core::Str] = &[
     "model",
     "messages",
     "max_tokens",
@@ -37,7 +37,7 @@ const CHAT_FIELDS: &[&str] = &[
     "user",
 ];
 
-const RESPONSE_FIELDS: &[&str] = &[
+const RESPONSE_FIELDS: &[&crate::translation_core::Str] = &[
     "model",
     "input",
     "instructions",
@@ -81,12 +81,12 @@ pub fn unknown_responses_field(body: &Value) -> Option<String> {
     unknown_field(body, RESPONSE_FIELDS)
 }
 
-fn unknown_field(body: &Value, known: &[&str]) -> Option<String> {
+fn unknown_field(body: &Value, known: &[&crate::translation_core::Str]) -> Option<String> {
     let object = body.as_object()?;
     object
         .keys()
         .find(|field| !known.contains(&field.as_str()))
-        .map(|field| format!("unsupported translated request field: {field}"))
+        .map(|field| crate::translation_core::format!("unsupported translated request field: {field}"))
 }
 
 pub fn reject_anthropic_provider_controls(body: &Value) -> Result<(), String> {
@@ -126,7 +126,7 @@ pub fn reject_anthropic_provider_controls(body: &Value) -> Result<(), String> {
     }
     for field in ["service_tier", "speed", "inference_geo"] {
         if body.get(field).is_some_and(|value| !value.is_null()) {
-            return Err(format!(
+            return Err(crate::translation_core::format!(
                 "{field} cannot be represented by the selected provider"
             ));
         }
@@ -143,11 +143,11 @@ pub fn reject_anthropic_provider_controls(body: &Value) -> Result<(), String> {
     Ok(())
 }
 
-fn reject_nonempty_object(body: &Value, field: &str) -> Result<(), String> {
+fn reject_nonempty_object(body: &Value, field: &crate::translation_core::Str) -> Result<(), String> {
     match body.get(field) {
         None | Some(Value::Null) => Ok(()),
         Some(Value::Object(value)) if value.is_empty() => Ok(()),
-        Some(_) => Err(format!(
+        Some(_) => Err(crate::translation_core::format!(
             "{field} cannot be represented by the selected provider"
         )),
     }
@@ -172,12 +172,12 @@ pub fn untranslatable_chat_participant_name(body: &Value) -> Option<String> {
             None | Some(Value::Null) => {}
             Some(Value::String(name)) if name.is_empty() => {}
             Some(Value::String(_)) => {
-                return Some(format!(
+                return Some(crate::translation_core::format!(
                     "messages[{index}].message.name cannot be represented by the selected provider"
                 ));
             }
             Some(_) => {
-                return Some(format!("messages[{index}].message.name must be a string"));
+                return Some(crate::translation_core::format!("messages[{index}].message.name must be a string"));
             }
         }
     }
@@ -228,7 +228,7 @@ pub fn validate_responses_resource_selectors(body: &Value) -> Result<(), String>
 pub fn validate_openai_prompt_cache(body: &Value, anthropic_target: bool) -> Result<(), String> {
     for field in ["prompt_cache_key", "prompt_cache_retention"] {
         if body.get(field).is_some_and(|value| !value.is_null()) {
-            return Err(format!(
+            return Err(crate::translation_core::format!(
                 "{field} cannot be represented by the selected provider"
             ));
         }
@@ -305,7 +305,7 @@ pub fn codex_instruction_cache_breakpoint(body: &Value) -> Option<String> {
             collect_named_values(content, "prompt_cache_breakpoint", &mut found);
         }
         if !found.is_empty() {
-            return Some(format!(
+            return Some(crate::translation_core::format!(
                 "messages[{index}] prompt_cache_breakpoint cannot be preserved when Codex hoists system or developer content into instructions"
             ));
         }

@@ -41,13 +41,13 @@ pub fn admin_ui_from_env() -> Result<crate::admin::AdminUiConfig, ConfigError> {
 /// as a socket address.
 pub fn admin_ui_config(
     port: Option<u16>,
-    host: &str,
+    host: &crate::translation_core::Str,
     candidate_ttl_secs: u64,
 ) -> Result<crate::admin::AdminUiConfig, ConfigError> {
     let default = crate::admin::AdminUiConfig::default();
     let enabled = port.is_some_and(|value| value != 0);
     let listen_addr = match port.filter(|value| *value != 0) {
-        Some(value) => format!("{host}:{value}")
+        Some(value) => crate::translation_core::format!("{host}:{value}")
             .parse()
             .map_err(|_| ConfigError::InvalidAddress)?,
         None => default.listen_addr,

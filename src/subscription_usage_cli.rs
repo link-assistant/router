@@ -6,8 +6,8 @@ use std::process::ExitCode;
 use crate::subscription_usage::{SubscriptionUsage, UsageEnvelope, UsageProvider};
 
 pub async fn run(
-    base_url: &str,
-    token: Option<&str>,
+    base_url: &crate::translation_core::Str,
+    token: Option<&crate::translation_core::Str>,
     provider: Option<UsageProvider>,
     json: bool,
 ) -> ExitCode {
@@ -49,8 +49,8 @@ pub async fn run_selected(
 
 async fn run_with_limit(
     client: &reqwest::Client,
-    base_url: &str,
-    token: Option<&str>,
+    base_url: &crate::translation_core::Str,
+    token: Option<&crate::translation_core::Str>,
     provider: Option<UsageProvider>,
     json: bool,
     response_limit: usize,

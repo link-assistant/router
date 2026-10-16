@@ -5,9 +5,9 @@ use serde_json::Value;
 /// `OpenAI` accepts at most 64 Unicode characters for `safety_identifier`.
 const OPENAI_MAX_CHARACTERS: usize = 64;
 
-pub fn validate_openai(identifier: Option<&str>) -> Result<(), String> {
+pub fn validate_openai(identifier: Option<&crate::translation_core::Str>) -> Result<(), String> {
     if identifier.is_some_and(|value| value.chars().count() > OPENAI_MAX_CHARACTERS) {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "safety_identifier must contain at most {OPENAI_MAX_CHARACTERS} characters"
         ));
     }
@@ -22,9 +22,9 @@ pub fn validate_openai_value(value: Option<&Value>) -> Result<(), String> {
     }
 }
 
-pub fn validate_openai_user(user: Option<&str>) -> Result<(), String> {
+pub fn validate_openai_user(user: Option<&crate::translation_core::Str>) -> Result<(), String> {
     if user.is_some_and(|value| value.chars().count() > OPENAI_MAX_CHARACTERS) {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "user must contain at most {OPENAI_MAX_CHARACTERS} characters"
         ));
     }
@@ -40,7 +40,7 @@ pub fn validate_openai_user_value(value: Option<&Value>) -> Result<(), String> {
 }
 
 /// Read and validate Anthropic's optional metadata identifier for an `OpenAI` target.
-pub fn anthropic_user_id(body: &Value) -> Result<Option<&str>, String> {
+pub fn anthropic_user_id(body: &Value) -> Result<Option<&crate::translation_core::Str>, String> {
     let Some(metadata) = body.get("metadata") else {
         return Ok(None);
     };

@@ -70,8 +70,8 @@ pub async fn selected_server(force_managed: bool) -> Result<Option<ResolvedServe
 pub async fn target_for(
     local: bool,
     managed: bool,
-    server: Option<&str>,
-    management_server: Option<&str>,
+    server: Option<&crate::translation_core::Str>,
+    management_server: Option<&crate::translation_core::Str>,
 ) -> Result<Option<ResolvedServer>, String> {
     if local || managed {
         return Ok(None);
@@ -111,8 +111,8 @@ fn has_selection() -> bool {
 /// Run a provider login against `server`, returning the process exit code.
 pub async fn authorize(
     server: &ResolvedServer,
-    provider: &str,
-    mode: Option<&str>,
+    provider: &crate::translation_core::Str,
+    mode: Option<&crate::translation_core::Str>,
     code: Option<String>,
 ) -> ExitCode {
     match authorize_inner(server, provider, mode, code).await {
@@ -126,8 +126,8 @@ pub async fn authorize(
 
 async fn authorize_inner(
     server: &ResolvedServer,
-    provider: &str,
-    mode: Option<&str>,
+    provider: &crate::translation_core::Str,
+    mode: Option<&crate::translation_core::Str>,
     code: Option<String>,
 ) -> Result<(), String> {
     let client = server
@@ -206,8 +206,8 @@ async fn authorize_inner(
 async fn poll_until_authorized(
     client: &reqwest::Client,
     server: &ResolvedServer,
-    login_id: &str,
-    provider: &str,
+    login_id: &crate::translation_core::Str,
+    provider: &crate::translation_core::Str,
 ) -> Result<(), String> {
     let deadline = std::time::Instant::now() + Duration::from_secs(10 * 60);
     while std::time::Instant::now() < deadline {
@@ -238,14 +238,14 @@ async fn poll_until_authorized(
     Err("the login was not approved in time".to_string())
 }
 
-fn finish(provider: &str, server: &ResolvedServer) {
+fn finish(provider: &crate::translation_core::Str, server: &ResolvedServer) {
     println!(
         "{provider} authorization saved on {} ({})",
         server.base_url, server.source
     );
 }
 
-fn status_of(view: &serde_json::Value) -> &str {
+fn status_of(view: &serde_json::Value) -> &crate::translation_core::Str {
     view.get("status")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("unknown")
@@ -340,7 +340,7 @@ fn report_status_credentials(body: &serde_json::Value) -> bool {
 /// `None` when the router cannot be reached or does not report homes — the
 /// refusal is still correct without it, so this never turns into a hard
 /// failure of its own.
-pub async fn credential_home(server: &ResolvedServer, provider: &str) -> Option<String> {
+pub async fn credential_home(server: &ResolvedServer, provider: &crate::translation_core::Str) -> Option<String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .ok()?;
@@ -390,7 +390,7 @@ pub async fn accounts(server: &ResolvedServer) -> ExitCode {
 ///
 /// Returns an operator-readable message when the call cannot be made or the
 /// router answers with a failure.
-pub async fn get(server: &ResolvedServer, path: &str) -> Result<serde_json::Value, String> {
+pub async fn get(server: &ResolvedServer, path: &crate::translation_core::Str) -> Result<serde_json::Value, String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -405,7 +405,7 @@ pub async fn get(server: &ResolvedServer, path: &str) -> Result<serde_json::Valu
 /// router answers with a failure.
 pub async fn post(
     server: &ResolvedServer,
-    path: &str,
+    path: &crate::translation_core::Str,
     body: serde_json::Value,
 ) -> Result<serde_json::Value, String> {
     let client = server
@@ -422,7 +422,7 @@ pub async fn post(
 /// transport errors.
 pub async fn post_response(
     server: &ResolvedServer,
-    path: &str,
+    path: &crate::translation_core::Str,
     body: serde_json::Value,
 ) -> Result<(reqwest::StatusCode, serde_json::Value), String> {
     let client = server
@@ -454,7 +454,7 @@ pub async fn post_response(
 ///
 /// Returns an operator-readable message when the call cannot be made or the
 /// router answers with a failure.
-pub async fn delete(server: &ResolvedServer, path: &str) -> Result<serde_json::Value, String> {
+pub async fn delete(server: &ResolvedServer, path: &crate::translation_core::Str) -> Result<serde_json::Value, String> {
     let client = server
         .management_client_with_timeout(REQUEST_TIMEOUT)
         .map_err(|error| error.to_string())?;
@@ -474,7 +474,7 @@ pub async fn delete(server: &ResolvedServer, path: &str) -> Result<serde_json::V
 /// path is the instruction. It is omitted rather than guessed when the router
 /// does not say (issue #291).
 #[must_use]
-pub fn remote_import_refusal(base_url: &str, home: Option<&str>) -> Vec<String> {
+pub fn remote_import_refusal(base_url: &crate::translation_core::Str, home: Option<&crate::translation_core::Str>) -> Vec<String> {
     let mut lines = vec![format!(
         "error: import installs a credential into the credential home of the machine running \
          it, so it cannot provision {base_url} from here."
@@ -499,7 +499,7 @@ pub fn remote_import_refusal(base_url: &str, home: Option<&str>) -> Vec<String> 
 /// server: single-account deployments report under `credentials` and pooled
 /// ones under `accounts`, and a router predating either simply omits both.
 #[must_use]
-pub fn home_in_accounts(body: &serde_json::Value, provider: &str) -> Option<String> {
+pub fn home_in_accounts(body: &serde_json::Value, provider: &crate::translation_core::Str) -> Option<String> {
     ["credentials", "accounts"]
         .into_iter()
         .filter_map(|key| body.get(key).and_then(serde_json::Value::as_array))

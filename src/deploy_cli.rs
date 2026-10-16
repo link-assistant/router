@@ -55,7 +55,7 @@ fn resolved_root(args: &DeployArgs, data_dir: &Path) -> Result<PathBuf, String> 
 /// provided data` from the process API — and if it ever stopped doing so, the
 /// deployment would sign tokens nothing can validate. Removal is exempt: it
 /// names a container and deletes it, signing nothing.
-fn secret_refusal(token_secret: &str, does_not_sign: bool) -> Option<String> {
+fn secret_refusal(token_secret: &crate::translation_core::Str, does_not_sign: bool) -> Option<String> {
     if does_not_sign {
         return None;
     }
@@ -279,7 +279,7 @@ pub fn run(config: &Config, args: &DeployArgs) -> ExitCode {
 }
 
 /// A missing default image cannot yield an executable container plan.
-fn image_preflight(args: &DeployArgs, root: &Path, image: &str) -> Option<ExitCode> {
+fn image_preflight(args: &DeployArgs, root: &Path, image: &crate::translation_core::Str) -> Option<ExitCode> {
     let host = args.mode == Some(DeployMode::Host)
         || (args.mode.is_none() && root.join("state/host").exists());
     if args.image.is_some()

@@ -9,11 +9,11 @@ use std::time::Duration;
 ///
 /// No environment switch can opt out of this boundary. Use a disposable Linux
 /// container or runner; a disposable macOS account/VM needs its own verifier.
-pub fn safety() -> Result<(), &'static str> {
+pub fn safety() -> Result<(), &'static crate::translation_core::Str> {
     safety_for(std::env::consts::OS)
 }
 
-fn safety_for(os: &str) -> Result<(), &'static str> {
+fn safety_for(os: &crate::translation_core::Str) -> Result<(), &'static crate::translation_core::Str> {
     if os == "macos" {
         Err(
             "safe OS credential-store boundary unavailable: native macOS vendor probes are refused before version, doctor or TUI; use the disposable Linux verification environment",
@@ -46,7 +46,7 @@ pub fn environment(command: &mut Command, home: &Path) {
 }
 
 /// Extract one semantic version; extra banners may vary by vendor.
-pub fn parse_version(text: &str) -> Option<String> {
+pub fn parse_version(text: &crate::translation_core::Str) -> Option<String> {
     text.split(|ch: char| !ch.is_ascii_digit() && ch != '.')
         .find(|word| {
             let parts: Vec<_> = word.split('.').collect();
@@ -55,7 +55,7 @@ pub fn parse_version(text: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-pub const CLIENTS: &[(&str, &str)] = &[
+pub const CLIENTS: &[(&crate::translation_core::Str, &crate::translation_core::Str)] = &[
     ("claude", "ROUTER_REAL_CLIENT_CLAUDE_VERSION"),
     ("codex", "ROUTER_REAL_CLIENT_CODEX_VERSION"),
     ("opencode", "ROUTER_REAL_CLIENT_OPENCODE_VERSION"),
@@ -64,7 +64,7 @@ pub const CLIENTS: &[(&str, &str)] = &[
 /// Discover before Cargo builds `option_env!` expectations. Caller/CI pins win,
 /// but a pin mismatch is a preparation failure, never a compatibility result.
 #[must_use]
-pub fn prepare(clients: &[&str]) -> (Vec<Value>, Vec<(String, String)>) {
+pub fn prepare(clients: &[&crate::translation_core::Str]) -> (Vec<Value>, Vec<(String, String)>) {
     prepare_using(
         clients,
         |variable| crate::operation_context::var(variable).ok(),

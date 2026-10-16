@@ -364,8 +364,8 @@ async fn forward(
     method: &Method,
     headers: &HeaderMap,
     body: &Bytes,
-    client_path: &str,
-    upstream_path: &str,
+    client_path: &crate::translation_core::Str,
+    upstream_path: &crate::translation_core::Str,
     destination: &AffinityDestination,
 ) -> Result<Forwarded, Response> {
     let correlation_id = crate::request_log::correlation_id(headers);
@@ -421,9 +421,9 @@ async fn forward(
 async fn read_upstream(
     state: &AppState,
     upstream: reqwest::Response,
-    account: Option<&str>,
+    account: Option<&crate::translation_core::Str>,
     bytes_sent: u64,
-    correlation_id: &str,
+    correlation_id: &crate::translation_core::Str,
 ) -> Result<Forwarded, Response> {
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
@@ -515,7 +515,7 @@ fn list_ids(body: &[u8]) -> Vec<String> {
         .collect()
 }
 
-fn with_query(path: &str, uri: &Uri) -> String {
+fn with_query(path: &crate::translation_core::Str, uri: &Uri) -> String {
     uri.query()
         .map_or_else(|| path.to_string(), |query| format!("{path}?{query}"))
 }
@@ -535,7 +535,7 @@ fn item_not_found() -> Response {
     resource_not_found("Conversation item", "conversation_item_not_found")
 }
 
-fn resource_not_found(message: &str, code: &str) -> Response {
+fn resource_not_found(message: &crate::translation_core::Str, code: &crate::translation_core::Str) -> Response {
     (
         StatusCode::NOT_FOUND,
         axum::Json(serde_json::json!({
@@ -574,11 +574,11 @@ fn affinity_error(error: &impl std::fmt::Display) -> Response {
     )
 }
 
-fn upstream_error(message: &str) -> Response {
+fn upstream_error(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::BAD_GATEWAY, "api_error", message)
 }
 
-fn openai_error(status: StatusCode, error_type: &str, message: &str) -> Response {
+fn openai_error(status: StatusCode, error_type: &crate::translation_core::Str, message: &crate::translation_core::Str) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type,

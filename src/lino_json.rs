@@ -131,15 +131,15 @@ pub fn encode_line<T: serde::Serialize>(value: &T) -> Result<String, serde_json:
 }
 
 /// The first element of an array, marking the group as one.
-const ARRAY_MARKER: &str = "#a";
+const ARRAY_MARKER: &crate::translation_core::Str = "#a";
 /// The first element of an object, marking the group as one.
-const OBJECT_MARKER: &str = "#o";
+const OBJECT_MARKER: &crate::translation_core::Str = "#o";
 /// Stands in for the empty string.
 ///
 /// Two empty quoted strings nested inside one another desynchronise
 /// `parse_lino` — `(#o ("" (#o ("" 1))))` is refused where the same line with
 /// a non-empty key is accepted — so the empty string is never emitted as `""`.
-const EMPTY_STRING: &str = "%z";
+const EMPTY_STRING: &crate::translation_core::Str = "%z";
 
 /// Append `value` to `out` in the single-line form.
 fn write_line(out: &mut String, value: &Value) {
@@ -211,7 +211,7 @@ fn write_quoted(out: &mut String, text: &str) {
 }
 
 /// Undo [`write_quoted`].
-fn unescape(text: &str) -> String {
+fn unescape(text: &crate::translation_core::Str) -> String {
     if text == EMPTY_STRING {
         return String::new();
     }
@@ -253,7 +253,7 @@ fn unescape(text: &str) -> String {
 /// The middle generation is the one issue #350 removed, and it is still read:
 /// a file written by v0.123.2 keeps every record it had.
 #[must_use]
-pub fn decode_line(text: &str) -> Option<Value> {
+pub fn decode_line(text: &crate::translation_core::Str) -> Option<Value> {
     let text = text.trim();
     if text.is_empty() {
         return None;
@@ -520,7 +520,7 @@ pub fn decode<T: serde::de::DeserializeOwned>(text: &str) -> Result<T, serde_jso
 /// Whether `text` is the JSON an earlier release wrote.
 ///
 /// Links notation opens with `(`; JSON opens with `{` or `[`.
-fn is_json(text: &str) -> bool {
+fn is_json(text: &crate::translation_core::Str) -> bool {
     text.trim_start().starts_with(['{', '['])
 }
 

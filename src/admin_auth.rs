@@ -23,8 +23,8 @@ use crate::token::{TokenManager, constant_time_eq};
 #[must_use]
 pub fn admin_access_granted(
     manager: &TokenManager,
-    provided: Option<&str>,
-    admin_key: Option<&str>,
+    provided: Option<&crate::translation_core::Str>,
+    admin_key: Option<&crate::translation_core::Str>,
     allow_anonymous: bool,
 ) -> bool {
     if let Some(provided) = provided {

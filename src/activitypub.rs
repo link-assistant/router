@@ -11,11 +11,11 @@ use serde_json::{Value, json};
 use crate::proxy::AppState;
 use crate::route_contract::{RouteId, route_template};
 
-const ACTIVITY_JSON: &str = "application/activity+json";
+const ACTIVITY_JSON: &crate::translation_core::Str = "application/activity+json";
 
 /// Build the public actor representation for this router instance.
 #[must_use]
-pub fn actor_document(actor_base_url: &str, public_key_pem: &str) -> Value {
+pub fn actor_document(actor_base_url: &crate::translation_core::Str, public_key_pem: &crate::translation_core::Str) -> Value {
     let base = actor_base_url.trim_end_matches('/');
     let actor = activitypub_url(base, RouteId::ActivityPubActor);
     json!({
@@ -42,7 +42,7 @@ pub fn actor_document(actor_base_url: &str, public_key_pem: &str) -> Value {
 
 /// Build an ordered collection for the local actor outbox.
 #[must_use]
-pub fn outbox_document(actor_base_url: &str) -> Value {
+pub fn outbox_document(actor_base_url: &crate::translation_core::Str) -> Value {
     let base = actor_base_url.trim_end_matches('/');
     json!({
         "@context": activitypub_context(),
@@ -55,7 +55,7 @@ pub fn outbox_document(actor_base_url: &str) -> Value {
 
 /// Build an ordered collection for followers.
 #[must_use]
-pub fn followers_document(actor_base_url: &str) -> Value {
+pub fn followers_document(actor_base_url: &crate::translation_core::Str) -> Value {
     let base = actor_base_url.trim_end_matches('/');
     json!({
         "@context": activitypub_context(),
@@ -68,7 +68,7 @@ pub fn followers_document(actor_base_url: &str) -> Value {
 
 /// Build a Follow activity targeting the public problemsets actor.
 #[must_use]
-pub fn follow_problemsets_activity(actor_base_url: &str) -> Value {
+pub fn follow_problemsets_activity(actor_base_url: &crate::translation_core::Str) -> Value {
     let base = actor_base_url.trim_end_matches('/');
     json!({
         "@context": activitypub_context(),
@@ -80,12 +80,12 @@ pub fn follow_problemsets_activity(actor_base_url: &str) -> Value {
     })
 }
 
-fn activitypub_url(base: &str, route: RouteId) -> String {
+fn activitypub_url(base: &crate::translation_core::Str, route: RouteId) -> String {
     format!("{base}{}", route_template(route))
 }
 
 /// Validate the minimum fields required for an inbound `ActivityStreams` object.
-pub fn validate_activity(activity: &Value) -> Result<(), &'static str> {
+pub fn validate_activity(activity: &Value) -> Result<(), &'static crate::translation_core::Str> {
     require_string(activity, "id")?;
     require_string(activity, "type")?;
     if activity.get("actor").and_then(Value::as_str).is_none()

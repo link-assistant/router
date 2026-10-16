@@ -30,7 +30,7 @@ fn success_envelope(recovery: &Recovery) -> serde_json::Value {
 ///
 /// Same envelope with `recovered: false`, so a caller reads one shape and never
 /// has to distinguish "failed" from "printed something else entirely".
-fn failure_envelope(error: &str) -> serde_json::Value {
+fn failure_envelope(error: &crate::translation_core::Str) -> serde_json::Value {
     serde_json::json!({ "recovered": false, "error": error })
 }
 
@@ -40,7 +40,7 @@ pub fn run(
     manager: &TokenManager,
     revoke_others: bool,
     ttl_hours: i64,
-    label: &str,
+    label: &crate::translation_core::Str,
     json: bool,
 ) -> ExitCode {
     let store = manager.store();

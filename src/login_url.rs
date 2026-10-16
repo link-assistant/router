@@ -12,16 +12,16 @@
 use crate::login_pty::PTY_COLS;
 
 /// Hosts an authorization URL is accepted from.
-const AUTH_HOSTS: &[&str] = &["claude.ai", "claude.com", "anthropic.com"];
+const AUTH_HOSTS: &[&crate::translation_core::Str] = &["claude.ai", "claude.com", "anthropic.com"];
 
 /// Prefix of the long-lived tokens `claude setup-token` prints.
-const TOKEN_PREFIXES: &[&str] = &["sk-ant-oat", "sk-ant-"];
+const TOKEN_PREFIXES: &[&crate::translation_core::Str] = &["sk-ant-oat", "sk-ant-"];
 
 /// Undo terminal hard-wrapping: a line that is exactly the terminal width was
 /// wrapped by the terminal, not ended by the program, so it continues on the
 /// next line.
 #[must_use]
-pub fn unwrap_terminal_lines(transcript: &str) -> String {
+pub fn unwrap_terminal_lines(transcript: &crate::translation_core::Str) -> String {
     let width = PTY_COLS as usize;
     let mut out = String::with_capacity(transcript.len());
     let mut lines = transcript.split('\n').peekable();
@@ -39,7 +39,7 @@ pub fn unwrap_terminal_lines(transcript: &str) -> String {
 /// Returns the last `https://` URL on a known Anthropic host, which is the
 /// most recently painted one.
 #[must_use]
-pub fn extract_login_url(transcript: &str) -> Option<String> {
+pub fn extract_login_url(transcript: &crate::translation_core::Str) -> Option<String> {
     let text = unwrap_terminal_lines(transcript);
     let mut found = None;
     let mut rest = text.as_str();
@@ -59,7 +59,7 @@ pub fn extract_login_url(transcript: &str) -> Option<String> {
 
 /// Find the long-lived token a successful `setup-token` run printed, if any.
 #[must_use]
-pub fn extract_token(transcript: &str) -> Option<String> {
+pub fn extract_token(transcript: &crate::translation_core::Str) -> Option<String> {
     let text = unwrap_terminal_lines(transcript);
     let mut found = None;
     for prefix in TOKEN_PREFIXES {
@@ -84,12 +84,12 @@ pub fn extract_token(transcript: &str) -> Option<String> {
 }
 
 /// Placeholder substituted for a secret that was removed from a transcript.
-pub const REDACTED: &str = "[redacted]";
+pub const REDACTED: &crate::translation_core::Str = "[redacted]";
 
 /// Prefixes of every credential that can appear in a login transcript: the
 /// upstream tokens the CLI prints, and the router's own credentials, in case a
 /// transcript ever picks one up.
-const SECRET_PREFIXES: &[&str] = &[
+const SECRET_PREFIXES: &[&crate::translation_core::Str] = &[
     "sk-ant-",
     crate::token::TOKEN_PREFIX,
     crate::token::CODEX_TOKEN_PREFIX,
@@ -106,7 +106,7 @@ const SECRET_PREFIXES: &[&str] = &[
 /// truncation, so a token cut by a length limit cannot leave a usable prefix
 /// behind.
 #[must_use]
-pub fn redact_secrets(text: &str) -> String {
+pub fn redact_secrets(text: &crate::translation_core::Str) -> String {
     let mut out = text.to_string();
     for prefix in SECRET_PREFIXES {
         out = redact_prefix(&out, prefix);
@@ -115,7 +115,7 @@ pub fn redact_secrets(text: &str) -> String {
 }
 
 /// Replace every `prefix`-led credential run with `prefix[redacted]`.
-fn redact_prefix(text: &str, prefix: &str) -> String {
+fn redact_prefix(text: &crate::translation_core::Str, prefix: &crate::translation_core::Str) -> String {
     let mut out = String::with_capacity(text.len());
     let mut rest = text;
     while let Some(idx) = rest.find(prefix) {
@@ -134,7 +134,7 @@ fn redact_prefix(text: &str, prefix: &str) -> String {
 /// The run is the usual base64url alphabet plus `-` and `_`. A `.` is part of
 /// the run only when another such character follows it, so a JWT's dotted
 /// segments are swallowed whole while a sentence-ending period is not.
-fn secret_run_len(text: &str) -> usize {
+fn secret_run_len(text: &crate::translation_core::Str) -> usize {
     let is_body = |c: char| c.is_ascii_alphanumeric() || c == '-' || c == '_';
     let bytes = text.as_bytes();
     let mut end = 0;
@@ -153,7 +153,7 @@ fn secret_run_len(text: &str) -> usize {
 /// Remove a specific known secret — the authorization code the human pasted,
 /// which the terminal echoes back and which no pattern can recognise.
 #[must_use]
-pub fn redact_value(text: &str, secret: &str) -> String {
+pub fn redact_value(text: &crate::translation_core::Str, secret: &crate::translation_core::Str) -> String {
     let secret = secret.trim();
     if secret.len() < 4 {
         return text.to_string();
@@ -162,7 +162,7 @@ pub fn redact_value(text: &str, secret: &str) -> String {
 }
 
 /// Strip punctuation a sentence may have wrapped the URL in.
-fn trim_url_punctuation(url: &str) -> &str {
+fn trim_url_punctuation(url: &crate::translation_core::Str) -> &crate::translation_core::Str {
     url.trim_end_matches(['.', ',', ')', ']', '>', '"', '\'', ';', ':'])
 }
 

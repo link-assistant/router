@@ -12,7 +12,7 @@
 use serde_json::Value;
 
 /// Column headers, in the order [`print_table`] writes them.
-const HEADERS: [&str; 9] = [
+const HEADERS: [&crate::translation_core::Str; 9] = [
     "id",
     "issued_at",
     "expires_at",

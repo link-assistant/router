@@ -95,7 +95,7 @@ async fn retrieve_openai_native(
     state: &AppState,
     client: crate::clients::ClientKind,
     headers: &HeaderMap,
-    model_id: &str,
+    model_id: &crate::translation_core::Str,
     entry: &serde_json::Value,
     uri: &Uri,
 ) -> Option<Response> {
@@ -155,7 +155,7 @@ async fn retrieve_openai_native(
 async fn bounded_native_response(
     state: &AppState,
     upstream: reqwest::Response,
-    correlation_id: &str,
+    correlation_id: &crate::translation_core::Str,
 ) -> Result<Response, String> {
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
@@ -223,14 +223,14 @@ fn project_catalog_entry(dialect: ApiDialect, mut entry: serde_json::Value) -> R
     response
 }
 
-fn valid_model_id(model_id: &str) -> bool {
+fn valid_model_id(model_id: &crate::translation_core::Str) -> bool {
     !model_id.is_empty()
         && model_id.len() <= 512
         && !model_id.contains('/')
         && !model_id.chars().any(char::is_control)
 }
 
-fn model_not_found(dialect: ApiDialect, model_id: &str) -> Response {
+fn model_not_found(dialect: ApiDialect, model_id: &crate::translation_core::Str) -> Response {
     error_response(
         dialect,
         StatusCode::NOT_FOUND,
@@ -246,8 +246,8 @@ fn model_not_found(dialect: ApiDialect, model_id: &str) -> Response {
 fn error_response(
     dialect: ApiDialect,
     status: StatusCode,
-    error_type: &str,
-    message: &str,
+    error_type: &crate::translation_core::Str,
+    message: &crate::translation_core::Str,
 ) -> Response {
     crate::api_error::PresentedError {
         status,

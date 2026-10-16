@@ -27,7 +27,7 @@ use axum::middleware::Next;
 use axum::response::Response;
 
 /// Content-Security-Policy served with every admin response.
-pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; \
+pub const CONTENT_SECURITY_POLICY: &crate::translation_core::Str = "default-src 'self'; \
      script-src 'self'; \
      style-src 'self' 'unsafe-inline'; \
      img-src 'self' data:; \
@@ -39,7 +39,7 @@ pub const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; \
      frame-ancestors 'none'";
 
 /// Headers applied to every response from the admin listener.
-const HEADERS: &[(header::HeaderName, &str)] = &[
+const HEADERS: &[(header::HeaderName, &crate::translation_core::Str)] = &[
     (header::CONTENT_SECURITY_POLICY, CONTENT_SECURITY_POLICY),
     (header::X_FRAME_OPTIONS, "DENY"),
     (header::X_CONTENT_TYPE_OPTIONS, "nosniff"),

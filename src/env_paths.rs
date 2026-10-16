@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 /// falls through to the next candidate and the "…are unset" error at its end
 /// can actually fire.
 #[must_use]
-pub fn directory(name: &str) -> Option<PathBuf> {
+pub fn directory(name: &crate::translation_core::Str) -> Option<PathBuf> {
     from_value(crate::operation_context::var_os(name))
 }
 
@@ -46,7 +46,7 @@ pub fn router_client_config_root_in(
 
 /// Qwen documents relative and `~/` overrides; resolve them once so later
 /// profile operations never write through a changing process directory.
-pub fn qwen_directory(name: &str, home: &Path) -> Result<Option<PathBuf>, String> {
+pub fn qwen_directory(name: &crate::translation_core::Str, home: &Path) -> Result<Option<PathBuf>, String> {
     qwen_directory_in(&directory, name, home, || {
         crate::operation_context::current_dir()
             .map_err(|error| format!("cannot resolve {name}: {error}"))
@@ -92,7 +92,7 @@ pub fn from_value(value: Option<std::ffi::OsString>) -> Option<PathBuf> {
 /// # Errors
 ///
 /// Returns a message when `root` is relative.
-pub fn require_absolute(root: PathBuf, what: &str) -> Result<PathBuf, String> {
+pub fn require_absolute(root: PathBuf, what: &crate::translation_core::Str) -> Result<PathBuf, String> {
     if root.is_absolute() {
         return Ok(root);
     }
