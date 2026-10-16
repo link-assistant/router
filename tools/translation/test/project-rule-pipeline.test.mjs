@@ -4,6 +4,7 @@ import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {translateProject,originalProjectMethodFieldEvidence} from '../project.mjs';
 import {serializeProgram} from '../semantic-meta.mjs';
+import {serializeConcreteSyntaxMeta,parseConcreteSyntaxMeta,reconstructConcreteSyntax} from '../concrete-syntax-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -19,10 +20,25 @@ const retain=(name,value)=>{
 };
 const options=(files,events=[])=>({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>{events.push({read:path});assert.ok(Object.hasOwn(files,path));return files[path];},progress:record=>events.push({progress:record})});
 function snapshot(result){return {meta:result.meta,javascript:result.javascript,typescript:result.typescript,sourceScopes:result.sourceScopes,executableDeclarations:result.executableDeclarations.map(({lower,...fields})=>fields),checkedMethodDeclarations:result.checkedMethodDeclarations.map(({lower,...fields})=>fields),checkedGeneratedMethodDeclarations:result.checkedGeneratedMethodDeclarations.map(({lower,...fields})=>fields)};}
+function assertConcreteSyntax(result,files){
+  const rows=result.meta.concreteSyntaxMeta,expected=result.sourceScopes.filter(row=>row.sourceView.modulePath.length===0).map(row=>row.source);
+  assert.ok(Array.isArray(rows));assert.deepEqual(rows.map(row=>row.source),expected);
+  return rows.map(({source,document})=>{
+    assert.ok(Object.hasOwn(files,source));assert.equal(document.language,'Rust');assert.equal(document.source,files[source]);
+    const serialized=serializeConcreteSyntaxMeta(document),parsed=parseConcreteSyntaxMeta(serialized);
+    assert.deepEqual(parsed,document);assert.equal(serializeConcreteSyntaxMeta(parsed),serialized);assert.equal(reconstructConcreteSyntax(parsed),files[source]);
+    assert.deepEqual(Buffer.from(reconstructConcreteSyntax(parsed)),Buffer.from(files[source]));
+    assert.ok(Object.keys(document.authority).length>0);for(const flag of Object.values(document.authority))assert.equal(flag,false);
+    return {source,document,serialized};
+  });
+}
+function legacySnapshot(result){const full=snapshot(result),{concreteSyntaxMeta,...meta}=full.meta;assert.ok(concreteSyntaxMeta);return {...full,meta};}
 function compare(files,name,extra={}){
   const beforeEvents=[],afterEvents=[],before=prior.translateProject({...options(files,beforeEvents),...extra}),after=translateProject({...options(files,afterEvents),...extra});
-  assert.deepEqual(snapshot(after),snapshot(before));assert.deepEqual(afterEvents,beforeEvents);
-  retain(name,{files,extra,original,resolvedOriginal,before:snapshot(before),after:snapshot(after),beforeEvents,afterEvents});return {before,after};
+  retain(name+'-raw',{files,extra,original,resolvedOriginal,before:snapshot(before),after:snapshot(after),beforeEvents,afterEvents});
+  const cst=assertConcreteSyntax(after,files);assert.equal(Object.hasOwn(before.meta,'concreteSyntaxMeta'),false);
+  retain(name,{files,extra,original,resolvedOriginal,before:snapshot(before),after:snapshot(after),cst,beforeEvents,afterEvents});
+  assert.deepEqual(legacySnapshot(after),snapshot(before));assert.deepEqual(afterEvents,beforeEvents);return {before,after};
 }
 const siblings={
   'src/lib.rs':'pub mod math; pub mod nested; pub fn root(value:u8)->u8{math::increment(value)}',
@@ -59,6 +75,7 @@ test('lazy declaration closures keep their full programs emitters and signatures
 test('genuine method facades use their own issuer and copied or cross-analysis evidence still refuses',{timeout:30000},async()=>{
   const source='pub struct Counter{value:u8}impl Counter{pub fn make(value:u8)->Self{Self{value}}pub fn small(&self)->bool{matches!(self.value,1 | 2)}}pub fn run(value:u8)->bool{Counter::make(value).small()}';
   const files={'src/lib.rs':source},result=translateProject(options(files)),second=translateProject(options(files));
+  assertConcreteSyntax(result,files);assertConcreteSyntax(second,files);
   const facade=result.checkedMethodDeclarations.find(row=>row.name==='small'),foreign=second.checkedMethodDeclarations.find(row=>row.name==='small');assert.ok(facade);assert.ok(foreign);
   const own=originalProjectMethodFieldEvidence(facade),other=originalProjectMethodFieldEvidence(foreign);
   assert.throws(()=>originalProjectMethodFieldEvidence({...facade}),/copied, unissued|caller fabricated/);
@@ -83,11 +100,14 @@ test('original callback errors propagate at the same stage before later work',()
   retain('callback-error-order',observations);
 });
 test('nested project calls remain independent without replacing the outer private program',()=>{
-  const files={'src/lib.rs':'pub fn run(value:u8)->u8{value+1}'},observations=[];
+  const files={'src/lib.rs':'pub fn run(value:u8)->u8{value+1}'},observations=[],raw=[];
   for(const implementation of [prior.translateProject,translateProject]){
     const events=[],input=options(files,events);let nested=null;
     input.progress=record=>{events.push({progress:record});if(record.stage==='namespace'&&record.state==='end'&&!nested)nested=implementation(options({'src/lib.rs':'pub const INNER:u8=9;'}));};
-    const result=implementation(input);assert.ok(nested);assert.equal(result.meta.executable.length,1);assert.equal(nested.meta.executable.length,1);observations.push({result:snapshot(result),nested:snapshot(nested),events});
+    const result=implementation(input);assert.ok(nested);assert.equal(result.meta.executable.length,1);assert.equal(nested.meta.executable.length,1);
+    retain('reentrant-projects-raw-'+(implementation===translateProject?'current':'original'),{files,result:snapshot(result),nested:snapshot(nested),events});
+    const current=implementation===translateProject,cst=current?{outer:assertConcreteSyntax(result,files),inner:assertConcreteSyntax(nested,{'src/lib.rs':'pub const INNER:u8=9;'})}:null;
+    raw.push({result:snapshot(result),nested:snapshot(nested),events,cst});observations.push({result:current?legacySnapshot(result):snapshot(result),nested:current?legacySnapshot(nested):snapshot(nested),events});
   }
-  assert.deepEqual(observations[0],observations[1]);retain('reentrant-projects',observations);
+  retain('reentrant-projects',{raw,observations});assert.deepEqual(observations[0],observations[1]);
 });

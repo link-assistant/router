@@ -1,4 +1,5 @@
 import {createRulePipeline} from './rule-pipeline.mjs';
+import {createRustConcreteSyntaxStage} from './forward-concrete-syntax.mjs';
 import {associateOriginalSharedPatternDependencies} from './extensions/shared-source-patterns.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {translationProgressReporter} from './translation-progress.mjs';
@@ -126,7 +127,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
   const profile=compilationProfile(profileInput);
   const tracked = new Set(paths);
   if (!tracked.has(entry)) throw new Error(`crate entrypoint is not tracked: ${entry}`);
-  const modules = [], edges = [], diagnostics = [], visited = new Set();
+  const modules = [], edges = [], diagnostics = [], concreteSyntaxMeta = [], visited = new Set();
   const boundedChild=(file,path,item)=>{
     if(path.length<=MODULE_PATH_PROFILE.limits.graphDepth)return true;
     diagnostics.push({file,module:path,kind:'module',message:'Tracked module graph exceeds its bounded combined module depth',limit:MODULE_PATH_PROFILE.limits.graphDepth,span:{start:item.start,end:item.end}});return false;
@@ -137,7 +138,11 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     const key = path.join('.');
     if (visited.has(key)) throw new Error(`duplicate module path ${key}`);
     visited.add(key);
-    const source = original?.source??readSource(file);
+    // Only whole physical inputs cross the CST boundary. Inline module views
+    // reuse their parent's exact reconstructed source and original coordinates.
+    const concrete=original?null:createRustConcreteSyntaxStage(readSource(file));
+    const source = original?.source??concrete.source;
+    if(concrete)concreteSyntaxMeta.push({source:file,document:concrete.document});
     const fileOffset=original?.offset??offset;
     if(!original)offset += source.length + 1;
     const module = { file, path, directory, pathDirectory, source, offset:fileOffset, items: [], compilationProfile:profile, inactiveItems:[], configurationEvidence:[] };
@@ -186,7 +191,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     }
   };
   visit(entry, [], posix.dirname(entry));
-  return { entry, modules, edges, diagnostics, compilationProfile:profile };
+  return { entry, modules, edges, diagnostics, compilationProfile:profile, concreteSyntaxMeta };
 }
 
 function tree(declarations) {
@@ -503,6 +508,7 @@ function compileProjectLanguage(options) {
   progress({stage:'target-emit',state:'end',entry:options.entry});
   progress({stage:'project-serialize',state:'start',entry:options.entry});
   const meta = { schema: 'tracked-rust-project-semantic-meta-v1', compilationProfile:graph.compilationProfile, standardNamespaceCensus:STANDARD_NAMESPACE_EVIDENCE, configurationEvidence:graph.modules.map(module=>({source:module.file,condition:module.configurationCondition,items:module.configurationEvidence})), status: 'partial', entry: options.entry, runtimeParity: false, sources: graph.modules.map(module => ({ source: module.file, sha256: sha256(module.source), module: module.path })), moduleEdges: graph.edges, imports, moduleDiagnostics: graph.diagnostics, bindingEvidence, refused, unloweredItems, executable: entries.map(entry => ({ source: entry.file, name: entry.name, term: entry.term, span: entry.span })), checkedSemanticProgram: JSON.parse(serializeProgram(checked)), targetSemanticProgram: JSON.parse(serializeProgram(target.program)), checkedMethods: methods.map(entry=>({source:entry.file,name:entry.displayName,span:entry.span,receiver:entry.surface.impl.receiver,...(entry.defaultSourceAdmission?{defaultSourceAdmission:entry.defaultSourceAdmission}:{})})), encodings: emitted.encodings, assumptions: emitted.assumptions };
+  meta.concreteSyntaxMeta=graph.concreteSyntaxMeta;
   if(deriveContext)meta.deriveNamespaceFootprints=deriveContext;
   if(generatedMethods.length)meta.checkedGeneratedMethods=generatedMethods.map(entry=>({source:entry.file,name:entry.displayName,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:entry.span,receiver:entry.surface.impl.receiver,semanticBodyChecked:true,...(entry.surface.impl.cloneSourceProof?{cloneSourceProof:entry.surface.impl.cloneSourceProof}:{defaultSourceProof:entry.surface.impl.defaultSourceProof})}));
   if(toolContext.certificates.length)meta.toolAttributeFootprints=toolContext;

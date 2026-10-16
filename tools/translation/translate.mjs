@@ -13,6 +13,7 @@ import { roundTripProgram } from './semantic-meta.mjs';
 import {relocateSourceLink} from './extensions/source-links.mjs';
 import {DEFAULT_JSON_PARSER_PROFILE,actualJsonCapabilityProfile} from './json-capabilities.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
+import {createRustConcreteSyntaxStage,readRustConcreteSyntaxMeta} from './forward-concrete-syntax.mjs';
 
 export const PIN = 'e46e196db5ec34bf13a73b8645aa38d409737e60';
 export const sha256 = text => createHash('sha256').update(text).digest('hex');
@@ -52,7 +53,18 @@ function relocate(value, offset) {
   return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, ['copyCertificate','sourceParameterPatterns','sourceParameterPattern','sourcePattern','constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceDisplayScope','sourceBoolFromScope'].includes(key)?item:['span','subjectSyntaxSpan','patternSpan'].includes(key) && item ? { start: item.start + offset, end: item.end + offset } : relocate(item, offset)]));
 }
 
-export function translateSource(source, path = 'input.rs', { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest } = {}) {
+export function translateSource(source,path='input.rs',{projectDeclarations=[],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest}={}) {
+  // Preserve the original four option reads/defaults before any source work.
+  return translateConcreteSyntaxStage(createRustConcreteSyntaxStage(source),path,{projectDeclarations,projectSourceScopes,jsonParserProfile:parserProfile,cargoManifest});
+}
+
+// Edited CST is new source input. It receives the same source hashes, private
+// original-source checks and semantic-meta round trip as the string entrypoint.
+export function translateSourceConcreteSyntaxMeta(serialized,path='input.rs',options={}) {
+  return translateConcreteSyntaxStage(readRustConcreteSyntaxMeta(serialized),path,options);
+}
+
+function translateConcreteSyntaxStage({source,document}, path, { projectDeclarations = [],projectSourceScopes=[],jsonParserProfile:parserProfile,cargoManifest } = {}) {
   const macroEvidence=macroProvenance(source),sourceHash=sha256(source);
   const matchingScopes=projectSourceScopes.filter(entry=>entry.source===path&&entry.sha256===sourceHash&&(!entry.sourceView||entry.sourceView.modulePath.length===0));
   const sourceScope=matchingScopes.length===1?matchingScopes[0]:null;
@@ -245,6 +257,7 @@ export function translateSource(source, path = 'input.rs', { projectDeclarations
   for (const item of executable) for (const signature of emissions.get(item).signatures ?? []) { if (signature.target) { parameterTypes.set(signature.target, signature.params); returnTypes.set(signature.target, signature.ret); } }
   const typedRuntime = annotateRuntimeTypes(runtime, parameterTypes, dataTypes, returnTypes, executable.flatMap(item=>emissions.get(item).checkedLocalBindings??[]));
   const typescript = typedRuntime.replace('export const translated =', `export const translated: { ${types} } =`);
+  ir.concreteSyntaxMeta=document;
   return { ir, javascript: runtime, typescript };
 }
 
