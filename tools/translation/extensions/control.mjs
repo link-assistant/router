@@ -25,6 +25,7 @@ const scalar = type => ['fixed', 'bool', 'string', 'unit'].includes(type.kind)||
 
 function containsControl(node) {
   if (!node || typeof node !== 'object') return false;
+  if (node.k === 'routerLambda') return false;
   if (['routerReturn', 'routerBreak', 'routerContinue'].includes(node.k)) return true;
   return Object.entries(node).some(([key, value]) => key !== 'type' && (Array.isArray(value) ? value.some(containsControl) : containsControl(value)));
 }
@@ -191,6 +192,11 @@ export class ControlChecker extends StringChecker {
 
   loopEnvironment(env) { return new Map(env).set(LOOP, (env.get(LOOP) ?? 0) + 1); }
   functionResult(env) { return env.get(RETURN); }
+  callbackEnvironment(env,result) {
+    // A callback owns its return and loop boundary. Captured scalar values may
+    // be read, but only genuine callback-local bindings can regain mutation.
+    return new Map(env).set(RETURN,result).set(LOOP,0).set(MUTABLE,new Set());
+  }
   bindingEnvironment(env, name, type, mutable = false) {
     const names = new Set(env.get(MUTABLE) ?? []);
     if (mutable) names.add(name); else names.delete(name);
@@ -279,7 +285,7 @@ export class ControlChecker extends StringChecker {
     return result;
   }
 }
-const __routerOriginalBirth286_ControlChecker=[ControlChecker,ControlChecker.prototype,StringChecker,[["constructor",ControlChecker],["program",ControlChecker.prototype["program"]],["contextEnvironment",ControlChecker.prototype["contextEnvironment"]],["loopEnvironment",ControlChecker.prototype["loopEnvironment"]],["functionResult",ControlChecker.prototype["functionResult"]],["bindingEnvironment",ControlChecker.prototype["bindingEnvironment"]],["expr",ControlChecker.prototype["expr"]]]];
+const __routerOriginalBirth286_ControlChecker=[ControlChecker,ControlChecker.prototype,StringChecker,[["constructor",ControlChecker],["program",ControlChecker.prototype["program"]],["contextEnvironment",ControlChecker.prototype["contextEnvironment"]],["loopEnvironment",ControlChecker.prototype["loopEnvironment"]],["functionResult",ControlChecker.prototype["functionResult"]],["callbackEnvironment",ControlChecker.prototype["callbackEnvironment"]],["bindingEnvironment",ControlChecker.prototype["bindingEnvironment"]],["expr",ControlChecker.prototype["expr"]]]];
 
 
 const indent = lines => lines.map(line => '  ' + line);
@@ -399,4 +405,4 @@ export const parseRust = source => new ControlRustParser(tokenizeRust(source)).f
 export const checkProgram = surface => new ControlChecker(surface.language, surface.externals ?? []).program(surface);
 export const emitJavaScript = program => emitWith(program, ControlEmitter);
 
-export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_ControlRustParser?[__routerOriginalBirth286_ControlRustParser[0],__routerOriginalBirth286_ControlRustParser[1],__routerOriginalBirth286_ControlRustParser[2],[[__routerOriginalBirth286_ControlRustParser[3][0][0],__routerOriginalBirth286_ControlRustParser[3][0][1]],[__routerOriginalBirth286_ControlRustParser[3][1][0],__routerOriginalBirth286_ControlRustParser[3][1][1]],[__routerOriginalBirth286_ControlRustParser[3][2][0],__routerOriginalBirth286_ControlRustParser[3][2][1]],[__routerOriginalBirth286_ControlRustParser[3][3][0],__routerOriginalBirth286_ControlRustParser[3][3][1]],[__routerOriginalBirth286_ControlRustParser[3][4][0],__routerOriginalBirth286_ControlRustParser[3][4][1]],[__routerOriginalBirth286_ControlRustParser[3][5][0],__routerOriginalBirth286_ControlRustParser[3][5][1]],[__routerOriginalBirth286_ControlRustParser[3][6][0],__routerOriginalBirth286_ControlRustParser[3][6][1]],[__routerOriginalBirth286_ControlRustParser[3][7][0],__routerOriginalBirth286_ControlRustParser[3][7][1]]]]:null,__routerOriginalBirth286_ControlChecker?[__routerOriginalBirth286_ControlChecker[0],__routerOriginalBirth286_ControlChecker[1],__routerOriginalBirth286_ControlChecker[2],[[__routerOriginalBirth286_ControlChecker[3][0][0],__routerOriginalBirth286_ControlChecker[3][0][1]],[__routerOriginalBirth286_ControlChecker[3][1][0],__routerOriginalBirth286_ControlChecker[3][1][1]],[__routerOriginalBirth286_ControlChecker[3][2][0],__routerOriginalBirth286_ControlChecker[3][2][1]],[__routerOriginalBirth286_ControlChecker[3][3][0],__routerOriginalBirth286_ControlChecker[3][3][1]],[__routerOriginalBirth286_ControlChecker[3][4][0],__routerOriginalBirth286_ControlChecker[3][4][1]],[__routerOriginalBirth286_ControlChecker[3][5][0],__routerOriginalBirth286_ControlChecker[3][5][1]],[__routerOriginalBirth286_ControlChecker[3][6][0],__routerOriginalBirth286_ControlChecker[3][6][1]]]]:null],bindings:[],factoryCalls:[0,0]};}
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_ControlRustParser?[__routerOriginalBirth286_ControlRustParser[0],__routerOriginalBirth286_ControlRustParser[1],__routerOriginalBirth286_ControlRustParser[2],[[__routerOriginalBirth286_ControlRustParser[3][0][0],__routerOriginalBirth286_ControlRustParser[3][0][1]],[__routerOriginalBirth286_ControlRustParser[3][1][0],__routerOriginalBirth286_ControlRustParser[3][1][1]],[__routerOriginalBirth286_ControlRustParser[3][2][0],__routerOriginalBirth286_ControlRustParser[3][2][1]],[__routerOriginalBirth286_ControlRustParser[3][3][0],__routerOriginalBirth286_ControlRustParser[3][3][1]],[__routerOriginalBirth286_ControlRustParser[3][4][0],__routerOriginalBirth286_ControlRustParser[3][4][1]],[__routerOriginalBirth286_ControlRustParser[3][5][0],__routerOriginalBirth286_ControlRustParser[3][5][1]],[__routerOriginalBirth286_ControlRustParser[3][6][0],__routerOriginalBirth286_ControlRustParser[3][6][1]],[__routerOriginalBirth286_ControlRustParser[3][7][0],__routerOriginalBirth286_ControlRustParser[3][7][1]]]]:null,__routerOriginalBirth286_ControlChecker?[__routerOriginalBirth286_ControlChecker[0],__routerOriginalBirth286_ControlChecker[1],__routerOriginalBirth286_ControlChecker[2],[[__routerOriginalBirth286_ControlChecker[3][0][0],__routerOriginalBirth286_ControlChecker[3][0][1]],[__routerOriginalBirth286_ControlChecker[3][1][0],__routerOriginalBirth286_ControlChecker[3][1][1]],[__routerOriginalBirth286_ControlChecker[3][2][0],__routerOriginalBirth286_ControlChecker[3][2][1]],[__routerOriginalBirth286_ControlChecker[3][3][0],__routerOriginalBirth286_ControlChecker[3][3][1]],[__routerOriginalBirth286_ControlChecker[3][4][0],__routerOriginalBirth286_ControlChecker[3][4][1]],[__routerOriginalBirth286_ControlChecker[3][5][0],__routerOriginalBirth286_ControlChecker[3][5][1]],[__routerOriginalBirth286_ControlChecker[3][6][0],__routerOriginalBirth286_ControlChecker[3][6][1]],[__routerOriginalBirth286_ControlChecker[3][7][0],__routerOriginalBirth286_ControlChecker[3][7][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

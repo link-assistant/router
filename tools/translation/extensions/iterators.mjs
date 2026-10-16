@@ -7,6 +7,7 @@ import { emitWith } from './core.mjs';
 import { tokenizeRust } from './lexical.mjs';
 import { BOOL, UNIT, array, fixed, isNumeric, sameType, rustFixedType } from '../checked-types.mjs';
 import { coerce } from '../checked-coercions.mjs';
+import {checkCallbackLocalReturn} from './callback-local-control.mjs';
 import { typeError, unsupported } from '../vendor/meta-language/translation/diagnostics.js';
 import {canonicalResult,resultCollectionContext,checkResultMapItem,checkResultCollect} from './result-iterators.mjs';
 import {checkedScalarEnumerate,requireScalarEnumerate,hasNextBasedEnumerate} from './scalar-enumerate.mjs';
@@ -214,7 +215,7 @@ export class IteratorChecker extends DataChecker {
   }
   lambda(node, argumentTypes, env, path, expected, context) {
     if (node.k !== 'routerLambda' || node.params.length !== argumentTypes.length) throw typeError(`iterator callback needs ${argumentTypes.length} scalar parameters`, node.span);
-    if (containsExit(node.body)) throw unsupported('closure exit', 'callback bodies must use tail values', node.span);
+    if (containsExit(node.body)) return checkCallbackLocalReturn(this,node,argumentTypes,env,path,expected,context);
     if(node.params.some(param=>param.pattern)) {
       if(typeof this.patternLambda!=='function')throw unsupported('callback pattern','requires a checked pattern binding extension',node.span);
       return this.patternLambda(node,argumentTypes,env,path,expected,context);
