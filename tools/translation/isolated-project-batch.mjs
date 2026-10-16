@@ -26,7 +26,7 @@ const LIMIT={input:33554432,wire:536870912,output:536870912,frame:8388608,artifa
 const initial=originalPrivateParserExpectedCommonIntrinsicsUnchanged();
 const get=initial?Object.getOwnPropertyDescriptor:null,keys=initial?Reflect.ownKeys:null,apply=initial?Reflect.apply:null,proto=initial?Object.getPrototypeOf:null,own=initial?Object.hasOwn:null,isProxy=initial?types.isProxy:null;
 const spawn=initial?childProcess.spawn:null,execFile=initial?childProcess.execFileSync:null,kill=initial?process.kill.bind(process):null;
-const fsBirth=initial?Object.fromEntries(['openSync','closeSync','fstatSync','lstatSync','writeSync','readFileSync','mkdirSync','mkdtempSync','chmodSync','rmSync','realpathSync','readdirSync'].map(key=>[key,fs[key]])):null;
+const fsBirth=initial?Object.fromEntries(['openSync','closeSync','fstatSync','lstatSync','writeSync','readFileSync','mkdirSync','mkdtempSync','chmodSync','unlinkSync','rmdirSync','realpathSync','readdirSync'].map(key=>[key,fs[key]])):null;
 const parse=initial?JSON.parse:null,stringify=initial?JSON.stringify:null;
 const pointField=initial?get(String,'fromCodePoint'):null,point=pointField&&own(pointField,'value')?pointField.value:null;
 const pointQualified=!!point&&originalCapturedFunctionSource(point)==='function fromCodePoint() { [native code] }';
@@ -124,9 +124,30 @@ function validateRequest(text){
   const entries=new Set();for(let at=0;at<value.entries.length;at++){const path=value.entries[at];if(typeof path!=='string'||!path.endsWith('.rs')||!paths.has(path)||entries.has(path))fail('request entry association');entries.add(path);}if(stringify(value)!==text)fail('canonical JSON request required');return value;
 }
 function errorText(error){if(!error||typeof error!=='object'||isProxy(error))return 'unclassified infrastructure failure';const field=get(error,'message');return field&&own(field,'value')&&typeof field.value==='string'?field.value.slice(0,4096):'unclassified infrastructure failure';}
-function diskBytes(root){let total=0,entries=0;const pending=[root];while(pending.length){const path=pending.pop(),state=stat(fsBirth.lstatSync(path));if(++entries>40000)fail('owned disk entry bound');if((state.mode&0xf000)===0xa000)fail('owned task contains link');total+=max(state.size,own(state,'blocks')?state.blocks*512:state.size);if(!isSafeInteger(total)||total>LIMIT.disk)fail('owned disk bound');if((state.mode&0xf000)===0x4000){const names=fsBirth.readdirSync(path);for(let at=0;at<names.length;at++)pending.push(join(path,names[at]));}else if((state.mode&0xf000)!==0x8000)fail('owned disk type');}return total;}
+function vanishedDescendant(error,root,path){
+  if(path===root||!path.startsWith(root+'/')||!error||typeof error!=='object'||isProxy(error))return false;
+  const code=get(error,'code');return !!(code&&own(code,'value')&&code.value==='ENOENT');
+}
+function diskBytes(root){
+  let total=0,entries=0;const pending=[root];
+  while(pending.length){
+    const path=pending.pop();if(++entries>40000)fail('owned disk entry bound');let state;
+    try{state=stat(fsBirth.lstatSync(path));}catch(error){if(vanishedDescendant(error,root,path))continue;throw error;}
+    if((state.mode&0xf000)===0xa000)fail('owned task contains link');total+=max(state.size,own(state,'blocks')?state.blocks*512:state.size);if(!isSafeInteger(total)||total>LIMIT.disk)fail('owned disk bound');
+    if((state.mode&0xf000)===0x4000){let names;try{names=fsBirth.readdirSync(path);}catch(error){if(vanishedDescendant(error,root,path))continue;throw error;}for(let at=0;at<names.length;at++)pending.push(join(path,names[at]));}
+    else if((state.mode&0xf000)!==0x8000)fail('owned disk type');
+  }return total;
+}
+function removeTask(root){
+  const pending=[{path:root,directory:false}];
+  for(let at=0;at<pending.length;at++){
+    const row=pending[at],state=stat(fsBirth.lstatSync(row.path)),kind=state.mode&0xf000;
+    if(kind===0x4000){row.directory=true;fsBirth.chmodSync(row.path,0o700);const names=fsBirth.readdirSync(row.path);for(let i=0;i<names.length;i++)pending[pending.length]={path:join(row.path,names[i]),directory:false};}
+    else if(kind!==0x8000&&kind!==0xa000)fail('owned cleanup node type');
+  }
+  for(let at=pending.length-1;at>=0;at--){const row=pending[at];if(row.directory)fsBirth.rmdirSync(row.path);else fsBirth.unlinkSync(row.path);}
+}
 
-function removeTask(root){const pending=[root];for(let at=0;at<pending.length;at++){const path=pending[at],state=stat(fsBirth.lstatSync(path));if((state.mode&0xf000)===0x4000){fsBirth.chmodSync(path,0o700);const names=fsBirth.readdirSync(path);for(let i=0;i<names.length;i++)pending[pending.length]=join(path,names[i]);}}fsBirth.rmSync(root,{recursive:true,force:true});}
 function processRss(childPid){
   const text=apply(execFile,childProcess,['/bin/ps',['-axo','pid=,ppid=,rss='],{encoding:'utf8',timeout:2000,maxBuffer:4194304,env:{PATH:'/usr/bin:/bin',LC_ALL:'C'}}]),rows=text.trim().split('\n').map(line=>line.trim().split(/\s+/u).map(number)),pids=new Set(childPid>0?[childPid]:[]),base=rows.find(row=>row[0]===parentPid);let changed=true;
   while(changed){changed=false;for(let at=0;at<rows.length;at++){const row=rows[at];if(pids.has(row[1])&&!pids.has(row[0])){pids.add(row[0]);changed=true;}}}
@@ -137,7 +158,7 @@ function processRss(childPid){
 export async function translateOriginalProjectBatch(serializedRequest){
   guard();if(platform!=='darwin'&&platform!=='linux')fail('qualified POSIX platform required');if(typeof serializedRequest!=='string'||serializedRequest.length>LIMIT.input)fail('bounded primitive JSON request required');const request=from(serializedRequest,'utf8');exactUtf8(serializedRequest,request);if(byteLength(serializedRequest,'utf8')>LIMIT.input)fail('request wire bound');const sourceInput=validateRequest(serializedRequest);guard();
   const root=fsBirth.realpathSync(functionSourceRoot),task=fsBirth.mkdtempSync(join(tmpdir(),'router-original-project-'));
-  let child=null,timer=null,closed=false,failure=null,header=null,trailer=null,pending='',wire=0,stderr='',peakRss=0,peakDisk=0,ticks=0,activeArtifact=null;const artifacts=[];
+  let child=null,timer=null,closed=false,failure=null,primaryFailure=null,header=null,trailer=null,pending='',wire=0,stderr='',peakRss=0,peakDisk=0,ticks=0,activeArtifact=null;const artifacts=[];
   const started=now(),decoder=new StringDecoder('utf8');
   function stop(message){if(!failure)failure=message;if(child?.pid&&!closed){try{kill(-child.pid,'SIGTERM');}catch{}try{kill(-child.pid,'SIGKILL');}catch{}}}
   function accept(value){
@@ -178,8 +199,9 @@ export async function translateOriginalProjectBatch(serializedRequest){
       const text=parts.join('');if(byteLength(text,'utf8')!==row.bytes||nativeHash(text)!==row.sha256)fail('artifact whole digest changed');guard();detached.push({path:row.path,text,bytes:row.bytes,sha256:row.sha256});peakRss=max(peakRss,processRss(0));if(peakRss>LIMIT.rss)fail('aggregate RSS bound after materialization');
     }
     guard();return {schema:'detached-original-project-batch-v1',sourceHead:SOURCE_HEAD,requestSha256,artifacts:detached,receipt:{...trailer,engine:header.engine,driverSha256:DRIVER_SHA256,trace:bound.trace,peakSampledAggregateRssBytes:peakRss,peakSampledTaskDiskBytes:peakDisk,diskMeasurement:'sum max(logical bytes, own POSIX blocks*512 when available), including directories; sampled',elapsedMilliseconds:now()-started,observerContract:'fresh trusted stock process; exclusive owned snapshot; no parent semantic token',semanticAuthority:false}};
-  }catch(error){fail(errorText(error));}finally{
+  }catch(error){primaryFailure=errorText(error);fail(primaryFailure);}finally{
     if(timer)clear(timer);if(child&&!closed){stop('batch final cleanup');try{await new Promise(resolve=>child.once('close',resolve));}catch{}}
-    if(activeArtifact?.fd!==null&&activeArtifact?.fd!==undefined)try{fsBirth.closeSync(activeArtifact.fd);}catch{}removeTask(task);
+    if(activeArtifact?.fd!==null&&activeArtifact?.fd!==undefined)try{fsBirth.closeSync(activeArtifact.fd);}catch{}
+    try{removeTask(task);}catch(error){const cleanupFailure=errorText(error);fail(primaryFailure===null?'owned cleanup failed: '+cleanupFailure:primaryFailure+'; owned cleanup failed: '+cleanupFailure);}
   }
 }
