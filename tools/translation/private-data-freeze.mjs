@@ -16,11 +16,7 @@ function remember(value,record,isRoot){
  else if(record.cells>=LARGE_CELLS){if(!large||largeSlots>=LARGE_LIMIT){large=new WeakMap();largeSlots=0;}large.set(value,encoded);largeSlots++;}
  else{if(!small||smallSlots>=SMALL_LIMIT){small=new WeakMap();smallSlots=0;}small.set(value,encoded);smallSlots++;}
 }
-function plan(value,readCost,nativeSegment=false){
- // Only the actual closed storage lookup and a freshly guarded entry may reuse
- // qualification within this synchronous walk. Diagnostic/custom lookups keep
- // the original applicability and callback order.
- nativeSegment=nativeSegment===true&&readCost===lookup;
+function plan(value,lookup){
  const states=new Map(),order=[],pending=[value,0,null];let uniqueCells=0;
  while(pending.length){
   const state=pending.pop(),depth=pending.pop(),value=pending.pop();
@@ -28,7 +24,7 @@ function plan(value,readCost,nativeSegment=false){
    let cells=state.cells,height=1,jsonFlags=state.jsonFlags;
    for(let index=0;index<state.children.length;index++){
     const child=state.children[index];
-    const cost=states.get(child)??readCost(child);
+    const cost=states.get(child)??lookup(child);
     if(!cost||typeof cost!=='number'&&!cost.done)return null;
     const packed=typeof cost==='number'?cost>>>2:0;
     cells+=typeof cost==='number'?packed%RECORD_BASE:cost.cells;const nextHeight=1+(typeof cost==='number'?(packed/RECORD_BASE)|0:cost.height);if(nextHeight>height)height=nextHeight;
@@ -40,7 +36,7 @@ function plan(value,readCost,nativeSegment=false){
   }
   if(value===null||typeof value!=='object'){if(typeof value==='function')return null;continue;}
   if(types.isProxy(value))return null;
-  const known=states.get(value)??readCost(value);
+  const known=states.get(value)??lookup(value);
   if(known){if(typeof known!=='number'&&!known.done||depth+(typeof known==='number'?((known>>>2)/RECORD_BASE)|0:known.height)>DEPTH_LIMIT)return null;continue;}
   if(depth>=DEPTH_LIMIT||states.size>=NODE_LIMIT)return null;
   const array=Array.isArray(value),prototype=Object.getPrototypeOf(value);
@@ -53,10 +49,6 @@ function plan(value,readCost,nativeSegment=false){
   const children=keys;let objectChildren=0,scalarCells=1,jsonFlags=3;
   for(let index=0;index<keys.length;index++){
    const key=keys[index];if(typeof key!=='string')return null;
-   // A native descriptor read can materialize a lazy captured Error stack and
-   // run a formatter even on an ordinary object. Invalidate before that read;
-   // the rest of this plan keeps the original guarded wide-child branch.
-   if(key==='stack')nativeSegment=false;
    const field=Object.getOwnPropertyDescriptor(value,key);
    if(!field||!Object.hasOwn(field,'value'))return null;
    if(array&&key==='length'){if(field.enumerable||field.value!==value.length)return null;continue;}
@@ -69,9 +61,9 @@ function plan(value,readCost,nativeSegment=false){
   // Only an entirely completed child set has no later cold descriptor walk.
   // A miss keeps the exact original pending order, including callback effects.
   let completedCells=scalarCells,completedHeight=1,completedFlags=jsonFlags;
-  let allCompleted=objectChildren>=(nativeSegment?1:MIN_COMPLETED_CHILDREN)&&(nativeSegment||originalDataFreezeIntrinsicsUnchanged());
+  let allCompleted=objectChildren>=MIN_COMPLETED_CHILDREN&&originalDataFreezeIntrinsicsUnchanged();
   if(allCompleted)for(let index=0;index<children.length;index++){
-   const cost=states.get(children[index])??readCost(children[index]);
+   const cost=states.get(children[index])??lookup(children[index]);
    if(typeof cost!=='number'||depth+1+(((cost>>>2)/RECORD_BASE)|0)>DEPTH_LIMIT){allCompleted=false;break;}
    const packed=cost>>>2;completedCells+=packed%RECORD_BASE;
    if(completedCells>CELL_LIMIT)completedCells=CELL_LIMIT+1;
@@ -83,7 +75,7 @@ function plan(value,readCost,nativeSegment=false){
   pending.push(value,depth,selected);
   for(let index=children.length-1;index>=0;index--)pending.push(children[index],depth+1,null);
  }
- const root=readCost(value)??states.get(value);
+ const root=lookup(value)??states.get(value);
  return root&&(typeof root==='number'||root.done)?{order,root:typeof root==='number'?{height:((root>>>2)/RECORD_BASE)|0,cells:(root>>>2)%RECORD_BASE,jsonFlags:root&3,done:true}:root}:null;
 }
 // The caller supplies its unchanged legacy recursive closure, not a callback
@@ -93,7 +85,7 @@ export function createCompletedDataFreezer(originalFreeze){
  return function completedDataFreeze(value){
   if(!value||typeof value!=='object'||!originalDataFreezeIntrinsicsUnchanged())return originalFreeze(value);
   if(lookup(value))return value;
-  const selected=plan(value,lookup,true);if(!selected)return originalFreeze(value);
+  const selected=plan(value,lookup);if(!selected)return originalFreeze(value);
   for(let index=0;index<selected.order.length;index++){
    const state=selected.order[index];Object.freeze(state.value);
    remember(state.value,state,state.value===value);
