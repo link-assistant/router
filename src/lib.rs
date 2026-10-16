@@ -119,6 +119,8 @@ pub mod oauth;
 pub mod observability_api;
 pub mod on_demand_cli;
 pub mod openai;
+#[cfg(test)]
+mod openai_tools_translation_tests;
 pub mod operation_context;
 pub mod operation_reports;
 mod operational_log;
