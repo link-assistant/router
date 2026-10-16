@@ -38,9 +38,12 @@ test('shared canonical JSON Some binding preserves the selected reference and bo
 });
 
 test('JSON Map and borrowed str projections retain input lifetimes and shadowing',async()=>{
-  const source='use serde_json::Value; pub fn text(body:&Value)->Option<&str>{let Some(body)=body.get("metadata") else{return None;};let Some(body)=body.as_object() else{return None;};let Some(body)=body.get("user_id") else{return None;};let Some(body)=body.as_str() else{return None;};Some(body)}',result=project(source);requireFunctions(result,['text']);
-  const controls=nodes(result.meta.checkedSemanticProgram.program.items,node=>node.patternControl?.sharedCopy);assert.equal(controls.length,3);assert.equal(controls.some(node=>node.patternControl.sharedCopy.pointee.name==='serde_json.Map_String_Value'),true);
-  await targets(result,api=>{for(const value of [{},{metadata:null},{metadata:[]},{metadata:{}},{metadata:{user_id:7}}])assert.deepEqual(api.text(json(value)),none);for(const value of ['','Ω😀','e\u0301'])assert.deepEqual(api.text(json({metadata:{user_id:value}})),some(value));});
+  const source='use serde_json::Value; pub fn text(body:&Value)->Option<&str>{let Some(body)=body.get("metadata") else{return None;};let Some(body)=body.as_object() else{return None;};let Some(body)=body.get("user_id") else{return None;};let Some(body)=body.as_str() else{return None;};Some(body)} pub fn nested(body:&Value)->Result<Option<&str>,String>{let Some(value)=body.get("x") else{return Ok(None);};let Some(value)=value.as_str() else{return Err("not text".into());};Ok(Some(value))} pub fn carried(value:Option<&str>,empty:bool)->Result<Option<&str>,String>{if empty{return Ok(None);};Ok(value)} pub fn deeper(value:Option<Option<&str>>,empty:bool)->Result<Option<Option<&str>>,String>{if empty{return Ok(Some(None));};Ok(value)} pub fn absent()->Result<Option<&\'static str>,String>{Ok(None)} pub fn failed()->Result<Option<&\'static str>,String>{Err("missing".into())}',result=project(source);requireFunctions(result,['text','nested','carried','deeper','absent','failed']);
+  const controls=nodes(result.meta.checkedSemanticProgram.program.items,node=>node.patternControl?.sharedCopy);assert.equal(controls.length,4);assert.equal(controls.some(node=>node.patternControl.sharedCopy.pointee.name==='serde_json.Map_String_Value'),true);
+  await targets(result,api=>{for(const value of [{},{metadata:null},{metadata:[]},{metadata:{}},{metadata:{user_id:7}}])assert.deepEqual(api.text(json(value)),none);for(const value of ['','Ω😀','e\u0301'])assert.deepEqual(api.text(json({metadata:{user_id:value}})),some(value));
+    assert.deepEqual(api.nested(json({})),ok(none));assert.deepEqual(api.nested(json({x:7})),{$:'Err',field0:'not text'});for(const value of ['','Ω😀','e\u0301'])assert.deepEqual(api.nested(json({x:value})),ok(some(value)));
+    for(const value of [none,some('Ω😀')]){assert.deepEqual(api.carried(value,true),ok(none));assert.deepEqual(api.carried(value,false),ok(value));}for(const value of [none,some(none),some(some('Ω😀'))]){assert.deepEqual(api.deeper(value,true),ok(some(none)));assert.deepEqual(api.deeper(value,false),ok(value));}assert.deepEqual(api.absent(),ok(none));assert.deepEqual(api.failed(),{$:'Err',field0:'missing'});
+  });
 });
 
 test('borrowed subjects are evaluated once and failure returns stay lazy',async()=>{
@@ -68,6 +71,10 @@ test('escaping borrows counterfeit source layouts and cross-analysis syntax cann
   for(const source of [
     'use serde_json::Value; pub fn bad(body:&Value)->Option<&\'static Value>{let Some(value)=body.get("x") else{return None;};Some(value)}',
     'use serde_json::Value; pub fn bad(body:&Value,other:&Value)->Option<&Value>{let Some(value)=body.get("x") else{return None;};Some(value)}',
+    "pub fn bad(value:&str)->Result<Option<&'static str>,String>{Ok(Some(value))}",
+    "pub fn bad(value:&str,empty:bool)->Result<Option<&'static str>,String>{if empty{Ok(None)}else{Ok(Some(value))}}",
+    "pub fn bad(value:Option<&str>)->Result<Option<&'static str>,String>{Ok(value)}",
+    "use serde_json::Value; pub fn bad(body:&Value)->Result<Option<&'static str>,String>{let Some(value)=body.get(\"x\") else{return Ok(None);};let Some(value)=value.as_str() else{return Err(\"not text\".into());};Ok(Some(value))}",
     'mod serde_json{pub enum Value{Null}} pub fn bad(body:Option<&serde_json::Value>)->bool{let Some(value)=body else{return false;};true}',
     'enum Option<T>{Some(T),None} use serde_json::Value; pub fn bad(body:Option<&Value>)->bool{let Some(value)=body else{return false;};true}',
   ])refuse(source);

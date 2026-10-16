@@ -520,16 +520,23 @@ function origins(node,env,context,returns,depth=0) {
   return borrowed?new Set([UNKNOWN]):new Set();
 }
 
-function emptyBorrowValue(node,context) {
-  if(!node)return false;
+function emptyBorrowValue(node,context,depth=0) {
+  if(!node||depth>256)return false;
+  const empty=value=>emptyBorrowValue(value,context,depth+1);
   if(node.k==='array'&&node.type?.rustFixedArray?.length===0&&node.items.length===0&&node.fixedArrayProof?.verified&&node.fixedArrayProof.syntax!=='repeat')return true;
   if(['routerReturn','routerBreak','routerContinue','routerPanic','abort'].includes(node.k))return true;
-  if(['let','routerDiscard','routerSet','routerWhile','routerFor','routerIf'].includes(node.k))return emptyBorrowValue(node.body,context);
-  if(node.k==='if')return emptyBorrowValue(node.then,context)&&emptyBorrowValue(node.else,context);
-  if(node.k==='match')return node.cases.every(arm=>emptyBorrowValue(arm.body,context));
+  if(['let','routerDiscard','routerSet','routerWhile','routerFor','routerIf'].includes(node.k))return empty(node.body);
+  if(node.k==='if')return empty(node.then)&&empty(node.else);
+  if(node.k==='match')return node.cases.every(arm=>empty(arm.body));
   if(node.k==='ctor') {
     const entry=context.declarations.get(node.data),ctor=entry?.ctors.find(ctor=>ctor.name===node.ctor);
-    return Boolean(ctor&&ctor.fields.every(field=>!hasBorrow(context.resolveType(field.type,entry.modulePath,node.span),context)));
+    // Ok(None) contains no reference even though its declared success type
+    // does. Follow only the actual checked constructor's exact arguments;
+    // inhabited borrowed fields must still supply their normal leaf origins.
+    return Boolean(ctor&&Array.isArray(node.args)&&node.args.length===ctor.fields.length&&ctor.fields.every((field,index)=>{
+      const type=context.resolveType(field.type,entry.modulePath,node.span),value=node.args[index];
+      return Boolean(value?.type&&sameType(value.type,type)&&(!hasBorrow(type,context)?!hasBorrow(value.type,context):empty(value)));
+    }));
   }
   return false;
 }
