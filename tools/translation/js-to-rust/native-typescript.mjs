@@ -7,6 +7,7 @@ import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync, rmSync
 import { dirname, join, resolve } from 'node:path';
 import { inferenceProgram, returnHint, localHint, typeNode, dynamicIndex } from './native-inference.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
+import {prepareReverseConcreteSource} from './concrete-source.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const walkFiles = (root, directory) => existsSync(join(root, directory)) ? readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => entry.isDirectory() ? walkFiles(root, `${directory}/${entry.name}`) : [`${directory}/${entry.name}`]).sort() : [];
@@ -103,6 +104,7 @@ function serialize(ts, sourceFile, checker) {
 }
 
 export function parseNativeJavaScript(ts, path, source, { file: inferredFile, checker } = {}) {
+  source=prepareReverseConcreteSource(source).source;
   const file = inferredFile ?? ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
   if (file.text !== source) throw new Error(`inference source snapshot differs for ${path}`);
   if (file.parseDiagnostics.length) throw new Error(`invalid authoritative JavaScript syntax in ${path}`);

@@ -15,6 +15,61 @@ specialized parser, checker and emitter extensions. They remain incomplete;
 adding a pipeline declaration alone does not implement missing source semantics
 or prove whole-source synchronization.
 
+## Concrete syntax before checked semantics
+
+The meta-language has a distinct `meta-language-concrete-syntax-v1` document
+with `representationLevel: 'concrete-syntax'`. It retains one complete source
+string and ordered token, trivia and delimiter spans. Serialize and parse that
+document, reconstruct the source, then let the semantic parser consume the
+reconstructed text. The ordinary source entry requires identical UTF-16 code
+units, including comments, BOM, CRLF and restricted-production line terminators.
+Source encoding observations distinguish well-formed UTF-8 preservation from
+replacement encoding of lone UTF-16 surrogates; they do not invent original
+byte recovery for an input that was supplied only as a JavaScript string.
+
+The reverse adapter in
+[`concrete-source.mjs`](../../tools/translation/js-to-rust/concrete-source.mjs)
+uses fixed language and repository concrete-rule sequences. Its ordinary source
+path performs an identity round trip; there is no caller callback or skip flag.
+`translateConcreteSyntaxMeta` instead consumes a canonical JavaScript or
+TypeScript concrete document, so a prior explicit concrete substitution really
+changes the source sent to the existing native parser and semantic checker.
+The resulting source receives fresh owner and body associations; a checksum,
+rule trace or copied source context cannot replace those joins. Rust and
+TypeScript emission still follows the separate serialized, reparsed and checked
+semantic program. The strict result retains the complete concrete serialization
+alongside its existing semantic meta and target outputs.
+
+Concrete status is `lexical`, `opaque` or `error`. None certifies grammar,
+types, names, effects or execution. Preserve the full source and diagnostics in
+all three cases; the existing native parser and semantic checker independently
+decide admission. A valid legacy native source can therefore continue even when
+the concrete provider retains a whole opaque region. Malformed JavaScript must
+still fail the real native syntax check. The native TypeScript AST route also
+consumes identical reconstructed JavaScript before its unchanged source-file
+identity, syntax and automatic-semicolon-insertion checks.
+
+The reverse semantic entry now requires the installed TypeScript compiler even
+for pure portable scalar input. Each call creates a fresh native source file;
+the existing ownership syntax cache does not supply this grammar decision.
+Compiler loading failures propagate as environment failures, not source
+diagnostics. An exported bundle must select its genuine receiving dependency
+root before fresh import. This is an explicit dependency of the new stage,
+not an inference that a copied compiler bundle includes installed dependencies.
+
+The reverse executable subset remains incomplete. JavaScript-compatible
+TypeScript concrete input can reach the existing checked Rust/TypeScript
+emitter, while unsupported annotations, enums and other typed constructs refuse;
+there is no blanket type erasure. Concrete syntax does not repair unresolved
+class bootstrap, trait-owner or producer-effect obligations. Source-stage
+bounds are 2,097,152 UTF-16 code units, 8,388,608 UTF-8 bytes, 200,000 nodes,
+256 delimiter levels and 33,554,432 serialized UTF-16 code units. Whole opaque
+regions preserve fidelity when lexical classification is uncertain; inputs
+beyond absolute source or serialization safety bounds may refuse. Existing
+semantic limits, complete test files, strict compiler versions and deadlines
+remain unchanged. This source draft requires receiving checks and qualified
+regeneration before any current-tree freshness or parity claim.
+
 ## Rule contracts
 
 Give each rule a stable unique identity and a deterministic position. State its

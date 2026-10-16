@@ -1,4 +1,4 @@
-// Executable JavaScript -> checked Links IR -> Rust / TypeScript.
+// JavaScript -> concrete syntax meta -> checked Links IR -> Rust / TypeScript.
 // Frontend/checker adapted from the pinned public-domain formal-ai translator;
 // see provenance.json. Unsupported source is reported, never put in envelopes.
 import { lex, topLevelItems } from './vendor/lexer.mjs';
@@ -17,6 +17,8 @@ import { discoverScopedHelpers } from './vendor/scoped-helpers.mjs';
 import {createSourceCallIssuer,issueTopLevelSourceCallsFrom,lowerSourceCalls} from './vendor/source-calls.mjs';
 import {issueOriginalConstructorBody,lowerOriginalConstructorBody,sourceConstructorItem,assertOriginalConstructorGraph} from './vendor/constructor-bodies.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
+import {prepareReverseConcreteSource,parseReverseConcreteSource} from './concrete-source.mjs';
+import {ownershipCompiler} from './vendor/module-syntax.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -37,8 +39,28 @@ function returns(body) {
   return body.some((statement) => ['return','throw'].includes(statement.kind) || statement.kind === 'if' && statement.else !== null && returns(statement.then) && returns(statement.else));
 }
 
-/** Discover and independently check every top-level source item. */
-export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,lossless=false,constructorGraph}={}) {
+// Resolve the original four analysis options before any added source work.
+// Later emission options still read the caller at their original phases.
+function readAnalysisOptions({includeScoped=true,sourcePath=null,lossless=false,constructorGraph}={}){
+  return {includeScoped,sourcePath,lossless,constructorGraph};
+}
+/** Discover source items only after consuming the concrete meta roundtrip. */
+export function analyzeJavaScript(source,options) {
+  const resolved=readAnalysisOptions(options);
+  return analyzeReconstructedSource(prepareReverseConcreteSource(source),resolved);
+}
+function analyzeReconstructedSource(stage,options){
+  const source=stage.source;
+  // Lexical CST classification is neither a grammar success nor a refusal.
+  // The installed native parser still decides complete JS syntax and ASI.
+  // Loading failures are environment failures, not source-syntax diagnostics.
+  // Allocate a fresh source file here; the existing ownership AST cache is not
+  // a grammar verdict or a new source/owner capability for this entry.
+  const ts=ownershipCompiler(),file=ts.createSourceFile('reverse-input.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  if(file.parseDiagnostics.length){const error={message:'invalid authoritative JavaScript syntax: '+ts.flattenDiagnosticMessageText(file.parseDiagnostics[0].messageText,'\n')};return {fragment:FRAGMENT,program:[],items:[],diagnostics:[diagnostic(error,{start:0,end:source.length},source)]};}
+  return analyzeJavaScriptSource(source,options);
+}
+function analyzeJavaScriptSource(source,{includeScoped=true,sourcePath=null,lossless=false,constructorGraph}={}) {
   let raw,tokens;
   try {
     tokens=lex(source,'JavaScript');
@@ -124,26 +146,35 @@ export function analyzeJavaScript(source,{includeScoped=true,sourcePath=null,los
   };
 }
 
-/** Strict executable translation: any unsupported item fails the module. */
+/** Strict source translation; the checked semantic boundary remains mandatory. */
 export function translateJavaScript(source,options) {
-  const pipeline=createRulePipeline([
+  return translateConcreteInput(source,options,false);
+}
+
+/** Independently translate the source reconstructed from canonical JS/TS CST. */
+export function translateConcreteSyntaxMeta(text,options){
+  return translateConcreteInput(text,options,true);
+}
+function translateConcreteInput(input,options,serialized){
+  let stage,analysisOptions;const pipeline=createRulePipeline([
     {phase:'language',rules:[
+      {id:'javascript:concrete-source',apply:value=>{analysisOptions=readAnalysisOptions(options);stage=serialized?parseReverseConcreteSource(value):prepareReverseConcreteSource(value);return stage;}},
       {id:'javascript:analyze',apply:input=>{
-        const analyzed=analyzeJavaScript(input,options);
-        if(analyzed.diagnostics.length)throw new TranslationError(analyzed.diagnostics[0]);
+        const analyzed=analyzeReconstructedSource(input,analysisOptions);
+        if(analyzed.diagnostics.length)throw new TranslationError({...analyzed.diagnostics[0],concreteSyntax:input.concreteSyntax});
         return analyzed;
       }},
       {id:'javascript:checked-meta-roundtrip',apply:analyzed=>{
         const meta=`${analyzed.program.map(toLino).join('\n')}\n`;
-        // Both targets consume the serialized/reparsed meta-language document.
+        // Both targets consume the serialized/reparsed semantic document.
         const program=parseMeta(meta,{constructorGraph:options?.constructorGraph});
         return {analyzed,meta,program};
       }},
       {id:'javascript:emit-targets',apply:({analyzed,meta,program})=>({analyzed,meta,rust:emitRust(program),typescript:emitTypeScript(program,{outputPath:options?.typescriptOutputPath})})},
     ]},
-    {phase:'repository',rules:[{id:'javascript:package-artifacts',apply:({analyzed,meta,rust,typescript})=>({ ...analyzed,meta,rust,typescript })}]},
+    {phase:'repository',rules:[{id:'javascript:package-artifacts',apply:({analyzed,meta,rust,typescript})=>({ ...analyzed,meta,rust,typescript,concreteSyntax:stage.concreteSyntax })}]},
   ]);
-  return pipeline.run(source).value;
+  return pipeline.run(input).value;
 }
 
 export function parseMeta(text,{constructorGraph}={}) {
