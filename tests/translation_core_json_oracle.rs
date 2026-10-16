@@ -50,8 +50,7 @@ fn borrowed_unicode_and_json_copy_leave_inputs_unchanged() {
     let value = translation_core::json!({"text": text, "flag": true});
     assert_eq!(value["text"].as_str(), Some(text));
     assert_eq!(value["flag"].as_bool(), Some(true));
-    // The native delegation supports this nonempty input array. The translated
-    // profile copies an already-canonical Json; it does not admit its allocation.
+    // Literal arrays and copies share the bounded translated operand domain.
 }
 
 fn optional(a: Maybe<&Str>, b: Maybe<&Str>) -> Maybe<Json> {
@@ -65,6 +64,24 @@ fn question_marks_short_circuit_the_actual_outer_option() {
     let value = optional(Some("first"), Some("second")).expect("both present");
     assert_eq!(value["a"], "first");
     assert_eq!(value["b"], "second");
+}
+
+fn optional_array(a: Maybe<&Str>, b: Maybe<&Str>) -> Maybe<Json> {
+    Some(translation_core::json!([a?, {"tail": b?}]))
+}
+
+#[test]
+fn literal_arrays_preserve_outer_option_flow_and_independent_json_copies() {
+    assert_eq!(optional_array(None, Some("second")), None);
+    assert_eq!(optional_array(Some("first"), None), None);
+    let expected = translation_core::json!(["猫😀", {"tail": "Ω"}]);
+    assert_eq!(optional_array(Some("猫😀"), Some("Ω")), Some(expected));
+
+    let mut input = translation_core::json!({"value": [true, null]});
+    let copies = translation_core::json!([&input, &input]);
+    input["value"][0] = Json::Bool(false);
+    assert_eq!(copies[0]["value"][0], true);
+    assert_eq!(copies[1]["value"][0], true);
 }
 
 #[test]

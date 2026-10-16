@@ -69,9 +69,16 @@ destruction, type checking or later body refusals.
 | `Maybe<T>` | `std::option::Option<T>` | Existing canonical variants and supported payload, lifetime, ownership and Drop rules; no blanket `Try` support. |
 | `Outcome<T, E>` | `std::result::Result<T, E>` | Existing checked success/error variants and supported payloads; no blanket error-conversion support. |
 | `format!` | `std::format!` | Existing checked literal format grammar and supported primitive operands. |
-| `json!` | `serde_json::json!` | Literal objects, scalars and empty arrays; checked borrowed text, booleans, canonical JSON copies and fixed integers through 64 bits. Each interpolation retains its actual type, effects and outer `?` behavior. Custom `Serialize`, floating point, owned text and nonempty literal arrays remain refused. |
+| `json!` | `serde_json::json!` | Bounded literal objects, arrays and scalars; checked borrowed text, booleans, canonical JSON copies and fixed integers through 64 bits. Each interpolation retains its actual type, effects and outer `?` behavior. Custom `Serialize`, floating point, owned text and effectful interpolation remain refused. |
 | `f64_inclusive_contains` | Same-type `Into<f64> + Copy` arguments, widened once before ordered comparisons | Checked `f64` inputs only; IEEE NaN, infinity and signed-zero behavior with once-only left-to-right arguments. Native Rust also accepts `f32`; that does not admit translated `f32` callers. |
 | `unicode_scalar_count` | Borrowed `str::chars().count()` | Validated Unicode scalar text to the existing 64-bit `usize` BigInt ABI; one input evaluation, with no general iterator admission. |
+
+Owned JSON retains the existing runtime's 4,096-node and depth-32 limits for the
+complete constructed value, including interpolated subtrees and repeated
+copies. Dense containers also retain their 4,096-element limit. Individually
+valid inputs can exceed the aggregate result limit; those executions remain
+outside the translated profile. Literal syntax keeps its separate 65,536-byte,
+16-level and 256-node limits. Extending the literal grammar does not raise them.
 
 ## Produce portable source-adoption proposals
 

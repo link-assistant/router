@@ -153,13 +153,16 @@ export function checkRouterCoreJson(checker,node,env,path,expected){
   requireOriginalPrimitiveTryFromChecker(checker);
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'owned-json:check-complete-typed-tree',apply:()=>{
-      const tree=value=>{if(value.kind==='array'&&value.items.length)throw unsupported('owned JSON nonempty array','requires a separate allocation and element evaluation contract',value.span);if(value.kind==='object')value.entries.forEach(entry=>tree(entry.value));};tree(node.jsonTree);
+      // The sealed syntax parser bounds the entire literal tree. Array and
+      // object children use the same checked operands and canonical runtime;
+      // no arbitrary Serialize implementation or effect is introduced here.
+      const tree=value=>{if(value.kind==='array')value.items.forEach(tree);else if(value.kind==='object')value.entries.forEach(entry=>tree(entry.value));};tree(node.jsonTree);
       const type=checker.hostType(JSON_TYPES.value,path,node.span),entry=checker.items.get(type.name);
       if(entry?.hostTypePath?.join('::')!=='serde_json::Value')throw unsupported('owned JSON layout','requires registered immutable canonical Json',node.span);
       const args=node.args.map(argument=>{const value=literalIdentity(argument,checker.expr(argument,env,path));if(!pure(checker,value))throw unsupported('owned JSON interpolation effects','requires checked scalar/Json readers or total saturating arithmetic',argument.span);return {value,serialization:serialization(checker,value.type,argument.span)};});
       if(!originalDataFreezeIntrinsicsUnchanged())throw typeError('owned JSON native operations changed during operands',node.span);requireOriginalPrimitiveTryFromChecker(checker);if(!sameSyntax(node,capture.syntax))throw typeError('owned JSON call changed during operand checking',node.span);
       return {k:'routerJsonMacro',jsonTree:node.jsonTree,args,type:{...type,rustSourceType:true},span:node.span,constEligible:false};
     }}]},
-    {phase:'repository',rules:[{id:'router-core:emit-existing-checked-json-vocabulary',apply:value=>({...value,jsonMacroProof:{loweringEligible:true,route:'owned-qualified-json-v1',runtimeParity:false},compatibilityCore:{id:'router-owned-json-v1',symbol:'crate::translation_core::json',facadeSha256:ROUTER_FORMATTING_FACADE_SHA256,libraryImplementation:'untranslated-owned-serde-json-delegation',sourceTrace:capture.receipt.trace,allocationBoundary:'bounded successful-resource projection; no allocator/OOM or arbitrary Serialize theorem'}})}]},
+    {phase:'repository',rules:[{id:'router-core:emit-existing-checked-json-vocabulary',apply:value=>({...value,jsonMacroProof:{loweringEligible:true,route:'owned-qualified-json-v1',runtimeParity:false},compatibilityCore:{id:'router-owned-json-v1',symbol:'crate::translation_core::json',facadeSha256:ROUTER_FORMATTING_FACADE_SHA256,libraryImplementation:'untranslated-owned-serde-json-delegation',sourceTrace:capture.receipt.trace,allocationBoundary:'bounded left-to-right literal object/array projection; aggregate constructed value remains within existing 4096-node/depth32 runtime limits; no allocator/OOM or arbitrary Serialize theorem'}})}]},
   ]);const result=pipeline.run(null);return {...result.value,compatibilityCore:{...result.value.compatibilityCore,trace:result.trace}};
 }
