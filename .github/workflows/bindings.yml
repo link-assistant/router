@@ -38,6 +38,7 @@ jobs:
       - run: python scripts/generate-contracts.py --check
       - run: python scripts/generate-bindings.py --check
       - run: python experiments/issue-697/test_contract_compatibility.py
+      - run: python experiments/issue-764/test_release_type.py
       - run: python experiments/issue-697/test_remote_json_consumers.py
       - run: python experiments/issue-697/test_deploy_status.py
         if: runner.os == 'Linux'
@@ -72,10 +73,12 @@ jobs:
         with:
           toolchain: 1.98.1
       - run: cargo install cargo-semver-checks --version 0.51.0 --locked
-      - name: Check documented minor API changes against PR base
+      - name: Check API changes against the declared release type
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: cargo semver-checks check-release --baseline-rev "$BASE_SHA" --release-type minor
+        run: |
+          release_type=$(python3 scripts/declared-release-type.py --base "$BASE_SHA")
+          cargo semver-checks check-release --baseline-rev "$BASE_SHA" --release-type "$release_type"
   generated-http:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

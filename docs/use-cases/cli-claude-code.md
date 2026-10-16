@@ -181,7 +181,6 @@ contract is rejected before upstream.
 | `qwen`, `gemini` | consumer subscription denied pending recorded terms |
 | `openai-compatible` | ordinary API-key provider; bridged by its configured terms |
 | `z.ai-coding-plan` | experimental, subscriber-bound aliases — see [zai-coding-plan.md](zai-coding-plan.md) |
-| `gonka`, `crater` | unchanged prior behaviour on this surface |
 
 The signed managed-client binding and exact model identity are checked again
 immediately before upstream; a stale/cached picker entry cannot select another

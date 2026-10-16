@@ -24,7 +24,6 @@ use axum::middleware::from_fn_with_state;
 use link_assistant_router::accounts::AccountRouter;
 use link_assistant_router::cli::{AccountOp, Command, TokenOp};
 use link_assistant_router::config::{Config, RoutingMode};
-use link_assistant_router::crater::{ForgeFedTaskProvider, TaskProvider};
 use link_assistant_router::login::LoginManager;
 use link_assistant_router::metrics::Metrics;
 use link_assistant_router::oauth::OAuthProvider;
@@ -356,16 +355,6 @@ async fn run_server(
     }
 
     let client = link_assistant_router::upstream_client::build_upstream_client()?;
-    let crater_provider =
-        if config.upstream_provider == link_assistant_router::config::UpstreamProvider::Crater {
-            Some(Arc::new(ForgeFedTaskProvider::new(
-                client.clone(),
-                config.crater.clone(),
-            )) as Arc<dyn TaskProvider>)
-        } else {
-            None
-        };
-
     // Keep readers for every vendor so automatic routing can discover all
     // mounted subscriptions, using the exact roots selected during parsing.
     let subscription_readers = config.subscription_readers();
@@ -414,11 +403,6 @@ async fn run_server(
         subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
         upstream_base_url: config.upstream_base_url.clone(),
         upstream_provider: config.upstream_provider,
-        gonka: link_assistant_router::gonka::GonkaConfig::new(
-            config.gonka_api_key.clone(),
-            config.gonka_source_url.as_deref(),
-            config.gonka_model.clone(),
-        ),
         bridge_model: config.bridge_model.clone(),
         bridge_model_policy: config.bridge_model_policy,
         audit: std::sync::Arc::new(link_assistant_router::audit::AuditLog::to_path(
@@ -430,7 +414,6 @@ async fn run_server(
             request_log_max_bytes,
             request_log_max_total_bytes,
         ),
-        crater: crater_provider,
         openai_compatible: config.openai_compatible.clone(),
         provider_store,
         logger,

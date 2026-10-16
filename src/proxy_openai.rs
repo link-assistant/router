@@ -215,24 +215,6 @@ async fn openai_chat_completions_with_subscription(
             &reason,
         );
     }
-    if state.upstream_provider == UpstreamProvider::Gonka {
-        return crate::gonka::forward_openai(
-            &state,
-            &headers,
-            body,
-            "/v1/chat/completions",
-            crate::metrics::Surface::OpenAIChat,
-        )
-        .await;
-    }
-    if state.upstream_provider == UpstreamProvider::Crater {
-        let stream_requested = body
-            .get("stream")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-        return crate::crater::forward_chat_completions(&state, &headers, body, stream_requested)
-            .await;
-    }
     if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
         return crate::zai_coding_plan::forward(
             &state,
@@ -769,16 +751,6 @@ async fn openai_responses_with_route(
             "invalid_request_error",
             &reason,
         );
-    }
-    if state.upstream_provider == UpstreamProvider::Gonka {
-        return crate::gonka::forward_openai(
-            &state,
-            &headers,
-            body,
-            "/v1/responses",
-            crate::metrics::Surface::OpenAIResponses,
-        )
-        .await;
     }
     if state.upstream_provider == UpstreamProvider::ZaiCodingPlan {
         return crate::zai_coding_plan::forward(

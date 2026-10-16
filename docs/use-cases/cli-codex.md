@@ -96,7 +96,7 @@ codex "explain this repository"
 | `anthropic` | denied by default; requires exact `codex:claude` risk acceptance — see [claude-max-in-codex.md](claude-max-in-codex.md) |
 | `codex` | native: forwarded to the ChatGPT backend Responses API with the `~/.codex/auth.json` OAuth token |
 | `qwen`, `gemini` | consumer subscription denied pending recorded terms |
-| `openai-compatible`, `gonka`, `crater` | ordinary provider credential/transport rules apply |
+| `openai-compatible` | ordinary provider credential/transport rules apply |
 | `z.ai-coding-plan` | experimental exact-ID live-catalog Responses route — see [zai-coding-plan.md](zai-coding-plan.md) |
 
 ## Trusted proxy compatibility

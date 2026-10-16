@@ -46,7 +46,10 @@ pub fn router_for_listener(state: AppState, config: &Config, listener: ListenerK
         app = app.merge(inference_routes(state.clone(), config));
     }
     if listener == ListenerKind::Combined {
-        app = app.merge(private_service_routes(state.clone()));
+        app = app.merge(private_service_routes(
+            state.clone(),
+            config.enable_openai_api,
+        ));
     }
     if listener == ListenerKind::GitHubAdapter {
         app = app.merge(github_adapter_routes(state.clone()));
@@ -502,19 +505,11 @@ fn inference_routes(state: AppState, config: &Config) -> Router<AppState> {
         ))
 }
 
-fn private_service_routes(state: AppState) -> Router<AppState> {
-    let activitypub = Router::new()
+fn private_service_routes(state: AppState, openai_enabled: bool) -> Router<AppState> {
+    let mut activitypub = Router::new()
         .route(
             route_template(RouteId::ActivityPubActor),
             get(activitypub::actor),
-        )
-        .route(
-            route_template(RouteId::ActivityPubInbox),
-            post(activitypub::inbox),
-        )
-        .route(
-            route_template(RouteId::ActivityPubOutbox),
-            get(activitypub::outbox),
         )
         .route(
             route_template(RouteId::ActivityPubFollowers),
@@ -522,8 +517,19 @@ fn private_service_routes(state: AppState) -> Router<AppState> {
         )
         .route(
             route_template(RouteId::ActivityPubFollowProblemsets),
-            get(activitypub::follow_problemsets),
+            get(|| async { StatusCode::GONE }),
         );
+    if openai_enabled {
+        activitypub = activitypub
+            .route(
+                route_template(RouteId::ActivityPubInbox),
+                post(activitypub::inbox),
+            )
+            .route(
+                route_template(RouteId::ActivityPubOutbox),
+                get(activitypub::outbox),
+            );
+    }
     activitypub.merge(canonical_github_routes(state))
 }
 

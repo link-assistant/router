@@ -44,7 +44,6 @@ only after the signed client/provider entitlement check:
 | `qwen` (`qwen-code`, `dashscope`) | denied | terms row is pending; no override enables it |
 | `gemini` (`google`, `code-assist`) | denied | terms row is pending; no override enables it |
 | `openai-compatible` | **yes** | LiteLLM, vLLM, any `/v1/chat/completions` gateway |
-| `gonka`, `crater` | no | these keep the Anthropic-surface behaviour they already had |
 
 ## 1. Log in with the vendor CLI once
 

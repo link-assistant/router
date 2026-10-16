@@ -262,8 +262,7 @@ mod required_headers_tests {
 
 mod activitypub_tests {
     use link_assistant_router::activitypub::{
-        actor_document, follow_problemsets_activity, followers_document, outbox_document,
-        validate_activity,
+        actor_document, followers_document, validate_activity,
     };
     use serde_json::json;
 
@@ -296,11 +295,11 @@ mod activitypub_tests {
             "https://router.example/api/services/activitypub/actor/code#main-key"
         );
         assert_eq!(actor["publicKey"]["publicKeyPem"], KEY);
-        assert!(actor["aliases"].as_array().expect("aliases").len() >= 2);
+        assert!(actor.get("aliases").is_none());
     }
 
     #[test]
-    fn actor_context_includes_forgefed_and_fep_ef61_aliases() {
+    fn actor_context_includes_fep_0837_terms() {
         let actor = actor_document(BASE, KEY);
         let context = actor["@context"].as_array().expect("context array");
 
@@ -309,28 +308,7 @@ mod activitypub_tests {
                 .iter()
                 .any(|item| item == "https://www.w3.org/ns/activitystreams")
         );
-        assert!(context.iter().any(|item| item == "https://forgefed.org/ns"));
-        assert!(context.iter().any(|item| item["aliases"] == "fep:aliases"));
-    }
-
-    #[test]
-    fn follow_activity_can_be_posted_to_problemsets_inbox() {
-        let follow = follow_problemsets_activity(BASE);
-
-        assert_eq!(
-            follow["id"],
-            "https://router.example/api/services/activitypub/activities/follow-problemsets-code-001"
-        );
-        assert_eq!(follow["type"], "Follow");
-        assert_eq!(
-            follow["actor"],
-            "https://router.example/api/services/activitypub/actor/code"
-        );
-        assert_eq!(
-            follow["object"],
-            "https://problemsets.lefine.pro/actor/code"
-        );
-        assert_eq!(follow["to"][0], "https://problemsets.lefine.pro/actor/code");
+        assert!(context.iter().any(|item| item["Proposal"] == "vf:Proposal"));
     }
 
     #[test]
@@ -348,7 +326,6 @@ mod activitypub_tests {
 
     #[test]
     fn collections_are_addressable_ordered_collections() {
-        assert_eq!(outbox_document(BASE)["type"], "OrderedCollection");
         assert_eq!(followers_document(BASE)["type"], "OrderedCollection");
     }
 }
@@ -356,7 +333,7 @@ mod activitypub_tests {
 mod config_verbose_tests {
     use link_assistant_router::config::{
         BuildArgs, Config, RoutingMode, StoragePolicy, UpstreamProvider,
-        default_activitypub_public_key_pem, default_crater_config, default_gonka_model,
+        default_activitypub_public_key_pem,
     };
     use std::path::PathBuf;
 
@@ -377,13 +354,8 @@ mod config_verbose_tests {
             claude_cli_bin: None,
             codex_cli_bin: None,
             upstream_provider: UpstreamProvider::Anthropic,
-            gonka_private_key: None,
-            gonka_api_key: None,
-            gonka_source_url: None,
-            gonka_model: default_gonka_model(),
             bridge_model: None,
             audit_log: None,
-            crater: default_crater_config("https://router.example"),
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
             activitypub_actor_base_url: "https://router.example".into(),
             activitypub_public_key_pem: default_activitypub_public_key_pem(),
@@ -736,12 +708,13 @@ mod support_docs_tests {
     use std::fs;
 
     #[test]
-    fn forgefed_docs_describe_public_actor_and_inbox() {
-        let docs = fs::read_to_string("docs/forgefed.md").expect("forgefed docs should exist");
+    fn marketplace_docs_describe_actor_and_inbox() {
+        let docs = fs::read_to_string("docs/activitypub-marketplace.md")
+            .expect("marketplace docs should exist");
 
         assert!(docs.contains("/api/services/activitypub/actor/code"));
         assert!(docs.contains("/api/services/activitypub/inbox/code"));
-        assert!(docs.contains("https://forgefed.org/ns"));
+        assert!(docs.contains("FEP-0837"));
         assert!(docs.contains("ACTIVITYPUB_ACTOR_BASE_URL"));
     }
 

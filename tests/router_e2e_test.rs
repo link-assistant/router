@@ -223,11 +223,9 @@ impl TestRouter {
             subscription_cache: Arc::new(TokenCache::new()),
             upstream_base_url: stub_url.clone(),
             upstream_provider: provider,
-            gonka: None,
             bridge_model: Some("gpt-5".to_string()),
             bridge_model_policy:
                 link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
-            crater: None,
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
             provider_store,
             logger: log_lazy::LogLazy::new(),

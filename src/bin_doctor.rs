@@ -17,11 +17,6 @@ pub async fn run_doctor(config: &Config) -> ExitCode {
         "openai_provider        : {} ({})",
         config.openai_compatible.provider_name, config.openai_compatible.base_url
     );
-    println!(
-        "crater_inbox           : {}",
-        config.crater.inbox.as_deref().unwrap_or("<unset>")
-    );
-    println!("crater_actor           : {}", config.crater.actor);
     println!("claude_code_home       : {}", config.claude_code_home);
     println!("routing_mode           : {:?}", config.routing_mode);
     println!("storage_policy         : {:?}", config.storage_policy);

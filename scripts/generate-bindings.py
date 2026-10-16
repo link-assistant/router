@@ -15,7 +15,7 @@ def pyname(value):
 def main():
     parser=argparse.ArgumentParser(__doc__); parser.add_argument('--check',action='store_true'); args=parser.parse_args()
     catalog=json.loads((ROOT/'schemas/operation-catalog.v1.json').read_text())
-    spec=json.loads((ROOT/'openapi/router.yaml').read_text())
+    spec=json.loads((ROOT/'openapi/router.v2.yaml').read_text())
     components=spec['components']['schemas']
     def ts(schema):
         if isinstance(schema,bool): return 'JsonValue' if schema else 'never'

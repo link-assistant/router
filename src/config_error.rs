@@ -39,14 +39,6 @@ pub enum ConfigError {
     InvalidAccountRequestLimits,
     /// Request caps did not align with primary plus additional accounts.
     MismatchedAccountRequestLimits,
-    /// Gonka was selected without a broker/API key.
-    MissingGonkaApiKey,
-    /// Broker/API-key mode was enabled without an explicit broker URL.
-    MissingGonkaSourceUrl,
-    /// Direct-wallet signing is not implemented according to the official protocol.
-    UnsupportedGonkaDirectWallet,
-    /// Crater was selected without `CRATER_FORGEFED_INBOX`.
-    MissingCraterForgeFedInbox,
 }
 
 impl std::fmt::Display for ConfigError {
@@ -74,7 +66,7 @@ impl std::fmt::Display for ConfigError {
             ),
             Self::InvalidUpstreamProvider => write!(
                 f,
-                "UPSTREAM_PROVIDER must be one of: auto, anthropic, codex, gemini, qwen, gonka, crater, openai-compatible"
+                "UPSTREAM_PROVIDER must be one of: auto, anthropic, codex, gemini, qwen, openai-compatible"
             ),
             Self::InvalidManagementSecurity(message)
             | Self::InvalidModelCatalogSources(message)
@@ -95,18 +87,6 @@ impl std::fmt::Display for ConfigError {
                 f,
                 "ACCOUNT_REQUEST_LIMITS must contain one entry for primary and each additional account"
             ),
-            Self::MissingGonkaApiKey => write!(f, "Gonka broker mode requires GONKA_API_KEY"),
-            Self::MissingGonkaSourceUrl => write!(
-                f,
-                "Gonka broker mode requires an explicit GONKA_SOURCE_URL; official direct-wallet node endpoints are not API-key broker defaults"
-            ),
-            Self::UnsupportedGonkaDirectWallet => write!(
-                f,
-                "GONKA_PRIVATE_KEY direct-wallet mode is unsupported because Router does not implement Gonka's official endpoint-resolution and secp256k1 signing protocol; configure a broker with GONKA_API_KEY instead"
-            ),
-            Self::MissingCraterForgeFedInbox => {
-                write!(f, "Crater provider requires CRATER_FORGEFED_INBOX")
-            }
         }
     }
 }

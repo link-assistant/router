@@ -3,18 +3,6 @@
 //! Split out of that module to keep it within the repository's per-file line
 //! budget; every item here is re-exported from `crate::config`.
 
-use std::time::Duration;
-
-/// Gonka has no synthetic default model.
-///
-/// Operators may declare one with `GONKA_MODEL`; otherwise the provider only
-/// accepts requests that name a model explicitly and advertises no model of
-/// its own.
-#[must_use]
-pub const fn default_gonka_model() -> String {
-    String::new()
-}
-
 /// Default OpenAI-compatible provider base URL.
 #[must_use]
 pub fn default_openai_compatible_base_url() -> String {
@@ -33,21 +21,4 @@ pub fn default_openai_compatible_config() -> crate::providers::OpenAICompatibleC
         models: Vec::new(),
         supported_clients: Vec::new(),
     }
-}
-
-/// Default crater provider config.
-#[must_use]
-pub fn default_crater_config(actor_base_url: &str) -> crate::crater::CraterConfig {
-    let actor = format!(
-        "{}{}",
-        actor_base_url.trim_end_matches('/'),
-        crate::route_contract::route_template(crate::route_contract::RouteId::ActivityPubActor)
-    );
-    crate::crater::CraterConfig::new(
-        None,
-        &actor,
-        None,
-        Duration::from_secs(1),
-        Duration::from_secs(120),
-    )
 }

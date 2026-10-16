@@ -125,11 +125,9 @@ impl TestRouter {
             subscription_cache: Arc::new(TokenCache::new()),
             upstream_base_url: stub_url,
             upstream_provider: UpstreamProvider::Anthropic,
-            gonka: None,
             bridge_model: bridge_model.map(str::to_string),
             bridge_model_policy:
                 link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
-            crater: None,
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
             provider_store,
             logger: log_lazy::LogLazy::new(),

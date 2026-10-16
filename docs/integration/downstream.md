@@ -1,6 +1,6 @@
 # Importing Router operations
 
-The supported operations languages are Rust, JavaScript/TypeScript on Node 20+ or Bun, and Python 3.10+. PHP, Go and Java HTTP clients are generated and tested from [OpenAPI](../../openapi/router.yaml). The [operation matrix](operations.md) and machine-readable [catalog](../../schemas/operation-catalog.v1.json) describe the complete operation set.
+The supported operations languages are Rust, JavaScript/TypeScript on Node 20+ or Bun, and Python 3.10+. PHP, Go and Java HTTP clients are generated and tested from [OpenAPI](../../openapi/router.v2.yaml). The [operation matrix](operations.md) and machine-readable [catalog](../../schemas/operation-catalog.v1.json) describe the complete operation set.
 
 ```sh
 npm install @link-assistant/router

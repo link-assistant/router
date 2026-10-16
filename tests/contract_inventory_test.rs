@@ -62,7 +62,7 @@ fn published_catalog_matches_the_rust_inventory() {
 
 #[test]
 fn openapi_covers_every_served_route_and_method() {
-    let spec: Value = serde_json::from_str(include_str!("../openapi/router.yaml")).unwrap();
+    let spec: Value = serde_json::from_str(include_str!("../openapi/router.v2.yaml")).unwrap();
     assert_eq!(spec["openapi"], "3.1.0");
     let mut expected = std::collections::BTreeSet::new();
     expected.insert(("/".to_owned(), "get".to_owned()));
@@ -150,7 +150,7 @@ async fn native_axum_methods_are_published_and_validated() {
             .is_empty()
     );
 
-    let spec: Value = serde_json::from_str(include_str!("../openapi/router.yaml")).unwrap();
+    let spec: Value = serde_json::from_str(include_str!("../openapi/router.v2.yaml")).unwrap();
     assert!(spec["paths"]["/api/health"]["head"].is_object());
     assert!(
         link_assistant_router::route_contract::route_for_path(&Method::HEAD, "/api/health")

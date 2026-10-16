@@ -36,8 +36,7 @@ pub(crate) const DEFAULT_MAX_TOKENS: u64 = 4096;
 
 /// Whether the Anthropic surface must be bridged for this upstream provider.
 ///
-/// `Anthropic` needs no translation, and `Gonka`/`Crater` keep the behaviour
-/// they already had on this surface.
+/// Anthropic uses its native protocol; other supported providers use the bridge.
 #[must_use]
 pub const fn is_bridged(provider: UpstreamProvider) -> bool {
     matches!(
