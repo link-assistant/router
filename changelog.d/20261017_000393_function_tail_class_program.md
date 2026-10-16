@@ -1,4 +1,4 @@
 ### Changed
 
-- Register the reviewed function-tail ordered-match Control source with the existing class-program producer. The proposed canonical Control and actual Host inputs retain the fixed language and repository rule phases and checked CST/meta boundaries.
-- This preparation is source-only. Run the actual producer, review every full forward/inverse source map and install its exact bytes before executing the focused JavaScript and strict TypeScript receiving checks. Rust remains unrun locally.
+- Regenerate the class-program entry with the actual producer from the reviewed function-tail Control and Host sources. Independently verify all thirteen complete UTF-16 source transformations and inverses, the unchanged twenty-four class selections and definitions, and the exact complete physical outputs before installing the producer bytes.
+- The bounded JavaScript producer passed with unchanged source and TypeScript inputs. Focused JavaScript and strict TypeScript receiving checks remain unrun at this checkpoint; Rust remains unrun locally.
