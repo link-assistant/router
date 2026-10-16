@@ -183,6 +183,8 @@ export class IteratorRustParser extends DataRustParser {
     }
   }
 }
+const __routerOriginalBirth286_IteratorRustParser=[IteratorRustParser,IteratorRustParser.prototype,DataRustParser,[["constructor",IteratorRustParser],["awaitExpression",IteratorRustParser.prototype["awaitExpression"]],["tryExpression",IteratorRustParser.prototype["tryExpression"]],["expr",IteratorRustParser.prototype["expr"]],["forStatement",IteratorRustParser.prototype["forStatement"]],["primary",IteratorRustParser.prototype["primary"]],["methodInstantiation",IteratorRustParser.prototype["methodInstantiation"]],["instantiatedMethod",IteratorRustParser.prototype["instantiatedMethod"]],["postfix",IteratorRustParser.prototype["postfix"]]]];
+
 
 // Method-precedence probes need the same contextual collection Item as the
 // iterator checker. This grants no expected type to a map's input stream.
@@ -355,6 +357,8 @@ export class IteratorChecker extends DataChecker {
     throw unsupported(`iterator ${op}`, 'no checked operation', node.span);
   }
 }
+const __routerOriginalBirth286_IteratorChecker=[IteratorChecker,IteratorChecker.prototype,DataChecker,[["constructor",IteratorChecker],["iteratorOptionExpected",IteratorChecker.prototype["iteratorOptionExpected"]],["lambda",IteratorChecker.prototype["lambda"]],["expr",IteratorChecker.prototype["expr"]]]];
+
 
 const HELPERS = {
   range: 'function* ml_router_range(start, end, inclusive) { for (let value = start; value < end || inclusive && value === end;) { yield value; if (value === end) return; value += 1n; } }',
@@ -435,3 +439,5 @@ export class IteratorEmitter extends DataEmitter {
 export const parseRust = source => new IteratorRustParser(tokenizeRust(source)).file();
 export const checkProgram = surface => new IteratorChecker(surface.language, surface.externals ?? []).program(surface);
 export const emitJavaScript = program => emitWith(program, IteratorEmitter);
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_IteratorRustParser?[__routerOriginalBirth286_IteratorRustParser[0],__routerOriginalBirth286_IteratorRustParser[1],__routerOriginalBirth286_IteratorRustParser[2],[[__routerOriginalBirth286_IteratorRustParser[3][0][0],__routerOriginalBirth286_IteratorRustParser[3][0][1]],[__routerOriginalBirth286_IteratorRustParser[3][1][0],__routerOriginalBirth286_IteratorRustParser[3][1][1]],[__routerOriginalBirth286_IteratorRustParser[3][2][0],__routerOriginalBirth286_IteratorRustParser[3][2][1]],[__routerOriginalBirth286_IteratorRustParser[3][3][0],__routerOriginalBirth286_IteratorRustParser[3][3][1]],[__routerOriginalBirth286_IteratorRustParser[3][4][0],__routerOriginalBirth286_IteratorRustParser[3][4][1]],[__routerOriginalBirth286_IteratorRustParser[3][5][0],__routerOriginalBirth286_IteratorRustParser[3][5][1]],[__routerOriginalBirth286_IteratorRustParser[3][6][0],__routerOriginalBirth286_IteratorRustParser[3][6][1]],[__routerOriginalBirth286_IteratorRustParser[3][7][0],__routerOriginalBirth286_IteratorRustParser[3][7][1]],[__routerOriginalBirth286_IteratorRustParser[3][8][0],__routerOriginalBirth286_IteratorRustParser[3][8][1]]]]:null,__routerOriginalBirth286_IteratorChecker?[__routerOriginalBirth286_IteratorChecker[0],__routerOriginalBirth286_IteratorChecker[1],__routerOriginalBirth286_IteratorChecker[2],[[__routerOriginalBirth286_IteratorChecker[3][0][0],__routerOriginalBirth286_IteratorChecker[3][0][1]],[__routerOriginalBirth286_IteratorChecker[3][1][0],__routerOriginalBirth286_IteratorChecker[3][1][1]],[__routerOriginalBirth286_IteratorChecker[3][2][0],__routerOriginalBirth286_IteratorChecker[3][2][1]],[__routerOriginalBirth286_IteratorChecker[3][3][0],__routerOriginalBirth286_IteratorChecker[3][3][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

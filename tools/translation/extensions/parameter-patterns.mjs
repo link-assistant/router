@@ -1,3 +1,5 @@
+// Hoisted undefined slots do not add a module lexical TDZ. Never overwritten.
+var __routerOriginalBirth286_ParameterPatternRustParser,__routerOriginalFactoryCalls286_ParameterPatternRustParser;
 // Written function parameter patterns reuse the checked irrefutable binding
 // planner. The original body is parsed once and retained without substitutions.
 import {UNIT} from '../checked-types.mjs';
@@ -10,7 +12,9 @@ function bindingNames(pattern) {
   return [...(pattern.items??[]),...(pattern.args??[]),...(pattern.fields??[]).map(field=>field.pattern)].flatMap(bindingNames);
 }
 export function withParameterPatternParser(Base) {
-  return class extends Base {
+  __routerOriginalFactoryCalls286_ParameterPatternRustParser=__routerOriginalFactoryCalls286_ParameterPatternRustParser===undefined?1:2;
+
+  const __routerOriginalReturned286_ParameterPatternRustParser=(0,class extends Base {
     fn(path) {
       const c=this.cursor,start=c.expect('fn','function'),name=c.identifier('function').value;
       const sourceLifetimeParameters=c.is('<')?this.sourceLifetimeParameters?.():null;
@@ -41,5 +45,9 @@ export function withParameterPatternParser(Base) {
       for(const {parameter,pattern} of patterns.toReversed())body={k:'routerLetPattern',pattern,subject:{k:'name',path:[parameter.name],span:parameter.span},body,span:pattern.span,sourceParameterBinding:true};
       return {k:'fn',name,params,ret,body,span:range(start,c.peek()),...(sourceLifetimeParameters?{sourceLifetimeParameters}:{}),...(patterns.length?{sourceParameterPatterns:{profile:'checked-irrefutable-parameters-v1',originalBodySpan,bindings:patterns.map(({parameter,pattern})=>({parameter:parameter.name,pattern}))}}:{})};
     }
-  };
+  });
+  if(__routerOriginalBirth286_ParameterPatternRustParser===undefined)__routerOriginalBirth286_ParameterPatternRustParser=[__routerOriginalReturned286_ParameterPatternRustParser,__routerOriginalReturned286_ParameterPatternRustParser.prototype,Base,[["constructor",__routerOriginalReturned286_ParameterPatternRustParser],["fn",__routerOriginalReturned286_ParameterPatternRustParser.prototype["fn"]]]];
+  return __routerOriginalReturned286_ParameterPatternRustParser;
 }
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_ParameterPatternRustParser?[__routerOriginalBirth286_ParameterPatternRustParser[0],__routerOriginalBirth286_ParameterPatternRustParser[1],__routerOriginalBirth286_ParameterPatternRustParser[2],[[__routerOriginalBirth286_ParameterPatternRustParser[3][0][0],__routerOriginalBirth286_ParameterPatternRustParser[3][0][1]],[__routerOriginalBirth286_ParameterPatternRustParser[3][1][0],__routerOriginalBirth286_ParameterPatternRustParser[3][1][1]]]]:null],bindings:[],factoryCalls:[(__routerOriginalFactoryCalls286_ParameterPatternRustParser===undefined?0:__routerOriginalFactoryCalls286_ParameterPatternRustParser)]};}

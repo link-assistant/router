@@ -1,3 +1,5 @@
+// Hoisted undefined slots do not add a module lexical TDZ. Never overwritten.
+var __routerOriginalBirth286_PatternControlRustParser,__routerOriginalFactoryCalls286_PatternControlRustParser,__routerOriginalBirth286_PatternControlChecker,__routerOriginalFactoryCalls286_PatternControlChecker;
 // Structural if-let lowering over checked Rust layouts. Vendor source, bodies
 // and shared frontend integration are unchanged; Data may adopt these classes.
 import {ControlRustParser,ControlChecker,ControlEmitter,checkingStatementMatch} from './control.mjs';
@@ -71,7 +73,9 @@ function ownershipRefusal(tokens) {
   return null;
 }
 export function withPatternControlParser(Base=ControlRustParser) {
-  return class extends Base {
+  __routerOriginalFactoryCalls286_PatternControlRustParser=__routerOriginalFactoryCalls286_PatternControlRustParser===undefined?1:2;
+
+  const __routerOriginalReturned286_PatternControlRustParser=(0,class extends Base {
     type() {
       const first=this.cursor.index,type=super.type(),tokens=this.cursor.tokens.slice(first,this.cursor.index),reason=ownershipRefusal(tokens);
       return reason?{...type,patternOwnershipRefusal:reason}:type;
@@ -240,11 +244,15 @@ export function withPatternControlParser(Base=ControlRustParser) {
       return {k:'routerWhile',cond:{k:'bool',value:true,span:range(first,first)},loopBody,span};
     }
     ifExpr(path) {return this.controlIf(path);}
-  };
+  });
+  if(__routerOriginalBirth286_PatternControlRustParser===undefined)__routerOriginalBirth286_PatternControlRustParser=[__routerOriginalReturned286_PatternControlRustParser,__routerOriginalReturned286_PatternControlRustParser.prototype,Base,[["constructor",__routerOriginalReturned286_PatternControlRustParser],["type",__routerOriginalReturned286_PatternControlRustParser.prototype["type"]],["registeredPatternOwner",__routerOriginalReturned286_PatternControlRustParser.prototype["registeredPatternOwner"]],["controlPattern",__routerOriginalReturned286_PatternControlRustParser.prototype["controlPattern"]],["callbackPatternParameter",__routerOriginalReturned286_PatternControlRustParser.prototype["callbackPatternParameter"]],["primary",__routerOriginalReturned286_PatternControlRustParser.prototype["primary"]],["letStatement",__routerOriginalReturned286_PatternControlRustParser.prototype["letStatement"]],["controlIf",__routerOriginalReturned286_PatternControlRustParser.prototype["controlIf"]],["whileStatement",__routerOriginalReturned286_PatternControlRustParser.prototype["whileStatement"]],["ifExpr",__routerOriginalReturned286_PatternControlRustParser.prototype["ifExpr"]]]];
+  return __routerOriginalReturned286_PatternControlRustParser;
 }
 
 export function withPatternControlChecker(Base=ControlChecker) {
-  return class extends Base {
+  __routerOriginalFactoryCalls286_PatternControlChecker=__routerOriginalFactoryCalls286_PatternControlChecker===undefined?1:2;
+
+  const __routerOriginalReturned286_PatternControlChecker=(0,class extends Base {
     bindingConstructorEnvironment(env,name,value,mutable){
       const facts=new Map(env.get(KNOWN_CONSTRUCTORS)??[]);facts.delete(name);
       if(!mutable&&value.k==='ctor')facts.set(name,{data:value.data,ctor:value.ctor});
@@ -561,7 +569,9 @@ export function withPatternControlChecker(Base=ControlChecker) {
       if(statement){conditional.body=this.expr(node.body,env,path,expected,allowLiteral);conditional.type=conditional.body.type;}
       return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:conditional.type,span:node.span,patternControl:{plan,subjectType:subject.type,...(node.cond.sourceWhileLet?{kind:'while-let',sourceCondition:structuredClone(node.cond.sourceWhileLet)}:{})}};
     }
-  };
+  });
+  if(__routerOriginalBirth286_PatternControlChecker===undefined)__routerOriginalBirth286_PatternControlChecker=[__routerOriginalReturned286_PatternControlChecker,__routerOriginalReturned286_PatternControlChecker.prototype,Base,[["constructor",__routerOriginalReturned286_PatternControlChecker],["bindingConstructorEnvironment",__routerOriginalReturned286_PatternControlChecker.prototype["bindingConstructorEnvironment"]],["resolveType",__routerOriginalReturned286_PatternControlChecker.prototype["resolveType"]],["patternOwner",__routerOriginalReturned286_PatternControlChecker.prototype["patternOwner"]],["patternDomain",__routerOriginalReturned286_PatternControlChecker.prototype["patternDomain"]],["sharedPatternView",__routerOriginalReturned286_PatternControlChecker.prototype["sharedPatternView"]],["patternProjection",__routerOriginalReturned286_PatternControlChecker.prototype["patternProjection"]],["patternTest",__routerOriginalReturned286_PatternControlChecker.prototype["patternTest"]],["patternLambda",__routerOriginalReturned286_PatternControlChecker.prototype["patternLambda"]],["expr",__routerOriginalReturned286_PatternControlChecker.prototype["expr"]]]];
+  return __routerOriginalReturned286_PatternControlChecker;
 }
 export function withPatternControlEmitter(Base=ControlEmitter) {
   return class extends Base {
@@ -637,3 +647,5 @@ export const PatternControlEmitter=withPatternControlEmitter();
 export const parseRust=source=>new PatternControlRustParser(tokenizeRust(source)).file();
 export const checkProgram=surface=>new PatternControlChecker(surface.language,surface.externals??[]).program(surface);
 export const emitJavaScript=program=>emitWith(program,PatternControlEmitter);
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_PatternControlRustParser?[__routerOriginalBirth286_PatternControlRustParser[0],__routerOriginalBirth286_PatternControlRustParser[1],__routerOriginalBirth286_PatternControlRustParser[2],[[__routerOriginalBirth286_PatternControlRustParser[3][0][0],__routerOriginalBirth286_PatternControlRustParser[3][0][1]],[__routerOriginalBirth286_PatternControlRustParser[3][1][0],__routerOriginalBirth286_PatternControlRustParser[3][1][1]],[__routerOriginalBirth286_PatternControlRustParser[3][2][0],__routerOriginalBirth286_PatternControlRustParser[3][2][1]],[__routerOriginalBirth286_PatternControlRustParser[3][3][0],__routerOriginalBirth286_PatternControlRustParser[3][3][1]],[__routerOriginalBirth286_PatternControlRustParser[3][4][0],__routerOriginalBirth286_PatternControlRustParser[3][4][1]],[__routerOriginalBirth286_PatternControlRustParser[3][5][0],__routerOriginalBirth286_PatternControlRustParser[3][5][1]],[__routerOriginalBirth286_PatternControlRustParser[3][6][0],__routerOriginalBirth286_PatternControlRustParser[3][6][1]],[__routerOriginalBirth286_PatternControlRustParser[3][7][0],__routerOriginalBirth286_PatternControlRustParser[3][7][1]],[__routerOriginalBirth286_PatternControlRustParser[3][8][0],__routerOriginalBirth286_PatternControlRustParser[3][8][1]],[__routerOriginalBirth286_PatternControlRustParser[3][9][0],__routerOriginalBirth286_PatternControlRustParser[3][9][1]]]]:null,__routerOriginalBirth286_PatternControlChecker?[__routerOriginalBirth286_PatternControlChecker[0],__routerOriginalBirth286_PatternControlChecker[1],__routerOriginalBirth286_PatternControlChecker[2],[[__routerOriginalBirth286_PatternControlChecker[3][0][0],__routerOriginalBirth286_PatternControlChecker[3][0][1]],[__routerOriginalBirth286_PatternControlChecker[3][1][0],__routerOriginalBirth286_PatternControlChecker[3][1][1]],[__routerOriginalBirth286_PatternControlChecker[3][2][0],__routerOriginalBirth286_PatternControlChecker[3][2][1]],[__routerOriginalBirth286_PatternControlChecker[3][3][0],__routerOriginalBirth286_PatternControlChecker[3][3][1]],[__routerOriginalBirth286_PatternControlChecker[3][4][0],__routerOriginalBirth286_PatternControlChecker[3][4][1]],[__routerOriginalBirth286_PatternControlChecker[3][5][0],__routerOriginalBirth286_PatternControlChecker[3][5][1]],[__routerOriginalBirth286_PatternControlChecker[3][6][0],__routerOriginalBirth286_PatternControlChecker[3][6][1]],[__routerOriginalBirth286_PatternControlChecker[3][7][0],__routerOriginalBirth286_PatternControlChecker[3][7][1]],[__routerOriginalBirth286_PatternControlChecker[3][8][0],__routerOriginalBirth286_PatternControlChecker[3][8][1]],[__routerOriginalBirth286_PatternControlChecker[3][9][0],__routerOriginalBirth286_PatternControlChecker[3][9][1]]]]:null],bindings:[],factoryCalls:[(__routerOriginalFactoryCalls286_PatternControlRustParser===undefined?0:__routerOriginalFactoryCalls286_PatternControlRustParser),(__routerOriginalFactoryCalls286_PatternControlChecker===undefined?0:__routerOriginalFactoryCalls286_PatternControlChecker)]};}

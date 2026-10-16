@@ -47,6 +47,8 @@ export class TextRustParser extends FormatRustParser {
     return {k:'routerTextPattern',op:name.value,object,args,...(tupleType?{tupleType}:{}),...(methodScope?{sourceMethodScope:methodScope}:{}),span};
   }
 }
+const __routerOriginalBirth286_TextRustParser=[TextRustParser,TextRustParser.prototype,FormatRustParser,[["constructor",TextRustParser],["primary",TextRustParser.prototype["primary"]],["unary",TextRustParser.prototype["unary"]],["method",TextRustParser.prototype["method"]]]];
+
 export class TextChecker extends FormatChecker {
   defaultNumber() {const type=super.defaultNumber();return this.language==='Rust'?{...type,rustPrimitiveName:'i32'}:type;}
   expr(node,env,path,expected,allowLiteral=false) {
@@ -112,6 +114,8 @@ export class TextChecker extends FormatChecker {
     return bindings.reduceRight((body,binding)=>({k:'let',...binding,body,mutable:false,type,span:node.span}),operation);
   }
 }
+const __routerOriginalBirth286_TextChecker=[TextChecker,TextChecker.prototype,FormatChecker,[["constructor",TextChecker],["defaultNumber",TextChecker.prototype["defaultNumber"]],["expr",TextChecker.prototype["expr"]]]];
+
 export class TextEmitter extends FormatEmitter {
   constructor(program,state){super(program,state);state.reserved.add('ml_slice_str_contains');state.reserved.add('ml_assert_str_slice');}
   fn(entry){
@@ -166,3 +170,5 @@ export class TextEmitter extends FormatEmitter {
     throw new Error(`unhandled checked string pattern method ${node.op}`);
   }
 }
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_TextRustParser?[__routerOriginalBirth286_TextRustParser[0],__routerOriginalBirth286_TextRustParser[1],__routerOriginalBirth286_TextRustParser[2],[[__routerOriginalBirth286_TextRustParser[3][0][0],__routerOriginalBirth286_TextRustParser[3][0][1]],[__routerOriginalBirth286_TextRustParser[3][1][0],__routerOriginalBirth286_TextRustParser[3][1][1]],[__routerOriginalBirth286_TextRustParser[3][2][0],__routerOriginalBirth286_TextRustParser[3][2][1]],[__routerOriginalBirth286_TextRustParser[3][3][0],__routerOriginalBirth286_TextRustParser[3][3][1]]]]:null,__routerOriginalBirth286_TextChecker?[__routerOriginalBirth286_TextChecker[0],__routerOriginalBirth286_TextChecker[1],__routerOriginalBirth286_TextChecker[2],[[__routerOriginalBirth286_TextChecker[3][0][0],__routerOriginalBirth286_TextChecker[3][0][1]],[__routerOriginalBirth286_TextChecker[3][1][0],__routerOriginalBirth286_TextChecker[3][1][1]],[__routerOriginalBirth286_TextChecker[3][2][0],__routerOriginalBirth286_TextChecker[3][2][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

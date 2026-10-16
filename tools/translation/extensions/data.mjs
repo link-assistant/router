@@ -183,6 +183,8 @@ export class DataRustParser extends TextRustParser {
     }
   }
 }
+const __routerOriginalBirth286_DataRustParser=[DataRustParser,DataRustParser.prototype,TextRustParser,[["constructor",DataRustParser],["fieldType",DataRustParser.prototype["fieldType"]],["attributes",DataRustParser.prototype["attributes"]],["items",DataRustParser.prototype["items"]],["enumItem",DataRustParser.prototype["enumItem"]],["primary",DataRustParser.prototype["primary"]],["postfix",DataRustParser.prototype["postfix"]]]];
+
 
 export class DataChecker extends withStandardStringEqualityChecker(TextChecker) {
   resolveType(type,path,span) {
@@ -313,6 +315,8 @@ export class DataChecker extends withStandardStringEqualityChecker(TextChecker) 
     return super.expr(node, env, path, expected, allowLiteral);
   }
 }
+const __routerOriginalBirth286_DataChecker=[DataChecker,DataChecker.prototype,null,[["constructor",DataChecker],["resolveType",DataChecker.prototype["resolveType"]],["sharedAggregatePointee",DataChecker.prototype["sharedAggregatePointee"]],["sharedFieldType",DataChecker.prototype["sharedFieldType"]],["sharedFieldCopy",DataChecker.prototype["sharedFieldCopy"]],["pattern",DataChecker.prototype["pattern"]],["binary",DataChecker.prototype["binary"]],["program",DataChecker.prototype["program"]],["application",DataChecker.prototype["application"]],["walk",DataChecker.prototype["walk"]],["expr",DataChecker.prototype["expr"]]]];
+
 
 const constructorValueType=type=>type.kind==='array'?{kind:'array',element:constructorValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
 export class DataEmitter extends TextEmitter {
@@ -366,3 +370,5 @@ export class DataEmitter extends TextEmitter {
 export const parseRust = source => new DataRustParser(tokenizeRust(source)).file();
 export const checkProgram = surface => new DataChecker(surface.language, surface.externals ?? []).program(surface);
 export const emitJavaScript = program => emitWith(program, DataEmitter);
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_DataRustParser?[__routerOriginalBirth286_DataRustParser[0],__routerOriginalBirth286_DataRustParser[1],__routerOriginalBirth286_DataRustParser[2],[[__routerOriginalBirth286_DataRustParser[3][0][0],__routerOriginalBirth286_DataRustParser[3][0][1]],[__routerOriginalBirth286_DataRustParser[3][1][0],__routerOriginalBirth286_DataRustParser[3][1][1]],[__routerOriginalBirth286_DataRustParser[3][2][0],__routerOriginalBirth286_DataRustParser[3][2][1]],[__routerOriginalBirth286_DataRustParser[3][3][0],__routerOriginalBirth286_DataRustParser[3][3][1]],[__routerOriginalBirth286_DataRustParser[3][4][0],__routerOriginalBirth286_DataRustParser[3][4][1]],[__routerOriginalBirth286_DataRustParser[3][5][0],__routerOriginalBirth286_DataRustParser[3][5][1]],[__routerOriginalBirth286_DataRustParser[3][6][0],__routerOriginalBirth286_DataRustParser[3][6][1]]]]:null,__routerOriginalBirth286_DataChecker?[__routerOriginalBirth286_DataChecker[0],__routerOriginalBirth286_DataChecker[1],__routerOriginalBirth286_DataChecker[2],[[__routerOriginalBirth286_DataChecker[3][0][0],__routerOriginalBirth286_DataChecker[3][0][1]],[__routerOriginalBirth286_DataChecker[3][1][0],__routerOriginalBirth286_DataChecker[3][1][1]],[__routerOriginalBirth286_DataChecker[3][2][0],__routerOriginalBirth286_DataChecker[3][2][1]],[__routerOriginalBirth286_DataChecker[3][3][0],__routerOriginalBirth286_DataChecker[3][3][1]],[__routerOriginalBirth286_DataChecker[3][4][0],__routerOriginalBirth286_DataChecker[3][4][1]],[__routerOriginalBirth286_DataChecker[3][5][0],__routerOriginalBirth286_DataChecker[3][5][1]],[__routerOriginalBirth286_DataChecker[3][6][0],__routerOriginalBirth286_DataChecker[3][6][1]],[__routerOriginalBirth286_DataChecker[3][7][0],__routerOriginalBirth286_DataChecker[3][7][1]],[__routerOriginalBirth286_DataChecker[3][8][0],__routerOriginalBirth286_DataChecker[3][8][1]],[__routerOriginalBirth286_DataChecker[3][9][0],__routerOriginalBirth286_DataChecker[3][9][1]],[__routerOriginalBirth286_DataChecker[3][10][0],__routerOriginalBirth286_DataChecker[3][10][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

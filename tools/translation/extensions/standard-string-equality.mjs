@@ -1,3 +1,5 @@
+// Hoisted undefined slots do not add a module lexical TDZ. Never overwritten.
+var __routerOriginalBirth286_StandardStringEqualityChecker,__routerOriginalFactoryCalls286_StandardStringEqualityChecker;
 // A pinned standard trait profile, not a coercion between owned and borrowed
 // strings. The checked operands and their source ownership remain intact.
 import {BOOL,STRING} from '../checked-types.mjs';
@@ -48,7 +50,9 @@ export function planStandardStringEquality(left,right,context) {
 }
 
 export function withStandardStringEqualityChecker(Base) {
-  return class StandardStringEqualityChecker extends Base {
+  __routerOriginalFactoryCalls286_StandardStringEqualityChecker=__routerOriginalFactoryCalls286_StandardStringEqualityChecker===undefined?1:2;
+
+  const __routerOriginalReturned286_StandardStringEqualityChecker=(0,class StandardStringEqualityChecker extends Base {
     binary(node,env,path,expected,allowLiteral) {
       if(this.language!=='Rust'||!['eq','ne'].includes(node.op))return super.binary(node,env,path,expected,allowLiteral);
       const left=this.expr(node.left,env,path,undefined,true),right=this.expr(node.right,env,path,undefined,true);
@@ -59,5 +63,9 @@ export function withStandardStringEqualityChecker(Base) {
       const proof=planStandardStringEquality(left,right,{declarations:this.items});
       return {k:'binary',op:node.op,left,right,type:BOOL,domain:STRING,span:node.span,standardStringEquality:proof};
     }
-  };
+  });
+  if(__routerOriginalBirth286_StandardStringEqualityChecker===undefined)__routerOriginalBirth286_StandardStringEqualityChecker=[__routerOriginalReturned286_StandardStringEqualityChecker,__routerOriginalReturned286_StandardStringEqualityChecker.prototype,Base,[["constructor",__routerOriginalReturned286_StandardStringEqualityChecker],["binary",__routerOriginalReturned286_StandardStringEqualityChecker.prototype["binary"]]]];
+  return __routerOriginalReturned286_StandardStringEqualityChecker;
 }
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_StandardStringEqualityChecker?[__routerOriginalBirth286_StandardStringEqualityChecker[0],__routerOriginalBirth286_StandardStringEqualityChecker[1],__routerOriginalBirth286_StandardStringEqualityChecker[2],[[__routerOriginalBirth286_StandardStringEqualityChecker[3][0][0],__routerOriginalBirth286_StandardStringEqualityChecker[3][0][1]],[__routerOriginalBirth286_StandardStringEqualityChecker[3][1][0],__routerOriginalBirth286_StandardStringEqualityChecker[3][1][1]]]]:null],bindings:[],factoryCalls:[(__routerOriginalFactoryCalls286_StandardStringEqualityChecker===undefined?0:__routerOriginalFactoryCalls286_StandardStringEqualityChecker)]};}

@@ -12,6 +12,8 @@ export class MethodRustParser extends EffectRustParser {
     return {k:'routerDispatchMethod',object,method:method.value,args,fallback,refusal,span};
   }
 }
+const __routerOriginalBirth286_MethodRustParser=[MethodRustParser,MethodRustParser.prototype,EffectRustParser,[["constructor",MethodRustParser],["method",MethodRustParser.prototype["method"]]]];
+
 export class MethodChecker extends EffectChecker {
   resolvedMethod(type,name,receiver) {
     if(type.kind !== 'data')return null;
@@ -60,6 +62,10 @@ export class MethodChecker extends EffectChecker {
     return super.expr(node,env,path,expected,allowLiteral);
   }
 }
+const __routerOriginalBirth286_MethodChecker=[MethodChecker,MethodChecker.prototype,EffectChecker,[["constructor",MethodChecker],["resolvedMethod",MethodChecker.prototype["resolvedMethod"]],["methodCall",MethodChecker.prototype["methodCall"]],["application",MethodChecker.prototype["application"]],["expr",MethodChecker.prototype["expr"]]]];
+
 export const parseRust=(source,{shadowedEffectRoots}={})=>{const parser=new MethodRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;return parser.file();};
 export const checkProgram=surface=>new MethodChecker(surface.language,surface.externals??[]).program(surface);
 export {emitJavaScript};
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_MethodRustParser?[__routerOriginalBirth286_MethodRustParser[0],__routerOriginalBirth286_MethodRustParser[1],__routerOriginalBirth286_MethodRustParser[2],[[__routerOriginalBirth286_MethodRustParser[3][0][0],__routerOriginalBirth286_MethodRustParser[3][0][1]],[__routerOriginalBirth286_MethodRustParser[3][1][0],__routerOriginalBirth286_MethodRustParser[3][1][1]]]]:null,__routerOriginalBirth286_MethodChecker?[__routerOriginalBirth286_MethodChecker[0],__routerOriginalBirth286_MethodChecker[1],__routerOriginalBirth286_MethodChecker[2],[[__routerOriginalBirth286_MethodChecker[3][0][0],__routerOriginalBirth286_MethodChecker[3][0][1]],[__routerOriginalBirth286_MethodChecker[3][1][0],__routerOriginalBirth286_MethodChecker[3][1][1]],[__routerOriginalBirth286_MethodChecker[3][2][0],__routerOriginalBirth286_MethodChecker[3][2][1]],[__routerOriginalBirth286_MethodChecker[3][3][0],__routerOriginalBirth286_MethodChecker[3][3][1]],[__routerOriginalBirth286_MethodChecker[3][4][0],__routerOriginalBirth286_MethodChecker[3][4][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

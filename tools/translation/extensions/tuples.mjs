@@ -61,6 +61,8 @@ export class TupleRustParser extends withParameterPatternParser(PatternControlRu
     c.expect(')','tuple expression');return {k:'routerTuple',items,span:span(start,c.peek())};
   }
 }
+const __routerOriginalBirth286_TupleRustParser=[TupleRustParser,TupleRustParser.prototype,null,[["constructor",TupleRustParser],["tupleType",TupleRustParser.prototype["tupleType"]],["type",TupleRustParser.prototype["type"]],["primary",TupleRustParser.prototype["primary"]]]];
+
 
 export class TupleChecker extends PatternControlChecker {
   program(surface) {
@@ -139,6 +141,10 @@ export class TupleChecker extends PatternControlChecker {
     return super.expr(node,env,path,expected,allowLiteral);
   }
 }
+const __routerOriginalBirth286_TupleChecker=[TupleChecker,TupleChecker.prototype,PatternControlChecker,[["constructor",TupleChecker],["program",TupleChecker.prototype["program"]],["inferredTupleField",TupleChecker.prototype["inferredTupleField"]],["inferSharedScalarIteratorPair",TupleChecker.prototype["inferSharedScalarIteratorPair"]],["inferTuple",TupleChecker.prototype["inferTuple"]],["expr",TupleChecker.prototype["expr"]]]];
+
 export class TupleEmitter extends PatternControlEmitter {
   expr(node){if(node.k==='routerTupleField')return `(${this.expr(node.object)})[${JSON.stringify('field'+node.index)}]`;return super.expr(node);}
 }
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_TupleRustParser?[__routerOriginalBirth286_TupleRustParser[0],__routerOriginalBirth286_TupleRustParser[1],__routerOriginalBirth286_TupleRustParser[2],[[__routerOriginalBirth286_TupleRustParser[3][0][0],__routerOriginalBirth286_TupleRustParser[3][0][1]],[__routerOriginalBirth286_TupleRustParser[3][1][0],__routerOriginalBirth286_TupleRustParser[3][1][1]],[__routerOriginalBirth286_TupleRustParser[3][2][0],__routerOriginalBirth286_TupleRustParser[3][2][1]],[__routerOriginalBirth286_TupleRustParser[3][3][0],__routerOriginalBirth286_TupleRustParser[3][3][1]]]]:null,__routerOriginalBirth286_TupleChecker?[__routerOriginalBirth286_TupleChecker[0],__routerOriginalBirth286_TupleChecker[1],__routerOriginalBirth286_TupleChecker[2],[[__routerOriginalBirth286_TupleChecker[3][0][0],__routerOriginalBirth286_TupleChecker[3][0][1]],[__routerOriginalBirth286_TupleChecker[3][1][0],__routerOriginalBirth286_TupleChecker[3][1][1]],[__routerOriginalBirth286_TupleChecker[3][2][0],__routerOriginalBirth286_TupleChecker[3][2][1]],[__routerOriginalBirth286_TupleChecker[3][3][0],__routerOriginalBirth286_TupleChecker[3][3][1]],[__routerOriginalBirth286_TupleChecker[3][4][0],__routerOriginalBirth286_TupleChecker[3][4][1]],[__routerOriginalBirth286_TupleChecker[3][5][0],__routerOriginalBirth286_TupleChecker[3][5][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

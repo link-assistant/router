@@ -68,6 +68,8 @@ export class EffectRustParser extends IteratorRustParser {
     return {k:'routerEffectCall',id:contract.id,args,span:span(first,c.peek())};
   }
 }
+const __routerOriginalBirth286_EffectRustParser=[EffectRustParser,EffectRustParser.prototype,IteratorRustParser,[["constructor",EffectRustParser],["file",EffectRustParser.prototype["file"]],["fn",EffectRustParser.prototype["fn"]],["constItem",EffectRustParser.prototype["constItem"]],["awaitExpression",EffectRustParser.prototype["awaitExpression"]],["tryExpression",EffectRustParser.prototype["tryExpression"]],["use",EffectRustParser.prototype["use"]],["type",EffectRustParser.prototype["type"]],["primary",EffectRustParser.prototype["primary"]]]];
+
 
 export class EffectChecker extends IteratorChecker {
   program(surface) {
@@ -127,6 +129,8 @@ export class EffectChecker extends IteratorChecker {
     return super.expr(node,env,path,expected,allowLiteral);
   }
 }
+const __routerOriginalBirth286_EffectChecker=[EffectChecker,EffectChecker.prototype,IteratorChecker,[["constructor",EffectChecker],["program",EffectChecker.prototype["program"]],["contextEnvironment",EffectChecker.prototype["contextEnvironment"]],["application",EffectChecker.prototype["application"]],["expr",EffectChecker.prototype["expr"]]]];
+
 
 const FUTURE = `function ml_router_future(operation) { let started = false; let pending; return { then(resolve, reject) { if (!started) { started = true; pending = globalThis.Promise.resolve().then(operation); } return (pending ?? globalThis.Promise.reject(new Error('future polling invariant'))).then(resolve, reject); } }; }
 function ml_router_defer(operation, args) { return ml_router_future(() => operation(...args)); }`;
@@ -180,3 +184,5 @@ export class EffectEmitter extends IteratorEmitter {
 export const parseRust=(source,{shadowedEffectRoots}={})=>{const parser=new EffectRustParser(tokenizeRust(source));parser.shadowedEffectRoots=shadowedEffectRoots;return parser.file();};
 export const checkProgram=surface=>new EffectChecker(surface.language,surface.externals??[]).program(surface);
 export const emitJavaScript=(program,{runtimeModule,reserved=[]}={})=>emitWith(program,class extends EffectEmitter {constructor(program,state){for(const name of reserved)state.reserved.add(name);super(program,state);this.runtimeModule=runtimeModule;}});
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_EffectRustParser?[__routerOriginalBirth286_EffectRustParser[0],__routerOriginalBirth286_EffectRustParser[1],__routerOriginalBirth286_EffectRustParser[2],[[__routerOriginalBirth286_EffectRustParser[3][0][0],__routerOriginalBirth286_EffectRustParser[3][0][1]],[__routerOriginalBirth286_EffectRustParser[3][1][0],__routerOriginalBirth286_EffectRustParser[3][1][1]],[__routerOriginalBirth286_EffectRustParser[3][2][0],__routerOriginalBirth286_EffectRustParser[3][2][1]],[__routerOriginalBirth286_EffectRustParser[3][3][0],__routerOriginalBirth286_EffectRustParser[3][3][1]],[__routerOriginalBirth286_EffectRustParser[3][4][0],__routerOriginalBirth286_EffectRustParser[3][4][1]],[__routerOriginalBirth286_EffectRustParser[3][5][0],__routerOriginalBirth286_EffectRustParser[3][5][1]],[__routerOriginalBirth286_EffectRustParser[3][6][0],__routerOriginalBirth286_EffectRustParser[3][6][1]],[__routerOriginalBirth286_EffectRustParser[3][7][0],__routerOriginalBirth286_EffectRustParser[3][7][1]],[__routerOriginalBirth286_EffectRustParser[3][8][0],__routerOriginalBirth286_EffectRustParser[3][8][1]]]]:null,__routerOriginalBirth286_EffectChecker?[__routerOriginalBirth286_EffectChecker[0],__routerOriginalBirth286_EffectChecker[1],__routerOriginalBirth286_EffectChecker[2],[[__routerOriginalBirth286_EffectChecker[3][0][0],__routerOriginalBirth286_EffectChecker[3][0][1]],[__routerOriginalBirth286_EffectChecker[3][1][0],__routerOriginalBirth286_EffectChecker[3][1][1]],[__routerOriginalBirth286_EffectChecker[3][2][0],__routerOriginalBirth286_EffectChecker[3][2][1]],[__routerOriginalBirth286_EffectChecker[3][3][0],__routerOriginalBirth286_EffectChecker[3][3][1]],[__routerOriginalBirth286_EffectChecker[3][4][0],__routerOriginalBirth286_EffectChecker[3][4][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

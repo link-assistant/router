@@ -71,6 +71,8 @@ export class FormatRustParser extends TupleRustParser {
     return {k:'routerFormat',args,pieces:pieces??formatParts(template,args,path,(segments,owner)=>this.resolve(segments,owner)),...(sourceTemplateControl?{sourceTemplateControl}:{}),...(sourceDisplayScope?{sourceDisplayScope}:{}),templateProvenance:{span:template.span},span:span(token,close)};
   }
 }
+const __routerOriginalBirth286_FormatRustParser=[FormatRustParser,FormatRustParser.prototype,TupleRustParser,[["constructor",FormatRustParser],["originalFormatDisplayScope",FormatRustParser.prototype["originalFormatDisplayScope"]],["primary",FormatRustParser.prototype["primary"]],["expressionMacro",FormatRustParser.prototype["expressionMacro"]]]];
+
 
 export class FormatChecker extends TupleChecker {
   originalFormatDisplayMethod(item,_entry){if(item.sourceMethodProof)throw new TypeError('Original method semantic source is copied, unsealed or caller fabricated');}
@@ -122,6 +124,8 @@ export class FormatChecker extends TupleChecker {
     return {...checked,formatProvenance:{sourceTemplateSpan:node.templateProvenance.span,sourceMacroSpan:node.span,profile:'checked-primitive-format-v1',explicitArgumentCount:node.args.length,...(displayClosures.length?{sourceDisplayClosures:displayClosures}:{}),...(node.sourceTemplateControl?{sourceControl:{schema:node.sourceTemplateControl.schema,originRanges:node.sourceTemplateControl.originRanges,argPlaces:node.sourceTemplateControl.argPlaces,helperTrace:node.sourceTemplateControl.trace,namespaceAuthority:false,traitSelectionVerified:false}}:{})}};
   }
 }
+const __routerOriginalBirth286_FormatChecker=[FormatChecker,FormatChecker.prototype,TupleChecker,[["constructor",FormatChecker],["originalFormatDisplayMethod",FormatChecker.prototype["originalFormatDisplayMethod"]],["originalFormatDisplayValue",FormatChecker.prototype["originalFormatDisplayValue"]],["visitDeclaration",FormatChecker.prototype["visitDeclaration"]],["expr",FormatChecker.prototype["expr"]]]];
+
 
 export class FormatEmitter extends TupleEmitter {
   expr(node) {
@@ -143,3 +147,5 @@ export class FormatEmitter extends TupleEmitter {
     return !node.zero&&node.width?`${rendered}.padStart(${node.width}," ")`:rendered;
   }
 }
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_FormatRustParser?[__routerOriginalBirth286_FormatRustParser[0],__routerOriginalBirth286_FormatRustParser[1],__routerOriginalBirth286_FormatRustParser[2],[[__routerOriginalBirth286_FormatRustParser[3][0][0],__routerOriginalBirth286_FormatRustParser[3][0][1]],[__routerOriginalBirth286_FormatRustParser[3][1][0],__routerOriginalBirth286_FormatRustParser[3][1][1]],[__routerOriginalBirth286_FormatRustParser[3][2][0],__routerOriginalBirth286_FormatRustParser[3][2][1]],[__routerOriginalBirth286_FormatRustParser[3][3][0],__routerOriginalBirth286_FormatRustParser[3][3][1]]]]:null,__routerOriginalBirth286_FormatChecker?[__routerOriginalBirth286_FormatChecker[0],__routerOriginalBirth286_FormatChecker[1],__routerOriginalBirth286_FormatChecker[2],[[__routerOriginalBirth286_FormatChecker[3][0][0],__routerOriginalBirth286_FormatChecker[3][0][1]],[__routerOriginalBirth286_FormatChecker[3][1][0],__routerOriginalBirth286_FormatChecker[3][1][1]],[__routerOriginalBirth286_FormatChecker[3][2][0],__routerOriginalBirth286_FormatChecker[3][2][1]],[__routerOriginalBirth286_FormatChecker[3][3][0],__routerOriginalBirth286_FormatChecker[3][3][1]],[__routerOriginalBirth286_FormatChecker[3][4][0],__routerOriginalBirth286_FormatChecker[3][4][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

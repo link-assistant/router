@@ -184,6 +184,8 @@ export class StringRustParser extends RustParser {
     return super.pattern(path, aliases);
   }
 }
+const __routerOriginalBirth286_StringRustParser=[StringRustParser,StringRustParser.prototype,RustParser,[["constructor",StringRustParser],["file",StringRustParser.prototype["file"]],["genericType",StringRustParser.prototype["genericType"]],["builtinShadow",StringRustParser.prototype["builtinShadow"]],["type",StringRustParser.prototype["type"]],["method",StringRustParser.prototype["method"]],["primary",StringRustParser.prototype["primary"]],["expressionMacro",StringRustParser.prototype["expressionMacro"]],["block",StringRustParser.prototype["block"]],["pattern",StringRustParser.prototype["pattern"]]]];
+
 
 export class StringChecker extends Checker {
   standardConstructor(path,type,scope=[],env=new Map(),span) {
@@ -238,6 +240,8 @@ export class StringChecker extends Checker {
     return { k: 'routerStringOperation', op: node.op, string, args, type, span: node.span };
   }
 }
+const __routerOriginalBirth286_StringChecker=[StringChecker,StringChecker.prototype,Checker,[["constructor",StringChecker],["standardConstructor",StringChecker.prototype["standardConstructor"]],["normalisePattern",StringChecker.prototype["normalisePattern"]],["expr",StringChecker.prototype["expr"]]]];
+
 
 export class StringEmitter extends JavaScriptEmitter {
   constructor(program, state) {
@@ -349,3 +353,5 @@ export function checkProgram(surface) {
   return new StringChecker(surface.language, surface.externals ?? []).program(surface);
 }
 export const emitJavaScript = program => emitWith(program, StringEmitter);
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_StringRustParser?[__routerOriginalBirth286_StringRustParser[0],__routerOriginalBirth286_StringRustParser[1],__routerOriginalBirth286_StringRustParser[2],[[__routerOriginalBirth286_StringRustParser[3][0][0],__routerOriginalBirth286_StringRustParser[3][0][1]],[__routerOriginalBirth286_StringRustParser[3][1][0],__routerOriginalBirth286_StringRustParser[3][1][1]],[__routerOriginalBirth286_StringRustParser[3][2][0],__routerOriginalBirth286_StringRustParser[3][2][1]],[__routerOriginalBirth286_StringRustParser[3][3][0],__routerOriginalBirth286_StringRustParser[3][3][1]],[__routerOriginalBirth286_StringRustParser[3][4][0],__routerOriginalBirth286_StringRustParser[3][4][1]],[__routerOriginalBirth286_StringRustParser[3][5][0],__routerOriginalBirth286_StringRustParser[3][5][1]],[__routerOriginalBirth286_StringRustParser[3][6][0],__routerOriginalBirth286_StringRustParser[3][6][1]],[__routerOriginalBirth286_StringRustParser[3][7][0],__routerOriginalBirth286_StringRustParser[3][7][1]],[__routerOriginalBirth286_StringRustParser[3][8][0],__routerOriginalBirth286_StringRustParser[3][8][1]],[__routerOriginalBirth286_StringRustParser[3][9][0],__routerOriginalBirth286_StringRustParser[3][9][1]]]]:null,__routerOriginalBirth286_StringChecker?[__routerOriginalBirth286_StringChecker[0],__routerOriginalBirth286_StringChecker[1],__routerOriginalBirth286_StringChecker[2],[[__routerOriginalBirth286_StringChecker[3][0][0],__routerOriginalBirth286_StringChecker[3][0][1]],[__routerOriginalBirth286_StringChecker[3][1][0],__routerOriginalBirth286_StringChecker[3][1][1]],[__routerOriginalBirth286_StringChecker[3][2][0],__routerOriginalBirth286_StringChecker[3][2][1]],[__routerOriginalBirth286_StringChecker[3][3][0],__routerOriginalBirth286_StringChecker[3][3][1]]]]:null],bindings:[],factoryCalls:[0,0]};}

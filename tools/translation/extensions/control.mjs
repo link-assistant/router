@@ -159,6 +159,8 @@ export class ControlRustParser extends StringRustParser {
     }
   }
 }
+const __routerOriginalBirth286_ControlRustParser=[ControlRustParser,ControlRustParser.prototype,StringRustParser,[["constructor",ControlRustParser],["fn",ControlRustParser.prototype["fn"]],["letStatement",ControlRustParser.prototype["letStatement"]],["forStatement",ControlRustParser.prototype["forStatement"]],["whileStatement",ControlRustParser.prototype["whileStatement"]],["block",ControlRustParser.prototype["block"]],["controlIf",ControlRustParser.prototype["controlIf"]],["postfix",ControlRustParser.prototype["postfix"]]]];
+
 
 export class ControlChecker extends StringChecker {
   program(surface) {
@@ -277,6 +279,8 @@ export class ControlChecker extends StringChecker {
     return result;
   }
 }
+const __routerOriginalBirth286_ControlChecker=[ControlChecker,ControlChecker.prototype,StringChecker,[["constructor",ControlChecker],["program",ControlChecker.prototype["program"]],["contextEnvironment",ControlChecker.prototype["contextEnvironment"]],["loopEnvironment",ControlChecker.prototype["loopEnvironment"]],["functionResult",ControlChecker.prototype["functionResult"]],["bindingEnvironment",ControlChecker.prototype["bindingEnvironment"]],["expr",ControlChecker.prototype["expr"]]]];
+
 
 const indent = lines => lines.map(line => '  ' + line);
 export class ControlEmitter extends StringEmitter {
@@ -394,3 +398,5 @@ export class ControlEmitter extends StringEmitter {
 export const parseRust = source => new ControlRustParser(tokenizeRust(source)).file();
 export const checkProgram = surface => new ControlChecker(surface.language, surface.externals ?? []).program(surface);
 export const emitJavaScript = program => emitWith(program, ControlEmitter);
+
+export function originalClassDefinitionBirths(){return {records:[__routerOriginalBirth286_ControlRustParser?[__routerOriginalBirth286_ControlRustParser[0],__routerOriginalBirth286_ControlRustParser[1],__routerOriginalBirth286_ControlRustParser[2],[[__routerOriginalBirth286_ControlRustParser[3][0][0],__routerOriginalBirth286_ControlRustParser[3][0][1]],[__routerOriginalBirth286_ControlRustParser[3][1][0],__routerOriginalBirth286_ControlRustParser[3][1][1]],[__routerOriginalBirth286_ControlRustParser[3][2][0],__routerOriginalBirth286_ControlRustParser[3][2][1]],[__routerOriginalBirth286_ControlRustParser[3][3][0],__routerOriginalBirth286_ControlRustParser[3][3][1]],[__routerOriginalBirth286_ControlRustParser[3][4][0],__routerOriginalBirth286_ControlRustParser[3][4][1]],[__routerOriginalBirth286_ControlRustParser[3][5][0],__routerOriginalBirth286_ControlRustParser[3][5][1]],[__routerOriginalBirth286_ControlRustParser[3][6][0],__routerOriginalBirth286_ControlRustParser[3][6][1]],[__routerOriginalBirth286_ControlRustParser[3][7][0],__routerOriginalBirth286_ControlRustParser[3][7][1]]]]:null,__routerOriginalBirth286_ControlChecker?[__routerOriginalBirth286_ControlChecker[0],__routerOriginalBirth286_ControlChecker[1],__routerOriginalBirth286_ControlChecker[2],[[__routerOriginalBirth286_ControlChecker[3][0][0],__routerOriginalBirth286_ControlChecker[3][0][1]],[__routerOriginalBirth286_ControlChecker[3][1][0],__routerOriginalBirth286_ControlChecker[3][1][1]],[__routerOriginalBirth286_ControlChecker[3][2][0],__routerOriginalBirth286_ControlChecker[3][2][1]],[__routerOriginalBirth286_ControlChecker[3][3][0],__routerOriginalBirth286_ControlChecker[3][3][1]],[__routerOriginalBirth286_ControlChecker[3][4][0],__routerOriginalBirth286_ControlChecker[3][4][1]],[__routerOriginalBirth286_ControlChecker[3][5][0],__routerOriginalBirth286_ControlChecker[3][5][1]],[__routerOriginalBirth286_ControlChecker[3][6][0],__routerOriginalBirth286_ControlChecker[3][6][1]]]]:null],bindings:[],factoryCalls:[0,0]};}
