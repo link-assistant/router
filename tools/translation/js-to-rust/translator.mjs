@@ -307,3 +307,45 @@ export function analyzeJavaScriptCorpusBatched(input,options){
     snapshot.requireCurrent();return result.value;
   }finally{live=false;plans=null;coordinates=null;chunks=null;batch=null;pool=null;analyses=null;currentModule=-1;}
 }
+
+/**
+ * Explicit independent-source corpus: labels do not establish module scope.
+ * Each row uses the original default frontend, including its single-source
+ * scoped retries. Only the existing original CST authentication packet is
+ * shared; source/host checks and caller joins remain fresh for every row.
+ */
+export function analyzeJavaScriptIndependentCorpus(input,options){
+  const snapshot=captureNativeCorpusSources(input,options),sources=snapshot.sources;
+  let batch=null,analyses=[];
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:[
+      {id:'independent-corpus:original-source-rows',apply:()=>{
+        const rows=[];for(let at=0;at<sources.length;at++)rows.push({source:sources[at].source,language:'JavaScript'});return rows;
+      }},
+      {id:'independent-corpus:checked-concrete-batch',apply:rows=>{
+        batch=prepareReverseConcreteSources(rows);
+        if(batch.stages.length!==sources.length||batch.totals.rows!==sources.length)throw Error('independent corpus row census differs');
+        return batch;
+      }},
+      {id:'independent-corpus:fresh-default-analysis',apply:()=>{
+        for(let at=0;at<sources.length;at++){
+          snapshot.requireCurrent();assertPrivateParserExecution();assertReverseConcreteSourceHost();
+          const row=sources[at],stage=batch.stages[at];
+          if(stage.source!==row.source||stage.concreteSyntax.language!=='JavaScript')throw Error('independent corpus source association differs');
+          const analysis=analyzeReconstructedSource(stage,{includeScoped:true,sourcePath:null,lossless:false,constructorGraph:snapshot.constructorGraph});
+          assertPrivateParserExecution();assertReverseConcreteSourceHost();snapshot.requireCurrent();
+          if(batch.stages[at]!==stage||stage.source!==row.source||stage.concreteSyntax.language!=='JavaScript')throw Error('independent corpus final source association differs');
+          analyses.push({path:row.path,source:row.source,analysis});
+        }
+        return analyses;
+      }},
+    ]},
+    {phase:'repository',rules:[{id:'independent-corpus:package-analyses',apply:value=>({analyses:value,concreteSyntaxCorpus:{schema:'reverse-independent-corpus-cst-v1',totals:batch.totals,rows:batch.stages.map((stage,at)=>({path:sources[at].path,source:stage.source,concreteSyntax:stage.concreteSyntax})),authority:{type:false,owner:false,executable:false}}})}]},
+  ]);
+  try{
+    const result=pipeline.run(undefined);assertPrivateParserExecution();assertReverseConcreteSourceHost();
+    for(let at=0;at<sources.length;at++)if(batch.stages[at].source!==sources[at].source||batch.stages[at].concreteSyntax.language!=='JavaScript'||analyses[at].path!==sources[at].path||analyses[at].source!==sources[at].source)throw Error('independent corpus final row differs');
+    Object.defineProperty(result.value.concreteSyntaxCorpus,'trace',{__proto__:null,value:result.trace,enumerable:true,writable:true,configurable:true});
+    snapshot.requireCurrent();return result.value;
+  }finally{batch=null;analyses=null;}
+}

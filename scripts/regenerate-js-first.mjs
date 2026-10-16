@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { analyzeJavaScript, translateJavaScript, parseMeta, emitRust, emitTypeScript } from '../tools/translation/js-to-rust/translator.mjs';
+import { analyzeJavaScriptIndependentCorpus, translateJavaScript, parseMeta, emitRust, emitTypeScript } from '../tools/translation/js-to-rust/translator.mjs';
 import { camelFromSnake } from '../tools/translation/js-to-rust/vendor/ir.mjs';
 import { buildNativePortableArtifacts, buildNativePortableArtifactsCorpusBulk } from '../tools/translation/js-to-rust/native-portable-artifacts.mjs';
 
@@ -78,8 +78,11 @@ export function buildArtifacts(root = ROOT) {
   const nativeCoverage = nativeDraft.manifest.modules.map(({ path, sha256, topLevel }) => ({ path, sha256,
     sourceItems: topLevel.sourceItems, translatedItems: topLevel.translatedItems,
     unsupportedItems: topLevel.unsupportedItems, diagnostics: topLevel.diagnostics }));
-  const unsupported = JSON.parse(readFileSync(join(root, 'parity/fixtures/js-first/unsupported.json'), 'utf8')).map((fixture) => {
-    const diagnostic = analyzeJavaScript(fixture.source).diagnostics[0];
+  const unsupportedFixtures = JSON.parse(readFileSync(join(root, 'parity/fixtures/js-first/unsupported.json'), 'utf8'));
+  const unsupportedCorpus = unsupportedFixtures.length === 0 ? {analyses:[]}
+    : analyzeJavaScriptIndependentCorpus(unsupportedFixtures.map((fixture,index) => ({path:'unsupported-fixture-'+index,source:fixture.source})));
+  const unsupported = unsupportedFixtures.map((fixture,index) => {
+    const diagnostic = unsupportedCorpus.analyses[index].analysis.diagnostics[0];
     if (!diagnostic || diagnostic.kind !== fixture.kind) throw new Error(`unsupported fixture diagnostic changed: ${fixture.kind}`);
     return { ...fixture, message: diagnostic.message };
   });
