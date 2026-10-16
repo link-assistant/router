@@ -3,7 +3,7 @@
   "roots": [
     "crate::response_affinity::AffinityFile"
   ],
-  "sourceSetSha256": "50006f5d22c5be2111829b82a02a92be0a051d7651c8974e023c1bb8e3159620",
+  "sourceSetSha256": "71805863390d75c7cbe51e3d712ac36563a63beb49472ae47022190e21151bac",
   "dependenciesDigest": "b5cd51de398c8286b9ef0454d13eeed6ebefcab7fddef8ad392a793e9bf9aa6d",
   "owners": [
     {
@@ -87,7 +87,7 @@
   "comparedActualNativeProjection": true,
   "parsedValueEqualityAllOwners": true,
   "descriptorSha256": "2cb95d3651c8a57ae45afc9c44f8d12952f812f84687ca25b9a379053c59cfe2",
-  "metadataSha256": "bf26b15fd09eb6242f9ce6b8e9668b0769bd869b397b2a36fdb8947d8b458c07",
+  "metadataSha256": "5e7c2b8e5722c62a3927cc215bf62c4d413756fa65a1c3cdad107092d84ed375",
   "javascriptSha256": "2fd934d7a25e5d34f14807d89c021422f3b05336d3da450833c9b32d01441aa0",
   "typescriptSha256": "b804c12e73c56dd29cf70f5d73a6689f9c1605e16fecc93849c0f61ac279fa65",
   "nativeInterpreterUnchanged": true,
