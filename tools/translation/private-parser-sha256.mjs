@@ -56,6 +56,15 @@ export function independentParserSha256(source){
   // All16 input words are overwritten before each schedule/compression pass.
   for(let at=0;at<source.length;at++){
     let code=source.charCodeAt(at);
+    // Four ASCII code units are exactly four UTF8 bytes and one big-endian
+    // input word. Non-ASCII, unaligned input and tails retain the scalar path.
+    if(pendingBytes===0&&code<128&&at+3<source.length){
+      const b=source.charCodeAt(at+1),c=source.charCodeAt(at+2),d=source.charCodeAt(at+3);
+      if((b|c|d)<128){
+        words[wordIndex++]=(code<<24)|(b<<16)|(c<<8)|d;payloadBytes+=4;at+=3;
+        if(wordIndex===16){compress();wordIndex=0;}continue;
+      }
+    }
     if(code>=55296&&code<=56319){
       const low=at+1<source.length?source.charCodeAt(at+1):-1;
       if(low<56320||low>57343)throwOriginalCapturedTypeError('Independent parser SHA256 requires well-formed UTF16');
