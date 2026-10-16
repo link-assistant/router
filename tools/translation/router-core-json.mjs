@@ -1,6 +1,7 @@
 // Owned JSON construction: the real Rust library delegation is explicit.
 // A genuine qualified source call selects this route; ordinary json! is unchanged.
 import {types} from 'node:util';
+import {hasCurrentRouterCoreJsonCopy} from './router-core-json-updates.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
 import {copyMetadata,originalParsedDeclarationEvidence,originalParsedSyntaxNode} from './extensions/source-links.mjs';
@@ -111,10 +112,11 @@ const readers=new Set(['serde_json_value_get_string','serde_json_value_get_usize
 function pure(checker,node){
   if(!node||typeof node!=='object')return true;
   if(node.k&&!pureKinds.has(node.k))return false;
-  if(node.k==='routerHostCall'&&!readers.has(node.id)){
+  if(node.k==='routerHostCall'&&!readers.has(node.id)&&!(node.id==='router_core_json_copy'&&hasCurrentRouterCoreJsonCopy(checker,node))){
     const contract=checker.instantiations?.contracts.get(node.id);
-    // Only the actual existing total saturating arithmetic contract can appear
-    // here; arbitrary host effects and source calls are never interpolations.
+    // The private new-copy receipt only opens the branch above; its complete
+    // argument still goes through the recursive old purity walk below. All
+    // other non-reader calls need the existing total saturating contract.
     if(!contract||contract.id!==node.id||!/^rust_fixed_saturating_(add|sub|mul)_/u.test(node.id)||contract.pure!==true)return false;
   }
   for(const [name,value]of Object.entries(node))if(!['type','span','contract','jsonMacroProof','compatibilityCore','sourcePattern','patternControl'].includes(name)){

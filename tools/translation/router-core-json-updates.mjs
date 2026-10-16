@@ -135,3 +135,15 @@ export function checkRouterCoreJsonMutableLet(checker,node,env,path,expected,all
  const body=checker.expr(node.body,inner,path,expected,allowLiteral);
  return {k:'let',name:node.name,value,body,mutable:true,type:body.type,span:node.span};
 }
+
+// Membership only: the consuming language rule must still recursively check
+// the operand's existing purity. Neither an id nor copied metadata can issue it.
+export function hasCurrentRouterCoreJsonCopy(checker,node){
+ if(!qualified||!originalDataFreezeIntrinsicsUnchanged())return false;
+ const frame=activeFunctions.get(checker);if(!frame||!node||typeof node!=='object'||isProxy(node))return false;requireOriginalPrimitiveTryFromChecker(checker);
+ const names=keys(node);for(let at=0;at<names.length;at++)if(names[at]==='stack')return false;
+ const metadata=descriptor(node,'compatibilityCore');if(!metadata||!own(metadata,'value'))return false;
+ const proof=issued.get(metadata.value);if(proof?.checker!==checker||proof.frame!==frame||proof.id!=='router_core_json_copy')return false;
+ const kind=descriptor(node,'k'),id=descriptor(node,'id'),args=descriptor(node,'args');
+ return !!kind&&own(kind,'value')&&kind.value==='routerHostCall'&&!!id&&own(id,'value')&&id.value===proof.id&&!!args&&own(args,'value')&&same(args.value,proof.args);
+}

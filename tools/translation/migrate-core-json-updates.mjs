@@ -24,6 +24,34 @@ function ownedMacro(tokens,at,name){
  const last=tokens[at+4],attached=last?.text===name+'!',separate=last?.text===name&&tokens[at+5]?.text==='!';if(!attached&&!separate)return null;const open=at+(attached?5:6),end=close(tokens,open);return end>=0?{open,end}:null;
 }
 function statementEnd(tokens,start){for(let at=start;at<tokens.length;at++){if(['(','[','{'].includes(tokens[at].text)){const end=close(tokens,at);if(end<0)return -1;at=end;}else if(tokens[at].text===';')return at;else if(tokens[at].text==='}')return -1;}return -1;}
+// Tail recognition is lexical syntax only. Original constructor/type ownership
+// remains the independent checker's obligation; no spelling issues a permit.
+function localReturnTail(tokens,body,declaration,afterUpdates,local){
+ const stack=[],pairs={'(':')','[':']','{':'}'};
+ for(let at=body;at<declaration;at++){
+  const token=tokens[at];if(['string','char','comment'].includes(token.type))continue;
+  if(pairs[token.text])stack.push(at);else if([')',']','}'].includes(token.text)){const open=stack.pop();if(open===undefined||pairs[tokens[open].text]!==token.text)return false;}
+ }
+ const open=[...stack].reverse().find(at=>tokens[at].text==='{'),end=open===undefined?-1:close(tokens,open);
+ if(end<0||afterUpdates>=end||local>=end)return false;
+ const constructors=new Set(['Some','Ok','Option::Some','Result::Ok','std::option::Option::Some','std::result::Result::Ok','::std::option::Option::Some','::std::result::Result::Ok','crate::translation_core::Maybe::Some','crate::translation_core::Outcome::Ok']);
+ function tail(start,stop,depth=0){
+  if(depth>32||start>=stop)return false;
+  if(start===local&&start+1===stop)return true;
+  const macro=ownedMacro(tokens,start,'json');if(macro&&macro.end===stop-1)return macro.open<local&&local<macro.end;
+  if(tokens[start].text==='('&&close(tokens,start)===stop-1)return tail(start+1,stop-1,depth+1);
+  let at=start;while(at<stop&&tokens[at].text!=='(')at++;
+  if(at===stop||!constructors.has(tokens.slice(start,at).map(token=>token.text).join(''))||close(tokens,at)!==stop-1)return false;
+  let innerEnd=stop-1;if(tokens[innerEnd-1]?.text===',')innerEnd--;
+  return tail(at+1,innerEnd,depth+1);
+ }
+ for(let at=afterUpdates+1;at<=local;at++){
+  if(at!==open+1&&![';','}'].includes(tokens[at-1]?.text))continue;
+  if(tail(at,end))return true;
+  if(tokens[at].text==='return'&&tokens[end-1]?.text===';'&&tail(at+1,end-1))return true;
+ }
+ return false;
+}
 function select(source,item){
  const tokens=item.tokens.filter(token=>token.type!=='comment'),selections=[],skipped=[],edits=[],claimed=new Set(),names=new Set(tokens.filter(ident).map(token=>token.text));
  if(tokens.some(token=>token.type==='ident'&&token.text.startsWith('r#')))return {edits:[],selections:[],skipped:[{function:item.name,reason:'raw local identity requires separate hygiene checking'}]};
@@ -32,7 +60,7 @@ function select(source,item){
   // Unknown expansions/local declarations retain the whole original body. A
   // fixed owned JSON/format call cannot introduce Rust bindings into the caller.
   const macro=ownedMacro(tokens,at,'json')??ownedMacro(tokens,at,'format');if(macro){at=macro.open;continue;}
-  if(tokens[at].text.endsWith('!')||tokens[at].text==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text)&&!['if','while','return','else'].includes(tokens[at-1].text)||tokens[at].text==='#'||['unsafe','async','await','yield','macro_rules','extern','trait','impl','fn','mod','use','struct','enum','union','type','const','static'].includes(tokens[at].text))return {edits:[],selections:[],skipped:[{function:item.name,reason:'unknown expansion or unsupported local effect/declaration'}]};
+  if(tokens[at].text!=='!'&&tokens[at].text.endsWith('!')||tokens[at].text==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text)&&!['if','while','return','else'].includes(tokens[at-1].text)||tokens[at].text==='#'||['unsafe','async','await','yield','macro_rules','extern','trait','impl','fn','mod','use','struct','enum','union','type','const','static'].includes(tokens[at].text))return {edits:[],selections:[],skipped:[{function:item.name,reason:'unknown expansion or unsupported local effect/declaration'}]};
  }
  for(let at=0;at+5<tokens.length;at++){
   if(tokens[at].text!=='let'||tokens[at+1].text!=='mut'||!ident(tokens[at+2])||tokens[at+3].text!=='=')continue;
@@ -50,15 +78,12 @@ function select(source,item){
   if(!updates.length)continue;
   const remaining=tokens.map((token,index)=>({token,index})).filter(({token,index})=>token.text===local&&index!==at+2&&!updates.some(row=>index===row.index));
   if(remaining.length!==1||remaining[0].index<=updates.at(-1).end){skipped.push({function:item.name,local,reason:'only update assignees and one final owned return are supported; aliases/shadows/reads remain'});continue;}
-  const tail=remaining[0].index;let end=tokens.length-1;while(tokens[end]?.text==='}')end--;
-  const suffix=tokens.slice(tail+1,end+1).map(token=>token.text),before=tokens[tail-1]?.text;
-  const finalJson=tokens.some((token,index)=>{const macro=ownedMacro(tokens,index,'json');return macro&&index<tail&&tail<macro.end&&tokens.slice(macro.end+1,end+1).every(token=>token.text===')');});
-  if(!(suffix.every(word=>word===')')&&['}',';','(','return'].includes(before)||finalJson)){skipped.push({function:item.name,local,reason:'owned value must be returned in the final expression or owned JSON projection'});continue;}
+  if(!localReturnTail(tokens,body,at,updates.at(-1).end,remaining[0].index)){skipped.push({function:item.name,local,reason:'owned value must end its actual lexical block through a bounded constructor or owned JSON projection'});continue;}
   // No shadowing binder can pass the complete same-spelling census above.
   for(const update of updates){
    if(update.rhs.some(value=>!Number.isSafeInteger(value))||update.rhs[0]>=update.rhs[1])continue;
    let temporary='__router_json_rhs_394';for(let suffix=2;names.has(temporary);suffix++)temporary='__router_json_rhs_394_'+suffix;names.add(temporary);
-   const span=[tokens[update.index].start,tokens[update.end].end],rhs=source.slice(...update.rhs),key=source.slice(update.key.start,update.key.end),replacement='{ let '+temporary+' = '+rhs+'; '+local+' = '+C+'json_with_field('+local+', '+key+', '+temporary+'); }';
+   const span=[tokens[update.index].start,tokens[update.end].end],rhs=source.slice(...update.rhs),key=source.slice(update.key.start,update.key.end),replacement='{ let '+temporary+' = '+rhs+'; '+local+' = '+C+'json_with_field('+local+', '+key+', '+temporary+'); };';
    if([...claimed].some(row=>span[0]<row[1]&&row[0]<span[1]))fail('overlapping local update selection');claimed.add(span);edits.push({span,expected:source.slice(...span),replacement});selections.push({function:item.name,local,span,rhs:update.rhs,keySource:key,temporary,sourceOperation:'fresh-owned-json-direct-string-key-assignment',evaluationOrder:['complete-original-RHS','move-owned-base','literal-key','move-computed-value','owned-update'],oldTraitDispatchProved:false});
   }
  }
