@@ -1,4 +1,5 @@
 import {createHash,Hash} from 'node:crypto';
+import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
 import {types} from 'node:util';
 import {originalJsonIntrinsicsUnchanged,originalPathMembershipIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
@@ -20,6 +21,8 @@ import {registeredDeriveHelperSource} from './derive-helper-namespaces.mjs';
 import {builtinStandardDeriveRegistry,builtinStandardDeriveSourceOwner} from './builtin-derive-standard-inputs.mjs';
 import {createOriginalAncestorAttributeScopeContext,proveOriginalConditionalSiblingScope} from './derive-ancestor-attribute-scope.mjs';
 export {createDeriveDependencyProof};
+// Comparison bytes only; source/owner joins and every hash remain fresh.
+const originalJson=createPrivateFrozenJsonCache();
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
 const contexts=new WeakMap(),certificates=new WeakMap(),concatCallerSources=new WeakMap(),helperProofs=new WeakSet(),helperCertificates=new WeakMap();
@@ -237,7 +240,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           }
         }
       }
-      originalScopes.push({source:module.file,module:module.path,sourceSha256:hash(module.source),sourceViewDigest:module.sourceView?.digest??null,resolverScopeSha256:hash(JSON.stringify(scope)),isAncestor,configurationCondition:scope.configurationCondition,unresolvedImports:scope.unresolvedImports});
+      originalScopes.push({source:module.file,module:module.path,sourceSha256:hash(module.source),sourceViewDigest:module.sourceView?.digest??null,resolverScopeSha256:hash(originalJson(scope)),isAncestor,configurationCondition:scope.configurationCondition,unresolvedImports:scope.unresolvedImports});
     }
     const expansions=pending.output.args.outputs.flatMap(branch=>branch.concatExpansions);
     if(!expansions.length||expansions.some(proof=>proof.meta.expression.kind!=='Lit'||proof.meta.attrs.length||proof.plan.rules.filter(rule=>['original-builtin-registration','original-core-builtin-owner'].includes(rule.role)).length!==2))throw new TypeError('Generated Args concat lacks its independent original builtin literal sink');
@@ -286,7 +289,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           if(!ancestors.length||ancestors.some((candidate,index)=>candidate.configurationCondition!=='active'||!closures[index]||candidate.bindings.some(binding=>missingModule(binding)&&!closures[index].conditionalSiblingProofs.some(proof=>JSON.stringify(proof.originalBinding)===JSON.stringify(binding))||names.has(binding.name)&&macroBindingAffects(binding,'attribute')||binding.namespace==='type'&&['core','std'].includes(binding.name))||candidate.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))))throw new TypeError('Standard-only input has an unresolved original ancestor, prelude root or attribute owner');
           standardRegistry=builtinStandardDeriveRegistry(dependencies);
           const standardOwners=input.derives.map(invocation=>{const owner=builtinStandardDeriveSourceOwner(standardRegistry,dependencies,invocation.path[0]);return {invocation,target:owner.target,declaration:owner.declaration,symbol:owner.symbol,registration:{name:owner.registration.name,callback:owner.registration.callback,deriveModule:owner.registration.deriveModule},corePrelude:owner.corePrelude,stdPrelude:owner.stdPrelude,callbackBodyCompiled:false};});
-          standardInput={schema:'original-standard-only-derive-input-v1',registryDigest:standardRegistry.digest,sourceProfileSha256:standardRegistry.sourceProfileSha256,completeRegistrationEntries:standardRegistry.registration.completeEntries.length,owners:standardOwners,originalScopes:ancestors.map((candidate,index)=>({source:candidate.file,module:candidate.path,configurationCondition:candidate.configurationCondition,resolverScopeSha256:hash(JSON.stringify(candidate)),originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{}),unresolvedImports:candidate.unresolvedImports})),namespaceAuthority:false,runtimeAuthority:false,generatedImplBehavior:false};
+          standardInput={schema:'original-standard-only-derive-input-v1',registryDigest:standardRegistry.digest,sourceProfileSha256:standardRegistry.sourceProfileSha256,completeRegistrationEntries:standardRegistry.registration.completeEntries.length,owners:standardOwners,originalScopes:ancestors.map((candidate,index)=>({source:candidate.file,module:candidate.path,configurationCondition:candidate.configurationCondition,resolverScopeSha256:hash(originalJson(candidate)),originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{}),unresolvedImports:candidate.unresolvedImports})),namespaceAuthority:false,runtimeAuthority:false,generatedImplBehavior:false};
         }
         if(!coreOwner)throw new TypeError('Derive error branch has no checked standard core owner');
         let builtinDefault=null;
@@ -307,7 +310,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
           const requested=ownerRequests(input,['allow','automatically_derived']),closures=ancestors.map(candidate=>requestedAttributeClosure(candidate,module,requested));
           if(ancestors.some((candidate,index)=>!closures[index]||candidate.bindings.some(binding=>['allow','automatically_derived'].includes(binding.name)&&macroBindingAffects(binding,'attribute'))))throw new TypeError('Generated Clap builtin attributes have an unresolved or shadowed original ancestor');
           if(clapArgsOutput&&ancestors.some(candidate=>candidate.bindings.some(binding=>binding.namespace==='type'&&binding.name==='clap'&&(binding.status!=='resolved'||JSON.stringify(binding.target)!==JSON.stringify(['clap'])))))throw new TypeError('Generated Args Clap macro path is shadowed in an original ancestor');
-          clapGeneratedAttributeOwners={names:['allow','automatically_derived'],scopes:ancestors.map((candidate,index)=>({source:candidate.file,module:candidate.path,originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{} )})),bindingsDigest:hash(JSON.stringify(baseline)),generatedAttributeOwnersResolved:true};
+          clapGeneratedAttributeOwners={names:['allow','automatically_derived'],scopes:ancestors.map((candidate,index)=>({source:candidate.file,module:candidate.path,originalAttributeFootprintClosed:closures[index].originalAttributeFootprintClosed,...(closures[index].conditionalSiblingProofs.length?{requestedOwnersClosed:true,conditionalSiblingScopeProofs:closures[index].conditionalSiblingProofs}:{} )})),bindingsDigest:hash(originalJson(baseline)),generatedAttributeOwnersResolved:true};
         }
         for(const helper of input.attributes.filter(attribute=>attribute.helpers)) {
           if(helper.name==='schemars'&&!owners.some(owner=>owner.target[0]==='schemars')||helper.name==='serde'&&!owners.some(owner=>['serde','schemars'].includes(owner.target[0])))throw new TypeError('Helper attribute lacks an actual declaring derive owner');
@@ -344,7 +347,7 @@ export function deriveFootprintAt(context,module,item) {
   if(certificates.get(certificate).sourceView!==module.sourceView||JSON.stringify(suppliedProfile)!==JSON.stringify(certificate.compilationProfile))throw new TypeError('Derive certificate original module view or compilation profile changed');
   const items=originalSourceModuleItems(module),lookup=itemScanNative?apply(itemScanGet,itemScanOrigins,[certificate]):null;
   const original=lookup&&lookup.item===item&&lookup.items===items&&itemScanUnchanged(items)?lookup.item:items.find(candidate=>candidate.start===item.start&&candidate.end===item.end);
-  if(!original||original.term!==item.term||original.name!==item.name||JSON.stringify(original.tokens)!==JSON.stringify(item.tokens))throw new TypeError('Derive certificate invocation differs from original module items');
+  if(!original||original.term!==item.term||original.name!==item.name||originalJson(original.tokens)!==originalJson(item.tokens))throw new TypeError('Derive certificate invocation differs from original module items');
   return certificate;
 }
 // Inert helper ownership is independent of generated bang output. Consume the
