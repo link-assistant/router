@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // Reviewed source-fixture producer. Git/CST history is data, never an issuer
 // of namespace, method-dispatch, ownership or executable authority.
+// Enter through the ordinary project bootstrap before structural extraction
+// reaches the mutually dependent Host/Formatting/Text class declarations.
+import './project.mjs';
 import {readFileSync,writeFileSync,mkdirSync,realpathSync,lstatSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {gzipSync,gunzipSync} from 'node:zlib';

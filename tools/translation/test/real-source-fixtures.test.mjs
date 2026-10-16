@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,symlinkSync,existsSync,readdirSync} from 'node:fs';
 import {gunzipSync,gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {resolve,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -39,7 +40,15 @@ test('actual reusable producer preserves complete originals and deterministic sa
   const expected=structuredClone(bundle);expected.current.revision=a.currentRevision;
   const archive=a.files.find(row=>row.path.endsWith('/originals.json.gz'));assert.deepEqual(JSON.parse(gunzipSync(Buffer.from(archive.content,'base64')).toString('utf8')),expected);
   assert.equal(hash(readFileSync(new URL('../fixtures/real-source-provenance.json',import.meta.url))),REAL_SOURCE_MANIFEST_SHA256);
-  const folder=mkdtempSync(join(tmpdir(),'router-native-fixture-producer-'));try{writeRealSourceFixtureProposal(a,folder);assert.deepEqual(readRealSourceFixtureBundle({folder}).bundle,expected);for(const row of a.files)assert.equal(hash(readFileSync(join(folder,row.path.split('/').at(-1)))),row.sha256);}finally{rmSync(folder,{recursive:true,force:true});}
+  const folder=mkdtempSync(join(tmpdir(),'router-native-fixture-producer-'));try{
+    writeRealSourceFixtureProposal(a,folder);assert.deepEqual(readRealSourceFixtureBundle({folder}).bundle,expected);for(const row of a.files)assert.equal(hash(readFileSync(join(folder,row.path.split('/').at(-1)))),row.sha256);
+    // A genuinely fresh same-engine CLI must not rely on this test module's
+    // earlier project imports to initialize the Host class dependency cycle.
+    const cold=join(folder,'cold'),entry=fileURLToPath(new URL('../prepare-real-source-fixtures.mjs',import.meta.url)),args=[entry,'--root',ROOT,'--current-revision','HEAD','--output',cold,'--history-archive',ASSETS];let stdout;
+    try{stdout=execFileSync(process.execPath,args,{encoding:'utf8',timeout:20_000,maxBuffer:32*1024*1024});}catch(error){retain('complete-cold-cli-failure',{args,status:error.status,signal:error.signal,stdout:error.stdout?.toString('utf8'),stderr:error.stderr?.toString('utf8')});throw error;}
+    const report=retain('complete-cold-cli-report',{args,stdout,report:JSON.parse(stdout)});assert.equal(report.report.historyMode,'explicit-reviewed-archive-replay');
+    assert.deepEqual(readRealSourceFixtureBundle({folder:cold}).bundle,expected);for(const row of a.files)assert.equal(hash(readFileSync(join(cold,row.path.split('/').at(-1)))),row.sha256);
+  }finally{rmSync(folder,{recursive:true,force:true});}
 });
 test('all fifteen complete historical parents retain every exact declaration method and native test scope',()=>{
   const {bundle,manifest}=retain('complete-historical-and-current-fixture',readRealSourceFixtureBundle());assert.equal(manifest.entries.length,12);assert.equal(bundle.historical.files.length,15);assert.equal(bundle.historical.files.reduce((sum,row)=>sum+row.bytes,0),211895);
