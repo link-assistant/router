@@ -21,3 +21,12 @@ macro_rules! __router_translation_core_format {
 
 /// Format through Rust's library; translation checks the primitive format subset.
 pub use crate::__router_translation_core_format as format;
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __router_translation_core_json {
+    ($($tokens:tt)*) => { ::serde_json::json!($($tokens)*) };
+}
+
+/// Construct JSON through the library; translation checks each supported value.
+pub use crate::__router_translation_core_json as json;

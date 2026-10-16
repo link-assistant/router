@@ -88,6 +88,7 @@ import {validateOriginalMethodAssociations,withCheckedMethodCopyReceivers} from 
 import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
 import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern} from '../router-core-algebraic.mjs';
 import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
+import {parseRouterCoreJson,captureRouterCoreJsonCalls,checkRouterCoreJson} from '../router-core-json.mjs';
 
 export const HOST_CONTRACTS=[ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -335,6 +336,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     const coreScalar=parseRouterCoreScalarCall(this,path);if(coreScalar)return coreScalar;
     const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
     const coreFormat=parseRouterCoreFormatting(this,path);if(coreFormat)return coreFormat;
+    const coreJson=parseRouterCoreJson(this,path);if(coreJson)return coreJson;
     const expandedMatches=parseOriginalMatchesCandidate(this,path);if(expandedMatches)return expandedMatches;
     if(this.cursor.peek().kind==='rustFloat') {
       const token=this.cursor.next();
@@ -592,6 +594,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
         }
       }
     }
+    if(node.k==='routerCoreJsonCall')return checkRouterCoreJson(this,node,env,path,expected);
     if(node.k==='routerCoreScalarCountCall')return checkRouterCoreScalarCall(this,node,env,path,expected);
     if(node.k==='routerCoreF64InclusiveCall')return checkRouterCoreRangeCall(this,node,env,path,expected);
     if(node.k==='routerPrimitiveFloatConstant')return checkedPrimitiveFloatConstant(node);
@@ -741,6 +744,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
   sourceFixedArrayCells(type,span){return fixedArrayCopyCells(type,span,0,(element,range)=>{checkedOptionNominal(this,element,range);const count=(type,active=new Set())=>{if(type.rustReference)return 1;if(type.kind==='array')return 1+(fixedArrayLength(type)??0)*count(type.element,active);if(type.kind!=='data')return 1;if(active.has(type.name))throw unsupported('static array cell budget','recursive owned layouts remain unproved',range);const entry=this.items.get(type.name),inner=new Set(active).add(type.name);return 1+Math.max(...entry.ctors.map(ctor=>ctor.fields.reduce((sum,field)=>sum+count(field.type,inner),0)));};return count(element);});}
   program(surface) {
     captureRouterCoreScalarCalls(this,surface);
+    captureRouterCoreJsonCalls(this,surface);
     captureRouterCoreRangeCalls(this,surface);
     captureConstMatchSources(this,surface);
     sourcePatterns.captureOriginalSharedPatterns(this,surface);
