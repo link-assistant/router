@@ -12,6 +12,7 @@ import {transportConcreteSyntaxSources,parseConcreteSyntaxMeta,reconstructConcre
 import {analyzeJavaScript,analyzeJavaScriptBatched,parseMeta,emitRust,emitTypeScript} from '../js-to-rust/translator.mjs';
 import {buildNativePortableArtifacts,buildNativePortableArtifactsBulk} from '../js-to-rust/native-portable-artifacts.mjs';
 import {collectScopedWrapperSources} from '../js-to-rust/vendor/scoped-helpers.mjs';
+import {ownershipCompiler} from '../js-to-rust/vendor/module-syntax.mjs';
 import {toLino} from '../js-to-rust/vendor/ir.mjs';
 import {evaluate} from '../js-to-rust/interpreter.mjs';
 import {buildArtifacts} from '../../../scripts/regenerate-js-first.mjs';
@@ -77,8 +78,12 @@ test('every batch row retains two-build canonical CST fidelity without semantic 
 test('dynamic producer callback retries and original refusals retain full independent semantic results',{timeout:60000},()=>{
  const fixtures=[positive,'export function owner(value){return value.split(",").map(part=>part.trim()).filter(part=>part.length>0).map(part=>part+"!");}','export function owner(value){return Object.entries(value).filter(([key,value])=>typeof value==="string").map(([key,value])=>key);}','export function owner(captured){const fn=other=>[captured,other];return fn;}','export function owner(){const fn=async value=>await value;return fn;}','export function malformed(){ return ( ; }','function outer(){function missing();}'];
  const rows=fixtures.map((source,index)=>{const options={sourcePath:'fixtures/bulk-'+index+'.mjs'};return {source,options,before:outcome(()=>analyzeJavaScript(source,options)),current:outcome(()=>analyzeJavaScriptBatched(source,options)),plan:collectScopedWrapperSources(source,options.sourcePath)};});
- retain('03-dynamic-complete',{rows});
+ const ts=ownershipCompiler(),witnesses=fixtures.map(source=>{const file=ts.createSourceFile('independent-body-presence.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),bodyless=[];const visit=node=>{if(ts.isFunctionDeclaration(node)&&node.body===undefined)bodyless.push({kind:ts.SyntaxKind[node.kind],start:node.getStart(file),end:node.end,text:node.getText(file),bodyAbsent:true});ts.forEachChild(node,visit);};visit(file);return {source,parseDiagnostics:file.parseDiagnostics.map(row=>({code:row.code,start:row.start,length:row.length,message:ts.flattenDiagnosticMessageText(row.messageText,'\n')})),bodyless};});
+ retain('03-dynamic-complete',{rows,witnesses});
  for(const row of rows){assert.ok(row.current.value);assert.deepEqual(row.current.value.analysis,row.before.value);assert.deepEqual(row.current.value.concreteSyntaxBatch.trace,phases);assert.deepEqual(row.current.value.concreteSyntaxBatch.authority,{type:false,owner:false,executable:false});assert.equal(row.current.value.concreteSyntaxBatch.totals.rows,row.plan.rows.length);}
+ const witness=witnesses.at(-1),refusal=rows.at(-1).current.value.analysis;
+ assert.deepEqual(witness.parseDiagnostics,[]);assert.equal(witness.bodyless.length,1);assert.deepEqual(witness.bodyless[0],{kind:'FunctionDeclaration',start:fixtures.at(-1).indexOf('function missing'),end:fixtures.at(-1).indexOf('function missing')+'function missing();'.length,text:'function missing();',bodyAbsent:true});
+ assert.deepEqual(refusal.program,[]);assert.deepEqual(refusal.items,[]);assert.equal(refusal.diagnostics.length,1);assert.equal(refusal.diagnostics[0].kind,'syntax');assert.equal(refusal.diagnostics[0].message,'invalid authoritative JavaScript syntax: function declaration requires a body');assert.deepEqual(refusal.diagnostics[0].span,{start:witness.bodyless[0].start,end:witness.bodyless[0].end,encoding:'utf16'});
  assert.equal(rows[0].current.value.analysis.program.length,1);assert.ok(rows.slice(1).some(row=>row.current.value.analysis.scopedFunctions?.sourceItems>0));assert.equal(rows.at(-1).current.value.analysis.program.length,0);assert.ok(rows.at(-1).current.value.analysis.diagnostics.length);
 });
 

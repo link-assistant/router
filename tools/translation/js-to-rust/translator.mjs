@@ -59,6 +59,13 @@ function analyzeReconstructedSource(stage,options,scopedAnalyze=analyzeJavaScrip
   // a grammar verdict or a new source/owner capability for this entry.
   const ts=ownershipCompiler(),file=ts.createSourceFile('reverse-input.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
   if(file.parseDiagnostics.length){const error={message:'invalid authoritative JavaScript syntax: '+ts.flattenDiagnosticMessageText(file.parseDiagnostics[0].messageText,'\n')};return {fragment:FRAGMENT,program:[],items:[],diagnostics:[diagnostic(error,{start:0,end:source.length},source)]};}
+  // TypeScript's AST also represents declaration signatures with no body.
+  // They are not executable JavaScript, even when parseDiagnostics is empty.
+  const bodyless=(function find(node){
+    if(ts.isFunctionDeclaration(node)&&node.body===undefined)return node;
+    return ts.forEachChild(node,find);
+  })(file);
+  if(bodyless){const error={message:'invalid authoritative JavaScript syntax: function declaration requires a body'};return {fragment:FRAGMENT,program:[],items:[],diagnostics:[diagnostic(error,{start:bodyless.getStart(file),end:bodyless.end},source)]};}
   return analyzeJavaScriptSource(source,options,scopedAnalyze);
 }
 function analyzeJavaScriptSource(source,{includeScoped=true,sourcePath=null,lossless=false,constructorGraph}={},scopedAnalyze=analyzeJavaScript) {
