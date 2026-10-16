@@ -727,8 +727,8 @@
     },
     {
       "path": "private-parser-sha256.mjs",
-      "bytes": 5591,
-      "sha256": "8dcc25edf02c845558111beb84c63794d50ccf801da7accdf0ac9a694dc4fce5"
+      "bytes": 5582,
+      "sha256": "0af886edba122dd74342e63c321aba26e877300fa2e41ce3fe1b839e03e922a6"
     }
   ]
 }
