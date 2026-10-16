@@ -45,7 +45,7 @@ pub fn print_table(records: &[crate::translation_core::Json]) {
 
 /// One table row, as the local path formats it.
 #[must_use]
-pub fn row(record: &crate::translation_core::Json) -> String {
+pub fn row(record: &crate::translation_core::Json) -> crate::translation_core::Text {
     let text = |key: &str| {
         record
             .get(key)
@@ -64,7 +64,7 @@ pub fn row(record: &crate::translation_core::Json) -> String {
         .and_then(Value::as_str)
         .filter(|scope| !scope.is_empty())
         .unwrap_or("client");
-    let rpm = number("rate_limit_per_minute").map_or_else(|| "-".to_string(), |v| v.to_string());
+    let rpm = number("rate_limit_per_minute").map_or_else(|| crate::translation_core::format!("{}", "-"), |v| v.to_string());
     let revoked = record
         .get("revoked")
         .and_then(Value::as_bool)

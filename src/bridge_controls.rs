@@ -244,7 +244,7 @@ pub fn validate_openai_prompt_cache(body: &crate::translation_core::Json, anthro
         }
         let object = options
             .as_object()
-            .ok_or_else(|| "prompt_cache_options must be an object".to_string())?;
+            .ok_or_else(|| crate::translation_core::format!("{}", "prompt_cache_options must be an object"))?;
         if !object.is_empty()
             && (object.len() != 1 || object.get("mode").and_then(Value::as_str) != Some("explicit"))
         {
