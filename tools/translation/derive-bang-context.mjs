@@ -76,7 +76,7 @@ export const isDeriveBangContext=value=>!!value&&contexts.has(value);
 function validateItemCarrier(module,original){
   // The authoritative original scoped selection remains private. An omitted
   // carrier is harmless; a provided carrier cannot erase/retype its items.
-  for(const name of ['items','allItems'])if(Object.hasOwn(module,name)&&originalJson(module[name])!==originalJson(original[name]))throw new TypeError('Bang original scoped item carrier changed');
+  for(const name of ['items','allItems'])if(Object.hasOwn(module,name)&&JSON.stringify(module[name])!==originalJson(original[name]))throw new TypeError('Bang original scoped item carrier changed');
 }
 export function deriveBangModules(context,{deriveContext,modules,externalModules,compilationProfile:profileInput}){
   const state=contexts.get(context);

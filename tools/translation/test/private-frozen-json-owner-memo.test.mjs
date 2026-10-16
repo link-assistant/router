@@ -14,7 +14,8 @@ after(()=>rmSync(directory,{recursive:true,force:true}));
 function retain(name,value){const output=process.env.ROUTER_PRIVATE_JSON_OWNER_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}}
 
 test('complete previous helper is pinned and storage exports and logical budgets stay unchanged',{timeout:5000},()=>{
- assert.deepEqual(Object.keys(current),Object.keys(old));assert.equal(current.privateFrozenJsonCacheFacts().available,true);
+ assert.deepEqual(Object.keys(old),['createPrivateFrozenJsonCache','privateFrozenJsonCacheFacts']);assert.deepEqual(Object.keys(current),['createPrivateFrozenJsonCache','createPrivateFrozenJsonComposer','privateFrozenJsonCacheFacts']);assert.equal(current.privateFrozenJsonCacheFacts().available,true);
+ const compose=current.createPrivateFrozenJsonComposer(),input={recipes:Object.freeze({syntax:'Ω😀'}),fresh:1};assert.equal(typeof compose,'function');assert.equal(compose(input),JSON.stringify(input));input.fresh=2;assert.equal(compose(input),JSON.stringify(input));assert.equal(typeof compose(input),'string');
  assert.deepEqual(current.privateFrozenJsonCacheFacts().limits,old.privateFrozenJsonCacheFacts().limits);
  assert.equal(current.privateFrozenJsonCacheFacts().eligibilityMemo.maximumEntries,old.privateFrozenJsonCacheFacts().eligibilityMemo.maximumEntries);
  for(const [name,source]of Object.entries(sources)){assert.equal(source.relocated.replace(/\bfrom (['"])(file:[^'"]+)\1/g,(whole,quote,url)=>{const row=source.imports.find(row=>row.url===url);return row?'from '+quote+row.path+quote:whole;}),source.source);retain('01-source-'+name,source);}
