@@ -6,9 +6,9 @@ import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {extractImplDeclarations} from '../impl-resolver.mjs';
-import {translateProject} from '../project.mjs';
 import {loadJavaScript,writeRuntimeAssets} from './artifact-loader.mjs';
 import {historicalRealSource} from './real-source-fixtures.mjs';
 // These exact native declarations retain their historical full-source pins.
