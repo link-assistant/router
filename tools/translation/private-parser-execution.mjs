@@ -169,6 +169,8 @@ function statIdentity(value){
   return result;
 }
 const sameIdentity=(a,b)=>a.dev===b.dev&&a.ino===b.ino&&a.size===b.size&&a.mode===b.mode&&a.mtimeMs===b.mtimeMs&&a.ctimeMs===b.ctimeMs;
+// Directory entry churn does not change the identity of an authenticated path.
+const sameDirectoryIdentity=(a,b)=>a.dev===b.dev&&a.ino===b.ino&&a.mode===b.mode;
 function regular(stat){return (stat.mode&0o170000)===0o100000;}
 function readOriginal(path,limit,records,ancestors){
   checked();
@@ -256,7 +258,7 @@ function authenticate(){
   return {manifest,sources,records,ancestors,text};
 }
 function finalIdentities(records,ancestors){
-  for(let ai=0;ai<ancestors.length;ai++){const record=ancestors[ai],value=lstatSync(record.path);checked();const now=statIdentity(value);if((now.mode&0o170000)!==0o040000||!sameIdentity(now,record.identity))fail('source ancestor changed');}
+  for(let ai=0;ai<ancestors.length;ai++){const record=ancestors[ai],value=lstatSync(record.path);checked();const now=statIdentity(value);if((now.mode&0o170000)!==0o040000||!sameDirectoryIdentity(now,record.identity))fail('source ancestor changed');}
   for(let ri=0;ri<records.length;ri++){const record=records[ri],value=lstatSync(record.path);checked();const now=statIdentity(value);if(!regular(now)||!sameIdentity(now,record.identity))fail('source identity changed');}
 }
 function rewrite(source,row){
