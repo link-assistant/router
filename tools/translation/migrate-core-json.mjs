@@ -77,7 +77,7 @@ export function proposeCoreJsonCorpus(options={}){
         if(item.term==='use')for(const leaf of originalUseDeclarationLeaves(item,parent.path)){
           if(leaf.glob){rootShadow=true;blocked.add('*');continue;}
           const role=roleFor(parent,item,leaf),json=same(leaf.segments,['serde_json','json'])&&role?.role.kind==='macro'&&role.role.namespace==='macro';
-          if(json&&!blocked.has(leaf.name)&&!alias.has(leaf.name)){alias.set(leaf.name,{module:parent,item,leaf,role});imports.push({item,leaf,role});}else if(leaf.name==='serde_json')rootShadow=true;else blocked.add(leaf.name);
+          if(json&&!blocked.has(leaf.name)&&!alias.has(leaf.name)){alias.set(leaf.name,{module:parent,item,leaf,role});imports.push({module:parent,item,leaf,role});}else if(leaf.name==='serde_json')rootShadow=true;else blocked.add(leaf.name);
         }
       }
       for(const item of originalSourceModuleItems(module)){
