@@ -1,3 +1,4 @@
+import {parseCharacterType,checkedCharacterType,assertCharacterBoundary,checkCharacterExpression,emitCharacterExpression,needsCharacterValueGuard} from './character-scalars.mjs';
 import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
 import {parseRouterCoreStrReference} from '../router-core-primitives.mjs';
 import {parseRouterCoreFormatting,parseRouterCoreText} from '../router-core-formatting.mjs';
@@ -258,6 +259,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
   hostTypeSyntax(){
     const coreText=parseRouterCoreText(this);if(coreText)return coreText;
     const coreStr=parseRouterCoreStrReference(this);if(coreStr)return coreStr;
+    const character=parseCharacterType(this);if(character)return character;
     const c=this.cursor,originalSelf=originalPrimitiveTryFromSelfType(this);if(originalSelf)return originalSelf;
     // && is one lexer token, but two borrows only in a source type position.
     // Split its coordinates here; boolean expression tokens remain untouched.
@@ -399,7 +401,7 @@ export function originalHostParserIdentitySnapshot(){return originalHostParserId
 const sourcePatterns=createOriginalSharedPatternAdapter();
 export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroChecker(withDeclarationRefusalCollection(withSharedNullaryEnumChecker(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
-  resolveType(type,path,range){const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
+  resolveType(type,path,range){if(type?.kind==='char')return checkedCharacterType(type,range);const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
   normalisePattern(pattern,type,span) {
     if(pattern.registeredGenericOwner){
       const entry=type.kind==='data'?this.items.get(type.name):null;
@@ -510,9 +512,11 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     return value;
   }
   expectedPrimitiveIdentity(actual,expected,path,range) {
+    assertCharacterBoundary(actual,expected,range);
     assertRustPrimitiveIdentity(actual,expected,range,{declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope??path,span)});
   }
   hostExpression(node,env,path,expected,allowLiteral=false) {
+    const character=checkCharacterExpression(this,node,env,path,expected);if(character)return character;
     if(node.k==='routerTextPattern'&&['contains','starts_with'].includes(node.op)&&node.args?.length===1&&node.args[0].k==='routerTextReference'&&node.args[0].sourceAmpersand)return super.expr(this.prepareOriginalStringPatternBorrow(node,env,path),env,path,expected,allowLiteral);
     if(node.k==='routerStaticArrayElementBorrow')return checkStaticArrayElement(this,node,env,path,expected);
     if(node.k==='routerPrimitiveShift')return checkedPrimitiveShift(this,node,env,path,expected);
@@ -771,6 +775,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
       fixedArrayCopyCells(param.type,param.span);this.fixedArrays=true;
       return [...constructorGuards,`${param.name} = ml_copy_fixed_array(${param.name}, ${JSON.stringify(runtimeValueType(param.type))});`,this.valueGuard(param.name,param.type)+';'];
     }
+    if(needsCharacterValueGuard(param.type))return [...constructorGuards,this.valueGuard(param.name,param.type)+';'];
     // The portable bounds helper compares values. Reject non-BigInts before
     // that helper can invoke a hostile object's conversion hooks.
     if(param.type.kind==='fixed')return [...constructorGuards,`if (typeof ${param.name} !== 'bigint') throw new TypeError('argument outside supported Rust fixed-integer domain');`,...super.parameterGuard(param)];
@@ -804,6 +809,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     return super.statements(node,...args);
   }
   expr(node) {
+    const character=emitCharacterExpression(this,node);if(character!==null)return character;
     if(node.k==='routerOriginalPrimitiveTryFrom')return this.expr(requireOriginalPrimitiveTryFromBody(node,this));
     if(node.k==='routerSourceConversion')return this.expr(requireOriginalConversionEmission(node,this));
     if(node.k==='routerCheckedCloneBody')return this.expr(requireOriginalCloneEmission(node,this));
