@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-spec = json.loads((ROOT / "openapi/router.yaml").read_text())
+spec = json.loads((ROOT / "openapi/router.v2.yaml").read_text())
 operations = {
     operation["operationId"]
     for methods in spec["paths"].values()

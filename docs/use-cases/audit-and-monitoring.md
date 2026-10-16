@@ -111,7 +111,7 @@ One JSON object per line is appended as each request is authorised:
 | `time` | RFC 3339 timestamp of the authorisation |
 | `token_id` | Router token id — the JWT `sub`, **not** the token string |
 | `label` | Label the token was issued with |
-| `provider` | Upstream that served it: `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, `openai-compatible` |
+| `provider` | Upstream that served it: `anthropic`, `codex`, `gemini`, `qwen`, `openai-compatible` |
 | `surface` | Client-facing dialect: `anthropic`, `openai_chat`, `openai_responses` |
 | `path` | Request path as the router saw it |
 | `client_kind` | Signed managed-client binding, when present |

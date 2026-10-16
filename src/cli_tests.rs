@@ -23,7 +23,7 @@ fn models_explain_parses_an_exact_selector_and_client() {
     assert_eq!(client, crate::clients::ClientKind::Codex);
     assert_eq!(target.server.as_deref(), Some("https://router.example"));
 }
-use crate::config::{default_gonka_model, default_openai_compatible_base_url};
+use crate::config::default_openai_compatible_base_url;
 use clap::CommandFactory as _;
 
 #[test]
@@ -291,10 +291,6 @@ fn cli_defaults_round_trip_to_config() {
         claude_cli_bin: None,
         codex_cli_bin: None,
         upstream_provider: "anthropic".into(),
-        gonka_private_key: None,
-        gonka_api_key: None,
-        gonka_source_url: None,
-        gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,
         audit_log: None,
@@ -302,11 +298,6 @@ fn cli_defaults_round_trip_to_config() {
         request_log_max_bytes: crate::request_log::DEFAULT_MAX_BYTES,
         request_log_max_total_bytes: crate::request_log::DEFAULT_MAX_TOTAL_BYTES,
         max_proxy_request_bytes: crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
-        crater_forgefed_inbox: None,
-        crater_forgefed_actor: None,
-        crater_forgefed_target: None,
-        crater_poll_interval_ms: 1000,
-        crater_poll_timeout_secs: 120,
         openai_compatible_provider_name: "litellm".into(),
         openai_compatible_base_url: default_openai_compatible_base_url(),
         openai_compatible_api_key: None,
@@ -421,10 +412,6 @@ fn cli_invalid_routing_mode_rejected() {
         claude_cli_bin: None,
         codex_cli_bin: None,
         upstream_provider: "anthropic".into(),
-        gonka_private_key: None,
-        gonka_api_key: None,
-        gonka_source_url: None,
-        gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,
         audit_log: None,
@@ -432,11 +419,6 @@ fn cli_invalid_routing_mode_rejected() {
         request_log_max_bytes: crate::request_log::DEFAULT_MAX_BYTES,
         request_log_max_total_bytes: crate::request_log::DEFAULT_MAX_TOTAL_BYTES,
         max_proxy_request_bytes: crate::config::DEFAULT_MAX_PROXY_REQUEST_BYTES,
-        crater_forgefed_inbox: None,
-        crater_forgefed_actor: None,
-        crater_forgefed_target: None,
-        crater_poll_interval_ms: 1000,
-        crater_poll_timeout_secs: 120,
         openai_compatible_provider_name: "litellm".into(),
         openai_compatible_base_url: default_openai_compatible_base_url(),
         openai_compatible_api_key: None,

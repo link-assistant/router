@@ -15,14 +15,14 @@ with open(sys.argv[1],'rb') as jar:
         digest.update(chunk)
     assert digest.hexdigest()=='41ce4f6b07f196676439d710759fa1ced7a08066d06ff1bf314681470289efae', 'Generator checksum mismatch'
 PY
-java -Xmx512m -jar "$tool" validate -i "$root/openapi/router.yaml"
+java -Xmx512m -jar "$tool" validate -i "$root/openapi/router.v2.yaml"
 for language in php go java; do
   properties='packageName=router,hideGenerationTimestamp=true'
   if [[ "$language" == go ]]; then properties+=',enumClassPrefix=true'; fi
   if [[ "$language" == php ]]; then properties+=',invokerPackage=LinkAssistant\Router'; fi
   if [[ "$language" == java ]]; then properties+=',invokerPackage=router.client,apiPackage=router.client.api,modelPackage=router.client.model'; fi
   generated="$(mktemp -d "$root/target/http-clients/generated-$language-XXXXXX")"
-  java -Xmx512m -jar "$tool" generate -i "$root/openapi/router.yaml" -g "$language" \
+  java -Xmx512m -jar "$tool" generate -i "$root/openapi/router.v2.yaml" -g "$language" \
     -o "$generated" --global-property apiTests=false,modelTests=false \
     --additional-properties "$properties"
   rm -rf "$root/target/http-clients/$language"

@@ -488,8 +488,6 @@ fn bridged_providers_are_the_non_anthropic_openai_dialect_ones() {
     assert!(is_bridged(UpstreamProvider::Gemini));
     assert!(is_bridged(UpstreamProvider::OpenAICompatible));
     assert!(!is_bridged(UpstreamProvider::Anthropic));
-    assert!(!is_bridged(UpstreamProvider::Gonka));
-    assert!(!is_bridged(UpstreamProvider::Crater));
 }
 
 /// `count_tokens` is answered locally, so it must authenticate the caller

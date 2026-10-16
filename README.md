@@ -21,7 +21,7 @@ own credential terms.
 
 Import operational logic from the Rust crate, `@link-assistant/router` for JavaScript/TypeScript on Node 20+ and Bun, or `link-assistant-router` for Python 3.10+. Each official package exposes the same operation catalog and validates versioned JSON contracts. PHP, Go and Java HTTP clients are generated and tested from the complete OpenAPI description in CI.
 
-See the [downstream integration guide](docs/integration/downstream.md), [operation × language matrix](docs/integration/operations.md), [JSON Schemas](schemas), and [OpenAPI 3.1](openapi/router.yaml). All official packages share Router's version and exact-tag release gate.
+See the [downstream integration guide](docs/integration/downstream.md), [operation × language matrix](docs/integration/operations.md), [JSON Schemas](schemas), and [OpenAPI 3.1](openapi/router.v2.yaml). All official packages share Router's version and exact-tag release gate.
 
 ## Overview
 
@@ -34,8 +34,7 @@ containment controls local to the operator.
 - **Supports Claude MAX (OAuth)** by reading Claude Code session credentials
 - **Vendor subscriptions** — `UPSTREAM_PROVIDER=auto` discovers healthy credentials, then exposes only the models allowed for the token's signed client/principal; a second pre-upstream check prevents stale or forged selection
 - **OpenAI-compatible endpoints** — `/api/services/openai/v1/chat/completions`, `/api/services/openai/v1/responses`, and `/api/services/openai/v1/models` translate to Anthropic or forward to a configured OpenAI-compatible provider
-- **Optional Gonka upstream** — `UPSTREAM_PROVIDER=gonka` forwards OpenAI-compatible routes to Gonka instead of translating them to Anthropic
-- **Optional Crater ForgeFed upstream** — `UPSTREAM_PROVIDER=crater` turns OpenAI chat requests into ForgeFed `Offer{Ticket}` tasks and waits for resolved task results
+- **ActivityPub marketplace** — publish model proposals and negotiate services using [FEP-0837](docs/activitypub-marketplace.md)
 - **Optional LiteLLM/OpenAI-compatible upstream** — `UPSTREAM_PROVIDER=openai-compatible` routes OpenAI SDK traffic to a stored provider such as LiteLLM
 - **Multi-account routing** — manage multiple account-bound credentials with session affinity, strict token pins, selection strategies, request caps, and `Retry-After`-aware cooldowns
 - **Issues custom `la_sk_...` JWT tokens** with expiration/revocation plus immutable managed-client and subscriber bindings
@@ -62,22 +61,11 @@ Link.Assistant.Router (Rust / axum)
 Anthropic API (api.anthropic.com)
 ```
 
-When `UPSTREAM_PROVIDER=gonka`, clients still authenticate to the router with
-`Authorization: Bearer la_sk_...`, but upstream OpenAI-compatible requests are
-sent to the configured Gonka broker with its separate API key instead of the
-client token. This project remains Link.Assistant.Router; Gonka is an optional
-backend.
-
 When `UPSTREAM_PROVIDER=openai-compatible`, clients still authenticate to the
 router with `Authorization: Bearer la_sk_...` or `x-api-key: la_sk_...`. The
 router forwards OpenAI-compatible requests to the configured provider, such as
 a LiteLLM proxy, and substitutes only the upstream provider key inside the
 router.
-
-When `UPSTREAM_PROVIDER=crater`, `/api/services/openai/v1/chat/completions` accepts normal OpenAI
-chat requests, delivers a ForgeFed `Offer` containing a `Ticket` to
-`CRATER_FORGEFED_INBOX`, reads `Accept.result`, polls that task URI until
-`isResolved:true`, and maps the resolved content back to OpenAI JSON or SSE.
 
 ### Vendor subscriptions (Codex, Gemini, Qwen)
 
@@ -764,27 +752,11 @@ visible output is truncated at the caller's budget and the exchange ends with
 estimated at roughly four characters per token, and hidden reasoning tokens are
 not observable, so the cap bounds visible output rather than billed tokens.
 
-With `UPSTREAM_PROVIDER=gonka`, `/api/services/openai/v1/chat/completions` and
-`/api/services/openai/v1/responses` forward OpenAI-compatible JSON to Gonka
-without Anthropic translation and relay SSE frames as they arrive. Availability
-comes only from the broker's authenticated `GET /v1/models` response.
-`GONKA_MODEL` is an optional request default and exact catalog narrowing rule;
-it never invents a model absent from that live catalog. In automatic mode,
-subscription, stored, and z.ai catalogs take precedence for an already-listed
-canonical ID; a duplicate Gonka entry is omitted and dispatch follows the same
-precedence.
-
 With `UPSTREAM_PROVIDER=openai-compatible`, the same routes forward JSON to the
 configured provider. This supports LiteLLM proxy deployments by setting the
 provider base URL to the LiteLLM `/v1` API base. Streaming OpenAI requests are
 passed through for OpenAI-compatible providers, and Anthropic-backed streaming
 requests are translated to OpenAI SSE chunks.
-
-With `UPSTREAM_PROVIDER=crater`, `/api/services/openai/v1/chat/completions`
-supports normal JSON
-responses and SSE with either request-body `"stream": true` or `?stream=true`.
-The SSE stream emits OpenAI chat-completion chunks once the ForgeFed task
-resolves.
 
 ### MPP charges for OpenAI endpoints
 
@@ -928,7 +900,7 @@ Every flag listed in `--help` has an env-var alias and can be configured from
 | `--host` / `ROUTER_HOST` | `0.0.0.0` | No | IP or network alias to resolve once and bind to |
 | `--listener` / `LISTENERS` | — | No | Repeatable `ADDR=combined\|inference-only,http\|tls` primary listener. `LISTENERS` separates entries with `;`. When present, these replace the legacy `--host`/`--port` primary listener; otherwise existing single-listener behavior is unchanged |
 | `--claude-code-home` / `CLAUDE_CODE_HOME` | `~/.claude` | No | Primary Claude Code credentials directory |
-| `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy credentials, or pin `anthropic`, `codex`, `gemini`, `qwen`, `gonka`, `crater`, `openai-compatible`, or `z.ai-coding-plan` |
+| `--upstream-provider` / `UPSTREAM_PROVIDER` | `auto` | No | Automatically route by model across healthy credentials, or pin `anthropic`, `codex`, `gemini`, `qwen`, `openai-compatible`, or `z.ai-coding-plan` |
 | `--allow-subscription-bridge` / `SUBSCRIPTION_BRIDGE_OVERRIDES` | — | No | Repeatable exact `CLIENT:PROVIDER` risk acceptance, such as `codex:claude`; no broad compatibility switch exists |
 | `--allow-proxied-client` / `PROXIED_CLIENT_OVERRIDES` | — | No | Repeatable reviewed proxy identity; currently only `codex`, permitting a Codex-bound Bearer token plus `X-Link-Assistant-Proxied-Client: codex` to call canonical Codex Responses without the native CLI fingerprint |
 | `--upstream-base-url` / `UPSTREAM_BASE_URL` | `https://api.anthropic.com` | No | Upstream Anthropic API URL |
@@ -1316,58 +1288,6 @@ work, in order of how little they ask:
 Installing the generated certificate into the OS trust store also works, but it
 is a machine-wide change that an operator may not be permitted to make on a
 shared host — so it is a last resort rather than the documented path.
-
-### Gonka provider
-
-Gonka support is optional. Configure an OpenAI-compatible Gonka broker with an
-API key, then set `UPSTREAM_PROVIDER=gonka` to pin the deployment to it. With
-`UPSTREAM_PROVIDER=auto`, compatible clients can also route exact IDs from its
-live catalog alongside other healthy providers.
-
-```env
-TOKEN_SECRET=your-router-token-secret
-
-UPSTREAM_PROVIDER=gonka
-GONKA_API_KEY=your_gonka_broker_api_key
-GONKA_SOURCE_URL=https://your-gonka-broker.example
-# Optional exact default/narrowing rule:
-GONKA_MODEL=your-current-gonka-model
-```
-
-| Flag / env | Default | Required | Description |
-|---|---|---|---|
-| `--gonka-api-key` / `GONKA_API_KEY` | — | Yes, for Gonka | Bearer key for the configured Gonka-compatible broker |
-| `--gonka-private-key` / `GONKA_PRIVATE_KEY` | — | Unsupported | Direct-wallet mode is rejected before startup; Router does not implement the official endpoint-resolution and secp256k1 signing protocol |
-| `--gonka-source-url` / `GONKA_SOURCE_URL` | — | Yes, with `GONKA_API_KEY` | Explicit Gonka-compatible broker URL; official direct-wallet nodes are not assumed to accept broker API keys |
-| `--gonka-model` / `GONKA_MODEL` | — | No | Default model when omitted and exact narrowing of the live catalog; never a synthetic catalog entry |
-
-Direct-wallet credentials must be used through an implementation of Gonka's
-official protocol, such as a compatible broker. Router will not substitute its
-own signature format, and deliberately has no official-node URL default in
-broker mode.
-
-### Crater ForgeFed provider
-
-Crater support is optional. It keeps router-issued `la_sk_...` tokens at the
-edge, then uses ForgeFed to submit work to a remote ticket tracker or exchange.
-
-```env
-TOKEN_SECRET=your-router-token-secret
-
-UPSTREAM_PROVIDER=crater
-CRATER_FORGEFED_INBOX=https://tracker.example/inbox
-CRATER_FORGEFED_TARGET=https://tracker.example/projects/demo
-# Optional; defaults to ACTIVITYPUB_ACTOR_BASE_URL/api/services/activitypub/actor/code
-CRATER_FORGEFED_ACTOR=https://router.example/api/services/activitypub/actor/code
-```
-
-| Flag / env | Default | Required | Description |
-|---|---|---|---|
-| `--crater-forgefed-inbox` / `CRATER_FORGEFED_INBOX` | — | Yes, for Crater | Remote ForgeFed inbox that receives `Offer{Ticket}` activities |
-| `--crater-forgefed-actor` / `CRATER_FORGEFED_ACTOR` | `${ACTIVITYPUB_ACTOR_BASE_URL}/api/services/activitypub/actor/code` | No | Local actor URI used in outbound activities |
-| `--crater-forgefed-target` / `CRATER_FORGEFED_TARGET` | inbox URI | No | Ticket tracker or project URI used as `Offer.target` |
-| `--crater-poll-interval-ms` / `CRATER_POLL_INTERVAL_MS` | `1000` | No | Delay between task URI polls |
-| `--crater-poll-timeout-secs` / `CRATER_POLL_TIMEOUT_SECS` | `120` | No | Maximum wait for `isResolved:true` |
 
 ### OpenAI-compatible / LiteLLM provider
 
@@ -2095,11 +2015,12 @@ Replace placeholder secrets, set `ACTIVITYPUB_ACTOR_BASE_URL` to the public
 router URL, and mount or provision Claude Code credentials at
 `CLAUDE_CODE_HOME` before exposing the service.
 
-## ForgeFed Integration
+## ActivityPub Marketplace
 
-The router exposes ActivityPub/ForgeFed endpoints for service discovery and
-problem-source federation. See [docs/forgefed.md](docs/forgefed.md) for the
-actor document, inbox, follow activity, and deployment verification steps.
+The router publishes model proposals and negotiates inference services using
+FEP-0837. Finalized agreements link to the authenticated inference API. See
+[ActivityPub marketplace](docs/activitypub-marketplace.md) for discovery,
+negotiation, execution, authentication and migration details.
 
 ## Token System
 
@@ -2205,7 +2126,7 @@ credential. It keeps working, `doctor` warns about it, and the first
 Each token can cap request count, actual upstream-reported input plus output
 tokens, and requests per minute. Managed launch/setup tokens also bind one
 client adapter and subscriber principal. Generic tokens below remain useful for
-ordinary API-key/Gonka/Crater routes but cannot consume vendor subscriptions.
+ordinary API-key routes but cannot consume vendor subscriptions.
 
 ```bash
 # CLI
@@ -2398,7 +2319,6 @@ This demonstrates token issuance, validation, and revocation programmatically.
 │   ├── main.rs               # Binary entry point — Cli dispatch + server setup
 │   ├── cli.rs                # `lino-arguments`-based CLI parser + subcommands
 │   ├── config.rs             # CLI/env/.lenv configuration
-│   ├── crater.rs             # Crater ForgeFed task provider
 │   ├── oauth.rs              # Claude Code OAuth credential reader
 │   ├── accounts.rs           # Multi-account router (round-robin/priority/least-used + cooldowns)
 │   ├── app_state.rs          # Shared HTTP handler state

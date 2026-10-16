@@ -7,7 +7,6 @@ use reqwest::Client;
 
 use crate::accounts::AccountRouter;
 use crate::config::UpstreamProvider;
-use crate::gonka::GonkaConfig;
 use crate::oauth::OAuthProvider;
 use crate::providers::{OpenAICompatibleConfig, ProviderStore};
 use crate::token::TokenManager;
@@ -43,8 +42,6 @@ pub struct AppState {
     pub upstream_base_url: String,
     /// Selected upstream inference provider.
     pub upstream_provider: UpstreamProvider,
-    /// Gonka provider configuration when selected.
-    pub gonka: Option<GonkaConfig>,
     /// Upstream model used when an Anthropic-dialect request is bridged to a
     /// non-Anthropic upstream. `None` selects one from the live catalog using
     /// [`AppState::bridge_model_policy`].
@@ -52,8 +49,6 @@ pub struct AppState {
     /// How a bridge model is chosen from the live catalog when
     /// [`AppState::bridge_model`] is unset.
     pub bridge_model_policy: crate::bridge_selection::BridgeModelPolicy,
-    /// Crater `ForgeFed` task provider when selected.
-    pub crater: Option<Arc<dyn crate::crater::TaskProvider>>,
     /// Boot-time generic OpenAI-compatible provider config.
     pub openai_compatible: OpenAICompatibleConfig,
     /// Persisted provider records with encrypted upstream secrets.
@@ -178,10 +173,8 @@ impl AppState {
             subscription_cache: Arc::new(crate::refresh::TokenCache::new()),
             upstream_base_url: "https://api.anthropic.com".to_string(),
             upstream_provider: crate::config::UpstreamProvider::Auto,
-            gonka: None,
             bridge_model: None,
             bridge_model_policy: crate::bridge_selection::BridgeModelPolicy::default(),
-            crater: None,
             openai_compatible: crate::config::default_openai_compatible_config(),
             provider_store: crate::providers::ProviderStore::open(data_dir, "test-secret")
                 .expect("open a provider store"),

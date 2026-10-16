@@ -166,6 +166,7 @@ pub enum RouteId {
     ActivityPubInbox,
     ActivityPubOutbox,
     ActivityPubFollowers,
+    /// Retired route, retained to preserve public discriminants.
     ActivityPubFollowProblemsets,
     NativeOpenAi,
     NativeAnthropic,

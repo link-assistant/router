@@ -22,14 +22,9 @@ fn default_args(secret: Option<&'static str>) -> BuildArgs<'static> {
         claude_cli_bin: None,
         codex_cli_bin: None,
         upstream_provider: UpstreamProvider::Auto,
-        gonka_private_key: None,
-        gonka_api_key: None,
-        gonka_source_url: None,
-        gonka_model: default_gonka_model(),
         bridge_model: None,
         bridge_model_policy: None,
         audit_log: None,
-        crater: default_crater_config("https://router.example"),
         openai_compatible: default_openai_compatible_config(),
         activitypub_actor_base_url: "https://router.example".into(),
         activitypub_public_key_pem: default_activitypub_public_key_pem(),
@@ -127,7 +122,7 @@ fn proxied_clients_are_opt_in_and_codex_only() {
 
 #[test]
 fn account_limits_must_align_with_the_configured_pool() {
-    let mut args = gonka_args(None);
+    let mut args = default_args(Some("secret"));
     args.upstream_provider = UpstreamProvider::Anthropic;
     args.additional_account_dirs = vec![PathBuf::from("/tmp/second")];
     args.account_request_limits = vec![100];
@@ -145,110 +140,6 @@ fn account_limit_parser_accepts_zero_as_unlimited() {
         parse_usize_csv("100,nope"),
         Err(ConfigError::InvalidAccountRequestLimits)
     ));
-}
-
-#[test]
-fn gonka_provider_requires_broker_api_key() {
-    let result = Config::build(gonka_args(None));
-    assert!(matches!(result, Err(ConfigError::MissingGonkaApiKey)));
-}
-
-#[test]
-fn gonka_provider_builds_with_broker_api_key_and_defaults() {
-    let config =
-        Config::build(gonka_args(Some("gonka-api-key"))).expect("gonka config should build");
-    assert_eq!(config.upstream_provider, UpstreamProvider::Gonka);
-    assert_eq!(
-        config.gonka_source_url.as_deref(),
-        Some("https://broker.gonka.test")
-    );
-    assert_eq!(config.gonka_model, default_gonka_model());
-    assert_eq!(config.gonka_api_key.as_deref(), Some("gonka-api-key"));
-    let debug = format!("{config:?}");
-    assert!(debug.contains("[REDACTED]"));
-    assert!(!debug.contains("gonka-api-key"));
-    assert!(!debug.contains("secret"));
-}
-
-#[test]
-fn crater_provider_requires_forgefed_inbox() {
-    let mut args = gonka_args(None);
-    args.upstream_provider = UpstreamProvider::Crater;
-    args.gonka_private_key = None;
-
-    let result = Config::build(args);
-
-    assert!(matches!(
-        result,
-        Err(ConfigError::MissingCraterForgeFedInbox)
-    ));
-}
-
-#[test]
-fn crater_provider_builds_with_forgefed_inbox() {
-    let mut args = gonka_args(None);
-    args.upstream_provider = UpstreamProvider::Crater;
-    args.gonka_private_key = None;
-    args.crater.inbox = Some("https://tracker.example/inbox".into());
-
-    let config = Config::build(args).expect("crater config should build");
-
-    assert_eq!(config.upstream_provider, UpstreamProvider::Crater);
-    assert_eq!(
-        config.crater.inbox.as_deref(),
-        Some("https://tracker.example/inbox")
-    );
-}
-
-fn gonka_args(api_key: Option<&str>) -> BuildArgs<'static> {
-    BuildArgs {
-        host: "0.0.0.0",
-        port: "8080",
-        token_secret: Some("secret"),
-        claude_code_home: "/tmp/claude",
-        upstream_base_url: "https://api.anthropic.com",
-        verbose: false,
-        max_proxy_request_bytes: DEFAULT_MAX_PROXY_REQUEST_BYTES,
-        api_format: None,
-        routing_mode: RoutingMode::Direct,
-        storage_policy: StoragePolicy::Memory,
-        data_dir: PathBuf::from("/tmp/test-data"),
-        claude_cli_bin: None,
-        codex_cli_bin: None,
-        upstream_provider: UpstreamProvider::Gonka,
-        gonka_private_key: None,
-        gonka_api_key: api_key.map(str::to_string),
-        gonka_source_url: Some("https://broker.gonka.test".into()),
-        gonka_model: default_gonka_model(),
-        bridge_model: None,
-        bridge_model_policy: None,
-        audit_log: None,
-        crater: default_crater_config("https://router.example"),
-        openai_compatible: default_openai_compatible_config(),
-        activitypub_actor_base_url: "https://router.example".into(),
-        activitypub_public_key_pem: default_activitypub_public_key_pem(),
-        enable_openai_api: true,
-        enable_anthropic_api: true,
-        enable_metrics: true,
-        inference_only: false,
-        listeners: vec![],
-        additional_account_dirs: vec![],
-        account_routing_strategy: SelectionStrategy::default(),
-        account_cooldown_secs: 60,
-        session_affinity_ttl_secs: 3600,
-        account_request_limits: vec![],
-        experimental_compatibility: false,
-        subscription_bridge_overrides: vec![],
-        proxied_client_overrides: vec![],
-        admin_key: None,
-        allow_anonymous_admin: false,
-        emergency_auth: crate::emergency_auth::EmergencyAuthConfig::default(),
-        pool: crate::pool_failover::PoolPolicy::default(),
-        mpp: default_mpp_config(),
-        login: crate::login::LoginConfig::default(),
-        admin_ui: crate::admin::AdminUiConfig::default(),
-        chat_admin: crate::chat_admin::ChatAdminConfig::default(),
-    }
 }
 
 #[test]
@@ -465,54 +356,6 @@ fn build_rejects_configurations_that_cannot_serve_requests() {
     assert!(matches!(
         Config::build(args),
         Err(ConfigError::InvalidListenHost(host)) if host == "not a host"
-    ));
-}
-
-/// Selecting a provider without the credential it needs is refused at boot.
-#[test]
-fn build_requires_the_credentials_the_selected_provider_needs() {
-    let mut args = default_args(Some("secret"));
-    args.upstream_provider = UpstreamProvider::Gonka;
-    args.gonka_api_key = None;
-    assert!(matches!(
-        Config::build(args),
-        Err(ConfigError::MissingGonkaApiKey)
-    ));
-
-    let mut args = default_args(Some("secret"));
-    args.upstream_provider = UpstreamProvider::Gonka;
-    args.gonka_api_key = Some("broker-key".into());
-    args.gonka_source_url = None;
-    assert!(matches!(
-        Config::build(args),
-        Err(ConfigError::MissingGonkaSourceUrl)
-    ));
-
-    // An empty key is treated as absent.
-    let mut args = default_args(Some("secret"));
-    args.upstream_provider = UpstreamProvider::Gonka;
-    args.gonka_api_key = Some(String::new());
-    assert!(matches!(
-        Config::build(args),
-        Err(ConfigError::MissingGonkaApiKey)
-    ));
-
-    let mut args = default_args(Some("secret"));
-    args.upstream_provider = UpstreamProvider::Gonka;
-    args.gonka_private_key = Some("wallet-key".into());
-    args.gonka_api_key = Some("broker-key".into());
-    assert!(matches!(
-        Config::build(args),
-        Err(ConfigError::UnsupportedGonkaDirectWallet)
-    ));
-
-    // Crater needs an inbox to deliver its Offer activities to.
-    let mut args = default_args(Some("secret"));
-    args.upstream_provider = UpstreamProvider::Crater;
-    args.crater.inbox = None;
-    assert!(matches!(
-        Config::build(args),
-        Err(ConfigError::MissingCraterForgeFedInbox)
     ));
 }
 

@@ -1,7 +1,6 @@
-//! Minimal `ActivityPub` / `ForgeFed` endpoint support.
-//!
-//! The router exposes a local service actor and accepts inbound activities so
-//! a ForgeFed-capable problem source can discover and address it.
+//! `ActivityPub` marketplace discovery and FEP-0837 agreement negotiation.
+
+pub mod marketplace;
 
 use axum::extract::State;
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
@@ -24,32 +23,15 @@ pub fn actor_document(actor_base_url: &str, public_key_pem: &str) -> Value {
         "type": "Service",
         "preferredUsername": "code",
         "name": "Link Assistant Code Router",
-        "summary": "ActivityPub and ForgeFed service actor for coding problem federation",
+        "summary": "FEP-0837 model inference marketplace",
         "inbox": activitypub_url(base, RouteId::ActivityPubInbox),
         "outbox": activitypub_url(base, RouteId::ActivityPubOutbox),
         "followers": activitypub_url(base, RouteId::ActivityPubFollowers),
-        "aliases": [
-            "urn:link-assistant:router:code".to_string(),
-            actor
-        ],
         "publicKey": {
             "id": format!("{actor}#main-key"),
             "owner": actor,
             "publicKeyPem": public_key_pem
         }
-    })
-}
-
-/// Build an ordered collection for the local actor outbox.
-#[must_use]
-pub fn outbox_document(actor_base_url: &str) -> Value {
-    let base = actor_base_url.trim_end_matches('/');
-    json!({
-        "@context": activitypub_context(),
-        "id": activitypub_url(base, RouteId::ActivityPubOutbox),
-        "type": "OrderedCollection",
-        "totalItems": 0,
-        "orderedItems": []
     })
 }
 
@@ -63,20 +45,6 @@ pub fn followers_document(actor_base_url: &str) -> Value {
         "type": "OrderedCollection",
         "totalItems": 0,
         "orderedItems": []
-    })
-}
-
-/// Build a Follow activity targeting the public problemsets actor.
-#[must_use]
-pub fn follow_problemsets_activity(actor_base_url: &str) -> Value {
-    let base = actor_base_url.trim_end_matches('/');
-    json!({
-        "@context": activitypub_context(),
-        "id": activitypub_url(base, RouteId::ActivityPubFollowProblemsets),
-        "type": "Follow",
-        "actor": activitypub_url(base, RouteId::ActivityPubActor),
-        "object": "https://problemsets.lefine.pro/actor/code",
-        "to": ["https://problemsets.lefine.pro/actor/code"]
     })
 }
 
@@ -110,8 +78,64 @@ pub async fn actor(State(state): State<AppState>) -> impl IntoResponse {
 
 /// `GET /api/services/activitypub/outbox/code`.
 #[allow(clippy::unused_async)]
-pub async fn outbox(State(state): State<AppState>) -> impl IntoResponse {
-    activity_response(outbox_document(&state.activitypub_actor_base_url))
+pub async fn outbox(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<std::collections::BTreeMap<String, String>>,
+    headers: HeaderMap,
+) -> Response {
+    let models = match visible_models(&state, headers).await {
+        Ok(models) => models,
+        Err(response) => return response,
+    };
+    if let Some(model) = query.get("model") {
+        return if models.contains(model) {
+            activity_response(marketplace::proposal(
+                &state.activitypub_actor_base_url,
+                model,
+            ))
+        } else {
+            crate::proxy::error_response(
+                StatusCode::NOT_FOUND,
+                "not_found_error",
+                "Model is not available in the caller's catalog",
+            )
+        };
+    }
+    activity_response(marketplace::publication(
+        &state.activitypub_actor_base_url,
+        &models,
+    ))
+}
+
+async fn visible_models(state: &AppState, headers: HeaderMap) -> Result<Vec<String>, Response> {
+    let response = crate::proxy::openai_models(
+        State(state.clone()),
+        axum::extract::OriginalUri(axum::http::Uri::from_static(
+            "/api/services/openai/v1/models",
+        )),
+        headers,
+    )
+    .await;
+    if !response.status().is_success() {
+        return Err(response);
+    }
+    let body = axum::body::to_bytes(response.into_body(), state.max_proxy_request_bytes)
+        .await
+        .map_err(|_| StatusCode::BAD_GATEWAY.into_response())?;
+    let catalog: Value =
+        serde_json::from_slice(&body).map_err(|_| StatusCode::BAD_GATEWAY.into_response())?;
+    Ok(catalog["data"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|model| model["router_available"] != false)
+        .filter_map(|model| {
+            model["id"]
+                .as_str()
+                .filter(|id| !id.is_empty())
+                .map(str::to_owned)
+        })
+        .collect())
 }
 
 /// `GET /api/services/activitypub/actors/code/followers`.
@@ -120,39 +144,27 @@ pub async fn followers(State(state): State<AppState>) -> impl IntoResponse {
     activity_response(followers_document(&state.activitypub_actor_base_url))
 }
 
-/// `GET /api/services/activitypub/activities/follow-problemsets-code-001`.
-#[allow(clippy::unused_async)]
-pub async fn follow_problemsets(State(state): State<AppState>) -> impl IntoResponse {
-    activity_response(follow_problemsets_activity(
-        &state.activitypub_actor_base_url,
-    ))
-}
-
 /// `POST /api/services/activitypub/inbox/code`.
 #[allow(clippy::unused_async)]
-pub async fn inbox(axum::Json(activity): axum::Json<Value>) -> impl IntoResponse {
-    match validate_activity(&activity) {
-        Ok(()) => {
-            let response = json!({
-                "@context": activitypub_context(),
-                "type": "Accept",
-                "object": activity
-            });
-            (
-                StatusCode::ACCEPTED,
-                activity_headers(),
-                axum::Json(response),
-            )
-                .into_response()
-        }
-        Err(message) => (
-            StatusCode::BAD_REQUEST,
-            axum::Json(json!({
-                "error": "invalid_activity",
-                "message": message
-            })),
+pub async fn inbox(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    axum::Json(activity): axum::Json<Value>,
+) -> Response {
+    let models = match visible_models(&state, headers).await {
+        Ok(models) => models,
+        Err(response) => return response,
+    };
+    match marketplace::negotiate(&state.activitypub_actor_base_url, &activity, &models) {
+        Ok(response) => (
+            StatusCode::ACCEPTED,
+            activity_headers(),
+            axum::Json(response),
         )
             .into_response(),
+        Err(message) => {
+            crate::proxy::error_response(StatusCode::BAD_REQUEST, "invalid_request_error", message)
+        }
     }
 }
 
@@ -171,14 +183,7 @@ fn activity_headers() -> HeaderMap {
 }
 
 fn activitypub_context() -> Value {
-    json!([
-        "https://www.w3.org/ns/activitystreams",
-        "https://forgefed.org/ns",
-        {
-            "fep": "https://w3id.org/fep/ef61#",
-            "aliases": "fep:aliases"
-        }
-    ])
+    marketplace::context()
 }
 
 fn require_string<'a>(activity: &'a Value, field: &'static str) -> Result<&'a str, &'static str> {
@@ -201,7 +206,7 @@ mod tests {
     const KEY: &str = "-----BEGIN PUBLIC KEY-----\nabc\n-----END PUBLIC KEY-----";
 
     #[test]
-    fn actor_contains_required_activitypub_and_forgefed_metadata() {
+    fn actor_contains_required_activitypub_metadata() {
         let doc = actor_document(BASE, KEY);
 
         assert_eq!(
@@ -223,33 +228,8 @@ mod tests {
         );
         assert_eq!(doc["publicKey"]["owner"], doc["id"]);
         assert_eq!(doc["publicKey"]["publicKeyPem"], KEY);
-        assert!(
-            doc["@context"]
-                .as_array()
-                .expect("context array")
-                .iter()
-                .any(|item| item == "https://forgefed.org/ns")
-        );
-        assert!(doc["aliases"].as_array().expect("aliases").len() >= 2);
-    }
-
-    #[test]
-    fn follow_activity_targets_problemsets_actor() {
-        let activity = follow_problemsets_activity(BASE);
-
-        assert_eq!(activity["type"], "Follow");
-        assert_eq!(
-            activity["actor"],
-            "https://router.example/api/services/activitypub/actor/code"
-        );
-        assert_eq!(
-            activity["object"],
-            "https://problemsets.lefine.pro/actor/code"
-        );
-        assert_eq!(
-            activity["to"][0],
-            "https://problemsets.lefine.pro/actor/code"
-        );
+        assert!(doc.get("aliases").is_none());
+        assert_eq!(doc["@context"][1]["Proposal"], "vf:Proposal");
     }
 
     #[test]

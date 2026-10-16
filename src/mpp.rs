@@ -3,7 +3,7 @@
 //! MPP uses HTTP `402 Payment Required` plus a `WWW-Authenticate: Payment`
 //! challenge. The router exposes this as an optional gate in front of the
 //! `OpenAI` surface so agents can discover payment requirements without relying
-//! on the ForgeFed/ActivityPub metadata path.
+//! on the `ActivityPub` metadata path.
 
 use axum::body::Body;
 use axum::http::{HeaderValue, StatusCode};

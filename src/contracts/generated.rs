@@ -65,4 +65,4 @@ pub(super) const CLI_SCHEMAS: &[(&str, &str)] = &[
     ("with", include_str!("../../schemas/with.v1.json")),
     ("cli-error", include_str!("../../schemas/cli-error.v1.json")),
 ];
-pub(super) const HTTP: &str = include_str!("../../openapi/router.yaml");
+pub(super) const HTTP: &str = include_str!("../../openapi/router.v2.yaml");

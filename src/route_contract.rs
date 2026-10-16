@@ -867,14 +867,14 @@ const ROUTES: &[RouteSpec] = &[
         ServiceKind::ActivityPub,
         ApiDialect::Anthropic,
     ),
-    public_private_service(
+    private_service(
         RouteId::ActivityPubInbox,
         RouteMethod::Post,
         "/api/services/activitypub/inbox/code",
         ServiceKind::ActivityPub,
         ApiDialect::Anthropic,
     ),
-    public_private_service(
+    private_service(
         RouteId::ActivityPubOutbox,
         RouteMethod::Get,
         "/api/services/activitypub/outbox/code",

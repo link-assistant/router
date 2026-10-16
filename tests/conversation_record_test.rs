@@ -235,11 +235,9 @@ impl Harness {
             subscription_cache: Arc::new(link_assistant_router::refresh::TokenCache::new()),
             upstream_base_url: upstream,
             upstream_provider: UpstreamProvider::Anthropic,
-            gonka: None,
             bridge_model: None,
             bridge_model_policy:
                 link_assistant_router::bridge_selection::BridgeModelPolicy::default(),
-            crater: None,
             openai_compatible: link_assistant_router::config::default_openai_compatible_config(),
             provider_store: link_assistant_router::providers::ProviderStore::open(
                 data.path(),

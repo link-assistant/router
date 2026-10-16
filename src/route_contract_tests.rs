@@ -69,7 +69,12 @@ fn every_registered_route_has_one_canonical_class_and_listener_contract() {
                 } else {
                     assert!(spec.template.starts_with("/api/services/"));
                 }
-                if service == ServiceKind::ActivityPub {
+                if service == ServiceKind::ActivityPub
+                    && !matches!(
+                        spec.id,
+                        RouteId::ActivityPubInbox | RouteId::ActivityPubOutbox
+                    )
+                {
                     assert_eq!(spec.auth, RouteAuth::None);
                 } else {
                     assert_eq!(spec.auth, RouteAuth::Client);

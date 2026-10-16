@@ -29,10 +29,6 @@ pub enum UpstreamProvider {
     Auto,
     /// Anthropic via Claude MAX OAuth credentials.
     Anthropic,
-    /// Gonka OpenAI-compatible inference provider.
-    Gonka,
-    /// Crater `ForgeFed` task provider.
-    Crater,
     /// `OpenAI` Codex / `ChatGPT` subscription via `~/.codex` OAuth credentials.
     Codex,
     /// Google Gemini Code Assist subscription via `~/.gemini` OAuth credentials.
@@ -52,8 +48,6 @@ impl UpstreamProvider {
         match s.to_lowercase().as_str() {
             "auto" | "all" => Some(Self::Auto),
             "anthropic" | "claude" => Some(Self::Anthropic),
-            "gonka" => Some(Self::Gonka),
-            "crater" | "forgefed" => Some(Self::Crater),
             "codex" | "chatgpt" | "openai-codex" => Some(Self::Codex),
             "gemini" | "google" | "code-assist" => Some(Self::Gemini),
             "qwen" | "qwen-code" | "dashscope" => Some(Self::Qwen),
@@ -75,11 +69,7 @@ impl UpstreamProvider {
             Self::Codex => Some(S::Codex),
             Self::Gemini => Some(S::Gemini),
             Self::Qwen => Some(S::Qwen),
-            Self::Auto
-            | Self::Gonka
-            | Self::Crater
-            | Self::OpenAICompatible
-            | Self::ZaiCodingPlan => None,
+            Self::Auto | Self::OpenAICompatible | Self::ZaiCodingPlan => None,
         }
     }
 
@@ -89,8 +79,6 @@ impl UpstreamProvider {
         match self {
             Self::Auto => "auto",
             Self::Anthropic => "anthropic",
-            Self::Gonka => "gonka",
-            Self::Crater => "crater",
             Self::Codex => "codex",
             Self::Gemini => "gemini",
             Self::Qwen => "qwen",
@@ -220,12 +208,6 @@ pub struct Config {
     pub codex_cli_bin: Option<PathBuf>,
     /// Selected upstream inference provider.
     pub upstream_provider: UpstreamProvider,
-    /// Gonka broker/API-key credential. Never log this.
-    pub gonka_api_key: Option<String>,
-    /// Explicit Gonka broker URL. Direct-wallet node endpoints are not defaults.
-    pub gonka_source_url: Option<String>,
-    /// Default Gonka model used when requests omit `model`.
-    pub gonka_model: String,
     /// Upstream model used when an Anthropic-dialect request is bridged to a
     /// non-Anthropic upstream. `None` selects one from the live catalog.
     pub bridge_model: Option<String>,
@@ -233,8 +215,6 @@ pub struct Config {
     pub bridge_model_policy: crate::bridge_selection::BridgeModelPolicy,
     /// Path of the append-only per-token audit log. `None` disables auditing.
     pub audit_log: Option<String>,
-    /// Crater `ForgeFed` task provider configuration.
-    pub crater: crate::crater::CraterConfig,
     /// Generic OpenAI-compatible provider config for `LiteLLM` and similar
     /// gateways.
     pub openai_compatible: crate::providers::OpenAICompatibleConfig,
@@ -304,12 +284,6 @@ impl std::fmt::Debug for Config {
             .debug_struct("Config")
             .field("listen_addr", &self.listen_addr)
             .field("upstream_provider", &self.upstream_provider)
-            .field(
-                "gonka_api_key",
-                &self.gonka_api_key.as_ref().map(|_| "[REDACTED]"),
-            )
-            .field("gonka_source_url", &self.gonka_source_url)
-            .field("gonka_model", &self.gonka_model)
             .field("data_dir", &self.data_dir)
             .finish_non_exhaustive()
     }
@@ -411,19 +385,13 @@ impl Config {
             .map(PathBuf::from);
         let upstream_provider = crate::operation_context::var("UPSTREAM_PROVIDER")
             .ok()
-            .and_then(|s| UpstreamProvider::from_str_opt(&s))
-            .unwrap_or_default();
-        let gonka_private_key = crate::operation_context::var("GONKA_PRIVATE_KEY")
-            .ok()
-            .filter(|s| !s.is_empty());
-        let gonka_api_key = crate::operation_context::var("GONKA_API_KEY")
-            .ok()
-            .filter(|s| !s.is_empty());
-        let gonka_source_url = crate::operation_context::var("GONKA_SOURCE_URL")
-            .ok()
-            .filter(|s| !s.is_empty());
-        let gonka_model =
-            crate::operation_context::var("GONKA_MODEL").unwrap_or_else(|_| default_gonka_model());
+            .map_or_else(
+                || Ok(UpstreamProvider::default()),
+                |value| {
+                    UpstreamProvider::from_str_opt(&value)
+                        .ok_or(ConfigError::InvalidUpstreamProvider)
+                },
+            )?;
         let bridge_model = crate::operation_context::var("ANTHROPIC_BRIDGE_MODEL")
             .ok()
             .filter(|s| !s.is_empty());
@@ -436,26 +404,6 @@ impl Config {
         let activitypub_actor_base_url =
             crate::operation_context::var("ACTIVITYPUB_ACTOR_BASE_URL")
                 .unwrap_or_else(|_| format!("http://{host}:{port}"));
-        let crater_actor = crate::operation_context::var("CRATER_FORGEFED_ACTOR")
-            .ok()
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| {
-                format!(
-                    "{}/api/services/activitypub/actor/code",
-                    activitypub_actor_base_url.trim_end_matches('/')
-                )
-            });
-        let crater = crate::crater::CraterConfig::new(
-            crate::operation_context::var("CRATER_FORGEFED_INBOX")
-                .ok()
-                .filter(|s| !s.is_empty()),
-            &crater_actor,
-            crate::operation_context::var("CRATER_FORGEFED_TARGET")
-                .ok()
-                .filter(|s| !s.is_empty()),
-            Duration::from_millis(parse_u64_env("CRATER_POLL_INTERVAL_MS", 1000)),
-            Duration::from_secs(parse_u64_env("CRATER_POLL_TIMEOUT_SECS", 120)),
-        );
         let openai_compatible = crate::providers::OpenAICompatibleConfig {
             provider_name: crate::operation_context::var("OPENAI_COMPATIBLE_PROVIDER_NAME")
                 .unwrap_or_else(|_| "litellm".to_string()),
@@ -591,14 +539,9 @@ impl Config {
             claude_cli_bin,
             codex_cli_bin,
             upstream_provider,
-            gonka_private_key,
-            gonka_api_key,
-            gonka_source_url,
-            gonka_model,
             bridge_model,
             bridge_model_policy,
             audit_log,
-            crater,
             openai_compatible,
             activitypub_actor_base_url,
             activitypub_public_key_pem,
@@ -646,26 +589,6 @@ impl Config {
             .ok_or(ConfigError::MissingTokenSecret)?
             .to_string();
 
-        if matches!(
-            args.upstream_provider,
-            UpstreamProvider::Auto | UpstreamProvider::Gonka
-        ) && matches!(args.gonka_private_key.as_deref(), Some(s) if !s.is_empty())
-        {
-            return Err(ConfigError::UnsupportedGonkaDirectWallet);
-        }
-        if args.upstream_provider == UpstreamProvider::Gonka
-            && !matches!(args.gonka_api_key.as_deref(), Some(s) if !s.is_empty())
-        {
-            return Err(ConfigError::MissingGonkaApiKey);
-        }
-        if matches!(args.gonka_api_key.as_deref(), Some(s) if !s.is_empty())
-            && !matches!(args.gonka_source_url.as_deref(), Some(s) if !s.is_empty())
-        {
-            return Err(ConfigError::MissingGonkaSourceUrl);
-        }
-        if args.upstream_provider == UpstreamProvider::Crater && args.crater.inbox.is_none() {
-            return Err(ConfigError::MissingCraterForgeFedInbox);
-        }
         if !args.account_request_limits.is_empty()
             && args.account_request_limits.len() != args.additional_account_dirs.len() + 1
         {
@@ -696,12 +619,6 @@ impl Config {
             claude_cli_bin: args.claude_cli_bin,
             codex_cli_bin: args.codex_cli_bin,
             upstream_provider: args.upstream_provider,
-            gonka_api_key: args.gonka_api_key.filter(|s| !s.is_empty()),
-            gonka_source_url: args
-                .gonka_source_url
-                .filter(|source| !source.is_empty())
-                .map(|source| source.trim_end_matches('/').to_string()),
-            gonka_model: args.gonka_model,
             bridge_model: args.bridge_model.filter(|s| !s.is_empty()),
             bridge_model_policy: args
                 .bridge_model_policy
@@ -713,7 +630,6 @@ impl Config {
                 )
                 .map_err(ConfigError::InvalidBridgeModelPolicy)?,
             audit_log: args.audit_log.filter(|s| !s.is_empty()),
-            crater: args.crater,
             openai_compatible: args.openai_compatible,
             activitypub_actor_base_url: args
                 .activitypub_actor_base_url
@@ -791,17 +707,11 @@ pub struct BuildArgs<'a> {
     pub claude_cli_bin: Option<PathBuf>,
     pub codex_cli_bin: Option<PathBuf>,
     pub upstream_provider: UpstreamProvider,
-    /// Legacy direct-wallet input, retained only so unsupported signing is
-    /// rejected explicitly before any request can be sent.
-    pub gonka_private_key: Option<String>,
-    pub gonka_api_key: Option<String>,
-    pub gonka_source_url: Option<String>,
-    pub gonka_model: String,
+    /// Upstream model used by the Anthropic bridge.
     pub bridge_model: Option<String>,
     /// How to pick a bridge model from the live catalog; `None` uses the default.
     pub bridge_model_policy: Option<String>,
     pub audit_log: Option<String>,
-    pub crater: crate::crater::CraterConfig,
     pub openai_compatible: crate::providers::OpenAICompatibleConfig,
     pub activitypub_actor_base_url: String,
     pub activitypub_public_key_pem: String,
@@ -867,8 +777,7 @@ pub fn default_activitypub_public_key_pem() -> String {
 }
 
 pub use crate::config_defaults::{
-    default_crater_config, default_gonka_model, default_openai_compatible_base_url,
-    default_openai_compatible_config,
+    default_openai_compatible_base_url, default_openai_compatible_config,
 };
 
 fn parse_csv(raw: &str) -> Vec<String> {

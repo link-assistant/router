@@ -12,8 +12,6 @@ async fn missing_chat_messages_is_rejected_locally_for_every_provider() {
     for provider in [
         UpstreamProvider::Auto,
         UpstreamProvider::Anthropic,
-        UpstreamProvider::Gonka,
-        UpstreamProvider::Crater,
         UpstreamProvider::Codex,
         UpstreamProvider::Gemini,
         UpstreamProvider::Qwen,

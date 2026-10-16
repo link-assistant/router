@@ -207,6 +207,22 @@ def generate(catalog):
                 op['requestBody']={'required':route['name']=='Logging','content':{'application/json':{'schema':ref(request_types.get(route['name'],'OpaqueVendorPayload'))}}}
             if '/realtime' in path or path.endswith('/responses') and method=='GET': op['x-router-websocket']={'upgrade':'websocket','events':ref('OpaqueVendorPayload')}
             if route['auth']=='Client': op['security'] += [{'RouterApiKey':[]},{'RouterGoogleKey':[]}]
+            if route['name'].startswith('ActivityPub'):
+                for response in op['responses'].values():
+                    payload = response.get('content', {}).get('application/json')
+                    if payload and response.get('description') == 'Success':
+                        response['content'] = {'application/activity+json': payload}
+                if route['name'] == 'ActivityPubInbox':
+                    op['responses']['202'] = op['responses'].pop('200')
+                    op['requestBody']['required'] = True
+                    payload = op['requestBody']['content']['application/json']
+                    op['requestBody']['content']['application/activity+json'] = payload
+                if route['name'] == 'ActivityPubOutbox':
+                    op['parameters'].append({'name':'model','in':'query','required':False,'schema':STRING,
+                        'description':'Exact catalog model ID; returns a FEP-0837 Proposal when supplied.'})
+                if route['name'] == 'ActivityPubFollowProblemsets':
+                    op['deprecated'] = True
+                    op['responses'] = {'410': {'description':'Legacy ForgeFed Follow activity removed'}}
             if method=='HEAD':
                 for response in op['responses'].values(): response.pop('content', None)
             paths.setdefault(path,{})[method.lower()] = op
@@ -222,11 +238,11 @@ def generate(catalog):
     paths['/']['head']['responses']['200'].pop('content')
     spec = {'openapi':'3.1.0','jsonSchemaDialect':DRAFT,'info':{'title':'Link.Assistant.Router HTTP API','version':catalog['version']},'servers':[{'url':'http://127.0.0.1:8080'}], 'paths':paths,'components':{'schemas':components,'securitySchemes':{'RouterBearer':{'type':'http','scheme':'bearer','bearerFormat':'la_sk JWT'},'AdminBearer':{'type':'http','scheme':'bearer','description':'Admin scoped JWT or provisioned TOKEN_ADMIN_KEY'},'RouterApiKey':{'type':'apiKey','in':'header','name':'x-api-key'},'RouterGoogleKey':{'type':'apiKey','in':'header','name':'x-goog-api-key'}}}, 'x-router-streams':{'sse':{'framing':'UTF-8 event/data records separated by a blank line','events':['message_start','content_block_start','content_block_delta','content_block_stop','message_delta','message_stop','error','response.created','response.output_text.delta','response.completed','response.failed','[DONE]']},'websocket':{'framing':'JSON text frames; native vendor event payloads','upgradeStatus':101}}}
     spec['x-router-any-methods'] = any_methods
-    write('openapi/router.yaml',spec)
+    write('openapi/router.v2.yaml',spec)
     embedded = ['//! Generated offline contracts; regenerate with scripts/generate-contracts.py.', '#[rustfmt::skip]', 'pub(super) const CLI_SCHEMAS: &[(&str, &str)] = &[']
     for operation in catalog['operations'] + [{'name':'cli-error'}]:
         embedded.append('    ('+json.dumps(operation['name'])+', include_str!("../../schemas/'+operation['name'].replace('.', '-')+'.v1.json")),')
-    embedded += ['];','pub(super) const HTTP: &str = include_str!("../../openapi/router.yaml");','']
+    embedded += ['];','pub(super) const HTTP: &str = include_str!("../../openapi/router.v2.yaml");','']
     write('src/contracts/generated.rs', '\n'.join(embedded))
     write('schemas/operation-catalog.v1.json',catalog)
     # Components are copied into each response schema so validation is offline.

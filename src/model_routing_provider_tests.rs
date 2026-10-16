@@ -1,7 +1,7 @@
 use super::tests::auto_state;
 use super::*;
 use axum::body::Body;
-use axum::extract::{OriginalUri, Query, State};
+use axum::extract::{Query, State};
 use axum::http::{HeaderMap, HeaderValue, Request, StatusCode};
 use axum::response::Response;
 use http_body_util::BodyExt as _;
@@ -552,40 +552,6 @@ async fn lefine_streaming_chat_completion_is_relayed_byte_for_byte() {
     task.abort();
 }
 
-#[tokio::test]
-async fn fixed_local_provider_catalogs_use_the_shared_authenticated_handler() {
-    for provider in [UpstreamProvider::Gonka, UpstreamProvider::Crater] {
-        let data_dir = tempfile::tempdir().expect("data dir");
-        let mut state = auto_state(Vec::new(), data_dir.path());
-        state.upstream_provider = provider;
-        let gonka_task = if provider == UpstreamProvider::Gonka {
-            let (base_url, task) = live_catalog_upstream(&["gonka-live"]).await;
-            state.gonka = crate::gonka::GonkaConfig::new(
-                Some("broker-secret".into()),
-                Some(base_url.trim_end_matches("/v1")),
-                String::new(),
-            );
-            Some(task)
-        } else {
-            None
-        };
-        let response = models(
-            State(state.clone()),
-            OriginalUri("/api/services/openai/v1/models".parse().unwrap()),
-            bearer(&state),
-        )
-        .await;
-        assert_eq!(response.status(), StatusCode::OK, "{provider:?}");
-        let body = response.into_body().collect().await.unwrap().to_bytes();
-        let catalog: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        let data = catalog["data"].as_array().expect("OpenAI model list");
-        assert!(!data.is_empty(), "{provider:?}");
-        if let Some(task) = gonka_task {
-            task.abort();
-        }
-    }
-}
-
 /// A declared model appears in `/v1/models`, so one token reaches every model
 /// the router can serve rather than only the discovered subscriptions.
 #[tokio::test]
@@ -858,3 +824,133 @@ async fn stored_provider_collisions_fail_before_any_upstream_request() {
 
 #[path = "model_routing_provider_tests/routing_boundaries.rs"]
 mod routing_boundaries;
+
+/// Marketplace discovery must use the real client-scoped catalog, and the
+/// returned execution link must lead to the existing inference implementation.
+#[tokio::test]
+async fn marketplace_discovers_negotiates_and_executes_an_existing_model() {
+    let data_dir = tempfile::tempdir().unwrap();
+    let mut state = auto_state(Vec::new(), data_dir.path());
+    state.client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap();
+    let (base_url, captured, task) = captured_model_upstream().await;
+    store_provider_at(&state, "market-provider", &base_url, &["shared-future"]);
+    let headers = bearer(&state);
+    let outbox = crate::activitypub::outbox(
+        State(state.clone()),
+        Query(BTreeMap::new()),
+        headers.clone(),
+    )
+    .await;
+    assert_eq!(outbox.status(), StatusCode::OK);
+    assert_eq!(
+        outbox.headers()["content-type"],
+        "application/activity+json"
+    );
+    let bytes = outbox.into_body().collect().await.unwrap().to_bytes();
+    let collection: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(collection["totalItems"], 1);
+    let proposal = &collection["orderedItems"][0]["object"];
+    assert_eq!(proposal["name"], "shared-future");
+    let activity = serde_json::json!({
+        "id":"https://consumer.example/offer/1", "type":"Offer",
+        "actor":"https://consumer.example/actor", "object": {
+            "type":"Agreement", "stipulates": {"type":"Commitment",
+                "satisfies": proposal["publishes"]["id"],
+                "resourceQuantity": proposal["publishes"]["resourceQuantity"]
+            }
+        }
+    });
+    let response =
+        crate::activitypub::inbox(State(state.clone()), headers.clone(), axum::Json(activity))
+            .await;
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    let bytes = response.into_body().collect().await.unwrap().to_bytes();
+    let accept: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(accept["type"], "Accept");
+    assert!(
+        captured.lock().unwrap().is_empty(),
+        "negotiation must not run inference"
+    );
+    let execution = url::Url::parse(accept["result"]["url"]["href"].as_str().unwrap()).unwrap();
+    let app = axum::Router::new()
+        .route(
+            execution.path(),
+            axum::routing::post(crate::proxy::openai_chat_completions),
+        )
+        .with_state(state.clone());
+    let mut request = Request::builder()
+        .method("POST")
+        .uri(execution.path())
+        .body(Body::from(
+            serde_json::json!({"model":proposal["name"],
+            "messages":[{"role":"user","content":"Hello"}]})
+            .to_string(),
+        ))
+        .unwrap();
+    *request.headers_mut() =
+        provider_forwarding_headers(&state, crate::clients::ClientKind::Opencode);
+    request
+        .headers_mut()
+        .insert("content-type", HeaderValue::from_static("application/json"));
+    let response = tower::ServiceExt::oneshot(app, request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let bytes = response.into_body().collect().await.unwrap().to_bytes();
+    let completion: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(completion["choices"][0]["message"]["content"], "ok");
+    assert_eq!(captured.lock().unwrap().len(), 1);
+    task.abort();
+    let _ = task.await;
+}
+
+#[tokio::test]
+async fn marketplace_http_handlers_preserve_authentication_and_proposal_lookup() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut state = auto_state(Vec::new(), dir.path());
+    state.client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap();
+    let (base_url, task) = live_catalog_upstream(&["vendor/model name"]).await;
+    store_provider_at(&state, "market-provider", &base_url, &["vendor/model name"]);
+    let app = axum::Router::new()
+        .route("/outbox", axum::routing::get(crate::activitypub::outbox))
+        .route("/inbox", axum::routing::post(crate::activitypub::inbox))
+        .with_state(state.clone());
+    for (method, uri) in [("GET", "/outbox"), ("POST", "/inbox")] {
+        let request = Request::builder()
+            .method(method)
+            .uri(uri)
+            .header("content-type", "application/activity+json")
+            .body(Body::from("{}"))
+            .unwrap();
+        let response = tower::ServiceExt::oneshot(app.clone(), request)
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+    for (model, status) in [
+        ("vendor%2Fmodel+name", StatusCode::OK),
+        ("missing", StatusCode::NOT_FOUND),
+    ] {
+        let mut request = Request::builder()
+            .uri(format!("/outbox?model={model}"))
+            .body(Body::empty())
+            .unwrap();
+        *request.headers_mut() = bearer(&state);
+        let response = tower::ServiceExt::oneshot(app.clone(), request)
+            .await
+            .unwrap();
+        assert_eq!(response.status(), status);
+        if status == StatusCode::OK {
+            let bytes = response.into_body().collect().await.unwrap().to_bytes();
+            let doc: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+            assert_eq!(doc["type"], "Proposal");
+            assert_eq!(doc["name"], "vendor/model name");
+        }
+    }
+    task.abort();
+    let _ = task.await;
+}

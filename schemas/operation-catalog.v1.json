@@ -165,46 +165,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -269,56 +229,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -1141,46 +1051,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -1245,56 +1115,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -2147,46 +1967,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -2251,56 +2031,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -3143,46 +2873,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -3247,56 +2937,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -4129,46 +3769,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -4233,56 +3833,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -5155,46 +4705,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -5259,56 +4769,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -6161,46 +5621,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -6265,56 +5685,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -7177,46 +6547,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -7281,56 +6611,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -8193,46 +7473,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -8297,56 +7537,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -9249,46 +8439,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -9353,56 +8503,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -10246,46 +9346,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -10350,56 +9410,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -11233,46 +10243,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -11337,56 +10307,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -12180,46 +11100,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -12284,56 +11164,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -13187,46 +12017,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -13291,56 +12081,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -14143,46 +12883,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -14247,56 +12947,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -15089,46 +13739,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -15193,56 +13803,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -16105,46 +14665,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -16209,56 +14729,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -17041,46 +15511,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -17145,56 +15575,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -18057,46 +16437,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -18161,56 +16501,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -19023,46 +17313,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -19127,56 +17377,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -19999,46 +18199,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -20103,56 +18263,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -20995,46 +19105,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -21099,56 +19169,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -21991,46 +20011,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -22095,56 +20075,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -22937,46 +20867,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -23041,56 +20931,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -23952,46 +21792,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -24056,56 +21856,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -24987,46 +22737,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -25091,56 +22801,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -25922,46 +23582,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -26026,56 +23646,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -27227,46 +24797,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -27331,56 +24861,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -28203,46 +25683,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -28307,56 +25747,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -29189,46 +26579,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -29293,56 +26643,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -30185,46 +27485,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -30289,56 +27549,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -31171,46 +28381,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -31275,56 +28445,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -32167,46 +29287,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -32271,56 +29351,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -33284,46 +30314,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -33388,56 +30378,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -34270,46 +31210,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -34374,56 +31274,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -35246,46 +32096,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -35350,56 +32160,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -36232,46 +32992,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -36336,56 +33056,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -37217,46 +33887,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -37321,56 +33951,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -38153,46 +34733,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -38257,56 +34797,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -39089,46 +35579,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -39193,56 +35643,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -40035,46 +36435,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -40139,56 +36499,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -40981,46 +37291,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -41085,56 +37355,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -41917,46 +38137,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -42021,56 +38201,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -42853,46 +38983,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -42957,56 +39047,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -43789,46 +39829,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -43893,56 +39893,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -44805,46 +40755,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -44909,56 +40819,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -45781,46 +41641,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -45885,56 +41705,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -46767,46 +42537,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -46871,56 +42601,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -47753,46 +43433,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -47857,56 +43497,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -48769,46 +44359,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -48873,56 +44423,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -49835,46 +45335,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -49939,56 +45399,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -50811,46 +46221,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -50915,56 +46285,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -51817,46 +47137,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -51921,56 +47201,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -52803,46 +48033,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -52907,56 +48097,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -53849,46 +48989,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -53953,56 +49053,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -54835,46 +49885,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -54939,56 +49949,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -55861,46 +50821,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -55965,56 +50885,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -56887,46 +51757,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -56991,56 +51821,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -57912,46 +52692,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -58016,56 +52756,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -58897,46 +53587,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -59001,56 +53651,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -59842,46 +54442,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -59946,56 +54506,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -60777,46 +55287,6 @@
         },
         {
           "boolean": false,
-          "environment": "GONKA_PRIVATE_KEY",
-          "flag": "gonka-private-key",
-          "multiple": false,
-          "name": "gonka_private_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_API_KEY",
-          "flag": "gonka-api-key",
-          "multiple": false,
-          "name": "gonka_api_key",
-          "positional": false,
-          "required": false,
-          "secret": true
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_SOURCE_URL",
-          "flag": "gonka-source-url",
-          "multiple": false,
-          "name": "gonka_source_url",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "GONKA_MODEL",
-          "flag": "gonka-model",
-          "multiple": false,
-          "name": "gonka_model",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
           "environment": "ANTHROPIC_BRIDGE_MODEL",
           "flag": "bridge-model",
           "multiple": false,
@@ -60881,56 +55351,6 @@
           "flag": "max-proxy-request-bytes",
           "multiple": false,
           "name": "max_proxy_request_bytes",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_INBOX",
-          "flag": "crater-forgefed-inbox",
-          "multiple": false,
-          "name": "crater_forgefed_inbox",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_ACTOR",
-          "flag": "crater-forgefed-actor",
-          "multiple": false,
-          "name": "crater_forgefed_actor",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_FORGEFED_TARGET",
-          "flag": "crater-forgefed-target",
-          "multiple": false,
-          "name": "crater_forgefed_target",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_INTERVAL_MS",
-          "flag": "crater-poll-interval-ms",
-          "multiple": false,
-          "name": "crater_poll_interval_ms",
-          "positional": false,
-          "required": false,
-          "secret": false
-        },
-        {
-          "boolean": false,
-          "environment": "CRATER_POLL_TIMEOUT_SECS",
-          "flag": "crater-poll-timeout-secs",
-          "multiple": false,
-          "name": "crater_poll_timeout_secs",
           "positional": false,
           "required": false,
           "secret": false
@@ -63242,7 +57662,7 @@
       "path": "/api/services/activitypub/actor/code"
     },
     {
-      "auth": "None",
+      "auth": "Client",
       "class": "Service(ActivityPub)",
       "dialect": "Anthropic",
       "listeners": [
@@ -63253,7 +57673,7 @@
       "path": "/api/services/activitypub/inbox/code"
     },
     {
-      "auth": "None",
+      "auth": "Client",
       "class": "Service(ActivityPub)",
       "dialect": "Anthropic",
       "listeners": [
