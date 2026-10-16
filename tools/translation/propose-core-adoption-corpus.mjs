@@ -171,7 +171,7 @@ function fixedAdoptionStage(name,files,propose,original,write,dependencies){
   // The full proposal/graph is reachable only in this call. Return the next
   // primitive source map and packet references, never the live proposal.
   return createRulePipeline([
-    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>propose({entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE,...((name==='literal'||name==='scalar-count')&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})})}]},
+    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>propose({entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE,...((name==='literal'||name==='scalar-count'||name==='json')&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})})}]},
     {phase:'repository',rules:[{id:'core-adoption:'+name+'-complete-packets',apply:proposal=>{
       rejoin(original);dependencies.verify();const packets=completeAdoptionPackets(proposal,write,files,name);
       return {files:proposal.after,packets,summary:{sourceFiles:Object.keys(proposal.before).length,proposals:proposal.proposals.length,selections:proposal.proposals.reduce((sum,row)=>sum+row.selections.length,0),edits:proposal.proposals.reduce((sum,row)=>sum+row.edits.length,0),changedFiles:proposal.proposals.filter(row=>row.before.source!==row.after.source).length,skippedFiles:proposal.skipped.length}};
@@ -179,19 +179,21 @@ function fixedAdoptionStage(name,files,propose,original,write,dependencies){
   ]).run(null);
 }
 export async function proposeCoreAdoptionSequence(input,sequence='literal'){
-  if(sequence!=='literal'&&sequence!=='literal-algebraic'&&sequence!=='scalar-count')fail('fixed sequence must be literal, literal-algebraic or scalar-count');
+  if(sequence!=='literal'&&sequence!=='literal-algebraic'&&sequence!=='scalar-count'&&sequence!=='json-algebraic-primitives')fail('fixed sequence must be literal, literal-algebraic, scalar-count or json-algebraic-primitives');
   if(!['darwin','linux'].includes(process.platform))fail('POSIX source-proposal receiving required');
   const requested=options(input);
   // Lazy imports preserve the old API's module initialization graph. Selected
   // imports finish before taking the operation's complete source snapshot.
-  const proposeCoreLiteralTextCorpus=sequence==='scalar-count'?null:(await import('./migrate-core-literal-text.mjs')).proposeCoreLiteralTextCorpus;
+  const jsonSequence=sequence==='json-algebraic-primitives';
+  const proposeCoreLiteralTextCorpus=sequence==='scalar-count'||jsonSequence?null:(await import('./migrate-core-literal-text.mjs')).proposeCoreLiteralTextCorpus;
+  const json=jsonSequence?(await import('./migrate-core-json.mjs')).proposeCoreJsonCorpus:null;
   const scalars=sequence==='scalar-count'?(await import('./migrate-core-scalars.mjs')).proposeCoreScalarsCorpus:null;
-  const algebraic=sequence==='literal-algebraic'?(await import('./migrate-core-algebraic.mjs')).proposeCoreAlgebraicCorpus:null;
+  const algebraic=sequence==='literal-algebraic'||jsonSequence?(await import('./migrate-core-algebraic.mjs')).proposeCoreAlgebraicCorpus:null;
   const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target),stages=[];
-  let stage=sequence==='scalar-count'?'scalar-count':'literal',after=original.files;
+  let stage=sequence==='scalar-count'?'scalar-count':jsonSequence?'json':'literal',after=original.files;
   try{
-    for(const name of sequence==='scalar-count'?['scalar-count']:sequence==='literal'?['literal']:['literal','algebraic']){
-      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='scalar-count'?scalars:name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies);
+    for(const name of jsonSequence?['json','algebraic','primitives']:sequence==='scalar-count'?['scalar-count']:sequence==='literal'?['literal']:['literal','algebraic']){
+      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='json'?json:name==='primitives'?proposeCorePrimitivesCorpus:name==='scalar-count'?scalars:name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies);
       after=next.value.files;stages.push({name,packets:next.value.packets,summary:next.value.summary,trace:next.trace});
     }
     stage='final-source-and-index';const dependencyInputs=dependencies.rows.map((row,at)=>write.json('dependency-inputs/'+numbered(at)+'.json',row)),inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
