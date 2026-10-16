@@ -70,7 +70,9 @@ fn question_marks_short_circuit_the_actual_outer_option() {
 #[test]
 fn qualified_owned_macro_does_not_select_a_local_same_name_macro() {
     macro_rules! json {
-        () => { false };
+        () => {
+            false
+        };
     }
     assert!(!json!());
     let value = translation_core::json!({"owned": true});
@@ -80,7 +82,8 @@ fn qualified_owned_macro_does_not_select_a_local_same_name_macro() {
 #[test]
 fn actual_gemini_error_mapping_uses_u16_without_numeric_coercion() {
     fn response(status: u16, body: &Json) -> Json {
-        let message = body.pointer("/error/message")
+        let message = body
+            .pointer("/error/message")
             .and_then(Json::as_str)
             .unwrap_or("upstream request failed");
         let status_text = match status {

@@ -69,6 +69,7 @@ destruction, type checking or later body refusals.
 | `Maybe<T>` | `std::option::Option<T>` | Existing canonical variants and supported payload, lifetime, ownership and Drop rules; no blanket `Try` support. |
 | `Outcome<T, E>` | `std::result::Result<T, E>` | Existing checked success/error variants and supported payloads; no blanket error-conversion support. |
 | `format!` | `std::format!` | Existing checked literal format grammar and supported primitive operands. |
+| `json!` | `serde_json::json!` | Literal objects, scalars and empty arrays; checked borrowed text, booleans, canonical JSON copies and fixed integers through 64 bits. Each interpolation retains its actual type, effects and outer `?` behavior. Custom `Serialize`, floating point, owned text and nonempty literal arrays remain refused. |
 | `f64_inclusive_contains` | Same-type `Into<f64> + Copy` arguments, widened once before ordered comparisons | Checked `f64` inputs only; IEEE NaN, infinity and signed-zero behavior with once-only left-to-right arguments. Native Rust also accepts `f32`; that does not admit translated `f32` callers. |
 | `unicode_scalar_count` | Borrowed `str::chars().count()` | Validated Unicode scalar text to the existing 64-bit `usize` BigInt ABI; one input evaluation, with no general iterator admission. |
 
@@ -92,6 +93,10 @@ node tools/translation/propose-core-adoption-corpus.mjs \
 node tools/translation/propose-core-adoption-corpus.mjs \
   --root /path/to/receiving-repository --output /outside/fresh-scalar-proposal \
   --sequence scalar-count
+
+node tools/translation/propose-core-adoption-corpus.mjs \
+  --root /path/to/receiving-repository --output /outside/fresh-json-proposal \
+  --sequence json-algebraic-primitives
 ```
 
 The fixed sequences adopt literal text conversions alone, or literal text
@@ -106,7 +111,16 @@ inverses. Reverse stage order to recover the original source. A single full API
 proposal is retained at a time; actual memory use still needs receiving checks.
 The async API is `proposeCoreAdoptionSequence({root, output}, sequence)`.
 
-The literal and scalar corpus APIs also accept optional own-data
+The `json-algebraic-primitives` sequence adopts source-resolved JSON calls, then
+transparent algebraic aliases and primitive aliases. Every stage consumes the
+complete preceding source map and builds its own module graph. The JSON rule
+binds the complete owned facade and delegates to the existing checked JSON
+runtime. Import uncertainty and declaration producers retain explicit refusals.
+An exact function body checked inside an authored isolated carrier demonstrates
+that body's behavior; it does not establish its original parent module or crate
+is translated. Use full-corpus generation to measure application coverage.
+
+The literal, scalar and JSON corpus APIs also accept optional own-data
 `dependencyInputs: {manifest, lock}` containing the caller's complete Cargo
 source. Exact registered inputs let the rule discover declaration-kind and
 macro-only import candidates from pinned package modules and public reexports.
@@ -114,7 +128,7 @@ Missing or different inputs leave external imports unclassified. This evidence
 does not grant type ownership, complete namespaces, trait dispatch or executable
 admission; unknown traits and declaration producers remain refused.
 
-The three explicit CLI sequences capture optional physical `Cargo.toml` and
+The explicit CLI sequences capture optional physical `Cargo.toml` and
 `Cargo.lock` themselves, retain complete source/identity packets, and recheck
 them before publishing a completed index. They never substitute the compiler
 repository's Cargo files for a receiving repository's files. The original
