@@ -1,6 +1,8 @@
 // Declaration-role candidates for explicit owned-API adoption only. These facts
 // cannot issue checker ownership, trait-dispatch, layout or runtime authority.
 import {createHash} from 'node:crypto';
+import {sourceItems} from './rust-structure.mjs';
+import {inspectConditionalAttribute} from './conditional-attributes.mjs';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {originalSourceModuleItems} from './source-module-views.mjs';
@@ -8,7 +10,7 @@ import {resolveModuleBindings,originalUseDeclarationLeaves,originalDeclarationHe
 import {stablePublicTypeCandidates,stablePublicReexportCandidates,originalPublicModuleCandidate} from './namespace-census.mjs';
 import {originalNonTraitImportRole} from './extensions/primitive-import-roles.mjs';
 import {originalCorePreludeRootSource} from './extensions/core-prelude-source.mjs';
-import {itemConfiguration} from './cfg-profile.mjs';
+import {itemConfiguration,evaluateConfiguration} from './cfg-profile.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const same=(a,b)=>a.length===b.length&&a.every((name,at)=>name===b[at]);
 const nonTraits=new Set(['struct','enum','union','fn','const','static','mod']);
@@ -28,17 +30,37 @@ const stdRoot=original({path:'rust-std-lib-1.89.0.rs.gz',bytes:28184,sha256:'d07
 const [stdTime,coreTime]=pins.map(pin=>original(pin)),coreRoot=originalCorePreludeRootSource();
 const roots={std:originalPublicModuleCandidate(stdRoot.source,'time'),core:originalPublicModuleCandidate(coreRoot.source,'time')};
 if(!roots.std||!roots.core)throw new TypeError('Literal import original time module routes differ');
+function standardTypes(pin){
+  const originals=sourceItems(pin.source),masked=[],annotations=[];
+  for(const item of originals){const attributes=itemConfiguration(item.tokens,null).attributes;
+    for(const attribute of attributes.filter(row=>row.name==='cfg_attr')){
+      const tokens=item.tokens.filter(token=>token.type!=='comment'&&token.start>=attribute.span.start&&token.end<=attribute.span.end);
+      let parsed;try{parsed=inspectConditionalAttribute(tokens.slice(2,-1));}catch{continue;}
+      if(evaluateConfiguration(parsed.predicate,null).diagnostics.length||!parsed.attributes.length||!parsed.attributes.every(row=>row.tokens.length===3&&row.tokens[0]==='rustc_diagnostic_item'&&row.tokens[1]==='='))continue;
+      const original=pin.source.slice(attribute.span.start,attribute.span.end),replacement=original.replace(/[^\r\n]/g,' ');
+      if(replacement.length!==original.length)throw new TypeError('Conditional annotation source coordinates changed');
+      masked.push({span:attribute.span,original,replacement});annotations.push({span:attribute.span,original,predicate:parsed.predicate.map(token=>token.text),payloads:parsed.attributes,alternatives:['annotation absent; same declaration kind','diagnostic-name annotation present; same declaration kind'],predicateSelected:false,attributeOwnerResolved:false});
+    }
+  }
+  let source=pin.source;for(const edit of [...masked].sort((a,b)=>b.span.start-a.span.start))source=source.slice(0,edit.span.start)+edit.replacement+source.slice(edit.span.end);
+  let restored=source;for(const edit of [...masked].sort((a,b)=>b.span.start-a.span.start)){if(restored.slice(edit.span.start,edit.span.end)!==edit.replacement)throw new TypeError('Conditional annotation inverse differs');restored=restored.slice(0,edit.span.start)+edit.original+restored.slice(edit.span.end);}if(restored!==pin.source)throw new TypeError('Complete conditional annotation inverse differs');
+  return stablePublicTypeCandidates(source).map(candidate=>{
+    const items=originals.filter(item=>item.end===candidate.span.end&&originalDeclarationHeader(item)?.name===candidate.name&&item.term===candidate.kind);if(items.length!==1)throw new TypeError('Conditional declaration has no exact original item');const item=items[0];
+    return {...candidate,sourceSha256:pin.sourceSha256,itemSha256:hash(pin.source.slice(item.start,item.end)),span:{start:item.start,end:item.end},attributes:itemConfiguration(item.tokens,null).attributes,conditionalAnnotations:annotations.filter(row=>row.span.start>=item.start&&row.span.end<=item.end),normalizedCensusSourceSha256:hash(source),originalDeclarationRetained:true};
+  });
+}
+const stdTypes=standardTypes(stdTime),coreTypes=standardTypes(coreTime);
 function standardRole(segments){
   if(!['std','core'].includes(segments[0])||segments[1]!=='time'||segments.length<2||segments.length>3)return null;
   const owner=segments[0],root=owner==='std'?stdRoot:{...coreRoot,sourceSha256:coreRoot.sha256};
   const route=[{sourceSha256:root.sourceSha256,...roots[owner]}];
   if(segments.length===2)return {kind:'mod',route};
-  const name=segments[2],direct=stablePublicTypeCandidates((owner==='std'?stdTime:coreTime).source).filter(row=>row.name===name&&nonTraits.has(row.kind));
+  const name=segments[2],direct=(owner==='std'?stdTypes:coreTypes).filter(row=>row.name===name&&nonTraits.has(row.kind));
   if(direct.length===1)return {kind:direct[0].kind,route:[...route,{...direct[0],file:owner==='std'?stdTime.path:coreTime.path}]};
   if(owner!=='std')return null;
   const exports=stablePublicReexportCandidates(stdTime.source).filter(row=>row.name===name&&row.path.length===3&&same(row.path.slice(0,2),['core','time']));
   if(exports.length!==1)return null;
-  const declared=stablePublicTypeCandidates(coreTime.source).filter(row=>row.name===exports[0].path[2]&&nonTraits.has(row.kind));
+  const declared=coreTypes.filter(row=>row.name===exports[0].path[2]&&nonTraits.has(row.kind));
   return declared.length===1?{kind:declared[0].kind,route:[...route,{...exports[0],file:stdTime.path},{...declared[0],file:coreTime.path}]}:null;
 }
 function closedDeclarations(module,profile){
