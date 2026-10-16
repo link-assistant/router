@@ -1,0 +1,3 @@
+The private Rust compiler source-report test now passes the actual `tokenize(...).tokens` list to the original `TokenCursor`. Its retained oracle includes the complete tokenization result, including comments, alongside the token list. The existing cursor observations, checked compiler output, strict TypeScript checks and all eight case deadlines are unchanged.
+
+The first receiving run passed seven of eight cases on Node; case seven failed before the compiler oracle because the fixture passed the entire tokenization object as a token list. The correction is source-reviewed and remains unrun. It changes no compiler, vendor source or private execution availability.

@@ -116,9 +116,9 @@ test('unknown source imports malformed bytes and linked complete source refuse o
 });
 
 test('independent original cursor and actual checked compiler oracle remain separate from private availability',{timeout:60000},async()=>{
-  const source='pub fn answer(value:u8)->u8{value+1u8} pub fn choose(value:u8)->bool{match value {0u8=>true,_=>false}}',tokens=tokenize('alpha + beta','Rust'),cursor=new TokenCursor(tokens,'Rust'),observations=[];
+  const source='pub fn answer(value:u8)->u8{value+1u8} pub fn choose(value:u8)->bool{match value {0u8=>true,_=>false}}',tokenization=tokenize('alpha + beta','Rust'),{tokens}=tokenization,cursor=new TokenCursor(tokens,'Rust'),observations=[];
   observations.push({peek:cursor.peek(),kind:cursor.isKind('identifier'),same:cursor.is('alpha'),index:cursor.index});observations.push({next:cursor.next(),index:cursor.index});observations.push({eat:cursor.eat('+'),identifier:cursor.identifier('oracle'),eof:cursor.atEnd()});
-  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source}),canonical=JSON.stringify(result.meta.checkedSemanticProgram),program=parseProgram(canonical);retain('07-full-original-oracle',{source,tokens,observations,result,canonical,program,scope:'PUBLIC original cursor/compiler oracle only. B1 private execution remains unavailable; no public class/source-proof promotion.'});
+  const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source}),canonical=JSON.stringify(result.meta.checkedSemanticProgram),program=parseProgram(canonical);retain('07-full-original-oracle',{source,tokenization,tokens,observations,result,canonical,program,scope:'PUBLIC original cursor/compiler oracle only. B1 private execution remains unavailable; no public class/source-proof promotion.'});
   assert.equal(observations[0].same,true);assert.equal(observations[1].next.value,'alpha');assert.equal(observations[2].identifier.value,'beta');assert.equal(observations[2].eof,true);assert.deepEqual(result.meta.refused,[]);assert.equal(serializeProgram(program),canonical);
   await verifyTypedTargets(result,api=>{const actual={answer:api.answer(2n),yes:api.choose(0n),no:api.choose(1n)};retain('07-original-targets',actual);assert.deepEqual(actual,{answer:3n,yes:true,no:false});},{childTimeoutMs:20000});
 });
