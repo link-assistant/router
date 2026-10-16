@@ -71,17 +71,22 @@ function definitions(p,spaces){const result={};for(const row of p.modules){const
 function reverseSource(text,row){for(let at=row.reverse.length-1;at>=0;at--){const edit=row.reverse[at];assert.equal(text.slice(edit.start,edit.end),edit.expected);text=text.slice(0,edit.start)+edit.replacement+text.slice(edit.end);}return text;}
 
 // These are bounded temporary SOURCE fixtures, never another checkout/worktree.
-// Exactly13 class modules are real fresh files; unchanged siblings alias genuine
-// active files. The same trusted common/host issuers initialize before poison.
+// Copy the COMPLETE reviewed static SCC, plus all13 birth modules and the leaf;
+// aliases outside it deliberately share the same authentic active realm. No
+// graph is initialized outside its actual whole case or hidden before a hook.
+const SCC_SOURCE_FILES=["clone-container-fields.mjs","clone-container-no-drop.mjs","clone-source-ir.mjs","declarative-macros.mjs","default-generated-dependencies.mjs","default-source-ir.mjs","default-unit-source.mjs","extensions/array-borrows.mjs","extensions/clone-container-body.mjs","extensions/clone-source-body.mjs","extensions/const-match-source-context.mjs","extensions/constant-evaluation.mjs","extensions/data.mjs","extensions/declaration-refusals.mjs","extensions/effects.mjs","extensions/external-trait-default-context.mjs","extensions/external-trait-sources.mjs","extensions/formatting.mjs","extensions/host-contracts.mjs","extensions/iterators.mjs","extensions/json-macros.mjs","extensions/match-patterns.mjs","extensions/methods.mjs","extensions/option-equality-source.mjs","extensions/option-equality.mjs","extensions/option-nominal-proof.mjs","extensions/ordered-matches.mjs","extensions/ownership.mjs","extensions/primitive-anonymous-traits.mjs","extensions/primitive-bool-from-source.mjs","extensions/primitive-identity-from-source.mjs","extensions/primitive-try-from-body.mjs","extensions/primitive-try-from-scope.mjs","extensions/primitive-type-aliases.mjs","extensions/shared-source-patterns.mjs","extensions/source-conversion-body.mjs","extensions/source-conversion-scope.mjs","extensions/source-display-formatting.mjs","extensions/source-lifetimes.mjs","extensions/standard-body-checker.mjs","extensions/standard-body-source.mjs","extensions/standard-borrowed-body.mjs","extensions/standard-mapped-body.mjs","extensions/standard-method-context.mjs","extensions/standard-option-callback-body.mjs","extensions/standard-source-frame.mjs","extensions/static-array-element.mjs","extensions/text.mjs","extensions/tuples.mjs","extensions/unit-enum-cast.mjs","extensions/utf16-fixed-f64.mjs","external-dependency-defaults.mjs","format-display-source.mjs","format-type-namespace.mjs","impl-resolver.mjs","json-macro-arrays.mjs","json-macro-context.mjs","json-macro-sources.mjs","matches-macro-context.mjs","matches-source-bridge.mjs","private-cargo-toml.mjs","project-copy.mjs","project.mjs","shared-nullary-enum.mjs","source-implementation-targets.mjs","source-macro-fragments.mjs","source-method-admission.mjs","source-method-parser.mjs","source-method-transforms.mjs","translate.mjs"];
 function graph(label,{before=false}={}){
-  const p=program(),folder=realpathSync(mkdtempSync(join(tmpdir(),'router-birth-'+label+'-'))),translation=join(folder,'tools/translation'),extensions=join(translation,'extensions');
-  mkdirSync(extensions,{recursive:true});const active=join(ROOT,'tools/translation');
-  for(const name of readdirSync(active)){if(name!=='extensions')symlinkSync(join(active,name),join(translation,name));}
-  const owned=new Set(p.modules.map(row=>row.id+'.mjs'));owned.add('original-class-definition-birth.mjs');
-  for(const name of readdirSync(join(active,'extensions'))){if(!owned.has(name))symlinkSync(join(active,'extensions',name),join(extensions,name));}
-  const sources=[];for(const row of p.files){const current=readFileSync(join(active,row.path),'utf8'),text=before?reverseSource(current,row):current,target=join(translation,row.path);writeFileSync(target,text,{flag:'wx'});sources.push({path:row.path,text});}
-  const leaf=readFileSync(new URL('../extensions/original-class-definition-birth.mjs',import.meta.url),'utf8');writeFileSync(join(extensions,'original-class-definition-birth.mjs'),leaf,{flag:'wx'});sources.push({path:'extensions/original-class-definition-birth.mjs',text:leaf});
-  retain(label+'-complete-source-graph',{folder,before,sources,unchangedSiblingsAreAliases:true,trustedCommonAlreadyInitialized:true});
+  const p=program(),folder=realpathSync(mkdtempSync(join(tmpdir(),'router-birth-'+label+'-'))),translation=join(folder,'tools/translation'),extensions=join(translation,'extensions'),active=join(ROOT,'tools/translation');
+  const physical=new Set(SCC_SOURCE_FILES);for(const row of p.files)physical.add(row.path);physical.add('extensions/original-class-definition-birth.mjs');
+  const sources=[];let total=0;
+  for(const path of physical){const current=readFileSync(join(active,path),'utf8'),row=p.files.find(row=>row.path===path),text=before&&row?reverseSource(current,row):current;total+=Buffer.byteLength(text);sources.push({path,text});}
+  assert.equal(physical.size,77);assert.ok(total<=4194304,'complete source fixture bound');mkdirSync(extensions,{recursive:true});
+  // Exclude physical source names BEFORE aliases are created: writing through
+  // an alias must never mutate the active original source directory.
+  for(const name of readdirSync(active))if(name!=='extensions'&&!physical.has(name))symlinkSync(join(active,name),join(translation,name));
+  for(const name of readdirSync(join(active,'extensions')))if(!physical.has('extensions/'+name))symlinkSync(join(active,'extensions',name),join(extensions,name));
+  for(const row of sources){const target=join(translation,row.path);writeFileSync(target,row.text,{flag:'wx'});assert.equal(readFileSync(target,'utf8'),row.text);}
+  retain(label+'-complete-source-graph',{folder,before,sources,sourceLogicalBytes:total,sourceLogicalBound:4194304,physicalSourceModules:77,unchangedOutsideSccAreActiveRealmAliases:true,trustedCommonAlreadyInitialized:true});
   let trusted=false;async function trust(){if(trusted)return;const common=await import(pathToFileURL(join(translation,'original-json-intrinsics.mjs')).href),host=await import(pathToFileURL(join(translation,'private-parser-execution.mjs')).href);assert.equal(common.originalPrivateParserCommonIntrinsicsUnchanged,originalPrivateParserCommonIntrinsicsUnchanged);assert.equal(host.assertPrivateParserExecution,assertPrivateParserExecution);trusted=true;}
   return {folder,p,extensions,trust,url:pathToFileURL(join(extensions,'original-class-definition-birth.mjs')).href,async module(id){await trust();return import(pathToFileURL(join(extensions,id+'.mjs')).href);},close(){rmSync(folder,{recursive:true,force:true});}};
 }
@@ -93,6 +98,7 @@ test('source-time class program covers all24 full definitions and exact source r
   restored();const p=program(),proposal=prepareOriginalClassBirthPlan({sourceRoot:ROOT}),token=await captureOriginalClassDefinitionContext(),facts=requireOriginalClassDefinitionContext(token),spaces=await namespaces();
   const complete=reports(p,spaces);retain('01-complete',{program:p,proposal,complete,facts});
   assert.equal(proposal.selections.length,24);assert.equal(proposal.files.length,13);assert.equal(facts.classes,24);
+  assert.equal(p.entry.path,'extensions/host-contracts.mjs');const hostSource=readFileSync(join(ROOT,'tools/translation',p.entry.path),'utf8');assert.equal(p.entry.sourcePin.bytes,Buffer.byteLength(hostSource));assert.equal(p.entry.sourcePin.sha256,createHash('sha256').update(hostSource).digest('hex'));
   const privateRows=proposal.selections.flatMap(owner=>owner.privateMethods.map(member=>({owner,member})));assert.equal(privateRows.length,1);
   const {owner,member}=privateRows[0];assert.equal(owner.id,'PatternControlChecker');assert.equal(member.key,'#checkedLetChain');assert.equal(member.kind,'private-instance-ordinary-method');assert.equal(member.nodeKind,'MethodDeclaration');assert.equal(member.arity,5);assert.equal(member.source,owner.source.slice(member.start-owner.start,member.end-owner.start));assert.equal(member.bytes,Buffer.byteLength(member.source));assert.equal(member.sha256,createHash('sha256').update(member.source).digest('hex'));assert.equal(owner.methods.some(method=>method.key===member.key),false);
   const privateProgram=p.definitions.find(row=>row.id===owner.id).privateMethods;assert.equal(privateProgram.length,1);assert.equal(privateProgram[0].sha256,member.sha256);assert.equal(privateProgram[0].start,member.start);assert.equal(privateProgram[0].end,member.end);
@@ -245,8 +251,9 @@ test('physical cold reflection and URI ingress are sticky and execute no poisone
 
 test('original parse check emit behavior and strictTS stay independent of identity-only context',{timeout:60000},async()=>{
   const rows=[];for(const before of [true,false]){const g=graph('08-λ-'+(before?'old':'current'),{before});try{
-    const methods=await g.module('methods'),parsed=methods.parseRust(input),checked=methods.checkProgram(parsed),emitted=methods.emitJavaScript(checked),refusal=attempt(()=>methods.parseRust('fn malformed('));
-    rows.push({before,input,parsed,checked,emitted,refusal:observed(refusal)});
+    await g.module('host-contracts');
+    const methods=await g.module('methods'),originalRefusal=attempt(()=>methods.parseRust(input)),executableSource=input+'\nfn main() {}',parsed=methods.parseRust(executableSource),checked=methods.checkProgram(parsed),emitted=methods.emitJavaScript(checked),refusal=attempt(()=>methods.parseRust('fn malformed('));
+    rows.push({before,input,originalRefusal:observed(originalRefusal),executableSource,parsed,checked,emitted,refusal:observed(refusal)});
     if(!before){const positive=await fullPositive(g);assert.equal(positive.facts.owner,false);assert.equal(positive.facts.body,false);}
   }finally{g.close();}}
   const folder=mkdtempSync(join(tmpdir(),'router-birth-strict-ts-'));let result;try{
@@ -255,5 +262,5 @@ test('original parse check emit behavior and strictTS stay independent of identi
     writeFileSync(file,source);const sourceRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??ROOT,require=createRequire(join(sourceRoot,'packages/javascript/package.json')),tsc=require.resolve('typescript/bin/tsc');
     result=spawnSync(process.execPath,[tsc,'--noEmit','--strict','--allowJs','--checkJs','false','--skipLibCheck','--module','NodeNext','--moduleResolution','NodeNext','--target','ES2022',file],{encoding:'utf8',timeout:20000,maxBuffer:1048576});retain('08-strict-typescript',{source,result});
   }finally{rmSync(folder,{recursive:true,force:true});}
-  retain('08-complete-old-current',{rows});assert.equal(result.status,0,result.stdout+result.stderr);assert.deepEqual(rows[1].parsed,rows[0].parsed);assert.deepEqual(rows[1].checked,rows[0].checked);assert.equal(rows[1].emitted,rows[0].emitted);assert.deepEqual(rows[1].refusal,rows[0].refusal);restored();
+  retain('08-complete-old-current',{rows});assert.equal(result.status,0,result.stdout+result.stderr);for(const row of rows)assert.ok(row.originalRefusal.error);assert.deepEqual(rows[1].originalRefusal,rows[0].originalRefusal);assert.deepEqual(rows[1].parsed,rows[0].parsed);assert.deepEqual(rows[1].checked,rows[0].checked);assert.equal(rows[1].emitted,rows[0].emitted);assert.deepEqual(rows[1].refusal,rows[0].refusal);restored();
 });
