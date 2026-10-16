@@ -15,3 +15,7 @@ actual fresh corpus graph with a conditional sibling and both typed targets.
 All eight cases keep their original 60-second limits and strict children their
 20-second limits. This is a source-only draft; checks are UNRUN locally and no
 new corpus adoption or executable gain is claimed until receiving.
+
+Keep ancestor source options when independently replaying conditional-negative
+proposal idempotence. The complete inverse, all negative inputs, eight cases
+and limits remain intact. The receiving fixture repair is locally UNRUN.
