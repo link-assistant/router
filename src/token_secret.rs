@@ -48,10 +48,9 @@ pub fn is_placeholder(secret: &crate::translation_core::Str) -> bool {
 /// operator's side that is exactly what happened, and a second wording would
 /// only invite the question of which one is the real problem.
 #[must_use]
-pub fn refusal() -> String {
-    "TOKEN_SECRET environment variable is required: this command signs or encrypts on this \
-     machine, and no signing secret was supplied"
-        .to_string()
+pub fn refusal() -> crate::translation_core::Text {
+    crate::translation_core::format!("{}", "TOKEN_SECRET environment variable is required: this command signs or encrypts on this \
+     machine, and no signing secret was supplied")
 }
 
 /// Refuse a stand-in before anything is signed or encrypted.
