@@ -1,7 +1,7 @@
 // Bounded actual builtin generator routes. Copy and Eq close source-selected associated
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
+import {createPrivateFrozenJsonCache,createPrivateFrozenJsonComposer} from './private-frozen-json.mjs';
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
@@ -21,6 +21,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const freezeCompleted=createCompletedDataFreezer(freeze);
 const originalJson=createPrivateFrozenJsonCache();
+const composeJson=createPrivateFrozenJsonComposer();
 const plans=new WeakMap(),proofs=new WeakMap();
 const directory='compiler/rustc_builtin_macros/src/deriving/';
 const routes=new Map([
@@ -136,7 +137,7 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
       if(state.original.name!=='Debug')throw new TypeError('Builtin '+state.original.name+' retains typed callback/conditional AST output obligations: '+error.message);
       const selected=debugDataInput(state,context,certificate),route=liftBuiltinDebugAstRoute({...state,original:state.original,input:selected.input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','Debug',...certificate.attributes.map(attribute=>attribute.name)]));
       const evidence={schema:'builtin-debug-data-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:selected.input,originalHelperOwners:selected.helpers,priorScalarRefusal:error.message,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true},fmtDebug:{outcomes:['None','Shallow','Full'],allSelectedInputOutcomesClosed:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['generated Debug/fmt methods and allocator/format execution remain unlowered','all other derives, original scopes, ownership and const eligibility require independent proofs']};
-      const proof=freezeCompleted({...evidence,digest:hash(JSON.stringify(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
+      const proof=freezeCompleted({...evidence,digest:hash(composeJson(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
     }
     const attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline',state.original.name,...certificate.attributes.map(attribute=>attribute.name)]));
     const evidence={schema:'builtin-scalar-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},generatedImplBehavior:false,obligations:['generated builtin trait methods remain unlowered','other derive owners and original ancestor scopes require separate closed outputs','unsupported source layouts and compiler errors remain refused']};
@@ -191,7 +192,7 @@ export const isBuiltinDeriveBangFootprint=value=>!!value&&proofs.has(value);
 export function originalBuiltinDeriveEnclosingOutput(proof,context,certificate,invocation){
  assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);
  const fresh=proveBuiltinDeriveBangFootprint({context,certificate,invocation});
- if(JSON.stringify(fresh)!==originalJson(proof))throw new TypeError('Builtin complete original output changed before namespace effect');
+ if(composeJson(fresh)!==(proof.schema==='builtin-debug-data-bang-output-v1'?composeJson(proof):originalJson(proof)))throw new TypeError('Builtin complete original output changed before namespace effect');
  const sink=fresh.slotProofs?.outputKind;
  if(sink?.kind!=='ItemKind::Impl')throw new TypeError('Builtin namespace effect requires a source-proved complete Impl sink');
  return freezeCompleted({schema:'original-complete-builtin-enclosing-output-v1',proof:fresh,sink,route:fresh.route??null});

@@ -29,13 +29,13 @@ function intrinsics(){
  if(!qualified||!originalNamespaceTraversalIntrinsicsUnchanged()||!originalLexingIntrinsicsUnchanged())return false;
  const actual=descriptor(Object,'isFrozen');return !!actual&&own(actual,'value')&&actual.value===frozenField.value&&actual.writable===frozenField.writable&&actual.enumerable===frozenField.enumerable&&actual.configurable===frozenField.configurable;
 }
-function immutableJson(value){
+function immutableJson(value,noStack=false){
  let stack={value,depth:0,exit:false,parent:null,next:null},cells=CELLS;const active=new setConstructor();
  const charge=(parent,count,height)=>{if(parent){parent.cells+=count;if(height+1>parent.height)parent.height=height+1;}};
  while(stack){const frame=stack;stack=frame.next;const value=frame.value;
   if(frame.exit){
    apply(setDelete,active,[value]);
-   const record={cells:frame.total.cells,height:frame.total.height};
+   const record=noStack?{cells:frame.total.cells,height:frame.total.height,stackFree:true}:{cells:frame.total.cells,height:frame.total.height};
    if(frame.parent===null){
     if(ownerEntries>=OWNERS){owners=new weakConstructor();ownerEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
     apply(weakSet,owners,[value,record]);ownerEntries++;
@@ -52,12 +52,15 @@ function immutableJson(value){
   if(--cells<0||frame.depth>DEPTH)return false;
   if(value===null||value===undefined||typeof value==='string'||typeof value==='number'||typeof value==='boolean'){charge(frame.parent,1,0);continue;}
   if(typeof value!=='object'||isProxy(value)||apply(setHas,active,[value]))return false;
+  if(noStack&&apply(compositionBoxedField.value,compositionTypes,[value]))return false;
   const owner=apply(weakGet,owners,[value]),large=owner?null:apply(weakGet,largeSubtrees,[value]),saved=owner||large||apply(weakGet,subtrees,[value]);
-  if(saved){if(saved.cells-1>cells||saved.height>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=saved.cells-1;charge(frame.parent,saved.cells,saved.height);if(subtreeHits<9007199254740991)subtreeHits++;if(owner){if(ownerHits<9007199254740991)ownerHits++;}else if(large){if(largeHits<9007199254740991)largeHits++;}else if(smallHits<9007199254740991)smallHits++;continue;}
+  if(saved&&(!noStack||own(saved,'stackFree')&&saved.stackFree===true)){if(saved.cells-1>cells||saved.height>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=saved.cells-1;charge(frame.parent,saved.cells,saved.height);if(subtreeHits<9007199254740991)subtreeHits++;if(owner){if(ownerHits<9007199254740991)ownerHits++;}else if(large){if(largeHits<9007199254740991)largeHits++;}else if(smallHits<9007199254740991)smallHits++;continue;}
   if(subtreeMisses<9007199254740991)subtreeMisses++;
+  let earlyNames=null;
+  if(noStack){const parent=prototype(value),array=isArray(value);if(parent!==objectPrototype&&parent!==null&&!(array&&parent===arrayPrototype))return false;if(array){const length=descriptor(value,'length');if(!length||!own(length,'value')||length.value>CELLS)return false;}earlyNames=keys(value);for(let at=0;at<earlyNames.length;at++)if(earlyNames[at]==='stack')return false;}
   if(!apply(frozenField.value,Object,[value]))return false;
   const proto=prototype(value),array=isArray(value);if(proto!==objectPrototype&&proto!==null&&!(array&&proto===arrayPrototype))return false;
-  const names=keys(value);if(own(value,'toJSON'))return false;
+  const names=earlyNames??keys(value);if(own(value,'toJSON'))return false;
   if(array){const field=descriptor(value,'length');if(!field||!own(field,'value'))return false;const length=field.value;if(length<0||length>cells||names.length!==length+1)return false;for(let at=0;at<length;at++)if(!own(value,at))return false;}
   const total={cells:1,height:0};let first=null,last=null;
   for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string')return false;const field=descriptor(value,key);if(!field||!own(field,'value')||!field.enumerable&&!(array&&key==='length'))return false;if(!(array&&key==='length')){const child={value:field.value,depth:frame.depth+1,exit:false,parent:total,next:null};if(last)last.next=child;else first=child;last=child;}}
@@ -89,3 +92,75 @@ export function createPrivateFrozenJsonCache(){
 }
 // Bounded scalar diagnostics only; mutating this returned copy grants nothing.
 export function privateFrozenJsonCacheFacts(){return {available:intrinsics(),entries,retainedBytes,hits,misses,captures,evictions,limits:{entryBytes:ENTRY_BYTES,bytes:TOTAL_BYTES,entries:ENTRIES,cells:CELLS,depth:DEPTH},eligibilityMemo:{completedBudgetRefusals,completedEligibilityHits,entries:ownerEntries+subtreeEntries+largeEntries,maximumEntries:OWNERS+SUBTREES+LARGE_SUBTREES,owners:{entries:ownerEntries,maximumEntries:OWNERS,hits:ownerHits},subtrees:{entries:subtreeEntries+largeEntries,maximumEntries:SUBTREES+LARGE_SUBTREES,small:{entries:subtreeEntries,maximumEntries:SUBTREES,hits:smallHits},large:{entries:largeEntries,maximumEntries:LARGE_SUBTREES,hits:largeHits,minimumCells:LARGE_CELLS}},hits:subtreeHits,misses:subtreeMisses,captures:subtreeCaptures,rotations:subtreeRotations,budgetRefusals:subtreeBudgetRefusals}};}
+
+
+// Fixed syntax-substrate composition only. Fresh wrappers are never retained;
+// every call first checks the entire logical graph without invoking user code.
+// Existing immutable eligibility/cost records and byte limits are shared with
+// the original byte helper. A stored substring grants no source/owner fact.
+// Boxed primitives keep native internal unboxing even after prototype changes.
+// An unavailable/changed optional native predicate disables composition only;
+// the existing byte-cache API and complete native fallback remain available.
+const compositionTypes=qualified?types:null;
+const compositionBoxedField=qualified&&!isProxy(compositionTypes)?descriptor(compositionTypes,'isBoxedPrimitive'):null;
+const compositionBoxedNative=!!(compositionBoxedField&&own(compositionBoxedField,'value')&&native(compositionBoxedField.value,'isBoxedPrimitive')&&prototype(compositionBoxedField.value)===functionPrototype);
+function compositionIntrinsics(){
+ if(!intrinsics()||!compositionBoxedNative||types!==compositionTypes)return false;
+ const field=descriptor(compositionTypes,'isBoxedPrimitive');return !!field&&own(field,'value')&&field.value===compositionBoxedField.value&&field.writable===compositionBoxedField.writable&&field.enumerable===compositionBoxedField.enumerable&&field.configurable===compositionBoxedField.configurable&&prototype(field.value)===functionPrototype;
+}
+const compositionReceiver=qualified?JSON:null;
+const compositionStringify=qualified?descriptor(compositionReceiver,'stringify').value:null;
+// One existing bounded byte-store instance serves both proof consumers.
+// Separate per-factory stores would duplicate shared chunks and evict them.
+const encodeSyntaxSubstrate=createPrivateFrozenJsonCache();
+const COMPOSITION_UNITS=8388608;
+function syntaxSubstrateKey(key){return key==='recipes'||key==='compilerMeta'||key==='schemas'||key==='positiveSchemas'||key==='parserFieldSpans'||key==='descriptor'||key==='method';}
+function existingSyntaxCost(value){const record=apply(weakGet,owners,[value])||apply(weakGet,largeSubtrees,[value])||apply(weakGet,subtrees,[value]);return record&&own(record,'stackFree')&&record.stackFree===true?record:null;}
+function immutableCost(value){const saved=existingSyntaxCost(value);if(saved)return saved;if(!immutableJson(value,true))return null;return existingSyntaxCost(value);}
+export function createPrivateFrozenJsonComposer(){
+ return value=>{
+  if(!compositionIntrinsics())return JSON.stringify(value);
+  let cells=0;const active=new setConstructor();
+  function inspect(value,depth,key){
+   if(depth>DEPTH)return null;
+   const kind=typeof value;
+   if(value===null||kind==='string'||kind==='boolean'||kind==='number')return ++cells>CELLS||kind==='string'&&value.length>COMPOSITION_UNITS?null:{kind:0,value};
+   // BigInt, symbols, undefined, functions and nonordinary prototypes keep the
+   // complete native operation, including its omissions, hooks and errors.
+   if(kind!=='object'||isProxy(value)||apply(compositionBoxedField.value,compositionTypes,[value]))return null;
+   const substrate=syntaxSubstrateKey(key),saved=substrate?existingSyntaxCost(value):null;
+   if(saved){if(saved.cells>CELLS-cells||saved.height>DEPTH-depth)return null;cells+=saved.cells;return {kind:1,value};}
+   if(apply(setHas,active,[value]))return null;
+   const array=isArray(value),parent=prototype(value);
+   if(parent!==(array?arrayPrototype:objectPrototype)&&!(parent===null&&!array))return null;
+   let arrayLength=null;if(array){const field=descriptor(value,'length');if(!field||!own(field,'value')||field.enumerable||field.value<0||field.value%1!==0||field.value>CELLS)return null;arrayLength=field.value;}
+   const names=keys(value);if(names.length>CELLS+1)return null;
+   // Native captured stacks can be lazy data descriptors on ordinary objects.
+   // Reject their key before any descriptor could invoke a formatter.
+   for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON'||names[at].length>COMPOSITION_UNITS)return null;
+   if(substrate&&apply(frozenField.value,Object,[value])){const cost=immutableCost(value);if(!cost||cost.cells>CELLS-cells||cost.height>DEPTH-depth)return null;cells+=cost.cells;return {kind:1,value};}
+   if(++cells>CELLS)return null;
+   let length=names.length;
+   if(array){if(names.length!==arrayLength+1||names[names.length-1]!=='length')return null;length=arrayLength;for(let at=0;at<length;at++)if(names[at]!==''+at)return null;}
+   const fields=[];
+   // Finish the whole own descriptor census before descending into children.
+   for(let at=0;at<length;at++){const name=names[at],field=descriptor(value,name);if(!field||!own(field,'value')||!field.enumerable)return null;fields[at]={name,value:field.value};}
+   apply(setAdd,active,[value]);const children=[];
+   for(let at=0;at<fields.length;at++){const field=fields[at],child=inspect(field.value,depth+1,field.name);if(!child){apply(setDelete,active,[value]);return null;}children[at]={name:field.name,child};}
+   apply(setDelete,active,[value]);return {kind:array?2:3,children};
+  }
+  let plan;try{plan=inspect(value,0,null);}catch{return JSON.stringify(value);}
+  if(!plan)return JSON.stringify(value);
+  const pieces=[];let units=0,overflow=false;
+  function append(text){units+=text.length;if(units>COMPOSITION_UNITS){overflow=true;return;}pieces[pieces.length]=text;}
+  function emit(node){
+   if(overflow)return;
+   if(node.kind===0){append(apply(compositionStringify,compositionReceiver,[node.value]));return;}
+   if(node.kind===1){append(encodeSyntaxSubstrate(node.value));return;}
+   const array=node.kind===2;append(array?'[':'{');
+   for(let at=0;at<node.children.length;at++){if(at)append(',');const row=node.children[at];if(!array){append(apply(compositionStringify,compositionReceiver,[row.name]));append(':');}emit(row.child);if(overflow)return;}
+   append(array?']':'}');
+  }
+  emit(plan);return overflow?JSON.stringify(value):pieces.join('');
+ };
+}
