@@ -1,0 +1,152 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs,{mkdirSync,writeFileSync} from 'node:fs';
+import {Hash} from 'node:crypto';
+import {join} from 'node:path';
+import {originalPrivateParserIngressUnchanged as ingress,
+  originalStaticSourceIntrinsicsUnchanged as staticGuard,
+  originalDataFreezeIntrinsicsUnchanged as dataGuard,
+  originalPrivateParserCommonIntrinsicsUnchanged as combined} from '../original-json-intrinsics.mjs';
+import {assertPrivateParserExecution,lexPrivateConcreteSource} from '../private-parser-execution.mjs';
+
+// The SAME genuine common issuer initializes before these controls. None claims
+// to authenticate a common module first evaluated under a poisoned bootstrap.
+const root=globalThis,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty;
+const parent=Object.getPrototypeOf,setParent=Object.setPrototypeOf,remove=Reflect.deleteProperty;
+const apply=Reflect.apply,stringify=JSON.stringify;
+const source='fn answer() -> u8 { 7 }';
+const directory=process.env.ROUTER_PRIVATE_PARSER_COMMON_VECTOR_DIR;
+function retain(name,value){if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,name+'.json'),stringify(value)+'\n',{flag:'wx'});}}
+function facts(){
+  const entry=ingress();
+  // Preserve the original ingress-before-either-old-guard ordering. Calling
+  // either older guard alone under a poisoned global root is not this domain.
+  const staticValue=entry?staticGuard():null,dataValue=entry?dataGuard():null;
+  return {ingress:entry,static:staticValue,data:dataValue,legacy:entry&&staticValue&&dataValue,combined:combined()};
+}
+function attempt(read){let value,error;try{value=read();}catch(caught){error=caught;}return {value,error};}
+function errorFacts(error){
+  if(error===null||typeof error!=='object')return {type:typeof error};
+  const result={};for(const name of ['name','message']){const field=descriptor(error,name);if(field&&Object.hasOwn(field,'value')&&typeof field.value==='string')result[name]=field.value;}return result;
+}
+function outcome(result){return result.error===undefined?{value:result.value}:{error:errorFacts(result.error)};}
+function restored(){assert.deepEqual(facts(),{ingress:true,static:true,data:true,legacy:true,combined:true});}
+function positive(){assertPrivateParserExecution();return lexPrivateConcreteSource(source,'Rust');}
+function mutation(owner,key,field){
+  const before=descriptor(owner,key);let observed;
+  try{define(owner,key,field);observed=facts();}
+  finally{if(before)define(owner,key,before);else remove(owner,key);}
+  return {key:typeof key==='symbol'?'symbol':key,observed,restored:facts()};
+}
+function rejected(row,expectedStatic,expectedData){
+  assert.equal(row.observed.ingress,true);assert.equal(row.observed.static,expectedStatic);assert.equal(row.observed.data,expectedData);
+  assert.equal(row.observed.legacy,false);assert.equal(row.observed.combined,false);assert.equal(row.restored.combined,true);
+}
+
+test('private parser combined guard preserves the complete healthy conjunction and output',{timeout:60000},()=>{
+  const rows=[];for(let at=0;at<4;at++)rows.push(facts());
+  const output=positive();retain('01-complete-healthy',{source,rows,output});
+  restored();for(const row of rows)assert.deepEqual(row,{ingress:true,static:true,data:true,legacy:true,combined:true});
+  assert.deepEqual(output.map(token=>[token.type,token.text,token.start,token.end]),[
+    ['ident','fn',0,2],['ident','answer',3,9],['punct','(',9,10],['punct',')',10,11],
+    ['punct','->',12,14],['ident','u8',15,17],['punct','{',18,19],['number','7',20,21],['punct','}',22,23],
+  ]);
+  assert.deepEqual(positive(),output);
+});
+
+test('private parser combined guard retains static-only String and RegExp failures',{timeout:60000},()=>{
+  let callbacks=0;const rows=[];
+  try{
+    rows.push(mutation(String.prototype,'charCodeAt',{configurable:true,get(){callbacks++;return ()=>0;}}));
+    rows.push(mutation(RegExp.prototype,'exec',{...descriptor(RegExp.prototype,'exec'),value:function(){callbacks++;return null;}}));
+  }finally{retain('02-static-only',{rows,callbacks});}
+  assert.equal(callbacks,0);for(const row of rows)rejected(row,false,true);restored();
+});
+
+test('private parser combined guard retains independent WeakMap get and set failures',{timeout:60000},()=>{
+  let callbacks=0;const rows=[];
+  try{
+    rows.push(mutation(WeakMap.prototype,'get',{configurable:true,get(){callbacks++;return ()=>undefined;}}));
+    rows.push(mutation(WeakMap.prototype,'set',{...descriptor(WeakMap.prototype,'set'),value:function(){callbacks++;return this;}}));
+  }finally{retain('03-data-only',{rows,callbacks});}
+  assert.equal(callbacks,0);for(const row of rows)rejected(row,true,false);restored();
+});
+
+test('private parser combined guard retains shared namespace descriptors and flags',{timeout:60000},()=>{
+  let callbacks=0;const rows=[];
+  try{
+    rows.push(mutation(Array.prototype,'find',{configurable:true,get(){callbacks++;return ()=>undefined;}}));
+    rows.push(mutation(Map.prototype,'entries',{...descriptor(Map.prototype,'entries'),enumerable:true}));
+    rows.push(mutation(Object,'getOwnPropertyDescriptor',{configurable:true,get(){callbacks++;return descriptor;}}));
+    rows.push(mutation(Array.prototype,'privateParserExtra',{value:7,configurable:true}));
+  }finally{retain('04-shared-namespace',{rows,callbacks});}
+  assert.equal(callbacks,0);for(const row of rows)rejected(row,false,false);restored();
+});
+
+test('private parser combined guard qualifies ingress before any old guard lookup',{timeout:60000},()=>{
+  const globalField=descriptor(root,'globalThis'),symbolField=descriptor(root,'Symbol');
+  let getters=0,traps=0;const proxy=new Proxy(symbolField.value,{get(){traps++;throw 0;},ownKeys(){traps++;throw 0;},getPrototypeOf(){traps++;throw 0;},getOwnPropertyDescriptor(){traps++;throw 0;}});
+  const cases=[
+    ['globalThis',{configurable:true,get(){getters++;return root;}}],
+    ['Symbol',{configurable:true,get(){getters++;return symbolField.value;}}],
+    ['Symbol',{...symbolField,value:proxy}],
+    ['Symbol',{...symbolField,enumerable:!symbolField.enumerable}],
+    ['globalThis',{...globalField,value:{}}],
+  ],rows=[];
+  try{
+    for(let at=0;at<cases.length;at++){
+      const item=cases[at];let observed;
+      try{define(root,item[0],item[1]);observed=facts();}
+      finally{define(root,'globalThis',globalField);define(root,'Symbol',symbolField);}
+      rows.push({key:item[0],observed,restored:facts()});
+    }
+  }finally{define(root,'globalThis',globalField);define(root,'Symbol',symbolField);retain('05-earliest-ingress',{rows,getters,traps,trustedCommonAlreadyInitialized:true});}
+  assert.equal(getters,0);assert.equal(traps,0);assert.equal(rows.length,5);
+  for(const row of rows){assert.deepEqual(row.observed,{ingress:false,static:null,data:null,legacy:false,combined:false});assert.equal(row.restored.combined,true);}restored();
+});
+
+test('private parser combined guard retains ancestry and independent numeric slot scans',{timeout:60000},()=>{
+  let callbacks=0;const rows=[];const originalParent=parent(String.prototype);let ancestry;
+  try{setParent(String.prototype,{});ancestry=facts();}finally{setParent(String.prototype,originalParent);}
+  try{
+    rows.push(mutation(Object.prototype,'1234567',{configurable:true,set(){callbacks++;}}));
+    rows.push(mutation(Array.prototype,'1234567',{value:9,configurable:true,writable:false}));
+    rows.push(mutation(String.prototype,'1234567',{configurable:true,get(){callbacks++;return 'x';}}));
+  }finally{retain('06-ancestry-numeric',{ancestry,rows,callbacks});}
+  assert.equal(callbacks,0);assert.deepEqual(ancestry,{ingress:true,static:false,data:true,legacy:false,combined:false});
+  rejected(rows[0],false,false);rejected(rows[1],false,false);rejected(rows[2],false,true);restored();
+});
+
+test('private parser combined guard remains fresh after a genuine observed hash installs a data hook',{timeout:60000},()=>{
+  const before=positive(),update=descriptor(Hash.prototype,'update'),weak=descriptor(WeakMap.prototype,'get');
+  let callbacks=0,getters=0,observed,result;
+  try{
+    define(Hash.prototype,'update',{...update,value:function(...args){
+      const value=apply(update.value,this,args);callbacks++;
+      define(WeakMap.prototype,'get',{configurable:true,get(){getters++;return ()=>undefined;}});
+      observed=facts();return value;
+    }});
+    result=attempt(()=>lexPrivateConcreteSource(source,'Rust'));
+  }finally{define(WeakMap.prototype,'get',weak);define(Hash.prototype,'update',update);}
+  const after=positive();retain('07-hash-live',{callbacks,getters,observed,result:outcome(result),before,after});
+  assert.ok(callbacks>0);assert.equal(getters,0);assert.deepEqual(observed,{ingress:true,static:true,data:false,legacy:false,combined:false});
+  assert.ok(result.error);assert.match(errorFacts(result.error).message,/native source operations changed/);assert.deepEqual(after,before);restored();
+});
+
+test('private parser combined guard remains fresh after actual default read installs a static hook',{timeout:60000},()=>{
+  const before=positive(),read=descriptor(fs,'readSync'),char=descriptor(String.prototype,'charCodeAt');
+  let callbacks=0,getters=0,observed,result;const calls=[];
+  try{
+    define(fs,'readSync',{...read,value:function(...args){
+      const value=apply(read.value,undefined,args);callbacks++;
+      calls.push({thisUndefined:this===undefined,argumentCount:args.length,offset:args[2],length:args[3],position:args[4],returned:value});
+      define(String.prototype,'charCodeAt',{configurable:true,get(){getters++;return ()=>0;}});
+      observed=facts();return value;
+    }});
+    result=attempt(()=>lexPrivateConcreteSource(source,'Rust'));
+  }finally{define(String.prototype,'charCodeAt',char);define(fs,'readSync',read);}
+  const after=positive();retain('08-read-live',{callbacks,getters,observed,calls,result:outcome(result),before,after});
+  assert.ok(callbacks>0);assert.equal(getters,0);assert.deepEqual(observed,{ingress:true,static:false,data:true,legacy:false,combined:false});
+  assert.ok(result.error);assert.match(errorFacts(result.error).message,/native source operations changed/);
+  for(const call of calls){assert.equal(call.thisUndefined,true);assert.equal(call.argumentCount,5);}assert.deepEqual(after,before);restored();
+});

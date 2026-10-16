@@ -722,13 +722,13 @@
   "hostInputs": [
     {
       "path": "original-json-intrinsics.mjs",
-      "bytes": 27447,
-      "sha256": "a25518f0f22141b794b01bddcb44b26d973bcceeba026454dd9837ed957a3c22"
+      "bytes": 28852,
+      "sha256": "677aed5ecf1ea91ab8fc5f50786c4f8a863f6fe72ef38784b3e51d8f4396faf8"
     },
     {
       "path": "private-parser-sha256.mjs",
-      "bytes": 4432,
-      "sha256": "db35d7335e20a996df8b561106f4cac1528f16037379c7830fa2cfce57bc6e6c"
+      "bytes": 4208,
+      "sha256": "97f12069fa2dd303dbdfcab28f582d423d96e0dc2c71f2d1bc7e8f2c76e228fa"
     }
   ]
 }

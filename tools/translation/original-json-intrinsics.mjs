@@ -202,3 +202,12 @@ const parserIngressSpecies=parserIngressNative?descriptor(parserIngressSymbol.va
 export function originalPrivateParserIngressUnchanged(){
  return !!(parserIngressNative&&parserIngressIterator&&hasOwn(parserIngressIterator,'value')&&typeof parserIngressIterator.value==='symbol'&&parserIngressSpecies&&hasOwn(parserIngressSpecies,'value')&&typeof parserIngressSpecies.value==='symbol'&&same(descriptor(parserIngressRoot,'globalThis'),parserIngressGlobal)&&same(descriptor(parserIngressRoot,'Symbol'),parserIngressSymbol)&&same(descriptor(parserIngressSymbol.value,'iterator'),parserIngressIterator)&&same(descriptor(parserIngressSymbol.value,'species'),parserIngressSpecies));
 }
+
+// One fresh namespace traversal for the exact private-parser conjunction.
+// All original guards/domains remain intact; both numeric scans and distinct
+// freeze pins stay live. No result is retained between calls. The omitted
+// duplicate traversal observes only captured native owners without callbacks.
+export function originalPrivateParserCommonIntrinsicsUnchanged(){
+ if(!originalPrivateParserIngressUnchanged())return false;
+ return !!(syntaxNative&&originalNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&samePrototype(syntaxStringPrototype,syntaxStrings)&&samePrototype(syntaxRegExpPrototype,syntaxRegexps)&&syntaxNumericPrototypeSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
+}
