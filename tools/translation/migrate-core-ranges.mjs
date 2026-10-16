@@ -8,8 +8,7 @@ import {rustTokens,sourceItems} from './rust-structure.mjs';
 import {macroProvenance} from './macro-provenance.mjs';
 import {itemConfiguration,PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
-import {ROUTER_FORMATTING_FACADE_SOURCE} from './router-core-formatting.mjs';
-import {ROUTER_CORE_RANGES_SOURCE} from './router-core-ranges.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_RANGES_SOURCE} from './router-core-source-data.mjs';
 
 const hash=source=>createHash('sha256').update(source).digest('hex');
 const fail=message=>{throw new TypeError('Core inclusive-range adoption: '+message);};

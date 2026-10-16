@@ -1,6 +1,9 @@
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {translateProject} from '../project.mjs';
@@ -140,6 +143,22 @@ test('actual complete validator modules retain full source before after and all 
   assert.deepEqual(proposals['src/structured_output.rs'].selections.map(row=>row.function),['unsupported_chat_generation_control']);
   assert.deepEqual(proposals['src/gemini_bridge_request.rs'].selections.map(row=>row.function),['validate_chat_contract']);
   assert.equal(proposals['src/subscription_usage_normalize.rs'].edits.length,0);assert.ok(proposals['src/subscription_usage_normalize.rs'].skipped.length>0);
+  // A fresh same-engine process loads the actual CLI directly. Importing this
+  // test's project/parser graph first cannot warm or repair that child realm.
+  const temporary=mkdtempSync(join(tmpdir(),'router-core-range-cold-cli-')),sourceRoot=join(temporary,'source'),output=join(temporary,'proposal');
+  try{
+    const corePaths=['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs'],core=Object.fromEntries(corePaths.map(path=>[path,readFileSync(new URL('../../../'+path,import.meta.url),'utf8')]));
+    const tree={'src/lib.rs':'pub mod translation_core;\n',...core,...inputs};retain('complete-cold-CLI-tree',tree);
+    for(const[path,source]of Object.entries(tree)){const parts=path.split('/');parts.pop();mkdirSync(join(sourceRoot,...parts),{recursive:true});writeFileSync(join(sourceRoot,path),source,{flag:'wx'});}
+    const tool=fileURLToPath(new URL('../migrate-core-ranges.mjs',import.meta.url)),args=[tool,'--root',sourceRoot,'--output',output,...paths.flatMap(path=>['--file',path])];
+    const child=spawnSync(process.execPath,args,{encoding:'utf8',timeout:20_000}),terminal={ok:child.status===0&&child.signal===null&&!child.error,status:child.status,signal:child.signal,stdout:child.stdout,stderr:child.stderr,error:child.error?{name:child.error.name,message:child.error.message,code:child.error.code}:null};
+    retain('actual-fresh-same-engine-CLI-terminal',{engine:process.execPath,args,terminal});assert.equal(terminal.ok,true,JSON.stringify(terminal));
+    const wire=readFileSync(join(output,'proposal.json'),'utf8'),proposal=JSON.parse(wire),artifacts=Object.fromEntries(paths.map(path=>[path,readFileSync(join(output,path),'utf8')]));retain('complete-cold-CLI-proposal-and-output',{wire,proposal,artifacts});
+    assert.deepEqual(proposal.inputs,paths.map(path=>({path,source:inputs[path]})));
+    for(let at=0;at<paths.length;at++){const path=paths[at];assert.equal(proposal.proposals[at].path,path);assert.deepEqual(proposal.proposals[at].proposal,proposals[path]);assert.equal(artifacts[path],proposals[path].after.source);assert.equal(transportConcreteSyntaxMeta(proposal.proposals[at].proposal.after.meta).source,artifacts[path]);assert.equal(migrateCoreRanges(artifacts[path]).edits.length,0);}
+    for(const[path,source]of Object.entries(tree))assert.equal(readFileSync(join(sourceRoot,path),'utf8'),source);
+  }finally{rmSync(temporary,{recursive:true,force:true});}
+
   const root='pub mod translation_core;\n'+paths.map(path=>'pub mod '+path.slice(4,-3)+';').join('\n');
   const build=sourceMap=>{const input=files('',{root,extra:sourceMap});return translateProject({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path]});};
   const before=retain('actual-full-original-project',build(inputs)),after=retain('actual-full-adopted-project',build(Object.fromEntries(paths.map(path=>[path,proposals[path].after.source]))));

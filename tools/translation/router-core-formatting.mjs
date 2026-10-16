@@ -9,8 +9,8 @@ import {transportConcreteSyntaxSource} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 
-export const ROUTER_FORMATTING_FACADE_SOURCE="//! Owned compatibility operations shared by Rust and checked translation.\n//!\n//! These library implementations are intentionally not translated. The\n//! translator binds this complete facade and checks its supported operand domain.\n\nmod primitives;\npub use self::primitives::Str;\n\nmod ranges;\npub use self::ranges::f64_inclusive_contains;\n\n/// Owned UTF-8 text returned by the compatibility formatting operation.\npub type Text = ::std::string::String;\n\n#[doc(hidden)]\n#[macro_export]\nmacro_rules! __router_translation_core_format {\n    ($($arguments:tt)*) => { ::std::format!($($arguments)*) };\n}\n\n/// Format through Rust's library; translation checks the primitive format subset.\npub use crate::__router_translation_core_format as format;\n";
-export const ROUTER_FORMATTING_FACADE_SHA256="19767751af306bb14b54697363419fe9d613c81c1b3b71b6d174165499b3b45a";
+import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_FORMATTING_FACADE_SHA256} from './router-core-source-data.mjs';
+export {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_FORMATTING_FACADE_SHA256};
 
 const formatDescriptor=Object.getOwnPropertyDescriptor(FormatRustParser.prototype,'expressionMacro');
 const proofs=new WeakMap();

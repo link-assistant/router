@@ -8,8 +8,8 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {requireRouterCoreFacade,requireRouterCoreFacadeCurrent} from './router-core-formatting.mjs';
 import {unsupported,typeError} from './vendor/meta-language/translation/diagnostics.js';
 
-export const ROUTER_CORE_RANGES_SOURCE="//! Inclusive binary64 bounds in the owned compatibility interface.\n//!\n//! This library implementation is intentionally untranslated. Both targets\n//! evaluate the three by-value arguments once, from left to right, and use\n//! IEEE ordered comparisons. NaN in any position therefore returns false.\n\n#[must_use]\npub fn f64_inclusive_contains(lower: f64, upper: f64, value: f64) -> bool {\n    lower <= value && value <= upper\n}\n";
-export const ROUTER_CORE_RANGES_SHA256="e04802b658049178fad334b5440b4109348a85f7fff21f23a06b0b9537247f7f";
+import {ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_RANGES_SHA256} from './router-core-source-data.mjs';
+export {ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_RANGES_SHA256};
 
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 export const ROUTER_CORE_RANGE_CONTRACT=freeze({
