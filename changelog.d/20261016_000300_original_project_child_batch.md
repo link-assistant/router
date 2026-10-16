@@ -3,3 +3,11 @@ Added an explicit fresh-child project batch translator that runs the complete re
 A deterministic preparation tool proposes complete registry and bootstrap pins through actual language/repository phases. The new process contract requires trusted stock launch/OS bootstrap and an exclusive private snapshot lifetime; it does not certify hostile filesystem/process equivalence or issue parent semantic tokens. Original cold-entry failures and whole-corpus producer memory remain receiving obligations. Existing same-process APIs, limits and test deadlines are unchanged. Source candidate tests are unrun until coordinator receiving.
 
 Initial receiving exposed an independent baseline that accidentally included unindexed bootstrap extras, a live disk sampler racing ordinary child cleanup, and Node recursive task removal observing a poisoned typed-array getter. The baseline now contains only the registered originals; live sampling tolerates only disappearing discovered descendants, and task cleanup uses captured no-follow census plus direct bottom-up unlink/rmdir. Existing zero-hook controls, primary failures, resource bounds and whole-case deadlines remain mandatory; repaired receiving is pending.
+
+The Node receiving harness now calls each real prelaunch API directly under its
+caller-installed hooks, records the exact spawn-site counter before restoration,
+restores all descriptors on that same stack, and only then observes the returned
+Promise. Node 20.19.4 async_hooks itself reads a shared Float64Array length during
+async context scheduling; keeping the poisoned getter across await can also measure
+host scheduling activity. All eighteen mutation controls, zero replacement calls, empty-task
+checks, restored genuine operation, production bytes, and deadlines remain intact.
