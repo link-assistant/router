@@ -1,6 +1,6 @@
 // Stable recursive algebraic layouts for target types and runtime domains.
 import {fixedArrayLength} from './checked-types.mjs';
-const PRIMITIVES=new Set(['bool','string','unit','float','nat','int']);
+const PRIMITIVES=new Set(['bool','string','char','unit','float','nat','int']);
 export const dataAliasName=name=>'MLData_'+Buffer.from(name,'utf8').toString('hex');
 function dataEntries(declarations) {
   if(!(declarations instanceof Map))throw new TypeError('Type layouts require the actual checked declaration Map');
@@ -63,7 +63,7 @@ function render(type,schema,aliases,active=new Set()) {
     case 'fixed':case 'nat':case 'int':return 'bigint';
     case 'float':return 'number';
     case 'bool':return 'boolean';
-    case 'string':return 'string';
+    case 'string':case 'char':return 'string';
     case 'unit':return 'null';
     case 'array':return `ReadonlyArray<${render(type.element,schema,aliases,active)}>${type.rustFixedArray?` & { readonly length: ${type.rustFixedArray.length} }`:''}`;
     case 'data': {

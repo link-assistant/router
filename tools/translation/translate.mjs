@@ -22,7 +22,7 @@ export const typeParameterName = (name, index) => /^[A-Za-z_$][A-Za-z0-9_$]*$/u.
 export const tsType = (type, dataTypes = []) => {
   if (type.kind === 'routerFuture') return `PromiseLike<${tsType(type.value, dataTypes)}>`;
   if (['array','data','named'].includes(type.kind))return typeScriptType(type,new Map(dataTypes.map(entry=>[entry.fullName,entry])));
-  return ({ fixed: 'bigint', nat: 'bigint', int: 'bigint', bool: 'boolean', string: 'string', unit: 'null', float: 'number' })[type.kind] ?? 'unknown';
+  return ({ fixed: 'bigint', nat: 'bigint', int: 'bigint', bool: 'boolean', string: 'string', char: 'string', unit: 'null', float: 'number' })[type.kind] ?? 'unknown';
 };
 
 // Different checked dependency closures can use overlapping host contracts.
