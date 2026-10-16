@@ -140,23 +140,23 @@ const DEFAULT_PAUSE_REASON: &str = "paused by an operator";
 const LOCAL_NOTE: &str = "note: recorded in this machine's data directory; a router started \
      from it applies the change at startup. Pass --server <URL> to change a running router.";
 
-fn pause_message(name: &str, until: Option<u64>) -> String {
+fn pause_message(name: &crate::translation_core::Str, until: Option<u64>) -> crate::translation_core::Text {
     until.map_or_else(
-        || format!("paused {name} until it is resumed"),
+        || crate::translation_core::format!("paused {name} until it is resumed"),
         |until| {
             let when =
                 chrono::DateTime::from_timestamp(i64::try_from(until).unwrap_or(i64::MAX), 0)
                     .map_or_else(|| until.to_string(), |time| time.to_rfc3339());
-            format!("paused {name} until {when}")
+            crate::translation_core::format!("paused {name} until {when}")
         },
     )
 }
 
-fn resume_message(name: &str, was_paused: bool) -> String {
+fn resume_message(name: &crate::translation_core::Str, was_paused: bool) -> crate::translation_core::Text {
     if was_paused {
-        format!("resumed {name}")
+        crate::translation_core::format!("resumed {name}")
     } else {
-        format!("{name} was not paused")
+        crate::translation_core::format!("{name} was not paused")
     }
 }
 
@@ -289,8 +289,8 @@ pub struct AccountRow<'a> {
 /// three of these eight columns — dropping `healthy`, which is the one the
 /// command exists to answer (issue #306).
 #[must_use]
-pub fn header() -> String {
-    format!(
+pub fn header() -> crate::translation_core::Text {
+    crate::translation_core::format!(
         "{:<16}  {:<8}  {:<12}  {:<6}  {:<9}  {:<9}  home",
         "name", "healthy", "credential", "used", "limit", "remaining"
     )
@@ -298,10 +298,10 @@ pub fn header() -> String {
 
 /// One rendered row, in the columns [`header`] names.
 #[must_use]
-pub fn row(account: &AccountRow<'_>) -> String {
+pub fn row(account: &AccountRow<'_>) -> crate::translation_core::Text {
     let optional =
         |value: Option<u64>| value.map_or_else(|| "-".to_string(), |value| value.to_string());
-    format!(
+    crate::translation_core::format!(
         "{:<16}  {:<8}  {:<12}  {:<6}  {:<9}  {:<9}  {}",
         account.name,
         account

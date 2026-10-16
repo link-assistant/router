@@ -1,0 +1,19 @@
+//! Owned compatibility operations shared by Rust and checked translation.
+//!
+//! These library implementations are intentionally not translated. The
+//! translator binds this complete facade and checks its supported operand domain.
+
+mod primitives;
+pub use self::primitives::Str;
+
+/// Owned UTF-8 text returned by the compatibility formatting operation.
+pub type Text = ::std::string::String;
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __router_translation_core_format {
+    ($($arguments:tt)*) => { ::std::format!($($arguments)*) };
+}
+
+/// Format through Rust's library; translation checks the primitive format subset.
+pub use crate::__router_translation_core_format as format;

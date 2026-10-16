@@ -1,3 +1,5 @@
+import {parseRouterCoreStrReference} from '../router-core-primitives.mjs';
+import {parseRouterCoreFormatting,parseRouterCoreText} from '../router-core-formatting.mjs';
 import {withOriginalFormatDisplayParser,withOriginalFormatDisplayChecker} from './source-display-formatting.mjs';
 import {checkOriginalMappedBody,checkOriginalMappedApplication,prepareOriginalMappedBodies,requireOriginalMappedEmission,finalizeOriginalMappedBodies} from './standard-mapped-body.mjs';
 import {createOriginalSharedPatternAdapter} from './shared-source-patterns.mjs';
@@ -253,6 +255,8 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     return this.qualifyOwnershipType?.(type,c.tokens.slice(start,c.index))??type;
   }
   hostTypeSyntax(){
+    const coreText=parseRouterCoreText(this);if(coreText)return coreText;
+    const coreStr=parseRouterCoreStrReference(this);if(coreStr)return coreStr;
     const c=this.cursor,originalSelf=originalPrimitiveTryFromSelfType(this);if(originalSelf)return originalSelf;
     // && is one lexer token, but two borrows only in a source type position.
     // Split its coordinates here; boolean expression tokens remain untouched.
@@ -314,6 +318,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     tree([]);c.expect(';','use');
   }
   primary(path,options) {
+    const coreFormat=parseRouterCoreFormatting(this,path);if(coreFormat)return coreFormat;
     const expandedMatches=parseOriginalMatchesCandidate(this,path);if(expandedMatches)return expandedMatches;
     if(this.cursor.peek().kind==='rustFloat') {
       const token=this.cursor.next();
