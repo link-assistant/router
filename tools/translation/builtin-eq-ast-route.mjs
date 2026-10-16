@@ -1,12 +1,14 @@
 // Source-selected Eq callback bridge. These are original construction recipes
 // and typed source leaves; no generated implementation bodies are synthesized.
 import {createHash} from 'node:crypto';
+import {createPrivateFrozenJsonComposer} from './private-frozen-json.mjs';
 import {builtinPayloadDataInputs} from './builtin-derive-data-inputs.mjs';
 import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler} from './derive-quote-meta.mjs';
 import {originalAstFunction,originalAstDefinition,astStructLiteral,astSyntaxText,astFragmentText,astEnumVariant} from './builtin-derive-ast-meta.mjs';
 const generic='compiler/rustc_builtin_macros/src/deriving/generic/mod.rs';
 const build='compiler/rustc_expand/src/build.rs',schema='compiler/rustc_ast/src/ast.rs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
+const composeJson=createPrivateFrozenJsonComposer();
 const inventories=new WeakMap();
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
 const member=(recipe,name)=>recipe.fields.find(field=>field.name===name);
@@ -78,5 +80,5 @@ export function liftBuiltinEqAstRoute({profile,original,certificate,entry,input}
   });
   const typedSource=sourceLeaves(original,certificate,input);
   const evidence={schema:'original-eq-type-only-method-bridge-v1',profileDigest:profile.digest,descriptor,method,recipes:[entry,callback,assertion,localBuilder,stmtBuilder,stmts,blockBridge,blockBuilder,createMethod,emptyBounds,emptyVec,generics,ret,explicitSelf,structure,enumeration,staticStruct,staticEnum,dispatch,sink,expand,itemBuilder,parameters,...builders],positiveSchemas:schemas,positiveVariants,typedSource,constructionFlow:{sourceCallback:callback.digest,fieldType:'actual field.ty clone in original assertion Type argument',statement:{constructor:localBuilder.digest,kind:'LocalKind::Decl',initializerCount:0,wrapper:'StmtKind::Let'},block:{bridge:blockBridge.digest,optionalExpression:'None from original new_stmts',constructor:blockBuilder.digest},associatedItem:{constructor:createMethod.digest,kind:'AssocItemKind::Fn',methods:1,genericBounds:0,nonselfArguments:0,returnKind:'TyKind::Tup empty'},implementation:{constructor:sink.digest,kind:'ItemKind::Impl',associatedTypes:0},hygiene:'original with_def_site_ctxt and original self/field Ty spans retained',constantBranches:['Const::Yes','Const::No'],fieldlessAndDedupBranches:'all preserve the identical closed type-only statement category'},generatedImplBehavior:false};
-  return freeze({...evidence,digest:hash(JSON.stringify(evidence))});
+  return freeze({...evidence,digest:hash(composeJson(evidence))});
 }

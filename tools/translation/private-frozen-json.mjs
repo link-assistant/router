@@ -114,21 +114,21 @@ const compositionStringify=qualified?descriptor(compositionReceiver,'stringify')
 // Separate per-factory stores would duplicate shared chunks and evict them.
 const encodeSyntaxSubstrate=createPrivateFrozenJsonCache();
 const COMPOSITION_UNITS=8388608;
-function syntaxSubstrateKey(key){return key==='recipes'||key==='compilerMeta'||key==='schemas'||key==='positiveSchemas'||key==='parserFieldSpans'||key==='descriptor'||key==='method';}
+function syntaxSubstrateKey(key){return key==='recipes'||key==='compilerMeta'||key==='schemas'||key==='positiveSchemas'||key==='parserFieldSpans'||key==='descriptor'||key==='method'||key==='entry'||key==='callbackRecipes'||key==='positiveSchema'||key==='constructionSink'||key==='descriptors';}
 function existingSyntaxCost(value){const record=apply(weakGet,owners,[value])||apply(weakGet,largeSubtrees,[value])||apply(weakGet,subtrees,[value]);return record&&own(record,'stackFree')&&record.stackFree===true?record:null;}
 function immutableCost(value){const saved=existingSyntaxCost(value);if(saved)return saved;if(!immutableJson(value,true))return null;return existingSyntaxCost(value);}
 export function createPrivateFrozenJsonComposer(){
  return value=>{
   if(!compositionIntrinsics())return JSON.stringify(value);
   let cells=0;const active=new setConstructor();
-  function inspect(value,depth,key){
+  function inspect(value,depth,key,arraySubstrate=false){
    if(depth>DEPTH)return null;
    const kind=typeof value;
    if(value===null||kind==='string'||kind==='boolean'||kind==='number')return ++cells>CELLS||kind==='string'&&value.length>COMPOSITION_UNITS?null:{kind:0,value};
    // BigInt, symbols, undefined, functions and nonordinary prototypes keep the
    // complete native operation, including its omissions, hooks and errors.
    if(kind!=='object'||isProxy(value)||apply(compositionBoxedField.value,compositionTypes,[value]))return null;
-   const substrate=syntaxSubstrateKey(key),saved=substrate?existingSyntaxCost(value):null;
+   const substrate=arraySubstrate||syntaxSubstrateKey(key),saved=substrate?existingSyntaxCost(value):null;
    if(saved){if(saved.cells>CELLS-cells||saved.height>DEPTH-depth)return null;cells+=saved.cells;return {kind:1,value};}
    if(apply(setHas,active,[value]))return null;
    const array=isArray(value),parent=prototype(value);
@@ -146,7 +146,7 @@ export function createPrivateFrozenJsonComposer(){
    // Finish the whole own descriptor census before descending into children.
    for(let at=0;at<length;at++){const name=names[at],field=descriptor(value,name);if(!field||!own(field,'value')||!field.enumerable)return null;fields[at]={name,value:field.value};}
    apply(setAdd,active,[value]);const children=[];
-   for(let at=0;at<fields.length;at++){const field=fields[at],child=inspect(field.value,depth+1,field.name);if(!child){apply(setDelete,active,[value]);return null;}children[at]={name:field.name,child};}
+   for(let at=0;at<fields.length;at++){const field=fields[at],child=inspect(field.value,depth+1,field.name,substrate&&array);if(!child){apply(setDelete,active,[value]);return null;}children[at]={name:field.name,child};}
    apply(setDelete,active,[value]);return {kind:array?2:3,children};
   }
   let plan;try{plan=inspect(value,0,null);}catch{return JSON.stringify(value);}
