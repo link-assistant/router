@@ -34,7 +34,13 @@ const revision=(root,value)=>{if(typeof value!=='string'||!(/^[0-9a-f]{40}$/u.te
 export function selectRealSourceFixture(source,entry,{current=false}={}){
   const items=sourceItems(source),declarations=[],selections=[];
   for(const expected of entry.declarations){
-    const candidates=items.filter(item=>item.term===expected.term&&item.name===expected.name&&(current||item.start===expected.start&&item.end===expected.end));
+    let candidates=items.filter(item=>item.term===expected.term&&item.name===expected.name&&(current||item.start===expected.start&&item.end===expected.end));
+    if(current){
+      // Imports can share their first path component. Match the complete pinned
+      // declaration before considering an actual changed function/constant.
+      const exact=candidates.filter(item=>hash(source.slice(item.start,item.end))===expected.sha256);
+      candidates=exact.length?exact:['fn','const'].includes(expected.term)?candidates:[];
+    }
     if(candidates.length!==1)fail('unique original declaration required: '+entry.id+'/'+expected.name);
     const item=candidates[0],text=source.slice(item.start,item.end),actual={name:item.name,term:item.term,start:item.start,end:item.end,...pin(text)};
     if(!current&&actual.sha256!==expected.sha256)fail('original declaration hash changed');

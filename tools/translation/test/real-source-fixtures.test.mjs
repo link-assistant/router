@@ -56,6 +56,18 @@ test('all fifteen complete historical parents retain every exact declaration met
   for(const entry of manifest.entries){const selected=historicalRealSourceEntry(entry.id);assert.equal(hash(selected.original),entry.sourceSha256);declarations+=entry.declarations.length;methods+=(entry.methodPins??[]).length;assert.equal(selected.selection.partitions.map(row=>selected.original.slice(...row.span)).join(''),selected.original);if(entry.testSource&&entry.testName)assert.match(historicalRealSource(entry.testSource),new RegExp(`fn ${entry.testName}\\(`));}
   assert.equal(declarations,22);assert.equal(methods,3);
   for(const row of bundle.historical.files){const source=bundle.sources[row.sourceId];assert.equal(transportConcreteSyntaxMeta(source.canonical).source,source.source);}
+  const timeout=historicalRealSourceEntry('timeout-parser'),prefix='// Shifted current parent Ω/😀\nuse std::fmt::Debug;\n',shifted=prefix+timeout.original;
+  const moved=retain('complete-shifted-current-parent-selection',{original:timeout.original,source:shifted,entry:timeout.entry,selection:selectRealSourceFixture(shifted,timeout.entry,{current:true})});
+  assert.equal(hash(timeout.original),timeout.entry.sourceSha256);assert.equal(moved.selection.parentSha256,hash(shifted));assert.equal(moved.selection.source,timeout.source);
+  assert.deepEqual(moved.selection.declarations,timeout.selection.declarations.map(row=>({...row,start:row.start+prefix.length,end:row.end+prefix.length})));assert.equal(moved.selection.partitions.map(row=>shifted.slice(...row.span)).join(''),shifted);
+  const duration=timeout.original.slice(timeout.entry.declarations[0].start,timeout.entry.declarations[0].end),duplicate=duration+'\n'+shifted;
+  retain('complete-ambiguous-current-parent',{source:duplicate,entry:timeout.entry});assert.throws(()=>selectRealSourceFixture(duplicate,timeout.entry,{current:true}),/unique original declaration/);
+  const changedImport=shifted.replace(duration,'use std::time::Instant;');assert.throws(()=>selectRealSourceFixture(changedImport,timeout.entry,{current:true}),/unique original declaration/);
+  const importOnly={...timeout.entry,declarations:[timeout.entry.declarations[0]]};assert.throws(()=>selectRealSourceFixture('use std::time::Instant;',importOnly,{current:true}),/unique original declaration/);
+  const original='pub const LIMIT: u64 = 1;\npub fn chosen() -> u64 { LIMIT }',constant='pub const LIMIT: u64 = 1;',fn='pub fn chosen() -> u64 { LIMIT }',entry={id:'changed-current-function-and-constant',path:'src/authored.rs',declarations:[{name:'LIMIT',term:'const',start:0,end:constant.length,sha256:hash(constant)},{name:'chosen',term:'fn',start:constant.length+1,end:original.length,sha256:hash(fn)}]};
+  const changed='pub const LIMIT: u64 = 2;\npub fn chosen() -> u64 { LIMIT + 1 }',selected=retain('complete-unique-changed-current-declarations',{original,source:changed,entry,selection:selectRealSourceFixture(changed,entry,{current:true})});assert.equal(selected.selection.source,changed);assert.ok(selected.selection.declarations.every((row,index)=>row.sha256!==entry.declarations[index].sha256));
+  for(const source of [changed+'\npub fn chosen() -> u64 { 3 }',changed+'\npub const LIMIT: u64 = 3;'])assert.throws(()=>selectRealSourceFixture(source,entry,{current:true}),/unique original declaration/);
+  const nested='mod nested { '+changed+' }';assert.throws(()=>selectRealSourceFixture(nested,entry,{current:true}),/unique original declaration/);assert.throws(()=>selectRealSourceFixture(shifted,timeout.entry),/original declaration/);
 });
 test('complete current Claude credential and first-block bodies execute in both typed targets',async()=>{
   await current(['identity-token','identity-first-block'],api=>{
