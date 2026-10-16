@@ -34,3 +34,9 @@ The first implementation CI run also found a stale CLI help fixture:
 variables in help. Both marketplace HTTP tests passed in that run (lines
 5143–5144). The fixture now checks only supported secret settings, with a
 separate assertion that retired settings and their values remain absent.
+
+On `09c16cca4`, all Linux tests passed, including 2,161 library tests. The
+instrumented suite also passed and measured 79,498 / 91,100 covered lines
+(87.264544%). Coverage CI required committing the increased ratchet baseline
+(`ci-logs/coverage-116835754209.log:8020–8062`). The baseline is advanced using
+the uploaded summary and the repository's own coverage checker.
