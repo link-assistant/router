@@ -1,3 +1,4 @@
+import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
 import {parseRouterCoreStrReference} from '../router-core-primitives.mjs';
 import {parseRouterCoreFormatting,parseRouterCoreText} from '../router-core-formatting.mjs';
 import {withOriginalFormatDisplayParser,withOriginalFormatDisplayChecker} from './source-display-formatting.mjs';
@@ -84,7 +85,7 @@ import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {validateOriginalMethodAssociations,withCheckedMethodCopyReceivers} from '../source-method-admission.mjs';
 import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
 
-export const HOST_CONTRACTS=[...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
+export const HOST_CONTRACTS=[ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
 const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
@@ -318,6 +319,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     tree([]);c.expect(';','use');
   }
   primary(path,options) {
+    const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
     const coreFormat=parseRouterCoreFormatting(this,path);if(coreFormat)return coreFormat;
     const expandedMatches=parseOriginalMatchesCandidate(this,path);if(expandedMatches)return expandedMatches;
     if(this.cursor.peek().kind==='rustFloat') {
@@ -571,6 +573,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
         }
       }
     }
+    if(node.k==='routerCoreF64InclusiveCall')return checkRouterCoreRangeCall(this,node,env,path,expected);
     if(node.k==='routerPrimitiveFloatConstant')return checkedPrimitiveFloatConstant(node);
     if(node.k==='routerPrimitiveFloatCall') {
       const contract=primitiveFloatContract(node.method);

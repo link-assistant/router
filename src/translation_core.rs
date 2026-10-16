@@ -6,6 +6,9 @@
 mod primitives;
 pub use self::primitives::Str;
 
+mod ranges;
+pub use self::ranges::f64_inclusive_contains;
+
 /// Owned UTF-8 text returned by the compatibility formatting operation.
 pub type Text = ::std::string::String;
 
