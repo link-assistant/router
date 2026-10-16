@@ -81,10 +81,15 @@ test('static results and borrowed call boundaries retain actual lifetime origins
 
 test('changed complete source and actual module routes cannot supply the owned contract',()=>{
   const good=`pub fn answer(value:${R})->${R}{value}`;
+  const facadeAnchor='pub use self::primitives::{Json, Maybe, Outcome, Str};';
+  const changedFacade=ROUTER_FORMATTING_FACADE_SOURCE.replace(facadeAnchor,'pub use custom::Str;');
+  retain('complete-facade-tamper',{before:ROUTER_FORMATTING_FACADE_SOURCE,after:changedFacade,anchor:facadeAnchor});
+  assert.equal(ROUTER_FORMATTING_FACADE_SOURCE.split(facadeAnchor).length,2);
+  assert.notEqual(changedFacade,ROUTER_FORMATTING_FACADE_SOURCE);
   const invalid=[
     {leaf:ROUTER_CORE_PRIMITIVES_SOURCE.replace('::std::primitive::str','::std::string::String')},
     {leaf:ROUTER_CORE_PRIMITIVES_SOURCE+'\n// different complete source\n'},
-    {facade:ROUTER_FORMATTING_FACADE_SOURCE.replace('pub use self::primitives::Str;','pub use custom::Str;')},
+    {facade:changedFacade},
     {root:'mod translation_core;\n'},
     {root:'#[cfg(any())] pub mod translation_core;\n'},
     {root:'pub mod translation_core; use custom as translation_core;\n'},

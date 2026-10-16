@@ -32,3 +32,8 @@ constructor namespace. Preserve method/field/raw identifiers, record keys and
 shorthand, unit variants and uncertain bindings. Qualified owner paths still
 adopt independently. Existing whole-case context controls retain complete
 source, inverse and refusal evidence; these new controls remain UNRUN.
+
+Update the existing borrowed-text refusal fixture to tamper the current grouped
+facade export and assert the original anchor is unique and the mutation changes
+the source. Keep all six original source/module-route negatives and the full
+eight-case workload and limits. This test-only repair is locally UNRUN.
