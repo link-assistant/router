@@ -1,0 +1,5 @@
+### Fixed
+
+- Supply the complete actual Router Cargo manifest to owned JSON receiving projects. The original OpenAI tool-choice body requires Rust 2024 let-chain syntax; its edition remains source-derived and is independently checked against the retained full manifest hash, not a caller edition flag.
+- Distinguish the JSON adopter’s complete-leaf import cleanup from a parent module with descendants. Preserve the original parent import and verify its whole inverse; additionally exercise the same two actual macro selections in a complete physical leaf, retaining the exact single-import-removal expectation there. Descendant uncertainty is not an import-removal permission. Any retained unused imports remain an application-review obligation before installing actual corpus proposals.
+- Keep all eight cases, original caller bodies, counterfeit/refusal controls, strict TypeScript work and deadlines. The repaired source checkpoint is unrun; the preceding complete run passed six of eight cases on both engines, with these two fixture-context failures retained.
