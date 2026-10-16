@@ -103,7 +103,12 @@ test('a post-bootstrap cold Symbol accessor is refused before species or iterato
 
 test('foreign same-shape Symbol functions and proxy data replacements gain no ingress or cold qualification',{timeout:60000},async()=>{
   assertRestored();const foreign=apply(bind,StockSymbol,[undefined]);
-  for(const key of keys(StockSymbol))define(foreign,key,descriptor(StockSymbol,key));
+  const initialForeignKeys=keys(foreign),stockKeys=keys(StockSymbol);
+  // Bound functions create length/name first, while Bun's stock Symbol starts
+  // with for/keyFor. Rebuild the configurable initial fields in STOCK order.
+  for(const key of initialForeignKeys){assert.equal(descriptor(foreign,key).configurable,true);assert.equal(remove(foreign,key),true);}
+  for(const key of stockKeys)define(foreign,key,descriptor(StockSymbol,key));
+  retain('04-foreign-shape-before-assert',{initialForeignKeys,stockKeys,foreignKeys:keys(foreign),samePrototype:parent(foreign)===parent(StockSymbol),descriptors:stockKeys.map(key=>({key,field:descriptorFacts(descriptor(foreign,key),descriptor(StockSymbol,key))}))});
   assert.deepEqual(keys(foreign),keys(StockSymbol));assert.equal(parent(foreign),parent(StockSymbol));
   for(const key of keys(StockSymbol))assert.deepEqual(descriptor(foreign,key),descriptor(StockSymbol,key));
   const shape={keys:keys(StockSymbol).map(key=>typeof key==='symbol'?'well-known-symbol':key),sameOwnDescriptors:true,samePrototype:true,distinctIdentity:foreign!==StockSymbol};
