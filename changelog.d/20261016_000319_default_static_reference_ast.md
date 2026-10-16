@@ -12,3 +12,9 @@ and strict TypeScript results, original output/name-effect evidence, source
 lineage, unchanged path cases and copied/changed/unsupported-source controls.
 Existing whole Default/Clone tests and their deadlines are unchanged. Tests
 remain unrun by the source worker; coordinator receiving is required.
+
+Receiving qualified the unchanged whole Default test, including the complete
+EmergencyAuthConfig method. The new test now joins the unique target Default
+method to the checked source/member span and receiver; it no longer expects a
+private admission field to survive target renaming. Its full source, independent
+JS/strict TS values and all eight deadlines remain unchanged.
