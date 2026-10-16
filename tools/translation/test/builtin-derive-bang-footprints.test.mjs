@@ -1,8 +1,8 @@
 // Source/AST namespace cases; generated trait execution remains unimplemented.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
-import {gzipSync} from 'node:zlib';
+import {readFileSync,mkdirSync} from 'node:fs';
+import {writeJsonGzip} from '../../evidence/write-json-gzip.mjs';
 import {createHash} from 'node:crypto';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {createDeriveFootprintContext,deriveFootprintExternalModules} from '../derive-footprints.mjs';
@@ -17,7 +17,7 @@ import {resolveModuleGraph} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
-const retain=(name,value)=>{const directory=process.env.ROUTER_BUILTIN_BANG_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json.gz',gzipSync(JSON.stringify(value,(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+'\n',{mtime:0}));}};
+const retain=(name,value)=>{const directory=process.env.ROUTER_BUILTIN_BANG_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonGzip(directory+'/'+name+'.json.gz',value,(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item);}};
 const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
 function input(source){const modules=[{file:'src/lib.rs',path:[],source:'mod model;'},{file:'src/model.rs',path:['model'],source}];return {modules,dependencies,compilationProfile:PRODUCTION_PROFILE};}
 function selected(source,name='Copy'){
