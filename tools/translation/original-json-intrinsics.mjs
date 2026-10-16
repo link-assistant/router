@@ -283,3 +283,58 @@ export function originalPrivateParserExpectedCommonIntrinsicsUnchanged(){
  if(privateExpectedPlans===false)return originalPrivateParserCommonIntrinsicsUnchanged();
  return !!(syntaxNative&&expectedNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&expectedSamePrototype(syntaxStringPrototype,syntaxStrings,privateExpectedPlans[4])&&expectedSamePrototype(syntaxRegExpPrototype,syntaxRegexps,privateExpectedPlans[5])&&syntaxNumericPrototypeSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
 }
+
+// Optional native numerical work storage, captured only at THIS trusted common
+// initialization point. This proves no earlier birth, parser/type/owner fact or
+// caller authority. Any uncertainty keeps the independent SHA's old arrays.
+function parserUint32Native(value,name){return typeof value==='function'&&!pathIsProxy.value(value)&&apply(functionText,value,[])===`function ${name}() { [native code] }`;}
+function parserUint32Data(owner,key){const field=descriptor(owner,key);return field&&hasOwn(field,'value')?field:null;}
+function parserUint32Keys(owner,allowed){
+ const names=keys(owner);if(names.length!==allowed.length)return null;
+ for(let at=0;at<names.length;at++){let found=false;for(let index=0;index<allowed.length;index++)if(names[at]===allowed[index])found=true;if(!found)return null;}
+ return names;
+}
+function captureParserUint32Storage(){
+ // Keep optional requalification callback-free even in the old lazy-stack
+ // compatibility domain. Unknown expected shape simply retains old arrays.
+ if(!pathNative)return null;
+ const snapshots=[arrayDescriptors,mapDescriptors,setDescriptors,weakSetDescriptors,syntaxStrings,syntaxRegexps];
+ for(let at=0;at<snapshots.length;at++){const entries=snapshots[at];if(!entries)return null;for(let index=0;index<entries.length;index++)if(entries[index][0]==='stack')return null;}
+ if(!types||typeof types!=='object'||pathIsProxy.value(types))return null;
+ // Do not initialize 287's expected plans earlier than their original caller.
+ if(!originalPrivateParserCommonIntrinsicsUnchanged())return null;
+ const global=parserUint32Data(parserIngressRoot,'Uint32Array'),brand=parserUint32Data(types,'isUint32Array');
+ if(!global||!brand||!parserUint32Native(global.value,'Uint32Array')||!parserUint32Native(brand.value,'isUint32Array'))return null;
+ const ctor=global.value,ctorKeys=parserUint32Keys(ctor,['length','name','prototype','BYTES_PER_ELEMENT']);if(!ctorKeys)return null;
+ const length=parserUint32Data(ctor,'length'),name=parserUint32Data(ctor,'name'),pointee=parserUint32Data(ctor,'prototype'),bytes=parserUint32Data(ctor,'BYTES_PER_ELEMENT');
+ if(!length||length.value!==3||!name||name.value!=='Uint32Array'||!pointee||!pointee.value||typeof pointee.value!=='object'||pathIsProxy.value(pointee.value)||pointee.writable||pointee.configurable||pointee.enumerable||!bytes||bytes.value!==4||bytes.writable||bytes.configurable||bytes.enumerable)return null;
+ const concrete=pointee.value,concreteKeys=parserUint32Keys(concrete,['constructor','BYTES_PER_ELEMENT']);if(!concreteKeys)return null;
+ const back=parserUint32Data(concrete,'constructor'),element=parserUint32Data(concrete,'BYTES_PER_ELEMENT');
+ if(!back||back.value!==ctor||!element||element.value!==4||element.writable||element.configurable||element.enumerable)return null;
+ const literalFunction=prototype(function(){}),sharedCtor=prototype(ctor),shared=prototype(concrete);
+ if(!sharedCtor||!shared||pathIsProxy.value(sharedCtor)||pathIsProxy.value(shared)||!parserUint32Native(sharedCtor,'TypedArray')||prototype(sharedCtor)!==literalFunction||prototype(shared)!==objectPrototype||prototype(brand.value)!==literalFunction)return null;
+ const sharedPrototype=parserUint32Data(sharedCtor,'prototype'),size=descriptor(shared,'length');
+ if(!sharedPrototype||sharedPrototype.value!==shared||sharedPrototype.writable||sharedPrototype.configurable||sharedPrototype.enumerable||!size||hasOwn(size,'value')||!hasOwn(size,'get')||!hasOwn(size,'set')||size.set!==undefined||!parserUint32Native(size.get,'get length')||prototype(size.get)!==literalFunction)return null;
+ // Genuine native Number-length construction does not consult an iterable,
+ // species, global ArrayBuffer, inherited index setter or a source object.
+ const small=new ctor(8),large=new ctor(64);
+ if(brand.value(small)!==true||brand.value(large)!==true||brand.value([])!==false||brand.value({})!==false||apply(size.get,small,[])!==8||apply(size.get,large,[])!==64||prototype(small)!==concrete||prototype(large)!==concrete)return null;
+ const inputs=[0,2147483647,2147483648,4294967295,-1,4294967296,4294967297],expected=[0,2147483647,2147483648,4294967295,4294967295,0,1];
+ for(let at=0;at<inputs.length;at++){small[at]=inputs[at];large[at]=inputs[at];if(small[at]!==expected[at]||large[at]!==expected[at])return null;}
+ if(!originalPrivateParserCommonIntrinsicsUnchanged())return null;
+ return {typeOwner:types,fields:[[parserIngressRoot,'Uint32Array',global],[types,'isUint32Array',brand],[ctor,'length',length],[ctor,'name',name],[ctor,'prototype',pointee],[ctor,'BYTES_PER_ELEMENT',bytes],[concrete,'constructor',back],[concrete,'BYTES_PER_ELEMENT',element],[sharedCtor,'prototype',sharedPrototype],[shared,'length',size]],parents:[[ctor,sharedCtor],[concrete,shared],[sharedCtor,literalFunction],[shared,objectPrototype],[brand.value,literalFunction],[size.get,literalFunction]],keys:[[ctor,ctorKeys],[concrete,concreteKeys]]};
+}
+// A negative is optional-feature birth eligibility, never a semantic refusal.
+const parserUint32Storage=captureParserUint32Storage();
+export function originalPrivateParserUint32WorkStorageUnchanged(){
+ // This is ONLY typed-work eligibility. The SHA caller retains its complete
+ // common entry/exit checks; fixed captured observers below never read stack.
+ if(!originalPrivateParserIngressUnchanged()||!parserUint32Storage||types!==parserUint32Storage.typeOwner)return false;
+ for(let at=0;at<parserUint32Storage.keys.length;at++){
+  const row=parserUint32Storage.keys[at],names=keys(row[0]);if(names.length!==row[1].length)return false;
+  for(let index=0;index<names.length;index++)if(names[index]!==row[1][index])return false;
+ }
+ for(let at=0;at<parserUint32Storage.parents.length;at++){const row=parserUint32Storage.parents[at];if(prototype(row[0])!==row[1])return false;}
+ for(let at=0;at<parserUint32Storage.fields.length;at++){const row=parserUint32Storage.fields[at];if(!same(descriptor(row[0],row[1]),row[2]))return false;}
+ return true;
+}

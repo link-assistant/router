@@ -316,6 +316,96 @@ test('independent SHA256 and strict Unicode binding do not trust decoder or Node
   for(const row of invalidRows){assert.deepEqual(row.current,row.before);assert.equal(row.current.error.name,'TypeError');assert.match(row.current.error.message,row.bounded?/bounded primitive text/u:/well-formed UTF16/u);}
   for(const row of argumentRows){assert.deepEqual(row.current,row.before);assert.equal(row.current.error.name,'TypeError');assert.match(row.current.error.message,/bounded primitive text/u);}assert.equal(argumentCallbacks,0);
   assert.throws(()=>independentParserSha256(String.fromCharCode(0xd800)),/well-formed/u);
+
+  // Complete coherent 287 helper is an independent ordinary-array oracle.
+  const beforeUint32Source="// Independent SHA-256 for executable-source authentication. Node crypto calls\n// remain required separately; their observer-returned digest is not authority.\nimport {originalPrivateParserExpectedCommonIntrinsicsUnchanged,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';\nconst initial=originalPrivateParserExpectedCommonIntrinsicsUnchanged();\nlet constants=null;\nfunction checked(){\n  if(!initial||!originalPrivateParserExpectedCommonIntrinsicsUnchanged())throwOriginalCapturedTypeError('Independent parser SHA256 host operations changed');\n}\nconst rotate=(value,count)=>(value>>>count)|(value<<(32-count));\nexport function independentParserSha256(source){\n  checked();if(typeof source!=='string'||source.length>262144)throwOriginalCapturedTypeError('Independent parser SHA256 requires bounded primitive text');\n  // No round array exists until the genuine initial/live guard has succeeded.\n  // Constants and work arrays never reach crypto, callbacks or returned data.\n  if(!constants)constants=[\n    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,\n    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,\n    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,\n    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,\n    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,\n    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,\n    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,\n    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2,\n  ];\n  const h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],words=[];\n  let pendingWord=0,pendingBytes=0,wordIndex=0,payloadBytes=0;\n  function compress(){\n    for(let at=16;at<64;at++){\n      const x=words[at-15],y=words[at-2];\n      const a=rotate(x,7)^rotate(x,18)^(x>>>3),b=rotate(y,17)^rotate(y,19)^(y>>>10);\n      words[at]=(words[at-16]+a+words[at-7]+b)>>>0;\n    }\n    let a=h[0],b=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],v=h[7];\n    for(let at=0;at<64;at++){\n      const sum=rotate(e,6)^rotate(e,11)^rotate(e,25),choice=(e&f)^(~e&g);\n      const t1=(v+sum+choice+constants[at]+words[at])>>>0;\n      const t2=((rotate(a,2)^rotate(a,13)^rotate(a,22))+((a&b)^(a&c)^(b&c)))>>>0;\n      v=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0;\n    }\n    h[0]=(h[0]+a)>>>0;h[1]=(h[1]+b)>>>0;h[2]=(h[2]+c)>>>0;h[3]=(h[3]+d)>>>0;\n    h[4]=(h[4]+e)>>>0;h[5]=(h[5]+f)>>>0;h[6]=(h[6]+g)>>>0;h[7]=(h[7]+v)>>>0;\n  }\n  function emit(byte){\n    pendingWord=(pendingWord<<8)|byte;pendingBytes++;\n    if(pendingBytes===4){\n      words[wordIndex++]=pendingWord;pendingWord=0;pendingBytes=0;\n      if(wordIndex===16){compress();wordIndex=0;}\n    }\n  }\n  // Pack each complete UTF8 byte directly into the current 64-byte block.\n  // All16 input words are overwritten before each schedule/compression pass.\n  for(let at=0;at<source.length;at++){\n    let code=source.charCodeAt(at);\n    if(code>=55296&&code<=56319){\n      const low=at+1<source.length?source.charCodeAt(at+1):-1;\n      if(low<56320||low>57343)throwOriginalCapturedTypeError('Independent parser SHA256 requires well-formed UTF16');\n      code=65536+(code-55296)*1024+low-56320;at++;\n    }else if(code>=56320&&code<=57343)throwOriginalCapturedTypeError('Independent parser SHA256 requires well-formed UTF16');\n    if(code<128){emit(code);payloadBytes++;}\n    else if(code<2048){emit(192|(code>>>6));emit(128|(code&63));payloadBytes+=2;}\n    else if(code<65536){emit(224|(code>>>12));emit(128|((code>>>6)&63));emit(128|(code&63));payloadBytes+=3;}\n    else{emit(240|(code>>>18));emit(128|((code>>>12)&63));emit(128|((code>>>6)&63));emit(128|(code&63));payloadBytes+=4;}\n  }\n  if(payloadBytes>1048576)throwOriginalCapturedTypeError('Independent parser SHA256 byte budget');\n  const bits=payloadBytes*8;emit(128);\n  while(wordIndex*4+pendingBytes!==56)emit(0);\n  for(let at=0;at<4;at++)emit(0);\n  for(let shift=24;shift>=0;shift-=8)emit((bits>>>shift)&255);\n  let result='';const digits='0123456789abcdef';\n  for(let at=0;at<8;at++)for(let shift=28;shift>=0;shift-=4)result+=digits[(h[at]>>>shift)&15];\n  checked();return result;\n}\n";
+  const workRoot=scratch(t),commonURL=pathToFileURL(join(base,'original-json-intrinsics.mjs')).href;
+  const shaSource=readFileSync(join(base,'private-parser-sha256.mjs'),'utf8'),commonSource=readFileSync(join(base,'original-json-intrinsics.mjs'),'utf8');
+  const {types:workTypes}=await import('node:util');
+  const workCtor=descriptor(globalThis,'Uint32Array').value,workConcrete=descriptor(workCtor,'prototype').value,workShared=Object.getPrototypeOf(workConcrete),workParent=Object.getPrototypeOf(workCtor);
+  const probePath=join(workRoot,'work-probe.mjs');
+  const probeSource="import {types} from 'node:util';\nconst brand=Object.getOwnPropertyDescriptor(types,'isUint32Array').value,apply=Reflect.apply,length=Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Uint32Array.prototype),'length').get;\nexport const rows=[];\nexport function record(typed,h,words){rows.push(typed?{typed,hUint32:brand(h),wordsUint32:brand(words),hLength:apply(length,h,[]),wordsLength:apply(length,words,[])}:{typed});}\n";
+  writeFileSync(probePath,probeSource);const workProbe=await import(pathToFileURL(probePath).href),probeReadback=readFileSync(probePath,'utf8');
+  let helperSerial=0;const copyWitnesses=[];
+  async function workCopy(source,{instrument=true,common=commonURL,label='work'}={}){
+    const location=join(workRoot,String(helperSerial++)+'-'+label+'.mjs'),changes=[],before="from './original-json-intrinsics.mjs'",after="from '"+common+"'";
+    assert.equal(source.split(before).length,2);let copied=source.replace(before,after);changes.push({before,after});
+    if(instrument){
+      const old='  let pendingWord=0,pendingBytes=0,wordIndex=0,payloadBytes=0;',replacement='  __recordUint32Work(typed,h,words);\n'+old;
+      assert.equal(copied.split(old).length,2);copied=copied.replace(old,replacement);changes.push({before:old,after:replacement});
+      const appendix="\nimport {record as __recordUint32Work} from '"+pathToFileURL(probePath).href+"';\n";copied+=appendix;changes.push({before:'',after:appendix,append:true});
+    }
+    writeFileSync(location,copied);let reversed=copied;for(let at=changes.length-1;at>=0;at--){const edit=changes[at];reversed=edit.append?reversed.slice(0,-edit.after.length):reversed.replace(edit.after,edit.before);}
+    const witness={source,sha256:nativeHash(source),location,copied,changes,reversed,readback:readFileSync(location,'utf8')};copyWitnesses.push(witness);retain('05-uint32-physical-copy-'+helperSerial,witness);
+    return import(pathToFileURL(location).href);
+  }
+  const ordinary=await workCopy(beforeUint32Source,{instrument:false,label:'complete-before'}),typedSubject=await workCopy(shaSource,{label:'current'});
+  const typedStart=workProbe.rows.length;
+  const workRows=streamingInputs.map(row=>({...row,before:outcome(()=>ordinary.independentParserSha256(row.source)),current:outcome(()=>typedSubject.independentParserSha256(row.source)),native:nativeHash(row.source)}));
+  const typedCoverage=workProbe.rows.slice(typedStart);
+  const workInvalid=invalidSources.map(row=>({...row,before:outcome(()=>ordinary.independentParserSha256(row.source)),current:outcome(()=>typedSubject.independentParserSha256(row.source))}));
+  let workArgumentCallbacks=0;const workHostile=new Proxy({},{get(){workArgumentCallbacks++;throw Error('work argument get');},getPrototypeOf(){workArgumentCallbacks++;throw Error('work argument prototype');}});
+  const workArguments=[new String('abc'),workHostile].map(input=>({before:outcome(()=>ordinary.independentParserSha256(input)),current:outcome(()=>typedSubject.independentParserSha256(input))}));
+  const workInput='\u0000\u00ff\u0800😀'+ 'z'.repeat(129),workExpected=nativeHash(workInput),hookRows=[];
+  const hookModes=[
+    ['global-get',globalThis,'Uint32Array','accessor'],['global-JS',globalThis,'Uint32Array','javascript'],['global-proxy',globalThis,'Uint32Array','proxy'],['global-wrong-native',globalThis,'Uint32Array','wrong-native'],
+    ['constructor-name',workCtor,'name','accessor'],['constructor-length',workCtor,'length','accessor'],['prototype-constructor',workConcrete,'constructor','accessor'],['shared-length',workShared,'length','accessor'],['brand-get',workTypes,'isUint32Array','accessor'],
+    ['constructor-parent',workCtor,null,'parent'],['concrete-parent',workConcrete,null,'parent'],['numeric-prototype',workConcrete,'0','accessor'],
+    ['unused-species',workParent,Symbol.species,'accessor',true],['unused-from',workParent,'from','accessor',true],['unused-set',workShared,'set','accessor',true],['unused-ArrayBuffer',globalThis,'ArrayBuffer','accessor',true],
+  ];
+  for(const [mode,owner,key,kind,unused]of hookModes){
+    const prior=key===null?null:descriptor(owner,key),priorParent=key===null?Object.getPrototypeOf(owner):null;let callbacks=0,cold,live,liveCoverage,coldCoverage,restoredCoverage,coldRestoredCoverage;
+    function trip(){callbacks++;throw Error('typed-only hook '+mode);}
+    const restore=()=>{if(key===null)Object.setPrototypeOf(owner,priorParent);else if(prior)define(owner,key,prior);else delete owner[key];};
+    try{
+      if(kind==='parent')Object.setPrototypeOf(owner,new Proxy(priorParent,{get:trip,getPrototypeOf:trip,ownKeys:trip,getOwnPropertyDescriptor:trip}));
+      else if(kind==='javascript'){const fake=function Uint32Array(){trip();};define(owner,key,{...prior,value:fake});}
+      else if(kind==='proxy')define(owner,key,{...prior,value:new Proxy(workCtor,{construct:trip,get:trip,getPrototypeOf:trip,ownKeys:trip,getOwnPropertyDescriptor:trip})});
+      else if(kind==='wrong-native')define(owner,key,{...prior,value:Int32Array});
+      else define(owner,key,{__proto__:null,get:trip,set:trip,enumerable:prior?prior.enumerable:false,configurable:true});
+      let at=workProbe.rows.length;live=outcome(()=>typedSubject.independentParserSha256(workInput));liveCoverage=workProbe.rows.slice(at);
+      const fresh=await workCopy(shaSource,{label:'cold-'+mode});at=workProbe.rows.length;cold=outcome(()=>fresh.independentParserSha256(workInput));coldCoverage=workProbe.rows.slice(at);
+      restore();at=workProbe.rows.length;const restored=outcome(()=>typedSubject.independentParserSha256(workInput));restoredCoverage=workProbe.rows.slice(at);
+      at=workProbe.rows.length;const coldRestored=outcome(()=>fresh.independentParserSha256(workInput));coldRestoredCoverage=workProbe.rows.slice(at);
+      hookRows.push({mode,kind,unused:!!unused,live,cold,restored,coldRestored,liveCoverage,coldCoverage,restoredCoverage,coldRestoredCoverage,callbacks});
+    }finally{restore();}
+  }
+  // An uncertain *common* birth also stays negative after exact restoration.
+  const freshCommonPath=join(workRoot,'cold-common.mjs');writeFileSync(freshCommonPath,commonSource);const globalWork=descriptor(globalThis,'Uint32Array');
+  let commonCalls=0,coldCommon,coldCommonResult,coldCommonRestored,coldCommonCoverage,coldCommonRestoredCoverage;
+  try{define(globalThis,'Uint32Array',{__proto__:null,get(){commonCalls++;throw Error('cold common optional getter');},configurable:true});
+    coldCommon=await workCopy(shaSource,{common:pathToFileURL(freshCommonPath).href,label:'cold-common'});let at=workProbe.rows.length;coldCommonResult=outcome(()=>coldCommon.independentParserSha256(workInput));coldCommonCoverage=workProbe.rows.slice(at);
+  }finally{define(globalThis,'Uint32Array',globalWork);}
+  {const at=workProbe.rows.length;coldCommonRestored=outcome(()=>coldCommon.independentParserSha256(workInput));coldCommonRestoredCoverage=workProbe.rows.slice(at);}
+  const commonWitness={source:commonSource,sha256:nativeHash(commonSource),path:freshCommonPath,readback:readFileSync(freshCommonPath,'utf8'),coldCommonResult,coldCommonRestored,coldCommonCoverage,coldCommonRestoredCoverage,commonCalls};
+  // Actual production observations stay in this process/engine. A typed-only
+  // hook installed by a real hash/read callback must retain all full inputs.
+  const hashParent=Object.getPrototypeOf(createHash('sha256')),updateField=descriptor(hashParent,'update'),digestField=descriptor(hashParent,'digest'),readField=descriptor(fs.default,'readSync'),callbackRows=[];
+  for(const mode of ['baseline','hash-global-get','read-global-get']){
+    const tape=[],reads=[];let hookCalls=0,installed=false,result;
+    function poison(){if(!installed){installed=true;define(globalThis,'Uint32Array',{__proto__:null,get(){hookCalls++;throw Error('observer typed-only getter');},configurable:true});}}
+    try{
+      define(hashParent,'update',{...updateField,value:function(input,...args){const value=apply(updateField.value,this,[input,...args]);tape.push({phase:'update',input:typeof input==='string'?input:Buffer.from(input).toString('utf8')});if(mode==='hash-global-get')poison();return value;}});
+      define(hashParent,'digest',{...digestField,value:function(...args){const value=apply(digestField.value,this,args);tape.push({phase:'digest',args,value});return value;}});
+      define(fs.default,'readSync',{...readField,value:function(...args){const count=apply(readField.value,this,args);reads.push({count,source:Buffer.from(args[1]).toString('utf8'),argCount:args.length,offset:args[2],length:args[3],position:args[4],thisUndefined:this===undefined});if(mode==='read-global-get')poison();return count;}});syncBuiltinESMExports();
+      result=outcome(()=>lexPrivateConcreteSource('pub fn typed_work()->u32 { 7 }','Rust'));
+    }finally{define(globalThis,'Uint32Array',globalWork);define(hashParent,'update',updateField);define(hashParent,'digest',digestField);define(fs.default,'readSync',readField);syncBuiltinESMExports();}
+    callbackRows.push({mode,result,tape,reads,hookCalls,installed});
+  }
+  retain('05-uint32-complete-oracles',{beforeUint32Source,beforeUint32Sha256:nativeHash(beforeUint32Source),shaSource,commonSource,probeSource,probeReadback,copyWitnesses,workRows,typedCoverage,workInvalid,workArguments,workArgumentCallbacks,workInput,workExpected,hookRows,commonWitness,callbackRows});
+  assert.equal(nativeHash(beforeUint32Source),'de032b553ae699e5c5a13c4b0e9eabbbad21c611f2130291b947f3eb66c6c294');assert.equal(probeReadback,probeSource);
+  for(const row of copyWitnesses){assert.equal(row.reversed,row.source);assert.equal(row.readback,row.copied);}
+  for(const row of workRows){assert.deepEqual(row.current,row.before);assert.equal(row.current.value,row.native);if(row.expected!==undefined)assert.equal(row.native,row.expected);}
+  assert.equal(typedCoverage.length,workRows.length);for(const row of typedCoverage)assert.deepEqual(row,{typed:true,hUint32:true,wordsUint32:true,hLength:8,wordsLength:64});
+  for(const row of workInvalid)assert.deepEqual(row.current,row.before);for(const row of workArguments)assert.deepEqual(row.current,row.before);assert.equal(workArgumentCallbacks,0);
+  for(const row of hookRows){
+    for(const result of [row.live,row.cold,row.restored,row.coldRestored])assert.deepEqual(result,{value:workExpected},row.mode);
+    for(const field of ['liveCoverage','coldCoverage']){assert.equal(row[field].length,1,row.mode);assert.equal(row[field][0].typed,row.unused,row.mode);}
+    assert.equal(row.restoredCoverage[0].typed,true,row.mode);assert.equal(row.coldRestoredCoverage[0].typed,row.unused,row.mode);assert.equal(row.callbacks,0,row.mode);
+  }
+  assert.equal(commonWitness.readback,commonWitness.source);assert.equal(commonCalls,0);assert.deepEqual(coldCommonResult,{value:workExpected});assert.deepEqual(coldCommonRestored,{value:workExpected});assert.deepEqual(coldCommonCoverage,[{typed:false}]);assert.deepEqual(coldCommonRestoredCoverage,[{typed:false}]);
+  assert.ok(callbackRows[0].result.value);assert.equal(callbackRows[0].tape.filter(row=>row.phase==='update').length,60);assert.equal(callbackRows[0].tape.filter(row=>row.phase==='digest').length,60);
+  for(const row of callbackRows.slice(1)){assert.deepEqual(row.result,callbackRows[0].result);assert.deepEqual(row.tape,callbackRows[0].tape);assert.deepEqual(row.reads,callbackRows[0].reads);assert.equal(row.installed,true);assert.equal(row.hookCalls,0);}
 });
 
 test('hash-time native mutation and recursive entry cannot expose or initialize private code',{timeout:60000},()=>{

@@ -1,7 +1,9 @@
 // Independent SHA-256 for executable-source authentication. Node crypto calls
 // remain required separately; their observer-returned digest is not authority.
-import {originalPrivateParserExpectedCommonIntrinsicsUnchanged,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
+import {originalPrivateParserExpectedCommonIntrinsicsUnchanged,originalPrivateParserUint32WorkStorageUnchanged,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
 const initial=originalPrivateParserExpectedCommonIntrinsicsUnchanged();
+const uint32AtBirth=initial&&originalPrivateParserUint32WorkStorageUnchanged();
+const privateUint32Constructor=uint32AtBirth?Object.getOwnPropertyDescriptor(globalThis,'Uint32Array').value:null;
 let constants=null;
 function checked(){
   if(!initial||!originalPrivateParserExpectedCommonIntrinsicsUnchanged())throwOriginalCapturedTypeError('Independent parser SHA256 host operations changed');
@@ -21,7 +23,11 @@ export function independentParserSha256(source){
     0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
     0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2,
   ];
-  const h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],words=[];
+  // No callback occurs after checked(): only primitive bounds, literal constants
+  // and captured-native Uint32 eligibility precede the two private allocations.
+  const typed=privateUint32Constructor!==null&&originalPrivateParserUint32WorkStorageUnchanged();
+  const h=typed?new privateUint32Constructor(8):[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],words=typed?new privateUint32Constructor(64):[];
+  if(typed){h[0]=0x6a09e667;h[1]=0xbb67ae85;h[2]=0x3c6ef372;h[3]=0xa54ff53a;h[4]=0x510e527f;h[5]=0x9b05688c;h[6]=0x1f83d9ab;h[7]=0x5be0cd19;}
   let pendingWord=0,pendingBytes=0,wordIndex=0,payloadBytes=0;
   function compress(){
     for(let at=16;at<64;at++){
