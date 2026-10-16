@@ -35,6 +35,25 @@ function originalHelperCryptoUnchanged(){return nativeHelperCrypto&&createHash==
 // consumers can reuse this exact qualification instead of relaxing it.
 export const originalDeriveHelperCryptoUnchanged=originalHelperCryptoUnchanged;
 const originalContextMaps=new WeakMap(),fastHelperProofs=new WeakSet(),weakSetHas=WeakSet.prototype.has,weakSetAdd=WeakSet.prototype.add,mapPrototype=Map.prototype,mapEntries=Map.prototype.entries,mapNext=Object.getPrototypeOf(new Map().entries()).next,mapSize=Object.getOwnPropertyDescriptor(Map.prototype,'size').get,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,hasOwn=Object.hasOwn;
+// Storage-only association for one issued immutable view/item. Every source,
+// profile and token check below still executes on each certificate read.
+const itemScanArray=Array.prototype,itemScanPrototype=Object.getPrototypeOf,itemScanFrozen=Object.isFrozen,itemScanProxy=types.isProxy,itemScanParent=itemScanPrototype(itemScanArray),itemScanFind=descriptor(itemScanArray,'find'),itemScanFunction=typeof helperData(itemScanFind)==='function'?itemScanPrototype(helperData(itemScanFind)):null,itemScanOrigins=new WeakMap(),itemScanGet=helperData(descriptor(WeakMap.prototype,'get')),itemScanSet=helperData(descriptor(WeakMap.prototype,'set'));
+const itemScanNative=originalJsonIntrinsicsUnchanged()&&helperNative(WeakMap,'WeakMap')&&helperNative(itemScanPrototype,'getPrototypeOf')&&helperNative(itemScanFrozen,'isFrozen')&&helperNative(itemScanProxy,'isProxy')&&helperNative(helperData(itemScanFind),'find')&&helperNative(itemScanGet,'get')&&helperNative(itemScanSet,'set');
+function itemScanUnchanged(items){
+  if(!itemScanNative||itemScanProxy(items)||itemScanPrototype(items)!==itemScanArray||itemScanPrototype(itemScanArray)!==itemScanParent||descriptor(items,'find')||itemScanPrototype(helperData(itemScanFind))!==itemScanFunction)return false;
+  const current=descriptor(itemScanArray,'find');return !!current&&helperData(current)===helperData(itemScanFind)&&current.writable===itemScanFind.writable&&current.enumerable===itemScanFind.enumerable&&current.configurable===itemScanFind.configurable;
+}
+function captureOriginalItemArray(module,items){
+  const view=descriptor(module,'sourceView');if(!view||!hasOwn(view,'value')||!items||!itemScanUnchanged(items)||!itemScanFrozen(items))return;
+  const length=descriptor(items,'length');if(!length||!hasOwn(length,'value')||typeof length.value!=='number'||length.value<0||length.value>20000||length.value%1)return;
+  // Validate once per module; no getter/predicate or source callback runs here.
+  for(let at=0;at<length.value;at++){const field=descriptor(items,''+at);if(!field||!hasOwn(field,'value'))return;const candidate=field.value;if(!candidate||typeof candidate!=='object'||itemScanProxy(candidate)||!itemScanFrozen(candidate))return;const start=descriptor(candidate,'start'),end=descriptor(candidate,'end');if(!start||!end||!hasOwn(start,'value')||!hasOwn(end,'value')||typeof start.value!=='number'||typeof end.value!=='number')return;}
+  for(let at=0;at<length.value;at++){const candidate=helperData(descriptor(items,''+at)),kind=helperData(descriptor(candidate,'term'));if(kind==='struct'||kind==='enum')apply(itemScanSet,itemScanOrigins,[candidate,{items,item:candidate}]);}
+  apply(itemScanSet,itemScanOrigins,[module,items]);
+}
+function captureOriginalItemLookup(certificate,module,item){
+  if(!itemScanNative)return;const items=apply(itemScanGet,itemScanOrigins,[module]),lookup=apply(itemScanGet,itemScanOrigins,[item]);if(items&&lookup?.items===items&&itemScanUnchanged(items))apply(itemScanSet,itemScanOrigins,[certificate,lookup]);
+}
 function ownSelection(value,name){if(!value||typeof value!=='object'||types.isProxy(value))throw new TypeError('Original derive selection requires non-proxy own data');const field=descriptor(value,name);if(!field||!hasOwn(field,'value'))throw new TypeError('Original derive selection requires own data: '+name);return field.value;}
 // This index lives only between requested-closure construction and the first
 // missing/unresolved module. No source hashing or caller callback runs in that
@@ -122,7 +141,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
   if(!isDeriveDependencyProof(dependencies)||!Array.isArray(modules)||!(externalModules instanceof Map))throw new TypeError('Derive context requires sealed dependencies and original tracked modules');
   const profile=compilationProfile(profileInput),external=new Map(externalModules);
   for(const table of external.values())if(table.bindings?.some(binding=>binding.deriveDependencyDigest||['serde','schemars','clap'].includes(binding.target?.[0])))throw new TypeError('Derive dependency paths require privately verified registry inputs, not caller external aliases');
-  modules=modules.map(module=>({...module,items:originalSourceModuleItems(module).filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive')}));
+  modules=modules.map(module=>{let items;const original={...module,items:(items=originalSourceModuleItems(module)).filter(item=>itemConfiguration(item.tokens,profile).status!=='inactive')};if(itemScanNative)captureOriginalItemArray(original,items);return original;});
   for(const [path,table]of deriveExternalModules(dependencies)) {
     const existing=external.get(path);
     if(existing?.bindings.some(binding=>table.bindings.some(derived=>derived.namespace===binding.namespace&&derived.name===binding.name)))throw new TypeError('Registered derive namespace collides with another external table');
@@ -300,7 +319,7 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
         }
         const evidence={schema:'derive-namespace-footprint-v1',source:module.file,module:[...module.path],sourceViewDigest:module.sourceView?.digest??null,sourceSha256,span:{start:item.start,end:item.end},itemSha256:hash(module.source.slice(item.start,item.end)),kind:input.kind,name:input.name,compilationProfile:profile,condition:input.condition,owners,attributes:input.attributes,...(clapValueEnumOutput?{clapValueEnumOutput,clapGeneratedAttributeOwners}:{}),...(clapArgsOutput?{...(clapSourceOutputs.get(invocationId(module,item))?.concatCaller?{clapArgsOutputStorage:encodeBuiltinSourceMeta(clapArgsOutput),clapConcatCaller:clapSourceOutputs.get(invocationId(module,item)).concatCaller}:{clapArgsOutput}),clapGeneratedAttributeOwners}:{}),...(input.lifetimeParameters?{lifetimeParameters:input.lifetimeParameters}:{}),...(input.genericParameters?{genericParameters:input.genericParameters}:{}),...(builtinDefault?{builtinDefault}:{}),dependenciesDigest:dependencies.digest,coreOwner:{target:['core','compile_error'],source:dependencies.standardCore},dimensions:{typeNamespaceComplete:true,valueNamespaceComplete:true,attributeMacroComplete:true,bangMacroComplete:false},generatedImplBehavior:false,obligations:['generated trait implementations are not lowered','fixed successful-expansion bang macro closure remains unproved'],confinement:builtinDefault&&!owners.length?'Pinned builtin Default emits one trait impl. Other original derive behavior remains unsupported; original unit-variant layout and helper tokens are retained.':'Successful outputs retain anonymous const groups or a source-proved Clap trait impl; original data and inert helper syntax remain unchanged. Unsupported output branches retain independent obligations.'};
         if(standardInput){evidence.standardInput=standardInput;evidence.dimensions.typeNamespaceComplete=false;evidence.dimensions.valueNamespaceComplete=false;evidence.obligations.push('standard-only registered input requires independent complete output grammar for every actual owner');evidence.confinement='Actual standard declarations, preludes and complete compiler registration identify inputs only. Generated layouts, namespace outputs and trait bodies retain separate obligations.';}
-        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});if(certificate.clapArgsOutputStorage&&JSON.stringify(decodeBuiltinSourceMeta(certificate.clapArgsOutputStorage))!==JSON.stringify(clapArgsOutput))throw new TypeError('Original scalar Args storage roundtrip changed');certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView,clapArgsOutput,clapValueEnumOutput,standardRegistry});byId.set(invocationId(module,item),certificate);
+        const certificate=freeze({...evidence,digest:hash(JSON.stringify(evidence))});if(certificate.clapArgsOutputStorage&&JSON.stringify(decodeBuiltinSourceMeta(certificate.clapArgsOutputStorage))!==JSON.stringify(clapArgsOutput))throw new TypeError('Original scalar Args storage roundtrip changed');captureOriginalItemLookup(certificate,module,item);certificates.set(certificate,{dependencies,input,source:module.source,sourceView:module.sourceView,clapArgsOutput,clapValueEnumOutput,standardRegistry});byId.set(invocationId(module,item),certificate);
       } catch(error){diagnostics.push({source:module.file,span:{start:item.start,end:item.end},name:item.name,message:error.message});}
     }
   }
@@ -323,7 +342,8 @@ export function deriveFootprintAt(context,module,item) {
   if(certificate.sourceSha256!==hash(module.source)||certificate.itemSha256!==hash(module.source.slice(item.start,item.end)))throw new TypeError('Derive certificate no longer matches original source');
   const suppliedProfile=Object.hasOwn(module,'compilationProfile')?compilationProfile(module.compilationProfile):context.compilationProfile;
   if(certificates.get(certificate).sourceView!==module.sourceView||JSON.stringify(suppliedProfile)!==JSON.stringify(certificate.compilationProfile))throw new TypeError('Derive certificate original module view or compilation profile changed');
-  const original=originalSourceModuleItems(module).find(candidate=>candidate.start===item.start&&candidate.end===item.end);
+  const items=originalSourceModuleItems(module),lookup=itemScanNative?apply(itemScanGet,itemScanOrigins,[certificate]):null;
+  const original=lookup&&lookup.item===item&&lookup.items===items&&itemScanUnchanged(items)?lookup.item:items.find(candidate=>candidate.start===item.start&&candidate.end===item.end);
   if(!original||original.term!==item.term||original.name!==item.name||JSON.stringify(original.tokens)!==JSON.stringify(item.tokens))throw new TypeError('Derive certificate invocation differs from original module items');
   return certificate;
 }
