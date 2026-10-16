@@ -211,3 +211,72 @@ export function originalPrivateParserCommonIntrinsicsUnchanged(){
  if(!originalPrivateParserIngressUnchanged())return false;
  return !!(syntaxNative&&originalNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&samePrototype(syntaxStringPrototype,syntaxStrings)&&samePrototype(syntaxRegExpPrototype,syntaxRegexps)&&syntaxNumericPrototypeSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
 }
+
+// Bulk metadata is confined to six genuine nonproxy bootstrap prototypes. The
+// expected snapshots never escape; this records their shape, not a live verdict.
+// A lazy native Error stack can execute a formatter during metadata acquisition.
+// Never bulk-read a snapshot containing stack, and key-gate every live owner.
+function bulkExpectedSafe(entries){
+ if(!entries)return false;
+ for(let index=0;index<entries.length;index++)if(entries[index][0]==='stack')return false;
+ return true;
+}
+const bulkExpectedNative=traversalNative&&bulkExpectedSafe(arrayDescriptors)&&bulkExpectedSafe(mapDescriptors)&&bulkExpectedSafe(setDescriptors)&&bulkExpectedSafe(weakSetDescriptors)&&bulkExpectedSafe(syntaxStrings)&&bulkExpectedSafe(syntaxRegexps);
+function bulkOperationUnchanged(){return !!(bulkExpectedNative&&same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors));}
+function bulkSamePrototype(owner,expectedDescriptors){
+ // Only these exact private associations may reach the captured native. There
+ // is no caller-supplied owner, descriptor, function or reusable success permit.
+ if(!(owner===arrayPrototype&&expectedDescriptors===arrayDescriptors||owner===mapPrototype&&expectedDescriptors===mapDescriptors||owner===setPrototype&&expectedDescriptors===setDescriptors||owner===weakSetPrototype&&expectedDescriptors===weakSetDescriptors||owner===syntaxStringPrototype&&expectedDescriptors===syntaxStrings||owner===syntaxRegExpPrototype&&expectedDescriptors===syntaxRegexps))return false;
+ const names=keys(owner);
+ if(names.length!==expectedDescriptors.length)return false;
+ for(let index=0;index<names.length;index++)if(names[index]!==expectedDescriptors[index][0])return false;
+ // No descriptor acquisition precedes the complete key/order gate. An added
+ // lazy stack is rejected without materializing it or calling its formatter.
+ if(!bulkOperationUnchanged())return false;
+ const fields=apply(traversalDescriptors.value,originalObject,[owner]),fieldNames=keys(fields);
+ if(fieldNames.length!==names.length)return false;
+ for(let index=0;index<names.length;index++)if(fieldNames[index]!==names[index])return false;
+ for(let index=0;index<names.length;index++){
+  const key=names[index],expected=expectedDescriptors[index][1];
+  if(!hasOwn(fields,key))return false;
+  const actual=fields[key];
+  if(!actual||typeof actual!=='object'||!hasOwn(actual,'enumerable')||!hasOwn(actual,'configurable'))return false;
+  const data=hasOwn(actual,'value');
+  if(data!==hasOwn(expected,'value'))return false;
+  // Every field read follows its own-data shape gate. Inherited value/get/set
+  // hooks are irrelevant even when a native descriptor represents an accessor.
+  if(actual.enumerable!==expected.enumerable||actual.configurable!==expected.configurable)return false;
+  if(data){
+   if(!hasOwn(actual,'writable')||hasOwn(actual,'get')||hasOwn(actual,'set'))return false;
+   if(actual.value!==expected.value||actual.writable!==expected.writable)return false;
+  }else{
+   if(!hasOwn(actual,'get')||!hasOwn(actual,'set')||hasOwn(actual,'writable')||!hasOwn(expected,'get')||!hasOwn(expected,'set'))return false;
+   if(actual.get!==expected.get||actual.set!==expected.set)return false;
+  }
+ }
+ return true;
+}
+
+function bulkJsonIntrinsicsUnchanged(){
+ if(!ordinaryNative)return false;for(let index=0;index<iteratorPins.length;index++){const pin=iteratorPins[index];if(!same(descriptor(pin.owner,'next'),pin.field))return false;}for(let index=0;index<objectPins.length;index++){const name=objectPins[index][0],field=objectPins[index][1];if(!same(descriptor(originalObject,name),field))return false;}
+ return same(descriptor(originalArray,Symbol.species),species)&&same(descriptor(globalThis,'WeakSet'),globalWeakSet)&&bulkSamePrototype(weakSetPrototype,weakSetDescriptors)&&same(descriptor(globalThis,'JSON'),globalJson)&&same(descriptor(globalThis,'Object'),globalObject)&&same(descriptor(globalThis,'Array'),globalArray)&&same(descriptor(globalThis,'Map'),globalMap)&&same(descriptor(globalThis,'Set'),globalSet)&&same(descriptor(originalObject,'hasOwn'),objectHasOwn)&&same(descriptor(originalObject,'getOwnPropertyDescriptor'),objectDescriptor)&&same(descriptor(originalJson,'stringify'),stringify)&&originalObject.prototype===objectPrototype&&originalArray.prototype===arrayPrototype&&prototype(objectPrototype)===null&&prototype(arrayPrototype)===objectPrototype&&!descriptor(objectPrototype,'toJSON')&&!descriptor(arrayPrototype,'toJSON')&&bulkSamePrototype(arrayPrototype,arrayDescriptors)&&bulkSamePrototype(mapPrototype,mapDescriptors)&&bulkSamePrototype(setPrototype,setDescriptors);
+}
+
+function bulkPathMembershipIntrinsicsUnchanged(){
+ return !!(pathNative&&bulkJsonIntrinsicsUnchanged()&&same(descriptor(originalObject,'getPrototypeOf'),pathGetPrototypeOf)&&same(descriptor(globalThis,'Reflect'),pathReflect)&&same(descriptor(pathReflect.value,'ownKeys'),pathOwnKeys)&&same(descriptor(originalArray,'isArray'),pathIsArray)&&same(descriptor(types,'isProxy'),pathIsProxy)&&same(descriptor(globalThis,'WeakMap'),pathWeakMap)&&pathWeakMap.value.prototype===pathWeakPrototype&&same(descriptor(pathWeakPrototype,'has'),pathWeakHas));
+}
+
+function bulkNamespaceTraversalIntrinsicsUnchanged(){
+ if(!traversalNative||!bulkPathMembershipIntrinsicsUnchanged()||!same(descriptor(traversalFunctionPrototype,'call'),traversalCall)||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(pathReflect.value,'apply'),traversalApply)||!same(descriptor(mapPrototype,'entries'),traversalEntries)||prototype(traversalMapIterator.owner)!==traversalIteratorPrototype||descriptor(traversalMapIterator.owner,Symbol.iterator)||prototype(traversalIteratorPrototype)!==traversalIteratorParent||!same(descriptor(traversalIteratorPrototype,Symbol.iterator),traversalIteratorMethod))return false;
+ // The old route calls entries.call; a function's own call hook or changed
+ // prototype is also observable and therefore keeps the collected fallback.
+ return prototype(traversalEntries.value)===traversalFunctionPrototype&&!descriptor(traversalEntries.value,'call')&&prototype(traversalMapIterator.field.value)===traversalFunctionPrototype&&!descriptor(traversalMapIterator.field.value,'call');
+}
+
+export function originalPrivateParserBulkCommonIntrinsicsUnchanged(){
+ if(!originalPrivateParserIngressUnchanged())return false;
+ // An uncertain bulk domain takes the COMPLETE old call. Never resume a bulk
+ // segment after legacy metadata could have run a lazy stack formatter.
+ if(!bulkOperationUnchanged())return originalPrivateParserCommonIntrinsicsUnchanged();
+ return !!(syntaxNative&&bulkNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&bulkSamePrototype(syntaxStringPrototype,syntaxStrings)&&bulkSamePrototype(syntaxRegExpPrototype,syntaxRegexps)&&syntaxNumericPrototypeSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
+}

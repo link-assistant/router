@@ -1,0 +1,5 @@
+### Check private parser prototypes with fresh bulk metadata
+
+The private parser guard compares the complete own-key order before using its captured native bulk-descriptor operation on six fixed bootstrap prototypes. It preserves the original common module and every old guard, uses the complete old guard when the bulk domain is uncertain, and keeps both numeric scans and all fresh source/hash/read checkpoints. Descriptor shape checks precede value/get/set reads; unknown lazy stacks refuse before metadata acquisition.
+
+A new whole eight-case source draft retains the complete before issuer, all six descriptor/key/parent controls, hostile operation and inherited-slot controls, actual native stack/fallback observations, real hash/read callbacks, and emitted JavaScript plus strict TypeScript. The fixed-width positive expects the existing BigInt result; an unknown macro stays fully source-bearing carried IR with its diagnostic and no executable exports in either target. Receiving, deadline and memory results remain unrun in this worker; fewer descriptor calls do not establish a speed or memory gain.
