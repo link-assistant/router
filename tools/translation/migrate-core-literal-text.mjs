@@ -25,7 +25,18 @@ function close(rows,start){
   const pairs={'(':')','[':']','{':'}'},stack=[];
   for(let at=start;at<rows.length;at++){const word=rows[at].text;if(pairs[word])stack.push(pairs[word]);else if([')',']','}'].includes(word)){if(stack.pop()!==word)return -1;if(!stack.length)return at;}}return -1;
 }
-function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRoles=[]){
+// A conditional external module introduces only its module name in this
+// parent. Its contents do not import conversion traits into the parent scope.
+// Retain both declaration alternatives; never choose the cfg predicate.
+function conditionalModule(item,condition,path){
+  if(item.term!=='mod'||condition.status!=='unknown'||condition.diagnostics.length||!condition.attributes.some(row=>row.name==='cfg')||condition.attributes.some(row=>row.name!=='cfg'&&!inert.has(row.name)||row.tokens[1]==='!'))return null;
+  const header=originalDeclarationHeader(item,path),rows=significant(item);
+  if(!header||header.kind!=='mod'||header.rawIdentifier||['ToString','ToOwned','String','std','core'].includes(header.name))return null;
+  const keyword=rows.findIndex(row=>row.start===header.keywordSpan.start),tail=rows.slice(keyword);
+  if(keyword<0||tail.length!==3||tail[0].text!=='mod'||tail[1].text!==header.name||tail[2].text!==';')return null;
+  return {module:[...path],name:header.name,span:[item.start,item.end],declarationTokens:rows.map(row=>({text:row.text,type:row.type,start:row.start,end:row.end})),configuration:condition,predicateSelected:false,alternatives:[{present:false},{present:true,kind:'mod',name:header.name}],role:'noncompeting-external-module-declaration',semanticAdmission:false};
+}
+function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRoles=[],conditionalDeclarations=[]){
   const problems=[];
   for(const item of items){
     const condition=itemConfiguration(item.tokens,profile);if(condition.status==='inactive'||item.comment)continue;
@@ -33,7 +44,7 @@ function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRole
     for(let at=0;at<rows.length;at++){
       if(rows[at].text==='r'&&rows[at+1]?.text==='#'&&rows[at+2]?.type==='ident'&&rows[at].end===rows[at+1].start&&rows[at+1].end===rows[at+2].start){names.push(rows[at+2].text);at+=2;}else names.push(rows[at].text);
     }
-    if(condition.status!=='active')problems.push('unknown declaration configuration');
+    if(condition.status!=='active'){const alternative=conditionalModule(item,condition,path);if(alternative)conditionalDeclarations.push(alternative);else problems.push('unknown declaration configuration');}
     if(condition.attributes.some(attribute=>!inert.has(attribute.name)&&attribute.name!=='cfg'&&!(item.term==='mod'&&attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')))problems.push('unresolved declaration attribute producer');
     if(item.term==='use'){
       try{for(const leaf of originalUseDeclarationLeaves(item,path)){
@@ -95,11 +106,11 @@ function functionSelection(source,item,path,profile,problems){
   if(bare)edits.push({span:[result[1].start,result[1].end],expected:'String',replacement:textType});
   return {edits,selection:{...record,conversions:selected,ownedReturnAlias:bare,bodyAdmission:false},skipped};
 }
-function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile)){
-  const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[],importRoles=[];
+function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile),externalConditions=[]){
+  const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[],importRoles=[],conditionalDeclarations=[...externalConditions];
   for(const module of modules){
     const ancestors=modules.filter(parent=>parent!==module&&parent.path.length<module.path.length&&parent.path.every((word,at)=>word===module.path[at]));
-    const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,parent,roleFor,importRoles)),...scopeProblems(items,profile,module.path,module,roleFor,importRoles)];
+    const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,parent,roleFor,importRoles,conditionalDeclarations)),...scopeProblems(items,profile,module.path,module,roleFor,importRoles,conditionalDeclarations)];
     if(module.configurationCondition!=='active'){skipped.push({module:module.path,reason:'module configuration is not active'});continue;}
     for(const item of items){if(item.term!=='fn')continue;let result;try{result=functionSelection(source,item,module.path,profile,problems);}catch(error){skipped.push({span:[item.start,item.end],reason:error.message});continue;}if(!result)continue;edits.push(...result.edits);skipped.push(...result.skipped);if(result.selection)selections.push(result.selection);}
   }
@@ -110,11 +121,11 @@ function propose(source,modules,profile,externalProblems=[],roleFor=createLitera
   if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let inverse=after.source;
   for(let at=mapping.length-1;at>=0;at--){const row=mapping[at];if(row.kind==='substitution'){if(inverse.slice(...row.after)!==row.replacement)fail('inverse substitution changed');inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);}}
   if(inverse!==source)fail('complete inverse differs');
-  return {schema:'router-owned-literal-text-adoption-v1',before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},compilationProfile:profile,edits,selections,skipped,importRoles,mapping,trace:applied.trace,executableAdmission:false,migrationSemantics:'maintainer-authorized explicit owned API adoption; no arbitrary original standard trait dispatch theorem',libraryImplementation:'existing untranslated Rust std::format interface'};
+  return {schema:'router-owned-literal-text-adoption-v1',before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},compilationProfile:profile,edits,selections,skipped,importRoles,conditionalDeclarations,mapping,trace:applied.trace,executableAdmission:false,migrationSemantics:'maintainer-authorized explicit owned API adoption; no arbitrary original standard trait dispatch theorem',libraryImplementation:'existing untranslated Rust std::format interface'};
 }
 export function migrateCoreLiteralText(source,{rootSource='',compilationProfile:input=PRODUCTION_PROFILE}={}){
   bounded(source);bounded(rootSource);const profile=normalizeProfile(input),captured=captureSourceModuleViews({source,sourcePath:'src/literal_adoption.rs',compilationProfile:profile}),modules=captured.views.map(view=>({file:'src/literal_adoption.rs',source,path:[...view.modulePath],sourceView:view,compilationProfile:profile,configurationCondition:view.configurationCondition}));
-  return propose(source,modules,profile,rootSource?scopeProblems(sourceItems(rootSource),profile):[]);
+  const conditions=[],problems=rootSource?scopeProblems(sourceItems(rootSource),profile,[],null,null,[],conditions):[];return propose(source,modules,profile,problems,undefined,conditions);
 }
 function sourceMap(input){
   if(!input||typeof input!=='object'||types.isProxy(input)||![null,Object.prototype].includes(Object.getPrototypeOf(input)))fail('own primitive source map required');
@@ -128,6 +139,6 @@ export function proposeCoreLiteralTextCorpus({entry='src/lib.rs',files:input,com
   if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!=='src/translation_core.rs'||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!=='src/translation_core/primitives.rs'||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('complete actual owned facade/primitive source routes required');
   const edge=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edge.length!==1||roots[0].source.slice(edge[0].start,edge[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core edge required');
   const after={...files},proposals=[],skipped=[],roleFor=createLiteralTextImportRoles(graph.modules,profile);
-  for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor)),result=propose(files[file],modules,profile,problems,roleFor);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
+  for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),conditions=[],problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor,[],conditions)),result=propose(files[file],modules,profile,problems,roleFor,conditions);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
   return {schema:'router-owned-literal-text-corpus-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
 }
