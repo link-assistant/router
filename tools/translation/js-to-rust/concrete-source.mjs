@@ -1,6 +1,6 @@
 // Lossless source transport only. Existing native grammar and semantic issuers
 // independently decide admission after this serialized/reparsed CST boundary.
-import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,transportConcreteSyntaxSources,assertConcreteSyntaxHost} from '../concrete-syntax-meta.mjs';
 import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,throwOriginalCapturedTypeError,originalPrivateParserIngressUnchanged} from '../original-json-intrinsics.mjs';
 const initial=originalPrivateParserIngressUnchanged()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
 function guard(){if(!initial||!originalPrivateParserIngressUnchanged()||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())throwOriginalCapturedTypeError('Reverse concrete source host operations changed');}
@@ -22,3 +22,16 @@ export function prepareReverseConcreteSource(source,sourceLanguage='JavaScript')
  const {document,meta,trace}=stage;
  return {source:stage.source,concreteSyntax:{schema:'router-reverse-concrete-stage-v1',language:document.language,representationLevel:document.representationLevel,status:document.status,meta,trace}};
 }
+
+/** New original/preorder batch contract; existing single APIs stay unchanged. */
+export function prepareReverseConcreteSources(rows){
+ guard();const batch=transportConcreteSyntaxSources(rows);guard();const stages=[];
+ for(let at=0;at<batch.rows.length;at++){
+  const {source,document,meta,trace}=batch.rows[at];language(document.language);
+  stages.push({source,concreteSyntax:{schema:'router-reverse-concrete-stage-v1',language:document.language,representationLevel:document.representationLevel,status:document.status,meta,trace}});
+ }
+ guard();return {stages,totals:batch.totals};
+}
+
+/** Recheck the original adapter/core host epoch without reusing source truth. */
+export function assertReverseConcreteSourceHost(){guard();assertConcreteSyntaxHost();guard();}

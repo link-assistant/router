@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {ownershipSyntax} from './module-syntax.mjs';
+import {ownershipSyntax,ownershipCompiler} from './module-syntax.mjs';
 import {parseMeta} from '../translator.mjs';
 import {toLino,lowerSourceClosure} from './ir.mjs';
 import {createLexicalEnvironmentIssuer,issueLexicalEnvironmentFrom,lexicalClosureName} from './lexical-environments.mjs';
@@ -113,4 +113,26 @@ export function discoverScopedHelpers(source,owners,analyze,sourcePath=null) {
   };
   visit(file);
   return {complete:true,sourceItems:items.length,translatedItems:program.length,fullDomainTranslatedItems:program.filter(fn=>!fn.conditionalInputs&&!fn.conditionalCaptures&&!fn.conditionalCalls).length,conditionalPrivateBodyDraftItems:program.filter(fn=>fn.conditionalInputs||fn.conditionalCaptures||fn.conditionalCalls).length,unsupportedItems:items.length-program.length,items,program,diagnostics:items.filter(item=>item.diagnostic).map(item=>item.diagnostic)};
+}
+
+/** Syntactic pool only: no callback/type/owner/admission decisions are made. */
+export function collectScopedWrapperSources(source,sourcePath=null){
+  if(typeof source!=='string'||source.length>2097152||sourcePath!==null&&typeof sourcePath!=='string')throw Error('bounded primitive bulk source/path required');
+  const ts=ownershipCompiler(),file=ts.createSourceFile('bulk-wrapper-census.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  const sourceSha256=createHash('sha256').update(source).digest('hex'),namespace=createHash('sha256').update(JSON.stringify([sourcePath,sourceSha256])).digest('hex').slice(0,16);
+  const rows=[{source,language:'JavaScript'}],occurrences=[];let units=source.length;
+  const isFunction=node=>ts.isArrowFunction(node)||ts.isFunctionExpression(node)||ts.isFunctionDeclaration(node);
+  const isTop=node=>node.parent===file||ts.isVariableDeclaration(node.parent)&&node.parent.parent.parent.parent===file;
+  const visit=node=>{
+    if(isFunction(node)&&!isTop(node)&&node.body){
+      const start=node.getStart(file),end=node.end,text=node.getText(file),temporary='scopedSrc'+namespace+'At'+start;
+      // Exact duplicate of the existing discover formula, deliberately not an
+      // old-body refactor. A pool row is not a semantic parsing result.
+      const wrapper=ts.isFunctionDeclaration(node)?'function '+temporary+'('+node.parameters.map(param=>param.getText(file)).join(',')+') '+node.body.getText(file):'const '+temporary+'='+text+';';
+      units+=wrapper.length;if(rows.length>=256||units>2097152)throw Error('bulk wrapper aggregate row/source budget');
+      occurrences.push({row:rows.length,start,end,kind:ts.SyntaxKind[node.kind],temporary,source:wrapper,language:'JavaScript'});rows.push({source:wrapper,language:'JavaScript'});
+    }
+    ts.forEachChild(node,visit);
+  };
+  visit(file);return {source,sourcePath,sourceSha256,namespace,rows,occurrences};
 }

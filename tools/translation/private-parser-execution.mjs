@@ -415,3 +415,85 @@ export function lexPrivateConcreteSource(source,language){return execute(source,
 export function transportPrivateConcreteSource(source,language){return execute(source,language,'source');}
 /** Canonical edited CST receives fresh independent builds, never old authority. */
 export function transportPrivateConcreteMeta(serialized){return execute(serialized,'Rust','serialized');}
+
+// A separately named data-only batch contract. Single execute() above retains
+// its complete source and callback schedule. No callback/permit is accepted.
+const BATCH_ROWS=256,BATCH_SOURCE=2097152,BATCH_UTF8=8388608,BATCH_NODES=200000,BATCH_SERIAL=33554432;
+function batchSnapshot(input,current){
+  const snapshots=[];
+  function shape(value,expected,expectedNames){
+    if(!value||typeof value!=='object'||proxy(value))fail('batch own-data input required');
+    const parent=prototype(value),names=keys(value);
+    // Reject unknown keys (including native lazy stack) before any field read.
+    if(names.length!==expectedNames.length)fail('batch exact own-field shape required');
+    for(let at=0;at<names.length;at++)if(names[at]!==expectedNames[at])fail('batch exact own-field names required');
+    if(parent!==expected&&!(expected===current.g.Object.prototype&&parent===null))fail('batch input prototype differs');
+    const fields=[];for(let at=0;at<names.length;at++){
+      const field=descriptor(value,names[at]);if(!field||!own(field,'value'))fail('batch own-data fields required');
+      fields.push(field);
+    }
+    snapshots.push({value,parent,names,fields});return {names,fields};
+  }
+  if(!input||typeof input!=='object'||proxy(input)||!current.g.Array.isArray(input))fail('batch dense array required');
+  const length=descriptor(input,'length');
+  if(!length||!own(length,'value')||typeof length.value!=='number'||length.value<1||length.value>BATCH_ROWS||length.value%1)fail('batch row budget');
+  const positions=[];for(let at=0;at<length.value;at++)positions.push(''+at);positions.push('length');
+  const outer=shape(input,current.g.Array.prototype,positions);
+  if(!length||!own(length,'value')||typeof length.value!=='number'||length.value<1||length.value>BATCH_ROWS||length.value%1||outer.names.length!==length.value+1||outer.names[length.value]!=='length')fail('batch row budget or dense shape');
+  const rows=[];let units=0,bytes=0;
+  for(let at=0;at<length.value;at++){
+    if(outer.names[at]!==''+at||outer.fields[at].enumerable!==true)fail('batch positional data required');
+    const value=outer.fields[at].value,row=shape(value,current.g.Object.prototype,['source','language']);
+    if(row.names.length!==2||row.names[0]!=='source'||row.names[1]!=='language'||row.fields[0].enumerable!==true||row.fields[1].enumerable!==true)fail('batch source/language row required');
+    const source=row.fields[0].value,language=row.fields[1].value;
+    if(typeof source!=='string'||source.length>BATCH_SOURCE||language!=='Rust'&&language!=='JavaScript'&&language!=='TypeScript')fail('batch primitive source/language required');
+    units+=source.length;if(units>BATCH_SOURCE)fail('batch aggregate source budget');
+    for(let index=0;index<source.length;index++){
+      const code=source.charCodeAt(index);
+      if(code>=55296&&code<=56319&&index+1<source.length){const low=source.charCodeAt(index+1);if(low>=56320&&low<=57343){bytes+=4;index++;continue;}}
+      bytes+=code<128?1:code<2048?2:3;
+    }
+    if(bytes>BATCH_UTF8)fail('batch aggregate UTF8 budget');rows.push({source,language});
+  }
+  return {rows,snapshots,units,bytes};
+}
+function batchInputCurrent(snapshots){
+  for(let at=0;at<snapshots.length;at++){
+    const row=snapshots[at];if(prototype(row.value)!==row.parent)fail('batch input ancestry changed');
+    const names=keys(row.value);if(names.length!==row.names.length)fail('batch input own shape changed');
+    for(let index=0;index<names.length;index++)if(names[index]!==row.names[index])fail('batch input own names changed');
+    for(let index=0;index<names.length;index++)if(!same(descriptor(row.value,names[index]),row.fields[index]))fail('batch input descriptor/value changed');
+  }
+}
+/** Fixed ordered CST batch. All throws abort the whole batch; no row classifier. */
+export function transportPrivateConcreteSources(input){
+  const current=checked();if(active)fail('recursive source transaction');
+  const request=batchSnapshot(input,current);active=true;
+  try{
+    const before=authenticate();checked();
+    if(!compiled){compiled=compile(before);compiledSources=before.sources;}
+    const selected=compiled,selectedSources=compiledSources,modules=selected.modules,transport=modules.concrete.originalIdentityTransport;
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled complete source changed');}
+    const rows=[];let nodes=0,canonicalUnits=0;
+    for(let at=0;at<request.rows.length;at++){
+      checked();const row=request.rows[at];let result;
+      try{result=transport(row.source,row.language,false);}catch(error){
+        checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
+        throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
+      }
+      checked();
+      if(result.source!==row.source||result.document.language!==row.language)fail('batch source association differs');
+      nodes+=result.document.nodes.length;canonicalUnits+=result.meta.length;
+      if(nodes>BATCH_NODES||canonicalUnits>BATCH_SERIAL)fail('batch aggregate node/canonical budget');
+      rows.push(result);
+    }
+    const result={rows,totals:{rows:rows.length,sourceCodeUnits:request.units,utf8Bytes:request.bytes,nodes,canonicalCodeUnits:canonicalUnits}};
+    const after=authenticate();checked();if(before.text!==after.text)fail('current manifest differs');
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(before.sources[row.id]!==after.sources[row.id])fail('current complete source differs');}
+    finalIdentities(before.records,before.ancestors);finalIdentities(after.records,after.ancestors);checked();
+    if(compiled!==selected||compiledSources!==selectedSources||selected.modules!==modules||modules.concrete.originalIdentityTransport!==transport)fail('batch source transaction association changed');
+    for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled source association changed');}
+    // Captured native reflection only: no callbacks/hash/IO follow this join.
+    batchInputCurrent(request.snapshots);return result;
+  }finally{active=false;}
+}

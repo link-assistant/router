@@ -1,7 +1,7 @@
 // Concrete syntax is a lossless representation level, not a semantic proof.
 // Existing semantic frontends must independently check reconstructed source.
 import {types} from 'node:util';
-import {assertPrivateParserExecution,privateParserHostAvailable,lexPrivateConcreteSource,transportPrivateConcreteSource,transportPrivateConcreteMeta} from './private-parser-execution.mjs';
+import {assertPrivateParserExecution,privateParserHostAvailable,lexPrivateConcreteSource,transportPrivateConcreteSource,transportPrivateConcreteMeta,transportPrivateConcreteSources} from './private-parser-execution.mjs';
 import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,
   originalCapturedFunctionSource,throwOriginalCapturedTypeError,originalPrivateParserIngressUnchanged} from './original-json-intrinsics.mjs';
 
@@ -372,3 +372,11 @@ export function applyConcreteSyntaxSubstitutions(value,sequences){
   }
   checked();return {value:doc,trace};
 }
+
+/** Explicit bounded data-only batch; its rows grant no semantic authority. */
+export function transportConcreteSyntaxSources(rows){
+  checked();const result=transportPrivateConcreteSources(rows);checked();return result;
+}
+
+/** Live host qualification only, never source/grammar/type authority. */
+export function assertConcreteSyntaxHost(){checked();}

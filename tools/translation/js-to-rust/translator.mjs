@@ -13,12 +13,13 @@ import { tableOwnership } from './vendor/static-tables.mjs';
 import { privateErrorContracts } from './vendor/private-contracts.mjs';
 import { jsonResponseOwnership } from './vendor/json-responses.mjs';
 import {callbackInputsFor} from './vendor/callback-inputs.mjs';
-import { discoverScopedHelpers } from './vendor/scoped-helpers.mjs';
+import { discoverScopedHelpers,collectScopedWrapperSources } from './vendor/scoped-helpers.mjs';
 import {createSourceCallIssuer,issueTopLevelSourceCallsFrom,lowerSourceCalls} from './vendor/source-calls.mjs';
 import {issueOriginalConstructorBody,lowerOriginalConstructorBody,sourceConstructorItem,assertOriginalConstructorGraph} from './vendor/constructor-bodies.mjs';
 import {createRulePipeline} from '../rule-pipeline.mjs';
-import {prepareReverseConcreteSource,parseReverseConcreteSource} from './concrete-source.mjs';
+import {prepareReverseConcreteSource,parseReverseConcreteSource,prepareReverseConcreteSources,assertReverseConcreteSourceHost} from './concrete-source.mjs';
 import {ownershipCompiler} from './vendor/module-syntax.mjs';
+import {assertPrivateParserExecution} from '../private-parser-execution.mjs';
 
 export class TranslationError extends Error {
   constructor(diagnostic) {
@@ -49,7 +50,7 @@ export function analyzeJavaScript(source,options) {
   const resolved=readAnalysisOptions(options);
   return analyzeReconstructedSource(prepareReverseConcreteSource(source),resolved);
 }
-function analyzeReconstructedSource(stage,options){
+function analyzeReconstructedSource(stage,options,scopedAnalyze=analyzeJavaScript){
   const source=stage.source;
   // Lexical CST classification is neither a grammar success nor a refusal.
   // The installed native parser still decides complete JS syntax and ASI.
@@ -58,9 +59,9 @@ function analyzeReconstructedSource(stage,options){
   // a grammar verdict or a new source/owner capability for this entry.
   const ts=ownershipCompiler(),file=ts.createSourceFile('reverse-input.mjs',source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
   if(file.parseDiagnostics.length){const error={message:'invalid authoritative JavaScript syntax: '+ts.flattenDiagnosticMessageText(file.parseDiagnostics[0].messageText,'\n')};return {fragment:FRAGMENT,program:[],items:[],diagnostics:[diagnostic(error,{start:0,end:source.length},source)]};}
-  return analyzeJavaScriptSource(source,options);
+  return analyzeJavaScriptSource(source,options,scopedAnalyze);
 }
-function analyzeJavaScriptSource(source,{includeScoped=true,sourcePath=null,lossless=false,constructorGraph}={}) {
+function analyzeJavaScriptSource(source,{includeScoped=true,sourcePath=null,lossless=false,constructorGraph}={},scopedAnalyze=analyzeJavaScript) {
   let raw,tokens;
   try {
     tokens=lex(source,'JavaScript');
@@ -136,7 +137,7 @@ function analyzeJavaScriptSource(source,{includeScoped=true,sourcePath=null,loss
     }
   }
   const censusItems=items.map(({parsed,checked,...item})=>{if(item.status!=='translated')delete item.coverageContract;return item;});
-  const scopedFunctions=includeScoped?discoverScopedHelpers(source,censusItems,analyzeJavaScript,sourcePath):undefined;
+  const scopedFunctions=includeScoped?discoverScopedHelpers(source,censusItems,scopedAnalyze,sourcePath):undefined;
   return {
     fragment: FRAGMENT,
     program: items.filter((item) => item.status === 'translated').map((item) => item.checked),
@@ -195,3 +196,41 @@ export function parseMeta(text,{constructorGraph}={}) {
 }
 
 export { emitRust, emitTypeScript };
+
+/**
+ * Explicit repository batch contract. Old analyzeJavaScript stays single-call.
+ * The delegated rule runner retains its existing IteratorClose/reflection host
+ * limitation; only the separate indexed raw batch claims its own hook guards.
+ */
+export function analyzeJavaScriptBatched(source,options){
+  const resolved=readAnalysisOptions(options);assertPrivateParserExecution();assertReverseConcreteSourceHost();let live=true,plan,batch,analysis;
+  const consume=(wrapper,attemptOptions)=>{
+    const selected=readAnalysisOptions(attemptOptions);
+    if(!live||!plan||!batch||typeof wrapper!=='string')throw Error('private same-call bulk stage unavailable');
+    let occurrence=null;
+    for(let at=0;at<plan.occurrences.length;at++){const row=plan.occurrences[at];if(row.source===wrapper){if(occurrence)throw Error('ambiguous bulk wrapper occurrence');occurrence=row;}}
+    if(!occurrence||occurrence.language!=='JavaScript'||plan.source!==source||plan.sourcePath!==resolved.sourcePath)throw Error('original bulk wrapper association differs');
+    const stage=batch.stages[occurrence.row];if(stage.source!==wrapper||stage.concreteSyntax.language!==occurrence.language)throw Error('bulk stage source/language differs');
+    // Discovery/producer hashes can change the native host after CST batching.
+    // Fidelity reuse never reuses a host epoch or an authoritative grammar.
+    assertPrivateParserExecution();assertReverseConcreteSourceHost();const result=analyzeReconstructedSource(stage,selected);assertPrivateParserExecution();assertReverseConcreteSourceHost();
+    if(!live||batch.stages[occurrence.row]!==stage||stage.source!==wrapper||stage.concreteSyntax.language!==occurrence.language||plan.source!==source||plan.sourcePath!==resolved.sourcePath)throw Error('bulk final wrapper association differs');
+    assertReverseConcreteSourceHost();return result;
+  };
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:[
+      {id:'native-bulk:plan-original-scoped-cst',apply:value=>{
+        plan=collectScopedWrapperSources(value,resolved.sourcePath);return plan;
+      }},
+      {id:'native-bulk:checked-concrete-batch',apply:value=>{
+        batch=prepareReverseConcreteSources(value.rows);if(batch.stages[0].source!==source)throw Error('bulk module reconstruction differs');return batch;
+      }},
+      {id:'native-bulk:fresh-authoritative-analysis',apply:value=>{
+        assertPrivateParserExecution();assertReverseConcreteSourceHost();analysis=analyzeReconstructedSource(value.stages[0],resolved,consume);assertPrivateParserExecution();assertReverseConcreteSourceHost();return analysis;
+      }},
+    ]},
+    {phase:'repository',rules:[{id:'native-bulk:package-source-analysis',apply:value=>({analysis:value,concreteSyntaxBatch:{schema:'native-portable-bulk-cst-v1',sourcePath:resolved.sourcePath,totals:batch.totals,occurrences:plan.occurrences.map(({row,start,end,kind,temporary,language})=>({row,start,end,kind,temporary,language})),authority:{type:false,owner:false,executable:false}}})}]},
+  ]);
+  try{const result=pipeline.run(source);assertPrivateParserExecution();assertReverseConcreteSourceHost();Object.defineProperty(result.value.concreteSyntaxBatch,'trace',{__proto__:null,value:result.trace,enumerable:true,writable:true,configurable:true});return result.value;}
+  finally{live=false;plan=null;batch=null;analysis=null;}
+}
