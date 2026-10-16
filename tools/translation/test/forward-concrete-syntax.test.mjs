@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {mkdirSync,writeFileSync} from 'node:fs';
+import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
 import {createConcreteSyntaxMeta,serializeConcreteSyntaxMeta,parseConcreteSyntaxMeta,reconstructConcreteSyntax,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
@@ -54,10 +54,28 @@ test('complete physical project sources retain one CST with genuine inline views
  for(const row of result.meta.sources)assert.equal(row.sha256,hash(files[row.source]));for(const key of ['checkedSemanticProgram','targetSemanticProgram']){const text=JSON.stringify(result.meta[key]);assert.equal(serializeProgram(parseProgram(text)),text);}
  assert.deepEqual(result.meta.refused,[]);await verifyTypedTargets(result,api=>{assert.equal(api.run(3n),6n);assert.throws(()=>api.run(255n),RangeError);},{childTimeoutMs:20000});
  const aliases={'src/lib.rs':'#[path="shared.rs"]pub mod a;#[path="shared.rs"]pub mod b;pub fn both()->u8{a::value()+b::value()}','src/shared.rs':'pub fn value()->u8{3}'},aliasReads=[];
- const aliased=translateProject({entry:'src/lib.rs',paths:Object.keys(aliases),readSource:path=>{aliasReads.push({path,source:aliases[path]});return aliases[path];}});retain('04-complete-repeated-physical-reads',{aliases,aliasReads,aliased});
- assert.deepEqual(aliasReads.map(row=>row.path),['src/lib.rs','src/shared.rs','src/shared.rs']);assert.deepEqual(aliased.meta.concreteSyntaxMeta.map(row=>row.source),aliasReads.map(row=>row.path));
- for(let at=0;at<aliasReads.length;at++)checkCst(aliased.meta.concreteSyntaxMeta[at].document,aliasReads[at].source);
- assert.equal(aliased.meta.concreteSyntaxMeta.filter(row=>row.source==='src/shared.rs').length,2);assert.notEqual(aliased.meta.concreteSyntaxMeta[1].document,aliased.meta.concreteSyntaxMeta[2].document);assert.deepEqual(aliased.meta.refused,[]);
+ const aliasOptions=events=>({entry:'src/lib.rs',paths:Object.keys(aliases),readSource:path=>{events.push({path,source:aliases[path]});return aliases[path];}});
+ const aliased=resolveModuleGraph(aliasOptions(aliasReads));
+ // Reuse the complete existing old whole-project fixture and its established
+ // pin from project-rule-pipeline.test.mjs; no extracted/handwritten baseline.
+ const originalProject=readFileSync(new URL('../fixtures/project-before-rule-pipeline-000151.mjs.txt',import.meta.url),'utf8');
+ assert.equal(hash(originalProject),'f9ea0ff4818f913f3384a7053c0eda24149420aedab6711f0dd08ca8f69561e0');
+ const projectRelocations=[],resolvedProject=originalProject.replace(/(\bfrom\s*['"])(\.[^'"]+)(['"])/gu,(_,a,b,c)=>{const to=new URL(b,new URL('../project.mjs',import.meta.url)).href;projectRelocations.push({from:b,to});return a+to+c;});
+ const reversedProject=resolvedProject.replace(/(\bfrom\s*['"])([^'"]+)(['"])/gu,(_,a,b,c)=>a+(projectRelocations.find(row=>row.to===b)?.from??b)+c);
+ assert.equal(reversedProject,originalProject);
+ const oldProject=await import('data:text/javascript;base64,'+Buffer.from(resolvedProject).toString('base64')),attempts=[];
+ for(const [label,implementation]of [['project-before-rule-pipeline-000151',oldProject.translateProject],['current',translateProject]]){
+  const events=[];let returned,error;
+  try{returned=implementation(aliasOptions(events));}catch(thrown){error={name:thrown.name,message:thrown.message,stack:thrown.stack,isTypeError:thrown instanceof TypeError};}
+  attempts.push({label,events,returned,error});
+ }
+ retain('04-complete-repeated-physical-reads',{aliases,aliasReads,aliased,originalProject,resolvedProject,reversedProject,projectRelocations,attempts});
+ assert.deepEqual(aliasReads.map(row=>row.path),['src/lib.rs','src/shared.rs','src/shared.rs']);assert.deepEqual(aliased.concreteSyntaxMeta.map(row=>row.source),aliasReads.map(row=>row.path));
+ for(let at=0;at<aliasReads.length;at++)checkCst(aliased.concreteSyntaxMeta[at].document,aliasReads[at].source);
+ assert.deepEqual(aliased.diagnostics,[]);assert.deepEqual(aliased.modules.map(row=>({file:row.file,path:row.path,source:row.source})),[{file:'src/lib.rs',path:[],source:aliases['src/lib.rs']},{file:'src/shared.rs',path:['a'],source:aliases['src/shared.rs']},{file:'src/shared.rs',path:['b'],source:aliases['src/shared.rs']}]);
+ assert.equal(aliased.concreteSyntaxMeta.filter(row=>row.source==='src/shared.rs').length,2);assert.notEqual(aliased.concreteSyntaxMeta[1].document,aliased.concreteSyntaxMeta[2].document);
+ for(const row of attempts){assert.equal(row.returned,undefined);assert.equal(row.error?.isTypeError,true);assert.equal(row.error.name,'TypeError');assert.equal(row.error.message,'Same-file macro view origins disagree with actual module paths/source');assert.deepEqual(row.events,aliasReads);}
+ assert.equal(attempts[0].error.message,attempts[1].error.message);
 });
 
 test('CST fidelity never supplies macro shadow borrowed or transitive dependency authority',{timeout:60000},async()=>{
