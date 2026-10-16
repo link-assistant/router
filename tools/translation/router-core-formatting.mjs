@@ -21,7 +21,7 @@ function formatterCurrent(){
 }
 function qualified(parser,leaf,kind){
   const c=parser.cursor;
-  return c.peek().kind==='identifier'&&c.is('crate')&&c.is('::',1)&&c.peek(2).kind==='identifier'&&c.is('translation_core',2)&&c.is('::',3)&&c.peek(4).kind===kind&&c.is(leaf,4);
+  return c.peek().kind==='identifier'&&c.is('crate')&&c.is('::',1)&&c.peek(2).kind==='identifier'&&c.is('translation_core',2)&&c.is('::',3)&&c.peek(4).kind===kind&&c.peek(4).value===leaf;
 }
 export function requireRouterCoreFacade(parser){
   const before=matchesParserFacts(parser),cursor=parser.cursor,index=cursor.index,tokens=cursor.tokens;
