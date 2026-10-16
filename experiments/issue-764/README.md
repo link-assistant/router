@@ -28,3 +28,9 @@ Local logs are kept alongside this file and ignored by Git. The protocol
 test target passes. The large library test build was stopped at about
 2.5 GiB RSS under the container's 2.92 GiB total memory limit; CI provides
 the remaining library/HTTP test validation.
+
+The first implementation CI run also found a stale CLI help fixture:
+`ci-logs/job-116831184464.log:6636` still required retired Gonka environment
+variables in help. Both marketplace HTTP tests passed in that run (lines
+5143–5144). The fixture now checks only supported secret settings, with a
+separate assertion that retired settings and their values remain absent.

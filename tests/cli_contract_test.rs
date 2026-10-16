@@ -2,13 +2,11 @@
 
 use std::process::{Command, Output};
 
-const SECRET_ENV: [(&str, &str); 7] = [
+const SECRET_ENV: [(&str, &str); 5] = [
     ("TOKEN_SECRET", "secret-leak-probe-token"),
     ("TOKEN_ADMIN_KEY", "secret-leak-probe-admin"),
     ("TELEGRAM_BOT_TOKEN", "secret-leak-probe-telegram"),
     ("VK_BOT_TOKEN", "secret-leak-probe-vk"),
-    ("GONKA_PRIVATE_KEY", "secret-leak-probe-gonka"),
-    ("GONKA_API_KEY", "secret-leak-probe-gonka-api"),
     (
         "OPENAI_COMPATIBLE_API_KEY",
         "secret-leak-probe-openai-compatible",
@@ -58,6 +56,33 @@ fn help_never_prints_secret_environment_values() {
             );
             assert!(!stdout.contains(value), "{name} leaked in help:\n{stdout}");
         }
+    }
+}
+
+#[test]
+fn retired_provider_settings_are_absent_from_help() {
+    let mut command = router(&["--help"]);
+    for name in [
+        "GONKA_PRIVATE_KEY",
+        "GONKA_API_KEY",
+        "CRATER_FORGEFED_INBOX",
+    ] {
+        command.env(name, "retired-provider-secret-probe");
+    }
+    let result = output(&mut command);
+    assert!(result.status.success());
+    let stdout = String::from_utf8_lossy(&result.stdout);
+    for retired in [
+        "GONKA_",
+        "CRATER_",
+        "--gonka-",
+        "--crater-",
+        "retired-provider-secret-probe",
+    ] {
+        assert!(
+            !stdout.contains(retired),
+            "retired setting in help: {retired}"
+        );
     }
 }
 
