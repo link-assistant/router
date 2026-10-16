@@ -391,3 +391,8 @@ import {transportPrivateConcreteParsedChunks} from './private-parser-execution.m
 export function transportConcreteSyntaxParsedChunks(chunks){
  checked();const result=transportPrivateConcreteParsedChunks(chunks);checked();return result;
 }
+
+
+import {transportPrivateConcreteMetaChunks} from './private-parser-execution.mjs';
+/** Import complete stored/edited canonical CST chunks; never semantic facts. */
+export function transportConcreteSyntaxMetaChunks(chunks){checked();const result=transportPrivateConcreteMetaChunks(chunks);checked();return result;}

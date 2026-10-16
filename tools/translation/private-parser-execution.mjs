@@ -678,3 +678,74 @@ export function transportPrivateConcreteParsedChunks(input){
     batchInputCurrent(request.snapshots);return result;
   }finally{active=false;}
 }
+
+// Canonical metadata is untrusted input. This separate stored-CST contract
+// deliberately uses the original full inspected/dense two-build workflow,
+// never the source-origin-only native-parse optimization.
+function canonicalChunkSnapshot(input,current){
+  const snapshots=[];
+  function array(value,max,label){
+    if(!value||typeof value!=='object'||proxy(value)||!current.g.Array.isArray(value)||prototype(value)!==current.g.Array.prototype)fail('canonical '+label+' dense array required');
+    const length=descriptor(value,'length');
+    if(!length||!own(length,'value')||typeof length.value!=='number'||length.value<1||length.value>max||length.value%1)fail('canonical '+label+' count');
+    const names=keys(value),expected=[];for(let at=0;at<length.value;at++)expected.push(''+at);expected.push('length');
+    if(names.length!==expected.length)fail('canonical exact '+label+' shape required');
+    for(let at=0;at<names.length;at++)if(names[at]!==expected[at])fail('canonical exact '+label+' names required');
+    const fields=[];for(let at=0;at<names.length;at++){const field=descriptor(value,names[at]);if(!field||!own(field,'value')||at<length.value&&field.enumerable!==true)fail('canonical own-data '+label+' required');fields.push(field);}
+    snapshots.push({value,parent:current.g.Array.prototype,names,fields});return {length:length.value,fields};
+  }
+  const outer=array(input,3,'chunks'),chunks=[];let canonicalUnits=0,rows=0;
+  for(let ci=0;ci<outer.length;ci++){
+    const chunk=array(outer.fields[ci].value,BATCH_ROWS,'rows'),metas=[];let units=0;
+    for(let at=0;at<chunk.length;at++){
+      const meta=chunk.fields[at].value;if(typeof meta!=='string'||meta.length>BATCH_SERIAL)fail('canonical bounded primitive metadata required');
+      units+=meta.length;canonicalUnits+=meta.length;rows++;
+      if(canonicalUnits>BATCH_SERIAL)fail('canonical aggregate input budget');metas.push(meta);
+    }
+    chunks.push({metas,canonicalUnits:units});
+  }
+  return {chunks,snapshots,canonicalUnits,rows};
+}
+/** Stored/edited CST import only; each row rebuilds and reconstructs in full. */
+export function transportPrivateConcreteMetaChunks(input){
+  const current=checked();if(active)fail('recursive source transaction');
+  const request=canonicalChunkSnapshot(input,current);active=true;
+  try{
+    const chunks=[],joins=[];let nodes=0,canonicalUnits=0,units=0,bytes=0;
+    for(let ci=0;ci<request.chunks.length;ci++){
+      const chunk=request.chunks[ci],before=authenticate();checked();
+      if(!compiled){compiled=compile(before);compiledSources=before.sources;}
+      const selected=compiled,selectedSources=compiledSources,modules=selected.modules,transport=modules.concrete.originalIdentityTransport;
+      for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled complete source changed');}
+      const rows=[];let chunkNodes=0,chunkCanonical=0,chunkUnits=0,chunkBytes=0;
+      for(let at=0;at<chunk.metas.length;at++){
+        checked();const meta=chunk.metas[at];let result;
+        try{result=transport(meta,'Rust',true);}catch(error){
+          checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
+          throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
+        }
+        checked();if(result.meta!==meta)fail('canonical input association differs');
+        // Both independent builds already recomputed and checked the complete
+        // sourceEncoding, not a caller-supplied byte count or a source flag.
+        const count=result.document.nodes.length,serial=result.meta.length,source=result.source.length,utf8=result.document.sourceEncoding.utf8Bytes;
+        nodes+=count;canonicalUnits+=serial;units+=source;bytes+=utf8;
+        chunkNodes+=count;chunkCanonical+=serial;chunkUnits+=source;chunkBytes+=utf8;
+        if(units>BATCH_SOURCE||bytes>BATCH_UTF8)fail('canonical aggregate source/UTF8 budget');
+        if(nodes>BATCH_NODES||canonicalUnits>BATCH_SERIAL)fail('canonical aggregate node/canonical budget');
+        rows.push(result);
+      }
+      const after=authenticate();checked();if(before.text!==after.text)fail('current manifest differs');
+      for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(before.sources[row.id]!==after.sources[row.id])fail('current complete source differs');}
+      finalIdentities(before.records,before.ancestors);finalIdentities(after.records,after.ancestors);checked();
+      joins.push({before,after,selected,selectedSources,modules,transport});
+      chunks.push({rows,totals:{rows:rows.length,inputCanonicalCodeUnits:chunk.canonicalUnits,sourceCodeUnits:chunkUnits,utf8Bytes:chunkBytes,nodes:chunkNodes,canonicalCodeUnits:chunkCanonical}});
+    }
+    for(let ci=0;ci<joins.length;ci++){const join=joins[ci];finalIdentities(join.before.records,join.before.ancestors);finalIdentities(join.after.records,join.after.ancestors);}checked();
+    const result={chunks,totals:{chunks:chunks.length,rows:request.rows,inputCanonicalCodeUnits:request.canonicalUnits,sourceCodeUnits:units,utf8Bytes:bytes,nodes,canonicalCodeUnits:canonicalUnits}};
+    for(let ci=0;ci<joins.length;ci++){
+      const join=joins[ci];if(compiled!==join.selected||compiledSources!==join.selectedSources||join.selected.modules!==join.modules||join.modules.concrete.originalIdentityTransport!==join.transport||join.before.text!==join.after.text)fail('canonical final source transaction association changed');
+      for(let at=0;at<join.before.manifest.sources.length;at++){const row=join.before.manifest.sources[at];if(join.selectedSources[row.id]!==join.before.sources[row.id]||join.before.sources[row.id]!==join.after.sources[row.id])fail('canonical final complete source association changed');}
+    }
+    batchInputCurrent(request.snapshots);return result;
+  }finally{active=false;}
+}

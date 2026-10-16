@@ -8,7 +8,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createRequire,syncBuiltinESMExports} from 'node:module';
 import {spawnSync} from 'node:child_process';
 import {transportPrivateConcreteChunks,transportPrivateConcreteSources,transportPrivateConcreteSource} from '../private-parser-execution.mjs';
-import {transportConcreteSyntaxChunks,parseConcreteSyntaxMeta,reconstructConcreteSyntax} from '../concrete-syntax-meta.mjs';
+import {transportConcreteSyntaxChunks,transportConcreteSyntaxMetaChunks,parseConcreteSyntaxMeta,reconstructConcreteSyntax} from '../concrete-syntax-meta.mjs';
 import {analyzeJavaScript,analyzeJavaScriptBatched,analyzeJavaScriptCorpusBatched,parseMeta,emitRust,emitTypeScript} from '../js-to-rust/translator.mjs';
 import {buildNativePortableArtifacts,buildNativePortableArtifactsBulk,buildNativePortableArtifactsCorpusBulk} from '../js-to-rust/native-portable-artifacts.mjs';
 import {collectScopedWrapperSources} from '../js-to-rust/vendor/scoped-helpers.mjs';
@@ -43,10 +43,10 @@ test('whole actual corpus outputs equal both complete existing assemblers and ev
  const sources=nativeSources(),old=await physical(t,beforeAssembler,'js-to-rust/native-portable-artifacts.mjs','before-assembler'),before=outcome(()=>old.module.buildNativePortableArtifacts(sources)),perModule=outcome(()=>old.module.buildNativePortableArtifactsBulk(sources)),current=outcome(()=>buildNativePortableArtifactsCorpusBulk(sources));
  retain('01-complete-artifact-attempts',{sources,beforeAssembler,beforeAssemblerSha256:hash(beforeAssembler),before:stored(before),perModule:stored(perModule),current:stored(current)});
  assert.ok(before.value);assert.ok(perModule.value);assert.ok(current.value);assert.deepEqual([...current.value.artifacts],[...before.value.artifacts]);assert.deepEqual(current.value.manifest,before.value.manifest);assert.deepEqual(current.value,perModule.value);
- const plan=planned(sources),audit=transportConcreteSyntaxChunks(plan.chunks),rows=audit.chunks.flatMap(chunk=>chunk.rows),observations=[];
- for(let at=0;at<rows.length;at++){const row=rows[at],parsed=parseConcreteSyntaxMeta(row.meta),source=reconstructConcreteSyntax(parsed);observations.push({index:at,input:plan.rows[at],row,parsed,source});}
- retain('01-complete-cst-audit',{sources,plans:plan.plans,chunkRows:plan.chunks.map(chunk=>chunk.length),audit,observations});
- assert.equal(rows.length,plan.rows.length);assert.ok(plan.chunks.length<=3);for(const row of observations){assert.equal(row.source,row.input.source);assert.deepEqual(row.parsed,row.row.document);assert.deepEqual(row.row.document.authority,{type:false,owner:false,executable:false});assert.equal(row.row.document.language,row.input.language);}assert.ok(audit.totals.nodes<=200000);assert.ok(audit.totals.canonicalCodeUnits<=33554432);
+ const plan=planned(sources),audit=transportConcreteSyntaxChunks(plan.chunks),rows=audit.chunks.flatMap(chunk=>chunk.rows),canonicalInput=audit.chunks.map(chunk=>chunk.rows.map(row=>row.meta)),canonicalAudit=transportConcreteSyntaxMetaChunks(canonicalInput),canonicalRows=canonicalAudit.chunks.flatMap(chunk=>chunk.rows),observations=[];
+ for(let at=0;at<rows.length;at++){const row=rows[at],canonical=canonicalRows[at],parsed=canonical.document,source=canonical.source;observations.push({index:at,input:plan.rows[at],row,parsed,source,canonical});}
+ retain('01-complete-cst-audit',{sources,plans:plan.plans,chunkRows:plan.chunks.map(chunk=>chunk.length),audit,canonicalInput,canonicalAudit,observations});
+ assert.equal(rows.length,plan.rows.length);assert.equal(canonicalRows.length,rows.length);assert.equal(canonicalAudit.totals.inputCanonicalCodeUnits,rows.reduce((n,row)=>n+row.meta.length,0));assert.ok(plan.chunks.length<=3);for(const row of observations){assert.equal(row.canonical.meta,row.row.meta);assert.equal(row.source,row.input.source);assert.deepEqual(row.parsed,row.row.document);assert.deepEqual(row.row.document.authority,{type:false,owner:false,executable:false});assert.equal(row.row.document.language,row.input.language);}assert.ok(audit.totals.nodes<=200000);assert.ok(audit.totals.canonicalCodeUnits<=33554432);
 });
 
 test('chunk boundaries preserve complete independent single results including opaque and UTF16 source',{timeout:60000},()=>{
