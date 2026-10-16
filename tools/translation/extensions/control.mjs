@@ -347,19 +347,20 @@ export class ControlEmitter extends StringEmitter {
     const entry=node.scrutinee.type.kind==='data'?this.program.declarations.get(node.scrutinee.type.name):null;
     const known=node.scrutinee.k==='ctor'?node.scrutinee:node.scrutinee.k==='var'?this.controlConstructors?.get(node.scrutinee.name):null;
     if(known&&entry&&known.data===entry.fullName&&known.type.kind==='data'&&known.type.name===entry.fullName) {
-      // Every arm was checked before emission. An immutable local initialized
-      // by this actual constructor has one possible tag; keep its evaluation
-      // and field reads once, avoiding impossible TypeScript comparisons.
+      // Every arm was checked before emission. Keep the real tag test before
+      // constructor projections: a checked local is widened to its full Rust
+      // union in TypeScript, so a naked selected arm has no narrowing proof.
       const arm=node.cases.find(arm=>['wild','bind'].includes(arm.pattern.k)||arm.pattern.k==='ctor'&&arm.pattern.ctor===known.ctor);
       if(!arm)throw new Error('known statement constructor lacks its checked exhaustive arm');
-      const pattern=arm.pattern,binds=[];
+      const pattern=arm.pattern,binds=[];let constructorCondition=null;
       if(pattern.k==='bind')binds.push(`const ${pattern.name} = ${subject};`);
       if(pattern.k==='ctor') {
         const ctor=entry.ctors.find(value=>value.name===pattern.ctor);
         if(!ctor||pattern.binds.length!==ctor.fields.length)throw new Error('known statement constructor differs from its actual checked fields');
+        constructorCondition=`${subject}.$ === ${JSON.stringify(ctor.name)}`;
         pattern.binds.forEach((name,index)=>{if(name&&name!=='_')binds.push(`const ${name} = ${subject}[${JSON.stringify(ctor.fields[index].name)}];`);});
       }
-      return [...lines,'{',...indent([...binds,...this.statements(arm.body,true)]),'}'];
+      return [...lines,constructorCondition?`if (${constructorCondition}) {`:'{',...indent([...binds,...this.statements(arm.body,true)]),constructorCondition?'} else { throw new TypeError("unexpected checked match constructor"); }':'}'];
     }
     let first=true,terminal=false;
     for(const arm of node.cases) {
