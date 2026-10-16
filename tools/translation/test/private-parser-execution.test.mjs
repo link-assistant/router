@@ -298,7 +298,7 @@ test('hash-time native mutation and recursive entry cannot expose or initialize 
     if(mode.endsWith('-dual')){
       try{
         define(parent,'update',{...prior,value:function(input,...args){const value=apply(prior.value,this,[input,...args]);probe.hashTape.push(typeof input==='string'?input:Buffer.from(input).toString('utf8'));return value;}});
-        define(fs.default,'readSync',{...oldRead,value:function(...args){const count=apply(oldRead.value,this,args);probe.readTape.push({count,source:Buffer.from(args[1]).toString('utf8')});return count;}});syncBuiltinESMExports();
+        define(fs.default,'readSync',{...oldRead,value:function(...args){const count=apply(oldRead.value,this,args);probe.readTape.push({count,source:Buffer.from(args[1]).toString('utf8'),thisUndefined:this===undefined,argCount:args.length,offset:args[2],length:args[3],position:args[4]});return count;}});syncBuiltinESMExports();
         probe.result=outcome(()=>serializeConcreteSyntaxMeta(publicDoc));
       }finally{define(parent,'update',prior);define(fs.default,'readSync',oldRead);syncBuiltinESMExports();}
     }
@@ -317,13 +317,29 @@ test('hash-time native mutation and recursive entry cannot expose or initialize 
       }
       return value;
     }});
-      if(mode==='read-dual'){define(fs.default,'readSync',{...oldRead,value:function(...args){const count=apply(oldRead.value,this,args);readCalls++;const observed={count,source:Buffer.from(args[1]).toString('utf8')};readTape.push(observed);tape.push({phase:'read',...observed});if(readCalls===armRead)dual();return count;}});syncBuiltinESMExports();}
+      if(mode==='read-dual'){define(fs.default,'readSync',{...oldRead,value:function(...args){const count=apply(oldRead.value,this,args);readCalls++;const observed={count,source:Buffer.from(args[1]).toString('utf8'),thisUndefined:this===undefined,argCount:args.length,offset:args[2],length:args[3],position:args[4]};readTape.push(observed);tape.push({phase:'read',...observed});if(readCalls===armRead)dual();return count;}});syncBuiltinESMExports();}
       result=outcome(()=>mode.endsWith('-dual')?applyConcreteSyntaxSubstitutions(publicDoc,{languageRules:[{id:'change-original',edits:[{node:number,expected:'1',replacement:'2'}]}],repositoryRules:[]}):lexPrivateConcreteSource('pub fn value() {}','Rust'));
     }
     finally{define(parent,'update',prior);define(Array.prototype,'find',find);if(oldReturn)define(iterator,'return',oldReturn);else delete iterator.return;define(fs.default,'readSync',oldRead);syncBuiltinESMExports();}
     const positive=outcome(()=>lexPrivateConcreteSource('pub fn value() {}','Rust'));records.push({mode,publicSource,editedSource:publicSource.replace('1','2'),number,probe,armHash,armRead,callbackCalls,readCalls,findCalls,rawHooks,nested,result,positive,tape,hashTape,readTape});
   }
-  retain('06-hash-native-reentry',records);
+  const invalidReads=[];
+  for(const mode of ['getter','proxy']){
+    let callbacks=0,calls=0,traps=0,result;const tape=[];
+    try{
+      define(parent,'update',{...prior,value:function(input,...args){
+        const value=apply(prior.value,this,[input,...args]);callbacks++;tape.push(typeof input==='string'?input:Buffer.from(input).toString('utf8'));
+        if(callbacks===1){
+          if(mode==='getter')define(fs.default,'readSync',{get(){calls++;return oldRead.value;},configurable:true});
+          else define(fs.default,'readSync',{...oldRead,value:new Proxy(oldRead.value,{apply(){calls++;throw Error('late source read proxy called');},get(){traps++;return undefined;},ownKeys(){traps++;return [];},getPrototypeOf(){traps++;return null;},getOwnPropertyDescriptor(){traps++;return undefined;}})});
+        }
+        return value;
+      }});
+      result=outcome(()=>lexPrivateConcreteSource('pub fn guarded_read() {}','Rust'));
+    }finally{define(parent,'update',prior);define(fs.default,'readSync',oldRead);syncBuiltinESMExports();}
+    const positive=outcome(()=>lexPrivateConcreteSource('pub fn guarded_read() {}','Rust'));invalidReads.push({mode,callbacks,calls,traps,result,positive,tape});
+  }
+  retain('06-hash-native-reentry',records);retain('06-late-invalid-source-read',invalidReads);
   assert.ok(records[0].result.error);assert.equal(records[0].findCalls,0);assert.ok(records[1].nested.error);assert.match(records[1].nested.error.message,/recursive source transaction/u);
   for(const row of records){assert.ok(row.mode==='read-dual'?row.readCalls>0:row.callbackCalls>0);assert.ok(row.positive.value);assert.equal(row.rawHooks,0);}
   for(const row of records.filter(row=>['length','prototype'].includes(row.mode)))assert.ok(row.result.value,row.mode);
@@ -331,7 +347,9 @@ test('hash-time native mutation and recursive entry cannot expose or initialize 
   for(const row of records.filter(row=>row.mode.endsWith('-dual'))){assert.ok(row.probe.result.value);assert.ok(row.probe.hashTape.length>0);assert.ok(row.probe.readTape.length>0);assert.ok(row.result.error,row.mode);assert.equal(row.findCalls,0);
     assert.deepEqual(row.hashTape.slice(0,row.probe.hashTape.length),row.probe.hashTape);
     if(row.mode==='hash-dual')assert.equal(row.callbackCalls,row.armHash);else{assert.deepEqual(row.readTape.slice(0,row.probe.readTape.length),row.probe.readTape);assert.equal(row.readCalls,row.armRead);}
+    for(const read of [...row.probe.readTape,...row.readTape]){assert.equal(read.thisUndefined,true);assert.equal(read.argCount,5);}
   }
+  for(const row of invalidReads){assert.ok(row.callbacks>0);assert.equal(row.calls,0);assert.equal(row.traps,0);assert.equal(row.result.error.name,'TypeError');assert.match(row.result.error.message,/own-data source read function required/u);assert.ok(row.positive.value);}
 });
 
 test('primitive bounds detached output mutation and private constructor boundaries remain explicit',{timeout:60000},()=>{

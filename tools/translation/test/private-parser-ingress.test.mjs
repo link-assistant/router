@@ -7,6 +7,7 @@ import {syncBuiltinESMExports} from 'node:module';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {types} from 'node:util';
 // This SAME common issuer is initialized normally before every poison control.
 // Fresh leaves below do not claim authentication of a poisoned common bootstrap.
 import {originalPrivateParserIngressUnchanged as ingress} from '../original-json-intrinsics.mjs';
@@ -16,7 +17,7 @@ import {prepareReverseConcreteSource} from '../js-to-rust/concrete-source.mjs';
 
 const root=globalThis,StockSymbol=Symbol,descriptor=Object.getOwnPropertyDescriptor;
 const define=Object.defineProperty,own=Object.hasOwn,keys=Reflect.ownKeys,apply=Reflect.apply;
-const parent=Object.getPrototypeOf,remove=Reflect.deleteProperty,bind=Function.prototype.bind;
+const parent=Object.getPrototypeOf,remove=Reflect.deleteProperty,bind=Function.prototype.bind,create=Object.create,isProxy=types.isProxy;
 const stringify=JSON.stringify;
 const originalGlobal=descriptor(root,'globalThis'),originalSymbol=descriptor(root,'Symbol');
 const rust='fn answer() -> u8 { 7 }',javascript='export const value = 7;';
@@ -101,19 +102,39 @@ test('a post-bootstrap cold Symbol accessor is refused before species or iterato
   assertRestored();const baseline=positive(),rows=[];for(const kind of ['executor','core','reverse'])rows.push(await coldControl('03-symbol-accessor-'+kind,'Symbol',undefined,kind));const restored=positive();retain('03-restored',{rows,baseline,restored,cachedExecutorBeforeFreshPublicImports:true});assert.deepEqual(restored,baseline);
 });
 
-test('foreign same-shape Symbol functions and proxy data replacements gain no ingress or cold qualification',{timeout:60000},async()=>{
-  assertRestored();const foreign=apply(bind,StockSymbol,[undefined]);
-  const initialForeignKeys=keys(foreign),stockKeys=keys(StockSymbol);
-  // Bound functions create length/name first, while Bun's stock Symbol starts
-  // with for/keyFor. Rebuild the configurable initial fields in STOCK order.
-  for(const key of initialForeignKeys){assert.equal(descriptor(foreign,key).configurable,true);assert.equal(remove(foreign,key),true);}
+test('foreign exact-shape Symbol objects same-descriptor callables and proxies gain no ingress or cold qualification',{timeout:60000},async()=>{
+  assertRestored();const foreign=create(parent(StockSymbol)),stockKeys=keys(StockSymbol);
   for(const key of stockKeys)define(foreign,key,descriptor(StockSymbol,key));
-  retain('04-foreign-shape-before-assert',{initialForeignKeys,stockKeys,foreignKeys:keys(foreign),samePrototype:parent(foreign)===parent(StockSymbol),descriptors:stockKeys.map(key=>({key,field:descriptorFacts(descriptor(foreign,key),descriptor(StockSymbol,key))}))});
+  let callableCalls=0;
+  const target=(...args)=>{callableCalls++;return apply(StockSymbol,undefined,args);},callable=apply(bind,target,[undefined]),initialCallableKeys=keys(callable),deletions=[];
+  for(const key of initialCallableKeys){const field=descriptor(callable,key);deletions.push({key,configurable:field.configurable,removed:field.configurable?remove(callable,key):false});}
+  for(const key of stockKeys)define(callable,key,descriptor(StockSymbol,key));
+  const callableKeys=keys(callable),callableOrderEqualsStock=callableKeys.length===stockKeys.length&&callableKeys.every((key,index)=>key===stockKeys[index]);
+  retain('04-foreign-shape-before-assert',{versions:process.versions,stockKeys,foreignKeys:keys(foreign),foreignType:typeof foreign,callableType:typeof callable,initialCallableKeys,deletions,callableKeys,callableOrderEqualsStock,
+    proofDomains:{object:'exact own-key order descriptors and parent; noncallable',callable:'all own keys descriptors and parent; actual runtime function ordering retained'},
+    samePrototype:parent(foreign)===parent(StockSymbol),descriptors:stockKeys.map(key=>({key,object:descriptorFacts(descriptor(foreign,key),descriptor(StockSymbol,key)),callable:descriptorFacts(descriptor(callable,key),descriptor(StockSymbol,key))}))});
   assert.deepEqual(keys(foreign),keys(StockSymbol));assert.equal(parent(foreign),parent(StockSymbol));
   for(const key of keys(StockSymbol))assert.deepEqual(descriptor(foreign,key),descriptor(StockSymbol,key));
-  const shape={keys:keys(StockSymbol).map(key=>typeof key==='symbol'?'well-known-symbol':key),sameOwnDescriptors:true,samePrototype:true,distinctIdentity:foreign!==StockSymbol};
+  assert.equal(typeof foreign,'object');assert.equal(isProxy(foreign),false);assert.equal(typeof callable,'function');assert.equal(isProxy(callable),false);assert.notEqual(callable,StockSymbol);
+  for(const row of deletions){assert.equal(row.configurable,true);assert.equal(row.removed,true);}
+  assert.equal(callableKeys.length,stockKeys.length);assert.equal(parent(callable),parent(StockSymbol));
+  for(const key of stockKeys){assert.equal(own(callable,key),true);assert.deepEqual(descriptor(callable,key),descriptor(StockSymbol,key));}
+  // These are observed ordering facts, not a guard/domain exception. Every
+  // runtime still executes BOTH foreign-value live and physical-cold controls.
+  if(process.versions.bun){assert.deepEqual(stockKeys.slice(0,4),['for','keyFor','length','name']);assert.deepEqual(callableKeys,['length','name',...stockKeys.filter(key=>key!=='length'&&key!=='name')]);assert.equal(callableOrderEqualsStock,false);}
+  else assert.deepEqual(callableKeys,stockKeys);
+  const shape={stockKeys,objectKeys:keys(foreign),callableKeys,callableOrderEqualsStock,sameOwnDescriptors:true,samePrototype:true,distinctIdentities:foreign!==StockSymbol&&callable!==StockSymbol};
   const observations=[];
-  observations.push(await coldControl('04-foreign-symbol','Symbol',{...originalSymbol,value:foreign}));
+  for(const row of [{label:'04-foreign-exact-object',value:foreign},{label:'04-foreign-callable',value:callable}]){
+    let during,live,cold;
+    try{define(root,'Symbol',{...originalSymbol,value:row.value});during=attempt(()=>ingress());live=attempt(()=>assertPrivateParserExecution());}
+    finally{restoreGlobals();}
+    retain(row.label+'-live-before-assert',{during:observed(during),live:observed(live),callableCalls});
+    try{cold=await coldControl(row.label,'Symbol',{...originalSymbol,value:row.value});}
+    finally{retain(row.label+'-callback-tape',{callableCalls});}
+    observations.push({label:row.label,during:observed(during),live:observed(live),cold,callableCalls});
+    assert.equal(during.value,false);assert.equal(errorFacts(live.error).name,'TypeError');assert.equal(callableCalls,0);
+  }
   for(const key of ['globalThis','Symbol']){
     let traps=0;const proxy=new Proxy(key==='globalThis'?root:StockSymbol,{get(){traps++;return undefined;},ownKeys(){traps++;return [];},getPrototypeOf(){traps++;return null;},getOwnPropertyDescriptor(){traps++;return undefined;}});
     const row=await coldControl('04-proxy-'+key,key,{...(key==='globalThis'?originalGlobal:originalSymbol),value:proxy});
@@ -165,12 +186,26 @@ test('a real source hash callback installing global accessors is stopped before 
 test('a real complete-source read callback installing global accessors is stopped and builtin bindings are restored before return',{timeout:60000},()=>{
   assertRestored();const baseline=positive(),originalRead=descriptor(fs,'readSync'),observations=[];
   for(const key of ['globalThis','Symbol']){
-    let callbacks=0,getters=0,armed=true,result;
+    let callbacks=0,getters=0,armed=true,result;const tape=[];
     try{
-      define(fs,'readSync',{...originalRead,value:function ingressChangingRead(...args){const value=apply(originalRead.value,this,args);callbacks++;if(armed){armed=false;define(root,key,{configurable:true,enumerable:false,get(){getters++;return key==='globalThis'?root:StockSymbol;}});}return value;}});syncBuiltinESMExports();
+      define(fs,'readSync',{...originalRead,value:function ingressChangingRead(...args){const value=apply(originalRead.value,this,args);callbacks++;tape.push({thisUndefined:this===undefined,argCount:args.length,offset:args[2],length:args[3],position:args[4],count:value,source:Buffer.from(args[1]).toString('utf8')});if(armed){armed=false;define(root,key,{configurable:true,enumerable:false,get(){getters++;return key==='globalThis'?root:StockSymbol;}});}return value;}});syncBuiltinESMExports();
       result=attempt(()=>lexPrivateConcreteSource(rust,'Rust'));
     }finally{restoreGlobals();define(fs,'readSync',originalRead);syncBuiltinESMExports();}
-    const restored=positive(),row={key,callbacks,getters,result:observed(result),restored,builtinReadRestored:descriptor(fs,'readSync').value===originalRead.value};observations.push(row);retain('08-'+key,row);assert.ok(callbacks>0,'the actual executor source read must cross the installed callback');assert.equal(getters,0);assert.equal(errorFacts(result.error).name,'TypeError');assert.equal(row.builtinReadRestored,true);assert.deepEqual(restored,baseline);assertRestored();
+    const restored=positive(),row={key,callbacks,getters,result:observed(result),restored,tape,builtinReadRestored:descriptor(fs,'readSync').value===originalRead.value};observations.push(row);retain('08-'+key,row);assert.ok(callbacks>0,'the actual executor source read must cross the installed callback');assert.equal(getters,0);assert.equal(errorFacts(result.error).name,'TypeError');assert.equal(row.builtinReadRestored,true);assert.deepEqual(restored,baseline);for(const read of tape){assert.equal(read.thisUndefined,true);assert.equal(read.argCount,5);}assertRestored();
   }
-  retain('08-complete',{observations});
+  const invalid=[];
+  for(const mode of ['getter','proxy','missing','nonfunction']){
+    let calls=0,traps=0,result,changed;
+    try{
+      if(mode==='getter')define(fs,'readSync',{get(){calls++;return originalRead.value;},configurable:true});
+      else if(mode==='proxy')define(fs,'readSync',{...originalRead,value:new Proxy(originalRead.value,{apply(){calls++;throw Error('read proxy called');},get(){traps++;return undefined;},ownKeys(){traps++;return [];},getPrototypeOf(){traps++;return null;},getOwnPropertyDescriptor(){traps++;return undefined;}})});
+      else if(mode==='missing')remove(fs,'readSync');
+      else define(fs,'readSync',{...originalRead,value:{toString(){calls++;return 'not a read function';}}});
+      changed=descriptor(fs,'readSync');result=attempt(()=>lexPrivateConcreteSource(rust,'Rust'));
+      // Do not ask syncBuiltinESMExports to read an accessor/proxy field.
+    }finally{define(fs,'readSync',originalRead);syncBuiltinESMExports();}
+    const restored=positive(),row={mode,calls,traps,changed:descriptorFacts(changed,originalRead),result:observed(result),restored};invalid.push(row);retain('08-invalid-'+mode,row);
+    assert.equal(errorFacts(result.error).name,'TypeError');assert.equal(calls,0);assert.equal(traps,0);assert.deepEqual(restored,baseline);assertRestored();
+  }
+  retain('08-complete',{observations,invalid});
 });

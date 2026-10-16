@@ -1,7 +1,7 @@
 // Native closure for the fixed private parser graph. This does not change the
 // existing common guard domains or authenticate public parser class identities.
 import {types} from 'node:util';
-import {constants,openSync,readSync,closeSync,fstatSync,lstatSync} from 'node:fs';
+import fs,{constants,openSync,closeSync,fstatSync,lstatSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {fileURLToPath,URL as SourceURL} from 'node:url';
 import {dirname,join} from 'node:path';
@@ -172,6 +172,15 @@ const sameIdentity=(a,b)=>a.dev===b.dev&&a.ino===b.ino&&a.size===b.size&&a.mode=
 // Directory entry churn does not change the identity of an authenticated path.
 const sameDirectoryIdentity=(a,b)=>a.dev===b.dev&&a.ino===b.ino&&a.mode===b.mode;
 function regular(stat){return (stat.mode&0o170000)===0o100000;}
+function observedRead(fd,bytes,offset,length,position){
+  // Bun does not rebind a named readSync import after syncBuiltinESMExports.
+  // Observe the actual current own-data operation at every read, without a
+  // property lookup that could invoke an accessor or proxy trap.
+  if(!fs||typeof fs!=='object'||proxy(fs))fail('nonproxy source filesystem required');
+  const field=descriptor(fs,'readSync');
+  if(!field||!own(field,'value')||typeof field.value!=='function'||proxy(field.value))fail('own-data source read function required');
+  return apply(field.value,undefined,[fd,bytes,offset,length,position]);
+}
 function readOriginal(path,limit,records,ancestors){
   checked();
   for(let parent=dirname(path);parent!==dirname(parent);parent=dirname(parent)){
@@ -187,8 +196,8 @@ function readOriginal(path,limit,records,ancestors){
     checked();
     const openedValue=fstatSync(fd);checked();const opened=statIdentity(openedValue);if(!sameIdentity(before,opened))fail('source fd differs');
     const bytes=new state.g.Uint8Array(opened.size);let at=0;
-    while(at<opened.size){const count=readSync(fd,bytes,at,opened.size-at,at);checked();if(typeof count!=='number'||count%1!==0||count<=0||count>opened.size-at)fail('invalid or truncated source read');at+=count;}
-    const extra=new state.g.Uint8Array(1),tail=readSync(fd,extra,0,1,at);checked();
+    while(at<opened.size){const count=observedRead(fd,bytes,at,opened.size-at,at);checked();if(typeof count!=='number'||count%1!==0||count<=0||count>opened.size-at)fail('invalid or truncated source read');at+=count;}
+    const extra=new state.g.Uint8Array(1),tail=observedRead(fd,extra,0,1,at);checked();
     const after=fstatSync(fd);checked();const named=lstatSync(path);checked();
     if(tail!==0||!sameIdentity(opened,statIdentity(after))||!sameIdentity(opened,statIdentity(named)))fail('source changed during read');
     records.push({path,identity:opened});return bytes;
