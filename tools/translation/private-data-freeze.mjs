@@ -17,35 +17,22 @@ function remember(value,record,isRoot){
  else{if(!small||smallSlots>=SMALL_LIMIT){small=new WeakMap();smallSlots=0;}small.set(value,encoded);smallSlots++;}
 }
 function plan(value,lookup){
- const states=new Map(),order=[],pending=[value,0,null];let uniqueCells=0;
- while(pending.length){
-  const state=pending.pop(),depth=pending.pop(),value=pending.pop();
-  if(state!==null){
-   let cells=state.cells,height=1,jsonFlags=state.jsonFlags;
-   for(let index=0;index<state.children.length;index++){
-    const child=state.children[index];
-    const cost=states.get(child)??lookup(child);
-    if(!cost||typeof cost!=='number'&&!cost.done)return null;
-    const packed=typeof cost==='number'?cost>>>2:0;
-    cells+=typeof cost==='number'?packed%RECORD_BASE:cost.cells;const nextHeight=1+(typeof cost==='number'?(packed/RECORD_BASE)|0:cost.height);if(nextHeight>height)height=nextHeight;
-    jsonFlags&=typeof cost==='number'?cost&3:cost.jsonFlags;
-    if(cells>CELL_LIMIT)cells=CELL_LIMIT+1;
-   }
-   if(depth+height>DEPTH_LIMIT)return null;
-   state.cells=cells;state.height=height;state.jsonFlags=jsonFlags;state.done=true;order.push(state);continue;
-  }
-  if(value===null||typeof value!=='object'){if(typeof value==='function')return null;continue;}
+ const states=new Map(),order=[];let uniqueCells=0;
+ // A bounded native-only DFS returns each child's completed scalar cost to
+ // its parent directly. It avoids the pending triples and second child-map
+ // walk; states still detect cycles and retain shared-edge multiplicity.
+ function visit(value,depth){
+  if(value===null||typeof value!=='object')return typeof value==='function'?null:0;
   if(types.isProxy(value))return null;
   const known=states.get(value)??lookup(value);
-  if(known){if(typeof known!=='number'&&!known.done||depth+(typeof known==='number'?((known>>>2)/RECORD_BASE)|0:known.height)>DEPTH_LIMIT)return null;continue;}
+  if(known)return typeof known!=='number'&&!known.done||depth+(typeof known==='number'?((known>>>2)/RECORD_BASE)|0:known.height)>DEPTH_LIMIT?null:known;
   if(depth>=DEPTH_LIMIT||states.size>=NODE_LIMIT)return null;
   const array=Array.isArray(value),prototype=Object.getPrototypeOf(value);
   if(prototype!==(array?Array.prototype:Object.prototype)&&!(prototype===null&&!array))return null;
   if(array&&value.length>=CELL_LIMIT)return null;
   const keys=Reflect.ownKeys(value);uniqueCells+=1+keys.length;if(uniqueCells>CELL_LIMIT)return null;
   if(array&&(keys.length!==value.length+1||keys.at(-1)!=='length'))return null;
-  // Reuse the private own-key array; only object edges need a later cost join.
-  // Scalar occurrences still count once each, including repeated values.
+  // Finish the same complete own-descriptor census before visiting children.
   const children=keys;let objectChildren=0,scalarCells=1,jsonFlags=3;
   for(let index=0;index<keys.length;index++){
    const key=keys[index];if(typeof key!=='string')return null;
@@ -58,8 +45,6 @@ function plan(value,lookup){
    else{scalarCells++;if(typeof field.value==='bigint'||typeof field.value==='symbol')jsonFlags&=2;}
   }
   children.length=objectChildren;
-  // Only an entirely completed child set has no later cold descriptor walk.
-  // A miss keeps the exact original pending order, including callback effects.
   let completedCells=scalarCells,completedHeight=1,completedFlags=jsonFlags;
   let allCompleted=objectChildren>=MIN_COMPLETED_CHILDREN&&originalDataFreezeIntrinsicsUnchanged();
   if(allCompleted)for(let index=0;index<children.length;index++){
@@ -70,12 +55,23 @@ function plan(value,lookup){
    const nextHeight=1+((packed/RECORD_BASE)|0);if(nextHeight>completedHeight)completedHeight=nextHeight;
    completedFlags&=cost&3;
   }
-  const selected={value,children,cells:allCompleted?completedCells:scalarCells,height:allCompleted?completedHeight:objectChildren===0?1:0,jsonFlags:allCompleted?completedFlags:jsonFlags,done:allCompleted||objectChildren===0};states.set(value,selected);
-  if(selected.done){order.push(selected);continue;}
-  pending.push(value,depth,selected);
-  for(let index=children.length-1;index>=0;index--)pending.push(children[index],depth+1,null);
+  const selected={value,cells:allCompleted?completedCells:scalarCells,height:allCompleted?completedHeight:1,jsonFlags:allCompleted?completedFlags:jsonFlags,done:allCompleted||objectChildren===0};states.set(value,selected);
+  if(!selected.done){
+   for(let index=0;index<children.length;index++){
+    const cost=visit(children[index],depth+1);if(cost===null)return null;
+    const packed=typeof cost==='number'?cost>>>2:0;
+    selected.cells+=typeof cost==='number'?packed%RECORD_BASE:cost.cells;
+    if(selected.cells>CELL_LIMIT)selected.cells=CELL_LIMIT+1;
+    const nextHeight=1+(typeof cost==='number'?(packed/RECORD_BASE)|0:cost.height);if(nextHeight>selected.height)selected.height=nextHeight;
+    selected.jsonFlags&=typeof cost==='number'?cost&3:cost.jsonFlags;
+   }
+   if(depth+selected.height>DEPTH_LIMIT)return null;
+   selected.done=true;
+  }
+  order.push(selected);return selected;
  }
- const root=lookup(value)??states.get(value);
+ const selected=visit(value,0);if(selected===null)return null;
+ const root=lookup(value)??selected;
  return root&&(typeof root==='number'||root.done)?{order,root:typeof root==='number'?{height:((root>>>2)/RECORD_BASE)|0,cells:(root>>>2)%RECORD_BASE,jsonFlags:root&3,done:true}:root}:null;
 }
 // The caller supplies its unchanged legacy recursive closure, not a callback
