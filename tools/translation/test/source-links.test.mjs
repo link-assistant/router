@@ -77,7 +77,7 @@ test('project global offsets retain local UTF-16 ranges and original resolved ca
 test('original STACK_BYTES and MAX_RETRY_AFTER receive independently pinned source proofs',{timeout:30000},async()=>{
   for(const pin of [
     {path:'src/entrypoint.rs',name:'STACK_BYTES',sourceSha:'39268a95729f7c2f4004ce47761afb31369ddb600ff3c63b3fc890868f6aa85e',span:[677,721],body:[704,720],declarationSha:'0be2725212bd633b4ba92f7ec53651d19475018d26014bf2960896808d6fe8d1',assert:api=>assert.equal(api.STACK_BYTES,16777216n)},
-    {path:'src/request_routing.rs',name:'MAX_RETRY_AFTER',sourceSha:'7489a49ea2486fe0bb66c96f03d8bb413219a5a0d287f2b4f8922ffd12f03a86',span:[169,241],body:[207,240],declarationSha:'b783afd2f14624b09072b47aae14903b6c4b416daf3234657cb7af9fedc14f12',assert:api=>assert.deepEqual(api.MAX_RETRY_AFTER,{$:'Duration',secs:86400n,nanos:0n})},
+    {path:'src/request_routing.rs',name:'MAX_RETRY_AFTER',sourceSha:'983ec98db6d62721c2675f8c94256507c48985c504c063c9e9b80933ff6a7c42',span:[169,241],body:[207,240],declarationSha:'b783afd2f14624b09072b47aae14903b6c4b416daf3234657cb7af9fedc14f12',assert:api=>assert.deepEqual(api.MAX_RETRY_AFTER,{$:'Duration',secs:86400n,nanos:0n})},
   ]){
     const source=readFileSync(new URL('../../../'+pin.path,import.meta.url),'utf8');assert.equal(hash(source),pin.sourceSha);
     const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source}),entry=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get(pin.name);
