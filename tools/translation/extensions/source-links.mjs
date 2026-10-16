@@ -180,7 +180,7 @@ function rangeSyntaxOrigin(parser,syntax,semantic,offset){
   const visit=(original,actual,depth=0)=>{
     if(--cells<0||depth>160||!original||typeof original!=='object'||!actual||typeof actual!=='object'||types.isProxy(original)||types.isProxy(actual))return;
     const kind=Object.getOwnPropertyDescriptor(original,'k');
-    if(kind&&Object.hasOwn(kind,'value')&&(kind.value==='routerCoreF64InclusiveCall'||kind.value==='routerCoreScalarCountCall'||kind.value==='routerCoreJsonCall'||kind.value==='routerLetElse')){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
+    if(kind&&Object.hasOwn(kind,'value')&&(kind.value==='routerCoreF64InclusiveCall'||kind.value==='routerCoreScalarCountCall'||kind.value==='routerCoreJsonCall'||kind.value==='routerCoreJsonUpdateCall'||kind.value==='routerLetElse')){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
     for(const key of Reflect.ownKeys(original))if(typeof key==='string'&&!['type','span','length'].includes(key)){
       const left=Object.getOwnPropertyDescriptor(original,key),right=Object.getOwnPropertyDescriptor(actual,key);
       if(left&&right&&Object.hasOwn(left,'value')&&Object.hasOwn(right,'value')){path.push(key);visit(left.value,right.value,depth+1);path.pop();}

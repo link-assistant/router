@@ -89,8 +89,9 @@ import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
 import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern} from '../router-core-algebraic.mjs';
 import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
 import {parseRouterCoreJson,captureRouterCoreJsonCalls,checkRouterCoreJson} from '../router-core-json.mjs';
+import {parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
 
-export const HOST_CONTRACTS=[ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
+export const HOST_CONTRACTS=[...ROUTER_CORE_JSON_UPDATE_CONTRACTS,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
 const span=(start,end)=>({start:start.start,end:end.end});
 const runtimeValueType=type=>type.kind==='fixed'?{kind:'fixed',bits:type.bits,signed:type.signed}:type.kind==='array'?{kind:'array',element:runtimeValueType(type.element),...(type.rustFixedArray?{rustFixedArray:{length:type.rustFixedArray.length}}:{})}:type.kind==='named'?{kind:'data',name:(type.path[0]==='crate'?type.path.slice(1):type.path).join('.')}:type.kind==='data'?{kind:'data',name:type.name}:{kind:type.kind};
@@ -337,6 +338,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     const coreRange=parseRouterCoreRangeCall(this,path);if(coreRange)return coreRange;
     const coreFormat=parseRouterCoreFormatting(this,path);if(coreFormat)return coreFormat;
     const coreJson=parseRouterCoreJson(this,path);if(coreJson)return coreJson;
+    const coreJsonUpdate=parseRouterCoreJsonUpdate(this,path);if(coreJsonUpdate)return coreJsonUpdate;
     const expandedMatches=parseOriginalMatchesCandidate(this,path);if(expandedMatches)return expandedMatches;
     if(this.cursor.peek().kind==='rustFloat') {
       const token=this.cursor.next();
@@ -597,6 +599,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       }
     }
     if(node.k==='routerCoreJsonCall')return checkRouterCoreJson(this,node,env,path,expected);
+    if(node.k==='routerCoreJsonUpdateCall')return checkRouterCoreJsonUpdate(this,node,env,path,expected);
     if(node.k==='routerCoreScalarCountCall')return checkRouterCoreScalarCall(this,node,env,path,expected);
     if(node.k==='routerCoreF64InclusiveCall')return checkRouterCoreRangeCall(this,node,env,path,expected);
     if(node.k==='routerPrimitiveFloatConstant')return checkedPrimitiveFloatConstant(node);
@@ -747,6 +750,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
   program(surface) {
     captureRouterCoreScalarCalls(this,surface);
     captureRouterCoreJsonCalls(this,surface);
+    captureRouterCoreJsonUpdates(this,surface);
     captureRouterCoreRangeCalls(this,surface);
     captureConstMatchSources(this,surface);
     sourcePatterns.captureOriginalSharedPatterns(this,surface);
@@ -934,7 +938,7 @@ export class HostEmitter extends withJsonMacroEmitter(EffectEmitter) {
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_fixed_')))preludes.unshift(`import { createFixedIntegerRuntime as ml_create_fixed_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'fixed-integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_integer_')))preludes.unshift(`import { createIntegerRuntime as ml_create_integer_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'integer-runtime.mjs'))};`);
     if([...this.instantiations.keys()].some(id=>id.startsWith('rust_vec_')))preludes.unshift(`import { createVectorRuntime as ml_create_vector_runtime } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,'vector-runtime.mjs'))};`);
-    for(const family of ['json','time','integer','float','string-iterator']) {
+    for(const family of ['json','json-update','time','integer','float','string-iterator']) {
       const used=HOST_CONTRACTS.filter(contract=>contract.family===family&&this.hosts.has(contract.id));
       if(used.length)preludes.unshift(`import { ${used.map(contract=>`${contract.jsExport} as ml_host_${contract.id}`).join(', ')} } from ${JSON.stringify((this.runtimeModule??'./runtime/effects.mjs').replace(/effects\.mjs$/u,`${family}-runtime.mjs`))};`);
     }

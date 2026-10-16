@@ -23,3 +23,20 @@ pub type Outcome<T, E> = ::std::result::Result<T, E>;
 pub fn unicode_scalar_count(value: &Str) -> usize {
     value.chars().count()
 }
+
+/// Copy one canonical JSON value without sharing mutable storage.
+/// Translation uses a bounded immutable deep copy (4096 nodes, depth 32).
+#[must_use]
+pub fn json_copy(value: &Json) -> Json {
+    ::std::clone::Clone::clone(value)
+}
+
+/// Set a string key on an owned object (or promote Null to an object).
+/// Non-object, non-null bases panic, matching serde_json string indexing.
+/// Arguments evaluate once, left to right. Allocation/Drop internals remain
+/// untranslated; translation admits bounded successful-resource projections.
+#[must_use]
+pub fn json_with_field(mut base: Json, key: &Str, value: Json) -> Json {
+    base[key] = value;
+    base
+}
