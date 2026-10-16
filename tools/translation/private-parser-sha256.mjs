@@ -21,27 +21,9 @@ export function independentParserSha256(source){
     0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
     0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2,
   ];
-  const bytes=[];
-  for(let at=0;at<source.length;at++){
-    let code=source.charCodeAt(at);
-    if(code>=55296&&code<=56319){
-      const low=at+1<source.length?source.charCodeAt(at+1):-1;
-      if(low<56320||low>57343)throwOriginalCapturedTypeError('Independent parser SHA256 requires well-formed UTF16');
-      code=65536+(code-55296)*1024+low-56320;at++;
-    }else if(code>=56320&&code<=57343)throwOriginalCapturedTypeError('Independent parser SHA256 requires well-formed UTF16');
-    if(code<128)bytes[bytes.length]=code;
-    else if(code<2048){bytes[bytes.length]=192|(code>>>6);bytes[bytes.length]=128|(code&63);}
-    else if(code<65536){bytes[bytes.length]=224|(code>>>12);bytes[bytes.length]=128|((code>>>6)&63);bytes[bytes.length]=128|(code&63);}
-    else{bytes[bytes.length]=240|(code>>>18);bytes[bytes.length]=128|((code>>>12)&63);bytes[bytes.length]=128|((code>>>6)&63);bytes[bytes.length]=128|(code&63);}
-  }
-  if(bytes.length>1048576)throwOriginalCapturedTypeError('Independent parser SHA256 byte budget');
-  const bits=bytes.length*8;bytes[bytes.length]=128;
-  while(bytes.length%64!==56)bytes[bytes.length]=0;
-  for(let at=0;at<4;at++)bytes[bytes.length]=0;
-  for(let shift=24;shift>=0;shift-=8)bytes[bytes.length]=(bits>>>shift)&255;
   const h=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],words=[];
-  for(let block=0;block<bytes.length;block+=64){
-    for(let at=0;at<16;at++){const pos=block+at*4;words[at]=(bytes[pos]<<24)|(bytes[pos+1]<<16)|(bytes[pos+2]<<8)|bytes[pos+3];}
+  let pendingWord=0,pendingBytes=0,wordIndex=0,payloadBytes=0;
+  function compress(){
     for(let at=16;at<64;at++){
       const x=words[at-15],y=words[at-2];
       const a=rotate(x,7)^rotate(x,18)^(x>>>3),b=rotate(y,17)^rotate(y,19)^(y>>>10);
@@ -57,6 +39,32 @@ export function independentParserSha256(source){
     h[0]=(h[0]+a)>>>0;h[1]=(h[1]+b)>>>0;h[2]=(h[2]+c)>>>0;h[3]=(h[3]+d)>>>0;
     h[4]=(h[4]+e)>>>0;h[5]=(h[5]+f)>>>0;h[6]=(h[6]+g)>>>0;h[7]=(h[7]+v)>>>0;
   }
+  function emit(byte){
+    pendingWord=(pendingWord<<8)|byte;pendingBytes++;
+    if(pendingBytes===4){
+      words[wordIndex++]=pendingWord;pendingWord=0;pendingBytes=0;
+      if(wordIndex===16){compress();wordIndex=0;}
+    }
+  }
+  // Pack each complete UTF8 byte directly into the current 64-byte block.
+  // All16 input words are overwritten before each schedule/compression pass.
+  for(let at=0;at<source.length;at++){
+    let code=source.charCodeAt(at);
+    if(code>=55296&&code<=56319){
+      const low=at+1<source.length?source.charCodeAt(at+1):-1;
+      if(low<56320||low>57343)throwOriginalCapturedTypeError('Independent parser SHA256 requires well-formed UTF16');
+      code=65536+(code-55296)*1024+low-56320;at++;
+    }else if(code>=56320&&code<=57343)throwOriginalCapturedTypeError('Independent parser SHA256 requires well-formed UTF16');
+    if(code<128){emit(code);payloadBytes++;}
+    else if(code<2048){emit(192|(code>>>6));emit(128|(code&63));payloadBytes+=2;}
+    else if(code<65536){emit(224|(code>>>12));emit(128|((code>>>6)&63));emit(128|(code&63));payloadBytes+=3;}
+    else{emit(240|(code>>>18));emit(128|((code>>>12)&63));emit(128|((code>>>6)&63));emit(128|(code&63));payloadBytes+=4;}
+  }
+  if(payloadBytes>1048576)throwOriginalCapturedTypeError('Independent parser SHA256 byte budget');
+  const bits=payloadBytes*8;emit(128);
+  while(wordIndex*4+pendingBytes!==56)emit(0);
+  for(let at=0;at<4;at++)emit(0);
+  for(let shift=24;shift>=0;shift-=8)emit((bits>>>shift)&255);
   let result='';const digits='0123456789abcdef';
   for(let at=0;at<8;at++)for(let shift=28;shift>=0;shift-=4)result+=digits[(h[at]>>>shift)&15];
   checked();return result;
