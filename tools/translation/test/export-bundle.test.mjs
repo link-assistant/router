@@ -7,8 +7,10 @@ import {chmodSync,existsSync,lstatSync,mkdirSync,mkdtempSync,readFileSync,rename
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
+import {gzipSync} from 'node:zlib';
 import {exportTranslatorBundle} from '../export-bundle.mjs';
 import {discoverCompilerSourceInputs} from '../compiler-source-inputs.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
 
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -23,6 +25,11 @@ function fixture(){
   return {directory,source,paths,output:join(directory,'bundle')};
 }
 function withFixture(operation){const row=fixture();try{return operation(row);}finally{rmSync(row.directory,{recursive:true,force:true});}}
+function retainConcreteExport(value){
+  const directory=process.env.ROUTER_CST_EXPORT_VECTORS;if(!directory)return;
+  mkdirSync(directory,{recursive:true});
+  writeFileSync(join(directory,'complete-receiving-cst.json.gz'),gzipSync(JSON.stringify(value),{level:9}));
+}
 
 test('complete committed offline compiler exports deterministically with full source/license bytes',{timeout:360000},()=>{
   const directory=mkdtempSync(join(tmpdir(),'router-translator-export-real-'));
@@ -112,6 +119,54 @@ test('the exported synchronization CLI generates and updates real receiving Java
     const observed=await import('data:text/javascript;base64,'+Buffer.from(erased).toString('base64'));assert.equal(observed.observed(),9);
     const fresh=run('--check','fresh');assert.equal(fresh.exitCode,0);assert.equal(fresh.artifactsCurrent,true);assert.equal(fresh.wholeSourceSynchronization,false);assert.equal(fresh.rustExecuted,false);
     assert.equal(readFileSync(join(receiving,'src/original.rs'),'utf8'),original);
+  }finally{rmSync(directory,{recursive:true,force:true});}
+});
+
+test('the complete exported CST extension feeds edited source into both checked translation directions',{timeout:60000},async()=>{
+  const directory=mkdtempSync(join(tmpdir(),'router-export-concrete-'));
+  try{
+    const bundle=exportTranslatorBundle({sourceRoot:root,output:join(directory,'bundle')});
+    const paths=new Set(bundle.manifest.inputs.map(row=>row.path));
+    for(const name of ['concrete-syntax-meta.mjs','forward-concrete-syntax.mjs','js-to-rust/concrete-source.mjs'])assert.ok(paths.has('tools/translation/'+name),name);
+    const load=name=>import(pathToFileURL(join(bundle.destination,'tools/translation',name)).href);
+    const concrete=await load('concrete-syntax-meta.mjs'),forward=await load('translate.mjs'),reverse=await load('js-to-rust/translator.mjs'),interpreter=await load('js-to-rust/interpreter.mjs');
+    const rust='\ufeff// receiving source: \u03bb\r\npub fn choose(flag: bool) -> u8 { if flag { 7 } else { 9 } }\r\n';
+    const javascript='\ufeff/** @param {boolean} flag @returns {number} */\r\n// receiving source: \u03bb\r\nexport function choose(flag) { return flag ? 7 : 9; }\r\n';
+    const inputs=[],observations=[];
+    for(const [language,source] of [['Rust',rust],['JavaScript',javascript]]){
+      const document=concrete.createConcreteSyntaxMeta(source,{language}),serialized=concrete.serializeConcreteSyntaxMeta(document),parsed=concrete.parseConcreteSyntaxMeta(serialized);
+      assert.equal(concrete.reconstructConcreteSyntax(parsed),source);
+      assert.deepEqual(Buffer.from(concrete.reconstructConcreteSyntax(parsed)),Buffer.from(source));
+      const start=source.indexOf('7'),edited=concrete.applyConcreteSyntaxSubstitutions(parsed,{languageRules:[{id:'language:receiving-seven-to-eleven',edits:[{span:[start,start+1],expected:'7',replacement:'11'}]}],repositoryRules:[]});
+      const updated=source.slice(0,start)+'11'+source.slice(start+1),editedMeta=concrete.serializeConcreteSyntaxMeta(edited.value);
+      assert.equal(concrete.reconstructConcreteSyntax(concrete.parseConcreteSyntaxMeta(editedMeta)),updated);
+      inputs.push({language,source,serialized,editedMeta,updated,trace:edited.trace});
+    }
+    const original=forward.translateSourceConcreteSyntaxMeta(inputs[0].serialized,'src/receiving.rs'),edited=forward.translateSourceConcreteSyntaxMeta(inputs[0].editedMeta,'src/receiving.rs');
+    const originalReverse=reverse.translateConcreteSyntaxMeta(inputs[1].serialized),editedReverse=reverse.translateConcreteSyntaxMeta(inputs[1].editedMeta);
+    retainConcreteExport({manifest:bundle.manifest,inputs,original,edited,originalReverse,editedReverse,RustExecuted:false,scope:'bounded complete receiving examples; full repository synchronization remains unproved'});
+    assert.equal(original.ir.sourceSha256,sha(Buffer.from(rust)));
+    assert.equal(edited.ir.sourceSha256,sha(Buffer.from(inputs[0].updated)));
+    assert.equal(concrete.reconstructConcreteSyntax(original.ir.concreteSyntaxMeta),rust);
+    assert.equal(concrete.reconstructConcreteSyntax(edited.ir.concreteSyntaxMeta),inputs[0].updated);
+    for(const [result,expected] of [[original,7n],[edited,11n]])await verifyTypedTargets(result,api=>{
+      assert.equal(api.choose(true),expected);assert.equal(api.choose(false),9n);assert.throws(()=>api.choose(1),TypeError);
+      observations.push({direction:'Rust-to-JavaScript/TypeScript',expected:String(expected),falseResult:String(api.choose(false))});
+    },{childTimeoutMs:20000});
+    const native=await import('data:text/javascript;base64,'+Buffer.from(javascript).toString('base64'));
+    assert.equal(native.choose(true),7);assert.equal(native.choose(false),9);
+    for(const [result,input,expected] of [[originalReverse,inputs[1].source,7],[editedReverse,inputs[1].updated,11]]){
+      const checked=reverse.parseMeta(result.meta);
+      assert.equal(interpreter.evaluate(checked,'choose',[true]),expected);assert.equal(interpreter.evaluate(checked,'choose',[false]),9);
+      assert.match(result.rust,/fn choose\(/u);
+      await verifyTypedTargets({javascript:input+'\nexport const translated = {choose};\n',typescript:result.typescript+'\nexport const translated = {choose};\n'},api=>{
+        assert.equal(api.choose(true),expected);assert.equal(api.choose(false),9);
+        observations.push({direction:'JavaScript-to-checked-meta/TypeScript',expected,falseResult:api.choose(false)});
+      },{childTimeoutMs:20000});
+    }
+    const unsupported=concrete.serializeConcreteSyntaxMeta(concrete.createConcreteSyntaxMeta('export function refuse(){return new WeakMap();}',{language:'JavaScript'}));
+    assert.throws(()=>reverse.translateConcreteSyntaxMeta(unsupported));
+    retainConcreteExport({manifest:bundle.manifest,inputs,original,edited,originalReverse,editedReverse,unsupported,observations,RustExecuted:false,scope:'bounded complete receiving examples; full repository synchronization remains unproved'});
   }finally{rmSync(directory,{recursive:true,force:true});}
 });
 

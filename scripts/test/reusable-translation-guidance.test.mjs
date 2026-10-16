@@ -86,6 +86,11 @@ test('receiving guidance retains both checked directions, stricter policies and 
     assert.match(text,/`language` first, then `repository`/u);
     assert.match(text,/Rust → meta → JavaScript\/TypeScript/u);assert.match(text,/JavaScript → meta → Rust\/TypeScript/u);
     assert.match(text,/serialize, reparse and independently check semantic meta/u);
+    assert.match(text,/concrete syntax tree \(CST\) extension to meta-language/u);
+    assert.match(text,/both actual source paths/u);assert.match(text,/comments, whitespace, punctuation, delimiter groups/u);
+    assert.match(text,/reconstructed source.*independent/iu);
+    assert.match(text,/lexical fidelity separate from grammar, type, ownership and executable admission/u);
+    assert.match(text,/without silently dropping text/u);
     assert.match(text,/source of truth/u);assert.match(text,/check mode.*without repairing/u);
     assert.match(text,/complete focused JavaScript/u);assert.match(text,/strict(?:-compiled)? TypeScript/u);
     assert.match(text,/(?:complete|full) same-SHA JavaScript gate/u);

@@ -1,6 +1,6 @@
 --- a/docs/case-studies/issue-759/standard/CONTRIBUTING.template.md
 +++ b/docs/case-studies/issue-759/standard/CONTRIBUTING.template.md
-@@ -9 +9,75 @@
+@@ -9 +9,86 @@
  Keep the receiving repository's terminology, testing tier explanations, credential conditions, changelog fragment process, release steps and public API rules in this document. Add this workflow to those conventions rather than replacing them. Report unavailable parity or measurements honestly; there is no promise of complete generation until the strict gate proves its declared scope.
 +
 +## Translation rules and synchronization
@@ -16,6 +16,17 @@
 +Both Rust → meta → JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript
 +must serialize, reparse and independently check semantic meta before target emission.
 +Repository formatting rules cannot bypass this boundary or grant semantic authority.
++
++Use a concrete syntax tree (CST) extension to meta-language in both actual source
++paths. Retain complete source, comments, whitespace, punctuation, delimiter groups
++and source spans through canonical serialization and reparsing. Consume the
++reconstructed source in the independent parser, checker and checked semantic meta
++boundary before target emission. Keep lexical fidelity separate from grammar,
++type, ownership and executable admission. Preserve unsupported and malformed source
++without silently dropping text, and refuse forged concrete classifications or
++public flags as semantic evidence. Check exact UTF16 code units and honest UTF8
++mapping, explicitly reporting replacement encoding for unpaired surrogates.
++
 +Declare the source of truth and generated ownership for each supported family; keep
 +unsupported native implementations visible. Automate the actual producers in dependency
 +order. Write mode regenerates owned artifacts, check mode reports stale artifacts
@@ -78,7 +89,7 @@
 +repair batch. Distinguish drafted work and unexecuted checks from verified behavior.
 --- a/docs/case-studies/issue-759/standard/AGENTS.template.md
 +++ b/docs/case-studies/issue-759/standard/AGENTS.template.md
-@@ -9 +9,46 @@
+@@ -9 +9,54 @@
  Preserve repository terminology, testing tiers, credential requirements, public contract compatibility, changelog and release conventions. Report incomplete parity or unavailable measurements explicitly. Do not treat inventory consistency as semantic equivalence.
 +
 +## Shared rule and synchronization contract
@@ -89,6 +100,14 @@
 +JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript serialize, reparse and
 +independently check semantic meta before emission. Retain unsupported domains and
 +source spans; rule traces and public metadata grant no admission authority.
++
++Use a concrete syntax tree (CST) extension to meta-language in both actual source
++paths. Preserve complete source, comments, whitespace, punctuation, delimiter groups
++and source spans. Serialize and reparse the concrete representation, then feed its
++reconstructed source into the independent semantic checks and checked meta boundary.
++Keep lexical fidelity separate from grammar, type, ownership and executable
++admission. Preserve unsupported or malformed input without silently dropping text;
++never promote an opaque source region to a checked body through a public flag.
 +
 +Declare each family's source of truth and generated ownership. Automate real forward,
 +reverse and TypeScript producers in dependency order; check mode must reject stale

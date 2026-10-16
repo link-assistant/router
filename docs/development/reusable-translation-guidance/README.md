@@ -59,3 +59,12 @@ production entry points. Its manifest does not claim to include these contributi
 instructions or the case-study scaffold. Copy this guidance separately and adapt it
 to the receiving project; compiler export success grants no policy, source-proof or
 parity authority. Generation and verification must still run in that project.
+
+The compiler's CST-like meta-language extension belongs to that exported source
+closure. Its forward and reverse adapters must consume serialized and reparsed
+concrete source before the independent semantic checks. Qualify exact comments,
+whitespace, punctuation, delimiter groups, Unicode spans and source edits in the
+receiving environment, then execute the emitted JavaScript and strict-compiled
+TypeScript. A concrete tree proves source fidelity only; it cannot supply missing
+grammar, types, ownership or runtime parity. Copying the compiler does not establish
+that the receiving repository's complete code can be translated.

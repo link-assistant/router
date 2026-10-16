@@ -17,6 +17,14 @@ JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript serialize, rep
 independently check semantic meta before emission. Retain unsupported domains and
 source spans; rule traces and public metadata grant no admission authority.
 
+Use a concrete syntax tree (CST) extension to meta-language in both actual source
+paths. Preserve complete source, comments, whitespace, punctuation, delimiter groups
+and source spans. Serialize and reparse the concrete representation, then feed its
+reconstructed source into the independent semantic checks and checked meta boundary.
+Keep lexical fidelity separate from grammar, type, ownership and executable
+admission. Preserve unsupported or malformed input without silently dropping text;
+never promote an opaque source region to a checked body through a public flag.
+
 Declare each family's source of truth and generated ownership. Automate real forward,
 reverse and TypeScript producers in dependency order; check mode must reject stale
 outputs without repairing them. Preserve original inputs and all explicit refusals.

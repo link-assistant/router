@@ -21,6 +21,17 @@ replacements for source evidence.
 Both Rust → meta → JavaScript/TypeScript and JavaScript → meta → Rust/TypeScript
 must serialize, reparse and independently check semantic meta before target emission.
 Repository formatting rules cannot bypass this boundary or grant semantic authority.
+
+Use a concrete syntax tree (CST) extension to meta-language in both actual source
+paths. Retain complete source, comments, whitespace, punctuation, delimiter groups
+and source spans through canonical serialization and reparsing. Consume the
+reconstructed source in the independent parser, checker and checked semantic meta
+boundary before target emission. Keep lexical fidelity separate from grammar,
+type, ownership and executable admission. Preserve unsupported and malformed source
+without silently dropping text, and refuse forged concrete classifications or
+public flags as semantic evidence. Check exact UTF16 code units and honest UTF8
+mapping, explicitly reporting replacement encoding for unpaired surrogates.
+
 Declare the source of truth and generated ownership for each supported family; keep
 unsupported native implementations visible. Automate the actual producers in dependency
 order. Write mode regenerates owned artifacts, check mode reports stale artifacts
