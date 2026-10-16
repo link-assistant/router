@@ -136,7 +136,10 @@ function literalIdentity(argument,value){
 function serialization(checker,type,span){
   if(type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||type.patternOwnershipRefusal&&!(type.patternOwnershipRefusal==='shared source reference'&&type.rustReference?.kind==='shared'))throw unsupported('owned JSON operand','requires an actual checked scalar or canonical Json value',span);
   if(type.kind==='string'&&!type.rustReference&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return 'string';
-  if(type.kind==='bool'&&!type.rustReference&&type.rustSourceType)return 'bool';
+  // This route already requires its private original Rust call and real checker.
+  // BOOL from literals, operators and inferred bindings is one primitive domain;
+  // unlike fixed integers it has no erased width/signedness identity to recover.
+  if(type.kind==='bool'&&!type.rustReference&&!type.rustOwnership&&!type.patternOwnershipRefusal&&(type.rustPrimitiveName===undefined||type.rustPrimitiveName==='bool'))return 'bool';
   const name=type.rustPrimitiveName;
   if(type.kind==='fixed'&&!type.rustReference&&type.rustSourceType&&/^([iu](8|16|32|64)|usize|isize)$/u.test(name??'')){
     const width=/^(u|i)(8|16|32|64)$/u.exec(name),bits=width?Number(width[2]):64,signed=name.startsWith('i');
