@@ -1,3 +1,6 @@
+import {historicalPrivateParserPacket,validateHistoricalPrivateParserArchive} from './private-parser-historical-packet.mjs';
+import {readFileSync} from 'node:fs';
+import {originalPrivateParserExpectedCommonIntrinsicsUnchanged as stored,originalPrivateParserNumericCommonIntrinsicsUnchanged as numeric} from '../original-json-intrinsics.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs,{mkdirSync,writeFileSync} from 'node:fs';
@@ -136,7 +139,7 @@ test('private parser combined guard qualifies ingress before any old guard looku
   for(const row of rows){assert.deepEqual(row.observed,{ingress:false,static:null,data:null,legacy:false,combined:false});assert.equal(row.restored.combined,true);}restored();
 });
 
-test('private parser combined guard retains ancestry and independent numeric slot scans',{timeout:60000},()=>{
+test('private parser combined guard retains ancestry and independent numeric slot scans',{timeout:60000},async t=>{
   let callbacks=0;const rows=[];const originalParent=parent(String.prototype);let ancestry;
   try{setParent(String.prototype,{});ancestry=facts();}finally{setParent(String.prototype,originalParent);}
   try{
@@ -146,6 +149,34 @@ test('private parser combined guard retains ancestry and independent numeric slo
   }finally{retain('06-ancestry-numeric',{ancestry,rows,callbacks});}
   assert.equal(callbacks,0);assert.deepEqual(ancestry,{ingress:true,static:false,data:true,legacy:false,combined:false});
   rejected(rows[0],false,false);rejected(rows[1],false,false);rejected(rows[2],false,true);restored();
+  // Independent full287 common from its immutable complete registered packet.
+  // The prior three original controls above remain intact and fully asserted.
+  const packet=historicalPrivateParserPacket(t,retain),previous=await import(packet.url('original-json-intrinsics.mjs'));
+  const old287=previous.originalPrivateParserExpectedCommonIntrinsicsUnchanged;
+  const three=()=>({old287:old287(),stored:stored(),numeric:numeric()}),healthy=three();
+  const numericCases=['0','1234567','9007199254740991','01','-0','+0','1.0','1e0','9007199254740992','Infinity','NaN','','-1','1.5'],owners=[Object.prototype,Array.prototype,String.prototype],names=['Object','Array','String'],observations=[];
+  let newCallbacks=0;
+  for(let ownerIndex=0;ownerIndex<owners.length;ownerIndex++)for(let keyIndex=0;keyIndex<numericCases.length;keyIndex++)for(let kind=0;kind<2;kind++){
+    const owner=owners[ownerIndex],key=numericCases[keyIndex],before=ownState(owner),field=descriptor(owner,key),length=owner===Array.prototype?descriptor(owner,'length'):null;let observed;
+    try{define(owner,key,kind===0?{__proto__:null,value:9,writable:true,enumerable:false,configurable:true}:{__proto__:null,get(){newCallbacks++;return 9;},set(){newCallbacks++;},enumerable:false,configurable:true});observed=three();}
+    finally{if(field)define(owner,key,field);else remove(owner,key);if(length)define(owner,'length',length);}
+    observations.push({owner:names[ownerIndex],key,kind:kind===0?'data':'accessor',before,observed,after:ownState(owner),restored:three()});
+  }
+  const callbackRows=[];
+  for(const kind of ['hash','read']){
+    const owner=kind==='hash'?Hash.prototype:fs,key=kind==='hash'?'update':'readSync',prior=descriptor(owner,key),before=descriptor(Object.prototype,'1234567');let calls=0,getters=0,observed,result;
+    try{define(owner,key,{...prior,value:function(...args){const result=apply(prior.value,this,args);calls++;define(Object.prototype,'1234567',{__proto__:null,configurable:true,get(){getters++;return 1;}});observed=three();return result;}});result=attempt(()=>positive());}
+    finally{define(owner,key,prior);if(before)define(Object.prototype,'1234567',before);else remove(Object.prototype,'1234567');}
+    callbackRows.push({kind,calls,getters,observed,result:outcome(result),restored:three(),positive:positive()});
+  }
+  const archive=readFileSync(new URL('./fixtures/private-parser-historical-288/registered-inputs.json.gz',import.meta.url)),changed=Buffer.from(archive);changed[changed.length-1]^=1;
+  const corrupt=attempt(()=>validateHistoricalPrivateParserArchive(changed));
+  retain('06-full-numeric-subset',{healthy,numericCases,observations,newCallbacks,callbackRows,archiveBefore:archive.toString('base64'),archiveChanged:changed.toString('base64'),corrupt:outcome(corrupt),historicalFullGraph:packet.files,contract:'Only immutable expected keys and same-invocation fresh owner equality are reused; no current truth or source/owner authority is retained.'});
+  assert.deepEqual(healthy,{old287:true,stored:true,numeric:true});assert.equal(newCallbacks,0);assert.equal(observations.length,84);
+  for(const row of observations){assert.equal(row.observed.stored,row.observed.old287);assert.equal(row.observed.numeric,row.observed.old287);assert.deepEqual(row.restored,healthy);assert.ok(sameOwnState(row.before,row.after));}
+  for(const row of callbackRows){assert.ok(row.calls>0);assert.equal(row.getters,0);assert.deepEqual(row.observed,{old287:false,stored:false,numeric:false});assert.ok(row.result.error);assert.deepEqual(row.restored,healthy);assert.ok(row.positive.length>0);}
+  assert.ok(corrupt.error);assert.deepEqual(three(),healthy);
+
 });
 
 test('private parser combined guard remains fresh after a genuine observed hash installs a data hook',{timeout:60000},()=>{

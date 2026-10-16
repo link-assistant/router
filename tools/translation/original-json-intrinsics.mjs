@@ -338,3 +338,34 @@ export function originalPrivateParserUint32WorkStorageUnchanged(){
  for(let at=0;at<parserUint32Storage.fields.length;at++){const row=parserUint32Storage.fields[at];if(!same(descriptor(row[0],row[1]),row[2]))return false;}
  return true;
 }
+
+// Reuse ONLY immutable expected-key facts and fresh key equality within ONE
+// callback-free guard invocation. All old guards and descriptor reads remain.
+let parserExpectedNonnumeric=null;
+function parserExpectedNumericSubset(){
+ // The private 287 plans are frozen own-data tuples, never caller evidence.
+ for(let slot=0;slot<=4;slot+=4){
+  const rows=privateExpectedPlans[slot];
+  for(let at=0;at<rows.length;at++){const key=rows[at][0];if(typeof key==='string'){const value=+key;if(value>=0&&value<=9007199254740991&&value%1===0&&''+value===key)return false;}}
+ }
+ return true;
+}
+function parserObjectNumericSafe(){
+ const names=keys(objectPrototype);
+ for(let at=0;at<names.length;at++){const key=names[at];if(typeof key==='string'){const value=+key;if(value>=0&&value<=9007199254740991&&value%1===0&&''+value===key)return false;}}
+ return true;
+}
+export function originalPrivateParserNumericCommonIntrinsicsUnchanged(){
+ if(!originalPrivateParserIngressUnchanged())return false;
+ // Cold first success and every unknown expected shape take the WHOLE old
+ // route. No current success or refusal is retained across calls.
+ if(privateExpectedPlans===null)return originalPrivateParserExpectedCommonIntrinsicsUnchanged();
+ if(privateExpectedPlans===false)return originalPrivateParserExpectedCommonIntrinsicsUnchanged();
+ if(parserExpectedNonnumeric===null)parserExpectedNonnumeric=parserExpectedNumericSubset();
+ if(!parserExpectedNonnumeric)return originalPrivateParserExpectedCommonIntrinsicsUnchanged();
+ // Fresh full Array/String key equality above proves their numeric absence.
+ // From this Object scan to the data-freeze tail only captured native fixed-
+ // owner descriptor reads/primitive comparisons occur; no callback can mutate
+ // those same owners between these observations in the trusted stock domain.
+ return !!(syntaxNative&&expectedNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(globalThis,'String'),syntaxString)&&same(descriptor(globalThis,'RegExp'),syntaxRegExp)&&same(descriptor(originalObject,'freeze'),syntaxFreeze)&&same(descriptor(originalObject,'isFrozen'),syntaxIsFrozen)&&same(descriptor(originalObject,'defineProperty'),syntaxDefine)&&syntaxString.value.prototype===syntaxStringPrototype&&syntaxRegExp.value.prototype===syntaxRegExpPrototype&&prototype(syntaxStringPrototype)===objectPrototype&&prototype(syntaxRegExpPrototype)===objectPrototype&&expectedSamePrototype(syntaxStringPrototype,syntaxStrings,privateExpectedPlans[4])&&expectedSamePrototype(syntaxRegExpPrototype,syntaxRegexps,privateExpectedPlans[5])&&parserObjectNumericSafe()&&dataFreezeNative&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet));
+}

@@ -354,7 +354,7 @@ test('independent SHA256 and strict Unicode binding do not trust decoder or Node
     for(const {kind,name}of declarations)replace('export '+kind+' '+name,kind+' '+name);
     if(kind!=='common'){const line='  let pendingWord=0,pendingBytes=0,wordIndex=0,payloadBytes=0;';replace(line,'  __recordUint32Work(typed,h,words);\n'+line);}
     const recordImport="import {record as __recordUint32Work} from '"+pathToFileURL(probePath).href+"';\n";
-    const commonNames='originalPrivateParserExpectedCommonIntrinsicsUnchanged,originalPrivateParserUint32WorkStorageUnchanged,throwOriginalCapturedTypeError';
+    const commonNames='originalPrivateParserNumericCommonIntrinsicsUnchanged,originalPrivateParserUint32WorkStorageUnchanged,throwOriginalCapturedTypeError';
     const imports=kind==='common'?originalImport:kind==='sha'?originalImport.replace("'./original-json-intrinsics.mjs'","'"+commonURL+"'")+recordImport:"import {createCompleteSourceCommon288} from '"+pathToFileURL(join(workRoot,'common-factory.mjs')).href+"';\n"+recordImport;
     const functionName=kind==='common'?'createCompleteSourceCommon288':kind==='sha'?'createCompleteSourceSha288':'createCompleteSourceShaWithCommon288';
     const opening=imports+'export function '+functionName+'(){\n'+(kind==='sha-common'?'const {'+commonNames+'}=createCompleteSourceCommon288();\n':'');

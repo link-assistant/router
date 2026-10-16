@@ -1,3 +1,4 @@
+import {historicalPrivateParserPacket,assertPrivateParserPacketEvolution} from './private-parser-historical-packet.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs,{readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync,readdirSync} from 'node:fs';
@@ -27,9 +28,10 @@ function outcome(action){try{return {value:action()};}catch(error){const field=e
 function scratch(t){const path=mkdtempSync(join(tmpdir(),'router-native-bulk-cst-'));t.after(()=>rmSync(path,{recursive:true,force:true}));return path;}
 function nativeSources(){const walk=directory=>readdirSync(join(ROOT,directory),{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?walk(directory+'/'+entry.name):entry.name.endsWith('.mjs')?[directory+'/'+entry.name]:[]);return walk('packages/javascript/native').sort().map(path=>({path,source:readFileSync(join(ROOT,path),'utf8')}));}
 async function physical(t,source,label,overrides={}){
- const root=scratch(t),changes=[];let copied=source;
+ const root=scratch(t),changes=[],historical=source===beforeExecutor?historicalPrivateParserPacket(t,retain):null;let copied=source;
+ if(historical){const selected=overrides['./private-parser-sha256.mjs'];overrides={...overrides,'./original-json-intrinsics.mjs':historical.url('original-json-intrinsics.mjs'),'./private-parser-sha256.mjs':selected?historical.probe(selected):historical.url('private-parser-sha256.mjs')};}
  copied=copied.replace(/from (['"])(\.\.?\/[^'"]+)\1/gu,(full,quote,relative)=>{const before=quote+relative+quote,after=quote+(overrides[relative]??new URL(relative,pathToFileURL(join(TOOL,label==='assembler'?'js-to-rust/native-portable-artifacts.mjs':'private-parser-execution.mjs'))).href)+quote;changes.push({before,after});return 'from '+after;});
- if(label!=='assembler'){const before='import.meta.url',after=json(pathToFileURL(join(TOOL,'private-parser-execution.mjs')).href);assert.equal(copied.split(before).length,2);copied=copied.replace(before,after);changes.push({before,after});}
+ if(label!=='assembler'){const before='import.meta.url',after=json(historical?historical.url('private-parser-execution.mjs'):pathToFileURL(join(TOOL,'private-parser-execution.mjs')).href);assert.equal(copied.split(before).length,2);copied=copied.replace(before,after);changes.push({before,after});}
  let reversed=copied;for(let at=changes.length-1;at>=0;at--)reversed=reversed.replace(changes[at].after,changes[at].before);
  const path=join(root,label+'.mjs');writeFileSync(path,copied);const readback=readFileSync(path,'utf8');retain(label+'-physical',{source,copied,changes,reversed,path,readback});assert.equal(reversed,source);assert.equal(readback,copied);return import(pathToFileURL(path).href);
 }
@@ -131,15 +133,23 @@ test('new packet schedule is explicit while complete old singles preserve sixty 
  // namespace is never assigned. All observation wrappers restore before asserts.
  const fsDefault=(await import('node:fs')).default,readField=get(fsDefault,'readSync');
  const input=[{source:'export const n=1;',language:'JavaScript'},{source:'export const n=2;',language:'JavaScript'}];
- function observe(action){const tape=[],reads=[];probe.calls.length=0;let result;try{
-  define(hashOwner,'update',{...u,value:function(value,...rest){tape.push({phase:'update',input:typeof value==='string'?value:Buffer.from(value).toString('utf8')});return apply(u.value,this,[value,...rest]);}});
-  define(hashOwner,'digest',{...d,value:function(...args){const value=apply(d.value,this,args);tape.push({phase:'digest',args,value});return value;}});
-  define(fsDefault,'readSync',{...readField,value:function(...args){const count=apply(readField.value,this,args);reads.push({count,argCount:args.length,thisUndefined:this===undefined,offset:args[2],length:args[3],position:args[4],source:Buffer.from(args[1]).toString('utf8')});return count;}});syncBuiltinESMExports();result=outcome(action);
+ function observe(action){const tape=[],reads=[];probe.calls.length=0;let result,lastHash;try{
+  define(hashOwner,'update',{...u,value:function(value,...rest){const event={phase:'update',input:typeof value==='string'?value:Buffer.from(value).toString('utf8'),inputKind:typeof value,argCount:1+rest.length,extraArgs:rest,returnedThis:false,receiverOwnPrototype:Object.getPrototypeOf(this)===hashOwner};tape.push(event);const result=apply(u.value,this,[value,...rest]);lastHash=this;event.returnedThis=result===this;return result;}});
+  define(hashOwner,'digest',{...d,value:function(...args){const value=apply(d.value,this,args);tape.push({phase:'digest',args,value,argCount:args.length,receiverIsUpdated:this===lastHash});return value;}});
+  define(fsDefault,'readSync',{...readField,value:function(...args){const count=apply(readField.value,this,args);reads.push({count,fd:args[0],bytes:Buffer.from(args[1]).toString('base64'),argCount:args.length,thisUndefined:this===undefined,offset:args[2],length:args[3],position:args[4],source:Buffer.from(args[1]).toString('utf8')});return count;}});syncBuiltinESMExports();result=outcome(action);
  }finally{define(hashOwner,'update',u);define(hashOwner,'digest',d);define(fsDefault,'readSync',readField);syncBuiltinESMExports();}return {result,tape,reads,independent:[...probe.calls]};}
  const oldRows=input.map(row=>observe(()=>before.transportPrivateConcreteSource(row.source,row.language))),singleRows=input.map(row=>observe(()=>current.transportPrivateConcreteSource(row.source,row.language))),bulk=observe(()=>current.transportPrivateConcreteSources(input));
  retain('05-complete-observers',{beforeExecutor,beforeExecutorSha256:hash(beforeExecutor),probeSource,probeReadback:readback(),input,oldRows,singleRows,bulk});assert.equal(hash(beforeExecutor),'85460bee38befcccd743a90bdb0a4eb0732154f78fba054ed8c09e681bfb8ec4');assert.equal(readback(),probeSource);
- for(let at=0;at<input.length;at++){assert.deepEqual(singleRows[at],oldRows[at]);assert.equal(singleRows[at].tape.filter(row=>row.phase==='update').length,60);assert.equal(singleRows[at].independent.length,30);}
+ for(let at=0;at<input.length;at++){assertPrivateParserPacketEvolution(t,retain,'05-old-single-'+at,oldRows[at],singleRows[at],TOOL);assert.equal(singleRows[at].tape.filter(row=>row.phase==='update').length,60);assert.equal(singleRows[at].independent.length,30);}
  assert.ok(bulk.result.value);assert.equal(bulk.tape.filter(row=>row.phase==='update').length,60);assert.equal(bulk.independent.length,30);assert.deepEqual(bulk.result.value.rows,singleRows.map(row=>row.result.value));assert.deepEqual(bulk.tape,singleRows[0].tape);assert.deepEqual(bulk.reads,singleRows[0].reads);assert.deepEqual(bulk.independent,singleRows[0].independent);
+ const historical=historicalPrivateParserPacket(t,retain),refusals=[];
+ for(const relative of ['source-profiles/private-parser-execution/manifest.json','original-json-intrinsics.mjs','private-parser-sha256.mjs']){
+  const file=join(historical.root,relative),original=readFileSync(file,'utf8'),changed=relative.endsWith('manifest.json')?original.replace('vendor/formal-ai/lexer.mjs','outside-private-packet.mjs'):original+'\n// counterfeit registered dependency\n';let result;
+  try{writeFileSync(file,changed);result=outcome(()=>before.transportPrivateConcreteSource(input[0].source,input[0].language));}finally{writeFileSync(file,original);}
+  const restored=outcome(()=>before.transportPrivateConcreteSource(input[0].source,input[0].language));refusals.push({relative,original,changed,readback:readFileSync(file,'utf8'),result,restored});
+ }
+ retain('05-historical-full-packet-refusals',{refusals});for(const row of refusals){assert.ok(row.result.error);assert.equal(row.readback,row.original);assert.deepEqual(row.restored,oldRows[0].result);}
+ const unknown=structuredClone(oldRows[0]);unknown.tape[0].unknownPacketField=true;const unknownRefusal=outcome(()=>assertPrivateParserPacketEvolution(t,retain,'05-unknown-difference',unknown,singleRows[0],TOOL));retain('05-unknown-difference-refusal',{unknown,current:singleRows[0],unknownRefusal});assert.ok(unknownRefusal.error);
 });
 
 test('raw mutation and later semantic namespace hashes cannot reuse a stale host epoch',{timeout:60000},()=>{
