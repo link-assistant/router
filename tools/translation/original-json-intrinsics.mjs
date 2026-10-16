@@ -189,3 +189,16 @@ export function throwOriginalCapturedTypeError(message){
  const text=typeof message==='string'?message:'Original captured diagnostic requires primitive text';
  throw {__proto__:diagnosticPrototype,name:'TypeError',message:text};
 }
+
+// Additional earliest ingress for private parser execution. The old guards
+// retain their exact domains. This captures only within the SAME trusted common
+// bootstrap; it cannot authenticate a common issuer first loaded under hooks.
+const parserIngressRoot=globalThis;
+const parserIngressGlobal=descriptor(parserIngressRoot,'globalThis');
+const parserIngressSymbol=descriptor(parserIngressRoot,'Symbol');
+const parserIngressNative=!!(pathNative&&parserIngressGlobal&&hasOwn(parserIngressGlobal,'value')&&parserIngressGlobal.value===parserIngressRoot&&parserIngressSymbol&&hasOwn(parserIngressSymbol,'value')&&!pathIsProxy.value(parserIngressSymbol.value)&&native(parserIngressSymbol.value,'Symbol'));
+const parserIngressIterator=parserIngressNative?descriptor(parserIngressSymbol.value,'iterator'):null;
+const parserIngressSpecies=parserIngressNative?descriptor(parserIngressSymbol.value,'species'):null;
+export function originalPrivateParserIngressUnchanged(){
+ return !!(parserIngressNative&&parserIngressIterator&&hasOwn(parserIngressIterator,'value')&&typeof parserIngressIterator.value==='symbol'&&parserIngressSpecies&&hasOwn(parserIngressSpecies,'value')&&typeof parserIngressSpecies.value==='symbol'&&same(descriptor(parserIngressRoot,'globalThis'),parserIngressGlobal)&&same(descriptor(parserIngressRoot,'Symbol'),parserIngressSymbol)&&same(descriptor(parserIngressSymbol.value,'iterator'),parserIngressIterator)&&same(descriptor(parserIngressSymbol.value,'species'),parserIngressSpecies));
+}

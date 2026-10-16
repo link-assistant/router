@@ -1,0 +1,734 @@
+{
+  "schema": "private-registered-parser-execution-v1",
+  "sourceHead": "3f83171fe5ae5a51058482070a0c75442b08ad26",
+  "sources": [
+    {
+      "path": "vendor/formal-ai/lexer.mjs",
+      "bytes": 9236,
+      "sha256": "de63554d12ba030a9a8cf82b3d950d8baa07f55dd20623e711b4a292a6d8f94d",
+      "id": "formal",
+      "imports": [],
+      "exports": [
+        "lex",
+        "topLevelItems"
+      ],
+      "edits": [
+        {
+          "start": 1421,
+          "end": 1428,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-lex"
+        },
+        {
+          "start": 6809,
+          "end": 6816,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-topLevelItems"
+        }
+      ]
+    },
+    {
+      "path": "rust-item-boundaries.mjs",
+      "bytes": 2795,
+      "sha256": "4487a37155041881c9519b1cd0fa8f141199189497835cf5be8524c9170156f6",
+      "id": "boundaries",
+      "imports": [],
+      "exports": [
+        "topLevelRustItems"
+      ],
+      "edits": [
+        {
+          "start": 303,
+          "end": 310,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-topLevelRustItems"
+        }
+      ]
+    },
+    {
+      "path": "rust-structure.mjs",
+      "bytes": 3853,
+      "sha256": "ea09bde0452ff0e8021454e2c0040b6bdd8493163b0ab48cea496353e6b92261",
+      "id": "rust",
+      "imports": [
+        {
+          "specifier": "./vendor/formal-ai/lexer.mjs",
+          "module": "formal",
+          "names": [
+            "lex"
+          ]
+        },
+        {
+          "specifier": "./rust-item-boundaries.mjs",
+          "module": "boundaries",
+          "names": [
+            "topLevelRustItems"
+          ]
+        }
+      ],
+      "exports": [
+        "rustTokens",
+        "sourceItems"
+      ],
+      "edits": [
+        {
+          "start": 78,
+          "end": 129,
+          "expected": "import { lex } from './vendor/formal-ai/lexer.mjs';",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-static-import-1"
+        },
+        {
+          "start": 130,
+          "end": 191,
+          "expected": "import {topLevelRustItems} from './rust-item-boundaries.mjs';",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-static-import-2"
+        },
+        {
+          "start": 343,
+          "end": 350,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-rustTokens"
+        },
+        {
+          "start": 3109,
+          "end": 3116,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-sourceItems"
+        }
+      ]
+    },
+    {
+      "path": "vendor/meta-language/translation/diagnostics.js",
+      "bytes": 907,
+      "sha256": "a5d8ddf02252f016b8568373248b67165b37ce747442a21a7bef3c63e2a385ab",
+      "id": "diagnostics",
+      "imports": [],
+      "exports": [
+        "TranslationError",
+        "unsupported",
+        "typeError"
+      ],
+      "edits": [
+        {
+          "start": 216,
+          "end": 223,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-TranslationError"
+        },
+        {
+          "start": 656,
+          "end": 663,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-unsupported"
+        },
+        {
+          "start": 808,
+          "end": 815,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-typeError"
+        }
+      ]
+    },
+    {
+      "path": "vendor/meta-language/translation/frontend-rules.js",
+      "bytes": 19004,
+      "sha256": "8b4a1a0f3a6180d4b98591206946fb05422f65869c939f3b263da1f8bfded1ed",
+      "id": "frontend",
+      "imports": [],
+      "exports": [
+        "decodeUnicodeEscape",
+        "acceptArgumentCount",
+        "findDefaultParameterReference",
+        "startRegularExpression",
+        "acceptControlParenthesis",
+        "regularExpressionEnd",
+        "findBindingRunEnd",
+        "acceptBindingScope",
+        "acceptLiteralBinding",
+        "constantBindingForm",
+        "acceptConstantEmission",
+        "renderConstantBinding",
+        "acceptModuleBindingScope",
+        "findDocumentationParameterRange",
+        "acceptTypeQueryOperand",
+        "readTypeQueryResult",
+        "readArrayMethodForm",
+        "acceptRootSyntaxItem",
+        "acceptSourcePrefixRestoration",
+        "acceptDeclarationSignature",
+        "readStringTestOperation",
+        "renderStringTestExpression",
+        "readStringTestHelper",
+        "readStringTestSupport",
+        "readStringMapOperation",
+        "renderStringMapExpression",
+        "readStringMapRefusal",
+        "acceptCheckedTypeQueryOperand",
+        "readScannerContinuationAction",
+        "acceptSourceEnvelopeRestoration",
+        "acceptArrayMethodArguments",
+        "renderStringLengthExpression"
+      ],
+      "edits": [
+        {
+          "start": 627,
+          "end": 634,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-decodeUnicodeEscape"
+        },
+        {
+          "start": 2687,
+          "end": 2694,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptArgumentCount"
+        },
+        {
+          "start": 3239,
+          "end": 3246,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-findDefaultParameterReference"
+        },
+        {
+          "start": 4139,
+          "end": 4146,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-startRegularExpression"
+        },
+        {
+          "start": 4800,
+          "end": 4807,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptControlParenthesis"
+        },
+        {
+          "start": 5291,
+          "end": 5298,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-regularExpressionEnd"
+        },
+        {
+          "start": 6279,
+          "end": 6286,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-findBindingRunEnd"
+        },
+        {
+          "start": 6751,
+          "end": 6758,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptBindingScope"
+        },
+        {
+          "start": 7316,
+          "end": 7323,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptLiteralBinding"
+        },
+        {
+          "start": 7628,
+          "end": 7635,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-constantBindingForm"
+        },
+        {
+          "start": 8025,
+          "end": 8032,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptConstantEmission"
+        },
+        {
+          "start": 8294,
+          "end": 8301,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-renderConstantBinding"
+        },
+        {
+          "start": 8806,
+          "end": 8813,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptModuleBindingScope"
+        },
+        {
+          "start": 9430,
+          "end": 9437,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-findDocumentationParameterRange"
+        },
+        {
+          "start": 10293,
+          "end": 10300,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptTypeQueryOperand"
+        },
+        {
+          "start": 10506,
+          "end": 10513,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-readTypeQueryResult"
+        },
+        {
+          "start": 10855,
+          "end": 10862,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-readArrayMethodForm"
+        },
+        {
+          "start": 11211,
+          "end": 11218,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptRootSyntaxItem"
+        },
+        {
+          "start": 11455,
+          "end": 11462,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptSourcePrefixRestoration"
+        },
+        {
+          "start": 11676,
+          "end": 11683,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptDeclarationSignature"
+        },
+        {
+          "start": 11847,
+          "end": 11854,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-readStringTestOperation"
+        },
+        {
+          "start": 12399,
+          "end": 12406,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-renderStringTestExpression"
+        },
+        {
+          "start": 13389,
+          "end": 13396,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-readStringTestHelper"
+        },
+        {
+          "start": 13869,
+          "end": 13876,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-readStringTestSupport"
+        },
+        {
+          "start": 15211,
+          "end": 15218,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-readStringMapOperation"
+        },
+        {
+          "start": 15747,
+          "end": 15754,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-renderStringMapExpression"
+        },
+        {
+          "start": 16420,
+          "end": 16427,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-readStringMapRefusal"
+        },
+        {
+          "start": 16889,
+          "end": 16896,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptCheckedTypeQueryOperand"
+        },
+        {
+          "start": 17305,
+          "end": 17312,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-readScannerContinuationAction"
+        },
+        {
+          "start": 17592,
+          "end": 17599,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptSourceEnvelopeRestoration"
+        },
+        {
+          "start": 17860,
+          "end": 17867,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-acceptArrayMethodArguments"
+        },
+        {
+          "start": 18290,
+          "end": 18297,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-renderStringLengthExpression"
+        }
+      ]
+    },
+    {
+      "path": "vendor/meta-language/translation/lexer.js",
+      "bytes": 16109,
+      "sha256": "70dbe490cd5162661a665bdffd5b506093bebc5a515f6fc1d36ecc347b705fdc",
+      "id": "javascript",
+      "imports": [
+        {
+          "specifier": "./diagnostics.js",
+          "module": "diagnostics",
+          "names": [
+            "TranslationError"
+          ]
+        },
+        {
+          "specifier": "./frontend-rules.js",
+          "module": "frontend",
+          "names": [
+            "acceptControlParenthesis",
+            "decodeUnicodeEscape",
+            "regularExpressionEnd",
+            "startRegularExpression"
+          ]
+        }
+      ],
+      "exports": [
+        "tokenize",
+        "matchingBrace",
+        "TokenCursor",
+        "describe"
+      ],
+      "edits": [
+        {
+          "start": 277,
+          "end": 329,
+          "expected": "import { TranslationError } from './diagnostics.js';",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-static-import-1"
+        },
+        {
+          "start": 330,
+          "end": 460,
+          "expected": "import { acceptControlParenthesis, decodeUnicodeEscape, regularExpressionEnd, startRegularExpression } from './frontend-rules.js';",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-static-import-2"
+        },
+        {
+          "start": 1354,
+          "end": 1361,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-tokenize"
+        },
+        {
+          "start": 13593,
+          "end": 13600,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-matchingBrace"
+        },
+        {
+          "start": 14661,
+          "end": 14668,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-TokenCursor"
+        },
+        {
+          "start": 15934,
+          "end": 15941,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-describe"
+        }
+      ]
+    },
+    {
+      "path": "private-parser-inputs/concrete-syntax-original.mjs",
+      "bytes": 22540,
+      "sha256": "127226ca4dc71123bb96a45a9a91fc120914f1464ac4fec05634fa54a61421b3",
+      "id": "concrete",
+      "imports": [
+        {
+          "specifier": "node:util",
+          "module": "host:util",
+          "names": [
+            "types"
+          ]
+        },
+        {
+          "specifier": "./rust-structure.mjs",
+          "module": "rust",
+          "names": [
+            "rustTokens"
+          ]
+        },
+        {
+          "specifier": "./vendor/meta-language/translation/lexer.js",
+          "module": "javascript",
+          "names": [
+            "tokenize"
+          ]
+        },
+        {
+          "specifier": "./original-json-intrinsics.mjs",
+          "module": "host:common",
+          "names": [
+            "originalStaticSourceIntrinsicsUnchanged",
+            "originalDataFreezeIntrinsicsUnchanged",
+            "originalCapturedFunctionSource",
+            "throwOriginalCapturedTypeError"
+          ]
+        }
+      ],
+      "exports": [
+        "CONCRETE_SYNTAX_SCHEMA",
+        "createConcreteSyntaxMeta",
+        "serializeConcreteSyntaxMeta",
+        "parseConcreteSyntaxMeta",
+        "reconstructConcreteSyntax",
+        "applyConcreteSyntaxSubstitutions"
+      ],
+      "edits": [
+        {
+          "start": 155,
+          "end": 187,
+          "expected": "import {types} from 'node:util';",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-static-import-1"
+        },
+        {
+          "start": 188,
+          "end": 236,
+          "expected": "import {rustTokens} from './rust-structure.mjs';",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-static-import-2"
+        },
+        {
+          "start": 237,
+          "end": 306,
+          "expected": "import {tokenize} from './vendor/meta-language/translation/lexer.js';",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-static-import-3"
+        },
+        {
+          "start": 307,
+          "end": 497,
+          "expected": "import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,\n  originalCapturedFunctionSource,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-static-import-4"
+        },
+        {
+          "start": 499,
+          "end": 506,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-CONCRETE_SYNTAX_SCHEMA"
+        },
+        {
+          "start": 4335,
+          "end": 4358,
+          "expected": "text.replace(/\\s/gu,'')",
+          "replacement": "originalNativeWhitespace(text)",
+          "phase": "language",
+          "id": "primitive-native-source-whitespace"
+        },
+        {
+          "start": 13702,
+          "end": 13709,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-createConcreteSyntaxMeta"
+        },
+        {
+          "start": 17747,
+          "end": 17754,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-serializeConcreteSyntaxMeta"
+        },
+        {
+          "start": 18029,
+          "end": 18036,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-parseConcreteSyntaxMeta"
+        },
+        {
+          "start": 18469,
+          "end": 18476,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-reconstructConcreteSyntax"
+        },
+        {
+          "start": 20507,
+          "end": 20514,
+          "expected": "export ",
+          "replacement": "",
+          "phase": "language",
+          "id": "remove-export-applyConcreteSyntaxSubstitutions"
+        }
+      ],
+      "logicalOriginalModule": "concrete-syntax-meta.mjs",
+      "execution": "Complete original bytes; consumed only by registered private module normalization, not ambient ESM resolution."
+    }
+  ],
+  "licenses": [
+    {
+      "path": "vendor/formal-ai/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
+    },
+    {
+      "path": "vendor/meta-language/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
+    }
+  ],
+  "notices": [
+    {
+      "path": "vendor/NOTICE.md",
+      "bytes": 2076,
+      "sha256": "827d7d26ecc3da802b161c955fb78bec7ba1845969d28461d3ef951b6e70d34e"
+    },
+    {
+      "path": "vendor/upstream-lock.json",
+      "bytes": 3043,
+      "sha256": "ee126e234437d23b62fefa4f4c6b59baa09f89918613412570d32bfd652a50c1"
+    },
+    {
+      "path": "source-profiles/private-parser-execution/NOTICE",
+      "bytes": 814,
+      "sha256": "1f2c0c47d5612e4358ce860ed7a4d1c9234a1193cd5475b9186f23fdd066e8ac"
+    }
+  ],
+  "rules": [
+    {
+      "phase": "language",
+      "rules": [
+        "exact-private-source-substitutions",
+        "explicit-strict-wrapper"
+      ]
+    },
+    {
+      "phase": "repository",
+      "rules": [
+        "closed-registered-import-bindings",
+        "instantiate-registered-module"
+      ]
+    }
+  ],
+  "authority": {
+    "type": false,
+    "owner": false,
+    "executable": false
+  },
+  "hostInputs": [
+    {
+      "path": "original-json-intrinsics.mjs",
+      "bytes": 27447,
+      "sha256": "a25518f0f22141b794b01bddcb44b26d973bcceeba026454dd9837ed957a3c22"
+    },
+    {
+      "path": "private-parser-sha256.mjs",
+      "bytes": 4432,
+      "sha256": "db35d7335e20a996df8b561106f4cac1528f16037379c7830fa2cfce57bc6e6c"
+    }
+  ]
+}

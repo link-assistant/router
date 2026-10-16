@@ -1,10 +1,9 @@
 // Concrete syntax is a lossless representation level, not a semantic proof.
 // Existing semantic frontends must independently check reconstructed source.
 import {types} from 'node:util';
-import {rustTokens} from './rust-structure.mjs';
-import {tokenize} from './vendor/meta-language/translation/lexer.js';
+import {assertPrivateParserExecution,privateParserHostAvailable,lexPrivateConcreteSource,transportPrivateConcreteSource,transportPrivateConcreteMeta} from './private-parser-execution.mjs';
 import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,
-  originalCapturedFunctionSource,throwOriginalCapturedTypeError} from './original-json-intrinsics.mjs';
+  originalCapturedFunctionSource,throwOriginalCapturedTypeError,originalPrivateParserIngressUnchanged} from './original-json-intrinsics.mjs';
 
 export const CONCRETE_SYNTAX_SCHEMA='meta-language-concrete-syntax-v1';
 // Exact RepresentationLevel.ConcreteSyntax value from the pinned vendored
@@ -13,7 +12,7 @@ export const CONCRETE_SYNTAX_SCHEMA='meta-language-concrete-syntax-v1';
 const CONCRETE_REPRESENTATION='concrete-syntax';
 const SOURCE_LIMIT=2097152,BYTE_LIMIT=8388608,NODE_LIMIT=200000,DEPTH_LIMIT=256;
 const SERIAL_LIMIT=33554432,RULE_LIMIT=256,EDIT_LIMIT=4096,TOTAL_EDIT_LIMIT=16384;
-const initial=originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
+const initial=originalPrivateParserIngressUnchanged()&&privateParserHostAvailable()&&originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
 let pins=null,descriptor=null,ownKeys=null,prototype=null,isArray=null,isProxy=null,freeze=null;
 let stringify=null,parse=null,define=null,numberValue=null,bigIntValue=null,fromCodePoint=null,errorPrototype=null,errorConstructor=null,functionPrototype=null;
 // Optional capture has no observable reflection work when common ingress fails.
@@ -71,7 +70,7 @@ function native(value,name){
   return typeof text==='string'&&text.replace(/\s/gu,'')==='function'+name+'(){[nativecode]}';
 }
 function guard(){
-  if(!pins||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())return false;
+  if(!originalPrivateParserIngressUnchanged()||!pins||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())return false;
   if(prototype(errorPrototype)!==Object.prototype||!errorLimitSafe())return false;
   // The pinned JavaScript lexer uses single-character escape lookup records.
   // Unknown inherited escape slots must not execute a user getter.
@@ -96,7 +95,7 @@ function errorLimitSafe(){
   return true;
 }
 function fail(reason){throwOriginalCapturedTypeError('Concrete syntax meta: '+reason);}
-function checked(){if(!guard())fail('native syntax operations changed');}
+function checked(){assertPrivateParserExecution();if(!guard())fail('native syntax operations changed');}
 const integer=value=>typeof value==='number'&&value>=0&&value<=9007199254740991&&value%1===0;
 function text(value,limit,label){if(typeof value!=='string'||value.length>limit)fail(label+' requires bounded primitive text');return value;}
 function record(value,names,label){
@@ -152,12 +151,12 @@ const roles={ident:'identifier',identifier:'identifier',macro:'macro',number:'nu
 function candidates(source,language){
   const rows=[];
   if(language==='Rust'){
-    const tokens=rustTokens(source);
+    const tokens=lexPrivateConcreteSource(source,'Rust');
     for(let at=0;at<tokens.length;at++){
       const token=tokens[at];rows.push([token.start,token.end,roles[token.type],token.text]);
     }
   }else{
-    const result=tokenize(source,'JavaScript');
+    const result=lexPrivateConcreteSource(source,'JavaScript');
     for(let at=0;at<result.tokens.length;at++){
       const token=result.tokens[at];if(token.kind==='eof')continue;
       rows.push([token.start,token.end,roles[token.kind],token.raw]);
@@ -230,6 +229,18 @@ export function createConcreteSyntaxMeta(source,options){
   checked();text(source,SOURCE_LIMIT,'source');
   const selected=record(options,['language'],'options'),language=languageName(selected.language);
   const doc=build(source,language);checked();return doc;
+}
+
+/** One fixed source transaction; public standalone validators remain complete. */
+export function transportConcreteSyntaxSource(source,options){
+  checked();text(source,SOURCE_LIMIT,'source');
+  const selected=record(options,['language'],'options'),language=languageName(selected.language);
+  const result=transportPrivateConcreteSource(source,language);checked();return result;
+}
+/** Freshly consume canonical edited input through the same two-build boundary. */
+export function transportConcreteSyntaxMeta(serialized){
+  checked();text(serialized,SERIAL_LIMIT,'serialized CST');
+  const result=transportPrivateConcreteMeta(serialized);checked();return result;
 }
 function inspected(value){
   const row=record(value,['schema','representationLevel','language','source','sourceEncoding','status','nodes','diagnostics','authority'],'document');
@@ -331,7 +342,9 @@ function rulesSnapshot(value){
 /** Apply declarative exact substitutions in language, then repository order. */
 export function applyConcreteSyntaxSubstitutions(value,sequences){
   checked();let doc=validated(value);const phases=rulesSnapshot(sequences),trace=[];
-  for(const [phase,field]of [['language','languageRules'],['repository','repositoryRules']]){
+  const phaseRows=[['language','languageRules'],['repository','repositoryRules']];
+  for(let phaseIndex=0;phaseIndex<phaseRows.length;phaseIndex++){
+    const phase=phaseRows[phaseIndex][0],field=phaseRows[phaseIndex][1];
     const applied=[];
     for(let at=0;at<phases[field].length;at++){
       const rule=phases[field][at],boundaries=new Set([0,doc.source.length]),edits=[];
