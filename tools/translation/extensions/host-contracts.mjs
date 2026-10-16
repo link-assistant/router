@@ -55,7 +55,7 @@ import {sourceByteLiteral,requireByteLiteral} from './rust-byte-character.mjs';
 import {captureStaticArrays,finalizeStaticArrays,checkStaticArrayElement,requireStaticArrayElement} from './static-array-element.mjs';
 import {checkUnitEnumCast,requireUnitEnumCast} from './unit-enum-cast.mjs';
 import {captureOptionNominals,bindCheckedNominalNoDrop,checkedOptionNominal}  from './option-nominal-proof.mjs';
-import {checkPinnedOptionBody,requirePinnedStandardBody,checkPinnedCallbackApplication,contextualOptionMapResultReceiver,contextualOptionMapExpected,preparePinnedStandardFunction,requirePinnedStandardEmission} from './standard-body-checker.mjs';
+import {checkPinnedOptionBody,requirePinnedStandardBody,checkPinnedCallbackApplication,contextualOptionMapResultReceiver,contextualOptionMapExpected,contextualOptionMapConstructor,preparePinnedStandardFunction,requirePinnedStandardEmission} from './standard-body-checker.mjs';
 import {CSV_STRING_PROFILE,checkCharacterSplit,checkCharacterSplitNext,allocatingStringFunctionItem,checkedAllocatingStringItem,requireCsvEmitterProof} from './csv-strings.mjs';
 import {canonicalResult,checkResultMapError,requireResultIteratorProof} from './result-iterators.mjs';
 import {checkedOptionAsDeref,requireOptionDerefProof} from './option-deref.mjs';
@@ -520,6 +520,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     if(sharedLetElse)assertOriginalCloneChecker(this);
     let value=this.hostExpression(node,env,path,expected,allowLiteral);
     if(sharedLetElse)assertOriginalCloneChecker(this);
+    value=contextualOptionMapConstructor(this,value,expected,path,node.span);
     if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};
     value=this.qualifyOwnershipResult?.(node,value,expected,path)??value;
     value=qualifyPrimitiveFloatResult(value);

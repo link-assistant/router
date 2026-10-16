@@ -34,11 +34,13 @@ function standard(type,kind,context,required=false) {
   if(fields.some((fields,index)=>!Array.isArray(fields) || fields.length!==(kind==='Option' && index===1?0:1) || fields.length && fields[0].name!=='field0'))throw typeError(`invalid standard ${kind} field layout`,span);
   const arguments_=entry.standardGeneric.arguments;
   if(!Array.isArray(arguments_) || arguments_.length!==(kind==='Option'?1:2))throw typeError(`missing standard ${kind} argument provenance`,span);
-  const types=fields.filter(fields=>fields.length).map(fields=>checkedType(resolveType(fields[0].type,span),span));
+  let types=fields.filter(fields=>fields.length).map(fields=>checkedType(resolveType(fields[0].type,span),span));
   for(const [index,type] of types.entries())if(typeKey(type)!==typeKey(checkedType(resolveType(arguments_[index],span),span)))throw typeError(`standard ${kind} arguments disagree with checked fields`,span);
   if(resolved.rustStandardGeneric){
     const source=resolved.rustStandardGeneric;
-    if(source.kind!==kind||!Array.isArray(source.arguments)||source.arguments.length!==types.length||source.arguments.some((argument,index)=>!sameOutput(checkedType(resolveType(argument,span),span),types[index])))throw typeError(`standard ${kind} source arguments differ from the checked monomorphic layout`,span);
+    const written=[];
+    if(source.kind!==kind||!Array.isArray(source.arguments)||source.arguments.length!==types.length||source.arguments.some((argument,index)=>!sameOutput(written[index]=checkedType(resolveType(argument,span),span),types[index])))throw typeError(`standard ${kind} source arguments differ from the checked monomorphic layout`,span);
+    types=written;
   }
   return {type:resolved,types};
 }

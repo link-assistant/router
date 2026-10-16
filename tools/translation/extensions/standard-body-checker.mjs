@@ -179,6 +179,23 @@ export function contextualOptionMapExpected(checker,node,receiver,path){
   requireOriginalStandardCall(checker,state.node);requireOriginalStandardCall(checker,node);requireOriginalPrimitiveTryFromChecker(checker);
   state.used=true;return expected;
 }
+// The portable core constructs a bare data type. Retain the current checked
+// use's arguments while this exact original map is being checked, rather than
+// later recovering lifetimes/ownership from the shared layout's first use.
+export function contextualOptionMapConstructor(checker,value,expected,path,span){
+  const state=optionMapContexts.get(checker);
+  if(!state?.used||value.k!=='ctor'||expected?.rustStandardGeneric?.kind!=='Option')return value;
+  requireOriginalStandardCall(checker,state.node);requireOriginalStandardCall(checker,state.map);requireOriginalPrimitiveTryFromChecker(checker);
+  const {payload}=optionPayload(checker,expected,path,span,{allowNestedOptions:true}),entry=checker.items.get(expected.name),ctor=entry.ctors.find(row=>row.name===value.ctor);
+  if(value.type?.kind!=='data'||value.type.name!==expected.name||value.data!==expected.name||!ctor||value.args.length!==ctor.fields.length)throw typeError('contextual Option constructor differs from its checked expected layout',span);
+  if(ctor.name==='Some'){
+    if(!sameType(value.args[0].type,payload))throw typeError('contextual Option constructor payload differs from its checked expected type',span);
+    checker.expectedOwnership(value.args[0].type,payload,path,span);checker.expectedPrimitiveIdentity(value.args[0].type,payload,path,span);
+  }
+  const result={...value,type:{...value.type,rustStandardGeneric:structuredClone(expected.rustStandardGeneric)}};
+  requireOriginalStandardCall(checker,state.node);requireOriginalStandardCall(checker,state.map);requireOriginalPrimitiveTryFromChecker(checker);
+  return result;
+}
 function checkPinnedOptionResult(checker,node,receiver,env,path,expected,Parser){
   requireOriginalPrimitiveTryFromChecker(checker);requireOriginalStandardCall(checker,node);requireOriginalPrimitiveTryFromChecker(checker);
   const {payload,owner}=optionPayload(checker,receiver.type,path,node.span,{allowNestedOptions:true}),selection=pinnedOptionBody('ok_or_else'),parameters=selection.method.parameters;

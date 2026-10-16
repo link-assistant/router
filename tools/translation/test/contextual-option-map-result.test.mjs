@@ -5,7 +5,7 @@ import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {translateProject} from '../project.mjs';
 import {parseRust,checkProgram,HostChecker,HostRustParser} from '../extensions/host-contracts.mjs';
-import {contextualOptionMapResultReceiver,contextualOptionMapExpected,requirePinnedStandardBody} from '../extensions/standard-body-checker.mjs';
+import {contextualOptionMapResultReceiver,contextualOptionMapExpected,contextualOptionMapConstructor,requirePinnedStandardBody} from '../extensions/standard-body-checker.mjs';
 import {serializeProgram,parseProgram} from '../semantic-meta.mjs';
 import {captureOriginalStandardCalls} from '../extensions/original-standard-calls.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
@@ -29,6 +29,7 @@ test('actual expected Result success constrains the immediate Option map callbac
   const result=compile(basic);requireFunctions(result,['mapped']);
   const entry=result.meta.checkedSemanticProgram.program.items.find(row=>row.name==='mapped'||row.fullName==='mapped');assert.ok(entry);
   assert.equal(nodes(entry.body,'routerStandardMethod').filter(node=>node.operation==='option_map').length,1);assert.equal(nodes(entry.body,'routerPinnedStandardBody').length,1);
+  const map=nodes(entry.body,'routerStandardMethod').find(node=>node.operation==='option_map'),callback=map.callback.type.result;assert.equal(callback.rustStandardGeneric.kind,'Option');assert.equal(callback.rustStandardGeneric.arguments[0].kind,'bool');assert.deepEqual(map.type.rustStandardGeneric.arguments[0],callback);for(const ctor of nodes(map.callback.binding,'ctor')){assert.equal(ctor.type.rustStandardGeneric.kind,'Option');assert.equal(ctor.type.name,ctor.data);assert.equal(ctor.type.rustStandardGeneric.arguments[0].kind,'bool');}
   await targets(result,api=>{assert.deepEqual(api.mapped(none),err('missing'));assert.deepEqual(api.mapped(some(true)),ok(some(false)));assert.deepEqual(api.mapped(some(false)),ok(some(true)));});
 });
 
@@ -43,6 +44,7 @@ test('complete original Anthropic tool-choice caller has independent JSON behavi
 
 test('nested Some payloads preserve distinct bool and fixed integer expectations',async()=>{
   const source='pub fn nested(value:Option<bool>)->Result<Option<Option<bool>>,String>{value.map(|flag| Some(Some(flag))).ok_or_else(||"absent".into())} pub fn byte(value:Option<bool>)->Result<Option<u8>,String>{value.map(|flag| Some(if flag{255}else{0})).ok_or_else(||"byte".into())}',result=compile(source);requireFunctions(result,['nested','byte']);
+  for(const name of ['nested','byte']){const entry=result.meta.checkedSemanticProgram.program.items.find(row=>row.name===name||row.fullName===name),map=nodes(entry.body,'routerStandardMethod').find(node=>node.operation==='option_map');let type=map.callback.type.result;for(let depth=0;depth<(name==='nested'?2:1);depth++){assert.equal(type.rustStandardGeneric.kind,'Option');type=type.rustStandardGeneric.arguments[0];}if(name==='nested')assert.equal(type.kind,'bool');else{assert.equal(type.kind,'fixed');assert.equal(type.rustPrimitiveName,'u8');}}
   await targets(result,api=>{assert.deepEqual(api.nested(none),err('absent'));assert.deepEqual(api.byte(none),err('byte'));for(const flag of [false,true]){assert.deepEqual(api.nested(some(flag)),ok(some(some(flag))));assert.deepEqual(api.byte(some(flag)),ok(some(flag?255n:0n)));}});
 });
 
@@ -70,7 +72,7 @@ test('foreign copied and changed syntax and overridden checker hooks cannot issu
   const source=basic+' fn main(){}',surface=parseRust(source),copied=structuredClone(surface);assert.throws(()=>checkProgram(copied));
   const changed=parseRust(source),changedFn=changed.items.find(row=>row.name==='mapped');changedFn.body.object.args.push({k:'bool',value:true,span:{start:0,end:0}});assert.throws(()=>checkProgram(changed));
   const node=surface.items.find(row=>row.name==='mapped').body;let calls=0;const fake=Object.defineProperty({},'items',{get(){calls++;throw Error('fake getter');}}),proxy=new Proxy(node,{get(){calls++;throw Error('proxy get');}});
-  assert.equal(contextualOptionMapResultReceiver(fake,node,new Map(),[],{}),null);assert.equal(contextualOptionMapResultReceiver(fake,proxy,new Map(),[],{}),null);assert.equal(contextualOptionMapExpected(fake,node,null,[]),null);assert.equal(calls,0);captureOriginalStandardCalls(fake,surface);assert.throws(()=>contextualOptionMapResultReceiver(fake,node,new Map(),[],{kind:'data',name:'forged'}),/Original parser\/cursor/);assert.equal(calls,0);
+  assert.equal(contextualOptionMapResultReceiver(fake,node,new Map(),[],{}),null);assert.equal(contextualOptionMapResultReceiver(fake,proxy,new Map(),[],{}),null);assert.equal(contextualOptionMapExpected(fake,node,null,[]),null);const bare={k:'ctor',data:'forged',ctor:'Some',args:[],type:{kind:'data',name:'forged'}};assert.strictEqual(contextualOptionMapConstructor(fake,bare,{rustStandardGeneric:{kind:'Option',arguments:[]}},[],{}),bare);assert.equal(calls,0);captureOriginalStandardCalls(fake,surface);assert.throws(()=>contextualOptionMapResultReceiver(fake,node,new Map(),[],{kind:'data',name:'forged'}),/Original parser\/cursor/);assert.equal(calls,0);
   const checker=new HostChecker('Rust',[]),program=checker.program(surface),entry=program.declarations.get('mapped'),env=new Map(entry.params.map(param=>[param.name,param.type])),observed=[];
   for(const name of ['resolveType','expectedOwnership','resolvedMethod'])for(const mode of ['method','getter']){const previous=Object.getOwnPropertyDescriptor(checker,name),hook=()=>{calls++;throw Error('overridden '+name);};Object.defineProperty(checker,name,mode==='method'?{value:hook,configurable:true}:{get:hook,configurable:true});let message;try{assert.throws(()=>HostChecker.prototype.expr.call(checker,node,env,[],entry.ret),error=>{message=error.message;return /Original parser\/cursor/.test(message);});}finally{if(previous)Object.defineProperty(checker,name,previous);else delete checker[name];}assert.equal(calls,0);observed.push({name,mode,message});}
   assert.equal(contextualOptionMapResultReceiver(checker,structuredClone(node),env,[],entry.ret),null);const foreign=parseRust(source).items.find(row=>row.name==='mapped').body;assert.equal(contextualOptionMapResultReceiver(checker,foreign,env,[],entry.ret),null);assert.equal(contextualOptionMapExpected(checker,node.object,null,[]),null);retain('complete-source-and-method-controls',{source,surface,copied,changed,observed,calls});
@@ -78,6 +80,7 @@ test('foreign copied and changed syntax and overridden checker hooks cannot issu
 
 test('borrowed callback outputs retain input origins and static escapes remain refused',async()=>{
   const source='pub fn borrowed(value:Option<&str>)->Result<Option<&str>,String>{value.map(|text|Some(text)).ok_or_else(||"absent".into())}',result=compile(source);requireFunctions(result,['borrowed']);
+  const direct=checkProgram(parseRust(source+' fn main(){}')),entry=direct.declarations.get('borrowed'),map=nodes(entry.body,'routerStandardMethod').find(node=>node.operation==='option_map'),argument=map.callback.type.result.rustStandardGeneric.arguments[0];assert.equal(argument.rustBorrowLifetime.kind,'elided');assert.deepEqual(argument.rustBorrowLifetime.span,{start:source.lastIndexOf('&str'),end:source.lastIndexOf('&str')+4});retain('complete-per-use-borrowed-callback-metadata',{direct,map});
   await targets(result,api=>{assert.deepEqual(api.borrowed(none),err('absent'));for(const value of ['', 'Ω😀','e\u0301'])assert.deepEqual(api.borrowed(some(value)),ok(some(value)));});
   for(const source of ["pub fn bad(value:Option<&str>)->Result<Option<&'static str>,String>{value.map(|text|Some(text)).ok_or_else(||\"x\".into())}","pub fn bad<'a,'b>(value:Option<&'a str>)->Result<Option<&'b str>,String>{value.map(|text|Some(text)).ok_or_else(||\"x\".into())}"]){const result=compile(source);assert.equal(admitted(result,'bad'),false,source);assert.ok(result.meta.refused.some(row=>row.name==='bad'));}
 });
