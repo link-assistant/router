@@ -15,7 +15,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {sourceWhileLetCondition,requireSourceWhileLet} from './while-let-source.mjs';
 import {hasSourceLetChain,parseSourceLetChain,requireSourceLetChain} from './let-chain-source.mjs';
 const range=(start,end)=>({start:start.start,end:end.end});
-const containsExit=node=>node&&typeof node==='object'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
+const containsExit=node=>node&&typeof node==='object'&&node.k!=='routerLambda'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
 const KNOWN_CONSTRUCTORS=Symbol('checked immutable constructor locals');
 export function immutableBinding(type,checker,active=new Set()) {

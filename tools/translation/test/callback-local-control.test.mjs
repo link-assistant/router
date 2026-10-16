@@ -71,6 +71,8 @@ test('fresh source and edited CST reject wrong return results hidden unreachable
     'pub fn bad()->bool{(0u8..2u8).any(|value|{continue;false})}',
     'pub fn bad()->bool{(0u8..2u8).any(|value|{let ignored=future.await;return true;false})}',
     'pub fn bad()->bool{(0u8..2u8).any(|(value,)|{return true;false})}',
+    "pub fn bad()->u8{let value={return 1u8;0u8};value}",
+    "pub fn bad()->u8{1u8+{return 2u8;0u8}}",
   ];
   const rows=[];for(const source of sources){const document=createConcreteSyntaxMeta(source,{language:'Rust'}),meta=serializeConcreteSyntaxMeta(document),plain=outcome(()=>translateSource(source)),cst=outcome(()=>translateSourceConcreteSyntaxMeta(meta));rows.push({source,document,meta,plain,cst});retain('05-refusal',rows.at(-1));for(const result of [plain,cst]){assert.ok(result.value);assert.equal(result.value.ir.items.find(row=>row.name==='bad').status,'carried');assert.equal(result.value.ir.items.map(row=>row.source).join(''),source);}assert.deepEqual(cst.value.ir,plain.value.ir);}
   retain('05-all',{rows,checkedMetaLimitation:'Canonical checked meta shape is not an untrusted whole type-proof verifier. Fresh source/CST must pass the actual checker; no new callback authority flag or verdict cache is introduced.'});
