@@ -88,18 +88,25 @@ node tools/translation/propose-core-adoption-corpus.mjs \
 node tools/translation/propose-core-adoption-corpus.mjs \
   --root /path/to/receiving-repository --output /outside/fresh-composed-proposal \
   --sequence literal-algebraic
+
+node tools/translation/propose-core-adoption-corpus.mjs \
+  --root /path/to/receiving-repository --output /outside/fresh-scalar-proposal \
+  --sequence scalar-count
 ```
 
 The fixed sequences adopt literal text conversions alone, or literal text
 followed by transparent algebraic aliases. The second stage uses the complete
-first-stage result and constructs a fresh module graph. Each stage writes all
+first-stage result and constructs a fresh module graph. The standalone
+`scalar-count` sequence replaces source-resolved borrowed owned-core text
+`chars().count()` calls with the qualified owned scalar-count operation; it
+keeps the native iterator implementation outside the translated library boundary. Each stage writes all
 returned fields in their original key order, full source and graph/CST records,
 selections, uncertainty reports and per-file substitutions with verified complete
 inverses. Reverse stage order to recover the original source. A single full API
 proposal is retained at a time; actual memory use still needs receiving checks.
 The async API is `proposeCoreAdoptionSequence({root, output}, sequence)`.
 
-The literal corpus API also accepts optional own-data
+The literal and scalar corpus APIs also accept optional own-data
 `dependencyInputs: {manifest, lock}` containing the caller's complete Cargo
 source. Exact registered inputs let the rule discover declaration-kind and
 macro-only import candidates from pinned package modules and public reexports.
@@ -107,7 +114,7 @@ Missing or different inputs leave external imports unclassified. This evidence
 does not grant type ownership, complete namespaces, trait dispatch or executable
 admission; unknown traits and declaration producers remain refused.
 
-The two new CLI sequences capture optional physical `Cargo.toml` and
+The three explicit CLI sequences capture optional physical `Cargo.toml` and
 `Cargo.lock` themselves, retain complete source/identity packets, and recheck
 them before publishing a completed index. They never substitute the compiler
 repository's Cargo files for a receiving repository's files. The original
