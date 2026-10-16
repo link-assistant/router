@@ -69,6 +69,47 @@ rechecks earlier file and ancestor identities, complete compiled source
 associations and caller array descriptors. No source or validation verdict is
 cached across calls. Existing standalone APIs retain their own contract.
 
+## Independent reverse analysis
+
+`analyzeJavaScriptIndependentCorpus` in `js-to-rust/translator.mjs` analyzes a
+bounded list of JavaScript sources independently:
+
+```javascript
+import {analyzeJavaScriptIndependentCorpus} from
+  './tools/translation/js-to-rust/translator.mjs';
+
+const result = analyzeJavaScriptIndependentCorpus([
+  {path: 'fixture-0', source: 'export class Router {}'},
+  {path: 'fixture-1', source: 'export function untyped(value) { return value; }'},
+]);
+const diagnostics = result.analyses.map(row => row.analysis.diagnostics);
+```
+
+Input is a dense array of 1–256 own-data objects with exactly `path`, then
+`source`, as primitive strings. Paths are ordered labels, including duplicates;
+they supply no module or ownership context. Each row uses the original default
+frontend with `includeScoped: true`, `sourcePath: null` and `lossless: false`.
+Definitions and failures do not flow between rows. The only optional argument is
+an exact own-data `{constructorGraph}` object; the existing constructor checks
+still decide its validity.
+
+The API uses one existing full CST batch transaction: complete parser-source
+authentication before and after the batch, and actual serialization, reparsing,
+reconstruction and independent builds for every row. Fresh native host checks
+and complete caller-input descriptor joins surround each semantic analysis and
+the final result. Scoped retries retain the original single-source analyzer.
+The existing aggregate source, UTF-8, node and canonical JSON limits above apply;
+labels have a separate 2,097,152 UTF-16 code-unit aggregate limit. Empty input is
+refused. Results contain ordered `analyses` and observational
+`concreteSyntaxCorpus` rows, totals and rule trace; CST metadata grants no type,
+owner or executable authority.
+
+JavaScript-first regeneration uses this explicit contract for all sixteen
+unsupported fixtures inside every build. The old single-source APIs and their
+callback schedules remain unchanged. No speed improvement is guaranteed;
+complete Node/Bun receiving checks and the original regeneration deadlines
+remain required.
+
 Project CST component storage is separate. Its 64 MiB per-component and 512 MiB
 aggregate storage limits do not increase these source transport limits or
 establish that a stored project is semantically translatable.
