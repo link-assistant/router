@@ -70,6 +70,12 @@ function scenario(kind,subject){
   const child={v:1};read(child);const count=kind==='aliases'?2:Number(kind.slice(8));input=count===2?{a:child,b:child}:Object.fromEntries(Array.from({length:count},(_,at)=>['f'+at,child]));before=graph(input);const actualPlan=subject.completedPlanForObservation(input);details.privatePlan=compactPlan(actualPlan);
   const encoded=(1*200002+2)*4+3,lookups=[];const synthetic=subject.planForObservation(input,value=>{lookups.push(value===input?'root':value===child?'child':'other');return value===child?encoded:undefined;});details.pureLookupProbe={lookups,plan:compactPlan(synthetic),authority:false};
   observed=outcome(()=>read(input)===input);details.budgets=[subject.completedDataTraversalExceedsBudget(input,4),subject.completedDataTraversalExceedsBudget(input,5),subject.completedDataJsonWithinBudget(input,5,2),subject.completedDataJsonWithinBudget(input,5,1)];
+ }else if(kind==='unknown-lookup-native-flag'){
+  const child={v:1};read(child);input={a:child,b:child};before=graph(input);
+  const prior=Object.getOwnPropertyDescriptor(Array.prototype,'pop'),apply=Reflect.apply,lookups=[];let installed=false,pops=0,selected;
+  const custom=value=>{lookups.push(value===input?'root':value===child?'child':'other');if(value===child&&!installed){installed=true;Object.defineProperty(Array.prototype,'pop',{...prior,value(){pops++;return apply(prior.value,this,[]);}});}return value===child?(1*200002+2)*4+3:undefined;};
+  try{selected=subject.planForObservation(input,custom,true);}finally{Object.defineProperty(Array.prototype,'pop',prior);}
+  details.plan=compactPlan(selected);details.lookups=lookups;details.pops=pops;observed=outcome(()=>read(input)===input);
  }else if(kind.startsWith('mixed-')){
   const first={v:1},second={v:2};read(first);read(second);const cold={nested:{v:3}},wide=kind.startsWith('mixed-wide-'),position=kind.slice(wide?11:6);
   if(wide){const slot=position==='first'?0:position==='middle'?31:63,children=Array.from({length:64},(_,at)=>at===slot?cold:at%2?first:second);input=Object.fromEntries(children.map((value,at)=>['f'+at,value]));}
@@ -124,7 +130,7 @@ function hostileScenario(kind,subject,legacyOnly=false){
  else if(kind==='last-hidden'){input={warm,cold:{v:2}};define(input,'hidden',{value:{v:3}});}
  else if(kind.startsWith('error-')){
   const prior=descriptor(Error,'prepareStackTrace'),get=descriptor(WeakMap.prototype,'get');let called=0;
-  define(Error,'prepareStackTrace',{value(){tape.push(['formatter',++called,phase]);if(kind==='error-reenter'){for(let at=0;at<1100;at++)read({v:at});tape.push(['reentered',called]);}if(kind==='error-hook'||kind==='error-enumerable-hook')define(WeakMap.prototype,'get',{...get,value(...args){tape.push(['weak-get',args.length]);return apply(get.value,this,args);}});return 'fixed retained formatter result';},configurable:true,writable:true});
+  define(Error,'prepareStackTrace',{value(){tape.push(['formatter',++called,phase]);if(kind==='error-reenter'){for(let at=0;at<1100;at++)read({v:at});tape.push(['reentered',called]);}if(kind==='error-hook'||kind==='error-enumerable-hook'||kind==='error-restore')define(WeakMap.prototype,'get',{...get,value(...args){tape.push(['weak-get',args.length]);return apply(get.value,this,args);}});if(kind==='error-restore'){try{const map=new WeakMap();map.get(warm);read({inside:warm});}finally{define(WeakMap.prototype,'get',get);}for(let at=0;at<1100;at++)read({v:at});tape.push(['restored-and-reentered',called]);}return 'fixed retained formatter result';},configurable:true,writable:true});
   restore=()=>{if(prior)define(Error,'prepareStackTrace',prior);else delete Error.prepareStackTrace;define(WeakMap.prototype,'get',get);};
   const error=kind==='error-capture'?{}:new Error('retained-original');if(kind==='error-capture')Error.captureStackTrace(error);else Object.setPrototypeOf(error,Object.prototype);
   error[0]=warm;if(kind==='error-enumerable-hook')define(error,'stack',{enumerable:true});input=kind==='error-parent'||kind==='error-enumerable-hook'?error:{warm,later:{error}};
@@ -164,6 +170,10 @@ test('full before source and private completed child probe retain aliases and ha
 });
 test('every mixed cold or local child keeps complete original ordered state and whole graph outcomes',{timeout:60000},()=>{
  for(const kind of ['mixed-first','mixed-middle','mixed-last','cold','mixed-wide-first','mixed-wide-middle','mixed-wide-last']){const {old,current}=paired(kind);assert.deepEqual(current.details,old.details);assert.equal(current.observed.same,true);}
+});
+test('a custom lookup cannot claim a closed native segment or erase its reentrant operation callbacks',{timeout:60000},()=>{
+ const {old,current}=paired('unknown-lookup-native-flag');assert.deepEqual(current.details,old.details);assert.deepEqual(current.details.lookups,['root','child','child','child','child','root']);assert.equal(current.details.pops,6);assert.equal(current.details.plan.root.cells,5);assert.equal(current.observed.same,true);
+ const expected=hostile('error-restore','old'),actual=hostile('error-restore','current'),formatterObserved=expected.tape.some(row=>row[0]==='formatter');retain('error-restore-complete-hostile-pair',{expected,actual,capability:{originalFormatterObserved:formatterObserved,currentFormatterObserved:actual.tape.some(row=>row[0]==='formatter')}});assert.deepEqual(actual,expected);assert.equal(actual.result.same,true);if(formatterObserved){assert.ok(actual.tape.some(row=>row[0]==='restored-and-reentered'));assert.ok(actual.tape.some(row=>row[0]==='weak-get'));}
 });
 test('each cached incoming height is charged at exact depth and over-depth retains whole original fallback',{timeout:60000},()=>{
  for(const prefix of ['','wide-']){const exact=paired(prefix+'depth-exact'),over=paired(prefix+'depth-over');assert.deepEqual(exact.current.details,exact.old.details);assert.equal(exact.current.details.privatePlan.root.height,160);assert.equal(over.current.details.privatePlan,null);assert.equal(over.old.details.privatePlan,null);assert.equal(exact.current.observed.same,true);assert.equal(over.current.observed.same,true);}
