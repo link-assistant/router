@@ -1,8 +1,5 @@
 //! Native-only oracle for the owned aliases. UNRUN locally during issue #759.
-#[path = "../src/translation_core.rs"]
-mod translation_core;
-
-use translation_core::{Json, Maybe, Outcome, Str, Text};
+use link_assistant_router::translation_core::{Json, Maybe, Outcome, Str, Text};
 
 fn is_resolved(task: &Json) -> bool {
     task.get("isResolved")

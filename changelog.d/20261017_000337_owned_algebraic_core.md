@@ -37,3 +37,7 @@ Update the existing borrowed-text refusal fixture to tamper the current grouped
 facade export and assert the original anchor is unique and the mutation changes
 the source. Keep all six original source/module-route negatives and the full
 eight-case workload and limits. This test-only repair is locally UNRUN.
+
+Use the published library compatibility module in the native algebraic oracle,
+matching the other compatibility oracles without reconstructing a local module.
+All six test bodies are unchanged; Rust remains UNRUN locally.
