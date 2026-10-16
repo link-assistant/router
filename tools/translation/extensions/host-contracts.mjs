@@ -1,5 +1,5 @@
 import {parseCharacterType,checkedCharacterType,assertCharacterBoundary,checkCharacterExpression,emitCharacterExpression,needsCharacterValueGuard} from './character-scalars.mjs';
-import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
+import {parseRouterCoreRangeCall,checkRouterCoreRangeCall,captureRouterCoreRangeCalls,ROUTER_CORE_RANGE_CONTRACT} from '../router-core-ranges.mjs';
 import {parseRouterCoreStrReference} from '../router-core-primitives.mjs';
 import {parseRouterCoreFormatting,parseRouterCoreText} from '../router-core-formatting.mjs';
 import {withOriginalFormatDisplayParser,withOriginalFormatDisplayChecker} from './source-display-formatting.mjs';
@@ -723,6 +723,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
   }
   sourceFixedArrayCells(type,span){return fixedArrayCopyCells(type,span,0,(element,range)=>{checkedOptionNominal(this,element,range);const count=(type,active=new Set())=>{if(type.rustReference)return 1;if(type.kind==='array')return 1+(fixedArrayLength(type)??0)*count(type.element,active);if(type.kind!=='data')return 1;if(active.has(type.name))throw unsupported('static array cell budget','recursive owned layouts remain unproved',range);const entry=this.items.get(type.name),inner=new Set(active).add(type.name);return 1+Math.max(...entry.ctors.map(ctor=>ctor.fields.reduce((sum,field)=>sum+count(field.type,inner),0)));};return count(element);});}
   program(surface) {
+    captureRouterCoreRangeCalls(this,surface);
     captureConstMatchSources(this,surface);
     sourcePatterns.captureOriginalSharedPatterns(this,surface);
     captureOriginalMoveTuples(this,surface);

@@ -6,15 +6,19 @@ import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {translateProject} from '../project.mjs';
+import {translateProject,resolveModuleGraph} from '../project.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE} from '../router-core-formatting.mjs';
 import {ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-primitives.mjs';
-import {ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_RANGES_SHA256,ROUTER_CORE_RANGE_CONTRACT,checkRouterCoreRangeCall} from '../router-core-ranges.mjs';
+import {ROUTER_CORE_RANGES_SOURCE,ROUTER_CORE_RANGES_SHA256,ROUTER_CORE_RANGE_CONTRACT,checkRouterCoreRangeCall,captureRouterCoreRangeCalls} from '../router-core-ranges.mjs';
 import {router_core_f64_inclusive_contains as contains} from '../extensions/float-runtime.mjs';
 import {migrateCoreRanges} from '../migrate-core-ranges.mjs';
 import {transportConcreteSyntaxMeta,transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 import {sourceItems} from '../rust-structure.mjs';
+import {HostRustParser,HostChecker} from '../extensions/host-contracts.mjs';
+import {tokenizeRust} from '../extensions/lexical.mjs';
+import {createMatchesMacroContext,configureMatchesMacroParser} from '../matches-macro-context.mjs';
+import {linkProjectDeclaration,originalParsedSyntaxNode} from '../extensions/source-links.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const C='crate::translation_core::f64_inclusive_contains',vectorRoot=process.env.ROUTER_CORE_RANGE_VECTOR_DIR;
@@ -67,8 +71,9 @@ test('runtime IEEE outcomes do not coerce caller objects and evaluate arguments 
 
 test('nested owned calls and checked function arguments preserve ordinary call lowering in both targets',async()=>{
   const source=`fn lower()->f64{-2.0} fn upper()->f64{2.0} fn identity(v:f64)->f64{v} pub fn answer(v:f64)->bool{${C}(lower(),upper(),identity(v))} pub fn combined(v:f64)->bool{${C}(-2.0,2.0,v)&&${C}(0.0,1.0,v)}`;
-  const result=project(source);for(const name of ['lower','upper','identity','answer','combined'])assert.equal(has(result,name),true,name);checked(result);
-  await targets(result,api=>{const values=[-3,-2,-0,0,0.5,1,2,3,NaN,Infinity],observed=values.map(value=>[api.answer(value),api.combined(value)]);retain('all-nested-target-results',observed);assert.deepEqual(observed,[[false,false],[true,false],[true,true],[true,true],[true,true],[true,true],[true,false],[false,false],[false,false],[false,false]]);});
+  const separate=`// Physical module offset Ω😀\n pub fn physical(v:f64)->bool{${C}(-2.0,2.0,v)}`,inline=`pub mod nested { // Inline module offset Ω😀\n pub fn inline(v:f64)->bool{${C}(0.0,1.0,v)} }`;
+  const result=project(source+' pub mod child; '+inline,{extra:{'src/child.rs':separate}});for(const name of ['lower','upper','identity','answer','combined','child.physical','nested.inline'])assert.equal(has(result,name),true,name);checked(result);
+  await targets(result,api=>{const values=[-3,-2,-0,0,0.5,1,2,3,NaN,Infinity],observed=values.map(value=>[api.answer(value),api.combined(value)]);retain('all-nested-target-results',observed);assert.deepEqual(observed,[[false,false],[true,false],[true,true],[true,true],[true,true],[true,true],[true,false],[false,false],[false,false],[false,false]]);const relocated=values.map(value=>[api['child.physical'](value),api['nested.inline'](value)]);retain('physical-and-inline-module-target-results',relocated);assert.deepEqual(relocated,[[false,false],[true,false],[true,true],[true,true],[true,true],[true,true],[true,false],[false,false],[false,false],[false,false]]);});
 });
 
 test('changed facade routes leaf implementation and non-f64 ownership remain genuine refusals',()=>{
@@ -90,6 +95,44 @@ test('changed facade routes leaf implementation and non-f64 ownership remain gen
     'pub fn bad(v:f64)->bool{crate::translation_core::unregistered(0.0,1.0,v)}',
   ])assert.equal(has(project(source),'bad'),false,source);
   assert.throws(()=>checkRouterCoreRangeCall({}, {k:'routerCoreF64InclusiveCall',args:[],span:{start:0,end:1}},new Map(),[],null),error=>error.kind==='type');
+
+  // Construct two independently parsed, genuinely linked declarations. The
+  // relocation is the existing source-link recipe, never an owner flag.
+  const source=`pub fn answer()->bool{${C}(0.0,1.0,0.5)}`,input=files(source),full=input['src/lib.rs'];
+  const graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path]}),context=createMatchesMacroContext({modules:graph.modules});
+  const item=sourceItems(full).find(item=>item.term==='fn'&&item.name==='answer');
+  const relocate=(value,offset)=>Array.isArray(value)?value.map(row=>relocate(row,offset)):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([key,row])=>[key,key==='span'&&row?{start:row.start+offset,end:row.end+offset}:relocate(row,offset)])):value;
+  const callOf=value=>{if(!value||typeof value!=='object')return null;if(value.k==='routerCoreF64InclusiveCall')return value;for(const child of Object.values(value)){if(Array.isArray(child)){for(const row of child){const found=callOf(row);if(found)return found;}}else {const found=callOf(child);if(found)return found;}}return null;};
+  const original=()=>{
+    const parser=new HostRustParser(tokenizeRust(full.slice(item.start,item.end)));configureMatchesMacroParser(parser,context,{file:'src/lib.rs',offset:item.start});parser.attributes();parser.visibility();
+    const raw=parser.fn([]),semantic=relocate(raw,item.start+71);
+    assert.equal(linkProjectDeclaration(parser,raw,semantic,{source:full,sourcePath:'src/lib.rs',itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:71,path:[],scope:null}),true);
+    return {parser,raw,semantic,node:callOf(semantic),rawNode:callOf(raw)};
+  };
+  const left=original(),right=original(),checker=new HostChecker('Rust',[]),surface={language:'Rust',items:[left.semantic],main:null};
+  const origin=originalParsedSyntaxNode(left.semantic,left.node);assert.strictEqual(origin.parser,left.parser);assert.strictEqual(origin.original,left.rawNode);assert.strictEqual(origin.actual,left.node);assert.deepEqual(origin.relocated,left.node);
+  captureRouterCoreRangeCalls(checker,surface);
+  const observed=retain('actual-linked-relocation-positive',{source:full,raw:left.raw,relocated:left.semantic,checked:checkRouterCoreRangeCall(checker,left.node,new Map(),[],{kind:'bool'})});
+  assert.equal(observed.checked.k,'routerHostCall');
+  const clone=structuredClone(left.node),copiedParent=structuredClone(left.semantic);
+  assert.equal(originalParsedSyntaxNode(copiedParent,callOf(copiedParent)),null);
+  assert.throws(()=>checkRouterCoreRangeCall(checker,clone,new Map(),[],{kind:'bool'}),error=>error.kind==='type');
+  assert.throws(()=>checkRouterCoreRangeCall(checker,right.node,new Map(),[],{kind:'bool'}),error=>error.kind==='type');
+  assert.throws(()=>captureRouterCoreRangeCalls({},surface),/original|checker|identity|prototype/i);
+  let overrideCalls=0;checker.expr=()=>{overrideCalls++;throw Error('unexpected checker override');};
+  assert.throws(()=>checkRouterCoreRangeCall(checker,left.node,new Map(),[],{kind:'bool'}),/original|method|callback|changed/i);delete checker.expr;assert.equal(overrideCalls,0);
+  // Equal source/digest is insufficient: a node swapped after linking was
+  // never present at that parent's approved relocation boundary.
+  const oldBody=right.semantic.body;right.semantic.body=left.semantic.body;
+  const crossChecker=new HostChecker('Rust',[]);captureRouterCoreRangeCalls(crossChecker,{language:'Rust',items:[right.semantic],main:null});
+  assert.equal(originalParsedSyntaxNode(right.semantic,left.node),null);
+  assert.throws(()=>checkRouterCoreRangeCall(crossChecker,left.node,new Map(),[],{kind:'bool'}),error=>error.kind==='type');
+  right.semantic.body=oldBody;captureRouterCoreRangeCalls(crossChecker,{language:'Rust',items:[right.semantic],main:null});
+  assert.equal(checkRouterCoreRangeCall(crossChecker,right.node,new Map(),[],{kind:'bool'}).k,'routerHostCall');
+  const before=left.node.args[0];left.node.args[0]=structuredClone(right.node.args[1]);
+  assert.throws(()=>checkRouterCoreRangeCall(checker,left.node,new Map(),[],{kind:'bool'}),error=>error.kind==='type');left.node.args[0]=before;
+  retain('source-association-refusal-controls',{clone,copiedParent,crossAnalysis:right.semantic,restored:checkRouterCoreRangeCall(checker,left.node,new Map(),[],{kind:'bool'})});
+
 });
 
 test('literal-range CST adoption keeps complete inverse maps and independently checked output',async()=>{

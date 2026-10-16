@@ -7,7 +7,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {capturedRustTokenSource} from './lexical.mjs';
 
 const parsed=new WeakMap(), linked=new WeakMap(), capturedContexts=new WeakMap(), checkedContexts=new WeakMap(), bound=new WeakMap();
-const parserSources=new WeakMap();
+const parserSources=new WeakMap(),syntaxOrigins=new WeakMap();
 const itemCache=new Map();let cachedCharacters=0;
 const mapEntries=Map.prototype.entries, mapGet=Map.prototype.get;
 const hash=text=>createHash('sha256').update(text).digest('hex');
@@ -173,7 +173,22 @@ function verifyRelocatedSyntax(entry,semantic,offset) {
   if(!Number.isSafeInteger(offset)||offset<0)fail('source relocation requires an exact nonnegative offset');
   if(metadataDigest(relocatedSyntax(copyMetadata(entry),offset))!==metadataDigest(semantic))fail('semantic declaration differs from the exact source relocation');
 }
-function attach(parser,entry,semantic,{source,sourcePath,offset=0,itemSpan=null,scope=null,path=[]}) {
+// Keep exact object correspondence only for the new owned call kind. This
+// eligibility scan grants nothing and retains no parser for old declarations.
+function rangeSyntaxOrigin(parser,syntax,semantic,offset){
+  let nodes=null,cells=200000;const path=[];
+  const visit=(original,actual,depth=0)=>{
+    if(--cells<0||depth>160||!original||typeof original!=='object'||!actual||typeof actual!=='object'||types.isProxy(original)||types.isProxy(actual))return;
+    const kind=Object.getOwnPropertyDescriptor(original,'k');
+    if(kind&&Object.hasOwn(kind,'value')&&kind.value==='routerCoreF64InclusiveCall'){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
+    for(const key of Reflect.ownKeys(original))if(typeof key==='string'&&!['type','span','length'].includes(key)){
+      const left=Object.getOwnPropertyDescriptor(original,key),right=Object.getOwnPropertyDescriptor(actual,key);
+      if(left&&right&&Object.hasOwn(left,'value')&&Object.hasOwn(right,'value')){path.push(key);visit(left.value,right.value,depth+1);path.pop();}
+    }
+  };visit(syntax,semantic);
+  return nodes?Object.freeze({parser,syntax,offset,nodes}):null;
+}
+function attach(parser,entry,semantic,{source,sourcePath,offset=0,itemSpan=null,scope=null,path=[],syntaxParser=parser,syntaxOffset=0}) {
   const origin=verifyParserTokens(parser);if(!origin)fail('requires original tokenizer source capture');
   if(itemSpan?source.slice(itemSpan.start,itemSpan.end)!==origin.source:source!==origin.source)fail('original source bytes differ from tokenizer input');
   const record=parsed.get(parser)?.find(record=>record.entry===entry||record.body&&record.body===entry.body);
@@ -184,7 +199,9 @@ function attach(parser,entry,semantic,{source,sourcePath,offset=0,itemSpan=null,
   const bodySpan=record?.bodySpan?{start:record.bodySpan.start+offset,end:record.bodySpan.end+offset}:{start:item.start,end:item.end};
   if(bodySpan.start<item.start||bodySpan.end>item.end)return false;
   const evidence={schemaVersion:1,sourcePath,sourceBytes:context.sourceBytes,sourceSha256:context.sourceSha256,declarationSpan:{start:item.start,end:item.end},declarationSha256:hash(source.slice(item.start,item.end)),bodySpan,bodySha256:hash(source.slice(bodySpan.start,bodySpan.end)),checkedSpan:copyMetadata(semantic.span),sourceOffset:0,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic)};
-  linked.set(semantic,freeze(evidence));return true;
+  linked.set(semantic,freeze(evidence));
+  if(record){const association=rangeSyntaxOrigin(syntaxParser,entry,semantic,syntaxOffset);if(association)syntaxOrigins.set(semantic,association);}
+  return true;
 }
 // Project parsing uses declaration-local tokens but links to the full original
 // file. globalOffset is the module offset; itemOffset relocates parser tokens.
@@ -195,7 +212,7 @@ export function linkProjectDeclaration(parser,entry,semantic,{source,sourcePath,
   const record=parsed.get(parser)?.find(record=>record.entry===entry||record.body&&record.body===entry.body);
   const linkedRecord=record?{...record,start:record.start+itemOffset,end:record.end+itemOffset,bodySpan:record.bodySpan?{start:record.bodySpan.start+itemOffset,end:record.bodySpan.end+itemOffset}:null}:null;
   const temporary={cursor:parser.cursor};parserSources.set(temporary,origin);if(linkedRecord)parsed.set(temporary,[{...linkedRecord,entry,body:entry.body}]);
-  const result=attach(temporary,entry,semantic,{source,sourcePath,itemSpan,offset:0,path,scope});
+  const result=attach(temporary,entry,semantic,{source,sourcePath,itemSpan,offset:0,path,scope,syntaxParser:parser,syntaxOffset:itemOffset+globalOffset});
   if(result){const evidence=linked.get(semantic);linked.set(semantic,freeze({...evidence,sourceOffset:globalOffset}));}
   return result;
 }
@@ -251,6 +268,7 @@ export function relocateSourceLink(entry,semantic,{source,sourcePath,itemSpan,of
   verifyRelocatedSyntax(entry,semantic,shift+offset);
   const context=originalContext(source);
   linked.set(semantic,freeze({...copyMetadata(evidence),sourcePath,sourceBytes:context.sourceBytes,sourceSha256:context.sourceSha256,declarationSpan:copyMetadata(itemSpan),bodySpan:{start:evidence.bodySpan.start+shift,end:evidence.bodySpan.end+shift},checkedSpan:copyMetadata(semantic.span),sourceOffset:offset,sourceScopeSha256:metadataDigest(scope),compilationProfileSha256:metadataDigest(scope?.compilationProfile??null),parsedSurfaceSha256:metadataDigest(semantic)}));
+  const origin=syntaxOrigins.get(entry);if(origin){const association=rangeSyntaxOrigin(origin.parser,origin.syntax,semantic,origin.offset+shift+offset);if(association)syntaxOrigins.set(semantic,association);}
   return true;
 }
 export function linkedSourceContext(surface) {
@@ -265,6 +283,17 @@ export function originalParsedDeclarationEvidence(entry) {
   const evidence=linked.get(entry);if(!evidence)return null;
   if(evidence.parsedSurfaceSha256!==metadataDigest(entry))fail('original parsed declaration changed after source capture');
   return evidence;
+}
+// Recover a node only through an existing genuine, unchanged parent link.
+// The private origin was retained at its approved relocation boundary; public
+// clones, checksums and caller-selected offsets cannot create this association.
+// This records ordinary parse/relocation only, not method normalization.
+export function originalParsedSyntaxNode(entry,node){
+  const origin=syntaxOrigins.get(entry),association=origin?.nodes.get(node);
+  if(!association||!originalParsedDeclarationEvidence(entry))return null;
+  let actual=entry;for(const key of association.path)actual=ownData(actual,key);
+  if(actual!==node)return null;
+  return Object.freeze({parser:origin.parser,original:association.original,actual,relocated:relocatedSyntax(copyMetadata(association.original),origin.offset)});
 }
 // Only a successful compiler check associates a program with its captured
 // parser context. External checked-looking IR cannot mint a bound certificate.
