@@ -321,11 +321,11 @@ function compile(packet){
   const hosts={__proto__:null,'host:util':{types:{isProxy:proxy}},'host:common':{originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource,throwOriginalCapturedTypeError}};
   const globals=['Object','Array','String','Number','BigInt','Symbol','RegExp','Function','Error','TypeError','Set','Map','WeakMap','WeakSet','Uint8Array','Math','JSON'];
   for(let ri=0;ri<packet.manifest.sources.length;ri++){const row=packet.manifest.sources[ri];
-    const original=packet.sources[row.id],suffix=row.id==='concrete'?workflow:'';
+    const original=packet.sources[row.id],suffix=row.id==='concrete'?workflow+'\n'+standaloneParsedWorkflow:'';
     const declarations=[{phase:'language',rules:[
       {id:'exact-private-source-substitutions',apply(value){return {...value,rewritten:rewrite(value.original,row)};}},
       {id:'explicit-strict-wrapper',apply(value){
-        const exports=row.exports.map(name=>name+':'+name);if(row.id==='concrete')exports.push('originalIdentityTransport:originalIdentityTransport');
+        const exports=row.exports.map(name=>name+':'+name);if(row.id==='concrete')exports.push('originalIdentityTransport:originalIdentityTransport','originalStandaloneSourceTransport:originalStandaloneSourceTransport');
         return {...value,body:'"use strict";\n'+value.rewritten+'\n'+suffix+'\nreturn {'+exports.join(',')+'};'};
       }},
     ]},{phase:'repository',rules:[
@@ -381,7 +381,7 @@ function execute(input,language,operation){
     if(!compiled){compiled=compile(before);compiledSources=before.sources;}
     for(let ri=0;ri<before.manifest.sources.length;ri++){const row=before.manifest.sources[ri];if(compiledSources[row.id]!==before.sources[row.id])fail('compiled complete source changed');}
     const selected=compiled,selectedSources=compiledSources,modules=selected.modules;
-    const rust=modules.rust.rustTokens,javascript=modules.javascript.tokenize,transport=modules.concrete.originalIdentityTransport;
+    const rust=modules.rust.rustTokens,javascript=modules.javascript.tokenize,transport=operation==='source'?modules.concrete.originalStandaloneSourceTransport:modules.concrete.originalIdentityTransport;
     let result;
     try{
       if(operation==='recipes')result=data(selected.recipes);
@@ -398,7 +398,7 @@ function execute(input,language,operation){
     finalIdentities(before.records,before.ancestors);finalIdentities(after.records,after.ancestors);checked();
     // Only private immutable executable identities and primitive input remain;
     // no hash, decode or caller callback follows this final association.
-    if(compiled!==selected||compiledSources!==selectedSources||selected.modules!==modules||modules.rust.rustTokens!==rust||modules.javascript.tokenize!==javascript||modules.concrete.originalIdentityTransport!==transport)fail('source transaction association changed');
+    if(compiled!==selected||compiledSources!==selectedSources||selected.modules!==modules||modules.rust.rustTokens!==rust||modules.javascript.tokenize!==javascript||(operation==='source'?modules.concrete.originalStandaloneSourceTransport:modules.concrete.originalIdentityTransport)!==transport)fail('source transaction association changed');
     for(let ri=0;ri<before.manifest.sources.length;ri++){const row=before.manifest.sources[ri];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled source association changed');}
     return result;
   }finally{active=false;}
@@ -592,6 +592,25 @@ function originalCorpusParsedSourceTransport(input,language){
  serializedPreflight(wire);let parsed;try{parsed=parse(wire);}catch{fail('invalid serialized JSON');}
  if(parsed.source!==input||parsed.language!==language)fail('native-parsed source association differs');
  const document=build(parsed.source,parsed.language);
+ if(stringify(document)!==wire)fail('noncanonical serialized CST');
+ const pieces=[];for(let at=1;at<document.nodes.length;at++){const node=document.nodes[at];if(node[0]!=='group')pieces.push(document.source.slice(node[2],node[3]));}
+ const source=pieces.join('');if(source!==document.source||source!==first.source||source!==input)fail('leaf partition does not reconstruct source');
+ const trace=[{phase:'language',rules:[]},{phase:'repository',rules:[]}];checked();return {source,document,meta:wire,trace};
+}
+`;
+// Standalone source provenance retains the legacy validated-wrapper checkpoint
+// and all four captured stringify calls. Untrusted documents keep workflow.
+const standaloneParsedWorkflow=`
+function originalStandaloneSourceTransport(input,language){
+ checked();text(input,SOURCE_LIMIT,'source');languageName(language);
+ const first=build(input,language),wire=stringify(first);
+ if(wire.length>SERIAL_LIMIT)fail('serialized budget exceeded');
+ serializedPreflight(wire);let parsed;try{parsed=parse(wire);}catch{fail('invalid serialized JSON');}
+ if(prototype(parsed)!==Object.prototype)fail('document has foreign prototype');
+ if(parsed.source!==input||parsed.language!==language)fail('native-parsed source association differs');
+ const document=build(parsed.source,parsed.language);
+ if(stringify(parsed)!==stringify(document))fail('concrete source partition or classification changed');
+ checked();
  if(stringify(document)!==wire)fail('noncanonical serialized CST');
  const pieces=[];for(let at=1;at<document.nodes.length;at++){const node=document.nodes[at];if(node[0]!=='group')pieces.push(document.source.slice(node[2],node[3]));}
  const source=pieces.join('');if(source!==document.source||source!==first.source||source!==input)fail('leaf partition does not reconstruct source');
