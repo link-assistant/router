@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
+import {types} from 'node:util';
 import {gzipSync,gunzipSync} from 'node:zlib';
 import {createCompletedDataFreezer} from '../private-data-freeze.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
@@ -29,6 +30,35 @@ const legacyFreeze=leaves.current.module.originalFreezeForOracle;
 const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
 function retain(name,value){const output=process.env.ROUTER_DATA_FREEZE_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(json(value,(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item)+String.fromCharCode(10)),{flag:'wx'});}}
 const outcome=run=>{try{return {value:run()};}catch(error){return {error:{name:error.name,message:error.message}};}};
+// Observe the complete returned graph without executing a retained accessor.
+// Function/symbol references retain alias identity inside each independent run;
+// native prototypes are labelled and every own field/flag remains explicit.
+const resultPrototype=Object.getPrototypeOf,resultKeys=Reflect.ownKeys,resultOwn=Object.hasOwn,resultExtensible=Object.isExtensible,resultProxy=types.isProxy;
+function freezeResultGraph(root){
+ const ids=new Map(),nodes=[],records=[],symbols=new Map();
+ function reference(value){
+  if(value===null)return {kind:'null'};
+  const kind=typeof value;
+  if(kind!=='object'&&kind!=='function'){
+   if(kind==='symbol'){if(!symbols.has(value))symbols.set(value,symbols.size);return {kind,id:symbols.get(value),text:String(value)};}
+   return {kind,...(kind==='undefined'?{}:{value:kind==='bigint'?String(value):kind==='number'&&!Number.isFinite(value)?String(value):kind==='number'&&Object.is(value,-0)?'-0':value})};
+  }
+  if(resultProxy(value))throw new TypeError('Freezer observation unexpectedly retained a proxy');
+  if(!ids.has(value)){ids.set(value,nodes.length);nodes.push(value);}return {node:ids.get(value)};
+ }
+ const selected=reference(root);
+ for(let at=0;at<nodes.length;at++){
+  const value=nodes[at],parent=resultPrototype(value),fields=[];
+  for(const key of resultKeys(value)){
+   const name=typeof key==='symbol'?reference(key):key;
+   if(key==='stack'){fields.push({key:name,unobservedLazyStack:true});continue;}
+   const field=descriptor(value,key);if(!field)throw new TypeError('Freezer observation descriptor disappeared');
+   fields.push({key:name,enumerable:field.enumerable,configurable:field.configurable,...(resultOwn(field,'value')?{kind:'data',writable:field.writable,value:reference(field.value)}:{kind:'accessor',get:reference(field.get),set:reference(field.set)})});
+  }
+  records.push({index:at,kind:typeof value,prototype:parent===null?'null':parent===Object.prototype?'Object.prototype':parent===Array.prototype?'Array.prototype':parent===Function.prototype?'Function.prototype':reference(parent),extensible:resultExtensible(value),...(typeof value==='function'?{source:apply(text,value,[])}:{}),fields});
+ }
+ return {root:selected,nodes:records};
+}
 function model(){const shared={text:'λ😀',values:[1,true,null]},nullRecord=Object.assign(Object.create(null),{name:'original',shared});return {first:shared,second:shared,list:[shared,nullRecord],nothing:undefined};}
 function selected(source,name='Copy'){
  const capture=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),modules=capture.views.map(sourceView=>({file:'src/lib.rs',path:[...sourceView.modulePath],source,sourceView,compilationProfile:sourceView.compilationProfile,configurationCondition:sourceView.configurationCondition})),context=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates.find(row=>row.name==='Payload');assert.ok(certificate);const attribute=certificate.attributes.find(row=>row.derives?.some(path=>path.join('::')===name));assert.ok(attribute);return {context,certificate,invocation:{path:[name],attributeSpan:attribute.span}};
@@ -88,8 +118,8 @@ test('changed native operations preserve full original callback function identit
   const expected=run(false),actual=run(true);assert.deepEqual(actual,expected);assert.ok(actual.probe.length>0);retain('05-observer-'+key+'-'+observations.length,{expected,actual});observations.push({key,expected,actual});
  }
  for(const operation of ['freeze','forEach']){
-  function run(fast){const read=fast?createCompletedDataFreezer(legacyFreeze):legacyFreeze,owner=operation==='freeze'?Object:Array.prototype,prior=descriptor(owner,operation),tape=[],first={value:1},input={first,get later(){tape.push({event:'getter',firstFrozen:Object.isFrozen(first)});define(owner,operation,{...prior,value(...args){tape.push({event:operation,callback:typeof args[0]==='function'?{name:args[0].name,source:apply(text,args[0],[]),sameOriginal:args[0]===legacyFreeze}:null});return apply(prior.value,this,args);}});return {value:2};}};let result;try{result=outcome(()=>read(input));}finally{define(owner,operation,prior);}return {tape,result};}
-  const expected=run(false),actual=run(true);assert.deepEqual(actual,expected);assert.equal(actual.tape[0].firstFrozen,false);retain('05-getter-mutated-'+operation,{expected,actual});
+  function run(fast){const read=fast?createCompletedDataFreezer(legacyFreeze):legacyFreeze,owner=operation==='freeze'?Object:Array.prototype,prior=descriptor(owner,operation),tape=[],first={value:1},input={first,get later(){tape.push({event:'getter',firstFrozen:Object.isFrozen(first)});define(owner,operation,{...prior,value(...args){tape.push({event:operation,callback:typeof args[0]==='function'?{name:args[0].name,source:apply(text,args[0],[]),sameOriginal:args[0]===legacyFreeze}:null});return apply(prior.value,this,args);}});return {value:2};}};let result;try{result=outcome(()=>read(input));}finally{define(owner,operation,prior);}return {tape,result:result.error?result:{sameInput:result.value===input,graph:freezeResultGraph(result.value)}};}
+  const owner=operation==='freeze'?Object:Array.prototype,nativeField=descriptor(owner,operation),expected=run(false),actual=run(true);assert.deepEqual(actual,expected);assert.equal(actual.tape[0].firstFrozen,false);assert.equal(actual.result.sameInput,true);assert.equal(actual.tape.filter(row=>row.event==='getter').length,1);retain('05-getter-mutated-'+operation,{expected,actual});assert.deepEqual(descriptor(owner,operation),nativeField);assert.equal(actual.tape.filter(row=>row.event==='getter').length,1);
  }
 });
 
