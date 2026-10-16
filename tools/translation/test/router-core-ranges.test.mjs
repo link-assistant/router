@@ -111,7 +111,7 @@ test('changed facade routes leaf implementation and non-f64 ownership remain gen
   };
   const left=original(),right=original(),checker=new HostChecker('Rust',[]),surface={language:'Rust',items:[left.semantic],main:null};
   const origin=originalParsedSyntaxNode(left.semantic,left.node);assert.strictEqual(origin.parser,left.parser);assert.strictEqual(origin.original,left.rawNode);assert.strictEqual(origin.actual,left.node);assert.deepEqual(origin.relocated,left.node);
-  captureRouterCoreRangeCalls(checker,surface);
+  retain('complete-genuine-checker-program',checker.program(surface));
   const observed=retain('actual-linked-relocation-positive',{source:full,raw:left.raw,relocated:left.semantic,checked:checkRouterCoreRangeCall(checker,left.node,new Map(),[],{kind:'bool'})});
   assert.equal(observed.checked.k,'routerHostCall');
   const clone=structuredClone(left.node),copiedParent=structuredClone(left.semantic);
@@ -123,8 +123,10 @@ test('changed facade routes leaf implementation and non-f64 ownership remain gen
   assert.throws(()=>checkRouterCoreRangeCall(checker,left.node,new Map(),[],{kind:'bool'}),/original|method|callback|changed/i);delete checker.expr;assert.equal(overrideCalls,0);
   // Equal source/digest is insufficient: a node swapped after linking was
   // never present at that parent's approved relocation boundary.
+  const crossChecker=new HostChecker('Rust',[]);
+  retain('complete-independent-checker-program',crossChecker.program({language:'Rust',items:[right.semantic],main:null}));
   const oldBody=right.semantic.body;right.semantic.body=left.semantic.body;
-  const crossChecker=new HostChecker('Rust',[]);captureRouterCoreRangeCalls(crossChecker,{language:'Rust',items:[right.semantic],main:null});
+  captureRouterCoreRangeCalls(crossChecker,{language:'Rust',items:[right.semantic],main:null});
   assert.equal(originalParsedSyntaxNode(right.semantic,left.node),null);
   assert.throws(()=>checkRouterCoreRangeCall(crossChecker,left.node,new Map(),[],{kind:'bool'}),error=>error.kind==='type');
   right.semantic.body=oldBody;captureRouterCoreRangeCalls(crossChecker,{language:'Rust',items:[right.semantic],main:null});

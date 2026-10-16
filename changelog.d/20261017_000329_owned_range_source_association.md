@@ -17,3 +17,10 @@ No standard Range implementation or trait-owner proof is claimed. The Host
 source input pin is derived mechanically; actual class-entry regeneration and
 JavaScript/strict TypeScript receiving are pending Root execution. No local
 Rust oracle has been run.
+
+The low-level regression fixture initializes each genuine checker through its
+ordinary program entry point before directly checking linked calls. This
+creates the normal lexical context maps without assigning private flags.
+Copy, foreign-node, replaced-method and restored-positive assertions remain
+inside the unchanged whole-test deadlines. The initial receiving failure and
+its full output are retained; this fixture successor is source-only and UNRUN.
