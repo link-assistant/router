@@ -93,14 +93,15 @@ test('changed facade routes leaf implementation and non-f64 ownership remain gen
 });
 
 test('literal-range CST adoption keeps complete inverse maps and independently checked output',async()=>{
-  const source='// Ω😀 untouched\r\npub fn bounded(value:f64)->bool{(0.0..=1.0).contains(&value)}\r\npub fn signed(value:f64)->bool{!(-2.0..=2.0).contains(&value)}\n';
+  const source='// Ω😀 untouched\r\npub fn bounded(value:f64)->bool{(0.0..=1.0).contains(&value)}\r\npub fn signed(value:f64)->bool{!(-2.0..=2.0).contains(&value)}\npub fn double(value:f64)->bool{!!(0.0..=1.0).contains(&value)}\npub fn conditional(value:f64)->bool{if !(0.0..=1.0).contains(&value){false}else{true}}\npub fn returning(value:f64)->bool{return !(0.0..=1.0).contains(&value);}\n';
   const proposal=retain('complete-CST-adoption',migrateCoreRanges(source));
-  assert.equal(proposal.edits.length,2);assert.equal(proposal.before.source,source);assert.equal(transportConcreteSyntaxMeta(proposal.before.meta).source,source);assert.equal(transportConcreteSyntaxMeta(proposal.after.meta).source,proposal.after.source);
+  assert.equal(proposal.edits.length,5);assert.deepEqual(proposal.selections.map(row=>row.function),['bounded','signed','double','conditional','returning']);assert.equal(proposal.before.source,source);assert.equal(transportConcreteSyntaxMeta(proposal.before.meta).source,source);assert.equal(transportConcreteSyntaxMeta(proposal.after.meta).source,proposal.after.source);
   assert.deepEqual(proposal.trace.map(row=>row.phase),['language','repository']);assert.equal(proposal.executableAdmission,false);
   let inverse=proposal.after.source;for(const row of [...proposal.mapping].reverse())if(row.kind==='substitution')inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);assert.equal(inverse,source);
   assert.equal(migrateCoreRanges(proposal.after.source).edits.length,0);
   const result=project(proposal.after.source);assert.equal(has(result,'bounded'),true);assert.equal(has(result,'signed'),true);checked(result);
-  await targets(result,api=>{const observed=[api.bounded(0),api.bounded(1),api.bounded(2),api.bounded(NaN),api.signed(-3),api.signed(-2),api.signed(2),api.signed(3)];retain('migrated-target-values',observed);assert.deepEqual(observed,[true,true,false,false,true,false,false,true]);});
+  await targets(result,api=>{const observed=[api.bounded(0),api.bounded(1),api.bounded(2),api.bounded(NaN),api.signed(-3),api.signed(-2),api.signed(2),api.signed(3),api.double(0.5),api.double(2),api.conditional(0.5),api.conditional(2),api.returning(0.5),api.returning(2)];retain('migrated-target-values',observed);assert.deepEqual(observed,[true,true,false,false,true,false,false,true,true,false,true,false,false,true]);});
+  for(const prefix of ['!','!!','return !','return!','if !','if!']){const complete=`pub fn compact(value:f64)->bool{${prefix}(0.0..=1.0).contains(&value)}`,adopted=retain('complete-keyword-negation-proposal',migrateCoreRanges(complete));assert.equal(adopted.edits.length,1,prefix);assert.equal(adopted.after.source,complete.replace('(0.0..=1.0).contains(&value)',`${C}(0.0, 1.0, value)`));assert.equal(migrateCoreRanges(adopted.after.source).edits.length,0);}
 });
 
 test('ambiguous and nonliteral range syntax is preserved rather than granted an owner or borrow',()=>{
@@ -117,6 +118,10 @@ test('ambiguous and nonliteral range syntax is preserved rather than granted an 
     'pub fn value(v:&f64)->bool{(0.0..=1.0).contains(v)}',
     'pub fn value(v:f64)->bool{(0.0..=1.0).contains(&(v+1.0))}',
     'pub fn value(v:f64)->bool{unknown!((0.0..=1.0).contains(&v))}',
+    'pub fn value(v:f64)->bool{unknown ! ((0.0..=1.0).contains(&v))}',
+    'pub fn value(v:f64)->bool{outer!{inner![(0.0..=1.0).contains(&v)]}}',
+    'pub fn value(v:f64)->bool{r#if!((0.0..=1.0).contains(&v))}',
+    'pub fn value(v:f64)->bool{r#return ! ((0.0..=1.0).contains(&v))}',
     'const TEXT:&str="(0.0..=1.0).contains(&v)"; // (0.0..=1.0).contains(&v)\n',
   ];
   for(const source of sources){const proposal=retain('complete-unchanged-refusal-proposal',migrateCoreRanges(source));assert.equal(proposal.after.source,source);assert.equal(proposal.edits.length,0);}

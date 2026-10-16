@@ -15,6 +15,17 @@ const fail=message=>{throw new TypeError('Core inclusive-range adoption: '+messa
 const target='crate::translation_core::f64_inclusive_contains';
 const ident=token=>token?.type==='ident'&&/^[A-Za-z_][A-Za-z0-9_]*$/u.test(token.text);
 const inert=new Set(['doc','must_use','allow','warn','deny','forbid','expect','inline','cold','deprecated','track_caller','test']);
+// The item lexer calls keywords ident too and can merge their following `!`.
+// Neither standalone negation nor `if !` / `return!` is a macro name. A raw
+// identifier can explicitly name a keyword; retain its contiguous r# prefix.
+const reservedMacroNames=new Set('as async await break const continue crate dyn else enum extern false fn for gen if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while abstract become box do final macro override priv try typeof unsized virtual yield _'.split(' '));
+function macroTreeOpen(rows,at){
+  const token=rows[at];if(token?.type!=='ident')return -1;
+  const merged=token.text.endsWith('!'),name=merged?token.text.slice(0,-1):token.text;
+  const raw=rows[at-2]?.text==='r'&&rows[at-1]?.text==='#'&&rows[at-2].end===rows[at-1].start&&rows[at-1].end===token.start;
+  if(!/^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(name)||reservedMacroNames.has(name)&&!raw||!merged&&rows[at+1]?.text!=='!')return -1;
+  const open=at+(merged?1:2);return ['(','[','{'].includes(rows[open]?.text)?open:-1;
+}
 function close(rows,at){
   const opens={'(':')','[':']','{':'}'},stack=[];
   for(let next=at;next<rows.length;next++){
@@ -55,8 +66,8 @@ export function migrateCoreRanges(source,{compilationProfile=PRODUCTION_PROFILE}
     const localProducer=rows.slice(body+1).some(row=>['fn','trait','impl','use','macro_rules!','macro'].includes(row.text));
     if(localProducer){skipped.push({function:item.name,span:[item.start,item.end],reason:'nested declaration or method/import producer'});continue;}
     const macroSpans=[];
-    for(let at=body+1;at<rows.length;at++)if(rows[at].text.endsWith('!')||rows[at+1]?.text==='!'){
-      const open=rows[at].text.endsWith('!')?at+1:at+2;if(!['(','[','{'].includes(rows[open]?.text))continue;
+    for(let at=body+1;at<rows.length;at++){
+      const open=macroTreeOpen(rows,at);if(open<0)continue;
       const end=close(rows,open);if(end>=0){macroSpans.push([open,end]);at=end;}
     }
     for(let at=body+1;at<rows.length-1;at++){
