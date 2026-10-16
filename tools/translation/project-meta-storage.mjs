@@ -7,6 +7,7 @@ export const PROJECT_META_STORAGE_LIMITS=Object.freeze({fileBytes:64*1024*1024,t
 const components=Object.freeze([
   Object.freeze({field:'checkedSemanticProgram',target:'checkedProgramMeta'}),
   Object.freeze({field:'targetSemanticProgram',target:'targetProgramMeta'}),
+  Object.freeze({field:'concreteSyntaxMeta',target:'concreteSyntaxMeta'}),
 ]);
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const size=text=>Buffer.byteLength(text,'utf8');
@@ -57,8 +58,8 @@ export function planProjectMetaStorage(metaPath,serialized,{storageLimits}={}){
   if(bytes<=bound.fileBytes)return {text:serialized,components:[],targets:{}};
   const fields=topFields(serialized),selected=new Map(fields.filter(row=>components.some(component=>component.field===row.name)).map(row=>[row.name,row.raw]));
   if('{'+fields.map(row=>JSON.stringify(row.name)+':'+row.raw).join(',')+'}\n'!==serialized)fail('complete canonical json(meta) required');
-  if(selected.size!==2)fail('both complete semantic programs required');
-  const rows=components.map(component=>{
+  if(!selected.has('checkedSemanticProgram')||!selected.has('targetSemanticProgram'))fail('both complete semantic programs required');
+  const rows=components.filter(component=>selected.has(component.field)).map(component=>{
     const content=selected.get(component.field)+'\n';budget(content,bound.fileBytes);canonicalValue(selected.get(component.field));
     return {...component,path:componentPath(metaPath,component.field),bytes:size(content),sha256:hash(content),text:content};
   });
@@ -79,13 +80,20 @@ export function loadProjectMetaStorage(serialized,{metaPath,targets,read,storage
   if(size(serialized)>bound.totalBytes)throw new RangeError('Project metadata storage aggregate byte budget');
   const document=JSON.parse(serialized),listed=components.filter(component=>Object.hasOwn(targets??{},component.target));
   if(document?.schema!==schema){if(listed.length)fail('unexpected inventory components for inline metadata');return {meta:document,text:serialized,components:[]};}
-  if(!keys(document,['schema','logical','root','components'])||!keys(document.logical,['bytes','sha256','keys'])||!Array.isArray(document.components)||document.components.length!==2||listed.length!==2||targets.meta!==metaPath||Object.keys(targets).length!==5||!['meta','javascript','typescript','checkedProgramMeta','targetProgramMeta'].every(key=>typeof targets[key]==='string')||typeof read!=='function')fail('complete wrapper and inventory components required');
+  // The two semantic programs remain mandatory. The complete concrete source
+  // array is an optional third component; legacy two-component wrappers keep
+  // their exact format and are read without inventing a concrete document.
+  const targetKeys=['meta','javascript','typescript',...listed.map(component=>component.target)];
+  if(!keys(document,['schema','logical','root','components'])||!keys(document.logical,['bytes','sha256','keys'])||!Array.isArray(document.components)||document.components.length!==listed.length||listed.length<2||!listed.some(component=>component.field==='checkedSemanticProgram')||!listed.some(component=>component.field==='targetSemanticProgram')||targets.meta!==metaPath||Object.keys(targets).length!==targetKeys.length||!targetKeys.every(key=>typeof targets[key]==='string')||typeof read!=='function')fail('complete wrapper and inventory components required');
+  // Reject a foreign inventory path before requesting any component bytes.
+  // Per-component byte/aggregate checks retain their existing read order.
+  if(!listed.every(component=>targets[component.target]===componentPath(metaPath,component.field)))fail('changed or escaping inventory component descriptor');
   const logical=document.logical;
   if(!Number.isSafeInteger(logical.bytes)||logical.bytes<1||logical.bytes>bound.totalBytes||!/^[a-f0-9]{64}$/u.test(logical.sha256)||!Array.isArray(logical.keys)||logical.keys.some(key=>typeof key!=='string')||new Set(logical.keys).size!==logical.keys.length||!document.root||typeof document.root!=='object'||Array.isArray(document.root))fail('invalid original logical metadata record');
   if(json(document)!==serialized)fail('noncanonical storage wrapper');
   const values=new Map(),loaded=[];let total=size(serialized);
-  for(let index=0;index<components.length;index++){
-    const expected=components[index],row=document.components[index],name=componentPath(metaPath,expected.field);
+  for(let index=0;index<listed.length;index++){
+    const expected=listed[index],row=document.components[index],name=componentPath(metaPath,expected.field);
     if(!keys(row,['field','path','bytes','sha256'])||row.field!==expected.field||row.path!==name||targets[expected.target]!==name||!Number.isSafeInteger(row.bytes)||row.bytes<1||row.bytes>bound.fileBytes||!/^[a-f0-9]{64}$/u.test(row.sha256)||Object.hasOwn(document.root,row.field))fail('changed, escaping or incomplete component descriptor');
     total+=row.bytes;if(total>bound.totalBytes)throw new RangeError('Project metadata storage aggregate byte budget');
     const content=text(read(name),bound.fileBytes);
