@@ -385,3 +385,9 @@ export function assertConcreteSyntaxHost(){checked();}
 import {transportPrivateConcreteChunks} from './private-parser-execution.mjs';
 /** Explicit corpus fidelity contract, without changing single/batch ingress. */
 export function transportConcreteSyntaxChunks(chunks){checked();const result=transportPrivateConcreteChunks(chunks);checked();return result;}
+
+import {transportPrivateConcreteParsedChunks} from './private-parser-execution.mjs';
+/** Fixed private source-origin corpus transport, never a caller document mode. */
+export function transportConcreteSyntaxParsedChunks(chunks){
+ checked();const result=transportPrivateConcreteParsedChunks(chunks);checked();return result;
+}

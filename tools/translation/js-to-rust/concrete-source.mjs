@@ -51,3 +51,18 @@ export function prepareReverseConcreteSourceChunks(chunks){
  }
  guard();return {chunks:groups,totals:result.totals};
 }
+
+import {transportConcreteSyntaxParsedChunks} from '../concrete-syntax-meta.mjs';
+/** Fixed source-origin specialization; semantic authority remains independent. */
+export function prepareReverseConcreteParsedSourceChunks(chunks){
+ guard();const result=transportConcreteSyntaxParsedChunks(chunks);guard();const groups=[];
+ for(let ci=0;ci<result.chunks.length;ci++){
+  const chunk=result.chunks[ci],stages=[];
+  for(let at=0;at<chunk.rows.length;at++){
+   const {source,document,meta,trace}=chunk.rows[at];language(document.language);
+   stages.push({source,concreteSyntax:{schema:'router-reverse-concrete-stage-v1',language:document.language,representationLevel:document.representationLevel,status:document.status,meta,trace}});
+  }
+  groups.push({stages,totals:chunk.totals});
+ }
+ guard();return {chunks:groups,totals:result.totals};
+}

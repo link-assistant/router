@@ -580,3 +580,101 @@ export function capturePrivateParserCorpusSources(input,options){
   if(options!==undefined){const fields=shape(options,current.g.Object.prototype,['constructorGraph']);constructorGraph=fields[0].value;}
   return {sources,constructorGraph,requireCurrent(){checked();batchInputCurrent(records);}};
 }
+
+
+// Source-origin specialization only. The native-parsed tree is private,
+// unexposed, and created from the first complete build's canonical wire.
+const corpusParsedWorkflow=`
+function originalCorpusParsedSourceTransport(input,language){
+ checked();text(input,SOURCE_LIMIT,'source');languageName(language);
+ const first=build(input,language),wire=stringify(first);
+ if(wire.length>SERIAL_LIMIT)fail('serialized budget exceeded');
+ serializedPreflight(wire);let parsed;try{parsed=parse(wire);}catch{fail('invalid serialized JSON');}
+ if(parsed.source!==input||parsed.language!==language)fail('native-parsed source association differs');
+ const document=build(parsed.source,parsed.language);
+ if(stringify(document)!==wire)fail('noncanonical serialized CST');
+ const pieces=[];for(let at=1;at<document.nodes.length;at++){const node=document.nodes[at];if(node[0]!=='group')pieces.push(document.source.slice(node[2],node[3]));}
+ const source=pieces.join('');if(source!==document.source||source!==first.source||source!==input)fail('leaf partition does not reconstruct source');
+ const trace=[{phase:'language',rules:[]},{phase:'repository',rules:[]}];checked();return {source,document,meta:wire,trace};
+}
+`;
+let corpusParsedCompiled=null,corpusParsedSources=null;
+
+function compileCorpusParsed(packet){
+  const cache={__proto__:null},recipes=[],g=state.g;
+  const hosts={__proto__:null,'host:util':{types:{isProxy:proxy}},'host:common':{originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalCapturedFunctionSource,throwOriginalCapturedTypeError}};
+  const globals=['Object','Array','String','Number','BigInt','Symbol','RegExp','Function','Error','TypeError','Set','Map','WeakMap','WeakSet','Uint8Array','Math','JSON'];
+  for(let ri=0;ri<packet.manifest.sources.length;ri++){const row=packet.manifest.sources[ri];
+    const original=packet.sources[row.id],suffix=row.id==='concrete'?workflow+'\n'+corpusParsedWorkflow:'';
+    const declarations=[{phase:'language',rules:[
+      {id:'exact-private-source-substitutions',apply(value){return {...value,rewritten:rewrite(value.original,row)};}},
+      {id:'explicit-strict-wrapper',apply(value){
+        const exports=row.exports.map(name=>name+':'+name);if(row.id==='concrete')exports.push('originalIdentityTransport:originalIdentityTransport','originalCorpusParsedSourceTransport:originalCorpusParsedSourceTransport');
+        return {...value,body:'"use strict";\n'+value.rewritten+'\n'+suffix+'\nreturn {'+exports.join(',')+'};'};
+      }},
+    ]},{phase:'repository',rules:[
+      {id:'closed-registered-import-bindings',apply(value){
+        const names=[],values=[];
+        for(let di=0;di<row.imports.length;di++){const dependency=row.imports[di];
+          const module=own(hosts,dependency.module)?hosts[dependency.module]:cache[dependency.module];
+          if(!module)fail('unregistered module order');
+          for(let bi=0;bi<dependency.names.length;bi++){const name=dependency.names[bi];if(!own(module,name))fail('unregistered module binding');names.push(name);values.push(module[name]);}
+        }
+        for(let gi=0;gi<globals.length;gi++){const name=globals[gi];names.push(name);values.push(g[name]);}
+        names.push('globalThis');values.push(root);return {...value,names,values};
+      }},
+      {id:'instantiate-registered-module',apply(value){
+        checked();const factory=apply(g.Function,undefined,[...value.names,value.body]);checked();
+        const module=apply(factory,undefined,value.values);checked();return {...value,module};
+      }},
+    ]}];
+    for(let at=0;at<2;at++){
+      const expected=packet.manifest.rules[at],actual=declarations[at];
+      if(expected.phase!==actual.phase||expected.rules.length!==actual.rules.length||expected.rules.some((id,index)=>id!==actual.rules[index].id))fail('registered executed rule order differs');
+    }
+    const result=fixedPhases({original},declarations);
+    Object.defineProperty(cache,row.id,{__proto__:null,value:result.value.module,enumerable:true});
+    recipes.push({id:row.id,original,rewritten:result.value.rewritten,body:result.value.body,edits:row.edits,trace:result.trace});
+  }
+  return {modules:cache,recipes};
+}
+
+/** Same raw chunk contract; only private native-parse provenance differs. */
+export function transportPrivateConcreteParsedChunks(input){
+  const current=checked();if(active)fail('recursive source transaction');
+  const request=chunkSnapshot(input,current);active=true;
+  try{
+    const chunks=[],joins=[];let nodes=0,canonicalUnits=0;
+    for(let ci=0;ci<request.chunks.length;ci++){
+      const chunk=request.chunks[ci],before=authenticate();checked();
+      if(!corpusParsedCompiled){corpusParsedCompiled=compileCorpusParsed(before);corpusParsedSources=before.sources;}
+      const selected=corpusParsedCompiled,selectedSources=corpusParsedSources,modules=selected.modules,transport=modules.concrete.originalCorpusParsedSourceTransport;
+      for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(selectedSources[row.id]!==before.sources[row.id])fail('compiled complete source changed');}
+      const rows=[];let chunkNodes=0,chunkCanonical=0;
+      for(let at=0;at<chunk.rows.length;at++){
+        checked();const row=chunk.rows[at];let result;
+        try{result=transport(row.source,row.language,false);}catch(error){
+          checked();const message=error!==null&&typeof error==='object'&&!proxy(error)?descriptor(error,'message'):null;
+          throwOriginalCapturedTypeError(message&&own(message,'value')&&typeof message.value==='string'?message.value:'Private original grammar refused');
+        }
+        checked();if(result.source!==row.source||result.document.language!==row.language)fail('corpus source association differs');
+        nodes+=result.document.nodes.length;canonicalUnits+=result.meta.length;chunkNodes+=result.document.nodes.length;chunkCanonical+=result.meta.length;
+        if(nodes>BATCH_NODES||canonicalUnits>BATCH_SERIAL)fail('corpus aggregate node/canonical budget');
+        rows.push(result);
+      }
+      const after=authenticate();checked();if(before.text!==after.text)fail('current manifest differs');
+      for(let at=0;at<before.manifest.sources.length;at++){const row=before.manifest.sources[at];if(before.sources[row.id]!==after.sources[row.id])fail('current complete source differs');}
+      finalIdentities(before.records,before.ancestors);finalIdentities(after.records,after.ancestors);checked();
+      joins.push({before,after,selected,selectedSources,modules,transport});
+      chunks.push({rows,totals:{rows:rows.length,sourceCodeUnits:chunk.units,utf8Bytes:chunk.bytes,nodes:chunkNodes,canonicalCodeUnits:chunkCanonical}});
+    }
+    // Later chunk callbacks may invalidate an earlier chunk's paths or inputs.
+    for(let ci=0;ci<joins.length;ci++){const join=joins[ci];finalIdentities(join.before.records,join.before.ancestors);finalIdentities(join.after.records,join.after.ancestors);}checked();
+    const result={chunks,totals:{chunks:chunks.length,rows:request.rows,sourceCodeUnits:request.units,utf8Bytes:request.bytes,nodes,canonicalCodeUnits:canonicalUnits}};
+    for(let ci=0;ci<joins.length;ci++){
+      const join=joins[ci];if(corpusParsedCompiled!==join.selected||corpusParsedSources!==join.selectedSources||join.selected.modules!==join.modules||join.modules.concrete.originalCorpusParsedSourceTransport!==join.transport||join.before.text!==join.after.text)fail('corpus final source transaction association changed');
+      for(let at=0;at<join.before.manifest.sources.length;at++){const row=join.before.manifest.sources[at];if(join.selectedSources[row.id]!==join.before.sources[row.id]||join.before.sources[row.id]!==join.after.sources[row.id])fail('corpus final complete source association changed');}
+    }
+    batchInputCurrent(request.snapshots);return result;
+  }finally{active=false;}
+}

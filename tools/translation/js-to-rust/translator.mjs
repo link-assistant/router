@@ -243,7 +243,7 @@ export function analyzeJavaScriptBatched(source,options){
 }
 
 
-import {prepareReverseConcreteSourceChunks} from './concrete-source.mjs';
+import {prepareReverseConcreteParsedSourceChunks} from './concrete-source.mjs';
 import {captureNativeCorpusSources} from './native-corpus-sources.mjs';
 /** New explicit corpus observer contract; every actual attempt is still fresh. */
 export function analyzeJavaScriptCorpusBatched(input,options){
@@ -282,7 +282,7 @@ export function analyzeJavaScriptCorpusBatched(input,options){
         return chunks;
       }},
       {id:'native-corpus:checked-concrete-chunks',apply:value=>{
-        batch=prepareReverseConcreteSourceChunks(value);
+        batch=prepareReverseConcreteParsedSourceChunks(value);
         for(let ci=0;ci<batch.chunks.length;ci++){const chunk=batch.chunks[ci];for(let at=0;at<chunk.stages.length;at++)pool.push(chunk.stages[at]);}
         if(pool.length!==coordinates.length||batch.totals.rows!==pool.length)throw Error('corpus reconstructed row census differs');
         for(let at=0;at<pool.length;at++)associated(at,coordinates[at].source,coordinates[at].module);
