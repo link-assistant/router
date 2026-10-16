@@ -67,7 +67,9 @@ export function privateDataJsonEquality(left,right){
   if(cells>CELLS||names.length!==other.length)return null;
   // Module namespaces retain a nonremovable symbol even with null prototype.
   // Reject the entire key shape before a TDZ descriptor could throw.
-  for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]!==other[at]||names[at]==='toJSON')return null;
+  // captureStackTrace can add a lazy own stack to non-Error branded targets.
+  // Even a frozen target must defer before integrity or descriptor queries.
+  for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]!==other[at]||names[at]==='toJSON'||names[at]==='stack'||other[at]==='stack')return null;
   // Native host interceptors can look plain while their backing data changes
   // outside this turn. Only immutable own data enters the positive domain.
   // Shape checks precede this native integrity query to avoid TDZ namespaces.
@@ -113,9 +115,9 @@ export function privateDataJsonFieldEquality(left,right,name){
   const isError=errorField.value,isBoxed=boxedField.value,isView=viewField.value;
   if(isError(value)||isBoxed(value)||isView(value))return null;
   const parent=prototype(value);if(parent!==null&&parent!==objectPrototype)return null;
-  const names=keys(value);for(let at=0;at<names.length;at++)if(typeof names[at]!=='string')return null;
-  if(!isFrozen(value))return null;
+  const names=keys(value);for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack')return null;
  }
+ if(!isFrozen(left)||!isFrozen(right))return null;
  const a=descriptor(left,name),b=descriptor(right,name);
  if(!a||!b||!own(a,'value')||!own(b,'value'))return null;
  const comparison=privateDataJsonEquality(a.value,b.value);
