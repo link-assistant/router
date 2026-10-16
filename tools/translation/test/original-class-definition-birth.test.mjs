@@ -13,6 +13,7 @@ import {assertPrivateParserExecution} from '../private-parser-execution.mjs';
 import {captureOriginalClassDefinitionContext,requireOriginalClassDefinitionContext,
   originalClassDefinitionProgram,originalClassBirthSourceHostAvailable} from '../extensions/original-class-definition-birth.mjs';
 import {prepareOriginalClassBirthPlan,applyOriginalClassBirthEdits} from '../prepare-original-class-birth.mjs';
+import {createRulePipeline,exactSubstitutionRule} from '../rule-pipeline.mjs';
 
 const ROOT=resolve(fileURLToPath(new URL('../../../',import.meta.url)));
 const descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty,keys=Reflect.ownKeys;
@@ -276,11 +277,47 @@ test('physical cold reflection and URI ingress are sticky and execute no poisone
   for(const row of rows){assert.equal(row.error,undefined);assert.equal(row.callbacks,0);assert.equal(row.distinct,true);assert.equal(row.sticky.value,false);assert.ok(row.contextError);}assert.equal(callbacks,0);assert.ok(late.error);restored();
 });
 
+// Diagnostic provenance only: replay the complete registered source recipe
+// for this exact physical graph. No partial URL/path matching grants equality.
+function originalCoreDiagnosticSource(g,before,proposal){
+  assert.deepEqual(g.p.core,proposal.program.core);
+  const row=g.p.core.find(row=>row.name==='rust.js'),core=g.p.files.find(row=>row.path==='extensions/core.mjs');
+  const coreSource=readFileSync(join(g.extensions,'core.mjs'),'utf8'),corePin=before?core.before:core.after;
+  assert.equal(Buffer.byteLength(coreSource),corePin.bytes);assert.equal(createHash('sha256').update(coreSource).digest('hex'),corePin.sha256);
+  const originalCore=before?coreSource:reverseSource(coreSource,core);assert.equal(Buffer.byteLength(originalCore),core.before.bytes);assert.equal(createHash('sha256').update(originalCore).digest('hex'),core.before.sha256);
+  const raw=readFileSync(join(g.folder,'tools/translation/vendor/meta-language/translation/rust.js'),'utf8');
+  assert.equal(Buffer.byteLength(raw),row.original.bytes);assert.equal(createHash('sha256').update(raw).digest('hex'),row.original.sha256);
+  assert.equal(row.language.length,10);assert.equal(row.language[9].id,'original-class-birth-RustParser');
+  const language=before?row.language.slice(0,-1):row.language,repository=row.repository;
+  assert.equal(language.length,before?9:10);assert.equal(repository.length,5);
+  const resolved=repository.map(edit=>({...edit,url:new URL('../'+edit.target,pathToFileURL(join(g.extensions,'core.mjs'))).href}));
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:language.map(edit=>exactSubstitutionRule('rust.js:'+edit.id,edit.expected,edit.replacement,'complete original diagnostic source anchor differs'))},
+    {phase:'repository',rules:[{id:'rust.js:resolve-imports',apply(source){
+      let result=source;for(let at=resolved.length-1;at>=0;at--){const edit=resolved[at];assert.equal(result.slice(edit.start,edit.end),edit.expected);result=result.slice(0,edit.start)+edit.expected[0]+edit.url+edit.expected[0]+result.slice(edit.end);}return result;
+    }}]},
+  ]);
+  const outcome=pipeline.run(raw),transformed=outcome.value,url='data:text/javascript;base64,'+Buffer.from(transformed,'utf8').toString('base64');
+  assert.equal(Buffer.from(url.slice('data:text/javascript;base64,'.length),'base64').toString('utf8'),transformed);
+  return {module:'rust.js',logical:'router-original-core:rust.js',before,coreSource,originalCore,corePin,raw,rawPin:row.original,language,repository:resolved,transformed,url,trace:outcome.trace};
+}
+function normalizeOriginalCoreRefusal(raw,proof){
+  if(!raw.error)return {value:raw,mapped:0};let seen=0,mapped=0;
+  const fields=raw.error.fields.map(field=>{
+    if(field.key!=='sourceURL')return field;
+    if(++seen!==1||field.data!==true||field.valueType!=='string'||typeof field.value!=='string'||field.value!==proof.url)throw new Error('unproved original core diagnostic sourceURL');
+    mapped++;return {...field,value:proof.logical};
+  });
+  const value={...raw,error:{...raw.error,fields}};
+  const reversed={...value,error:{...value.error,fields:fields.map(field=>field.key==='sourceURL'?{...field,value:proof.url}:field)}};
+  return {value,mapped,reversed};
+}
+
 test('original parse check emit behavior and strictTS stay independent of identity-only context',{timeout:60000},async()=>{
-  const rows=[];for(const before of [true,false]){const g=graph('08-λ-'+(before?'old':'current'),{before});try{
+  const proposal=prepareOriginalClassBirthPlan({sourceRoot:ROOT}),rows=[];for(const before of [true,false]){const g=graph('08-λ-'+(before?'old':'current'),{before});try{
     await g.module('host-contracts');
     const methods=await g.module('methods'),originalRefusal=attempt(()=>methods.parseRust(input)),executableSource=input+'\nfn main() {}',parsed=methods.parseRust(executableSource),checked=methods.checkProgram(parsed),emitted=methods.emitJavaScript(checked),refusal=attempt(()=>methods.parseRust('fn malformed('));
-    rows.push({before,input,originalRefusal:observed(originalRefusal),executableSource,parsed,checked,emitted,refusal:observed(refusal)});
+    const provenance=originalCoreDiagnosticSource(g,before,proposal);rows.push({before,input,originalRefusal:observed(originalRefusal),executableSource,parsed,checked,emitted,refusal:observed(refusal),provenance});
     if(!before){const positive=await fullPositive(g);assert.equal(positive.facts.owner,false);assert.equal(positive.facts.body,false);}
   }finally{g.close();}}
   const folder=mkdtempSync(join(tmpdir(),'router-birth-strict-ts-'));let result;try{
@@ -289,5 +326,15 @@ test('original parse check emit behavior and strictTS stay independent of identi
     writeFileSync(file,source);const sourceRoot=process.env.ROUTER_NATIVE_TS_SOURCE_ROOT??ROOT,require=createRequire(join(sourceRoot,'packages/javascript/package.json')),tsc=require.resolve('typescript/bin/tsc');
     result=spawnSync(process.execPath,[tsc,'--noEmit','--strict','--allowJs','--checkJs','false','--skipLibCheck','--module','NodeNext','--moduleResolution','NodeNext','--target','ES2022',file],{encoding:'utf8',timeout:20000,maxBuffer:1048576});retain('08-strict-typescript',{source,result});
   }finally{rmSync(folder,{recursive:true,force:true});}
-  retain('08-complete-old-current',{rows});assert.equal(result.status,0,result.stdout+result.stderr);for(const row of rows)assert.ok(row.originalRefusal.error);assert.deepEqual(rows[1].originalRefusal,rows[0].originalRefusal);assert.deepEqual(rows[1].parsed,rows[0].parsed);assert.deepEqual(rows[1].checked,rows[0].checked);assert.deepEqual(rows[1].emitted,rows[0].emitted);assert.deepEqual(rows[1].refusal,rows[0].refusal);restored();
+  retain('08-complete-old-current',{rows});
+  const normalized=rows.map(row=>normalizeOriginalCoreRefusal(row.originalRefusal,row.provenance));
+  const foreign=rows.map(row=>{
+    let seen=false;const fields=row.originalRefusal.error.fields.map(field=>{if(field.key!=='sourceURL')return field;seen=true;return {...field,value:row.provenance.url+'x'};});
+    if(!seen)fields.push({key:'sourceURL',data:true,valueType:'string',enumerable:false,configurable:true,writable:true,value:row.provenance.url+'x',getter:false,setter:false});
+    const facts={...row.originalRefusal,error:{...row.originalRefusal.error,fields}};return {facts,result:observed(attempt(()=>normalizeOriginalCoreRefusal(facts,row.provenance)))};
+  });
+  retain('08-complete-source-url-associations',{rows,normalized,foreign});
+  assert.equal(result.status,0,result.stdout+result.stderr);for(let at=0;at<rows.length;at++){assert.ok(rows[at].originalRefusal.error);assert.deepEqual(normalized[at].reversed,rows[at].originalRefusal);assert.ok(foreign[at].result.error);}
+  assert.equal(normalized[1].mapped,normalized[0].mapped);assert.deepEqual(normalized[1].value,normalized[0].value);
+  assert.deepEqual(rows[1].parsed,rows[0].parsed);assert.deepEqual(rows[1].checked,rows[0].checked);assert.deepEqual(rows[1].emitted,rows[0].emitted);assert.deepEqual(rows[1].refusal,rows[0].refusal);restored();
 });
