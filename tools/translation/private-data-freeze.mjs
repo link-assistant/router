@@ -2,6 +2,7 @@
 // A completed record contains scalar traversal costs only, with weak keys.
 import {types} from 'node:util';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+const MIN_COMPLETED_CHILDREN=64;
 const ROOT_LIMIT=1024,LARGE_LIMIT=2048,SMALL_LIMIT=1024,LARGE_CELLS=64,NODE_LIMIT=32768,CELL_LIMIT=200000,DEPTH_LIMIT=160,RECORD_BASE=CELL_LIMIT+2;
 // Shared scalar-only weak records; no owner or proof root is retained.
 // The low two bits retain safe-scalar/no-own-toJSON subtree facts. The other
@@ -60,7 +61,7 @@ function plan(value,lookup){
   // Only an entirely completed child set has no later cold descriptor walk.
   // A miss keeps the exact original pending order, including callback effects.
   let completedCells=scalarCells,completedHeight=1,completedFlags=jsonFlags;
-  let allCompleted=objectChildren>0&&originalDataFreezeIntrinsicsUnchanged();
+  let allCompleted=objectChildren>=MIN_COMPLETED_CHILDREN&&originalDataFreezeIntrinsicsUnchanged();
   if(allCompleted)for(let index=0;index<children.length;index++){
    const cost=states.get(children[index])??lookup(children[index]);
    if(typeof cost!=='number'||depth+1+(((cost>>>2)/RECORD_BASE)|0)>DEPTH_LIMIT){allCompleted=false;break;}

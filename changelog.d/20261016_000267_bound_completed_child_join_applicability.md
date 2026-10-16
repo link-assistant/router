@@ -1,0 +1,5 @@
+### Changed
+
+- Limit the completed-child cost-join attempt to parents with at least 64 direct object-child occurrences, counted after the complete original descriptor scan. Smaller parents use the original pending schedule without an extra full native guard or cache lookup. Larger parents still require the complete unchanged native guard and all-completed valid-depth records before the join; misses and every uncertainty keep the original schedule.
+- Retain the two-alias whole-data control and add exact 63/64 alias boundaries, wide mixed/local/cyclic cases and cached-height paths inside the same eight whole tests with all deadlines, transport caps, source/hash/refusal checks and cache partitions unchanged.
+- Source only and unverified. The original coherent receiving batch with the per-nonleaf guard had a Node case duration of 231188.645 ms against its unchanged 60000 ms deadline. That failure and all earlier sources remain retained. The applicability floor is an unmeasured correction candidate, not a wall-time, deadline or admission improvement claim.

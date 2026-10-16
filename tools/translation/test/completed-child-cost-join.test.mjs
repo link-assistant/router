@@ -66,18 +66,21 @@ function compactPlan(plan){return plan===null?null:{root:{cells:plan.root.cells,
 
 function scenario(kind,subject){
  const read=subject.createCompletedDataFreezer(freeze),tape=[],details={};let input,before,observed;
- if(kind==='aliases'){
-  const child={v:1};read(child);input={a:child,b:child};before=graph(input);const actualPlan=subject.completedPlanForObservation(input);details.privatePlan=compactPlan(actualPlan);
+ if(kind==='aliases'||kind==='aliases-63'||kind==='aliases-64'){
+  const child={v:1};read(child);const count=kind==='aliases'?2:Number(kind.slice(8));input=count===2?{a:child,b:child}:Object.fromEntries(Array.from({length:count},(_,at)=>['f'+at,child]));before=graph(input);const actualPlan=subject.completedPlanForObservation(input);details.privatePlan=compactPlan(actualPlan);
   const encoded=(1*200002+2)*4+3,lookups=[];const synthetic=subject.planForObservation(input,value=>{lookups.push(value===input?'root':value===child?'child':'other');return value===child?encoded:undefined;});details.pureLookupProbe={lookups,plan:compactPlan(synthetic),authority:false};
   observed=outcome(()=>read(input)===input);details.budgets=[subject.completedDataTraversalExceedsBudget(input,4),subject.completedDataTraversalExceedsBudget(input,5),subject.completedDataJsonWithinBudget(input,5,2),subject.completedDataJsonWithinBudget(input,5,1)];
  }else if(kind.startsWith('mixed-')){
-  const first={v:1},second={v:2};read(first);read(second);const cold={nested:{v:3}},position=kind.slice(6);input=position==='first'?{cold,first,second}:position==='middle'?{first,cold,second}:{first,second,cold};input.again=cold;before=graph(input);details.privatePlan=compactPlan(subject.completedPlanForObservation(input));observed=outcome(()=>read(input)===input);
+  const first={v:1},second={v:2};read(first);read(second);const cold={nested:{v:3}},wide=kind.startsWith('mixed-wide-'),position=kind.slice(wide?11:6);
+  if(wide){const slot=position==='first'?0:position==='middle'?31:63,children=Array.from({length:64},(_,at)=>at===slot?cold:at%2?first:second);input=Object.fromEntries(children.map((value,at)=>['f'+at,value]));}
+  else{input=position==='first'?{cold,first,second}:position==='middle'?{first,cold,second}:{first,second,cold};input.again=cold;}
+  before=graph(input);details.privatePlan=compactPlan(subject.completedPlanForObservation(input));observed=outcome(()=>read(input)===input);
  }else if(kind==='cold'){
   input={a:{v:1},b:{v:2},c:[1,2,3]};before=graph(input);details.privatePlan=compactPlan(subject.completedPlanForObservation(input));observed=outcome(()=>read(input)===input);
- }else if(kind==='depth-exact'||kind==='depth-over'){
-  const shared=chain(79);read(shared);input=chain(kind==='depth-exact'?80:81,shared);before=graph(input);details.privatePlan=compactPlan(subject.completedPlanForObservation(input));observed=outcome(()=>read(input)===input);
- }else if(kind==='cycle'||kind==='local-shared'){
-  const warm={v:1};read(warm);const cold={v:2};input={warm,cold,again:cold};if(kind==='cycle')cold.back=input;before=graph(input);details.privatePlan=compactPlan(subject.completedPlanForObservation(input));observed=outcome(()=>read(input)===input);
+ }else if(['depth-exact','depth-over','wide-depth-exact','wide-depth-over'].includes(kind)){
+  const shared=chain(79);read(shared);const wide=kind.startsWith('wide-'),exact=kind.endsWith('-exact'),base=wide?Object.fromEntries(Array.from({length:64},(_,at)=>['f'+at,shared])):shared;input=chain(wide?(exact?79:80):(exact?80:81),base);before=graph(input);details.privatePlan=compactPlan(subject.completedPlanForObservation(input));observed=outcome(()=>read(input)===input);
+ }else if(['cycle','local-shared','wide-cycle','wide-local-shared'].includes(kind)){
+  const warm={v:1};read(warm);const cold={v:2},wide=kind.startsWith('wide-');input=wide?Object.fromEntries(Array.from({length:64},(_,at)=>['f'+at,at===31||at===63?cold:warm])):{warm,cold,again:cold};if(kind.endsWith('cycle'))cold.back=input;before=graph(input);details.privatePlan=compactPlan(subject.completedPlanForObservation(input));observed=outcome(()=>read(input)===input);
  }else if(kind==='flags'){
   const shared=Object.assign(Object.create(null),{u:undefined,n:null,z:-0,nan:NaN,inf:Infinity});read(shared);input={a:shared,b:shared,list:[shared,true,'Ω😀']};before=graph(input);details.privatePlan=compactPlan(subject.completedPlanForObservation(input));details.independent=scalarCost(input);observed=outcome(()=>read(input)===input);details.budgets=[subject.completedDataJsonWithinBudget(input,details.independent.cells,details.independent.height),subject.completedDataJsonWithinBudget(input,details.independent.cells-1,details.independent.height)];
  }else if(kind==='bigint'||kind==='symbol'||kind==='toJSON'){
@@ -156,16 +159,17 @@ test('full before source and private completed child probe retain aliases and ha
  retain('00-complete-source-witnesses',{manifest,originals:[...originals],subjects,relocations,legacy,scope:'Private test-copy plan observations; no production export, proof or authority.'});
  assert.equal(subjects.old.source.includes('let allCompleted='),false);assert.equal(subjects.current.source.split('let allCompleted=').length,2);
  const {old,current}=paired('aliases');assert.equal(current.observed.same,true);assert.deepEqual(current.details.privatePlan,old.details.privatePlan);assert.deepEqual(current.details.budgets,[true,false,true,false]);assert.equal(current.details.privatePlan.root.cells,5);assert.equal(current.details.privatePlan.root.height,2);
- assert.deepEqual(current.details.pureLookupProbe.lookups,['root','child','child','root']);assert.deepEqual(old.details.pureLookupProbe.lookups,['root','child','child','child','child','root']);assert.deepEqual(current.details.pureLookupProbe.plan,old.details.pureLookupProbe.plan);
+ assert.deepEqual(current.details.pureLookupProbe.lookups,['root','child','child','child','child','root']);assert.deepEqual(old.details.pureLookupProbe.lookups,['root','child','child','child','child','root']);assert.deepEqual(current.details.pureLookupProbe.plan,old.details.pureLookupProbe.plan);
+ for(const count of [63,64]){const pair=paired('aliases-'+count),expectedCells=1+2*count,oldTrace=['root',...Array(count*2).fill('child'),'root'],currentTrace=['root',...Array(count===64?count:count*2).fill('child'),'root'];assert.deepEqual(pair.current.details.privatePlan,pair.old.details.privatePlan);assert.deepEqual(pair.current.details.privatePlan.root,{cells:expectedCells,height:2,jsonFlags:3,done:true});assert.deepEqual(pair.current.details.pureLookupProbe.plan,pair.old.details.pureLookupProbe.plan);assert.deepEqual(pair.current.details.budgets,[true,true,false,false]);assert.deepEqual(pair.current.details.budgets,pair.old.details.budgets);assert.deepEqual(pair.old.details.pureLookupProbe.lookups,oldTrace);assert.deepEqual(pair.current.details.pureLookupProbe.lookups,currentTrace);assert.equal(pair.current.observed.same,true);}
 });
 test('every mixed cold or local child keeps complete original ordered state and whole graph outcomes',{timeout:60000},()=>{
- for(const kind of ['mixed-first','mixed-middle','mixed-last','cold']){const {old,current}=paired(kind);assert.deepEqual(current.details,old.details);assert.equal(current.observed.same,true);}
+ for(const kind of ['mixed-first','mixed-middle','mixed-last','cold','mixed-wide-first','mixed-wide-middle','mixed-wide-last']){const {old,current}=paired(kind);assert.deepEqual(current.details,old.details);assert.equal(current.observed.same,true);}
 });
 test('each cached incoming height is charged at exact depth and over-depth retains whole original fallback',{timeout:60000},()=>{
- const exact=paired('depth-exact'),over=paired('depth-over');assert.deepEqual(exact.current.details,exact.old.details);assert.equal(exact.current.details.privatePlan.root.height,160);assert.equal(over.current.details.privatePlan,null);assert.equal(over.old.details.privatePlan,null);assert.equal(exact.current.observed.same,true);assert.equal(over.current.observed.same,true);
+ for(const prefix of ['','wide-']){const exact=paired(prefix+'depth-exact'),over=paired(prefix+'depth-over');assert.deepEqual(exact.current.details,exact.old.details);assert.equal(exact.current.details.privatePlan.root.height,160);assert.equal(over.current.details.privatePlan,null);assert.equal(over.old.details.privatePlan,null);assert.equal(exact.current.observed.same,true);assert.equal(over.current.observed.same,true);}
 });
 test('cycles and invocation-local shared states preserve original refusal and exact complete data',{timeout:60000},()=>{
- const cyclic=paired('cycle');assert.equal(cyclic.current.details.privatePlan,null);assert.equal(cyclic.old.details.privatePlan,null);assert.equal(cyclic.current.observed.error.name,'RangeError');const local=paired('local-shared');assert.deepEqual(local.current.details,local.old.details);assert.equal(local.current.observed.same,true);
+ for(const prefix of ['','wide-']){const cyclic=paired(prefix+'cycle');assert.equal(cyclic.current.details.privatePlan,null);assert.equal(cyclic.old.details.privatePlan,null);assert.equal(cyclic.current.observed.error.name,'RangeError');const local=paired(prefix+'local-shared');assert.deepEqual(local.current.details,local.old.details);assert.equal(local.current.observed.same,true);}
 });
 test('full cached scalar flags arrays null records and every alias match independent cost and eligibility calculations',{timeout:60000},()=>{
  const flags=paired('flags');assert.deepEqual(flags.current.details,flags.old.details);assert.deepEqual(flags.current.details.budgets,[true,false]);assert.deepEqual(flags.current.details.privatePlan.root,{cells:flags.current.details.independent.cells,height:flags.current.details.independent.height,jsonFlags:flags.current.details.independent.flags,done:true});
