@@ -7,6 +7,9 @@ import {sourceItems} from '../rust-structure.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {decodeRustCharacter} from '../extensions/rust-character.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
+import {ROUTER_FORMATTING_FACADE_SOURCE} from '../router-core-formatting.mjs';
+import {ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-primitives.mjs';
+import {ROUTER_CORE_RANGES_SOURCE} from '../router-core-ranges.mjs';
 async function translate(source,verify) {
   const result=translateSource(source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   assert.equal(result.ir.counts.carried,0,JSON.stringify(result.ir.items.filter(item=>item.status==='carried').map(item=>item.diagnostic)));
@@ -90,9 +93,13 @@ test('unchanged original string functions translate with exact source identity i
   ];
   for(const [path,name,observations] of cases){
     const original=readFileSync(new URL('../../../'+path,import.meta.url),'utf8'),item=sourceItems(original).find(item=>item.term==='fn'&&item.name===name);assert.ok(item);
-    const source=original.slice(item.start,item.end),result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});assert.deepEqual(result.meta.refused,[]);
-    const entry=result.meta.executable.find(entry=>entry.name===name);assert.equal(sha256(source.slice(entry.span.start,entry.span.end)),sha256(source));
-    await verifyTypedTargets(result,api=>{for(const [value,expected] of observations)assert.equal(api[name](value),expected);});
+    const source=original.slice(item.start,item.end),names=path.slice(4,-3).split('/');
+    const files={'src/lib.rs':`pub mod translation_core; mod ${names[0]};`,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE};
+    for(let depth=1;depth<names.length;depth++)files['src/'+names.slice(0,depth).join('/')+'.rs']=`mod ${names[depth]};`;
+    files[path]=source;
+    const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:file=>files[file]});assert.deepEqual(result.meta.refused,[]);
+    const key=names.join('.')+'.'+name,entry=result.meta.executable.find(entry=>entry.name===key);assert.equal(entry.source,path);assert.deepEqual(entry.span,{start:0,end:source.length});assert.equal(sha256(source.slice(entry.span.start,entry.span.end)),sha256(source));
+    await verifyTypedTargets(result,api=>{for(const [value,expected] of observations)assert.equal(api[key](value),expected);});
   }
 });
 test('original shell quoting and XML escaping bodies recover through the same general compiler',async()=>{

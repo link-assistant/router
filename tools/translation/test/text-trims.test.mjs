@@ -48,12 +48,15 @@ test('trim and strip operations preserve checked source-order bindings',async()=
   let body=result.ir.items.find(item=>item.name==='run').semantic.checkedIR.body,count=0;
   while(body.k==='let'){count++;body=body.body;}assert.equal(count,2);assert.equal(body.constEligible,false);
 });
-test('trim double-ended trait bounds, ownership and const qualifications remain distinct obligations',()=>{
+test('trim double-ended trait bounds, ownership and const qualifications remain distinct obligations',async()=>{
+  const supported='pub fn bad(v:&str)->String{v.trim_matches([\'a\',\'b\']).to_string()}';
+  await translate(supported,api=>{
+    for(const [input,expected]of [['abbaXYZabba','XYZ'],['ab',''],['',''],['aΩ😀b','Ω😀'],['unchanged','unchanged']])assert.equal(api.bad(input),expected);
+  });
   for(const source of [
     'pub fn bad(v:&str)->String{v.trim_matches("ab").to_string()}',
     'pub fn bad(v:&str,p:&str)->String{v.trim_matches(p).to_string()}',
     'pub fn bad(v:&str)->String{v.trim_end_matches(|c|true).to_string()}',
-    'pub fn bad(v:&str)->String{v.trim_matches([\'a\',\'b\']).to_string()}',
     'pub fn bad(v:String)->bool{v.strip_prefix("x").is_some()}',
     'pub fn bad(v:&str,p:String)->bool{v.strip_suffix(p).is_some()}',
     'pub fn bad(v:&String)->String{v.trim_start_matches("x").to_string()}',

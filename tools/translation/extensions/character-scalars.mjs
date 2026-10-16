@@ -72,6 +72,9 @@ export function emitCharacterExpression(emitter,node){
   if(!trims.has(node.op)||node.args?.length!==1||!borrowedText(node.value?.type)||!borrowedText(node.type)||node.sourceProfile!=='checked-str-pattern-v1'||node.constEligible!==false)throw new TypeError('Missing checked borrowed character Pattern trimming');
   requireCharacterSet(node.args[0]);
   const receiver=emitter.expr(node.value),pattern=emitter.expr(node.args[0]);
+  // Empty sets cannot match. Keep both arguments evaluated in source order,
+  // including the fresh frozen set, without a never[] membership call in TS.
+  if(node.args[0].items.length===0)return `((text, pattern) => text)(${receiver}, ${pattern})`;
   // Function arguments evaluate once left-to-right outside the local names.
   // Array.from splits valid source text into scalars, never UTF16 code units.
   const start=node.op!=='trim_end_matches'?'while(start<end&&pattern.includes(chars[start]))start++;':'';
