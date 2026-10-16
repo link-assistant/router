@@ -1,5 +1,6 @@
 // Original Rust compiler AST construction recipes, never generated trait bodies.
 import {createHash} from 'node:crypto';
+import {types} from 'node:util';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {isDeriveDependencyProof} from './derive-dependencies.mjs';
@@ -8,6 +9,45 @@ import {requireOriginalStandardBangOutputSourcePlan} from './standard-bang-outpu
 import {originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 const collectionInputsInitiallyNative=originalStaticSourceIntrinsicsUnchanged()&&originalDataFreezeIntrinsicsUnchanged();
+// Optional storage sharing only. The old clone/parse/hash path remains the
+// fallback; these captures never authenticate a source, fragment or owner.
+const cloneDescriptor=collectionInputsInitiallyNative?Object.getOwnPropertyDescriptor:null,cloneOwn=collectionInputsInitiallyNative?Object.hasOwn:null,cloneKeys=collectionInputsInitiallyNative?Reflect.ownKeys:null,clonePrototype=collectionInputsInitiallyNative?Object.getPrototypeOf:null,cloneApply=collectionInputsInitiallyNative?Reflect.apply:null;
+const cloneObject=collectionInputsInitiallyNative?Object.prototype:null,cloneArray=collectionInputsInitiallyNative?Array.prototype:null,cloneFunction=collectionInputsInitiallyNative?clonePrototype(function(){}):null,cloneText=collectionInputsInitiallyNative?cloneDescriptor(cloneFunction,'toString').value:null,cloneProxy=collectionInputsInitiallyNative?types.isProxy:null;
+const cloneParse=collectionInputsInitiallyNative?cloneDescriptor(JSON,'parse'):null,cloneStringify=collectionInputsInitiallyNative?cloneDescriptor(JSON,'stringify'):null,cloneJson=collectionInputsInitiallyNative?JSON:null;
+const cloneExoticNames=['isBoxedPrimitive','isDate','isRegExp','isMap','isSet','isWeakMap','isWeakSet','isPromise','isNativeError','isAnyArrayBuffer','isArgumentsObject','isModuleNamespaceObject'];
+const cloneExotics=collectionInputsInitiallyNative&&!cloneProxy(types)?cloneExoticNames.map(name=>[name,cloneDescriptor(types,name)]):[];
+const cloneBuffer=collectionInputsInitiallyNative?cloneDescriptor(globalThis,'ArrayBuffer'):null,cloneView=cloneBuffer&&cloneOwn(cloneBuffer,'value')&&!cloneProxy(cloneBuffer.value)?cloneDescriptor(cloneBuffer.value,'isView'):null;
+const cloneNative=(field,name)=>!!field&&cloneOwn(field,'value')&&typeof field.value==='function'&&!cloneProxy(field.value)&&clonePrototype(field.value)===cloneFunction&&cloneApply(cloneText,field.value,[])===`function ${name}() { [native code] }`;
+const cloneInitiallyNative=!!(collectionInputsInitiallyNative&&cloneNative(cloneParse,'parse')&&cloneNative(cloneStringify,'stringify')&&cloneBuffer&&cloneOwn(cloneBuffer,'value')&&cloneNative(cloneView,'isView')&&cloneExotics.length===cloneExoticNames.length&&cloneExotics.every(row=>cloneNative(row[1],row[0])));
+function cloneSameField(actual,expected){return !!actual&&cloneOwn(actual,'value')&&actual.value===expected.value&&actual.writable===expected.writable&&actual.enumerable===expected.enumerable&&actual.configurable===expected.configurable&&clonePrototype(actual.value)===cloneFunction;}
+function syntaxCloneIntrinsics(){
+ if(!cloneInitiallyNative||!originalStaticSourceIntrinsicsUnchanged()||!originalDataFreezeIntrinsicsUnchanged())return false;
+ if(!cloneSameField(cloneDescriptor(cloneJson,'parse'),cloneParse)||!cloneSameField(cloneDescriptor(cloneJson,'stringify'),cloneStringify))return false;
+ const buffer=cloneDescriptor(globalThis,'ArrayBuffer');if(!buffer||!cloneOwn(buffer,'value')||buffer.value!==cloneBuffer.value||buffer.writable!==cloneBuffer.writable||buffer.enumerable!==cloneBuffer.enumerable||buffer.configurable!==cloneBuffer.configurable||!cloneSameField(cloneDescriptor(buffer.value,'isView'),cloneView))return false;
+ for(let at=0;at<cloneExotics.length;at++){const row=cloneExotics[at];if(!cloneSameField(cloneDescriptor(types,row[0]),row[1]))return false;}return true;
+}
+function syntaxCloneCompatible(root){
+ if(!syntaxCloneIntrinsics())return false;
+ // The existing source parser permits at most32,000 token trees. Sixteen
+ // cells per tree covers its token/group/span/children representation. This
+ // bounds only an optional data census; original parser budgets stay exact.
+ let cells=32000*16+1;const seen=new WeakSet();
+ function visit(value,depth){
+  if(--cells<0||depth>160)return false;
+  if(value===null||typeof value==='string'||typeof value==='boolean')return true;
+  if(typeof value==='number')return value===value&&value!==Infinity&&value!==-Infinity&&(value!==0||1/value!==-Infinity);
+  if(typeof value!=='object'||cloneProxy(value)||seen.has(value))return false;
+  for(let at=0;at<cloneExotics.length;at++)if(cloneApply(cloneExotics[at][1].value,types,[value]))return false;
+  if(cloneApply(cloneView.value,cloneBuffer.value,[value]))return false;
+  const array=Array.isArray(value);if(clonePrototype(value)!==(array?cloneArray:cloneObject))return false;
+  const names=cloneKeys(value);for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON')return false;
+  if(!Object.isFrozen(value))return false;
+  let length=names.length;if(array){const field=cloneDescriptor(value,'length');if(!field||!cloneOwn(field,'value')||field.enumerable||typeof field.value!=='number'||field.value<0||field.value%1!==0||field.value>32000*16||names.length!==field.value+1||names[names.length-1]!=='length')return false;length=field.value;for(let at=0;at<length;at++)if(names[at]!==''+at)return false;}
+  seen.add(value);for(let at=0;at<length;at++){const field=cloneDescriptor(value,names[at]);if(!field||!cloneOwn(field,'value')||!field.enumerable||field.writable||field.configurable||!visit(field.value,depth+1))return false;}return true;
+ }
+ return visit(root,0)&&syntaxCloneIntrinsics();
+}
+function cloneStep(state,value){if(state.native&&!syntaxCloneIntrinsics())state.native=false;return value;}
 const root=new URL('./source-profiles/builtin-derive-bang/',import.meta.url);
 const profileBytes=readFileSync(new URL('manifest.json',root));
 const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
@@ -42,7 +82,7 @@ function originalSyntaxRoots(profile,path){
     return cached.roots;
   }
   const roots=freeze(originalMacroTrees(origin.source,{maxBytes:256000,maxTokens:32000,maxDepth:64}));
-  state.syntaxRoots.set(path,{origin,source:origin.source,sha256:origin.sha256,roots});return roots;
+  state.syntaxRoots.set(path,{origin,source:origin.source,sha256:origin.sha256,roots,cloneCompatible:syntaxCloneCompatible(roots)});return roots;
 }
 export function originalAstFunction(profile,path,name,sourceContains=null){
   const state=profiles.get(profile);if(!state)throw new TypeError('Unsealed builtin AST function inventory');
@@ -70,15 +110,22 @@ export function originalAstFunction(profile,path,name,sourceContains=null){
 export function assertOriginalAstFunction(profile,fragment){if(fragments.get(fragment)?.profile!==profile)throw new TypeError('Unsealed original AST construction fragment');return fragment;}
 export function astFragmentText(fragment){if(!fragments.has(fragment))throw new TypeError('Unsealed AST source fragment');const state=fragments.get(fragment);return state.origin.source.slice(fragment.span.start,fragment.span.end);}
 export function originalAstDefinition(profile,path,kind,name){
-  const origin=builtinAstOriginal(profile,path),roots=originalSyntaxRoots(profile,path),matches=[];
+  const sharing={native:syntaxCloneIntrinsics()},origin=builtinAstOriginal(profile,path),roots=originalSyntaxRoots(profile,path),matches=[];cloneStep(sharing,null);
+  if(sharing.native)sharing.native=profiles.get(profile).syntaxRoots.get(path).cloneCompatible===true;
   function visit(nodes){for(let at=0;at<nodes.length;at++){
     if(nodes[at].text===kind&&nodes[at+1]?.text===name){let end=at+2;while(end<nodes.length&&!(nodes[end].kind==='group'&&nodes[end].delimiter==='{')&&nodes[end].text!==';')end++;if(nodes[end]?.kind==='group'&&nodes[end].delimiter==='{')matches.push(nodes.slice(at,end+1));}
     if(nodes[at].kind==='group')visit(nodes[at].children);
   }}visit(roots);
   if(matches.length!==1)throw new TypeError('Original AST schema definition is not unique: '+kind+' '+name);
-  const syntax=JSON.parse(JSON.stringify(matches[0])),span={start:syntax[0].span.start,end:syntax.at(-1).span.end};
-  const evidence={schema:'original-ast-schema-meta-v1',source:path,sourceSha256:origin.sha256,span,sha256:hash(origin.source.slice(span.start,span.end)),syntax,syntaxSha256:hash(JSON.stringify(syntax)),semanticSyntaxRoundTrip:true,generatedImplBehavior:false};
-  const fragment=freezeCompletedFragment({...evidence,digest:hash(JSON.stringify(evidence))});fragments.set(fragment,{profile,origin});return fragment;
+  // Keep native parse's callee lookup before its stringify argument, and
+  // remember every disqualification through each original observable step.
+  const syntax=cloneStep(sharing,JSON.parse(sharing.native?cloneStep(sharing,JSON.stringify(matches[0])):JSON.stringify(matches[0]))),span={start:syntax[0].span.start,end:syntax.at(-1).span.end};
+  const evidence={schema:'original-ast-schema-meta-v1',source:path,sourceSha256:origin.sha256,span,sha256:cloneStep(sharing,hash(origin.source.slice(span.start,span.end))),syntax,syntaxSha256:cloneStep(sharing,hash((cloneStep(sharing,null),JSON.stringify(syntax)))),semanticSyntaxRoundTrip:true,generatedImplBehavior:false};
+  const digest=cloneStep(sharing,hash((cloneStep(sharing,null),JSON.stringify(evidence))));
+  // Only children come from existing independently frozen private syntax.
+  // The parsed outer array and branded fragment are fresh on every call.
+  if(sharing.native){for(let at=0;at<syntax.length;at++)syntax[at]=matches[0][at];}
+  const fragment=freezeCompletedFragment({...evidence,digest});fragments.set(fragment,{profile,origin});return fragment;
 }
 
 // Extract an actual named Rust struct literal, retaining every source field.
