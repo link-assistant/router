@@ -57,8 +57,20 @@ function plan(value,lookup){
    else{scalarCells++;if(typeof field.value==='bigint'||typeof field.value==='symbol')jsonFlags&=2;}
   }
   children.length=objectChildren;
-  const selected={value,children,cells:scalarCells,height:objectChildren===0?1:0,jsonFlags,done:objectChildren===0};states.set(value,selected);
-  if(objectChildren===0){order.push(selected);continue;}
+  // Only an entirely completed child set has no later cold descriptor walk.
+  // A miss keeps the exact original pending order, including callback effects.
+  let completedCells=scalarCells,completedHeight=1,completedFlags=jsonFlags;
+  let allCompleted=objectChildren>0&&originalDataFreezeIntrinsicsUnchanged();
+  if(allCompleted)for(let index=0;index<children.length;index++){
+   const cost=states.get(children[index])??lookup(children[index]);
+   if(typeof cost!=='number'||depth+1+(((cost>>>2)/RECORD_BASE)|0)>DEPTH_LIMIT){allCompleted=false;break;}
+   const packed=cost>>>2;completedCells+=packed%RECORD_BASE;
+   if(completedCells>CELL_LIMIT)completedCells=CELL_LIMIT+1;
+   const nextHeight=1+((packed/RECORD_BASE)|0);if(nextHeight>completedHeight)completedHeight=nextHeight;
+   completedFlags&=cost&3;
+  }
+  const selected={value,children,cells:allCompleted?completedCells:scalarCells,height:allCompleted?completedHeight:objectChildren===0?1:0,jsonFlags:allCompleted?completedFlags:jsonFlags,done:allCompleted||objectChildren===0};states.set(value,selected);
+  if(selected.done){order.push(selected);continue;}
   pending.push(value,depth,selected);
   for(let index=children.length-1;index>=0;index--)pending.push(children[index],depth+1,null);
  }
