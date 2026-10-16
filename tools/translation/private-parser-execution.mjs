@@ -203,7 +203,7 @@ function hash(value){
 function decoded(bytes){
   // Canonical UTF8 decoding uses only qualified primitive operations. Decoder
   // globals and Buffer.toString cannot supply executable or manifest text.
-  const size=apply(state.length,bytes,[]),pieces=[];
+  const size=apply(state.length,bytes,[]),pieces=[];let chunk='';
   for(let at=0;at<size;){
     const first=bytes[at++];let code=first,needed=0,min=0;
     if(first>=194&&first<=223){code=first&31;needed=1;min=128;}
@@ -212,9 +212,13 @@ function decoded(bytes){
     else if(first>127)fail('invalid original UTF8');
     for(let left=needed;left>0;left--){if(at>=size||bytes[at]<128||bytes[at]>191)fail('invalid original UTF8 continuation');code=code*64+(bytes[at++]&63);}
     if(code<min||code>1114111||code>=55296&&code<=57343)fail('noncanonical original UTF8');
-    pieces.push(state.g.String.fromCodePoint(code));
+    const point=state.g.String.fromCodePoint(code);
+    // Whole scalar points keep chunks <=4096 UTF16 units, without a per-point
+    // array cell or an unbounded intermediate concatenation chain.
+    if(chunk.length+point.length>4096){pieces.push(chunk);chunk='';}
+    chunk+=point;
   }
-  return pieces.join('');
+  if(chunk)pieces.push(chunk);return pieces.join('');
 }
 function sameUtf8(source,bytes){
   let at=0;const size=apply(state.length,bytes,[]);
