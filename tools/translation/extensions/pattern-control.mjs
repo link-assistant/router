@@ -14,6 +14,7 @@ import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {isDeepStrictEqual} from 'node:util';
 import {sourceWhileLetCondition,requireSourceWhileLet} from './while-let-source.mjs';
 import {hasSourceLetChain,parseSourceLetChain,requireSourceLetChain} from './let-chain-source.mjs';
+import {requireOriginalStandardCall} from './original-standard-calls.mjs';
 const range=(start,end)=>({start:start.start,end:end.end});
 const containsExit=node=>node&&typeof node==='object'&&node.k!=='routerLambda'&&(['routerReturn','routerBreak','routerContinue'].includes(node.k)||Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value))));
 const scalar=type=>['fixed','bool','string','unit'].includes(type?.kind);
@@ -30,6 +31,26 @@ export function immutableBinding(type,checker,active=new Set()) {
   }
   if(!entry||!['Option','Result'].includes(entry.standardGeneric?.kind)||profile?.kind!==entry.standardGeneric.kind||active.has(type.name))return false;
   active.add(type.name);const result=profile.arguments.every(argument=>immutableBinding(checker.resolveType(argument,entry.modulePath,entry.span),checker,active));active.delete(type.name);return result;
+}
+// Copy the shared reference in an actual canonical Option, never its pointee.
+// The normal pattern owner/layout and source lifetime checks still run. A
+// standalone pattern checker without the registered host proof stays scalar.
+function sharedJsonLetElse(node,type,plan,checker,path,span) {
+  if(typeof checker.sourceStandardFieldCopy!=='function'||typeof checker.hostType!=='function'||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;
+  if(plan.bindings.length!==1||plan.test.kind!=='ctor'||plan.test.data!==type.name||plan.test.ctor!=='Some'||plan.test.projection.length)return null;
+  const binding=plan.bindings[0];
+  if(binding.projection.length!==1||binding.projection[0]!=='field0')return null;
+  requireOriginalStandardCall(checker,node);
+  const copy=checker.sourceStandardFieldCopy({type},span),payload=copy?.payload,reference=payload?.rustReference,pointee=reference?.pointee;
+  if(copy?.kind!=='source-standard-option-payload-copy'||copy.referenceDepth!==1||!copy.referenceSource||reference?.kind!=='shared'||payload.kind!=='data'||pointee?.kind!=='data'||pointee.rustReference||payload.name!==pointee.name||payload.rustGenericIdentityUnresolved||payload.rustBorrowingUnresolved||pointee.rustGenericIdentityUnresolved||pointee.rustBorrowingUnresolved)return null;
+  // These are the two existing closed JSON ABI declarations, resolved through
+  // the actual checker table. A user-defined same-named record is insufficient.
+  const candidate=['Value','Map_String_Value'].map(name=>({path:['serde_json',name],type:checker.hostType({kind:'named',path:['serde_json',name]},path,span)})).find(candidate=>sameType(candidate.type,pointee));
+  const canonical=candidate?.type,entry=canonical&&checker.items.get(canonical.name);
+  if(!entry||entry.generated!=='router-json-contract'||!isDeepStrictEqual(entry.hostTypePath,candidate.path))return null;
+  if(!sameType(binding.type,payload)||!isDeepStrictEqual(binding.type.rustReference,reference))return null;
+  checker.expectedOwnership(binding.type,payload,path,span);
+  return {profile:'canonical-option-shared-json-let-else-v1',copy,pointee:canonical,pointeeMoveAuthority:false,pointeeDropAuthority:false,lifetimeAuthority:false};
 }
 const owned=new Set(['Box','Vec','String','Arc','Rc','Cell','RefCell','UnsafeCell','Mutex','RwLock','Pin','ManuallyDrop','MaybeUninit']);
 function checkCallbackCaptures(node,env,bound,span) {
@@ -514,7 +535,8 @@ export function withPatternControlChecker(Base=ControlChecker) {
         this.patternDomain(subject.type,node.span);
         const pattern=this.patternOwner(node.pattern,subject.type,path,env);
         const plan=planPattern(pattern,subject.type,{declarations:this.items,resolveType:type=>this.resolveType(type,path,node.span),span:node.span});
-        for(const binding of plan.bindings)if(!scalar(binding.type))throw unsupported('let-else aggregate binding','only immutable scalar bindings have a checked ownership contract',binding.span??node.span);
+        const sharedCopy=plan.bindings.some(binding=>!scalar(binding.type))?sharedJsonLetElse(node,subject.type,plan,this,path,node.span):null;
+        for(const binding of plan.bindings)if(!scalar(binding.type)&&!sharedCopy)throw unsupported('let-else aggregate binding','requires immutable scalars or one checked canonical Option shared JSON payload',binding.span??node.span);
         let temporary;do{temporary=this.freshName('ml_pattern_');}while(env.has(temporary));
         const variable={k:'var',name:temporary,type:subject.type,span:node.span};
         const otherwise=this.expr(node.else,new Map(env),path,UNIT);
@@ -524,9 +546,10 @@ export function withPatternControlChecker(Base=ControlChecker) {
         let body=this.expr(node.body,inner,path,expected,allowLiteral);
         body=plan.bindings.reduceRight((body,binding)=>({k:'let',name:binding.name,value:this.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??node.span}),body);
         let condition=this.patternTest(plan.test,variable,plan.projectionPaths);
-        if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL},right:condition,type:BOOL};
+        if(subject.type.kind==='data')condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL,...(sharedCopy?{borrowedAggregate:true}:{})},right:condition,type:BOOL};
         const conditional={k:'routerIf',cond:condition,then:{k:'unit',type:UNIT},else:otherwise,body,type:body.type,span:node.span};
-        return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'let-else',divergence:'checked-exit'}};
+        if(sharedCopy)requireOriginalStandardCall(this,node);
+        return {k:'let',name:temporary,value:subject,body:conditional,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'let-else',divergence:'checked-exit',...(sharedCopy?{sharedCopy}:{})}};
       }
       if(node.k==='let'&&node.type?.patternOwnershipRefusal) {
         env=this.contextEnvironment(node,env,expected);
