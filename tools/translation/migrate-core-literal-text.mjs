@@ -3,6 +3,7 @@
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
 import {sourceItems} from './rust-structure.mjs';
+import {createLiteralTextImportRoles} from './literal-text-import-roles.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems} from './source-module-views.mjs';
 import {originalUseDeclarationLeaves,originalDeclarationHeader} from './module-bindings.mjs';
 import {resolveModuleGraph} from './project.mjs';
@@ -24,7 +25,7 @@ function close(rows,start){
   const pairs={'(':')','[':']','{':'}'},stack=[];
   for(let at=start;at<rows.length;at++){const word=rows[at].text;if(pairs[word])stack.push(pairs[word]);else if([')',']','}'].includes(word)){if(stack.pop()!==word)return -1;if(!stack.length)return at;}}return -1;
 }
-function scopeProblems(items,profile,path=[]){
+function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRoles=[]){
   const problems=[];
   for(const item of items){
     const condition=itemConfiguration(item.tokens,profile);if(condition.status==='inactive'||item.comment)continue;
@@ -36,19 +37,19 @@ function scopeProblems(items,profile,path=[]){
     if(condition.attributes.some(attribute=>!inert.has(attribute.name)&&attribute.name!=='cfg'&&!(item.term==='mod'&&attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')))problems.push('unresolved declaration attribute producer');
     if(item.term==='use'){
       try{for(const leaf of originalUseDeclarationLeaves(item,path)){
-        if(leaf.glob||['ToString','ToOwned','String','_'].includes(leaf.name)||leaf.segments.some(name=>['ToString','ToOwned'].includes(name)))problems.push('conversion trait/type import or glob competition');
-        else problems.push('named import role is unclassified; it may supply a conversion trait');
+        if(leaf.glob||['ToString','ToOwned','String','_','std','core'].includes(leaf.name)||leaf.segments.some(name=>['ToString','ToOwned'].includes(name)))problems.push('conversion trait/type import or glob competition');
+        else {const role=module&&roleFor?.(module,item,leaf);if(role)importRoles.push(role);else problems.push('named import role is unclassified; it may supply a conversion trait');}
       }}
       catch{problems.push('unresolved import declaration');}
     }
-    if(names.some((name,at)=>['trait','type','struct','enum','union','mod'].includes(name)&&['ToString','ToOwned','String'].includes(names[at+1])))problems.push('conversion trait or String declaration competition');
+    if(names.some((name,at)=>['trait','type','struct','enum','union','mod'].includes(name)&&['ToString','ToOwned','String','std','core'].includes(names[at+1])))problems.push('conversion trait or String declaration competition');
     if(names.some((name,at)=>name==='fn'&&conversions.has(names[at+1])))problems.push('conversion method declaration competition');
     if(item.term==='opaque'){
       // Ordinary extern-crate bindings do not import trait members. The
       // exact builtin macro_use module attribute imports macro names only;
       // actual invocation/attribute producers remain separate refusals.
       const ordinaryExtern=names[0]==='extern'&&names[1]==='crate'&&rows[2]?.type==='ident'&&(names.length===4&&names[3]===';'||names.length===6&&names[3]==='as'&&rows[4]?.type==='ident'&&names[5]===';');
-      if(!ordinaryExtern||['String','ToString','ToOwned','_'].includes(names.length===6?names[4]:names[2]))problems.push('unresolved declaration producer');
+      if(!ordinaryExtern||['String','ToString','ToOwned','_','std','core'].includes(names.length===6?names[4]:names[2]))problems.push('unresolved declaration producer');
     }
   }
   return [...new Set(problems)];
@@ -94,11 +95,11 @@ function functionSelection(source,item,path,profile,problems){
   if(bare)edits.push({span:[result[1].start,result[1].end],expected:'String',replacement:textType});
   return {edits,selection:{...record,conversions:selected,ownedReturnAlias:bare,bodyAdmission:false},skipped};
 }
-function propose(source,modules,profile,externalProblems=[]){
-  const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[];
+function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile)){
+  const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[],importRoles=[];
   for(const module of modules){
     const ancestors=modules.filter(parent=>parent!==module&&parent.path.length<module.path.length&&parent.path.every((word,at)=>word===module.path[at]));
-    const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path)),...scopeProblems(items,profile,module.path)];
+    const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,parent,roleFor,importRoles)),...scopeProblems(items,profile,module.path,module,roleFor,importRoles)];
     if(module.configurationCondition!=='active'){skipped.push({module:module.path,reason:'module configuration is not active'});continue;}
     for(const item of items){if(item.term!=='fn')continue;let result;try{result=functionSelection(source,item,module.path,profile,problems);}catch(error){skipped.push({span:[item.start,item.end],reason:error.message});continue;}if(!result)continue;edits.push(...result.edits);skipped.push(...result.skipped);if(result.selection)selections.push(result.selection);}
   }
@@ -109,7 +110,7 @@ function propose(source,modules,profile,externalProblems=[]){
   if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let inverse=after.source;
   for(let at=mapping.length-1;at>=0;at--){const row=mapping[at];if(row.kind==='substitution'){if(inverse.slice(...row.after)!==row.replacement)fail('inverse substitution changed');inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);}}
   if(inverse!==source)fail('complete inverse differs');
-  return {schema:'router-owned-literal-text-adoption-v1',before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},compilationProfile:profile,edits,selections,skipped,mapping,trace:applied.trace,executableAdmission:false,migrationSemantics:'maintainer-authorized explicit owned API adoption; no arbitrary original standard trait dispatch theorem',libraryImplementation:'existing untranslated Rust std::format interface'};
+  return {schema:'router-owned-literal-text-adoption-v1',before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},compilationProfile:profile,edits,selections,skipped,importRoles,mapping,trace:applied.trace,executableAdmission:false,migrationSemantics:'maintainer-authorized explicit owned API adoption; no arbitrary original standard trait dispatch theorem',libraryImplementation:'existing untranslated Rust std::format interface'};
 }
 export function migrateCoreLiteralText(source,{rootSource='',compilationProfile:input=PRODUCTION_PROFILE}={}){
   bounded(source);bounded(rootSource);const profile=normalizeProfile(input),captured=captureSourceModuleViews({source,sourcePath:'src/literal_adoption.rs',compilationProfile:profile}),modules=captured.views.map(view=>({file:'src/literal_adoption.rs',source,path:[...view.modulePath],sourceView:view,compilationProfile:profile,configurationCondition:view.configurationCondition}));
@@ -126,7 +127,7 @@ export function proposeCoreLiteralTextCorpus({entry='src/lib.rs',files:input,com
   const roots=graph.modules.filter(module=>same(module,[])),cores=graph.modules.filter(module=>same(module,['translation_core'])),leaves=graph.modules.filter(module=>same(module,['translation_core','primitives']));
   if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!=='src/translation_core.rs'||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!=='src/translation_core/primitives.rs'||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('complete actual owned facade/primitive source routes required');
   const edge=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edge.length!==1||roots[0].source.slice(edge[0].start,edge[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core edge required');
-  const after={...files},proposals=[],skipped=[];
-  for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path)),result=propose(files[file],modules,profile,problems);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
+  const after={...files},proposals=[],skipped=[],roleFor=createLiteralTextImportRoles(graph.modules,profile);
+  for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor)),result=propose(files[file],modules,profile,problems,roleFor);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
   return {schema:'router-owned-literal-text-corpus-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
 }
