@@ -10,8 +10,10 @@ import {sourceItems} from '../rust-structure.mjs';
 import {extractImplDeclarations} from '../impl-resolver.mjs';
 import {translateProject} from '../project.mjs';
 import {loadJavaScript,writeRuntimeAssets} from './artifact-loader.mjs';
+import {historicalRealSource} from './real-source-fixtures.mjs';
+// These exact native declarations retain their historical full-source pins.
+// Current adopted bodies are checked separately in real-source-fixtures.test.mjs.
 
-const root=new URL('../../../',import.meta.url);
 const fixture=JSON.parse(readFileSync(new URL('../fixtures/real-source-provenance.json',import.meta.url),'utf8'));
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const tagged=($,fields={})=>Object.freeze({$,...fields});
@@ -29,7 +31,7 @@ function jsonValue(value) {
 }
 function exactModule(id) {
   const entry=fixture.entries.find(entry=>entry.id===id);assert.ok(entry,`unknown source evidence ${id}`);
-  const source=readFileSync(new URL(entry.path,root),'utf8');assert.equal(hash(source),entry.sourceSha256,`${entry.path}: source pin changed`);
+  const source=historicalRealSource(entry.path);assert.equal(hash(source),entry.sourceSha256,`${entry.path}: source pin changed`);
   const items=sourceItems(source);
   const declarations=entry.declarations.map(pin=>{
     const matches=items.filter(item=>item.start===pin.start && item.end===pin.end && item.name===pin.name && item.term===pin.term);
@@ -84,7 +86,7 @@ test('production source pins select complete original declarations without body 
   assert.equal(fixture.fullParity,false);assert.equal(fixture.rustExecution,false);
   for(const entry of fixture.entries){
     exactModule(entry.id);
-    if(entry.testSource && entry.testName){const tests=readFileSync(new URL(entry.testSource,root),'utf8');assert.match(tests,new RegExp(`fn ${entry.testName}\\(`));}
+    if(entry.testSource && entry.testName){const tests=historicalRealSource(entry.testSource);assert.match(tests,new RegExp(`fn ${entry.testName}\\(`));}
   }
   assert.ok(fixture.obligations.length>0,'unresolved source obligations must remain visible');
 });

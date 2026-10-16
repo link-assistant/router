@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { HostChecker, hostData } from '../extensions/host-contracts.mjs';
 import { HostInstantiations } from '../extensions/host-instantiations.mjs';
 import { fixed } from '../vendor/meta-language/translation/types.js';
+import {historicalRealSourceEntry} from './real-source-fixtures.mjs';
 
 test('factory data is declared and checked once per actual monomorphic receiver', () => {
   const checker = new HostChecker('Rust', []);
@@ -39,11 +40,10 @@ test('factory data is declared and checked once per actual monomorphic receiver'
 
 import { translateProject } from '../project.mjs';
 import { loadJavaScript, writeRuntimeAssets } from './artifact-loader.mjs';
-import { mkdtempSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 const project = source => translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 const strict = result => {const dir=mkdtempSync(join(tmpdir(),'router-vector-types-'));try {writeRuntimeAssets(dir);const path=join(dir,'src/fixture.ts');writeFileSync(path,result.typescript);execFileSync(process.env.ROUTER_TRANSLATION_TSC??'tsc',['--strict','--noEmit','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext',path],{encoding:'utf8'});}finally{rmSync(dir,{recursive:true,force:true});}};
 
@@ -64,10 +64,7 @@ test('source Vec shadows and unsafely const-eligible readers remain explicit ref
 });
 
 test('an exact pinned identity reader executes through generic slice, Option and JSON contracts', async () => {
-  const provenance=JSON.parse(readFileSync(new URL('../fixtures/real-source-provenance.json',import.meta.url)));
-  const entry=provenance.entries.find(entry=>entry.id==='identity-first-block');
-  const root=fileURLToPath(new URL('../../../',import.meta.url)),original=readFileSync(join(root,entry.path),'utf8');
-  const source=entry.declarations.map(declaration=>original.slice(declaration.start,declaration.end)).join('\n');
+  const {source}=historicalRealSourceEntry('identity-first-block');
   const result=project(source);assert.deepEqual(result.meta.refused,[]);assert.ok(result.meta.executable.some(entry=>entry.name==='first_block_is_identity'));strict(result);
   const api=(await loadJavaScript(result.javascript)).translated;
   const string=value=>Object.freeze({$:'String',field0:value});

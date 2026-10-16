@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -10,6 +10,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {extractImplDeclarations} from '../impl-resolver.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
 import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
+import {historicalRealSource,historicalRealSourceEntry} from './real-source-fixtures.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 async function artifacts(result,operation){
   assert.deepEqual(result.meta.refused,[]);
@@ -54,9 +55,7 @@ test('associated integer parsing keeps actual trait scope, radix panic and const
 });
 
 test('original timeout helpers retain Rust Unicode whitespace and exact u64 parsing behavior', {timeout:30_000}, async()=>{
-  const provenance=JSON.parse(readFileSync(new URL('../fixtures/real-source-provenance.json',import.meta.url))),entry=provenance.entries.find(item=>item.id==='timeout-parser');
-  const original=readFileSync(new URL('../../../'+entry.path,import.meta.url),'utf8');
-  const result=project(entry.declarations.map(declaration=>original.slice(declaration.start,declaration.end)).join('\n'));
+  const result=project(historicalRealSourceEntry('timeout-parser').source);
   await artifacts(result,api=>{
     const duration=secs=>({$:'Duration',secs,nanos:0n});
     for(const [input,expected] of [[none,some(duration(10n))],[some('0'),none],[some(' 3 '),some(duration(3n))],[some('\u00853'),some(duration(3n))],[some('\ufeff3'),some(duration(10n))],[some('18446744073709551615'),some(duration(18446744073709551615n))],[some('18446744073709551616'),some(duration(10n))],[some('-1'),some(duration(10n))]])assert.deepEqual(api.parse_timeout_secs(input,10n),expected);
@@ -65,7 +64,7 @@ test('original timeout helpers retain Rust Unicode whitespace and exact u64 pars
 });
 
 test('original const limiter constructor retains derives and match body while saturation remains exact', {timeout:30_000}, async()=>{
-  const original=readFileSync(new URL('../../../src/output_limit.rs',import.meta.url),'utf8'),items=sourceItems(original);
+  const original=historicalRealSource('src/output_limit.rs'),items=sourceItems(original);
   const declarations=items.filter(item=>['CHARS_PER_TOKEN','OutputTokenLimiter'].includes(item.name)&&['const','struct'].includes(item.term)).map(item=>original.slice(item.start,item.end));
   const methods=extractImplDeclarations(original).implementations.find(entry=>entry.typePath.join('.')==='OutputTokenLimiter').methods.filter(method=>['new','enabled','stopped'].includes(method.name));
   declarations.push('impl OutputTokenLimiter {\n'+methods.map(method=>original.slice(method.span.start,method.span.end)).join('\n')+'\n}','pub fn create(limit:Option<u64>)->OutputTokenLimiter{OutputTokenLimiter::new(limit)} pub fn enabled(value:&OutputTokenLimiter)->bool{value.enabled()} pub fn stopped(value:&OutputTokenLimiter)->bool{value.stopped()}');
