@@ -736,7 +736,7 @@ fn validate_chat_contract(body: &Value) -> Result<(), String> {
             let value = value
                 .as_f64()
                 .ok_or_else(|| format!("{field} must be a number"))?;
-            if !(-2.0..=2.0).contains(&value) {
+            if !crate::translation_core::f64_inclusive_contains(-2.0, 2.0, value) {
                 return Err(format!("{field} must be between -2 and 2"));
             }
         }

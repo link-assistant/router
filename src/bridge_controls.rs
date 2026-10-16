@@ -338,7 +338,7 @@ pub fn validate_responses(request: &crate::responses::OpenAIResponseRequest) -> 
     crate::safety_identifier::validate_openai_user(request.user.as_deref())?;
     if request
         .top_p
-        .is_some_and(|top_p| !(0.0..=1.0).contains(&top_p))
+        .is_some_and(|top_p| !crate::translation_core::f64_inclusive_contains(0.0, 1.0, top_p))
     {
         return Err("top_p must be between 0 and 1".into());
     }

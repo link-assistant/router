@@ -190,7 +190,7 @@ pub fn unsupported_chat_generation_control(
         ("presence_penalty", request.presence_penalty),
     ] {
         if let Some(value) = value {
-            if !(-2.0..=2.0).contains(&value) {
+            if !crate::translation_core::f64_inclusive_contains(-2.0, 2.0, value) {
                 return Some(crate::translation_core::format!("{name} must be between -2 and 2"));
             }
             if value != 0.0 {
