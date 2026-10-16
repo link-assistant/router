@@ -1,6 +1,10 @@
 // Declaration-role candidates for explicit owned-API adoption only. These facts
 // cannot issue checker ownership, trait-dispatch, layout or runtime authority.
 import {createHash} from 'node:crypto';
+import {types} from 'node:util';
+import {posix} from 'node:path';
+import {JSON_MACRO_SOURCE_PROFILE,jsonMacroDependencyProfile,jsonMacroOriginalSource} from './json-macro-inputs.mjs';
+import {jsonMacroSourceDefinition,jsonMacroDefinitionSource} from './json-macro-sources.mjs';
 import {sourceItems} from './rust-structure.mjs';
 import {inspectConditionalAttribute} from './conditional-attributes.mjs';
 import {readFileSync} from 'node:fs';
@@ -72,11 +76,64 @@ function closedDeclarations(module,profile){
     return !!originalDeclarationHeader(item,module.path)||item.term==='impl';
   });
 }
-export function createLiteralTextImportRoles(modules,profile){
+// Optional Cargo inputs are ordinary source data, never a caller-issued binding
+// table. A mismatched audited profile leaves external imports unclassified.
+const roleChecks=new WeakMap();
+function dependencySnapshot(input){
+  if(input===undefined)return {value:undefined,verify(){}};
+  if(!input||typeof input!=='object'||types.isProxy(input)||![null,Object.prototype].includes(Object.getPrototypeOf(input)))throw new TypeError('Literal import dependency inputs require own data');
+  const prototype=Object.getPrototypeOf(input),keys=Reflect.ownKeys(input);if(keys.length!==2||!keys.includes('manifest')||!keys.includes('lock'))throw new TypeError('Literal import dependency fields differ');
+  const fields=keys.map(key=>[key,Object.getOwnPropertyDescriptor(input,key)]),value=Object.create(null);
+  for(const [key,d]of fields){if(!d||!Object.hasOwn(d,'value')||typeof d.value!=='string'||d.value.length>2_000_000)throw new TypeError('Literal import dependency source must be bounded primitive own data');value[key]=d.value;}
+  return {value,verify(){const now=Reflect.ownKeys(input);if(Object.getPrototypeOf(input)!==prototype||!same(now,keys))throw new TypeError('Literal import dependency source keys changed');for(const [key,before]of fields){const d=Object.getOwnPropertyDescriptor(input,key);if(!d||!Object.hasOwn(d,'value')||d.value!==before.value||d.writable!==before.writable||d.enumerable!==before.enumerable||d.configurable!==before.configurable)throw new TypeError('Literal import dependency source changed');}}};
+}
+export function verifyLiteralTextImportRoles(roleFor){const check=roleChecks.get(roleFor);if(!check)throw new TypeError('Literal import role context required');check();}
+const publicHead=item=>{const h=originalDeclarationHeader(item);if(!h)return null;const rows=item.tokens.filter(row=>row.type!=='comment'),at=rows.findIndex(row=>row.start===h.keywordSpan.start);return at>0&&rows[at-1].text==='pub'?h:null;};
+const packageAttributes=new Set(['doc','derive','allow','warn','deny','forbid','must_use','inline','cold','deprecated','track_caller']);
+function packageItem(item){const c=itemConfiguration(item.tokens,null);return c.status==='active'&&c.attributes.every(a=>packageAttributes.has(a.name));}
+function externalRoles(inputs){
+  if(!inputs)return null;const proof=jsonMacroDependencyProfile(inputs).proof;if(!proof)return null;
+  const direct=JSON_MACRO_SOURCE_PROFILE.directDependency,entry=JSON_MACRO_SOURCE_PROFILE.packages.find(row=>row.name===direct.name),pins=new Map(),items=new Map();
+  if(!entry)return null;
+  const pin=path=>{if(!entry.members.some(row=>row.path===path))return null;if(!pins.has(path))pins.set(path,jsonMacroOriginalSource(proof,entry.name,path));return pins.get(path);};
+  const rows=path=>{const source=pin(path);if(!source)return null;if(!items.has(path))items.set(path,sourceItems(source.source));return items.get(path);};
+  const cargo=pin('Cargo.toml'),section=cargo?.source.match(/^\[lib\]\s*\n([\s\S]*?)(?=^\[|$(?![\s\S]))/m)?.[1],paths=section?[...section.matchAll(/^path\s*=\s*"([^"\n]+)"\s*$/gm)]:[],names=section?[...section.matchAll(/^name\s*=\s*"([A-Za-z_][A-Za-z_0-9]*)"\s*$/gm)]:[];
+  if(paths.length!==1||names.length!==1||names[0][1]!==entry.name.replaceAll('-','_')||!/^src\/(?:[A-Za-z_][A-Za-z_0-9]*\/)*[A-Za-z_][A-Za-z_0-9]*\.rs$/.test(paths[0][1]))return null;
+  const root=paths[0][1],rootRows=rows(root);if(!rootRows)return null;
+  const evidence=(path,item)=>({package:entry.name,version:entry.version,file:path,sourceSha256:pin(path).sha256,span:[item.start,item.end],original:pin(path).source.slice(item.start,item.end),attributes:itemConfiguration(item.tokens,null).attributes});
+  const normalize=(segments,owner)=>{if(segments[0]==='crate')return segments.slice(1);let base=[...owner],at=segments[0]==='self'?1:0;while(segments[at]==='super'){if(!base.length)return null;base.pop();at++;}return [...base,...segments.slice(at)];};
+  function module(owner,requirePublic=false){let file=root,route=[];
+    for(let at=0;at<owner.length;at++){const matches=rows(file)?.filter(item=>item.term==='mod'&&item.name===owner[at])??[];if(matches.length!==1||requirePublic&&!publicHead(matches[0]))return null;const condition=itemConfiguration(matches[0].tokens,null);if(condition.status!=='active'||condition.attributes.some(a=>!packageAttributes.has(a.name)&&!(a.name==='macro_use'&&a.tokens.join('')==='#[macro_use]')))return null;const item=matches[0],tokens=item.tokens.filter(row=>row.type!=='comment');if(tokens.at(-1)?.text!==';')return null;
+      const parent=at===0?posix.dirname(root):posix.dirname(file)+(posix.basename(file)==='mod.rs'?'':'/'+posix.basename(file,'.rs')),base=parent+'/'+owner[at],files=[base+'.rs',base+'/mod.rs'].filter(path=>pin(path));if(files.length!==1)return null;route.push(evidence(file,item));file=files[0];}
+    return {file,route};
+  }
+  function declaration(path,seen=new Set(),requirePublic=true){
+    const key=path.join('::');if(!path.length||path.length>16||seen.has(key)||seen.size>=32)return null;seen.add(key);
+    const owner=path.slice(0,-1),selected=module(owner,requirePublic);if(!selected)return null;const all=rows(selected.file),name=path.at(-1),own=all.filter(item=>originalDeclarationHeader(item)?.name===name),exports=[];
+    for(const item of all.filter(item=>item.term==='use'&&publicHead(item))){let leaves;try{leaves=originalUseDeclarationLeaves(item,owner);}catch{return null;}if(leaves.some(leaf=>leaf.glob))return null;for(const leaf of leaves.filter(leaf=>leaf.name===name)){if(!packageItem(item))return null;const next=normalize(leaf.segments,owner);if(!next)return null;exports.push({item,next});}}
+    if(own.length+exports.length!==1)return null;
+    if(own.length){const item=own[0],head=publicHead(item);if(!head||!nonTraits.has(head.kind)||!packageItem(item))return null;return {kind:head.kind,route:[...selected.route,evidence(selected.file,item)]};}
+    const next=declaration(exports[0].next,new Set(seen),false);return next?{kind:next.kind,route:[...selected.route,evidence(selected.file,exports[0].item),...next.route]}:null;
+  }
+  function macro(name){
+    // A complete pinned macro_export declaration is a bang namespace candidate.
+    // No macro body is expanded and no invocation receives executable authority.
+    for(const item of rootRows){const head=originalDeclarationHeader(item);if(head?.name===name)return null;if(item.term==='use'&&publicHead(item)){let leaves;try{leaves=originalUseDeclarationLeaves(item,[]);}catch{return null;}if(leaves.some(leaf=>leaf.glob||leaf.name===name))return null;}}
+    const candidates=[];
+    for(const edge of rootRows.filter(item=>item.term==='mod')){const c=itemConfiguration(edge.tokens,null),tokens=edge.tokens.filter(row=>row.type!=='comment');if(c.status!=='active'||tokens.at(-1)?.text!==';'||!c.attributes.some(a=>a.name==='macro_use')||c.attributes.some(a=>!packageAttributes.has(a.name)&&!(a.name==='macro_use'&&a.tokens.join('')==='#[macro_use]')))continue;
+      const owner=module([edge.name]);if(!owner)continue;
+      for(const item of rows(owner.file).filter(item=>item.name===name&&item.term==='macro_rules!')){const condition=itemConfiguration(item.tokens,null);if(condition.status!=='active'||!condition.attributes.some(a=>a.name==='macro_export'&&a.tokens.join('')==='#[macro_export]')||condition.attributes.some(a=>!packageAttributes.has(a.name)&&a.name!=='macro_export'))return null;
+        let definition,source;try{definition=jsonMacroSourceDefinition(proof,name);source=jsonMacroDefinitionSource(definition);}catch{return null;}if(source.sourceSha256!==pin(owner.file).sha256||source.originalDefinitionSpan.start<item.start||source.originalDefinitionSpan.end>item.end)return null;candidates.push({kind:'macro',namespace:'macro',macroKind:'bang',route:[evidence(root,edge),evidence(owner.file,item)],definitionSource:source,expansionAuthority:false});}
+    }
+    return candidates.length===1?candidates[0]:null;
+  }
+  return segments=>{if(segments[0]!==names[0][1]||segments.length<2)return null;const role=declaration(segments.slice(1))??(segments.length===2?macro(segments[1]):null);return role?{...role,dependency:{manifestSha256:proof.manifestSha256,lockSha256:proof.lockSha256,profileSha256:proof.profileSha256,archiveSha256:entry.sha256,package:entry.name,version:entry.version},cargo:{file:'Cargo.toml',sourceSha256:cargo.sha256,crateRoot:root},namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;};
+}
+export function createLiteralTextImportRoles(modules,profile,dependencyInputs=undefined){
   // Resolver tables are created here from genuine complete graph views. No
   // caller-supplied bindings, public flags or copied candidate is accepted.
-  const evidence=resolveModuleBindings({modules,compilationProfile:profile}),facts={modules,evidence};
-  return (module,item,leaf)=>{
+  const captured=dependencySnapshot(dependencyInputs),external=externalRoles(captured.value),evidence=resolveModuleBindings({modules,compilationProfile:profile}),facts={modules,evidence};captured.verify();
+  const roleFor=(module,item,leaf)=>{
     if(leaf.glob||leaf.name==='_')return null;
     const exact=originalSourceModuleItems(module).find(row=>row===item||row.start===item.start&&row.end===item.end&&row.term==='use');
     if(!exact||!originalUseDeclarationLeaves(exact,module.path).some(row=>row.name===leaf.name&&same(row.segments,leaf.segments)))return null;
@@ -84,9 +141,10 @@ export function createLiteralTextImportRoles(modules,profile){
     const root=leaf.segments[0],shadowed=ancestors.some(owner=>originalSourceModuleItems(owner).some(row=>{
       if(row.comment||itemConfiguration(row.tokens,profile).status==='inactive')return false;
       const header=originalDeclarationHeader(row,owner.path);if(header?.name===root)return true;
+      const words=row.tokens.filter(token=>token.type!=='comment').map(token=>token.text);if(words[0]==='extern'&&words[1]==='crate'&&(words[3]==='as'?words[4]:words[2])===root)return true;
       return row.term==='use'&&originalUseDeclarationLeaves(row,owner.path).some(imported=>imported.glob||imported.name===root);
     }));
-    let role=!shadowed?standardRole(leaf.segments):null;
+    let role=!shadowed?(standardRole(leaf.segments)??external?.(leaf.segments)):null;
     const scope=evidence.scopes.find(row=>row.file===module.file&&same(row.path,module.path));
     const bindings=scope?.bindings.filter(row=>row.name===leaf.name&&row.span?.start===item.start&&row.span?.end===item.end&&row.status==='resolved')??[];
     if(!role&&bindings.length&&bindings.every(binding=>nonTraits.has(binding.kind))){
@@ -97,6 +155,7 @@ export function createLiteralTextImportRoles(modules,profile){
       });
       if(originalBindings.every(Boolean))role={kind:'original-graph-nontrait-candidate',originalBindings};
     }
-    return role?{schema:'owned-literal-import-role-candidate-v1',name:leaf.name,segments:[...leaf.segments],import:{file:module.file,sourceSha256:hash(module.source),span:[item.start,item.end]},role,namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;
+    captured.verify();return role?{schema:'owned-literal-import-role-candidate-v1',name:leaf.name,segments:[...leaf.segments],import:{file:module.file,sourceSha256:hash(module.source),span:[item.start,item.end]},role,namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;
   };
+  roleChecks.set(roleFor,captured.verify);return roleFor;
 }

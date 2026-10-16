@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
 import {sourceItems} from './rust-structure.mjs';
-import {createLiteralTextImportRoles} from './literal-text-import-roles.mjs';
+import {createLiteralTextImportRoles,verifyLiteralTextImportRoles} from './literal-text-import-roles.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems} from './source-module-views.mjs';
 import {originalUseDeclarationLeaves,originalDeclarationHeader} from './module-bindings.mjs';
 import {resolveModuleGraph} from './project.mjs';
@@ -132,13 +132,19 @@ function sourceMap(input){
   const keys=Reflect.ownKeys(input);if(keys.length>MAX_FILES)fail('file count bound');const files=Object.create(null);let total=0;
   for(const key of keys){if(typeof key!=='string'||key.length>4096||!key.endsWith('.rs')||key.includes('\\')||key.startsWith('/')||/[\x00-\x1f:]/u.test(key)||key.split('/').some(part=>!part||part==='.'||part==='..'))fail('canonical relative Rust source path required');const d=Object.getOwnPropertyDescriptor(input,key);if(!d||!Object.hasOwn(d,'value'))fail('own source data required');bounded(d.value);total+=d.value.length;if(total>MAX_TOTAL)fail('complete corpus source bound');files[key]=d.value;}return files;
 }
-export function proposeCoreLiteralTextCorpus({entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE}={}){
+export function proposeCoreLiteralTextCorpus(options={}){
+  const {entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE}=options,dependencyField=Object.getOwnPropertyDescriptor(options,'dependencyInputs');
+  if(dependencyField&&!Object.hasOwn(dependencyField,'value'))fail('dependencyInputs must be an own data field');
+  const dependencyInputs=dependencyField?.value;
   const files=sourceMap(input),profile=normalizeProfile(inputProfile);if(typeof entry!=='string'||!Object.hasOwn(files,entry))fail('actual entry source required');
   const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),same=(module,path)=>module.path.length===path.length&&module.path.every((name,at)=>name===path[at]);
   const roots=graph.modules.filter(module=>same(module,[])),cores=graph.modules.filter(module=>same(module,['translation_core'])),leaves=graph.modules.filter(module=>same(module,['translation_core','primitives']));
   if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!=='src/translation_core.rs'||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!=='src/translation_core/primitives.rs'||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('complete actual owned facade/primitive source routes required');
   const edge=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edge.length!==1||roots[0].source.slice(edge[0].start,edge[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core edge required');
-  const after={...files},proposals=[],skipped=[],roleFor=createLiteralTextImportRoles(graph.modules,profile);
+  const after={...files},proposals=[],skipped=[],roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs);
   for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),conditions=[],problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor,[],conditions)),result=propose(files[file],modules,profile,problems,roleFor,conditions);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
-  return {schema:'router-owned-literal-text-corpus-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
+  const result={schema:'router-owned-literal-text-corpus-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
+  verifyLiteralTextImportRoles(roleFor);const currentDependency=Object.getOwnPropertyDescriptor(options,'dependencyInputs');
+  if(!!currentDependency!==!!dependencyField||dependencyField&&(!currentDependency||!Object.hasOwn(currentDependency,'value')||currentDependency.value!==dependencyInputs||currentDependency.writable!==dependencyField.writable||currentDependency.enumerable!==dependencyField.enumerable||currentDependency.configurable!==dependencyField.configurable))fail('dependencyInputs option changed');
+  return result;
 }

@@ -160,13 +160,20 @@ function completeAdoptionPackets(proposal,write,files,name){
   for(let at=0;at<proposal.proposals.length;at++){const row=proposal.proposals[at];if(row.before.source!==files[row.file]||row.after.source!==proposal.after[row.file])fail('per-file source chain differs');assertAdoptionInverse(row);packets.proposals.push(write.json(name+'/proposals/'+numbered(at)+'.json',row));}
   return packets;
 }
-function fixedAdoptionStage(name,files,propose,original,write){
+// Only the explicit literal sequences capture Cargo inputs. The original
+// formatting/primitives producer above keeps its original source contract.
+function sequenceDependencies(root){
+  function capture(){return ['Cargo.toml','Cargo.lock'].map(path=>{const absolute=join(root,path);if(!existsSync(absolute))return {path,absent:true};const before=lstatSync(absolute);if(!before.isFile()||before.isSymbolicLink()||before.size>L.fileBytes)fail('regular bounded Cargo source required');const raw=readFileSync(absolute),source=raw.toString('utf8'),after=lstatSync(absolute);if(!fileSame(before,after)||source.length>L.fileUnits||!Buffer.from(source,'utf8').equals(raw))fail('Cargo source identity/UTF8 changed');return {path,source,identity:{dev:after.dev,ino:after.ino,mode:after.mode,size:after.size,mtimeMs:after.mtimeMs,ctimeMs:after.ctimeMs}};});}
+  const rows=capture(),inputs=rows.every(row=>!row.absent)?{manifest:rows[0].source,lock:rows[1].source}:undefined;
+  return {rows,inputs,verify(){const current=capture();for(let at=0;at<rows.length;at++){const a=rows[at],b=current[at];if(a.path!==b.path||a.absent!==b.absent||a.source!==b.source||!a.absent&&!fileSame(a.identity,b.identity))fail('complete optional Cargo input changed');}}};
+}
+function fixedAdoptionStage(name,files,propose,original,write,dependencies){
   // The full proposal/graph is reachable only in this call. Return the next
   // primitive source map and packet references, never the live proposal.
   return createRulePipeline([
-    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>propose({entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE})}]},
+    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>propose({entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE,...(name==='literal'&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})})}]},
     {phase:'repository',rules:[{id:'core-adoption:'+name+'-complete-packets',apply:proposal=>{
-      rejoin(original);const packets=completeAdoptionPackets(proposal,write,files,name);
+      rejoin(original);dependencies.verify();const packets=completeAdoptionPackets(proposal,write,files,name);
       return {files:proposal.after,packets,summary:{sourceFiles:Object.keys(proposal.before).length,proposals:proposal.proposals.length,selections:proposal.proposals.reduce((sum,row)=>sum+row.selections.length,0),edits:proposal.proposals.reduce((sum,row)=>sum+row.edits.length,0),changedFiles:proposal.proposals.filter(row=>row.before.source!==row.after.source).length,skippedFiles:proposal.skipped.length}};
     }}]},
   ]).run(null);
@@ -179,18 +186,18 @@ export async function proposeCoreAdoptionSequence(input,sequence='literal'){
   // imports finish before taking the operation's complete source snapshot.
   const {proposeCoreLiteralTextCorpus}=await import('./migrate-core-literal-text.mjs');
   const algebraic=sequence==='literal-algebraic'?(await import('./migrate-core-algebraic.mjs')).proposeCoreAlgebraicCorpus:null;
-  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),write=writer(target),stages=[];
+  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target),stages=[];
   let stage='literal',after=original.files;
   try{
     for(const name of sequence==='literal'?['literal']:['literal','algebraic']){
-      stage=name;rejoin(original);const next=fixedAdoptionStage(name,after,name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write);
+      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies);
       after=next.value.files;stages.push({name,packets:next.value.packets,summary:next.value.summary,trace:next.trace});
     }
-    stage='final-source-and-index';const inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
+    stage='final-source-and-index';const dependencyInputs=dependencies.rows.map((row,at)=>write.json('dependency-inputs/'+numbered(at)+'.json',row)),inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
     for(const [path,source]of Object.entries(after)){pathName(path);if(!Object.hasOwn(original.files,path))fail('unexpected adopted source path');if(source!==original.files[path])changes.push({path,beforeSha256:hash(original.files[path]),afterSha256:hash(source),source:write.text('after/'+path,source)});}
     if(Object.keys(after).length!==original.rows.length)fail('adopted source path census differs');
-    const index={schema:'router-core-adoption-sequence-packets-v1',complete:true,sequence,entry:'src/lib.rs',sourceRoot:root,compilationProfile:PRODUCTION_PROFILE,limits:L,inputs,census,stages,changes,packets:[...write.records],packetBytes:write.bytes,semanticAdmission:false,installation:'proposal only; review every complete stage and inverse before application; this CLI never applies sources',sourceChain:'each stage before equals previous complete after; reverse stage order and full per-file mappings to recover original sources',hostBoundary:'stock Node/Bun filesystem/JSON/rule runner; exclusive owned output lifetime; non-atomic source snapshots, no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim',memory:'one full API proposal/graph at a time; per-packet serialization; actual live heap/RSS requires receiving evidence'};
-    const text=JSON.stringify(index)+'\n';rejoin(original);write.complete(text);
+    const index={schema:'router-core-adoption-sequence-packets-v1',complete:true,sequence,entry:'src/lib.rs',sourceRoot:root,compilationProfile:PRODUCTION_PROFILE,limits:L,inputs,dependencyInputs,census,stages,changes,packets:[...write.records],packetBytes:write.bytes,semanticAdmission:false,installation:'proposal only; review every complete stage and inverse before application; this CLI never applies sources',sourceChain:'each stage before equals previous complete after; reverse stage order and full per-file mappings to recover original sources',hostBoundary:'stock Node/Bun filesystem/JSON/rule runner; exclusive owned output lifetime; non-atomic source snapshots, no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim',memory:'one full API proposal/graph at a time; per-packet serialization; actual live heap/RSS requires receiving evidence'};
+    const text=JSON.stringify(index)+'\n';rejoin(original);dependencies.verify();write.complete(text);
     return {schema:index.schema,complete:true,sequence,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:stages.map(({name,summary})=>({name,...summary})),packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:write.bytes,semanticAdmission:false};
   }catch(error){try{write.failure(error,stage);}catch(reportFailure){const failure=new Error('sequence proposal failed and its incomplete receipt could not be written');failure.cause=error;failure.reportFailure=reportFailure;throw failure;}throw error;}
 }
