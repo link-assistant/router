@@ -340,6 +340,29 @@ test('independent SHA256 and strict Unicode binding do not trust decoder or Node
     return import(pathToFileURL(location).href);
   }
   const ordinary=await workCopy(beforeUint32Source,{instrument:false,label:'complete-before'}),typedSubject=await workCopy(shaSource,{label:'current'});
+  // Bind imports and create every physical artifact BEFORE any typed-only
+  // poison. Cold below means the exact synchronous source initializer, not a
+  // claim about an ESM loader running safely under a global native hook.
+  const factoryWitnesses=[];
+  async function completeSourceFactory(source,label,kind){
+    const importStart=source.indexOf('import '),importEnd=source.indexOf('\n',importStart)+1,originalImport=source.slice(importStart,importEnd),edits=[];
+    let body=source;function replace(before,after){assert.equal(body.split(before).length,2);const at=body.indexOf(before);body=body.slice(0,at)+after+body.slice(at+before.length);edits.push({at,before,after});}
+    replace(originalImport,'');
+    const declarations=[...body.matchAll(/^export (function|const) ([A-Za-z_$][A-Za-z0-9_$]*)/gmu)].map(match=>({kind:match[1],name:match[2]}));
+    for(const {kind,name}of declarations)replace('export '+kind+' '+name,kind+' '+name);
+    if(kind!=='common'){const line='  let pendingWord=0,pendingBytes=0,wordIndex=0,payloadBytes=0;';replace(line,'  __recordUint32Work(typed,h,words);\n'+line);}
+    const recordImport="import {record as __recordUint32Work} from '"+pathToFileURL(probePath).href+"';\n";
+    const commonNames='originalPrivateParserExpectedCommonIntrinsicsUnchanged,originalPrivateParserUint32WorkStorageUnchanged,throwOriginalCapturedTypeError';
+    const imports=kind==='common'?originalImport:kind==='sha'?originalImport.replace("'./original-json-intrinsics.mjs'","'"+commonURL+"'")+recordImport:"import {createCompleteSourceCommon288} from '"+pathToFileURL(join(workRoot,'common-factory.mjs')).href+"';\n"+recordImport;
+    const functionName=kind==='common'?'createCompleteSourceCommon288':kind==='sha'?'createCompleteSourceSha288':'createCompleteSourceShaWithCommon288';
+    const opening=imports+'export function '+functionName+'(){\n'+(kind==='sha-common'?'const {'+commonNames+'}=createCompleteSourceCommon288();\n':'');
+    const closing='\nreturn {'+(kind==='common'?commonNames:'independentParserSha256')+'};\n}\n',copied=opening+body+closing;
+    let reversed=copied.slice(opening.length,-closing.length);for(let at=edits.length-1;at>=0;at--){const edit=edits[at];assert.equal(reversed.slice(edit.at,edit.at+edit.after.length),edit.after);reversed=reversed.slice(0,edit.at)+edit.before+reversed.slice(edit.at+edit.after.length);}
+    const location=join(workRoot,label+'.mjs');writeFileSync(location,copied);const witness={kind,source,sha256:nativeHash(source),originalImport,imports,declarations,edits,opening,closing,body,copied,reversed,location,readback:readFileSync(location,'utf8'),claim:'complete synchronous source initialization with pre-bound imports; not cold ESM loader equivalence'};
+    factoryWitnesses.push(witness);retain('05-uint32-source-factory-'+label,witness);return import(pathToFileURL(location).href);
+  }
+  await completeSourceFactory(commonSource,'common-factory','common');
+  const shaFactory=await completeSourceFactory(shaSource,'sha-factory','sha'),commonShaFactory=await completeSourceFactory(shaSource,'sha-common-factory','sha-common');
   const typedStart=workProbe.rows.length;
   const workRows=streamingInputs.map(row=>({...row,before:outcome(()=>ordinary.independentParserSha256(row.source)),current:outcome(()=>typedSubject.independentParserSha256(row.source)),native:nativeHash(row.source)}));
   const typedCoverage=workProbe.rows.slice(typedStart);
@@ -355,7 +378,7 @@ test('independent SHA256 and strict Unicode binding do not trust decoder or Node
   ];
   for(const [mode,owner,key,kind,unused]of hookModes){
     const prior=key===null?null:descriptor(owner,key),priorParent=key===null?Object.getPrototypeOf(owner):null;let callbacks=0,cold,live,liveCoverage,coldCoverage,restoredCoverage,coldRestoredCoverage;
-    function trip(){callbacks++;throw Error('typed-only hook '+mode);}
+    function trip(){callbacks++;throw 288;}
     const restore=()=>{if(key===null)Object.setPrototypeOf(owner,priorParent);else if(prior)define(owner,key,prior);else delete owner[key];};
     try{
       if(kind==='parent')Object.setPrototypeOf(owner,new Proxy(priorParent,{get:trip,getPrototypeOf:trip,ownKeys:trip,getOwnPropertyDescriptor:trip}));
@@ -364,20 +387,22 @@ test('independent SHA256 and strict Unicode binding do not trust decoder or Node
       else if(kind==='wrong-native')define(owner,key,{...prior,value:Int32Array});
       else define(owner,key,{__proto__:null,get:trip,set:trip,enumerable:prior?prior.enumerable:false,configurable:true});
       let at=workProbe.rows.length;live=outcome(()=>typedSubject.independentParserSha256(workInput));liveCoverage=workProbe.rows.slice(at);
-      const fresh=await workCopy(shaSource,{label:'cold-'+mode});at=workProbe.rows.length;cold=outcome(()=>fresh.independentParserSha256(workInput));coldCoverage=workProbe.rows.slice(at);
+      let fresh;const coldInitialization=outcome(()=>{fresh=shaFactory.createCompleteSourceSha288();return Reflect.ownKeys(fresh);});at=workProbe.rows.length;cold=fresh?outcome(()=>fresh.independentParserSha256(workInput)):coldInitialization;coldCoverage=workProbe.rows.slice(at);
       restore();at=workProbe.rows.length;const restored=outcome(()=>typedSubject.independentParserSha256(workInput));restoredCoverage=workProbe.rows.slice(at);
-      at=workProbe.rows.length;const coldRestored=outcome(()=>fresh.independentParserSha256(workInput));coldRestoredCoverage=workProbe.rows.slice(at);
-      hookRows.push({mode,kind,unused:!!unused,live,cold,restored,coldRestored,liveCoverage,coldCoverage,restoredCoverage,coldRestoredCoverage,callbacks});
+      at=workProbe.rows.length;const coldRestored=fresh?outcome(()=>fresh.independentParserSha256(workInput)):coldInitialization;coldRestoredCoverage=workProbe.rows.slice(at);
+      hookRows.push({mode,kind,unused:!!unused,live,coldInitialization,cold,coldClaim:'synchronous complete-source factory initializer; imports bound before hook',restored,coldRestored,liveCoverage,coldCoverage,restoredCoverage,coldRestoredCoverage,callbacks});
     }finally{restore();}
   }
-  // An uncertain *common* birth also stays negative after exact restoration.
-  const freshCommonPath=join(workRoot,'cold-common.mjs');writeFileSync(freshCommonPath,commonSource);const globalWork=descriptor(globalThis,'Uint32Array');
-  let commonCalls=0,coldCommon,coldCommonResult,coldCommonRestored,coldCommonCoverage,coldCommonRestoredCoverage;
-  try{define(globalThis,'Uint32Array',{__proto__:null,get(){commonCalls++;throw Error('cold common optional getter');},configurable:true});
-    coldCommon=await workCopy(shaSource,{common:pathToFileURL(freshCommonPath).href,label:'cold-common'});let at=workProbe.rows.length;coldCommonResult=outcome(()=>coldCommon.independentParserSha256(workInput));coldCommonCoverage=workProbe.rows.slice(at);
+  // The complete common body can also initialize synchronously under an
+  // optional Uint32 hook. Its node:util import was bound before the hook;
+  // its three SHA exports are bound lexically inside the fixed SHA factory.
+  const globalWork=descriptor(globalThis,'Uint32Array');
+  let commonCalls=0,coldCommon,coldCommonInitialization,coldCommonResult,coldCommonRestored,coldCommonCoverage,coldCommonRestoredCoverage;
+  try{define(globalThis,'Uint32Array',{__proto__:null,get(){commonCalls++;throw 288;},configurable:true});
+    coldCommonInitialization=outcome(()=>{coldCommon=commonShaFactory.createCompleteSourceShaWithCommon288();return Reflect.ownKeys(coldCommon);});const at=workProbe.rows.length;coldCommonResult=coldCommon?outcome(()=>coldCommon.independentParserSha256(workInput)):coldCommonInitialization;coldCommonCoverage=workProbe.rows.slice(at);
   }finally{define(globalThis,'Uint32Array',globalWork);}
-  {const at=workProbe.rows.length;coldCommonRestored=outcome(()=>coldCommon.independentParserSha256(workInput));coldCommonRestoredCoverage=workProbe.rows.slice(at);}
-  const commonWitness={source:commonSource,sha256:nativeHash(commonSource),path:freshCommonPath,readback:readFileSync(freshCommonPath,'utf8'),coldCommonResult,coldCommonRestored,coldCommonCoverage,coldCommonRestoredCoverage,commonCalls};
+  {const at=workProbe.rows.length;coldCommonRestored=coldCommon?outcome(()=>coldCommon.independentParserSha256(workInput)):coldCommonInitialization;coldCommonRestoredCoverage=workProbe.rows.slice(at);}
+  const commonWitness={source:commonSource,sha256:nativeHash(commonSource),coldCommonInitialization,coldCommonResult,coldCommonRestored,coldCommonCoverage,coldCommonRestoredCoverage,commonCalls,claim:'complete synchronous common and SHA initializers; static imports bound before hook; not cold ESM'};
   // Actual production observations stay in this process/engine. A typed-only
   // hook installed by a real hash/read callback must retain all full inputs.
   const hashParent=Object.getPrototypeOf(createHash('sha256')),updateField=descriptor(hashParent,'update'),digestField=descriptor(hashParent,'digest'),readField=descriptor(fs.default,'readSync'),callbackRows=[];
@@ -392,18 +417,18 @@ test('independent SHA256 and strict Unicode binding do not trust decoder or Node
     }finally{define(globalThis,'Uint32Array',globalWork);define(hashParent,'update',updateField);define(hashParent,'digest',digestField);define(fs.default,'readSync',readField);syncBuiltinESMExports();}
     callbackRows.push({mode,result,tape,reads,hookCalls,installed});
   }
-  retain('05-uint32-complete-oracles',{beforeUint32Source,beforeUint32Sha256:nativeHash(beforeUint32Source),shaSource,commonSource,probeSource,probeReadback,copyWitnesses,workRows,typedCoverage,workInvalid,workArguments,workArgumentCallbacks,workInput,workExpected,hookRows,commonWitness,callbackRows});
+  retain('05-uint32-complete-oracles',{beforeUint32Source,beforeUint32Sha256:nativeHash(beforeUint32Source),shaSource,commonSource,probeSource,probeReadback,copyWitnesses,factoryWitnesses,workRows,typedCoverage,workInvalid,workArguments,workArgumentCallbacks,workInput,workExpected,hookRows,commonWitness,callbackRows});
   assert.equal(nativeHash(beforeUint32Source),'de032b553ae699e5c5a13c4b0e9eabbbad21c611f2130291b947f3eb66c6c294');assert.equal(probeReadback,probeSource);
-  for(const row of copyWitnesses){assert.equal(row.reversed,row.source);assert.equal(row.readback,row.copied);}
+  for(const row of [...copyWitnesses,...factoryWitnesses]){assert.equal(row.reversed,row.source);assert.equal(row.readback,row.copied);}
   for(const row of workRows){assert.deepEqual(row.current,row.before);assert.equal(row.current.value,row.native);if(row.expected!==undefined)assert.equal(row.native,row.expected);}
   assert.equal(typedCoverage.length,workRows.length);for(const row of typedCoverage)assert.deepEqual(row,{typed:true,hUint32:true,wordsUint32:true,hLength:8,wordsLength:64});
   for(const row of workInvalid)assert.deepEqual(row.current,row.before);for(const row of workArguments)assert.deepEqual(row.current,row.before);assert.equal(workArgumentCallbacks,0);
   for(const row of hookRows){
-    for(const result of [row.live,row.cold,row.restored,row.coldRestored])assert.deepEqual(result,{value:workExpected},row.mode);
+    assert.deepEqual(row.coldInitialization,{value:['independentParserSha256']},row.mode);for(const result of [row.live,row.cold,row.restored,row.coldRestored])assert.deepEqual(result,{value:workExpected},row.mode);
     for(const field of ['liveCoverage','coldCoverage']){assert.equal(row[field].length,1,row.mode);assert.equal(row[field][0].typed,row.unused,row.mode);}
     assert.equal(row.restoredCoverage[0].typed,true,row.mode);assert.equal(row.coldRestoredCoverage[0].typed,row.unused,row.mode);assert.equal(row.callbacks,0,row.mode);
   }
-  assert.equal(commonWitness.readback,commonWitness.source);assert.equal(commonCalls,0);assert.deepEqual(coldCommonResult,{value:workExpected});assert.deepEqual(coldCommonRestored,{value:workExpected});assert.deepEqual(coldCommonCoverage,[{typed:false}]);assert.deepEqual(coldCommonRestoredCoverage,[{typed:false}]);
+  assert.deepEqual(coldCommonInitialization,{value:['independentParserSha256']});assert.equal(commonCalls,0);assert.deepEqual(coldCommonResult,{value:workExpected});assert.deepEqual(coldCommonRestored,{value:workExpected});assert.deepEqual(coldCommonCoverage,[{typed:false}]);assert.deepEqual(coldCommonRestoredCoverage,[{typed:false}]);
   assert.ok(callbackRows[0].result.value);assert.equal(callbackRows[0].tape.filter(row=>row.phase==='update').length,60);assert.equal(callbackRows[0].tape.filter(row=>row.phase==='digest').length,60);
   for(const row of callbackRows.slice(1)){assert.deepEqual(row.result,callbackRows[0].result);assert.deepEqual(row.tape,callbackRows[0].tape);assert.deepEqual(row.reads,callbackRows[0].reads);assert.equal(row.installed,true);assert.equal(row.hookCalls,0);}
 });
