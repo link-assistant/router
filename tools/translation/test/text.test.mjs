@@ -97,8 +97,13 @@ test('unchanged original string functions translate with exact source identity i
     const files={'src/lib.rs':`pub mod translation_core; mod ${names[0]};`,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE};
     for(let depth=1;depth<names.length;depth++)files['src/'+names.slice(0,depth).join('/')+'.rs']=`mod ${names[depth]};`;
     files[path]=source;
-    const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:file=>files[file]});assert.deepEqual(result.meta.refused,[]);
-    const key=names.join('.')+'.'+name,entry=result.meta.executable.find(entry=>entry.name===key);assert.equal(entry.source,path);assert.deepEqual(entry.span,{start:0,end:source.length});assert.equal(sha256(source.slice(entry.span.start,entry.span.end)),sha256(source));
+    const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:file=>files[file]});
+    // The owned library body deliberately stays generic and untranslated.
+    // Assert its complete exact boundary; any additional application or
+    // library refusal still fails this full-array comparison.
+    assert.equal(ROUTER_CORE_RANGES_SOURCE.slice(437,445),'<\n    T:');
+    assert.deepEqual(result.meta.refused,[{file:'src/translation_core/ranges.rs',module:['translation_core','ranges'],name:'f64_inclusive_contains',term:'fn',kind:'unsupported',message:'generic function: requires contiguous original named lifetime tokens or separately checked monomorphization',span:{start:437,end:445}}]);
+    const key=names.join('.')+'.'+name,entry=result.meta.executable.find(entry=>entry.name===key);assert.ok(entry,key);assert.equal(entry.source,path);assert.deepEqual(entry.span,{start:0,end:source.length});assert.equal(sha256(source.slice(entry.span.start,entry.span.end)),sha256(source));
     await verifyTypedTargets(result,api=>{for(const [value,expected] of observations)assert.equal(api[key](value),expected);});
   }
 });
