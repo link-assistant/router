@@ -173,14 +173,14 @@ function verifyRelocatedSyntax(entry,semantic,offset) {
   if(!Number.isSafeInteger(offset)||offset<0)fail('source relocation requires an exact nonnegative offset');
   if(metadataDigest(relocatedSyntax(copyMetadata(entry),offset))!==metadataDigest(semantic))fail('semantic declaration differs from the exact source relocation');
 }
-// Keep exact object correspondence only for the new owned call kind. This
+// Keep exact object correspondence only for the selected owned call kinds. This
 // eligibility scan grants nothing and retains no parser for old declarations.
 function rangeSyntaxOrigin(parser,syntax,semantic,offset){
   let nodes=null,cells=200000;const path=[];
   const visit=(original,actual,depth=0)=>{
     if(--cells<0||depth>160||!original||typeof original!=='object'||!actual||typeof actual!=='object'||types.isProxy(original)||types.isProxy(actual))return;
     const kind=Object.getOwnPropertyDescriptor(original,'k');
-    if(kind&&Object.hasOwn(kind,'value')&&kind.value==='routerCoreF64InclusiveCall'){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
+    if(kind&&Object.hasOwn(kind,'value')&&(kind.value==='routerCoreF64InclusiveCall'||kind.value==='routerCoreScalarCountCall')){nodes??=new WeakMap();nodes.set(actual,{original,path:[...path]});}
     for(const key of Reflect.ownKeys(original))if(typeof key==='string'&&!['type','span','length'].includes(key)){
       const left=Object.getOwnPropertyDescriptor(original,key),right=Object.getOwnPropertyDescriptor(actual,key);
       if(left&&right&&Object.hasOwn(left,'value')&&Object.hasOwn(right,'value')){path.push(key);visit(left.value,right.value,depth+1);path.pop();}
