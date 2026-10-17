@@ -24,6 +24,37 @@ function ownedMacro(tokens,at,name){
  const last=tokens[at+4],attached=last?.text===name+'!',separate=last?.text===name&&tokens[at+5]?.text==='!';if(!attached&&!separate)return null;const open=at+(attached?5:6),end=close(tokens,open);return end>=0?{open,end}:null;
 }
 function statementEnd(tokens,start){for(let at=start;at<tokens.length;at++){if(['(','[','{'].includes(tokens[at].text)){const end=close(tokens,at);if(end<0)return -1;at=end;}else if(tokens[at].text===';')return at;else if(tokens[at].text==='}')return -1;}return -1;}
+// A fresh local belongs to its actual containing Rust block, not every token
+// with the same spelling in an unrelated sibling branch. Macro delimiters are
+// excluded by the caller before any block can become a selected binding scope.
+function bindingBlock(tokens,body,at){
+ const stack=[],pairs={'(':')','[':']','{':'}'};
+ for(let index=body;index<at;index++){
+  const token=tokens[index];if(['string','char','comment'].includes(token.type))continue;
+  if(pairs[token.text])stack.push(index);else if([')',']','}'].includes(token.text)){const open=stack.pop();if(open===undefined||pairs[tokens[open].text]!==token.text)return null;}
+ }
+ const open=[...stack].reverse().find(index=>tokens[index].text==='{'),end=open===undefined?-1:close(tokens,open);
+ return end>at?{open,end}:null;
+}
+function bindingUncertainty(tokens,body,at,scope,local){
+ // Same-block redeclarations remain conservative: neither declaration may
+ // borrow a census that silently discards the other still-live binding.
+ for(let index=body+1;index<at;index++)if(tokens[index].text==='let'){
+  const name=tokens[index+1]?.text==='mut'?index+2:index+1;
+  if(tokens[name]?.text===local&&(bindingBlock(tokens,body,index)?.end??-1)>at)return true;
+ }
+ let declarations=0;
+ for(let index=scope.open+1;index<scope.end;index++)if(tokens[index].text==='let'){
+  const name=tokens[index+1]?.text==='mut'?index+2:index+1;
+  if(tokens[name]?.text===local&&bindingBlock(tokens,body,index)?.open===scope.open&&++declarations>1)return true;
+ }
+ for(let index=at;index<scope.end;index++){
+  const word=tokens[index].text,previous=tokens[index-1]?.text;
+  if(['for','while','loop'].includes(word))return true;
+  if(word==='|'||word==='||'&&['=','(',',','{',';','=>','return','move'].includes(previous))return true;
+ }
+ return false;
+}
 // Tail recognition is lexical syntax only. Original constructor/type ownership
 // remains the independent checker's obligation; no spelling issues a permit.
 function localReturnTail(tokens,body,declaration,afterUpdates,local){
@@ -53,21 +84,24 @@ function localReturnTail(tokens,body,declaration,afterUpdates,local){
  return false;
 }
 function select(source,item){
- const tokens=item.tokens.filter(token=>token.type!=='comment'),selections=[],skipped=[],edits=[],claimed=new Set(),names=new Set(tokens.filter(ident).map(token=>token.text));
+ const tokens=item.tokens.filter(token=>token.type!=='comment'),selections=[],skipped=[],edits=[],claimed=new Set(),names=new Set(tokens.filter(ident).map(token=>token.text)),macroRanges=[];
  if(tokens.some(token=>token.type==='ident'&&token.text.startsWith('r#')))return {edits:[],selections:[],skipped:[{function:item.name,reason:'raw local identity requires separate hygiene checking'}]};
  const header=originalDeclarationHeader(item,[]),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),params=close(tokens,name+1);let body=params+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(name<0||tokens[name+1]?.text!=='('||params<0||body>=tokens.length||close(tokens,body)!==tokens.length-1)return {edits:[],selections:[],skipped:[{function:item.name,reason:'complete ordinary function body required'}]};
  for(let at=body+1;at<tokens.length;at++){
   // Unknown expansions/local declarations retain the whole original body. A
   // fixed owned JSON/format call cannot introduce Rust bindings into the caller.
-  const macro=ownedMacro(tokens,at,'json')??ownedMacro(tokens,at,'format');if(macro){at=macro.open;continue;}
+  const macro=ownedMacro(tokens,at,'json')??ownedMacro(tokens,at,'format');if(macro){macroRanges.push([at,macro.end]);at=macro.open;continue;}
   if(tokens[at].text!=='!'&&tokens[at].text.endsWith('!')||tokens[at].text==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text)&&!['if','while','return','else'].includes(tokens[at-1].text)||tokens[at].text==='#'||['unsafe','async','await','yield','macro_rules','extern','trait','impl','fn','mod','use','struct','enum','union','type','const','static'].includes(tokens[at].text))return {edits:[],selections:[],skipped:[{function:item.name,reason:'unknown expansion or unsupported local effect/declaration'}]};
  }
  for(let at=0;at+5<tokens.length;at++){
   if(tokens[at].text!=='let'||tokens[at+1].text!=='mut'||!ident(tokens[at+2])||tokens[at+3].text!=='=')continue;
   const local=tokens[at+2].text,initial=ownedMacro(tokens,at+4,'json');if(!initial||tokens[initial.end+1]?.text!==';')continue;
+  const scope=bindingBlock(tokens,body,at);
+  if(!scope||tokens.slice(name+2,params).some(token=>token.text===local)||macroRanges.some(([start,end])=>start<at&&at<end)||bindingUncertainty(tokens,body,at,scope,local)){skipped.push({function:item.name,local,reason:'uncertain lexical binding, shadow, closure or loop boundary'});continue;}
+
   const root=tokens[initial.open+1],literalRoot=root?.text==='{'||root?.text==='null'&&initial.end===initial.open+2;if(!literalRoot){skipped.push({function:item.name,local,reason:'fresh literal object or null required'});continue;}
   const updates=[];
-  for(let index=initial.end+2;index<tokens.length;index++){
+  for(let index=initial.end+2;index<scope.end;index++){
    if(tokens[index].text!==local||tokens[index+1]?.text!=='['||tokens[index+2]?.type!=='string'||!(/^(?:"|r#*")/u.test(tokens[index+2].text))||tokens[index+3]?.text!==']'||tokens[index+4]?.text!=='=')continue;
    if(![';','{','}'].includes(tokens[index-1]?.text)){updates.length=0;break;}
    const end=statementEnd(tokens,index+5);if(end<0){updates.length=0;break;}
@@ -76,7 +110,7 @@ function select(source,item){
    updates.push({index,end,key:tokens[index+2],rhs:[tokens[index+4].end,tokens[end].start]});index=end;
   }
   if(!updates.length)continue;
-  const remaining=tokens.map((token,index)=>({token,index})).filter(({token,index})=>token.text===local&&index!==at+2&&!updates.some(row=>index===row.index));
+  const remaining=tokens.map((token,index)=>({token,index})).filter(({token,index})=>at+2<=index&&index<scope.end&&token.text===local&&index!==at+2&&!updates.some(row=>index===row.index));
   if(remaining.length!==1||remaining[0].index<=updates.at(-1).end){skipped.push({function:item.name,local,reason:'only update assignees and one final owned return are supported; aliases/shadows/reads remain'});continue;}
   if(!localReturnTail(tokens,body,at,updates.at(-1).end,remaining[0].index)){skipped.push({function:item.name,local,reason:'owned value must end its actual lexical block through a bounded constructor or owned JSON projection'});continue;}
   // No shadowing binder can pass the complete same-spelling census above.
@@ -84,7 +118,7 @@ function select(source,item){
    if(update.rhs.some(value=>!Number.isSafeInteger(value))||update.rhs[0]>=update.rhs[1])continue;
    let temporary='__router_json_rhs_394';for(let suffix=2;names.has(temporary);suffix++)temporary='__router_json_rhs_394_'+suffix;names.add(temporary);
    const span=[tokens[update.index].start,tokens[update.end].end],rhs=source.slice(...update.rhs),key=source.slice(update.key.start,update.key.end),replacement='{ let '+temporary+' = '+rhs+'; '+local+' = '+C+'json_with_field('+local+', '+key+', '+temporary+'); };';
-   if([...claimed].some(row=>span[0]<row[1]&&row[0]<span[1]))fail('overlapping local update selection');claimed.add(span);edits.push({span,expected:source.slice(...span),replacement});selections.push({function:item.name,local,span,rhs:update.rhs,keySource:key,temporary,sourceOperation:'fresh-owned-json-direct-string-key-assignment',evaluationOrder:['complete-original-RHS','move-owned-base','literal-key','move-computed-value','owned-update'],oldTraitDispatchProved:false});
+   if([...claimed].some(row=>span[0]<row[1]&&row[0]<span[1]))fail('overlapping local update selection');claimed.add(span);edits.push({span,expected:source.slice(...span),replacement});selections.push({function:item.name,local,span,lexicalBinding:{declaration:[tokens[at].start,tokens[initial.end+1].end],block:[tokens[scope.open].start,tokens[scope.end].end]},rhs:update.rhs,keySource:key,temporary,sourceOperation:'fresh-owned-json-direct-string-key-assignment',evaluationOrder:['complete-original-RHS','move-owned-base','literal-key','move-computed-value','owned-update'],oldTraitDispatchProved:false});
   }
  }
  return {edits,selections,skipped};
