@@ -10,7 +10,7 @@ import {createHash,Hash} from 'node:crypto';
 import {types} from 'node:util';
 import {copyMetadata,metadataDigest,linkParsedFile,linkedSourceContext,bindCheckedSourceLinks} from '../extensions/source-links.mjs';
 import {tryCopyDigestMetadata} from '../native-metadata-copy.mjs';
-import {originalFlatTokenIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
+import {originalFlatTokenIntrinsicsUnchanged,originalJsonIntrinsicsUnchanged,originalNamespaceTraversalIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalPrivateParserIngressUnchanged,originalPrivateParserCommonIntrinsicsUnchanged,originalPrivateParserNumericCommonIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {HostRustParser,parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
 import {translateProject,originalProjectMethodFieldEvidence} from '../project.mjs';
@@ -22,6 +22,48 @@ import {transportConcreteSyntaxSource} from '../concrete-syntax-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {associatedOriginalParentInputs} from './associated-original-context.mjs';
 import {writeJsonGzip} from '../../evidence/write-json-gzip.mjs';
+// Test-only current-state evidence, never a permission or automatic repair.
+// Capture reflection once before this file installs any observer. Descriptors
+// retain identity/source and own key order without reading their accessors.
+const diagnosticDescriptor=Object.getOwnPropertyDescriptor,diagnosticDefine=Object.defineProperty,diagnosticKeys=Reflect.ownKeys,diagnosticPrototype=Object.getPrototypeOf,diagnosticApply=Reflect.apply,diagnosticProxy=types.isProxy,diagnosticFunctionText=Function.prototype.toString,diagnosticSymbolText=Symbol.prototype.toString,diagnosticBigIntText=BigInt.prototype.toString;
+const diagnosticIdentities=[];
+const diagnosticOwners=[['globalThis',globalThis],['Object',Object],['Object.prototype',Object.prototype],['Array',Array],['Array.prototype',Array.prototype],['Map',Map],['Map.prototype',Map.prototype],['Set',Set],['Set.prototype',Set.prototype],['WeakMap',WeakMap],['WeakMap.prototype',WeakMap.prototype],['WeakSet',WeakSet],['WeakSet.prototype',WeakSet.prototype],['String',String],['String.prototype',String.prototype],['Number',Number],['Number.prototype',Number.prototype],['BigInt',BigInt],['BigInt.prototype',BigInt.prototype],['RegExp',RegExp],['RegExp.prototype',RegExp.prototype],['Function',Function],['Function.prototype',Function.prototype],['Error',Error],['Error.prototype',Error.prototype],['TypeError',TypeError],['TypeError.prototype',TypeError.prototype],['Symbol',Symbol],['Symbol.prototype',Symbol.prototype],['Uint32Array',Uint32Array],['Uint32Array.prototype',Uint32Array.prototype],['Uint8Array',Uint8Array],['Uint8Array.prototype',Uint8Array.prototype],['JSON',JSON],['Reflect',Reflect],['Buffer',Buffer],['util.types',types]];
+function diagnosticAppend(array,value){diagnosticDefine(array,array.length,{__proto__:null,value,enumerable:true,writable:true,configurable:true});}
+function diagnosticIdentity(value){for(let index=0;index<diagnosticIdentities.length;index++)if(diagnosticIdentities[index]===value)return index+1;diagnosticAppend(diagnosticIdentities,value);return diagnosticIdentities.length;}
+function diagnosticValue(value){
+ const type=typeof value;
+ if(value===null||type==='undefined'||type==='boolean'||type==='string')return {type,value};
+ if(type==='number')return {type,value:value!==value?'NaN':value===Infinity?'Infinity':value===-Infinity?'-Infinity':value===0&&1/value===-Infinity?'-0':value};
+ if(type==='symbol')return {type,identity:diagnosticIdentity(value),text:diagnosticApply(diagnosticSymbolText,value,[])};
+ const identity=diagnosticIdentity(value);
+ if(type==='bigint')return {type,identity,text:diagnosticApply(diagnosticBigIntText,value,[])};
+ const proxy=diagnosticProxy(value);if(proxy)return {type,identity,proxy:true};
+ return {type,identity,proxy:false,...(type==='function'?{source:diagnosticApply(diagnosticFunctionText,value,[])}:{})};
+}
+function diagnosticField(field){
+ if(!field)return null;
+ const result={__proto__:null,enumerable:field.enumerable,configurable:field.configurable};
+ const ownValue=diagnosticDescriptor(field,'value');
+ if(ownValue){result.value=diagnosticValue(ownValue.value);result.writable=field.writable;}
+ else{result.get=diagnosticValue(field.get);result.set=diagnosticValue(field.set);}
+ return result;
+}
+function captureGuardDiagnostic(stage){
+ const guards={__proto__:null},owners=[],reads=[['json',originalJsonIntrinsicsUnchanged],['namespace',originalNamespaceTraversalIntrinsicsUnchanged],['flatToken',originalFlatTokenIntrinsicsUnchanged],['staticSource',originalStaticSourceIntrinsicsUnchanged],['dataFreeze',originalDataFreezeIntrinsicsUnchanged],['privateIngress',originalPrivateParserIngressUnchanged],['privateCommon',originalPrivateParserCommonIntrinsicsUnchanged],['privateNumericCommon',originalPrivateParserNumericCommonIntrinsicsUnchanged]];
+ for(let index=0;index<reads.length;index++){
+  const name=reads[index][0],read=reads[index][1];
+  try{guards[name]={returned:read()};}catch(error){guards[name]={threw:diagnosticValue(error)};}
+ }
+ for(let index=0;index<diagnosticOwners.length;index++){
+  const name=diagnosticOwners[index][0],owner=diagnosticOwners[index][1],identity=diagnosticValue(owner);
+  if(identity.proxy){diagnosticAppend(owners,{name,owner:identity,uncertain:true});continue;}
+  const fields=[],keys=diagnosticKeys(owner);
+  for(let at=0;at<keys.length;at++){const key=keys[at];diagnosticAppend(fields,{key:diagnosticValue(key),descriptor:diagnosticField(diagnosticDescriptor(owner,key))});}
+  diagnosticAppend(owners,{name,owner:identity,prototype:diagnosticValue(diagnosticPrototype(owner)),fields});
+ }
+ return {stage,guards,owners,authority:false,restorationPerformed:false,parserWarmupPerformed:false};
+}
+const moduleEntryGuardDiagnostic=captureGuardDiagnostic('module-entry-before-archived-leaf-import');
 const json=JSON.stringify,apply=Reflect.apply,define=Object.defineProperty,descriptor=Object.getOwnPropertyDescriptor;
 const encode=value=>json(value,(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item);
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -32,8 +74,8 @@ const folder=mkdtempSync(join(tmpdir(),'router-native-metadata-')),imports=[];
 const oldRelocated=oldText.replace(/\bfrom (['"])(\.\.?\/[^'"]+)\1/g,(_whole,quote,path)=>{const url=new URL(path,base).href;imports.push({path,url});return 'from '+quote+url+quote;});
 const oldPath=join(folder,'complete-old-source-links.mjs');writeFileSync(oldPath,oldRelocated);const old=await import(pathToFileURL(oldPath).href);after(()=>rmSync(folder,{recursive:true,force:true}));
 const test=(name,run)=>testCase(name,{timeout:60000},async t=>{
- const vectors=[];try{await run(t,(kind,value)=>{vectors.push({kind,value});return value;});}
- finally{const directory=process.env.ROUTER_NATIVE_METADATA_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonGzip(join(directory,Buffer.from(name).toString('hex')+'.json.gz'),{name,vectors},(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item);}}
+ const vectors=[{kind:'module-entry-guard-diagnostic',value:moduleEntryGuardDiagnostic},{kind:'case-entry-guard-diagnostic',value:captureGuardDiagnostic('case-entry:'+name)}];try{await run(t,(kind,value)=>{vectors.push({kind,value});return value;});}
+ finally{vectors.push({kind:'case-finally-guard-diagnostic',value:captureGuardDiagnostic('case-finally:'+name)});const directory=process.env.ROUTER_NATIVE_METADATA_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonGzip(join(directory,Buffer.from(name).toString('hex')+'.json.gz'),{name,vectors},(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item);}}
 });
 function outcome(run){try{return {value:run()};}catch(error){return {error:{name:error.name,message:error.message}};}}
 function graph(value){
