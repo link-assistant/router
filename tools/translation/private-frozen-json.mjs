@@ -71,11 +71,25 @@ function immutableJson(value,noStack=false){
 }
 function retire(state){if(!state.active)return;apply(mapDelete,storage,[state]);retainedBytes-=state.bytes;entries--;state.active=false;state.encoded=null;if(evictions<9007199254740991)evictions++;}
 function remember(state){apply(mapSet,storage,[state,state]);retainedBytes+=state.bytes;entries++;}
+// Protect only genuine repeated byte hits from one-use encoding streams.
+// The same bounded Map holds no owner/root keys; each state adds one own bit.
+function touch(state){
+ const promote=!state.protected;state.protected=true;apply(mapDelete,storage,[state]);apply(mapSet,storage,[state,state]);
+ if(!promote)return;
+ let count=0,oldest=null;const cursor=apply(mapEntries,storage,[]);
+ for(let at=0;at<ENTRIES;at++){const row=apply(next,cursor,[]);if(row.done)break;const current=row.value[0];if(current.protected){count++;if(oldest===null)oldest=current;}}
+ if(count>ENTRIES/2)oldest.protected=false;
+}
+function probationaryVictim(){
+ let oldest=null;const cursor=apply(mapEntries,storage,[]);
+ for(let at=0;at<ENTRIES;at++){const row=apply(next,cursor,[]);if(row.done)break;const current=row.value[0];if(oldest===null)oldest=current;if(!current.protected)return current;}
+ return oldest;
+}
 export function createPrivateFrozenJsonCache(){
  const values=qualified?new weakConstructor():null;
  return value=>{
   if(!intrinsics()||value===null||typeof value!=='object')return JSON.stringify(value);
-  const prior=apply(weakGet,values,[value]);if(prior?.active){apply(mapDelete,storage,[prior]);apply(mapSet,storage,[prior,prior]);if(hits<9007199254740991)hits++;return prior.encoded;}
+  const prior=apply(weakGet,values,[value]);if(prior?.active){touch(prior);if(hits<9007199254740991)hits++;return prior.encoded;}
   if(misses<9007199254740991)misses++;
   if(completedDataTraversalExceedsBudget(value,CELLS)){if(completedBudgetRefusals<9007199254740991)completedBudgetRefusals++;return JSON.stringify(value);}
   // This skips eligibility traversal only, never serialization or owner joins.
@@ -85,8 +99,8 @@ export function createPrivateFrozenJsonCache(){
   const encoded=JSON.stringify(value);if(typeof encoded!=='string'||encoded.length*2+128>ENTRY_BYTES||!intrinsics())return encoded;
   // No issuer/root is held by global bookkeeping. Weak owner keys may vanish;
   // bounded encoded bytes survive at most until ordinary global eviction.
-  const state={encoded,bytes:encoded.length*2+128,active:true};let removed=0;
-  while(entries>=ENTRIES||retainedBytes+state.bytes>TOTAL_BYTES){if(removed++>=ENTRIES)return encoded;const cursor=apply(mapEntries,storage,[]),first=apply(next,cursor,[]);if(first.done)return encoded;const before=entries;retire(first.value[0]);if(entries>=before)return encoded;}
+  const state={encoded,bytes:encoded.length*2+128,active:true,protected:false};let removed=0;
+  while(entries>=ENTRIES||retainedBytes+state.bytes>TOTAL_BYTES){if(removed++>=ENTRIES)return encoded;const victim=probationaryVictim();if(victim===null)return encoded;const before=entries;retire(victim);if(entries>=before)return encoded;}
   remember(state);apply(weakSet,values,[value,state]);if(captures<9007199254740991)captures++;return encoded;
  };
 }
