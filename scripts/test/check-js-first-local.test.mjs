@@ -85,8 +85,12 @@ test('local reverse stage discovers a new failing test under both engines before
     'node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs',
     'bun test tools/translation/js-to-rust/test/*.test.mjs',
     'node scripts/regenerate-js-first.mjs --check',
+    'node scripts/regenerate-js-first.mjs --owned-core-definitions --check',
+    'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check',
   ]);
   assert.equal(stages.length, 7);
+  assert.ok(stages.find(([id])=>id==='typescript')[1].includes('node scripts/check-owned-definition-typescript.mjs'));
+  for(const command of ['node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check','node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'])assert.ok(stages.find(([id])=>id==='translation')[1].includes(command));
   assert.ok(stages.find(([id]) => id === 'typescript')[1].includes('node scripts/run-node-tests.mjs --outer-timeout-ms=900000 tools/translation/js-to-rust/test/native-typescript.test.mjs'));
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'router-reverse-discovery-'));
   const testDirectory = path.join(directory, 'tools/translation/js-to-rust/test');

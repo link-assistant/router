@@ -114,6 +114,7 @@ jobs:
       - run: node packages/javascript/node_modules/typescript/bin/tsc -p tools/translation/tsconfig.json
       - run: node tools/translation/check-typescript-fixtures.mjs
       - run: node scripts/check-profile-typescript.mjs
+      - run: node scripts/check-owned-definition-typescript.mjs
       - run: node tools/translation/serialization-schema/native-descriptor.mjs --check
       - run: node tools/translation/serialization-schema/check-descriptor-typescript.mjs
       - run: node tools/translation/serialization-schema/bulk.mjs --check
@@ -182,6 +183,7 @@ jobs:
       - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: node scripts/run-node-tests.mjs --outer-timeout-ms=3600000 --test-concurrency=2 tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs
       - run: node scripts/translate-router.mjs --check
+      - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check
       - name: Preserve complete Node deadline audit and raw streams
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -214,6 +216,7 @@ jobs:
           "
       - run: npm ci --prefix packages/javascript --ignore-scripts
       - run: node scripts/translate-router.mjs --profile-matrix --check
+      - run: node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check
   reverse-translation:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -240,6 +243,8 @@ jobs:
       - run: node scripts/run-node-tests.mjs --outer-timeout-ms=900000 --test-concurrency=2 tools/translation/js-to-rust/test/*.test.mjs
       - run: bun test tools/translation/js-to-rust/test/*.test.mjs
       - run: node scripts/regenerate-js-first.mjs --check
+      - run: node scripts/regenerate-js-first.mjs --owned-core-definitions --check
+      - run: node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check
       - name: Preserve complete Node deadline audit and raw streams
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a

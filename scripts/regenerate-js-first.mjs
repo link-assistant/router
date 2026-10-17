@@ -52,7 +52,7 @@ function rustFixtures(fixtures, program) {
   return `\n#[cfg(test)]\n#[rustfmt::skip]\nmod shared_fixtures {\n    use super::*;\n\n${rows.join('\n\n')}\n}\n`;
 }
 
-export function buildArtifacts(root = ROOT) {
+function buildArtifactsSelected(root = ROOT, definitions=false, matrix,ownedBuilder) {
   const sources = modules(root, 'packages/javascript/portable');
   if (!sources.length) throw new Error('no authoritative portable JavaScript modules found');
   const sourceRows = [];
@@ -96,7 +96,8 @@ export function buildArtifacts(root = ROOT) {
     ['packages/typescript/native/js-first-policy.ts', `${header}${emitTypeScript(program)}`],
   ]);
   for (const [path, content] of nativeDraft.artifacts) artifacts.set(path, content);
-  const ownedDraft=buildOwnedCoreDocumentArtifacts(root);
+  const ownedDraft=definitions?ownedBuilder(root,{matrix}):buildOwnedCoreDocumentArtifacts(root);
+  const legacyArtifactPaths=definitions?new Set([...artifacts.keys(),...ownedDraft.legacyArtifactPaths]):null;
   for(const [path,content]of ownedDraft.artifacts)artifacts.set(path,content);
   const manifest = {
     schemaVersion: 1,
@@ -119,14 +120,15 @@ export function buildArtifacts(root = ROOT) {
       scopedFunctions: nativeDraft.manifest.scopedFunctions, wholeNativeImplementationTranslated: false, runtimeParity: false },
     unsupportedExamples: unsupported,
     ownedCoreDraft:{manifest:'parity/js-owned-core-reverse-draft.json',...ownedDraft.manifest.totals,runtimeParity:false},
-    outputs: [...artifacts].map(([path, content]) => ({ path, bytes: Buffer.byteLength(content), sha256: sha256(content) })),
+    outputs: (definitions?[...artifacts].filter(([path])=>legacyArtifactPaths.has(path)):[...artifacts]).map(([path, content]) => ({ path, bytes: Buffer.byteLength(content), sha256: sha256(content) })),
   };
   artifacts.set('parity/js-first-translation.json', json(manifest));
   return artifacts;
 }
 
-export function regenerate(root = ROOT, { check = false } = {}) {
-  const artifacts = buildArtifacts(root);
+export function buildArtifacts(root = ROOT){return buildArtifactsSelected(root);}
+export async function buildArtifactsWithOwnedDefinitions(root = ROOT,{matrix=false}={}){const [owned,profiles]=await Promise.all([import('../tools/translation/js-to-rust/owned-core-definition-corpus.mjs'),import('../tools/translation/compilation-matrix.mjs')]);return buildArtifactsSelected(root,true,matrix?profiles.createCompilationMatrix({profiles:profiles.DECLARED_FAMILY_PROFILES}):undefined,owned.buildOwnedCoreDefinitionArtifacts);}
+function applyArtifactsSelected(root,{check=false}={},artifacts,definitionCleanup,matrix=false){
   const changed = [];
   const witnessPrefix='tools/translation/js-to-rust/generated/owned-core-witness';
   const witnessIndex=join(root,witnessPrefix+'-inputs.json'),previousWitness=new Map();
@@ -165,6 +167,7 @@ export function regenerate(root = ROOT, { check = false } = {}) {
        path.endsWith('.lino')?!(content.startsWith('(owned-core-context ')||content.startsWith('(owned-source-document ')&&content.startsWith('(owned-source-document '+encodeWord('{"profile":"router-owned-core-source-document-v1","context":'))):JSON.parse(content).schema!=='owned-core-reverse-ci-witness-v1')throw Error('Unknown old owned witness output');
     changed.push(path);if(!check)rmSync(absolute);
   }
+  if(definitionCleanup)definitionCleanup(root,artifacts,changed,{check,matrix});
   for (const [path, content] of artifacts) {
     const absolute = join(root, path);
     if (existsSync(absolute) && readFileSync(absolute, 'utf8') === content) continue;
@@ -177,13 +180,27 @@ export function regenerate(root = ROOT, { check = false } = {}) {
   return { changed, bytes: [...artifacts.values()].reduce((sum, value) => sum + Buffer.byteLength(value), 0) };
 }
 
+export function regenerate(root = ROOT,{check=false}={}){const artifacts=buildArtifacts(root);return applyArtifactsSelected(root,{check},artifacts);}
+export async function regenerateWithOwnedDefinitions(root = ROOT,{check=false,matrix=false}={}){const artifacts=await buildArtifactsWithOwnedDefinitions(root,{matrix}),owned=await import('../tools/translation/js-to-rust/owned-core-definition-corpus.mjs');return applyArtifactsSelected(root,{check},artifacts,owned.cleanOwnedDefinitionDrafts,matrix);}
+
 if (process.argv[1] && relative(ROOT, process.argv[1]) === relative(ROOT, fileURLToPath(import.meta.url))) {
   const args = process.argv.slice(2);
-  if (args.some((arg) => !['--check', '--write'].includes(arg))) throw new Error('usage: node scripts/regenerate-js-first.mjs [--check|--write]');
+  if (args.some((arg) => !['--check', '--write','--owned-core-definitions','--profile-matrix'].includes(arg))) throw new Error('usage: node scripts/regenerate-js-first.mjs [--check|--write] [--owned-core-definitions [--profile-matrix]]');
   const check = args.includes('--check');
+  const definitions=args.includes('--owned-core-definitions'),matrix=args.includes('--profile-matrix');
+  if(matrix&&!definitions)throw Error('--profile-matrix requires explicit --owned-core-definitions');
+  if(definitions){
+    regenerateWithOwnedDefinitions(ROOT,{check,matrix}).then(result=>{
+  if (check && result.changed.length) {
+    console.error(`JavaScript-first artifacts differ: ${result.changed.join(', ')}. Run node scripts/regenerate-js-first.mjs.`);
+    process.exitCode = 1;
+  } else console.log(`JavaScript-first ${check ? 'regeneration verified' : 'regenerated'}: ${result.bytes} bytes; ${result.changed.length} changed artifacts.`);
+    }).catch(error=>{console.error(error);process.exitCode=1;});
+  }else{
   const result = regenerate(ROOT, { check });
   if (check && result.changed.length) {
     console.error(`JavaScript-first artifacts differ: ${result.changed.join(', ')}. Run node scripts/regenerate-js-first.mjs.`);
     process.exitCode = 1;
   } else console.log(`JavaScript-first ${check ? 'regeneration verified' : 'regenerated'}: ${result.bytes} bytes; ${result.changed.length} changed artifacts.`);
+  }
 }

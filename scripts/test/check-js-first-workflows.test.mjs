@@ -102,6 +102,12 @@ test('every JavaScript stage and command is mandatory and cannot skip or ignore 
     fails('javascript-first.yml', workflow => { workflow.jobs[id].steps.at(-1).run = 'echo inventory only'; }, 'mandatory command');
   }
   fails('javascript-first.yml', workflow => { workflow.jobs.parity.steps.at(-1).run = 'node scripts/check-router-parity.mjs'; }, 'mandatory command');
+  for(const [id,command]of [['typescript', 'node scripts/check-owned-definition-typescript.mjs'], ['translation', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --check'], ['profile-matrix', 'node scripts/translate-router.mjs --retain-output-text --owned-core-definitions --profile-matrix --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --check'], ['reverse-translation', 'node scripts/regenerate-js-first.mjs --owned-core-definitions --profile-matrix --check']]) {
+    fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps=workflow.jobs[id].steps.filter(step=>step.run!==command);},'mandatory command');
+    fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.find(step=>step.run===command).run='echo '+command;},'mandatory command');
+    fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.find(step=>step.run===command).if='${{ false }}';},'conditional');
+    fails('javascript-first.yml',workflow=>{workflow.jobs[id].steps.find(step=>step.run===command).run=command.includes('--owned-core-definitions')?command.replace('--owned-core-definitions','--old-definitions'):command+' --skip';},'mandatory command');
+  }
 });
 test('heavy compiler and acceptance cohorts require two workers and every test file', () => {
   for (const [id, glob] of [['translation', 'tools/translation/test/*.test.mjs tools/translation/serialization-schema/*.test.mjs'], ['parity', 'experiments/issue-759/acceptance/*.test.mjs']]) {
