@@ -7,7 +7,9 @@ import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {translateProject} from '../project.mjs';
-import {emitJavaScript} from '../extensions/host-contracts.mjs';
+import {emitJavaScript,HostRustParser} from '../extensions/host-contracts.mjs';
+import {tokenizeRust} from '../extensions/lexical.mjs';
+import {linkProjectDeclaration,originalParsedSyntaxNode} from '../extensions/source-links.mjs';
 import {originalJsonOptionReceiver,checkOriginalOwnedJsonLetElse} from '../router-core-json-updates.mjs';
 import {proposeCoreJsonParseCorpus} from '../migrate-core-json-parse.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
@@ -90,6 +92,14 @@ test('unknown allocating callbacks shadowed traits custom carriers and absent pa
  assert.equal(originalJsonOptionReceiver(checker,trap,trap),false);assert.equal(checkOriginalOwnedJsonLetElse(checker,trap,new Map(),[],null,false),null);assert.equal(callbacks,0);
  const wrapper={k:'routerStringOwnership',operation:'as_str',object:{k:'var',name:'json'},fallback:{k:'routerDispatchMethod',method:'as_str',args:[]}},synthetic={k:'routerIteratorOperation',op:'filter',object:wrapper,args:[]};assert.equal(originalJsonOptionReceiver(checker,synthetic,{k:'routerHostCall',id:'serde_json_value_as_str'}),false);assert.equal(callbacks,0);
  const forged=files('pub fn bad(value:&'+S+')->bool{let '+M+'::Some(json)='+P+'(value)else{return false;};json.is_null()}');forged['src/translation_core/primitives.rs']+='\n// a different complete source leaf cannot issue an owned alias\n';no(project(forged),'bad');
+ // This is source correspondence only; no parser/type/JSON admission is inferred.
+ const declaration='fn proof(value:&String)->&str{value.as_str()}',prefix='// λ 😀\n',relocate=(node,offset)=>Array.isArray(node)?node.map(value=>relocate(value,offset)):node&&typeof node==='object'?Object.fromEntries(Object.entries(node).map(([key,value])=>[key,['span','subjectSyntaxSpan','patternSpan'].includes(key)&&value?{start:value.start+offset,end:value.end+offset}:relocate(value,offset)])):node;
+ const capture=()=>{const parser=new HostRustParser(tokenizeRust(declaration)),entry=parser.fn([]),semantic=relocate(entry,prefix.length),source=prefix+declaration;assert.ok(parser.cursor.atEnd());assert.equal(linkProjectDeclaration(parser,entry,semantic,{source,sourcePath:'src/original.rs',itemSpan:{start:prefix.length,end:source.length},itemOffset:prefix.length,globalOffset:0,path:[],scope:null}),true);return {entry,semantic,wrapper:find(semantic.body,node=>node.k==='routerStringOwnership'&&node.operation==='as_str')};};
+ const first=capture(),second=capture(),outer=originalParsedSyntaxNode(first.semantic,first.wrapper),inner=originalParsedSyntaxNode(first.semantic,first.wrapper.fallback);assert.ok(outer&&inner);assert.equal(outer.parser,inner.parser);assert.equal(outer.original.fallback,inner.original);assert.equal(outer.original.object,inner.original.object);assert.notEqual(first.wrapper.object,first.wrapper.fallback.object);assert.deepEqual(first.wrapper.object,first.wrapper.fallback.object);assert.deepEqual(first.wrapper,outer.relocated);assert.deepEqual(first.wrapper.fallback,inner.relocated);
+ retain('complete-original-relocated-reader-correspondence',{source:prefix+declaration,entry:first.entry,semantic:first.semantic,originalReceiverShared:true,relocatedReceiverShared:false,wrapperAndFallbackOriginalParserSame:true});
+ assert.equal(originalParsedSyntaxNode(first.semantic,structuredClone(first.wrapper)),null);assert.equal(originalParsedSyntaxNode(first.semantic,structuredClone(first.wrapper.fallback)),null);assert.equal(originalParsedSyntaxNode(first.semantic,second.wrapper),null);assert.equal(originalParsedSyntaxNode(first.semantic,second.wrapper.fallback),null);
+ const actualFallback=first.wrapper.fallback;try{first.wrapper.fallback=structuredClone(actualFallback);assert.ok(originalParsedSyntaxNode(first.semantic,first.wrapper));assert.equal(originalParsedSyntaxNode(first.semantic,first.wrapper.fallback),null);first.wrapper.fallback=second.wrapper.fallback;assert.ok(originalParsedSyntaxNode(first.semantic,first.wrapper));assert.equal(originalParsedSyntaxNode(first.semantic,first.wrapper.fallback),null);}finally{first.wrapper.fallback=actualFallback;}assert.ok(originalParsedSyntaxNode(first.semantic,first.wrapper.fallback));
+
 });
 test('linear owned payloads mutable captures custom errors and escaped temporary loans keep their refusals',()=>{
  const sources=[

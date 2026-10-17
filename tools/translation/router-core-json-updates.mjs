@@ -246,17 +246,31 @@ function currentOptionLayout(checker,type,span,recover=false,diagnostic=null){
  }
  return {owner,payload,summary};
 }
-function captureOptionReaders(root,output){let cells=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(node.k==='routerTry'||node.k==='routerDispatchMethod'&&['get','as_str'].includes(node.method)||node.k==='routerStringOwnership'&&node.operation==='as_str'&&node.fallback?.k==='routerDispatchMethod'&&node.fallback.method==='as_str'&&node.fallback.args?.length===0&&node.fallback.object===node.object)output.set(node,copyMetadata(node));for(const [key,value]of Object.entries(node))if(!['type','span'].includes(key))Array.isArray(value)?value.forEach(child=>visit(child,depth+1)):visit(value,depth+1);};visit(root);}
+// Project relocation preserves syntax, not sharing between repeated receiver
+// occurrences. Only original parser correspondence proves their common origin.
+function optionReaderWrapperOrigin(checker,frame,node,expected=null){
+ if(!frame.optionLane||node.k!=='routerStringOwnership'||node.operation!=='as_str'||node.fallback?.k!=='routerDispatchMethod'||node.fallback.method!=='as_str'||node.fallback.args?.length!==0)return null;
+ currentFunction(checker,frame.activeItem,frame);
+ const snapshot=expected?.syntax??copyMetadata(node),fallbackSnapshot=expected?.fallbackSyntax??copyMetadata(node.fallback),fallback=expected?.fallback??node.fallback,object=expected?.object??node.object,fallbackObject=expected?.fallbackObject??node.fallback.object;
+ const outer=originalParsedSyntaxNode(frame.activeItem,node),inner=originalParsedSyntaxNode(frame.activeItem,fallback);
+ const original=expected?.original??outer?.original,originalFallback=expected?.originalFallback??inner?.original,originalObject=expected?.originalObject??original?.object;
+ currentFunction(checker,frame.activeItem,frame);
+ if(!outer||!inner||outer.actual!==node||inner.actual!==fallback||outer.parser!==inner.parser||outer.original!==original||inner.original!==originalFallback||original?.k!=='routerStringOwnership'||original.operation!=='as_str'||original.fallback!==originalFallback||originalFallback?.k!=='routerDispatchMethod'||originalFallback.method!=='as_str'||originalFallback.args?.length!==0||original.object!==originalObject||originalFallback.object!==originalObject)return null;
+ if(node.fallback!==fallback||node.object!==object||fallback.object!==fallbackObject||!same(node.span,fallback.span)||!same(node,snapshot)||!same(fallback,fallbackSnapshot)||!same(node,outer.relocated)||!same(fallback,inner.relocated))return null;
+ return expected??{syntax:snapshot,fallbackSyntax:fallbackSnapshot,fallback,object,fallbackObject,original,originalFallback,originalObject};
+}
+function captureOptionReaders(root,output,checker,frame){let cells=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(node.k==='routerTry'||node.k==='routerDispatchMethod'&&['get','as_str'].includes(node.method))output.set(node,copyMetadata(node));else if(node.k==='routerStringOwnership'&&node.operation==='as_str'){const origin=optionReaderWrapperOrigin(checker,frame,node);if(origin)output.set(node,{syntax:origin.syntax,origin});}for(const [key,value]of Object.entries(node))if(!['type','span'].includes(key))Array.isArray(value)?value.forEach(child=>visit(child,depth+1)):visit(value,depth+1);};visit(root);}
 function observeOptionReader(checker,node,value,frame){
- const source=frame?.optionLane&&frame.readers?.get(node);if(!source)return;
+ const capture=frame?.optionLane&&frame.readers?.get(node);if(!capture)return;const source=node.k==='routerStringOwnership'?capture.syntax:capture;
  let inner=null;if(node.k==='routerStringOwnership'){
   if(value.k!=='routerHostCall'||value.id!=='serde_json_value_as_str')return;
   inner=issued.get(value);if(inner?.kind!=='option-reader'||inner.checker!==checker||inner.frame!==frame||inner.source!==node.fallback||!same(value,inner.call)||!same(inner.source,inner.syntax))fail();
-  if(node.operation!=='as_str'||node.fallback?.k!=='routerDispatchMethod'||node.fallback.method!=='as_str'||node.fallback.args?.length!==0||node.fallback.object!==node.object||!same(node.span,node.fallback.span))fail();
+  if(!capture.origin||!optionReaderWrapperOrigin(checker,frame,node,capture.origin))fail();
+  if(node.operation!=='as_str'||node.fallback?.k!=='routerDispatchMethod'||node.fallback.method!=='as_str'||node.fallback.args?.length!==0||node.object!==capture.origin.object||node.fallback.object!==capture.origin.fallbackObject||!same(node.span,node.fallback.span))fail();
  }
  currentFunction(checker,frame.activeItem,frame);if(!same(node,source))fail();
  if(inner){const actual=currentOptionLayout(checker,value.type,node.span,false),payload=actual?.payload;if(!payload||payload.kind!=='string'||payload.rustReference||payload.patternOwnershipRefusal||payload.rustBorrowingUnresolved||payload.rustGenericIdentityUnresolved||payload.rustOwnership?.kind!=='borrowed'||payload.rustOwnership.source!=='str')fail();}
- if(value.k==='routerTry'&&value.option===true||value.k==='routerHostCall'&&['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id))issued.set(value,{kind:'option-reader',checker,frame,source:node,syntax:source,call:copyMetadata(value),...(inner?{inner}: {})});
+ if(value.k==='routerTry'&&value.option===true||value.k==='routerHostCall'&&['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id))issued.set(value,{kind:'option-reader',checker,frame,source:node,syntax:source,call:copyMetadata(value),...(inner?{inner,wrapperOrigin:capture.origin}: {})});
 }
 // An outer ownership wrapper carries only its actual inner issued reader.
 // Neither a copied fallback nor an equal public source marker can supply it.
@@ -268,7 +282,9 @@ function optionReaderWrapperCurrent(checker,frame,value,record,diagnostic=null){
  if(node.fallback?.k!=='routerDispatchMethod')return refuse('wrapper.fallback-kind');
  if(node.fallback.method!=='as_str')return refuse('wrapper.fallback-method');
  if(node.fallback.args?.length!==0)return refuse('wrapper.fallback-arity');
- if(node.object!==node.fallback.object)return refuse('wrapper.object-identity');
+ if(!record.wrapperOrigin||!optionReaderWrapperOrigin(checker,frame,node,record.wrapperOrigin))return refuse('wrapper.original-relocation');
+ if(node.object!==record.wrapperOrigin.object)return refuse('wrapper.outer-object-identity');
+ if(node.fallback.object!==record.wrapperOrigin.fallbackObject)return refuse('wrapper.fallback-object-identity');
  if(!same(node.span,node.fallback.span))return refuse('wrapper.span');
  if(inner.kind!=='option-reader')return refuse('wrapper.inner-kind');
  if(inner.checker!==checker)return refuse('wrapper.inner-checker');
@@ -357,7 +373,7 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
  return (...args)=>{
   const name=[...path,item.name].join('.');
   if(item.k!=='fn'||entry!==checker.items.get(name)||entry.fullName!==name)fail();
-  currentFunction(checker,item,receipt);if(activeFunctions.has(checker))fail();receipt.functionName=name;receipt.errorLane=receipt.owns&&stringError(checker,entry);receipt.optionLane=receipt.owns&&!receipt.errorLane&&ownedOptionReturn(checker,entry);receipt.activeItem=item;if(receipt.optionLane){receipt.readers=new WeakMap();captureOptionReaders(item.body,receipt.readers);}activeFunctions.set(checker,receipt);
+  currentFunction(checker,item,receipt);if(activeFunctions.has(checker))fail();receipt.functionName=name;receipt.errorLane=receipt.owns&&stringError(checker,entry);receipt.optionLane=receipt.owns&&!receipt.errorLane&&ownedOptionReturn(checker,entry);receipt.activeItem=item;if(receipt.optionLane){receipt.readers=new WeakMap();captureOptionReaders(item.body,receipt.readers,checker,receipt);}activeFunctions.set(checker,receipt);
   try{
    const result=visit(...args),body=copyMetadata(entry.body);
    currentFunction(checker,item,receipt);if(!same(entry.body,body))fail();
