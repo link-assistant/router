@@ -7,7 +7,6 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {encodeStaticSourceStorage} from '../static-source-storage-codec.mjs';
 import {prepareStaticSourceLifecycleProposal,writeStaticSourceLifecycleProposal,STATIC_SOURCE_LIFECYCLE_CASES,STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS,selectRealSourceFixture,transportStaticSourceLifecycleCanonicals,visitStaticSourceLifecycleCanonicals} from '../prepare-real-source-fixtures.mjs';
 import {readStaticSourceLifecycle,staticSourceLifecycleContext,originalRealSourceManifest} from './real-source-fixtures.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,transportConcreteSyntaxMetaChunks,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
@@ -21,7 +20,7 @@ const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),ASSETS=fileURLToP
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 function retain(name,value){const output=process.env.ROUTER_STATIC_SOURCE_LIFECYCLE_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(JSON.stringify(value)+'\n'));}}
 function context(name='fixed-arrays.test.mjs',options={}){return staticSourceLifecycleContext(name,options);}
-function changedFolder(t,mutate,preimage){const folder=mkdtempSync(join(tmpdir(),'router-static-source-tamper-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));const {bundle,index}=JSON.parse(preimage);mutate(bundle,index);const raw=Buffer.from(JSON.stringify(bundle)+'\n'),stored=encodeStaticSourceStorage(bundle,raw),packed=gzipSync(stored.raw);delete index.storage;writeFileSync(join(folder,'originals.json.gz'),packed);writeFileSync(join(folder,'manifest.json'),JSON.stringify({...index,rawBytes:stored.raw.length,rawSha256:hash(stored.raw),bytes:packed.length,sha256:hash(packed),...(stored.storage?{storage:stored.storage}:{})}));return folder;}
+function changedFolder(t,mutate,preimage){const folder=mkdtempSync(join(tmpdir(),'router-static-source-tamper-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));const {bundle,index}=JSON.parse(preimage);mutate(bundle,index);const raw=Buffer.from(JSON.stringify(bundle)+'\n'),packed=gzipSync(raw);delete index.storage;writeFileSync(join(folder,'originals.json.gz'),packed);writeFileSync(join(folder,'manifest.json'),JSON.stringify({...index,rawBytes:raw.length,rawSha256:hash(raw),bytes:packed.length,sha256:hash(packed)}));return folder;}
 
 test('all fixed historical universes and every existing original frontier pin remain complete',{timeout:60000},()=>{
  const data=readStaticSourceLifecycle(),a=context(),b=context('option-ok-or-else.test.mjs');retain('01-full-bank-and-current-source-joins',{data,a,b});
