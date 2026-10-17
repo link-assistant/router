@@ -66,7 +66,7 @@ fn error_callbacks_run_only_for_none_and_receivers_run_once() {
     }
 }
 
-fn inner<'a>(value: &'a Json) -> Result<&'a str, String> {
+fn inner(value: &Json) -> Result<&str, String> {
     value.get("text").and_then(Json::as_str).ok_or_else(|| {
         translation_core::format!("{}", "text required")
     })
