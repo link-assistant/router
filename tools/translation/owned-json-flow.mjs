@@ -1,27 +1,61 @@
-// A deliberately closed linear-use analysis for source-authenticated owned JSON
-// operations. This runs on one whole checked function before that declaration
-// leaves the ordinary refusal collector. It is neither a Rust borrow checker
-// for unrelated programs nor a public checked-IR/ownership capability.
-import {JSON_CONTRACTS} from './extensions/json-contracts.mjs';
+// A closed per-function linear/lexical-loan analysis for actual owned JSON
+// operations. Its caller authenticates the original declaration and checked body.
+// This grants no public IR, arbitrary Drop, or source lifetime authority.
+import {JSON_CONTRACTS,JSON_DATA,JSON_TYPES} from './extensions/json-contracts.mjs';
+import {sameType} from './checked-types.mjs';
+import {sharedReferenceCopyIdentity} from './shared-reference-copy-source.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
-const linear=kind=>kind==='json'||kind==='linear';
+const linear=kind=>kind==='json'||kind==='linear',path=parts=>JSON.stringify(parts);
+const empty=()=>({loans:new Map(),tags:null});
+const copy=value=>({loans:new Map([...value.loans].map(([key,roots])=>[key,new Set(roots)])),tags:value.tags&&new Set(value.tags)});
+function union(left,right){const result=copy(left);for(const [key,roots]of right.loans)result.loans.set(key,new Set([...(result.loans.get(key)??[]),...roots]));result.tags=left.tags&&right.tags?new Set([...left.tags,...right.tags]):null;return result;}
+function prefix(value,part){return {loans:new Map([...value.loans].map(([key,roots])=>[path([part,...JSON.parse(key)]),new Set(roots)])),tags:null};}
+function project(value,part){return {loans:new Map([...value.loans].filter(([key])=>JSON.parse(key)[0]===part).map(([key,roots])=>[path(JSON.parse(key).slice(1)),new Set(roots)])),tags:null};}
+const roots=value=>new Set([...value.loans.values()].flatMap(value=>[...value]));
 export function validateOwnedJsonFlow(checker,entry,{genuine}) {
  const refuse=(detail,node)=>{throw unsupported('owned JSON flow',detail,node?.span??entry.span);};
  let cells=100000;
+ const canonical=(type,node)=>{
+  if(type?.kind!=='data'||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;
+  const owner=checker.items.get(type.name),name=owner?.hostTypePath?.join('::');
+  if(!['serde_json::Value','serde_json::Map_String_Value'].includes(name))return null;
+  const original=JSON_DATA[0].items.find(item=>item.name===owner.hostTypePath[1]);
+  if(owner.generated!=='router-json-contract'||!original||owner.ctors?.length!==original.ctors.length)refuse('canonical reader owner layout changed',node);
+  for(let at=0;at<original.ctors.length;at++){
+   const wanted=original.ctors[at],actual=owner.ctors[at];if(actual.name!==wanted.name||actual.fields.length!==wanted.fields.length)refuse('canonical reader constructor layout changed',node);
+   for(let index=0;index<wanted.fields.length;index++)if(actual.fields[index].name!==wanted.fields[index].name||!sameType(checker.resolveType(actual.fields[index].type,owner.modulePath,node?.span??entry.span),checker.hostType(wanted.fields[index].type,owner.modulePath,node?.span??entry.span)))refuse('canonical reader field layout changed',node);
+  }
+  return name;
+ };
+ const option=(type,node)=>{
+  const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type?.rustStandardGeneric;
+  if(type?.rustReference||type?.rustOwnership||type?.patternOwnershipRefusal||type?.rustGenericIdentityUnresolved||type?.rustBorrowingUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return null;
+  const some=owner.ctors.find(ctor=>ctor.name==='Some'),none=owner.ctors.find(ctor=>ctor.name==='None');
+  if(!some||some.fields?.length!==1||some.fields[0].name!=='field0'||!none||none.fields?.length)return null;
+  const payload=checker.resolveType(source.arguments[0],owner.modulePath,node?.span??entry.span);
+  for(const written of [owner.standardGeneric.arguments[0],some.fields[0].type]){const actual=checker.resolveType(written,owner.modulePath,node?.span??entry.span);if(!sameType(payload,actual))return null;checker.expectedOwnership(actual,payload,owner.modulePath,node?.span??entry.span);}
+  return {owner,payload};
+ };
  const domain=(type,node,active=new Set())=>{
   if(!type||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse('requires resolved source types',node);
-  if(type.rustReference){if(type.rustReference.kind!=='shared'||!type.rustReference.pointee)refuse('mutable or unresolved reference',node);const inner=domain(type.rustReference.pointee,node,active);if(inner==='json')return 'borrow';if(inner==='copy')return 'copy';refuse('aggregate reference requires a separate loan proof',node);}
+  if(type.rustReference){
+   if(type.rustReference.kind!=='shared'||!type.rustReference.pointee||!sharedReferenceCopyIdentity(type))refuse('mutable or unresolved reference',node);
+   if(canonical(type.rustReference.pointee,node))return 'borrow';
+   if(domain(type.rustReference.pointee,node,active)==='copy')return 'copy';
+   refuse('aggregate reference requires a separate loan proof',node);
+  }
   if(type.kind==='data'){
-   const owner=checker.items.get(type.name);
-   if(owner?.hostTypePath?.join('::')==='serde_json::Value'){
-    if(type.rustOwnership||type.patternOwnershipRefusal)refuse('a borrowed pointee cannot become an owned JSON value',node);
-    return 'json';
-   }
+   const owner=checker.items.get(type.name),abi=canonical(type,node);
+   if(abi==='serde_json::Value')return 'json';if(abi)refuse('owned Map transfer has no Drop contract',node);
    if(active.has(type.name))refuse('recursive or unknown aggregate Drop',node);
    const generic=type.rustStandardGeneric??owner?.standardGeneric;
    if(!['Option','Result'].includes(owner?.standardGeneric?.kind)||generic?.kind!==owner.standardGeneric.kind)refuse('unknown aggregate Drop or ownership',node);
    const inner=new Set(active).add(type.name),arguments_=generic.arguments.map(argument=>domain(checker.resolveType(argument,owner.modulePath,node?.span??entry.span),node,inner));
-   if(arguments_.some(kind=>kind==='borrow'))refuse('stored JSON loans remain outside this flow contract',node);
+   if(arguments_.some(kind=>kind==='borrow'||kind==='loan-option')){
+    const actual=option(type,node),proof=actual&&checker.sourceStandardFieldCopy({type},node?.span??entry.span);
+    if(arguments_.length!==1||arguments_[0]!=='borrow'||proof?.kind!=='source-standard-option-payload-copy'||proof.referenceDepth!==1||!proof.referenceSource||!sameType(proof.payload,actual.payload)||!canonical(actual.payload.rustReference?.pointee,node))refuse('stored JSON loan requires exact Option shared-payload Copy',node);
+    return 'loan-option';
+   }
    return arguments_.some(linear)?'linear':'copy';
   }
   if(type.kind==='string'){
@@ -37,106 +71,141 @@ export function validateOwnedJsonFlow(checker,entry,{genuine}) {
   if(!generic||active.has(type.name))return false;const inner=new Set(active).add(type.name);
   return generic.arguments.some(argument=>retainsLoan(checker.resolveType(argument,owner.modulePath,entry.span),inner));
  };
- const clone=state=>({names:new Map(state.names),available:new Map(state.available),alive:state.alive});
- const state={names:new Map(),available:new Map(),alive:true};
- const bind=(state,name,type,mutable,node)=>{const slot={name,kind:domain(type,node),mutable};state.names.set(name,slot);state.available.set(slot,true);return slot;};
- for(const param of entry.params)bind(state,param.name,param.type,false,entry);
- // Unknown parameter/local payloads are rejected even when a particular branch
- // happens not to inspect them: this domain makes no arbitrary Drop theorem.
+ const state={names:new Map(),available:new Map(),values:new Map(),alive:true};
+ const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive});
+ const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const slot={name,kind:domain(type,node),type,mutable,input};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
+ for(const param of entry.params){
+  const slot=bind(state,param.name,param.type,false,entry),fact=state.values.get(slot);
+  slot.input=slot.kind==='borrow'||slot.kind==='loan-option';
+  if(slot.kind==='borrow')fact.loans.set(path([]),new Set([slot]));
+  if(slot.kind==='loan-option'){fact.loans.set(path(['field0']),new Set([slot]));fact.tags=new Set(['Some','None']);}
+ }
+ const live=(state,root)=>[...state.values].some(([slot,value])=>state.available.get(slot)===true&&roots(value).has(root));
+ const ensureRoots=(value,state,node)=>{for(const root of roots(value))if(!state.available.has(root)||state.available.get(root)!==true)refuse('loan outlived or followed the move of its lexical root',node);};
+ const returnRoots=(value,node)=>{for(const root of roots(value))if(!root.input)refuse('a local JSON root loan cannot escape this function',node);};
  const merge=(target,left,right)=>{
   target.alive=left.alive||right.alive;
-  for(const slot of target.available.keys())target.available.set(slot,left.alive&&right.alive?left.available.get(slot)===true&&right.available.get(slot)===true:left.alive?left.available.get(slot)===true:right.alive?right.available.get(slot)===true:false);
+  for(const slot of target.available.keys()){
+   target.available.set(slot,left.alive&&right.alive?left.available.get(slot)===true&&right.available.get(slot)===true:left.alive?left.available.get(slot)===true:right.alive?right.available.get(slot)===true:false);
+   target.values.set(slot,left.alive&&right.alive?union(left.values.get(slot),right.values.get(slot)):copy((left.alive?left:right).values.get(slot)));
+  }
  };
  const variable=(node,state,mode)=>{
   const slot=state.names.get(node.name);if(!slot)refuse('unbound lexical variable',node);
   if(state.available.get(slot)!==true)refuse('use after move or possibly moved value: '+slot.name,node);
-  if(mode==='borrow')return;
-  if(slot.kind==='borrow')refuse('moving a shared JSON pointee or escaping its loan',node);
-  if(linear(slot.kind))state.available.set(slot,false);
+  if(!sameType(node.type,slot.type)||mode!=='borrow'&&domain(node.type,node)!==slot.kind)refuse('lexical binding source ownership changed',node);
+  const value=copy(state.values.get(slot));ensureRoots(value,state,node);
+  if(mode==='borrow'&&slot.kind==='json')value.loans.set(path([]),new Set([slot]));
+  if(mode!=='borrow'&&linear(slot.kind)){if(live(state,slot))refuse('moving an owned JSON root with a live lexical loan: '+slot.name,node);state.available.set(slot,false);}
+  // Copying a genuine shared reference does not move its pointee. A by-value
+  // operation still needs the separate canonical-ownership checker above us.
+  return value;
  };
+ const refine=(state,node,wanted)=>{
+  if(node?.k==='routerPatternTag'&&node.object?.k==='var'){
+   const slot=state.names.get(node.object.name),actual=option(slot?.type,node);
+   if(!slot||!actual||node.data!==slot.type.name||!['Some','None'].includes(node.ctor))refuse('pattern tag has no current canonical Option owner',node);
+   const previous=state.values.get(slot),allowed=wanted?node.ctor:node.ctor==='Some'?'None':'Some';
+   const value=copy(previous);value.tags=new Set([allowed]);if(allowed==='None')value.loans.clear();state.values.set(slot,value);return;
+  }
+  if(node?.k==='binary'&&node.op==='and'&&wanted){refine(state,node.left,true);refine(state,node.right,true);}
+  if(node?.k==='unary'&&node.op==='not')refine(state,node.arg,!wanted);
+ };
+ const readers=new Set(['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_pointer','serde_json_value_as_str','serde_json_value_as_object','serde_json_map_get']);
  const visit=(node,state,mode='move',depth=0)=>{
   if(--cells<0||depth>160)refuse('whole-function flow bound',node);
   if(!node||typeof node!=='object')refuse('missing checked expression',entry);
-  const read=(value,how='move')=>visit(value,state,how,depth+1);
-  const kind=domain(node.type,node);
-  if(node.k==='var'){variable(node,state,mode);return;}
-  if(['lit','unit'].includes(node.k)){if(linear(kind)||kind==='borrow')refuse('unproved JSON literal ownership',node);return;}
+  const read=(value,how='move')=>visit(value,state,how,depth+1),kind=domain(node.type,node);
+  if(node.k==='var')return variable(node,state,mode);
+  if(['lit','unit'].includes(node.k)){if(linear(kind)||kind==='borrow'||kind==='loan-option')refuse('unproved JSON literal ownership',node);return empty();}
   if(node.k==='let'){
-   read(node.value);const valueKind=domain(node.value.type,node.value);
-   if(valueKind==='borrow')refuse('retained JSON aliases require an explicit loan analysis',node);
-   const previous=state.names.get(node.name),slot=bind(state,node.name,node.value.type,node.mutable===true,node);
-   read(node.body);state.available.delete(slot);if(previous)state.names.set(node.name,previous);else state.names.delete(node.name);return;
+   const value=read(node.value);ensureRoots(value,state,node.value);
+   if(node.mutable&&value.loans.size)refuse('mutable retained JSON loans are outside the lexical contract',node);
+   const previous=state.names.get(node.name),slot=bind(state,node.name,node.value.type,node.mutable===true,node,value);
+   const result=read(node.body);state.available.delete(slot);state.values.delete(slot);if(previous)state.names.set(node.name,previous);else state.names.delete(node.name);ensureRoots(result,state,node);return result;
   }
   if(node.k==='routerSet'){
    if(node.target.k!=='var')refuse('only direct local reinitialization is supported',node);
    const slot=state.names.get(node.target.name);
    if(!slot?.mutable||slot.kind!=='json'||domain(node.value.type,node.value)!=='json')refuse('assignment needs its actual mutable canonical JSON binding',node);
-   // Rust evaluates the complete RHS before selecting/replacing the local.
-   // The RHS may move this exact binding, then the assignment reinitializes it.
-   read(node.value);state.available.set(slot,true);read(node.body);return;
+   if(live(state,slot))refuse('reinitializing an owned JSON root with a live lexical loan: '+slot.name,node);
+   read(node.value);state.available.set(slot,true);state.values.set(slot,empty());return read(node.body);
   }
   if(node.k==='if'||node.k==='routerIf'){
-   read(node.cond);const left=clone(state),right=clone(state);
-   visit(node.then,left,'move',depth+1);visit(node.else,right,'move',depth+1);merge(state,left,right);
-   if(node.k==='routerIf')read(node.body);return;
+   read(node.cond);const left=clone(state),right=clone(state);refine(left,node.cond,true);refine(right,node.cond,false);
+   const a=visit(node.then,left,'move',depth+1),b=visit(node.else,right,'move',depth+1),result=left.alive&&right.alive?union(a,b):copy(left.alive?a:b);
+   merge(state,left,right);return node.k==='routerIf'?read(node.body):result;
   }
   if(node.k==='routerReturn'){
-   read(node.value);const unreachable=clone(state);visit(node.body,unreachable,'move',depth+1);state.alive=false;return;
+   const value=read(node.value);returnRoots(value,node);const unreachable=clone(state);visit(node.body,unreachable,'move',depth+1);state.alive=false;return empty();
   }
-  if(node.k==='routerDiscard'){read(node.value);read(node.body);return;}
+  if(node.k==='routerDiscard'){read(node.value);return read(node.body);}
   if(node.k==='routerTry'){
-   // The failure exits this function through its already checked Option/Result
-   // boundary. Only the successful path reaches subsequent source operations.
-   read(node.value);return;
+   const value=read(node.value);if(value.loans.size&&!node.option)refuse('Result loan/error transfer remains unproved',node);
+   return node.option?project(value,'field0'):empty();
+  }
+  if(node.k==='routerPatternImmutable'||node.k==='routerPatternTag'){
+   if(!option(node.object?.type,node))refuse('pattern observation requires the actual canonical Option layout',node);
+   read(node.object,'borrow');if(node.k==='routerPatternTag'&&(node.data!==node.object.type.name||!['Some','None'].includes(node.ctor)))refuse('Option tag differs from its actual constructor',node);return empty();
+  }
+  if(node.k==='routerPatternProjection'){
+   const object=node.object,slot=object?.k==='var'?state.names.get(object.name):null,actual=option(object?.type,node),fact=slot&&state.values.get(slot);
+   if(!slot||!actual||node.field!=='field0'||!sameType(node.type,actual.payload)||fact?.tags?.size!==1||!fact.tags.has('Some'))refuse('Option loan projection requires a dominating actual Some branch',node);
+   checker.expectedOwnership(node.type,actual.payload,actual.owner.modulePath,node.span);if(domain(node.type,node)!==domain(actual.payload,node))refuse('Option projection cannot erase its shared ownership',node);
+   return project(read(object,'borrow'),'field0');
   }
   if(node.k==='routerJsonMacro'){
    if(kind!=='json')refuse('JSON construction requires its actual canonical result',node);
-   // A direct local is a borrowable place. Composite expressions still move
-   // their operands before the macro borrows the resulting temporary.
-   for(const argument of node.args){const value=argument.value;if(!value?.k)refuse('missing checked JSON interpolation',node);read(value,value.k==='var'?'borrow':'move');}return;
+   for(const argument of node.args){const value=argument.value;if(!value?.k)refuse('missing checked JSON interpolation',node);read(value,value.k==='var'?'borrow':'move');}return empty();
   }
   if(node.k==='routerHostCall'){
    if(['router_core_json_copy','router_core_json_with_field'].includes(node.id)){
     if(!genuine(node))refuse('new operation has no private checked source receipt',node);
     if(node.id==='router_core_json_copy'){if(node.args.length!==1)refuse('copy arity',node);read(node.args[0],'borrow');}
-    else{if(node.args.length!==3)refuse('update arity',node);read(node.args[0]);read(node.args[1],'borrow');read(node.args[2]);}
-    if(kind!=='json')refuse('new operation result is not canonical JSON',node);return;
+    else{if(node.args.length!==3)refuse('update arity',node);if(domain(node.args[0].type,node)!=='json'||domain(node.args[2].type,node)!=='json')refuse('an owned update cannot move a shared pointee',node);read(node.args[0]);read(node.args[1],'borrow');read(node.args[2]);}
+    if(kind!=='json')refuse('new operation result is not canonical JSON',node);return empty();
    }
-   // No method-name trust: existing registered canonical JSON reader contracts
-   // have shared receiver semantics. New APIs cannot turn their loans into
-   // owned payloads; stored loans/projections and unknown contracts refuse.
    const contract=JSON_CONTRACTS.find(row=>row.id===node.id);
-   if(contract?.kind==='method'&&contract.receiver?.path?.join('::')==='serde_json::Value'){
-    if(linear(kind)||kind==='borrow'||retainsLoan(node.type))refuse('reader projection needs a separate owned/loan proof',node);
-    for(const argument of node.args)read(argument,'borrow');return;
+   if(contract?.kind==='method'&&['serde_json::Value','serde_json::Map'].includes(contract.rustPath.slice(0,-1).join('::'))){
+    if(contract.params.length!==node.args.length)refuse('reader signature arity changed',node);
+    const source=canonical(node.args[0].type.rustReference?.pointee??node.args[0].type,node);
+    if(source!==contract.receiver.path.join('::'))refuse('reader receiver differs from its actual registered owner',node);
+    const value=read(node.args[0],'borrow');for(const argument of node.args.slice(1))read(argument,'borrow');
+    if(retainsLoan(node.type)){
+     if(!readers.has(node.id)||!value.loans.get(path([]))?.size)refuse('reader loan needs an existing live canonical lexical root',node);
+     if(!sameType(checker.hostType(contract.ret,entry.modulePath,node.span),node.type))refuse('reader result differs from its actual registered signature',node);
+     if(kind!=='loan-option'&&!(option(node.type,node)&&node.id==='serde_json_value_as_str'))refuse('reader payload is outside the closed shared JSON/text domain',node);
+     return {loans:new Map([[path(['field0']),new Set(value.loans.get(path([])))]]),tags:new Set(['Some','None'])};
+    }
+    if(linear(kind)||kind==='borrow'||kind==='loan-option')refuse('reader projection needs a separate owned/loan proof',node);return empty();
    }
    refuse('unknown host ownership or effect contract',node);
   }
   if(node.k==='ctor'){
    const declaration=checker.items.get(node.data),ctor=declaration?.ctors.find(row=>row.name===node.ctor);
    if(!ctor||ctor.fields.length!==node.args.length)refuse('unknown constructor source layout',node);
-   if(kind==='json'){if(node.ctor!=='Null'||node.args.length)refuse('direct JSON constructors require the checked literal operation',node);return;}
+   if(kind==='json'){if(node.ctor!=='Null'||node.args.length)refuse('direct JSON constructors require the checked literal operation',node);return empty();}
    if(!['Option','Result'].includes(declaration.standardGeneric?.kind))refuse('unknown aggregate constructor Drop',node);
-   for(const argument of node.args)read(argument);return;
+   if(kind==='loan-option'&&node.ctor==='Some'){const actual=option(node.type,node);checker.expectedOwnership(node.args[0].type,actual.payload,declaration.modulePath,node.span);if(domain(node.args[0].type,node)!=='borrow')refuse('Some shared payload cannot consume an owned pointee',node);}
+   let value=empty();for(const argument of node.args)value=union(value,read(argument));
+   if(declaration.standardGeneric.kind==='Result'&&value.loans.size)refuse('Result loan/error transfer remains unproved',node);
+   if(declaration.standardGeneric.kind==='Option'){value=prefix(value,'field0');value.tags=new Set([node.ctor]);}return value;
   }
   if(node.k==='call'){
    const target=checker.items.get(node.fn);
-   if(!target?.params||target.params.length!==node.args.length||linear(kind)||kind==='borrow')refuse('source call needs a separate JSON transfer/return proof',node);
+   if(!target?.params||target.params.length!==node.args.length||linear(kind)||kind==='borrow'||kind==='loan-option')refuse('source call needs a separate JSON transfer/return proof',node);
    if(node.args.some(argument=>domain(argument.type,argument)!=='copy')||target.params.some(param=>domain(param.type,node)!=='copy'))refuse('source call cannot transfer or retain JSON in this contract',node);
-   for(const argument of node.args)read(argument);return;
+   for(const argument of node.args)if(read(argument).loans.size)refuse('source call may retain a JSON-derived text loan',node);return empty();
   }
-  if(node.k==='routerTextReference'){
-   // Only the private json_copy checker strips its direct written borrow.
-   // Any retained/general reference remains explicit rather than disappearing.
-   refuse('retained or escaped JSON aliases are not supported',node);
-  }
+  if(node.k==='routerTextReference')refuse('retained or escaped explicit JSON aliases are not supported',node);
   if(['unary','binary','cast','routerConstObligation','routerBuiltinConversion','routerPrimitiveDereference','routerStandardSharedReceiver'].includes(node.k)){
-   if(kind!=='copy')refuse('aggregate projection or coercion needs a transfer proof',node);
-   for(const key of ['arg','left','right','value','object'])if(node[key]){if(domain(node[key].type,node[key])!=='copy')refuse('an unproved scalar projection cannot hide a JSON move',node);read(node[key]);}return;
+   if(kind!=='copy'&&!(node.k==='routerStandardSharedReceiver'&&kind==='borrow'))refuse('aggregate projection or coercion needs a transfer proof',node);
+   let result=empty();for(const key of ['arg','left','right','value','object'])if(node[key]){
+    if(domain(node[key].type,node[key])!=='copy'&&node.k!=='routerStandardSharedReceiver')refuse('an unproved scalar projection cannot hide a JSON move',node);
+    const value=read(node[key],node.k==='routerStandardSharedReceiver'?'borrow':'move');if(node.k==='routerStandardSharedReceiver')result=value;else if(value.loans.size)refuse('unknown scalar operation on a JSON-derived loan',node);
+   }return result;
   }
-  // In particular no recursion into arbitrary callbacks/loop frames, matches,
-  // fields or opaque wrappers: each needs its own lexical/control transfer rule.
   refuse('unsupported control/escape node '+node.k,node);
  };
- visit(entry.body,state);
+ const result=visit(entry.body,state);returnRoots(result,entry);
 }

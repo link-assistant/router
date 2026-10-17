@@ -96,10 +96,22 @@ flow rule. It tracks lexical binding identity, available/moved state,
 reinitialization and joins of continuing branches; returning branches and existing
 checked enclosing `?` propagation keep their own exit behavior. Only genuine
 fresh checked JSON producers open the mutable-JSON local lane. Double moves,
-use after move, borrowed-pointee moves, retained loans (including borrowed text
-projected from JSON), loops, closures, opaque transfers and unknown aggregate
-Drop remain refused in this initial domain. JSON reader results carrying source
-loans also remain outside this initial flow domain, even when used inline.
+use after move and borrowed-pointee moves remain refused. The closed reader
+extension tracks shared canonical JSON/object and derived text loans, including
+actual `Option` payloads through checked `let`/`let-else`, `if-let` and branch
+joins. It checks the real registered reader signatures, canonical layouts,
+shared-reference/Option Copy source and dominating `Some` tests. A loan keeps
+its actual lexical input or owned-local root; a separate fresh output document
+can update, while consuming or replacing a root with a live loan refuses.
+
+Loan lifetimes are conservatively lexical, so valid Rust non-lexical lifetime
+programs can remain unsupported. Borrowed returns must keep an input root and
+still pass the ordinary source lifetime proof. Local-root escapes, mutable
+references, general matches, callbacks, loops, arrays, unknown retaining source
+calls, Result loan/error transfers and unknown aggregate Drop remain refused.
+This reader extension is a source draft until its complete receiving tests pass;
+retaining a full application's body or selecting a source rewrite is not an
+executable coverage claim.
 This does not waive the ordinary
 checker or establish a general Rust borrow checker, arbitrary `Serialize`,
 allocator/OOM or payload Drop equivalence. Native library internals stay
