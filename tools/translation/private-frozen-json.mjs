@@ -7,6 +7,8 @@ import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mj
 import {completedDataTraversalExceedsBudget,completedDataJsonWithinBudget} from './private-data-freeze.mjs';
 const enabled=originalNamespaceTraversalIntrinsicsUnchanged()&&originalLexingIntrinsicsUnchanged();
 const descriptor=enabled?Object.getOwnPropertyDescriptor:null,prototype=enabled?Object.getPrototypeOf:null,own=enabled?Object.hasOwn:null,keys=enabled?Reflect.ownKeys:null,apply=enabled?Reflect.apply:null,isProxy=enabled?types.isProxy:null,isArray=enabled?Array.isArray:null;
+// The existing fresh namespace guard also pins this native own-enumeration.
+const enumerableKeys=enabled?Object.keys:null;
 const functionPrototype=enabled?prototype(function(){}):null,textField=enabled?descriptor(functionPrototype,'toString'):null;
 const frozenField=enabled?descriptor(Object,'isFrozen'):null;
 const native=(value,name)=>typeof value==='function'&&!isProxy(value)&&apply(textField.value,value,[])===`function ${name}() { [native code] }`;
@@ -189,9 +191,11 @@ export function createPrivateFrozenJsonComposer(){
   function frozenUnits(value,limit,depth){
    if(--measureCells<0||depth>DEPTH||limit<0)return -1;
    if(value===null||typeof value!=='object')return scalarUnits(value,limit);
-   const array=isArray(value),names=keys(value);let length=names.length,units=2,count=0;
-   if(array){const field=descriptor(value,'length');if(!field||!own(field,'value')||names.length!==field.value+1||names[names.length-1]!=='length')return -1;length=field.value;}
-   // Keep the full key census before descriptors, even on already checked data.
+   // Private immutable/noStack eligibility already proved every own field
+   // enumerable, except the dense array's immutable own data length. This
+   // native enumeration still covers the complete logical key domain.
+   const array=isArray(value),names=enumerableKeys(value);let length=names.length,units=2,count=0;
+   if(array){length=value.length;if(names.length!==length)return -1;}
    for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON'||array&&at<length&&names[at]!==''+at)return -1;
    for(let at=0;at<length;at++){
     const name=names[at],childValue=value[name];
