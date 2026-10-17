@@ -280,7 +280,7 @@ need(report.packets===index.packets.length&&report.packetBytes===index.packetByt
 const refs=packetRefs(index);
 for(const ref of refs.values())canonicalPacket(storage,ref);
 const load=ref=>canonicalPacket(storage,ref);
-need(wire(index.stages[0].trace)===wire([{phase:'language',id:'core-adoption:complete-json-readers-corpus'},{phase:'repository',id:'core-adoption:json-readers-complete-packets'}]),'actual complete corpus language/repository trace');
+need(wire(index.stages[0].trace)===wire([{phase:'language',id:'core-adoption:prepare-json-readers-corpus-stream'},{phase:'repository',id:'core-adoption:json-readers-stream-complete-packets'}]),'actual complete corpus language/repository trace');
 const sourceTree=load(index.census);
 need(sourceTree.root===o.root&&Array.isArray(sourceTree.rows),'actual source census packet');
 sameCensus(sourceTree.rows,sourceCensus(o.root),recovery?new Set(index.changes.map(row=>row.path)):new Set());
