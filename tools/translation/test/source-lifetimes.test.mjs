@@ -9,6 +9,7 @@ import {createHash} from 'node:crypto';
 import {translateProject} from '../project.mjs';
 import {parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {sourceItems} from '../rust-structure.mjs';
+import {withSourceLifetimeChecker} from '../extensions/source-lifetimes.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 async function both(result,assertions) {
@@ -54,6 +55,17 @@ test('per-use tuple lifetimes cannot inherit a previous portable layout staticne
     const result=project(prefix+'pub fn bad(v:&str)->(&\'static str,u8){(v,0)}');
     assert.ok(result.meta.refused.some(entry=>entry.name==='bad'));
   }
+  // Negative validation only: incomplete public tuple qualifiers cannot
+  // remove the existing constructor field's independently written staticness.
+  const original=checkProgram(parseRust("pub fn source(v:&str)->(&'static str,u8){(\"fixed\",0u8)}fn main(){}"));
+  for(const fields of [[],[null]]){
+    const program=structuredClone(original),entry=program.declarations.get('source'),ctor=entry.body;
+    assert.equal(ctor.k,'ctor');assert.equal(ctor.args.length,2);
+    ctor.type.rustTupleLifetimeFields=fields;
+    ctor.args[0]={k:'var',name:'v',type:entry.params[0].type,span:ctor.args[0].span};
+    class ValidationOnlyBase{constructor(){this.language='Rust';this.items=program.declarations;}resolveType(type){return type;}program(){return program;}}
+    assert.throws(()=>new (withSourceLifetimeChecker(ValidationOnlyBase))().program({items:[]}),/static source parameter/);
+  }
 });
 test('mutable borrowed bindings cannot retain stale initializer lifetime origins',()=>{
   for(const [source,diagnostic] of [
@@ -85,6 +97,21 @@ test('computed standard Option results retain borrowed source leaves',{timeout:3
   const source="pub fn prefix(v:&'static str,p:&str)->Option<&'static str>{v.strip_prefix(p)} pub fn split(v:&str)->Option<(&str,&str)>{v.split_once('=')}";
   const result=project(source);await both(result,api=>{assert.deepEqual(api.prefix('prefix','pre'),{$:'Some',field0:'fix'});assert.deepEqual(api.prefix('prefix','x'),{$:'None'});assert.deepEqual(api.split('a=b'),{$:'Some',field0:{$:'Tuple',field0:'a',field1:'b'}});});
   for(const source of ["pub fn bad(v:&str)->Option<&'static str>{v.strip_prefix(\"x\")}","pub fn bad(v:&str)->Option<(&'static str,&'static str)>{v.split_once('=')}"])assert.ok(project(source).meta.refused.some(entry=>entry.name==='bad'));
+  const dynamic="pub fn current(v:&str)->Option<&str>{Some(v)}pub fn nested(v:&str)->Option<Option<&str>>{Some(Some(v))}pub fn ok(v:&str)->Result<&str,u8>{Ok(v)}pub fn err(v:&str)->Result<u8,&str>{Err(v)}";
+  const frozen="pub fn frozen(v:&'static str)->Option<&'static str>{Some(v)}pub fn frozen_nested(v:&'static str)->Option<Option<&'static str>>{Some(Some(v))}pub fn frozen_ok(v:&'static str)->Result<&'static str,u8>{Ok(v)}pub fn frozen_err(v:&'static str)->Result<u8,&'static str>{Err(v)}";
+  for(const parts of [[frozen,dynamic],[dynamic,frozen]]){
+    const input=parts.join(' '),result=project(input);
+    await both(result,api=>{
+      for(const value of ['', '猫😀', '\0']){
+        assert.deepEqual(api.current(value),{$:'Some',field0:value});assert.deepEqual(api.frozen(value),{$:'Some',field0:value});
+        assert.deepEqual(api.nested(value),{$:'Some',field0:{$:'Some',field0:value}});assert.deepEqual(api.frozen_nested(value),{$:'Some',field0:{$:'Some',field0:value}});
+        assert.deepEqual(api.ok(value),{$:'Ok',field0:value});assert.deepEqual(api.err(value),{$:'Err',field0:value});
+      }
+    });
+    for(const body of ["pub fn bad(v:&str)->Option<&'static str>{Some(v)}","pub fn bad(v:&str)->Option<Option<&'static str>>{Some(Some(v))}","pub fn bad(v:&str)->Result<&'static str,u8>{Ok(v)}","pub fn bad(v:&str)->Result<u8,&'static str>{Err(v)}","struct Holder{value:&'static str}pub fn bad(v:&str)->Holder{Holder{value:v}}","fn needs(v:Option<&'static str>)->u8{1u8}pub fn bad(v:&str)->u8{needs(Some(v))}"]){
+      const refused=project(input+' '+body),failure=refused.meta.refused.find(entry=>entry.name==='bad');assert.ok(failure,body);assert.match(failure.message,/static source parameter|escaping source borrow/);assert.equal(refused.meta.executable.some(entry=>entry.name==='bad'),false);
+    }
+  }
 });
 test('source static reference field copies retain their written origin',{timeout:30_000},async()=>{
   const source="struct S{value:&'static u64} impl S{fn read(&self)->&'static u64{self.value}} pub fn run(v:S)->&'static u64{v.read()}";

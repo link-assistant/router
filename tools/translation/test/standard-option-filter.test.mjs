@@ -7,6 +7,11 @@ test('original filter predicate loan and early return stay lazy and local in JS 
  const source='fn fail(value:&u8)->bool{panic!("predicate invoked")}fn receiver()->Option<u8>{panic!("receiver first")}pub fn keep(value:Option<u8>)->Option<u8>{value.filter(|v|*v>2u8)}pub fn text<\'a>(value:Option<&\'a str>)->Option<&\'a str>{value.filter(|v|!v.is_empty())}pub fn isolated(value:Option<u8>)->u8{value.filter(|v|*v>2u8).unwrap_or(9u8)}pub fn lazy(value:Option<u8>)->Option<u8>{value.filter(fail)}pub fn order()->Option<u8>{receiver().filter(fail)}pub fn captures(value:Option<u8>,x:u8)->Option<u8>{value.filter(|v|*v>x)}pub fn scratch(value:Option<u8>)->Option<u8>{value.filter(|v|{let mut n=0u8;n=*v;n>0u8})}';
  const result=project(source);assert.deepEqual(result.meta.refused,[]);const body=find(result.meta.checkedSemanticProgram,'routerOriginalStandardFrame');assert.equal(body.sourceFrameProof.returnScope,'selected-original-method-only');assert.ok(body.sourceFrameProof.selection.method.bodySource.includes('return Some(x)'));assert.equal(find(body,'routerOriginalCallbackLoan').originalLoanProof.escapes,false);
  await verifyTypedTargets(result,api=>{assert.deepEqual(api.keep(some(3n)),some(3n));assert.deepEqual(api.keep(some(2n)),none);assert.deepEqual(api.keep(none),none);assert.equal(api.isolated(some(3n)),3n);assert.equal(api.isolated(some(1n)),9n);assert.deepEqual(api.lazy(none),none);assert.throws(()=>api.lazy(some(1n)),/predicate invoked/);assert.throws(()=>api.order(),/receiver first/);assert.deepEqual(api.captures(some(3n),2n),some(3n));assert.deepEqual(api.captures(some(3n),4n),none);assert.deepEqual(api.scratch(some(1n)),some(1n));assert.deepEqual(api.scratch(some(0n)),none);for(const text of ['É😀','\u0085','\uFEFF','\0'])assert.deepEqual(api.text(some(text)),some(text));assert.deepEqual(api.text(some('')),none);assert.throws(()=>api.keep(some(256n)),TypeError);assert.throws(()=>api.text(some('\ud800')),TypeError);},{childTimeoutMs:20000});
+ const dynamic="pub fn dynamic(value:Option<&str>)->Option<&str>{value.filter(|text|!text.is_empty())}",frozen="pub fn frozen(value:Option<&'static str>)->Option<&'static str>{value.filter(|text|!text.is_empty())}";
+ for(const bodies of [[frozen,dynamic],[dynamic,frozen]]){
+  const files={'src/lib.rs':'mod current;','src/current.rs':bodies.join(' ')},current=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});assert.deepEqual(current.meta.refused,[]);
+  await verifyTypedTargets(current,api=>{for(const name of ['current.dynamic','current.frozen']){for(const value of ['猫😀','\0','Ω'])assert.deepEqual(api[name](some(value)),some(value));assert.deepEqual(api[name](some('')),none);assert.deepEqual(api[name](none),none);}},{childTimeoutMs:20000});
+ }
 });
 
 test('private Copy values and shared owned pointees retain exact layouts without mutable alias or Drop authority',{timeout:60000},async()=>{
@@ -27,12 +32,25 @@ test('caller if-let and inactive or failed source frames receive no filter loan 
 
 test('owned payloads, escaped loans, mutable captures and const filter remain refused',()=>{
  for(const source of ['pub fn bad(v:Option<String>)->Option<String>{v.filter(|_|true)}','pub struct Owner{n:u8}pub fn bad(v:Option<Owner>)->Option<Owner>{v.filter(|_|true)}','#[derive(Copy,Clone)]pub struct Owner{n:u8}impl Drop for Owner{fn drop(&mut self){}}pub fn bad(v:Option<Owner>)->Option<Owner>{v.filter(|_|true)}','pub fn bad(v:Option<u8>)->Option<u8>{let mut n=0u8;v.filter(|x|{n=*x;n>0u8})}','pub fn bad(v:Option<u8>)->Option<u8>{let mut n=0u8;v.filter(|x|n>0u8)}','pub fn bad(v:Option<u8>)->Option<u8>{v.filter(|x|{let escaped:&\'static u8=x;true})}','pub fn bad(v:Option<u8>)->Option<u8>{v.filter(|x|{let alias:&mut u8=x;true})}','pub const fn bad(v:Option<u8>)->Option<u8>{v.filter(|_|true)}']){const result=project(source);assert.ok(result.meta.refused.some(x=>x.name==='bad'),source);assert.equal(result.meta.executable.some(x=>x.name==='bad'),false);}
+ const dynamic="pub fn current(value:Option<&str>)->Option<&str>{value.filter(|_|true)}",frozen="pub fn frozen(value:Option<&'static str>)->Option<&'static str>{value.filter(|_|true)}";
+ for(const prefix of [frozen+' '+dynamic,dynamic+' '+frozen])for(const source of ["pub fn bad(value:Option<&str>)->Option<&'static str>{value.filter(|_|true)}","fn needs(value:Option<&'static str>)->u8{1u8}pub fn bad(value:Option<&str>)->u8{needs(value.filter(|_|true))}"]){const result=project(prefix+' '+source),failure=result.meta.refused.find(row=>row.name==='bad');assert.ok(failure,source);assert.match(failure.message,/static source parameter|escaping source borrow/);assert.equal(result.meta.executable.some(row=>row.name==='bad'),false);}
 });
 
 test('public source callers and changed original frame/loan snapshots cannot issue authority',()=>{
  assert.throws(()=>checkProgram(structuredClone(parseRust('pub fn keep(v:Option<u8>)->Option<u8>{v.filter(|_|true)}fn main(){}'))),/privately captured source-call/);
  const result=project('pub fn keep(v:Option<u8>,other:u8)->Option<u8>{v.filter(|x|*x>other)}');assert.deepEqual(result.meta.refused,[]);
  for(const mutate of [program=>{find([...program.declarations.values()],'routerOriginalStandardFrame').sourceFrameProof.returnScope='caller';},program=>{find([...program.declarations.values()],'routerOriginalCallbackLoan').originalLoanProof.escapes=true;},program=>{find([...program.declarations.values()],'routerOriginalCallbackLoan').type.rustReference.kind='mutable';},program=>{find([...program.declarations.values()],'routerOriginalStandardFrame').type={kind:'bool'};},program=>{find([...program.declarations.values()],'routerReturn').value.ctor='None';}]){const program=parseProgram(JSON.stringify(result.meta.targetSemanticProgram));mutate(program);assert.throws(()=>emitJavaScript(program),/changed|private|captured/);}
+ const shared=project('pub fn current(value:Option<&str>)->Option<&str>{value.filter(|_|true)}');assert.deepEqual(shared.meta.refused,[]);
+ for(const mutation of ['static','erase','kind','arity','payload']){
+  const program=parseProgram(JSON.stringify(shared.meta.targetSemanticProgram)),frame=find([...program.declarations.values()],'routerOriginalStandardFrame'),ctor=find(frame.body,'routerReturn').value;
+  assert.equal(ctor.k,'ctor');assert.equal(ctor.ctor,'Some');assert.equal(ctor.type.rustStandardGeneric.kind,'Option');assert.equal(ctor.type.rustStandardGeneric.arguments.length,1);
+  if(mutation==='static')ctor.type.rustStandardGeneric.arguments[0].rustBorrowLifetime={kind:'static',source:'forged-static-upgrade'};
+  if(mutation==='erase')delete ctor.type.rustStandardGeneric;
+  if(mutation==='kind')ctor.type.rustStandardGeneric.kind='Result';
+  if(mutation==='arity')ctor.type.rustStandardGeneric.arguments=[];
+  if(mutation==='payload')ctor.type.rustStandardGeneric.arguments[0]={kind:'bool'};
+  assert.throws(()=>emitJavaScript(program),/changed|private|captured|source|body/,mutation);
+ }
 });
 
 test('fresh serialized frames need genuine original source recompilation',()=>{

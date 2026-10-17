@@ -516,7 +516,10 @@ function origins(node,env,context,returns,depth=0) {
   if(node.k==='ctor') {
     const values=node.args.map(value=>read(value));
     const declaration=context.declarations.get(node.data),ctor=declaration?.ctors.find(ctor=>ctor.name===node.ctor);
-    if(ctor)checkStaticArguments({params:ctor.fields.map((field,index)=>sourceBorrowRegions(node.type?.rustTupleLifetimeFields?.[index]??context.resolveType(field.type,declaration.modulePath,node.span),context))},values,node.span??context.entry.span);
+    if(ctor) {
+      const currentFields=constructorLifetimeFields(node.type,declaration,ctor,context,node.span??context.entry.span);
+      checkStaticArguments({params:ctor.fields.map((field,index)=>sourceBorrowRegions(node.type?.rustTupleLifetimeFields?.[index]??currentFields[index],context))},values,node.span??context.entry.span);
+    }
     const result=declaration?.tuple?union(...values.map((value,index)=>prefix(value,['tuple',index]))):declaration?.standardGeneric?union(...values.map(value=>prefix(value,['argument',node.ctor==='Err'?1:0]))):union(...values);
     if(ctor&&ctor.fields.every((field,index)=>!hasBorrow(context.resolveType(field.type,declaration.modulePath,node.span),context)||values[index]?.emptyBorrow))result.emptyBorrow=true;
     return result;
@@ -574,10 +577,43 @@ function closedStringErrorTry(node,context){
  return true;
 }
 
+// The monomorphic data registry owns a runtime layout. Written lifetimes
+// belong to this checked constructor use, not the first use of that layout.
+function constructorLifetimeFields(type,declaration,ctor,context,range) {
+  const fields=ctor.fields.map(field=>context.resolveType(field.type,declaration.modulePath,range));
+  const generic=type?.rustStandardGeneric;
+  if(!generic)return fields;
+  const kind=declaration.standardGeneric?.kind,tags=kind==='Option'?['None','Some']:kind==='Result'?['Ok','Err']:null;
+  const arity=kind==='Option'?1:2;
+  if(type.kind!=='data'||type.name!==declaration.fullName||!tags||generic.kind!==kind||
+    !Array.isArray(generic.arguments)||generic.arguments.length!==arity||
+    !Array.isArray(declaration.standardGeneric.arguments)||declaration.standardGeneric.arguments.length!==arity||
+    declaration.ctors.length!==2||tags.some(tag=>declaration.ctors.filter(value=>value.name===tag).length!==1)||
+    declaration.ctors.some(value=>value.fields.length!==(kind==='Option'&&value.name==='None'?0:1)||value.fields.some(field=>field.name!=='field0'))||
+    !declaration.ctors.includes(ctor))throw typeError('Constructor lifetime specialization requires its checked canonical standard layout',range);
+  const arguments_=generic.arguments.map(argument=>context.resolveType(argument,declaration.modulePath,range));
+  for(const [index,argument] of arguments_.entries()) {
+    const tag=kind==='Option'?'Some':tags[index],field=declaration.ctors.find(value=>value.name===tag).fields[0];
+    for(const written of [field.type,declaration.standardGeneric.arguments[index]]) {
+      const actual=context.resolveType(written,declaration.modulePath,range);
+      if(!sameType(actual,argument))throw typeError('Constructor lifetime specialization differs from its checked payload identity',range);
+      context.checker.expectedOwnership(actual,argument,declaration.modulePath,range);
+      context.checker.expectedPrimitiveIdentity(actual,argument,declaration.modulePath,range);
+    }
+  }
+  return fields.length?[arguments_[kind==='Result'&&ctor.name==='Err'?1:0]]:[];
+}
+
 export function withSourceLifetimeChecker(Base) {
   return class extends Base {
     expr(node,env,path,expected,allowLiteral=false) {
-      const value=super.expr(node,env,path,expected,allowLiteral);
+      let value=super.expr(node,env,path,expected,allowLiteral);
+      if(this.language==='Rust'&&value.k==='ctor'&&expected?.rustStandardGeneric&&expected.kind==='data'&&value.data===expected.name&&sameType(value.type,expected)) {
+        const declaration=this.items.get(value.data),ctor=declaration?.ctors.find(ctor=>ctor.name===value.ctor);
+        if(!ctor||value.args.length!==ctor.fields.length)throw typeError('Constructor lifetime specialization requires its actual checked constructor and arity',node.span);
+        constructorLifetimeFields(expected,declaration,ctor,{checker:this,resolveType:(type,path,span)=>this.resolveType(type,path,span)},node.span);
+        value={...value,type:{...value.type,rustStandardGeneric:copyMetadata(expected.rustStandardGeneric)}};
+      }
       if(this.language!=='Rust'||node.k!=='let'||!node.type)return value;
       const declared=this.resolveType(node.type,path,node.span);
       const context={declarations:this.items,resolveType:(type,scope,span)=>this.resolveType(type,scope,span)};
