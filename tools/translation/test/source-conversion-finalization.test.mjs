@@ -74,6 +74,6 @@ test('no-conversion Host subclasses retain ordinary checking while conversion is
   const state=checked();assert.equal(hasOriginalConversionIssuance(state.checker),true);state.checker.hasOriginalConversionIssuance=false;assert.equal(hasOriginalConversionIssuance(state.checker),true);
   assert.equal(hasOriginalConversionIssuance({...state.checker}),false);negative('no-conversion-subclass-cannot-finalize',()=>finalizeOriginalConversions(extension,state.program,state.links),/actual original Host checker/);
   Object.setPrototypeOf(state.checker,Extension.prototype);negative('issued-host-prototype-mutation',()=>finalizeOriginalConversions(state.checker,state.program,state.links),/actual original Host checker/);
-  const falseIssuer=new Extension('Rust',[]);negative('subclass-cannot-issue-conversion',()=>falseIssuer.program(parseRust(source+'fn main(){}')),/actual original Host checker/);assert.equal(hasOriginalConversionIssuance(falseIssuer),false);
+  const falseIssuer=new Extension('Rust',[]);negative('subclass-cannot-issue-conversion',()=>{try{return falseIssuer.program(parseRust(source+'fn main(){}'));}catch(error){assert.ok(error instanceof TypeError);throw error;}},/^Original parser\/cursor source class changed$/);assert.equal(hasOriginalConversionIssuance(falseIssuer),false);
   record('no-conversion-subclass-preserves-lifecycle',{source:'pub const GOOD:u8=1;fn main(){}',constant:program.declarations.get('GOOD'),unissuedSubclass:false,publicFlagsIgnored:true,proxyTraps:reads});
 });
