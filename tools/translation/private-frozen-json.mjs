@@ -172,8 +172,11 @@ export function createPrivateFrozenJsonComposer(){
   // anything the original cell, depth, descriptor or output checks refused.
   let measureCells=CELLS,measureText=COMPOSITION_UNITS,measurementRecords=0;
   const entryUnits=(ENTRY_BYTES-128)/2;
+  // Successful primitive sizes live only through this one completed plan.
+  const quotedSizes=new Map();let quotedEntries=0,quotedKeyUnits=0;
   function quotedUnits(value,limit){
    if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;let units=2;
+   const saved=apply(mapGet,quotedSizes,[value]);if(saved!==undefined&&saved<=limit)return saved;
    for(let at=0;at<value.length;at++){
     // charCodeAt is already pinned by the fresh lexical intrinsic guard.
     const code=value.charCodeAt(at);
@@ -182,7 +185,9 @@ export function createPrivateFrozenJsonComposer(){
     else if(code>=55296&&code<=56319){const low=at+1<value.length?value.charCodeAt(at+1):-1;if(low>=56320&&low<=57343){units+=2;at++;}else units+=6;}
     else units+=code>=56320&&code<=57343?6:1;
     if(units>limit)return -1;
-   }return units;
+   }
+   if(saved===undefined&&value.length<=256&&quotedEntries<1024&&quotedKeyUnits+value.length<=65536){apply(mapSet,quotedSizes,[value,units]);quotedEntries++;quotedKeyUnits+=value.length;}
+   return units;
   }
   function scalarUnits(value,limit){
    if(typeof value==='string')return quotedUnits(value,limit);
