@@ -267,6 +267,7 @@ function checkFunction(context,path,declaration,analysis){
   const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str'].includes(type)?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
+ if(declaration.parameters.length===0)paired=pairedFunction(context,path,declaration,analysis);
  const hostCalls=[];
  function expression(node,scope,depth){
   tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
@@ -286,6 +287,21 @@ function checkFunction(context,path,declaration,analysis){
    if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
    const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
    const expected=analysis.runtimeRoot+'/'+(binding.name.startsWith('json_macro_')?'json-macro-runtime.mjs':'json-update-runtime.mjs');
+   if(['json_macro_array','json_macro_object'].includes(binding.name)&&binding.target===expected){
+    if(node.arguments.length!==1||!ts.isArrayLiteralExpression(node.arguments[0])||node.arguments[0].elements.length>4096)fail('literal dense JSON constructor required');
+    const values=[],keys=new Set();
+    for(const element of node.arguments[0].elements){
+     if(ts.isSpreadElement(element)||ts.isOmittedExpression(element))fail('dense literal JSON constructor required');
+     if(binding.name==='json_macro_array'){const value=expression(element,scope,depth+1);if(!json(value.type))fail('JSON array element domain');values.push(value);}
+     else{
+      if(!ts.isArrayLiteralExpression(element)||element.elements.length!==2||!ts.isStringLiteral(element.elements[0])||ts.isSpreadElement(element.elements[1])||ts.isOmittedExpression(element.elements[1]))fail('literal JSON entry pair required');
+      const key=element.elements[0].text;if(/\p{Surrogate}/u.test(key)||keys.has(key))fail('invalid or duplicate literal JSON key');keys.add(key);
+      const value=expression(element.elements[1],scope,depth+1);if(!json(value.type))fail('JSON object value domain');values.push({key,value});
+     }
+    }
+    hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});
+    return binding.name==='json_macro_array'?{kind:'json-array',items:values,type:'json',root:null}:{kind:'json-object',entries:values,type:'json',root:null};
+   }
    if(!op||binding.target!==expected)fail('unregistered source operation');
    const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
    if(args.length!==op.args.length||args.some((argument,index)=>!compatible(argument.type,op.args[index])))fail('owned argument type differs');

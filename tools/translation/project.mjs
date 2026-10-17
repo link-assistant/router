@@ -269,7 +269,7 @@ function declarationProgram(program, root) {
   return roundTripProgram({ ...program, declarations, items: [...declarations.values()], main: null });
 }
 
-function compileProjectLanguage(options) {
+function compileProjectLanguage(options, ownedDefinitionMode=false) {
   const progress=translationProgressReporter(options.progress);
   progress({stage:'project-graph',state:'start',entry:options.entry});
   const cargoEditionContext=options.cargoManifest===undefined||options.cargoManifest===null?null:captureOriginalCargoEdition(options.cargoManifest);
@@ -536,6 +536,10 @@ function compileProjectLanguage(options) {
   });
   progress({stage:'project-serialize',state:'end',entry:options.entry});
   const checkedGeneratedMethodDeclarations=generatedMethods.map(entry=>{const own=checked.declarations.get(entry.name);return Object.freeze({source:entry.file,sourceSha256:sha256(graph.modules.find(module=>module.file===entry.file).source),name:entry.surface.impl.method,term:'generated-method',origin:'derive-invocation',originalDeclarationTerm:entry.originalDeclarationTerm,generator:entry.surface.impl.cloneSourceProof?'core::clone::Clone':'core::default::Default',span:Object.freeze({...entry.span}),project:options.entry,qualifiedName:entry.name,displayName:entry.displayName,receiver:entry.surface.impl.receiver,compilationProfile:graph.compilationProfile,signature:freezeMacroTree(structuredClone({params:own.params,ret:own.ret})),lower:lowerDeclaration(entry,entry.surface.impl.method)});});
+  if(ownedDefinitionMode===true){
+    const definitions=prepareForwardOwnedDefinitions({project:graph.entry,entries,checked,target,sourceModules:graph.modules,lower:entry=>lowerDeclaration(entry,entry.name.split('.').at(-1))({runtimeModule:'../runtime/effects.mjs'})});
+    return {meta,javascript,typescript,executableDeclarations,checkedMethodDeclarations,checkedGeneratedMethodDeclarations,sourceScopes,ownedDefinitions:definitions};
+  }
   return { meta, javascript, typescript, executableDeclarations, checkedMethodDeclarations, checkedGeneratedMethodDeclarations, sourceScopes };
   };
 }
@@ -547,3 +551,11 @@ const projectTranslationRules=createRulePipeline([
 export function translateProject(options) {
   return projectTranslationRules.run(options).value;
 }
+
+import {prepareForwardOwnedDefinitions} from './forward-owned-definitions.mjs';
+const ownedDefinitionProjectRules=createRulePipeline([
+  {phase:'language',rules:[{id:'rust-project-owned-definitions:checked-language',apply:options=>compileProjectLanguage(options,true)}]},
+  {phase:'repository',rules:[{id:'rust-project-owned-definitions:closed-definition-sources',apply:finalize=>finalize()}]},
+]);
+// An additional receiving corpus, never original module initialization parity.
+export function translateProjectOwnedDefinitions(options){return ownedDefinitionProjectRules.run(options).value;}

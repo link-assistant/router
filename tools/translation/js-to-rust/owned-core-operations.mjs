@@ -61,6 +61,14 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
    case 'not':return '(!'+expr(value.value)+')';
    case 'binary':return '('+expr(value.left)+' '+(rust?({'===':'==','!==':'!='}[value.op]??value.op):value.op)+' '+expr(value.right)+')';
    case 'choose':return rust?'(if '+expr(value.cond)+' { '+expr(value.then)+' } else { '+expr(value.else)+' })':'('+expr(value.cond)+' ? '+expr(value.then)+' : '+expr(value.else)+')';
+   case 'json-array':case 'json-object':{
+    const name=value.kind==='json-array'?'json_macro_array':'json_macro_object';imports.add(name);
+    const children=value.kind==='json-array'?value.items:value.entries.map(entry=>entry.value);
+    if(!rust)return '__ro_'+name+'(['+(value.kind==='json-array'?children.map(child=>expr(child)):value.entries.map(entry=>'['+JSON.stringify(entry.key)+', '+expr(entry.value)+']')).join(', ')+'])';
+    const names=children.map(()=> '__ro_json_'+sequence++),bindings=children.map((child,index)=>'let '+names[index]+' = '+expr(child)+';');
+    const literal=value.kind==='json-array'?'['+names.join(', ')+']':'{'+value.entries.map((entry,index)=>rustString(entry.key)+': '+names[index]).join(', ')+'}';
+    return '{ '+bindings.join(' ')+' let __ro_result = crate::translation_core::json!('+literal+'); __ro_domain(&__ro_result); __ro_result }';
+   }
    case 'owned-call':{
     const op=OPS[value.name];imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+value.args.map(expr).join(', ')+')';
@@ -167,6 +175,8 @@ export function evaluateOwnedCoreProgram(input,name,args,token){
    case 'not':return !get(value.value,scope);
    case 'choose':return get(value.cond,scope)?get(value.then,scope):get(value.else,scope);
    case 'binary':{const left=get(value.left,scope);if(value.op==='&&')return left&&get(value.right,scope);if(value.op==='||')return left||get(value.right,scope);const right=get(value.right,scope);return value.op==='==='?left===right:left!==right;}
+   case 'json-array':return state.modules.macro.json_macro_array(value.items.map(child=>get(child,scope)));
+   case 'json-object':return state.modules.macro.json_macro_object(value.entries.map(entry=>[entry.key,get(entry.value,scope)]));
    case 'owned-call':{const module=value.name.startsWith('json_macro_')?state.modules.macro:state.modules.update;return Reflect.apply(module[value.name],undefined,value.args.map(value=>get(value,scope)));}
    default:fail('unknown evaluated expression');
   }
