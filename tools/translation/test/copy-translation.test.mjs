@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {associatedOriginalFileReader} from './associated-original-context.mjs';
+const readFileSync=associatedOriginalFileReader('copy-translation.test.mjs');
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';

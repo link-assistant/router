@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {associatedOriginalFileReader} from './associated-original-context.mjs';
+const readFileSync=associatedOriginalFileReader('bool-then-some.test.mjs');
 import {createHash} from 'node:crypto';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';

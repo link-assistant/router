@@ -119,3 +119,20 @@ Keep failed runs, source identities, compiler versions and original deadlines.
 During issue #759, author Rust regression source where useful but run no local
 Rust tests, builds or Rust-backed tools; Rust execution belongs to CI after the
 same-head JavaScript gate passes.
+
+`staticSourceAssociatedContext` is a separate test-data API for six explicit
+associations outside the original sixteen static-source lifecycle cases. It
+checks complete historical Rust/Cargo universes and retains current physical/Git
+joins and adoption history. Association records grant no namespace, dispatch,
+ownership, semantic or executable authority. The original sixteen-case API and
+the default current `originalCsvContext` retain their existing behavior.
+
+The associated CSV helper selects one complete historical universe; it never
+mixes a pinned old file into a current graph. Its twelve original workloads,
+including the 900000 ms case deadlines, remain separate receiving obligations.
+Telegram's pinned case uses its historical graph while qwen keeps the current
+whole-root graph. Changed bridge/copy parents also have independent current Core
+fixture attempts with full parents and source/CST inverses retained. These scoped
+attempts establish neither complete parent/crate admission nor repaired semantic
+or performance frontiers. All ordinary source, dependency, checker and private
+proof checks still run afresh; source data is not a saved compiler verdict.

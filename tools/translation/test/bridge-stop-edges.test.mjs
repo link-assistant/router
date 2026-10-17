@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {associatedOriginalSourceReader} from './associated-original-context.mjs';
 import {translateSource} from '../translate.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const file='src/bridge_response.rs';
-const source=readFileSync(new URL('../../../'+file,import.meta.url),'utf8');
+const source=associatedOriginalSourceReader('bridge-stop-edges.test.mjs')(file);
 const cases=JSON.parse(readFileSync(new URL('../../../parity/fixtures/translation/bridge-stop-edge-cases.json',import.meta.url),'utf8'));
 const none=Object.freeze({$:'None'}),some=field0=>Object.freeze({$:'Some',field0});
 

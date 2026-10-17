@@ -8,7 +8,8 @@ import {createHash} from 'node:crypto';
 import {sourceItems} from '../rust-structure.mjs';
 import {extractImplDeclarations} from '../impl-resolver.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-import {originalCsvContext,checkedDeclarationTargets} from './original-csv-context.mjs';
+import {checkedDeclarationTargets} from './original-csv-context.mjs';
+import {associatedOriginalCsvContext as originalCsvContext} from './associated-original-context.mjs';
 let recordedOriginalInputs=false;
 function original(){const context=originalCsvContext();if(!recordedOriginalInputs){recordedOriginalInputs=true;console.log('ORIGINAL_CSV_INPUTS '+JSON.stringify(context.inputs));}return context;}
 const hash=value=>createHash('sha256').update(value).digest('hex');

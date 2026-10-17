@@ -11,10 +11,12 @@ import {inertInnerLintItem} from '../tool-attributes.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {associatedOriginalInputs,associatedOriginalDependencyInputs} from './associated-original-context.mjs';
 const root=new URL('../../../',import.meta.url),fixture=JSON.parse(readFileSync(new URL('../fixtures/derive-helper-originals.json',import.meta.url),'utf8'));
-const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')}),hash=value=>createHash('sha256').update(value).digest('hex'),tag=($,fields={})=>Object.freeze({$,...fields});
+const associatedData=associatedOriginalInputs('derive-helper-originals.test.mjs');
+const dependencies=loadDeriveDependencyProof(associatedOriginalDependencyInputs(associatedData)),hash=value=>createHash('sha256').update(value).digest('hex'),tag=($,fields={})=>Object.freeze({$,...fields});
 function original(path) {
-  const pin=fixture.entries.find(entry=>entry.path===path),source=readFileSync(new URL(path,root),'utf8');assert.ok(pin);assert.equal(hash(source),pin.sourceSha256);
+  const pin=fixture.entries.find(entry=>entry.path===path),source=associatedData.source(path);assert.ok(pin);assert.equal(hash(source),pin.sourceSha256);
   const methods=extractImplDeclarations(source).implementations;
   for(const method of pin.methods){
     const actual=methods.find(entry=>entry.typePath.join('::')===method.owner)?.methods.find(entry=>entry.name===method.name);

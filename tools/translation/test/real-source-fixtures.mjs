@@ -139,3 +139,32 @@ export function staticSourceLifecycleContext(testName,{folder=STATIC_FOLDER,root
   // freshly rebuild every view, module binding, dependency and private proof.
   return {source,sourceCurrent,inputs:{entry:'src/lib.rs',sourceHead:profile.revision,compilationProfile:STATIC_PROFILE,sources:profile.files.map(row=>({source:row.path,bytes:row.bytes,sha256:row.sourceId,gitBlob:row.gitBlob})),originalBytes:profile.files.reduce((sum,row)=>sum+row.bytes,0),digest:profile.sourceSetSha256},current:{producerRevision:bundle.current.producerRevision,sourceSetSha256:bundle.current.sourceSetSha256,files:bundle.current.files},lineage:bundle.lineage.find(row=>row.revision===revision),scope:'Complete historical test source universe; current source evolution is retained data, never executable admission.',index};
 }
+
+// Separate fixed associations, never additions/aliases to the original16 table.
+// The original reader/API prefix above remains byte exact. These are sources,
+// not a namespace, ownership, checked program or historical compiler verdict.
+const ASSOCIATED_SOURCE_MANIFEST_SHA256='dabbc7daf61a793c4d1f0fef828b894b67f466df4db32c4f9fc7aa746d1d95f1';
+function associatedSourceEntry(id){
+ const raw=readFileSync(new URL('./fixtures/outside-static-source-associations.json',import.meta.url));
+ if(hash(raw)!==ASSOCIATED_SOURCE_MANIFEST_SHA256)staticError('outside association manifest differs');
+ const manifest=JSON.parse(text(raw));
+ if(manifest.schema!=='outside-static-source-associations-v1'||manifest.entries?.length!==6||new Set(manifest.entries.map(row=>row.id)).size!==6||manifest.entries.some(row=>Object.hasOwn(STATIC_SOURCE_LIFECYCLE_CASES,row.id))||JSON.stringify(manifest.authority)!==JSON.stringify({namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}))staticError('separate six-case data contract required');
+ const rows=manifest.entries.filter(row=>row.id===id);if(rows.length!==1)staticError('unknown explicit outside association');return rows[0];
+}
+export function staticSourceAssociatedContext(caseId,{folder=STATIC_FOLDER,root=ROOT,current=true}={}){
+ const association=associatedSourceEntry(caseId),revision=association.revision,{bundle,index}=readStaticSourceLifecycle({folder}),profile=bundle.profiles.find(row=>row.revision===revision);
+ if(!profile||!Array.isArray(association.parents)||!association.parents.length)staticError('actual associated historical profile missing');
+ for(const parent of association.parents){const rows=profile.files.filter(row=>row.path===parent.path),row=rows[0];if(rows.length!==1||row.sourceId!==parent.sha256||row.bytes!==parent.bytes||row.gitBlob!==parent.gitBlob)staticError('outside full original parent differs');}
+ const historical=new Map(profile.files.map(row=>[row.path,bundle.sources[row.sourceId].source])),currentFiles=new Map(bundle.current.files.map(row=>[row.path,bundle.sources[row.sourceId].source]));
+ if(current){
+  const paths=staticExec('/usr/bin/git',['-C',root,'ls-files','-z','--','*.rs','Cargo.toml','Cargo.lock'],{encoding:'utf8',timeout:30000,maxBuffer:64*1024*1024}).split('\0').filter(Boolean).sort();if(JSON.stringify(paths)!==JSON.stringify(bundle.current.files.map(row=>row.path)))staticError('actual current source set differs');
+  const raw=staticExec('/usr/bin/git',['-C',root,'cat-file','--batch'],{input:paths.map(path=>'HEAD:'+path+'\n').join(''),timeout:30000,maxBuffer:64*1024*1024});let at=0;
+  for(const row of bundle.current.files){const end=raw.indexOf(10,at);if(end<at)staticError('complete current Git header');const [blob,kind,size]=raw.subarray(at,end).toString('ascii').split(' ');at=end+1;const value=raw.subarray(at,at+row.bytes);at+=row.bytes;
+   if(kind!=='blob'||blob!==row.gitBlob||Number(size)!==row.bytes||raw[at++]!==10||value.toString('utf8')!==currentFiles.get(row.path))staticError('current full Git source differs');
+   let physical;try{physical=readFileSync(resolve(root,row.path));}catch(error){if(error.code!=='ENOENT')throw error;physical=value;}if(!physical.equals(value)||staticHashBlob(value)!==row.gitBlob||hash(value)!==row.sourceId)staticError('current physical/source/Git blob differs');
+  }if(at!==raw.length)staticError('extra current Git bytes');
+ }
+ const source=path=>{if(!historical.has(path))staticError('unknown associated historical source path: '+path);return historical.get(path);};
+ const sourceCurrent=path=>{if(!currentFiles.has(path))staticError('unknown associated current source path: '+path);return currentFiles.get(path);};
+ return {source,sourceCurrent,association,inputs:{entry:'src/lib.rs',sourceHead:profile.revision,compilationProfile:STATIC_PROFILE,sources:profile.files.map(row=>({source:row.path,bytes:row.bytes,sha256:row.sourceId,gitBlob:row.gitBlob})),originalBytes:profile.files.reduce((sum,row)=>sum+row.bytes,0),digest:profile.sourceSetSha256},current:{producerRevision:bundle.current.producerRevision,sourceSetSha256:bundle.current.sourceSetSha256,files:bundle.current.files},lineage:bundle.lineage.find(row=>row.revision===revision),scope:'Explicit outside-original16 historical DATA association; current sources and later compiler obligations remain separate.',index};
+}
