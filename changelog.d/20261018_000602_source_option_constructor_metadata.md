@@ -1,0 +1,5 @@
+Add failure-only finite type facts to the original Option equality diagnostic when the independently checked right payload refuses. The existing reason prefix, phase, span, details, semantic checks, evaluation order and hash arguments/call order remain intact. Successful checks retain local operand-type references without reflective inspection; nothing is stored across calls.
+
+The diagnostic uses captured descriptor/prototype/proxy operations on already checked metadata. It invokes no getters or proxy traps and reports only fixed labels for the expected and actual Option payload kind, owner, registered-signature prototype, source marker and literal origin. These labels grant no source, ownership, lifetime or emission authority.
+
+This is source-only PhaseA. The existing complete tail whole8 is unchanged. Its actual right-operand prototype must be observed under Root's bounded receiving before any separately reviewed signature-comparison repair. `copyMetadata`, constructor specialization, source lifetime rules and all semantic admission boundaries are unchanged; no fix or executable-coverage gain is established here.
