@@ -10,6 +10,12 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {proposeCoreFormattingCorpus} from './propose-core-formatting-corpus.mjs';
 import {proposeCorePrimitivesCorpus} from './migrate-core-primitives.mjs';
 
+// Keep each relocatable lazy module edge at one source location. These helpers
+// perform the original dynamic import on every request; no extra cache or
+// changed sequence/stream dispatch is introduced.
+function loadJsonReaderModule(){return import('./migrate-core-json-readers.mjs');}
+function loadPacketStorageModule(){return import('./core-adoption-packet-storage.mjs');}
+
 export const CORE_ADOPTION_PACKET_LIMITS=Object.freeze({files:1024,paths:20000,pathUnits:4096,fileBytes:8000000,fileUnits:2000000,sourceUnits:32*1024*1024,packetBytes:64*1024*1024,outputBytes:1024*1024*1024,packets:20000});
 const L=CORE_ADOPTION_PACKET_LIMITS,FAILURE_RESERVE=16384;
 const fail=message=>{throw new TypeError('Combined core adoption proposal: '+message);};
@@ -211,14 +217,14 @@ export async function proposeCoreAdoptionSequence(input,sequence='literal',packe
   const proposeCoreLiteralTextCorpus=sequence==='scalar-count'||jsonSequence||jsonUpdates||jsonIndices||jsonCollections||jsonCopies||jsonParse||jsonReaders?null:(await import('./migrate-core-literal-text.mjs')).proposeCoreLiteralTextCorpus;
   const updates=jsonUpdates?(await import('./migrate-core-json-updates.mjs')).proposeCoreJsonUpdateCorpus:null;
   const copies=jsonCopies?(await import('./migrate-core-json-copies.mjs')).proposeCoreJsonCopiesCorpus:null;
-  const readers=jsonReaders?(await import('./migrate-core-json-readers.mjs')).proposeCoreJsonReadersCorpus:null;
+  const readers=jsonReaders?(await loadJsonReaderModule()).proposeCoreJsonReadersCorpus:null;
   const parse=jsonParse?(await import('./migrate-core-json-parse.mjs')).proposeCoreJsonParseCorpus:null;
   const indices=jsonIndices?(await import('./migrate-core-json-indices.mjs')).proposeCoreJsonIndicesCorpus:null;
   const collections=jsonCollections?(await import('./migrate-core-json-collections.mjs')).proposeCoreJsonCollectionsCorpus:null;
   const json=jsonSequence?(await import('./migrate-core-json.mjs')).proposeCoreJsonCorpus:null;
   const scalars=sequence==='scalar-count'?(await import('./migrate-core-scalars.mjs')).proposeCoreScalarsCorpus:null;
   const algebraic=sequence==='literal-algebraic'||jsonSequence?(await import('./migrate-core-algebraic.mjs')).proposeCoreAlgebraicCorpus:null;
-  const gzipStorage=packetStorage==='gzip'?await import('./core-adoption-packet-storage.mjs'):null;
+  const gzipStorage=packetStorage==='gzip'?await loadPacketStorageModule():null;
   const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target,gzipStorage),stages=[];
   let stage=jsonReaders?'json-readers':jsonParse?'json-parse':jsonCopies?'json-copies':jsonCollections?'json-collections':jsonIndices?'json-indices':jsonUpdates?'json-updates':sequence==='scalar-count'?'scalar-count':jsonSequence?'json':'literal',after=original.files;
   try{
@@ -293,7 +299,7 @@ function fixedAdoptionStreamStage(name,files,createStream,original,write,depende
 // schedule. Existing materialized APIs retain their original hash/observer work.
 export async function proposeCoreJsonReadersGzipPackets(input){
  if(!['darwin','linux'].includes(process.platform))fail('POSIX source-proposal receiving required');
- const requested=options(input),{iterateCoreJsonReadersCorpusPackets}=await import('./migrate-core-json-readers.mjs'),gzipStorage=await import('./core-adoption-packet-storage.mjs');
+ const requested=options(input),{iterateCoreJsonReadersCorpusPackets}=await loadJsonReaderModule(),gzipStorage=await loadPacketStorageModule();
  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target,gzipStorage),name='json-readers';let stage=name;
  try{
   rejoin(original);dependencies.verify();const next=fixedAdoptionStreamStage(name,original.files,iterateCoreJsonReadersCorpusPackets,original,write,dependencies),after=next.value.files,stages=[{name,packets:next.value.packets,summary:next.value.summary,trace:next.trace}];
