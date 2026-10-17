@@ -401,6 +401,61 @@ inventory validation are success-only obligations; any bounded diagnostic decode
 of failed bytes is non-authoritative. There is no recovery journal or partial
 packet acceptance protocol.
 
+The full capture/propose/review workflow is also checked in. From a clean
+physical checkout, select its exact full Git HEAD and fresh external run path:
+
+```sh
+python3 scripts/propose-core-adoption.py --root ROOT --expected-head FULL_HEAD \
+  --output FRESH_EXTERNAL_RUN --sequence json-readers
+python3 scripts/review-core-adoption.py --root ROOT --expected-head FULL_HEAD \
+  --run FRESH_EXTERNAL_RUN --review-directory review-v1 \
+  --review-monitor-directory review-monitor-v1
+```
+
+The first controller retains the complete Git/physical compiler, scripts and
+Rust/Cargo inputs, including Rust outside `src`, and all 132 installed TypeScript
+5.9.3 files before invoking the existing whole-`src` gzip proposal CLI. Source
+counts come from that receiving checkout; they are not executable coverage.
+The second independently checks every stored and decoded packet, source/profile
+join, graph, retained refusal, both language/repository CST stages, full mappings
+and inverses. Its fixed adapter requires the current streaming outer trace.
+Both freshly rejoin the captured inputs and source HEAD after execution. The
+executing controllers and reviewer helpers must themselves be the captured
+same-HEAD files; no private temporary script, checkpoint digest updater or
+caller-provided semantic verifier is used. Existing upstream profile pins remain
+required. This source association does not establish that an unreviewed commit
+or copied public metadata is semantically correct.
+
+This reviewed controller currently supports only `json-readers` with gzip.
+Other unchanged proposal sequences retain their existing API/CLI contracts and
+need their own independent equation adapters before using this workflow.
+Proposal and review are read-only with respect to source. Supply the resulting
+exact review, installation-plan and index digests to the separate apply command
+below only after reviewing the complete outcomes. Explicit fresh review and
+monitor names allow a new review without overwriting a failed attempt.
+
+The stock POSIX Darwin/Linux controllers require Python 3, Git, Node and the
+installed TypeScript 5.9.3 dependency. Proposal retains its 900-second child,
+3 GiB sampled aggregate limit and 1792 MiB Node old-space setting; independent
+review retains its 180-second child and 1 GiB aggregate limit. Both count the
+complete producer/review/snapshot/pending/log/receipt trees and active external
+temporary files within the same 384 MiB observed budget, require 3 GiB initially
+free and preserve a 2 GiB reserve. Preflight and finalization remain separately
+observed work, rather than a claim that either child deadline covers the entire
+controller. Original logical packet/source/CST bounds are unchanged. Failures
+retain partial output, logs and RED receipts; no automatic retry, application or
+acceptance of an incomplete index occurs. Temporary file removal follows full
+archival readback only. Receiving repositories must qualify their full workload
+under these bounds; copying this automation guarantees no fit, speed or parity.
+
+To copy this workflow, retain both scripts and
+`tools/translation/core_adoption_review.py` plus
+`tools/translation/core_adoption_json_readers_review.py` alongside the existing
+compiler, profiles, notices and application tools. The current standalone
+compiler exporter does not automatically include these Python files. Adapt
+repository paths and independent equation rules through reviewed source changes,
+without treating a new schema or capture hash as a missing type/owner proof.
+
 A complete reviewed `json-readers` gzip proposal can be applied with
 `scripts/apply-reviewed-core-adoption.py apply --root ROOT --run PRODUCER_RUN
 --output FRESH_EXTERNAL_OUTPUT --expected-head FULL_HEAD
