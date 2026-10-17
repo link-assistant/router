@@ -18,6 +18,7 @@ import {sourceItems} from '../rust-structure.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {completeCoreSourceFixture} from './complete-core-source-fixture.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencyInputs={manifest:readFileSync(new URL('../../../Cargo.toml',import.meta.url),'utf8'),lock:readFileSync(new URL('../../../Cargo.lock',import.meta.url),'utf8')},dependencies=loadJsonMacroSourceProof(dependencyInputs);
 const fixtureSource=readFileSync(new URL('../../../fixtures/translation/openai-tool-choice.json',import.meta.url),'utf8'),fixture=JSON.parse(fixtureSource);
@@ -25,7 +26,7 @@ const tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{f
 const nominal='enum Item{Text(String),Empty}';
 let vectors=[];const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(process.env.ROUTER_FUNCTION_TAIL_MATCH_VECTOR_DIR){const dir=process.env.ROUTER_FUNCTION_TAIL_MATCH_VECTOR_DIR;mkdirSync(dir,{recursive:true});writeFileSync(join(dir,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
-function project(source,extra={}){const files=typeof source==='string'?{'src/lib.rs':source}:source;retain('complete-source-files',files);return retain('complete-project',translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],jsonMacroDependencies:dependencies,cargoManifest:dependencyInputs.manifest,compilationProfile:PRODUCTION_PROFILE,...extra}));}
+function project(source,extra={}){const files=typeof source==='string'?{'src/lib.rs':source}:source;retain('complete-source-files',files);const actualFiles=completeCoreSourceFixture(files);retain('complete-source-files-with-owned-core-closure',actualFiles);return retain('complete-project',translateProject({entry:'src/lib.rs',paths:Object.keys(actualFiles),readSource:path=>actualFiles[path],jsonMacroDependencies:dependencies,cargoManifest:dependencyInputs.manifest,compilationProfile:PRODUCTION_PROFILE,...extra}));}
 const has=(result,name)=>result.meta.executable.some(row=>row.name===name);
 const find=(node,kind)=>node&&typeof node==='object'?(node.k===kind?node:(node instanceof Map?[...node.values()]:Object.values(node)).map(value=>find(value,kind)).find(Boolean)):null;
 async function targets(result,verify){const wire=JSON.stringify(result.meta.checkedSemanticProgram);assert.equal(serializeProgram(parseProgram(wire)),wire);retain('complete-targets',{javascript:result.javascript,typescript:result.typescript,wire});await verifyTypedTargets(result,verify,{childTimeoutMs:20_000});}

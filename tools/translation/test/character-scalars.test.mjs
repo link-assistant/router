@@ -15,6 +15,7 @@ import {CHARACTER,requireCharacterLiteral,checkedCharacterType} from '../extensi
 import {typeScriptType,valueSchema} from '../type-layout.mjs';
 import {validateRustValue} from '../type-layout-runtime.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {completeCoreSourceFixture} from './complete-core-source-fixture.mjs';
 
 const directory=process.env.ROUTER_CHARACTER_SCALAR_VECTOR_DIR;
 let vectors=[];
@@ -22,7 +23,7 @@ const retain=(kind,value)=>{vectors.push({kind,value});return value;};
 const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,Buffer.from(name).toString('hex')+'.json'),JSON.stringify({name,vectors},(_,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});
 const C='crate::translation_core::Str',R='&'+C,profile={flags:{test:false}},digest=source=>createHash('sha256').update(source).digest('hex');
 function files(source){return {'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE};}
-function build(input){retain('complete-project-input',input);return retain('complete-project-result',translateProject({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path],compilationProfile:profile}));}
+function build(input){retain('complete-project-input',input);const actualInput=completeCoreSourceFixture(input);retain('complete-project-input-with-owned-core-closure',actualInput);return retain('complete-project-result',translateProject({entry:'src/lib.rs',paths:Object.keys(actualInput),readSource:path=>actualInput[path],compilationProfile:profile}));}
 function project(source){return build(files(source));}
 const has=(result,name)=>result.meta.executable.some(row=>row.name===name);
 function checked(result){const text=JSON.stringify(result.meta.checkedSemanticProgram),program=parseProgram(text);assert.equal(serializeProgram(program),text);retain('complete-canonical-checked-meta',text);return program;}
