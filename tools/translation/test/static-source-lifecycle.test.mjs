@@ -7,9 +7,9 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {prepareStaticSourceLifecycleProposal,writeStaticSourceLifecycleProposal,STATIC_SOURCE_LIFECYCLE_CASES,STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS,selectRealSourceFixture,transportStaticSourceLifecycleCanonicals} from '../prepare-real-source-fixtures.mjs';
+import {prepareStaticSourceLifecycleProposal,writeStaticSourceLifecycleProposal,STATIC_SOURCE_LIFECYCLE_CASES,STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS,selectRealSourceFixture,transportStaticSourceLifecycleCanonicals,visitStaticSourceLifecycleCanonicals} from '../prepare-real-source-fixtures.mjs';
 import {readStaticSourceLifecycle,staticSourceLifecycleContext,originalRealSourceManifest} from './real-source-fixtures.mjs';
-import {transportConcreteSyntaxMeta,transportConcreteSyntaxMetaChunks,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,transportConcreteSyntaxMetaChunks,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {translateProject} from '../project.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
@@ -38,7 +38,7 @@ test('actual sibling producer is deterministic and complete without changing the
  const oldIndex=read('../source-profiles/real-source-fixtures/manifest.json'),oldArchive=hash(readFileSync(new URL('../source-profiles/real-source-fixtures/originals.json.gz',import.meta.url))),a=prepareStaticSourceLifecycleProposal({root:ROOT,historyArchive:ASSETS}),b=prepareStaticSourceLifecycleProposal({root:ROOT,historyArchive:ASSETS});
  retain('02-two-complete-proposals',{a,b});assert.deepEqual(a,b);assert.deepEqual(a.trace.map(row=>row.phase),['language','repository']);assert.equal(a.files.length,3);assert.deepEqual(a.before,a.after);assert.equal(a.completeInverse,true);
  const folder=mkdtempSync(join(tmpdir(),'router-static-source-proposal-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));writeStaticSourceLifecycleProposal(a,folder);
- for(const row of a.files){const raw=readFileSync(join(folder,row.path.split('/').at(-1)));assert.equal(raw.length,row.bytes);assert.equal(hash(raw),row.sha256);}
+ for(const row of a.files){const raw=readFileSync(join(folder,row.path.split('/').at(-1)));assert.equal(raw.length,row.bytes);assert.equal(hash(raw),row.sha256);assert.deepEqual(raw,readFileSync(join(ASSETS,row.path.split('/').at(-1))),'complete installed artifact: '+row.path);}
  const produced=readStaticSourceLifecycle({folder}),installed=readStaticSourceLifecycle();assert.deepEqual(produced.bundle,installed.bundle);
  assert.equal(read('../source-profiles/real-source-fixtures/manifest.json'),oldIndex);assert.equal(hash(readFileSync(new URL('../source-profiles/real-source-fixtures/originals.json.gz',import.meta.url))),oldArchive);
 });
@@ -55,7 +55,18 @@ test('all changed full current parents preserve whole CST token boundaries and c
  for(const path of ['src/credential_recovery_store.rs','src/accounts_cli.rs']){const row=rows.find(row=>row.path===path);assert.ok(row,path);const before=bundle.sources[row.before.sourceId],after=bundle.sources[row.after.sourceId],old=applyConcreteSyntaxSubstitutions(documents.get(row.before.sourceId),{languageRules:[],repositoryRules:[{id:'repository.reviewed-native-adoption-history',edits:[row.edit]}]});
   assert.equal(old.value.source,after.source);assert.equal(serializeConcreteSyntaxMeta(old.value),after.canonical);assert.equal(hash(serializeConcreteSyntaxMeta(old.value)),row.afterCanonicalSha256);assert.deepEqual(row.trace,[{phase:'language',id:'static-fixture.whole-original-cst-span'},{phase:'repository',id:'static-fixture.exact-current-parent-and-inverse'}]);
  }
- retain('03-full-current-and-original-cst-inverses',{rows,authority:bundle.authority});
+ // The default Map still returns every full native document. The explicit
+ // visitor observes the same complete rows without retaining the full graph.
+ const selected=Object.entries(bundle.sources).filter(([,row])=>row.canonical!==undefined).slice(0,2),visited=[];
+ visitStaticSourceLifecycleCanonicals(selected,(id,document)=>{
+  assert.equal(document.source,bundle.sources[id].source);assert.equal(document.language,'Rust');assert.equal(JSON.stringify(document),JSON.stringify(documents.get(id)));
+  const expected=new Set([0,document.source.length,...documents.get(id).nodes.flatMap(node=>[node[2],node[3]])]),actual=new Set([0,document.source.length]);
+  for(const node of document.nodes){actual.add(node[2]);actual.add(node[3]);}assert.deepEqual(actual,expected);visited.push(id);
+ });assert.deepEqual(visited,selected.map(([id])=>id));
+ const scalarSources=['// é😀 complete trivia\npub fn alpha(){ let text = "Ω"; }','pub fn beta(){ /* nested ( 😀 ) */ let group = [1,2]; }'],scalarRows=scalarSources.map((source,index)=>['scalar-'+index,{source,canonical:transportConcreteSyntaxSource(source,{language:'Rust'}).meta}]),scalarMap=transportStaticSourceLifecycleCanonicals(scalarRows),scalarVisited=[];
+ visitStaticSourceLifecycleCanonicals(scalarRows,(id,document)=>{assert.equal(JSON.stringify(document),JSON.stringify(scalarMap.get(id)));assert.equal(document.source,scalarRows.find(([name])=>name===id)[1].source);assert.ok(document.nodes.some(node=>node[0]==='group'));assert.ok(document.nodes.some(node=>node[1]==='comment'));scalarVisited.push(id);});assert.deepEqual(scalarVisited,scalarRows.map(([id])=>id));
+ for(const change of ['source','classification']){const [id,row]=selected[0],document=JSON.parse(row.canonical);if(change==='source')document.source+=' ';else document.nodes[1][0]='unknown-classification';assert.throws(()=>visitStaticSourceLifecycleCanonicals([[id,{...row,canonical:JSON.stringify(document)}]],()=>assert.fail('forged canonical must not reach visitor')),TypeError);}
+ retain('03-full-current-and-original-cst-inverses',{rows,authority:bundle.authority,visitorIds:visited,scalarSources,scalarVisited});
 });
 
 test('original native constants and a current complete formatting body retain independent typed behavior',{timeout:60000},async()=>{

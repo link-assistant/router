@@ -193,10 +193,16 @@ function staticSourceCsts(rows,accept){
 }
 /** Full untrusted stored-CST transport; no source-origin shortcut or receipt. */
 export function transportStaticSourceLifecycleCanonicals(rows){
-  const out=new Map();let pending=[],units=0,bytes=0,canonical=0;
+  const out=new Map();visitStaticSourceLifecycleCanonicals(rows,(id,document)=>out.set(id,document));return out;
+}
+/** Explicit data-only visitor; each complete native batch is consumed locally.
+ * No callback equivalence or semantic/source authority is issued by this API. */
+export function visitStaticSourceLifecycleCanonicals(rows,accept){
+  if(typeof accept!=='function')staticFail('canonical data visitor required');
+  let pending=[],units=0,bytes=0,canonical=0;
   const flush=()=>{if(!pending.length)return;const actual=transportConcreteSyntaxMetaChunks([pending.map(([,row])=>row.canonical)]),values=actual.chunks[0]?.rows;
     if(!values||values.length!==pending.length)staticFail('complete canonical batch census differs');
-    for(let i=0;i<pending.length;i++){const [id,row]=pending[i],value=values[i];if(value.meta!==row.canonical||value.source!==row.source||value.document.language!=='Rust')staticFail('complete canonical source association differs');out.set(id,value.document);}
+    for(let i=0;i<pending.length;i++){const [id,row]=pending[i],value=values[i];if(value.meta!==row.canonical||value.source!==row.source||value.document.language!=='Rust')staticFail('complete canonical source association differs');accept(id,value.document);}
     pending=[];units=0;bytes=0;canonical=0;};
   for(const [id,row]of rows){if(typeof row.source!=='string'||typeof row.canonical!=='string')staticFail('complete changed-parent CST missing');
     // Never parse untrusted metadata to plan a batch. Primitive length is
@@ -204,7 +210,7 @@ export function transportStaticSourceLifecycleCanonicals(rows){
     if(row.canonical.length>33554432)staticFail('complete canonical code-unit bound');const size=Buffer.byteLength(row.source);
     if(pending.length&&(pending.length===256||units+row.source.length>65536||bytes+size>262144||canonical+row.canonical.length>33554432))flush();
     pending.push([id,row]);units+=row.source.length;bytes+=size;canonical+=row.canonical.length;
-  }flush();return out;
+  }flush();
 }
 function staticDelta(before,after){
   const operation=createRulePipeline([
@@ -212,7 +218,7 @@ function staticDelta(before,after){
       let start=0,end=before.source.length,suffix=after.source.length;
       while(start<end&&start<suffix&&before.source[start]===after.source[start])start++;
       while(end>start&&suffix>start&&before.source[end-1]===after.source[suffix-1]){end--;suffix--;}
-      const boundaries=[...new Set([0,before.source.length,...before.document.nodes.flatMap(row=>[row[2],row[3]])])].sort((a,b)=>a-b);
+      const boundaries=before.boundaries;
       start=boundaries.filter(at=>at<=start).at(-1);end=boundaries.find(at=>at>=end);suffix=end+after.source.length-before.source.length;
       return {span:[start,end],expected:before.source.slice(start,end),replacement:after.source.slice(start,suffix)};
     }}]},
@@ -275,9 +281,15 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
     {phase:'language',rules:[{id:'static-fixture.complete-original-cst-and-current-source-joins',apply:()=>{
       for(const row of sources.values()){retainedBytes+=Buffer.byteLength(JSON.stringify({source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('retained source bound');}
       const changed=[...sources].filter(([id])=>changedIds.has(id));
-      staticSourceCsts(changed,(id,cst)=>{const row=sources.get(id);if(cst.source!==row.source||cst.document.language!=='Rust')staticFail('complete source CST differs');retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');row.canonical=cst.meta;row.document=cst.document;});
-      const reparsed=transportStaticSourceLifecycleCanonicals(changed);
-      for(const [id,row]of changed){const document=reparsed.get(id);if(JSON.stringify(document)!==JSON.stringify(row.document))staticFail('independent complete CST classification differs');row.document=document;}
+      // Preserve an explicit full first-document serialization, not an assumed
+      // equivalence between the transport's meta string and document shape.
+      const firstDocuments=new Map();
+      staticSourceCsts(changed,(id,cst)=>{const row=sources.get(id);if(cst.source!==row.source||cst.document.language!=='Rust')staticFail('complete source CST differs');retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');row.canonical=cst.meta;firstDocuments.set(id,JSON.stringify(cst.document));});
+      visitStaticSourceLifecycleCanonicals(changed,(id,document)=>{
+        if(JSON.stringify(document)!==firstDocuments.get(id))staticFail('independent complete CST classification differs');firstDocuments.delete(id);
+        const boundaries=new Set([0,document.source.length]);for(const node of document.nodes){boundaries.add(node[2]);boundaries.add(node[3]);}
+        sources.get(id).boundaries=[...boundaries].sort((a,b)=>a-b);
+      });
       for(const stage of lineage)for(const row of stage.files)if(row.status==='changed'){
         Object.assign(row,staticDelta(sources.get(row.before.sourceId),sources.get(row.after.sourceId)));retainedBytes+=Buffer.byteLength(JSON.stringify(row));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete inverse retention bound');
       }
@@ -289,7 +301,7 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
   const packed=gzipSync(raw,{level:9,mtime:0}),index={schema:bundle.schema,archive:'originals.json.gz',rawBytes:raw.length,rawSha256:hash(raw),bytes:packed.length,sha256:hash(packed),profiles:profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})),current:bundle.current.sourceSetSha256,trace:result.trace},notice='# Complete static source lifecycle fixtures\n\nTwo complete original Router Rust/Cargo source universes and separately captured current source parents. All original LICENSE terms apply. Historical revisions: '+revisions.join(', ')+'. Full source/Git blob/CST joins and reversible actual source evolution are data only: no namespace, dispatch, ownership, trait, semantic or execution authority. Current producer revision is provenance; exact full source rows determine freshness across compiler/asset-only commits.\n';
   const files=[{path:STATIC_SOURCE_PREFIX+'originals.json.gz',encoding:'base64',content:packed.toString('base64')},{path:STATIC_SOURCE_PREFIX+'manifest.json',encoding:'utf8',content:JSON.stringify(index,null,2)+'\n'},{path:STATIC_SOURCE_PREFIX+'NOTICE.md',encoding:'utf8',content:notice}].map(row=>({...row,bytes:Buffer.byteLength(row.content,row.encoding),sha256:hash(Buffer.from(row.content,row.encoding))}));
   const after=actual();if(JSON.stringify(before)!==JSON.stringify(after))staticFail('source inputs changed');
-  return {schema:'router-static-source-lifecycle-proposal-v1',sourceRoot:root,subjectRevision,provenanceRevision,before,after,files,cstSchedule:{source:'existing bounded Sources; large rows existing single transport',canonical:'every canonical through full untrusted MetaChunks',substitution:'actual whole-span language/repository pipeline; full inverse'},trace:result.trace,limits:STATIC_SOURCE_LIFECYCLE_LIMITS,completeInverse:true,authority:bundle.authority};
+  return {schema:'router-static-source-lifecycle-proposal-v1',sourceRoot:root,subjectRevision,provenanceRevision,before,after,files,cstSchedule:{source:'existing bounded Sources; large rows existing single transport',canonical:'every canonical through full untrusted MetaChunks',substitution:'actual whole-span language/repository pipeline; full inverse',retention:'first full document JSON captured during source pass; full fresh second JSON compared before retaining only whole-node boundaries; native batch results released after visitor consumption'},trace:result.trace,limits:STATIC_SOURCE_LIFECYCLE_LIMITS,completeInverse:true,authority:bundle.authority};
 }
 export function writeStaticSourceLifecycleProposal(proposal,output){
   if(proposal?.schema!=='router-static-source-lifecycle-proposal-v1'||typeof output!=='string'||!isAbsolute(output))staticFail('explicit external proposal output required');
