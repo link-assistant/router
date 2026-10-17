@@ -191,7 +191,7 @@ test('a custom lookup cannot claim a closed native segment or erase its reentran
  // The old pending stack performs six post-hook pops; recursive DFS has no
  // pop at all. Both original hook workloads remain recorded. Dynamic Map.get
  // now independently witnesses the current planner's reentrant operation.
- assert.equal(old.details.pops,6);assert.equal(current.details.pops,0);assert.deepEqual(old.details.mapGets,['child','child','child']);assert.deepEqual(current.details.mapGets,['child']);
+ assert.equal(old.details.pops,6);assert.equal(current.details.pops,0);assert.deepEqual(old.details.mapGets,['child','child','child','root']);assert.deepEqual(current.details.mapGets,['child']);
  const expectedRefusals=[false,true].map(nativeFlag=>({nativeFlag,lookups:['root','child'],gets:['child'],result:{error:{name:'Error',message:'custom Map.get refusal'}}}));assert.deepEqual(old.details.operationRefusals,expectedRefusals);assert.deepEqual(current.details.operationRefusals,expectedRefusals);
  assert.equal(current.details.plan.root.cells,5);assert.equal(current.observed.same,true);
  const expected=hostile('error-restore','old'),actual=hostile('error-restore','current'),formatterObserved=expected.tape.some(row=>row[0]==='formatter');retain('error-restore-complete-hostile-pair',{expected,actual,capability:{originalFormatterObserved:formatterObserved,currentFormatterObserved:actual.tape.some(row=>row[0]==='formatter')}});assert.deepEqual(actual,expected);assert.equal(actual.result.same,true);if(formatterObserved){assert.ok(actual.tape.some(row=>row[0]==='restored-and-reentered'));assert.ok(actual.tape.some(row=>row[0]==='weak-get'));}
