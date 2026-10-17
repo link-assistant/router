@@ -80,10 +80,10 @@ fs.rmSync(directory,{recursive:true,force:true});
 function smallSources(root){for(const path of core)write(join(root,path),fs.readFileSync(join(ROOT,path)));
 write(join(root,'src/lib.rs'),original);
 }
-function packetFixture(directory){const root=join(directory,'source'),output=join(directory,'proposal');
+async function packetFixture(directory){const root=join(directory,'source'),output=join(directory,'proposal');
 fs.mkdirSync(root);
 smallSources(root);
-assert.equal(proposeCoreAdoptionSequence({root,output},'json-readers','gzip').complete,true);
+assert.equal((await proposeCoreAdoptionSequence({root,output},'json-readers','gzip')).complete,true);
 return {root,output};
 }
 function allPackets(output){const storage=openCoreAdoptionGzipPackets(output);
@@ -147,7 +147,7 @@ keep('complete-capture',actual);
 }));
 
 test('full gzip transport accepts exact decoded bytes and an additional empty member',()=>home(async directory=>{
- const {output}=packetFixture(directory),storage=allPackets(output),first=storage.index.packets[0];
+ const {output}=await packetFixture(directory),storage=allPackets(output),first=storage.index.packets[0];
 assert.equal(python(storageCheck,{path:output}).ok,true);
 const expected=storage.read(first),restore=patchStored(output,first,raw=>Buffer.concat([raw,gzipSync(Buffer.alloc(0))]));
 try{assert.equal(python(storageCheck,{path:output}).ok,true);
@@ -156,7 +156,7 @@ try{assert.equal(python(storageCheck,{path:output}).ok,true);
 }));
 
 test('stored CRC raw bytes strict UTF8 and complete physical inventory corruption refuse',()=>home(async directory=>{
- const {output}=packetFixture(directory),storage=allPackets(output),first=storage.index.packets[0];
+ const {output}=await packetFixture(directory),storage=allPackets(output),first=storage.index.packets[0];
 const restore=patchStored(output,first,raw=>{const changed=Buffer.from(raw);
 changed[changed.length-1]^=1;
 return changed;
@@ -188,7 +188,7 @@ assert.match(result.message,/utf-?8|decode/iu);
 }));
 
 test('complete CST Unicode partitions and both language repository stages stay independently checked',()=>home(async directory=>{
- const {output}=packetFixture(directory),storage=allPackets(output),row=JSON.parse(storage.read(storage.index.stages[0].packets.proposals[0]));
+ const {output}=await packetFixture(directory),storage=allPackets(output),row=JSON.parse(storage.read(storage.index.stages[0].packets.proposals[0]));
 assert.ok(row.selections.length>0);
 assert.equal(row.before.source,original);
  const result=python(`import copy\nfrom core_adoption_review import check_cst\nfrom core_adoption_json_readers_review import reader_proposal\nrow=payload['row'];ids=['canonical-json-readers:expand-option-and-then-on-shared-root','router-core:bind-generated-json-reader-paths']\na,b,count,doc=reader_proposal(row,row['before']['source'],ids,payload['language']);failures=[]\nfor kind in ['source','parent','token']:\n changed=copy.deepcopy(doc)\n if kind=='source':changed['source']+='!'\n elif kind=='parent':next(node for node in changed['nodes']if node[0]=='group')[-1]=len(changed['nodes'])+1\n else:next(node for node in changed['nodes']if node[0]=='token')[2]+=1\n try:check_cst(changed,a);failures.append(False)\n except Exception:failures.append(True)\nchanged=copy.deepcopy(row);changed['stages'][0]['trace'][0]['rules'][0]['id']='unknown-rule'\ntry:reader_proposal(changed,a,ids,payload['language']);failures.append(False)\nexcept Exception:failures.append(True)\nprint(json.dumps({'before':a,'after':b,'count':count,'failures':failures,'originalDoc':doc}))\n`,{row,language:row.stages[0].edits});

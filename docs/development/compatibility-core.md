@@ -502,5 +502,4 @@ exports from their complete selected inputs, then actual canonical/profile and
 reverse outputs. If reverse generation changes a Rust witness, refresh the bank
 and dependent exports again. Retain all historical sources, callbacks, oracles,
 failed runs and original limits; obtain the complete current gate before claiming
-completion. The application tool and eight source regressions remain unqualified
-until Root receives them; no local Rust execution is authorized.
+completion. Qualification is tied to the recorded source checkpoint; rerun the complete application and receiving suites after relevant changes. No local Rust execution is authorized.
