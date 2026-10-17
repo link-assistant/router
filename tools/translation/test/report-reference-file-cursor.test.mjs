@@ -59,7 +59,7 @@ function transportError(error){
 function moduleTransport(mode,code){
   assert.ok(['eval','stdin'].includes(mode));
   if(mode==='eval')assert.ok(Buffer.byteLength(code)<64*1024,'legacy comparator stays below Linux per-argument limit');
-  const argv=mode==='eval'?['--input-type=module','--eval',code]:['--input-type=module'];
+  const argv=mode==='eval'?['--input-type=module','--eval',code]:['--input-type=module','-'];
   let stdout,stderr=Buffer.alloc(0),error=null,status=0,signal=null;
   try{stdout=execFileSync(process.execPath,argv,{...(mode==='stdin'?{input:code}:{}),timeout:10000,maxBuffer:8*1024*1024,stdio:['pipe','pipe','pipe']});}
   catch(caught){stdout=Buffer.from(caught.stdout??[]);stderr=Buffer.from(caught.stderr??[]);error=transportError(caught);status=caught.status;signal=caught.signal;}
@@ -80,8 +80,8 @@ function transportControls(){
   const failedLegacy=moduleTransport('eval',fixed),failedCurrent=moduleTransport('stdin',fixed);retain('01-complete-controlled-native-errors',{code:fixed,legacy:failedLegacy,current:failedCurrent});
   assert.equal(failedLegacy.status,23);assert.equal(failedCurrent.status,23);assert.equal(failedLegacy.signal,null);assert.equal(failedCurrent.signal,null);assert.ok(failedLegacy.error);assert.ok(failedCurrent.error);assert.deepEqual(failedCurrent.stdout,failedLegacy.stdout);assert.deepEqual(failedCurrent.stderr,failedLegacy.stderr);
   assert.equal(Buffer.from(failedCurrent.stdout.base64,'base64').toString('utf8'),'fixed-out Ω😀\n');assert.equal(Buffer.from(failedCurrent.stderr.base64,'base64').toString('utf8'),'fixed-err Ω😀\n');
-  for(const source of ['export const = 1;','throw new TypeError("transport deliberate failure");']){
-    const old=moduleTransport('eval',source),now=moduleTransport('stdin',source);retain('01-complete-native-syntax-or-throw-errors',{source,old,current:now});
+  for(const [label,source]of [['syntax','export const = 1;'],['runtime','throw new TypeError("transport deliberate failure");']]){
+    const old=moduleTransport('eval',source),now=moduleTransport('stdin',source);retain('01-complete-native-'+label+'-errors',{source,old,current:now});
     assert.notEqual(old.status,0);assert.equal(now.status,old.status);assert.equal(now.signal,old.signal);assert.deepEqual(now.stdout,old.stdout);assert.ok(old.stderr.bytes>0);assert.ok(now.stderr.bytes>0);assert.ok(old.error);assert.ok(now.error);
     // Full native frame/URL/command differences remain above without any
     // stack, path or source normalization, and cannot mint a passing report.
