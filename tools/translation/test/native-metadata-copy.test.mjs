@@ -78,10 +78,10 @@ const test=(name,run)=>testCase(name,{timeout:60000},async t=>{
  finally{vectors.push({kind:'case-finally-guard-diagnostic',value:captureGuardDiagnostic('case-finally:'+name)});const directory=process.env.ROUTER_NATIVE_METADATA_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonGzip(join(directory,Buffer.from(name).toString('hex')+'.json.gz'),{name,vectors},(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item);}}
 });
 function outcome(run){try{return {value:run()};}catch(error){return {error:{name:error.name,message:error.message}};}}
-function graph(value){
+function descriptorTree(value){
  if(value===null||typeof value!=='object')return {scalar:typeof value,value};
  const fields=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(fields);
- return {array:Array.isArray(value),prototype:Object.getPrototypeOf(value)===null?'null':Object.getPrototypeOf(value)===Array.prototype?'Array':'other',fields:keys.map(key=>({key,...fields[key],value:graph(fields[key].value)}))};
+ return {array:Array.isArray(value),prototype:Object.getPrototypeOf(value)===null?'null':Object.getPrototypeOf(value)===Array.prototype?'Array':'other',fields:keys.map(key=>({key,...fields[key],value:descriptorTree(fields[key].value)}))};
 }
 function compare(value){const before=outcome(()=>old.metadataDigest(value)),after=outcome(()=>metadataDigest(value));return {before,after};}
 function same(pair){assert.deepEqual(pair.after,pair.before);return pair.after;}
@@ -96,8 +96,8 @@ test('canonical records retain complete property descriptors and nested signed k
  const nullRecord=Object.create(null);define(nullRecord,'__proto__',{value:{z:3,a:1},enumerable:true});nullRecord[10]='ten';nullRecord[2]='two';
  const value={z:[undefined,null,4n],a:nullRecord,copyCertificate:{z:2,a:{z:3,a:4},nested:[{z:5,a:6}]},other:Object.create(Array.prototype)};
  define(value,'fixed',{value:{z:1,a:2},enumerable:true});Object.freeze(value.z);
- const expected=old.copyMetadata(value),actual=trial(value),pair=compare(value);retain('whole-copy',{eligibility,value,expected:graph(expected),actual:graph(actual),pair});
- assert.deepEqual(graph(actual),graph(expected));same(pair);assert.deepEqual(Object.keys(actual),['a','copyCertificate','fixed','other','z']);
+ const expected=old.copyMetadata(value),actual=trial(value),pair=compare(value);retain('whole-copy',{eligibility,value,expected:descriptorTree(expected),actual:descriptorTree(actual),pair});
+ assert.deepEqual(descriptorTree(actual),descriptorTree(expected));same(pair);assert.deepEqual(Object.keys(actual),['a','copyCertificate','fixed','other','z']);
  assert.deepEqual(Object.keys(actual.a),['2','10','__proto__']);assert.equal(Object.getPrototypeOf(actual.a),null);assert.deepEqual(Object.keys(actual.copyCertificate),['z','a','nested']);assert.deepEqual(Object.keys(actual.copyCertificate.a),['z','a']);assert.deepEqual(Object.keys(actual.copyCertificate.nested[0]),['z','a']);
  for(const key of Object.keys(actual))assert.deepEqual(descriptor(actual,key),{value:actual[key],enumerable:true,writable:true,configurable:true});
  assert.equal(pair.after.value,hash(encode(expected)));assert.notEqual(actual,value);assert.notEqual(actual.a,value.a);
@@ -133,10 +133,10 @@ test('aliases cycles and malformed descriptors preserve full old refusals withou
 test('whole default quotas and partial ancestor failures retain old precedence',(_t,retain)=>{
  const fitCells=Array(199999).fill(null),overCells=Array(200000).fill(null),fitText='é'.repeat(2097152),overText=fitText+'x';
  const subjects=[['cell-fit',fitCells,true],['cell-over',overCells,false],['byte-fit',fitText,true],['byte-over',overText,false],['depth-fit',depth(160),true],['depth-over',depth(161),false],['alias-cell-over',{left:fitCells,right:fitCells},false],['alias-byte-over',{left:fitText,right:fitText},false],['partial-late',{a:{ok:[1,2]},z:depth(161)},false]];
- for(const [label,value,accept]of subjects){const pair=compare(value),attempt=tryCopyDigestMetadata(value);retain('complete-boundary-'+label,{label,value,pair,trialSuccess:attempt!==null});same(pair);assert.equal(!pair.after.error,accept);if(originalFlatTokenIntrinsicsUnchanged())assert.equal(attempt!==null,accept);else assert.equal(attempt,null);if(attempt)assert.deepEqual(graph(attempt.value),graph(old.copyMetadata(value)));}
+ for(const [label,value,accept]of subjects){const pair=compare(value),attempt=tryCopyDigestMetadata(value);retain('complete-boundary-'+label,{label,value,pair,trialSuccess:attempt!==null});same(pair);assert.equal(!pair.after.error,accept);if(originalFlatTokenIntrinsicsUnchanged())assert.equal(attempt!==null,accept);else assert.equal(attempt,null);if(attempt)assert.deepEqual(descriptorTree(attempt.value),descriptorTree(old.copyMetadata(value)));}
  let calls=0;const cells={valueOf(){calls++;return 4;}},custom={a:[1,2]};calls=0;const before=outcome(()=>old.copyMetadata(custom,{cells})),beforeCalls=calls;calls=0;const after=outcome(()=>copyMetadata(custom,{cells})),afterCalls=calls;
  retain('public-custom-state',{before,after,beforeCalls,afterCalls});assert.deepEqual(after,before);assert.equal(afterCalls,beforeCalls);
- for(const preserveKeyOrder of [false,true])assert.deepEqual(graph(copyMetadata({z:1,a:2},{preserveKeyOrder})),graph(old.copyMetadata({z:1,a:2},{preserveKeyOrder})));
+ for(const preserveKeyOrder of [false,true])assert.deepEqual(descriptorTree(copyMetadata({z:1,a:2},{preserveKeyOrder})),descriptorTree(old.copyMetadata({z:1,a:2},{preserveKeyOrder})));
  const budget={cells:4,bytes:5},active=new Set();assert.deepEqual(copyMetadata({a:1},undefined,0,active,budget),old.copyMetadata({a:1},undefined,0,new Set(),{cells:4,bytes:5}));assert.deepEqual(budget,{cells:2,bytes:5});
 });
 
@@ -148,14 +148,15 @@ function observerRun(implementation,owner,key){
  return {result,tape};
 }
 test('altered intrinsic and inherited hooks keep complete legacy observation tapes',(_t,retain)=>{
+ const ownerEntry=captureGuardDiagnostic('case5-before-observers');
  const targets=[[Object,'getOwnPropertyDescriptors'],[Object,'getOwnPropertyDescriptor'],[Object,'getPrototypeOf'],[Object,'defineProperty'],[Object,'create'],[Object,'hasOwn'],[Reflect,'ownKeys'],[Array,'isArray'],[Array.prototype,'sort'],[Array.prototype,'push'],[Array.prototype,Symbol.iterator],[Set.prototype,'has'],[Set.prototype,'add'],[Set.prototype,'delete'],[Buffer,'byteLength'],[globalThis,'String'],[globalThis,'Number'],[globalThis,'Set'],[Number,'isSafeInteger'],[types,'isProxy']];
  for(let index=0;index<targets.length;index++){const [owner,key]=targets[index],before=observerRun(old,owner,key),after=observerRun({metadataDigest},owner,key);retain('intrinsic-tape-'+index,{key:String(key),before,after});assert.deepEqual(after,before);}
  const inherited=[];
  for(const [owner,key]of [[Object.prototype,'cells'],[Object.prototype,'bytes'],[Object.prototype,'preserveKeyOrder'],[Object.prototype,'get'],[Object.prototype,'set'],[Object.prototype,'127'],[Array.prototype,'127'],[Object.prototype,'toJSON'],[Array.prototype,'toJSON']]){
-  const previous=descriptor(owner,key);let tape='';
+  const previous=descriptor(owner,key),arrayLength=owner===Array.prototype&&key==='127'?descriptor(Array.prototype,'length'):null;let tape='';
   const run=implementation=>{tape='';const value={items:Array.from({length:128},(_,index)=>index),child:{value:'é'}};const result=outcome(()=>implementation.metadataDigest(value));return {result,tape};};
   const field={__proto__:null,configurable:true};if(key==='toJSON')field.value=function(){tape+='toJSON;';return this;};else if(key==='127')field.set=function(value){tape+='set127;';define(this,key,{__proto__:null,value,writable:true,enumerable:true,configurable:true});};else field.get=function(){tape+=key+';';return key==='cells'?200000:key==='bytes'?4194304:key==='preserveKeyOrder'?false:undefined;};
-  let before,after;try{define(owner,key,field);before=run(old);after=run({metadataDigest});}finally{if(previous)define(owner,key,previous);else delete owner[key];}const row={key,before,after};inherited.push(row);retain('inherited-tape-'+inherited.length,row);assert.deepEqual(after,before);
+  let before,after;try{define(owner,key,field);before=run(old);after=run({metadataDigest});}finally{if(previous)define(owner,key,previous);else delete owner[key];if(arrayLength)define(Array.prototype,'length',arrayLength);}const row={key,before,after};inherited.push(row);retain('inherited-tape-'+inherited.length,row);assert.deepEqual(after,before);
  }
  retain('inherited-tapes',inherited);
  const globalBuffer=descriptor(globalThis,'Buffer'),buffer=Buffer;let tape='';const run=implementation=>{tape='';const result=outcome(()=>implementation.metadataDigest({a:'é',b:'😀'}));return {result,tape};};let before,after;
@@ -166,6 +167,7 @@ test('altered intrinsic and inherited hooks keep complete legacy observation tap
  const coercion={before:keyObjects(old),after:keyObjects({metadataDigest})};retain('string-key-coercion',coercion);assert.deepEqual(coercion.after,coercion.before);assert.equal(coercion.after.keys,'String;key;String;key;');
  const script=`import assert from'node:assert/strict';await import(${json(new URL('../original-json-intrinsics.mjs',import.meta.url).href)});const define=Object.defineProperty,apply=Reflect.apply;let calls=0;Object.defineProperty=function(...args){calls++;return apply(define,this,args);};const old=await import(${json(pathToFileURL(oldPath).href)}),current=await import(${json(new URL('../extensions/source-links.mjs',import.meta.url).href)});const value={z:2,a:{x:'é'}};calls=0;const before=old.metadataDigest(value),expected=calls;calls=0;const after=current.metadataDigest(value),actual=calls;Object.defineProperty=define;assert.equal(after,before);assert.equal(actual,expected);assert.ok(actual>0);console.log(JSON.stringify({before,after,expected,actual}));`;
  const stdout=execFileSync(process.execPath,['--input-type=module','-'],{input:script,encoding:'utf8',timeout:10000,maxBuffer:1048576});retain('cold-leaf-raw',{script,stdout});assert.equal(JSON.parse(stdout).before,JSON.parse(stdout).after);
+ const ownerExit=captureGuardDiagnostic('case5-after-observers');retain('all-owner-restoration',{before:ownerEntry,after:ownerExit});assert.deepEqual(ownerExit.owners,ownerEntry.owners);assert.deepEqual(ownerExit.guards,ownerEntry.guards);
 });
 
 function hashTape(implementation,mode){
