@@ -218,8 +218,9 @@ function staticDelta(before,after){
       let start=0,end=before.source.length,suffix=after.source.length;
       while(start<end&&start<suffix&&before.source[start]===after.source[start])start++;
       while(end>start&&suffix>start&&before.source[end-1]===after.source[suffix-1]){end--;suffix--;}
-      const boundaries=before.boundaries;
-      start=boundaries.filter(at=>at<=start).at(-1);end=boundaries.find(at=>at>=end);suffix=end+after.source.length-before.source.length;
+      const boundaries=before.boundaries,afterBoundaries=new Set(after.boundaries),difference=after.source.length-before.source.length;
+      start=boundaries.filter(at=>at<=start&&afterBoundaries.has(at)).at(-1);end=boundaries.find(at=>at>=end&&afterBoundaries.has(at+difference));
+      if(start===undefined||end===undefined)staticFail('paired original/current CST boundary required');suffix=end+difference;
       return {span:[start,end],expected:before.source.slice(start,end),replacement:after.source.slice(start,suffix)};
     }}]},
     {phase:'repository',rules:[{id:'static-fixture.exact-current-parent-and-inverse',apply:edit=>{
