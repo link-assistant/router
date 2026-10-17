@@ -78,7 +78,7 @@ pub fn chat_to_responses_format(value: crate::translation_core::Maybe<&crate::tr
                 })?;
             let mut format = crate::translation_core::json!({
                 "type": "json_schema",
-                "name": definition["name"],
+                "name": crate::translation_core::json_map_index(&definition, "name"),
                 "schema": schema,
             });
             if let Some(strict) = definition.get("strict") {
@@ -110,7 +110,7 @@ pub fn responses_to_chat_format(text: crate::translation_core::Maybe<&crate::tra
                 .filter(|schema| schema.is_object())
                 .ok_or_else(|| crate::translation_core::format!("{}", "text.format.schema must be an object"))?;
             let mut definition = crate::translation_core::json!({
-                "name": format["name"],
+                "name": crate::translation_core::json_index_str(&format, "name"),
                 "schema": schema,
             });
             if let Some(strict) = format.get("strict") {
