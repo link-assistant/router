@@ -1,0 +1,269 @@
+import { Link } from './Link.js';
+import { LinksGroup } from './LinksGroup.js';
+import { ParseError } from './ParseError.js';
+import { stripComments } from './comments.js';
+import * as parserModule from './parser-generated.js';
+
+/**
+ * How deep links may nest when nothing says otherwise. The parser recurses once
+ * per level, and the same limit applies in every Links Notation implementation,
+ * so a document one of them reads is not too deep for another.
+ */
+export const DEFAULT_MAX_DEPTH = 64;
+
+export class Parser {
+  /**
+   * Create a new Parser instance
+   * @param {Object} options - Parser options
+   * @param {number} options.maxInputSize - Maximum input size in bytes (default: 10MB)
+   * @param {number} options.maxDepth - How deep links may nest: every parenthesized group and every indentation level is one level (default: 64)
+   * @param {boolean} options.comments - If false, read `#` as an ordinary character instead of the start of a comment (default: true)
+   */
+  constructor(options = {}) {
+    this.maxInputSize = options.maxInputSize || 10 * 1024 * 1024; // 10MB default
+    this.maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH;
+    this.comments = options.comments ?? true;
+  }
+
+  /**
+   * Parse Lino notation text into Link objects
+   * @param {string} input - The Lino notation text to parse
+   * @returns {Link[]} Array of parsed Link objects
+   * @throws {Error} If parsing fails
+   */
+  parse(input) {
+    return this._parse(input, (raw) => this.transformResult(raw));
+  }
+
+  /**
+   * Read the indentation tree before it is expanded into path combinations.
+   * Each group's element is the Link on that line; its children are groups
+   * for the immediately indented lines. Parenthesized values remain Links.
+   * @param {string} input - The Lino document
+   * @returns {LinksGroup[]}
+   */
+  parseGroups(input) {
+    return this._parse(input, (raw) =>
+      raw.map((item) => this._transformGroup(item))
+    );
+  }
+
+  _transformGroup(item) {
+    return new LinksGroup(
+      this.transformLink(item),
+      (item.children || []).map((child) => this._transformGroup(child))
+    );
+  }
+
+  _parse(input, transform) {
+    // Validate input
+    if (typeof input !== 'string') {
+      throw new TypeError('Input must be a string');
+    }
+
+    if (input.length > this.maxInputSize) {
+      throw new Error(
+        `Input size exceeds maximum allowed size of ${this.maxInputSize} bytes`
+      );
+    }
+
+    // Comments are blanked rather than removed, so a position reported for the
+    // prepared document is the same position in the document the caller wrote.
+    const prepared = this.comments ? stripComments(input) : input;
+
+    try {
+      const rawResult = parserModule.parse(prepared, {
+        maxDepth: this.maxDepth,
+      });
+      return transform(rawResult);
+    } catch (error) {
+      // A syntax error knows where it stopped; anything else is passed on with
+      // the original error kept as the cause.
+      if (error && error.location) {
+        throw new ParseError(input, error);
+      }
+      const parseError = new Error(`Parse error: ${error.message}`);
+      parseError.cause = error;
+      throw parseError;
+    }
+  }
+
+  transformResult(rawResult) {
+    const links = [];
+    const items = Array.isArray(rawResult) ? rawResult : [rawResult];
+
+    for (const item of items) {
+      // Use explicit null/undefined check
+      if (item !== null && item !== undefined) {
+        this.collectLinks(item, [], links);
+      }
+    }
+    return links;
+  }
+
+  collectLinks(item, parentPath, result) {
+    // Use explicit null/undefined check
+    if (item === null || item === undefined) return;
+
+    // For items with children (indented structure)
+    if (item.children && item.children.length > 0) {
+      // Special case: If this is an ID with empty values but has children,
+      // the children should become the values of the link (indented ID syntax)
+      if (
+        item.id !== undefined &&
+        item.id !== null &&
+        (!item.values || item.values.length === 0)
+      ) {
+        const childValues = item.children.map((child) =>
+          this.transformIndentedValue(child)
+        );
+        const linkWithChildren = {
+          id: item.id,
+          values: childValues,
+        };
+        const currentLink = this.transformLink(linkWithChildren);
+
+        if (parentPath.length === 0) {
+          result.push(currentLink);
+        } else {
+          result.push(this.combinePathElements(parentPath, currentLink));
+        }
+      } else {
+        // Regular indented structure - process as before
+        const currentLink = this.transformLink(item);
+
+        // Add the link combined with parent path
+        if (parentPath.length === 0) {
+          result.push(currentLink);
+        } else {
+          result.push(this.combinePathElements(parentPath, currentLink));
+        }
+
+        // Process each child with this item in the path
+        const newPath = [...parentPath, currentLink];
+
+        for (const child of item.children) {
+          this.collectLinks(child, newPath, result);
+        }
+      }
+    } else {
+      // Leaf item or item with inline values
+      const currentLink = this.transformLink(item);
+
+      if (parentPath.length === 0) {
+        result.push(currentLink);
+      } else {
+        result.push(this.combinePathElements(parentPath, currentLink));
+      }
+    }
+  }
+
+  // A line below an indented ID is a value in its own right. Bare single
+  // references unwrap, but named links and descendants keep their structure.
+  transformIndentedValue(item) {
+    const children = item.children || [];
+    if (children.length && item.id != null && !item.values?.length) {
+      return new Link(
+        item.id,
+        children.map((child) => this.transformIndentedValue(child))
+      );
+    }
+
+    const current = this.transformLink(item);
+    if (children.length) {
+      return new Link(current.id, [
+        ...current.values,
+        ...children.map((child) => this.transformIndentedValue(child)),
+      ]);
+    }
+    if (
+      item.id == null &&
+      item.nested === undefined &&
+      current.values.length === 1
+    ) {
+      return current.values[0];
+    }
+    return current;
+  }
+
+  combinePathElements(pathElements, current) {
+    if (pathElements.length === 0) return current;
+    if (pathElements.length === 1) {
+      const combined = new Link(null, [pathElements[0], current]);
+      combined._isFromPathCombination = true;
+      return combined;
+    }
+
+    // For multiple path elements, we need to build proper nesting
+    // The last element in the path should be combined with its parent
+    const parentPath = pathElements.slice(0, -1);
+    const lastElement = pathElements[pathElements.length - 1];
+
+    // Build the parent structure
+    let parent = this.combinePathElements(parentPath, lastElement);
+
+    // Add current element to the built structure
+    const combined = new Link(null, [parent, current]);
+    combined._isFromPathCombination = true;
+    return combined;
+  }
+
+  /**
+   * Transform the links of a nested (parenthesised) context into a single Link.
+   * The nested context is parsed with the same rules as the root, so it yields
+   * a list of links; a single link is used as is, several links become the
+   * values of one anonymous link. An already parenthesised single link keeps
+   * its own group so that `((a b))` stays distinct from `(a b)`.
+   * @param {Array} nested - Raw items parsed inside the parentheses
+   * @returns {Link} The link representing the parenthesised group
+   */
+  transformNested(nested) {
+    const nestedLinks = [];
+    for (const item of nested) {
+      if (item !== null && item !== undefined) {
+        this.collectLinks(item, [], nestedLinks);
+      }
+    }
+    const wrapsSingleGroup =
+      nested.length === 1 && nested[0] && nested[0].nested !== undefined;
+    if (nestedLinks.length === 1 && !wrapsSingleGroup) {
+      return nestedLinks[0];
+    }
+    return new Link(null, nestedLinks);
+  }
+
+  /**
+   * Transform a parsed item into a Link object
+   * @param {*} item - The item to transform
+   * @returns {Link|null} The transformed Link or null
+   */
+  transformLink(item) {
+    // Use explicit null/undefined check
+    if (item === null || item === undefined) return null;
+
+    if (item instanceof Link) {
+      return item;
+    }
+
+    // Parenthesised group parsed as a nested context
+    if (item.nested !== undefined) {
+      return this.transformNested(item.nested);
+    }
+
+    // Handle simple reference objects like {id: 'a'}
+    if (item.id !== undefined && !item.values && !item.children) {
+      return new Link(item.id);
+    }
+
+    // For items with values, create a link with those values
+    if (item.values && Array.isArray(item.values)) {
+      // Create a link with id (if present) and transformed values
+      const link = new Link(item.id ?? null, []);
+      link.values = item.values.map((v) => this.transformLink(v));
+      return link;
+    }
+
+    // Default case
+    return new Link(item.id ?? null, []);
+  }
+}

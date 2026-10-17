@@ -1,0 +1,11 @@
+# Complete translator source batch evidence
+
+This packet preserves complete passed and failed worker/source checks, immutable input vectors, tested source snapshots, native regeneration and source review. The actual source batch uses automated Rust → meta-language → JavaScript/TypeScript and JavaScript → meta-language → target lowering. These bounded checks do not establish complete runtime parity or authorize Rust verification or publication.
+
+The corrected reverse gate discovers the complete test directory under both Node and Bun. The actual integrated forward cohort passed 96 cases in each engine. All nine affected native TypeScript tests passed in both engines, including execution of 229 shared runtime expectations. Native regeneration at `cebe907e5a17eb9475231913d13148dfda1b7db5` left all 59 TypeScript modules and generated Rust unchanged; its complete reverse census records 49 translated and 739 refused native declarations.
+
+Every byte of all 28,586 original CI inputs remains available. The 259 compressed job API responses decode to their original Git bytes. Complete before/after CI measurements agree after exact archive-path normalization and exclusion of the added provenance input. This reclaimed 897,024 allocated bytes within the unchanged 500 MB evidence budget.
+
+The separate namespace template candidate passed 44 focused cases in each engine. Its complete resolver results agree across the actual 391-module graph, and every complete parser field agrees for the original root, clients and verification scopes. All complete before/after configurations and alternating measured setup trials are preserved. The isolated setup measurement does not establish corpus throughput, CI resource savings or new semantic admission. The first two test attempts lacked an original-source fixture dependency; their complete failures and input vectors are preserved before the corrected runs.
+
+`receipt.json` records every complete TAR member's original length and SHA256. Exact duplicate originals use ordinary TAR hardlinks. Complete canonical and profile generation, independent target execution and the complete strict gate remain separate requirements. No Rust build or publication ran.

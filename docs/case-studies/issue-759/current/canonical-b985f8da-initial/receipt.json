@@ -1,0 +1,82 @@
+{
+  "schema": "canonical-whole-corpus-initial-composition-failure-v1",
+  "sourceHead": "b985f8dae61093141b520eabd9d18b03e0507ef1",
+  "passed": false,
+  "exitCode": 1,
+  "elapsedSeconds": 316.726,
+  "sourceInputsUnchanged": true,
+  "artifactWrites": false,
+  "scopeFailure": "method binding scope differs from its independently captured original owner",
+  "scopeDiagnosticPending": true,
+  "profilesStarted": false,
+  "rustStarted": false,
+  "archive": {
+    "file": "complete-initial.tar.xz",
+    "bytes": 81156,
+    "sha256": "e9e183234bbe5570007d9cba00f207bc855aa85296d5ddbceb5caab177f4ea81",
+    "members": 10,
+    "reopenedErrors": 0
+  },
+  "files": [
+    {
+      "member": "router-759-cohort-v2-canonical-b985f8dae.log",
+      "originalPath": "/tmp/router-759-cohort-v2-canonical-b985f8dae.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "member": "router-759-cohort-v2-canonical-b985f8dae-time.log",
+      "originalPath": "/tmp/router-759-cohort-v2-canonical-b985f8dae-time.log",
+      "bytes": 1215,
+      "sha256": "98e846b1237c0f2e2620fee835f74aa23d591edbca303d56ddf256d7d3793185"
+    },
+    {
+      "member": "router-759-cohort-v2-canonical-b985f8dae.json",
+      "originalPath": "/tmp/router-759-cohort-v2-canonical-b985f8dae.json",
+      "bytes": 1528,
+      "sha256": "114cb821a4a863b86f31c37fd1dc925132b26302e395a8945e90c56061ee01b4"
+    },
+    {
+      "member": "router-759-cohort-v2-canonical-b985f8dae-inputs.json",
+      "originalPath": "/tmp/router-759-cohort-v2-canonical-b985f8dae-inputs.json",
+      "bytes": 252196,
+      "sha256": "60adbc263e9960a3affca1fb7aa8c48e5c694a6c18796ac6f06be43a5407713e"
+    },
+    {
+      "member": "router-759-bounded-cohort-producer-v2.py",
+      "originalPath": "/tmp/router-759-bounded-cohort-producer-v2.py",
+      "bytes": 4007,
+      "sha256": "1c8ba7d1e4346e3131ae3ff4c8cf847a035e0f9ad96b2d2b2d99d9fc61c15530"
+    },
+    {
+      "member": "router-759-final-cohort-pre-generation-source-audit.json",
+      "originalPath": "/tmp/router-759-final-cohort-pre-generation-source-audit.json",
+      "bytes": 692,
+      "sha256": "d7b2aba984831f1b41cd9c6505ac74d6bce2f090d6975715f18efaf4c6a964f2"
+    },
+    {
+      "member": "router-759-gate-alias-default-integration.json",
+      "originalPath": "/tmp/router-759-gate-alias-default-integration.json",
+      "bytes": 5332,
+      "sha256": "4d095bcafaede6e883041508732c90a6d4267b6c0db6c68fef29169532c06b97"
+    },
+    {
+      "member": "router-759-gate-method-integration.json",
+      "originalPath": "/tmp/router-759-gate-method-integration.json",
+      "bytes": 6363,
+      "sha256": "12cd4290f96599f73a95bebb0bef43c6ceabc222e0f66452c9bb815e53a882df"
+    },
+    {
+      "member": "router-759-gate-copied-flow-integration.json",
+      "originalPath": "/tmp/router-759-gate-copied-flow-integration.json",
+      "bytes": 4527,
+      "sha256": "aaa0a318640a2298634e86aed7abbcd2f50df581d73f0a3664891abfe27b71e6"
+    },
+    {
+      "member": "router-759-gate-copy-origin-integration.json",
+      "originalPath": "/tmp/router-759-gate-copy-origin-integration.json",
+      "bytes": 2576,
+      "sha256": "49bfc8fbcbe4b2c39c99c0f5ad87f65bd9e7a604c12382b866de3e81faabc2dd"
+    }
+  ]
+}

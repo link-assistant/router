@@ -14,7 +14,7 @@ pub fn capture_checkpoint(
     context: &crate::operation_context::OperationContext,
     root: &Path,
     records: &[crate::storage::TokenRecord],
-    secret: &str,
+    secret: &crate::translation_core::Str,
 ) -> std::io::Result<std::path::PathBuf> {
     context.scope(|| data_backup::capture(root, records, secret))
 }

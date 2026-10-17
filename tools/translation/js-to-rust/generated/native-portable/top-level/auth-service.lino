@@ -1,0 +1,3 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(function fail (parameters (code value) (message utf16-string) (status value (default (number 400)))) (returns error%3A%5B%5B%22code%22%2C%22value%22%5D%2C%5B%22status%22%2C%22value%22%5D%5D) (body (return (error (message (variable message)) (field code (variable code)) (field status (variable status))))))
+(constant pending (type table-set) (value (table-set (string awaiting_code) (string awaiting_callback) (string awaiting_device))))

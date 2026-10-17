@@ -1,0 +1,1 @@
+- Add reusable fixed-integer checked and saturating arithmetic contracts and exact BigInt adapters, with resolved standard Option provenance, primitive Ord ordering and source clamp panic behavior; keep non-const trait calls and unsupported numeric profiles explicit.

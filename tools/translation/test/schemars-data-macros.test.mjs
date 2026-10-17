@@ -1,0 +1,19 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {proveSchemarsDataMacroNamespace,isSchemarsDataMacroNamespace,assertSchemarsDataMacroNamespace} from '../schemars-macro-inputs.mjs';
+const root=new URL('../../../',import.meta.url),read=p=>readFileSync(new URL(p,root),'utf8');
+const dependencies=loadDeriveDependencyProof({manifest:read('Cargo.toml'),lock:read('Cargo.lock')});
+test('original complete schema wrapper follows private definition-site serde_json reexport and full recursive JSON rules',()=>{
+ const source='schemars::json_schema!({"type":"object","additionalProperties":false})',proof=proveSchemarsDataMacroNamespace({dependencies,source});assert.equal(assertSchemarsDataMacroNamespace(proof,{dependencies,source}),proof);assert.equal(proof.noUnprovedNestedBangCalls,true);assert.equal(proof.callerMacroOwnerResolved,false);assert.equal(proof.namespaceAuthority,false);assert.equal(proof.generatedImplBehavior,false);assert.ok(proof.calls.some(row=>row.target==='schemars::json_schema'));assert.ok(proof.calls.some(row=>row.target==='serde_json::json'));assert.ok(proof.calls.filter(row=>row.target==='serde_json::json_internal').length>2);assert.ok(proof.calls.slice(1).every(row=>row.parentDigest));const internal=proof.origins.find(row=>row.name==='json_internal');assert.equal(internal.ruleCount,37);assert.equal(internal.ruleBudget,37);assert.ok(proof.origins.every(row=>row.header.sourceVerified&&row.header.attributes.every(attribute=>['doc','macro_export'].includes(attribute.tokens[0].text))));assert.ok(proof.sourceReexports.private.sourceSha256);assert.ok(proof.attributes.every(row=>row.name==='allow'&&row.arguments.join()==='unused_imports'));
+});
+test('actual optional-default specialization retains original local trait/impl expression without serializer authority',()=>{
+ const proof=proveSchemarsDataMacroNamespace({dependencies,source:'schemars::_schemars_maybe_to_value!(default)'});assert.equal(proof.target,'schemars::_schemars_maybe_to_value');assert.equal(proof.expansionCount,1);assert.equal(proof.namespaceAuthority,false);assert.equal(proof.generatedImplBehavior,false);assert.equal(proof.calls[0].target,'schemars::_schemars_maybe_to_value');
+});
+test('unknown nested expressions arrays aliases malformed keys and non-scalar source retain refusals',()=>{
+ for(const source of ['json_schema!({"type":"object"})','other::json_schema!({"type":"object"})','schemars::json_schema!({"type":helper!()})','schemars::json_schema!({"type":helper()})','schemars::json_schema!({"enum":[]})','schemars::json_schema!({key:"object"})','schemars::json_schema!({"type":null})','schemars::_schemars_maybe_to_value!(p::default)','schemars::_schemars_maybe_to_value!(self)','schemars::_schemars_maybe_to_value!(helper!())','schemars::json_schema!({"type":"\ud800"})'])assert.throws(()=>proveSchemarsDataMacroNamespace({dependencies,source}),undefined,source);
+});
+test('copied/refrozen/foreign candidates or forged dependency accessors do not select actual private source or expansion lineage',()=>{
+ const source='schemars::json_schema!({"type":"object"})',proof=proveSchemarsDataMacroNamespace({dependencies,source});for(const fake of [structuredClone(proof),Object.freeze(structuredClone(proof)),new Proxy(proof,{})]){assert.equal(isSchemarsDataMacroNamespace(fake),false);assert.throws(()=>assertSchemarsDataMacroNamespace(fake,{dependencies,source}),/Unsealed/);}assert.throws(()=>assertSchemarsDataMacroNamespace(proof,{dependencies,source:source+' '}));assert.throws(()=>proveSchemarsDataMacroNamespace({dependencies:structuredClone(dependencies),source}));let traps=0;assert.throws(()=>proveSchemarsDataMacroNamespace({dependencies:Object.defineProperty({},'digest',{get(){traps++;throw Error('getter');}}),source}));assert.equal(traps,0);assert.throws(()=>proof.calls.push({}),TypeError);
+});

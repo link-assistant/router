@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "7c9199fcbca32288259202f27f4f7c5e02c75a61",
+  "scope": "Complete unchanged pre-258 helper and genuine repository license; test oracle only, no source authority.",
+  "sources": [
+    {
+      "path": "tools/translation/private-data-freeze.mjs",
+      "storedPath": "raw/private-data-freeze.mjs",
+      "bytes": 6431,
+      "sha256": "d191234261a8c8e48d4ef06b18445b9a49b0c09cb9398698bac7c72813d03c8d",
+      "gitBlobSha1": "d5445c2f489a9492091dac7393f9492d735c143f"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "raw/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "gitBlobSha1": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657"
+    }
+  ]
+}

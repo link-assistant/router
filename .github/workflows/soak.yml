@@ -36,13 +36,23 @@ permissions:
 
 concurrency:
   group: soak-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   soak:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Soak (${{ matrix.os }})
     strategy:
       fail-fast: false

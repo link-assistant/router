@@ -1,0 +1,191 @@
+{
+  "schema": "router-759-complete-bounded-corpus-attempt-archive-v1",
+  "producer": {
+    "schema": "bounded-coherent-corpus-producer-v3",
+    "mode": "canonical",
+    "sourceHead": "be19f5028eae1d0cc72fd05a3c9f4d2ce6098bbc",
+    "headAfter": "be19f5028eae1d0cc72fd05a3c9f4d2ce6098bbc",
+    "argv": [
+      "node",
+      "scripts/translate-router.mjs",
+      "--progress"
+    ],
+    "capSeconds": 1200,
+    "startedUtc": "2026-10-12T22:46:17.746910+00:00",
+    "elapsedSeconds": 750.238,
+    "elapsedScope": "Direct waited producer including bounded termination; excludes post-input snapshot",
+    "wrapperElapsedSeconds": 750.537,
+    "exitCode": 1,
+    "timedOut": false,
+    "sourceInputFiles": 1812,
+    "sourceInputSha256": "9edbbc6b446b57f424cab2fa08ecd71ccd1ad71db1709bc11aa1a9de6e7ceb6e",
+    "sourceInputsUnchanged": true,
+    "inputReceipt": "/tmp/router-759-cohort-v3-canonical-be19f5028-inputs.json",
+    "freeBytesBefore": 31611441152,
+    "freeBytesAfter": 31222218752,
+    "statusAfter": "",
+    "stdout": {
+      "path": "/tmp/router-759-cohort-v3-canonical-be19f5028.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stderr": {
+      "path": "/tmp/router-759-cohort-v3-canonical-be19f5028-time.log",
+      "bytes": 546665,
+      "sha256": "3acb867153dd287f8e401b48154754269432c074871a5cec22f64b7a1fd09a01"
+    },
+    "rustExecuted": false,
+    "harnessSha256": "c6cba8fa9c639467353f8de9e874596fae0f1e6bdb423298fedc9be8c304ab43",
+    "resource": {
+      "scope": "Python waited producer children; max RSS is maximum recorded child, not aggregate concurrent memory or peak footprint",
+      "userCpuSeconds": 815.854979,
+      "systemCpuSeconds": 69.380435,
+      "maxRss": 2893217792,
+      "maxRssUnits": "bytes on Darwin; KiB on Linux",
+      "platform": "Darwin"
+    },
+    "progress": {
+      "enabled": true,
+      "events": 1894,
+      "first": {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "corpus",
+        "state": "start",
+        "elapsedMilliseconds": 0
+      },
+      "last": {
+        "schema": "rust-meta-translation-progress-v1",
+        "stage": "standalone",
+        "state": "advance",
+        "source": "scripts/get-version.rs",
+        "completed": 64,
+        "total": 804,
+        "elapsedMilliseconds": 737615
+      },
+      "completeRawRetained": true
+    }
+  },
+  "comparison": {
+    "schema": "router-759-complete-bounded-original-source-corpus-comparison-v1",
+    "previousHead": "ae51ec45f889bc57e9b777190f8d709cef6387d3",
+    "sourceHead": "be19f5028eae1d0cc72fd05a3c9f4d2ce6098bbc",
+    "originalRustAndCargoCompleteBytesIdentical": true,
+    "sameCapSeconds": true,
+    "previousTimedOut": true,
+    "currentTimedOut": false,
+    "currentExitCode": 1,
+    "previousElapsedSeconds": 1200.149,
+    "currentElapsedSeconds": 750.238,
+    "currentRefusals": 1392,
+    "currentPhases": {
+      "declaration-types": 1122,
+      "uncollected": 15,
+      "declaration-bodies": 255
+    },
+    "currentAttemptRefusalCounts": {
+      "0": 226,
+      "1": 74,
+      "2": 3,
+      "3": 819,
+      "4": 1,
+      "5": 1,
+      "6": 248,
+      "7": 7,
+      "8": 1,
+      "9": 1,
+      "10": 1,
+      "11": 1,
+      "12": 1,
+      "13": 1,
+      "14": 1,
+      "15": 1,
+      "16": 1,
+      "17": 1,
+      "18": 1,
+      "19": 1,
+      "20": 1
+    },
+    "lastEvent": {
+      "schema": "rust-meta-translation-progress-v1",
+      "stage": "standalone",
+      "state": "advance",
+      "source": "scripts/get-version.rs",
+      "completed": 64,
+      "total": 804,
+      "elapsedMilliseconds": 737615
+    },
+    "sourceInputsUnchanged": true,
+    "runtimeParity": false,
+    "rustExecutions": 0
+  },
+  "members": [
+    {
+      "name": "router-759-cohort-v3-canonical-be19f5028.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "originalPath": "/tmp/router-759-cohort-v3-canonical-be19f5028.log"
+    },
+    {
+      "name": "router-759-cohort-v3-canonical-be19f5028-time.log",
+      "bytes": 546665,
+      "sha256": "3acb867153dd287f8e401b48154754269432c074871a5cec22f64b7a1fd09a01",
+      "originalPath": "/tmp/router-759-cohort-v3-canonical-be19f5028-time.log"
+    },
+    {
+      "name": "router-759-cohort-v3-canonical-be19f5028-inputs.json",
+      "bytes": 269080,
+      "sha256": "52fee76297871b9cef8bd43e0cbc5a27c75418cf777d646ff9f45088e90140c5",
+      "originalPath": "/tmp/router-759-cohort-v3-canonical-be19f5028-inputs.json"
+    },
+    {
+      "name": "router-759-cohort-v3-canonical-be19f5028.json",
+      "bytes": 2188,
+      "sha256": "fb335e55b53ba337fbc93ccef051f7376bac8b8e58167caa69c978e5df11fe9d",
+      "originalPath": "/tmp/router-759-cohort-v3-canonical-be19f5028.json"
+    },
+    {
+      "name": "router-759-bounded-cohort-producer-v5.py",
+      "bytes": 4663,
+      "sha256": "c6cba8fa9c639467353f8de9e874596fae0f1e6bdb423298fedc9be8c304ab43",
+      "originalPath": "/tmp/router-759-bounded-cohort-producer-v5.py"
+    },
+    {
+      "name": "router-759-coherent-repair-seven-direct-git-v1.json",
+      "bytes": 194,
+      "sha256": "9309eca514f0917032fdcc6a3735df5130c004f180cb7c644b0cf383c7c30e72",
+      "originalPath": "/tmp/router-759-coherent-repair-seven-direct-git-v1.json"
+    },
+    {
+      "name": "router-759-ae51ec-native-requirements-source-only-v1.json",
+      "bytes": 3540,
+      "sha256": "8ccc009f1e938cc5837e97449d5d9cbf9a1b77adf800368ffc0d6aea08c471c8",
+      "originalPath": "/tmp/router-759-ae51ec-native-requirements-source-only-v1.json"
+    },
+    {
+      "name": "router-759-ae51ec-structural-method-source-review-v1.json",
+      "bytes": 10038,
+      "sha256": "13ecb85620b877dbc71a838e4643a5f5232570481563a08d35e5569b199c84e2",
+      "originalPath": "/tmp/router-759-ae51ec-structural-method-source-review-v1.json"
+    },
+    {
+      "name": "router-759-canonical-be19f5-complete-comparison-v1.json",
+      "bytes": 1204,
+      "sha256": "6df882484ed0a6ecda9bcb3cd3a22de4bdaca700e41d43c9645690bda1c98c16",
+      "originalPath": "/tmp/router-759-canonical-be19f5-complete-comparison-v1.json"
+    },
+    {
+      "name": "router-759-canonical-be19f5-full-archive-v1.py",
+      "bytes": 4270,
+      "sha256": "f7022e3c3218ea079cbb6a732d4456442338aea8f432e449c63019c0ba0edd51",
+      "originalPath": "/tmp/router-759-canonical-be19f5-full-archive-v1.py"
+    }
+  ],
+  "archive": {
+    "path": "docs/case-studies/issue-759/current/canonical-be19f5-structural-signatures/complete-attempt.tar.xz",
+    "bytes": 113196,
+    "sha256": "e106a2ddbfc639cee2de73000e301171bb53b98d94d0841e28cf74b31db8aaea"
+  },
+  "sourceReviewsAreUnrun": true,
+  "runtimeParity": false,
+  "directGitFullBytesVerification": "required after commit before original cleanup"
+}

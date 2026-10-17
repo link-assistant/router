@@ -1,0 +1,268 @@
+{
+  "schema": "serde-alias-default-staged-initial-validation-v1",
+  "artifactHead": "2021ff3468c3bbcaf704a5d0fc1d7e2063d40836",
+  "producer": {
+    "head": "efacfdcc92ef9ee122437b8ff7acce0f986cb35e",
+    "command": [
+      "node",
+      "tools/translation/serialization-schema/bulk.mjs",
+      "--write"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.042,
+    "unchanged_all_original_inputs": true,
+    "only_expected_mutation_paths": true,
+    "all_four_artifacts_changed": true,
+    "outputs": [
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.meta.json",
+        "bytes": 3951005,
+        "sha256": "0bcbc32192a155974a0c977fcf503fcbf333871661f8261a4b4387968ac6cf21"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.mjs",
+        "bytes": 63566,
+        "sha256": "6a773cdac2b547097d7e73f50925bb65d8f40bafb2c431d5d530872b0cc00c6a"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization.ts",
+        "bytes": 64286,
+        "sha256": "81b5d990fdf225cfec24ff325e5a3a1c2aa6e07af070bf82de8d83f05f47365d"
+      },
+      {
+        "file": "tools/translation/serialization-schema/bulk-generated/router-serialization-inventory.json",
+        "bytes": 908060,
+        "sha256": "bcc08eb2d8827fca2e827f5151084fa77bd99c02aa639130c45d84836994cf54"
+      }
+    ],
+    "temporary_bytes_before_cleanup": 491,
+    "temporary_entries_before_cleanup": [
+      "xcrun_db"
+    ]
+  },
+  "validation": {
+    "results": [
+      {
+        "engine": "artifact-check",
+        "command": [
+          "node",
+          "tools/translation/serialization-schema/bulk.mjs",
+          "--check"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 3.969,
+        "temporary_bytes_before_cleanup": 491,
+        "remaining_temporary_entries_before_cleanup": [
+          "xcrun_db"
+        ]
+      },
+      {
+        "engine": "descriptor-tsc",
+        "command": [
+          "node",
+          "tools/translation/serialization-schema/check-bulk-typescript.mjs"
+        ],
+        "exit_code": 1,
+        "timed_out": false,
+        "wall_seconds": 0.042,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      },
+      {
+        "engine": "node",
+        "command": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "tools/translation/serialization-schema/bulk.test.mjs",
+          "tools/translation/serialization-schema/serialization-schema.test.mjs",
+          "tools/translation/serialization-schema/scalars-direction.test.mjs",
+          "tools/translation/serialization-schema/aliases-defaults.test.mjs",
+          "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+          "experiments/issue-759/acceptance/affinity-file.test.mjs",
+          "experiments/issue-759/acceptance/provider-responses.test.mjs",
+          "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+          "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+          "packages/javascript/test/native-core.test.mjs",
+          "packages/javascript/test/native-service.test.mjs",
+          "packages/javascript/test/native-server.test.mjs",
+          "packages/javascript/test/native-storage.test.mjs"
+        ],
+        "exit_code": 1,
+        "timed_out": false,
+        "wall_seconds": 28.179,
+        "temporary_bytes_before_cleanup": 491,
+        "remaining_temporary_entries_before_cleanup": [
+          "xcrun_db"
+        ]
+      },
+      {
+        "engine": "bun",
+        "command": [
+          "bun",
+          "test",
+          "--timeout",
+          "15000",
+          "tools/translation/serialization-schema/bulk.test.mjs",
+          "tools/translation/serialization-schema/serialization-schema.test.mjs",
+          "tools/translation/serialization-schema/scalars-direction.test.mjs",
+          "tools/translation/serialization-schema/aliases-defaults.test.mjs",
+          "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+          "experiments/issue-759/acceptance/affinity-file.test.mjs",
+          "experiments/issue-759/acceptance/provider-responses.test.mjs",
+          "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+          "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+          "packages/javascript/test/native-core.test.mjs",
+          "packages/javascript/test/native-service.test.mjs",
+          "packages/javascript/test/native-server.test.mjs",
+          "packages/javascript/test/native-storage.test.mjs"
+        ],
+        "exit_code": 1,
+        "timed_out": false,
+        "wall_seconds": 17.738,
+        "temporary_bytes_before_cleanup": 491,
+        "remaining_temporary_entries_before_cleanup": [
+          "xcrun_db"
+        ]
+      }
+    ],
+    "immutableInputCount": 1319,
+    "immutableInputs": true,
+    "beforeStatus": "?? packages/javascript/node_modules",
+    "afterStatus": "?? packages/javascript/node_modules",
+    "nodePassed": 170,
+    "bunPassed": 170,
+    "authoredCasesPerEngine": 213,
+    "failedPerEngine": 43,
+    "skippedPerEngine": 0,
+    "failuresBothEngines": [
+      "stored provider JSON with a leading BOM refuses identity capture but retains original Location fallback bytes",
+      "Conversations BOM documents keep create refusal and opaque item-list relay without capturing IDs",
+      "literal BOM inside provider JSON ID is preserved while unquoted BOM SSE payloads wait for a later usable identity",
+      "conversation create/PATCH/items preserve opaque bytes, encoded IDs, query, owner and provider identity",
+      "item lookup rejects missing parent, another parent, another destination and ambiguous IDs before upstream",
+      "successful item lists relay malformed/non-array documents unchanged and capture only usable string IDs",
+      "child recording follows original sequential transactions when a later ID is invalid",
+      "parent and item-list gone results retire only children matching the original owner and destination",
+      "item gone/deletion retires its exact binding while preserving its parent and sibling resources",
+      "failed child cleanup is ignored for missing conversations but propagates after successful parent DELETE",
+      "conversation response read limit uses the request limit and leaves bindings untouched on failed DELETE bodies",
+      "original Conversations method policy rejects HEAD after owned lookup while public dispatch strips the error body",
+      "real core keeps persisted conversation destination after default change and ignores opaque model metadata",
+      "late parent gone result keeps a replacement persistent destination and its new children",
+      "Qwen Conversations keeps original unsupported400 and matching IDs remain isolated by service namespace",
+      "successful parent DELETE preserves upstream status/body and removes only its original destination children",
+      "child retirement errors are ignored for upstream missing but surfaced after successful item deletion",
+      "create identity and storage failures follow original502/503 policies without exposing successful resources",
+      "real core resolves recorded logical primary for implicit Codex conversations and Responses continuations",
+      "HTTP SSE capture skips unusable lines, prioritizes root IDs and persists before replaying exact Unicode bytes",
+      "stored JSON capture uses query-free trailing-slash Location fallback and replays malformed provider bytes",
+      "provider background state, owner-scoped retrieval, input cursors and cancellation preserve upstream contracts",
+      "known continuation stays on its exact provider after routing order changes; legacy IDs remain upstream-owned",
+      "malformed continuation selectors and non-JSON Responses creates never dispatch",
+      "Responses-only continuation fields do not bind unrelated image resource requests",
+      "every Responses lifecycle operation normalizes upstream gone state and retires only that owner binding",
+      "late gone response cannot delete a replacement affinity to a different provider",
+      "upstream lifecycle errors preserve the binding while successful deletion retires it and preserves its body",
+      "a token with the same principal cannot continue or control another pinned subscription account",
+      "input-token helper requires response and conversation references to share one exact provider",
+      "real core reloads persisted Responses affinity after the default changes without redirecting its authority",
+      "a truncated successful DELETE body leaves its exact response binding available for retry",
+      "late gone response preserves a recreated persistent record on the same destination with a new lifetime",
+      "upstream 404 and 410 remain exact response-not-found when affinity retirement fails",
+      "successful provider DELETE reports exact affinity-storage error when retirement cannot commit",
+      "public Web HEAD forwards the original method and preserves lifecycle status and headers with empty bodies",
+      "network HEAD reaches the provider as HEAD and exposes no lifecycle body through the public dispatcher",
+      "local upstream HTTP receives selected credential and no client cookie or bearer",
+      "HTTP listener health and body bounds use Node builtins",
+      "failed listen leaves shutdown safe and permits a later retry",
+      "Codex live calls share the persisted Realtime namespace and keep foreign owners isolated",
+      "native HEAD retains upstream upgrade rejection while cancelling its actual HTTP body",
+      "opaque relay forwards actual multipart bytes/query and application headers through localhost"
+    ],
+    "allPairedFailuresAreLoopbackListenPrerequisites": true,
+    "strictTSComplete": false,
+    "strictTSFailure": "Missing exactHEAD sparse helper; not a descriptor type error",
+    "initialRetainedBeforeAnyRepair": true
+  },
+  "supportedOwners": 79,
+  "refusedOwners": 462,
+  "excludedOwners": 134,
+  "manualTraitHeadersUnproved": 170,
+  "sourceCoverageFiles": 558,
+  "outputTotalBytes": 4986917,
+  "archive": {
+    "file": "aliases-defaults-staged-initial-raws.tar.gz",
+    "bytes": 408684,
+    "sha256": "13af18f23498c2d36126f50841e01abfbbea82ab9fdcc1058919cda3dabce6e2",
+    "reopenedExactMembers": {
+      "frozen-producer-plan.json": {
+        "bytes": 2031,
+        "sha256": "d50b4725cfedf7b0d4fa10695d06b574ab5314cda45be4421fde609dcb9e9939"
+      },
+      "frozen-validation-plan.json": {
+        "bytes": 2031,
+        "sha256": "d50b4725cfedf7b0d4fa10695d06b574ab5314cda45be4421fde609dcb9e9939"
+      },
+      "initial-hydration.json": {
+        "bytes": 157501,
+        "sha256": "eb2b0053729d1a8d3f6799e5349ed64c1fbf43a1fd29b3cbdee0c89458dceb8f"
+      },
+      "missing-prerequisite-review.json": {
+        "bytes": 743,
+        "sha256": "b501101e888f9823040a70192799491af05f7ce867576ebb965a5efbc0742afe"
+      },
+      "producer/harness.py": {
+        "bytes": 4633,
+        "sha256": "daea335869600254051358a458b4c553623f7fe6c3d6cc78bcf997599eec7dc3"
+      },
+      "producer/inputs.json": {
+        "bytes": 147130,
+        "sha256": "397c46186e9936fe0430617c75055aa10a6b9a3007a267f943d517ce969412c7"
+      },
+      "producer/producer.log": {
+        "bytes": 498,
+        "sha256": "d3291d2c6190b44f9246d373d050b35fdf70bd0862af15ea11fa5ac528aa68b3"
+      },
+      "producer/receipt.json": {
+        "bytes": 295323,
+        "sha256": "f38d57268c271b787de912a8c2a0942845a7144c6ba2e2e9422bc0b0d36092f7"
+      },
+      "validation/artifact-check.log": {
+        "bytes": 499,
+        "sha256": "048e24487f5c638b4d0a9e9a5ac7ef44bccac90eaf0e80887da709ed93580920"
+      },
+      "validation/bun.log": {
+        "bytes": 81141,
+        "sha256": "267424f396f26936d5aed669c66f87a90c4ce5dbae6849c28fcc698069e8571e"
+      },
+      "validation/descriptor-tsc.log": {
+        "bytes": 1214,
+        "sha256": "740db9d8873ef601427c6179bb7e482368db0fa5d72281629830fdca1c8ab75f"
+      },
+      "validation/harness.py": {
+        "bytes": 6745,
+        "sha256": "afbd5281c186a8dc094755c5e278875fe52deacfd762b745ecb781d28455969f"
+      },
+      "validation/inputs.json": {
+        "bytes": 161540,
+        "sha256": "bf301222990aabdafeaa9d7edcce5792a72c59803b267735ae8480791186038c"
+      },
+      "validation/node.log": {
+        "bytes": 72073,
+        "sha256": "cdedb90c3693da7a7869571d575265c512dc0621c4359948c62ac6f993068880"
+      },
+      "validation/receipt.json": {
+        "bytes": 324993,
+        "sha256": "346b169bb96ffa447953ea38d4710946494c04ce79dd665294613b71a02f59f9"
+      }
+    }
+  },
+  "engineSlotReleased": true,
+  "producerRepeatPerformed": false,
+  "runtimeSourceRepairsPerformed": false,
+  "productionImportsChanged": false,
+  "runtimeAuthority": false,
+  "generatedTraitBehavior": false
+}

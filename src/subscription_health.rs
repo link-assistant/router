@@ -27,7 +27,7 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
         .iter()
         .filter(|health| health.is_degraded())
         .map(|health| {
-            serde_json::json!({
+            crate::translation_core::json!({
                 "provider": health.provider.as_str(),
                 "reason": health.summary,
             })
@@ -47,13 +47,13 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
         Some(true) => healthy.push("z.ai"),
         Some(false) => degraded.push(crate::zai_coding_plan::recorded_exhaustion(&state).map_or_else(
             || {
-                serde_json::json!({
+                crate::translation_core::json!({
                     "provider": "z.ai",
                     "reason": "the Coding Plan credential was rejected upstream and needs replacement",
                 })
             },
             |exhaustion| {
-                serde_json::json!({
+                crate::translation_core::json!({
                     "provider": "z.ai",
                     "state": "exhausted",
                     "reason": exhaustion.summary(),
@@ -70,7 +70,7 @@ pub async fn subscription_health(State(state): State<AppState>) -> impl IntoResp
     };
     (
         status,
-        axum::Json(serde_json::json!({
+        axum::Json(crate::translation_core::json!({
             "status": if degraded.is_empty() { "ok" } else { "degraded" },
             "starting_providers": starting,
             "healthy_providers": healthy,

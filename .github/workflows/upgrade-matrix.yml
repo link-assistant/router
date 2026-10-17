@@ -36,13 +36,23 @@ permissions:
 
 concurrency:
   group: upgrade-matrix-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   releases:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Pick releases
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -61,6 +71,8 @@ jobs:
           echo "tags=$tags" >> "$GITHUB_OUTPUT"
 
   build:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Build router
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -93,8 +105,9 @@ jobs:
           retention-days: 1
 
   upgrade:
+    if: needs.javascript.result == 'success'
     name: Upgrade from ${{ matrix.tag }}
-    needs: [releases, build]
+    needs: [javascript, releases, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:

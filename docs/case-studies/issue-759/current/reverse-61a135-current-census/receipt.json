@@ -1,0 +1,70 @@
+{
+  "schema": "router-759-complete-reverse-inventory-refresh-v1",
+  "beforeHead": "61a13545c1951e6f63b767360dcb3474a3ad225a",
+  "nativeCensus": {
+    "headBefore": "61a13545c1951e6f63b767360dcb3474a3ad225a",
+    "nativeModules": 52,
+    "sourceItems": 779,
+    "translatedItems": 16,
+    "unsupportedItems": 763,
+    "diagnosticKinds": {
+      "no-definition": 238,
+      "unsupported": 160,
+      "untyped": 190,
+      "class": 28,
+      "collection": 22,
+      "statement": 13,
+      "async": 101,
+      "name": 11
+    },
+    "allOriginalSourceHashesMatch": true,
+    "currentNativeSourceSetComplete": true,
+    "RustAndTypeScriptExecutableArtifactsUnchanged": true,
+    "wholeNativeImplementationTranslated": false,
+    "RustExecutions": 0
+  },
+  "members": [
+    {
+      "name": "router-759-61a135-reverse-write-v1.raw.log",
+      "bytes": 65,
+      "sha256": "42bf4725e73530328c1b2a311430ebfb9bfc33f8590ef7d8eeb0232f5e14985d",
+      "originalPath": "/tmp/router-759-61a135-reverse-write-v1.raw.log"
+    },
+    {
+      "name": "router-759-61a135-reverse-write-v1.json",
+      "bytes": 443,
+      "sha256": "b2fd22e008b23de69fe57f52df4757a6416742856055b9ce9078e43a25cb4dd0",
+      "originalPath": "/tmp/router-759-61a135-reverse-write-v1.json"
+    },
+    {
+      "name": "router-759-61a135-reverse-check-v1.raw.log",
+      "bytes": 75,
+      "sha256": "13a606034e9c384b84a189fce3804fab0d9e27fd01063e890f00d4c5cd42aa25",
+      "originalPath": "/tmp/router-759-61a135-reverse-check-v1.raw.log"
+    },
+    {
+      "name": "router-759-61a135-reverse-check-v1.json",
+      "bytes": 443,
+      "sha256": "0e4962d58279acb9a158ff1efc0bc7927e61a225420bb5239827aebea216bf4c",
+      "originalPath": "/tmp/router-759-61a135-reverse-check-v1.json"
+    },
+    {
+      "name": "router-759-61a135-reverse-complete-census-v1.json",
+      "bytes": 561,
+      "sha256": "b79e9a1c1dcce60427cc29fa0b17027a8635eb79a8b789cdb08b1cc113ddee79",
+      "originalPath": "/tmp/router-759-61a135-reverse-complete-census-v1.json"
+    },
+    {
+      "name": "router-759-canonical-fe9bf5-direct-git-v1.json",
+      "bytes": 413960,
+      "sha256": "09d10966706864c0b218f1863743387c51ff73af9127b394cc4f090ebfb74801",
+      "originalPath": "/tmp/router-759-canonical-fe9bf5-direct-git-v1.json"
+    }
+  ],
+  "archive": {
+    "path": "docs/case-studies/issue-759/current/reverse-61a135-current-census/complete-refresh.tar.xz",
+    "bytes": 22980,
+    "sha256": "1c118b96f0eb14e9f221720c0d7cbf8696506e7f7e29091334151d28de13e2d4"
+  },
+  "directGitFullBytesVerification": "required after commit before originals cleanup"
+}

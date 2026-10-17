@@ -1,0 +1,110 @@
+[
+  {
+    "id": 112507927471,
+    "run_id": 37533199513,
+    "workflow_name": "Coding Ladder",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37533199513",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaMf67rw",
+    "head_sha": "26a178ad4e5edee58a82cbca5c1fe775a443f89c",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112507927471",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37533199513/job/112507927471",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-06T21:21:43Z",
+    "started_at": "2026-10-06T21:21:53Z",
+    "completed_at": "2026-10-06T21:28:26Z",
+    "name": "130-task coding ladder",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-06T21:21:54Z",
+        "completed_at": "2026-10-06T21:21:55Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-06T21:21:55Z",
+        "completed_at": "2026-10-06T21:22:07Z"
+      },
+      {
+        "name": "Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "number": 3,
+        "started_at": "2026-10-06T21:22:07Z",
+        "completed_at": "2026-10-06T21:28:22Z"
+      },
+      {
+        "name": "Install rust-script",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 4,
+        "started_at": "2026-10-06T21:28:22Z",
+        "completed_at": "2026-10-06T21:28:22Z"
+      },
+      {
+        "name": "Measure all 130 coding tasks",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 5,
+        "started_at": "2026-10-06T21:28:22Z",
+        "completed_at": "2026-10-06T21:28:22Z"
+      },
+      {
+        "name": "Enforce the recorded floor",
+        "status": "completed",
+        "conclusion": "skipped",
+        "number": 6,
+        "started_at": "2026-10-06T21:28:22Z",
+        "completed_at": "2026-10-06T21:28:22Z"
+      },
+      {
+        "name": "Retain the measured evidence",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-10-06T21:28:22Z",
+        "completed_at": "2026-10-06T21:28:22Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/formal-ai-binary",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 13,
+        "started_at": "2026-10-06T21:28:22Z",
+        "completed_at": "2026-10-06T21:28:22Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 14,
+        "started_at": "2026-10-06T21:28:22Z",
+        "completed_at": "2026-10-06T21:28:23Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15,
+        "started_at": "2026-10-06T21:28:23Z",
+        "completed_at": "2026-10-06T21:28:23Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112507927471",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000146066,
+    "runner_name": "GitHub Actions 1000146066",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

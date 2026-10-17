@@ -1,0 +1,52 @@
+{
+  "schema": "shared-completed-freeze-before-v1",
+  "commit": "61ce7dd382ccc6273b6163034fc2e5671619371f",
+  "sources": [
+    {
+      "path": "tools/translation/private-data-freeze.mjs",
+      "storedPath": "raw/private-data-freeze.mjs",
+      "bytes": 4207,
+      "sha256": "08e7d3016f1737a72dea3ac2eef6855abc6dbc92a262ff0965edc59de5334b30",
+      "commit": "61ce7dd382ccc6273b6163034fc2e5671619371f",
+      "gitBlob": "52baf831d3e8e986ff819433bf0326392e04c5f6",
+      "mode": "100644"
+    },
+    {
+      "path": "tools/translation/builtin-derive-bang-footprints.mjs",
+      "storedPath": "raw/builtin-derive-bang-footprints.mjs",
+      "bytes": 34879,
+      "sha256": "ff740fef6fa539f3b7747059e157b00cccf639d8cda7cad6d956f6275c95bedb",
+      "commit": "61ce7dd382ccc6273b6163034fc2e5671619371f",
+      "gitBlob": "c92ff7f38ee775370882b7bfa2345c7c6c39e275",
+      "mode": "100644"
+    },
+    {
+      "path": "tools/translation/builtin-debug-ast-route.mjs",
+      "storedPath": "raw/builtin-debug-ast-route.mjs",
+      "bytes": 39128,
+      "sha256": "94c0927b3351cb8d991e0d3aeb326077ca507366220437fa728a629e32c048ef",
+      "commit": "61ce7dd382ccc6273b6163034fc2e5671619371f",
+      "gitBlob": "f59c6c1c70afe30eac536231320b8ae82cd0d37c",
+      "mode": "100644"
+    },
+    {
+      "path": "tools/translation/builtin-partial-eq-ast-route.mjs",
+      "storedPath": "raw/builtin-partial-eq-ast-route.mjs",
+      "bytes": 36656,
+      "sha256": "2a852b34fe54d6b78fb63873f05009116beb0680fccad80923e83c622e915cda",
+      "commit": "61ce7dd382ccc6273b6163034fc2e5671619371f",
+      "gitBlob": "e52cf5cd01599dd6f62f4f7dee1142951dee9540",
+      "mode": "100644"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "raw/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "commit": "61ce7dd382ccc6273b6163034fc2e5671619371f",
+      "gitBlob": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657",
+      "mode": "100644"
+    }
+  ],
+  "scope": "Complete helper and three original consumer modules; all physical test copies retain imports/module-URL relocation records and exact legacy closures."
+}

@@ -1,0 +1,2 @@
+### Fixed
+- Regenerate the complete serialization registries through the actual JavaScript producers after trait-object source-grammar repairs. Restore RecoveryRecord and RefreshResponse: 88 supported layouts, 453 refusals and 134 exclusions, with no lost owners. All previous 86 printed descriptors and the seven native affinity descriptors retain their values; all 88 JavaScript and TypeScript projections agree. This is data-layout coverage, not complete serde behavior or Router runtime parity. Rust remains unrun locally.

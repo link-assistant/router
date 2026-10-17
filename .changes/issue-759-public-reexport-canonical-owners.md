@@ -1,0 +1,1 @@
+Resolve checked imports and public reexports directly to their proven canonical owners, including owners in private modules. Check new written suffixes from that owner and retain explicit private, unresolved and ambiguous route refusals. The repair applies to Rust type, value and module aliases through the shared meta-language translator for JavaScript and TypeScript.

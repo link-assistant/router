@@ -1,0 +1,1 @@
+Full original Rust1.89 DoubleEndedIterator and Map source plus reused full licensed Split/Pattern<char> sources. Only fresh scalar-char Split with checked pure borrowed-str trim maps supports rfind; no arbitrary iterator, substring ReverseSearcher, stored/mutable cursor or const authority. All authored cases remain unrun.

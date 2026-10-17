@@ -8,7 +8,7 @@
 use axum::body::Body;
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
-use serde_json::json;
+
 
 /// Runtime configuration for MPP charge challenges.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -49,11 +49,11 @@ pub fn has_payment_credential(headers: &axum::http::HeaderMap) -> bool {
 
 /// Build an MPP `402 Payment Required` response for an unpaid endpoint.
 #[must_use]
-pub fn payment_required(config: &MppConfig, path: &str) -> Response {
+pub fn payment_required(config: &MppConfig, path: &crate::translation_core::Str) -> Response {
     let challenge = challenge_header(config, path);
     let mut resp = (
         StatusCode::PAYMENT_REQUIRED,
-        axum::Json(json!({
+        axum::Json(crate::translation_core::json!({
             "type": "error",
             "error": {
                 "type": "payment_required",
@@ -78,7 +78,7 @@ pub fn payment_required(config: &MppConfig, path: &str) -> Response {
     resp
 }
 
-fn challenge_header(config: &MppConfig, path: &str) -> String {
+fn challenge_header(config: &MppConfig, path: &crate::translation_core::Str) -> String {
     let mut params = vec![
         ("protocol", "mpp".to_string()),
         ("intent", "charge".to_string()),
@@ -99,7 +99,7 @@ fn challenge_header(config: &MppConfig, path: &str) -> String {
     format!("Payment {encoded}")
 }
 
-fn escape_header_value(value: &str) -> String {
+fn escape_header_value(value: &crate::translation_core::Str) -> String {
     value.replace('\\', r"\\").replace('"', r#"\""#)
 }
 
@@ -111,7 +111,7 @@ fn escape_header_value(value: &str) -> String {
 #[must_use]
 pub fn unsupported_payment_verification() -> Response {
     let mut resp = Response::new(Body::from(
-        json!({
+        crate::translation_core::json!({
             "type": "error",
             "error": {
                 "type": "payment_verification_unavailable",

@@ -1,0 +1,83 @@
+[
+  {
+    "id": 113528298848,
+    "run_id": 37840425615,
+    "workflow_name": "Benchmark Corpus Gate",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37840425615",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAabtBdYA",
+    "head_sha": "cadee1db0b45c543eeed04c1690bbb7b57aa43de",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113528298848",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37840425615/job/113528298848",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T20:34:42Z",
+    "started_at": "2026-10-08T20:34:42Z",
+    "completed_at": "2026-10-08T20:35:33Z",
+    "name": "Build the corpus gate binary",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113528298848",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 0,
+    "runner_name": "",
+    "runner_group_id": 0,
+    "runner_group_name": ""
+  },
+  {
+    "id": 113528659474,
+    "run_id": 37840425615,
+    "workflow_name": "Benchmark Corpus Gate",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37840425615",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAabtXeEg",
+    "head_sha": "cadee1db0b45c543eeed04c1690bbb7b57aa43de",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113528659474",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37840425615/job/113528659474",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T20:35:34Z",
+    "started_at": "2026-10-08T20:35:34Z",
+    "completed_at": "2026-10-08T20:35:33Z",
+    "name": "Corpus shard ${{ matrix.shard }}",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113528659474",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": null,
+    "runner_name": null,
+    "runner_group_id": null,
+    "runner_group_name": null
+  },
+  {
+    "id": 113528661242,
+    "run_id": 37840425615,
+    "workflow_name": "Benchmark Corpus Gate",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37840425615",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAabtXk-g",
+    "head_sha": "cadee1db0b45c543eeed04c1690bbb7b57aa43de",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113528661242",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37840425615/job/113528661242",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-08T20:35:34Z",
+    "started_at": "2026-10-08T20:35:34Z",
+    "completed_at": "2026-10-08T20:35:34Z",
+    "name": "no benchmark prompt reaches the unknown opener (all shards)",
+    "steps": [],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113528661242",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": null,
+    "runner_name": null,
+    "runner_group_id": null,
+    "runner_group_name": null
+  }
+]

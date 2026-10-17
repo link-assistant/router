@@ -1,0 +1,5 @@
+# Keep intentional native oracle operations under CI lint checks
+
+A source-only review of the recent JSON/Option Rust oracle tests found no concrete move, borrow or API-signature defect. The workflow enables Clippy all/pedantic/nursery under `RUSTFLAGS=-Dwarnings`. Narrow function-local allowances preserve intentional lazy constant-error calls, the original logical interpolation expression and the explicitly expanded optional default branch; replacing those operations with lint suggestions would remove the syntax being witnessed. The unrelated input-only key lifetime is elided while the required receiver/output lifetime remains named.
+
+All test functions, input cases, expressions and assertions are retained; application Rust, generated sources and Cargo lint policy are unchanged. The current error-flow oracle, including the separately added nested-return cases, is unchanged. This is a source-predicted CI lint cleanup only: no Rust tool, Clippy, formatter, build or test was run by the worker, and it does not qualify the complete Rust gate.

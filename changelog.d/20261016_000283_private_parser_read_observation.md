@@ -1,0 +1,7 @@
+Private parser read observation and foreign-value fixtures
+
+Source-only repair: each private source read now selects the genuine builtin filesystem object's current own-data `readSync` function, refuses accessors and proxies without invoking them, and calls through captured apply with the original undefined receiver and five arguments. Actual Node 20.19.4 and Bun 1.4.3 observations showed that Bun retains its old named ESM binding after `syncBuiltinESMExports`. All original source/hash/read/EOF/descriptor/path checks and limits remain; installed read observers are observed on both runtimes rather than silently bypassed.
+
+The ingress fixture separates an ordinary exact-order descriptor clone from a nonproxy callable with every stock own key, descriptor and parent. Node retains the exact callable order assertion; Bun records and asserts its observed function metadata order instead of claiming a false exact-order premise. Both foreign values exercise real live and physically cold refusal, with zero unqualified callbacks. The original failed fixtures, full output streams and independent runtime observations are retained.
+
+Both existing whole eight-case files keep their deadlines, mandatory read callback counts and complete late dual-poison prefix checks. Added controls retain undefined receiver/five-argument read tapes and zero-call getter/proxy refusals, including a hash observer that changes the read operation between reads. All repairs remain UNRUN; no worker engines, local Rust, deadline/performance qualification or publication occurred.

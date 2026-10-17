@@ -1,0 +1,120 @@
+{
+  "schema": "original-standard-bang-output-inputs-v1",
+  "rust": "1.89.0",
+  "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+  "sources": [
+    {
+      "sourcePath": "compiler/rustc_builtin_macros/src/edition_panic.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_builtin_macros/src/edition_panic.rs",
+      "archive": "edition-panic.rs.gz",
+      "bytes": 2672,
+      "sha256": "a6365f0e31536f121c42b11c97d505e8f63e3abe2c6923ace3ed55080ea4c938",
+      "archiveBytes": 956,
+      "archiveSha256": "a41d55bbb1b6055d23f0d5152af5246f9bc7fc25c7a2bc9af23effe944cc9531"
+    },
+    {
+      "sourcePath": "library/core/src/panic.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/panic.rs",
+      "archive": "core-panic.rs.gz",
+      "bytes": 9556,
+      "sha256": "f7f7aebb8825202e99d71740f05ddc22fe85ce01cfc3a2ecc54b9d0ccc904760",
+      "archiveBytes": 2752,
+      "archiveSha256": "606340687c1ebf870fa857d4b9bf6bf1ea88a9887b8e1595dc9b87e85970527d"
+    },
+    {
+      "sourcePath": "library/std/src/panic.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/std/src/panic.rs",
+      "archive": "std-panic.rs.gz",
+      "bytes": 19011,
+      "sha256": "53601e29ade57911c560e37faf49c94e544314ff8b280c56704aaaebda5fd7d1",
+      "archiveBytes": 5840,
+      "archiveSha256": "78730e6a7fe38fb26524b3ce21e8f9b7de05040ad5d020a416145649411343e7"
+    },
+    {
+      "sourcePath": "library/alloc/Cargo.toml",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/Cargo.toml",
+      "archive": "alloc-Cargo.toml.gz",
+      "bytes": 1188,
+      "sha256": "d2e8625ca4301addbb3ee11fc4e944260a54f8ba178d83a133bd8cc74d7a85a9",
+      "archiveBytes": 569,
+      "archiveSha256": "8235a391592e13860fc95f5bea9904fca2356c61ac450d8353cb22defac3ade8"
+    },
+    {
+      "sourcePath": "library/alloc/src/macros.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/src/macros.rs",
+      "archive": "../json-macro/arrays/alloc-macros.rs.gz",
+      "bytes": 3982,
+      "sha256": "f493a323ef1ab77759d9a04877219e4932d7689a29bccaa8d4da7c57a8dbfac1",
+      "archiveBytes": 1655,
+      "archiveSha256": "c486e0d8d08910a089f44bc30e3d96dc84566b1e736938a75b91717d74aa3eb2",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "sourcePath": "library/alloc/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/alloc/src/lib.rs",
+      "archive": "../namespace-standard/rust-alloc-lib-1.89.0.rs.gz",
+      "bytes": 7849,
+      "sha256": "1db66400d82c953ea5300568e5fe7734edee3e60e633a42758a4ed5497b0e4c9",
+      "archiveBytes": 2936,
+      "archiveSha256": "1919fc3dae67328239368b55a46c44e232ad6d3741bc6801b14529bd085587c2",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "sourcePath": "library/core/src/macros/mod.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/core/src/macros/mod.rs",
+      "archive": "../derive/rust-core-macros-1.89.0.rs.gz",
+      "bytes": 65222,
+      "sha256": "9a950cfa3735eef653b7f9a6a4701e7b218f9876141701dac72ccb8b8e8d3862",
+      "archiveBytes": 14787,
+      "archiveSha256": "8506fde0d40b33c2336337b7282358b44f09a010434807b6e0e06d7a896ab49e",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "sourcePath": "library/std/src/macros.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/std/src/macros.rs",
+      "archive": "../format-arguments/library-std-src-macros.rs.gz",
+      "bytes": 11671,
+      "sha256": "490613d8c599b6a7d2b07573680ba37a84f863f3e55dd21f6a5327906a0796eb",
+      "archiveBytes": 3435,
+      "archiveSha256": "33228439233129e9b4953c3a7c774f6eb9226381f2145fb33ba3aff3f1634923",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "sourcePath": "library/std/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/library/std/src/lib.rs",
+      "archive": "../namespace-standard/rust-std-lib-1.89.0.rs.gz",
+      "bytes": 28184,
+      "sha256": "d070a5abc5138536e274e483181db929cc56d7a4b7a1947a11149f92b2cdc1ea",
+      "archiveBytes": 8934,
+      "archiveSha256": "d0216701dd8c129fb80a7c32ddd025de22d1420090a9fc7219384f06eecce065",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "sourcePath": "compiler/rustc_builtin_macros/src/standard_library_imports.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_builtin_macros/src/standard_library_imports.rs",
+      "archive": "../matches-source/standard-library-imports.rs.gz",
+      "bytes": 2495,
+      "sha256": "b38dc23e80f09a3d6d61fef87ce3a677e24ace3fefe7e75c7a689a84a7daddab",
+      "archiveBytes": 951,
+      "archiveSha256": "20124f5d1a3b096547fc29f8d21fb64541b9b08d77de6e43b881926b4a2cff58",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "sourcePath": "compiler/rustc_builtin_macros/src/lib.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_builtin_macros/src/lib.rs",
+      "archive": "../builtin-derive-bang/rust-1.89-compiler_rustc_builtin_macros_src_lib.rs.gz",
+      "bytes": 5277,
+      "sha256": "7af7c77b36351c3ea41e1ebb62605c2f74aeee3ee76ba9ea0b1f511356f85f07",
+      "archiveBytes": 1631,
+      "archiveSha256": "87b25549db475e3644a4f89b27348d0a15fba8dfd72338ae37d97e2095ebae0d",
+      "reusedCompleteOriginal": true
+    }
+  ],
+  "licenses": [
+    "../conditional-attributes/LICENSE-MIT",
+    "../conditional-attributes/LICENSE-APACHE"
+  ],
+  "callerOwnerResolved": false,
+  "namespaceAuthority": false,
+  "runtimeAuthority": false
+}

@@ -1,0 +1,3 @@
+# Complete historical Router fixture sources
+
+Originals: Router Git 5de1dea8b777dcd6e637758efc2c260150735af5; original fixture manifest SHA256 fc81dbdc0ddf1c650f41c41a4c44f3e30db4c28f76170f2857983f7d80c0ff67. All 15 complete production/native-test parents are retained without source substitutions. Current isolated-carrier parents: e8f9769ab986f367799226f92a592d234cbe5003. Full source CST partitions, exact selections and adoption inverses are in the content-addressed archive. Existing Router LICENSE applies. This fixture is test data, never namespace, dispatch, ownership or executable authority.

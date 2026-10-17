@@ -1,0 +1,98 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 50,
+    "start_column": null,
+    "end_line": 50,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "sccache stats - agent-cli-failure-report",
+    "message": "55% - 555 hits, 456 misses, 1 error",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 23,
+    "start_column": null,
+    "end_line": 23,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "No files were found with the provided path: /tmp/formal-ai-issue-864-evidence. No artifacts will be uploaded.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 1612,
+    "start_column": null,
+    "end_line": 1612,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Process completed with exit code 101.",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 391,
+    "start_column": null,
+    "end_line": 391,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "Failed to restore: Failed to GetCacheEntryDownloadURL: Rate limited: Failed request: (429) Too Many Requests: rate limit exceeded",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 390,
+    "start_column": null,
+    "end_line": 390,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "You've hit a rate limit, your rate limit will reset in 21 seconds",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 47,
+    "start_column": null,
+    "end_line": 47,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "Failed to restore: Failed to GetCacheEntryDownloadURL: Rate limited: Failed request: (429) Too Many Requests: rate limit exceeded",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 46,
+    "start_column": null,
+    "end_line": 46,
+    "end_column": null,
+    "annotation_level": "warning",
+    "title": "",
+    "message": "You've hit a rate limit, your rate limit will reset in 25 seconds",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/034eac299055e2a80f04e74c2cbfd36ff60394b6/.github",
+    "start_line": 1,
+    "start_column": null,
+    "end_line": 1,
+    "end_column": null,
+    "annotation_level": "notice",
+    "title": "",
+    "message": "\"The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026. For more information, see https://github.com/actions/runner-images/issues/14748\"",
+    "raw_details": ""
+  }
+]

@@ -1,0 +1,88 @@
+// GENERATED: node scripts/regenerate-js-first.mjs
+// Independently checked top-level bodies from packages/javascript/native/managed-server.mjs; source sha256=e75adfc79b0ef607e789f98f996f69580e0ecde3ea9fd80ceae10df1d79c3bdf; IR sha256=cfc83b940a258c11b70689594946bbb037f559d01c3d462d3eeac528675bea2c.
+// Refused enclosing owners remain refused. runtimeParity: false; Rust is an uncompiled projection.
+#[derive(Clone, Copy)]
+pub enum JsPayload<'a> {
+    String(&'a [u16]), Number(f64), Boolean(bool), Null, Undefined,
+    Object(&'a dyn std::any::Any), Function(&'a dyn std::any::Any),
+    BigInt(&'a dyn std::any::Any), Symbol(&'a dyn std::any::Any),
+}
+#[rustfmt::skip]
+impl<'a> JsPayload<'a> {
+    fn strict_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right,
+            (Self::Null, Self::Null) | (Self::Undefined, Self::Undefined) => true,
+            _ => false,
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub enum JsValue<'a> {
+    String(&'a str), Number(f64), Boolean(bool), Undefined,
+    Object, Function, BigInt, Symbol,
+}
+
+#[rustfmt::skip]
+impl<'a> JsValue<'a> {
+    fn type_name(self) -> &'static str {
+        match self {
+            Self::String(_) => "string", Self::Number(_) => "number",
+            Self::Boolean(_) => "boolean", Self::Undefined => "undefined",
+            Self::Object => "object", Self::Function => "function",
+            Self::BigInt => "bigint", Self::Symbol => "symbol",
+        }
+    }
+    fn as_string(self) -> &'a str { if let Self::String(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_number(self) -> f64 { if let Self::Number(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn as_boolean(self) -> bool { if let Self::Boolean(value) = self { value } else { unreachable!("checked typeof guard") } }
+    fn is_finite(self) -> bool { matches!(self, Self::Number(value) if value.is_finite()) }
+    fn is_nan(self) -> bool { matches!(self, Self::Number(value) if value.is_nan()) }
+    fn is_safe_integer(self) -> bool {
+        matches!(self, Self::Number(value) if value.is_finite() && value.fract() == 0.0 && value.abs() <= 9007199254740991.0)
+    }
+    fn same_primitive(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::String(left), Self::String(right)) => left == right,
+            (Self::Boolean(left), Self::Boolean(right)) => left == right,
+            (Self::Number(left), Self::Number(right)) => left == right || left.is_nan() && right.is_nan(),
+            _ => false,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct JsErrorProjection0 {
+    pub message: Vec<u16>,
+    pub code: String,
+}
+
+#[derive(Clone)]
+pub struct JsRecord1<'a> {
+    pub output: std::rc::Rc<std::cell::RefCell<Vec<JsPayload<'a>>>>,
+}
+
+#[rustfmt::skip]
+const ENGINE: &str = "link-assistant-router/native-managed/v1";
+
+#[rustfmt::skip]
+const MAX_STATE: f64 = 1048576.0;
+
+#[rustfmt::skip]
+fn fail(message: &[u16]) -> std::rc::Rc<std::cell::RefCell<JsErrorProjection0>> {
+    return std::rc::Rc::new(std::cell::RefCell::new(JsErrorProjection0 { message: (message).to_vec(), code: "managed_server".to_string() }));
+}
+
+#[rustfmt::skip]
+fn unsupported(message: &[u16]) -> std::rc::Rc<std::cell::RefCell<JsErrorProjection0>> {
+    return std::rc::Rc::new(std::cell::RefCell::new(JsErrorProjection0 { message: (message).to_vec(), code: "unsupported".to_string() }));
+}
+
+#[rustfmt::skip]
+fn out<'a>(lines: Vec<JsPayload<'a>>) -> std::rc::Rc<std::cell::RefCell<JsRecord1<'a>>> {
+    let lines = std::rc::Rc::new(std::cell::RefCell::new(lines));
+    return std::rc::Rc::new(std::cell::RefCell::new(JsRecord1 { output: lines.clone() }));
+}

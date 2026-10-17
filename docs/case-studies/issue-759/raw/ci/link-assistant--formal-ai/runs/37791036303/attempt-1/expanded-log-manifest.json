@@ -1,0 +1,92 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/2_Coding ladder shard 1.txt.gz",
+    "sha256": "02f547f439ba3a68cbd735f3704dd147b47e9ad5e405a08a1995caf23b150f3f",
+    "bytes": 7888,
+    "uncompressed_bytes": 31205,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "753f01b4611319c3507040cb6cbba26747410112b0b31d87f3b285edb1c66805"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/Coding ladder shard 1/system.txt.gz",
+    "sha256": "78a388f5f7e2ee4cba23ef3e8428802a5ff812e15f331e1317f8f1ebc12b970a",
+    "bytes": 396,
+    "uncompressed_bytes": 751,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "56e3362c2675d5c6013df37b2f138bd2216cde1b1cc1d316309a91c31dd73a5f"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/3_Coding ladder shard 5.txt.gz",
+    "sha256": "45171971a77b97c30562d54867ddd4ef0d82594486727866da2d05d707ea80e9",
+    "bytes": 8027,
+    "uncompressed_bytes": 31477,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "3a2394d9a174952ef0a364ebf2c22b4198b0f976a7b0e15e4dc523a4f45abf01"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/Coding ladder shard 5/system.txt.gz",
+    "sha256": "903635334f5fa42a79ae754164593e9d9c23b0c3024bab9e4eac2d439aaf8ced",
+    "bytes": 396,
+    "uncompressed_bytes": 751,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "b13377b049ed412030d08c3954ec973ecd8061e5e30687c8f9c2c50b6225d394"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/4_Coding ladder shard 2.txt.gz",
+    "sha256": "9d364c32e53604a2e62483a75b264ed1b6c24eedbe238c5ddb56145426c8a891",
+    "bytes": 8343,
+    "uncompressed_bytes": 32492,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "e816189de458ab2834da1c881c9794d93f267827eaf9f85a43ab85450ce9244d"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/Coding ladder shard 2/system.txt.gz",
+    "sha256": "1dc4299fb37db002873cbd52eb155c6b68ef80bceac5b1bd1b4ccafabcad4910",
+    "bytes": 393,
+    "uncompressed_bytes": 751,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "b9f056958675dd9cd44b2718864341a77105bf4e11561fad0aab11fdb4c006e2"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/5_Coding ladder shard 4.txt.gz",
+    "sha256": "e1556e7c8f07d64214a6ca71da529e793824f8dca199ac4d72df72ff7270889d",
+    "bytes": 8339,
+    "uncompressed_bytes": 32471,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "a5942e48d2af13148c4615309514d3190cd0e613fe397474cd54bacdfecca536"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/Coding ladder shard 4/system.txt.gz",
+    "sha256": "5987265e1acfe98a8242835bd7c33606dd833c3a058ab6cea50a9d0aeac870d5",
+    "bytes": 392,
+    "uncompressed_bytes": 751,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "d62f3d49147e7254a6084d10ecd6109fbf0c6ddd6866667354bdfea27eb854b2"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/6_Coding ladder binary.txt.gz",
+    "sha256": "087d16f35b9c41758b381951b00af1767a707811f71d7cac2e7e35f40a502b26",
+    "bytes": 6375,
+    "uncompressed_bytes": 26090,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "f00ab3887ebf31d573a280cec8a25cd2e5125e8276d1ed0c5c872b7897cf9ba6"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37791036303/attempt-1/logs/Coding ladder binary/system.txt.gz",
+    "sha256": "1f726f074d974672d59900e6f4e1426f5067c3d26685750e7decb40941c91185",
+    "bytes": 396,
+    "uncompressed_bytes": 752,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "8a5289c0edfb798ff864981850cec2d4914c196adae73364c9056c30c462446e"
+  }
+]

@@ -1,0 +1,7 @@
+The repaired original-method namespace and shared-reference source passed all 204 focused cases in Node and Bun. The namespace-only audit changed 85 mismatches to zero while retaining all 273 unresolved obligations.
+
+Canonical generation on frozen `37c6b515960eef76b8fff4df9b1043273863107f` then reached its unchanged 2400-second cap in 2400.438 seconds. The Node process ended with SIGTERM; both logs were empty, no artifacts were written, and all 1715 captured source hashes remained unchanged. This is a timeout with no new census, not a completed generation or runtime-parity result.
+
+The archive retains the complete attempt, input hashes, exact harness, three task-owned process observations, approved one-second full process sample, source integration audit, independent 47-entry evidence verification and exact own-HEAD prerequisite hydration. Three further pipeline helpers are retained as unexecuted plans. Every archive member was reopened and compared byte-for-byte with its original. No temporary originals were removed.
+
+Child CPU/RSS observations and OS sample physical footprint use different measurement scopes. The sample contains V8 descriptor/key, JSON serialization and GC frames without reliable JavaScript function attribution. Its diagnostic overhead is included in the attempt and was not measured separately. The later source-only performance repair must retain all evidence and mutation guards; this timeout does not authorize skipping checks.

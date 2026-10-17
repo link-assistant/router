@@ -1,0 +1,24 @@
+{
+  "schema": "router-complete-real-source-fixtures-v1",
+  "originalRevision": "5de1dea8b777dcd6e637758efc2c260150735af5",
+  "currentRevision": "e8f9769ab986f367799226f92a592d234cbe5003",
+  "originalManifestSha256": "fc81dbdc0ddf1c650f41c41a4c44f3e30db4c28f76170f2857983f7d80c0ff67",
+  "archive": "originals.json.gz",
+  "rawBytes": 5734772,
+  "rawSha256": "4c74b74f5b6905cdb0654f678a3ca46df9d1d046612852bdd75faf619394fcc5",
+  "bytes": 984569,
+  "sha256": "b8078965bb04d2f73fe6c86348af87d43b9e017c67a8b0f9fff046b271fdc8fb",
+  "historicalFiles": 15,
+  "currentFiles": 21,
+  "trace": [
+    {
+      "phase": "language",
+      "id": "native-fixture.complete-cst-and-exact-declarations"
+    },
+    {
+      "phase": "repository",
+      "id": "native-fixture.content-addressed-history-and-packets"
+    }
+  ],
+  "scope": "Historical originals plus separately reviewed current isolated carriers; no whole-crate parity or native execution claim."
+}

@@ -1,0 +1,2 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(function output (parameters (lines array-value (rest))) (returns record%3A%5B%5B%22output%22%2C%22array-value%22%5D%5D) (body (return (record (field output (variable lines))))))

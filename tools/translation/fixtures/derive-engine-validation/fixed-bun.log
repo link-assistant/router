@@ -1,0 +1,49 @@
+bun test v1.4.3 (c6da4a4d3)
+
+tools/translation/test/derive-builtin-default.test.mjs:
+(pass) builtin Default original compiler and core sources have sealed versioned evidence [1.52ms]
+(pass) standard-only and actual external derives retain unit default helper without implementing traits [3.79ms]
+(pass) Default helpers retain actual owner and original input refusal boundaries [5.39ms]
+(pass) certified unit default layout executes existing selectors and retains Default call refusal [395.36ms]
+
+tools/translation/test/derive-helper-paths.test.mjs:
+(pass) bounded Serde helper ExprPath grammar retains original source paths and unimplemented behavior [0.28ms]
+(pass) actual locked derive owners certify literal path and tag inputs without granting helper execution [1.76ms]
+(pass) helper expressions owners positions and unrelated procedural uncertainty remain closed [2.30ms]
+
+tools/translation/test/derive-layout.test.mjs:
+(pass) written string borrow and allocation chains retain the actual outer operation [364.96ms]
+(pass) sealed actual derive attributes retain layout source and do not implement serialization [360.28ms]
+(pass) unchanged whole tracked thinking file retains unproved task-local and Copy provenance [140.34ms]
+(pass) unchanged whole subscription file checks only proven original shared expiry behavior [399.80ms]
+
+tools/translation/test/derive-footprints.test.mjs:
+(pass) actual locked archives and all audited members are verified before dependency branding [13.48ms]
+(pass) actual qualified and imported derive owners certify independent namespace dimensions [0.81ms]
+(pass) literal default and skip metadata remain original attributes and generated trait obligations [0.31ms]
+(pass) binder narrows only sealed declaration dimensions and keeps exported bang uncertainty [0.43ms]
+(pass) unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty [1.29ms]
+(pass) actual local packages unknown macro imports and custom core owners cannot forge standard derives [0.98ms]
+
+tools/translation/test/reuse-translation.test.mjs:
+(pass) source-only relocated bulk translator regenerates a separate tracked repository and executes both targets [562.53ms]
+
+tools/translation/test/declarative-macros.test.mjs:
+(pass) bounded declarative rules retain source order groups repetitions and definition-site owner [1.31ms]
+(pass) forwarded type fragments remain opaque to literal matching [0.51ms]
+(pass) ambiguity capture arity unsupported fragments and recursive resource excess remain explicit [1.53ms]
+(pass) nested source repetition shapes retain empty rows and reject unequal transcription axes [0.38ms]
+(pass) source metadata keeps nested conditional grammar opaque when forwarded [0.24ms]
+(pass) actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner [16.09ms]
+(pass) checked block expressions retain opacity and refuse unsupported statements or expression grammar [0.72ms]
+(pass) original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim [18.56ms]
+(pass) all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission [18.74ms]
+
+tools/translation/test/derive-helper-originals.test.mjs:
+(pass) whole original provider acceptance getter retains exact checked Copy field behavior [388.09ms]
+(pass) whole original response affinity retains unresolved inner lint attributes and selector provenance [38.45ms]
+(pass) whole original standard-default-helper selectors retain bodies and unit layout [824.19ms]
+
+ 30 pass
+ 0 fail
+Ran 30 tests across 7 files. [3.68s]

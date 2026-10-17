@@ -1,0 +1,1045 @@
+{
+  "schema": "locked-tracing-whole-archive-inventory-v1",
+  "bounds": {
+    "archives": 2,
+    "membersPerArchive": 1024,
+    "memberBytes": 2097152,
+    "unpackedBytesPerArchive": 16777216
+  },
+  "cargoManifestSha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+  "cargoLockSha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+  "archives": [
+    {
+      "package": "tracing",
+      "version": "0.1.44",
+      "archive": "tracing-0.1.44.crate",
+      "archiveBytes": 463135,
+      "archiveSha256": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "lockedArchiveChecksum": "63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100",
+      "registry": "registry+https://github.com/rust-lang/crates.io-index",
+      "unpackedBytes": 9818203,
+      "members": [
+        {
+          "path": "tracing-0.1.44/.cargo_vcs_info.json",
+          "bytes": 101,
+          "sha256": "e3812fbb3fb259f00c279faa9a044355113802daac267ab6e8dffcfd659cdc8e",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5481
+        },
+        {
+          "path": "tracing-0.1.44/CHANGELOG.md",
+          "bytes": 37803,
+          "sha256": "ab06fd7a013cf5cf746f516b3789b14af626069efd94994a95f9f7f6bc2cae45",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5745
+        },
+        {
+          "path": "tracing-0.1.44/Cargo.lock",
+          "bytes": 19985,
+          "sha256": "5514d0d5653bb13676dc6e8a76e2be02949fd78d8b7dee321bdd4974502f0093",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 4440
+        },
+        {
+          "path": "tracing-0.1.44/Cargo.toml",
+          "bytes": 4847,
+          "sha256": "b7e201be4f3872fe25da1fa45aa404c8751a661755d4883fdbb5c0c558303e6d",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 4462
+        },
+        {
+          "path": "tracing-0.1.44/Cargo.toml.orig",
+          "bytes": 2630,
+          "sha256": "7f2718d2c04f52efa187ef4f5ae54aec9169d9309edf6815e5d7127872f131cc",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6298
+        },
+        {
+          "path": "tracing-0.1.44/LICENSE",
+          "bytes": 1062,
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5352
+        },
+        {
+          "path": "tracing-0.1.44/README.md",
+          "bytes": 19417,
+          "sha256": "7e65cd681de515732194a3d6d669f83afd0962a3d5fa6b000f62f05903b4ab2f",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5530
+        },
+        {
+          "path": "tracing-0.1.44/benches/baseline.rs",
+          "bytes": 722,
+          "sha256": "43a3e31b6c33dba2e6328052301b707b212487b83f0dcffc843061a9c48a2319",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6718
+        },
+        {
+          "path": "tracing-0.1.44/benches/dispatch_get_clone.rs",
+          "bytes": 421,
+          "sha256": "866239abeb74a82440741c948a4e7e0a44e92e8cc87319ec57e3b057c9e8f5dd",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7777
+        },
+        {
+          "path": "tracing-0.1.44/benches/dispatch_get_ref.rs",
+          "bytes": 409,
+          "sha256": "dd2803259a6784c256304e676bbce05de233e4c8451ac85863787213343e9be7",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7560
+        },
+        {
+          "path": "tracing-0.1.44/benches/empty_span.rs",
+          "bytes": 925,
+          "sha256": "9f51cf376414ea751b2f50c357f2435a545d606118286f5b8b89f185e28aad8c",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6978
+        },
+        {
+          "path": "tracing-0.1.44/benches/enter_span.rs",
+          "bytes": 396,
+          "sha256": "4410ec73d277e7b54e9f306c00ff3b79a150d1832966b7fc29984c8e3ad8d57c",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6957
+        },
+        {
+          "path": "tracing-0.1.44/benches/event.rs",
+          "bytes": 295,
+          "sha256": "98de3c82ed18abe0a3cbe6eda9a4f9deec2b69bca42c3aac11dea4b608b85a67",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6436
+        },
+        {
+          "path": "tracing-0.1.44/benches/shared.rs",
+          "bytes": 4415,
+          "sha256": "b13eb859fc851f0f084e26055d1ea9c5ec9a316cf4a7215417a7133c57c432bc",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6525
+        },
+        {
+          "path": "tracing-0.1.44/benches/span_fields.rs",
+          "bytes": 583,
+          "sha256": "9166cd43ef2783e5419dd61ea57a02e48e8cc38aa1b357e9b79fa581929b60d8",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7044
+        },
+        {
+          "path": "tracing-0.1.44/benches/span_no_fields.rs",
+          "bytes": 329,
+          "sha256": "79cc4befacf27d7ce728246087c4f06a6066f913e831d9043caeb7941f0193f6",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7358
+        },
+        {
+          "path": "tracing-0.1.44/benches/span_repeated.rs",
+          "bytes": 515,
+          "sha256": "e4b3c99a7a9fc15d9042b8db399a56cf647b4eebd26f29d95325bb057b68330b",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7250
+        },
+        {
+          "path": "tracing-0.1.44/src/dispatcher.rs",
+          "bytes": 5891,
+          "sha256": "a8732392ffe56b1178f8fd3d6e6e02d40b51475c38bb4600abd9cd170df1bf6c",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6549
+        },
+        {
+          "path": "tracing-0.1.44/src/field.rs",
+          "bytes": 6890,
+          "sha256": "f4ba4bb680a844733682b21b8fef46773054989b6dd4f31aac38ee39ec287d4d",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6007
+        },
+        {
+          "path": "tracing-0.1.44/src/instrument.rs",
+          "bytes": 14263,
+          "sha256": "9266d792bd9b6678baa49728704c5f38003bbc24755eac16a9e0bffcb2728010",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6613
+        },
+        {
+          "path": "tracing-0.1.44/src/level_filters.rs",
+          "bytes": 4225,
+          "sha256": "e648e4e17435ea7c671fca53f173fd475746ffeb03346fc6e79fa0aa3ca449ab",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6871
+        },
+        {
+          "path": "tracing-0.1.44/src/lib.rs",
+          "bytes": 49331,
+          "sha256": "217a90d94806a478c9142a14ff27b745856fd21a4ee95aee915dd396c96a44bd",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5802
+        },
+        {
+          "path": "tracing-0.1.44/src/macros.rs",
+          "bytes": 115718,
+          "sha256": "4c367e39d560ae169afcf1b15c618011f5a8c198cab1504a86b4576d5c3fdb30",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6135
+        },
+        {
+          "path": "tracing-0.1.44/src/span.rs",
+          "bytes": 57318,
+          "sha256": "b87686c0ff6b55193a9377f3a0c978e0368edb6f46cd4d5a5b395c169df2f658",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5939
+        },
+        {
+          "path": "tracing-0.1.44/src/subscriber.rs",
+          "bytes": 2313,
+          "sha256": "51d9e23098b81cab911d2e7c2e4590bce75c61337c83d73b0a0af3dedc0fe7a7",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6561
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/bin/macro-results.sh",
+          "bytes": 767,
+          "sha256": "86cc594cd5988829226e5558f97463c709820ee33b85355aadf06e61d6e242ec",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 8014
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/debug.rs",
+          "bytes": 145113,
+          "sha256": "99b1a2e4572f6fa5de99877f6e2b9b51588bd6f6ca9afaff8686995b0484a703",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7431
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/debug_n.rs",
+          "bytes": 160973,
+          "sha256": "b218e2ab3ae7c3d957d90cdb792b4e6c186d351ed5a18032db4370f0bb2680d1",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7641
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/debug_np.rs",
+          "bytes": 208553,
+          "sha256": "a22b54f692e14726dc5cfbb68c4519f6f4f809aff5c49ca089aa217ddecaf555",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7754
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/debug_nt.rs",
+          "bytes": 189033,
+          "sha256": "9b8b9cbe9470dce0ebd4be5979b9f8f0fea948e36ac8cce064080015d3eaf1fb",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7754
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/debug_ntp.rs",
+          "bytes": 236613,
+          "sha256": "3d339acc553d18983941b2e6a0901ebee104d095705f28a72645bcc896dcb848",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7867
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/debug_p.rs",
+          "bytes": 191473,
+          "sha256": "f98d9d625c5d7a0847c6ef63710e1597d2783c210a4f25b1a06bab7f48586e93",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7651
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/debug_t.rs",
+          "bytes": 171953,
+          "sha256": "e7a9a91a8efb96d0d529d472dfdd1cf419f93af7fd651aa9d5920653c8f83a55",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7651
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/debug_tp.rs",
+          "bytes": 219533,
+          "sha256": "3605b9be589245a6b14d5825ca48ec40dc4c0667e9dbf96740448ab97ca41536",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7764
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/error.rs",
+          "bytes": 145113,
+          "sha256": "7a5a4696e833270ccb3a18174be060db42f288e06408ba621ce3dadeeb0e17c2",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7466
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/error_n.rs",
+          "bytes": 160973,
+          "sha256": "dcf77db3df8755bb6097406b4f2386eab0206f486989cd7f6930744897c0ce51",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7676
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/error_np.rs",
+          "bytes": 208553,
+          "sha256": "1f2938446d00e056dea0f8f69402cec73cef86552ca514bfe3e6c6ccdf3a67cc",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7789
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/error_nt.rs",
+          "bytes": 189033,
+          "sha256": "4e318c7c7989ebf8641d0cd7293e46e9b5eb02568146794fc422b44c4fd444ef",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7789
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/error_ntp.rs",
+          "bytes": 236613,
+          "sha256": "f36a7c3ecf616622bfa6f100c0a3b6ba329039d4be739a3b624d89779ad2b56e",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7902
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/error_p.rs",
+          "bytes": 191473,
+          "sha256": "db5a7d6e2f8882adac33daa8027cbe304f3dc11ac7cbbc203e23d77538b10f42",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7686
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/error_t.rs",
+          "bytes": 171953,
+          "sha256": "b674bf3cb193139bafc69f5ca2875c434f515ee8af8a077f9aa7c1f5398b7c24",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7686
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/error_tp.rs",
+          "bytes": 219533,
+          "sha256": "67a33dc6a5d2cf9320c45ad2b501a19cc3f784d072018f53440a7376d2dc5ff4",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7799
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/event.rs",
+          "bytes": 171953,
+          "sha256": "e8acca0bdfa3e3724a6855bacba9a0a0e47bf57dca52af61e0e82daa5460eed7",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7467
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/event_n.rs",
+          "bytes": 187813,
+          "sha256": "05ea563731965ecf2f8aae48fb23da67beb994c57c3def407a9a1373bb8bf4d8",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7677
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/event_np.rs",
+          "bytes": 235393,
+          "sha256": "40bbaf8154ca1524efed0cc0319054b9c404a9f8c658fcbfa079f0ad6be583ec",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7776
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/event_nt.rs",
+          "bytes": 215873,
+          "sha256": "9290cb4a8ebac8d8c00addc902f3f79316c741d20f6bd8f67106758339908ac9",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7783
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/event_ntp.rs",
+          "bytes": 263453,
+          "sha256": "230326599ced527818cc8d392d7abcb201a63ab10c50fb1dc9fe26a2fb86fe70",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7889
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/event_p.rs",
+          "bytes": 218313,
+          "sha256": "c68a5a3af91f7fec58273bf4427226fcf8d311ee5dd9257c170a76b3ec8af1cd",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7666
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/event_t.rs",
+          "bytes": 198793,
+          "sha256": "8a22d8e9511ccfa07eef5ad5a5a8dcb0d212370d0785de7fcf63a9ac34582396",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7666
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/event_tp.rs",
+          "bytes": 246373,
+          "sha256": "dbf9937f0fdbe93484a4b6348044451c96489e9913cd6003048107360be56c6d",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7786
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/info.rs",
+          "bytes": 142671,
+          "sha256": "1de3667f05475965f295535d87ef25f8f1537ff4e342d105cbb904c91bf402f4",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7348
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/info_n.rs",
+          "bytes": 158531,
+          "sha256": "1ff81a9080189b29e2d9ee2ab8be2072395b5225ab6ae29e323a746618d517db",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7551
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/info_np.rs",
+          "bytes": 206111,
+          "sha256": "2fd82972685fe169671a5784a2d0119fe6170918cb12a309f1143e7fa768a797",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7664
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/info_nt.rs",
+          "bytes": 186591,
+          "sha256": "ce52b59f526fb33e2f5177cf6f0b8bd52e5e48874e57c93bc17dcdf2b3a48f41",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7671
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/info_ntp.rs",
+          "bytes": 234171,
+          "sha256": "08bccc80c3e990ab000f5d8531fd70a501a5f2f216c88d13c47ea3e21bfa5061",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7777
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/info_p.rs",
+          "bytes": 189031,
+          "sha256": "e0e77eb4a349bc3c2ae34000846c692ccbd0c8cae1318c44994a27cb9ae8f233",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7554
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/info_t.rs",
+          "bytes": 169511,
+          "sha256": "d5b08733bc613cc643cd38f29ecd6d51fab84c9eddf79281ee8a514134ad4c78",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7554
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/info_tp.rs",
+          "bytes": 217091,
+          "sha256": "7ea04fb6d6f1f75ca212cf0bffbb31b3282e9004d0cd3828d70d587e30c35dbc",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7660
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/trace.rs",
+          "bytes": 145113,
+          "sha256": "cdaf575e73ceb2d79c344c17a0a1cc710f26315271dd1c36ad74a3bfad13430c",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7439
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/trace_n.rs",
+          "bytes": 160973,
+          "sha256": "0598a28f98b4265886bb0e4d28ca332f37b5d8948ffc1a5fa0c50e3df820d60c",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7649
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/trace_np.rs",
+          "bytes": 208553,
+          "sha256": "14052fad3b8cfdf0b072a156cd1269024748466083e600fefb0aedd159c1e629",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7762
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/trace_nt.rs",
+          "bytes": 189033,
+          "sha256": "a8cd691fe69a4866b4ef8a679fd0c0c0a811490fbf2cef2e0b3f3b66001d9b89",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7762
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/trace_ntp.rs",
+          "bytes": 236613,
+          "sha256": "95e57ff15aa5217662036280a61b1a6252c6ace3dd1a37c28d847353701b15c6",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7875
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/trace_p.rs",
+          "bytes": 191473,
+          "sha256": "658d4185382df533ae680942419fd1acf5ee71fdfaa0261b1a596efca064e879",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7659
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/trace_t.rs",
+          "bytes": 171953,
+          "sha256": "b845662bd6971f4da93f8305899feceeae991dddea7fd7098526e9bc1fef8f07",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7659
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/trace_tp.rs",
+          "bytes": 219533,
+          "sha256": "78e722af60ff80ee038f4be2f521813d2b179c64e72b5e91d9e5ae8532c9c6b9",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7772
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/warn.rs",
+          "bytes": 142671,
+          "sha256": "265a0a82f8ee0316e923d354e162e3b6fa9f21f296b147514e83e295cb934e6f",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7360
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/warn_n.rs",
+          "bytes": 158531,
+          "sha256": "aea9e9b87430af5fe50e8e94beeea858ea379ae62e6e21bcb533a4231ce9ecbe",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7563
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/warn_np.rs",
+          "bytes": 206111,
+          "sha256": "7e884d3ff118c5834998d3bde4b8e1922946b948f41827e4920aa4639afeb9cd",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7676
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/warn_nt.rs",
+          "bytes": 186591,
+          "sha256": "6423e3a64b3e4c6e2c7c0b72cdbf560ec3296630aa7cec306fbabae33240f2c8",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7683
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/warn_ntp.rs",
+          "bytes": 234171,
+          "sha256": "ea9c6a51dae213b1594e03c437047ac3d7d9543c5a19a499060b5e37e7eb7783",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7789
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/warn_p.rs",
+          "bytes": 189031,
+          "sha256": "640fb373d13e9bf464dd85b1fe9bec9071536f7f4566c6f2918f3a81051047b9",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7566
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/warn_t.rs",
+          "bytes": 169511,
+          "sha256": "e1b613a785e1e9e80dc350a3287e791a88362d1a21127be7d60b35e9e2f22025",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7566
+        },
+        {
+          "path": "tracing-0.1.44/test-macros/tests/warn_tp.rs",
+          "bytes": 217091,
+          "sha256": "36557cbd34f55a453bce690a5a55e88bff5d5c1d5541e2d5cabfc0287990c05d",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7672
+        },
+        {
+          "path": "tracing-0.1.44/tests/enabled.rs",
+          "bytes": 1725,
+          "sha256": "e19d039cf0e984918838aaab9d8b3ca5a1eea9d01a54a264a70184b440a9e880",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6442
+        },
+        {
+          "path": "tracing-0.1.44/tests/event.rs",
+          "bytes": 19627,
+          "sha256": "f390eac630a79fa6d43a005377e4ebcb764d9464088f240566b9859d39b495d3",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6276
+        },
+        {
+          "path": "tracing-0.1.44/tests/filter_caching_is_lexically_scoped.rs",
+          "bytes": 2056,
+          "sha256": "5487a37db5fbdf3d57020ab1f01185d928c45d967d99d723ffc434540459d8dc",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 9283
+        },
+        {
+          "path": "tracing-0.1.44/tests/filters_are_not_reevaluated_for_the_same_span.rs",
+          "bytes": 2438,
+          "sha256": "251abbc000dddd298448958a1f0e5be71da527ac6c1a368d57837c83a5467329",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 10475
+        },
+        {
+          "path": "tracing-0.1.44/tests/filters_are_reevaluated_for_different_call_sites.rs",
+          "bytes": 3019,
+          "sha256": "e0fdd8e930c043674702831b4d96f331e63aba824576bbac50b3f53bb0241cc7",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 10781
+        },
+        {
+          "path": "tracing-0.1.44/tests/filters_dont_leak.rs",
+          "bytes": 1973,
+          "sha256": "6c41d3209cf2a37a1656a8314399777022ceec556e44f5417f1f5a4cd24eb43a",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7531
+        },
+        {
+          "path": "tracing-0.1.44/tests/future_send.rs",
+          "bytes": 524,
+          "sha256": "3e9c9193219d12e342c18bbedb2f6ec940334202feb3cffba91601d6001b8575",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6904
+        },
+        {
+          "path": "tracing-0.1.44/tests/instrument.rs",
+          "bytes": 2086,
+          "sha256": "a3ee726247d897ad2af8123e6d44abce1a43a72ccbc3fd479257f810d8cbbbb2",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6837
+        },
+        {
+          "path": "tracing-0.1.44/tests/macro_imports.rs",
+          "bytes": 631,
+          "sha256": "d5de857162185d4a2384f3cb644bfcf76c7f5c1a3b5f72bfa0d2620ac6e3873c",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7132
+        },
+        {
+          "path": "tracing-0.1.44/tests/macros.rs",
+          "bytes": 68684,
+          "sha256": "6da2322cabb1e49500991be5071a328e999fec2e700e58fff4dc53d6464f30d2",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6369
+        },
+        {
+          "path": "tracing-0.1.44/tests/macros_incompatible_concat.rs",
+          "bytes": 487,
+          "sha256": "5f3bcbb65e4ae39db1cfc2def62fc913c20bab0fb769c8f731504e2615585ee5",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 8466
+        },
+        {
+          "path": "tracing-0.1.44/tests/max_level_hint.rs",
+          "bytes": 1483,
+          "sha256": "39576a958df3ea215c49154ff72c3dd14c8b3be3fcdb849e7dd847c8c9fd09e2",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7210
+        },
+        {
+          "path": "tracing-0.1.44/tests/missed_register_callsite.rs",
+          "bytes": 3713,
+          "sha256": "3211f0f030c9baf6333abf709d6520ced25619ee82cdf88a4e6ba8e1aff12296",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 8273
+        },
+        {
+          "path": "tracing-0.1.44/tests/multiple_max_level_hints.rs",
+          "bytes": 2663,
+          "sha256": "28ead97a8424358a0632547dae987ddbddc5bb69cdcd996d20feb49a7f3ddc69",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 8300
+        },
+        {
+          "path": "tracing-0.1.44/tests/no_subscriber.rs",
+          "bytes": 614,
+          "sha256": "ca42d0d4a20eb3b4e0a342b5e0090c7ada8b5a157f3cddb7b5d051238cdc1202",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7114
+        },
+        {
+          "path": "tracing-0.1.44/tests/register_callsite_deadlock.rs",
+          "bytes": 1489,
+          "sha256": "c0b3142543e7a10065c7583a8ee0b6bc978ea4f3979599651101c5a28966e7c8",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 8453
+        },
+        {
+          "path": "tracing-0.1.44/tests/scoped_clobbers_default.rs",
+          "bytes": 1193,
+          "sha256": "a7615615d176fb2a4b877c48d2aa7a75fca436d997d9672b56cc2c30177f889b",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 8133
+        },
+        {
+          "path": "tracing-0.1.44/tests/span.rs",
+          "bytes": 33093,
+          "sha256": "9a0acd71aadd697f8b6d73a6e853f031e2c2082d9619c1c2bd40549f909ac1b6",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6155
+        },
+        {
+          "path": "tracing-0.1.44/tests/subscriber.rs",
+          "bytes": 4022,
+          "sha256": "2da999bedb978bab019a70ccc9fdd43b062ec2e383af1e7c5b780df23adc219b",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6811
+        }
+      ],
+      "features": {
+        "async-await": [],
+        "attributes": [
+          "tracing-attributes"
+        ],
+        "default": [
+          "std",
+          "attributes"
+        ],
+        "log-always": [
+          "log"
+        ],
+        "max_level_debug": [],
+        "max_level_error": [],
+        "max_level_info": [],
+        "max_level_off": [],
+        "max_level_trace": [],
+        "max_level_warn": [],
+        "release_max_level_debug": [],
+        "release_max_level_error": [],
+        "release_max_level_info": [],
+        "release_max_level_off": [],
+        "release_max_level_trace": [],
+        "release_max_level_warn": [],
+        "std": [
+          "tracing-core/std"
+        ],
+        "valuable": [
+          "tracing-core/valuable"
+        ]
+      }
+    },
+    {
+      "package": "tracing-core",
+      "version": "0.1.36",
+      "archive": "tracing-core-0.1.36.crate",
+      "archiveBytes": 63967,
+      "archiveSha256": "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a",
+      "lockedArchiveChecksum": "db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a",
+      "registry": "registry+https://github.com/rust-lang/crates.io-index",
+      "unpackedBytes": 255338,
+      "members": [
+        {
+          "path": "tracing-core-0.1.36/.cargo_vcs_info.json",
+          "bytes": 106,
+          "sha256": "fc0c40fe943f71a6f07ff229f3ff2a972e1434b17b218c91311c6e1e821a77d6",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5950
+        },
+        {
+          "path": "tracing-core-0.1.36/CHANGELOG.md",
+          "bytes": 18814,
+          "sha256": "f33c4cce31b558333bc494d06239831a2590cabf3c147de19cf52d6a23b4c301",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6225
+        },
+        {
+          "path": "tracing-core-0.1.36/Cargo.lock",
+          "bytes": 576,
+          "sha256": "553e05afb1a85e16d54d4e16370d0924c638e62f0afcc8f446b3fe3112a85ff7",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 4899
+        },
+        {
+          "path": "tracing-core-0.1.36/Cargo.toml",
+          "bytes": 2140,
+          "sha256": "610cf318865f1d349164f4420b53b49b2b3662b6938c2e730873371eb92e050e",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 4928
+        },
+        {
+          "path": "tracing-core-0.1.36/Cargo.toml.orig",
+          "bytes": 1355,
+          "sha256": "bfb8713c75a630c7552b51445f012e8bbafbe2e5c018f6e9ed688f46bb7fa6c1",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6768
+        },
+        {
+          "path": "tracing-core-0.1.36/LICENSE",
+          "bytes": 1062,
+          "sha256": "898b1ae9821e98daf8964c8d6c7f61641f5f5aa78ad500020771c0939ee0dea1",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5823
+        },
+        {
+          "path": "tracing-core-0.1.36/README.md",
+          "bytes": 5013,
+          "sha256": "e3008819ba561550f2a258aeeda96aebf049b85e3a427433dc58514d8362f4db",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 5996
+        },
+        {
+          "path": "tracing-core-0.1.36/src/callsite.rs",
+          "bytes": 23168,
+          "sha256": "5379f10b434562dc431488b5206b291d5770337cc932b0dc4ee28c2901c53903",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6807
+        },
+        {
+          "path": "tracing-core-0.1.36/src/dispatcher.rs",
+          "bytes": 36090,
+          "sha256": "d2a0584196c7e053006490baebfa61c6b3145138e3209f82f44d1afbe066acb6",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7028
+        },
+        {
+          "path": "tracing-core-0.1.36/src/event.rs",
+          "bytes": 4402,
+          "sha256": "f2673bf5d266972e567e521c9cd92fb33f28b0c7e010937e3bc2bf9eb483087f",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6505
+        },
+        {
+          "path": "tracing-core-0.1.36/src/field.rs",
+          "bytes": 43841,
+          "sha256": "17eaa584f9c87dcc4f43e355d77319d22543c285ffd12b2f3d0c5eafa32182f4",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6476
+        },
+        {
+          "path": "tracing-core-0.1.36/src/lazy.rs",
+          "bytes": 2521,
+          "sha256": "318e3558e4446abf26294287167c0788e343044a28072f9217bd985929809087",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6409
+        },
+        {
+          "path": "tracing-core-0.1.36/src/lib.rs",
+          "bytes": 9547,
+          "sha256": "97a112bcdcd0fd35ad786fc75269a501eabbebaba16bb4e15f65583317eb344a",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6270
+        },
+        {
+          "path": "tracing-core-0.1.36/src/metadata.rs",
+          "bytes": 39719,
+          "sha256": "87b7dc2f5e1da4ae4146da2c641e71972b5412c243918ca484027bc06922a7e5",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6801
+        },
+        {
+          "path": "tracing-core-0.1.36/src/parent.rs",
+          "bytes": 263,
+          "sha256": "5d5ad733343280a64a1feb6a008e186c39305ec554f14279012b8d7915821471",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6607
+        },
+        {
+          "path": "tracing-core-0.1.36/src/span.rs",
+          "bytes": 10491,
+          "sha256": "0f5fdfd585b0961c7c09e4e314f43d11775837de008176dc3cdc29528dee8f92",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6399
+        },
+        {
+          "path": "tracing-core-0.1.36/src/spin/LICENSE",
+          "bytes": 1085,
+          "sha256": "58545fed1565e42d687aecec6897d35c6d37ccb71479a137c0deb2203e125c79",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6689
+        },
+        {
+          "path": "tracing-core-0.1.36/src/spin/mod.rs",
+          "bytes": 124,
+          "sha256": "c458ce5e875acb7fbfb279f23254f4924d7c6d6fee419b740800d2e8087d1524",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6767
+        },
+        {
+          "path": "tracing-core-0.1.36/src/spin/mutex.rs",
+          "bytes": 3343,
+          "sha256": "4d30ff2b59b18fd7909f016e1abdf9aa0c04aa11d047a46e98cffe1319e32dad",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7016
+        },
+        {
+          "path": "tracing-core-0.1.36/src/spin/once.rs",
+          "bytes": 5113,
+          "sha256": "3781fd4eae0db04d80c03a039906c99b1e01d1583b29ac0144e6fbbd5a0fef0b",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6873
+        },
+        {
+          "path": "tracing-core-0.1.36/src/subscriber.rs",
+          "bytes": 35588,
+          "sha256": "399c300e2d55711928ccfac76254ffbbc02d618095b4d06814d87ff7189f6d74",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7036
+        },
+        {
+          "path": "tracing-core-0.1.36/src/sync.rs",
+          "bytes": 629,
+          "sha256": "509cfcd9ba98bf41e1e95dfa0470d730749576953aced5a55e753836d80d3623",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6404
+        },
+        {
+          "path": "tracing-core-0.1.36/tests/common/mod.rs",
+          "bytes": 1022,
+          "sha256": "0bbb217baa17df0f96cc1ff57dfa74ccc5a959e7f66b15bb7d25d5f43358a278",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7218
+        },
+        {
+          "path": "tracing-core-0.1.36/tests/dispatch.rs",
+          "bytes": 1436,
+          "sha256": "d3f000fab43734a854c82a7783142910c5e79f806cbd3f8ec5eded598c59ddb1",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7044
+        },
+        {
+          "path": "tracing-core-0.1.36/tests/global_dispatch.rs",
+          "bytes": 894,
+          "sha256": "cdc05d77e448ee8b50bfb930abafa3f19b4c6f922b7bebc7797fa1dbdaa1d398",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 7768
+        },
+        {
+          "path": "tracing-core-0.1.36/tests/local_dispatch_before_init.rs",
+          "bytes": 1340,
+          "sha256": "338846cd519e9a3a6895f958b11bd3f97e4350d08adb50f95b8552113a593b0d",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 8917
+        },
+        {
+          "path": "tracing-core-0.1.36/tests/macros.rs",
+          "bytes": 1204,
+          "sha256": "b1603d888b349c8d103794deceec3b1ae4538b8d3eba805f3f561899e8ad0dd2",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 6840
+        },
+        {
+          "path": "tracing-core-0.1.36/tests/missed_register_callsite.rs",
+          "bytes": 4452,
+          "sha256": "c8af23ec5ac08a2c5dffe8b39f96d67a785d113f52d721e46417d2c85f8fc8fe",
+          "type": "regular",
+          "mode": 420,
+          "tarHeaderChecksum": 8748
+        }
+      ],
+      "features": {
+        "default": [
+          "std",
+          "valuable?/std"
+        ],
+        "std": [
+          "once_cell"
+        ]
+      }
+    }
+  ]
+}

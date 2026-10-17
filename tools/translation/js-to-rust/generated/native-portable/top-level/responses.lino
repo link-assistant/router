@@ -1,0 +1,2 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(constant TRANSITION_RESERVE_BYTES (type number) (value (number 256)))

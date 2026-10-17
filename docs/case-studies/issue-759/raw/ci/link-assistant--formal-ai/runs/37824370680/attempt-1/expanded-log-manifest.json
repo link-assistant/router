@@ -1,0 +1,67 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37824370680/attempt-1/logs/6_js tier (node --check over js, suites 4_4).txt.xz",
+    "sha256": "bc4c6155f3c8d6e84fe5d9018b5e1869a63bb304075f3a94edb7a43bc3205d7e",
+    "bytes": 53512,
+    "uncompressed_bytes": 362261,
+    "redacted": false,
+    "original_gzip_sha256": "372f3c182a088482bdc028f6db2f89a967d34e6fdc004de96b995165de141520",
+    "compression": "xz",
+    "decoded_sha256": "b7d20e4d15a30aeb17c2e1d052b45519e1cdb1f91af6b37190858960fd1c4567"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37824370680/attempt-1/logs/js tier (node --check over js, suites 4_4)/system.txt.gz",
+    "sha256": "02f2384d3ff8cbd9f9d169ce659840835844fc774a4fc74a0f7994ae28388ce9",
+    "bytes": 442,
+    "uncompressed_bytes": 858,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37824370680/attempt-1/logs/7_js tier (node --check over js, suites 3_4).txt.xz",
+    "sha256": "32121152587d7db7fe2f17728b429e83fb7b16c89ca11676e909854030493018",
+    "bytes": 42368,
+    "uncompressed_bytes": 299559,
+    "redacted": false,
+    "original_gzip_sha256": "d69f2a7cc584779dedd2b577d4c72e77f8cca15fa34008052a640eb3c8863cde",
+    "compression": "xz",
+    "decoded_sha256": "59806472952ddd7f6d0f2979ae8fa3231cd1aa6f1710a5394e35693bbb52e6f4"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37824370680/attempt-1/logs/js tier (node --check over js, suites 3_4)/system.txt.gz",
+    "sha256": "3902284fc430a4b343d95414effe9f2408deb1a6ad179e6eb52e6682994998f9",
+    "bytes": 443,
+    "uncompressed_bytes": 858,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37824370680/attempt-1/logs/8_provers (real Lean 4 and Rocq compile, R1186-4).txt.gz",
+    "sha256": "c314329eec4fd1bdf0f8fbdf81b8a74a15409aa215d070aea19c7a45fa81fc5a",
+    "bytes": 8971,
+    "uncompressed_bytes": 39308,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37824370680/attempt-1/logs/provers (real Lean 4 and Rocq compile, R1186-4)/system.txt.gz",
+    "sha256": "a2fdab9b26121a94bf8366784566f87ded0e6755b6c07d362974a324ffdc9844",
+    "bytes": 444,
+    "uncompressed_bytes": 863,
+    "redacted": false
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37824370680/attempt-1/logs/9_Detect tier changes.txt.xz",
+    "sha256": "2d846709a28e203dd6411a68e3d7dcace093d7abca9bba3249075923fed28b79",
+    "bytes": 82468,
+    "uncompressed_bytes": 1027100,
+    "redacted": false,
+    "original_gzip_sha256": "315620bd7fac14ac4f48212b0e9da3a74123004399d18961752902654f20e382",
+    "compression": "xz",
+    "decoded_sha256": "e46cf8c7878f58b85d8d32901ee8f65c0dc78e3ae39c0ae916fa163910615ef7"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37824370680/attempt-1/logs/Detect tier changes/system.txt.gz",
+    "sha256": "d258cd954c6aa8c9ea1e26a74f2255a1825868d5baa70d33354101e8b35179ac",
+    "bytes": 389,
+    "uncompressed_bytes": 743,
+    "redacted": false
+  }
+]

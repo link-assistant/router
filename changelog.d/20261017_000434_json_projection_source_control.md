@@ -1,0 +1,3 @@
+Correct the owned JSON projection fixture boundary: ordinary copied scalar syntax remains a supported portable checker input and needs no projection receipt. The fixture now checks that positive explicitly, then attaches a public projection-shaped operation to a copied declaration and requires the actual private source-call refusal. The existing fake-call, lifetime, numeric, emission-tamper and behavior controls remain under the same eight titles and deadlines.
+
+Only test expectations and this explanation change; no runtime, checker or source-link authority is relaxed. Worker receiving checks are UNRUN.

@@ -1,0 +1,60 @@
+{
+  "schema": "retained-focus-evidence-v1",
+  "status": "FOCUSED_PASS_NOT_FULL_GATE",
+  "pack": "cycle-9-10-core.tar.gz",
+  "bytes": 22147,
+  "sha256": "29f1b863567e423f4110f89c329c6e0ac8345ac347f6c2709ffd9805c3783ca1",
+  "members": [
+    {
+      "path": "router-759-cycle-10-tool-attribute-source-plan.json",
+      "bytes": 1784,
+      "sha256": "d58523c26131784e9e01561ef88aefd1b89fd021883373452a928ed04bebff1f"
+    },
+    {
+      "path": "router-759-cycle-9-binary64-source-draft.json",
+      "bytes": 1477,
+      "sha256": "23f9e3c7b693c9ca4f9bb388a3c871e4548b12fa04fa94ccd41edeb1fc765810"
+    },
+    {
+      "path": "router-759-cycle-9-binary64-source-review.json",
+      "bytes": 1194,
+      "sha256": "84ded648b6616b0f88530e4e0fe68e8bcaf490eef6b8e8543389654ef4c8c168"
+    },
+    {
+      "path": "router-759-future9-10-core-complete-receipt.json",
+      "bytes": 3027,
+      "sha256": "10fd8ebaf5d5700becec052a6987dc039b7cefe91b50a5efe9c8c1fdac9865c7"
+    },
+    {
+      "path": "router-759-future9-10-core-final-bun.log",
+      "bytes": 18829,
+      "sha256": "88b33ef3a8ae6f4deb84c1a6bc0428103bbfc762c5bf5b3e540381ca23e14849"
+    },
+    {
+      "path": "router-759-future9-10-core-final-node.log",
+      "bytes": 30186,
+      "sha256": "9924ad4ffce1222f53d6617ef9c756f3c49c0217806cfb38a9f5e4ba21fb4776"
+    },
+    {
+      "path": "router-759-future9-10-core-final.json",
+      "bytes": 2922,
+      "sha256": "4fbae78cf551c653770d296b39b7e152246fa04a453569df7060d3a3999242fa"
+    },
+    {
+      "path": "router-759-future9-10-core-initial-bun.log",
+      "bytes": 22815,
+      "sha256": "8c862abc2038d3342cb63afe6075c2cff7b3ab762a813a7ec14ed9ae5cab661e"
+    },
+    {
+      "path": "router-759-future9-10-core-initial-node.log",
+      "bytes": 33157,
+      "sha256": "2407d1974f04bde785c1a165132f887247344c2ab63b1e42dfbf33668e328d32"
+    },
+    {
+      "path": "router-759-future9-10-core-initial.json",
+      "bytes": 2926,
+      "sha256": "ecc0ca3a455a4216318b5feda3a492006b263b8e7175d5b7c1af186dbd768d13"
+    }
+  ],
+  "receiptSha256": "10fd8ebaf5d5700becec052a6987dc039b7cefe91b50a5efe9c8c1fdac9865c7"
+}

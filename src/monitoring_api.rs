@@ -220,7 +220,7 @@ pub async fn credential_status_endpoint(
 /// probing each vendor upstream would turn one request into several outbound
 /// ones. `refreshable` already distinguishes "expired but recoverable" from
 /// dead, which is the distinction the empty array was destroying.
-fn single_account_view(state: &AppState) -> serde_json::Value {
+fn single_account_view(state: &AppState) -> crate::translation_core::Json {
     let now_ms = crate::operation_context::now().timestamp_millis();
     let credentials: Vec<serde_json::Value> = state
         .subscription_readers
@@ -232,7 +232,7 @@ fn single_account_view(state: &AppState) -> serde_json::Value {
                 now_ms,
                 Some(&state.subscription_cache),
             );
-            serde_json::json!({
+            crate::translation_core::json!({
                 "name": reader.provider().to_string(),
                 "home": reader.home().display().to_string(),
                 "credential": credential.label(),
@@ -240,7 +240,7 @@ fn single_account_view(state: &AppState) -> serde_json::Value {
             })
         })
         .collect();
-    serde_json::json!({
+    crate::translation_core::json!({
         "accounts": [],
         "credentials": credentials,
         "note": "single-account mode (no AccountRouter configured)",

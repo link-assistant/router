@@ -1,0 +1,194 @@
+TAP version 13
+# file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/macro-token-trees.mjs:6
+# const pairs={'(':')','[':']','{':'};
+#                                  ^^^
+# SyntaxError: Invalid or unexpected token
+#     at compileSourceTextModule (node:internal/modules/esm/utils:346:16)
+#     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:146:18)
+#     at \#translate (node:internal/modules/esm/loader:431:12)
+#     at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:478:27)
+# Node.js v20.19.4
+# Subtest: /Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/declarative-macros.test.mjs
+not ok 1 - /Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/declarative-macros.test.mjs
+  ---
+  duration_ms: 60.991459
+  location: '/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/declarative-macros.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: builtin Default original compiler and core sources have sealed versioned evidence
+ok 2 - builtin Default original compiler and core sources have sealed versioned evidence
+  ---
+  duration_ms: 3.036792
+  ...
+# Subtest: standard-only and actual external derives retain unit default helper without implementing traits
+ok 3 - standard-only and actual external derives retain unit default helper without implementing traits
+  ---
+  duration_ms: 8.079458
+  ...
+# Subtest: Default helpers retain actual owner and original input refusal boundaries
+ok 4 - Default helpers retain actual owner and original input refusal boundaries
+  ---
+  duration_ms: 8.058625
+  ...
+# Subtest: certified unit default layout executes existing selectors and retains Default call refusal
+ok 5 - certified unit default layout executes existing selectors and retains Default call refusal
+  ---
+  duration_ms: 1450.202708
+  ...
+# Subtest: actual locked archives and all audited members are verified before dependency branding
+ok 6 - actual locked archives and all audited members are verified before dependency branding
+  ---
+  duration_ms: 17.425041
+  ...
+# Subtest: actual qualified and imported derive owners certify independent namespace dimensions
+ok 7 - actual qualified and imported derive owners certify independent namespace dimensions
+  ---
+  duration_ms: 6.056042
+  ...
+# Subtest: literal default and skip metadata remain original attributes and generated trait obligations
+ok 8 - literal default and skip metadata remain original attributes and generated trait obligations
+  ---
+  duration_ms: 1.164375
+  ...
+# Subtest: binder narrows only sealed declaration dimensions and keeps exported bang uncertainty
+ok 9 - binder narrows only sealed declaration dimensions and keeps exported bang uncertainty
+  ---
+  duration_ms: 0.984959
+  ...
+# Subtest: unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty
+ok 10 - unknown helpers generic inputs and macro-bearing fragments retain namespace uncertainty
+  ---
+  duration_ms: 5.276209
+  ...
+# Subtest: actual local packages unknown macro imports and custom core owners cannot forge standard derives
+ok 11 - actual local packages unknown macro imports and custom core owners cannot forge standard derives
+  ---
+  duration_ms: 2.42675
+  ...
+# Subtest: whole original provider acceptance getter retains exact checked Copy field behavior
+ok 12 - whole original provider acceptance getter retains exact checked Copy field behavior
+  ---
+  duration_ms: 1349.619959
+  ...
+# Subtest: whole original response affinity selectors preserve canonical tagged route outcomes
+not ok 13 - whole original response affinity selectors preserve canonical tagged route outcomes
+  ---
+  duration_ms: 91.299083
+  location: '/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-originals.test.mjs:45:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+    + undefined
+    - {
+    -   end: 1953,
+    -   start: 1179
+    - }
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    start: 1179
+    end: 1953
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-originals.test.mjs:47:42)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: whole original standard-default-helper selectors retain bodies and unit layout
+ok 14 - whole original standard-default-helper selectors retain bodies and unit layout
+  ---
+  duration_ms: 2805.028375
+  ...
+# Subtest: bounded Serde helper ExprPath grammar retains original source paths and unimplemented behavior
+not ok 15 - bounded Serde helper ExprPath grammar retains original source paths and unimplemented behavior
+  ---
+  duration_ms: 1.879333
+  location: '/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-paths.test.mjs:11:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /Serde helper/. Input:
+    
+    'TypeError: Serde super path requires an original leading parent chain'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: 'Serde super path requires an original leading parent chain'
+  name: 'TypeError'
+  stack: |-
+    boundedSerdeExprPath (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/derive-helper-paths.mjs:30:90)
+    file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-paths.test.mjs:16:251
+    getActual (node:assert:498:5)
+    Function.throws (node:assert:644:24)
+    TestContext.<anonymous> (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-paths.test.mjs:16:240)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    node:internal/test_runner/harness:255:12
+    node:internal/process/task_queues:140:7
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-full-protocols/tools/translation/test/derive-helper-paths.test.mjs:16:240)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    node:internal/test_runner/harness:255:12
+    node:internal/process/task_queues:140:7
+    AsyncResource.runInAsyncScope (node:async_hooks:206:9)
+    AsyncResource.runMicrotask (node:internal/process/task_queues:137:8)
+  ...
+# Subtest: actual locked derive owners certify literal path and tag inputs without granting helper execution
+ok 16 - actual locked derive owners certify literal path and tag inputs without granting helper execution
+  ---
+  duration_ms: 6.468375
+  ...
+# Subtest: helper expressions owners positions and unrelated procedural uncertainty remain closed
+ok 17 - helper expressions owners positions and unrelated procedural uncertainty remain closed
+  ---
+  duration_ms: 6.402292
+  ...
+# Subtest: written string borrow and allocation chains retain the actual outer operation
+ok 18 - written string borrow and allocation chains retain the actual outer operation
+  ---
+  duration_ms: 1294.871708
+  ...
+# Subtest: sealed actual derive attributes retain layout source and do not implement serialization
+ok 19 - sealed actual derive attributes retain layout source and do not implement serialization
+  ---
+  duration_ms: 1305.537916
+  ...
+# Subtest: unchanged whole tracked thinking file retains unproved task-local and Copy provenance
+ok 20 - unchanged whole tracked thinking file retains unproved task-local and Copy provenance
+  ---
+  duration_ms: 299.986417
+  ...
+# Subtest: unchanged whole subscription file checks only proven original shared expiry behavior
+ok 21 - unchanged whole subscription file checks only proven original shared expiry behavior
+  ---
+  duration_ms: 1518.006791
+  ...
+# Subtest: source-only relocated bulk translator regenerates a separate tracked repository and executes both targets
+ok 22 - source-only relocated bulk translator regenerates a separate tracked repository and executes both targets
+  ---
+  duration_ms: 6426.476958
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 19
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17209.495209

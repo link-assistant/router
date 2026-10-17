@@ -14,34 +14,34 @@ use axum::response::Response;
 use serde_json::{Value, json};
 
 /// The probe's text.
-const WARMUP_TEXT: &str = "Warmup";
+const WARMUP_TEXT: &crate::translation_core::Str = "Warmup";
 
 /// Whether `body` is a warmup probe: its messages are exactly one user message
 /// whose text — a string or text blocks — is `Warmup`.
 #[must_use]
-pub fn is_warmup_request(body: &Value) -> bool {
+pub fn is_warmup_request(body: &crate::translation_core::Json) -> bool {
     let Some([message]) = body
         .get("messages")
-        .and_then(Value::as_array)
+        .and_then(crate::translation_core::Json::as_array)
         .map(Vec::as_slice)
     else {
         return false;
     };
-    if message.get("role").and_then(Value::as_str) != Some("user") {
+    if message.get("role").and_then(crate::translation_core::Json::as_str) != Some("user") {
         return false;
     }
     let text = match message.get("content") {
-        Some(Value::String(text)) => text.clone(),
-        Some(Value::Array(blocks)) if !blocks.is_empty() => {
+        Some(crate::translation_core::Json::String(text)) => text.clone(),
+        Some(crate::translation_core::Json::Array(blocks)) if !blocks.is_empty() => {
             let mut text = String::new();
             for block in blocks {
-                if block.get("type").and_then(Value::as_str) != Some("text") {
+                if block.get("type").and_then(crate::translation_core::Json::as_str) != Some("text") {
                     return false;
                 }
                 text.push_str(
                     block
                         .get("text")
-                        .and_then(Value::as_str)
+                        .and_then(crate::translation_core::Json::as_str)
                         .unwrap_or_default(),
                 );
             }
@@ -54,7 +54,7 @@ pub fn is_warmup_request(body: &Value) -> bool {
 
 /// The synthetic reply for a warmup probe, in the shape the request asked for.
 #[must_use]
-pub fn warmup_response(body: &Value) -> Response {
+pub fn warmup_response(body: &crate::translation_core::Json) -> Response {
     let model = body
         .get("model")
         .and_then(Value::as_str)
@@ -82,36 +82,36 @@ pub fn warmup_response(body: &Value) -> Response {
     response
 }
 
-fn sse_response(message: &Value) -> Response {
+fn sse_response(message: &crate::translation_core::Json) -> Response {
     let mut start = message.clone();
-    start["content"] = json!([]);
+    start["content"] = crate::translation_core::json!([]);
     start["stop_reason"] = Value::Null;
     let events = [
         (
             "message_start",
-            json!({"type": "message_start", "message": start}),
+            crate::translation_core::json!({"type": "message_start", "message": start}),
         ),
         (
             "content_block_start",
-            json!({"type": "content_block_start", "index": 0,
+            crate::translation_core::json!({"type": "content_block_start", "index": 0,
                    "content_block": {"type": "text", "text": ""}}),
         ),
         (
             "content_block_delta",
-            json!({"type": "content_block_delta", "index": 0,
+            crate::translation_core::json!({"type": "content_block_delta", "index": 0,
                    "delta": {"type": "text_delta", "text": "OK"}}),
         ),
         (
             "content_block_stop",
-            json!({"type": "content_block_stop", "index": 0}),
+            crate::translation_core::json!({"type": "content_block_stop", "index": 0}),
         ),
         (
             "message_delta",
-            json!({"type": "message_delta",
+            crate::translation_core::json!({"type": "message_delta",
                    "delta": {"stop_reason": "end_turn", "stop_sequence": null},
                    "usage": {"output_tokens": 0}}),
         ),
-        ("message_stop", json!({"type": "message_stop"})),
+        ("message_stop", crate::translation_core::json!({"type": "message_stop"})),
     ];
     let mut text = String::new();
     for (event, data) in &events {

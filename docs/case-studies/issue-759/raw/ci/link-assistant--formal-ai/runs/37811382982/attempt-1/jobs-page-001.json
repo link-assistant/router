@@ -1,0 +1,100 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 113429144648,
+      "run_id": 37811382982,
+      "workflow_name": "Self-hosting evidence",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37811382982",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaaOdkSA",
+      "head_sha": "18af7296e1760cf8c7ad07948d4d102da5685a2f",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113429144648",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37811382982/job/113429144648",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-08T16:46:59Z",
+      "started_at": "2026-10-08T16:46:59Z",
+      "completed_at": "2026-10-08T16:47:50Z",
+      "name": "Self-Hosting Evidence Check",
+      "steps": [],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113429144648",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 0,
+      "runner_name": "",
+      "runner_group_id": 0,
+      "runner_group_name": ""
+    },
+    {
+      "id": 113429511662,
+      "run_id": 37811382982,
+      "workflow_name": "Self-hosting evidence",
+      "head_branch": "qa-reasoning-coding-bulk-fixes",
+      "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37811382982",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSbOoU88AAAAaaOz97g",
+      "head_sha": "18af7296e1760cf8c7ad07948d4d102da5685a2f",
+      "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/113429511662",
+      "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37811382982/job/113429511662",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-08T16:47:50Z",
+      "started_at": "2026-10-08T16:49:02Z",
+      "completed_at": "2026-10-08T16:49:21Z",
+      "name": "Evidence Check Status",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-08T16:49:03Z",
+          "completed_at": "2026-10-08T16:49:04Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-08T16:49:04Z",
+          "completed_at": "2026-10-08T16:49:19Z"
+        },
+        {
+          "name": "Fail the run when a required job was cancelled or failed",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-08T16:49:19Z",
+          "completed_at": "2026-10-08T16:49:19Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-08T16:49:19Z",
+          "completed_at": "2026-10-08T16:49:19Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-08T16:49:19Z",
+          "completed_at": "2026-10-08T16:49:19Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/113429511662",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000154073,
+      "runner_name": "GitHub Actions 1000154073",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ]
+}

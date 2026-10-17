@@ -60,7 +60,7 @@ pub fn command() -> clap::Command {
 
 /// Complete operation catalog, including option metadata used by bindings.
 #[must_use]
-pub fn operations() -> Vec<Value> {
+pub fn operations() -> Vec<crate::translation_core::Json> {
     fn visit(command: &clap::Command, path: &[String], globals: &[Value], result: &mut Vec<Value>) {
         let own: Vec<_> = command.get_arguments().filter(|arg| arg.get_long() != Some("json"))
             .map(|argument| {
@@ -78,7 +78,7 @@ pub fn operations() -> Vec<Value> {
         let options: Vec<_> = globals.iter().chain(own.iter()).cloned().collect();
         if command.get_subcommands().count() == 0 {
             let name = path.join(".");
-            result.push(json!({"name":name, "command":path, "schema":format!("link-assistant-router/{}/v1",name.replace('.',"-")), "options":options}));
+            result.push(json!({"name":name, "command":path, "schema":crate::translation_core::format!("link-assistant-router/{}/v1",name.replace('.',"-")), "options":options}));
         } else {
             for child in command.get_subcommands() {
                 let mut next = path.to_vec();
@@ -109,24 +109,24 @@ pub fn operations() -> Vec<Value> {
 
 /// HTTP routes with their original method, path, authentication and dialect.
 #[must_use]
-pub fn routes() -> Vec<Value> {
-    crate::route_contract::route_specs().iter().map(|route| json!({
-        "name":format!("{:?}",route.id),"method":route.method.as_str(),"path":route.template,
-        "auth":format!("{:?}",route.auth),"dialect":format!("{:?}",route.dialect),
-        "class":format!("{:?}",route.class),"listeners":route.listeners.iter().map(|listener|format!("{listener:?}")).collect::<Vec<_>>()
+pub fn routes() -> Vec<crate::translation_core::Json> {
+    crate::route_contract::route_specs().iter().map(|route| crate::translation_core::json!({
+        "name":crate::translation_core::format!("{:?}",route.id),"method":route.method.as_str(),"path":route.template,
+        "auth":crate::translation_core::format!("{:?}",route.auth),"dialect":crate::translation_core::format!("{:?}",route.dialect),
+        "class":crate::translation_core::format!("{:?}",route.class),"listeners":route.listeners.iter().map(|listener|crate::translation_core::format!("{listener:?}")).collect::<Vec<_>>()
     })).collect()
 }
 
 /// Generated contract document; checked-in publications must match this source.
 #[must_use]
-pub fn document() -> Value {
-    json!({"schema":"link-assistant-router/operation-catalog/v1", "version":crate::VERSION,
+pub fn document() -> crate::translation_core::Json {
+    crate::translation_core::json!({"schema":"link-assistant-router/operation-catalog/v1", "version":crate::VERSION,
         "operations":operations(),"routes":routes(),"languages":["rust","javascript","typescript","python"], "types": types()})
 }
 
 /// Canonical operation name for an already-parsed library request.
 #[must_use]
-pub fn operation_name(command: Option<&Command>) -> String {
+pub fn operation_name(command: crate::translation_core::Maybe<&Command>) -> crate::translation_core::Text {
     fn name(debug: &str) -> String {
         let first = debug.split([' ', '{', '(']).next().unwrap_or_default();
         let mut result = String::new();
@@ -143,19 +143,19 @@ pub fn operation_name(command: Option<&Command>) -> String {
         Some(Command::Version) => "version".into(),
         Some(Command::Contracts) => "contracts".into(),
         Some(Command::Verify(_)) => "verify".into(),
-        Some(Command::Tokens { op }) => format!("tokens.{}", name(&format!("{op:?}"))),
-        Some(Command::Accounts { op }) => format!("accounts.{}", name(&format!("{op:?}"))),
-        Some(Command::Providers { op }) => format!("providers.{}", name(&format!("{op:?}"))),
+        Some(Command::Tokens { op }) => crate::translation_core::format!("tokens.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Accounts { op }) => crate::translation_core::format!("accounts.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Providers { op }) => crate::translation_core::format!("providers.{}", name(&crate::translation_core::format!("{op:?}"))),
         Some(Command::Clients {
             op: crate::cli::ClientOp::Backup { op },
-        }) => format!("clients.backup.{}", name(&format!("{op:?}"))),
-        Some(Command::Clients { op }) => format!("clients.{}", name(&format!("{op:?}"))),
-        Some(Command::Models { op }) => format!("models.{}", name(&format!("{op:?}"))),
-        Some(Command::Server { op }) => format!("server.{}", name(&format!("{op:?}"))),
-        Some(Command::Auth { op }) => format!("auth.{}", name(&format!("{op:?}"))),
-        Some(Command::Tls { op }) => format!("tls.{}", name(&format!("{op:?}"))),
-        Some(Command::Logs { op }) => format!("logs.{}", name(&format!("{op:?}"))),
-        Some(Command::Tunnel(args)) => format!("tunnel.{}", name(&format!("{:?}", args.op))),
+        }) => crate::translation_core::format!("clients.backup.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Clients { op }) => crate::translation_core::format!("clients.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Models { op }) => crate::translation_core::format!("models.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Server { op }) => crate::translation_core::format!("server.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Auth { op }) => crate::translation_core::format!("auth.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Tls { op }) => crate::translation_core::format!("tls.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Logs { op }) => crate::translation_core::format!("logs.{}", name(&crate::translation_core::format!("{op:?}"))),
+        Some(Command::Tunnel(args)) => crate::translation_core::format!("tunnel.{}", name(&crate::translation_core::format!("{:?}", args.op))),
         Some(Command::With(_)) => "with".into(),
         Some(Command::Configure(_)) => "configure".into(),
         Some(Command::Usage(_)) => "usage".into(),
@@ -166,8 +166,8 @@ pub fn operation_name(command: Option<&Command>) -> String {
 
 /// JSON Schemas derived from public HTTP and CLI data types.
 #[must_use]
-pub fn types() -> Value {
-    json!({
+pub fn types() -> crate::translation_core::Json {
+    crate::translation_core::json!({
         "ModelCatalogDocument":crate::model_catalog_sources::document_schema(),
         "ModelDefinitionsResponse":schemars::schema_for!(crate::model_catalog_sources::ModelDefinitionsResponse),
         "OperationResult":schemars::schema_for!(crate::operations::OperationResult),
@@ -212,7 +212,7 @@ pub fn types() -> Value {
     })
 }
 
-fn secret_option(name: &str) -> bool {
+fn secret_option(name: &crate::translation_core::Str) -> bool {
     name.ends_with("_api_key")
         || name.ends_with("_private_key")
         || name.ends_with("_bot_token")

@@ -12,7 +12,7 @@
 use serde_json::Value;
 
 /// Column headers, in the order [`print_table`] writes them.
-const HEADERS: [&str; 9] = [
+const HEADERS: [&crate::translation_core::Str; 9] = [
     "id",
     "issued_at",
     "expires_at",
@@ -25,7 +25,7 @@ const HEADERS: [&str; 9] = [
 ];
 
 /// Print the token table, one row per record.
-pub fn print_table(records: &[Value]) {
+pub fn print_table(records: &[crate::translation_core::Json]) {
     println!(
         "{:<36}  {:<10}  {:<10}  {:<8}  {:<13}  {:<15}  {:<9}  {:<8}  {:<6}  label",
         HEADERS[0],
@@ -45,7 +45,7 @@ pub fn print_table(records: &[Value]) {
 
 /// One table row, as the local path formats it.
 #[must_use]
-pub fn row(record: &Value) -> String {
+pub fn row(record: &crate::translation_core::Json) -> crate::translation_core::Text {
     let text = |key: &str| {
         record
             .get(key)
@@ -64,7 +64,7 @@ pub fn row(record: &Value) -> String {
         .and_then(Value::as_str)
         .filter(|scope| !scope.is_empty())
         .unwrap_or("client");
-    let rpm = number("rate_limit_per_minute").map_or_else(|| "-".to_string(), |v| v.to_string());
+    let rpm = number("rate_limit_per_minute").map_or_else(|| crate::translation_core::format!("{}", "-"), |v| v.to_string());
     let revoked = record
         .get("revoked")
         .and_then(Value::as_bool)

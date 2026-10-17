@@ -13,10 +13,10 @@ use crate::credential_store::CredentialStore;
 use crate::subscription::{SubscriptionProvider, SubscriptionToken};
 
 const RECOVERY_VERSION: u8 = 1;
-const RECOVERY_DIRECTORY: &str = "refresh-recovery";
+const RECOVERY_DIRECTORY: &crate::translation_core::Str = "refresh-recovery";
 
 /// Account name used by the configured, non-pooled credential homes.
-pub const PRIMARY_ACCOUNT: &str = "primary";
+pub const PRIMARY_ACCOUNT: &crate::translation_core::Str = "primary";
 
 /// Maximum time a Router-owned writer waits for another credential transaction.
 pub const CREDENTIAL_LOCK_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
@@ -116,7 +116,7 @@ impl RecoverableCredentialStore {
         hex::encode(crate::refresh::credential_fingerprint(token))
     }
 
-    fn read_recovery(&self) -> Result<Option<RecoveryRecord>, String> {
+    fn read_recovery(&self) -> crate::translation_core::Outcome<crate::translation_core::Maybe<RecoveryRecord>, String> {
         let bytes = match std::fs::read(&self.recovery_path) {
             Ok(bytes) => bytes,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -139,9 +139,9 @@ impl RecoverableCredentialStore {
 
     fn write_recovery(
         &self,
-        baseline_fingerprint: Option<String>,
+        baseline_fingerprint: crate::translation_core::Maybe<String>,
         token: &SubscriptionToken,
-    ) -> Result<(), String> {
+    ) -> crate::translation_core::Outcome<(), String> {
         let record = RecoveryRecord {
             version: RECOVERY_VERSION,
             provider: self.provider,

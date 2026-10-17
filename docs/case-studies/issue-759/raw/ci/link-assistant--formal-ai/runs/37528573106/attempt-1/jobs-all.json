@@ -1,0 +1,118 @@
+[
+  {
+    "id": 112491987365,
+    "run_id": 37528573106,
+    "workflow_name": "Question necessity ratchet",
+    "head_branch": "qa-reasoning-coding-bulk-fixes",
+    "run_url": "https://api.github.com/repos/link-assistant/formal-ai/actions/runs/37528573106",
+    "run_attempt": 1,
+    "node_id": "CR_kwDOSbOoU88AAAAaMQuBpQ",
+    "head_sha": "46b959853e900eebb0676529c3c7b23faea9cbd4",
+    "url": "https://api.github.com/repos/link-assistant/formal-ai/actions/jobs/112491987365",
+    "html_url": "https://github.com/link-assistant/formal-ai/actions/runs/37528573106/job/112491987365",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "created_at": "2026-10-06T20:43:43Z",
+    "started_at": "2026-10-06T20:44:25Z",
+    "completed_at": "2026-10-06T20:48:26Z",
+    "name": "Question necessity ratchet (issue #920)",
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 1,
+        "started_at": "2026-10-06T20:44:26Z",
+        "completed_at": "2026-10-06T20:44:26Z"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 2,
+        "started_at": "2026-10-06T20:44:26Z",
+        "completed_at": "2026-10-06T20:44:49Z"
+      },
+      {
+        "name": "Setup Rust",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 3,
+        "started_at": "2026-10-06T20:44:49Z",
+        "completed_at": "2026-10-06T20:44:50Z"
+      },
+      {
+        "name": "Run ./.github/actions/setup-sccache",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 4,
+        "started_at": "2026-10-06T20:44:50Z",
+        "completed_at": "2026-10-06T20:44:51Z"
+      },
+      {
+        "name": "Install rust-script",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 5,
+        "started_at": "2026-10-06T20:44:51Z",
+        "completed_at": "2026-10-06T20:45:21Z"
+      },
+      {
+        "name": "Test the ratchet checker",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 6,
+        "started_at": "2026-10-06T20:45:21Z",
+        "completed_at": "2026-10-06T20:45:22Z"
+      },
+      {
+        "name": "Enforce the monotonic ceiling",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 7,
+        "started_at": "2026-10-06T20:45:22Z",
+        "completed_at": "2026-10-06T20:45:23Z"
+      },
+      {
+        "name": "Run the deterministic question benchmark",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "number": 8,
+        "started_at": "2026-10-06T20:45:23Z",
+        "completed_at": "2026-10-06T20:48:23Z"
+      },
+      {
+        "name": "Post Run ./.github/actions/setup-sccache",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 15,
+        "started_at": "2026-10-06T20:48:23Z",
+        "completed_at": "2026-10-06T20:48:23Z"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 16,
+        "started_at": "2026-10-06T20:48:23Z",
+        "completed_at": "2026-10-06T20:48:24Z"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17,
+        "started_at": "2026-10-06T20:48:24Z",
+        "completed_at": "2026-10-06T20:48:24Z"
+      }
+    ],
+    "check_run_url": "https://api.github.com/repos/link-assistant/formal-ai/check-runs/112491987365",
+    "labels": [
+      "ubuntu-latest"
+    ],
+    "runner_id": 1000145885,
+    "runner_name": "GitHub Actions 1000145885",
+    "runner_group_id": 0,
+    "runner_group_name": "GitHub Actions"
+  }
+]

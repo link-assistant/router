@@ -1,0 +1,79 @@
+{
+  "name": "start-command",
+  "version": "0.37.0",
+  "description": "Gamification of coding, execute any command with ability to auto-report issues on GitHub",
+  "main": "src/bin/cli.js",
+  "exports": {
+    ".": "./src/bin/cli.js",
+    "./execution-store": "./src/lib/execution-store.js"
+  },
+  "bin": {
+    "$": "./src/bin/cli.js"
+  },
+  "scripts": {
+    "test": "bun ../scripts/run-js-tests.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:file-size": "bun ../scripts/check-file-size.mjs",
+    "lint:scripts": "cd .. && eslint .",
+    "format:check:scripts": "cd .. && prettier --check \"scripts/**/*.{js,mjs,cjs}\"",
+    "check": "bun run lint && bun run lint:scripts && bun run format:check && bun run format:check:scripts && bun run check:file-size",
+    "prepare": "cd .. && husky .husky || true",
+    "changeset": "changeset",
+    "changeset:version": "bun ../scripts/changeset-version.mjs",
+    "changeset:publish": "changeset publish",
+    "changeset:status": "changeset status --since=origin/main"
+  },
+  "keywords": [
+    "cli",
+    "command",
+    "gamification",
+    "github",
+    "automation"
+  ],
+  "author": "",
+  "license": "Unlicense",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/link-foundation/start.git"
+  },
+  "bugs": {
+    "url": "https://github.com/link-foundation/start/issues"
+  },
+  "homepage": "https://github.com/link-foundation/start#readme",
+  "devDependencies": {
+    "@changesets/cli": "^3.0.3",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.4",
+    "prettier": "^3.8.3"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs}": [
+      "eslint --fix --max-warnings 6",
+      "prettier --write",
+      "prettier --check"
+    ],
+    "*.md": [
+      "prettier --write",
+      "prettier --check"
+    ]
+  },
+  "dependencies": {
+    "command-stream": "^0.9.4",
+    "lino-objects-codec": "^0.4.0"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.12",
+    "flatted": "^3.4.2",
+    "js-yaml": "^4.3.2"
+  }
+}

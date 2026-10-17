@@ -1,0 +1,11 @@
+{
+  "schema": "complete-original-derive-module-path-oracle-v1",
+  "revision": "2d4b1c31b3fa9df0d9fb0dc18f23f096a664e94e",
+  "path": "tools/translation/derive-footprints.mjs",
+  "mode": "100644",
+  "blob": "15244e85e0c24fe2033e4b99d7eda4fc3f1727c7",
+  "bytes": 48775,
+  "sha256": "10bb7ab8ea9f09700f4f83a7968aa4cdcbd9ad9955bff2fcfc673e974e5f7f53",
+  "storedPath": "derive-footprints.2d4b.mjs.txt",
+  "execution": "Only imports relocate to the same active module URLs; the complete implementation body is unchanged."
+}

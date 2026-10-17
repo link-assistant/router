@@ -309,7 +309,7 @@ pub async fn item(
 fn authenticate(
     state: &AppState,
     headers: &HeaderMap,
-) -> Result<(crate::token::TokenClaims, ResponseOwner), Response> {
+) -> crate::translation_core::Outcome<(crate::token::TokenClaims, ResponseOwner), Response> {
     let claims = crate::proxy::authenticate_client_error(state, headers)
         .map_err(|error| error.render(crate::api_error::ApiDialect::OpenAi))?;
     let owner = ResponseOwner::from_claims(&claims)
@@ -364,10 +364,10 @@ async fn forward(
     method: &Method,
     headers: &HeaderMap,
     body: &Bytes,
-    client_path: &str,
-    upstream_path: &str,
+    client_path: &crate::translation_core::Str,
+    upstream_path: &crate::translation_core::Str,
     destination: &AffinityDestination,
-) -> Result<Forwarded, Response> {
+) -> crate::translation_core::Outcome<Forwarded, Response> {
     let correlation_id = crate::request_log::correlation_id(headers);
     let (upstream, account) = match destination {
         AffinityDestination::StoredProvider {
@@ -421,10 +421,10 @@ async fn forward(
 async fn read_upstream(
     state: &AppState,
     upstream: reqwest::Response,
-    account: Option<&str>,
+    account: crate::translation_core::Maybe<&crate::translation_core::Str>,
     bytes_sent: u64,
-    correlation_id: &str,
-) -> Result<Forwarded, Response> {
+    correlation_id: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<Forwarded, Response> {
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     let headers = crate::proxy::relay_response_headers(upstream.headers());
@@ -454,7 +454,7 @@ async fn read_upstream(
     })
 }
 
-async fn bounded_request_body(state: &AppState, body: Body) -> Result<Bytes, Response> {
+async fn bounded_request_body(state: &AppState, body: Body) -> crate::translation_core::Outcome<Bytes, Response> {
     axum::body::to_bytes(body, state.max_proxy_request_bytes)
         .await
         .map_err(|error| {
@@ -470,7 +470,7 @@ fn remove_conversation(
     state: &AppState,
     affinity: &ResponseAffinity,
     item_namespace: ResponseNamespace,
-) -> Result<(), Response> {
+) -> crate::translation_core::Outcome<(), Response> {
     let store = state.provider_store.response_affinities();
     store
         .remove_children(
@@ -486,7 +486,7 @@ fn remove_conversation(
     Ok(())
 }
 
-fn root_id(body: &[u8]) -> Option<String> {
+fn root_id(body: &[u8]) -> crate::translation_core::Maybe<String> {
     serde_json::from_slice::<serde_json::Value>(body)
         .ok()?
         .get("id")?
@@ -501,21 +501,21 @@ fn list_ids(body: &[u8]) -> Vec<String> {
         .and_then(|value| {
             value
                 .get("data")
-                .and_then(serde_json::Value::as_array)
+                .and_then(crate::translation_core::Json::as_array)
                 .cloned()
         })
         .unwrap_or_default()
         .into_iter()
         .filter_map(|item| {
             item.get("id")
-                .and_then(serde_json::Value::as_str)
+                .and_then(crate::translation_core::Json::as_str)
                 .map(str::to_string)
         })
         .filter(|id| !id.is_empty())
         .collect()
 }
 
-fn with_query(path: &str, uri: &Uri) -> String {
+fn with_query(path: &crate::translation_core::Str, uri: &Uri) -> String {
     uri.query()
         .map_or_else(|| path.to_string(), |query| format!("{path}?{query}"))
 }
@@ -535,10 +535,10 @@ fn item_not_found() -> Response {
     resource_not_found("Conversation item", "conversation_item_not_found")
 }
 
-fn resource_not_found(message: &str, code: &str) -> Response {
+fn resource_not_found(message: &crate::translation_core::Str, code: &crate::translation_core::Str) -> Response {
     (
         StatusCode::NOT_FOUND,
-        axum::Json(serde_json::json!({
+        axum::Json(crate::translation_core::json!({
             "error": {
                 "message": format!("{message} not found"),
                 "type": "invalid_request_error",
@@ -574,11 +574,11 @@ fn affinity_error(error: &impl std::fmt::Display) -> Response {
     )
 }
 
-fn upstream_error(message: &str) -> Response {
+fn upstream_error(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::BAD_GATEWAY, "api_error", message)
 }
 
-fn openai_error(status: StatusCode, error_type: &str, message: &str) -> Response {
+fn openai_error(status: StatusCode, error_type: &crate::translation_core::Str, message: &crate::translation_core::Str) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type,

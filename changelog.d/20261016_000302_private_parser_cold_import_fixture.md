@@ -1,0 +1,1 @@
+Repair the complete private-parser execution fixture to relocate all four registered parser imports in a cold public CST module. Keep every native-hook refusal, restoration, whole-file case and original deadline. This changes test setup only; translation and runtime parity remain unqualified.

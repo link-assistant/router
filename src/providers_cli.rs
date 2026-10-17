@@ -16,11 +16,11 @@ struct ProviderImportReport {
     results: Vec<serde_json::Value>,
 }
 
-fn import_failure(name: &str, outcome: ProviderProvisionFailureKind) -> serde_json::Value {
-    serde_json::json!({"name": name, "outcome": outcome})
+fn import_failure(name: &crate::translation_core::Str, outcome: ProviderProvisionFailureKind) -> crate::translation_core::Json {
+    crate::translation_core::json!({"name": name, "outcome": outcome})
 }
 
-fn remote_failure(body: &serde_json::Value) -> ProviderProvisionFailureKind {
+fn remote_failure(body: &crate::translation_core::Json) -> ProviderProvisionFailureKind {
     let outcome = body.pointer("/error/outcome").cloned();
     outcome
         .and_then(|value| serde_json::from_value(value).ok())
@@ -67,7 +67,7 @@ async fn local_import_report(
 async fn remote_import_report(
     server: &crate::managed_server::ResolvedServer,
     imported: &[ProviderUpsert],
-) -> Result<ProviderImportReport, String> {
+) -> crate::translation_core::Outcome<ProviderImportReport, String> {
     let mut report = ProviderImportReport {
         complete: true,
         results: Vec::with_capacity(imported.len()),
@@ -199,7 +199,7 @@ pub struct Call {
 /// # Errors
 ///
 /// Returns an operator-readable message when the provider cannot be encoded.
-pub fn call_for(op: &ProviderOp) -> Result<Option<Call>, String> {
+pub fn call_for(op: &ProviderOp) -> crate::translation_core::Outcome<crate::translation_core::Maybe<Call>, String> {
     Ok(match op {
         ProviderOp::List { .. } => Some(Call {
             method: "GET",
@@ -279,7 +279,7 @@ fn supplied_api_key(
     Ok(api_key.cloned())
 }
 
-fn reject_lefine_argv_key(kind: &str, api_key: Option<&String>) -> Result<(), String> {
+fn reject_lefine_argv_key(kind: &crate::translation_core::Str, api_key: crate::translation_core::Maybe<&String>) -> crate::translation_core::Outcome<(), String> {
     if crate::providers::ProviderKind::from_str_opt(kind)
         == Some(crate::providers::ProviderKind::Lefine)
         && api_key.is_some()
@@ -297,16 +297,16 @@ fn reject_lefine_argv_key(kind: &str, api_key: Option<&String>) -> Result<(), St
 /// # Errors
 ///
 /// Returns an operator-readable message when the record cannot be encoded.
-pub fn upsert_body(upsert: &ProviderUpsert) -> Result<serde_json::Value, String> {
+pub fn upsert_body(upsert: &ProviderUpsert) -> crate::translation_core::Outcome<crate::translation_core::Json, String> {
     serde_json::to_value(upsert).map_err(|error| error.to_string())
 }
 
 /// The provider records inside a `/api/management/providers` answer.
 #[must_use]
-pub fn records_in(answer: &serde_json::Value) -> Vec<serde_json::Value> {
+pub fn records_in(answer: &crate::translation_core::Json) -> Vec<crate::translation_core::Json> {
     answer
         .get("data")
-        .and_then(serde_json::Value::as_array)
+        .and_then(crate::translation_core::Json::as_array)
         .cloned()
         .unwrap_or_default()
 }
@@ -314,7 +314,7 @@ pub fn records_in(answer: &serde_json::Value) -> Vec<serde_json::Value> {
 async fn remote_result(
     server: &crate::managed_server::ResolvedServer,
     op: &ProviderOp,
-) -> Result<ExitCode, String> {
+) -> crate::translation_core::Outcome<ExitCode, String> {
     if let ProviderOp::Import { path, .. } = op {
         // The manifest is this machine's file; the providers it declares are
         // the deployment's. Reading here and declaring there is what "import
@@ -397,7 +397,7 @@ async fn remote_result(
 ///
 /// `kind` is taken through [`ProviderKind::as_str`] so table output stays
 /// aligned with the accepted CLI spelling.
-fn print_remote_table(records: &[serde_json::Value]) {
+fn print_remote_table(records: &[crate::translation_core::Json]) {
     println!(
         "{:<20}  {:<18}  {:<32}  {:<10}  default_model",
         "name", "kind", "base_url", "enabled"

@@ -1,0 +1,3 @@
+Align three historical fixtures with their actual checked source contracts: exact individual Rust Gt token-tree backing and spans replace the obsolete fused-token expectation; the unchanged explicit shared-f64 read now has its genuine primitive Copy source witness and complete IEEE/invalid-input outcomes, with paired strict targets; an unissued Host subclass must fail at its exact earlier source-class guard.
+
+All original subjects, meaningful refusals, private-issuer checks and case/child limits remain. Production and generated source are unchanged. Source-only; receiving is pending, with no engines run or performance/coverage claim.

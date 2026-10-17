@@ -1,0 +1,14 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/020be4ac016b14d293a2b22e7f4db69479919c96/.github",
+    "start_line": 27,
+    "start_column": null,
+    "end_line": 27,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "Unable to download artifact(s): Artifact not found for name: native-release-x86_64-pc-windows-msvc\n        Please ensure that your artifact is not expired and the artifact was uploaded using a compatible version of toolkit/upload-artifact.\n        For more information, visit the GitHub Artifacts FAQ: https://github.com/actions/toolkit/blob/main/packages/artifact/docs/faq.md",
+    "raw_details": ""
+  }
+]

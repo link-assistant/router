@@ -1,0 +1,1 @@
+Document the original compiler's fresh-process batch API, its CST and checked semantic meta-language boundaries, bounded canonical requests, deterministic two-sequence registration proposals and required receiving checks. Keep unsupported language coverage, generated freshness and the JavaScript-first Rust CI gate explicit.

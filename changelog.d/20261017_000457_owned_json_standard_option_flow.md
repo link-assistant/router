@@ -1,0 +1,7 @@
+# Retain selected original Option identities in JSON flow
+
+The genuine checked original filter body contains internal Some/None and continuation types without per-use generic metadata, while its actual current Option declaration retains the complete shared payload. The JSON flow walker now recovers that metadata only for exact type-object identities in a freshly revalidated original standard body or an already privately issued collection callback body. The lexical scope is restored in `finally`. Existing current Option/field/Copy and canonical Json/Map checks remain conjunctive; conflicting metadata, arbitrary copied types and ordinary outside-scope Options receive no new permission. Semantic IR and source lifetime checks remain unchanged.
+
+The error-flow fixture now freezes its Some/None carrier containers, matching the existing runtime ABI. All eight original cases, complete structured parents, original negatives and 60-second/20-second limits remain, with independent selected-filter and non-error nested get/if-let/None callback controls plus proof/layout tamper refusals. No stored Result, generic Drop/Copy, mutable/deep reference, Host, source-data or generated class change is included. The independently assigned function-tail match repair stays separate.
+
+Worker runtime and Rust checks are UNRUN. Root receiving must establish actual gains; extra source/type traversal cost is unmeasured.

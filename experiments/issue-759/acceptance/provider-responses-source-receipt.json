@@ -1,0 +1,222 @@
+{
+  "base": "e0b405361ed24f9eedb035b1dec84a6047e845c1",
+  "validation": "source-only; no executable parity evidence",
+  "sources": [
+    {
+      "path": "src/proxy_openai_resource.rs",
+      "sha256": "1eafa26a131345dc3ce171a3ec1cc6833a801a794ecc76d545bca3d96eacf09c"
+    },
+    {
+      "path": "src/proxy_openai.rs",
+      "sha256": "c449a0b413246bc1f0b75e12b2b1638e6fbfcbd09877237ad4c462806d9cf3a9"
+    },
+    {
+      "path": "src/responses_lifecycle.rs",
+      "sha256": "93395af7d4894f332f2b1443f0c36bdc73f89640ec3b4b8753d7f70d8f251d3b"
+    },
+    {
+      "path": "src/native_service_resources.rs",
+      "sha256": "335509c73af26192c00cb49f8cadd6e31be523f2b223482c8ee2378130aa94d0"
+    },
+    {
+      "path": "src/native_service_tests_resources.rs",
+      "sha256": "2e8496501016d2e3097223841253be2031c6e432177f275a285131a7be377a50"
+    },
+    {
+      "path": "src/response_affinity.rs",
+      "sha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41"
+    },
+    {
+      "path": "src/resource_capture.rs",
+      "sha256": "897136aaa5c146ef01219581665b0fa88299ea66af865ed1fe368f0625399d35"
+    },
+    {
+      "path": "src/server_router.rs",
+      "sha256": "0a30a4cdce5fe3ed72f1f9e3a2008517858888e8c7b6f08130aa01aac69d6c64"
+    },
+    {
+      "path": "src/api_error.rs",
+      "sha256": "1afefa01a39e711dff5893b9490b4963fbcb53a5c626693b8b5657276232de6a"
+    },
+    {
+      "path": "src/native_service.rs",
+      "sha256": "478d8a6cc9a58defd2fb3c3eefeea81846b4499533530d7539ef1c8dbfb11337"
+    },
+    {
+      "path": "src/conversations.rs",
+      "sha256": "9a61690047a137df88531cf815d86dea9c0ea80e8a374db724eadbdd07b2e41d"
+    },
+    {
+      "path": "src/resource_lifecycle_tests.rs",
+      "sha256": "5d4dd7103be604663fbfcb7fd585029f5533d2c84d024cfe9c43b93939eea180"
+    },
+    {
+      "path": "src/sse.rs",
+      "sha256": "c15e23127a0c780f344929514e5fc37a8f2fee4d20aeeec5a9b3f459372d3066"
+    },
+    {
+      "path": "src/bridge_controls.rs",
+      "sha256": "c4d0d6520eccf550be920e521860681172ffca2dc028fde5187434429d1f7b81"
+    }
+  ],
+  "contracts": [
+    {
+      "source": "src/proxy_openai_resource.rs",
+      "symbols": [
+        "state_for_previous_response"
+      ]
+    },
+    {
+      "source": "src/responses_lifecycle.rs",
+      "symbols": [
+        "forward",
+        "forward_stored_provider",
+        "forward_subscription",
+        "relay",
+        "response_not_found"
+      ]
+    },
+    {
+      "source": "src/native_service_resources.rs",
+      "symbols": [
+        "response_references",
+        "referenced_response_affinity"
+      ]
+    },
+    {
+      "source": "src/native_service_tests_resources.rs",
+      "symbols": [
+        "responses_helpers_pin_native_compaction_to_existing_state"
+      ]
+    },
+    {
+      "source": "src/response_affinity.rs",
+      "symbols": [
+        "remove_if_matches"
+      ],
+      "remove_if_matches_start_line": 397,
+      "record_equality_line": 405
+    },
+    {
+      "source": "src/conversations.rs",
+      "symbols": [
+        "create",
+        "conversation",
+        "items",
+        "item",
+        "read_upstream",
+        "remove_conversation",
+        "list_ids",
+        "resource_not_found",
+        "unsupported",
+        "method_not_allowed"
+      ]
+    },
+    {
+      "source": "src/resource_lifecycle_tests.rs",
+      "symbols": [
+        "conversations_are_native_owner_scoped_and_parent_bound",
+        "native_subscription_response_lifecycle_reuses_the_exact_account",
+        "sse_identity_is_durable_before_the_success_response_is_returned"
+      ]
+    },
+    {
+      "source": "src/resource_capture.rs",
+      "symbols": [
+        "capture_with_json_fields",
+        "capture_stream",
+        "sse_id",
+        "location_id",
+        "record_context",
+        "affinity_error",
+        "openai_error"
+      ]
+    },
+    {
+      "source": "src/sse.rs",
+      "symbols": [
+        "push_blocks",
+        "find_separator"
+      ]
+    },
+    {
+      "source": "src/bridge_controls.rs",
+      "symbols": [
+        "validate_responses"
+      ]
+    }
+  ],
+  "authored_fixture_count": 42,
+  "authored_fixtures_executed": false,
+  "head_source_trace": {
+    "rust_handler": "src/responses_lifecycle.rs::forward passes &parts.method unchanged to provider and subscription builders",
+    "rust_native_relay": "src/native_service.rs::forward clones request.method() for forwarding",
+    "rust_route": "src/server_router.rs get(responses_lifecycle::retrieve)",
+    "native_dispatch": "packages/javascript/native/server.mjs handle preserves original Request for nativeService.fetch; local handlers use HEAD-to-GET normalization; outer response body strip remains; listen/public fetch share dispatch",
+    "authored_assertions": [
+      "outbound HEAD retrieval/input_items/missing lifecycle",
+      "outbound HEAD real HTTP",
+      "empty body/status/headers on both public surfaces",
+      "foreign owner denial without upstream",
+      "computed health HEAD without upstream"
+    ],
+    "upstream_method_equivalence_verified": false,
+    "route_precedence_changed": false
+  },
+  "retirement_storage_failure_contract": {
+    "upstream_404_410": "ignore remove_if_matches error; return response_not_found",
+    "successful_delete": "return affinity_storage_error on remove_if_matches error"
+  },
+  "fixture_modules": [
+    {
+      "path": "experiments/issue-759/acceptance/provider-responses.test.mjs",
+      "authored_count": 16,
+      "executed": false
+    },
+    {
+      "path": "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+      "authored_count": 16,
+      "executed": false
+    },
+    {
+      "path": "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+      "authored_count": 10,
+      "executed": false
+    }
+  ],
+  "conversation_contract_notes": {
+    "child_capture": "sequential original per-ID transactions; earlier successful captures survive later failure",
+    "cleanup": "parent children removed by namespace/parent/owner/destination then full-original parent equality; not an atomic tree generation transaction",
+    "head": "explicit original allowed-method checks exclude HEAD after owner lookup; no route precedence inference",
+    "body_limit": "read_upstream uses max_proxy_request_bytes; native draft uses maxBodyBytes",
+    "subscription_binding": "recorded account is logical principalAccount, not physical pinnedAccount; core maps implicit Codex to primary"
+  },
+  "capture_contract_notes": {
+    "architecture": "provider-owned background execution/cancel; Anthropic bridge synchronous-only refusal; no local worker",
+    "ordering": "search complete blocks in current transport chunk before rejecting still-unidentified prefix over1MiB",
+    "visibility": "persist owner affinity before exposing successful response or buffered bytes",
+    "failed_capture": "502/503 api_error envelope with param/code null",
+    "scope": "representative bounded observable contracts, not universal serde_json/depth/numeric precision or Rust runtime proof"
+  },
+  "source_review_notes": {
+    "executed": false,
+    "corrections": [
+      "Responses invalid selector/create API type maps to invalid_request_error; model_required remains distinct",
+      "conversation root/list ID parse shares capture checked UTF8/scalar/nonfinite domain"
+    ],
+    "packaging": "native/portable included by existing package files; no new dependency/export required",
+    "prerequisites": [
+      "integrated source tree or ROUTER_ACCEPTANCE_ROOT pointing to gate",
+      "Node>=20 and existing AJV/TOML dependency tree",
+      "Python3 advisory-lock adapter",
+      "loopback access and bounded writable temporary directories"
+    ],
+    "focused_fixture_count": 42,
+    "unproved_store_boundaries": [
+      "typed persisted row/schema validation",
+      "wide i64 affinity lifetimes",
+      "serde_json recursion/precision",
+      "subscription reactive refresh"
+    ]
+  }
+}

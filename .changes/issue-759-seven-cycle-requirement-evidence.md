@@ -1,0 +1,1 @@
+Reconcile the issue759 case-study requirement ledger with all seven completed draft-publication evidence cycles. Preserve partial runtime, adoption and branch-protection status; report the six actual outer CI deadline cancellations separately from four strict gap inventories. No external actions or implementation changed.

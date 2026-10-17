@@ -1,0 +1,5 @@
+### Added
+
+- Add a reusable private Cargo invocation planner for explicit modeled root-library build, check and test requests. The complete checked request binds genuine parser, Cargo, lockfile and captured package sources; unsupported flags, wrappers, configuration injection and incomplete or replayed requests refuse.
+- Keep the modeling boundary explicit: the plan observes no actual environment or CI command and grants no dependency-unit, cfg, namespace, runtime or native-parity authority. A later source-derived unit rule must consume the private plan, and Rust CI must independently check its real invocation against the model before claiming parity.
+- Add eight complete source and receiving controls, including full source/hash observation, mutation during source reissue, private identity, zero-callback native ingress, sticky physical cold import, and independent JS/strict TypeScript execution. Source-only draft: every new case is UNRUN; existing compiler consumers and test limits are unchanged.

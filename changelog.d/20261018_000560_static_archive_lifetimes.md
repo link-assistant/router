@@ -1,0 +1,5 @@
+Static-source archive decoding now returns the complete fresh index and bundle from a short-lived private frame before unchanged full CST, profile, source and inverse validation. Packed and decoded raw buffers no longer share that frame with the later native validation work. No read, hash, parse, independent native build, return field, limit or cache policy changes.
+
+The original case-six negative workload retains its full serialized preimage and original canonical string while releasing the duplicate parsed pristine bundle. It still freshly parses every mutation and runs all ten full negative readers. The complete native canonical transport also remains; its primitive source is retained for the unchanged final comparison. Selecting the original canonical string moves earlier only in this explicit data-only fixture schedule. All eight cases, original caps and strict TypeScript checks remain.
+
+Source-only draft: runtime, memory impact, full asset replay and complete Node/Bun qualification are unrun. Earlier standard-Bun memory-limit and gzip-byte failures remain independent retained evidence.

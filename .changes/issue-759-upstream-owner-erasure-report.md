@@ -1,0 +1,1 @@
+- Record a reproducible pinned upstream Rust name-resolution defect for shadowed String/Box modules, with exact vendor/source hashes, measured Node output, qualified-path controls and an unpublished existing-issue comment draft. Rust expectations are source-derived; no Rust execution or parity promotion is claimed.

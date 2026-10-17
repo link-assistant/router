@@ -1,0 +1,4 @@
+### Changed
+- Document upstream implementation review, immutable source pins, inactive complete copies and pristine raw records in contribution guidance. Correct the current serialization inventory counts without changing executable layouts.
+
+The complete JavaScript gate on 9281e72a8 attempted all seven stages with unchanged source and compiler inputs. Native Node/Bun tests, TypeScript, 121 acceptance cases and 102 reverse cases in each engine passed. Forward tests retained 17 failures among 2445 cases; strict parity retained 442 known gaps with zero validation errors. The failed forward test command prevented that stage's subsequent canonical and matrix commands from running. No green stamp or Rust execution occurred. These results remain a failed checkpoint, not complete parity or qualification of the subsequent repair drafts.

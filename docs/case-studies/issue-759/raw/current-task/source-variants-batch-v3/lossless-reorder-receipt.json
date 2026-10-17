@@ -1,0 +1,20 @@
+{
+  "schema": "complete-packet-lossless-reorder-v5",
+  "originalArchiveBytes": 80313872,
+  "originalArchiveSha256": "6d15e690a04a9b4847a9fff642e566179bbdb196ebbeb96c77654266725b2140",
+  "archive": "/tmp/router-759-complete-packet-reorder-v5/complete-evidence.tar.xz",
+  "archiveBytes": 75670080,
+  "archiveSha256": "cb01766ddc7b6a08336c68b08d2fe26eeed2da0ae1840d91a01060281f60aaab",
+  "completeMembers": 4853,
+  "completeOriginalBytes": 264132564,
+  "allOriginalNamesLengthsAndHashesUnchanged": true,
+  "ordering": "adjacent legacy40 complete failed and successful containers; other compressed original basename families; then complete plain payloads",
+  "originalReceipt": "/tmp/router-759-new-complete-source-packet-v3/capture-receipt.json",
+  "elapsedSeconds": 134.7640409169253,
+  "capSeconds": 600,
+  "caseChanged": false,
+  "originalsRemoved": false,
+  "fullGatePass": false,
+  "runtimeParity": false,
+  "rustExecutions": 0
+}

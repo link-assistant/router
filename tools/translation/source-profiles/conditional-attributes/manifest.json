@@ -1,0 +1,130 @@
+{
+  "schema": "rust-original-conditional-attribute-absence-v1",
+  "id": "rust-1.89-cfg-attr-false-absence",
+  "rust": "1.89.0",
+  "sources": [
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_expand/src/config.rs",
+      "archive": "rust-expand-config-1.89.0.rs.gz",
+      "bytes": 19343,
+      "sha256": "164793e06f844ef96778a8d5593cc3e44cea542d764f49a27aebc42daa711f0e",
+      "archiveBytes": 5323,
+      "archiveSha256": "a87988a492b51b47fe9984e0afb5475c6f88770580fe95d998a18cf045471db6",
+      "anchors": [
+        {
+          "anchor": "fn process_cfg_attr(",
+          "line": 271
+        },
+        {
+          "anchor": "pub(crate) fn expand_cfg_attr(",
+          "line": 286
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/parser/attr.rs",
+      "archive": "rust-parse-attr-1.89.0.rs.gz",
+      "bytes": 19525,
+      "sha256": "9e497b25e61cd8e1aa7b40d8b2d890aa170dd8522626e2481d264980e2bd11fc",
+      "archiveBytes": 4887,
+      "archiveSha256": "28749513fc97a2e614cc7701c129df560bfbc418aba4435613b65790f35a7e45",
+      "anchors": [
+        {
+          "anchor": "pub fn parse_attr_item(",
+          "line": 290
+        },
+        {
+          "anchor": "pub fn parse_cfg_attr(",
+          "line": 380
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/lib.rs",
+      "archive": "rust-parse-lib-1.89.0.rs.gz",
+      "bytes": 8170,
+      "sha256": "e445ed1d6a197b64a9a605d95bd36b73d3f48f59ad867d858b91bf019e926003",
+      "archiveBytes": 2803,
+      "archiveSha256": "58eef1a45473a20141f42ea9ec2aa20a82046874b8921dc07a9c4fc8e4c3bd8d",
+      "anchors": [
+        {
+          "anchor": "pub fn parse_cfg_attr(",
+          "line": 217
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_span/src/symbol.rs",
+      "archive": "rust-symbol-1.89.0.rs.gz",
+      "bytes": 77781,
+      "sha256": "35b84de01138877958228c55fcfbbff7749f7b97dd4e089fc3e4cad1733196b2",
+      "archiveBytes": 19825,
+      "archiveSha256": "0fe76fef2e6a0d434b6a4a2baaae292705ded8b6aa1c172d1e0028a8ee1454f9",
+      "keywordLines": [
+        43,
+        115
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_feature/src/builtin_attrs.rs",
+      "archive": "rust-builtin-attrs-1.89.0.rs.gz",
+      "bytes": 53039,
+      "sha256": "2f6de6720effcaef643447287b65cc471e8f0f00122e3ec8dae3fb129f106a32",
+      "archiveBytes": 10242,
+      "archiveSha256": "1146eb5e90bf1f88a57daac5be5d2596d5256beeb0a82e82c2e853061ff2050e",
+      "anchors": [
+        {
+          "anchor": "allow, Normal, template!",
+          "lines": [
+            442
+          ]
+        },
+        {
+          "anchor": "pub fn is_builtin_attr_name",
+          "lines": [
+            1254
+          ]
+        }
+      ]
+    },
+    {
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_passes/src/dead.rs",
+      "archive": "rust-dead-lint-1.89.0.rs.gz",
+      "bytes": 51435,
+      "sha256": "43d7356d7d17a8cd749b6d96ea8f68041a24cfd341b92aa7afab990b1bc2659f",
+      "archiveBytes": 12120,
+      "archiveSha256": "d0d2599ff4c171ed57242741e5cb450c6dc83b0afce248ce6c5e32a027d908a9",
+      "anchors": [
+        {
+          "anchor": "fn has_allow_expect_dead_code",
+          "lines": [
+            662
+          ]
+        },
+        {
+          "anchor": "emit_node_span_lint(DEAD_CODE",
+          "lines": [
+            1127
+          ]
+        },
+        {
+          "anchor": "pub(crate) fn provide",
+          "lines": [
+            1282
+          ]
+        }
+      ]
+    }
+  ],
+  "limits": {
+    "tokens": 8192,
+    "inputs": 256,
+    "depth": 64
+  },
+  "supported": "Validated false predicates establish absence. Independently checked exact builtin allow(dead_code) inputs have no item, namespace or runtime transformation under either branch, while predicate selection stays explicit or unknown.",
+  "limitations": [
+    "Active or unknown procedural, derive, path and other conditional attribute transformations remain refused.",
+    "Attribute assignment expressions other than original string literals and raw identifier paths remain refused.",
+    "No host configuration, procedural expansion, namespace identity, or runtime behavior is inferred."
+  ]
+}

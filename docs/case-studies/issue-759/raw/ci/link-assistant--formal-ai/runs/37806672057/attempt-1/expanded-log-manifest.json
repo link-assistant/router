@@ -1,0 +1,20 @@
+[
+  {
+    "path": "link-assistant--formal-ai/runs/37806672057/attempt-1/logs/13_base _ Pin base commit.txt.gz",
+    "sha256": "4057da82fc38da99acbcdbb32d570c94dc0c523979bc26b807f970fbbe9f3fea",
+    "bytes": 4872,
+    "uncompressed_bytes": 20804,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "cfbc9577ffee6e2947545e053512bf12dbc1235574b4b88d739c395718a25a30"
+  },
+  {
+    "path": "link-assistant--formal-ai/runs/37806672057/attempt-1/logs/base _ Pin base commit/system.txt.gz",
+    "sha256": "1a1126100cb4116206f765e956033e5cfe8f034ef725c9e8b9bb4d68e11b1229",
+    "bytes": 560,
+    "uncompressed_bytes": 1803,
+    "redacted": false,
+    "compression": "gzip",
+    "decoded_sha256": "6b4d4808aefb8b971ae0f8dba3641257d776b3cbf06978c6121a58965726011b"
+  }
+]

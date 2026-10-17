@@ -1,0 +1,28 @@
+{
+  "schema": "completed-json-budget-before-v1",
+  "commit": "762431daf7dbd7a2ced386d626af1fdb9226c227",
+  "sources": [
+    {
+      "path": "tools/translation/private-data-freeze.mjs",
+      "storedPath": "raw/private-data-freeze.mjs",
+      "bytes": 4671,
+      "sha256": "a49100e9a8cba5e1401822ed658a6bbb016ef8a10390f8717e138b689b72ea18",
+      "gitBlob": "1993ee091649dd82c2a99072a8c0838aab5fe813"
+    },
+    {
+      "path": "tools/translation/private-frozen-json.mjs",
+      "storedPath": "raw/private-frozen-json.mjs",
+      "bytes": 9205,
+      "sha256": "b35d616d4adbd8aa536bdc2954f31af7c35370ec07438fd89278f4e654ed2976",
+      "gitBlob": "915bbf1470b3b925300fefda51ac653d8c3923d1"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "raw/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "gitBlob": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657"
+    }
+  ],
+  "scope": "Complete private freezer/JSON before implementations and project license; tests relocate original relative imports to exact active issuer URLs."
+}

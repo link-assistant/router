@@ -1,0 +1,6 @@
+# GENERATED: checked portable-router-v1 bodies; no source envelopes.
+(constant ENGINE (type string) (value (string link-assistant-router/native-managed/v1)))
+(constant MAX_STATE (type number) (value (binary multiply (number 1024) (number 1024))))
+(function fail (parameters (message utf16-string)) (returns error%3A%5B%5B%22code%22%2C%22string%22%5D%5D) (body (return (error (message (variable message)) (field code (string managed_server))))))
+(function unsupported (parameters (message utf16-string)) (returns error%3A%5B%5B%22code%22%2C%22string%22%5D%5D) (body (return (error (message (variable message)) (field code (string unsupported))))))
+(function out (parameters (lines array-value (rest))) (returns record%3A%5B%5B%22output%22%2C%22array-value%22%5D%5D) (body (return (record (field output (variable lines))))))

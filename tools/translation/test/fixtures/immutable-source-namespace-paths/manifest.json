@@ -1,0 +1,28 @@
+{
+  "schema": "complete-original-namespace-source-v1",
+  "sourceHead": "6b4d818ef482e71efab9e2d886a01fbb4032288e",
+  "licenseWitness": "complete pre258 fixture; original Git blob fdddb29aa445bf3d6a5d843d6dd77e10a9f99657",
+  "sources": [
+    {
+      "path": "tools/translation/source-scopes.mjs",
+      "storedPath": "source-scopes.original.mjs.gz",
+      "encoding": "gzip",
+      "bytes": 6257,
+      "sha256": "44cc3bceed9599475aaf7bd01aab26af28bad95e176378974db8963337daf8bc",
+      "gitBlobSha1": "0b3014346fd42ebffec743c0da6bee1ef37ea7da",
+      "storedBytes": 1900,
+      "storedSha256": "6f83d0c4b4d30c8dc856f73e1d1532e9509f2b1f913908265c4221d939137700"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "LICENSE",
+      "encoding": "identity",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "gitBlobSha1": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657",
+      "storedBytes": 1211,
+      "storedSha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e"
+    }
+  ],
+  "authority": false
+}

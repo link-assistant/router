@@ -1,0 +1,3 @@
+Replace the qualified constructor-proof encoder’s per-byte branch chain and percent-string assembly with a private literal containing all 256 byte encodings. Keep the existing lazy native qualification, `Buffer.from` call, constants and complete callback-sensitive fallback unchanged. This is fixed encoding data, with no source or verdict cache.
+
+The retained profile supplies sample counts only; the proposed reduction in byte work has no measured speedup or deadline qualification. Existing whole constructor, reverse-translator and isolated-project tests remain unchanged and UNRUN for this change. The registered isolated compiler must be re-prepared and reviewed against the coherent source revision before its new API tests run. No Rust execution or generated outputs.

@@ -11,14 +11,14 @@ use serde_json::{Value, json};
 use crate::proxy::AppState;
 use crate::route_contract::{RouteId, route_template};
 
-const ACTIVITY_JSON: &str = "application/activity+json";
+const ACTIVITY_JSON: &crate::translation_core::Str = "application/activity+json";
 
 /// Build the public actor representation for this router instance.
 #[must_use]
-pub fn actor_document(actor_base_url: &str, public_key_pem: &str) -> Value {
+pub fn actor_document(actor_base_url: &crate::translation_core::Str, public_key_pem: &crate::translation_core::Str) -> crate::translation_core::Json {
     let base = actor_base_url.trim_end_matches('/');
     let actor = activitypub_url(base, RouteId::ActivityPubActor);
-    json!({
+    crate::translation_core::json!({
         "@context": activitypub_context(),
         "id": actor,
         "type": "Service",
@@ -42,9 +42,9 @@ pub fn actor_document(actor_base_url: &str, public_key_pem: &str) -> Value {
 
 /// Build an ordered collection for the local actor outbox.
 #[must_use]
-pub fn outbox_document(actor_base_url: &str) -> Value {
+pub fn outbox_document(actor_base_url: &crate::translation_core::Str) -> crate::translation_core::Json {
     let base = actor_base_url.trim_end_matches('/');
-    json!({
+    crate::translation_core::json!({
         "@context": activitypub_context(),
         "id": activitypub_url(base, RouteId::ActivityPubOutbox),
         "type": "OrderedCollection",
@@ -55,9 +55,9 @@ pub fn outbox_document(actor_base_url: &str) -> Value {
 
 /// Build an ordered collection for followers.
 #[must_use]
-pub fn followers_document(actor_base_url: &str) -> Value {
+pub fn followers_document(actor_base_url: &crate::translation_core::Str) -> crate::translation_core::Json {
     let base = actor_base_url.trim_end_matches('/');
-    json!({
+    crate::translation_core::json!({
         "@context": activitypub_context(),
         "id": activitypub_url(base, RouteId::ActivityPubFollowers),
         "type": "OrderedCollection",
@@ -68,9 +68,9 @@ pub fn followers_document(actor_base_url: &str) -> Value {
 
 /// Build a Follow activity targeting the public problemsets actor.
 #[must_use]
-pub fn follow_problemsets_activity(actor_base_url: &str) -> Value {
+pub fn follow_problemsets_activity(actor_base_url: &crate::translation_core::Str) -> crate::translation_core::Json {
     let base = actor_base_url.trim_end_matches('/');
-    json!({
+    crate::translation_core::json!({
         "@context": activitypub_context(),
         "id": activitypub_url(base, RouteId::ActivityPubFollowProblemsets),
         "type": "Follow",
@@ -80,18 +80,18 @@ pub fn follow_problemsets_activity(actor_base_url: &str) -> Value {
     })
 }
 
-fn activitypub_url(base: &str, route: RouteId) -> String {
+fn activitypub_url(base: &crate::translation_core::Str, route: RouteId) -> String {
     format!("{base}{}", route_template(route))
 }
 
 /// Validate the minimum fields required for an inbound `ActivityStreams` object.
-pub fn validate_activity(activity: &Value) -> Result<(), &'static str> {
+pub fn validate_activity(activity: &crate::translation_core::Json) -> crate::translation_core::Outcome<(), &'static crate::translation_core::Str> {
     require_string(activity, "id")?;
     require_string(activity, "type")?;
-    if activity.get("actor").and_then(Value::as_str).is_none()
+    if activity.get("actor").and_then(crate::translation_core::Json::as_str).is_none()
         && activity
             .get("attributedTo")
-            .and_then(Value::as_str)
+            .and_then(crate::translation_core::Json::as_str)
             .is_none()
     {
         return Err("activity must include actor or attributedTo");
@@ -133,7 +133,7 @@ pub async fn follow_problemsets(State(state): State<AppState>) -> impl IntoRespo
 pub async fn inbox(axum::Json(activity): axum::Json<Value>) -> impl IntoResponse {
     match validate_activity(&activity) {
         Ok(()) => {
-            let response = json!({
+            let response = crate::translation_core::json!({
                 "@context": activitypub_context(),
                 "type": "Accept",
                 "object": activity
@@ -147,7 +147,7 @@ pub async fn inbox(axum::Json(activity): axum::Json<Value>) -> impl IntoResponse
         }
         Err(message) => (
             StatusCode::BAD_REQUEST,
-            axum::Json(json!({
+            axum::Json(crate::translation_core::json!({
                 "error": "invalid_activity",
                 "message": message
             })),
@@ -156,7 +156,7 @@ pub async fn inbox(axum::Json(activity): axum::Json<Value>) -> impl IntoResponse
     }
 }
 
-fn activity_response(value: Value) -> Response {
+fn activity_response(value: crate::translation_core::Json) -> Response {
     (StatusCode::OK, activity_headers(), axum::Json(value)).into_response()
 }
 
@@ -170,8 +170,8 @@ fn activity_headers() -> HeaderMap {
     headers
 }
 
-fn activitypub_context() -> Value {
-    json!([
+fn activitypub_context() -> crate::translation_core::Json {
+    crate::translation_core::json!([
         "https://www.w3.org/ns/activitystreams",
         "https://forgefed.org/ns",
         {

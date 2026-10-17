@@ -1,0 +1,1 @@
+Preserve literal fixed-array sizes through automated Rust → meta → JavaScript and TypeScript translation, with exact length and scalar element checks, immutable value copies, and source-checked constant evaluation. Unsupported allocation, repeat, const-generic, reference and non-Copy array cases remain explicit translation refusals.

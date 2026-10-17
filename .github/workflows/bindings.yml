@@ -8,9 +8,19 @@ permissions:
   contents: read
 concurrency:
   group: bindings-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   bindings:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +71,8 @@ jobs:
           python -m pip install build
           python -m build packages/python
   semver:
-    if: github.event_name == 'pull_request'
+    needs: [javascript]
+    if: needs.javascript.result == 'success' && (github.event_name == 'pull_request')
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -77,6 +88,8 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: cargo semver-checks check-release --baseline-rev "$BASE_SHA" --release-type minor
   generated-http:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:

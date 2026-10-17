@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "inventoryRoots": [
+    { "path": "javascript", "extensions": [".js", ".mjs"] },
+    { "path": "rust", "extensions": [".rs"] }
+  ],
+  "entries": [
+    {
+      "id": "replace-with-real-feature",
+      "state": "partial",
+      "inputs": ["javascript/example.js"],
+      "outputs": ["rust/example.rs"],
+      "fixtures": ["tests/example.json"],
+      "reason": "Template only: record actual generation/port status and behavior coverage."
+    }
+  ],
+  "exclusions": []
+}

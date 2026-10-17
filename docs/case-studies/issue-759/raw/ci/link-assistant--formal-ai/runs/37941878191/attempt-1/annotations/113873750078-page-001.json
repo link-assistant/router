@@ -1,0 +1,74 @@
+[
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/d70e2e33f1fedb78c4ea9c17052b4b425f1d49a1/.github",
+    "start_line": 199,
+    "start_column": null,
+    "end_line": 199,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "The process 'C:\\Program Files\\Git\\bin\\git.exe' failed with exit code 128",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/d70e2e33f1fedb78c4ea9c17052b4b425f1d49a1/.github",
+    "start_line": 170,
+    "start_column": null,
+    "end_line": 170,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "cannot create directory at 'experiments/formal_ai_subagent/evidence/coordinator-1188/immutable-release-and-source-proof/raw/private/tmp/pr1188-native-artifacts-d7437d4bc/37914168403/self-ast-census/data/meta/self-ast/src/agentic_coding/evidence_record': Filename too long",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/d70e2e33f1fedb78c4ea9c17052b4b425f1d49a1/.github",
+    "start_line": 169,
+    "start_column": null,
+    "end_line": 169,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "unable to create file experiments/formal_ai_subagent/evidence/coordinator-1188/immutable-release-and-source-proof/raw/private/tmp/pr1188-native-artifacts-d7437d4bc/37914168403/self-ast-census/data/meta/self-ast/src/agentic_coding/conversation_recall.lino.gz: Filename too long",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/d70e2e33f1fedb78c4ea9c17052b4b425f1d49a1/.github",
+    "start_line": 168,
+    "start_column": null,
+    "end_line": 168,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "unable to create file experiments/formal_ai_subagent/evidence/coordinator-1188/immutable-release-and-source-proof/raw/private/tmp/pr1188-native-artifacts-d7437d4bc/37914168403/self-ast-census/data/meta/self-ast/src/agentic_coding/code_task/target_guard.lino.gz: Filename too long",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/d70e2e33f1fedb78c4ea9c17052b4b425f1d49a1/.github",
+    "start_line": 167,
+    "start_column": null,
+    "end_line": 167,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "unable to create file experiments/formal_ai_subagent/evidence/coordinator-1188/immutable-release-and-source-proof/raw/private/tmp/pr1188-native-artifacts-d7437d4bc/37914168403/self-ast-census/data/meta/self-ast/src/agentic_coding/code_rewrite_learning.lino.gz: Filename too long",
+    "raw_details": ""
+  },
+  {
+    "path": ".github",
+    "blob_href": "https://github.com/link-assistant/formal-ai/blob/d70e2e33f1fedb78c4ea9c17052b4b425f1d49a1/.github",
+    "start_line": 166,
+    "start_column": null,
+    "end_line": 166,
+    "end_column": null,
+    "annotation_level": "failure",
+    "title": "",
+    "message": "unable to create file experiments/formal_ai_subagent/evidence/coordinator-1188/immutable-release-and-source-proof/raw/private/tmp/pr1188-native-artifacts-d7437d4bc/37914168403/self-ast-census/data/meta/self-ast/src/agentic_coding/associative_learning.lino.gz: Filename too long",
+    "raw_details": ""
+  }
+]

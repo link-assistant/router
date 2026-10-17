@@ -137,7 +137,7 @@ pub struct Summary {
 
 impl Summary {
     #[must_use]
-    pub fn to_json(&self) -> Value {
+    pub fn to_json(&self) -> crate::translation_core::Json {
         json!({
             "exchanges": self.exchanges,
             "records": self.records,
@@ -212,7 +212,7 @@ pub struct Anomaly {
 /// never has to infer absence from silence.
 pub fn read_exchanges(
     root: &Path,
-    token: Option<&str>,
+    token: crate::translation_core::Maybe<&crate::translation_core::Str>,
 ) -> std::io::Result<(Vec<Exchange>, u64, u64)> {
     let mut by_id: BTreeMap<String, Exchange> = BTreeMap::new();
     let mut unparsable = 0;
@@ -244,7 +244,7 @@ pub fn read_exchanges(
     Ok((exchanges, unparsable, bytes))
 }
 
-fn log_files(root: &Path, token: Option<&str>) -> std::io::Result<Vec<PathBuf>> {
+fn log_files(root: &Path, token: crate::translation_core::Maybe<&crate::translation_core::Str>) -> std::io::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
     if !root.is_dir() {
         return Ok(files);
@@ -410,7 +410,7 @@ fn note_response_content_type(exchange: &mut Exchange, record: &Value) {
 ///
 /// The transport says 200 and the stream carries the failure, so the status
 /// line cannot answer whether the turn succeeded — only the frames can.
-fn carries_a_stream_error(decoded: &str) -> bool {
+fn carries_a_stream_error(decoded: &crate::translation_core::Str) -> bool {
     decoded.lines().any(|line| {
         let line = line.trim();
         line.eq_ignore_ascii_case("event: error")
@@ -420,7 +420,7 @@ fn carries_a_stream_error(decoded: &str) -> bool {
                 .and_then(|value| {
                     value
                         .get("type")
-                        .and_then(Value::as_str)
+                        .and_then(crate::translation_core::Json::as_str)
                         .map(|kind| kind == "error")
                 })
                 .unwrap_or(false)
@@ -438,9 +438,9 @@ fn carries_a_stream_error(decoded: &str) -> bool {
 /// so decoding them one at a time reads the opening frame and leaves the rest
 /// as base64 — which is most of the stream.
 fn decode_response_stream(
-    records: &[Value],
-    encoding: Option<crate::log_decode::Encoding>,
-) -> Option<String> {
+    records: &[crate::translation_core::Json],
+    encoding: crate::translation_core::Maybe<crate::log_decode::Encoding>,
+) -> crate::translation_core::Maybe<String> {
     let encoding = encoding?;
     if encoding.is_identity() {
         return None;
@@ -458,11 +458,11 @@ fn decode_response_stream(
 }
 
 /// The base64 a record stores in place of a body, if it stores one.
-fn stored_bytes(record: &Value) -> Option<&str> {
+fn stored_bytes(record: &crate::translation_core::Json) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
     record
         .get("body")
         .and_then(|body| body.get(crate::request_log::BINARY_BODY_KEY))
-        .and_then(Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
 }
 
 /// Render the decoded stream against the first frame that carried it.
@@ -563,10 +563,10 @@ fn settle_encoded_frames(exchange: &mut Exchange) {
 /// document when it parsed as one; both are searched as text, since the marker
 /// is a substring either way. A base64 body is compressed or binary and is
 /// handled by `inspectable` instead (issue #255).
-fn body_carries_a_terminator(body: &Value) -> bool {
+fn body_carries_a_terminator(body: &crate::translation_core::Json) -> bool {
     match body {
-        Value::String(text) => crate::request_log::text_terminates_stream(text),
-        Value::Null => false,
+        crate::translation_core::Json::String(text) => crate::request_log::text_terminates_stream(text),
+        crate::translation_core::Json::Null => false,
         // A parsed document: search its rendered form, so a terminator that
         // arrived as structured JSON is found too.
         other => crate::request_log::text_terminates_stream(&other.to_string()),
@@ -579,12 +579,12 @@ fn body_carries_a_terminator(body: &Value) -> bool {
 /// This corroborates rather than decides: it is used only when no response
 /// media type was recorded, since a request can ask for a stream and receive a
 /// single-shot answer.
-fn request_asks_for_a_stream(record: &Value) -> bool {
+fn request_asks_for_a_stream(record: &crate::translation_core::Json) -> bool {
     record
         .get("body")
         .and_then(|body| body.get("json"))
         .and_then(|body| body.get("stream"))
-        .and_then(Value::as_bool)
+        .and_then(crate::translation_core::Json::as_bool)
         .unwrap_or(false)
 }
 
@@ -728,9 +728,9 @@ pub fn anomalies(exchanges: &[Exchange]) -> Vec<Anomaly> {
 /// Render one exchange's records in order.
 pub fn show_records(
     root: &Path,
-    token: Option<&str>,
-    correlation_id: &str,
-) -> std::io::Result<Vec<Value>> {
+    token: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    correlation_id: &crate::translation_core::Str,
+) -> std::io::Result<Vec<crate::translation_core::Json>> {
     let mut out = Vec::new();
     for path in log_files(root, token)? {
         // The encoding is declared on the response record, which may arrive
@@ -741,7 +741,7 @@ pub fn show_records(
             .lines()
             .filter_map(crate::lino_json::decode_line)
             .filter(|record| {
-                record.get("correlation_id").and_then(Value::as_str) == Some(correlation_id)
+                record.get("correlation_id").and_then(crate::translation_core::Json::as_str) == Some(correlation_id)
             })
             .collect::<Vec<_>>();
         let encoding = records
@@ -750,7 +750,7 @@ pub fn show_records(
                 record
                     .get("headers")
                     .and_then(|headers| headers.get("content-encoding"))
-                    .and_then(Value::as_str)
+                    .and_then(crate::translation_core::Json::as_str)
             })
             .map_or(Some(crate::log_decode::Encoding::Identity), |declared| {
                 crate::log_decode::Encoding::parse(declared)
@@ -771,7 +771,7 @@ pub fn show_records(
 }
 
 /// Render one exchange using the same decoded records as the operation API.
-pub fn show(root: &Path, token: Option<&str>, correlation_id: &str) -> std::io::Result<String> {
+pub fn show(root: &Path, token: crate::translation_core::Maybe<&crate::translation_core::Str>, correlation_id: &crate::translation_core::Str) -> std::io::Result<String> {
     let records = show_records(root, token, correlation_id)?;
     crate::operation_output::report(crate::operation_reports::LogRecordsReport {
         correlation_id: correlation_id.into(),

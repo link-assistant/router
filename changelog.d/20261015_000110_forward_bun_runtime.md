@@ -1,0 +1,1 @@
+Install pinned Bun in the forward-translation CI job, which runs the source metadata regression's actual Bun child. Require the same immutable action and version in the workflow audit, preserving both engine checks.

@@ -1,0 +1,4 @@
+### Tests
+
+- Add independent native Rust source oracles for callback-local Option `?`: nearest callback return, continued outer computation, single evaluation, lazy iteration, ordinary same-named methods, differing input/output payload types, sequential propagation and branch order. Drop cases retain complete event tapes, including an already evaluated call-argument temporary on early return.
+- These manually formatted tests remain UNRUN locally. The existing release CI discovers integration tests with `cargo test --locked --all-features` after JavaScript verification for the same commit. No workflow, Cargo configuration or translator permission changes are included; source availability and these oracles do not establish Try/FromResidual ownership, callback lowering, arbitrary Drop support or native parity.

@@ -1,0 +1,67 @@
+name: Coverage Gap Report
+
+on:
+  schedule:
+    # Every Monday at 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: coverage-gap-report
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -Dwarnings
+  CARGO_NET_RETRY: '10'
+  CARGO_HTTP_MULTIPLEXING: 'false'
+
+jobs:
+  coverage-gap-report:
+    name: Refresh Coverage Gap Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+
+      - name: Cache cargo registry
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
+
+      - name: Build release binary
+        run: cargo build --release --locked --bin link-calculator
+
+      # The weekly report measures current gaps; PR/push CI enforces the baseline.
+      - name: Regenerate competitor report
+        run: node scripts/competitor-coverage.mjs --quiet
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: competitor-coverage-report
+          path: docs/case-studies/issue-227/results/coverage-report.md
+          retention-days: 14
+
+      - name: Open or update coverage gap issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/update-coverage-gap-issue.mjs

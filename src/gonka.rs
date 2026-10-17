@@ -19,7 +19,7 @@ use crate::providers::LiveProviderModel;
 use crate::proxy::AppState;
 
 /// Error shown when Gonka is selected without a broker/API key.
-pub const MISSING_API_KEY_MESSAGE: &str = "Gonka broker mode requires GONKA_API_KEY";
+pub const MISSING_API_KEY_MESSAGE: &crate::translation_core::Str = "Gonka broker mode requires GONKA_API_KEY";
 const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const CATALOG_REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
 const FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
@@ -57,7 +57,7 @@ impl std::fmt::Debug for GonkaConfig {
 impl GonkaConfig {
     /// Create Gonka config if all required fields are present.
     #[must_use]
-    pub fn new(api_key: Option<String>, source_url: Option<&str>, model: String) -> Option<Self> {
+    pub fn new(api_key: crate::translation_core::Maybe<String>, source_url: crate::translation_core::Maybe<&crate::translation_core::Str>, model: String) -> crate::translation_core::Maybe<Self> {
         let api_key = api_key.filter(|key| !key.is_empty())?;
         let source_url = source_url.filter(|url| !url.is_empty())?;
         Some(Self {
@@ -70,14 +70,14 @@ impl GonkaConfig {
 
     /// Resolve an OpenAI-compatible Gonka endpoint.
     #[must_use]
-    pub fn endpoint(&self, path: &str) -> String {
+    pub fn endpoint(&self, path: &crate::translation_core::Str) -> String {
         format!("{}{}", self.source_url, path)
     }
 }
 
 /// Ensure an `OpenAI` request body has a model, using `GONKA_MODEL` when omitted.
 #[must_use]
-pub fn with_default_model(mut body: Value, default_model: &str) -> Value {
+pub fn with_default_model(mut body: crate::translation_core::Json, default_model: &crate::translation_core::Str) -> crate::translation_core::Json {
     if !default_model.is_empty()
         && !matches!(body.get("model").and_then(Value::as_str), Some(s) if !s.is_empty())
     {
@@ -103,7 +103,7 @@ impl GonkaConfig {
     pub(crate) async fn live_catalog(
         &self,
         client: &reqwest::Client,
-    ) -> Result<Vec<LiveProviderModel>, String> {
+    ) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, String> {
         let cached = self
             .catalog
             .read()
@@ -127,7 +127,7 @@ impl GonkaConfig {
     async fn refresh_catalog(
         &self,
         client: &reqwest::Client,
-    ) -> Result<Vec<LiveProviderModel>, String> {
+    ) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, String> {
         self.refresh_catalog_with_timeout(client, CATALOG_REQUEST_TIMEOUT)
             .await
     }
@@ -136,7 +136,7 @@ impl GonkaConfig {
         &self,
         client: &reqwest::Client,
         timeout: Duration,
-    ) -> Result<Vec<LiveProviderModel>, String> {
+    ) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, String> {
         let fetched = tokio::time::timeout(timeout, self.fetch_catalog(client))
             .await
             .map_err(|_| "catalog request exceeded its total timeout".to_string())
@@ -172,7 +172,7 @@ impl GonkaConfig {
     async fn fetch_catalog(
         &self,
         client: &reqwest::Client,
-    ) -> Result<Vec<LiveProviderModel>, String> {
+    ) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, String> {
         let source_url = self.endpoint("/v1/models");
         let response = client
             .get(&source_url)
@@ -234,7 +234,7 @@ impl GonkaConfig {
 
 /// Project exact live entries into an OpenAI-shaped catalog.
 #[must_use]
-pub(crate) fn catalog_json(models: Vec<LiveProviderModel>) -> Value {
+pub(crate) fn catalog_json(models: Vec<LiveProviderModel>) -> crate::translation_core::Json {
     let data = models
         .into_iter()
         .map(|model| {
@@ -247,7 +247,7 @@ pub(crate) fn catalog_json(models: Vec<LiveProviderModel>) -> Value {
             Value::Object(raw)
         })
         .collect::<Vec<_>>();
-    json!({"object": "list", "data": data})
+    crate::translation_core::json!({"object": "list", "data": data})
 }
 
 /// Add exact IDs; the shared catalog records collisions and fails closed.
@@ -306,7 +306,7 @@ impl GonkaRelayStream {
         upstream: reqwest::Response,
         state: &AppState,
         correlation_id: String,
-        usage: Option<crate::usage::UsageTracker>,
+        usage: crate::translation_core::Maybe<crate::usage::UsageTracker>,
         bytes_sent: u64,
     ) -> Self {
         let outcome = crate::request_log::StreamOutcome {
@@ -395,10 +395,10 @@ impl Drop for GonkaRelayStream {
 
 /// Convert a Gonka provider error into an OpenAI-shaped JSON response.
 #[must_use]
-pub fn provider_error(status: StatusCode, message: &str) -> Response {
+pub fn provider_error(status: StatusCode, message: &crate::translation_core::Str) -> Response {
     (
         status,
-        axum::Json(json!({
+        axum::Json(crate::translation_core::json!({
             "error": {
                 "type": "api_error",
                 "message": message
@@ -415,8 +415,8 @@ pub fn provider_error(status: StatusCode, message: &str) -> Response {
 pub(crate) async fn forward_openai(
     state: &AppState,
     headers: &HeaderMap,
-    body: serde_json::Value,
-    path: &str,
+    body: crate::translation_core::Json,
+    path: &crate::translation_core::Str,
     surface: crate::metrics::Surface,
 ) -> Response {
     if let Some(resp) = crate::proxy::maybe_mpp_challenge(state, headers, path) {

@@ -24,10 +24,20 @@ permissions:
 
 concurrency:
   group: docker-runtime-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
+  javascript:
+    name: JavaScript first (same commit)
+    uses: ./.github/workflows/javascript-first.yml
+    with:
+      sha: ${{ github.sha }}
+    permissions:
+      contents: read
+
   runtime:
+    if: needs.javascript.result == 'success'
+    needs: [javascript]
     name: Build amd64 runtime (no push)
     runs-on: ubuntu-24.04
     timeout-minutes: 45

@@ -1,0 +1,1 @@
+Added checked string pattern methods to the default Rust → semantic meta → JavaScript/TypeScript compiler, preserving literal replacement text, Unicode boundaries for empty patterns, exact usize limits and receiver/argument evaluation order. Other Pattern implementations require separate checked contracts.

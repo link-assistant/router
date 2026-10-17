@@ -1,0 +1,3 @@
+The complete pattern-control fixture now orders its existing project import before its lower-level parser and checker imports. This selects the compiler's canonical Host initialization before constructing the fixture's composed classes. No import, preload, test work, callback, assertion or deadline was added or removed.
+
+Both Node and Bun reproduced the same TextRustParser initialization error on the pre-callback branch and the receiving branch; their complete failed reports remain retained. This fixture correction does not establish support for arbitrary cold submodule import orders or close the separate private-compiler source proof. The complete twenty-case fixture still requires receiving checks.

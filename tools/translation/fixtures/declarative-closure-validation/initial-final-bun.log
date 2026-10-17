@@ -1,0 +1,34 @@
+bun test v1.4.3 (c6da4a4d3)
+
+tools/translation/test/declarative-closure.test.mjs:
+(pass) profile source origin and forwarding lineage reject caller-created clones and definitions [27.02ms]
+(pass) all pinned Router task-local chains retain call-site standard owner and generated attribute obligations [23.35ms]
+(pass) actual exhaustive cfg_if branches have a symbolic partition without authorizing macro owners [31.11ms]
+(pass) every original standard leaf keeps generated attribute and nested owner obligations with its actual lineage [22.79ms]
+
+tools/translation/test/macro-items.test.mjs:
+(pass) opaque item captures parse bounded original modules imports and macro item delimiters [1.22ms]
+(pass) unproved item forms malformed imports attributes and terminators remain refusals [0.25ms]
+(pass) original locked Tokio cfg_rt transcribes complete task module items with both docsrs possibilities retained [16.52ms]
+
+tools/translation/test/reuse-translation.test.mjs:
+(pass) source-only relocated bulk translator regenerates a separate tracked repository and executes both targets [519.55ms]
+
+tools/translation/test/declarative-macros.test.mjs:
+(pass) bounded declarative rules retain source order groups repetitions and definition-site owner [0.53ms]
+(pass) forwarded type fragments remain opaque to literal matching [0.27ms]
+(pass) ambiguity capture arity unsupported fragments and recursive resource excess remain explicit [1.13ms]
+(pass) nested source repetition shapes retain empty rows and reject unequal transcription axes [0.26ms]
+(pass) source metadata keeps nested conditional grammar opaque when forwarded [0.18ms]
+(pass) actual pinned cfg_if transcribes every original std branch without selecting a platform or closing its owner [14.16ms]
+(pass) checked block expressions retain opacity and refuse unsupported statements or expression grammar [0.32ms]
+(pass) original std transcribers forward actual nested key expressions across every pinned leaf without a closure claim [16.36ms]
+(pass) all original pinned task-local invocations use actual locked transcribers without runtime or namespace admission [15.01ms]
+
+tools/translation/test/declarative-owner-frontier.test.mjs:
+(pass) original macro headers retain custom attributes without self-authorizing their export or hygiene [0.10ms]
+(pass) actual Tokio and standard leaf candidates preserve phase attributes and reject supplied closed scopes [18.55ms]
+
+ 19 pass
+ 0 fail
+Ran 19 tests across 5 files. [789.00ms]

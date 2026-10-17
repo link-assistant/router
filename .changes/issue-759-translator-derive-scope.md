@@ -1,0 +1,1 @@
+Check imported macro bindings before treating familiar derive names as closed module scope evidence. A custom or unresolved derive can introduce additional items; type-only imports remain in their separate namespace and do not receive macro capabilities.

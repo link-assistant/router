@@ -1,0 +1,5 @@
+### Added
+
+- Add the fixed `--sequence json-algebraic-primitives` route to the proposal-only core adoption CLI. It runs the actual JSON, transparent algebraic and borrowed primitive source producers in that order, with fresh complete module graphs and actual language/repository stages. JSON receives the captured audited Cargo sources; every stage retains complete inputs, CST substitutions, per-file inverse mappings and source-chain checks.
+- Preserve all existing sequence and default operations, resource bounds, exclusive output publication, source/Cargo mutation checks and review-before-installation requirements. This producer never installs proposed application source or grants semantic admission.
+- Extend the existing whole-eight receiving controls with complete direct-API packet equality, same-engine CLI execution, full three-stage inverses, Cargo mutation/restoration and JavaScript/strict-TypeScript execution of the resulting source. Tests and the actual full Router proposal are unrun at this source checkpoint; isolated callers do not establish full original-module coverage.

@@ -1,0 +1,1 @@
+Added general checked Rust split_once and rsplit_once translation through serialized semantic meta, returning canonical immutable Option and borrowed tuple layouts in JavaScript and TypeScript. Unicode, empty delimiter, constructor ownership and evaluation-order checks retain unsupported source when their contracts are unproved.

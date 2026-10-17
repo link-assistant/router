@@ -1,0 +1,3 @@
+Check known Rust integer identities on every Host expression return and during host overload selection, including nested arrays and registered standard generic arguments. Preserve exact primitive conversion and associated parsing target metadata. Equal portable widths no longer authorize a known usize/u64 substitution; contextual literals retain inference and missing source metadata is not guessed.
+
+Acquire integer From conversions only from the pinned Rust 1.89 implementation table, including the identity implementation. Current 64-bit pointer bounds do not establish From<u16> for isize or other absent traits. Borrowed or erased generic integer inputs remain explicit obligations.

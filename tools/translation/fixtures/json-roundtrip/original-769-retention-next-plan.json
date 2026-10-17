@@ -1,0 +1,91 @@
+{
+  "schema": "original-json-769-retention-repair-source-only-v1",
+  "status": "SOURCE_ONLY_UNRUN",
+  "historicalCounterexampleReceipt": {
+    "path": "tools/translation/fixtures/json-roundtrip/source-counterexample.json",
+    "sha256": "c8ee3bcdbd122df7bca0afb782359d50ab196508cd9a1b363304c3767b35b12d",
+    "preserved": true
+  },
+  "lockedSourceArchiveSha256": "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14",
+  "fullOriginalInputs": [
+    {
+      "path": "src/lexical/bhcomp.rs",
+      "bytes": 7035,
+      "sha256": "26f39d52008225a6b377d7246d326940d44200e160a7b4652733e712e1a45a04"
+    },
+    {
+      "path": "src/lexical/num.rs",
+      "bytes": 11179,
+      "sha256": "2d06111d28616221995f7b4d4f13625b8d902884921268b0e02e544f871a5339"
+    }
+  ],
+  "derivedControl": [
+    "index initialized0; single direct+1 update before only loop break",
+    "loop stops at actual F::MAX_DIGITS-1",
+    "actual Float-for-f64 MAX_DIGITS literal769",
+    "remaining input length greater than retained index executes actual decimal-tail calls10 and1"
+  ],
+  "sourceInferredCounterexample": {
+    "construction": "((2^53+1)*5^53)*10^715 followed by e-768",
+    "rawMantissaDigits": 769,
+    "retainedDigits": 768,
+    "syntheticTailActuallyNonzero": false,
+    "expectedSourceCandidateBits": "0x3ff0000000000001",
+    "independentIdealRationalBits": "0x3ff0000000000000",
+    "RustObserved": false,
+    "runtimeObserved": false
+  },
+  "realCandidatePaths": [
+    "sourceLexicalMantissa",
+    "lexicalTruncatedTrace",
+    "parseJsonRoundtripNumber",
+    "serde_json_roundtrip_from_str",
+    "serde_json_roundtrip_from_slice"
+  ],
+  "currentFeatureGuardChanged": false,
+  "largerDomainBound": {
+    "rawDigits": 770,
+    "result": "explicit unsupported candidate-domain diagnostic, not Rust syntax error"
+  },
+  "newAuthoredTests": {
+    "path": "test/json-roundtrip-retention.test.mjs",
+    "cases": 6,
+    "status": "UNRUN",
+    "strictTSConsumer": "same original-source candidate runtime, authored ABI carrier; no production-body count"
+  },
+  "sourceFiles": [
+    {
+      "path": "tools/translation/arithmetic-digit-retention.mjs",
+      "bytes": 9580,
+      "sha256": "12b5c09a2cf105cd2a7f11b87df5117df02589a8fb0e689f8907864ca79ce47f"
+    },
+    {
+      "path": "tools/translation/extensions/json-roundtrip-retention-source.mjs",
+      "bytes": 19365,
+      "sha256": "06ebb2eb6e0c0ba7755ef6183db9de3bb2740e201fd84e408d084311868e199a"
+    },
+    {
+      "path": "tools/translation/test/json-roundtrip-retention.test.mjs",
+      "bytes": 7390,
+      "sha256": "1310bb2b229af4417a2224407f036de88c13c94a704afb5bb50f686ac74b0665"
+    }
+  ],
+  "remaining": [
+    "retention control shape is source derived; numeric trait owner/Float bound/cfg/Copy/allocator contracts are not promoted",
+    "original Bigint::default Vec::with_capacity(20), OOM/abort/drop remains unimplemented in source IR",
+    "whole source-derived limb/math closure and real Cargo feature admission remain unverified",
+    "new conservative769-digit negativepow5 ceiling1100 exceeds existing1099 source-IR projection cap; counterexample uses768",
+    "private generic arithmetic/control loops and typed fixtures require full focused runtime checks",
+    "Gate must fingerprint the new root arithmetic-digit-retention.mjs helper when this future queue is reviewed"
+  ],
+  "authority": {
+    "namespaceAuthority": false,
+    "parseAdmission": false,
+    "sourceBehaviorFidelityVerified": false,
+    "traitOwnerVerified": false,
+    "allocatorEffectsVerified": false,
+    "applicationEffectCompleteness": false,
+    "runtimeParity": false,
+    "RustExecution": false
+  }
+}

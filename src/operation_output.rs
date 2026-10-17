@@ -62,7 +62,7 @@ pub fn report(report: impl serde::Serialize) {
 }
 
 /// Attach structured data while leaving human rendering to the existing adapter.
-pub fn record(value: Value) {
+pub fn record(value: crate::translation_core::Json) {
     if let Some(context) = crate::operation_context::current() {
         context.output.lock().expect("operation output lock").data = Some(value);
     }

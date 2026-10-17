@@ -18,13 +18,13 @@
 ///
 /// The NUL prefix is what makes it unforgeable: `std::env::var` cannot return
 /// a value containing one, and neither can argv.
-const SENTINEL: &str = "\u{0}link-assistant-router:no-token-secret:";
+const SENTINEL: &crate::translation_core::Str = "\u{0}link-assistant-router:no-token-secret:";
 
 /// Values that were written into stores before the sentinel existed.
 ///
 /// Kept so a record encrypted under one can be recognised and named, rather
 /// than surfacing as an opaque decryption failure (issue #300).
-pub const LEGACY_PLACEHOLDERS: [&str; 3] = [
+pub const LEGACY_PLACEHOLDERS: [&crate::translation_core::Str; 3] = [
     "unused-by-remote-command",
     "unused-by-auth",
     "unused-by-this-client-command",
@@ -32,13 +32,13 @@ pub const LEGACY_PLACEHOLDERS: [&str; 3] = [
 
 /// A stand-in secret for a command that will not sign, naming why.
 #[must_use]
-pub fn placeholder(reason: &str) -> String {
+pub fn placeholder(reason: &crate::translation_core::Str) -> String {
     format!("{SENTINEL}{reason}")
 }
 
 /// Whether this secret is a stand-in rather than a real signing key.
 #[must_use]
-pub fn is_placeholder(secret: &str) -> bool {
+pub fn is_placeholder(secret: &crate::translation_core::Str) -> bool {
     secret.starts_with(SENTINEL) || LEGACY_PLACEHOLDERS.contains(&secret)
 }
 
@@ -48,10 +48,9 @@ pub fn is_placeholder(secret: &str) -> bool {
 /// operator's side that is exactly what happened, and a second wording would
 /// only invite the question of which one is the real problem.
 #[must_use]
-pub fn refusal() -> String {
-    "TOKEN_SECRET environment variable is required: this command signs or encrypts on this \
-     machine, and no signing secret was supplied"
-        .to_string()
+pub fn refusal() -> crate::translation_core::Text {
+    crate::translation_core::format!("{}", "TOKEN_SECRET environment variable is required: this command signs or encrypts on this \
+     machine, and no signing secret was supplied")
 }
 
 /// Refuse a stand-in before anything is signed or encrypted.
@@ -59,7 +58,7 @@ pub fn refusal() -> String {
 /// # Errors
 ///
 /// Returns [`refusal`] when `secret` is a stand-in.
-pub fn ensure_real(secret: &str) -> Result<(), String> {
+pub fn ensure_real(secret: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
     if is_placeholder(secret) {
         return Err(refusal());
     }
@@ -70,14 +69,14 @@ pub fn ensure_real(secret: &str) -> Result<(), String> {
 ///
 /// A service unit references the file, so the secret never appears in the
 /// unit, in `systemctl show`, or in any process's argv.
-pub const FILE_ENV: &str = "TOKEN_SECRET_FILE";
+pub const FILE_ENV: &crate::translation_core::Str = "TOKEN_SECRET_FILE";
 
 /// The secret in `path`, without one trailing line break.
 ///
 /// # Errors
 ///
 /// When the file cannot be read, is not UTF-8, or holds no secret.
-pub fn read_file(path: &std::path::Path) -> Result<String, String> {
+pub fn read_file(path: &std::path::Path) -> crate::translation_core::Outcome<String, String> {
     let text = std::fs::read_to_string(path)
         .map_err(|error| format!("{FILE_ENV}={} could not be read: {error}", path.display()))?;
     let secret = text.strip_suffix('\n').map_or(text.as_str(), |text| {
@@ -97,7 +96,7 @@ pub fn read_file(path: &std::path::Path) -> Result<String, String> {
 /// # Errors
 ///
 /// When `TOKEN_SECRET_FILE` is set and cannot supply a secret.
-pub fn or_from_file(secret: Option<String>) -> Result<Option<String>, String> {
+pub fn or_from_file(secret: crate::translation_core::Maybe<String>) -> crate::translation_core::Outcome<crate::translation_core::Maybe<String>, String> {
     if secret.as_deref().is_some_and(|secret| !secret.is_empty()) {
         return Ok(secret);
     }

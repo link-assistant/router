@@ -1,0 +1,1 @@
+Revalidate registered historical generated methods with their complete immutable compiler graph and exact original/output witnesses. Keep current compiler-plan/body/hash validation intact, compare the actual replayed historical rows separately, and report bounded replay provenance without granting runtime or Rust authority.

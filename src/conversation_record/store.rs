@@ -22,9 +22,9 @@ use serde_json::{Value, json};
 /// made against a different contract. Without it the only diagnosis available
 /// for a failing replay is "something changed", which is the failure mode the
 /// strict matching exists to avoid.
-pub const HEADER_PHASE: &str = "recording";
+pub const HEADER_PHASE: &crate::translation_core::Str = "recording";
 /// Phase marking one complete client exchange.
-pub const TURN_PHASE: &str = "turn";
+pub const TURN_PHASE: &crate::translation_core::Str = "turn";
 
 /// What produced a recording.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -118,7 +118,7 @@ pub fn turn_line(turn: &Turn) -> String {
 /// `encode_line` fails only when a value cannot become JSON, which cannot
 /// happen for the `json!` literals above; an empty line is skipped on read, so
 /// even that impossible case cannot corrupt the file.
-fn encode(value: &Value) -> String {
+fn encode(value: &crate::translation_core::Json) -> String {
     crate::lino_json::encode_line(value).unwrap_or_default()
 }
 
@@ -126,7 +126,7 @@ fn encode(value: &Value) -> String {
 ///
 /// # Errors
 /// Propagates any failure to create the parent directory or append the line.
-pub fn append_line(path: &Path, line: &str) -> std::io::Result<()> {
+pub fn append_line(path: &Path, line: &crate::translation_core::Str) -> std::io::Result<()> {
     if let Some(parent) = path
         .parent()
         .filter(|parent| !parent.as_os_str().is_empty())
@@ -145,7 +145,7 @@ pub fn append_line(path: &Path, line: &str) -> std::io::Result<()> {
 ///
 /// # Errors
 /// Returns [`LoadError`] when the file cannot be read or carries no header.
-pub fn load(path: &PathBuf) -> Result<Recording, LoadError> {
+pub fn load(path: &PathBuf) -> crate::translation_core::Outcome<Recording, LoadError> {
     let text = std::fs::read_to_string(path).map_err(LoadError::Unreadable)?;
     let mut provenance = None;
     let mut turns = Vec::new();
@@ -155,7 +155,7 @@ pub fn load(path: &PathBuf) -> Result<Recording, LoadError> {
         let Some(record) = crate::lino_json::decode_line(line) else {
             continue;
         };
-        match record.get("phase").and_then(Value::as_str) {
+        match record.get("phase").and_then(crate::translation_core::Json::as_str) {
             Some(HEADER_PHASE) => provenance = Some(read_provenance(&record)),
             Some(TURN_PHASE) => {
                 if let Some(turn) = read_turn(&record, turns.len() + 1) {
@@ -170,17 +170,17 @@ pub fn load(path: &PathBuf) -> Result<Recording, LoadError> {
         .ok_or(LoadError::MissingHeader)
 }
 
-fn read_provenance(record: &Value) -> Provenance {
+fn read_provenance(record: &crate::translation_core::Json) -> Provenance {
     Provenance {
         router_version: string_field(record, "router_version"),
         provider: string_field(record, "provider"),
     }
 }
 
-fn string_field(record: &Value, name: &str) -> String {
+fn string_field(record: &crate::translation_core::Json, name: &crate::translation_core::Str) -> String {
     record
         .get(name)
-        .and_then(Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
         .unwrap_or("unknown")
         .to_string()
 }
@@ -190,13 +190,13 @@ fn string_field(record: &Value, name: &str) -> String {
 /// The recorded `turn` field is informational: replay counts positions itself,
 /// so a hand-edited recording with a wrong number still replays in file order
 /// rather than silently skipping or repeating an exchange.
-fn read_turn(record: &Value, position: usize) -> Option<Turn> {
+fn read_turn(record: &crate::translation_core::Json, position: usize) -> crate::translation_core::Maybe<Turn> {
     let request = record.get("request")?.clone();
     let response = record.get("response")?;
     let status = u16::try_from(response.get("status")?.as_u64()?).ok()?;
     let headers = response
         .get("headers")
-        .and_then(Value::as_array)
+        .and_then(crate::translation_core::Json::as_array)
         .map(|pairs| {
             pairs
                 .iter()
@@ -212,7 +212,7 @@ fn read_turn(record: &Value, position: usize) -> Option<Turn> {
         .unwrap_or_default();
     let events = response
         .get("events")
-        .and_then(Value::as_array)
+        .and_then(crate::translation_core::Json::as_array)
         .map(|events| {
             events
                 .iter()

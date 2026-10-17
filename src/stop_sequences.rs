@@ -31,7 +31,7 @@ impl StopSequenceFilter {
 
     /// Return safe visible text and the matched sequence, if this chunk stops
     /// generation. Calls after a match return no text.
-    pub fn push(&mut self, text: &str) -> (String, Option<String>) {
+    pub fn push(&mut self, text: &crate::translation_core::Str) -> (String, crate::translation_core::Maybe<String>) {
         if self.stopped {
             return (String::new(), None);
         }
@@ -80,7 +80,7 @@ impl StopSequenceFilter {
 }
 
 #[must_use]
-pub fn from_value(value: Option<&Value>) -> Vec<String> {
+pub fn from_value(value: crate::translation_core::Maybe<&crate::translation_core::Json>) -> Vec<String> {
     match value {
         Some(Value::String(sequence)) => vec![sequence.clone()],
         Some(Value::Array(sequences)) => sequences

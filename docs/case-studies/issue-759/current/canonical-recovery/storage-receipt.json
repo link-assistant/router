@@ -1,0 +1,16 @@
+{
+  "schema": "canonical-recovery-packet-storage-v1",
+  "originalReceiptPath": "/tmp/router-759-current-688-packet-v4.receipt.json",
+  "originalReceiptBytes": 874781,
+  "originalReceiptSha256": "1c7ac50a4d375c9d80010ff0f8bdf9cc6dc08e3cd6b6f645ec331e4b061ca482",
+  "storedReceiptPath": "capture-receipt.json.gz",
+  "storedReceiptBytes": 138279,
+  "storedReceiptSha256": "a07413ccba2a752b76172bfc57b97d14a5ba261f113843f0fe73b7243f4ff349",
+  "completeReceiptBytesEqual": true,
+  "archiveSha256": "debe7a6aa7b15b9bc127a9d4338d4a7ec904c1b8f692227846dfc2adb81e4cb5",
+  "completeMembers": 2626,
+  "completeOriginalBytes": 402308943,
+  "fullGatePass": false,
+  "runtimeParity": false,
+  "rustExecuted": false
+}

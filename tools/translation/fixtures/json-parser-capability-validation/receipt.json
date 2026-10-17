@@ -1,0 +1,15 @@
+{
+  "schema": "json-parser-capability-focused-evidence-v1",
+  "archive": "focused-evidence.json.gz",
+  "bytes": 8455,
+  "sha256": "5045d32704d7c6f4bc05633e0f554fa925e63f126c1bbf5ed8aba0ec7b608001",
+  "reopenedVerified": true,
+  "checkedSourceHead": "82ed1b313818ca0cda9ab6cb34531607909f3bf3",
+  "finalCases": 28,
+  "nodePass": 28,
+  "bunPass": 28,
+  "failed": 0,
+  "skipped": 0,
+  "rustObserved": false,
+  "runtimeParity": false
+}

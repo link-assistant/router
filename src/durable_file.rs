@@ -4,10 +4,10 @@ use std::fs::{self, OpenOptions, TryLockError};
 use std::io::{self, Write};
 use std::path::Path;
 
-const ROLLBACK_SUFFIX: &str = ".router-rollback";
-const COMMIT_SUFFIX: &str = ".router-commit";
+const ROLLBACK_SUFFIX: &crate::translation_core::Str = ".router-rollback";
+const COMMIT_SUFFIX: &crate::translation_core::Str = ".router-commit";
 
-fn sibling_with_suffix(path: &Path, suffix: &str) -> io::Result<std::path::PathBuf> {
+fn sibling_with_suffix(path: &Path, suffix: &crate::translation_core::Str) -> io::Result<std::path::PathBuf> {
     let name = path
         .file_name()
         .and_then(|name| name.to_str())

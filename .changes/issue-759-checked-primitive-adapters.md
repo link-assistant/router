@@ -1,0 +1,1 @@
+Check Rust integer parsing, fixed-width arithmetic, Option.map, Result.ok and bool.then through reusable typed standard-library adapters. Preserve original timeout and output-limiter bodies, enforce const-call restrictions and reject unproven constructor owners; broader translation and runtime parity remain incomplete.

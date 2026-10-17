@@ -1,0 +1,1 @@
+Include the synchronization CLI in reusable translator bundles and exercise real receiving JavaScript edits through meta, Rust, strict TypeScript and freshness checks while preserving handwritten Rust.

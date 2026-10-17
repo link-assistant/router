@@ -1,0 +1,23 @@
+{
+  "schema": "external-trait-default-context-complete-before-v1",
+  "commit": "e2287a4a47bfec82d8587aceade31ce5c001ab11",
+  "sources": [
+    {
+      "path": "tools/translation/extensions/external-trait-sources.mjs",
+      "storedPath": "external-trait-sources.original.mjs",
+      "bytes": 13112,
+      "sha256": "1d0e4b2838883edf90829299c95c11e6f5cd6a18c979a21d7a46a1adf74b3151",
+      "commit": "e2287a4a47bfec82d8587aceade31ce5c001ab11",
+      "gitBlob": "6e567e16d2822ed1c9d0c7df31feb4e3be1f3673"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "commit": "e2287a4a47bfec82d8587aceade31ce5c001ab11",
+      "gitBlob": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657"
+    }
+  ],
+  "scope": "Complete legacy external closure and license; original imports/module URL relocated mechanically in whole observer test. Exact initialized common/static issuers shared; no whole-bootstrap claim."
+}

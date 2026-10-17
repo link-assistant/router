@@ -15,7 +15,7 @@ pub async fn run(operation: &ModelOp) -> ExitCode {
     exit_code(run_inner(operation).await)
 }
 
-fn exit_code(result: Result<bool, AnyError>) -> ExitCode {
+fn exit_code(result: crate::translation_core::Outcome<bool, AnyError>) -> ExitCode {
     match result {
         Ok(found) => {
             if found {
@@ -31,13 +31,13 @@ fn exit_code(result: Result<bool, AnyError>) -> ExitCode {
     }
 }
 
-async fn run_inner(operation: &ModelOp) -> Result<bool, AnyError> {
+async fn run_inner(operation: &ModelOp) -> crate::translation_core::Outcome<bool, AnyError> {
     match operation {
         ModelOp::Explain { id, client, target } => explain(id, *client, target).await,
     }
 }
 
-async fn explain(id: &str, client: ClientKind, target: &AuthTarget) -> Result<bool, AnyError> {
+async fn explain(id: &crate::translation_core::Str, client: ClientKind, target: &AuthTarget) -> crate::translation_core::Outcome<bool, AnyError> {
     if id.is_empty() {
         return Err("model selector must not be empty".into());
     }
@@ -46,10 +46,10 @@ async fn explain(id: &str, client: ClientKind, target: &AuthTarget) -> Result<bo
 }
 
 async fn explain_at(
-    id: &str,
+    id: &crate::translation_core::Str,
     client: ClientKind,
     server: &crate::managed_server::ResolvedServer,
-) -> Result<bool, AnyError> {
+) -> crate::translation_core::Outcome<bool, AnyError> {
     let token = server.token.as_deref().ok_or(
         "the selected router has no client token; select one with `router server use --token ...`",
     )?;
@@ -81,7 +81,7 @@ async fn explain_at(
     Ok(found)
 }
 
-fn diagnostic(id: &str, client: ClientKind, catalog: &Value) -> (Value, bool) {
+fn diagnostic(id: &crate::translation_core::Str, client: ClientKind, catalog: &crate::translation_core::Json) -> (crate::translation_core::Json, bool) {
     let mut matches = catalog
         .get("data")
         .and_then(Value::as_array)
@@ -166,7 +166,7 @@ fn diagnostic(id: &str, client: ClientKind, catalog: &Value) -> (Value, bool) {
             .and_then(Value::as_str)
             .map(str::to_string),
     };
-    let diagnostic = json!({
+    let diagnostic = crate::translation_core::json!({
         "contract_version": 1,
         "model_descriptor": descriptor,
         "requested_selector": id,
@@ -194,16 +194,16 @@ fn diagnostic(id: &str, client: ClientKind, catalog: &Value) -> (Value, bool) {
     (diagnostic, found)
 }
 
-fn selector_kind(entry: Option<&Value>) -> (&str, ModelSelectorKind) {
+fn selector_kind(entry: crate::translation_core::Maybe<&crate::translation_core::Json>) -> (&crate::translation_core::Str, ModelSelectorKind) {
     let label = entry
         .and_then(|value| value.get("selector_kind"))
-        .and_then(Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
         .unwrap_or("unknown");
     let kind = ModelSelectorKind::from_wire(label);
     (label, kind)
 }
 
-fn effective_capabilities(entry: Option<&Value>) -> Value {
+fn effective_capabilities(entry: crate::translation_core::Maybe<&crate::translation_core::Json>) -> crate::translation_core::Json {
     const FIELDS: [&str; 8] = [
         "context_window",
         "max_output_tokens",
@@ -226,7 +226,7 @@ fn effective_capabilities(entry: Option<&Value>) -> Value {
 
 async fn resolve_target(
     target: &AuthTarget,
-) -> Result<crate::managed_server::ResolvedServer, AnyError> {
+) -> crate::translation_core::Outcome<crate::managed_server::ResolvedServer, AnyError> {
     if target.local {
         return crate::managed_server::discovered_local_router()
             .await

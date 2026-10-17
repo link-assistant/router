@@ -61,7 +61,7 @@ pub struct TokenUsage {
 }
 
 impl Metrics {
-    pub fn record_request(&self, surface: Surface, status: u16, account: Option<&str>) {
+    pub fn record_request(&self, surface: Surface, status: u16, account: crate::translation_core::Maybe<&crate::translation_core::Str>) {
         self.requests_total.fetch_add(1, Ordering::Relaxed);
         if status >= 400 {
             self.errors_total.fetch_add(1, Ordering::Relaxed);
@@ -92,7 +92,7 @@ impl Metrics {
     /// Called once per request, right after the token is validated, so the
     /// counter reflects requests the router accepted for that token — the same
     /// unit `max_requests` budgets.
-    pub fn record_token_request(&self, token_id: &str, label: &str) {
+    pub fn record_token_request(&self, token_id: &crate::translation_core::Str, label: &crate::translation_core::Str) {
         if let Ok(mut g) = self.token_calls.lock() {
             let entry = g.entry(token_id.to_string()).or_default();
             if entry.label.is_empty() && !label.is_empty() {
@@ -245,7 +245,7 @@ pub fn render_prometheus(m: &Metrics) -> String {
 /// vendor names, never account identifiers, so this carries nothing the rest of
 /// `/metrics` does not already expose.
 #[must_use]
-pub fn render_subscription_health(providers: &[(&str, bool)]) -> String {
+pub fn render_subscription_health(providers: &[(&crate::translation_core::Str, bool)]) -> String {
     if providers.is_empty() {
         return String::new();
     }

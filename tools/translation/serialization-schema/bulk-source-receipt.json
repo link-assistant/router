@@ -1,0 +1,40 @@
+{
+  "schema": "bulk-serialization-source-draft-v1",
+  "prior_verified_checkpoint": "7bb325fa98963666ec37a2f0109b18289a211900",
+  "source_only": true,
+  "engines_run": false,
+  "producer_run": false,
+  "production_imports_changed": false,
+  "authored_bulk_tests": 14,
+  "initial_scope_tests": 31,
+  "full_regression_scope_tests": 180,
+  "owner_discovery": "privately captured original module graph and locked serde owner certificates, no owner-name list",
+  "refusal_inventory": "all data declaration partitions plus manual trait headers, graph diagnostics and every input file coverage",
+  "whole_trait_or_runtime_authority": false,
+  "new_source_paths": [
+    "tools/translation/serialization-schema/bulk.mjs",
+    "tools/translation/serialization-schema/bulk.test.mjs",
+    "tools/translation/serialization-schema/check-bulk-typescript.mjs",
+    "tools/translation/serialization-schema/BULK.md"
+  ],
+  "shared_source_path": "tools/translation/serialization-schema/extract.mjs",
+  "original_inputs": [
+    {
+      "file": "src/lib.rs",
+      "sha256": "3c9605387b5454634325dbbf7604e0ad919931be17dac05905a60ea0268286af",
+      "bytes": 6649
+    },
+    {
+      "file": "Cargo.toml",
+      "sha256": "328a6026c740f42468d0752d9cea4cb4930304b45c979b03d3f3db9ce658d476",
+      "bytes": 5296
+    },
+    {
+      "file": "Cargo.lock",
+      "sha256": "c1cb53b3b73c3a547d362c88c400d0a81457876f4c3e5537acb2fbd3e4aececa",
+      "bytes": 124800
+    }
+  ],
+  "prior29_verified_head": "d2eabadc1fcb6d79d1955de2415ad07cbf5c0ce3",
+  "added_original_scope_controls": "Late String/Vec aliases and a post-DTO import through a private target public reexport preserve full original consuming scope"
+}

@@ -1,0 +1,1 @@
+Add a sequential synchronization command for the existing JavaScript, Rust, meta-language, TypeScript, platform and serialization producers. Preserve original inputs and complete failure receipts, require an explicit write/check mode, and retain all incomplete translation and runtime parity boundaries.

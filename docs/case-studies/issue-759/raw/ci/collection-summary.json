@@ -1,0 +1,58 @@
+[
+  {
+    "repo": "link-assistant/router",
+    "pr": 749,
+    "branch": "issue-724-878028a21e67",
+    "head_sha": "ac061bf2b7efaf86c05464e0b1e40c06bb9be7b7",
+    "commit_count_api": 33,
+    "commits_archived": 33,
+    "branch_runs": 122,
+    "older_created_partitions": 0,
+    "attempts": 124,
+    "comparison_commits_archived": null,
+    "complete_unique_commits_archived": 33,
+    "commit_count_note": "commits_archived is the PRcommits endpoint receipt count; comparison pagination supplies the full list where that endpoint is capped."
+  },
+  {
+    "repo": "link-foundation/meta-language",
+    "pr": 201,
+    "branch": "issue-199-58f3573d6122",
+    "head_sha": "e46e196db5ec34bf13a73b8645aa38d409737e60",
+    "commit_count_api": 73,
+    "commits_archived": 73,
+    "branch_runs": 59,
+    "older_created_partitions": 0,
+    "attempts": 59,
+    "comparison_commits_archived": null,
+    "complete_unique_commits_archived": 73,
+    "commit_count_note": "commits_archived is the PRcommits endpoint receipt count; comparison pagination supplies the full list where that endpoint is capped."
+  },
+  {
+    "repo": "link-foundation/relative-meta-logic",
+    "pr": 184,
+    "branch": "issue-183-7fedfddffe9c",
+    "head_sha": "9b509ec0f4f3554b234a275bbd21f4c540995243",
+    "commit_count_api": 143,
+    "commits_archived": 143,
+    "branch_runs": 831,
+    "older_created_partitions": 0,
+    "attempts": 851,
+    "comparison_commits_archived": null,
+    "complete_unique_commits_archived": 143,
+    "commit_count_note": "commits_archived is the PRcommits endpoint receipt count; comparison pagination supplies the full list where that endpoint is capped."
+  },
+  {
+    "repo": "link-assistant/formal-ai",
+    "pr": 1188,
+    "branch": "qa-reasoning-coding-bulk-fixes",
+    "head_sha": "e9f057c8300cab787f746afbcc0133cef80e2948",
+    "commit_count_api": 966,
+    "commits_archived": 250,
+    "branch_runs": 3172,
+    "older_created_partitions": 3,
+    "attempts": 3172,
+    "comparison_commits_archived": 966,
+    "complete_unique_commits_archived": 966,
+    "commit_count_note": "commits_archived is the PRcommits endpoint receipt count; comparison pagination supplies the full list where that endpoint is capped."
+  }
+]

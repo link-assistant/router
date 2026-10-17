@@ -1,0 +1,31 @@
+{
+  "schema": "router-static-source-lifecycle-v1",
+  "archive": "originals.json.gz",
+  "rawBytes": 62557697,
+  "rawSha256": "e1766c0d2b509830123d2a9db6c8b306c765e83a7d7dacb6b90cac91b0096188",
+  "bytes": 10281677,
+  "sha256": "0f63df33e1e5b0ce6247ec5aea415f28a07da2c5beb896094d1e1d186d5284e8",
+  "profiles": [
+    {
+      "revision": "5de1dea8b777dcd6e637758efc2c260150735af5",
+      "files": 806,
+      "sourceSetSha256": "fa513c50ae94c3ccba510ddd5a954451bedf63a2a823805c62eb8fee08b4affa"
+    },
+    {
+      "revision": "e4561e76506ed25a7e638fb1e00a965f8479e1db",
+      "files": 808,
+      "sourceSetSha256": "8683ed8c1f78d91f109d9c3f41151fa54e605833e03caac2bb821f00aa8f6d16"
+    }
+  ],
+  "current": "8d420d0f31b466b5cdc8c9e1c86ca998096ea66ad30e7a41f1c4ad6aab5458c7",
+  "trace": [
+    {
+      "phase": "language",
+      "id": "static-fixture.complete-original-cst-and-current-source-joins"
+    },
+    {
+      "phase": "repository",
+      "id": "static-fixture.fixed-historical-universes-and-reversible-current-parents"
+    }
+  ]
+}

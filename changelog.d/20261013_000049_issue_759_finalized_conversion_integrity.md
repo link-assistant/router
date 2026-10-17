@@ -1,0 +1,1 @@
+Bind Into conversion emission to exact finalized original checker computations after recursive argument rewriting, preserving the original computation proof and privately checked source/caller identity. Retain complete body, signature, type and cross-checker forgery guards; use private issuance tokens without retaining failed checker graphs.

@@ -1,0 +1,346 @@
+{
+  "schema": "generated-affinity-integration-verification-v1",
+  "producer_source_head": "b2927e6942e760b715674e92c36d7f140dbb723b",
+  "frozen_generated_source_head": "f0c716ca8ae87edd5f4f1a1f02afbf38e5de7500",
+  "source_only_draft_queue": [
+    "ab9392a79",
+    "cc7557b52",
+    "55a28008b",
+    "9680c4390",
+    "92a7690c7",
+    "b2927e694"
+  ],
+  "generated_commit": "f0c716ca8ae87edd5f4f1a1f02afbf38e5de7500",
+  "producer": {
+    "exit_code": 0,
+    "wall_seconds": 2.974,
+    "only_expected_mutation_paths": true,
+    "other_source_inputs_unchanged": true,
+    "interpreter_body_matches": true,
+    "outputs": [
+      {
+        "file": "tools/translation/serialization-schema/generated/affinity-schema.meta.json",
+        "bytes": 49413,
+        "sha256": "d96153f1c9ac51abff9ac36d588e8d6a8b050b27b96f053192d0b52dace941fd"
+      },
+      {
+        "file": "packages/javascript/native/affinity-schema-descriptor.mjs",
+        "bytes": 2906,
+        "sha256": "2fd934d7a25e5d34f14807d89c021422f3b05336d3da450833c9b32d01441aa0"
+      },
+      {
+        "file": "tools/translation/serialization-schema/generated/affinity-schema-descriptor.ts",
+        "bytes": 2915,
+        "sha256": "b804c12e73c56dd29cf70f5d73a6689f9c1605e16fecc93849c0f61ac279fa65"
+      },
+      {
+        "file": "tools/translation/serialization-schema/generated/affinity-schema-emission.json",
+        "bytes": 3559,
+        "sha256": "b68f68e82fbbe9c61105119113147eadfc139f5395287858e076777ddf688b50"
+      }
+    ]
+  },
+  "validation": {
+    "scope": [
+      "tools/translation/serialization-schema/serialization-schema.test.mjs",
+      "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+      "experiments/issue-759/acceptance/affinity-file.test.mjs",
+      "experiments/issue-759/acceptance/provider-responses.test.mjs",
+      "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+      "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+      "packages/javascript/test/native-core.test.mjs",
+      "packages/javascript/test/native-service.test.mjs",
+      "packages/javascript/test/native-server.test.mjs",
+      "packages/javascript/test/native-storage.test.mjs"
+    ],
+    "authored_cases_per_engine": 166,
+    "input_count": 1119,
+    "immutable_inputs": true,
+    "results": [
+      {
+        "engine": "artifact-check",
+        "command": [
+          "node",
+          "tools/translation/serialization-schema/native-descriptor.mjs",
+          "--check"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 2.851,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      },
+      {
+        "engine": "descriptor-tsc",
+        "command": [
+          "node",
+          "tools/translation/serialization-schema/check-descriptor-typescript.mjs"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 0.348,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      },
+      {
+        "engine": "node",
+        "command": [
+          "node",
+          "--test",
+          "--test-concurrency=1",
+          "tools/translation/serialization-schema/serialization-schema.test.mjs",
+          "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+          "experiments/issue-759/acceptance/affinity-file.test.mjs",
+          "experiments/issue-759/acceptance/provider-responses.test.mjs",
+          "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+          "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+          "packages/javascript/test/native-core.test.mjs",
+          "packages/javascript/test/native-service.test.mjs",
+          "packages/javascript/test/native-server.test.mjs",
+          "packages/javascript/test/native-storage.test.mjs"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 19.963,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      },
+      {
+        "engine": "bun",
+        "command": [
+          "bun",
+          "test",
+          "--timeout",
+          "15000",
+          "tools/translation/serialization-schema/serialization-schema.test.mjs",
+          "experiments/issue-759/acceptance/affinity-prefix.test.mjs",
+          "experiments/issue-759/acceptance/affinity-file.test.mjs",
+          "experiments/issue-759/acceptance/provider-responses.test.mjs",
+          "experiments/issue-759/acceptance/provider-conversations.test.mjs",
+          "experiments/issue-759/acceptance/provider-resource-capture.test.mjs",
+          "packages/javascript/test/native-core.test.mjs",
+          "packages/javascript/test/native-service.test.mjs",
+          "packages/javascript/test/native-server.test.mjs",
+          "packages/javascript/test/native-storage.test.mjs"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "wall_seconds": 11.164,
+        "temporary_bytes_before_cleanup": 0,
+        "remaining_temporary_entries_before_cleanup": []
+      }
+    ],
+    "strict_TypeScript_version": "5.9.3",
+    "strict_TypeScript_diagnostics": 0
+  },
+  "source_owners": [
+    {
+      "owner": "crate::providers::ProviderKind",
+      "source": "src/providers.rs",
+      "sourceSha256": "80e6c02411fd9473c2704a49130b29edd122ddc66d233b0d586f44e61f8dbdf8",
+      "span": {
+        "end": 1398,
+        "start": 876,
+        "unit": "utf16"
+      },
+      "kind": "enum"
+    },
+    {
+      "owner": "crate::response_affinity::AffinityDestination",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "span": {
+        "end": 3729,
+        "start": 3196,
+        "unit": "utf16"
+      },
+      "kind": "enum"
+    },
+    {
+      "owner": "crate::response_affinity::AffinityFile",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "span": {
+        "end": 5418,
+        "start": 5291,
+        "unit": "utf16"
+      },
+      "kind": "struct"
+    },
+    {
+      "owner": "crate::response_affinity::ResponseAffinity",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "span": {
+        "end": 4168,
+        "start": 3731,
+        "unit": "utf16"
+      },
+      "kind": "struct"
+    },
+    {
+      "owner": "crate::response_affinity::ResponseNamespace",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "span": {
+        "end": 1148,
+        "start": 485,
+        "unit": "utf16"
+      },
+      "kind": "enum"
+    },
+    {
+      "owner": "crate::response_affinity::ResponseOwner",
+      "source": "src/response_affinity.rs",
+      "sourceSha256": "e8aa97145a2df74e399c3c1bc648075f0b72266ed2def6dcc6e17291579dbf41",
+      "span": {
+        "end": 2714,
+        "start": 2537,
+        "unit": "utf16"
+      },
+      "kind": "struct"
+    },
+    {
+      "owner": "crate::subscription::types::SubscriptionProvider",
+      "source": "src/subscription/types.rs",
+      "sourceSha256": "74996ec0b4a32cb6e8d8c6a5e4cf2057a09238acff6d141ad58b592184c12c26",
+      "span": {
+        "end": 639,
+        "start": 105,
+        "unit": "utf16"
+      },
+      "kind": "enum"
+    }
+  ],
+  "refusal_evidence": {
+    "file": "tools/translation/serialization-schema/serialization-schema.test.mjs",
+    "passed_in_both_engines": [
+      "metadata drift and forged attrs/qualified owners remain rejected",
+      "source changes invalidate old checked metadata even with unchanged qualified names",
+      "source-defined String and aliases cannot impersonate a prelude serialization primitive",
+      "Option shadow and unsupported helpers are explicit refusals",
+      "tagged named variants project ordered fields while tuple and untagged layouts refuse",
+      "source-qualified duplicate leaf names refuse the ordinary descriptor ABI",
+      "ambiguous aliases and unregistered globs cannot bless type owner guesses",
+      "checked grammar refuses duplicate metadata keys and unbounded nesting",
+      "JSON-only escapes cannot bless Rust-invalid serde helper names",
+      "written field paths obey consuming-module privacy while public reexports retain their checked private target route",
+      "public reexport aliases do not grant visibility to a new private written suffix"
+    ],
+    "scope_note": "Observed bounded source/metadata refusals and controls; no claim that every original declaration or generated serde trait is translated"
+  },
+  "original_dependencies_digest": "0291457e0018c166cb68e568b9e09e523f276d5db73f6b6d1a6940f4c2ed2654",
+  "original_source_set_sha256": "4d05b7f90885b0377f1909b3cecc704ba563a7fb0ca3c3ab5b3912f46591aa93",
+  "archive": {
+    "file": "integration-verification-raws.tar.gz",
+    "bytes": 346551,
+    "sha256": "73303471bf2087a400a099feb8e41fc1762260c0acfb26533f8638ecbfaecb2c",
+    "members": [
+      {
+        "file": "prerequisites/initial17-helper-materialization.json",
+        "bytes": 80484,
+        "sha256": "8102e2c97f416be2970065315ae214c5ca0a81340f032877d748adb6496f1742",
+        "reopened_verified": true
+      },
+      {
+        "file": "prerequisites/typescript-prerequisites.json",
+        "bytes": 465,
+        "sha256": "22ede1337115a3a7cb9cc69ac4d6835aebbeb7e2529db2147473d0fdcef6bc3b",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer-runner/plan.json",
+        "bytes": 323,
+        "sha256": "797d04ce4dd49c6024aaca7b5229ed599e96b0d064c371b4a280bf6fccaec63b",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer-runner/run.py",
+        "bytes": 4626,
+        "sha256": "36f59289646a5ffe18408b431697b2856a329fe6fe589e7c3373eca98e1b9716",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/harness.py",
+        "bytes": 4626,
+        "sha256": "36f59289646a5ffe18408b431697b2856a329fe6fe589e7c3373eca98e1b9716",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/inputs.json",
+        "bytes": 117823,
+        "sha256": "72a638e7a14947fcb38e81e9d44449e1e16c280d81d8877248d3a7ddfb6bf087",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/producer.log",
+        "bytes": 3395,
+        "sha256": "5ffbd5a6f76008dfbdc7c32bc16cdf78c4aabdfc6dd863d033372e339fcbba8f",
+        "reopened_verified": true
+      },
+      {
+        "file": "producer/receipt.json",
+        "bytes": 237132,
+        "sha256": "33e24a750dcb3139eb5b17c7f62f98a3d6d5ecdda6319035b944b7e2aa2e3c08",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation-runner/plan.json",
+        "bytes": 1326,
+        "sha256": "089a727ca37da92bd812f6dde2043909dc66dbdd62a24af79a7da6937887baa0",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation-runner/run.py",
+        "bytes": 6233,
+        "sha256": "4a29d6d704c59189a0ad0b01e0d36d4fdd55921d8c2ffcec0a494299b4f9e344",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/artifact-check.log",
+        "bytes": 3279,
+        "sha256": "f5ef4528937154d0905d5ffca740828c752747083b0607adc170db4d3d5625cb",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/bun.log",
+        "bytes": 18046,
+        "sha256": "98d95e90a35a84bb766cb3fbdac3b3bb4c8ba7ae125f98a406f61f79746f6ba1",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/descriptor-tsc.log",
+        "bytes": 271,
+        "sha256": "58ed50b7141465f155109c10eaf72707acdac00160b4e877f6a9d9101a6dead2",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/harness.py",
+        "bytes": 6233,
+        "sha256": "4a29d6d704c59189a0ad0b01e0d36d4fdd55921d8c2ffcec0a494299b4f9e344",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/inputs.json",
+        "bytes": 132713,
+        "sha256": "01c7ac616e6feacb9bf0438cb21bf8e5774f720b7a2692cdaf6cdd33db41fbe7",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/node.log",
+        "bytes": 38629,
+        "sha256": "340529715c49f7e03008a0ddf49a5f8c1ca6df9386b14f82450a19808844841c",
+        "reopened_verified": true
+      },
+      {
+        "file": "validation/receipt.json",
+        "bytes": 267043,
+        "sha256": "f2299490b91ac08df3aec1be94a6563a858c03929b4c5f2e9597a6be8b1e6ee4",
+        "reopened_verified": true
+      }
+    ]
+  },
+  "fullParity": false,
+  "generatedTraitBehavior": false,
+  "scope": "Seven source-reachable original serialization data layouts feed shared checked meta and descriptor data; native generic interpreter remains unchanged; other original runtime logic/traits remain unproved"
+}

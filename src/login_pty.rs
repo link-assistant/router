@@ -269,7 +269,7 @@ impl PtySession {
     }
 
     /// Block until the child exits, returning its exit code.
-    pub fn wait_for_exit(&self, timeout: Duration) -> Result<Option<u32>, WaitError> {
+    pub fn wait_for_exit(&self, timeout: Duration) -> crate::translation_core::Outcome<crate::translation_core::Maybe<u32>, WaitError> {
         let deadline = Instant::now() + timeout;
         loop {
             if let Some(code) = self.exit_code() {
@@ -287,7 +287,7 @@ impl PtySession {
     /// Requiring a full idle interval after entry prevents old quiet time from
     /// making a post-input settle return before the child has processed the
     /// newly written bytes.
-    pub fn wait_idle(&self, idle: Duration, timeout: Duration) -> Result<(), WaitError> {
+    pub fn wait_idle(&self, idle: Duration, timeout: Duration) -> crate::translation_core::Outcome<(), WaitError> {
         let started = Instant::now();
         let deadline = started + timeout;
         loop {
@@ -313,7 +313,7 @@ impl PtySession {
 
     /// The child's exit code, or `None` while it is still running.
     #[must_use]
-    pub fn exit_code(&self) -> Option<u32> {
+    pub fn exit_code(&self) -> crate::translation_core::Maybe<u32> {
         let mut guard = self.child.lock().ok()?;
         match guard.try_wait() {
             Ok(Some(status)) => Some(status.exit_code()),
@@ -328,7 +328,7 @@ impl PtySession {
     }
 
     /// Type `text` into the PTY as if a human had typed it.
-    pub fn send_text(&self, text: &str) -> std::io::Result<()> {
+    pub fn send_text(&self, text: &crate::translation_core::Str) -> std::io::Result<()> {
         let mut writer = self
             .writer
             .lock()
@@ -342,7 +342,7 @@ impl PtySession {
     /// Ink and other terminal UIs use these delimiters to distinguish a paste
     /// from a burst of independent keypresses. Keeping the complete sequence
     /// under one writer lock also prevents another input from interleaving.
-    pub fn send_bracketed_paste(&self, text: &str) -> std::io::Result<()> {
+    pub fn send_bracketed_paste(&self, text: &crate::translation_core::Str) -> std::io::Result<()> {
         let mut writer = self
             .writer
             .lock()
@@ -397,7 +397,7 @@ pub enum Key {
 impl Key {
     /// The byte sequence a terminal emits for this key.
     #[must_use]
-    pub const fn sequence(self) -> &'static str {
+    pub const fn sequence(self) -> &'static crate::translation_core::Str {
         match self {
             Self::Enter => "\r",
             Self::Escape => "\x1b",
@@ -413,7 +413,7 @@ impl Key {
 /// therefore leaves repeated text in the transcript, which is why extraction
 /// takes the *last* match rather than the first.
 #[must_use]
-pub fn strip_ansi(input: &str) -> String {
+pub fn strip_ansi(input: &crate::translation_core::Str) -> String {
     let mut out = String::with_capacity(input.len());
     let mut chars = input.chars().peekable();
     while let Some(ch) = chars.next() {

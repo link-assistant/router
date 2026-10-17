@@ -1,0 +1,1 @@
+Record the user’s standing issue #759 authorization for the designated publisher to push coordinated fixes and update the draft PR without another approval request after the entire preceding CI cycle finishes and its failures are handled. Same-commit JavaScript-first Rust gating and the single-publisher rule remain mandatory.

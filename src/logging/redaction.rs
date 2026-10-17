@@ -1,5 +1,5 @@
 //! Remove URL credentials and query values before diagnostics reach any sink.
-pub fn urls(message: &str) -> String {
+pub fn urls(message: &crate::translation_core::Str) -> String {
     let mut result = String::new();
     let mut remaining = message;
     while let Some(start) = remaining

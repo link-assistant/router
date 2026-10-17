@@ -33,7 +33,7 @@ pub(crate) struct RetryBudget {
 }
 
 impl RetryBudget {
-    pub(crate) fn new(router: Option<&AccountRouter>, failover: bool, attempts: u32) -> Self {
+    pub(crate) fn new(router: crate::translation_core::Maybe<&AccountRouter>, failover: bool, attempts: u32) -> Self {
         let policy = if failover {
             router.map_or_else(RetryPolicy::default, AccountRouter::retry_policy)
         } else {

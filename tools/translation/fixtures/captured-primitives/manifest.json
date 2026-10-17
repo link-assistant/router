@@ -1,0 +1,28 @@
+{
+  "schema": "complete-captured-primitive-old-source-oracles-v1",
+  "sourceCommit": "53c7a52432bf8e0f3131b65d1c0996cdeb86b67b",
+  "licenseProvenance": "Unchanged original repository modules; original repository license and source headers retained. Only ESM specifiers are relocated in the test harness; old private issuers remain isolated.",
+  "members": [
+    {
+      "originalPath": "tools/translation/js-to-rust/vendor/scoped-helpers.mjs",
+      "sourceFile": "scoped-helpers.source.txt",
+      "bytes": 12221,
+      "sha256": "8387a58a699c21612b59fd8f2802fc01c04c4f23360d058f8cb110e94bcd8eca",
+      "gitBlob": "155c2882272f9c8f645af6361e6815016dca44b8"
+    },
+    {
+      "originalPath": "tools/translation/js-to-rust/vendor/ir.mjs",
+      "sourceFile": "ir.source.txt",
+      "bytes": 43496,
+      "sha256": "506771dea822a50d2deb97f3f4653689a7e573de54addf442133929bda144bf7",
+      "gitBlob": "e274914950348f44d2313d5edbd6cbad7f74229e"
+    },
+    {
+      "originalPath": "tools/translation/js-to-rust/vendor/lexical-environments.mjs",
+      "sourceFile": "lexical-environments.source.txt",
+      "bytes": 11370,
+      "sha256": "5f59240216d6d981b6a2bb55f0b59be4d2955c4599692e36472cf3f10b079dfd",
+      "gitBlob": "494b069f030e1ba125639267e6fdae940de68325"
+    }
+  ]
+}

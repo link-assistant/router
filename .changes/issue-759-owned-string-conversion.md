@@ -1,0 +1,1 @@
+Preserve the owning String conversion obligation in checked expression types. A String::from result keeps its owned provenance even when its scalar backend representation is a JavaScript string, so restricted immutable scalar pattern profiles can refuse it.

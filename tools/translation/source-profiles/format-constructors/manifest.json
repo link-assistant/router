@@ -1,0 +1,103 @@
+{
+  "schema": "original-format-constructor-source-v1",
+  "rustVersion": "1.89",
+  "license": "MIT OR Apache-2.0",
+  "sources": [
+    {
+      "path": "compiler/rustc_expand/src/build.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_expand/src/build.rs",
+      "bytes": 25136,
+      "sha256": "83dc2a7b9998b2a863efc98ec3067ca4355aecbfb0b95a448ed513e02ac55927",
+      "archive": "../builtin-derive-bang/rust-1.89-compiler_rustc_expand_src_build.rs.gz",
+      "archiveBytes": 4994,
+      "archiveSha256": "9bbe493fc141cf3780d7a5243a72abb0ef0ac17a2912b061493ad52a0080b441",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "path": "compiler/rustc_expand/src/base.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_expand/src/base.rs",
+      "bytes": 52174,
+      "sha256": "0bf27a4b3d96610af84dd2dd9780587e0fb4ac0fb951bbc53f982295f837077f",
+      "archive": "../builtin-derive-bang/../clap-concat/rust-1.89-base.rs.gz",
+      "archiveBytes": 12220,
+      "archiveSha256": "203c8d2ef3a0774863906f41da8d5d398d08b65834468946f7d79aee6224c4d9",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "path": "compiler/rustc_ast/src/ast.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast/src/ast.rs",
+      "bytes": 128914,
+      "sha256": "115db8af9bbd5230088173343ee8321ca9af51fc14d921edf59d9a0b109e0217",
+      "archive": "../builtin-derive-bang/rust-1.89-compiler_rustc_ast_src_ast.rs.gz",
+      "archiveBytes": 31890,
+      "archiveSha256": "db6d3221b23c958dc1d1252ed30e195074dae781cb793ee7e3b2726053fa5c6b",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "path": "compiler/rustc_ast/src/visit.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/29483883eed69d5fb4db01964cdf2af4d86e9cb2/compiler/rustc_ast/src/visit.rs",
+      "bytes": 81117,
+      "sha256": "2cde31625ec47f907d6a314ae06e75711245ca79f8dc1f5bf5b44768c6dc87fd",
+      "archive": "../builtin-derive-bang/../clap-concat/rust-1.89-visit.rs.gz",
+      "archiveBytes": 12455,
+      "archiveSha256": "adad0653d6db72b3c9793d70299fca148b7a22ba8ec88cec6e0ea6a477628bee",
+      "revision": "29483883eed69d5fb4db01964cdf2af4d86e9cb2",
+      "reusedProfile": "clap-concat/manifest.json",
+      "namespaceAuthority": false,
+      "generatedImplBehavior": false,
+      "reusedCompleteOriginal": true
+    },
+    {
+      "path": "compiler/rustc_ast/src/ptr.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_ast/src/ptr.rs",
+      "bytes": 331,
+      "sha256": "8253859648b97ee47aae7ef9a993396407c3e380ab50758485448e8d7268ef1c",
+      "archive": "../builtin-derive-bang/original-compiler_rustc_ast_src_ptr.rs.gz",
+      "archiveBytes": 248,
+      "archiveSha256": "9fcfcc67d5b404a2177fd060724090ac05fd9344841da8a4a250b91c9a90e979",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "path": "compiler/rustc_parse/src/parser/expr.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_parse/src/parser/expr.rs",
+      "bytes": 180686,
+      "sha256": "32847f9b0bf01f448493367833adf7503532f6038883f055a98fafdb3bd0ba69",
+      "archive": "../clap-concat/rust-1.89-parser-expr.rs.gz",
+      "archiveBytes": 39761,
+      "archiveSha256": "766d1475d1cb721aab4db4cfb6bfa5ebaf4990f1f485290fe925f8ff5e5dc36d",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "path": "library/core/src/option.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/option.rs",
+      "bytes": 86718,
+      "sha256": "4c172731ebf0ef2ae6fc3e9b5127096d3c5c400c3757cfe5e38223de91bc3efd",
+      "archive": "../builtin-derive-bang/../option-deref/core-option.rs.gz",
+      "archiveBytes": 18396,
+      "archiveSha256": "2f8986530d23db3ed08f32fbe8b0c82b7ffb1c3abe6b407b38ff989998739cb1",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "path": "LICENSE-MIT",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/LICENSE-MIT",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1",
+      "archive": "../builtin-derive-bang/rust-1.89-LICENSE-MIT.gz",
+      "archiveBytes": 646,
+      "archiveSha256": "e675109f90bf15b2d8120a8bd7a7d062a8f62a7efa9b09a2c25e030dae5de841",
+      "reusedCompleteOriginal": true
+    },
+    {
+      "path": "LICENSE-APACHE",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/LICENSE-APACHE",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a",
+      "archive": "../builtin-derive-bang/rust-1.89-LICENSE-APACHE.gz",
+      "archiveBytes": 3554,
+      "archiveSha256": "743f15542c6a31637b66b952a6d7da62ac00374b5caae6530e8d7317c29b0fd6",
+      "reusedCompleteOriginal": true
+    }
+  ],
+  "namespaceAuthority": false,
+  "runtimeAuthority": false
+}

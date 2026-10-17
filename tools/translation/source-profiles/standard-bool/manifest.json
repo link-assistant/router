@@ -1,0 +1,17 @@
+{
+  "profile": "rust-1.89-bool-then-some",
+  "rust": "1.89.0",
+  "constEligible": false,
+  "source": {
+    "file": "core-bool.rs.gz",
+    "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/library/core/src/bool.rs",
+    "bytes": 1871,
+    "sha256": "d88d8511eb134f8efc2cdcb6a24c7f888abfb2c03588d7db3f304657e19b83b3",
+    "compressedSha256": "af463ac04b4f82aa9d52fd3a3bfa70e2734c0506d625e1edd7e31f1ca5a0d11b",
+    "lines": [
+      31,
+      35
+    ]
+  },
+  "semantics": "By-value primitive bool; receiver then argument evaluated eagerly once. Only conditional Option construction is lazy; no const eligibility."
+}

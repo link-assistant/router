@@ -1,0 +1,35 @@
+{
+  "schema": "complete-static-native-performance-oracles-v1",
+  "sourceCommit": "32cbf93df679f03c8e344383d3fc38485a6edddc",
+  "members": [
+    {
+      "originalPath": "tools/translation/js-to-rust/vendor/lexical-environments.mjs",
+      "sourceFile": "lexical-environments.source.txt",
+      "bytes": 9856,
+      "sha256": "ef12833d7fff55374c490320fe247d6054f3103d691851e7238f8a80bd2b3edd",
+      "gitBlob": "0edb6d4b72094e37b9273953b27d5218304812b8"
+    },
+    {
+      "originalPath": "tools/translation/js-to-rust/native-typescript.mjs",
+      "sourceFile": "native-typescript.source.txt",
+      "bytes": 29908,
+      "sha256": "cd2347f8406238d7eba762e77e10a4668d31ef4b6d1e1868c6d0765668574d45",
+      "gitBlob": "3e39689187ef56525386cd799a55534ae23c8a1b"
+    },
+    {
+      "originalPath": "tools/translation/js-to-rust/vendor/scoped-helpers.mjs",
+      "sourceFile": "scoped-helpers.source.txt",
+      "bytes": 12088,
+      "sha256": "cc9b71babed4026446a19db12cb9dda95aaf20b621603c50bb6da3d86321d68a",
+      "gitBlob": "70d2b718c0cded5b05fe8c6142a351df61692d8d"
+    },
+    {
+      "sourceFile": "ir.source.txt",
+      "originalPath": "tools/translation/js-to-rust/vendor/ir.mjs",
+      "bytes": 42098,
+      "sha256": "cffe20b9fa6f8c732d500cf98ec5aee40ca9afabb5aae98489fd2f9acf4e8b39",
+      "gitBlob": "5e890b2f3fba164bdc95b43ce31d07b9aa10c218"
+    }
+  ],
+  "compilerAuthority": false
+}

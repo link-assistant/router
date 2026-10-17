@@ -1,0 +1,16 @@
+[
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37744693006/attempt-1/logs/0_Link model to native RML observations.txt.gz",
+    "sha256": "ab33af91416f5234ae1c3913c292760a1f53e461772f1aa9f89a1c4c24c31e51",
+    "bytes": 11583,
+    "uncompressed_bytes": 51846,
+    "redacted": false
+  },
+  {
+    "path": "link-foundation--relative-meta-logic/runs/37744693006/attempt-1/logs/Link model to native RML observations/system.txt.gz",
+    "sha256": "927ae8a5ea4c28017322eeaffd483eb0667de0a35a4ec84ec5c5905a678a8356",
+    "bytes": 407,
+    "uncompressed_bytes": 755,
+    "redacted": false
+  }
+]

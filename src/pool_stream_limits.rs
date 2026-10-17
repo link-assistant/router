@@ -17,7 +17,7 @@ pub struct StreamLimits {
 }
 
 impl StreamLimits {
-    pub(crate) fn new(router: AccountRouter, account: String, model: Option<String>) -> Self {
+    pub(crate) fn new(router: AccountRouter, account: String, model: crate::translation_core::Maybe<String>) -> Self {
         // Response streams outlive task-local policy dispatch. Retain its opt-out.
         let scoped = crate::account_policy_scope::current();
         let relayed = scoped.as_ref().is_some_and(|scope| {
@@ -62,7 +62,7 @@ impl StreamLimits {
     }
 
     /// Also used by WebSocket frames, whose error is already JSON.
-    pub(crate) fn observe_event(&self, value: &Value) {
+    pub(crate) fn observe_event(&self, value: &crate::translation_core::Json) {
         if self.relayed {
             return;
         }

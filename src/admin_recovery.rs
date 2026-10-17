@@ -52,7 +52,7 @@ use crate::token::TokenManager;
 /// nothing to lose if the optional JSONL audit sink is off. The default is a
 /// distinct constant rather than the bootstrap label so a recovery is never
 /// mistaken for a first boot.
-pub const RECOVERED_ADMIN_LABEL: &str = "recovered-admin";
+pub const RECOVERED_ADMIN_LABEL: &crate::translation_core::Str = "recovered-admin";
 
 /// Outcome of a successful recovery.
 ///
@@ -95,11 +95,11 @@ pub fn recover(
     manager: &TokenManager,
     store: &Arc<dyn TokenStore>,
     ttl_hours: i64,
-    label: &str,
+    label: &crate::translation_core::Str,
     revoke_others: bool,
 ) -> Result<Recovery, String> {
     if ttl_hours <= 0 {
-        return Err(format!(
+        return Err(crate::translation_core::format!(
             "a recovered admin token needs a positive lifetime; --ttl-hours was {ttl_hours}"
         ));
     }
@@ -108,9 +108,9 @@ pub fn recover(
     let existing_admins = admin_token_ids(store)?;
     let token = manager
         .issue_admin_token(ttl_hours, label)
-        .map_err(|error| format!("could not sign a replacement admin token: {error}"))?;
+        .map_err(|error| crate::translation_core::format!("could not sign a replacement admin token: {error}"))?;
     let token_id = crate::managed_server::token_subject(&token)
-        .map_err(|error| format!("could not read the minted token's subject: {error}"))?;
+        .map_err(|error| crate::translation_core::format!("could not read the minted token's subject: {error}"))?;
 
     let mut revoked = Vec::new();
     if revoke_others {
@@ -120,7 +120,7 @@ pub fn recover(
         for id in &existing_admins {
             store
                 .revoke(id)
-                .map_err(|error| format!("minted {token_id} but could not revoke {id}: {error}"))?;
+                .map_err(|error| crate::translation_core::format!("minted {token_id} but could not revoke {id}: {error}"))?;
             revoked.push(id.clone());
         }
     }
@@ -141,7 +141,7 @@ fn admin_token_ids(store: &Arc<dyn TokenStore>) -> Result<Vec<String>, String> {
     let now = crate::operation_context::now().timestamp();
     let records = store
         .list()
-        .map_err(|error| format!("could not read the token store: {error}"))?;
+        .map_err(|error| crate::translation_core::format!("could not read the token store: {error}"))?;
     Ok(records
         .into_iter()
         .filter(|record| {
@@ -158,8 +158,8 @@ fn admin_token_ids(store: &Arc<dyn TokenStore>) -> Result<Vec<String>, String> {
 /// about the wrong deployment in a shape that looks correct — the failure mode
 /// issue #291 was filed for — so it refuses and names the target instead.
 #[must_use]
-pub fn refusal(server: &crate::managed_server::ResolvedServer) -> String {
-    format!(
+pub fn refusal(server: &crate::managed_server::ResolvedServer) -> crate::translation_core::Text {
+    crate::translation_core::format!(
         "`tokens recover-admin` acts on the token store of the machine it runs on, and {} is \
          selected. Recovery is proof of local ownership, so no router performs it over HTTP: \
          run it on that deployment — `docker exec <container> router tokens recover-admin` for \

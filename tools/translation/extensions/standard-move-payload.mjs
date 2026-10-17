@@ -1,0 +1,30 @@
+// A whole original Some value moves through or_else without copying/dropping
+// its payload. Structural tuple authority still starts at genuine Rust syntax.
+import {sameType,rustFixedType} from '../checked-types.mjs';
+import {originalParsedDeclarationEvidence,metadataDigest} from './source-links.mjs';
+import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
+import {unsupported} from '../vendor/meta-language/translation/diagnostics.js';
+const contexts=new WeakMap(),tokens=new WeakSet();
+export function captureOriginalMoveTuples(checker,surface){
+ const declarations=new Map(),functions=[];const items=(list,path=[])=>{for(const item of list){if(item.k==='module')items(item.items,[...path,item.name]);else if(item.k==='data')declarations.set([...path,item.name].join('.'),item);else if(item.k==='fn'&&originalParsedDeclarationEvidence(item))functions.push(item);}};items(surface.items);
+ const records=new Map(),visit=value=>{if(!value||typeof value!=='object')return;if(value.kind==='named'&&Array.isArray(value.path)&&Array.isArray(value.rustTupleLifetimeFields)){const name=value.path.filter((part,index)=>index!==0||part!=='crate').join('.'),entry=declarations.get(name);if(entry?.generated==='router-tuple-type'&&entry.tuple===true&&entry.ctors?.length===1&&entry.ctors[0].fields.length===value.rustTupleLifetimeFields.length){const record=Object.freeze({name,constructor:entry.ctors[0].name,fields:structuredClone(value.rustTupleLifetimeFields)});tokens.add(record);records.set(name,record);}}for(const [key,child]of Object.entries(value))if(!['span','sourceMethodProof'].includes(key))Array.isArray(child)?child.forEach(visit):visit(child);};functions.forEach(visit);contexts.set(checker,records);
+}
+export const originalMoveContext=checker=>contexts.get(checker);
+export function restoreOriginalMoves(checker,records){if(!(records instanceof Map)||[...records.values()].some(record=>!tokens.has(record)))throw new TypeError('Original tuple move context was not privately source-issued');contexts.set(checker,records);}
+function canonicalOption(checker,type,span){const entry=checker.items.get(type.name),source=type.rustStandardGeneric;if(type.rustReference||entry?.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||entry.standardGeneric.arguments?.length!==1||entry.ctors?.length!==2)return null;const some=entry.ctors.find(ctor=>ctor.name==='Some'),none=entry.ctors.find(ctor=>ctor.name==='None');if(some?.fields.length!==1||some.fields[0].name!=='field0'||none?.fields.length!==0)return null;const payload=checker.resolveType(source.arguments[0],entry.modulePath,span);for(const written of [entry.standardGeneric.arguments[0],some.fields[0].type]){const actual=checker.resolveType(written,entry.modulePath,span);if(!sameType(payload,actual))return null;checker.expectedOwnership(actual,payload,[],span);checker.expectedPrimitiveIdentity(actual,payload,[],span);}return payload;}
+export function originalMoveOwner(checker,type,span,depth=0){
+ if(depth>32||!type||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)return null;
+ if(type.rustReference){const identity=sharedReferenceCopyIdentity(type);return identity?'shared:'+identity:null;}
+ if(type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&type.kind==='string')return 'whole-move:String';
+ if(type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str'&&type.kind==='string')return 'str';
+ if(['bool','unit'].includes(type.kind)&&!type.rustOwnership&&!type.patternOwnershipRefusal)return type.kind;
+ if(type.kind==='fixed'){const fixed=rustFixedType(type.rustPrimitiveName);return fixed&&sameType(type,fixed)&&!type.rustOwnership&&!type.patternOwnershipRefusal?type.rustPrimitiveName:null;}
+ if(type.kind==='float'&&type.rustPrimitiveName==='f64'&&!type.rustOwnership&&!type.patternOwnershipRefusal)return 'f64';
+ if(type.kind!=='data'||type.rustOwnership)return null;
+ const option=canonicalOption(checker,type,span);if(option){const owner=originalMoveOwner(checker,option,span,depth+1);return owner?'whole-move:Option<'+owner+'>':null;}
+ const entry=checker.items.get(type.name),name=entry?.generated==='router-project-flattened'&&/^rp_(?:[a-f0-9]{2})+$/u.test(type.name)?Buffer.from(type.name.slice(3),'hex').toString('utf8'):type.name,record=contexts.get(checker)?.get(name);
+ if(!record||!tokens.has(record)||entry?.tuple!==true||entry.standardGeneric||entry.ctors?.length!==1||entry.ctors[0].name!==record.constructor||entry.ctors[0].fields.length!==record.fields.length)return null;
+ for(const [index,field]of entry.ctors[0].fields.entries()){let syntax=record.fields[index];if(entry.generated==='router-project-flattened'){const retarget=value=>{if(Array.isArray(value))return value.map(retarget);if(!value||typeof value!=='object')return value;const node=Object.fromEntries(Object.entries(value).map(([key,child])=>[key,retarget(child)]));if(value.kind==='named'){const name=value.path.filter((part,at)=>at!==0||part!=='crate').join('.'),target='rp_'+Buffer.from(name).toString('hex');if(checker.items.has(target))node.path=['crate',target];}return node;};syntax=retarget(syntax);}const wanted=checker.resolveType(syntax,[],span),actual=checker.resolveType(field.type,entry.modulePath,span);if(field.name!=='field'+index||!sameType(actual,wanted)||!originalMoveOwner(checker,actual,span,depth+1))return null;checker.expectedOwnership(actual,wanted,[],span);checker.expectedPrimitiveIdentity(actual,wanted,[],span);}
+ return 'whole-move:tuple:'+name;
+}
+export function requireOriginalOrElseMove(selection){if(selection.key!=='Option::or_else'||selection.method.parameters[0]?.reference||!selection.method.signatureSource.replace(/\s/gu,'').includes('F:FnOnce()->Option<T>')||!selection.method.bodySource.replace(/\s/gu,'').includes('x@Some(_)=>x,'))throw unsupported('whole Option move','requires the actual original by-value Some alias branch and callback signature');}

@@ -1,0 +1,3 @@
+Draft original formatting argument controls retain complete FormatArguments methods, parse_args recovery branches and lowering declarations, with private associations to genuine caller expression ASTs. A separate authored-control issuer can exercise the existing bounded generic interpreter and statement order without granting original compiler execution authority.
+
+This next-cycle source draft is UNVERIFIED. The original matches!, assert_eq!, exp!, parser/error callbacks and borrowing/temporary/Drop obligations remain unresolved; no Host admission hook or macro-owner guard changes. Original argument construction, evaluation-order and borrow proof fields remain false. Eight whole-file tests are drafted but have not run.

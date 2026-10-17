@@ -1,0 +1,989 @@
+{
+  "schema": "complete-evidence-packet-v1",
+  "sourceHead": "5d75f6d14231dd78178298d582fbc8e777013c49",
+  "archive": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/supplement-complete.tar.xz",
+  "archiveBytes": 757904,
+  "archiveSha256": "6b8925993ed13098c33b16c719824e3f925b7315694b0b66c92ca122042fb270",
+  "manifestSha256": "6d4240b72464cc3c1a13eb922a968dc4d78d752418b947f77ec7cb6d6207ee2e",
+  "members": [
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-inputs.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-inputs.json",
+      "bytes": 433942,
+      "sha256": "6c8b77103f616db4bff95d53c5f8ae39d945625b6608c48fe2ef79604aee5589"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-inputs.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-inputs.json",
+      "bytes": 229432,
+      "sha256": "0e4f5af47b5db4096ee2801aba81273cb08c834c2c49e9ea86084cd6a36ad253"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/inputs.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/inputs.json",
+      "bytes": 1193,
+      "sha256": "270063276070504c8e0709d7da37f8c5551c03368cbaa2bc4fc954ab47623680"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/inputs.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/inputs.json",
+      "bytes": 2273,
+      "sha256": "6de873d1db662281213b0976aec628b55423ee7fe9e6130ee6f67b3b999e5c4c"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/inputs.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/inputs.json",
+      "bytes": 2273,
+      "sha256": "c21eb406247564216c0c0c30ac715bb7cd751addc767bc83516de59eaa528cfe"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/inputs.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/inputs.json",
+      "bytes": 708,
+      "sha256": "25c501c941dedbd81c1e000c7e95b0a098e0d07eb639c86ac99075ea3ccbfd56"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-bun/javascript.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-bun/javascript.complete",
+      "bytes": 15386,
+      "sha256": "d8ce717ab3339fcc681fdaafc9794fbf480bda1e589a3d9533a49615491a658e"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-bun/meta.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-bun/meta.complete",
+      "bytes": 8132513,
+      "sha256": "94aecb4c9eed90787e0113b67b4ac6bce04fcaba44ff4c3d9f713497045f3e9e"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-bun/stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-bun/stdout.raw.log",
+      "bytes": 1171,
+      "sha256": "f67780398a6f6003c3d2b262842401424200c97fc12c9eb3959df6a76d0889d2"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-bun/typescript.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-bun/typescript.complete",
+      "bytes": 38358,
+      "sha256": "1013d4cc9d28792411f86f5149584136c014425b6e57c36e95ce932c079c307f"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-node/javascript.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-node/javascript.complete",
+      "bytes": 15386,
+      "sha256": "d8ce717ab3339fcc681fdaafc9794fbf480bda1e589a3d9533a49615491a658e",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/javascript.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-node/meta.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-node/meta.complete",
+      "bytes": 8132513,
+      "sha256": "94aecb4c9eed90787e0113b67b4ac6bce04fcaba44ff4c3d9f713497045f3e9e",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/meta.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-node/stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-node/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-node/stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-node/stdout.raw.log",
+      "bytes": 1165,
+      "sha256": "452355ee6fa6de0804041c9c77b666a49579fa299da5d96df55a747ba56c081a"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/baseline-node/typescript.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/baseline-node/typescript.complete",
+      "bytes": 38358,
+      "sha256": "1013d4cc9d28792411f86f5149584136c014425b6e57c36e95ce932c079c307f",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/typescript.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-bun/javascript.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-bun/javascript.complete",
+      "bytes": 15386,
+      "sha256": "d8ce717ab3339fcc681fdaafc9794fbf480bda1e589a3d9533a49615491a658e",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/javascript.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-bun/meta.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-bun/meta.complete",
+      "bytes": 8132513,
+      "sha256": "94aecb4c9eed90787e0113b67b4ac6bce04fcaba44ff4c3d9f713497045f3e9e",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/meta.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-bun/stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-bun/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-bun/stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-bun/stdout.raw.log",
+      "bytes": 1178,
+      "sha256": "ad5889c6985f4c512a75636581f424a8fe917def19cab23cd37438e7500e9b7b"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-bun/typescript.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-bun/typescript.complete",
+      "bytes": 38358,
+      "sha256": "1013d4cc9d28792411f86f5149584136c014425b6e57c36e95ce932c079c307f",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/typescript.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-node/javascript.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-node/javascript.complete",
+      "bytes": 15386,
+      "sha256": "d8ce717ab3339fcc681fdaafc9794fbf480bda1e589a3d9533a49615491a658e",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/javascript.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-node/meta.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-node/meta.complete",
+      "bytes": 8132513,
+      "sha256": "94aecb4c9eed90787e0113b67b4ac6bce04fcaba44ff4c3d9f713497045f3e9e",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/meta.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-node/stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-node/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-node/stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-node/stdout.raw.log",
+      "bytes": 1172,
+      "sha256": "c741f3211dfeacf1aa92205afd60d57cbbc71fad42cb3ad0de19f0fd1f4845ac"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/candidate-node/typescript.complete",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/candidate-node/typescript.complete",
+      "bytes": 38358,
+      "sha256": "1013d4cc9d28792411f86f5149584136c014425b6e57c36e95ce932c079c307f",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/typescript.complete"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/comparison.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/comparison.json",
+      "bytes": 2285,
+      "sha256": "44fce64e25a4341c133fec4158ae8de28ce42fb70af9304ba2bdcd8b5a74f654"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/profile.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/profile.mjs",
+      "bytes": 2162,
+      "sha256": "df60a09b3327726edb90d9033db67c3f27af869a56934aa5eaf853f6540f410d"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/receipt.json",
+      "bytes": 3225,
+      "sha256": "0074143fbfb7b96722dd7331fae84af894973584358551c2c840bd48fb3c6762"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/rejected-candidate-source/tools/translation/extensions/immutable-metadata-digest.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/rejected-candidate-source/tools/translation/extensions/immutable-metadata-digest.mjs",
+      "bytes": 3549,
+      "sha256": "d445545215e3cb0af562c19ce6d43ccfd95cf88a747416094bcf4ad07b90e81b"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/rejected-candidate-source/tools/translation/extensions/source-links.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/rejected-candidate-source/tools/translation/extensions/source-links.mjs",
+      "bytes": 23478,
+      "sha256": "85dfbc4412406b6835a78c373cb89785e9a9cf3a446e27619f707c1f2d9b44dc"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/rejected-candidate-source/tools/translation/test/immutable-metadata-digest.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/rejected-candidate-source/tools/translation/test/immutable-metadata-digest.test.mjs",
+      "bytes": 5051,
+      "sha256": "b9fe9d290c6ad936cd6b4c256655915d21a5414f5c08127741f6893f655cdbf2"
+    },
+    {
+      "path": "const-match/immutable-digest-model-profile-v1/run.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/immutable-digest-model-profile-v1/run.py",
+      "bytes": 1707,
+      "sha256": "8b1fb30028c3da43522717eb2c2a409188feffc7fa42fb9625371c9d6c13a962"
+    },
+    {
+      "path": "const-match/json-impl-expansion-probe-v1/complete-probe.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/json-impl-expansion-probe-v1/complete-probe.json",
+      "bytes": 70175,
+      "sha256": "515ddcd54674d11ca7b02d0d128ae62b87868b7c2f5ecfd15a67db4730702f8b"
+    },
+    {
+      "path": "const-match/json-impl-expansion-probe-v1/probe.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/json-impl-expansion-probe-v1/probe.mjs",
+      "bytes": 2424,
+      "sha256": "224bcfeddff8f2aad61af066504983293b70cf25d683a438180ba24c72cb16b9"
+    },
+    {
+      "path": "const-match/json-impl-expansion-probe-v1/stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/json-impl-expansion-probe-v1/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/json-impl-expansion-probe-v1/stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/json-impl-expansion-probe-v1/stdout.raw.log",
+      "bytes": 658,
+      "sha256": "549684ddc2aff3e719f2d27429a134afd98aa2b2e1549946cc5d9f89634feb51"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/0.complete-javascript.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/0.complete-javascript.mjs",
+      "bytes": 1891,
+      "sha256": "f54db9daed1f6c4af80a9d4bd49fee7069e3704bcf15ee7897224d7c79e98c44"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/0.complete-meta.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/0.complete-meta.json",
+      "bytes": 672840,
+      "sha256": "7b8d325065d341a3beb2f5611104b3e05efbacd9b22e2787c4057f4442e195bd"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/0.complete-typescript.ts",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/0.complete-typescript.ts",
+      "bytes": 16328,
+      "sha256": "710951aec297e3918fa8b9171cb0310dcfb81f7976fa60e9e8d89b3c29fe185f"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/1.complete-javascript.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/1.complete-javascript.mjs",
+      "bytes": 1891,
+      "sha256": "f54db9daed1f6c4af80a9d4bd49fee7069e3704bcf15ee7897224d7c79e98c44",
+      "storedAsHardlink": "const-match/nested-implementation-baseline-v1/0.complete-javascript.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/1.complete-meta.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/1.complete-meta.json",
+      "bytes": 566021,
+      "sha256": "da75727297a5555e581e409c2d6886c6cb4d5878233b7bbd92aee697f32e6ee6"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/1.complete-typescript.ts",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/1.complete-typescript.ts",
+      "bytes": 16328,
+      "sha256": "710951aec297e3918fa8b9171cb0310dcfb81f7976fa60e9e8d89b3c29fe185f",
+      "storedAsHardlink": "const-match/nested-implementation-baseline-v1/0.complete-typescript.ts"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/2.complete-javascript.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/2.complete-javascript.mjs",
+      "bytes": 1730,
+      "sha256": "74e74afb1abb035ec4a1d7f159ffd0e1de9288d924f17309e90df3d5fd34f3f4"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/2.complete-meta.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/2.complete-meta.json",
+      "bytes": 6109908,
+      "sha256": "8d6763cf94a82f541dbee243d52e06ffd99e4c0f163646241707f95911c21dd2"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/2.complete-typescript.ts",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/2.complete-typescript.ts",
+      "bytes": 16181,
+      "sha256": "208b9d7379a839cfc5b091677861fabfbf6b1bfc2799afa09a925fb9da282994"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/3.complete-javascript.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/3.complete-javascript.mjs",
+      "bytes": 1891,
+      "sha256": "f54db9daed1f6c4af80a9d4bd49fee7069e3704bcf15ee7897224d7c79e98c44",
+      "storedAsHardlink": "const-match/nested-implementation-baseline-v1/0.complete-javascript.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/3.complete-meta.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/3.complete-meta.json",
+      "bytes": 672843,
+      "sha256": "14f3d507b8337389c535b5ee96fc0fe39a40a2ec6ea461f2986ab6f82dd644ac"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/3.complete-typescript.ts",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/3.complete-typescript.ts",
+      "bytes": 16328,
+      "sha256": "710951aec297e3918fa8b9171cb0310dcfb81f7976fa60e9e8d89b3c29fe185f",
+      "storedAsHardlink": "const-match/nested-implementation-baseline-v1/0.complete-typescript.ts"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/4.complete-javascript.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/4.complete-javascript.mjs",
+      "bytes": 568,
+      "sha256": "57c10bb5fc06b0be64a0f30d97a4afac952590d40e47fb009f731c726748315e"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/4.complete-meta.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/4.complete-meta.json",
+      "bytes": 383508,
+      "sha256": "03251ab79f2dcdaadd969c1daffe4d7e67e3626ab108908b64626526c39bb462"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/4.complete-typescript.ts",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/4.complete-typescript.ts",
+      "bytes": 14812,
+      "sha256": "79cb35213c496c4812c164df53a9190b3db9168c25cad5d36ddf7963cdefbf16"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/5.complete-javascript.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/5.complete-javascript.mjs",
+      "bytes": 621,
+      "sha256": "e00562d83ae95824fd16cb911ac5a28e4219aaf253c3da68ba882d9ea888a89f"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/5.complete-meta.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/5.complete-meta.json",
+      "bytes": 335381,
+      "sha256": "fb1b53e61932372a64f44da34c9dc93abe4aeee083c87f709435fa609f5424e1"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/5.complete-typescript.ts",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/5.complete-typescript.ts",
+      "bytes": 14853,
+      "sha256": "c409be42b688d05400cb3469073a9f5973978c834e3f768d39b9a4ec1110e238"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/6.complete-javascript.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/6.complete-javascript.mjs",
+      "bytes": 622,
+      "sha256": "742633bb6dfe3b9d169408a4d6f6f7e6d806ee9953747fa42b305b24fd1687b5"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/6.complete-meta.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/6.complete-meta.json",
+      "bytes": 260835,
+      "sha256": "9c7aff3eb554dfcdc7eb5b5339786fb935fcf3ee33c6f9840327b906a0ce9775"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/6.complete-typescript.ts",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/6.complete-typescript.ts",
+      "bytes": 14858,
+      "sha256": "c684bd2968b18b7d58bf4fa4912574deafba1944124d8f71ab4bd8382dc898d7"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/7.complete-javascript.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/7.complete-javascript.mjs",
+      "bytes": 1891,
+      "sha256": "f54db9daed1f6c4af80a9d4bd49fee7069e3704bcf15ee7897224d7c79e98c44",
+      "storedAsHardlink": "const-match/nested-implementation-baseline-v1/0.complete-javascript.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/7.complete-meta.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/7.complete-meta.json",
+      "bytes": 672846,
+      "sha256": "851f5f21cd1ac605ae1c59ee337691b27b8cf53ba796084c3f4690c0996c0f62"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/7.complete-typescript.ts",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/7.complete-typescript.ts",
+      "bytes": 16328,
+      "sha256": "710951aec297e3918fa8b9171cb0310dcfb81f7976fa60e9e8d89b3c29fe185f",
+      "storedAsHardlink": "const-match/nested-implementation-baseline-v1/0.complete-typescript.ts"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/cases.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/cases.json",
+      "bytes": 2029,
+      "sha256": "293f246a9011e0fae464dcc25693726b5667ab490b2de727446fd966aeee8bc3"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/probe.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/probe.mjs",
+      "bytes": 1525,
+      "sha256": "3393a9d88324379ce16c54c7d77a89ced82aefc7aead11c767ecb9e28b740007"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/receipt.json",
+      "bytes": 630,
+      "sha256": "e6ebf68104080652c183938bd3b24ed9f4ea03c7be49df352ec354d8bd0a35ca"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/run.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/run.py",
+      "bytes": 678,
+      "sha256": "1259db1940bcc3725dd10c0852f98fd4a75d3e04fc36b03c14d76f0958ec1fb8"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/nested-implementation-baseline-v1/stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-baseline-v1/stdout.raw.log",
+      "bytes": 2324,
+      "sha256": "d23dcc5fe2da6bc07a58a02fee52f69cbfb8fdd44720021fafaa516a8eccd452"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/node.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/node.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/node.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/node.stdout.raw.log",
+      "bytes": 11035,
+      "sha256": "42bc686139942a4bfce2c797549d8ae2059e2cad63ddaf2022d823465c28e23b"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/receipt.json",
+      "bytes": 411,
+      "sha256": "757907eb90b5c4b13edf21dc8b553c0563e478fbea3d1bd7ef89cb56d9efd2dc"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/clone-record-no-drop.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/source-snapshots/tools/translation/clone-record-no-drop.mjs",
+      "bytes": 10474,
+      "sha256": "b8fc71bdcd31f1fcb08aec89f716847dab6883f0ed3c2f29c45f86d7f3f07b54"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/clone-source-ir.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/source-snapshots/tools/translation/clone-source-ir.mjs",
+      "bytes": 8518,
+      "sha256": "9a92fc1eccbe6db7d7fd086ca6d3b7e1ffdcfe420b4c3b2dd2b7a5c3788f1da6"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/default-source-ir.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/source-snapshots/tools/translation/default-source-ir.mjs",
+      "bytes": 17298,
+      "sha256": "98f7a314fafb4edab3532416f98ee4fdfdfd1945aebecc7fa0c0e891106457db"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/default-unit-source.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/source-snapshots/tools/translation/default-unit-source.mjs",
+      "bytes": 6562,
+      "sha256": "b7a2cb641e5eeec47918b57d6ed050af8f337cfa2fc19db1c321148afc8c8c50"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/nested-implementation-obligations.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/source-snapshots/tools/translation/nested-implementation-obligations.mjs",
+      "bytes": 2285,
+      "sha256": "4ab8d503c59fa14332bd717705a970e68da6638357510bc05ba7c4193a07c100"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/project-copy.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/source-snapshots/tools/translation/project-copy.mjs",
+      "bytes": 9000,
+      "sha256": "9e4dd6fee7d952f5f2ec60a5df08020664390720a63f03b3cec94d53591b858b"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/test/nested-implementation-obligations.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v1/source-snapshots/tools/translation/test/nested-implementation-obligations.test.mjs",
+      "bytes": 6244,
+      "sha256": "be35d0151f7a53cd01b9a708a6f8f59da34ebd7e8d3c26b993ae82f4864fed57"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/bun.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/bun.stderr.raw.log",
+      "bytes": 19033,
+      "sha256": "e6023f0de511d745920b1582dd7aa6b016df582fbbae130df0a3776cf15a0612"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/bun.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/bun.stdout.raw.log",
+      "bytes": 28,
+      "sha256": "93e17c6d85569f385aa7b45405c874ee0eea42e855761a831066dd5dcffcdf89"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/node.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/node.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/node.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/node.stdout.raw.log",
+      "bytes": 23456,
+      "sha256": "0420f00cb1f4da84dac4378e6f136cdb56aaa0ff25612a3f5fbd12ead5e9e273"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/receipt.json",
+      "bytes": 1655,
+      "sha256": "db1662dfeffa0d95865fc2ec9164b6fd734fce029e53150e464f9b7636c63bbf"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/run.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/run.py",
+      "bytes": 2050,
+      "sha256": "474a2423854f63682d732aba5685c5087f380a065fb34fd77f40871fa78852cd"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/clone-record-no-drop.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/clone-record-no-drop.mjs",
+      "bytes": 10474,
+      "sha256": "b8fc71bdcd31f1fcb08aec89f716847dab6883f0ed3c2f29c45f86d7f3f07b54",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/clone-record-no-drop.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/clone-source-ir.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/clone-source-ir.mjs",
+      "bytes": 8518,
+      "sha256": "9a92fc1eccbe6db7d7fd086ca6d3b7e1ffdcfe420b4c3b2dd2b7a5c3788f1da6",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/clone-source-ir.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/default-source-ir.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/default-source-ir.mjs",
+      "bytes": 17298,
+      "sha256": "98f7a314fafb4edab3532416f98ee4fdfdfd1945aebecc7fa0c0e891106457db",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/default-source-ir.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/default-unit-source.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/default-unit-source.mjs",
+      "bytes": 6562,
+      "sha256": "b7a2cb641e5eeec47918b57d6ed050af8f337cfa2fc19db1c321148afc8c8c50",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/default-unit-source.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/nested-implementation-obligations.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/nested-implementation-obligations.mjs",
+      "bytes": 2285,
+      "sha256": "4ab8d503c59fa14332bd717705a970e68da6638357510bc05ba7c4193a07c100",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/nested-implementation-obligations.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/project-copy.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/project-copy.mjs",
+      "bytes": 9000,
+      "sha256": "9e4dd6fee7d952f5f2ec60a5df08020664390720a63f03b3cec94d53591b858b",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/project-copy.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/clone-source-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/clone-source-methods.test.mjs",
+      "bytes": 12843,
+      "sha256": "e4e8ce11db94876ea1aebab4b05d1a7d13a5d2614b9e5ad63d46fb1586df50d7"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/clone-unit-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/clone-unit-methods.test.mjs",
+      "bytes": 6813,
+      "sha256": "94748307bd90c41e3d584b7fdc7fbd63aeec868ae477038a567d3acd76b6dead"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-container-source.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-container-source.test.mjs",
+      "bytes": 13309,
+      "sha256": "beab469bd1a46cdb7b3d36bda959e762d148d21e9f32675d915d0403aed12210"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-source-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-source-methods.test.mjs",
+      "bytes": 10364,
+      "sha256": "ca908e9836ef16f85a8822d6d8bfc34e7f3f717cca54417d30c6593958487b84"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-unit-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-unit-methods.test.mjs",
+      "bytes": 10996,
+      "sha256": "861ac66424f4102ecf00a85391c0d6fa461528edeecaa88178bc8e2785c21cc9"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/nested-implementation-obligations.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/nested-implementation-obligations.test.mjs",
+      "bytes": 6259,
+      "sha256": "0f98e1a8bd62463a475086f2d5c44ed35cfbd60c1d1bc8b749abdd5d3a4d364e"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/original-default-helper-owners.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/original-default-helper-owners.test.mjs",
+      "bytes": 7698,
+      "sha256": "a403b751129bb55f3c8ca6eb8fdf0a5809c011c9586994f3edae107cfa7d3280"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/bun.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/bun.stderr.raw.log",
+      "bytes": 8919,
+      "sha256": "6fbdfe88ba50848db767b5cd0a2a29ff1407cdccb8d68855ba9f0b511b7a2136"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/bun.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/bun.stdout.raw.log",
+      "bytes": 28,
+      "sha256": "93e17c6d85569f385aa7b45405c874ee0eea42e855761a831066dd5dcffcdf89",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v2/bun.stdout.raw.log"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/node.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/node.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/node.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/node.stdout.raw.log",
+      "bytes": 18601,
+      "sha256": "d132b0e810ebc1f82f16cffa38e234410337ad48b63373f62114a3a2404c2339"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/receipt.json",
+      "bytes": 1655,
+      "sha256": "a78c3d3eb8db1627628c4c01a2c4f8c4f0f794d350fbd267f82719712873603d"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/run.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/run.py",
+      "bytes": 2050,
+      "sha256": "17e63c4e7b69f42d1fa2ad63a7dc5eb3ff5486ea687cec7f3408f924fa856f72"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/clone-record-no-drop.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/clone-record-no-drop.mjs",
+      "bytes": 10474,
+      "sha256": "b8fc71bdcd31f1fcb08aec89f716847dab6883f0ed3c2f29c45f86d7f3f07b54",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/clone-record-no-drop.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/clone-source-ir.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/clone-source-ir.mjs",
+      "bytes": 8518,
+      "sha256": "9a92fc1eccbe6db7d7fd086ca6d3b7e1ffdcfe420b4c3b2dd2b7a5c3788f1da6",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/clone-source-ir.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/default-source-ir.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/default-source-ir.mjs",
+      "bytes": 17298,
+      "sha256": "98f7a314fafb4edab3532416f98ee4fdfdfd1945aebecc7fa0c0e891106457db",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/default-source-ir.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/default-unit-source.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/default-unit-source.mjs",
+      "bytes": 6562,
+      "sha256": "b7a2cb641e5eeec47918b57d6ed050af8f337cfa2fc19db1c321148afc8c8c50",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/default-unit-source.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/nested-implementation-obligations.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/nested-implementation-obligations.mjs",
+      "bytes": 2472,
+      "sha256": "b86c6fcb7a880d1476dab372cfac355b6d462f898a21beb80fd6460cc1b261ff"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/project-copy.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/project-copy.mjs",
+      "bytes": 9000,
+      "sha256": "9e4dd6fee7d952f5f2ec60a5df08020664390720a63f03b3cec94d53591b858b",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v1/source-snapshots/tools/translation/project-copy.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/clone-source-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/clone-source-methods.test.mjs",
+      "bytes": 12843,
+      "sha256": "e4e8ce11db94876ea1aebab4b05d1a7d13a5d2614b9e5ad63d46fb1586df50d7",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/clone-source-methods.test.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/clone-unit-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/clone-unit-methods.test.mjs",
+      "bytes": 6813,
+      "sha256": "94748307bd90c41e3d584b7fdc7fbd63aeec868ae477038a567d3acd76b6dead",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/clone-unit-methods.test.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/default-container-source.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/default-container-source.test.mjs",
+      "bytes": 13309,
+      "sha256": "beab469bd1a46cdb7b3d36bda959e762d148d21e9f32675d915d0403aed12210",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-container-source.test.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/default-source-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/default-source-methods.test.mjs",
+      "bytes": 10364,
+      "sha256": "ca908e9836ef16f85a8822d6d8bfc34e7f3f717cca54417d30c6593958487b84",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-source-methods.test.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/default-unit-methods.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/default-unit-methods.test.mjs",
+      "bytes": 10996,
+      "sha256": "861ac66424f4102ecf00a85391c0d6fa461528edeecaa88178bc8e2785c21cc9",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/default-unit-methods.test.mjs"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/nested-implementation-obligations.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/nested-implementation-obligations.test.mjs",
+      "bytes": 6981,
+      "sha256": "2df5b8af6b3fa56918b52966e243727bbda112688935bdaf0079b6fe4332ab8d"
+    },
+    {
+      "path": "const-match/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/original-default-helper-owners.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/nested-implementation-frontier-v3/source-snapshots/tools/translation/test/original-default-helper-owners.test.mjs",
+      "bytes": 7698,
+      "sha256": "a403b751129bb55f3c8ca6eb8fdf0a5809c011c9586994f3edae107cfa7d3280",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v2/source-snapshots/tools/translation/test/original-default-helper-owners.test.mjs"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/bun.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/bun.stderr.raw.log",
+      "bytes": 915,
+      "sha256": "4d2686a4ca1bfc190d3e548baed7d7a5d8312e3a56decfcb527f27d1686c4811"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/bun.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/bun.stdout.raw.log",
+      "bytes": 28,
+      "sha256": "93e17c6d85569f385aa7b45405c874ee0eea42e855761a831066dd5dcffcdf89",
+      "storedAsHardlink": "const-match/nested-implementation-frontier-v2/bun.stdout.raw.log"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/node.stderr.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/node.stderr.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/node.stdout.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/node.stdout.raw.log",
+      "bytes": 1750,
+      "sha256": "f554a6615bc7b363dd98f06e9d82a8c31d7a16ca2ec7e10b41ae478b903d6892"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/receipt.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/receipt.json",
+      "bytes": 974,
+      "sha256": "e712439f085462b44e271049ea3f907a9e3fd31a7554c89c1047a8cf6b391e26"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/run.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/run.py",
+      "bytes": 1570,
+      "sha256": "5cd4428b78ab26310628e3ad19e746391801ed82ae16e917e866aa481b323d79"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/source-snapshots/packages/javascript/node_modules/typescript/package.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/source-snapshots/packages/javascript/node_modules/typescript/package.json",
+      "bytes": 3620,
+      "sha256": "822ef7ca6452205657b6288b066481ecf508bfbf43455d715cf7d3ec457561e6"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/source-snapshots/tools/translation/test/derive-helper-originals.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/source-snapshots/tools/translation/test/derive-helper-originals.test.mjs",
+      "bytes": 12397,
+      "sha256": "8bcd48e272d2d99e5c0cd9666be132b335fd074eb11480949e23def5db67a989"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/source-snapshots/tools/translation/test/typed-target-compiler.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/source-snapshots/tools/translation/test/typed-target-compiler.test.mjs",
+      "bytes": 1563,
+      "sha256": "a81f0f9987541997d599935a87ceee3580aba0caf5c3d129c3caba65e68a6ee6"
+    },
+    {
+      "path": "const-match/pinned-typed-targets-v1/source-snapshots/tools/translation/test/typed-targets.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-const-match/packages/javascript/node_modules/.issue-759-verification/pinned-typed-targets-v1/source-snapshots/tools/translation/test/typed-targets.mjs",
+      "bytes": 2798,
+      "sha256": "67a5454d6f972fa143a19c3376b9bcea0f5d9b5f3c2ff63314da8696aafe13b9"
+    },
+    {
+      "path": "storage-source/changelog.d/20261014_000088_complete_packet_git_recovery.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/changelog.d/20261014_000088_complete_packet_git_recovery.md",
+      "bytes": 548,
+      "sha256": "c728572e5913d02edc9ea96e1cfa66d4011b1d8250be1be48ddc1af0ef3fa7d8"
+    },
+    {
+      "path": "storage-source/tools/evidence/README.md",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/tools/evidence/README.md",
+      "bytes": 8712,
+      "sha256": "063221f2cfd57a07ed7aa9b619d83fbd0ccf2c732f69bf3f59eba1bec287096f"
+    },
+    {
+      "path": "storage-source/tools/evidence/packet.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/tools/evidence/packet.py",
+      "bytes": 11619,
+      "sha256": "7cda70870ced8050d4ac6258c410682925175fe14b4477d8b92f4b60cce862d5"
+    },
+    {
+      "path": "storage-source/tools/evidence/packet.test.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/tools/evidence/packet.test.mjs",
+      "bytes": 1076,
+      "sha256": "73d9ed20cb4ae936d8f789d9c8072dda4a1660ecfbde84dcb3c4e1d9522af623"
+    },
+    {
+      "path": "storage-source/tools/evidence/packet_test.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/tools/evidence/packet_test.py",
+      "bytes": 8701,
+      "sha256": "e5731c6e51ef378b3c6ba6e3984574077ac3eaa0c2d82117f9b0204c3893b06d"
+    },
+    {
+      "path": "storage-verification/absent-overlay-complete-ci-integrity.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-integrity.json",
+      "bytes": 1087,
+      "sha256": "5b8d1aed990514267c94335d5fd95f9356c73a482624285e03ea74f10c2292b9"
+    },
+    {
+      "path": "storage-verification/absent-overlay-complete-ci-integrity.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-integrity.raw.log",
+      "bytes": 1003,
+      "sha256": "07428c87ac55a9c5cad62c4a7a27e25fc0e67bcbde7beb457a79c9d380270994"
+    },
+    {
+      "path": "storage-verification/absent-overlay-complete-ci-measurement.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-measurement.json",
+      "bytes": 9571526,
+      "sha256": "6c9ffaddef858a233335ca1a48b802af1f65cbfc6c4eb66b7b27e2edefa6e2bd"
+    },
+    {
+      "path": "storage-verification/absent-overlay-complete-ci-measurement.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/absent-overlay-complete-ci-measurement.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "storage-verification/capture-receipt-v2.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/capture-receipt-v2.json",
+      "bytes": 702614,
+      "sha256": "f4269e31f663e31e980d5947be008d5ad986e1ff91461b13f3ebd1d64fb34b46"
+    },
+    {
+      "path": "storage-verification/capture-v2.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/capture-v2.raw.log",
+      "bytes": 1068,
+      "sha256": "31c0d24068f60b9078f9dadb0f7be1e3e55df00d5ec85dd62c87e7a43829a325"
+    },
+    {
+      "path": "storage-verification/current-complete-ci-measurement.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/current-complete-ci-measurement.json",
+      "bytes": 7641527,
+      "sha256": "bf846060e3ec109aaedb5117ec66daadc99fa1070f4ed6f47e72275bcd2bfde9"
+    },
+    {
+      "path": "storage-verification/current-complete-ci-measurement.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/current-complete-ci-measurement.raw.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "storedAsHardlink": "const-match/immutable-digest-model-profile-v1/baseline-bun/stderr.raw.log"
+    },
+    {
+      "path": "storage-verification/measure-js-first-pinned.mjs",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/measure-js-first-pinned.mjs",
+      "bytes": 11757,
+      "sha256": "dcd92bea6a36b9307cb955b411e4f3fbd71bce68a5376426c779495afa781932"
+    },
+    {
+      "path": "storage-verification/old-absent-full-member-recovery-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-absent-full-member-recovery-final.raw.log",
+      "bytes": 232,
+      "sha256": "2d35210f2a5e51ecdcd4e8ac30377ca85da71eb7aba95e3eb120d5df1693eda8"
+    },
+    {
+      "path": "storage-verification/old-archive-full-git-witness.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/old-archive-full-git-witness.json",
+      "bytes": 761,
+      "sha256": "1c18133594278afefae899a31d230c2f3e05ed6fe0d64ee7ee6c4c9130156a1e"
+    },
+    {
+      "path": "storage-verification/packet-bun-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-bun-final.raw.log",
+      "bytes": 308,
+      "sha256": "c8046d3e85068c4e7f82dc9f67078b7adaae5a9ece466f32581596ed877ef6fe"
+    },
+    {
+      "path": "storage-verification/packet-bun-sealed.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-bun-sealed.raw.log",
+      "bytes": 308,
+      "sha256": "6ea9653d1d2975b9ec707e0e1b0e93526ccbd46a7b909db04cd80402e80ff44b"
+    },
+    {
+      "path": "storage-verification/packet-first-source.py",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-first-source.py",
+      "bytes": 10759,
+      "sha256": "881f566b6d159f82a98456ca9639fc8d87fa487a438f7f90b07c5adb7ba8527a"
+    },
+    {
+      "path": "storage-verification/packet-node-cli-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-cli-final.raw.log",
+      "bytes": 551,
+      "sha256": "0036807b5c2a12f0d8b538bd44203fafde106b93bb5945ec76d19c4c83c6b548"
+    },
+    {
+      "path": "storage-verification/packet-node-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-final.raw.log",
+      "bytes": 551,
+      "sha256": "548213fe5f609e201f4d9afcea731c91b2e6c35f1e9279f64339d2ca726488a8"
+    },
+    {
+      "path": "storage-verification/packet-node-first.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-first.raw.log",
+      "bytes": 551,
+      "sha256": "2d1250cd51016a1a7fdaf9ec1f15105986b612e1aed4ab9cbe5582efc52410d6"
+    },
+    {
+      "path": "storage-verification/packet-node-sealed.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-node-sealed.raw.log",
+      "bytes": 551,
+      "sha256": "98dd6bf2c66875b19d9a5b1d8026debc7e55cdb37da1a3ab43dbbbd6e1b0976b"
+    },
+    {
+      "path": "storage-verification/packet-python-cli-final.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-cli-final.raw.log",
+      "bytes": 110,
+      "sha256": "eb64b6b4aaf444c362152a740c230816060f56e9651c23996c4f21e3f1bd4e84"
+    },
+    {
+      "path": "storage-verification/packet-python-first.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-first.raw.log",
+      "bytes": 5179,
+      "sha256": "76e645f5e6567a119433902ca695116c8a01219eab0858ac51c6ac0618e8996c"
+    },
+    {
+      "path": "storage-verification/packet-python-second.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-second.raw.log",
+      "bytes": 106,
+      "sha256": "a91d78e6247c075ea857c1697f1d5ba37873458ea5e642300d6cd88dbeb61aeb"
+    },
+    {
+      "path": "storage-verification/packet-python-third.raw.log",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/packet-python-third.raw.log",
+      "bytes": 109,
+      "sha256": "8f9fa882f41ae1d18d81dc5628323cfebb4110845ab4a2eec2cf7e37f9a19225"
+    },
+    {
+      "path": "storage-verification/whole-ci-measurement-continuity.json",
+      "originalPath": "/Users/konard/Code/Archive/link-assistant/router/.worktrees/issue-759-reverse-cycle/packages/javascript/node_modules/.issue-759-verification/combined-evidence-pack-v1/whole-ci-measurement-continuity.json",
+      "bytes": 2058249,
+      "sha256": "8e03db6a4b76d091ff96af39d14f9ae19c6d257ad82b6fe860c58d39fe95a517"
+    }
+  ],
+  "completeMembers": 153,
+  "completeOriginalBytes": 63812965,
+  "allDecodedOriginalsVerified": true,
+  "allSelectedOriginalsUnchanged": true,
+  "capSeconds": 600,
+  "elapsedSeconds": 6.5455887080024695,
+  "compression": {
+    "format": "xz",
+    "preset": 9,
+    "dictionaryBytes": 67108864
+  },
+  "harnessSha256": "a7ee5de4075d81697d7afeccc46089f0e91f9b1a438e917dc067e75ee3bca7be",
+  "semanticAuthority": false,
+  "runtimeParity": false,
+  "fullGatePass": false,
+  "rustExecuted": false
+}

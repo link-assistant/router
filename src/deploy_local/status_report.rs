@@ -32,8 +32,8 @@ impl Coordinator<'_> {
     }
 }
 
-pub(super) fn blocker(name: &str, reason: &str, forceable: bool) -> Value {
-    json!({"name": name, "reason": reason, "forceable": forceable})
+pub(super) fn blocker(name: &crate::translation_core::Str, reason: &crate::translation_core::Str, forceable: bool) -> Value {
+    crate::translation_core::json!({"name": name, "reason": reason, "forceable": forceable})
 }
 
 impl Coordinator<'_> {

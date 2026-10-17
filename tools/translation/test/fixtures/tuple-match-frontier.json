@@ -1,0 +1,24 @@
+{
+  "schema": "original-tuple-match-frontier-v1",
+  "scope": "Whole unchanged source files; remaining computed product and char Pattern contracts retained. No corpus gain or runtime parity claimed.",
+  "sources": [
+    {
+      "path": "src/bridge_request.rs",
+      "sourceSha256": "acdba5185dc63148a8a8821c10208ec8ba5c965313df900ee23eecb526695236",
+      "name": "untranslatable_responses_state",
+      "span": {"start": 10149, "end": 11071},
+      "itemSha256": "a49cc1b312cc7451f39c23dd733bf6a1e4eee41a1dc98553c85083a1553b70b7"
+    },
+    {
+      "path": "src/chat_admin.rs",
+      "sourceSha256": "2ea36d953cacc699736b2c5e6c96dd8ac607142839db5ee3ff161b28634d90fd",
+      "name": "split_command",
+      "span": {"start": 21664, "end": 21846},
+      "itemSha256": "41856ffe1dc56fc6d8449f227b385f521ad6572ae9bb4009ac9e093448cebfd3"
+    }
+  ],
+  "testsRun": false,
+  "runtimeParity": false,
+  "canonicalProducerRuns": 0,
+  "rustBuilds": 0
+}

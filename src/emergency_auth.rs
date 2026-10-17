@@ -43,27 +43,27 @@ use crate::clients::ClientKind;
 use crate::token::TokenClaims;
 
 /// Command-line flag that turns the mode on.
-pub const FLAG: &str = "--emergency-accept-any-token";
+pub const FLAG: &crate::translation_core::Str = "--emergency-accept-any-token";
 /// Environment variable that turns the mode on.
-pub const ENV: &str = "EMERGENCY_ACCEPT_ANY_TOKEN";
+pub const ENV: &crate::translation_core::Str = "EMERGENCY_ACCEPT_ANY_TOKEN";
 /// Environment variable acknowledging exposure beyond loopback.
-pub const ALLOW_NON_LOOPBACK_ENV: &str = "EMERGENCY_ALLOW_NON_LOOPBACK";
+pub const ALLOW_NON_LOOPBACK_ENV: &crate::translation_core::Str = "EMERGENCY_ALLOW_NON_LOOPBACK";
 /// Environment variable bounding how long the mode stays on.
-pub const DURATION_ENV: &str = "EMERGENCY_DURATION_MINUTES";
+pub const DURATION_ENV: &crate::translation_core::Str = "EMERGENCY_DURATION_MINUTES";
 /// Every environment variable that configures the mode. Deployment launchers
 /// strip these so an ordinary deployment never inherits the mode silently.
-pub const ENV_VARS: [&str; 3] = [ENV, ALLOW_NON_LOOPBACK_ENV, DURATION_ENV];
+pub const ENV_VARS: [&crate::translation_core::Str; 3] = [ENV, ALLOW_NON_LOOPBACK_ENV, DURATION_ENV];
 /// Default lifetime of the mode once enabled.
 pub const DEFAULT_DURATION_MINUTES: u64 = 60;
 /// Longest lifetime an operator may request. A forgotten mode lapses within a
 /// day even if nobody disables it.
 pub const MAX_DURATION_MINUTES: u64 = 24 * 60;
 /// Prefix of the synthetic token id given to every bypassed request.
-pub const SUBJECT_PREFIX: &str = "emergency-bypass-";
+pub const SUBJECT_PREFIX: &crate::translation_core::Str = "emergency-bypass-";
 /// Label given to every bypassed request, visible in the request log.
-pub const LABEL: &str = "emergency-bypass";
+pub const LABEL: &crate::translation_core::Str = "emergency-bypass";
 /// Response header set on `/api/health` while the mode is active.
-pub const HEALTH_HEADER: &str = "x-link-assistant-emergency-auth";
+pub const HEALTH_HEADER: &crate::translation_core::Str = "x-link-assistant-emergency-auth";
 
 /// Operator configuration for the mode, resolved from CLI, env and `.lenv`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -116,7 +116,7 @@ impl EmergencyAuthConfig {
     ///
     /// Returns an operator-facing message when the duration is out of bounds
     /// or when a listener is not loopback and exposure was not acknowledged.
-    pub fn check(&self, listeners: &[SocketAddr]) -> Result<(), String> {
+    pub fn check(&self, listeners: &[SocketAddr]) -> crate::translation_core::Outcome<(), String> {
         if !self.enabled {
             return Ok(());
         }
@@ -174,7 +174,7 @@ impl EmergencyAuth {
 
     /// Apply a checked start-up configuration: when enabled, turn the mode on
     /// and log a warning that names every consequence. Returns the lapse time.
-    pub fn start(&self, config: &EmergencyAuthConfig) -> Option<i64> {
+    pub fn start(&self, config: &EmergencyAuthConfig) -> crate::translation_core::Maybe<i64> {
         if !config.enabled {
             return None;
         }
@@ -199,7 +199,7 @@ impl EmergencyAuth {
 
     /// When the mode lapses, if it is on right now.
     #[must_use]
-    pub fn active_until(&self) -> Option<i64> {
+    pub fn active_until(&self) -> crate::translation_core::Maybe<i64> {
         let until = self.active_until.load(Ordering::SeqCst);
         (until > now()).then_some(until)
     }
@@ -211,7 +211,7 @@ impl EmergencyAuth {
     }
 
     /// Count one bypassed request under the check it bypassed.
-    pub fn record_bypass(&self, reason: &'static str) {
+    pub fn record_bypass(&self, reason: &'static crate::translation_core::Str) {
         self.bypassed.fetch_add(1, Ordering::Relaxed);
         if let Ok(mut reasons) = self.reasons.lock() {
             *reasons.entry(reason).or_default() += 1;
@@ -267,7 +267,7 @@ impl EmergencyAuth {
 
 /// Stable, non-reversible fingerprint of a token for logs and diagnostics.
 #[must_use]
-pub fn token_fingerprint(token: &str) -> String {
+pub fn token_fingerprint(token: &crate::translation_core::Str) -> String {
     use sha2::Digest;
     let digest = sha2::Sha256::digest(token.as_bytes());
     hex::encode(&digest[..6])
@@ -279,7 +279,7 @@ pub fn token_fingerprint(token: &str) -> String {
 /// `sub`, so budget admission, usage settlement and run-lease renewal find no
 /// durable record and change nothing.
 #[must_use]
-pub fn synthetic_claims(token: &str, headers: &HeaderMap) -> TokenClaims {
+pub fn synthetic_claims(token: &crate::translation_core::Str, headers: &HeaderMap) -> TokenClaims {
     let payload = unverified_payload(token);
     let payload_field = |name: &str| {
         payload
@@ -321,13 +321,13 @@ pub fn is_synthetic(claims: &TokenClaims) -> bool {
 /// Whether a token id is the synthetic id of a bypassed request. Real ids are
 /// UUIDs, so the prefix can never name a durable record.
 #[must_use]
-pub fn is_synthetic_id(token_id: &str) -> bool {
+pub fn is_synthetic_id(token_id: &crate::translation_core::Str) -> bool {
     token_id.starts_with(SUBJECT_PREFIX)
 }
 
 /// Decode a JWT payload without verifying it. Used only to keep a bypassed
 /// request's client binding and subscriber continuity; never as authority.
-fn unverified_payload(token: &str) -> Option<serde_json::Value> {
+fn unverified_payload(token: &crate::translation_core::Str) -> crate::translation_core::Maybe<crate::translation_core::Json> {
     use base64::Engine;
     let jwt = crate::token::token_jwt(token).unwrap_or(token);
     let payload = jwt.split('.').nth(1)?;
@@ -338,7 +338,7 @@ fn unverified_payload(token: &str) -> Option<serde_json::Value> {
 }
 
 /// Infer the calling client from what the request itself says.
-fn infer_client(token: &str, headers: &HeaderMap) -> Option<ClientKind> {
+fn infer_client(token: &crate::translation_core::Str, headers: &HeaderMap) -> crate::translation_core::Maybe<ClientKind> {
     let header = |name: &str| {
         headers
             .get(name)

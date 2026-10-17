@@ -1,0 +1,1 @@
+Draft independent ClaimFile and ModelSelectorKind Default checks using the existing single complete original-crate compilation and both generated JavaScript and strict TypeScript targets. Preserve every existing source and timeout assertion.

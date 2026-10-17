@@ -59,7 +59,7 @@ pub struct NativeBody {
 }
 
 impl NativeBody {
-    pub fn encode(&self, value: &Value) -> Result<Vec<u8>, String> {
+    pub fn encode(&self, value: &crate::translation_core::Json) -> crate::translation_core::Outcome<Vec<u8>, String> {
         if *value == self.original {
             return Ok(self.bytes.to_vec());
         }
@@ -85,7 +85,7 @@ pub async fn read_native_json(
     body: Body,
     limit: usize,
     zstd_allowed: bool,
-) -> Result<ParsedBody, Response> {
+) -> crate::translation_core::Outcome<ParsedBody, Response> {
     let zstd = match content_encoding(headers)? {
         Encoding::Identity => false,
         Encoding::Zstd => true,
@@ -123,7 +123,7 @@ pub async fn read_native_json(
     })
 }
 
-async fn decode_zstd_async(compressed: Bytes, limit: usize) -> Result<Vec<u8>, Response> {
+async fn decode_zstd_async(compressed: Bytes, limit: usize) -> crate::translation_core::Outcome<Vec<u8>, Response> {
     let deadline = tokio::time::Instant::now() + ZSTD_DECODE_TIMEOUT;
     let permit = tokio::time::timeout_at(deadline, Arc::clone(&ZSTD_DECODE_SLOTS).acquire_owned())
         .await
@@ -169,7 +169,7 @@ enum Encoding {
     Zstd,
 }
 
-fn content_encoding(headers: &HeaderMap) -> Result<Encoding, Response> {
+fn content_encoding(headers: &HeaderMap) -> crate::translation_core::Outcome<Encoding, Response> {
     let mut encodings = Vec::new();
     for value in headers.get_all("content-encoding") {
         let value = value.to_str().map_err(|_| {
@@ -223,7 +223,7 @@ fn decode_zstd_bounded(
     limit: usize,
     cancelled: &AtomicBool,
     deadline: Instant,
-) -> Result<Vec<u8>, String> {
+) -> crate::translation_core::Outcome<Vec<u8>, String> {
     let check_work_boundary = || {
         if cancelled.load(Ordering::Acquire) {
             Err("zstd request decoding was cancelled".to_string())
@@ -280,7 +280,7 @@ fn decode_zstd_bounded(
     Ok(output)
 }
 
-fn request_error(status: StatusCode, message: &str) -> Response {
+fn request_error(status: StatusCode, message: &crate::translation_core::Str) -> Response {
     crate::api_error::error_response_for_surface(
         crate::metrics::Surface::OpenAIResponses,
         status,

@@ -1,0 +1,324 @@
+{
+  "$defs": {
+    "DoctorReport": {
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "items": {
+            "$ref": "#/$defs/DoctorReport_Check"
+          },
+          "type": "array"
+        },
+        "data_dir": {
+          "type": "string"
+        },
+        "deployments": {
+          "items": {
+            "$ref": "#/$defs/DoctorReport_DeploymentHealth"
+          },
+          "type": "array"
+        },
+        "forwarded_headers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "listen_addr": {
+          "type": "string"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "providers": {
+          "items": {
+            "$ref": "#/$defs/DoctorReport_ProviderHealth"
+          },
+          "type": "array"
+        },
+        "recommended_models": {
+          "items": {
+            "$ref": "#/$defs/DoctorReport_ModelRecommendation"
+          },
+          "type": "array"
+        },
+        "status": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "version",
+        "checks",
+        "providers",
+        "deployments",
+        "recommended_models",
+        "data_dir",
+        "listen_addr",
+        "forwarded_headers",
+        "output"
+      ],
+      "title": "DoctorReport",
+      "type": "object"
+    },
+    "DoctorReport_Check": {
+      "additionalProperties": false,
+      "properties": {
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "state"
+      ],
+      "type": "object"
+    },
+    "DoctorReport_DeploymentHealth": {
+      "additionalProperties": false,
+      "properties": {
+        "deployment": {
+          "$ref": "#/$defs/DoctorReport_Entry"
+        },
+        "present": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "deployment",
+        "present"
+      ],
+      "type": "object"
+    },
+    "DoctorReport_Entry": {
+      "additionalProperties": false,
+      "description": "One registered deployment.",
+      "properties": {
+        "instance": {
+          "description": "The `--instance` it was deployed as, when any.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "mode": {
+          "description": "`container` or `host`.",
+          "type": "string"
+        },
+        "port": {
+          "description": "The loopback port it serves on.",
+          "format": "uint16",
+          "maximum": 65535,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "registered_at": {
+          "description": "Unix seconds of the last successful deploy.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "root": {
+          "description": "The absolute deployment root.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "root",
+        "mode",
+        "port",
+        "registered_at"
+      ],
+      "type": "object"
+    },
+    "DoctorReport_ModelRecommendation": {
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/$defs/DoctorReport_SubscriptionProvider"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "DoctorReport_ProviderHealth": {
+      "additionalProperties": false,
+      "properties": {
+        "credential_root": {
+          "type": "string"
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "models": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "provider": {
+          "$ref": "#/$defs/DoctorReport_SubscriptionProvider"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "credential_root",
+        "state",
+        "models"
+      ],
+      "type": "object"
+    },
+    "DoctorReport_SubscriptionProvider": {
+      "description": "A subscription-backed upstream that authenticates with vendor OAuth tokens.",
+      "oneOf": [
+        {
+          "const": "claude",
+          "description": "Anthropic Claude (Pro/Max) via Claude Code \u2014 `~/.claude`.",
+          "type": "string"
+        },
+        {
+          "const": "codex",
+          "description": "`OpenAI` Codex / `ChatGPT` subscription via the Codex CLI \u2014 `~/.codex`.",
+          "type": "string"
+        },
+        {
+          "const": "gemini",
+          "description": "Google Gemini Code Assist via the Gemini CLI \u2014 `~/.gemini`.",
+          "type": "string"
+        },
+        {
+          "const": "qwen",
+          "description": "Alibaba Qwen via the qwen-code CLI \u2014 `~/.qwen`.",
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "$id": "link-assistant-router/doctor/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "properties": {
+          "exit_code": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "success": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "output": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/DoctorReport"
+        }
+      ]
+    },
+    "diagnostics": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "exit_code": {
+      "maximum": 255,
+      "minimum": 0,
+      "type": "integer"
+    },
+    "operation": {
+      "const": "doctor"
+    },
+    "schema": {
+      "const": "link-assistant-router/doctor/v1"
+    },
+    "success": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema",
+    "operation",
+    "success",
+    "exit_code",
+    "data",
+    "diagnostics"
+  ],
+  "type": "object"
+}

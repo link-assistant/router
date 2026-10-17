@@ -1,0 +1,33 @@
+{
+  "schema": "completed-data-freeze-full-originals-v1",
+  "commit": "7886973137f467e47a395bd47f0984c3f82eee0c",
+  "sources": [
+    {
+      "path": "tools/translation/builtin-derive-bang-footprints.mjs",
+      "storedPath": "raw/builtin-derive-bang-footprints.mjs",
+      "bytes": 34652,
+      "sha256": "1fba65e6296d20b9dc5fc59e1dc977e2365bd4737b634a4455f1cbb4934f0e20",
+      "gitBlob": "d846a380b5067a83b1032954dcc6b798e988ff76",
+      "mode": "100644"
+    },
+    {
+      "path": "tools/translation/original-json-intrinsics.mjs",
+      "storedPath": "raw/original-json-intrinsics.mjs",
+      "bytes": 22604,
+      "sha256": "f687a6ea3c6b8927a2edda702f65d9a0e49f04a984e270df0c70356fdc2c44c5",
+      "gitBlob": "7094c0af73a58a27157d446c480bd1a9be8b47c4",
+      "mode": "100644"
+    },
+    {
+      "path": "LICENSE",
+      "storedPath": "raw/LICENSE",
+      "bytes": 1211,
+      "sha256": "6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e",
+      "gitBlob": "fdddb29aa445bf3d6a5d843d6dd77e10a9f99657",
+      "mode": "100644"
+    }
+  ],
+  "oracleAdaptation": "Full original leaf retained; only relative import and import.meta.url relocation plus appended private-freezer test exports. Existing original recursive freeze body never changed.",
+  "scope": "Common issuer and dependency bootstrap explicitly preinitialized before fresh consumer/helper observers; no whole-bootstrap equivalence claim.",
+  "license": "raw/LICENSE"
+}

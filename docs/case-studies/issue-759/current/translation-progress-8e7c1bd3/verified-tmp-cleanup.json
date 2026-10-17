@@ -1,0 +1,410 @@
+{
+  "schema": "router-759-verified-progress-temporary-cleanup-v1",
+  "archiveCommit": "f040e0c7ee7f61cf0c9fbbf62ab7ec5dce45228a",
+  "archivePath": "docs/case-studies/issue-759/current/translation-progress-8e7c1bd3/complete-focused.tar.xz",
+  "archiveSha256": "4b5db19d024d13ce78fe1d0ce9d9954827698745b593eeb92f1fed85f0f31497",
+  "preflightMembers": 56,
+  "logicalBytesRemoved": 1883690,
+  "allocatedFileBytesObservedBeforeRemoval": 2011136,
+  "basis": "Own direct Git full-member equality and independent Gate56 full-member equality, followed by exact committed-Git equality of all originals immediately before unlink; allocated bytes are per-file stat blocks, not a measured filesystem free-space delta",
+  "files": [
+    {
+      "member": "source-drafts/v1/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/draft.patch",
+      "bytes": 24553,
+      "sha256": "09264712d92140bd1de11a6c595a87a6bf56f0a336af51e3f9f71bd997f63062",
+      "allocatedBytesObserved": 24576
+    },
+    {
+      "member": "source-drafts/v1/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/receipt.json",
+      "bytes": 1587,
+      "sha256": "84b6e5d6197e75422501af40d941d4615e6f21d0b439a5e189aa78f33dfb57a0",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v1/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/scripts/translate-router.mjs",
+      "bytes": 2065,
+      "sha256": "255d9eafc2b60d4cf5d2251d428f38d2d915dbaae908a844d6b6775082304ea1",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v1/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc",
+      "allocatedBytesObserved": 28672
+    },
+    {
+      "member": "source-drafts/v1/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "source-drafts/v1/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4",
+      "allocatedBytesObserved": 40960
+    },
+    {
+      "member": "source-drafts/v1/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v1/tools/translation/translation-progress.mjs",
+      "bytes": 1853,
+      "sha256": "4616e0d8a731d55f723050083bd672665d3ce61c98afadf27b4f6b4cf8562365",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v2/.changes/issue-759-translation-progress-draft.md",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/.changes/issue-759-translation-progress-draft.md",
+      "bytes": 413,
+      "sha256": "3d076dfe23176ce3d36d12edd226a2cc9c6599cd2c28b16dc99e218975a4a6f5",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v2/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/draft.patch",
+      "bytes": 32971,
+      "sha256": "537d8c51fd5388c1fcfed067104cc4a50b1de988d6a7c65474176919426266a5",
+      "allocatedBytesObserved": 36864
+    },
+    {
+      "member": "source-drafts/v2/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/receipt.json",
+      "bytes": 2283,
+      "sha256": "446428e13b4311c06a104ffea85de48ddf38e5225fcefff4a80263ddadd20a8b",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v2/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/scripts/translate-router.mjs",
+      "bytes": 2198,
+      "sha256": "f8e867edd366ae8f335b16de1dd2076d34743d658a30700ffff58ac7d8197ea5",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc",
+      "allocatedBytesObserved": 28672
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4",
+      "allocatedBytesObserved": 40960
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/test/translation-progress.test.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/test/translation-progress.test.mjs",
+      "bytes": 7604,
+      "sha256": "8c4e99d8a5bb809a28d2402a6ddc7aeafa2267b1ffef71044d5ee1294035255a",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "source-drafts/v2/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v2/tools/translation/translation-progress.mjs",
+      "bytes": 1867,
+      "sha256": "3b04db6aa2dc4207d5cc0f3a2f74965fe9716417b43ecd6fda0feaba97daac75",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v3/.changes/issue-759-translation-progress-draft.md",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/.changes/issue-759-translation-progress-draft.md",
+      "bytes": 413,
+      "sha256": "3d076dfe23176ce3d36d12edd226a2cc9c6599cd2c28b16dc99e218975a4a6f5",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v3/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/draft.patch",
+      "bytes": 32963,
+      "sha256": "e8da1b5c68b3f30e9cc15bab57a0eea2ce4127ba17a1a0953e4ec2074758e726",
+      "allocatedBytesObserved": 36864
+    },
+    {
+      "member": "source-drafts/v3/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/receipt.json",
+      "bytes": 2529,
+      "sha256": "aae0ecb9c4da15b523323bb9f75ba89b6a4496b378ba4fc54ddad5b25fdfb05a",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v3/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/scripts/translate-router.mjs",
+      "bytes": 2198,
+      "sha256": "f8e867edd366ae8f335b16de1dd2076d34743d658a30700ffff58ac7d8197ea5",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc",
+      "allocatedBytesObserved": 28672
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4",
+      "allocatedBytesObserved": 40960
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/test/translation-progress.test.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/test/translation-progress.test.mjs",
+      "bytes": 7596,
+      "sha256": "95bb7b714f2666a3af937139eb1df556f86b4ccb5d6d15b741888871d0b0c08e",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "source-drafts/v3/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v3/tools/translation/translation-progress.mjs",
+      "bytes": 1867,
+      "sha256": "3b04db6aa2dc4207d5cc0f3a2f74965fe9716417b43ecd6fda0feaba97daac75",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v4/.changes/issue-759-translation-progress-draft.md",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/.changes/issue-759-translation-progress-draft.md",
+      "bytes": 413,
+      "sha256": "3d076dfe23176ce3d36d12edd226a2cc9c6599cd2c28b16dc99e218975a4a6f5",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v4/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/draft.patch",
+      "bytes": 33345,
+      "sha256": "7c5047613338355165227774a664bd82d9335402608ff03871c1391c2bc7c6c8",
+      "allocatedBytesObserved": 36864
+    },
+    {
+      "member": "source-drafts/v4/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/receipt.json",
+      "bytes": 2562,
+      "sha256": "4d99c590441afec55af6125a48174c106ab7a6692af5bdb2e1ffcf9a1c7abdee",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v4/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/scripts/translate-router.mjs",
+      "bytes": 2198,
+      "sha256": "f8e867edd366ae8f335b16de1dd2076d34743d658a30700ffff58ac7d8197ea5",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc",
+      "allocatedBytesObserved": 28672
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4",
+      "allocatedBytesObserved": 40960
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/test/translation-progress.test.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/test/translation-progress.test.mjs",
+      "bytes": 7871,
+      "sha256": "cc7bcfdd9bedbd68c3dec4ad916f2dc54a6a5d1ffcf49afe0b143c8310e2c455",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "source-drafts/v4/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v4/tools/translation/translation-progress.mjs",
+      "bytes": 1970,
+      "sha256": "66ca623f98b7c3df498755cdc1be19615aa2a5ddb76ac8d8752d599e13e69c45",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v5/.changes/issue-759-translation-progress-draft.md",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/.changes/issue-759-translation-progress-draft.md",
+      "bytes": 413,
+      "sha256": "3d076dfe23176ce3d36d12edd226a2cc9c6599cd2c28b16dc99e218975a4a6f5",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v5/draft.patch",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/draft.patch",
+      "bytes": 35075,
+      "sha256": "a759c910ba45ca4b597c366b8cdcd8e33512dc07c8f57dfdabc08af4ed0c46a6",
+      "allocatedBytesObserved": 36864
+    },
+    {
+      "member": "source-drafts/v5/receipt.json",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/receipt.json",
+      "bytes": 2820,
+      "sha256": "7fc1c05fcf0f43eeaf2f8071ddcd1bc032a45943018a66dd951aae3bb5cf34f3",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v5/scripts/translate-router.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/scripts/translate-router.mjs",
+      "bytes": 2198,
+      "sha256": "f8e867edd366ae8f335b16de1dd2076d34743d658a30700ffff58ac7d8197ea5",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/bulk.mjs",
+      "bytes": 25464,
+      "sha256": "262f4681159411cc67ac3135063b992c47aea85f623c2002f2c14c977b366acc",
+      "allocatedBytesObserved": 28672
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/matrix-bulk.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/matrix-bulk.mjs",
+      "bytes": 5943,
+      "sha256": "555154e85b9faf5df061d501be34b5e628d3517bb98371a040f393d89e4b3e46",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/project.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/project.mjs",
+      "bytes": 39797,
+      "sha256": "2d39adaed60f611cd1a4fb11c868be459320bbd6fbd227b2edf66a723faf8ed4",
+      "allocatedBytesObserved": 40960
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/test/translation-progress.test.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/test/translation-progress.test.mjs",
+      "bytes": 9583,
+      "sha256": "dc2b4755efb5073f8333d7ad25cd006ff30ea8e9a472b15dc0a791fc2706627e",
+      "allocatedBytesObserved": 12288
+    },
+    {
+      "member": "source-drafts/v5/tools/translation/translation-progress.mjs",
+      "originalPath": "/tmp/router-759-progress-source-draft-v5/tools/translation/translation-progress.mjs",
+      "bytes": 1970,
+      "sha256": "66ca623f98b7c3df498755cdc1be19615aa2a5ddb76ac8d8752d599e13e69c45",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "tmp/router-759-progress-own-source-install-v1.json",
+      "originalPath": "/tmp/router-759-progress-own-source-install-v1.json",
+      "bytes": 1601,
+      "sha256": "ddf68affd201bea025fc63362d8df2849a18ee2845a6476fa680873a71b397ae",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "tmp/router-759-root-progress-69ca-own-head-hydration.json",
+      "originalPath": "/tmp/router-759-root-progress-69ca-own-head-hydration.json",
+      "bytes": 178642,
+      "sha256": "de1cae0689da5034cf81b3818d53f9c877ecbfa848d8839541eeda15beaba20e",
+      "allocatedBytesObserved": 180224
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-run-v1.py",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-run-v1.py",
+      "bytes": 6654,
+      "sha256": "d85214a3810cdecd75c93c24c8a84929b94af091331244c720c80fa183761271",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-freeze-v1.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-freeze-v1.json",
+      "bytes": 328335,
+      "sha256": "62168ebd46176c931795173350b7a9357017263e528db5404031af00506428b5",
+      "allocatedBytesObserved": 331776
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-plan-v1.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-plan-v1.json",
+      "bytes": 3846,
+      "sha256": "2c4cc1330457adf9bcab8a31458e2c1da2fc21a5ba5a9a487b45a2eccb0b4468",
+      "allocatedBytesObserved": 4096
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-node.raw.log",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-node.raw.log",
+      "bytes": 50960,
+      "sha256": "ce7e3df1979ab2ca2053ed1363cf10ad01b3d29b81af4166401f1fcccb313362",
+      "allocatedBytesObserved": 53248
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-node-receipt.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-node-receipt.json",
+      "bytes": 4254,
+      "sha256": "5a0ddcf05b45741896c9a5f7072d2bf1f911a8f585e0d4255f0b3af2b70f00db",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-node-inputs.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-node-inputs.json",
+      "bytes": 326389,
+      "sha256": "170efe14bd4a6c6f516f6b0c737ace7745dd789b10a16b48f7aac8a0e89c1017",
+      "allocatedBytesObserved": 327680
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-bun.raw.log",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-bun.raw.log",
+      "bytes": 24736,
+      "sha256": "ff2beb8cd66151a6b32a77eeca453a7dfb4373a1e091e825de7167e3e280d4bd",
+      "allocatedBytesObserved": 28672
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-bun-receipt.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-bun-receipt.json",
+      "bytes": 4293,
+      "sha256": "d7bdc17ca1945ddd6649eafb241da3796c6e33aa822e4923403fc1cb61312f10",
+      "allocatedBytesObserved": 8192
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-initial215-bun-inputs.json",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-initial215-bun-inputs.json",
+      "bytes": 326389,
+      "sha256": "170efe14bd4a6c6f516f6b0c737ace7745dd789b10a16b48f7aac8a0e89c1017",
+      "allocatedBytesObserved": 327680
+    },
+    {
+      "member": "tmp/router-759-progress-8e7c1b-complete-source.patch",
+      "originalPath": "/tmp/router-759-progress-8e7c1b-complete-source.patch",
+      "bytes": 37197,
+      "sha256": "b7bffd399b689f9f5b6ae92ec68b9c42e5d549bf8e4137bbb0aa0e572b4bc0d2",
+      "allocatedBytesObserved": 40960
+    },
+    {
+      "member": "tmp/router-759-progress-215-pack-v1.py",
+      "originalPath": "/tmp/router-759-progress-215-pack-v1.py",
+      "bytes": 8996,
+      "sha256": "afc2e91133e62490231939070ec7ae4b7517c8a67ab8b7c3c0b3a288ab61b491",
+      "allocatedBytesObserved": 12288
+    }
+  ],
+  "furtherSourceDraftsRemoved": false,
+  "rustBuilds": 0,
+  "startedUtc": "2026-10-12T17:40:11.039840+00:00",
+  "status": "REMOVED_VERIFIED_ARCHIVED_ORIGINALS",
+  "finishedUtc": "2026-10-12T17:40:11.049216+00:00",
+  "remainingOriginals": []
+}

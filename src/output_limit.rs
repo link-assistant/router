@@ -32,7 +32,7 @@ pub struct OutputTokenLimiter {
 impl OutputTokenLimiter {
     /// Create a limiter for an optional caller-supplied output-token cap.
     #[must_use]
-    pub const fn new(limit: Option<u64>) -> Self {
+    pub const fn new(limit: crate::translation_core::Maybe<u64>) -> Self {
         Self {
             remaining: match limit {
                 Some(limit) => Some(limit.saturating_mul(CHARS_PER_TOKEN)),
@@ -56,7 +56,7 @@ impl OutputTokenLimiter {
 
     /// Return the leading part of `text` that fits in the budget, and whether
     /// this chunk exhausted it.
-    pub fn push(&mut self, text: &str) -> (String, bool) {
+    pub fn push(&mut self, text: &crate::translation_core::Str) -> (String, bool) {
         if self.stopped {
             return (String::new(), false);
         }
@@ -80,7 +80,7 @@ impl OutputTokenLimiter {
 
 /// Truncate `text` to an output-token budget, returning `None` when it fits.
 #[must_use]
-pub fn truncate(text: &str, limit: u64) -> Option<String> {
+pub fn truncate(text: &crate::translation_core::Str, limit: u64) -> crate::translation_core::Maybe<String> {
     let mut limiter = OutputTokenLimiter::new(Some(limit));
     let (visible, truncated) = limiter.push(text);
     truncated.then_some(visible)
@@ -109,7 +109,7 @@ pub fn enforce_response_limit(response: &mut Value, limit: u64) {
     }
     if truncated {
         response["status"] = Value::String("incomplete".into());
-        response["incomplete_details"] = json!({"reason": "max_output_tokens"});
+        response["incomplete_details"] = crate::translation_core::json!({"reason": "max_output_tokens"});
     }
 }
 
@@ -156,7 +156,7 @@ pub struct ResponsesStreamRewriter {
 impl ResponsesStreamRewriter {
     /// Create a rewriter for one Codex-backed Responses request.
     #[must_use]
-    pub fn new(requested_model: &str, limit: Option<u64>) -> Self {
+    pub fn new(requested_model: &crate::translation_core::Str, limit: crate::translation_core::Maybe<u64>) -> Self {
         Self {
             requested_model: requested_model.to_string(),
             limiter: OutputTokenLimiter::new(limit),
@@ -202,7 +202,7 @@ impl ResponsesStreamRewriter {
 
     /// The first concrete upstream model seen so far.
     #[must_use]
-    pub fn upstream_model(&self) -> Option<&str> {
+    pub fn upstream_model(&self) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
         self.upstream_model.as_deref()
     }
 
@@ -256,7 +256,7 @@ impl ResponsesStreamRewriter {
         output
     }
 
-    fn rewrite_block(&mut self, block: &str) -> String {
+    fn rewrite_block(&mut self, block: &crate::translation_core::Str) -> String {
         let Some(payload) = data_payload(block) else {
             return format!("{block}\n\n");
         };
@@ -388,10 +388,10 @@ impl ResponsesStreamRewriter {
     }
 }
 
-fn event_contains_assistant_content(event: &Value) -> bool {
+fn event_contains_assistant_content(event: &crate::translation_core::Json) -> bool {
     event
         .get("type")
-        .and_then(Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
         .is_some_and(|kind| {
             kind.contains("output_text.delta")
                 || kind.contains("content_block_delta")
@@ -399,16 +399,16 @@ fn event_contains_assistant_content(event: &Value) -> bool {
         })
         || event
             .get("choices")
-            .and_then(Value::as_array)
+            .and_then(crate::translation_core::Json::as_array)
             .is_some_and(|choices| !choices.is_empty())
         || event
             .get("candidates")
             .or_else(|| event.pointer("/response/candidates"))
-            .and_then(Value::as_array)
+            .and_then(crate::translation_core::Json::as_array)
             .is_some_and(|candidates| !candidates.is_empty())
 }
 
-fn data_payload(block: &str) -> Option<String> {
+fn data_payload(block: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     let payload = block
         .lines()
         .filter_map(|line| {
@@ -423,7 +423,7 @@ fn data_payload(block: &str) -> Option<String> {
 
 /// Re-emit an SSE block with its `data:` payload replaced, keeping `event:`
 /// and comment lines in their original order.
-fn render_block(block: &str, event: &Value) -> String {
+fn render_block(block: &crate::translation_core::Str, event: &crate::translation_core::Json) -> String {
     use std::fmt::Write as _;
     let mut rendered = String::new();
     for line in block.lines() {

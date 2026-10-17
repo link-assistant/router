@@ -1,0 +1,3 @@
+Default derive namespace output now follows the pinned Rust tuple-type visitor for bounded tuple-bearing fields, including `ResolvedDeploy.env: Vec<(String, String)>`. The existing path parser remains the first route; source/owner/attribute checks and limits remain mandatory. This closes a source-output branch, not tuple Default execution or trait validity.
+
+The complete pre-change helper remains the historical tuple-refusal oracle. New whole-file controls retain full source/AST/private-proof refusals and the unchanged four-file deploy parent with JS/strict TypeScript expectations. Source-only; all new behavior and resource qualification remain pending receiving.

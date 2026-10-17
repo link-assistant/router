@@ -60,7 +60,7 @@ const DEFAULT_TIMEOUT: Duration = Duration::from_secs(90);
 ///
 /// Re-validate before changing it: point the client at a *copy* of an expired
 /// credential and compare the file before and after.
-const CLAUDE_PROBE: &[&str] = &["-p", "ok"];
+const CLAUDE_PROBE: &[&crate::translation_core::Str] = &["-p", "ok"];
 
 /// Probe that makes the Codex CLI exercise its credential.
 ///
@@ -73,14 +73,14 @@ const CLAUDE_PROBE: &[&str] = &["-p", "ok"];
 /// reaches an authenticated endpoint without replacing a credential that is
 /// not due to rotate. `--skip-git-repo-check` matters because the router runs
 /// this from wherever it happens to live, which need not be a repository.
-const CODEX_PROBE: &[&str] = &["exec", "--skip-git-repo-check", "ok"];
+const CODEX_PROBE: &[&crate::translation_core::Str] = &["exec", "--skip-git-repo-check", "ok"];
 
 /// Environment variable overriding the probe arguments, whitespace separated.
 ///
 /// Applies to every provider. A deployment running two vendor clients can
 /// override them independently with the per-provider form below, which is
 /// checked first.
-pub const PROBE_ARGS_ENV: &str = "ROUTER_VENDOR_REFRESH_ARGS";
+pub const PROBE_ARGS_ENV: &crate::translation_core::Str = "ROUTER_VENDOR_REFRESH_ARGS";
 
 /// The per-provider override, e.g. `ROUTER_VENDOR_REFRESH_ARGS_CODEX`.
 ///
@@ -94,7 +94,7 @@ pub fn probe_args_env_for(provider: SubscriptionProvider) -> String {
 
 /// The probe that exercises a provider's credential, when one is known.
 #[must_use]
-pub const fn probe_for(provider: SubscriptionProvider) -> Option<&'static [&'static str]> {
+pub const fn probe_for(provider: SubscriptionProvider) -> crate::translation_core::Maybe<&'static [&'static crate::translation_core::Str]> {
     match provider {
         SubscriptionProvider::Claude => Some(CLAUDE_PROBE),
         SubscriptionProvider::Codex => Some(CODEX_PROBE),

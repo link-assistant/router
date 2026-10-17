@@ -1,0 +1,462 @@
+{
+  "schema": "router-759-coherent-complete-repair-pair-archive-v1",
+  "testedHead": "cb2e3d546df49cb39597cace903c9ea76044e71a",
+  "casesPerEngine": 682,
+  "passPerEngine": 680,
+  "failPerEngine": 2,
+  "skipPerEngine": 0,
+  "bothTerminal": true,
+  "timedOut": false,
+  "sourceInputs": 1892,
+  "sourceInputsUnchanged": true,
+  "sameFailedNames": true,
+  "diagnosticAuthority": "Source-only probes and official source downloads grant no new namespace semantics or runtime authority",
+  "rustExecutions": 0,
+  "runtimeParity": false,
+  "members": [
+    {
+      "name": "router-759-coherent-repair-packet-builder-v3.py",
+      "bytes": 10193,
+      "sha256": "138aae3582e960844d8f8a0eecf04f76b4770d7dfae3d203e75d697829ed2bcc",
+      "originalPath": "/tmp/router-759-coherent-repair-packet-builder-v3.py"
+    },
+    {
+      "name": "router-759-coherent-cb2e3-pair-run-v3.py",
+      "bytes": 8254,
+      "sha256": "242ef8cf3990aca4833dcdc3df7609f8566ecf45ffa4609b9e92ee4b3ce25ea4",
+      "originalPath": "/tmp/router-759-coherent-cb2e3-pair-run-v3.py"
+    },
+    {
+      "name": "router-759-coherent-cb2e3-repair-plan.json",
+      "bytes": 26659,
+      "sha256": "68887b7e3b380d4c999649a604e5a850aa82e01b289ceceff492ba45a288f705",
+      "originalPath": "/tmp/router-759-coherent-cb2e3-repair-plan.json"
+    },
+    {
+      "name": "router-759-coherent-cb2e3-repair-inputs.json",
+      "bytes": 410324,
+      "sha256": "eba752a0b5af0f60950fda6787604b16fdab68ee646bb55cde297a0fb85e2160",
+      "originalPath": "/tmp/router-759-coherent-cb2e3-repair-inputs.json"
+    },
+    {
+      "name": "router-759-coherent-cb2e3-repair-fingerprints.json",
+      "bytes": 106697,
+      "sha256": "ef349094dc6db622ed8f6f188a5655b638a2a0b03a1f154415531a534ae70539",
+      "originalPath": "/tmp/router-759-coherent-cb2e3-repair-fingerprints.json"
+    },
+    {
+      "name": "router-759-coherent-cb2e3-direct-source-audit.json",
+      "bytes": 1525,
+      "sha256": "1b90155edba05b180ddc416d9e4c427afdb63f3f75269868bd84e39335ea0e44",
+      "originalPath": "/tmp/router-759-coherent-cb2e3-direct-source-audit.json"
+    },
+    {
+      "name": "router-759-coherent-cb2e3-complete-failures-v1.json",
+      "bytes": 3397,
+      "sha256": "e4e5c97421d698963f0b29390e657e55d14f50da8575065e1694a5bf1e6865da",
+      "originalPath": "/tmp/router-759-coherent-cb2e3-complete-failures-v1.json"
+    },
+    {
+      "name": "router-759-coherent-repair-one-direct-git-v1.json",
+      "bytes": 3741,
+      "sha256": "c0c9dd827b87ad8af5dd3bd103908a589099e11854ed6e031f6f555cb796250d",
+      "originalPath": "/tmp/router-759-coherent-repair-one-direct-git-v1.json"
+    },
+    {
+      "name": "router-759-coherent-namespace-diagnostics-v5.mjs",
+      "bytes": 1656,
+      "sha256": "56e34faaa1fb95e4504c7a701e48fd675e37880e1ff8147f2f6c6f79ac7c7dc7",
+      "originalPath": "/tmp/router-759-coherent-namespace-diagnostics-v5.mjs"
+    },
+    {
+      "name": "router-759-coherent-namespace-diagnostics-v5.raw.log",
+      "bytes": 59772,
+      "sha256": "446b17afc5253e6915619b562499728e8ec7836c595ce260b9260c3d269de523",
+      "originalPath": "/tmp/router-759-coherent-namespace-diagnostics-v5.raw.log"
+    },
+    {
+      "name": "router-759-coherent-second-source-diagnostics-v6.mjs",
+      "bytes": 1738,
+      "sha256": "294a0bd3d9de98929f396b0d8d2ced814848a999e53499cdcfa43618cbd9efbe",
+      "originalPath": "/tmp/router-759-coherent-second-source-diagnostics-v6.mjs"
+    },
+    {
+      "name": "router-759-coherent-second-source-diagnostics-v6.raw.log",
+      "bytes": 348,
+      "sha256": "5267bf552211f592861e99f6679cf7673bba1cea545df7e537d6815e28b41849",
+      "originalPath": "/tmp/router-759-coherent-second-source-diagnostics-v6.raw.log"
+    },
+    {
+      "name": "router-759-fetch-namespace-originals-v1.py",
+      "bytes": 2176,
+      "sha256": "65c4a88eb480de2ae41aca742882f7ada3654bc9068f6c390bbec51bb4f9e654",
+      "originalPath": "/tmp/router-759-fetch-namespace-originals-v1.py"
+    },
+    {
+      "name": "router-759-rust-stdarch-1.89-gitlink-response.json",
+      "bytes": 795,
+      "sha256": "9b70f103a7639f94a8ec06e4b2420c3505300da6a6b2d046a71ee99750256228",
+      "originalPath": "/tmp/router-759-rust-stdarch-1.89-gitlink-response.json"
+    },
+    {
+      "name": "router-759-stdarch-tree-1.89-response.json",
+      "bytes": 93644,
+      "sha256": "5620e41ebafe297f08272bf24656aef61a0900a101755bda5c048947be337713",
+      "originalPath": "/tmp/router-759-stdarch-tree-1.89-response.json"
+    },
+    {
+      "name": "router-759-stdarch-1.89-complete-source.tar.gz",
+      "bytes": 1654940,
+      "sha256": "11b7b7c9e38040c360db0068c929c4f5be044983cba60f40001e34422047e8dd",
+      "originalPath": "/tmp/router-759-stdarch-1.89-complete-source.tar.gz"
+    },
+    {
+      "name": "router-759-stdarch-1.89-complete-download-receipt.json",
+      "bytes": 401,
+      "sha256": "5b668e8bf8ffe533a505ca591f7bb0e17f53b3f3e28f844f4d83af796c7fc5f1",
+      "originalPath": "/tmp/router-759-stdarch-1.89-complete-download-receipt.json"
+    },
+    {
+      "name": "router-759-stdarch-full-git-verify-v2.py",
+      "bytes": 1767,
+      "sha256": "734138f9505cb41835fb39575b7a90e1ac5b53cf3e9265f20a42a0f97a90c50c",
+      "originalPath": "/tmp/router-759-stdarch-full-git-verify-v2.py"
+    },
+    {
+      "name": "router-759-stdarch-1.89-full-git-verify-v2.json",
+      "bytes": 73095,
+      "sha256": "231ca84e31e0cedb9145f482de779526272457f1101db4626e82389df3d35d86",
+      "originalPath": "/tmp/router-759-stdarch-1.89-full-git-verify-v2.json"
+    },
+    {
+      "name": "router-759-coherent-repair-two-archive-v1.py",
+      "bytes": 3053,
+      "sha256": "04b500c3535b8e0128c0bf6ad09659eca5bb5e424a7853a17aa62abcf237bfc9",
+      "originalPath": "/tmp/router-759-coherent-repair-two-archive-v1.py"
+    },
+    {
+      "name": "router-759-coherent-cb2e3d546-repair-two-preflight.json",
+      "bytes": 5443,
+      "sha256": "912ddfddfa28c0f08622ae8598a655468c66fbb3da38506498d1ae50c7f7f2c2",
+      "originalPath": "/tmp/router-759-coherent-cb2e3d546-repair-two-preflight.json"
+    },
+    {
+      "name": "router-759-coherent-cb2e3d546-repair-two-node.raw.log",
+      "bytes": 169669,
+      "sha256": "1fd0f2d28905642ecf4d730492ac815aa189b3449abda9a842684f4ebe88b1cf",
+      "originalPath": "/tmp/router-759-coherent-cb2e3d546-repair-two-node.raw.log"
+    },
+    {
+      "name": "router-759-coherent-cb2e3d546-repair-two-node-receipt.json",
+      "bytes": 6414,
+      "sha256": "c032689c499b2c2836733c88f75b189b67f46daa243bfc44e6c0080355c5b385",
+      "originalPath": "/tmp/router-759-coherent-cb2e3d546-repair-two-node-receipt.json"
+    },
+    {
+      "name": "router-759-coherent-cb2e3d546-repair-two-bun.raw.log",
+      "bytes": 88990,
+      "sha256": "3d6090963436794d84d1d07092a9794a4d852533309395b74537eb6bd14ca29a",
+      "originalPath": "/tmp/router-759-coherent-cb2e3d546-repair-two-bun.raw.log"
+    },
+    {
+      "name": "router-759-coherent-cb2e3d546-repair-two-bun-receipt.json",
+      "bytes": 6464,
+      "sha256": "5f0adfb9b5ffd6aeff6ce06c4aeb7b825c165da19c77d8759f02b73f791a8619",
+      "originalPath": "/tmp/router-759-coherent-cb2e3d546-repair-two-bun-receipt.json"
+    },
+    {
+      "name": "router-759-coherent-cb2e3d546-repair-two-summary.json",
+      "bytes": 14338,
+      "sha256": "22f981be3ae0021f7f2e6e3f7f5c32e214debe85db2b4dd79bc8a1550b63e38d",
+      "originalPath": "/tmp/router-759-coherent-cb2e3d546-repair-two-summary.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/receipt.json",
+      "bytes": 11508,
+      "sha256": "a9c977625029f021bc38d7dcafc37e8cd7cb0c41d75e4e4d7cb18be7661c67b6",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/receipt.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-arch.rs.response.json",
+      "bytes": 5712,
+      "sha256": "9e74d7690fa1a9b77a30b9b7a183674bda37d984bfcdadcdbff267c0d8814bdb",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-arch.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-arch.rs.rs",
+      "bytes": 3535,
+      "sha256": "1d812c48a3c1be9198906a03080a7135feccd90ff4806875d384491b4796464b",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-arch.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-clone.rs.response.json",
+      "bytes": 30512,
+      "sha256": "eaabc7ea21189a2333d8d8a63da6c1f939f52e4dd36accd00181a1ace7ac8fc1",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-clone.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-clone.rs.rs",
+      "bytes": 21530,
+      "sha256": "c1b8a02d24d463b92f2f97f0012dfa01fdb8e2d8821a4c53af7640ec145adcf5",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-clone.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-mem-maybe_uninit.rs.response.json",
+      "bytes": 85617,
+      "sha256": "eced44f44346ceec45d52594a4457fbaf5d847d3481ecf755ecf28f6f5d60020",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-mem-maybe_uninit.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-mem-maybe_uninit.rs.rs",
+      "bytes": 61471,
+      "sha256": "bf7d863ed3f5a0b686a3faa3afe791b403efed8e52752863c9af0acafc44ea7e",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-mem-maybe_uninit.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-mem-mod.rs.response.json",
+      "bytes": 69598,
+      "sha256": "051a1d31348ab3f2fe5a36249f81e92bca8941335a22f536ed8137b825c3e806",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-mem-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-mem-mod.rs.rs",
+      "bytes": 49893,
+      "sha256": "04ccdc44e3a1879118611e7cfa9929dda471383df4efdddcb28482a3d104de84",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-mem-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-ops-mod.rs.response.json",
+      "bytes": 11165,
+      "sha256": "a798041a1e256c5e44e4bacee459e0c2f5c829fa975127e6722bc7dd68fc20b1",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-ops-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-ops-mod.rs.rs",
+      "bytes": 7481,
+      "sha256": "c15106f749ec6eba95bb44f1b60e5905d50eb0e4ec709386d6192f8f0349055d",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-ops-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-ops-range.rs.response.json",
+      "bytes": 54390,
+      "sha256": "cdc76b4710f9ad505b7a444e20dc1592425f98b6a006b32ddcabd289f50e16b0",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-ops-range.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-rust-library-core-src-ops-range.rs.rs",
+      "bytes": 38843,
+      "sha256": "c070f37e43e4e688a7b5a26eb23e7c6c5ab761b07b41475dfd0a5e54175cbd40",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-rust-library-core-src-ops-range.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-mod.rs.response.json",
+      "bytes": 2736,
+      "sha256": "399c8e8735166c5f25a353629c658ddf1b0f8cf3b43b909d6023d652a5312303",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-mod.rs.rs",
+      "bytes": 1189,
+      "sha256": "ed7826f76a187c2efb54c6ae6d5eb4725791004917e9f791d06c0d4781c1b76e",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-generated.rs.blob-response.json",
+      "bytes": 1644897,
+      "sha256": "852fc497bf2b7d3d9d7fae5bd940607b8b5a3dfb0185772f8dc5d8285a906a97",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-generated.rs.blob-response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-generated.rs.response.json",
+      "bytes": 1167,
+      "sha256": "10ec1339cab863482c2958fe7241d58d69eb9dfa6f59611279c8f2c015a93e23",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-generated.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-generated.rs.rs",
+      "bytes": 1193662,
+      "sha256": "92707a5e4ca3e9db8bdeb25275d4c475998e6f33257f75c2adfbc473d1b5b643",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-generated.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-mod.rs.response.json",
+      "bytes": 43761,
+      "sha256": "6309326716ab8f4194b375e001252c4abb3bfe889c22acac97ca3b82672479bd",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-mod.rs.rs",
+      "bytes": 30943,
+      "sha256": "3e4fca45c8c409fcdc65072598dc67ae62db7e56beeff6086ac2babab1c109cd",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-aarch64-neon-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-mod.rs.response.json",
+      "bytes": 6648,
+      "sha256": "ddf993ed7240c986724a84bdd1278451076d4e34cede553eba4dea762657b1a9",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-mod.rs.rs",
+      "bytes": 4015,
+      "sha256": "9fb69d515c73f97f81b6f50038ac4cb0741764e5cf93d39060786f7678f4af66",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-generated.rs.blob-response.json",
+      "bytes": 3928717,
+      "sha256": "bbde51c67ce77b79d72a9a5a96717cbb26078703736b18bd15a0463f2e606a19",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-generated.rs.blob-response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-generated.rs.response.json",
+      "bytes": 1185,
+      "sha256": "bef281834e58dd26e60eaa137a07bc913d573192bfcf60fa5a048bf9598d306a",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-generated.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-generated.rs.rs",
+      "bytes": 2851273,
+      "sha256": "c7406c126683a31140f925e3b20328e28b9c3d83a709f5eca86a2d05f0753abf",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-generated.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-mod.rs.response.json",
+      "bytes": 240774,
+      "sha256": "39b497bc561855d79bcf52ff14eafc94e95224eae1f057ad9e40e7ea6313ed98",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-mod.rs.rs",
+      "bytes": 173925,
+      "sha256": "347d1e67960d65bfba284e02fcfe935e7d02ea62a70087b1d36cd3ff24946230",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-arm_shared-neon-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-lib.rs.response.json",
+      "bytes": 4416,
+      "sha256": "a5100fea26be6d6e79a0e2ec0a235e6b4b5ad8f31d9d6e8cbc4f0ed34591eccb",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-lib.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-lib.rs.rs",
+      "bytes": 2443,
+      "sha256": "c2450eab85d00afb20d0750098577aa0812b2dcbf74ffa20c1875a8eff30bd30",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-lib.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-macros.rs.response.json",
+      "bytes": 8181,
+      "sha256": "15d7c81bf1c42ff147d14ab178d43fec772439af89d3aef75501c4b375800d5d",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-macros.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-macros.rs.rs",
+      "bytes": 5163,
+      "sha256": "13677e011471068a8b236905c3abe1fd41ffb333a02bdd9e4a6dcb8d7aad9ab5",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-macros.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-mod.rs.response.json",
+      "bytes": 20135,
+      "sha256": "d1c5923bac80a9ad4f33eb6e68f50f08abbac162a4b2e5de6733dd189dd1cbbf",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-mod.rs.rs",
+      "bytes": 13852,
+      "sha256": "452713882c91dfc0fdab541373dc2cea4e55a2d2d9c2942a2c31acbaa97c8a1e",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-mod.rs.response.json",
+      "bytes": 40037,
+      "sha256": "699d34cfa04ae7c802f7e6062db29335114afc702c3bc045cc58037f839d5f81",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-mod.rs.rs",
+      "bytes": 28281,
+      "sha256": "6f32c5a5abe16c816965dd4d1cff4678d3bd8e13cc4944a2ac9ddfcd21487c13",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-sse2.rs.response.json",
+      "bytes": 260265,
+      "sha256": "4c4a27f052effce7f0e56663ebe6825a4695bac46318d3f4f95575f4f2982691",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-sse2.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-sse2.rs.rs",
+      "bytes": 188117,
+      "sha256": "78cb77582150024dd488b5368aa7f9359ccf9911dbe9932dad155fa434eb3eb4",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-sse2.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-sse41.rs.response.json",
+      "bytes": 99393,
+      "sha256": "654fc8bc992fa6678c7eacee62f1d56a55fd590c98a03c8989abf6b86da801b1",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-sse41.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-sse41.rs.rs",
+      "bytes": 71352,
+      "sha256": "5fac3ef4c7991e657b82729b24da88593ff58a758ab543afd7b91765d8df1496",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-sse41.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-ssse3.rs.response.json",
+      "bytes": 33069,
+      "sha256": "d3b2b4cc71e30ededd388eaa8b0ddbed1e1211c77881af0f7fb471c4e8bb2dc5",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-ssse3.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-ssse3.rs.rs",
+      "bytes": 23213,
+      "sha256": "325000fa4b7629446cf82b3bd3f3230a2b43fc7e5bf37407935d408ddff9978e",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86-ssse3.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-mod.rs.response.json",
+      "bytes": 3610,
+      "sha256": "76038fa23a49c8dca86668d51a406507f01d99827b60cbda744cd2d23ff24d12",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-mod.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-mod.rs.rs",
+      "bytes": 1829,
+      "sha256": "b67cb2bd7727eb94fa318212694ebcd184bfa536120bec8cecf8f191319c232f",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-mod.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-sse2.rs.response.json",
+      "bytes": 11331,
+      "sha256": "6db129b97f7acdbc48a2d4d6367582535182b0405fd130a26a47484348f96a7d",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-sse2.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-sse2.rs.rs",
+      "bytes": 7427,
+      "sha256": "584cae1436f1516d4ea949b9b985e02653ac2344e5cbf186ab951f1c22398e4b",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-sse2.rs.rs"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-sse41.rs.response.json",
+      "bytes": 3856,
+      "sha256": "ddb575d0987b8c82d44effea69b6d68e18b0b2edd9bbcfa63bcf583a127e1b84",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-sse41.rs.response.json"
+    },
+    {
+      "name": "router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-sse41.rs.rs",
+      "bytes": 1996,
+      "sha256": "8559ecb7a9c2b3bb0766f5723ce2b2563270cbd2f97260da04d096eda7ca826c",
+      "originalPath": "/tmp/router-759-namespace-originals-v1/rust-lang-stdarch-crates-core_arch-src-x86_64-sse41.rs.rs"
+    }
+  ],
+  "archive": {
+    "path": "docs/case-studies/issue-759/current/coherent-cb2e3-repair-two/complete-repair-two.tar.xz",
+    "bytes": 2427716,
+    "sha256": "c313d21cefa3412d7ba32bc19f7ea2e29a374bc47ce17aad0b786d4e300cda7e"
+  },
+  "directGitFullBytesVerification": "required after commit before any original cleanup"
+}

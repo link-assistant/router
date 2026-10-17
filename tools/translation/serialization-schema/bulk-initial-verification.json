@@ -1,0 +1,102 @@
+{
+  "schema": "bulk-initial-serialization-verification-v1",
+  "head": "d2eabadc1fcb6d79d1955de2415ad07cbf5c0ce3",
+  "scope": [
+    "tools/translation/serialization-schema/bulk.test.mjs",
+    "tools/translation/serialization-schema/serialization-schema.test.mjs"
+  ],
+  "authored_cases_per_engine": 29,
+  "input_count": 1126,
+  "immutable_inputs": true,
+  "results": [
+    {
+      "engine": "node",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 13.216,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ]
+    },
+    {
+      "engine": "bun",
+      "command": [
+        "bun",
+        "test",
+        "--timeout",
+        "15000",
+        "tools/translation/serialization-schema/bulk.test.mjs",
+        "tools/translation/serialization-schema/serialization-schema.test.mjs"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "wall_seconds": 7.844,
+      "temporary_bytes_before_cleanup": 491,
+      "remaining_temporary_entries_before_cleanup": [
+        "xcrun_db"
+      ]
+    }
+  ],
+  "bulk_persistent_outputs_written": false,
+  "production_imports_changed": false,
+  "actual_supported_owner_lower_bound": 8,
+  "authority_note": "Observed executable registry data and original source refusal controls; whole serde/trait/runtime parity remains unproved",
+  "archive": {
+    "file": "bulk-initial-verification-raws.tar.gz",
+    "bytes": 164305,
+    "sha256": "6bcd4fe8138396e190310d5e0bc864e530ba5c3852234e72d567acfdc910dd93",
+    "members": [
+      {
+        "file": "run/bun.log",
+        "bytes": 3331,
+        "sha256": "2f1a0638fc705b4f38a3fd60b445e9b814d136157ffef362c1c9e18ed7db1acf",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/harness.py",
+        "bytes": 5106,
+        "sha256": "0e60c4333688b8610e22f5e07ee87db1ffc4634b9d8a69078f892546690971e4",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/inputs.json",
+        "bytes": 133076,
+        "sha256": "374f6327e971dd13d23b0c9fece37e4ccc9ab624ba0e9eb44b8f3f0a5af9c948",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/node.log",
+        "bytes": 6980,
+        "sha256": "1f44ac1f34df783cfcc261e164fc413ec08db83b84347913f54be8bd1d4db617",
+        "reopened_verified": true
+      },
+      {
+        "file": "run/receipt.json",
+        "bytes": 266635,
+        "sha256": "0fff85ac7d0d4b0df68697c48cfbfe71d73f1e8bd13426d58cbdeb4c4e4bff67",
+        "reopened_verified": true
+      },
+      {
+        "file": "runner/plan.json",
+        "bytes": 493,
+        "sha256": "9be003a2be4f634df3c06f78e019e86c1e9753fa3f2ef1786791c70a23cc3b8c",
+        "reopened_verified": true
+      },
+      {
+        "file": "runner/run.py",
+        "bytes": 5106,
+        "sha256": "0e60c4333688b8610e22f5e07ee87db1ffc4634b9d8a69078f892546690971e4",
+        "reopened_verified": true
+      }
+    ]
+  },
+  "runtimeAuthority": false
+}

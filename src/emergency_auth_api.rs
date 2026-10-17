@@ -47,7 +47,7 @@ pub async fn emergency_disable(State(state): State<AppState>) -> Response {
 pub async fn auth_diagnostics(State(state): State<AppState>) -> Response {
     (
         StatusCode::OK,
-        axum::Json(serde_json::json!({
+        axum::Json(crate::translation_core::json!({
             "diagnostics": state.token_manager.diagnostics().snapshot(),
             "emergency_auth": state.token_manager.emergency().status(),
         })),
@@ -58,10 +58,10 @@ pub async fn auth_diagnostics(State(state): State<AppState>) -> Response {
 /// Value of the [`crate::emergency_auth::HEALTH_HEADER`] liveness header, or
 /// `None` while the mode is off.
 #[must_use]
-pub fn health_header(state: &AppState) -> Option<String> {
+pub fn health_header(state: &AppState) -> crate::translation_core::Maybe<String> {
     state
         .token_manager
         .emergency()
         .active_until()
-        .map(|until| format!("active; expires_at={until}"))
+        .map(|until| crate::translation_core::format!("active; expires_at={until}"))
 }
