@@ -108,6 +108,22 @@ It retains full source/CST, dependency inputs, every proposal field and inverse.
 The fixed adopter recognizes canonical explicit parse calls followed by `.ok()`
 or an ordinary `let Ok(name) = ... else` discard boundary. It emits qualified
 owned APIs and `Maybe::Some`, preserving the input evaluation and failure block.
+Its canonical-target selector retains the complete balanced argument source,
+including nested groups, comments and an optional unary trailing comma. It
+rejects multiple arguments and comments that a path or `.ok()` replacement
+would delete. Imported `Value`, impl methods, uncertain include origins and
+existing macro/loop/producer boundaries remain outside this selector.
+
+A separate fixed language/repository pass can bind a complete final method chain
+rooted at `json_parse[_bytes](borrowed_parameter)?` to a hygienic immutable local
+Json. The new inner block covers the entire former tail; the original suffix,
+comments and `?` order stay intact. Argument-created owners are not hoisted:
+introducing a let semicolon could shorten their temporary lifetime. Both passes
+retain original, intermediate and final CST/source, mappings and full inverses.
+The ordinary checker must still prove borrowing, destruction, canonical layouts
+and every suffix call, including allocating String conversions. This normalization
+does not admit escaped loans or extend the temporary-borrow model.
+
 Unknown owners, producers, binders, macros and custom error handling are retained
 as refusals. This is API adoption, not translation of serde internals or a grant
 for the rest of the function. Both CST and checked semantic roundtrips remain

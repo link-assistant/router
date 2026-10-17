@@ -27,18 +27,36 @@ function record(value,allowed,bound){
 }
 function close(tokens,start){const pairs={'(':')','[':']','{':'}'},stack=[];for(let at=start;at<tokens.length;at++){const token=tokens[at];if(['string','char','comment'].includes(token.type))continue;if(pairs[token.text])stack.push(pairs[token.text]);else if([')',']','}'].includes(token.text)){if(stack.pop()!==token.text)return -1;if(!stack.length)return at;}}return -1;}
 function split(tokens){const rows=[];let start=0;for(let at=0;at<tokens.length;at++){if(['(','[','{'].includes(tokens[at].text)){const end=close(tokens,at);if(end<0)return [];at=end;}else if(tokens[at].text===','){rows.push(tokens.slice(start,at));start=at+1;}}rows.push(tokens.slice(start));return rows.filter(row=>row.length);}
+// Preserve the argument interior verbatim. Groups and explicit turbofish/closure
+// headers may contain commas; a second outer argument is never adopted.
+function singleArgument(tokens,start,end){
+ if(start===end)return null;const last=tokens[end-1]?.text===','?end-1:end;if(start===last)return null;
+ for(let at=start;at<last;at++){
+  const word=tokens[at].text;if(['(','[','{'].includes(word)){const stop=close(tokens,at);if(stop<0||stop>=last)return null;at=stop;}
+  else if(word==='<'&&tokens[at-1]?.text==='::'){let depth=1;while(++at<last&&depth){if(['(','[','{'].includes(tokens[at].text)){const stop=close(tokens,at);if(stop<0||stop>=last)return null;at=stop;}else if(tokens[at].text==='<')depth++;else if(tokens[at].text==='>')depth--;else if(tokens[at].text==='>>')depth-=2;}if(depth)return null;at--;}
+  else if(word==='|'&&at===start){while(++at<last&&tokens[at].text!=='|'){}if(at===last)return null;}
+  else if(word===',')return null;
+ }
+ return tokens.slice(start,last);
+}
+function tailRoot(tokens,at,stop,body,parameter){
+ if(!parameter||at!==body+1||tokens[stop+1]?.text!=='?')return null;
+ let cursor=stop+2,methods=0;while(cursor<tokens.length-1){if(tokens[cursor]?.text!=='.'||!ident(tokens[cursor+1])||tokens[cursor+2]?.text!=='(')return null;const end=close(tokens,cursor+2);if(end<0)return null;cursor=end+1;if(tokens[cursor]?.text==='?')cursor++;methods++;}
+ return methods&&cursor===tokens.length-1?{span:[tokens[at].start,tokens[cursor-1].end],questionEnd:tokens[stop+1].end}:null;
+}
 function scope(module,modules,profile,context){
- const ancestors=modules.filter(parent=>parent.path.length<=module.path.length&&parent.path.every((name,at)=>module.path[at]===name)),problems=[],imports=[];
+ const ancestors=modules.filter(parent=>parent.path.length<=module.path.length&&parent.path.every((name,at)=>module.path[at]===name)),problems=[],imports=[],identifiers=new Set();
  for(const parent of ancestors){problems.push(...coreTypeProducerProblemsForModule(context,parent));for(const item of originalSourceModuleItems(parent)){
+  for(const token of item.tokens)if(token.type==='ident')identifiers.add(token.text.replace(/^r#/u,''));
   if(item.comment||itemConfiguration(item.tokens,profile).status==='inactive')continue;
   const declarationTokens=item.tokens.filter(token=>token.type!=='comment');if(declarationTokens.some((token,at)=>token.text==='extern'&&declarationTokens[at+1]?.text==='crate')){const alias=declarationTokens.findIndex(token=>token.text==='as'),bound=alias<0?declarationTokens[declarationTokens.findIndex(token=>token.text==='crate')+1]?.text:declarationTokens[alias+1]?.text;if(reserved.has(bound))problems.push('competing external crate alias '+bound);}
   const header=originalDeclarationHeader(item,parent.path);if(header&&reserved.has(header.name)&&!(header.name==='translation_core'&&parent.path.length===0&&item.term==='mod'))problems.push('competing decode owner or constructor '+header.name);
   if(item.term==='use')for(const leaf of originalUseDeclarationLeaves(item,parent.path)){imports.push({file:parent.file,module:parent.path,span:[item.start,item.end],leaf});if(leaf.glob||reserved.has(leaf.name))problems.push('glob or competing decode root/constructor import '+leaf.name);}
- }}return {problems,imports};
+ }}return {problems,imports,identifiers};
 }
-function select(source,item,module){
- const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,module.path),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[];
- const skip=reason=>({edits:[],selections:[],preserved:[{function:item.name,span:[item.start,item.end],reason}]});
+function select(source,item,module,identifiers){
+ const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,module.path),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[],roots=[];
+ const skip=reason=>({edits:[],selections:[],roots:[],preserved:[{function:item.name,span:[item.start,item.end],reason}]});
  if(name<0||tokens[name+1]?.text!=='(')return skip('ordinary nongeneric function declaration required');
  const paramsEnd=close(tokens,name+1);let body=paramsEnd+1;while(body<tokens.length&&tokens[body].text!=='{')body++;
  if(paramsEnd<0||body>=tokens.length||close(tokens,body)!==tokens.length-1||tokens.slice(0,name).some(token=>['async','unsafe','extern','const'].includes(token.text))||tokens.slice(paramsEnd+1,body).some(token=>token.text==='where'))return skip('complete ordinary function required');
@@ -56,24 +74,37 @@ function select(source,item,module){
   if(tokens[at].text!=='serde_json'||['::','.'].includes(tokens[at-1]?.text)||tokens[at+1]?.text!=='::'||!['from_str','from_slice'].includes(tokens[at+2]?.text)||words(tokens.slice(at+3,at+5))!=='::<')continue;
   let endType=at+5;while(endType<tokens.length&&!['>','(',')',';','{'].includes(tokens[endType].text))endType++;
   const target=words(tokens.slice(at+5,endType));if(!['serde_json::Value',C+'Json'].includes(target)||tokens[endType]?.text!=='>'||tokens[endType+1]?.text!=='(')continue;
-  const end=close(tokens,endType+1),argument=tokens.slice(endType+2,end);if(end<0||argument.length!==1||!ident(argument[0]))continue;
-  const role=parameters.get(argument[0].text),kind=tokens[at+2].text==='from_str'?'text':'bytes';if(role?.kind!==kind)continue;
-  const operation=kind==='text'?'json_parse':'json_parse_bytes',span=[tokens[at].start,tokens[end].end],replacement=C+operation+'('+argument[0].text+')';let mode=null,stop=end,patternEdit=null;
+  const end=close(tokens,endType+1),argument=end<0?null:singleArgument(tokens,endType+2,end);if(!argument)continue;
+  const kind=tokens[at+2].text==='from_str'?'text':'bytes',role=argument.length===1&&ident(argument[0])?parameters.get(argument[0].text):null,parameter=role?.kind===kind?{name:argument[0].text,...role}:null;
+  const interior=[tokens[endType+1].end,tokens[end].start],expression={span:interior,source:source.slice(...interior)},operation=kind==='text'?'json_parse':'json_parse_bytes',span=[tokens[at].start,tokens[end].end],replacement=C+operation+'('+expression.source+')';let mode=null,stop=end,patternEdit=null;
   if(words(tokens.slice(end+1,end+5))==='.ok()'){mode='discard-error-ok';stop=end+4;}
   else if(words(tokens.slice(at-6,at-3))==='letOk('&&ident(tokens[at-3])&&tokens[at-2]?.text===')'&&tokens[at-1]?.text==='='&&tokens[end+1]?.text==='else'&&tokens[end+2]?.text==='{'){
    const branchEnd=close(tokens,end+2);if(branchEnd<0||tokens[branchEnd+1]?.text!==';')continue;mode='discard-error-let-else';const pattern=[tokens[at-5].start,tokens[at-5].end];patternEdit={span:pattern,expected:source.slice(...pattern),replacement:C+'Maybe::Some'};
   }
   if(!mode)continue;
-  const complete=[span[0],tokens[stop].end];if(item.tokens.some(token=>token.type==='comment'&&token.start>=complete[0]&&token.end<=complete[1]))continue;
-  if(patternEdit)edits.push(patternEdit);edits.push({span:complete,expected:source.slice(...complete),replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span:complete,operation,mode,argument:{name:argument[0].text,...role},sourceTarget:target,originalCall:source.slice(...span),replacement,sourceModule:module.path,originalParserImplementationTranslated:false,originalErrorDropAdmitted:false,executableAdmission:false,evaluationOrder:['borrowed-input-once']});at=stop;
+  const complete=[span[0],tokens[stop].end];if(item.tokens.some(token=>token.type==='comment'&&token.start>=complete[0]&&token.end<=complete[1]&&!(token.start>=interior[0]&&token.end<=interior[1])))continue;
+  const root=mode==='discard-error-ok'?tailRoot(tokens,at,stop,body,parameter):null;
+  if(root){const names=new Set(identifiers);for(const token of tokens)if(token.type==='ident')names.add(token.text.replace(/^r#/u,''));let suffix=0;while(names.has('__router_json_root_'+suffix))suffix++;roots.push({...root,name:'__router_json_root_'+suffix,hygiene:{identifiers:[...names].sort(),sourceModule:module.path},function:item.name});}
+  if(patternEdit)edits.push(patternEdit);edits.push({span:complete,expected:source.slice(...complete),replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span:complete,operation,mode,argument:{...(parameter??{}),expression},sourceTarget:target,originalCall:source.slice(...span),replacement,sourceModule:module.path,originalParserImplementationTranslated:false,originalErrorDropAdmitted:false,executableAdmission:false,evaluationOrder:['borrowed-input-once']});at=stop;
  }
- return {edits,selections,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no exact canonical parse with a closed borrowed parameter and discarded error'}]};
+ return {edits,selections,roots,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no exact canonical unary parse with a retained balanced argument and discarded error'}]};
 }
-function apply(source,edits){
+function mapping(source,after,edits){
+ const result=[];let old=0,current=0;for(const edit of edits){if(old<edit.span[0]){const size=edit.span[0]-old;result.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+size]});current+=size;}result.push({kind:'substitution',before:edit.span,after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});old=edit.span[1];current+=edit.replacement.length;}if(old<source.length)result.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});
+ let restored=after;for(const part of [...result].reverse())if(part.kind==='substitution'){if(restored.slice(...part.after)!==part.replacement)fail('inverse replacement differs');restored=restored.slice(0,part.after[0])+part.expected+restored.slice(part.after[1]);}if(restored!==source)fail('complete inverse differs');return result;
+}
+function apply(source,edits,language='optional-json-parse:retain-canonical-call-and-error-discard-context',repository='router-core:adopt-qualified-optional-json-decode'){
  const before=transportConcreteSyntaxSource(source,{language:'Rust'});edits.sort((a,b)=>a.span[0]-b.span[0]);for(let at=0;at<edits.length;at++)if(source.slice(...edits[at].span)!==edits[at].expected||at&&edits[at-1].span[1]>edits[at].span[0])fail('overlapping or changed exact edit');
- const stage=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'optional-json-parse:retain-canonical-call-and-error-discard-context',edits:[]}],repositoryRules:[{id:'router-core:adopt-qualified-optional-json-decode',edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(stage.value)),mapping=[];let old=0,current=0;
- for(const edit of edits){if(old<edit.span[0]){const size=edit.span[0]-old;mapping.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+size]});current+=size;}mapping.push({kind:'substitution',before:edit.span,after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});old=edit.span[1];current+=edit.replacement.length;}if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});
- let restored=after.source;for(const part of [...mapping].reverse())if(part.kind==='substitution'){if(restored.slice(...part.after)!==part.replacement)fail('inverse replacement differs');restored=restored.slice(0,part.after[0])+part.expected+restored.slice(part.after[1]);}if(restored!==source)fail('complete inverse differs');return {before:{source,sha256:hash(source),meta:before.meta},after:{source:after.source,sha256:hash(after.source),meta:after.meta},edits,mapping,trace:stage.trace,executableAdmission:false};
+ const stage=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:language,edits:[]}],repositoryRules:[{id:repository,edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(stage.value));
+ return {before:{source,sha256:hash(source),meta:before.meta},after:{source:after.source,sha256:hash(after.source),meta:after.meta},edits,mapping:mapping(source,after.source,edits),trace:stage.trace,executableAdmission:false};
+}
+function normalize(source,edits,roots){
+ const first=apply(source,edits);if(!roots.length)return first;roots.sort((a,b)=>a.span[0]-b.span[0]);
+ const offset=point=>{let delta=0;for(const edit of first.edits){if(point<=edit.span[0])break;if(point<edit.span[1])fail('tail boundary crosses adoption edit');delta+=edit.replacement.length-(edit.span[1]-edit.span[0]);}return point+delta;};
+ const normalized=roots.map(root=>{const span=root.span.map(offset),question=offset(root.questionEnd),original=first.after.source.slice(...span),line=first.after.source.lastIndexOf('\n',span[0]-1)+1,indent=first.after.source.slice(line,span[0]).match(/^\s*/u)[0],replacement='{\n'+indent+'    let '+root.name+' = '+first.after.source.slice(span[0],question)+';\n'+indent+'    '+root.name+first.after.source.slice(question,span[1])+'\n'+indent+'}';return {span,expected:original,replacement};});
+ const second=apply(first.after.source,normalized,'optional-json-parse:retain-complete-tail-and-borrowed-parameter-root','router-core:bind-owned-json-full-tail-root');
+ const combined=first.edits.filter(edit=>!roots.some(root=>edit.span[0]>=root.span[0]&&edit.span[1]<=root.span[1])).concat(roots.map((root,index)=>({span:root.span,expected:source.slice(...root.span),replacement:normalized[index].replacement}))).sort((a,b)=>a.span[0]-b.span[0]);
+ return {before:first.before,after:second.after,edits:combined,mapping:mapping(source,second.after.source,combined),trace:[...first.trace,...second.trace],stages:[{name:'canonical-native-alias',...first},{name:'lexical-json-full-tail',...second}],tailRoots:roots,executableAdmission:false};
 }
 export function proposeCoreJsonParseCorpus(options={}){
  const supplied=record(options,['entry','files','compilationProfile','dependencyInputs'],4),{entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE,dependencyInputs:requestedDependencies}=supplied.value,captured=record(input,null,1024),files=captured.value,profile=compilationProfile(inputProfile),dependencies=record(requestedDependencies,['manifest','lock'],2),dependencyInputs=dependencies.value;let units=0;
@@ -87,8 +118,8 @@ export function proposeCoreJsonParseCorpus(options={}){
  const context=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs}),proposals=[],skipped=[],after={...files};
  for(const file of Object.keys(files)){
   if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>!module.sourceView.modulePath.length);if(origins.length!==1){skipped.push({file,reason:'unique complete physical source origin required'});continue;}
-  const edits=[],selections=[],preserved=[];for(const module of modules){const scoped=scope(module,graph.modules,profile,context);for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;const condition=itemConfiguration(item.tokens,profile);if(module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(attribute=>!inert.has(attribute.name))||scoped.problems.length){preserved.push({function:item.name,span:[item.start,item.end],reason:'configuration, producer or decode owner uncertainty',problems:scoped.problems});continue;}const selected=select(files[file],item,module);edits.push(...selected.edits);selections.push(...selected.selections.map(row=>({...row,imports:scoped.imports})));preserved.push(...selected.preserved);}}
-  const proposal=apply(files[file],edits);proposals.push({file,...proposal,selections,preserved});after[file]=proposal.after.source;
+  const edits=[],selections=[],roots=[],preserved=[];for(const module of modules){const scoped=scope(module,graph.modules,profile,context);for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;const condition=itemConfiguration(item.tokens,profile);if(module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(attribute=>!inert.has(attribute.name))||scoped.problems.length){preserved.push({function:item.name,span:[item.start,item.end],reason:'configuration, producer or decode owner uncertainty',problems:scoped.problems});continue;}const selected=select(files[file],item,module,scoped.identifiers);edits.push(...selected.edits);roots.push(...selected.roots);selections.push(...selected.selections.map(row=>({...row,imports:scoped.imports})));preserved.push(...selected.preserved);}}
+  const proposal=normalize(files[file],edits,roots);proposals.push({file,...proposal,selections,preserved});after[file]=proposal.after.source;
  }
  const producerEffects=finishCoreAdoptionProducerContext(context),result={schema:'router-owned-optional-json-parse-corpus-v1',entry,compilationProfile:profile,dependencyInputs:{...dependencyInputs},inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),before:{...files},after,proposals,skipped,...(producerEffects?{producerEffects}:{}),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},numericSourceProfile:numericProfile,migrationSemantics:'explicit maintainer-owned optional canonical decode adoption; only existing discarded-error contexts; no general Deserialize/Error Drop or old parser capability; fresh checked semantics required',executableAdmission:false};
  dependencies.verify();captured.verify();supplied.verify();return result;
