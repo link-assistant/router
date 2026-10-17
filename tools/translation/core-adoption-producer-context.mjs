@@ -9,6 +9,8 @@ import {originalSourceModuleItems} from './source-module-views.mjs';
 import {resolveModuleBindings,originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
+import {createHash} from 'node:crypto';
+import {registeredDeriveHelperSource} from './derive-helper-namespaces.mjs';
 const contexts=new WeakMap(),fail=message=>{throw new TypeError('Core adoption producer context: '+message);};
 const same=(a,b)=>a.length===b.length&&a.every((name,at)=>name===b[at]);
 function dependencySources(input){
@@ -63,6 +65,59 @@ export function finishCoreAdoptionProducerContext(context){
   selections.push({file:row.module.file,module:row.module.path,sourceSha256:row.input.sourceSha256,span:row.input.span,itemSha256:row.input.itemSha256,inputDigest:row.input.digest,languageRule:facts.rule.id,completeInvocationDigest:facts.certificate.digest,retainedAlternatives:facts.alternatives.map(alternative=>({invocation:alternative.invocation,kind:alternative.kind??null,rootKinds:alternative.roots?.map(root=>root.kind)??null})),enclosingTypeBindings:[],enclosingUsableValueBindings:[],runtimeAuthority:false,generatedImplBehavior:false});
  }
  return {schema:'core-adoption-original-producer-effects-v1',dependencyInputs:deriveDependencyOriginalInputs(state.dependencies),dependenciesDigest:state.dependencies.digest,compilationProfile:state.profile,deriveDiagnostics:state.derive.diagnostics,bangDiagnostics:state.bang.diagnostics,selections,runtimeAuthority:false,generatedImplBehavior:false};
+}
+
+// Migration candidates only. This consumes this operation's private original
+// binding/derive context; accepting a role never checks or lowers its body.
+export function createCoreAdoptionNonTraitImportSelector({modules,compilationProfile:inputProfile,context=null}){
+ const state=context===null?null:stateOf(context),profile=compilationProfile(inputProfile);
+ if(state&&(JSON.stringify(state.profile)!==JSON.stringify(profile)||state.modules.length!==modules.length||state.modules.some((module,at)=>module!==modules[at])))fail('nontrait context source/profile differs');
+ const hash=source=>createHash('sha256').update(source).digest('hex'),nonTraits=new Set(['struct','enum','union','fn','const','static','mod']);
+ const inert=new Set(['cfg','doc','must_use','allow','warn','deny','forbid','expect','inline','cold','deprecated','track_caller']);
+ const origins=modules.map(module=>({module,file:module.file,path:[...module.path],source:module.source,view:module.sourceView,condition:module.configurationCondition,profile:JSON.stringify(module.compilationProfile)}));
+ const verify=()=>{if(modules.length!==origins.length||modules.some((module,at)=>module!==origins[at].module)||origins.some(row=>row.module.file!==row.file||row.module.source!==row.source||row.module.sourceView!==row.view||row.module.configurationCondition!==row.condition||JSON.stringify(row.module.compilationProfile)!==row.profile||!same(row.module.path,row.path)))fail('nontrait original graph changed');};
+ const scopeFor=module=>state.binding.scopes.filter(scope=>scope.file===module.file&&same(scope.path,module.path));
+ function attributesClosed(module,item,condition){
+  return condition.attributes.every(attribute=>{
+   if(inert.has(attribute.name))return true;
+   if(attribute.name==='derive')return coreAdoptionDeriveAttributeClosed(context,module.source,module.file,module.sourceView?.modulePath??module.path,item,attribute);
+   // Container helpers must belong to this exact privately captured derive
+   // invocation and its original registration, not to their written name.
+   const input=deriveFootprintAt(state.derive,module,item),actual=input?.attributes.find(row=>row.position==='container'&&row.helpers&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end&&JSON.stringify(row.tokens)===JSON.stringify(attribute.tokens));
+   if(!actual||input.dimensions.attributeMacroComplete!==true)return false;
+   const derives=condition.attributes.filter(row=>row.name==='derive');
+   return derives.length>0&&derives.every(row=>coreAdoptionDeriveAttributeClosed(context,module.source,module.file,module.sourceView?.modulePath??module.path,item,row))&&input.owners.some(owner=>registeredDeriveHelperSource({dependencies:state.dependencies,target:owner.target,helperName:actual.name}));
+  });
+ }
+ function closedOwner(module){
+  const scopes=scopeFor(module);if(scopes.length!==1||scopes[0].configurationCondition!=='active'||scopes[0].unresolvedTypeScope)return false;
+  return originalSourceModuleItems(module).every(item=>{
+   if(item.comment)return true;const condition=itemConfiguration(item.tokens,profile);if(condition.status==='inactive')return true;
+   if(condition.status!=='active'||!attributesClosed(module,item,condition))return false;
+   if(item.term==='use')try{return originalUseDeclarationLeaves(item,module.path).every(leaf=>!leaf.glob);}catch{return false;}
+   const header=originalDeclarationHeader(item,module.path);
+   return !!header&&header.kind===item.term||item.term==='impl';
+  });
+ }
+ const select=(module,item,leaf)=>{
+  verify();if(!state||!origins.some(row=>row.module===module)||module.configurationCondition!=='active'||leaf.glob||leaf.name==='_')return null;
+  const originals=originalSourceModuleItems(module).filter(row=>row.term==='use'&&row.start===item.start&&row.end===item.end);
+  if(originals.length!==1||JSON.stringify(originals[0].tokens)!==JSON.stringify(item.tokens)||!originalUseDeclarationLeaves(originals[0],module.path).some(row=>row.name===leaf.name&&same(row.segments,leaf.segments)))return null;
+  const scopes=scopeFor(module);if(scopes.length!==1)return null;
+  const bindings=scopes[0].bindings.filter(row=>row.name===leaf.name&&row.source===module.file&&row.span?.start===item.start&&row.span?.end===item.end);
+  if(!bindings.length||bindings.some(row=>row.status!=='resolved'||!nonTraits.has(row.kind)||row.target?.[0]!=='crate'||!row.declaration))return null;
+  const roles=[];
+  for(const binding of bindings){
+   const declaration=binding.declaration,owners=modules.filter(owner=>owner.file===declaration.source&&same(['crate',...owner.path,binding.target.at(-1)],binding.target));
+   if(owners.length!==1||!closedOwner(owners[0]))return null;const owner=owners[0];
+   const declared=originalSourceModuleItems(owner).filter(row=>row.start===declaration.span.start&&row.end===declaration.span.end&&row.term===binding.kind&&originalDeclarationHeader(row,owner.path)?.name===binding.target.at(-1));
+   if(declared.length!==1)return null;const selected=declared[0],condition=itemConfiguration(selected.tokens,profile);
+   if(condition.status!=='active'||!attributesClosed(owner,selected,condition))return null;
+   roles.push({kind:binding.kind,namespace:binding.namespace,target:[...binding.target],declaration:{file:owner.file,module:[...owner.path],sourceSha256:hash(owner.source),span:[selected.start,selected.end],original:owner.source.slice(selected.start,selected.end)},binding});
+  }
+  verify();return {kind:'original-producer-closed-nontrait-candidate',import:{file:module.file,sourceSha256:hash(module.source),span:[item.start,item.end],segments:[...leaf.segments]},roles,namespaceComplete:false,originalDispatchProved:false,executableAdmission:false};
+ };
+ return {select,verify};
 }
 
 // A per-operation source candidate selector. The existing binder owns the crate

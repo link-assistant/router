@@ -9,6 +9,7 @@ import {createLiteralTextImportRoles,verifyLiteralTextImportRoles} from './liter
 import {captureSourceModuleViews,originalSourceModuleItems} from './source-module-views.mjs';
 import {originalUseDeclarationLeaves,originalDeclarationHeader} from './module-bindings.mjs';
 import {resolveModuleGraph} from './project.mjs';
+import {planTrackedModulePath,isTrackedModulePathPlan} from './module-paths.mjs';
 import {PRODUCTION_PROFILE,itemConfiguration,compilationProfile as normalizeProfile} from './cfg-profile.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE} from './router-core-source-data.mjs';
@@ -38,7 +39,21 @@ function conditionalModule(item,condition,path){
   if(keyword<0||tail.length!==3||tail[0].text!=='mod'||tail[1].text!==header.name||tail[2].text!==';')return null;
   return {module:[...path],name:header.name,span:[item.start,item.end],declarationTokens:rows.map(row=>({text:row.text,type:row.type,start:row.start,end:row.end})),configuration:condition,predicateSelected:false,alternatives:[{present:false},{present:true,kind:'mod',name:header.name}],role:'noncompeting-external-module-declaration',semanticAdmission:false};
 }
-function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRoles=[],conditionalDeclarations=[],producerContext=null){
+// Reissue the existing private tracked-path plan from the current complete
+// graph. This closes only a module-file selection, never an arbitrary attribute.
+function trackedPathSelector(graph,files){
+  const paths=Object.keys(files);
+  return (module,item,attribute)=>{
+    if(item.term!=='mod'||attribute.name!=='path'||!graph.modules.includes(module))return false;
+    let plan;try{plan=planTrackedModulePath(module,item,paths);}catch(error){if(!(error instanceof TypeError))throw error;return false;}
+    if(!isTrackedModulePathPlan(plan)||plan.explicitPath===null||!plan.attributes.some(row=>row.name==='path'&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end&&JSON.stringify(row.tokens)===JSON.stringify(attribute.tokens)))return false;
+    const childPath=[...module.path,plan.name],target=plan.inline?module.file:plan.target;
+    const children=graph.modules.filter(child=>child.file===target&&child.source===files[target]&&child.configurationCondition==='active'&&child.path.length===childPath.length&&child.path.every((name,at)=>name===childPath[at]));
+    const edges=graph.edges.filter(edge=>edge.from===module.file&&edge.to===target&&edge.module.length===childPath.length&&edge.module.every((name,at)=>name===childPath[at])&&edge.pathSelection?.span.start===item.start&&edge.pathSelection?.span.end===item.end);
+    return children.length===1&&edges.length===1&&JSON.stringify(edges[0].pathSelection)===JSON.stringify(plan);
+  };
+}
+function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRoles=[],conditionalDeclarations=[],producerContext=null,pathFor=null){
   const problems=[];
   for(const item of items){
     const condition=itemConfiguration(item.tokens,profile);if(condition.status==='inactive'||item.comment)continue;
@@ -47,7 +62,7 @@ function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRole
       if(rows[at].text==='r'&&rows[at+1]?.text==='#'&&rows[at+2]?.type==='ident'&&rows[at].end===rows[at+1].start&&rows[at+1].end===rows[at+2].start){names.push(rows[at+2].text);at+=2;}else names.push(rows[at].text);
     }
     if(condition.status!=='active'){const alternative=conditionalModule(item,condition,path);if(alternative)conditionalDeclarations.push(alternative);else problems.push('unknown declaration configuration');}
-    if(condition.attributes.some(attribute=>!inert.has(attribute.name)&&attribute.name!=='cfg'&&!(item.term==='mod'&&attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')&&!(module&&coreAdoptionDeriveAttributeClosed(producerContext,module.source,module.file,module.sourceView?.modulePath??module.path,item,attribute))))problems.push('unresolved declaration attribute producer');
+    if(condition.attributes.some(attribute=>!inert.has(attribute.name)&&attribute.name!=='cfg'&&!(item.term==='mod'&&attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')&&!(module&&pathFor?.(module,item,attribute))&&!(module&&coreAdoptionDeriveAttributeClosed(producerContext,module.source,module.file,module.sourceView?.modulePath??module.path,item,attribute))))problems.push('unresolved declaration attribute producer');
     if(item.term==='use'){
       try{for(const leaf of originalUseDeclarationLeaves(item,path)){
         if(leaf.glob||['ToString','ToOwned','String','_','std','core'].includes(leaf.name)||leaf.segments.some(name=>['ToString','ToOwned'].includes(name)))problems.push('conversion trait/type import or glob competition');
@@ -123,11 +138,11 @@ function functionSelection(source,item,path,profile,problems,borrowedProblems=[]
   if(bare)edits.push({span:[result[1].start,result[1].end],expected:'String',replacement:textType});
   return {edits,selection:{...record,conversions:selected,ownedReturnAlias:bare,bodyAdmission:false},skipped};
 }
-function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile),externalConditions=[],producerContext=null,externalBorrowedProblems=[]){
+function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile),externalConditions=[],producerContext=null,externalBorrowedProblems=[],pathFor=null){
   const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[],importRoles=[],conditionalDeclarations=[...externalConditions];
   for(const module of modules){
     const ancestors=modules.filter(parent=>parent!==module&&parent.path.length<module.path.length&&parent.path.every((word,at)=>word===module.path[at]));
-    const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,parent,roleFor,importRoles,conditionalDeclarations,producerContext)),...scopeProblems(items,profile,module.path,module,roleFor,importRoles,conditionalDeclarations,producerContext)];
+    const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,parent,roleFor,importRoles,conditionalDeclarations,producerContext,pathFor)),...scopeProblems(items,profile,module.path,module,roleFor,importRoles,conditionalDeclarations,producerContext,pathFor)];
     if(module.configurationCondition!=='active'){skipped.push({module:module.path,reason:'module configuration is not active'});continue;}
     for(const item of items){if(item.term!=='fn')continue;let result;try{result=functionSelection(source,item,module.path,profile,problems,[...externalBorrowedProblems,...ancestors.flatMap(parent=>borrowedScopeProblems(originalSourceModuleItems(parent),profile,parent.path)),...borrowedScopeProblems(items,profile,module.path)]);}catch(error){skipped.push({span:[item.start,item.end],reason:error.message});continue;}if(!result)continue;edits.push(...result.edits);skipped.push(...result.skipped);if(result.selection)selections.push(result.selection);}
   }
@@ -158,8 +173,8 @@ export function proposeCoreLiteralTextCorpus(options={}){
   const roots=graph.modules.filter(module=>same(module,[])),cores=graph.modules.filter(module=>same(module,['translation_core'])),leaves=graph.modules.filter(module=>same(module,['translation_core','primitives']));
   if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!=='src/translation_core.rs'||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!=='src/translation_core/primitives.rs'||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('complete actual owned facade/primitive source routes required');
   const edge=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edge.length!==1||roots[0].source.slice(edge[0].start,edge[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core edge required');
-  const after={...files},proposals=[],skipped=[],roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs),producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});
-  for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),conditions=[],problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor,[],conditions,producerContext)),borrowedProblems=ancestors.flatMap(module=>borrowedScopeProblems(originalSourceModuleItems(module),profile,module.path)),result=propose(files[file],modules,profile,problems,roleFor,conditions,producerContext,borrowedProblems);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
+  const after={...files},proposals=[],skipped=[],producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs}),roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs,producerContext),pathFor=trackedPathSelector(graph,files);
+  for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),conditions=[],problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor,[],conditions,producerContext,pathFor)),borrowedProblems=ancestors.flatMap(module=>borrowedScopeProblems(originalSourceModuleItems(module),profile,module.path)),result=propose(files[file],modules,profile,problems,roleFor,conditions,producerContext,borrowedProblems,pathFor);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
   const result={schema:'router-owned-literal-text-corpus-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
   const producerEffects=finishCoreAdoptionProducerContext(producerContext);if(producerEffects)result.producerEffects=producerEffects;
   verifyLiteralTextImportRoles(roleFor);const currentDependency=Object.getOwnPropertyDescriptor(options,'dependencyInputs');

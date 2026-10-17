@@ -1,0 +1,6 @@
+### Fixed
+
+- Literal and borrowed-text adoption can classify original local nontrait imports using the same operation's private, source-derived producer/binding context. Complete source views, declaration spans, current configuration, known derive output confinement and original helper registrations remain required; copied candidates grant no compiler admission. The old source-role fallback is retained.
+- The literal scanner reissues the existing tracked module-path plan for an exact `#[path]` declaration and joins its original child source/edge. This closes only that already-proved file selection, not arbitrary attributes, unknown configuration, trait imports or globs.
+
+The actual 458 full-corpus proposal and independent 468 reviewer passed, but selected only one old literal and no new borrowed conversions. That result motivates this source repair; it is not a repository coverage gain. Complete login, canonical-provider and remote parents are retained by the new whole eight-case fixture, including unresolved standard/external dependencies. All old test files and deadlines are unchanged. This batch and strict emitted-target controls are unrun locally; the integration coordinator owns receiving checks and subsequent full-corpus measurement. Local Rust execution and publication remain blocked by the existing constraints.

@@ -15,6 +15,7 @@ import {stablePublicTypeCandidates,stablePublicReexportCandidates,originalPublic
 import {originalNonTraitImportRole} from './extensions/primitive-import-roles.mjs';
 import {originalCorePreludeRootSource} from './extensions/core-prelude-source.mjs';
 import {itemConfiguration,evaluateConfiguration} from './cfg-profile.mjs';
+import {createCoreAdoptionNonTraitImportSelector} from './core-adoption-producer-context.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const same=(a,b)=>a.length===b.length&&a.every((name,at)=>name===b[at]);
 const nonTraits=new Set(['struct','enum','union','fn','const','static','mod']);
@@ -129,10 +130,10 @@ function externalRoles(inputs){
   }
   return segments=>{if(segments[0]!==names[0][1]||segments.length<2)return null;const role=declaration(segments.slice(1))??(segments.length===2?macro(segments[1]):null);return role?{...role,dependency:{manifestSha256:proof.manifestSha256,lockSha256:proof.lockSha256,profileSha256:proof.profileSha256,archiveSha256:entry.sha256,package:entry.name,version:entry.version},cargo:{file:'Cargo.toml',sourceSha256:cargo.sha256,crateRoot:root},namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;};
 }
-export function createLiteralTextImportRoles(modules,profile,dependencyInputs=undefined){
+export function createLiteralTextImportRoles(modules,profile,dependencyInputs=undefined,producerContext=null){
   // Resolver tables are created here from genuine complete graph views. No
   // caller-supplied bindings, public flags or copied candidate is accepted.
-  const captured=dependencySnapshot(dependencyInputs),external=externalRoles(captured.value),evidence=resolveModuleBindings({modules,compilationProfile:profile}),facts={modules,evidence};captured.verify();
+  const captured=dependencySnapshot(dependencyInputs),external=externalRoles(captured.value),evidence=resolveModuleBindings({modules,compilationProfile:profile}),facts={modules,evidence},original=createCoreAdoptionNonTraitImportSelector({modules,compilationProfile:profile,context:producerContext});captured.verify();
   const roleFor=(module,item,leaf)=>{
     if(leaf.glob||leaf.name==='_')return null;
     const exact=originalSourceModuleItems(module).find(row=>row===item||row.start===item.start&&row.end===item.end&&row.term==='use');
@@ -155,7 +156,8 @@ export function createLiteralTextImportRoles(modules,profile,dependencyInputs=un
       });
       if(originalBindings.every(Boolean))role={kind:'original-graph-nontrait-candidate',originalBindings};
     }
-    captured.verify();return role?{schema:'owned-literal-import-role-candidate-v1',name:leaf.name,segments:[...leaf.segments],import:{file:module.file,sourceSha256:hash(module.source),span:[item.start,item.end]},role,namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;
+    if(!role)role=original.select(module,item,leaf);
+    captured.verify();original.verify();return role?{schema:'owned-literal-import-role-candidate-v1',name:leaf.name,segments:[...leaf.segments],import:{file:module.file,sourceSha256:hash(module.source),span:[item.start,item.end]},role,namespaceComplete:false,originalDispatchProved:false,executableAdmission:false}:null;
   };
-  roleChecks.set(roleFor,captured.verify);return roleFor;
+  roleChecks.set(roleFor,()=>{captured.verify();original.verify();});return roleFor;
 }
