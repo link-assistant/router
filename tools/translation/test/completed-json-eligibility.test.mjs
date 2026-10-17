@@ -24,6 +24,13 @@ function copy(source,origin,path,redirect=new Map()){
  const changes=[];for(const match of source.matchAll(/^import\b[^\n]*?\bfrom\s+(['"])([^'"\n]+)\1;/gmu)){if(!match[2].startsWith('.'))continue;const original=match[1]+match[2]+match[1],start=match.index+match[0].lastIndexOf(original),resolved=new URL(match[2],origin).href;changes.push({start,end:start+original.length,original,replacement:json(redirect.get(resolved)??resolved)});}
  assert.equal([...source.matchAll(/^import\b/gmu)].length,[...source.matchAll(/^import\b[^\n]*?\bfrom\s+(['"])([^'"\n]+)\1;/gmu)].length);
  for(const match of source.matchAll(/\bimport\.meta\.url\b/gu))changes.push({start:match.index,end:match.index+match[0].length,original:match[0],replacement:json(origin.href)});
+ // Current consumers additionally import a composer. The historical module's
+ // native stringify operation is the baseline for this compatibility export;
+ // retain the appended bridge as an explicit reversible source relocation.
+ if(origin.href===new URL('private-frozen-json.mjs',base).href&&source===originals.get('tools/translation/private-frozen-json.mjs')){
+  const replacement='\nexport function createPrivateFrozenJsonComposer(){return value=>JSON.stringify(value); }\n';
+  changes.push({start:source.length,end:source.length,original:'',replacement,kind:'historical-native-stringify-composer-export'});
+ }
  changes.sort((a,b)=>a.start-b.start);let result='',cursor=0;const relocations=[];
  for(const change of changes){assert.ok(change.start>=cursor);assert.equal(source.slice(change.start,change.end),change.original);result+=source.slice(cursor,change.start);const copiedStart=result.length;result+=change.replacement;relocations.push({...change,copiedStart,copiedEnd:result.length});cursor=change.end;}result+=source.slice(cursor);
  let reversed=result;for(const row of [...relocations].reverse()){assert.equal(reversed.slice(row.copiedStart,row.copiedEnd),row.replacement);reversed=reversed.slice(0,row.copiedStart)+row.original+reversed.slice(row.copiedEnd);}assert.equal(reversed,source);
