@@ -14,7 +14,7 @@ import {alphaTree,retargetCheckedCallback,requirePinnedStandardBody} from './ext
 import {captureBorrowedLayouts,requireBorrowedLayouts} from './extensions/standard-borrowed-body.mjs';
 import {renameFunction} from './vendor/meta-language/translation/ir.js';
 import {coerce} from './checked-coercions.mjs';
-import {validateOwnedJsonFlow} from './owned-json-flow.mjs';
+import {validateOwnedJsonFlow,describeOwnedJsonDifference} from './owned-json-flow.mjs';
 import {SOURCE_STR,sourceShared} from './extensions/source-contract-types.mjs';
 import {matchesParserFacts} from './matches-macro-context.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
@@ -235,6 +235,7 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
        if(node.k!=='routerConstObligation'||node.sourceFeature!=='router-core-format')return null;const frame=current(entry.fullName).receipt,record=frame.formatted?.find(record=>isSameSemantic(node,record.value)&&same(record.syntax,record.original));if(!record)return null;
        let body=node.k==='routerConstObligation'?node.value:node;const values=[];while(body?.k==='let'){values.push(body.value);body=body.body;}return values;
       },
+      diagnostic:node=>node?.k==='routerConstObligation'&&node.sourceFeature==='router-core-format'?{join:'format-record',function:fact.entry.fullName.slice(0,120),candidates:(fact.receipt.formatted??[]).slice(0,3).map(record=>({difference:describeOwnedJsonDifference(alphaTree(node),alphaTree(record.value))}))}:null,
       standard:(node)=>{if(node.k==='routerPinnedStandardBody'){requirePinnedStandardBody(node,Parser,{Checker,program});return node.body;}if(node.k==='routerPinnedOptionCallbackBody')return requirePinnedOptionCallbackBody(node,program,Parser,Checker);if(node.k==='routerOriginalMappedBody')return requireOriginalMappedBody(node,program,Parser,Checker);return null;},
       tail:(node,entry)=>{current(entry.fullName);return tailOrigin(node)&&node.sourceSharedPatternProof.functionTail===true;},
      },
@@ -324,7 +325,7 @@ export function prepareOriginalJsonProjectionEmission(emitter,entry,Checker){
   const context=projectionContexts.get(node.compatibilityCore?.sourceProjectionKey),fn=context?.functionContext;
   if(!context||!fn||node.id!==context.id||entry.fullName!==fn.name&&entry.fullName!=='rp_'+Buffer.from(fn.name).toString('hex'))throw new Error('Owned JSON projection lacks its actual source function');
   const expected=retargetCheckedCallback(context.call,emitter.program),wanted=retargetCheckedCallback(fn,emitter.program);
-  if(!isSameSemantic(node,expected)||!isSameSemantic({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source function or checked call changed');
+  if(!isSameSemantic(node,expected)||!isSameSemantic({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source function or checked call changed [comparison '+JSON.stringify({function:entry.fullName.slice(0,120),id:node.id,call:describeOwnedJsonDifference(alphaTree(node),alphaTree(expected)),body:describeOwnedJsonDifference(alphaTree({params:entry.params,ret:entry.ret,body:entry.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body}))})+']');
   requireBorrowedLayouts(context.layouts,checker,emitter.program,retargetCheckedCallback(context.roots,emitter.program));
   for(const dependency of fn.dependencies??[]){const wanted=retargetCheckedCallback(dependency,emitter.program),name=emitter.program.declarations.has(dependency.name)?dependency.name:'rp_'+Buffer.from(dependency.name).toString('hex'),actual=emitter.program.declarations.get(name);if(!actual||!isSameSemantic({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper changed from its actual checked source body');}
   requireOriginalPrimitiveTryFromChecker(checker);

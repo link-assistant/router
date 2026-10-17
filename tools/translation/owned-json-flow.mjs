@@ -15,8 +15,26 @@ function union(left,right){const result=copy(left);for(const [key,roots]of right
 function prefix(value,part){return {loans:new Map([...value.loans].map(([key,roots])=>[path([part,...JSON.parse(key)]),new Set(roots)])),tags:null};}
 function project(value,part){return {loans:new Map([...value.loans].filter(([key])=>JSON.parse(key)[0]===part).map(([key,roots])=>[path(JSON.parse(key).slice(1)),new Set(roots)])),tags:null};}
 const roots=value=>new Set([...value.loans.values()].flatMap(value=>[...value]));
+// Failure diagnostics only: never used to accept a type, call or source body.
+// The existing guard has already failed before this bounded traversal runs.
+export function describeOwnedJsonDifference(actual,expected,{propertyOrder=false}={}){
+ let remaining=4096;
+ const preview=value=>value===undefined?'undefined':value===null?'null':typeof value==='string'?value.slice(0,120):typeof value==='object'?(Array.isArray(value)?'array':'object'):String(value);
+ const visit=(a,b,path,depth)=>{
+  if(--remaining<0||depth>64)return {path,reason:'diagnostic bound'};
+  if(a===b)return null;
+  if(!a||!b||typeof a!=='object'||typeof b!=='object')return {path,actual:preview(a),expected:preview(b)};
+  if(Array.isArray(a)!==Array.isArray(b))return {path,actual:preview(a),expected:preview(b)};
+  const names=Object.keys(a),wanted=Object.keys(b);if(!propertyOrder){names.sort();wanted.sort();}
+  if(names.length!==wanted.length)return {path,reason:'own key count',actual:names.length,expected:wanted.length};
+  for(let at=0;at<names.length;at++)if(names[at]!==wanted[at])return {path,reason:'own key',actual:names[at].slice(0,120),expected:wanted[at].slice(0,120)};
+  for(const name of names){const found=visit(a[name],b[name],path+'/'+name.slice(0,48),depth+1);if(found)return found;}
+  return null;
+ };
+ return visit(actual,expected,'',0);
+}
 export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,closedErrors=null}) {
- const refuse=(detail,node)=>{throw unsupported('owned JSON flow',detail,node?.span??entry.span);};
+ const refuse=(detail,node,comparison=null)=>{const diagnostic=comparison??closedErrors?.diagnostic?.(node);throw unsupported('owned JSON flow',detail+(diagnostic?' [comparison '+JSON.stringify(diagnostic)+']':''),node?.span??entry.span);};
  let cells=100000,callCount=0,selectedOptionTypes=null;
  const ownedText=type=>type?.kind==='string'&&!type.rustReference&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&[undefined,'ownership-bearing String type','owned String source type','owned String formatting'].includes(type.patternOwnershipRefusal);
  const resultOwner=(type,node)=>{const result=canonicalResult(checker,type,entry.modulePath,node?.span??entry.span,false);if(!result||!ownedText(result.error))refuse('requires actual canonical Result with owned standard String error',node);return result;};
@@ -120,7 +138,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   const slot=state.names.get(node.name);if(!slot)refuse('unbound lexical variable',node);
   if(state.callbackCaptures?.has(slot)&&(linear(slot.kind)||slot.mutable))refuse('collection callback cannot capture owned or mutable state',node);
   if(state.available.get(slot)!==true)refuse('use after move or possibly moved value: '+slot.name,node);
-  if(!sameType(node.type,slot.type)||slot.localLoanType&&JSON.stringify(node.type)!==JSON.stringify(slot.localLoanType)||!slot.localLoanType&&mode!=='borrow'&&domain(node.type,node)!==slot.kind)refuse('lexical binding source ownership changed',node);
+  if(!sameType(node.type,slot.type)||slot.localLoanType&&JSON.stringify(node.type)!==JSON.stringify(slot.localLoanType)||!slot.localLoanType&&mode!=='borrow'&&domain(node.type,node)!==slot.kind)refuse('lexical binding source ownership changed',node,{join:'lexical-variable',name:node.name.slice(0,120),mode,slotKind:slot.kind,type:describeOwnedJsonDifference(node.type,slot.type),localLoan:slot.localLoanType?describeOwnedJsonDifference(node.type,slot.localLoanType,{propertyOrder:true}):null});
   const value=copy(state.values.get(slot));ensureRoots(value,state,node);
   if(mode==='borrow'&&slot.kind==='json')value.loans.set(path([]),new Set([slot]));
   if(mode!=='borrow'&&linear(slot.kind)){if(live(state,slot))refuse('moving an owned JSON root with a live lexical loan: '+slot.name,node);state.available.set(slot,false);}
