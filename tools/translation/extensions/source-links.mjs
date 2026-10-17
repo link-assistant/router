@@ -2,7 +2,7 @@
 // a caller-supplied file checksum. Private contexts are not semantic IR nodes.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
-import {originalFlatTokenIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
+import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {capturedRustTokenSource} from './lexical.mjs';
 
@@ -176,6 +176,7 @@ function verifyRelocatedSyntax(entry,semantic,offset) {
 // Keep exact object correspondence for selected owned calls and let-else. This
 // eligibility scan grants nothing and retains no parser for old declarations.
 function rangeSyntaxOrigin(parser,syntax,semantic,offset){
+  if(!originalDataFreezeIntrinsicsUnchanged())return null;
   let nodes=null,cells=200000;const path=[];
   const visit=(original,actual,depth=0)=>{
     if(--cells<0||depth>160||!original||typeof original!=='object'||!actual||typeof actual!=='object'||types.isProxy(original)||types.isProxy(actual))return;

@@ -1,0 +1,3 @@
+The optional source-syntax association scan now requires its existing fresh native reflection and collection domain before inspecting any node. Changed reflection or collection hooks retain the complete original token/body/source path and callback order, while qualified owned JSON, f64 and let-else associations keep their private joins. No digest, source check or owner check is skipped.
+
+The original flat-token whole-file callback controls remain unchanged. This source repair follows a reproduced 113-versus-8 descriptor callback divergence; Node/Bun receiving is pending. No local Rust execution.
