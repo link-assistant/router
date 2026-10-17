@@ -2,7 +2,6 @@
 // a caller-supplied file checksum. Private contexts are not semantic IR nodes.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
-import {tryCopyDigestMetadata} from '../native-metadata-copy.mjs';
 import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {capturedRustTokenSource} from './lexical.mjs';
@@ -26,10 +25,6 @@ export function snapshotMap(value) {
 }
 // Descriptor inspection precedes value access, including non-enumerable and
 // symbol properties. This never calls getters or caller-defined Map methods.
-function digestMetadataCopy(value) {
-  const trial=tryCopyDigestMetadata(value);
-  return trial===null?copyMetadata(value):trial.value;
-}
 export function copyMetadata(value,{cells=200000,bytes=4194304,preserveKeyOrder=false}={},depth=0,active=new Set(),budget=null) {
   budget??={cells,bytes};if(--budget.cells<0||depth>160)fail('metadata budget exhausted');
   if(value===null||value===undefined||typeof value==='boolean'||typeof value==='bigint')return value;
@@ -55,7 +50,7 @@ export function copyMetadata(value,{cells=200000,bytes=4194304,preserveKeyOrder=
   active.delete(value);return result;
 }
 export function metadataDigest(value) {
-  return hash(JSON.stringify(digestMetadataCopy(value),(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item));
+  return hash(JSON.stringify(copyMetadata(value),(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item));
 }
 function freeze(value){if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
 const signature=entry=>({name:entry.name,params:entry.params??[],ret:entry.ret??null,constant:Boolean(entry.constant),constFunction:Boolean(entry.constFunction),async:Boolean(entry.async),...(Object.hasOwn(entry,'sourceLifetimeParameters')?{sourceLifetimeParameters:ownData(entry,'sourceLifetimeParameters')}:{})});

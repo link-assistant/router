@@ -2,7 +2,7 @@
 // The existing native-only gate intentionally retains Node's JS byteLength
 // fallback; no function-text recognition or additional bootstrap is used here.
 import {types} from 'node:util';
-import {originalFlatTokenIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalFlatTokenIntrinsicsUnchanged} from '../../original-json-intrinsics.mjs';
 
 export function tryCopyDigestMetadata(value) {
   if(!originalFlatTokenIntrinsicsUnchanged())return null;

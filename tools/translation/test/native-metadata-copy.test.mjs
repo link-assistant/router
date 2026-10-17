@@ -9,7 +9,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash,Hash} from 'node:crypto';
 import {types} from 'node:util';
 import {copyMetadata,metadataDigest,linkParsedFile,linkedSourceContext,bindCheckedSourceLinks} from '../extensions/source-links.mjs';
-import {tryCopyDigestMetadata} from '../native-metadata-copy.mjs';
+import {tryCopyDigestMetadata} from './fixtures/native-metadata-copy-candidate.mjs';
 import {originalFlatTokenIntrinsicsUnchanged,originalJsonIntrinsicsUnchanged,originalNamespaceTraversalIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,originalPrivateParserIngressUnchanged,originalPrivateParserCommonIntrinsicsUnchanged,originalPrivateParserNumericCommonIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 import {HostRustParser,parseRust,checkProgram} from '../extensions/host-contracts.mjs';
 import {tokenizeRust} from '../extensions/lexical.mjs';
