@@ -74,7 +74,7 @@ const functions=new WeakMap();
 export function prepareOriginalSourceFrames(emitter,entry){
   const found=nodes(entry.body);if(!found.length)return null;
   for(const node of found){const frame=node.k==='routerOriginalStandardFrame',proof=frame?node.sourceFrameProof:node.originalLoanProof,state=(frame?frames:loans).get(proof?.key),value=frame?node.body:node.value;
-    if(!state||metadataDigest(proof)!==metadataDigest(state.proof)||metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,emitter.program))||metadataDigest(alphaTree(value))!==metadataDigest(alphaTree(retargetCheckedCallback(frame?state.body:state.value,emitter.program))))throw new Error('Original standard frame/loan changed or lacks private source authority');
+    let failed='private-state';if(!state||(failed='proof',metadataDigest(proof)!==metadataDigest(state.proof))||(failed='type',metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,emitter.program)))||(failed='body',metadataDigest(alphaTree(value))!==metadataDigest(alphaTree(retargetCheckedCallback(frame?state.body:state.value,emitter.program)))))throw new Error('Original standard frame/loan changed or lacks private source authority [join '+failed+']');
   }
   const previous=functions.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());functions.set(emitter,nodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));
   return ()=>{if(previous)functions.set(emitter,previous);else functions.delete(emitter);};
