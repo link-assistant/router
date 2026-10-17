@@ -2,7 +2,7 @@ import nodeTest from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
-import {Hash} from 'node:crypto';
+import {Hash,createHash} from 'node:crypto';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {createDeriveFootprintContext,deriveFootprintExternalModules} from '../derive-footprints.mjs';
 import {createDeriveBangContext} from '../derive-bang-context.mjs';
@@ -161,7 +161,7 @@ test('unknown sibling producers imports and cfg alternatives remain unresolved',
  }
 });
 
-test('opaque bodies types helpers additional derives and generated attributes cannot borrow empty effects',()=>{
+test('opaque bodies types helpers additional derives and generated attributes cannot borrow empty effects',async()=>{
  const rows=[],states=[];
  function observe(source,rootSource='mod model;',label=String(rows.length+1).padStart(2,'0')){
   const observed={label,source,rootSource,action:'proveDeriveEmptyEnclosingEffect(context,deriveContext,module,item)',setupCompleted:false,token:null,error:null,actual:null,factsError:null};
@@ -188,9 +188,47 @@ test('opaque bodies types helpers additional derives and generated attributes ca
   retain('07-complete-'+observed.label,observed);
  }
  retain('07-no-opaque-associated-or-generated-effects',{rows});
- // Preserve the original refusal obligation for every initial action. A setup
+ // All eight current initial native actions and their full facts stay first.
+ // Replay the closed historical issuer graph with genuine current interfaces;
+ // this is not historical bootstrap or Hash callback-schedule equivalence.
+ const digest=value=>createHash('sha256').update(value).digest('hex'),fixtureText=read('tools/translation/test/fixtures/derive-payload-before-196.json');
+ assert.equal(Buffer.byteLength(fixtureText),141090);assert.equal(digest(fixtureText),'751e59d5d2d36027775a7b500bdb9010c84aa027f23e0eb26b4a24466c5a8e27');
+ const fixture=JSON.parse(fixtureText),loaded=new Map(),urls=new Map(),copies=[],currentSourcePins=[];
+ assert.equal(fixture.schema,'closed-original-payload-effect-before-196-v1');assert.equal(fixture.modules.length,6);assert.deepEqual(fixture.loadOrder,fixture.modules.map(row=>row.path));
+ const actualTargets=new Set(fixture.modules.flatMap(row=>row.imports.filter(edge=>edge.kind==='current-genuine-interface'&&!edge.target.startsWith('node:')).map(edge=>edge.target)));
+ for(const path of actualTargets){const pin=fixture.currentGenuineInterfaces.find(row=>row.path===path);assert.ok(pin,'complete current interface '+path);const source=read(path);assert.equal(Buffer.byteLength(source),pin.bytes);assert.equal(digest(source),pin.sha256);currentSourcePins.push({path,source,sha256:pin.sha256});}
+ assert.equal(digest(fixture.oldProfile.source),fixture.oldProfile.sha256);assert.equal(Buffer.byteLength(fixture.oldProfile.source),fixture.oldProfile.bytes);
+ const oldManifest=JSON.parse(fixture.oldProfile.source),currentManifest=JSON.parse(read(fixture.oldProfile.path)),profileJoins=[];
+ assert.equal(oldManifest.sources.length,36);for(const old of oldManifest.sources){const matches=currentManifest.sources.filter(row=>row.path===old.path);assert.equal(matches.length,1);assert.deepEqual(matches[0],old);profileJoins.push({old,current:matches[0]});}
+ for(const row of fixture.modules){
+  assert.equal(Buffer.byteLength(row.source),row.bytes);assert.equal(digest(row.source),row.sha256);assert.equal(row.source.includes('import.meta'),false);
+  const imports=[...row.source.matchAll(/^import[^\n]*?\bfrom\s+(['"])([^'"\n]+)\1;/gmu)];assert.equal(imports.length,row.imports.length);const changes=[];
+  for(let index=0;index<row.imports.length;index++){
+   const edge=row.imports[index],actual=imports[index],quoted=actual[1]+actual[2]+actual[1],at=actual.index+actual[0].lastIndexOf(quoted);assert.equal(actual[2],edge.specifier);assert.deepEqual(edge.span,[at,at+quoted.length]);assert.equal(row.source.slice(...edge.span),edge.expected);
+   if(!edge.specifier.startsWith('.'))continue;
+   const target=fixture.modules.some(item=>item.path===edge.target)?urls.get(edge.target):new URL(edge.target,repository).href;assert.equal(typeof target,'string','closed earlier historical/current import '+edge.target);
+   changes.push({start:edge.span[0],end:edge.span[1],expected:edge.expected,replacement:JSON.stringify(target),target:edge.target});
+  }
+  let copied=row.source;for(const edit of [...changes].reverse()){assert.equal(copied.slice(edit.start,edit.end),edit.expected);copied=copied.slice(0,edit.start)+edit.replacement+copied.slice(edit.end);}
+  let shift=0;for(const edit of changes){edit.copiedStart=edit.start+shift;edit.copiedEnd=edit.copiedStart+edit.replacement.length;shift+=edit.replacement.length-edit.expected.length;}
+  let inverse=copied;for(const edit of [...changes].reverse()){assert.equal(inverse.slice(edit.copiedStart,edit.copiedEnd),edit.replacement);inverse=inverse.slice(0,edit.copiedStart)+edit.expected+inverse.slice(edit.copiedEnd);}assert.equal(inverse,row.source);
+  const url='data:text/javascript;base64,'+Buffer.from(copied).toString('base64');copies.push({path:row.path,original:row.source,copied,changes,inverse});urls.set(row.path,url);loaded.set(row.path,await import(url));
+ }
+ const selected=states[1],observed=rows[1],row=selected.row,oldBang=loaded.get('tools/translation/derive-bang-context.mjs'),oldEffects=loaded.get('tools/translation/derive-output-effects.mjs'),oldContext=oldBang.createDeriveBangContext({deriveContext:row.deriveContext});let oldToken=null,oldError=null;
+ try{oldToken=oldEffects.proveDeriveEmptyEnclosingEffect(oldContext,row.deriveContext,row.module,row.item);}catch(error){oldError=error;}
+ const historical={fixture,profileJoins,currentSourcePins,copies,row,context:oldContext,token:oldToken,error:oldError&&{name:oldError.name,message:oldError.message},scope:fixture.boundary};retain('07-546-complete-historical-private-refusal',historical);
+ assert.equal(oldToken,null);assert.ok(oldError instanceof TypeError);assert.equal(oldError.message,'Original derive output has unresolved actual owners');
+ const historicalRow=oldContext.certificates.find(value=>value.source===row.module.file&&value.span.start===row.item.start&&value.span.end===row.item.end);assert.ok(historicalRow);assert.equal(historicalRow.selectedOwners.length,0);assert.equal(historicalRow.residualOwners.length,1);assert.deepEqual(historicalRow.residualOwners[0].path,['Clone']);assert.equal(historicalRow.residualOwners[0].reason,'Builtin data enum payload or explicit discriminant remains unproved');
+ assert.equal(selected.setupError,null);assert.equal(selected.error,null);assert.ok(selected.token);assert.equal(observed.factsError,null);const actual=observed.actual;assert.equal(actual.alternatives.length,1);const alternative=actual.alternatives[0],output=alternative.originalCompleteOutput,route=output.route;
+ const {validateBuiltinCloneAstOutput}=await import('../builtin-clone-ast-route.mjs');retain('07-546-complete-current-payload-positive',{row,token:selected.token,actual,alternative,output,route});
+ assert.equal(alternative.kind,'ItemKind::Impl');assert.equal(output.sink.kind,'ItemKind::Impl');assert.equal(validateBuiltinCloneAstOutput(route,route.branches),true);
+ assert.deepEqual(route.branches.map(value=>value.feature),['has_derive_copy=false','has_derive_copy=true']);assert.deepEqual(route.typedSource.variants.map(value=>[value.name,value.style,value.fields.length]),[['Value','tuple',1],['None','unit',0]]);
+ const full=route.branches[0].output.items[0].body.statements[0].expr;assert.equal(full.constructor.variant.name,'Match');assert.equal(full.slots.arms.length,2);assert.deepEqual(full.slots.arms.map(arm=>arm.pat.slots.path.segments),[['Payload','Value'],['Payload','None']]);assert.equal(route.branches[1].output.items[0].body.typeOnlyStatements.candidates.length,1);
+ for(const key of ['namespaceAuthority','copyAuthority','noDropAuthority','constAuthority','generatedImplBehavior'])assert.equal(route[key],false,key);assert.equal(actual.runtimeAuthority,false);assert.equal(output.proof.generatedImplBehavior,false);assert.equal(actual.certificate.dimensions.typeNamespaceComplete,false);assert.equal(actual.certificate.dimensions.valueNamespaceComplete,false);assert.deepEqual(actual.enclosingTypeBindings,[]);assert.deepEqual(actual.enclosingUsableValueBindings,[]);
+ // Preserve the exact seven other initial TypeError obligations. A setup
  // exception cannot substitute for the action's actual expected TypeError.
  for(let index=0;index<states.length;index++){
+  if(index===1)continue; // The exact payload subject retains its historical refusal above and current namespace-only positive.
   const state=states[index];assert.equal(state.setupError,null,rows[index].label+' original setup');
   assert.throws(()=>{if(state.error)throw state.error;return state.token;},TypeError,rows[index].label+' original effect');
  }
