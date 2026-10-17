@@ -161,10 +161,60 @@ export function createPrivateFrozenJsonComposer(){
    for(let at=0;at<length;at++){const name=names[at],field=descriptor(value,name);if(!field||!own(field,'value')||!field.enumerable)return null;fields[at]={name,value:field.value};}
    apply(setAdd,active,[value]);const children=[];
    for(let at=0;at<fields.length;at++){const field=fields[at],child=inspect(field.value,depth+1,field.name,substrate&&array);if(!child){apply(setDelete,active,[value]);return null;}children[at]={name:field.name,child};}
-   apply(setDelete,active,[value]);return {kind:array?2:3,children};
+   apply(setDelete,active,[value]);return {kind:array?2:3,children,substrate:array&&substrate&&apply(frozenField.value,Object,[value])?value:null};
   }
   let plan;try{plan=inspect(value,0,null);}catch{return JSON.stringify(value);}
   if(!plan)return JSON.stringify(value);
+  // Choose byte granularity only after the WHOLE logical preflight succeeded.
+  // These per-call work counters retain no size/owner facts and cannot admit
+  // anything the original cell, depth, descriptor or output checks refused.
+  let measureCells=CELLS,measureText=COMPOSITION_UNITS;
+  const entryUnits=(ENTRY_BYTES-128)/2;
+  function quotedUnits(value,limit){
+   if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;let units=2;
+   for(let at=0;at<value.length;at++){
+    const char=value[at];
+    if(char==='"'||char==='\\')units+=2;
+    else if(char<='\u001f')units+=char==='\b'||char==='\f'||char==='\n'||char==='\r'||char==='\t'?2:6;
+    else if(char>='\ud800'&&char<='\udbff'){const low=at+1<value.length?value[at+1]:'';if(low>='\udc00'&&low<='\udfff'){units+=2;at++;}else units+=6;}
+    else units+=char>='\udc00'&&char<='\udfff'?6:1;
+    if(units>limit)return -1;
+   }return units;
+  }
+  function scalarUnits(value,limit){
+   if(typeof value==='string')return quotedUnits(value,limit);
+   const units=value===undefined?4:apply(compositionStringify,compositionReceiver,[value]).length;return units<=limit?units:-1;
+  }
+  function frozenUnits(value,limit,depth){
+   if(--measureCells<0||depth>DEPTH||limit<0)return -1;
+   if(value===null||typeof value!=='object')return scalarUnits(value,limit);
+   const array=isArray(value),names=keys(value);let length=names.length,units=2,count=0;
+   if(array){const field=descriptor(value,'length');if(!field||!own(field,'value')||names.length!==field.value+1||names[names.length-1]!=='length')return -1;length=field.value;}
+   // Keep the full key census before descriptors, even on already checked data.
+   for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON'||array&&at<length&&names[at]!==''+at)return -1;
+   for(let at=0;at<length;at++){
+    const name=names[at],field=descriptor(value,name);if(!field||!own(field,'value')||!field.enumerable)return -1;
+    if(!array&&field.value===undefined)continue;
+    if(count++)units++;if(!array){const quoted=quotedUnits(name,limit-units-1);if(quoted<0)return -1;units+=quoted+1;}
+    const child=frozenUnits(field.value,limit-units,depth+1);if(child<0)return -1;units+=child;
+   }return units<=limit?units:-1;
+  }
+  function planUnits(node,limit,depth){
+   if(node.kind===1)return frozenUnits(node.value,limit,depth);
+   if(--measureCells<0||depth>DEPTH||limit<0)return -1;
+   if(node.kind===0)return scalarUnits(node.value,limit);
+   let units=2;for(let at=0;at<node.children.length;at++){
+    const row=node.children[at];if(at)units++;if(node.kind===3){const quoted=quotedUnits(row.name,limit-units-1);if(quoted<0)return -1;units+=quoted+1;}
+    const child=planUnits(row.child,limit-units,depth+1);if(child<0)return -1;units+=child;
+   }return units<=limit?units:-1;
+  }
+  function granularity(node,depth){
+   if(node.kind<2)return node;
+   if(node.substrate&&planUnits(node,entryUnits,depth)>=0)return {kind:1,value:node.substrate};
+   for(let at=0;at<node.children.length;at++)node.children[at].child=granularity(node.children[at].child,depth+1);
+   return node;
+  }
+  try{plan=granularity(plan,0);}catch{return JSON.stringify(value);}
   const pieces=[];let units=0,overflow=false;
   function append(text){units+=text.length;if(units>COMPOSITION_UNITS){overflow=true;return;}pieces[pieces.length]=text;}
   function emit(node){
