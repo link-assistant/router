@@ -2,6 +2,7 @@
 // replace the independent current source/type/borrow/semantic checks.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
+import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 import {readFileSync,mkdirSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -28,7 +29,7 @@ const jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDep
 const nativeJson=JSON.stringify,integer=(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value;
 let vectors=[];
 const retain=(kind,value)=>{vectors.push({kind,value});return value;};
-const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{const output=process.env.ROUTER_JSON_READER_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,Buffer.from(name).toString('hex')+'.json'),nativeJson({name,vectors},integer)+'\n');}}});
+const test=(name,run)=>testCase(name,{timeout:60_000},async()=>{vectors=[];try{await run();}finally{const output=process.env.ROUTER_JSON_READER_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeJsonTextGzip(join(output,Buffer.from(name).toString('hex')+'.json.gz'),nativeJson({name,vectors},integer));}}});
 const files=(source,extra={})=>({'src/lib.rs':'pub mod translation_core;\n'+source,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,...extra});
 const project=input=>retain('complete-independent-project',translateProject({entry:'src/lib.rs',paths:Object.keys(input),readSource:path=>input[path],jsonMacroDependencies,deriveDependencies,cargoManifest:dependencyInputs.manifest,compilationProfile:PRODUCTION_PROFILE}));
 const has=(result,name)=>result.meta.executable.some(row=>row.name===name);
