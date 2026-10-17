@@ -7,13 +7,13 @@ import {translateProject} from '../project.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {writeJsonGzip} from '../../evidence/write-json-gzip.mjs';
-import {staticSourceAssociatedContext} from './real-source-fixtures.mjs';
+import {staticSourceAssociatedContext,staticSourceAssociatedTextData} from './real-source-fixtures.mjs';
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const fail=message=>{throw new TypeError('Associated original source data: '+message);};
 export function associatedOriginalInputs(id){return staticSourceAssociatedContext(id);}
 export function associatedOriginalSourceReader(id){
  let context;
- return path=>{context??=associatedOriginalInputs(id);if(!context.association.parents.some(row=>row.path===path))fail('path is outside the explicit old parent association');return context.source(path);};
+ return path=>{context??=staticSourceAssociatedTextData(id);if(!context.association.parents.some(row=>row.path===path))fail('path is outside the explicit old parent association');return context.source(path);};
 }
 export function associatedOriginalFileReader(id){
  const source=associatedOriginalSourceReader(id);
@@ -43,7 +43,7 @@ function associatedSourceProjection(sources){
  return path=>{if(!Object.hasOwn(sources,path))fail('path is outside the projected original parents/Cargo');return sources[path];};
 }
 export function associatedOriginalParentInputs(id){
- const context=associatedOriginalInputs(id),sources=Object.create(null);
+ const context=staticSourceAssociatedTextData(id),sources=Object.create(null);
  for(const path of [...context.association.parents.map(row=>row.path),'Cargo.toml','Cargo.lock']){
   if(Object.hasOwn(sources,path))fail('duplicate projected original path');
   sources[path]=context.source(path);

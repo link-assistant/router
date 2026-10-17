@@ -425,3 +425,38 @@ export function decodeStaticSourceStorage(raw,index){
  const lineage=stored.payload.lineage.map(stage=>({...stage,files:stage.files.map(row=>decodeLineageRow(row,sources))}));
  return {...stored.payload,lineage,sources};
 }
+
+/** Separate source-text TEST DATA projection, not the complete storage decoder.
+ * The caller must authenticate the whole stored bytes to its actual Git source.
+ * No canonical document, logical-payload digest or compiler proof is validated
+ * or returned here. Existing complete encode/decode APIs remain unchanged. */
+export function decodeStaticSourceTextData(raw,index){
+ assert(Buffer.isBuffer(raw)&&raw.length<=MAX,'bounded stored text-data bytes required');
+ let payload,restored;
+ if(!Object.hasOwn(index,'storage')){
+  payload=JSON.parse(text(raw));
+  assert(sameKeys(payload,logicalKeys)&&payload.schema===index.schema&&record(payload.sources)&&Array.isArray(payload.lineage),'complete legacy text-data payload');
+  restored=payload.sources;
+ }else{
+  const descriptor=index.storage;
+  assert(sameKeys(descriptor,storageKeys)&&descriptor.schema===storageSchema&&descriptor.codec===SCHEMA&&safe(descriptor.logicalRawBytes)&&descriptor.logicalRawBytes>=0&&descriptor.logicalRawBytes<=MAX&&sourceID(descriptor.logicalRawSha256),'exact text-data storage descriptor');
+  const stored=JSON.parse(text(raw));
+  assert(sameKeys(stored,containerKeys)&&json(Object.keys(stored))===json(containerKeys)&&stored.schema===SCHEMA&&stored.logicalRawBytes===descriptor.logicalRawBytes&&stored.logicalRawSha256===descriptor.logicalRawSha256,'complete text-data container join');
+  payload=stored.payload;
+  assert(sameKeys(payload,logicalKeys)&&payload.schema===index.schema&&record(payload.sources)&&Array.isArray(payload.lineage),'complete stored text-data payload');
+  // Source deltas depend on complete source/lineage equations, not canonical
+  // column tables. Do not materialize or grant authority to unreturned CSTs.
+  restored=decodeSourceStrings(payload.sources,payload.lineage);
+ }
+ const rows=Object.entries(restored);assert(rows.length<=MAX_SOURCE_ROWS,'complete text-data source census bound');let total=0;
+ const sources=Object.fromEntries(rows.map(([id,row])=>{
+  assert(validSource(id,row)&&Buffer.from(row.source,'utf8').toString('utf8')===row.source&&typeof row.gitBlob==='string'&&/^[a-f0-9]{40}$/.test(row.gitBlob),'complete text-data source UTF8/hash/length required');
+  total+=row.bytes;assert(total<=MAX_SOURCE,'complete text-data source byte bound');
+  return [id,{source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}];
+ }));
+ const lineage=payload.lineage.map(stage=>{
+  assert(record(stage)&&Array.isArray(stage.files),'complete text-data lineage stage');
+  return {...stage,files:stage.files.map(row=>Object.hasOwn(index,'storage')?decodeLineageRow(row,sources):row)};
+ });
+ return {schema:'router-static-source-text-projection-v1',bundle:{schema:payload.schema,cases:payload.cases,authority:payload.authority,profiles:payload.profiles,current:payload.current,sources,lineage},validation:{canonicalDocuments:false,logicalPayloadDigest:false,compilerAuthority:false}};
+}
