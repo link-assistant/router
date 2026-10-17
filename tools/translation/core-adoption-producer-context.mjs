@@ -6,7 +6,7 @@ import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintSourceCont
 import {createDeriveBangContext} from './derive-bang-context.mjs';
 import {proveDeriveEmptyEnclosingEffect,deriveEmptyEnclosingEffectFacts} from './derive-output-effects.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
-import {resolveModuleBindings} from './module-bindings.mjs';
+import {resolveModuleBindings,originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';
 import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {compilationProfile,itemConfiguration} from './cfg-profile.mjs';
 const contexts=new WeakMap(),fail=message=>{throw new TypeError('Core adoption producer context: '+message);};
@@ -63,4 +63,41 @@ export function finishCoreAdoptionProducerContext(context){
   selections.push({file:row.module.file,module:row.module.path,sourceSha256:row.input.sourceSha256,span:row.input.span,itemSha256:row.input.itemSha256,inputDigest:row.input.digest,languageRule:facts.rule.id,completeInvocationDigest:facts.certificate.digest,retainedAlternatives:facts.alternatives.map(alternative=>({invocation:alternative.invocation,kind:alternative.kind??null,rootKinds:alternative.roots?.map(root=>root.kind)??null})),enclosingTypeBindings:[],enclosingUsableValueBindings:[],runtimeAuthority:false,generatedImplBehavior:false});
  }
  return {schema:'core-adoption-original-producer-effects-v1',dependencyInputs:deriveDependencyOriginalInputs(state.dependencies),dependenciesDigest:state.dependencies.digest,compilationProfile:state.profile,deriveDiagnostics:state.derive.diagnostics,bangDiagnostics:state.bang.diagnostics,selections,runtimeAuthority:false,generatedImplBehavior:false};
+}
+
+// A per-operation source candidate selector. The existing binder owns the crate
+// identity; this function cannot issue type, trait, borrow or runtime authority.
+export function createCoreAdoptionSelfAliasSelector({modules,compilationProfile:inputProfile,context=null}){
+ const profile=compilationProfile(inputProfile),state=context===null?null:stateOf(context);
+ if(state&&(JSON.stringify(state.profile)!==JSON.stringify(profile)||state.modules.length!==modules.length||state.modules.some((module,at)=>module!==modules[at])))fail('self-alias context source/profile differs');
+ const binding=state?.binding??resolveModuleBindings({modules,compilationProfile:profile}),scopes=binding.scopes;
+ const origins=modules.map(module=>({module,file:module.file,path:[...module.path],source:module.source,view:module.sourceView,condition:module.configurationCondition}));
+ const reserved=new Set('as break const continue crate else enum extern false fn for if impl in let loop match mod move mut pub ref return self Self static struct super trait true type unsafe use where while async await dyn abstract become box do final macro override priv typeof unsized virtual yield try gen _ std core serde_json Option Some None Result Ok Err String str usize Vec Value Map translation_core Json Maybe Outcome Text Str'.split(' '));
+ const pathEqual=(a,b)=>Array.isArray(a)&&same(a,b),scopeFor=module=>scopes.filter(scope=>scope.file===module.file&&pathEqual(scope.path,module.path));
+ return (module,item,consumer=module)=>{
+  if(origins.some(row=>row.module.file!==row.file||row.module.source!==row.source||row.module.sourceView!==row.view||row.module.configurationCondition!==row.condition||!pathEqual(row.module.path,row.path)))fail('self-alias original graph changed');
+  if(!origins.some(row=>row.module===module)||!origins.some(row=>row.module===consumer)||module.configurationCondition!=='active'||consumer.configurationCondition!=='active')return false;
+  const actual=originalSourceModuleItems(module).filter(row=>row.start===item.start&&row.end===item.end&&row.term===item.term);
+  if(actual.length!==1||JSON.stringify(actual[0].tokens)!==JSON.stringify(item.tokens)||module.source.slice(item.start,item.end)!==module.source.slice(actual[0].start,actual[0].end))return false;
+  const condition=itemConfiguration(actual[0].tokens,profile);if(condition.status!=='active'||condition.attributes.length)return false;
+  const tokens=actual[0].tokens.filter(token=>token.type!=='comment');let at=0;
+  if(tokens[at]?.text==='pub'){at++;if(tokens[at]?.text==='('){let depth=0;do{if(tokens[at]?.text==='(')depth++;if(tokens[at]?.text===')')depth--;at++;}while(depth&&at<tokens.length);if(depth)return false;}}
+  const tail=tokens.slice(at),alias=tail[4];
+  if(tail.length!==6||tail[0].text!=='extern'||tail[1].text!=='crate'||tail[2].text!=='self'||tail[3].text!=='as'||tail[5].text!==';'||alias?.type!=='ident'||!/^(?:\p{ID_Start}|_)\p{ID_Continue}*$/u.test(alias.text)||reserved.has(alias.text)||alias.rawIdentifier)return false;
+  const own=scopeFor(module);if(own.length!==1||own[0].configurationCondition!=='active')return false;
+  const selected=own[0].bindings.filter(row=>row.namespace==='type'&&row.name===alias.text);
+  const original=row=>row.status==='resolved'&&row.externCrateSelf===true&&row.externCrateBinding===true&&pathEqual(row.target,['crate'])&&row.source===module.file&&row.span?.start===item.start&&row.span?.end===item.end&&row.declaration?.source===module.file&&row.declaration?.span?.start===item.start&&row.declaration?.span?.end===item.end;
+  if(selected.length!==1||!original(selected[0]))return false;
+  // Neither a second declaration/import nor a higher-priority child binding
+  // may silently replace the exact self alias while its ancestor is scanned.
+  for(const parent of modules.filter(parent=>parent.path.length<=consumer.path.length&&parent.path.every((name,at)=>consumer.path[at]===name))){
+   const scoped=scopeFor(parent);if(scoped.length!==1)return false;
+   if(scoped[0].bindings.some(row=>row.namespace==='type'&&row.name===alias.text&&!original(row)))return false;
+   for(const other of originalSourceModuleItems(parent)){if(other.comment||itemConfiguration(other.tokens,profile).status==='inactive'||parent===module&&other.start===item.start&&other.end===item.end)continue;
+    if(originalDeclarationHeader(other,parent.path)?.name===alias.text)return false;
+    if(other.term==='use')try{if(originalUseDeclarationLeaves(other,parent.path).some(leaf=>leaf.glob||leaf.name===alias.text))return false;}catch{return false;}
+   }
+  }
+  return true;
+ };
 }
