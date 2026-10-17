@@ -2,7 +2,7 @@
 // through ordinary tuple/match/string IR. There is no tagged-object deepEq.
 import {BOOL} from '../checked-types.mjs';
 import {metadataDigest} from './source-links.mjs';
-import {typeError} from '../vendor/meta-language/translation/diagnostics.js';
+import {typeError,TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 import {hasOriginalStandardCall,requireOriginalStandardCall} from './original-standard-calls.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './host-contracts.mjs';
 import {pinnedOptionPartialEqBody,parsePinnedBody} from './standard-body-source.mjs';
@@ -27,16 +27,28 @@ function contextualConstructor(checker,value,expected,path,span){
 export function checkOriginalOptionEquality(checker,node,env,path,Parser){
  if(node?.k!=='binary'||node.op!=='eq'||!hasOriginalStandardCall(checker,node))return null;
  requireOriginalPrimitiveTryFromChecker(checker);if(checker.language!=='Rust')return null;
+ let phase='candidate-types';
+ try{
  const leftKnown=knownOption(checker,node.left,env,path),rightKnown=knownOption(checker,node.right,env,path);
  // This is candidate discovery only. All constructor resolution remains in
  // the normal source checker, and no spelling or public shape grants a type.
  if(!leftKnown&&!rightKnown&&!constructorSyntax(node.left)&&!constructorSyntax(node.right))return null;
+ phase='source-call';
  requireOriginalStandardCall(checker,node);
+ phase='left-expression';
  const initialLeft=checker.expr(node.left,env,path,rightKnown??undefined,true),left=rightKnown?contextualConstructor(checker,initialLeft,rightKnown,path,node.span):initialLeft;if(!canonical(checker,left.type))return null;
+ phase='left-payload';
  const leftPayload=optionPayload(checker,left.type,path,node.span);if(leftPayload.owner!=='&str')return null;
- const right=contextualConstructor(checker,checker.expr(node.right,env,path,left.type,true),left.type,path,node.span);if(!canonical(checker,right.type)||optionPayload(checker,right.type,path,node.span).owner!=='&str')throw typeError('Original Option equality requires the same canonical borrowed-str specialization',node.span);
+ phase='right-expression';
+ const right=contextualConstructor(checker,checker.expr(node.right,env,path,left.type,true),left.type,path,node.span);
+ phase='right-payload';
+ if(!canonical(checker,right.type)||optionPayload(checker,right.type,path,node.span).owner!=='&str')throw typeError('Original Option equality requires the same canonical borrowed-str specialization',node.span);
+ phase='operand-joins';
  checker.expectedOwnership(right.type,left.type,path,node.span);checker.expectedPrimitiveIdentity(right.type,left.type,path,node.span);
+ phase='original-method';
  const selection=pinnedOptionPartialEqBody();originalOptionPartialEqSource(selection);const original=parsePinnedBody(Parser,selection),values=[left,right],previous=operandsByChecker.get(checker);operandsByChecker.set(checker,{caller:node,values,digests:values.map(value=>metadataDigest(value))});
+ phase='borrowed-body';
  try{const operands=values.map((value,index)=>originalStandardOperandLoan(checker,node,value,original,index)),checked=checkPinnedBorrowedMethod(checker,node,original,operands,BOOL,env);let body=checked.body;for(let index=checked.bindings.length-1;index>=0;index--)body={k:'let',name:checked.bindings[index].name,value:checked.bindings[index].value,body,type:BOOL,span:node.span};requireOriginalStandardCall(checker,node);return body;}
  finally{if(previous)operandsByChecker.set(checker,previous);else operandsByChecker.delete(checker);}
+ }catch(error){if(!(error instanceof TranslationError))throw error;throw new TranslationError(error.kind,error.reason+' [original Option equality: '+phase+']',error.span,error.details);}
 }

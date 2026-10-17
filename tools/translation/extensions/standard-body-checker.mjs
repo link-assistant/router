@@ -20,9 +20,9 @@ import {requireOriginalPrimitiveTryFromChecker} from './host-contracts.mjs';
 const OPTION_RESULT_RULE='rust.option.ok-or-else.original-body.v1';
 const EAGER_OPTION_RESULT_RULE='rust.option.ok-or.original-body.v1';
 
-const refuse=span=>{throw unsupported('pinned standard body owner','requires an actual by-value canonical Option with a checked scalar, borrowed str, or privately certified Copy nominal payload',span);};
+const refuse=(span,site)=>{throw unsupported('pinned standard body owner','requires an actual by-value canonical Option with a checked scalar, borrowed str, or privately certified Copy nominal payload [original Option payload: '+site+']',span);};
 function scalarOwner(type,span){
-  if(!type||type.rustReference||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse(span);
+  if(!type||type.rustReference||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse(span,'scalar-qualifiers');
   if(type.kind==='string'&&(type.rustSourceType||isDeepStrictEqual(type.rustStandardSignature,SOURCE_STR.rustStandardSignature)||type.rustBorrowLifetime?.kind==='static'&&type.rustBorrowLifetime.source==='string-literal')&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return '&str';
   if(type.kind==='bool'&&!type.rustOwnership)return 'bool';
   if(type.kind==='fixed'){
@@ -30,28 +30,28 @@ function scalarOwner(type,span){
     if(actual&&sameType(type,actual))return type.rustPrimitiveName;
   }
   if(type.kind==='float'&&type.rustPrimitiveName==='f64')return 'f64';
-  return refuse(span);
+  return refuse(span,'scalar-domain');
 }
 export function payloadOwner(checker,type,span,{allowShared=false,allowMove=false,allowNestedOptions=false,depth=0,budget={remaining:512}}={}){
   if(allowNestedOptions&&type?.kind==='data'&&checker.items.get(type.name)?.standardGeneric?.kind==='Option'){
-    if(depth>=32||--budget.remaining<0)refuse(span);
+    if(depth>=32||--budget.remaining<0)refuse(span,'nested-bound');
     return 'nested-option<'+optionPayload(checker,type,[],span,{allowShared,allowNestedOptions:true,depth:depth+1,budget}).owner+'>';
   }
   if(allowMove){const owner=originalMoveOwner(checker,type,span);if(owner)return owner;}
-  if(allowShared&&type?.rustReference){const identity=sharedReferenceCopyIdentity(type);if(!identity)refuse(span);return 'shared:'+identity;}
+  if(allowShared&&type?.rustReference){const identity=sharedReferenceCopyIdentity(type);if(!identity)refuse(span,'shared-reference-identity');return 'shared:'+identity;}
   if(type?.kind==='data'){checkedOptionNominal(checker,type,span);return 'nominal:'+type.name;}
   return scalarOwner(type,span);
 }
 export function optionPayload(checker,type,path,span,{allowShared=false,allowMove=false,allowNestedOptions=false,depth=0,budget={remaining:512}}={}){
-  if(type?.kind!=='data'||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse(span);
+  if(type?.kind!=='data'||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse(span,'option-qualifiers');
   const entry=checker.items.get(type.name),source=type.rustStandardGeneric;
-  if(entry?.k!=='data'||entry.fullName!==type.name||!Array.isArray(entry.modulePath)||entry.standardGeneric?.kind!=='Option'||entry.standardGeneric.arguments?.length!==1||source?.kind!=='Option'||source.arguments?.length!==1||entry.ctors?.length!==2)refuse(span);
+  if(entry?.k!=='data'||entry.fullName!==type.name||!Array.isArray(entry.modulePath)||entry.standardGeneric?.kind!=='Option'||entry.standardGeneric.arguments?.length!==1||source?.kind!=='Option'||source.arguments?.length!==1||entry.ctors?.length!==2)refuse(span,'option-owner-layout');
   const some=entry.ctors.filter(ctor=>ctor.name==='Some'),none=entry.ctors.filter(ctor=>ctor.name==='None');
-  if(some.length!==1||none.length!==1||some[0].fields?.length!==1||some[0].fields[0].name!=='field0'||none[0].fields?.length)refuse(span);
+  if(some.length!==1||none.length!==1||some[0].fields?.length!==1||some[0].fields[0].name!=='field0'||none[0].fields?.length)refuse(span,'option-constructors');
   const payload=checker.resolveType(source.arguments[0],entry.modulePath,span),owner=payloadOwner(checker,payload,span,{allowShared,allowMove,allowNestedOptions,depth,budget});
   for(const written of [entry.standardGeneric.arguments[0],some[0].fields[0].type]){
     const actual=checker.resolveType(written,entry.modulePath,span);
-    if(!sameType(payload,actual)||payloadOwner(checker,actual,span,{allowShared,allowMove,allowNestedOptions,depth,budget})!==owner)refuse(span);
+    if(!sameType(payload,actual)||payloadOwner(checker,actual,span,{allowShared,allowMove,allowNestedOptions,depth,budget})!==owner)refuse(span,'option-payload-layout');
     checker.expectedOwnership(actual,payload,path,span);checker.expectedPrimitiveIdentity(actual,payload,path,span);
   }
   return {payload,owner};
