@@ -373,10 +373,10 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
       return {k:'routerPrimitiveFloatCall',owner:[...owner],method:operation,args,span:span(first,c.peek())};
     }
     const fixedItem=owner.length===1&&fixed&&!this.builtinShadow(owner[0],path)&&INHERENT_FIXED_COPY.has(operation);
-    const stringItem=segments.length===2&&segments[0]==='str'&&['to_owned','trim','trim_start','trim_end'].includes(operation)&&!this.builtinShadow('str',path)&&this.resolveSourceNamespace(['str'],path,'type').join('::')==='str';
+    const stringItem=segments.length===2&&segments[0]==='str'&&['to_owned','trim','trim_start','trim_end','is_empty'].includes(operation)&&!this.builtinShadow('str',path)&&this.resolveSourceNamespace(['str'],path,'type').join('::')==='str';
     if((fixedItem||stringItem)&&!c.is('(',offset)&&!c.is('::',offset)) {
       for(let index=0;index<offset;index++)c.next();
-      return {k:'routerStandardFunctionItem',operation:segments.join('::'),method:operation,...(fixedItem?{ownerType:{...fixed,rustPrimitiveName:owner[0]}}:{}),sourceFunctionItem:{profile:fixedItem?'rust-1.89-primitive-inherent-function-item':operation==='to_owned'?'rust-1.89-str-to-owned-function-item':'rust-1.89-str-trim-function-item',path:resolved,span:span(first,c.peek())},span:span(first,c.peek())};
+      return {k:'routerStandardFunctionItem',operation:segments.join('::'),method:operation,...(fixedItem?{ownerType:{...fixed,rustPrimitiveName:owner[0]}}:{}),sourceFunctionItem:{profile:fixedItem?'rust-1.89-primitive-inherent-function-item':operation==='to_owned'?'rust-1.89-str-to-owned-function-item':operation==='is_empty'?'rust-1.89-str-is-empty-function-item':'rust-1.89-str-trim-function-item',path:resolved,span:span(first,c.peek())},span:span(first,c.peek())};
     }
     const constructor=resolved.at(-1),kind=this.registeredGenericKind(resolved.slice(0,-1),path,segments[0]);
     if(kind&&(kind==='Option'?['Some','None']:['Ok','Err']).includes(constructor)){
@@ -443,7 +443,8 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
       } else if(node.operation==='str::to_owned') {
         if(types.length!==1||types[0].kind!=='string'||types[0].rustReference||types[0].rustOwnership?.kind!=='borrowed'||types[0].rustOwnership.source!=='str')throw typeError('str::to_owned function item needs its actual borrowed str argument',node.span);
         body={k:'routerStringOwnership',operation:'to_owned',object:args[0],span:node.span};
-      } else if(['str::trim','str::trim_start','str::trim_end'].includes(node.operation)) {
+      } else if(['str::trim','str::trim_start','str::trim_end','str::is_empty'].includes(node.operation)) {
+        if(node.operation==='str::is_empty'&&node.sourceFunctionItem?.profile!=='rust-1.89-str-is-empty-function-item')throw typeError('str is_empty function item requires its actual standard source operation',node.span);
         if(types.length!==1)throw typeError('str trim function item needs one actual borrowed str argument',node.span);
         requireBorrowedString(types[0],node.span);
         body={k:'routerStringOperation',op:node.method,object:args[0],args:[],span:node.span};
