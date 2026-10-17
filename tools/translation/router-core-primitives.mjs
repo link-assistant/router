@@ -2,6 +2,7 @@
 // its library internals are intentionally outside translation. This adapter
 // creates the existing borrowed-text type only for the genuine qualified edge.
 import {STRING} from './checked-types.mjs';
+import {originalNamedSourceReferenceLifetime} from './extensions/named-lifetimes.mjs';
 import {ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_PRIMITIVES_SHA256} from './router-core-source-data.mjs';
 export {ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_PRIMITIVES_SHA256};
 import {matchesParserFacts} from './matches-macro-context.mjs';
@@ -30,8 +31,8 @@ function originalLeaf(state){
 
 // This consumes the complete reference. A bare STRING pointee would instead
 // enter the ordinary shared-String path and lose the str lifetime semantics.
-// Named binders are a separate parser capability; this first domain keeps
-// elided and explicit static references only, without guessing binder names.
+// Named binders come only from the actual current free-function parser frame;
+// their original identities remain distinct from elided and static references.
 export function parseRouterCoreStrReference(parser){
   const c=parser.cursor;
   if(!c.is('&'))return null;
@@ -41,7 +42,11 @@ export function parseRouterCoreStrReference(parser){
   if(!words.every((word,index)=>c.is(word,offset+index)))return null;
   if([0,2,4].some(index=>c.peek(offset+index).kind!=='identifier'))return null;
   const count=offset+words.length,last=c.peek(count-1),location=range(first,last);
-  if(explicitLifetime&&(lifetime!=='static'||c.peek(2).kind!=='identifier'||c.peek(1).end!==c.peek(2).start))throw unsupported('Router borrowed text lifetime','requires an elided or contiguous static reference; named binder integration remains separate',location);
+  const named=explicitLifetime&&lifetime!=='static';
+  if(named){
+    lifetime=originalNamedSourceReferenceLifetime(parser);
+    if(lifetime===null)throw unsupported('Router borrowed text lifetime','requires an actual declared lifetime in this original free function',location);
+  }else if(explicitLifetime&&(c.peek(2).kind!=='identifier'||c.peek(1).end!==c.peek(2).start))throw unsupported('Router borrowed text lifetime','requires an elided or contiguous static reference',location);
   if(c.is('<',count)||c.is('::',count))throw unsupported('Router borrowed text type','requires the complete nongeneric owned Str alias',location);
   const before=contract(()=>matchesParserFacts(parser),location),tokens=c.tokens;
   const proof=contract(()=>requireRouterCoreFacade(parser),location);
@@ -61,6 +66,7 @@ export function parseRouterCoreStrReference(parser){
     if(originalLeaf(before)!==leaf)fail();
     requireRouterCoreFacadeCurrent(parser,proof);
     if(matchesParserFacts(parser)!==before||parser.cursor!==c||c.tokens!==tokens||c.index!==start||leaf.sourceView!==view||leaf.source!==source||actual.some((token,index)=>tokens[start+index]!==token))fail();
+    if(named&&originalNamedSourceReferenceLifetime(parser)!==lifetime)fail();
   },location);
   c.index=start+count;return output.value;
 }

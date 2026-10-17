@@ -10,6 +10,7 @@ import {ROUTER_FORMATTING_FACADE_SOURCE,requireRouterCoreFacadeCurrent} from '..
 import {migrateCoreFormatting} from '../migrate-core-formatting.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {sourceItems} from '../rust-structure.mjs';
+import {originalNamedSourceReferenceLifetime} from '../extensions/named-lifetimes.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 
 const vectorRoot=process.env.ROUTER_CORE_PRIMITIVES_VECTOR_DIR;
@@ -77,6 +78,21 @@ test('static results and borrowed call boundaries retain actual lifetime origins
   const program=checked(result),fixed=program.declarations.get('fixed'),input=program.declarations.get('static_input');
   borrowed(fixed.ret,'static');borrowed(input.params[0].type,'static');assert.deepEqual(fixed.sourceLifetimeProof.returnOrigins,['static']);assert.equal(program.declarations.get('call').sourceLifetimeProof.outputs[0].identity,'input:0:[]');
   await targets(result,api=>{assert.equal(api.fixed(),'fixed');assert.equal(api.call('borrow'),'borrow');assert.equal(api.static_input('static'),'static');});
+  // These exact source strings were the two former named-owned-Str refusals.
+  const namedSources=[
+    `pub fn bad<'a>(value:&'a ${C})->&'a ${C}{value}`,
+    `pub fn bad<'elided>(value:&'elided ${C})->&'elided ${C}{value}`,
+  ];
+  for(const [index,source]of namedSources.entries()){
+    const lifetime=index===0?'named:a':'named:elided',named=project(source);
+    assert.equal(has(named,'bad'),true,source);
+    const entry=checked(named).declarations.get('bad');
+    borrowed(entry.params[0].type,lifetime);borrowed(entry.ret,lifetime);
+    assert.equal(entry.sourceLifetimeProof.outputs[0].identity,entry.sourceLifetimeProof.params[0][0].identity);
+    assert.equal(entry.sourceLifetimeParameters.names[0],lifetime.slice(6));
+    for(const type of [entry.params[0].type,entry.ret])for(const token of type.rustBorrowLifetime.tokens)assert.equal((rootSource+source).slice(token.span.start,token.span.end),token.value);
+    await targets(named,api=>{for(const value of ['', 'Ω猫😀', '\0\r\n'])assert.equal(api.bad(value),value);});
+  }
 });
 
 test('changed complete source and actual module routes cannot supply the owned contract',()=>{
@@ -98,6 +114,7 @@ test('changed complete source and actual module routes cannot supply the owned c
   const missing=project(good,{leaf:''});assert.equal(has(missing,'answer'),false);
   let reads=0;const fake=new Proxy({},{get(){reads++;throw new Error('fake parser read');}});
   assert.throws(()=>requireRouterCoreFacadeCurrent(fake,{trace:[]}),TypeError);assert.equal(reads,0);
+  assert.equal(originalNamedSourceReferenceLifetime(fake),null);assert.equal(reads,0);
 });
 
 test('unsupported lifetimes ownership and alias syntax preserve semantic refusals',()=>{
@@ -108,14 +125,26 @@ test('unsupported lifetimes ownership and alias syntax preserve semantic refusal
     `fn needs(value:${S})->u8{1} pub fn bad(value:${R})->u8{needs(value)}`,
     `pub fn bad(value:crate::translation_core::Text)->${S}{value.trim()}`,
     `pub fn bad(value:&mut ${C})->u8{1}`,
-    `pub fn bad<'a>(value:&'a ${C})->&'a ${C}{value}`,
-    `pub fn bad<'elided>(value:&'elided ${C})->&'elided ${C}{value}`,
+    `pub fn bad(value:&'a ${C})->u8{0}`,
+    `pub fn bad<'a>(value:&'b ${C})->u8{0}`,
+    `pub fn bad<'a>(value:&' a ${C})->u8{0}`,
+    `pub fn bad<'a>(value:&'/*split*/a ${C})->u8{0}`,
+    `fn earlier<'a>(value:&'a ${C})->&'a ${C}{value} pub fn bad(value:&'a ${C})->u8{0}`,
+    `pub fn bad<'a,'b>(first:&'a ${C},last:&'b ${C})->&'a ${C}{last}`,
+    `pub fn bad<'a>(value:&'a ${C})->&'static ${C}{value}`,
+    `pub fn bad<'a>(value:&'a mut ${C})->u8{0}`,
+    `pub fn bad<'a,'a>(value:&'a ${C})->u8{0}`,
+    `pub fn bad<'a0,'a1,'a2,'a3,'a4,'a5,'a6,'a7,'a8,'a9,'a10,'a11,'a12,'a13,'a14,'a15,'a16,'a17,'a18,'a19,'a20,'a21,'a22,'a23,'a24,'a25,'a26,'a27,'a28,'a29,'a30,'a31,'a32>(value:&'a0 ${C})->u8{0}`,
     `pub fn bad(value:${C})->u8{1}`,
     `pub fn bad(value:&crate::translation_core::Str<u8>)->u8{1}`,
     `pub fn bad(value:&crate::translation_core::Str::Other)->u8{1}`,
     `pub fn bad(value:&crate::translation_core::Unknown)->u8{1}`,
   ];
   for(const source of cases){const result=project(source);assert.equal(has(result,'bad'),false,source);assert.ok(result.meta.refused.some(item=>item.name==='bad'),source);}
+  const atBound=`pub fn bound<'a0,'a1,'a2,'a3,'a4,'a5,'a6,'a7,'a8,'a9,'a10,'a11,'a12,'a13,'a14,'a15,'a16,'a17,'a18,'a19,'a20,'a21,'a22,'a23,'a24,'a25,'a26,'a27,'a28,'a29,'a30,'a31>(value:&'a31 ${C})->&'a31 ${C}{value}`;
+  const bound=project(atBound);assert.equal(has(bound,'bound'),true);
+  const entry=checked(bound).declarations.get('bound');
+  assert.equal(entry.sourceLifetimeParameters.names.length,32);borrowed(entry.params[0].type,'named:a31');borrowed(entry.ret,'named:a31');
 });
 
 test('actual affected signatures adopt the owned core through full CST substitutions and inverse',async()=>{

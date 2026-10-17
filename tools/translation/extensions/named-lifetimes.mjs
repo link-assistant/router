@@ -26,7 +26,26 @@ function declarations(cursor) {
   const last=cursor.tokens[at];
   if(!last||!names.length)throw typeError('Lifetime parameter list requires actual source binders',first);
   tokens.push(last);
-  return {start:cursor.index+prefix+2,end:at+1,names,tokens,span:range(first,last)};
+  return {start:cursor.index+prefix+2,end:at+1,names,tokens,span:range(first,last),cursor,tokenArray:cursor.tokens,copies:tokens.map(tokenCopy)};
+}
+
+// Read the active original function binder without exposing its private frame.
+// The owned Str adapter calls this both before and after source/CST callbacks.
+export function originalNamedSourceReferenceLifetime(parser) {
+  const frame=frames.get(parser);
+  if(!frame)return null;
+  const c=parser.cursor;
+  if(c!==frame.cursor||c.tokens!==frame.tokenArray||frame.names.length<1||frame.names.length>32||frame.tokens.some((token,index)=>{
+    const copy=frame.copies[index];
+    return c.tokens[frame.start+index]!==token||token.kind!==copy.kind||token.value!==copy.value||token.start!==copy.span.start||token.end!==copy.span.end;
+  }))throw unsupported('named lifetime source','requires its unchanged original function cursor and complete binder token group',frame.span);
+  if(!c.is('&')||!c.is("'",1))return null;
+  const first=c.peek(),name=c.peek(2);
+  if(name.kind!=='identifier'||c.peek(1).end!==name.start)throw unsupported('source reference lifetime','requires contiguous original apostrophe and lifetime name tokens',range(first,name));
+  if(name.value==='static')return null;
+  if(!frame.names.includes(name.value))throw unsupported('named reference lifetime','requires a contiguous declared lifetime in this actual free function',range(first,name));
+  if(c.is('mut',3))throw unsupported('mutable reference','mutation is outside the portable core',range(first,c.peek(3)));
+  return `named:${name.value}`;
 }
 
 export function withNamedLifetimeParser(Base) {return class extends Base {
