@@ -6,6 +6,7 @@ import {withOwnedCoreItemChecks} from './owned-core-operations.mjs';
 import {ownedCorePairedTypePath,prepareOwnedCorePairedTypes} from './owned-core-paired-types.mjs';
 import {prepareReverseConcreteSource,parseReverseConcreteSource,assertReverseConcreteSourceHost} from './concrete-source.mjs';
 import {encodeWord,textOf,writeLink} from './vendor/lino.mjs';
+import {encodeInertJsonWord} from './vendor/inert-json-word-encoding.mjs';
 const PROFILE='router-owned-core-source-document-v1',LIMIT=33554432,ITEMS=4096;
 const fail=message=>{throw TypeError('Owned source document: '+message);};
 const bare=code=>code>=65&&code<=90||code>=97&&code<=122||code>=48&&code<=57||code===46||code===95||code===126||code===42||code===47||code===60||code===62||code===61||code===33||code===38||code===124||code===43||code===45;
@@ -46,7 +47,7 @@ function wordCost(value,remaining){
 }
 function writer(){
  const prefix=[],items=[];let used=0;
- return {add(head,value){const overhead=head.length+4,cost=wordCost(value,LIMIT-used-overhead);used+=overhead+cost;const word=encodeWord(JSON.stringify(value));if(word.length!==cost)fail('encoded word accounting differs');const line=writeLink([head,word])+'\n';(head==='owned-source-item'?items:prefix).push(line);},finish(){return prefix.concat(items).join('');}};
+ return {add(head,value){const overhead=head.length+4,cost=wordCost(value,LIMIT-used-overhead);used+=overhead+cost;const word=encodeInertJsonWord(JSON.stringify(value));if(word.length!==cost)fail('encoded word accounting differs');const line=writeLink([head,word])+'\n';(head==='owned-source-item'?items:prefix).push(line);},finish(){return prefix.concat(items).join('');}};
 }
 // Flat framing is checked BEFORE decoding a Links word or native JSON.
 function framed(text){

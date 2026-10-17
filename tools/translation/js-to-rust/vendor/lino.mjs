@@ -131,3 +131,28 @@ export function field(link, head) {
 export function writeLink(link) {
   return `(${link.map((item) => (Array.isArray(item) ? writeLink(item) : typeof item === 'string' ? item : `"${item.quoted}"`)).join(' ')})`;
 }
+
+// Explicit writer-storage siblings. Call the predicate only after independently
+// qualifying every native operation it uses; it grants no source authority.
+// No receiver or configurable callback is accepted, and BARE never escapes.
+export function originalWordPatternCanonical() {
+  const descriptor=Object.getOwnPropertyDescriptor,prototype=Object.getPrototypeOf,apply=Reflect.apply;
+  const regexpPrototype=prototype(/^[A-Za-z0-9._~*/<>=!&|+-]$/u),names=Reflect.ownKeys(BARE),last=descriptor(BARE,'lastIndex');
+  if(prototype(BARE)!==regexpPrototype||names.length!==1||names[0]!=='lastIndex'||!last||!Object.hasOwn(last,'value')||last.value!==0)return false;
+  const source=descriptor(regexpPrototype,'source').get;
+  if(apply(source,BARE,[])!==apply(source,/^[A-Za-z0-9._~*/<>=!&|+-]$/u,[]))return false;
+  const flags=['hasIndices','global','ignoreCase','multiline','dotAll','unicode','unicodeSets','sticky'];
+  for(let index=0;index<flags.length;index++)if(apply(descriptor(regexpPrototype,flags[index]).get,BARE,[])!==(flags[index]==='unicode'))return false;
+  return true;
+}
+
+// Exact legacy byte loop, separated only so a writer that already called
+// Buffer.from can preserve that call once and the original regex identity.
+export function encodeWordBytes(bytes) {
+  let out = '';
+  for (const byte of bytes) {
+    const char = String.fromCharCode(byte);
+    out += byte < 0x80 && BARE.test(char) ? char : `%${byte.toString(16).toUpperCase().padStart(2, '0')}`;
+  }
+  return out;
+}
