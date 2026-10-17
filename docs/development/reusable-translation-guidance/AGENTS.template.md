@@ -30,6 +30,15 @@ reverse and TypeScript producers in dependency order; check mode must reject sta
 outputs without repairing them. Preserve original inputs and all explicit refusals.
 Do not manually repair generated output or confuse freshness with runtime parity.
 
+Where the receiving maintainer authorizes a shared Rust/JavaScript compatibility
+core, bind actual qualified APIs to matching implementations and independently
+check their common domain. Library internals may remain intentionally untranslated.
+Automate candidate CST adoption with both declared rule sequences and complete
+source, serialization/reparsing and inverses; freshly check the rewritten whole
+function. A proposal supplies no original dispatch or ownership permission.
+Measure executable callers separately from API counts, retained source, parent
+module behavior and complete runtime parity.
+
 Run complete focused JavaScript files under Node and Bun plus strict TypeScript
 execution, collect the whole related failure set, then regenerate and run the full
 same-SHA JavaScript gate. Add meaningful Rust edge SOURCE cases, but never claim
@@ -37,6 +46,8 @@ unexecuted Rust behavior passes. An explicit stricter user policy supersedes the
 bounded local Rust exception above: when local Rust is forbidden, run no tests,
 builds, Clippy, rust-script or other Rust-backed tools. Rust CI stays behind every
 same-SHA JavaScript requirement, even for an authorized incomplete feedback draft.
+Required Rust failures remain fatal; do not use `continue-on-error` or ignored
+failures on required Rust jobs or steps.
 
 Run one heavy compiler, test or compression workload at a time. Measure actual
 workloads before optimization; keep original semantics, deadlines and complete cases.
@@ -51,6 +62,11 @@ the single heavy-workload lease explicit. Only the publication owner pushes or u
 pull requests. Retain complete metadata and raw logs for every finished CI job/attempt;
 no second push or cancellation while the current batch is active. An edit invalidates
 a green stamp. Report draft coverage and all remaining parity gaps candidly.
+Use the receiving user's existing standing publication authorization where granted,
+without repeated approval requests; this template grants no publication permission.
+Make coherent, reviewable checkpoint commits at least once every six hours of
+active work, preserving stricter user instructions. Record failed/unrun checks;
+a worker checkpoint never by itself authorizes publication or Rust execution.
 
 Track every requested requirement through source changes, generated artifacts,
 checks and remaining gaps. Continue independent source review and drafting while

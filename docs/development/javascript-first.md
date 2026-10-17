@@ -10,8 +10,9 @@ related failures and fix shared substitution rules before full regeneration.
 Use separate reusable language and repository formatting/quality sequences as
 described in [the rule-layer contract](translation-rules.md). Add matching Rust
 edge-case test source when it defines an independent oracle, and report it as
-unrun until CI executes it. Issue #759 prohibits all local Rust tests and builds;
-the bounded exception below does not override this instruction. CI may execute
+unrun until CI executes it. Issue #759 prohibits all local Rust tool invocations,
+including Cargo, Clippy, rustfmt, rustc, rust-script and hooks; the bounded
+exception below does not override this instruction. CI may execute
 Rust only after every required JavaScript stage passes for the same SHA.
 
 Keep a requirement-to-change-and-check record for the complete requested batch,
@@ -68,11 +69,11 @@ failed and unrun checks. Workers commit in their assigned worktrees and the
 coordinator integrates completed changes. This cadence preserves the publication
 gate below and the same-commit JavaScript-first requirements for Rust CI.
 
-Assign work to isolated worktrees, keep ownership explicit and send draft commits to one push gate owner. The owner integrates the complete batch, runs the full JavaScript gate, reviews generated diffs and publishes one tested head. Leave running CI intact. After CI finishes, collect failures from every required job, separate code defects from infrastructure or missing evidence, repair the complete failure set and rerun the gate before the next push. Repeated pushes while checks are still running obscure which head was verified and spend additional runner time.
+Assign work to isolated worktrees, keep ownership explicit and send draft commits to one push gate owner. The owner integrates the complete batch, runs the full JavaScript gate, reviews generated diffs and publishes one tested head. Leave running CI intact. After CI finishes, collect failures from every required job, separate code defects from infrastructure or missing evidence, repair the complete failure set and rerun the gate before the next push. Repeated pushes while checks are still running obscure which head was verified and spend additional runner time. The explicitly authorized incomplete feedback checkpoint policy in [CONTRIBUTING.md](../../CONTRIBUTING.md#development-workflow) applies to draft publication; it never unlocks Rust CI or certifies completion.
 
 For active issue #759, the user has given standing authorization for the designated push owner to push the coordinated repair batch and update its draft pull request without another approval request. Wait for the published head's entire CI cycle to finish, collect and handle every failure, and then publish the reviewed fixes promptly for fresh feedback. This authorization preserves the single publisher, honest failed/unrun evidence and same-SHA JavaScript gate before Rust execution.
 
-Every CI job capable of compiling Rust must depend on the JavaScript gate. It must check the current head and strict parity, not accept an inventory-only result or a stamp from another SHA. Workflow structure checks guard bypass paths; they complement the behavioral tests. Publication belongs to the push gate owner, including PR updates. Preserve draft or blocked status when complete parity is unavailable.
+Every CI job or step that invokes Rust tools, including rustfmt, Clippy and rust-script, must depend on every required JavaScript stage for the same SHA. It must check the current head and strict parity, not accept an inventory-only result or a stamp from another SHA. Workflow structure checks guard bypass paths; they complement the behavioral tests. Publication belongs to the push gate owner, including PR updates. Preserve draft or blocked status when complete parity is unavailable.
 
 ## Keep local Rust exceptions bounded
 

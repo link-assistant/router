@@ -10,6 +10,8 @@ own contribution and agent instructions. Preserve terminology, testing tiers,
 credentials, release rules and existing public contracts. Supply actual commands,
 versions, source ownership and fixed budgets. Explicit stricter user instructions
 always take precedence, including a prohibition on every local Rust-backed tool.
+Router's standing push authorization is local to its task and is not exported by
+these templates. Follow the receiving user's actual publication authorization.
 Three active workers is a default resource policy, not permission to delegate when
 the user or environment does not authorize it. Reduce concurrency under tighter limits.
 
@@ -22,6 +24,12 @@ rapid feedback, add meaningful Rust regression source, then run the complete gat
 on the integrated immutable SHA. Rust CI depends on every same-SHA JavaScript stage.
 One heavy workload and one publication owner remain separate resource responsibilities.
 Measure before optimizing and retain complete failed/pass originals and limitations.
+The templates also preserve six-hour source checkpoints, fatal Rust CI failures
+and conditional use of the receiving user's standing publication authorization.
+The [compatibility-core contract](../compatibility-core.md) describes paired
+library abstractions with intentionally untranslated internals and automated CST
+adoption. Adapt that pattern only within the receiving maintainer's authorization;
+retain fresh whole-function checking and actual producer/freshness qualification.
 Track every requested requirement and continue independent source review while CI
 runs, preserving the tested head. Inspect pinned upstream implementations before
 adding machinery and retain reproducible upstream defects for authorized reporting.

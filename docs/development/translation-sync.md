@@ -12,6 +12,13 @@ Complete raw stdout/stderr, command, deadline, status and input vectors are reta
 
 This command automates the existing draft translators. Their retained refusals, dynamic TypeScript annotations and uncompiled Rust projections still block whole-source synchronization and runtime parity. A passing freshness receipt cannot unlock Rust CI or replace the complete JavaScript gate. Continue implementing and testing refused constructs before promoting their coverage.
 
+The convenience command above keeps its ordinary default producer lanes. It
+does not materialize or qualify the separately required checked-definition lane.
+Follow [the explicit definition-only workflow](javascript-first.md#measure-archived-cycles-without-inventing-resource-data) for actual
+`--retain-output-text --owned-core-definitions` canonical and matrix generation,
+independent reverse materialization/freshness and strict TypeScript checks.
+A default synchronization receipt alone does not satisfy those obligations.
+
 ## Explicit owned-core reverse profile
 
 Default reverse regeneration also inventories the actual forward application

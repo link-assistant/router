@@ -45,6 +45,15 @@ keep candidate copies inactive until receiving qualification passes. For an upst
 or tooling defect, retain exact versions, a minimal reproduction, full failed output
 and any workaround. The publication owner reports it within the user's authorization.
 
+Where the receiving maintainer authorizes a shared Rust/JavaScript compatibility
+core, bind actual qualified APIs to matching implementations and independently
+check their common domain. Library internals may remain intentionally untranslated.
+Automate candidate CST adoption with both declared rule sequences and complete
+source, serialization/reparsing and inverses; freshly check the rewritten whole
+function. A proposal supplies no original dispatch or ownership permission.
+Measure executable callers separately from API counts, retained source, parent
+module behavior and complete runtime parity.
+
 ## Verification and Rust policy
 
 Begin with complete focused JavaScript test files under Node and Bun and execute
@@ -58,6 +67,8 @@ affected output and run the complete same-SHA JavaScript gate and freshness chec
 An edit invalidates an earlier stamp. Every Rust-capable CI job must remain blocked
 until all required JavaScript stages pass for that exact source SHA and contents.
 Focused checks, inventory consistency and source preservation cannot unlock Rust.
+Required Rust CI failures remain fatal; required jobs and steps must not suppress
+them with `continue-on-error` or an ignored failure.
 
 An explicit stricter user policy overrides any local Rust exception in this template.
 If the user prohibits local Rust, do not run tests, builds, Clippy, rust-script or
@@ -85,7 +96,14 @@ single heavy-workload lease before execution. The owner collects complete CI met
 and logs for every job and attempt after the whole batch finishes; no repeated pushes
 or cancellation while CI is active. Preserve draft status and honest missing coverage.
 An explicitly authorized incomplete feedback draft cannot claim a green gate or
-permit Rust before its same-SHA JavaScript prerequisites pass.
+permit Rust before its same-SHA JavaScript prerequisites pass. Use the receiving
+user's existing standing publication authorization where granted, without repeated
+approval requests; this template grants no publication permission.
+
+Make coherent, reviewable checkpoint commits at least once every six hours of
+active work, preserving stricter user instructions. Keep failed/unrun checks and
+remaining gaps explicit even while the complete gate is red. Worker commits do
+not by themselves authorize publication or Rust execution.
 
 Track each requested requirement through its source changes, generated artifacts,
 checks and remaining gaps. Continue source review and independent drafting in

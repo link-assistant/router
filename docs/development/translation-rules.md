@@ -91,12 +91,21 @@ implementations and licenses inspectable. Place reusable language rules outside
 Router-specific adapters so other repositories can copy the implementation
 without inheriting Router paths, schema choices or naming exceptions.
 
-Repository rules consume already checked results. They may choose imports,
-identifiers, layout and formatting only while preserving those results. They
+At the checked-semantic and target-packaging boundary, repository rules consume
+already checked results. They may choose imports, identifiers, layout and
+formatting only while preserving those results. They
 must not turn an unsupported construct into executable output, suppress a
 dependency refusal, supply an unproved implementation or bypass the meta
 round trip. Source proofs and private issuer identities retain their existing
 validation boundaries across rule layers.
+
+A separately declared source-adoption pipeline may instead transform candidate
+CST before semantic checking, including a maintainer-authorized mapping to a
+[paired compatibility-core API](compatibility-core.md). Retain both ordered rule
+sequences, complete original/edited CST, actual serialization/reparsing and full
+inverses. The resulting source must receive fresh independent semantic and
+whole-function checks. A source proposal grants no original trait-dispatch
+authority, executable admission or whole-parent equivalence.
 
 ## Extending and checking a rule
 
@@ -106,7 +115,8 @@ that only reproduce the implementation's own output. Check the complete emitted
 JavaScript and strict-compiled TypeScript for the admitted construct. For a Rust
 oracle regression, add the Rust case too, record that it is unrun locally, and
 use CI after the complete JavaScript gate passes for that same immutable SHA.
-During issue #759 no local Rust tests or builds are authorized.
+During issue #759 no local Rust tool invocation, including formatter/compiler
+diagnostics or hooks, is authorized.
 
 Run complete focused JavaScript files first to collect related defects quickly.
 Then integrate the whole repair batch, regenerate all affected outputs and run
