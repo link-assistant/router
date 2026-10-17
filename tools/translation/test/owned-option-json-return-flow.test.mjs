@@ -78,6 +78,18 @@ test('actual allocating callbacks retain current source bodies layouts and priva
  }
  const foreign=project(files(field.replace('field(','other(')));yes(foreign,['other']);const old=parseProgram(wire),other=find([...parseProgram(JSON.stringify(foreign.meta.targetSemanticProgram)).declarations.values()],node=>node.k==='routerHostCall'&&node.id==='router_core_json_parse_bytes'),call=find([...old.declarations.values()],node=>node.k==='routerHostCall'&&node.id==='router_core_json_parse_bytes');assert.ok(other&&call);call.compatibilityCore.sourceProjectionKey=other.compatibilityCore.sourceProjectionKey;assert.throws(()=>emitJavaScript(old),/source|projection|function|changed/i);
  for(const mutation of ['reader-source-span','reader-key']){const program=parseProgram(wire),reader=find([...program.declarations.values()],node=>node.k==='routerHostCall'&&node.id==='serde_json_value_as_str'),get=find([...program.declarations.values()],node=>node.k==='routerHostCall'&&node.id==='serde_json_value_get_string');assert.ok(reader&&get,mutation);if(mutation==='reader-source-span')reader.span={...reader.span,end:reader.span.end+1};else get.args[1]={k:'lit',value:'another_key',type:structuredClone(get.args[1].type),span:get.args[1].span};retain('complete-wrapper-reader-tamper',{mutation,wire:serializeProgram(program)});assert.throws(()=>emitJavaScript(program),/source|projection|body|changed|checked|private|binding/i,mutation);}
+ for(const mutation of ['reader-source-start','reader-missing-span','reader-empty-span','get-source-span','reader-foreign-span','callback-source-span','reader-argument-span']){
+  const program=parseProgram(wire),reader=find([...program.declarations.values()],node=>node.k==='routerHostCall'&&node.id==='serde_json_value_as_str'),get=find([...program.declarations.values()],node=>node.k==='routerHostCall'&&node.id==='serde_json_value_get_string'),allocation=find([...program.declarations.values()],node=>node.k==='routerAllocatingStringItem');assert.ok(reader&&get&&allocation,mutation);
+  if(mutation==='reader-source-start')reader.span={...reader.span,start:reader.span.start+1};
+  if(mutation==='reader-missing-span')delete reader.span;
+  if(mutation==='reader-empty-span')reader.span={};
+  if(mutation==='get-source-span')get.span={...get.span,end:get.span.end+1};
+  if(mutation==='reader-foreign-span')reader.span=structuredClone(get.span);
+  if(mutation==='callback-source-span')allocation.span={...allocation.span,end:allocation.span.end+1};
+  if(mutation==='reader-argument-span'){assert.ok(reader.args[0]?.span);reader.args[0].span={...reader.args[0].span,end:reader.args[0].span.end+1};}
+  retain('513-complete-source-span-tamper',{mutation,wire:serializeProgram(program)});assert.throws(()=>emitJavaScript(program),/source|span|projection|body|changed|checked|private|binding/i,mutation);
+ }
+ const restored=emitJavaScript(parseProgram(wire));retain('513-complete-restored-source-emission',restored);assert.deepEqual(restored,emitJavaScript(parseProgram(wire)));
 });
 test('unknown allocating callbacks shadowed traits custom carriers and absent parser bindings remain refused',()=>{
  const sources=[

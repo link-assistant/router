@@ -543,11 +543,33 @@ export function prepareOriginalJsonProjectionEmission(emitter,entry,Checker){
   if(!context||!fn||node.id!==context.id||entry.fullName!==fn.name&&entry.fullName!=='rp_'+Buffer.from(fn.name).toString('hex'))throw new Error('Owned JSON projection lacks its actual source function');
   const expected=retargetCheckedCallback(context.call,emitter.program),wanted=retargetCheckedCallback(fn,emitter.program);
   if(!projectionSemanticSame(node,expected)||!projectionSemanticSame({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source function or checked call changed [comparison '+JSON.stringify({function:entry.fullName.slice(0,120),id:node.id,call:describeOwnedJsonDifference(alphaTree(node),alphaTree(expected)),body:describeOwnedJsonDifference(alphaTree({params:entry.params,ret:entry.ret,body:entry.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body}))})+']');
+  if(!projectionSpansSame(node,expected)||!projectionSpansSame({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source spans changed from its actual checked function');
   requireBorrowedLayouts(context.layouts,checker,emitter.program,retargetCheckedCallback(context.roots,emitter.program));
-  for(const dependency of fn.dependencies??[]){const wanted=retargetCheckedCallback(dependency,emitter.program),name=emitter.program.declarations.has(dependency.name)?dependency.name:'rp_'+Buffer.from(dependency.name).toString('hex'),actual=emitter.program.declarations.get(name);if(!actual||!projectionSemanticSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper changed from its actual checked source body [comparison '+JSON.stringify({helper:name.slice(0,120),difference:actual?describeOwnedJsonDifference(alphaTree({params:actual.params,ret:actual.ret,body:actual.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body})):{reason:'actual helper absent'}})+']');}
+  for(const dependency of fn.dependencies??[]){const wanted=retargetCheckedCallback(dependency,emitter.program),name=emitter.program.declarations.has(dependency.name)?dependency.name:'rp_'+Buffer.from(dependency.name).toString('hex'),actual=emitter.program.declarations.get(name);if(!actual||!projectionSemanticSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper changed from its actual checked source body [comparison '+JSON.stringify({helper:name.slice(0,120),difference:actual?describeOwnedJsonDifference(alphaTree({params:actual.params,ret:actual.ret,body:actual.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body})):{reason:'actual helper absent'}})+']');if(!projectionSpansSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper source spans changed from its actual checked body');}
   requireOriginalPrimitiveTryFromChecker(checker);
  }
  const previous=emissionFrames.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());emissionFrames.set(emitter,projectionNodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));return ()=>{if(previous)emissionFrames.set(emitter,previous);else emissionFrames.delete(emitter);};
+}
+// Alpha equivalence deliberately erases diagnostics. Source-bound emission
+// also rejoins every complete span at its actual path in the private envelope.
+// No subtree (including opaque proof/type data) is omitted by a public flag.
+function projectionSpansSame(actual,expected,budget={cells:200000},depth=0){
+ if(--budget.cells<0||depth>160)return false;if(actual===expected)return true;
+ const actualObject=actual!==null&&typeof actual==='object',expectedObject=expected!==null&&typeof expected==='object';if(!actualObject&&!expectedObject)return true;
+ if(actualObject){if(isProxy(actual))return false;const parent=prototype(actual);if(parent!==plainPrototype&&parent!==arrayPrototype&&parent!==null)return false;}
+ if(expectedObject){if(isProxy(expected))return false;const parent=prototype(expected);if(parent!==plainPrototype&&parent!==arrayPrototype&&parent!==null)return false;}
+ const names=actualObject?keys(actual):[],wanted=expectedObject?keys(expected):[];
+ // Finish BOTH complete key censuses before ANY descriptor of unknown fields.
+ for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack')return false;
+ for(let at=0;at<wanted.length;at++)if(typeof wanted[at]!=='string'||wanted[at]==='stack')return false;
+ for(let at=0;at<names.length;at++){
+  const name=names[at],a=descriptor(actual,name),b=expectedObject?descriptor(expected,name):null;if(!a||!own(a,'value')||b&&!own(b,'value'))return false;
+  if(name==='span'){if(!b||!same(a.value,b.value,budget,depth+1))return false;}
+  else if(!projectionSpansSame(a.value,b?.value,budget,depth+1))return false;
+ }
+ for(let at=0;at<wanted.length;at++){
+  const name=wanted[at];if(actualObject&&own(actual,name))continue;const b=descriptor(expected,name);if(!b||!own(b,'value')||name==='span'||!projectionSpansSame(undefined,b.value,budget,depth+1))return false;
+ }return true;
 }
 const canonicalSemanticSame=(actual,expected)=>same(alphaTree(copyMetadata(actual)),alphaTree(copyMetadata(expected)));
 const isSameSemantic=(actual,expected)=>metadataDigest(alphaTree(actual))===metadataDigest(alphaTree(expected));
