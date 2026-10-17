@@ -1,0 +1,5 @@
+Reuse only successful full size measurements on fresh private JSON composition plan nodes within one invocation. Exact original depth and cell/text charges preserve later size and work bounds; every failed or uncertain probe still runs the complete old measurement walk with its original partial budget effects. Records contain only sizing scalars, remain inaccessible, and never enter the existing cross-call byte or eligibility stores.
+
+Keep the whole preflight, native/source/owner comparisons, hash arguments and ordering, original measurement body, emission and fallback paths. Retain all complete historical 503/507 sources and inverse recipes. Add eight complete behavioral/refusal groups for nested probes, quotas, aliases, Unicode, lazy stacks, late observers, forged sizing data and strict TypeScript targets, without changing old workloads or deadlines.
+
+Source experiment only: no local engines, Rust tools or generation ran. Root must qualify the complete new and existing files and the original thirteen-case Node/Bun workload under unchanged deadlines/resources. No measured speed gain or repaired deadline is claimed.

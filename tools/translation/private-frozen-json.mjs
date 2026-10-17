@@ -143,7 +143,7 @@ export function createPrivateFrozenJsonComposer(){
    // complete native operation, including its omissions, hooks and errors.
    if(kind!=='object'||isProxy(value)||apply(compositionBoxedField.value,compositionTypes,[value]))return null;
    const substrate=arraySubstrate||syntaxSubstrateKey(key),saved=substrate?existingSyntaxCost(value):null;
-   if(saved&&!isArray(value)){const cost=saved>>>1,savedCells=cost%(CELLS+1),savedHeight=(cost/(CELLS+1))|0;if(savedCells>CELLS-cells||savedHeight>DEPTH-depth)return null;cells+=savedCells;return {kind:1,value};}
+   if(saved&&!isArray(value)){const cost=saved>>>1,savedCells=cost%(CELLS+1),savedHeight=(cost/(CELLS+1))|0;if(savedCells>CELLS-cells||savedHeight>DEPTH-depth)return null;cells+=savedCells;return {kind:1,value,measurement:null};}
    if(apply(setHas,active,[value]))return null;
    const array=isArray(value),parent=prototype(value);
    if(parent!==(array?arrayPrototype:objectPrototype)&&!(parent===null&&!array))return null;
@@ -152,7 +152,7 @@ export function createPrivateFrozenJsonComposer(){
    // Native captured stacks can be lazy data descriptors on ordinary objects.
    // Reject their key before any descriptor could invoke a formatter.
    for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON'||names[at].length>COMPOSITION_UNITS)return null;
-   if(substrate&&!array&&apply(frozenField.value,Object,[value])){const cost=immutableCost(value);if(!cost)return null;const packed=cost>>>1,costCells=packed%(CELLS+1),costHeight=(packed/(CELLS+1))|0;if(costCells>CELLS-cells||costHeight>DEPTH-depth)return null;cells+=costCells;return {kind:1,value};}
+   if(substrate&&!array&&apply(frozenField.value,Object,[value])){const cost=immutableCost(value);if(!cost)return null;const packed=cost>>>1,costCells=packed%(CELLS+1),costHeight=(packed/(CELLS+1))|0;if(costCells>CELLS-cells||costHeight>DEPTH-depth)return null;cells+=costCells;return {kind:1,value,measurement:null};}
    if(++cells>CELLS)return null;
    let length=names.length;
    if(array){if(names.length!==arrayLength+1||names[names.length-1]!=='length')return null;length=arrayLength;for(let at=0;at<length;at++)if(names[at]!==''+at)return null;}
@@ -168,7 +168,7 @@ export function createPrivateFrozenJsonComposer(){
   // Choose byte granularity only after the WHOLE logical preflight succeeded.
   // These per-call work counters retain no size/owner facts and cannot admit
   // anything the original cell, depth, descriptor or output checks refused.
-  let measureCells=CELLS,measureText=COMPOSITION_UNITS;
+  let measureCells=CELLS,measureText=COMPOSITION_UNITS,measurementRecords=0;
   const entryUnits=(ENTRY_BYTES-128)/2;
   function quotedUnits(value,limit){
    if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;let units=2;
@@ -200,8 +200,17 @@ export function createPrivateFrozenJsonComposer(){
     const child=frozenUnits(childValue,limit-units,depth+1);if(child<0)return -1;units+=child;
    }return units<=limit?units:-1;
   }
+  // Successful measurements belong only to these fresh private plan nodes.
+  // Equal depth and exact logical charges preserve every old partial failure.
+  function measuredFrozenUnits(node,limit,depth){
+   const prior=node.measurement;
+   if(prior&&prior.depth===depth&&prior.units<=limit&&prior.cells<=measureCells&&prior.text<=measureText){measureCells-=prior.cells;measureText-=prior.text;return prior.units;}
+   const cellsBefore=measureCells,textBefore=measureText,units=frozenUnits(node.value,limit,depth);
+   if(units>=0&&measurementRecords<1024&&cellsBefore-measureCells>=64){node.measurement={depth,units,cells:cellsBefore-measureCells,text:textBefore-measureText};measurementRecords++;}
+   return units;
+  }
   function planUnits(node,limit,depth){
-   if(node.kind===1)return frozenUnits(node.value,limit,depth);
+   if(node.kind===1)return measuredFrozenUnits(node,limit,depth);
    if(--measureCells<0||depth>DEPTH||limit<0)return -1;
    if(node.kind===0)return scalarUnits(node.value,limit);
    let units=2;for(let at=0;at<node.children.length;at++){
@@ -211,7 +220,7 @@ export function createPrivateFrozenJsonComposer(){
   }
   function granularity(node,depth){
    if(node.kind<2)return node;
-   if(node.substrate&&planUnits(node,entryUnits,depth)>=0)return {kind:1,value:node.substrate};
+   if(node.substrate&&planUnits(node,entryUnits,depth)>=0)return {kind:1,value:node.substrate,measurement:null};
    for(let at=0;at<node.children.length;at++)node.children[at].child=granularity(node.children[at].child,depth+1);
    return node;
   }
