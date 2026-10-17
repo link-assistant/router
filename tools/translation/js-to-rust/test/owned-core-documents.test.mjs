@@ -79,6 +79,12 @@ test('exact escaping early output bounds and flat framing retain existing limits
  const excessive=input();excessive.files.push({path:'retained.txt',source:'\0'.repeat(4500000)});const context=createOwnedCoreSourceContext(excessive);assert.throws(()=>serializeOwnedCoreDocument([],{context}),/encoded document byte bound/u);
  let touched=0;const hostile=[];Object.defineProperty(hostile,'0',{get(){touched++;return received.result.program[0];},enumerable:true});assert.throws(()=>serializeOwnedCoreDocument(hostile,{context:received.context}),/accessor/u);assert.equal(touched,0);
  const proxy=new Proxy([],{get(){assert.fail('proxy observed');}});assert.throws(()=>serializeOwnedCoreDocument(proxy,{context:received.context}),/ordinary program/u);
+ // This independent existing codec computes a header leaving16..23 encoded
+ // bytes. Even the first complete item cannot fit; a4096-item input must not
+ // accumulate compact snapshots or reach its deliberately invalid late item.
+ const near=input();near.files.push({path:'near-bound.txt',source:''});const header={profile:'router-owned-core-source-document-v1',context:near},emptyBytes=writeLink(['owned-source-document',encodeWord(JSON.stringify(header))]).length+1,padding=Math.floor((33554432-emptyBytes-16)/8);assert.ok(padding>0);near.files.at(-1).source='\0'.repeat(padding);
+ const nearContext=createOwnedCoreSourceContext(near),many=Array(4096).fill(received.result.program[0]);many[4095]={kind:'invalid-late-item'};assert.throws(()=>serializeOwnedCoreDocument(many,{context:nearContext}),/encoded document byte bound/u);
+
  const stack=[];Object.defineProperty(stack,'stack',{get(){touched++;throw Error('formatter invoked');}});assert.throws(()=>serializeOwnedCoreDocument(stack,{context:received.context}),/unknown program key/u);assert.equal(touched,0);assert.throws(()=>parseOwnedCoreDocumentMeta(received.result.meta,{context:{schema:'owned-core-source-context-v1'}}),/unissued/u);
 });
 test('explicit corpus discovery keeps every original refusal target and current input join',limits,t=>{

@@ -45,8 +45,8 @@ function wordCost(value,remaining){
  visit(value,0);return total;
 }
 function writer(){
- const rows=[];let used=0;
- return {add(head,value){const overhead=head.length+4,cost=wordCost(value,LIMIT-used-overhead),word=encodeWord(JSON.stringify(value));if(word.length!==cost)fail('encoded word accounting differs');const line=writeLink([head,word])+'\n';used+=line.length;if(used>LIMIT)fail('encoded document byte bound');rows.push(line);},finish(){return rows.join('');}};
+ const prefix=[],items=[];let used=0;
+ return {add(head,value){const overhead=head.length+4,cost=wordCost(value,LIMIT-used-overhead);used+=overhead+cost;const word=encodeWord(JSON.stringify(value));if(word.length!==cost)fail('encoded word accounting differs');const line=writeLink([head,word])+'\n';(head==='owned-source-item'?items:prefix).push(line);},finish(){return prefix.concat(items).join('');}};
 }
 // Flat framing is checked BEFORE decoding a Links word or native JSON.
 function framed(text){
@@ -112,9 +112,14 @@ function checkCst(row,files){
 }
 /** New explicit storage profile. No legacy serializer is redirected here. */
 export function serializeOwnedCoreDocument(program,{context}={}){
- assertReverseConcreteSourceHost();requireOwnedCoreSourceCurrent(context);const data=ownedCoreSourceData(context),files=sources(data),items=[],names=new Set(),paths=new Set();
- for(const original of inputItems(program)){const item=checkOwnedCoreItem(original,context);if(names.has(item.name))fail('duplicate function');names.add(item.name);items.push(compact(item,files));for(const path of referenced(item))paths.add(path);}
- const output=writer();output.add('owned-source-document',{profile:PROFILE,context:data});for(const path of paths)output.add('owned-source-cst',cstRow(path,files));for(const item of items)output.add('owned-source-item',item);
+ assertReverseConcreteSourceHost();requireOwnedCoreSourceCurrent(context);const data=ownedCoreSourceData(context),files=sources(data),names=new Set(),paths=new Set(),output=writer();
+ // Reserve the header and each checked compact row before retaining anything
+ // proportional to the number of items. Only bounded encoded lines accumulate.
+ output.add('owned-source-document',{profile:PROFILE,context:data});
+ for(const original of inputItems(program)){const item=checkOwnedCoreItem(original,context);if(names.has(item.name))fail('duplicate function');names.add(item.name);output.add('owned-source-item',compact(item,files));for(const path of referenced(item))paths.add(path);}
+ // Existing CST transport has its own source/node bounds. Its stored word must
+ // fit the SAME remaining document budget before JSON/percent serialization.
+ for(const path of paths)output.add('owned-source-cst',cstRow(path,files));
  requireOwnedCoreSourceCurrent(context);assertReverseConcreteSourceHost();return output.finish();
 }
 /** Full source/CST reconstruction precedes unchanged per-item source checking. */
