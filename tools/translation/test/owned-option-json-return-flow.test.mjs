@@ -64,8 +64,8 @@ test('ordinary Maybe Json and prior String-error Result remain independent passi
  // Each transform borrows its input; only the genuine owned parser allocates.
  const trims=project(files(['trim','trim_start','trim_end'].map(op=>'pub fn '+op+'(value:&'+S+')->'+M+'<'+T+'>{'+P+'(value.'+op+'())}').join('')));yes(trims,['trim','trim_start','trim_end']);
  await targets(trims,api=>{
-  for(const [op,input]of [['trim','\u0085"猫😀"\u0085'],['trim_start','\u0085"猫😀" '],['trim_end',' "猫😀"\u0085']]){const before=input;assert.deepEqual(api[op](input),some('猫😀'));assert.equal(input,before);}
-  for(const op of ['trim','trim_start','trim_end']){assert.deepEqual(api[op]('null'),some(null));assert.deepEqual(api[op]('broken'),none);assert.deepEqual(api[op]('\ufeffnull'),none);assert.deepEqual(api[op]('null\ufeff'),none);}
+  for(const [op,input]of [['trim','\u0085"猫😀"\u0085'],['trim_start','\u0085"猫😀" '],['trim_end',' "猫😀"\u0085']]){const before=input;assert.deepEqual(api[op](input),some({$:'String',field0:'猫😀'}));assert.equal(input,before);}
+  for(const op of ['trim','trim_start','trim_end']){assert.deepEqual(api[op]('null'),some({$:'Null'}));assert.deepEqual(api[op]('broken'),none);assert.deepEqual(api[op]('\ufeffnull'),none);assert.deepEqual(api[op]('null\ufeff'),none);}
  });
  const trimWire=JSON.stringify(trims.meta.targetSemanticProgram),trimEmission=emitJavaScript(parseProgram(trimWire));retain('516-complete-trim-source-targets',{source:trims,wire:trimWire,emission:trimEmission});
  for(const mutation of ['operation','receiver-owned','receiver-reference','source-span','receiver-variable']){
