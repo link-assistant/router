@@ -124,3 +124,40 @@ fn multiple_updates_preserve_conditional_fields_and_the_final_owned_return() {
         assert_eq!(original, adopted);
     }
 }
+
+
+fn original_shared_child(value: &Json) -> Json {
+    if let Some(child) = value.get("strict") {
+        child.clone()
+    } else {
+        Json::Null
+    }
+}
+
+fn adopted_shared_child(value: &Json) -> Json {
+    if let Some(child) = value.get("strict") {
+        translation_core::json_copy(child)
+    } else {
+        Json::Null
+    }
+}
+
+#[test]
+fn shared_clone_adoption_pairs_keep_absent_null_unicode_and_independent_storage() {
+    for original in [
+        Json::Null,
+        translation_core::json!({}),
+        translation_core::json!({"strict": null}),
+        translation_core::json!({"strict": true}),
+        translation_core::json!({"strict": {"nested": ["猫😀", false]}}),
+    ] {
+        let snapshot = original.clone();
+        assert_eq!(original_shared_child(&original), adopted_shared_child(&original));
+        assert_eq!(original.clone(), translation_core::json_copy(&original));
+        assert_eq!(original, snapshot);
+    }
+    let original = translation_core::json!({"strict": {"nested": ["猫😀"]}});
+    let mut copied = adopted_shared_child(&original);
+    copied["nested"][0] = translation_core::json!("changed");
+    assert_eq!(original["strict"]["nested"][0], "猫😀");
+}

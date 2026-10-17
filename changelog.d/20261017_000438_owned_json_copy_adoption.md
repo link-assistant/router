@@ -1,0 +1,7 @@
+# Owned JSON copy adoption
+
+The explicit `json-copies` proposal sequence replaces closed shared canonical JSON identifier `.clone()` expressions with `crate::translation_core::json_copy(identifier)`. It shares the bounded CST/graph/Cargo role engine with `json-indices`; the existing index schema, phase IDs and conservative conditional-binder behavior remain unchanged. Function header selection uses the actual original module path, including `pub(super)`.
+
+Only the copy mode follows source-resolved `if let Some` bindings inside their true block. Else branches and continuations retain their original lexical environments. Owned receivers, mutable/deep references, maps, strings, unknown traits/imports/macros/aliases and uncertain producers remain original. Candidate roles do not establish original Clone dispatch, executable admission, lifetime or Drop authority. Normal checking and emission independently validate the new qualified call.
+
+The CLI retains complete fields, sources, CSTs, mappings, inverses and optional Cargo snapshots. Two current `structured_output` shared `strict` copies are receiving targets, with separate fresh index/copy/update proposals and complete remaining refusal evidence. These substitutions alone are not claimed function gains. Whole-eight JS/strict TypeScript and paired native Rust oracle sources were added; all runtime checks are UNRUN by the worker. Existing index tests, limits and deadlines are unchanged.
