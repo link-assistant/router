@@ -20,7 +20,7 @@ enum Operation {
 }
 
 impl Operation {
-    const fn suffix(self) -> &'static str {
+    const fn suffix(self) -> &'static crate::translation_core::Str {
         match self {
             Self::Retrieve | Self::Delete => "",
             Self::Cancel => "/cancel",
@@ -171,13 +171,13 @@ pub(crate) async fn forward_stored_provider(
     method: &Method,
     headers: &HeaderMap,
     body: &Bytes,
-    client_path: &str,
-    upstream_path: &str,
-    name: &str,
+    client_path: &crate::translation_core::Str,
+    upstream_path: &crate::translation_core::Str,
+    name: &crate::translation_core::Str,
     expected_kind: crate::providers::ProviderKind,
-    expected_base_url: &str,
-    correlation_id: &str,
-) -> Result<reqwest::Response, Response> {
+    expected_base_url: &crate::translation_core::Str,
+    correlation_id: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<reqwest::Response, Response> {
     let provider = state
         .provider_store
         .resolve(name)
@@ -238,14 +238,14 @@ pub(crate) async fn forward_subscription(
     method: &Method,
     headers: &HeaderMap,
     body: &Bytes,
-    client_path: &str,
-    upstream_path: &str,
+    client_path: &crate::translation_core::Str,
+    upstream_path: &crate::translation_core::Str,
     provider: SubscriptionProvider,
-    account: &str,
-    expected_account_id: Option<&str>,
-    expected_base_url: &str,
-    correlation_id: &str,
-) -> Result<reqwest::Response, Response> {
+    account: &crate::translation_core::Str,
+    expected_account_id: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    expected_base_url: &crate::translation_core::Str,
+    correlation_id: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<reqwest::Response, Response> {
     crate::client_policy::enforce_subscription_for_claims(
         state,
         claims,
@@ -353,7 +353,7 @@ pub(crate) async fn forward_subscription(
 pub(crate) fn register_exact_reader(
     state: &AppState,
     provider: SubscriptionProvider,
-    account: &str,
+    account: &crate::translation_core::Str,
 ) {
     if let Some(router) = state
         .account_router
@@ -385,9 +385,9 @@ fn verify_subscription_destination(
     state: &AppState,
     provider: SubscriptionProvider,
     token: &SubscriptionToken,
-    expected_account_id: Option<&str>,
-    expected_base_url: &str,
-) -> Result<(), Response> {
+    expected_account_id: crate::translation_core::Maybe<&crate::translation_core::Str>,
+    expected_base_url: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(), Response> {
     let base_url = state
         .subscription_base_url
         .clone()
@@ -405,9 +405,9 @@ async fn relay(
     affinity: ResponseAffinity,
     operation: Operation,
     upstream: reqwest::Response,
-    account: Option<&str>,
+    account: crate::translation_core::Maybe<&crate::translation_core::Str>,
     bytes_sent: u64,
-    correlation_id: &str,
+    correlation_id: &crate::translation_core::Str,
 ) -> Response {
     let status = StatusCode::from_u16(upstream.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
@@ -447,13 +447,13 @@ async fn relay(
     response
 }
 
-fn upstream_path(response_id: &str, operation: Operation, query: Option<&str>) -> String {
+fn upstream_path(response_id: &crate::translation_core::Str, operation: Operation, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> String {
     let encoded_id = percent_encode_segment(response_id);
     let query = query.map_or(String::new(), |query| format!("?{query}"));
     format!("/v1/responses/{encoded_id}{}{query}", operation.suffix())
 }
 
-pub(crate) fn percent_encode_segment(segment: &str) -> String {
+pub(crate) fn percent_encode_segment(segment: &crate::translation_core::Str) -> String {
     const HEX: &[u8; 16] = b"0123456789ABCDEF";
     let mut encoded = String::with_capacity(segment.len());
     for byte in segment.bytes() {
@@ -471,7 +471,7 @@ pub(crate) fn percent_encode_segment(segment: &str) -> String {
 pub(crate) fn response_not_found() -> Response {
     (
         StatusCode::NOT_FOUND,
-        axum::Json(serde_json::json!({
+        axum::Json(crate::translation_core::json!({
             "error": {
                 "message": "Response not found",
                 "type": "invalid_request_error",
@@ -491,15 +491,15 @@ fn affinity_storage_error(error: &impl std::fmt::Display) -> Response {
     )
 }
 
-fn unavailable(message: &str) -> Response {
+fn unavailable(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::SERVICE_UNAVAILABLE, "api_error", message)
 }
 
-fn upstream_error(message: &str) -> Response {
+fn upstream_error(message: &crate::translation_core::Str) -> Response {
     openai_error(StatusCode::BAD_GATEWAY, "api_error", message)
 }
 
-fn openai_error(status: StatusCode, error_type: &str, message: &str) -> Response {
+fn openai_error(status: StatusCode, error_type: &crate::translation_core::Str, message: &crate::translation_core::Str) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type,

@@ -17,11 +17,11 @@ use link_assistant_router::storage::TokenRecord;
 use super::{Coordinator, LABEL_KEY};
 
 /// The backend label holding [`fingerprint`] of its `TOKEN_SECRET`.
-pub(super) const LABEL_SUFFIX: &str = "token-secret";
+pub(super) const LABEL_SUFFIX: &crate::translation_core::Str = "token-secret";
 /// The variable carrying the probe token into `docker exec`, by name only.
-pub(super) const PROBE_ENV: &str = "ROUTER_DEPLOY_PROBE_TOKEN";
+pub(super) const PROBE_ENV: &crate::translation_core::Str = "ROUTER_DEPLOY_PROBE_TOKEN";
 const FINGERPRINT_CONTEXT: &[u8] = b"link-assistant-router/deploy/token-secret-fingerprint/v1";
-const PROBE_SCRIPT: &str = "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_DEPLOY_PROBE_TOKEN}});console.log(r.status)";
+const PROBE_SCRIPT: &crate::translation_core::Str = "const r=await fetch('http://127.0.0.1:8080/api/models',{signal:AbortSignal.timeout(5000),headers:{authorization:'Bearer '+process.env.ROUTER_DEPLOY_PROBE_TOKEN}});console.log(r.status)";
 
 fn hmac_sha256(key: &[u8], message: &[u8]) -> Vec<u8> {
     let signature =
@@ -34,7 +34,7 @@ fn hmac_sha256(key: &[u8], message: &[u8]) -> Vec<u8> {
 
 /// A keyed, truncated digest that identifies a secret without revealing it:
 /// HMAC-SHA256 keyed by the secret over a fixed context, first 128 bits.
-pub(super) fn fingerprint(secret: &str) -> String {
+pub(super) fn fingerprint(secret: &crate::translation_core::Str) -> String {
     let digest = hmac_sha256(secret.as_bytes(), FINGERPRINT_CONTEXT);
     format!("hmac-sha256:{}", hex::encode(&digest[..16]))
 }
@@ -50,7 +50,7 @@ pub(super) enum SecretMatch {
 }
 
 impl SecretMatch {
-    pub(super) const fn as_str(self) -> &'static str {
+    pub(super) const fn as_str(self) -> &'static crate::translation_core::Str {
         match self {
             Self::Matches => "matches",
             Self::Changed => "changed",

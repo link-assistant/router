@@ -79,7 +79,7 @@ pub fn call_for(op: &TokenOp) -> Call {
         } => Call {
             method: "POST",
             path: crate::route_contract::route_template(crate::route_contract::RouteId::Tokens),
-            body: Some(serde_json::json!({
+            body: Some(crate::translation_core::json!({
                 "ttl_hours": ttl_hours,
                 "label": label,
                 "account": account,
@@ -108,7 +108,7 @@ pub fn call_for(op: &TokenOp) -> Call {
             path: crate::route_contract::route_template(
                 crate::route_contract::RouteId::RotateClientToken,
             ),
-            body: Some(serde_json::json!({
+            body: Some(crate::translation_core::json!({
                 "id": id,
                 "ttl_hours": ttl_hours,
                 "label": (!label.is_empty()).then(|| label.clone()),
@@ -132,7 +132,7 @@ pub fn call_for(op: &TokenOp) -> Call {
             path: crate::route_contract::route_template(
                 crate::route_contract::RouteId::RevokeToken,
             ),
-            body: Some(serde_json::json!({ "id": id })),
+            body: Some(crate::translation_core::json!({ "id": id })),
         },
         // Recovery has no remote form: it proves local ownership of a store,
         // which is not a thing an HTTP request can demonstrate. `run` refuses
@@ -145,7 +145,7 @@ pub fn call_for(op: &TokenOp) -> Call {
     }
 }
 
-async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, String> {
+async fn execute(server: &ResolvedServer, op: &TokenOp) -> crate::translation_core::Outcome<ExitCode, String> {
     let call = call_for(op);
     let answer = match call.body {
         Some(body) => crate::auth_remote::post(server, call.path, body).await?,
@@ -184,7 +184,7 @@ async fn execute(server: &ResolvedServer, op: &TokenOp) -> Result<ExitCode, Stri
 /// Exits 2 for an unknown id, as the local path does, so a script's meaning is
 /// the same against either target.
 #[must_use]
-pub fn show_one(records: &[serde_json::Value], id: &str) -> ExitCode {
+pub fn show_one(records: &[crate::translation_core::Json], id: &crate::translation_core::Str) -> ExitCode {
     records
         .iter()
         .find(|record| record.get("id").and_then(serde_json::Value::as_str) == Some(id))
@@ -205,10 +205,10 @@ pub fn show_one(records: &[serde_json::Value], id: &str) -> ExitCode {
 
 /// The token records inside a `/api/management/tokens/list` answer.
 #[must_use]
-pub fn records_in(answer: &serde_json::Value) -> Vec<serde_json::Value> {
+pub fn records_in(answer: &crate::translation_core::Json) -> Vec<crate::translation_core::Json> {
     answer
         .get("data")
-        .and_then(serde_json::Value::as_array)
+        .and_then(crate::translation_core::Json::as_array)
         .cloned()
         .unwrap_or_default()
 }
@@ -217,7 +217,7 @@ pub fn records_in(answer: &serde_json::Value) -> Vec<serde_json::Value> {
 ///
 /// The token itself goes to stdout alone, so `tokens issue > file` and
 /// `$(router tokens issue)` keep working against a remote deployment.
-fn print_issued(answer: &serde_json::Value) {
+fn print_issued(answer: &crate::translation_core::Json) {
     if let Some(token) = answer.get("token").and_then(serde_json::Value::as_str) {
         println!("{token}");
     }

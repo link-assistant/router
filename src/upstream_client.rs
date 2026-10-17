@@ -36,7 +36,7 @@ pub const DEFAULT_UPSTREAM_FIRST_BYTE_TIMEOUT_SECS: u64 = DEFAULT_UPSTREAM_READ_
 /// Parse a timeout in whole seconds; `0` disables the bound and an unset or
 /// unparsable value falls back to `default`.
 #[must_use]
-pub fn parse_timeout_secs(value: Option<&str>, default: u64) -> Option<Duration> {
+pub fn parse_timeout_secs(value: crate::translation_core::Maybe<&crate::translation_core::Str>, default: u64) -> crate::translation_core::Maybe<Duration> {
     let seconds = value
         .and_then(|value| value.trim().parse::<u64>().ok())
         .unwrap_or(default);
@@ -45,14 +45,14 @@ pub fn parse_timeout_secs(value: Option<&str>, default: u64) -> Option<Duration>
 
 /// Parse `UPSTREAM_READ_TIMEOUT_SECS`; `0` disables the bound.
 #[must_use]
-pub fn parse_upstream_read_timeout(value: Option<&str>) -> Option<Duration> {
+pub fn parse_upstream_read_timeout(value: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Maybe<Duration> {
     parse_timeout_secs(value, DEFAULT_UPSTREAM_READ_TIMEOUT_SECS)
 }
 
 /// The idle-read timeout: `UPSTREAM_IDLE_TIMEOUT_SECS`, or the older
 /// `UPSTREAM_READ_TIMEOUT_SECS` it is an alias of.
 #[must_use]
-pub fn upstream_idle_timeout() -> Option<Duration> {
+pub fn upstream_idle_timeout() -> crate::translation_core::Maybe<Duration> {
     let value = crate::operation_context::var("UPSTREAM_IDLE_TIMEOUT_SECS")
         .or_else(|_| crate::operation_context::var("UPSTREAM_READ_TIMEOUT_SECS"))
         .ok();
@@ -61,7 +61,7 @@ pub fn upstream_idle_timeout() -> Option<Duration> {
 
 /// The connect timeout from `UPSTREAM_CONNECT_TIMEOUT_SECS`.
 #[must_use]
-pub fn upstream_connect_timeout() -> Option<Duration> {
+pub fn upstream_connect_timeout() -> crate::translation_core::Maybe<Duration> {
     parse_timeout_secs(
         crate::operation_context::var("UPSTREAM_CONNECT_TIMEOUT_SECS")
             .ok()
@@ -72,7 +72,7 @@ pub fn upstream_connect_timeout() -> Option<Duration> {
 
 /// The first-byte timeout from `UPSTREAM_FIRST_BYTE_TIMEOUT_SECS`.
 #[must_use]
-pub fn upstream_first_byte_timeout() -> Option<Duration> {
+pub fn upstream_first_byte_timeout() -> crate::translation_core::Maybe<Duration> {
     parse_timeout_secs(
         crate::operation_context::var("UPSTREAM_FIRST_BYTE_TIMEOUT_SECS")
             .ok()
@@ -105,8 +105,8 @@ pub fn upstream_client_builder() -> reqwest::ClientBuilder {
 }
 
 fn configured_builder(
-    connect_timeout: Option<Duration>,
-    idle_timeout: Option<Duration>,
+    connect_timeout: crate::translation_core::Maybe<Duration>,
+    idle_timeout: crate::translation_core::Maybe<Duration>,
 ) -> reqwest::ClientBuilder {
     let mut builder = reqwest::Client::builder().redirect(redirect_policy());
     if let Some(timeout) = connect_timeout {
@@ -153,7 +153,7 @@ pub fn provider_client(default: &reqwest::Client) -> &reqwest::Client {
 ///
 /// # Errors
 /// Returns the refusal, ready to show to the operator.
-pub fn check_provider_base_url(base_url: &str) -> Result<(), BlockedAddress> {
+pub fn check_provider_base_url(base_url: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), BlockedAddress> {
     NetworkPolicy::from_env().check_base_url(base_url)
 }
 
@@ -229,8 +229,8 @@ impl From<reqwest::Error> for UpstreamSendError {
 pub async fn execute_with_first_byte_timeout(
     client: &reqwest::Client,
     request: reqwest::Request,
-    first_byte: Option<Duration>,
-) -> Result<reqwest::Response, UpstreamSendError> {
+    first_byte: crate::translation_core::Maybe<Duration>,
+) -> crate::translation_core::Outcome<reqwest::Response, UpstreamSendError> {
     let pending = client.execute(request);
     match first_byte {
         Some(limit) => tokio::time::timeout(limit, pending)

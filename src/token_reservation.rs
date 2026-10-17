@@ -66,7 +66,7 @@ impl RequestBudget {
 /// `generationConfig.maxOutputTokens` (Gemini). When none is present the
 /// protocol default applies, matching what the adapters forward upstream.
 #[must_use]
-pub fn estimate(body: &Value) -> RequestBudget {
+pub fn estimate(body: &crate::translation_core::Json) -> RequestBudget {
     RequestBudget {
         input: estimate_input_tokens(body),
         output: declared_output_tokens(body).unwrap_or(DEFAULT_MAX_OUTPUT_TOKENS),
@@ -75,15 +75,15 @@ pub fn estimate(body: &Value) -> RequestBudget {
 
 /// The caller's declared output cap, in whichever field its protocol uses.
 #[must_use]
-pub fn declared_output_tokens(body: &Value) -> Option<u64> {
+pub fn declared_output_tokens(body: &crate::translation_core::Json) -> crate::translation_core::Maybe<u64> {
     for field in ["max_output_tokens", "max_completion_tokens", "max_tokens"] {
-        if let Some(value) = body.get(field).and_then(Value::as_u64) {
+        if let Some(value) = body.get(field).and_then(crate::translation_core::Json::as_u64) {
             return Some(value);
         }
     }
     body.get("generationConfig")
         .and_then(|config| config.get("maxOutputTokens"))
-        .and_then(Value::as_u64)
+        .and_then(crate::translation_core::Json::as_u64)
 }
 
 /// Estimate prompt tokens from the request's text payload.
@@ -93,7 +93,7 @@ pub fn declared_output_tokens(body: &Value) -> Option<u64> {
 /// only has to be good enough to keep a reservation in the right order of
 /// magnitude; the real figure replaces it at settlement.
 #[must_use]
-pub fn estimate_input_tokens(body: &Value) -> u64 {
+pub fn estimate_input_tokens(body: &crate::translation_core::Json) -> u64 {
     let mut characters = 0u64;
     for field in ["messages", "input", "contents", "system", "prompt", "tools"] {
         if let Some(value) = body.get(field) {
@@ -104,14 +104,14 @@ pub fn estimate_input_tokens(body: &Value) -> u64 {
 }
 
 /// Total length of every string in a JSON value.
-fn text_length(value: &Value) -> u64 {
+fn text_length(value: &crate::translation_core::Json) -> u64 {
     match value {
-        Value::String(text) => text.len() as u64,
-        Value::Array(items) => items
+        crate::translation_core::Json::String(text) => text.len() as u64,
+        crate::translation_core::Json::Array(items) => items
             .iter()
             .map(text_length)
             .fold(0u64, u64::saturating_add),
-        Value::Object(fields) => fields
+        crate::translation_core::Json::Object(fields) => fields
             .values()
             .map(text_length)
             .fold(0u64, u64::saturating_add),

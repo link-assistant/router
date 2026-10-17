@@ -43,9 +43,9 @@ use state::{Active, Phase, PreviousKind, Recovery, State, Transaction};
 pub static RELAY: InstanceName = InstanceName::new(link_assistant_router::deploy::RELAY);
 /// Network name; carries `--instance`.
 pub static NETWORK: InstanceName = InstanceName::new(link_assistant_router::deploy::NETWORK);
-pub const LABEL_KEY: &str = link_assistant_router::deploy::LABEL_KEY;
-const LEGACY: &str = link_assistant_router::deploy::CONTAINER;
-pub const SPEC_VERSION: &str = "local-v1";
+pub const LABEL_KEY: &crate::translation_core::Str = link_assistant_router::deploy::LABEL_KEY;
+const LEGACY: &crate::translation_core::Str = link_assistant_router::deploy::CONTAINER;
+pub const SPEC_VERSION: &crate::translation_core::Str = "local-v1";
 #[cfg(not(test))]
 const READY_ATTEMPTS: usize = 300;
 #[cfg(test)]
@@ -634,15 +634,15 @@ impl Coordinator<'_> {
 }
 
 #[must_use]
-pub fn run(args: &DeployArgs, root: &Path, image: &str, token_secret: &str) -> ExitCode {
+pub fn run(args: &DeployArgs, root: &Path, image: &crate::translation_core::Str, token_secret: &crate::translation_core::Str) -> ExitCode {
     run_with_docker(args, root, image, token_secret, Docker::default())
 }
 
 fn run_with_docker(
     args: &DeployArgs,
     root: &Path,
-    image: &str,
-    token_secret: &str,
+    image: &crate::translation_core::Str,
+    token_secret: &crate::translation_core::Str,
     docker: Docker,
 ) -> ExitCode {
     let host = host_runtime::System::default();
@@ -835,7 +835,7 @@ fn run_assessed(
     result_code(coordinator.deploy(&existing))
 }
 
-fn result_code(result: Result<(), String>) -> ExitCode {
+fn result_code(result: crate::translation_core::Outcome<(), String>) -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {

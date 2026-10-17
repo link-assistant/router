@@ -74,7 +74,7 @@ impl ZaiExhaustion {
 
     /// The fields surfaces publish, without anything secret.
     #[must_use]
-    pub fn to_json(&self) -> Value {
+    pub fn to_json(&self) -> crate::translation_core::Json {
         json!({
             "state": "exhausted",
             "code": self.code.to_string(),
@@ -88,17 +88,17 @@ impl ZaiExhaustion {
 
 /// The business code in a z.ai error body, as a string or a number, under
 /// `error.code` (inference) or a top-level `code` (non-inference).
-fn business_code(value: &Value) -> Option<u32> {
+fn business_code(value: &crate::translation_core::Json) -> crate::translation_core::Maybe<u32> {
     let code = value.pointer("/error/code").or_else(|| value.get("code"))?;
     match code {
-        Value::String(text) => text.trim().parse().ok(),
-        Value::Number(number) => number.as_u64().and_then(|n| u32::try_from(n).ok()),
+        crate::translation_core::Json::String(text) => text.trim().parse().ok(),
+        crate::translation_core::Json::Number(number) => number.as_u64().and_then(|n| u32::try_from(n).ok()),
         _ => None,
     }
 }
 
 /// Split `[1113][reason][request id]` into its reason and request id.
-fn bracketed(message: &str) -> (Option<String>, Option<String>) {
+fn bracketed(message: &crate::translation_core::Str) -> (crate::translation_core::Maybe<String>, crate::translation_core::Maybe<String>) {
     let parts = message
         .split(']')
         .filter_map(|part| part.trim().strip_prefix('['))
@@ -113,7 +113,7 @@ fn bracketed(message: &str) -> (Option<String>, Option<String>) {
 
 /// Classify a z.ai error body; `Some` only for a non-retryable account state.
 #[must_use]
-pub fn classify(body: &[u8]) -> Option<ZaiExhaustion> {
+pub fn classify(body: &[u8]) -> crate::translation_core::Maybe<ZaiExhaustion> {
     let value = serde_json::from_slice::<Value>(body).ok()?;
     let code = business_code(&value)?;
     if !EXHAUSTED_CODES.contains(&code) {
@@ -123,7 +123,7 @@ pub fn classify(body: &[u8]) -> Option<ZaiExhaustion> {
         .pointer("/error/message")
         .or_else(|| value.get("msg"))
         .or_else(|| value.get("message"))
-        .and_then(Value::as_str)
+        .and_then(crate::translation_core::Json::as_str)
         .unwrap_or_default();
     let (reason, request_id) = bracketed(message);
     let reason = reason
@@ -135,7 +135,7 @@ pub fn classify(body: &[u8]) -> Option<ZaiExhaustion> {
             value
                 .get("request_id")
                 .or_else(|| value.pointer("/error/request_id"))
-                .and_then(Value::as_str)
+                .and_then(crate::translation_core::Json::as_str)
                 .map(str::to_string)
         })
         .filter(|id| !id.is_empty());
@@ -230,7 +230,7 @@ pub(crate) async fn relay_refusal(
     provider: &crate::providers::ResolvedProvider,
     surface: crate::metrics::Surface,
     upstream_resp: reqwest::Response,
-    correlation_id: &str,
+    correlation_id: &crate::translation_core::Str,
 ) -> Response {
     let status = StatusCode::from_u16(upstream_resp.status().as_u16())
         .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
@@ -282,7 +282,7 @@ pub(crate) async fn relay_refusal(
 /// A restart, `router doctor` and `deploy --status` thereby see what the
 /// serving process learned. It holds codes and z.ai's public reason, never a
 /// secret.
-pub const STATE_FILE: &str = "provider-exhaustion.json";
+pub const STATE_FILE: &crate::translation_core::Str = "provider-exhaustion.json";
 
 /// The exhaustions recorded under `data_dir`, by provider name. A missing or
 /// unreadable file means none were recorded.
@@ -297,7 +297,7 @@ pub fn load(data_dir: &std::path::Path) -> std::collections::HashMap<String, Zai
     entries
         .into_iter()
         .filter_map(|(name, entry)| {
-            let code = business_code(&json!({ "code": entry.get("code")? }))?;
+            let code = business_code(&crate::translation_core::json!({ "code": entry.get("code")? }))?;
             let observed = entry.get("observed_at_unix").and_then(Value::as_u64)?;
             Some((
                 name,

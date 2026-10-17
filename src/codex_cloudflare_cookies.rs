@@ -16,9 +16,9 @@ const SUPPORTED_CODEX_VERSION: &str = "0.154.0";
 const MAX_COOKIE_BYTES: usize = 4_096;
 const MAX_COOKIE_COUNT: usize = 64;
 const MAX_COOKIE_HEADER_BYTES: usize = 16_384;
-const EXACT_HOSTS: &[&str] = &["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"];
-const SUBDOMAIN_SUFFIXES: &[&str] = &[".chatgpt.com", ".chatgpt-staging.com"];
-const EXACT_COOKIE_NAMES: &[&str] = &[
+const EXACT_HOSTS: &[&crate::translation_core::Str] = &["chatgpt.com", "chat.openai.com", "chatgpt-staging.com"];
+const SUBDOMAIN_SUFFIXES: &[&crate::translation_core::Str] = &[".chatgpt.com", ".chatgpt-staging.com"];
+const EXACT_COOKIE_NAMES: &[&crate::translation_core::Str] = &[
     "__cf_bm",
     "__cflb",
     "__cfruid",
@@ -48,7 +48,7 @@ pub fn isolated_store() -> Arc<dyn ReqwestCookieStore> {
     Arc::new(CodexCloudflareCookieStore::default())
 }
 
-pub fn cookie_header(url: &Url) -> Option<HeaderValue> {
+pub fn cookie_header(url: &Url) -> crate::translation_core::Maybe<HeaderValue> {
     SHARED_STORE.cookies(url)
 }
 
@@ -56,7 +56,7 @@ pub fn store_response_headers<'a>(headers: impl Iterator<Item = &'a HeaderValue>
     SHARED_STORE.set_cookies(&mut headers.into_iter(), url);
 }
 
-pub fn websocket_url_to_https(value: &str) -> Option<Url> {
+pub fn websocket_url_to_https(value: &crate::translation_core::Str) -> crate::translation_core::Maybe<Url> {
     let mut url = Url::parse(value).ok()?;
     (url.scheme() == "wss").then_some(())?;
     url.set_scheme("https").ok()?;
@@ -67,14 +67,14 @@ fn is_cookie_url(url: &Url) -> bool {
     url.scheme() == "https" && url.host_str().is_some_and(is_allowed_chatgpt_host)
 }
 
-fn is_allowed_chatgpt_host(host: &str) -> bool {
+fn is_allowed_chatgpt_host(host: &crate::translation_core::Str) -> bool {
     EXACT_HOSTS.contains(&host)
         || SUBDOMAIN_SUFFIXES
             .iter()
             .any(|suffix| host.ends_with(suffix))
 }
 
-fn is_allowed_cookie_name(name: &str) -> bool {
+fn is_allowed_cookie_name(name: &crate::translation_core::Str) -> bool {
     EXACT_COOKIE_NAMES.contains(&name) || name.starts_with("cf_chl_")
 }
 

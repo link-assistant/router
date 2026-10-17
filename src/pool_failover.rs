@@ -40,7 +40,7 @@ impl FailoverMode {
     /// # Errors
     ///
     /// Returns an operator-facing message for any other value.
-    pub fn parse(value: &str) -> Result<Self, String> {
+    pub fn parse(value: &crate::translation_core::Str) -> crate::translation_core::Outcome<Self, String> {
         match value.trim().to_ascii_lowercase().replace('_', "-").as_str() {
             "" | "off" | "false" | "0" | "none" => Ok(Self::Off),
             "pre-first-byte" => Ok(Self::PreFirstByte),
@@ -49,7 +49,7 @@ impl FailoverMode {
     }
 
     #[must_use]
-    pub const fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static crate::translation_core::Str {
         match self {
             Self::Off => "off",
             Self::PreFirstByte => "pre-first-byte",
@@ -249,7 +249,7 @@ static INSTALLED: std::sync::RwLock<Option<PoolPolicy>> = std::sync::RwLock::new
 pub fn install(policy: PoolPolicy) {
     *INSTALLED
         .write()
-        .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(policy);
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = crate::translation_core::Maybe::Some(policy);
 }
 
 /// The installed policy, or the defaults when none was installed.
@@ -267,7 +267,7 @@ pub fn current() -> PoolPolicy {
 /// # Errors
 ///
 /// Returns an operator-facing message for anything else.
-pub fn parse_percent(value: &str) -> Result<u8, String> {
+pub fn parse_percent(value: &crate::translation_core::Str) -> crate::translation_core::Outcome<u8, String> {
     value
         .trim()
         .trim_end_matches('%')
@@ -314,7 +314,7 @@ pub enum RetryReason {
 
 impl RetryReason {
     #[must_use]
-    pub const fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static crate::translation_core::Str {
         match self {
             Self::RateLimited => "rate_limited",
             Self::Overloaded => "overloaded",
@@ -331,7 +331,7 @@ impl RetryReason {
 /// attempted failed; `501` and other `5xx` that describe the request rather than
 /// the account are not retried.
 #[must_use]
-pub const fn classify_status(status: u16) -> Option<RetryReason> {
+pub const fn classify_status(status: u16) -> crate::translation_core::Maybe<RetryReason> {
     match status {
         429 => Some(RetryReason::RateLimited),
         529 => Some(RetryReason::Overloaded),

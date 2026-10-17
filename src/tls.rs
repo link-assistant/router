@@ -19,9 +19,9 @@
 use std::path::{Path, PathBuf};
 
 /// Where the generated certificate and key live inside the data directory.
-const GENERATED_DIRECTORY: &str = "tls";
-const GENERATED_CERT: &str = "cert.pem";
-const GENERATED_KEY: &str = "key.pem";
+const GENERATED_DIRECTORY: &crate::translation_core::Str = "tls";
+const GENERATED_CERT: &crate::translation_core::Str = "cert.pem";
+const GENERATED_KEY: &crate::translation_core::Str = "key.pem";
 
 /// How the router should serve its main listener.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -47,7 +47,7 @@ impl TlsSetup {
 /// deployment it was generated for. Loopback names are included because an
 /// operator debugging from inside the container reaches it that way.
 #[must_use]
-pub fn generated_subject_names(configured: &str) -> Vec<String> {
+pub fn generated_subject_names(configured: &crate::translation_core::Str) -> Vec<String> {
     let mut names: Vec<String> = configured
         .split(',')
         .map(str::trim)
@@ -72,7 +72,7 @@ pub fn generated_subject_names(configured: &str) -> Vec<String> {
 /// Returns a message when only one half of the pair is set — that is a
 /// misconfiguration whose silent fallback to plaintext would be the opposite of
 /// what was asked for — or when generation fails.
-pub fn from_env(data_dir: &Path) -> Result<TlsSetup, String> {
+pub fn from_env(data_dir: &Path) -> crate::translation_core::Outcome<TlsSetup, String> {
     let read = |name: &str| {
         crate::operation_context::var(name)
             .ok()
@@ -99,11 +99,11 @@ pub fn from_env(data_dir: &Path) -> Result<TlsSetup, String> {
 /// generation fails.
 pub fn resolve(
     data_dir: &Path,
-    cert: Option<String>,
-    key: Option<String>,
+    cert: crate::translation_core::Maybe<String>,
+    key: crate::translation_core::Maybe<String>,
     self_signed: bool,
-    self_signed_dns: Option<String>,
-) -> Result<TlsSetup, String> {
+    self_signed_dns: crate::translation_core::Maybe<String>,
+) -> crate::translation_core::Outcome<TlsSetup, String> {
     match (cert, key) {
         (Some(cert), Some(key)) => Ok(TlsSetup::Enabled {
             cert: PathBuf::from(cert),
@@ -143,7 +143,7 @@ pub fn generated_paths(data_dir: &Path) -> (PathBuf, PathBuf) {
 /// # Errors
 ///
 /// Returns a message when the certificate cannot be generated or written.
-pub fn ensure_generated(data_dir: &Path, names: &[String]) -> Result<(PathBuf, PathBuf), String> {
+pub fn ensure_generated(data_dir: &Path, names: &[String]) -> crate::translation_core::Outcome<(PathBuf, PathBuf), String> {
     let (cert_path, key_path) = generated_paths(data_dir);
     if cert_path.is_file() && key_path.is_file() {
         return Ok((cert_path, key_path));
@@ -172,7 +172,7 @@ pub fn ensure_generated(data_dir: &Path, names: &[String]) -> Result<(PathBuf, P
 /// # Errors
 ///
 /// Returns a message when no certificate has been generated yet.
-pub fn read_generated_certificate(data_dir: &Path) -> Result<String, String> {
+pub fn read_generated_certificate(data_dir: &Path) -> crate::translation_core::Outcome<String, String> {
     let (cert_path, _) = generated_paths(data_dir);
     std::fs::read_to_string(&cert_path).map_err(|error| {
         format!(
@@ -214,7 +214,7 @@ pub async fn serve_https(
 pub async fn load_config(
     cert: &Path,
     key: &Path,
-) -> Result<axum_server::tls_rustls::RustlsConfig, String> {
+) -> crate::translation_core::Outcome<axum_server::tls_rustls::RustlsConfig, String> {
     axum_server::tls_rustls::RustlsConfig::from_pem_file(cert, key)
         .await
         .map_err(|error| {

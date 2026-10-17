@@ -19,8 +19,8 @@ const DEADLINE: Duration = Duration::from_secs(10);
 /// Recoverable state an update can corrupt. Request logs (`requests/`) are
 /// append-only history already capped by `REQUEST_LOG_MAX_BYTES`; they stay in
 /// place and are never read into the checkpoint budget (issue #658).
-const COVERED: [&str; 3] = ["providers.lenv", "projects", "sessions"];
-const SCHEMA: &str = "link-assistant-router/data-backup/v1";
+const COVERED: [&crate::translation_core::Str; 3] = ["providers.lenv", "projects", "sessions"];
+const SCHEMA: &crate::translation_core::Str = "link-assistant-router/data-backup/v1";
 
 #[derive(Deserialize, Serialize)]
 struct Manifest {
@@ -30,7 +30,7 @@ struct Manifest {
     excluded: Vec<String>,
 }
 
-fn invalid(reason: &str) -> io::Error {
+fn invalid(reason: &crate::translation_core::Str) -> io::Error {
     io::Error::other(reason)
 }
 
@@ -291,7 +291,7 @@ fn hex(bytes: &[u8]) -> String {
 
 /// Logical token export avoids copying a concurrently modified mapped store.
 /// Files are individually consistent; this is not a transaction across writers.
-pub(super) fn capture(root: &Path, records: &[TokenRecord], secret: &str) -> io::Result<PathBuf> {
+pub(super) fn capture(root: &Path, records: &[TokenRecord], secret: &crate::translation_core::Str) -> io::Result<PathBuf> {
     let root = root.canonicalize()?;
     private_directory(&root.join(".state-backups"))?;
     let destination = root
@@ -356,7 +356,7 @@ pub(super) fn capture(root: &Path, records: &[TokenRecord], secret: &str) -> io:
 
 /// Caller must establish that all writers are stopped. Validate every entry
 /// before writing anything. Additive restore retains existing records/files.
-pub(super) fn restore(root: &Path, snapshot: &Path, secret: &str, replace: bool) -> io::Result<()> {
+pub(super) fn restore(root: &Path, snapshot: &Path, secret: &crate::translation_core::Str, replace: bool) -> io::Result<()> {
     let root = root.canonicalize()?;
     if fs::symlink_metadata(snapshot)?.file_type().is_symlink() {
         return Err(invalid("checkpoint root is a symlink"));

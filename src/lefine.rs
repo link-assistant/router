@@ -4,8 +4,8 @@ use std::collections::HashSet;
 
 use crate::providers::{LiveProviderModel, ProviderKind, ResolvedProvider};
 
-pub const BASE_URL: &str = "https://lefine.pro/v1";
-pub const COMPATIBLE_CLIENTS: [&str; 3] = ["grok", "opencode", "qwen"];
+pub const BASE_URL: &crate::translation_core::Str = "https://lefine.pro/v1";
+pub const COMPATIBLE_CLIENTS: [&crate::translation_core::Str; 3] = ["grok", "opencode", "qwen"];
 const MAX_CATALOG_BODY: usize = 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -22,7 +22,7 @@ pub struct CatalogFailure {
 }
 
 impl CatalogFailure {
-    const fn new(kind: CatalogFailureKind, message: &'static str) -> Self {
+    const fn new(kind: CatalogFailureKind, message: &'static crate::translation_core::Str) -> Self {
         Self { kind, message }
     }
 
@@ -44,7 +44,7 @@ impl std::error::Error for CatalogFailure {}
 pub(crate) async fn fetch_catalog(
     client: &reqwest::Client,
     provider: &ResolvedProvider,
-) -> Result<Vec<LiveProviderModel>, CatalogFailure> {
+) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, CatalogFailure> {
     if provider.kind != ProviderKind::Lefine {
         return Err(CatalogFailure::new(
             CatalogFailureKind::Unavailable,
@@ -134,7 +134,7 @@ pub(crate) async fn fetch_catalog(
 /// Operator-configured exact IDs used only while live discovery is unavailable.
 pub(crate) fn configured_catalog(
     provider: &ResolvedProvider,
-) -> Result<Vec<LiveProviderModel>, CatalogFailure> {
+) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, CatalogFailure> {
     if provider.models.is_empty() {
         return Err(unavailable(
             "Lefine live catalog is unavailable and no exact fallback models are configured",
@@ -146,18 +146,18 @@ pub(crate) fn configured_catalog(
         .map(|id| LiveProviderModel {
             id: id.clone(),
             raw: serde_json::Map::from_iter([
-                ("id".into(), serde_json::Value::String(id.clone())),
-                ("object".into(), serde_json::Value::String("model".into())),
+                ("id".into(), crate::translation_core::Json::String(id.clone())),
+                ("object".into(), crate::translation_core::Json::String("model".into())),
                 (
                     "catalog_source".into(),
-                    serde_json::Value::String("configured_fallback".into()),
+                    crate::translation_core::Json::String("configured_fallback".into()),
                 ),
             ]),
         })
         .collect())
 }
 
-fn exact_models(entries: &[serde_json::Value]) -> Result<Vec<LiveProviderModel>, CatalogFailure> {
+fn exact_models(entries: &[crate::translation_core::Json]) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, CatalogFailure> {
     let mut seen = HashSet::new();
     let mut models = Vec::new();
     for entry in entries {
@@ -167,7 +167,7 @@ fn exact_models(entries: &[serde_json::Value]) -> Result<Vec<LiveProviderModel>,
             .ok_or_else(|| unavailable("Lefine catalog contained an invalid model record"))?;
         let id = raw
             .get("id")
-            .and_then(serde_json::Value::as_str)
+            .and_then(crate::translation_core::Json::as_str)
             .filter(|id| !id.is_empty() && *id == id.trim())
             .ok_or_else(|| unavailable("Lefine catalog contained an invalid exact model id"))?;
         if seen.insert(id.to_string()) {
@@ -180,7 +180,7 @@ fn exact_models(entries: &[serde_json::Value]) -> Result<Vec<LiveProviderModel>,
     Ok(models)
 }
 
-fn body_error(error: &serde_json::Value) -> CatalogFailure {
+fn body_error(error: &crate::translation_core::Json) -> CatalogFailure {
     let field = |name: &str| {
         error.get(name).map_or_else(String::new, |value| {
             value
@@ -211,7 +211,7 @@ fn body_error(error: &serde_json::Value) -> CatalogFailure {
     CatalogFailure::new(kind, "Lefine model catalog returned an error")
 }
 
-fn catalog_url(base_url: &str) -> String {
+fn catalog_url(base_url: &crate::translation_core::Str) -> String {
     let base = base_url.trim_end_matches('/');
     if base.ends_with("/v1") {
         format!("{base}/models")
@@ -220,7 +220,7 @@ fn catalog_url(base_url: &str) -> String {
     }
 }
 
-const fn unavailable(message: &'static str) -> CatalogFailure {
+const fn unavailable(message: &'static crate::translation_core::Str) -> CatalogFailure {
     CatalogFailure::new(CatalogFailureKind::Unavailable, message)
 }
 

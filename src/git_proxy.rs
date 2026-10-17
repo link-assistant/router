@@ -29,7 +29,7 @@ use crate::app_state::AppState;
 use crate::github_proxy::POLICY_HEADER;
 
 /// The all-zero object id a client sends to delete a ref.
-const ZERO_OID: &str = "0000000000000000000000000000000000000000";
+const ZERO_OID: &crate::translation_core::Str = "0000000000000000000000000000000000000000";
 
 /// One ref update requested by a `git-receive-pack` body.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -151,8 +151,8 @@ pub fn refuse_destructive_updates(
     updates: &[RefUpdate],
     forced: bool,
     policy: &crate::github_proxy::GitHubPolicy,
-    repository: &str,
-) -> Option<RefRefusal> {
+    repository: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<RefRefusal> {
     for update in updates {
         // An operator may permit one ref explicitly; the rule path names the
         // repository and ref so a permission cannot leak to another.
@@ -223,8 +223,8 @@ pub enum Ancestry {
 /// fast-forward condition. Anything else — `behind`, `diverged`, or a shape
 /// we do not recognise — is not a fast-forward.
 #[must_use]
-pub fn ancestry_from_compare(payload: &serde_json::Value) -> Ancestry {
-    match payload.get("status").and_then(serde_json::Value::as_str) {
+pub fn ancestry_from_compare(payload: &crate::translation_core::Json) -> Ancestry {
+    match payload.get("status").and_then(crate::translation_core::Json::as_str) {
         Some("ahead" | "identical") => Ancestry::FastForward,
         Some("behind" | "diverged") => Ancestry::Diverged,
         _ => Ancestry::Unknown,
@@ -242,7 +242,7 @@ pub fn ancestry_from_compare(payload: &serde_json::Value) -> Ancestry {
 pub fn updates_needing_ancestry(
     updates: &[RefUpdate],
     policy: &crate::github_proxy::GitHubPolicy,
-    repository: &str,
+    repository: &crate::translation_core::Str,
 ) -> Vec<AncestryQuery> {
     updates
         .iter()
@@ -258,7 +258,7 @@ pub fn updates_needing_ancestry(
 
 /// `owner/repo` from a `/git/{owner}/{repo}.git/...` path.
 #[must_use]
-pub fn repository_in_git_path(path: &str) -> Option<String> {
+pub fn repository_in_git_path(path: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     let rest = path.strip_prefix("/git/")?;
     let mut parts = rest.split('/');
     let owner = parts.next().filter(|part| !part.is_empty())?;
@@ -268,7 +268,7 @@ pub fn repository_in_git_path(path: &str) -> Option<String> {
 
 /// The upstream git URL for a proxied path.
 #[must_use]
-pub fn upstream_git_url(base: &str, path: &str, query: Option<&str>) -> Option<String> {
+pub fn upstream_git_url(base: &crate::translation_core::Str, path: &crate::translation_core::Str, query: crate::translation_core::Maybe<&crate::translation_core::Str>) -> crate::translation_core::Maybe<String> {
     let rest = path.strip_prefix("/git/")?;
     let mut url = format!("{}/{rest}", base.trim_end_matches('/'));
     if let Some(query) = query {
@@ -285,11 +285,11 @@ pub fn upstream_git_url(base: &str, path: &str, query: Option<&str>) -> Option<S
 /// Only a push carries ref updates; a fetch is read-only.
 #[must_use]
 pub fn refusal_for_request(
-    path: &str,
+    path: &crate::translation_core::Str,
     body: &[u8],
     policy: &crate::github_proxy::GitHubPolicy,
-    repository: &str,
-) -> Option<RefRefusal> {
+    repository: &crate::translation_core::Str,
+) -> crate::translation_core::Maybe<RefRefusal> {
     if !path.ends_with("/git-receive-pack") {
         return None;
     }
@@ -305,7 +305,7 @@ pub fn refusal_for_request(
 ///
 /// Empty is unrestricted, matching the REST surface, so one rule governs both.
 #[must_use]
-pub fn scope_admits(allowed_repositories: &[String], repository: &str) -> bool {
+pub fn scope_admits(allowed_repositories: &[String], repository: &crate::translation_core::Str) -> bool {
     allowed_repositories.is_empty()
         || allowed_repositories
             .iter()
@@ -401,7 +401,7 @@ async fn forward(state: &AppState, allowed_repositories: &[String], request: Req
     relayed
 }
 
-fn canonical_git_path(path: &str) -> &str {
+fn canonical_git_path(path: &crate::translation_core::Str) -> &crate::translation_core::Str {
     path.strip_prefix("/api/services/github").unwrap_or(path)
 }
 
@@ -415,10 +415,10 @@ fn canonical_git_path(path: &str) -> &str {
 /// before the call is made.
 async fn refuse_rewrites_upstream(
     state: &AppState,
-    token: &str,
-    repository: &str,
+    token: &crate::translation_core::Str,
+    repository: &crate::translation_core::Str,
     body: &[u8],
-) -> Option<RefRefusal> {
+) -> crate::translation_core::Maybe<RefRefusal> {
     let updates = parse_ref_updates(body);
     let queries = updates_needing_ancestry(&updates, state.github.policy_rules(), repository);
     for query in queries {
@@ -471,7 +471,7 @@ async fn refuse_rewrites_upstream(
 }
 
 /// A policy refusal, marked so an operator can find it in a log.
-fn blocked(message: &str) -> Response {
+fn blocked(message: &crate::translation_core::Str) -> Response {
     let mut response = git_error(StatusCode::FORBIDDEN, message);
     response
         .headers_mut()
@@ -479,7 +479,7 @@ fn blocked(message: &str) -> Response {
     response
 }
 
-fn git_error(status: StatusCode, message: &str) -> Response {
+fn git_error(status: StatusCode, message: &crate::translation_core::Str) -> Response {
     (status, format!("{message}\n")).into_response()
 }
 

@@ -15,8 +15,8 @@ use sha2::{Digest as _, Sha256};
 use crate::app_state::AppState;
 use crate::subscription::SubscriptionProvider;
 
-pub const CONTINUATION_PREFIX: &str = "la_rc_";
-const FILE_NAME: &str = "codex-remote-control.lino";
+pub const CONTINUATION_PREFIX: &crate::translation_core::Str = "la_rc_";
+const FILE_NAME: &crate::translation_core::Str = "codex-remote-control.lino";
 const STORE_VERSION: u32 = 1;
 const MAX_RECORDS: usize = 1_000;
 
@@ -102,7 +102,7 @@ pub struct CodexRemoteControlStore {
 }
 
 impl CodexRemoteControlStore {
-    pub fn open(data_dir: &Path, token_secret: &str) -> Result<Self, StoreError> {
+    pub fn open(data_dir: &Path, token_secret: &crate::translation_core::Str) -> crate::translation_core::Outcome<Self, StoreError> {
         fs::create_dir_all(data_dir)?;
         let path = data_dir.join(FILE_NAME);
         let store = Self {
@@ -118,7 +118,7 @@ impl CodexRemoteControlStore {
         Ok(store)
     }
 
-    pub fn issue(&self, record: &EnrollmentRecord) -> Result<String, StoreError> {
+    pub fn issue(&self, record: &EnrollmentRecord) -> crate::translation_core::Outcome<String, StoreError> {
         validate_record(record)?;
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
             crate::durable_file::recover_transactional_write(&self.path)?;
@@ -134,7 +134,7 @@ impl CodexRemoteControlStore {
         })
     }
 
-    pub fn resolve(&self, token: &str, now: i64) -> Result<Option<EnrollmentRecord>, StoreError> {
+    pub fn resolve(&self, token: &crate::translation_core::Str, now: i64) -> crate::translation_core::Outcome<crate::translation_core::Maybe<EnrollmentRecord>, StoreError> {
         let Some(hash) = continuation_hash(token) else {
             return Ok(None);
         };
@@ -155,11 +155,11 @@ impl CodexRemoteControlStore {
 
     pub fn find(
         &self,
-        principal_id: &str,
-        account_name: &str,
-        server_id: &str,
-        installation_id: &str,
-    ) -> Result<Option<BoundEnrollment>, StoreError> {
+        principal_id: &crate::translation_core::Str,
+        account_name: &crate::translation_core::Str,
+        server_id: &crate::translation_core::Str,
+        installation_id: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<crate::translation_core::Maybe<BoundEnrollment>, StoreError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
             crate::durable_file::recover_transactional_write(&self.path)?;
             let file = self.load()?;
@@ -183,9 +183,9 @@ impl CodexRemoteControlStore {
 
     pub fn rotate(
         &self,
-        expected_token_hash: &str,
+        expected_token_hash: &crate::translation_core::Str,
         record: &EnrollmentRecord,
-    ) -> Result<String, StoreError> {
+    ) -> crate::translation_core::Outcome<String, StoreError> {
         validate_record(record)?;
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
             crate::durable_file::recover_transactional_write(&self.path)?;
@@ -207,10 +207,10 @@ impl CodexRemoteControlStore {
 
     pub fn owns_environment(
         &self,
-        principal_id: &str,
-        account_name: &str,
-        environment_id: &str,
-    ) -> Result<bool, StoreError> {
+        principal_id: &crate::translation_core::Str,
+        account_name: &crate::translation_core::Str,
+        environment_id: &crate::translation_core::Str,
+    ) -> crate::translation_core::Outcome<bool, StoreError> {
         crate::durable_file::with_exclusive_lock(&self.lock_path, || {
             crate::durable_file::recover_transactional_write(&self.path)?;
             let file = self.load()?;
@@ -246,7 +246,7 @@ impl CodexRemoteControlStore {
         Ok(())
     }
 
-    fn seal(&self, token: &str, record: &EnrollmentRecord) -> Result<StoredEnrollment, StoreError> {
+    fn seal(&self, token: &crate::translation_core::Str, record: &EnrollmentRecord) -> crate::translation_core::Outcome<StoredEnrollment, StoreError> {
         let plaintext = serde_json::to_string(record)?;
         let sealed_record = crate::providers::seal_secret(&plaintext, &self.token_secret)
             .map_err(|error| StoreError::Crypto(error.to_string()))?;
@@ -256,7 +256,7 @@ impl CodexRemoteControlStore {
         })
     }
 
-    fn unseal(&self, stored: &StoredEnrollment) -> Result<EnrollmentRecord, StoreError> {
+    fn unseal(&self, stored: &StoredEnrollment) -> crate::translation_core::Outcome<EnrollmentRecord, StoreError> {
         let plaintext = crate::providers::open_secret(&stored.sealed_record, &self.token_secret)
             .map_err(|error| StoreError::Crypto(error.to_string()))?;
         let record = serde_json::from_str(&plaintext)?;
@@ -264,7 +264,7 @@ impl CodexRemoteControlStore {
         Ok(record)
     }
 
-    fn load(&self) -> Result<StoreFile, StoreError> {
+    fn load(&self) -> crate::translation_core::Outcome<StoreFile, StoreError> {
         if !self.path.exists() {
             return Ok(StoreFile {
                 version: STORE_VERSION,
@@ -278,7 +278,7 @@ impl CodexRemoteControlStore {
         Ok(file)
     }
 
-    fn flush(&self, file: &StoreFile) -> Result<(), StoreError> {
+    fn flush(&self, file: &StoreFile) -> crate::translation_core::Outcome<(), StoreError> {
         let encoded = crate::lino_json::encode(file)?;
         crate::durable_file::transactional_write_owner_only(&self.path, encoded.as_bytes())?;
         Ok(())
@@ -293,12 +293,12 @@ fn new_continuation() -> String {
     )
 }
 
-fn continuation_hash(token: &str) -> Option<String> {
+fn continuation_hash(token: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     token.strip_prefix(CONTINUATION_PREFIX)?;
     Some(hex::encode(Sha256::digest(token.as_bytes())))
 }
 
-fn validate_record(record: &EnrollmentRecord) -> Result<(), StoreError> {
+fn validate_record(record: &EnrollmentRecord) -> crate::translation_core::Outcome<(), StoreError> {
     let identity = &record.identity;
     let values = [
         identity.principal_id.as_str(),
@@ -319,14 +319,14 @@ fn validate_record(record: &EnrollmentRecord) -> Result<(), StoreError> {
     Ok(())
 }
 
-const ROOT: &str = "/api/services/codex/backend-api/wham/remote/control/";
-const SERVER: &str = "/api/services/codex/backend-api/wham/remote/control/server";
-const ENROLL: &str = "/api/services/codex/backend-api/wham/remote/control/server/enroll";
-const REFRESH: &str = "/api/services/codex/backend-api/wham/remote/control/server/refresh";
-const REFRESH_UPSTREAM: &str = "/wham/remote/control/server/refresh";
-const PAIR: &str = "/api/services/codex/backend-api/wham/remote/control/server/pair";
-const PAIR_STATUS: &str = "/api/services/codex/backend-api/wham/remote/control/server/pair/status";
-const ENVIRONMENTS: &str = "/api/services/codex/backend-api/wham/remote/control/environments/";
+const ROOT: &crate::translation_core::Str = "/api/services/codex/backend-api/wham/remote/control/";
+const SERVER: &crate::translation_core::Str = "/api/services/codex/backend-api/wham/remote/control/server";
+const ENROLL: &crate::translation_core::Str = "/api/services/codex/backend-api/wham/remote/control/server/enroll";
+const REFRESH: &crate::translation_core::Str = "/api/services/codex/backend-api/wham/remote/control/server/refresh";
+const REFRESH_UPSTREAM: &crate::translation_core::Str = "/wham/remote/control/server/refresh";
+const PAIR: &crate::translation_core::Str = "/api/services/codex/backend-api/wham/remote/control/server/pair";
+const PAIR_STATUS: &crate::translation_core::Str = "/api/services/codex/backend-api/wham/remote/control/server/pair/status";
+const ENVIRONMENTS: &crate::translation_core::Str = "/api/services/codex/backend-api/wham/remote/control/environments/";
 
 #[derive(Debug, Eq, PartialEq)]
 enum Operation {
@@ -339,11 +339,11 @@ enum Operation {
     Revoke { environment_id: String },
 }
 
-pub fn is_remote_control_path(path: &str) -> bool {
+pub fn is_remote_control_path(path: &crate::translation_core::Str) -> bool {
     path.starts_with(ROOT)
 }
 
-fn operation(method: &Method, path: &str) -> Option<Operation> {
+fn operation(method: &Method, path: &crate::translation_core::Str) -> crate::translation_core::Maybe<Operation> {
     match (method, path) {
         (&Method::GET, SERVER) => Some(Operation::WebSocket),
         (&Method::POST, ENROLL) => Some(Operation::Enroll),
@@ -359,14 +359,14 @@ fn operation(method: &Method, path: &str) -> Option<Operation> {
 /// The ordinary inference middleware cannot validate `la_rc_` credentials;
 /// these handlers resolve their encrypted, identity-bound state before ever
 /// reading a request body.
-pub fn authenticates_continuation(method: &Method, path: &str) -> bool {
+pub fn authenticates_continuation(method: &Method, path: &crate::translation_core::Str) -> bool {
     matches!(
         operation(method, path),
         Some(Operation::WebSocket | Operation::Pair | Operation::PairStatus)
     )
 }
 
-fn dynamic_operation(method: &Method, path: &str) -> Option<Operation> {
+fn dynamic_operation(method: &Method, path: &crate::translation_core::Str) -> crate::translation_core::Maybe<Operation> {
     let tail = path.strip_prefix(ENVIRONMENTS)?;
     let segments = tail.split('/').collect::<Vec<_>>();
     match (method, segments.as_slice()) {
@@ -477,7 +477,7 @@ fn service_uri(uri: &axum::http::Uri) -> String {
     uri_path_and_query(path, uri.query().unwrap_or_default())
 }
 
-fn uri_path_and_query(path: &str, query: &str) -> String {
+fn uri_path_and_query(path: &crate::translation_core::Str, query: &crate::translation_core::Str) -> String {
     if query.is_empty() {
         path.to_string()
     } else {
@@ -503,7 +503,7 @@ fn primary_target(
     state: &AppState,
     incoming: &HeaderMap,
     selected: &crate::accounts::SelectedSubscriptionAccount,
-    uri: &str,
+    uri: &crate::translation_core::Str,
 ) -> crate::native_service::Target {
     let root = codex_backend_root(state, selected);
     let mut headers = crate::proxy::native_request_headers(incoming, &selected.token.access_token);
@@ -563,7 +563,7 @@ async fn enroll(
     let Ok(continuation) = state.provider_store.codex_remote_control().issue(&record) else {
         return unavailable("remote-control continuation state could not be stored");
     };
-    json["remote_control_token"] = serde_json::Value::String(continuation);
+    json["remote_control_token"] = crate::translation_core::Json::String(continuation);
     crate::audit::record_control_plane_request(
         &state,
         &claims,
@@ -731,7 +731,7 @@ impl BufferedResponse {
         response
     }
 
-    fn with_json(self, json: &serde_json::Value) -> Response {
+    fn with_json(self, json: &crate::translation_core::Json) -> Response {
         let mut response = Response::new(Body::from(json.to_string()));
         *response.status_mut() = self.status;
         *response.headers_mut() = self.headers;
@@ -744,7 +744,7 @@ async fn send_buffered(
     method: Method,
     body: Bytes,
     target: crate::native_service::Target,
-) -> Result<BufferedResponse, Response> {
+) -> crate::translation_core::Outcome<BufferedResponse, Response> {
     let upstream = target
         .client
         .request(
@@ -782,12 +782,12 @@ async fn send_buffered(
 
 fn enrollment_response(
     body: &[u8],
-) -> Result<(serde_json::Value, String, String, String, i64), Response> {
+) -> crate::translation_core::Outcome<(crate::translation_core::Json, String, String, String, i64), Response> {
     let json: serde_json::Value = serde_json::from_slice(body)
         .map_err(|_| unavailable("remote-control enrollment response is malformed"))?;
     let string = |name| {
         json.get(name)
-            .and_then(serde_json::Value::as_str)
+            .and_then(crate::translation_core::Json::as_str)
             .filter(|value| !value.is_empty())
             .map(str::to_string)
             .ok_or_else(|| unavailable("remote-control enrollment response is malformed"))
@@ -807,7 +807,7 @@ fn enrollment_response(
     Ok((json, server_id, environment_id, upstream_token, expires_at))
 }
 
-fn json_string(body: &[u8], name: &str) -> Option<String> {
+fn json_string(body: &[u8], name: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     serde_json::from_slice::<serde_json::Value>(body)
         .ok()?
         .get(name)?
@@ -820,16 +820,16 @@ fn pair_identity_matches(body: &[u8], identity: &EnrollmentIdentity) -> bool {
     let Ok(json) = serde_json::from_slice::<serde_json::Value>(body) else {
         return false;
     };
-    json.get("server_id").and_then(serde_json::Value::as_str) == Some(identity.server_id.as_str())
+    json.get("server_id").and_then(crate::translation_core::Json::as_str) == Some(identity.server_id.as_str())
         && json
             .get("environment_id")
-            .and_then(serde_json::Value::as_str)
+            .and_then(crate::translation_core::Json::as_str)
             == Some(identity.environment_id.as_str())
 }
 
 fn websocket_identity_matches(headers: &HeaderMap, identity: &EnrollmentIdentity) -> bool {
-    header(headers, "x-codex-server-id") == Some(identity.server_id.as_str())
-        && header(headers, "x-codex-installation-id") == Some(identity.installation_id.as_str())
+    header(headers, "x-codex-server-id") == crate::translation_core::Maybe::Some(identity.server_id.as_str())
+        && header(headers, "x-codex-installation-id") == crate::translation_core::Maybe::Some(identity.installation_id.as_str())
 }
 
 fn header<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
@@ -838,7 +838,7 @@ fn header<'a>(headers: &'a HeaderMap, name: &str) -> Option<&'a str> {
     values.next().is_none().then_some(value)
 }
 
-fn bearer(headers: &HeaderMap) -> Option<&str> {
+fn bearer(headers: &HeaderMap) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
     let value = header(headers, "authorization")?;
     let (scheme, token) = value.split_once(' ')?;
     (scheme.eq_ignore_ascii_case("bearer") && !token.is_empty()).then_some(token)
@@ -848,7 +848,7 @@ fn is_websocket(headers: &HeaderMap) -> bool {
     header(headers, "upgrade").is_some_and(|value| value.eq_ignore_ascii_case("websocket"))
 }
 
-fn decode_path_segment(segment: &str) -> Option<String> {
+fn decode_path_segment(segment: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     if segment.is_empty() {
         return None;
     }
@@ -871,7 +871,7 @@ fn decode_path_segment(segment: &str) -> Option<String> {
         .filter(|value| !value.chars().any(char::is_control))
 }
 
-const fn hex_digit(byte: u8) -> Option<u8> {
+const fn hex_digit(byte: u8) -> crate::translation_core::Maybe<u8> {
     match byte {
         b'0'..=b'9' => Some(byte - b'0'),
         b'a'..=b'f' => Some(byte - b'a' + 10),
@@ -880,23 +880,23 @@ const fn hex_digit(byte: u8) -> Option<u8> {
     }
 }
 
-fn invalid_request(message: &str) -> Response {
+fn invalid_request(message: &crate::translation_core::Str) -> Response {
     api_error(StatusCode::BAD_REQUEST, "invalid_request_error", message)
 }
 
-fn authentication_error(message: &str) -> Response {
+fn authentication_error(message: &crate::translation_core::Str) -> Response {
     api_error(StatusCode::UNAUTHORIZED, "authentication_error", message)
 }
 
-fn permission_error(message: &str) -> Response {
+fn permission_error(message: &crate::translation_core::Str) -> Response {
     api_error(StatusCode::FORBIDDEN, "permission_error", message)
 }
 
-fn unavailable(message: &str) -> Response {
+fn unavailable(message: &crate::translation_core::Str) -> Response {
     api_error(StatusCode::SERVICE_UNAVAILABLE, "api_error", message)
 }
 
-fn api_error(status: StatusCode, error_type: &str, message: &str) -> Response {
+fn api_error(status: StatusCode, error_type: &crate::translation_core::Str, message: &crate::translation_core::Str) -> Response {
     crate::api_error::PresentedError {
         status,
         error_type,

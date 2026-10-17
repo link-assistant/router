@@ -14,15 +14,15 @@ use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
 /// Documented base path for native Anthropic Messages traffic.
-pub const ANTHROPIC_BASE_PATH: &str = "/api/anthropic";
+pub const ANTHROPIC_BASE_PATH: &crate::translation_core::Str = "/api/anthropic";
 /// Documented base path for `OpenAI Chat Completions` traffic.
-pub const CHAT_BASE_PATH: &str = "/api/coding/paas/v4";
+pub const CHAT_BASE_PATH: &crate::translation_core::Str = "/api/coding/paas/v4";
 /// Documented base path for `OpenAI Responses` traffic.
-pub const RESPONSES_BASE_PATH: &str = "/api/v1";
+pub const RESPONSES_BASE_PATH: &crate::translation_core::Str = "/api/v1";
 /// Documented, non-inference quota operation used for health checks.
-pub const HEALTH_PATH: &str = "/api/monitor/usage/quota/limit";
+pub const HEALTH_PATH: &crate::translation_core::Str = "/api/monitor/usage/quota/limit";
 /// Authenticated non-inference catalog used as the model source of truth.
-pub const CATALOG_PATH: &str = "/api/anthropic/v1/models";
+pub const CATALOG_PATH: &crate::translation_core::Str = "/api/anthropic/v1/models";
 
 const CATALOG_TTL: Duration = Duration::from_secs(5 * 60);
 const FAILED_REFRESH_RETRY: Duration = Duration::from_secs(15);
@@ -44,7 +44,7 @@ pub struct ZaiProbeFailure {
 }
 
 impl ZaiProbeFailure {
-    const fn new(kind: ZaiProbeFailureKind, message: &'static str) -> Self {
+    const fn new(kind: ZaiProbeFailureKind, message: &'static crate::translation_core::Str) -> Self {
         Self { kind, message }
     }
 
@@ -83,10 +83,10 @@ pub struct ZaiCodingPlanPolicy {
 impl ZaiCodingPlanPolicy {
     /// Build a fail-closed policy from persisted operator acknowledgements.
     pub fn new(
-        subscriber_id: &str,
+        subscriber_id: &crate::translation_core::Str,
         intermediary_risk_acknowledged: bool,
         unsupported_clients: &[String],
-    ) -> Result<Self, String> {
+    ) -> crate::translation_core::Outcome<Self, String> {
         let subscriber_id = subscriber_id.trim();
         if subscriber_id.is_empty() {
             return Err("z.ai Coding Plan requires one subscriber_id".into());
@@ -128,7 +128,7 @@ impl ZaiCodingPlanPolicy {
     }
 
     /// Authorize exactly one signed client/principal pair.
-    pub fn authorize(&self, client: ClientKind, principal_id: &str) -> Result<(), String> {
+    pub fn authorize(&self, client: ClientKind, principal_id: &crate::translation_core::Str) -> crate::translation_core::Outcome<(), String> {
         if !self.intermediary_risk_acknowledged {
             return Err("z.ai Coding Plan intermediary-proxy risk is not acknowledged".into());
         }
@@ -197,9 +197,9 @@ pub fn registry_for_client(
 pub fn mapping_for_client(
     client: ClientKind,
     models: &[String],
-    exposed_id: &str,
+    exposed_id: &crate::translation_core::Str,
     protocol: ClientProtocol,
-) -> Option<RegistryEntry> {
+) -> crate::translation_core::Maybe<RegistryEntry> {
     registry_for_client(client, models)
         .ok()?
         .into_iter()
@@ -208,7 +208,7 @@ pub fn mapping_for_client(
 
 /// Whether any supported adapter registry contains this exact exposed id.
 #[must_use]
-pub fn canonical_for_any_client(models: &[String], exposed_id: &str) -> Option<String> {
+pub fn canonical_for_any_client(models: &[String], exposed_id: &crate::translation_core::Str) -> crate::translation_core::Maybe<String> {
     [
         ClientKind::ClaudeCode,
         ClientKind::Codex,
@@ -238,8 +238,8 @@ fn cache_failure(
     state: &crate::app_state::AppState,
     provider: &ResolvedProvider,
     fingerprint: String,
-    detail: &str,
-) -> Result<Vec<LiveProviderModel>, String> {
+    detail: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, String> {
     tracing::warn!(provider = %provider.name, "z.ai catalog refresh failed: {detail}");
     let previous = state
         .provider_store
@@ -266,7 +266,7 @@ fn cache_failure(
 pub(crate) async fn live_catalog(
     state: &crate::app_state::AppState,
     provider: &ResolvedProvider,
-) -> Result<Vec<LiveProviderModel>, String> {
+) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, String> {
     let fingerprint = catalog_fingerprint(provider);
     if let Some(cached) = state
         .provider_store
@@ -313,7 +313,7 @@ pub(crate) async fn live_catalog(
 pub(crate) async fn fetch_catalog(
     client: &reqwest::Client,
     provider: &ResolvedProvider,
-) -> Result<Vec<LiveProviderModel>, ZaiProbeFailure> {
+) -> crate::translation_core::Outcome<Vec<LiveProviderModel>, ZaiProbeFailure> {
     let key = provider
         .api_key
         .as_deref()
@@ -457,8 +457,8 @@ pub(crate) async fn fetch_catalog(
 
 /// Apply the body-level success contract shared by catalog, health, and usage.
 pub(crate) fn accepted_non_inference_payload(
-    value: serde_json::Value,
-) -> Result<serde_json::Value, ZaiProbeFailure> {
+    value: crate::translation_core::Json,
+) -> crate::translation_core::Outcome<crate::translation_core::Json, ZaiProbeFailure> {
     let code = value.get("code").and_then(serde_json::Value::as_i64);
     if value.get("success").and_then(serde_json::Value::as_bool) == Some(false) {
         let kind = if code == Some(429) {
@@ -490,7 +490,7 @@ pub(crate) fn accepted_non_inference_payload(
 pub(crate) fn live_registry_for_client(
     client: ClientKind,
     models: &[LiveProviderModel],
-) -> Result<Vec<RegistryEntry>, String> {
+) -> crate::translation_core::Outcome<Vec<RegistryEntry>, String> {
     let mut registry = registry_for_client(
         client,
         &models.iter().map(|model| &model.id).collect::<Vec<_>>(),
@@ -500,7 +500,7 @@ pub(crate) fn live_registry_for_client(
             .raw
             .get("display_name")
             .or_else(|| model.raw.get("name"))
-            .and_then(serde_json::Value::as_str)
+            .and_then(crate::translation_core::Json::as_str)
             .map(str::to_string);
     }
     Ok(registry)
@@ -509,10 +509,10 @@ pub(crate) fn live_registry_for_client(
 /// Resolve one exact current z.ai id for automatic routing.
 pub(crate) async fn live_provider_for_model(
     state: &crate::app_state::AppState,
-    model: &str,
-    client: Option<ClientKind>,
+    model: &crate::translation_core::Str,
+    client: crate::translation_core::Maybe<ClientKind>,
     authorized: bool,
-) -> Result<Option<ResolvedProvider>, crate::model_routing::ModelRouteError> {
+) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedProvider>, crate::model_routing::ModelRouteError> {
     if !authorized {
         return Ok(None);
     }
@@ -541,9 +541,9 @@ pub(crate) async fn live_provider_for_model(
 /// catalog Router already cached and never contacts z.ai.
 pub(crate) fn unproven_request_for_listed_model(
     state: &crate::app_state::AppState,
-    model: &str,
-    client: Option<ClientKind>,
-) -> Option<String> {
+    model: &crate::translation_core::Str,
+    client: crate::translation_core::Maybe<ClientKind>,
+) -> crate::translation_core::Maybe<String> {
     let provider = resolve(state).ok().flatten()?;
     let client = client?;
     // A client the plan does not permit is never shown its models, so for it
@@ -577,7 +577,7 @@ pub(crate) fn authorize_automatic_discovery(
     claims: &crate::token::TokenClaims,
     headers: &axum::http::HeaderMap,
     protocol: ClientProtocol,
-    path: &str,
+    path: &crate::translation_core::Str,
 ) -> bool {
     resolve(state).ok().flatten().is_some_and(|provider| {
         authorize_client_request(&provider, claims, headers, protocol, path).is_ok()
@@ -585,7 +585,7 @@ pub(crate) fn authorize_automatic_discovery(
 }
 
 /// Resolve the selected enabled Coding Plan provider from runtime state.
-pub fn resolve(state: &crate::app_state::AppState) -> Result<Option<ResolvedProvider>, String> {
+pub fn resolve(state: &crate::app_state::AppState) -> crate::translation_core::Outcome<crate::translation_core::Maybe<ResolvedProvider>, String> {
     let providers = state
         .provider_store
         .list()
@@ -605,11 +605,11 @@ pub fn resolve(state: &crate::app_state::AppState) -> Result<Option<ResolvedProv
         .map_err(|error| error.to_string())
 }
 
-fn client_claims(claims: &crate::token::TokenClaims) -> Result<(ClientKind, &str), String> {
+fn client_claims(claims: &crate::token::TokenClaims) -> crate::translation_core::Outcome<(ClientKind, &crate::translation_core::Str), String> {
     crate::client_policy::bound_client(claims)
 }
 
-fn provider_policy(provider: &ResolvedProvider) -> Result<ZaiCodingPlanPolicy, String> {
+fn provider_policy(provider: &ResolvedProvider) -> crate::translation_core::Outcome<ZaiCodingPlanPolicy, String> {
     if provider.kind != ProviderKind::ZaiCodingPlan {
         return Err("selected credential is not z.ai Coding Plan".into());
     }
@@ -648,8 +648,8 @@ pub fn authorize_catalog(
     provider: &ResolvedProvider,
     claims: &crate::token::TokenClaims,
     headers: &axum::http::HeaderMap,
-    path: &str,
-) -> Result<(ClientKind, bool), String> {
+    path: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(ClientKind, bool), String> {
     let (client, _, overridden) =
         authorize_client_request(provider, claims, headers, ClientProtocol::Catalog, path)?;
     Ok((client, overridden))
@@ -662,9 +662,9 @@ pub(crate) fn authorize_model(
     claims: &crate::token::TokenClaims,
     headers: &axum::http::HeaderMap,
     protocol: ClientProtocol,
-    path: &str,
-    exposed_id: &str,
-) -> Result<(ClientKind, RegistryEntry, bool), String> {
+    path: &crate::translation_core::Str,
+    exposed_id: &crate::translation_core::Str,
+) -> crate::translation_core::Outcome<(ClientKind, RegistryEntry, bool), String> {
     let (client, _, overridden) =
         authorize_client_request(provider, claims, headers, protocol, path)?;
     let mapping = live_registry_for_client(client, live_models)?
@@ -678,7 +678,7 @@ pub(crate) fn authorize_model(
 pub async fn credential_healthy(
     client: &reqwest::Client,
     provider: &ResolvedProvider,
-) -> Result<(), String> {
+) -> crate::translation_core::Outcome<(), String> {
     fetch_catalog(client, provider)
         .await
         .map(|_| ())
@@ -689,7 +689,7 @@ pub async fn credential_healthy(
 ///
 /// The same authenticated non-inference live catalog gates catalogs and
 /// dispatch, so every health surface reports the routing source of truth.
-pub(crate) async fn configured_health(state: &crate::app_state::AppState) -> Option<bool> {
+pub(crate) async fn configured_health(state: &crate::app_state::AppState) -> crate::translation_core::Maybe<bool> {
     let configured = match state.provider_store.list() {
         Ok(providers) => providers
             .iter()
@@ -716,12 +716,12 @@ pub(crate) async fn configured_health(state: &crate::app_state::AppState) -> Opt
 /// the last inference z.ai refused and cleared by the next one it serves.
 pub(crate) fn recorded_exhaustion(
     state: &crate::app_state::AppState,
-) -> Option<crate::zai_upstream_error::ZaiExhaustion> {
+) -> crate::translation_core::Maybe<crate::zai_upstream_error::ZaiExhaustion> {
     let provider = resolve(state).ok().flatten()?;
     state.provider_store.exhaustion(&provider.name)
 }
 
-fn policy_error(surface: crate::metrics::Surface, message: &str) -> axum::response::Response {
+fn policy_error(surface: crate::metrics::Surface, message: &crate::translation_core::Str) -> axum::response::Response {
     crate::api_error::error_response_for_surface(
         surface,
         axum::http::StatusCode::FORBIDDEN,
@@ -730,7 +730,7 @@ fn policy_error(surface: crate::metrics::Surface, message: &str) -> axum::respon
     )
 }
 
-fn unavailable_error(surface: crate::metrics::Surface, message: &str) -> axum::response::Response {
+fn unavailable_error(surface: crate::metrics::Surface, message: &crate::translation_core::Str) -> axum::response::Response {
     crate::api_error::error_response_for_surface(
         surface,
         axum::http::StatusCode::SERVICE_UNAVAILABLE,
@@ -743,8 +743,8 @@ fn unavailable_error(surface: crate::metrics::Surface, message: &str) -> axum::r
 pub async fn forward(
     state: &crate::app_state::AppState,
     headers: &axum::http::HeaderMap,
-    mut body: serde_json::Value,
-    incoming_path: &str,
+    mut body: crate::translation_core::Json,
+    incoming_path: &crate::translation_core::Str,
     protocol: ClientProtocol,
     surface: crate::metrics::Surface,
 ) -> axum::response::Response {
@@ -858,14 +858,14 @@ pub async fn forward(
 pub fn count_tokens(
     state: &crate::app_state::AppState,
     headers: &axum::http::HeaderMap,
-    path: &str,
-    body: &serde_json::Value,
+    path: &crate::translation_core::Str,
+    body: &crate::translation_core::Json,
 ) -> axum::response::Response {
     let claims = match crate::proxy::authenticate_client(state, headers) {
         Ok(claims) => claims,
         Err(response) => return *response,
     };
-    let Some(model) = body.get("model").and_then(serde_json::Value::as_str) else {
+    let Some(model) = body.get("model").and_then(crate::translation_core::Json::as_str) else {
         return crate::api_error::error_response(
             axum::http::StatusCode::BAD_REQUEST,
             "invalid_request_error",

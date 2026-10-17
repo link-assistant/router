@@ -18,9 +18,9 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
 
 /// Environment which elects the binary into relay mode before CLI parsing.
-pub const STATE_ENV: &str = "ROUTER_DEPLOY_RELAY_STATE";
+pub const STATE_ENV: &crate::translation_core::Str = "ROUTER_DEPLOY_RELAY_STATE";
 /// Semicolon-separated `LISTEN_ADDRESS,BACKEND_PORT` relay bindings.
-pub const LISTENERS_ENV: &str = "ROUTER_DEPLOY_RELAY_LISTENERS";
+pub const LISTENERS_ENV: &crate::translation_core::Str = "ROUTER_DEPLOY_RELAY_LISTENERS";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct Binding {
@@ -28,7 +28,7 @@ struct Binding {
     backend_port: u16,
 }
 
-fn parse_bindings(raw: &str) -> Result<Vec<Binding>, String> {
+fn parse_bindings(raw: &crate::translation_core::Str) -> crate::translation_core::Outcome<Vec<Binding>, String> {
     let bindings = raw
         .split(';')
         .filter(|part| !part.trim().is_empty())
@@ -54,7 +54,7 @@ fn parse_bindings(raw: &str) -> Result<Vec<Binding>, String> {
     Ok(bindings)
 }
 
-fn valid_backend(value: &str) -> bool {
+fn valid_backend(value: &crate::translation_core::Str) -> bool {
     !value.is_empty()
         && value.len() <= 128
         && value
@@ -62,7 +62,7 @@ fn valid_backend(value: &str) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
 }
 
-fn read_backend(state: &Path) -> Result<String, String> {
+fn read_backend(state: &Path) -> crate::translation_core::Outcome<String, String> {
     let backend = std::fs::read_to_string(state)
         .map_err(|error| format!("could not read relay state {}: {error}", state.display()))?;
     let backend = backend.trim();
@@ -82,7 +82,7 @@ struct Connections {
 }
 
 impl Connections {
-    fn new(state: &Path) -> Result<Self, String> {
+    fn new(state: &Path) -> crate::translation_core::Outcome<Self, String> {
         let parent = state
             .parent()
             .ok_or_else(|| "relay state has no parent directory".to_string())?;
@@ -129,7 +129,7 @@ impl Connections {
         })
     }
 
-    fn change(&mut self, backend: &str, change: i8) -> Result<(), String> {
+    fn change(&mut self, backend: &crate::translation_core::Str, change: i8) -> crate::translation_core::Outcome<(), String> {
         let value = self.counts.entry(backend.to_string()).or_default();
         let previous = *value;
         if change > 0 {
@@ -186,7 +186,7 @@ async fn relay_connection(
     state: &Path,
     backend_port: u16,
     connections: Arc<Mutex<Connections>>,
-) -> Result<(), String> {
+) -> crate::translation_core::Outcome<(), String> {
     relay_connection_with_connector(
         client,
         state,
@@ -201,7 +201,7 @@ async fn serve_binding(
     binding: Binding,
     state: PathBuf,
     connections: Arc<Mutex<Connections>>,
-) -> Result<(), String> {
+) -> crate::translation_core::Outcome<(), String> {
     let listener = TcpListener::bind(&binding.listen)
         .await
         .map_err(|error| format!("could not bind relay listener {}: {error}", binding.listen))?;
@@ -229,7 +229,7 @@ async fn serve_binding(
 /// Run relay mode when its opt-in environment is present.
 ///
 /// `Ok(None)` means this is an ordinary Router invocation.
-pub async fn run_from_env() -> Result<Option<()>, String> {
+pub async fn run_from_env() -> crate::translation_core::Outcome<crate::translation_core::Maybe<()>, String> {
     let Some(state) = crate::operation_context::var_os(STATE_ENV) else {
         return Ok(None);
     };
