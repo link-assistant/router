@@ -171,16 +171,8 @@ export function createPrivateFrozenJsonComposer(){
   let measureCells=CELLS,measureText=COMPOSITION_UNITS;
   const entryUnits=(ENTRY_BYTES-128)/2;
   function quotedUnits(value,limit){
-   if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;let units=2;
-   for(let at=0;at<value.length;at++){
-    // charCodeAt is already pinned by the fresh lexical intrinsic guard.
-    const code=value.charCodeAt(at);
-    if(code===34||code===92)units+=2;
-    else if(code<32)units+=code===8||code===12||code===10||code===13||code===9?2:6;
-    else if(code>=55296&&code<=56319){const low=at+1<value.length?value.charCodeAt(at+1):-1;if(low>=56320&&low<=57343){units+=2;at++;}else units+=6;}
-    else units+=code>=56320&&code<=57343?6:1;
-    if(units>limit)return -1;
-   }return units;
+   if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;
+   const units=apply(compositionStringify,compositionReceiver,[value]).length;return units<=limit?units:-1;
   }
   function scalarUnits(value,limit){
    if(typeof value==='string')return quotedUnits(value,limit);
