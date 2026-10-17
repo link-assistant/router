@@ -3,7 +3,7 @@
 // see provenance.json. Unsupported source is reported, never put in envelopes.
 import { lex, topLevelItems } from './vendor/lexer.mjs';
 import { parseJavaScriptItem } from './vendor/frontends.mjs';
-import { check, signatures, toLino, fromLino, FRAGMENT } from './vendor/ir.mjs';
+import { check, signatures, toLino, fromLino, FRAGMENT, toOwnedCoreLinoProgram } from './vendor/ir.mjs';
 import { isRefusal } from './vendor/constructs.mjs';
 import { emitRust, emitTypeScript } from './targets.mjs';
 import { parseLinks } from './vendor/lino.mjs';
@@ -379,7 +379,7 @@ export function parseOwnedCoreMeta(text,{context}={}){
  if(context){if(JSON.stringify(ownedCoreSourceData(context))!==JSON.stringify(data))throw TypeError('Owned meta current context differs');}
  else context=createOwnedCoreSourceContext(data);
  const raw=fromLino(text),program=checkOwnedCoreProgram(raw,context);
- const canonical=writeLink(['owned-core-context',encodeWord(JSON.stringify(ownedCoreSourceData(context)))])+'\n'+program.map(toLino).join('\n')+'\n';
+ const canonical=writeLink(['owned-core-context',encodeWord(JSON.stringify(ownedCoreSourceData(context)))])+'\n'+toOwnedCoreLinoProgram(program).join('\n')+'\n';
  if(canonical!==text)throw TypeError('Noncanonical owned checked meta');
  requireOwnedCoreSourceCurrent(context);return program;
 }
@@ -388,7 +388,7 @@ function translateOwnedStage(stage,{sourcePath,context,typescriptOutputPath}={})
   {phase:'language',rules:[
    {id:'owned-core:source-symbols-and-body',apply:()=>{const analyzed=analyzeOwnedCoreStage(stage,sourcePath,context);if(analyzed.diagnostics.length)throw TypeError(analyzed.diagnostics[0].message);return analyzed;}},
    {id:'owned-core:checked-links-roundtrip',apply:analyzed=>{
-    const meta=writeLink(['owned-core-context',encodeWord(JSON.stringify(ownedCoreSourceData(context)))])+'\n'+analyzed.program.map(toLino).join('\n')+'\n';
+    const meta=writeLink(['owned-core-context',encodeWord(JSON.stringify(ownedCoreSourceData(context)))])+'\n'+toOwnedCoreLinoProgram(analyzed.program).join('\n')+'\n';
     const program=parseOwnedCoreMeta(meta,{context});return {analyzed,meta,program};
    }},
    {id:'owned-core:both-checked-targets',apply:row=>({...row,rust:emitRust(row.program),typescript:emitTypeScript(row.program,{outputPath:typescriptOutputPath})})},

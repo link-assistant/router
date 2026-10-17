@@ -2,7 +2,7 @@
 // the original full-source checker, with all its fresh hash arguments intact.
 import {types,isDeepStrictEqual} from 'node:util';
 import {ownedCoreSourceData,createOwnedCoreSourceContext,requireOwnedCoreSourceCurrent,ownedPlainData,ownedSourcePath} from './owned-core-source.mjs';
-import {checkOwnedCoreItem} from './owned-core-operations.mjs';
+import {withOwnedCoreItemChecks} from './owned-core-operations.mjs';
 import {ownedCorePairedTypePath,prepareOwnedCorePairedTypes} from './owned-core-paired-types.mjs';
 import {prepareReverseConcreteSource,parseReverseConcreteSource,assertReverseConcreteSourceHost} from './concrete-source.mjs';
 import {encodeWord,textOf,writeLink} from './vendor/lino.mjs';
@@ -118,7 +118,7 @@ export function serializeOwnedCoreDocument(program,{context}={}){
  // Reserve the header and each checked compact row before retaining anything
  // proportional to the number of items. Only bounded encoded lines accumulate.
  output.add('owned-source-document',{profile:PROFILE,context:data});
- for(const original of inputItems(program)){const item=checkOwnedCoreItem(original,context);if(names.has(item.name))fail('duplicate function');names.add(item.name);output.add('owned-source-item',compact(item,files));for(const path of referenced(item))paths.add(path);}
+ withOwnedCoreItemChecks(check=>{for(const original of inputItems(program)){const item=check(original,context);if(names.has(item.name))fail('duplicate function');names.add(item.name);output.add('owned-source-item',compact(item,files));for(const path of referenced(item))paths.add(path);}});
  // Existing CST transport has its own source/node bounds. Its stored word must
  // fit the SAME remaining document budget before JSON/percent serialization.
  for(const path of paths)output.add('owned-source-cst',cstRow(path,files));
@@ -135,6 +135,6 @@ export function readOwnedCoreDocument(text,{context}={}){
   else fail('row order differs');
  }
  const names=new Set(),required=new Set(),pairs=new Map(),program=[];
- for(const item of items){for(const path of referenced(item)){if(!paths.includes(path))fail('CST source missing');required.add(path);}const checked=checkOwnedCoreItem(expand(item,data,files,pairs),context);if(names.has(checked.name))fail('duplicate function');names.add(checked.name);if(JSON.stringify(compact(checked,files))!==JSON.stringify(item))fail('noncanonical checked item');program.push(checked);}
+ withOwnedCoreItemChecks(check=>{for(const item of items){for(const path of referenced(item)){if(!paths.includes(path))fail('CST source missing');required.add(path);}const checked=check(expand(item,data,files,pairs),context);if(names.has(checked.name))fail('duplicate function');names.add(checked.name);if(JSON.stringify(compact(checked,files))!==JSON.stringify(item))fail('noncanonical checked item');program.push(checked);}});
  if(!isDeepStrictEqual(paths,[...required]))fail('unreferenced or reordered CST');requireOwnedCoreSourceCurrent(context);assertReverseConcreteSourceHost();return program;
 }

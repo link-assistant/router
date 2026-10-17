@@ -37,7 +37,7 @@ import { checkClosedJson,jsonResponseStatus,closedJsonValue,utf16Link,utf16Of } 
 import {sourceConstructorItem,isOriginalConstructorBodyCheck,checkOriginalConstructorBody} from './constructor-bodies.mjs';
 import {reissueImportedErrorConstructor,originalImportedErrorConstructor} from './source-constructors.mjs';
 
-import {isOwnedCoreItem,checkOwnedCoreItem} from '../owned-core-operations.mjs';
+import {isOwnedCoreItem,checkOwnedCoreItem,withOwnedCoreItemChecks} from '../owned-core-operations.mjs';
 
 export const FRAGMENT = 'portable-router-v1';
 function callableOf(type){if(typeof type!=='string'||!type.startsWith('callable:'))return null;return JSON.parse(type.slice(9));}
@@ -674,6 +674,12 @@ function linkOf(expr) {
     default:
       return [expr.kind, expr.name, ...expr.args.map(linkOf)];
   }
+}
+
+// Complete owned-program encoding keeps row checking/encoding interleaved.
+// The standalone toLino contract and all ordinary portable rows stay unchanged.
+export function toOwnedCoreLinoProgram(program){
+  return withOwnedCoreItemChecks(check=>program.map(item=>writeLink(['owned-function',encodeConstructorProofWord(JSON.stringify(check(item)))])));
 }
 
 /**

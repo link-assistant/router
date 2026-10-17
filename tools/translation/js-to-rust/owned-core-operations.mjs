@@ -3,6 +3,7 @@
 import {isDeepStrictEqual,types} from 'node:util';
 import {posix} from 'node:path';
 import {analyzeOriginalOwnedCoreSource,requireOwnedCoreSourceCurrent,ownedPlainData,ownedCoreSourceData} from './owned-core-source.mjs';
+import {originalNamespaceTraversalIntrinsicsUnchanged,originalStaticSourceIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
 const issued=new WeakMap(),runtimes=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse operation: '+message);};
 const OPS=Object.freeze({
@@ -40,8 +41,112 @@ export function checkOwnedCoreItem(item,context=issued.get(item)?.context){
  if(candidates.length!==1)fail('original function span or checked domain differs');const result=candidates[0];
  if(!isDeepStrictEqual(result,input))fail('checked function/meta differs');return result;
 }
+// This synchronous storage lifetime never escapes its consumer invocation.
+// Every accepted row still joins its full current private source/context.
+export function withOwnedCoreItemChecks(run){
+ let active=true,enabled=originalNamespaceTraversalIntrinsicsUnchanged(),admit=true,groups=null,native=null;
+ const contexts=[];let groupCount=0,retainedCells=0,retainedUnits=0;
+ if(enabled){native={Map,apply:Reflect.apply,get:Map.prototype.get,set:Map.prototype.set,clear:Map.prototype.clear};groups=new native.Map();}
+ const get=(map,key)=>native.apply(native.get,map,[key]),set=(map,key,value)=>native.apply(native.set,map,[key,value]);
+ const disable=()=>{enabled=false;admit=false;if(groups)native.apply(native.clear,groups,[]);};
+ function cost(value){
+  let cells=0,units=0;const ancestors=new Set();
+  function visit(value,depth){
+   if(++cells>100000-retainedCells||depth>160)return false;
+   if(typeof value==='string'){units+=value.length;return units<=16777216-retainedUnits;}
+   if(value===null||typeof value==='boolean'||typeof value==='number')return true;
+   if(typeof value!=='object'||types.isProxy(value)||ancestors.has(value))return false;
+   const array=Array.isArray(value),parent=Object.getPrototypeOf(value);
+   if(array?parent!==Array.prototype:parent!==Object.prototype&&parent!==null)return false;
+   const names=Reflect.ownKeys(value);if(names.length>100000-retainedCells-cells+1)return false;
+   const fields=Object.getOwnPropertyDescriptors(value);
+   for(const name of names){if(typeof name!=='string'||name==='stack'||!Object.hasOwn(fields,name)||!Object.hasOwn(fields[name],'value'))return false;}
+   let length=names.length;
+   if(array){const field=fields.length;if(!field||typeof field.value!=='number'||field.value<0||field.value%1!==0||names.length!==field.value+1)return false;length=field.value;}
+   ancestors.add(value);
+   for(let at=0;at<length;at++){
+    const name=array?''+at:names[at],field=fields[name];
+    if(!field||!Object.hasOwn(field,'value')||!field.enumerable){ancestors.delete(value);return false;}
+    if(!array){units+=name.length;if(units>16777216-retainedUnits){ancestors.delete(value);return false;}}
+    if(!visit(field.value,depth+1)){ancestors.delete(value);return false;}
+   }
+   ancestors.delete(value);return true;
+  }
+  return visit(value,0)?{cells,units}:null;
+ }
+ function canonicalCopy(value,input=false){
+  const ops={isProxy:types.isProxy,isArray:Array.isArray,prototype:Object.getPrototypeOf,keys:Reflect.ownKeys,fields:Object.getOwnPropertyDescriptors,has:Object.hasOwn,define:Object.defineProperty,apply:Reflect.apply,Set,hasCycle:Set.prototype.has,addCycle:Set.prototype.add,deleteCycle:Set.prototype.delete,objectPrototype:Object.prototype,arrayPrototype:Array.prototype};
+  const ancestors=new ops.Set();let cells=0,units=0,failed=false;
+  const bad=()=>{failed=true;return undefined;};
+  function visit(value,depth){
+   if(failed||++cells>100000||depth>160)return bad();
+   if(value===null||typeof value==='boolean'||typeof value==='number')return value;
+   if(typeof value==='string'){units+=value.length;return units>16777216?bad():value;}
+   if(typeof value!=='object'||ops.isProxy(value)||ops.apply(ops.hasCycle,ancestors,[value]))return bad();
+   const array=ops.isArray(value),parent=ops.prototype(value);
+   if(array?parent!==ops.arrayPrototype:parent!==ops.objectPrototype&&(input||parent!==null))return bad();
+   const names=ops.keys(value);if(names.length>100000-cells+1)return bad();const fields=ops.fields(value);
+   for(let at=0;at<names.length;at++){const name=names[at];if(typeof name!=='string'||name==='stack'||!ops.has(fields,name)||!ops.has(fields[name],'value'))return bad();const field=fields[name];if(name==='length'&&array){if(field.enumerable||field.configurable||!field.writable)return bad();}else if(!field.enumerable||!field.writable||!field.configurable)return bad();}
+   let length=names.length;
+   if(array){const field=fields.length;if(!field||typeof field.value!=='number'||field.value<0||field.value>4096||field.value%1!==0||names.length!==field.value+1)return bad();length=field.value;}
+   ops.apply(ops.addCycle,ancestors,[value]);const result=array?[]:parent===null?{__proto__:null}:{};
+   for(let at=0;at<length;at++){
+    const name=array?''+at:names[at],field=fields[name];
+    if(!field||!ops.has(field,'value')||!field.enumerable)return bad();
+    const item=visit(field.value,depth+1);if(failed)return undefined;
+    ops.define(result,name,{value:item,enumerable:true,writable:true,configurable:true});
+   }
+   ops.apply(ops.deleteCycle,ancestors,[value]);return result;
+  }
+  const result=visit(value,0);return failed?null:result;
+ }
+ const check=(item,context)=>{
+  if(!active)fail('closed item-check invocation');
+  if(!enabled||!originalNamespaceTraversalIntrinsicsUnchanged()){disable();return checkOwnedCoreItem(item,context);}
+  if(context===undefined)context=issued.get(item)?.context;
+  if(!context)fail('unissued function');
+  const input=ownedPlainData(item),path=input.source.path;
+  let paths=get(groups,context),analysis=paths&&get(paths,path);const retained=!!analysis;
+  if(retained)requireOwnedCoreSourceCurrent(context);else analysis=analyzeOwnedCoreModule(context,path);
+  // Source/hash/issuer observers may retain or mutate the original public
+  // copies. Detach them through qualified native descriptors before comparison.
+  if(!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()){disable();return checkOwnedCoreItem(input,context);}
+  const snapshot=canonicalCopy(input,true);if(!snapshot){disable();return checkOwnedCoreItem(item,context);}
+  if(!retained){analysis=canonicalCopy(analysis);if(!analysis){disable();return checkOwnedCoreItem(item,context);}}
+  if(analysis.source!==snapshot.source.source)fail('complete caller source differs');
+  const candidates=analysis.program.filter(value=>value.source.span[0]===snapshot.source.span[0]&&value.source.span[1]===snapshot.source.span[1]);
+  if(candidates.length!==1)fail('original function span or checked domain differs');
+  // Only separate, private ordinary-data copies enter equality. The canonical
+  // return never aliases the analysis that may be retained for later rows.
+  const result=canonicalCopy(candidates[0]);if(!result){disable();return checkOwnedCoreItem(item,context);}
+  if(!isDeepStrictEqual(result,snapshot))fail('checked function/meta differs');
+  if(!originalNamespaceTraversalIntrinsicsUnchanged()||!originalStaticSourceIntrinsicsUnchanged()){disable();return checkOwnedCoreItem(input,context);}
+  if(admit&&!retained){
+   // analyzeOwnedCoreModule issues its original rows through WeakMap.set.
+   // Store a NEW whole-analysis copy after equality; never store issued rows.
+   const privateAnalysis=canonicalCopy(analysis);if(!privateAnalysis){disable();return checkOwnedCoreItem(item,context);}
+   const size=groupCount<64?cost(privateAnalysis):null;
+   if(size){
+    if(!paths){paths=new native.Map();set(groups,context,paths);contexts[contexts.length]=context;}
+    set(paths,path,privateAnalysis);groupCount++;retainedCells+=size.cells;retainedUnits+=size.units;
+   }else admit=false;
+  }
+  issued.set(result,{context});return result;
+ };
+ let failed=false;
+ try{return run(check);}catch(error){failed=true;throw error;}
+ finally{
+  active=false;if(groups)native.apply(native.clear,groups,[]);
+  let exitFailed=false,exitError;
+  try{for(let at=0;at<contexts.length;at++)try{requireOwnedCoreSourceCurrent(contexts[at]);}catch(error){if(!exitFailed){exitFailed=true;exitError=error;}}}
+  finally{contexts.length=0;}
+  // Preserve the original primary error, including null/undefined, while
+  // attempting every final fence. No failed fence can produce a success.
+  if(!failed&&exitFailed)throw exitError;
+ }
+}
 export function checkOwnedCoreProgram(program,context){
- if(!Array.isArray(program)||program.length>4096)fail('invalid program');const names=new Set();return program.map(item=>{const result=checkOwnedCoreItem(item,context);if(names.has(result.name))fail('duplicate function');names.add(result.name);return result;});
+ if(!Array.isArray(program)||program.length>4096)fail('invalid program');const names=new Set();return withOwnedCoreItemChecks(check=>program.map(item=>{const result=check(item,context);if(names.has(result.name))fail('duplicate function');names.add(result.name);return result;}));
 }
 export function ownedCoreContext(item){return issued.get(checkOwnedCoreItem(item))?.context;}
 const rustString=value=>'"'+value.replace(/[\\"\x00-\x1f\x7f]/gu,c=>({'\\':'\\\\','"':'\\"','\n':'\\n','\r':'\\r','\t':'\\t'}[c]??'\\u{'+c.codePointAt(0).toString(16)+'}'))+'"';

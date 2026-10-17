@@ -574,3 +574,34 @@ also an input-domain declaration for that source-bound registered ABI position;
 any competing source declaration of the type helper refuses. It grants no call
 permission or Rust trait/type inference. Ordinary unconstrained `bigint` and
 structural map/byte annotations do not acquire canonical index domains.
+
+
+Complete owned programs and source documents check rows incrementally within a
+single synchronous invocation. The first requested function in each genuine
+context and complete source path reconstructs the entire original module; later
+rows in that same invocation freshly rejoin the context and compare the full
+item, source span, ABI, import and paired-source data against that private
+analysis. Standalone item checking still reconstructs on every call. Links
+encoding, source-document encoding/reading and each target emission use separate
+invocations; no source, owner, digest or successful body result persists between
+those boundaries.
+
+This intentionally reduces redundant internal compiler work and hash observation
+counts. It preserves each actual source-current operation's complete hashes and
+all independent CST, metadata and typed checks; old and current observation tapes
+are retained separately. Local storage has stricter aggregate limits and falls
+back to full reconstruction when unavailable. Cached analysis rows never escape:
+returned rows are fresh canonical own-data copies checked against genuine private source.
+Object key ordering remains canonical, including nested metadata. Stored complete
+analysis is a separate private copy that never passes through an issuer or public
+encoding callback; public issuer rows and transient input copies cannot mutate it.
+Source/native qualification is rechecked after full private comparison.
+A late native qualification miss disables storage before any hidden row is used.
+Finally closes and clears storage before fresh final context checks. An existing
+primary error, including `null` or `undefined`, takes priority over a secondary
+final-check error; no failed check can become a success.
+
+Qualification belongs to the recorded source checkpoint and complete original
+receiving suites, including the twelve-function case and its original deadlines.
+This implementation alone establishes no performance, coverage or synchronization
+gain. No local Rust execution is authorized.
