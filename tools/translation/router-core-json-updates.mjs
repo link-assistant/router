@@ -7,14 +7,15 @@ import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contract
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {copyMetadata,metadataDigest,originalParsedDeclarationEvidence,originalParsedSyntaxNode} from './extensions/source-links.mjs';
 import {JSON_TYPES,JSON_DATA} from './extensions/json-contracts.mjs';
-import {sameType} from './checked-types.mjs';
+import {BOOL,UNIT,sameType} from './checked-types.mjs';
+import {planPattern} from './pattern-bindings.mjs';
 import {canonicalResult} from './extensions/result-iterators.mjs';
 import {planStandardMethod,completeStandardMethod} from './extensions/standard-method-plans.mjs';
 import {CSV_STRING_PROFILE,checkedAllocatingStringItem,requireCsvEmitterProof} from './extensions/csv-strings.mjs';
-import {originalStandardCallContext} from './extensions/original-standard-calls.mjs';
+import {originalStandardCallContext,hasOriginalStandardCall} from './extensions/original-standard-calls.mjs';
 import {requirePinnedOptionCallbackBody} from './extensions/standard-option-callback-body.mjs';
 import {requireOriginalMappedBody} from './extensions/standard-mapped-body.mjs';
-import {alphaTree,retargetCheckedCallback,requirePinnedStandardBody} from './extensions/standard-body-checker.mjs';
+import {alphaTree,retargetCheckedCallback,requirePinnedStandardBody,nonlocal} from './extensions/standard-body-checker.mjs';
 import {captureBorrowedLayouts,requireBorrowedLayouts} from './extensions/standard-borrowed-body.mjs';
 import {renameFunction,renameExpr,Scope} from './vendor/meta-language/translation/ir.js';
 import {coerce} from './checked-coercions.mjs';
@@ -124,6 +125,7 @@ export function checkRouterCoreJsonUpdate(checker,node,env,path,expected){
   }}]},
   {phase:'repository',rules:[{id:'router-core:retain-owned-json-update-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-update-v1',symbol:contract.rustPath.join('::'),sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,sourceTrace:capture.receipt.trace,...(capture.receipt.numericProfile?{numericProfile:capture.receipt.numericProfile}:{}),libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
  ]);const value=stage.run(null).value,record={checker,frame:activeFunctions.get(checker),id:value.id,args:copyMetadata(value.args)};
+ if(isRouterCoreJsonParse(node.operation))record.typeIdentity=value.type;
  if(projectionNames.has(node.operation)||isRouterCoreJsonParse(node.operation)||record.frame.errorLane||record.frame.optionLane){
   const layouts=copyMetadata(captureBorrowedLayouts(checker,[...value.args.map(arg=>arg.type),value.type]));
   const key=metadataDigest({functionName:record.frame.functionName,source:record.frame.syntax,call:value,layouts});value.compatibilityCore.sourceProjectionKey=key;
@@ -167,7 +169,7 @@ export function visitOriginalJsonCollectionTextMatch(checker,node,run){
 // complete original function, qualified raw member and formatter stay joined;
 // neither public format metadata nor a copied semantic node opens the lane.
 export function observeOriginalJsonErrorFormat(checker,node,value){
- const frame=activeFunctions.get(checker),syntax=frame?.formats.get(node);if(!syntax)return value;
+ const frame=activeFunctions.get(checker);observeOptionReader(checker,node,value,frame);const syntax=frame?.formats.get(node);if(!syntax)return value;
  requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!same(node,syntax)||value?.type.kind!=='string'||value.type.rustOwnership?.kind!=='owned'||value.type.rustOwnership.source!=='String')fail();
  const inner=value.k==='routerConstObligation'?value.value:value;if(!inner.formatProvenance||inner.formatProvenance.profile!=='checked-primitive-format-v1')fail();
  value={...value,type:{...value.type,rustSourceType:true}};
@@ -188,13 +190,15 @@ function ownedOptionReturn(checker,entry){
 // Both raw and checked membership are local to this actual completed function.
 // No source checksum, copied callback or standalone CSV marker is an issuer.
 function closedOptionSource(checker,fact,current,Parser,Checker,program){
- const allocations=new WeakSet();
+ const allocations=new WeakSet(),actualTypes=new WeakMap();
  const member=(root,target,predicate)=>{let cells=100000,hits=[];const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(target?node===target:predicate(node))hits.push(node);for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','originalCallbackProof','sourceFrameProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))Array.isArray(value)?value.forEach(child=>visit(child,depth+1)):visit(value,depth+1);};visit(root);return hits;};
+ member(fact.entry.body,null,node=>{if(node.type?.kind==='data')actualTypes.set(node,node.type);return false;});
  return {
+  optionSource:(type,node,entry)=>{if(current(entry.fullName)!==fact||node?.type!==type||actualTypes.get(node)!==type)return null;const actual=currentOptionLayout(checker,type,node.span,true);return actual?{source:{kind:'Option',arguments:[actual.payload]},summary:actual.summary}:null;},
   standard:node=>{current(fact.entry.fullName);let body=null;if(node.k==='routerPinnedStandardBody'){requirePinnedStandardBody(node,Parser,{Checker,program});body=node.body;}else if(node.k==='routerPinnedOptionCallbackBody')body=requirePinnedOptionCallbackBody(node,program,Parser,Checker);else if(node.k==='routerOriginalMappedBody')body=requireOriginalMappedBody(node,program,Parser,Checker);current(fact.entry.fullName);return body;},
   map:(node,entry)=>{
    if(current(entry.fullName)!==fact||node.k!=='routerStandardMethod'||node.operation!=='option_map'||node.constEligible!==false||member(entry.body,node).length!==1)return null;
-   const source=member(fact.item.body,null,value=>value.k==='routerDispatchMethod'&&value.method==='map'&&same(value.span,node.span));if(source.length!==1)return null;
+   const source=member(fact.item.body,null,value=>(value.k==='routerDispatchMethod'&&value.method==='map'||value.k==='routerIteratorOperation'&&value.op==='map')&&same(value.span,node.span));if(source.length!==1)return null;
    const raw=source[0],context=originalStandardCallContext(checker,raw);requireOriginalPrimitiveTryFromChecker(checker);current(entry.fullName);
    const item=raw.args?.[0],callback=node.callback,binding=callback?.binding,allocation=binding?.body;
    if(context.owner!==entry.fullName||raw.args.length!==1||item?.k!=='routerStandardFunctionItem'||!['str::to_string','ToString::to_string'].includes(item.operation)||item.sourceFunctionItem?.profile!==CSV_STRING_PROFILE.id||callback?.k!=='routerLambda'||callback.arity!==1||binding?.k!=='let'||binding.mutable===true||binding.value?.k!=='routerLambdaInput'||binding.value.position!==0||allocation?.k!=='routerAllocatingStringItem'||allocation.object?.k!=='var'||allocation.object.name!==binding.name||!same(allocation.span,item.span))return null;
@@ -214,6 +218,68 @@ function publishProjectionContexts(receipt,entry,dependencies=[],checker=null){
  for(const projection of receipt.projections)projectionContexts.set(projection.key,freeze({id:projection.id,call:projection.call,layouts:extraLayouts.length?[...projection.layouts,...extraLayouts]:projection.layouts,roots:extraRoots.length?[...projection.roots,...extraRoots]:projection.roots,functionContext}));
 }
 
+// The standard constructor may omit per-use metadata on an actual checked
+// None/Some join. Recovery is allowed only by a separately private membership.
+function currentOptionLayout(checker,type,span,recover=false){
+ const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type&&!own(type,'rustStandardGeneric')&&recover?owner?.standardGeneric:type?.rustStandardGeneric;
+ if(type?.rustReference||type?.rustOwnership||type?.rustBorrowingUnresolved||type?.rustGenericIdentityUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return null;
+ const some=owner.ctors.find(row=>row.name==='Some'),none=owner.ctors.find(row=>row.name==='None');if(!some||some.fields?.length!==1||some.fields[0].name!=='field0'||!none||none.fields?.length)return null;
+ const payload=checker.resolveType(source.arguments[0],owner.modulePath,span);
+ for(const written of [owner.standardGeneric.arguments[0],some.fields[0].type]){const actual=checker.resolveType(written,owner.modulePath,span);if(!sameType(actual,payload))return null;checker.expectedOwnership(actual,payload,owner.modulePath,span);checker.expectedPrimitiveIdentity(actual,payload,owner.modulePath,span);}
+ let summary=false;if(type.patternOwnershipRefusal){
+  if(payload.kind==='string'&&payload.rustOwnership?.kind==='owned'&&payload.rustOwnership.source==='String'&&!payload.rustReference&&!payload.rustBorrowingUnresolved&&!payload.rustGenericIdentityUnresolved&&type.patternOwnershipRefusal==='ownership-bearing String type')summary=true;
+  else if(recover&&type.patternOwnershipRefusal==='owned String source type'&&payload.kind==='data'&&!payload.rustReference&&!payload.rustOwnership&&!payload.patternOwnershipRefusal){projectionOwner(checker,payload,span,false);summary=true;}
+  else return null;
+ }
+ return {owner,payload,summary};
+}
+function captureOptionReaders(root,output){let cells=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(node.k==='routerTry'||node.k==='routerDispatchMethod'&&['get','as_str'].includes(node.method))output.set(node,copyMetadata(node));for(const [key,value]of Object.entries(node))if(!['type','span'].includes(key))Array.isArray(value)?value.forEach(child=>visit(child,depth+1)):visit(value,depth+1);};visit(root);}
+function observeOptionReader(checker,node,value,frame){
+ const source=frame?.optionLane&&frame.readers?.get(node);if(!source)return;
+ currentFunction(checker,frame.activeItem,frame);if(!same(node,source))fail();
+ if(value.k==='routerTry'&&value.option===true||value.k==='routerHostCall'&&['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id))issued.set(value,{kind:'option-reader',checker,frame,source:node,syntax:source,call:copyMetadata(value)});
+}
+// Called only by the existing standard callback gate. A copied semantic
+// receiver or public Option/control marker cannot manufacture this membership.
+export function originalJsonOptionReceiver(checker,node,receiver){
+ const frame=activeFunctions.get(checker),record=issued.get(receiver);if(!frame?.optionLane||!record||record.kind!=='option-reader'||record.checker!==checker||record.frame!==frame||record.source!==node.object||!hasOriginalStandardCall(checker,node))return false;
+ const source=originalStandardCallContext(checker,node);currentFunction(checker,frame.activeItem,frame);
+ if(source.owner!==frame.functionName||!same(record.source,record.syntax)||!same(receiver,record.call))return false;
+ let cells=100000,found=false;
+ const readerPayload=(type,span)=>{if(type?.kind==='data'){projectionOwner(checker,type,span,false);return true;}return type?.kind==='string'&&!type.rustReference&&!type.patternOwnershipRefusal&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str';};
+ const output=currentOptionLayout(checker,receiver.type,node.span,false);if(!output||!readerPayload(output.payload,node.span))return false;
+ const visit=(value,depth=0)=>{
+  if(!value||typeof value!=='object'||--cells<0||depth>160)return false;
+  if(['routerReturn','routerBreak','routerContinue','routerAwait','routerLambda','call','app'].includes(value.k))return false;
+  if(value.k==='routerTry'){
+   const proof=issued.get(value),actual=currentOptionLayout(checker,value.value?.type,value.span,false);if(value.option!==true||!proof||proof.kind!=='option-reader'||proof.checker!==checker||proof.frame!==frame||!same(value,proof.call)||!same(proof.source,proof.syntax)||!actual||!sameType(value.type,actual.payload)||!readerPayload(actual.payload,value.span))return false;checker.expectedOwnership(value.type,actual.payload,frame.activeItem.modulePath??[],value.span);found=true;
+  }
+  if(value.k==='routerHostCall'){
+   if(['router_core_json_parse','router_core_json_parse_bytes'].includes(value.id)){const proof=issued.get(value.compatibilityCore);if(proof?.checker!==checker||proof.frame!==frame||proof.id!==value.id||!same(value,proof.call))return false;}
+   else if(['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id)){const proof=issued.get(value);if(proof?.kind!=='option-reader'||proof.checker!==checker||proof.frame!==frame||!same(value,proof.call)||!same(proof.source,proof.syntax))return false;}
+   else return false;
+  }
+  for(const [key,child]of Object.entries(value))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const nested of Array.isArray(child)?child:[child])if(nested&&typeof nested==='object'&&!visit(nested,depth+1))return false;return true;
+ };
+ const valid=visit(receiver)&&found;currentFunction(checker,frame.activeItem,frame);return valid;
+}
+// Only a direct, actually issued owned parser can enter this let-else lane.
+// Existing Pattern code still handles every scalar/shared/uncertain case.
+export function checkOriginalOwnedJsonLetElse(checker,node,env,path,expected,allowLiteral){
+ const frame=activeFunctions.get(checker);if(!frame?.owns||node.k!=='routerLetElse'||node.subject?.k!=='routerCoreJsonUpdateCall'||!['json_parse','json_parse_bytes'].includes(node.subject.operation)||!hasOriginalStandardCall(checker,node))return null;
+ const source=originalStandardCallContext(checker,node);currentFunction(checker,frame.activeItem,frame);if(source.owner!==frame.functionName)fail();
+ if(node.else?.k!=='routerReturn'||node.else.body?.k!=='unit')throw unsupported('owned JSON let-else divergence','requires the original unconditional function return',node.else?.span??node.span);
+ if(nonlocal(node.subject))throw unsupported('owned JSON let-else subject control','nonlocal exits cannot be emitted through its subject value',node.subject.span);
+ env=checker.contextEnvironment(node,env,expected);const subject=checker.expr(node.subject,env,path),proof=issued.get(subject.compatibilityCore),actual=currentOptionLayout(checker,subject.type,node.span,false);
+ if(proof?.checker!==checker||proof.frame!==frame||proof.typeIdentity!==subject.type||!['router_core_json_parse','router_core_json_parse_bytes'].includes(proof.id)||!same(subject,proof.call)||!actual)fail();projectionOwner(checker,actual.payload,node.span,false);requireBorrowedLayouts(proof.layouts,checker,{declarations:checker.items},proof.roots);
+ const pattern=checker.patternOwner(node.pattern,subject.type,path,env),plan=planPattern(pattern,subject.type,{declarations:checker.items,resolveType:type=>checker.resolveType(type,path,node.span),span:node.span}),binding=plan.bindings[0];
+ if(pattern.k!=='ctor'||pattern.ctor!=='Some'||pattern.data!==actual.owner.fullName||plan.bindings.length!==1||binding.projection.length!==1||binding.projection[0]!=='field0'||!sameType(binding.type,actual.payload))throw unsupported('owned JSON let-else pattern','requires its actual single immutable canonical Some payload',node.span);
+ checker.expectedOwnership(binding.type,actual.payload,path,node.span);let name;do{name=checker.freshName('ml_owned_json_pattern_');}while(env.has(name));const variable={k:'var',name,type:subject.type,span:node.span};
+ const otherwise=checker.expr(node.else,new Map(env),path,UNIT);if(!sameType(otherwise.type,UNIT))fail();const inner=checker.bindingEnvironment(new Map(env),binding.name,binding.type,false);let body=checker.expr(node.body,inner,path,expected,allowLiteral);
+ body={k:'let',name:binding.name,value:checker.patternProjection(variable,binding.projection,binding.type,plan.projectionPaths),body,mutable:false,type:body.type,span:binding.span??node.span};
+ const condition={k:'binary',op:'and',left:{k:'routerPatternImmutable',object:variable,type:BOOL},right:checker.patternTest(plan.test,variable,plan.projectionPaths),type:BOOL},conditional={k:'routerIf',cond:condition,then:{k:'unit',type:UNIT},else:otherwise,body,type:body.type,span:node.span};
+ currentFunction(checker,frame.activeItem,frame);return {k:'let',name,value:subject,body:conditional,mutable:false,type:body.type,span:node.span,patternControl:{plan,subjectType:subject.type,kind:'let-else',divergence:'checked-exit'}};
+}
 // These receipts exist only during this checker's actual attributed body visit.
 // A public shape, copied IR or fabricated source marker cannot open this lane.
 function currentFunction(checker,item,receipt){
@@ -227,7 +293,7 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
  return (...args)=>{
   const name=[...path,item.name].join('.');
   if(item.k!=='fn'||entry!==checker.items.get(name)||entry.fullName!==name)fail();
-  currentFunction(checker,item,receipt);if(activeFunctions.has(checker))fail();receipt.functionName=name;receipt.errorLane=receipt.owns&&stringError(checker,entry);receipt.optionLane=receipt.owns&&!receipt.errorLane&&ownedOptionReturn(checker,entry);activeFunctions.set(checker,receipt);
+  currentFunction(checker,item,receipt);if(activeFunctions.has(checker))fail();receipt.functionName=name;receipt.errorLane=receipt.owns&&stringError(checker,entry);receipt.optionLane=receipt.owns&&!receipt.errorLane&&ownedOptionReturn(checker,entry);receipt.activeItem=item;if(receipt.optionLane){receipt.readers=new WeakMap();captureOptionReaders(item.body,receipt.readers);}activeFunctions.set(checker,receipt);
   try{
    const result=visit(...args),body=copyMetadata(entry.body);
    currentFunction(checker,item,receipt);if(!same(entry.body,body))fail();
@@ -245,7 +311,7 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
    ]).run(null);
    publishProjectionContexts(receipt,entry);
    return result;
-  }finally{activeFunctions.delete(checker);}
+  }finally{delete receipt.activeItem;delete receipt.readers;activeFunctions.delete(checker);}
  };
 }
 // Membership is conjunctive with the lifetime walk's current Result/layout checks.

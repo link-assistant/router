@@ -64,9 +64,9 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   selectedOptionTypes=types;try{return run();}finally{selectedOptionTypes=previous;}
  };
  const option=(type,node)=>{
-  const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type&&!Object.hasOwn(type,'rustStandardGeneric')&&selectedOptionTypes?.has(type)&&owner?.standardGeneric?.kind==='Option'?owner.standardGeneric:type?.rustStandardGeneric;
+  const owner=type?.kind==='data'?checker.items.get(type.name):null,recovered=type&&!Object.hasOwn(type,'rustStandardGeneric')&&closedOption?closedOption.optionSource(type,node,entry):null,source=type&&!Object.hasOwn(type,'rustStandardGeneric')&&selectedOptionTypes?.has(type)&&owner?.standardGeneric?.kind==='Option'?owner.standardGeneric:recovered?.source??type?.rustStandardGeneric;
   const stringSummary=closedOption&&type?.patternOwnershipRefusal==='ownership-bearing String type'&&source?.kind==='Option'&&source.arguments?.length===1&&ownedText(checker.resolveType(source.arguments[0],owner?.modulePath??entry.modulePath,node?.span??entry.span));
-  if(type?.rustReference||type?.rustOwnership||type?.patternOwnershipRefusal&&!stringSummary||type?.rustGenericIdentityUnresolved||type?.rustBorrowingUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return null;
+  if(type?.rustReference||type?.rustOwnership||type?.patternOwnershipRefusal&&!stringSummary&&!recovered?.summary||type?.rustGenericIdentityUnresolved||type?.rustBorrowingUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return null;
   const some=owner.ctors.find(ctor=>ctor.name==='Some'),none=owner.ctors.find(ctor=>ctor.name==='None');
   if(!some||some.fields?.length!==1||some.fields[0].name!=='field0'||!none||none.fields?.length)return null;
   const payload=checker.resolveType(source.arguments[0],owner.modulePath,node?.span??entry.span);
@@ -99,7 +99,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const generic=type.rustStandardGeneric??owner?.standardGeneric;
    if(!['Option','Result'].includes(owner?.standardGeneric?.kind)||generic?.kind!==owner.standardGeneric.kind)refuse('unknown aggregate Drop or ownership',node);
    if(closedOption&&generic.kind==='Result')refuse('owned Option flow grants no Result error or residual transfer',node);
-   if(closedOption&&generic.kind==='Option'&&!option(type,node))refuse('owned Option source arguments or field layout changed',node);
+   if(closedOption&&generic.kind==='Option'&&!option(type,node))refuse('owned Option source arguments or field layout changed',node,{join:'owned-option-layout',nodeKind:node?.k??null,perUse:Object.hasOwn(type,'rustStandardGeneric'),refusal:type.patternOwnershipRefusal??null,source:describeOwnedJsonDifference(type.rustStandardGeneric??null,owner?.standardGeneric??null)});
    const inner=new Set(active).add(type.name),arguments_=generic.arguments.map(argument=>domain(checker.resolveType(argument,owner.modulePath,node?.span??entry.span),node,inner));
    if(closedErrors&&generic.kind==='Result'){
     const actual=resultOwner(type,node);if(!sameType(actual.success,checker.resolveType(generic.arguments[0],owner.modulePath,node?.span??entry.span)))refuse('Result success source changed',node);
@@ -267,7 +267,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const object=node.object,slot=object?.k==='var'?state.names.get(object.name):null,actual=option(object?.type,node),fact=slot&&state.values.get(slot);
    if(!slot||!actual||node.field!=='field0'||!sameType(node.type,actual.payload)||fact?.tags?.size!==1||!fact.tags.has('Some'))refuse('Option loan projection requires a dominating actual Some branch',node);
    checker.expectedOwnership(node.type,actual.payload,actual.owner.modulePath,node.span);if(domain(node.type,node)!==domain(actual.payload,node))refuse('Option projection cannot erase its shared ownership',node);
-   return project(read(object,'borrow'),'field0');
+   const value=project(read(object,'borrow'),'field0');if(linear(slot.kind)){if(live(state,slot))refuse('moving an owned Option payload with a live lexical loan',node);state.available.set(slot,false);}return value;
   }
   if(standardContext&&['routerPinnedStandardBody','routerPinnedOptionCallbackBody','routerOriginalMappedBody','routerOriginalSharedDomainGuard','routerOriginalStandardFrame','routerOriginalSharedPatternMatch'].includes(node.k)){
    if(node.k==='routerOriginalSharedDomainGuard'){if(!hasOriginalSharedDomainGuard(node))refuse('shared domain guard changed',node);return read(node.value,'borrow');}

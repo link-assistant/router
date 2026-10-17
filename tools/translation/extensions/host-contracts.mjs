@@ -89,7 +89,7 @@ import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
 import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern} from '../router-core-algebraic.mjs';
 import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
 import {parseRouterCoreJson,captureRouterCoreJsonCalls,checkRouterCoreJson} from '../router-core-json.mjs';
-import {parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,visitOriginalJsonCollectionTextMatch,observeOriginalJsonErrorFormat,finalizeOriginalJsonErrorFlow,visitRouterCoreJsonUpdateFunction,checkRouterCoreJsonMutableLet,prepareOriginalJsonProjectionEmission,requireOriginalJsonProjectionEmission,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
+import {checkOriginalOwnedJsonLetElse,parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,visitOriginalJsonCollectionTextMatch,observeOriginalJsonErrorFormat,finalizeOriginalJsonErrorFlow,visitRouterCoreJsonUpdateFunction,checkRouterCoreJsonMutableLet,prepareOriginalJsonProjectionEmission,requireOriginalJsonProjectionEmission,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
 
 export const HOST_CONTRACTS=[...ROUTER_CORE_JSON_UPDATE_CONTRACTS,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -523,7 +523,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     const sharedPattern=sourcePatterns.checkOriginalSharedPatternMatch(this,node,env,path,expected,allowLiteral,syntax=>checkOrderedMatch(this,syntax,env,path,expected,allowLiteral));if(sharedPattern)return sharedPattern;
     const sharedLetElse=node.k==='routerLetElse'&&hasOriginalStandardCall(this,node);
     if(sharedLetElse)assertOriginalCloneChecker(this);
-    let value=this.hostExpression(node,env,path,expected,allowLiteral);
+    let value=(sharedLetElse?checkOriginalOwnedJsonLetElse(this,node,env,path,expected,allowLiteral):null)??this.hostExpression(node,env,path,expected,allowLiteral);
     if(sharedLetElse)assertOriginalCloneChecker(this);
     value=contextualOptionMapConstructor(this,value,expected,path,node.span);
     if(node.k==='routerTuple'&&expected?.rustTupleLifetimeFields&&value.type.kind==='data'&&value.type.name===expected.name)value={...value,type:{...value.type,rustTupleLifetimeFields:expected.rustTupleLifetimeFields}};

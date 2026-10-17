@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {translateProject} from '../project.mjs';
 import {emitJavaScript} from '../extensions/host-contracts.mjs';
+import {originalJsonOptionReceiver,checkOriginalOwnedJsonLetElse} from '../router-core-json-updates.mjs';
 import {proposeCoreJsonParseCorpus} from '../migrate-core-json-parse.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
@@ -54,6 +55,8 @@ test('complete original root_id and its complete current parent retain source CS
 test('ordinary Maybe Json and prior String-error Result remain independent passing contracts',async()=>{
  const source='pub fn parsed(value:&'+S+')->'+M+'<'+T+'>{'+P+'(value)}pub fn copied(value:&'+T+')->'+M+'<'+T+'>{Some('+COPY+'(value))}pub fn result(value:&'+T+')->'+C+'Outcome<'+T+',String>{Ok('+COPY+'(value))}pub fn lazy(value:&'+S+',run:bool)->'+M+'<String>{if run{let json='+P+'(value)?;json.as_str().map(ToString::to_string)}else{None}}',result=project(files(source));yes(result,['parsed','copied','result','lazy']);
  await targets(result,api=>{const parsed=api.parsed('{"v":"猫😀"}');assert.equal(parsed.$,'Some');assert.deepEqual(api.copied(parsed.field0),parsed);assert.deepEqual(api.result(parsed.field0),{$:'Ok',field0:parsed.field0});assert.deepEqual(api.lazy('"猫😀"',true),some('猫😀'));assert.deepEqual(api.lazy('null',true),none);assert.deepEqual(api.lazy(' '.repeat(1048577),false),none);assert.throws(()=>api.lazy(' '.repeat(1048577),true),error=>error.code==='ERR_JSON_ROUNDTRIP_CAPABILITY_BOUND');});
+ const owned=project(files('pub fn owned(value:&'+S+')->bool{let '+M+'::Some(json)='+P+'(value)else{return false;};json.is_null()}pub fn owned_bytes(value:&[u8])->bool{let Some(json)='+B+'(value)else{return false;};json.is_null()}'));yes(owned,['owned','owned_bytes']);
+ await targets(owned,api=>{for(const [source,wanted]of [['null',true],['false',false],['{}',false],['bad',false]]){const input=bytes(source),before=structuredClone(input);assert.equal(api.owned(source),wanted);assert.equal(api.owned_bytes(input),wanted);assert.deepEqual(input,before);}});
 });
 test('actual allocating callbacks retain current source bodies layouts and private issuance on semantic re-emission',()=>{
  const result=project(files(field));yes(result,['field']);const wire=JSON.stringify(result.meta.targetSemanticProgram);retain('complete-reemitted',emitJavaScript(parseProgram(wire)));
@@ -80,6 +83,8 @@ test('unknown allocating callbacks shadowed traits custom carriers and absent pa
   'struct Other{value:String}pub fn bad(body:&[u8])->Option<Other>{let json='+B+'(body)?;unknown(json)}',
  ];for(const source of sources){const result=project(files(source));no(result,source.includes('pub fn bad')?'bad':'field');}
  const missing=project(files(field),{jsonMacroDependencies:undefined,deriveDependencies:undefined});no(missing,'field');
+ let callbacks=0;const checker={expr(){callbacks++;},hostType(){callbacks++;}},trap=new Proxy({},{get(){callbacks++;return null;},ownKeys(){callbacks++;return [];}});
+ assert.equal(originalJsonOptionReceiver(checker,trap,trap),false);assert.equal(checkOriginalOwnedJsonLetElse(checker,trap,new Map(),[],null,false),null);assert.equal(callbacks,0);
 });
 test('linear owned payloads mutable captures custom errors and escaped temporary loans keep their refusals',()=>{
  const sources=[
@@ -90,6 +95,12 @@ test('linear owned payloads mutable captures custom errors and escaped temporary
   'pub struct Error{value:String}pub fn bad(body:&[u8],error:Error)->'+M+'<String>{let parsed:Result<(),Error>=Err(error);let json='+B+'(body)?;json.as_str().map(str::to_string)}',
   'pub fn bad(body:&[u8])->'+M+'<String>{'+B+'(body)?.as_str().map(str::to_string)}',
  ];for(const source of sources)no(project(files(source)),'bad');
+ for(const source of [
+  'pub fn bad(input:&'+S+')->'+M+'<'+T+'>{let Some(json)='+P+'(input)else{return None;};let moved=json;Some(json)}',
+  'pub fn bad(input:&'+S+')->'+M+'<&str>{let Some(json)='+P+'(input)else{return None;};json.as_str()}',
+  'fn foreign(input:&'+S+')->'+M+'<'+T+'>{'+P+'(input)}pub fn bad(input:&'+S+')->bool{let Some(json)=foreign(input)else{return false;};json.is_null()}',
+  'pub fn bad(body:&[u8])->'+M+'<String>{let json='+B+'(body)?;json.get("v")?.as_str().filter(|value|{return !value.is_empty();}).map(str::to_string)}',
+ ])no(project(files(source)),'bad');
 });
 test('standard filter callback and allocation preserve nonempty predicate source and full callback forgery refusals',async()=>{
  const source='pub fn select(body:&[u8])->'+M+'<String>{let json='+B+'(body)?;json.as_str().filter(|text|!text.is_empty()).map(str::to_string)}',result=project(files(source));yes(result,['select']);
