@@ -399,3 +399,22 @@ function translateOwnedStage(stage,{sourcePath,context,typescriptOutputPath}={})
 }
 export function translateOwnedCoreJavaScript(source,options){return translateOwnedStage(prepareReverseConcreteSource(source),options);}
 export function translateOwnedCoreConcreteSyntaxMeta(text,options){return translateOwnedStage(parseReverseConcreteSource(text),options);}
+
+
+// Explicit source-document transport; all preceding single/default APIs retain
+// their original metadata format and observation schedules.
+import {serializeOwnedCoreDocument,readOwnedCoreDocument} from './owned-core-document.mjs';
+export function parseOwnedCoreDocumentMeta(text,options){return readOwnedCoreDocument(text,options);}
+function translateOwnedDocumentStage(stage,{sourcePath,context,typescriptOutputPath}={}){
+ const pipeline=createRulePipeline([
+  {phase:'language',rules:[
+   {id:'owned-document:original-source-symbols-and-body',apply:()=>{const analyzed=analyzeOwnedCoreStage(stage,sourcePath,context);if(analyzed.diagnostics.length)throw TypeError(analyzed.diagnostics[0].message);return analyzed;}},
+   {id:'owned-document:source-cst-and-checked-item-roundtrip',apply:analyzed=>{const meta=serializeOwnedCoreDocument(analyzed.program,{context}),program=parseOwnedCoreDocumentMeta(meta,{context});return {analyzed,meta,program};}},
+   {id:'owned-document:both-original-checked-targets',apply:row=>({...row,rust:emitRust(row.program),typescript:emitTypeScript(row.program,{outputPath:typescriptOutputPath})})},
+  ]},
+  {phase:'repository',rules:[{id:'owned-document:package-source-artifacts',apply:row=>({...row,concreteSyntax:stage.concreteSyntax,profile:'router-owned-core-source-document-v1',runtimeParity:false})}]},
+ ]);
+ const result=pipeline.run(undefined);requireOwnedCoreSourceCurrent(context);return {...result.value,trace:result.trace};
+}
+export function translateOwnedCoreDocumentJavaScript(source,options){return translateOwnedDocumentStage(prepareReverseConcreteSource(source),options);}
+export function translateOwnedCoreDocumentConcreteSyntaxMeta(text,options){return translateOwnedDocumentStage(parseReverseConcreteSource(text),options);}

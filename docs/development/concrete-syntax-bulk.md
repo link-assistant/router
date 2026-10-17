@@ -160,3 +160,49 @@ to refuse. The stored forward inventory may be historical; its flags and hashes
 cannot recreate source authority. Fresh forward materialization and separate
 canonical-type/packaging work are required before claiming application coverage.
 This source draft has not yet received Node/Bun or strict TypeScript checks.
+
+
+## Owned-context source documents
+
+The explicit `router-owned-core-source-document-v1` storage profile keeps full
+ordered receiving originals once in its context header. Each application
+JavaScript/TypeScript source has a complete CST row whose source field is an
+exact whole-file reference into that header. Function and imported-runtime
+records retain source paths and spans; paired written-type evidence is freshly
+reconstructed from both originals instead of repeated in every stored function.
+String literals in checked bodies are never rewritten as storage references.
+
+`translateOwnedCoreDocumentJavaScript`,
+`translateOwnedCoreDocumentConcreteSyntaxMeta` and `parseOwnedCoreDocumentMeta`
+are separate APIs. The original single/default translators, owned Links format,
+`parseOwnedCoreMeta` and `buildOwnedCoreArtifacts` retain their old code and
+observation schedules. The sibling `buildOwnedCoreDocumentArtifacts` discovers
+the same complete actual forward corpus and records every item and refusal.
+The repository bulk selector remains unchanged in this source draft; its
+explicit switch requires receiving qualification followed by actual generation,
+complete artifact review, installation and freshness checks.
+
+A document reader reconstructs every complete source/CST and validates its
+canonical partition through the existing CST reader. It then expands each
+function's complete original metadata and invokes the unchanged original item
+checker independently, including source symbols, body, ABI, imports, ownership
+and loans. A source reference, digest, paired annotation or copied field grants
+no executable authority. Missing, foreign, duplicate, reordered or changed
+references refuse. No native Program/Checker or traversal frame escapes, and
+there is no cross-call source, owner, hash or verdict cache.
+
+This new operation has an explicit additional authentication/CST/read/hash
+schedule; it does not claim public callback equivalence with repeated old API
+calls. Expanding an item does not change any argument or order inside the old
+item check. Language rules run original analysis, document serialization and
+reparsing, and both checked targets; repository rules package their results.
+
+The encoded document stays within 32 MiB, with exact encoded-size accounting
+before allocating each JSON word or the final document. Existing context
+16 MiB/4,096-file limits, 4,096-item limits, checked-data limits and CST source,
+node and delimiter bounds remain. CST node arrays retain their existing
+200,000-node limit; they do not acquire an unrelated 4,096-node truncation.
+The corpus keeps its 256 MiB total output bound. The source draft is unrun;
+there is no measured speed or application-coverage claim. Structural generated
+type aliases, module startup effects and unsupported parse/callback profiles
+remain separate obligations. Rust execution remains gated CI work.

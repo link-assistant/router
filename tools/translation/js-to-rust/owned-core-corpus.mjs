@@ -99,3 +99,45 @@ function ownedCoreWitnessArtifacts(root){
  for(const row of originals)if(strictSource(physical(root,row.path))!==row.source)throw TypeError('Original witness library source changed');
  return {artifacts,manifest:{available:true,applicationItems:0,functions:result.program.length,rust:'tools/translation/js-to-rust/generated/owned-core-witness.rs',oracle:WITNESS,sourceSha256:hash(source),rustExecuted:false}};
 }
+
+
+// Explicit corpus sibling; registration is a separate reviewed successor.
+import {serializeOwnedCoreDocument} from './owned-core-document.mjs';
+import {parseOwnedCoreDocumentMeta} from './translator.mjs';
+export function buildOwnedCoreDocumentArtifacts(root){
+ const capture=captureOwnedCoreCorpus(root),artifacts=new Map(),rows=[],diagnostics=[];
+ const modules=capture.files.filter(row=>row.path.startsWith(ROOT+'/')&&!row.path.startsWith(ROOT+'/runtime/')&&row.path.endsWith('.mjs'));
+ const pipeline=createRulePipeline([
+  {phase:'language',rules:[{id:'owned-document-corpus:all-original-application-bodies',apply:()=>{
+   let context=null,contextError=null;
+   if(modules.length){try{context=createOwnedCoreSourceContext({files:capture.files,runtimeRoot:ROOT+'/runtime',declarationRoot:TYPED+'/runtime'});}catch(error){if(!(error instanceof TypeError))throw error;contextError=error.message;}}
+   const ts=ownershipCompiler();
+   for(const row of modules){
+    capture.requireCurrent();const file=ts.createSourceFile(row.path,row.source,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),functions=file.statements.filter(ts.isFunctionDeclaration);
+    let analysis;
+    try{if(contextError)throw TypeError(contextError);analysis=analyzeOwnedCoreJavaScript(row.source,{sourcePath:row.path,context});}
+    catch(error){if(!(error instanceof TypeError))throw error;analysis={program:[],items:functions.map(node=>({name:node.name?.text??null,span:[node.getStart(file),node.end],status:'unsupported'})),diagnostics:[{kind:'owned-core',message:error.message}]};}
+    const stem=row.path.slice(ROOT.length+1,-4),prefix='tools/translation/js-to-rust/generated/owned-core/'+stem;
+    const output='packages/typescript/generated/reverse-owned-core/'+stem+'.ts';
+    if(analysis.program.length){
+     const meta=serializeOwnedCoreDocument(analysis.program,{context}),program=parseOwnedCoreDocumentMeta(meta,{context});
+     artifacts.set(prefix+'.lino','# GENERATED: owned-core source/checked Links.\n'+meta);
+     artifacts.set(prefix+'.rs.txt','// GENERATED: owned-core reverse draft; CI Rust qualification pending.\n'+emitRust(program));
+     artifacts.set(output,'// GENERATED: owned-core reverse checked TypeScript.\n'+emitTypeScript(program,{outputPath:output}));
+    }
+    rows.push({path:row.path,bytes:Buffer.byteLength(row.source),sha256:hash(row.source),sourceItems:functions.length,translatedItems:analysis.program.length,unsupportedItems:analysis.items.filter(item=>item.status!=='translated').length,items:analysis.items,diagnostics:analysis.diagnostics});
+    diagnostics.push(...analysis.diagnostics.map(diagnostic=>({source:row.path,...diagnostic})));capture.requireCurrent();
+   }
+   return rows;
+  }}]},
+  {phase:'repository',rules:[{id:'owned-document-corpus:package-full-inputs-and-refusals',apply:rows=>{
+   const inputs={schema:'owned-core-reverse-original-inputs-v1',files:capture.files};
+   artifacts.set('tools/translation/js-to-rust/generated/owned-core/inputs.json',JSON.stringify(inputs)+'\n');
+   return {schema:'owned-core-reverse-corpus-v1',profile:'router-owned-core-source-document-v1',discoveryRoot:ROOT,modules:rows,inputs:capture.files.map(row=>({path:row.path,bytes:Buffer.byteLength(row.source),sha256:hash(row.source)})),diagnostics,totals:{modules:rows.length,sourceItems:rows.reduce((n,row)=>n+row.sourceItems,0),translatedItems:rows.reduce((n,row)=>n+row.translatedItems,0),unsupportedItems:rows.reduce((n,row)=>n+row.unsupportedItems,0)},sourceAvailable:modules.length!==0,runtimeParity:false,rustExecuted:false,wholeSourceSynchronization:false};
+  }}]},
+ ]);
+ const result=pipeline.run(undefined);capture.requireCurrent();const witness=ownedCoreWitnessArtifacts(root);for(const [path,content]of witness.artifacts)artifacts.set(path,content);const manifest={...result.value,trace:result.trace,witness:witness.manifest};
+ artifacts.set('parity/js-owned-core-reverse-draft.json',JSON.stringify(manifest)+'\n');
+ let outputBytes=0;for(const content of artifacts.values()){outputBytes+=Buffer.byteLength(content);if(outputBytes>MAX_BYTES)throw TypeError('Owned receiving artifact budget');}
+ return {artifacts,manifest};
+}
