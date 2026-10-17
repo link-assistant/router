@@ -82,7 +82,7 @@ pub fn chat_to_responses_format(value: crate::translation_core::Maybe<&crate::tr
                 "schema": schema,
             });
             if let Some(strict) = definition.get("strict") {
-                format["strict"] = strict.clone();
+                { let __router_json_rhs_394 =  strict.clone(); format = crate::translation_core::json_with_field(format, "strict", __router_json_rhs_394); };
             }
             Ok(Some(format))
         }
@@ -114,7 +114,7 @@ pub fn responses_to_chat_format(text: crate::translation_core::Maybe<&crate::tra
                 "schema": schema,
             });
             if let Some(strict) = format.get("strict") {
-                definition["strict"] = strict.clone();
+                { let __router_json_rhs_394 =  strict.clone(); definition = crate::translation_core::json_with_field(definition, "strict", __router_json_rhs_394); };
             }
             Ok(Some(
                 crate::translation_core::json!({"type": "json_schema", "json_schema": definition}),
