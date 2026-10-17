@@ -5,7 +5,9 @@ import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {originalMethodMember,originalMethodLowering} from './impl-resolver.mjs';
 import {originalMethodNamespaceOwner} from './matches-macro-context.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
-import {captureOriginalMethodValidation,originalMethodValidationDigest} from './source-method-validation.mjs';
+import {captureOriginalMethodValidation,originalMethodValidationDigest,originalMethodValidationIntrinsicsUnchanged} from './source-method-validation.mjs';
+import {originalFlatTokenIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {types} from 'node:util';
 const transforms=new WeakMap(),tokensToTransforms=new WeakMap(),parserTokenCopies=new WeakMap();
 const canonical=path=>path[0]==='crate'?path.slice(1):path;
 const equal=(a,b)=>metadataDigest(a)===metadataDigest(b);
@@ -79,3 +81,105 @@ export function originalMethodParserTokenFacts(tokens) {
   return Object.freeze({proof:issued.proof,source:state.member.source,sourcePath:state.member.sourcePath,modulePath:state.member.modulePath,sourceView:state.member.sourceView,compilationProfile:state.member.compilationProfile,originalMemberSpan:state.method.span,originalBodySpan:state.method.bodySpan,transform:state.proof});
 }
 export function originalMethodParserTokenContext(tokens){return parserTokenCopies.has(tokens)?originalMethodParserTokenFacts(tokens):null;}
+
+// Explicit sibling observation contract. Every old issuer/reader stays exact;
+// this lane only groups comparisons of a freshly copied, actually issued stream.
+function groupedTokenIntrinsics(){return originalMethodValidationIntrinsicsUnchanged()&&originalFlatTokenIntrinsicsUnchanged();}
+function originalMethodParserTokenObservedTail(issued,state,actual) {
+  let at=0;
+  for(const expected of issued.expected){const first=actual[at++];if(equal(first,expected))continue;const second=actual[at++];
+    if(expected.value!=='&&'||expected.end!==expected.start+2||!equal(first,{...expected,value:'&',end:expected.start+1})||!equal(second,{...expected,value:'&',start:expected.start+1}))throw new TypeError('Original method parser changed its exact transformed token stream');
+  }
+  if(at!==actual.length)throw new TypeError('Original method parser inserted or removed source tokens');
+  return Object.freeze({proof:issued.proof,source:state.member.source,sourcePath:state.member.sourcePath,modulePath:state.member.modulePath,sourceView:state.member.sourceView,compilationProfile:state.member.compilationProfile,originalMemberSpan:state.method.span,originalBodySpan:state.method.bodySpan,transform:state.proof});
+}
+// Count well-formed JSON UTF-16 units without allocating an encoded big string.
+// Primitive string indexing has own immutable character slots; no new String
+// prototype method, regexp state or caller callback is used in this preflight.
+function groupedTokenQuotedUnits(value) {
+  let units=2;
+  for(let index=0;index<value.length;index++){
+    const char=value[index];
+    if(char==='"'||char==='\\')units+=2;
+    else if(char<='\u001f')units+=char==='\b'||char==='\t'||char==='\n'||char==='\f'||char==='\r'?2:6;
+    else if(char>='\ud800'&&char<='\udbff'){
+      const next=index+1<value.length?value[index+1]:undefined;if(next!==undefined&&next>='\udc00'&&next<='\udfff'){units+=2;index++;}else units+=6;
+    }else units+=char>='\udc00'&&char<='\udfff'?6:1;
+    if(units>1048576)return 1048577;
+  }
+  return units;
+}
+function groupedTokenRecord(value,requireFrozen) {
+  if(!value||typeof value!=='object'||types.isProxy(value)||Array.isArray(value))return null;
+  const proto=Object.getPrototypeOf(value);if(proto!==Object.prototype&&proto!==null||requireFrozen&&!Object.isFrozen(value))return null;
+  const fields=Object.getOwnPropertyDescriptors(value),keys=Reflect.ownKeys(fields),copy=Object.create(null);
+  let bytes=0,units=2,count=0;
+  for(let index=0;index<keys.length;index++){
+    const key=keys[index],field=fields[key];if(typeof key!=='string'||!Object.hasOwn(field,'value')||!field.enumerable)return null;
+    const item=field.value,kind=typeof item;
+    if(item!==null&&kind!=='undefined'&&kind!=='string'&&kind!=='boolean'&&!(kind==='number'&&Number.isSafeInteger(item)))return null;
+    copy[key]=item;
+    if(kind==='string')bytes+=Buffer.byteLength(item);
+    if(item!==undefined){
+      if(count++)units++;
+      units+=groupedTokenQuotedUnits(key)+1+(kind==='string'?groupedTokenQuotedUnits(item):item===null?4:kind==='boolean'?item?4:5:JSON.stringify(item).length);
+    }
+    if(bytes>4194304||units>1048576||keys.length+1>200000)return null;
+  }
+  return {value:copy,cells:keys.length+1,bytes,units,height:keys.length?1:0};
+}
+function groupedTokenRows(values,requireFrozen) {
+  if(types.isProxy(values)||!Array.isArray(values)||Object.getPrototypeOf(values)!==Array.prototype||requireFrozen&&!Object.isFrozen(values))return null;
+  const fields=Object.getOwnPropertyDescriptors(values),keys=Reflect.ownKeys(fields),length=Object.hasOwn(fields,'length')?fields.length.value:null;
+  if(!Number.isSafeInteger(length)||length<0||length>200000||keys.length!==length+1)return null;
+  const rows=[];
+  for(let index=0;index<length;index++){
+    const key=String(index);if(!Object.hasOwn(fields,key))return null;
+    const field=fields[key];if(!Object.hasOwn(field,'value')||!field.enumerable)return null;
+    const row=groupedTokenRecord(field.value,requireFrozen);if(!row)return null;rows.push(row);
+  }
+  return rows;
+}
+function planOriginalMethodParserTokenGroups(issued,actual) {
+  // Qualification precedes this callback-free detached own-data clone. No row
+  // enters an issuer, Map/WeakMap or observer-capable helper during planning.
+  const expectedRows=groupedTokenRows(issued.expected,true),actualRows=groupedTokenRows(actual,false);if(!expectedRows||!actualRows)return null;
+  const groups=[];let at=0,actualGroup=[],expectedGroup=[],actualCells=1,expectedCells=1,actualBytes=0,expectedBytes=0,actualUnits=2,expectedUnits=2;
+  const append=(left,right)=>{
+    if(!left||!right)return false;
+    if(actualGroup.length){actualUnits++;expectedUnits++;}
+    actualCells+=left.cells;expectedCells+=right.cells;actualBytes+=left.bytes;expectedBytes+=right.bytes;actualUnits+=left.units;expectedUnits+=right.units;
+    if(actualCells>200000||expectedCells>200000||actualBytes>4194304||expectedBytes>4194304||actualUnits>1048576||expectedUnits>1048576||left.height+1>160||right.height+1>160)return false;
+    actualGroup.push(left.value);expectedGroup.push(right.value);return true;
+  };
+  for(let index=0;index<expectedRows.length;index++){
+    const expected=expectedRows[index],first=actualRows[at++];if(!first)return null;
+    if(expected.value.value==='&&'&&expected.value.end===expected.value.start+2&&first.value.value==='&'){
+      const left=groupedTokenRecord(expected.value,false).value,right=groupedTokenRecord(expected.value,false).value;
+      left.value=right.value='&';left.end=expected.value.start+1;right.start=expected.value.start+1;
+      if(!append(first,groupedTokenRecord(left,false))||!append(actualRows[at++],groupedTokenRecord(right,false)))return null;
+    }else if(!append(first,expected))return null;
+    if((index+1)%256===0||index+1===expectedRows.length){
+      groups.push({actual:actualGroup,expected:expectedGroup});actualGroup=[];expectedGroup=[];actualCells=expectedCells=1;actualBytes=expectedBytes=0;actualUnits=expectedUnits=2;
+    }
+  }
+  return {groups,consumed:at};
+}
+export function originalMethodParserTokenFactsGrouped(tokens) {
+  if(!groupedTokenIntrinsics())return originalMethodParserTokenFacts(tokens);
+  const issued=parserTokenCopies.get(tokens);if(!issued)throw new TypeError('Original method parser token array is copied or unissued');
+  const state=originalMethodTransformFacts(issued.proof),actual=copyMetadata(tokens);
+  if(!groupedTokenIntrinsics())return originalMethodParserTokenObservedTail(issued,state,actual);
+  const plan=planOriginalMethodParserTokenGroups(issued,actual);
+  if(!plan)return originalMethodParserTokenObservedTail(issued,state,actual);
+  for(let index=0;index<plan.groups.length;index++){
+    if(!groupedTokenIntrinsics())throw new TypeError('Original method grouped token validation native operations changed');
+    const actualDigest=metadataDigest(plan.groups[index].actual);
+    if(!groupedTokenIntrinsics())throw new TypeError('Original method grouped token validation native operations changed');
+    const expectedDigest=metadataDigest(plan.groups[index].expected);
+    if(!groupedTokenIntrinsics())throw new TypeError('Original method grouped token validation native operations changed');
+    if(actualDigest!==expectedDigest)throw new TypeError('Original method parser changed its exact transformed token stream');
+  }
+  if(plan.consumed!==actual.length)throw new TypeError('Original method parser inserted or removed source tokens');
+  return Object.freeze({proof:issued.proof,source:state.member.source,sourcePath:state.member.sourcePath,modulePath:state.member.modulePath,sourceView:state.member.sourceView,compilationProfile:state.member.compilationProfile,originalMemberSpan:state.method.span,originalBodySpan:state.method.bodySpan,transform:state.proof});
+}

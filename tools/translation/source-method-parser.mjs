@@ -5,7 +5,7 @@ import {TokenCursor} from './vendor/meta-language/translation/lexer.js';
 import {originalTextCursorGuard} from './extensions/text.mjs';
 import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {assertOriginalParserIdentity} from './original-parser-identity.mjs';
-import {originalMethodTransformFacts,originalMethodTokenTransformSnapshot,originalMethodParserTokens,originalMethodParserTokenFacts} from './source-method-transforms.mjs';
+import {originalMethodTransformFacts,originalMethodTokenTransformSnapshot,originalMethodParserTokens,originalMethodParserTokenFacts,originalMethodParserTokenFactsGrouped} from './source-method-transforms.mjs';
 import {originalMethodParserNamespace,configureMatchesMethodParser} from './matches-macro-context.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {captureOriginalMethodValidation,originalMethodValidationDigest} from './source-method-validation.mjs';
@@ -38,6 +38,15 @@ export function parseOriginalMethodTransform(transform,{immutableNamespaceTarget
 export function originalMethodParsedFacts(result) {
   const state=parses.get(result);if(!state)throw new TypeError('Original method Host parse is copied, unsealed or caller fabricated');
   const source=originalMethodTransformFacts(state.transform);identity(state.parser);originalMethodParserTokenFacts(state.parser.cursor.tokens);
+  originalMethodParserNamespace(source.context,source.method);
+  if(result.entry!==state.entry||result.proof!==state.proof||originalMethodValidationDigest(state.entry,state.validation)!==state.digest||originalMethodValidationDigest(state.parser.sourceNamespaceEvidence,state.namespaceValidation)!==state.namespaceDigest)throw new TypeError('Original method parsed body/signature/source namespace changed');
+  return state;
+}
+
+// Explicit grouped-token sibling; the old source/parser reader remains exact.
+export function originalMethodParsedFactsGrouped(result) {
+  const state=parses.get(result);if(!state)throw new TypeError('Original method Host parse is copied, unsealed or caller fabricated');
+  const source=originalMethodTransformFacts(state.transform);identity(state.parser);originalMethodParserTokenFactsGrouped(state.parser.cursor.tokens);
   originalMethodParserNamespace(source.context,source.method);
   if(result.entry!==state.entry||result.proof!==state.proof||originalMethodValidationDigest(state.entry,state.validation)!==state.digest||originalMethodValidationDigest(state.parser.sourceNamespaceEvidence,state.namespaceValidation)!==state.namespaceDigest)throw new TypeError('Original method parsed body/signature/source namespace changed');
   return state;

@@ -3,8 +3,8 @@
 import {copyMetadata,metadataDigest,ownData} from './extensions/source-links.mjs';
 import {types} from 'node:util';
 import {typeError} from './vendor/meta-language/translation/diagnostics.js';
-import {originalProjectMethodFieldEvidence} from './project.mjs';
-import {originalMethodParsedFacts} from './source-method-parser.mjs';
+import {originalProjectMethodFieldEvidence,originalProjectMethodFieldEvidenceGrouped} from './project.mjs';
+import {originalMethodParsedFacts,originalMethodParsedFactsGrouped} from './source-method-parser.mjs';
 import {originalMethodTransformFacts} from './source-method-transforms.mjs';
 import {originalMethodLowering} from './impl-resolver.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
@@ -109,4 +109,22 @@ export function validateOriginalMethodAssociations(surface) {
     }
   };
   visit(surface,0);return surface;
+}
+
+// Grouped token observations never replace the old standalone proof readers.
+export function originalMethodSemanticFactsGrouped(surface) {
+  const state=semantics.get(surface);if(!state)throw new TypeError('Original method semantic source is copied, unsealed or caller fabricated');
+  originalMethodParsedFactsGrouped(state.parsed);originalMethodTransformFacts(state.transform);
+  if(state.fieldEvidence!==undefined)originalProjectMethodFieldEvidenceGrouped(state.fieldEvidence,state.transform);
+  if(originalMethodValidationDigest(surface,state.validation)!==state.digest)throw new TypeError('Original method semantic body/signature/decorations changed');
+  return state;
+}
+export function originalMethodRefusalRangeGrouped(surface,path) {
+  if(!semantics.has(surface))return null;
+  const state=originalMethodSemanticFactsGrouped(surface),origin=originalMethodTransformFacts(state.transform);
+  const actualPath=copyMetadata(path);
+  if(!Array.isArray(actualPath)||actualPath.length!==origin.member.modulePath.length||actualPath.some((part,index)=>part!==origin.member.modulePath[index]))return null;
+  const start=origin.method.span.start+state.offset,end=origin.method.span.end+state.offset;
+  if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||end<=start)throw new TypeError('Original method refusal range exceeds its actual source coordinates');
+  return Object.freeze({start,end});
 }

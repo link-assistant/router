@@ -2,7 +2,7 @@
 // returns checked IR; callers discard this checker and recheck the survivors.
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 import {originalMethodRefusalRange} from '../source-method-admission.mjs';
-import {originalProjectDeclarationRefusalRange,originalProjectDeclarationRefusalRanges} from '../project.mjs';
+import {originalProjectDeclarationRefusalRange,originalProjectDeclarationRefusalRangesGroupedTokens as originalProjectDeclarationRefusalRanges} from '../project.mjs';
 const collectors=new WeakMap(),batches=new WeakMap();
 function failedPhase(errors) {
   const error=new Error('Original declaration phase contains semantic refusals');

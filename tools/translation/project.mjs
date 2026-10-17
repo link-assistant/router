@@ -31,8 +31,8 @@ import { roundTripProgram, serializeProgram } from './semantic-meta.mjs';
 import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './translate.mjs';
 import {linkProjectDeclaration,linkProjectMethodDeclaration,originalParsedDeclarationEvidence,copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {createOriginalMethodTokenTransform,originalMethodTransformFacts} from './source-method-transforms.mjs';
-import {parseOriginalMethodTransform,originalMethodParsedFacts} from './source-method-parser.mjs';
-import {originalMethodSemantic,relocateOriginalMethodSemantic,originalMethodRefusalRange,isOriginalMethodSemanticSource} from './source-method-admission.mjs';
+import {parseOriginalMethodTransform,originalMethodParsedFacts,originalMethodParsedFactsGrouped} from './source-method-parser.mjs';
+import {originalMethodSemantic,relocateOriginalMethodSemantic,originalMethodRefusalRange,originalMethodRefusalRangeGrouped,isOriginalMethodSemanticSource} from './source-method-admission.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
@@ -582,3 +582,38 @@ const ownedDefinitionProjectRules=createRulePipeline([
 ]);
 // An additional receiving corpus, never original module initialization parity.
 export function translateProjectOwnedDefinitions(options){return ownedDefinitionProjectRules.run(options).value;}
+
+// Additive siblings select grouped token comparisons only; all current source,
+// parser/field/layout and private project-parent joins remain independent.
+export function originalProjectMethodFieldEvidenceGrouped(value,transform) {
+  if(transform===undefined){
+    const origin=checkedMethodFieldOrigins.get(value);
+    if(!origin)throw new TypeError('Original project method field facade is copied, unissued or caller fabricated');
+    return originalProjectMethodFieldEvidenceGrouped(origin.token,origin.transform);
+  }
+  const state=methodFieldEvidence.get(value);
+  if(!state)throw new TypeError('Original project method field evidence is copied, unissued or caller fabricated');
+  if(state.transform!==transform)throw new TypeError('Original project method field evidence belongs to another genuine transform');
+  const capture=originalMethodParsedFactsGrouped(state.parsed);originalMethodTransformFacts(transform);
+  if(capture.transform!==transform||capture.digest!==state.parsedDigest||metadataDigest(state.facts.fields)!==state.fieldDigest)throw new TypeError('Original project method field source/signature/prepass evidence changed');
+  return state.facts;
+}
+export function originalProjectDeclarationRefusalRangesGroupedTokens(surface,path) {
+  const previous=()=>({methodRange:originalMethodRefusalRange(surface,path),projectRange:originalProjectDeclarationRefusalRange(surface,path)});
+  if(!originalDataFreezeIntrinsicsUnchanged()||!isOriginalMethodSemanticSource(surface))return previous();
+  const state=declarationRanges.get(surface);
+  if(!state||state.parent!==surface||state.defaultGenerated||state.cloneGenerated||state.structural||state.path.length!==state.parentPath.length)return previous();
+  for(let index=0;index<state.path.length;index++)if(state.path[index]!==state.parentPath[index])return previous();
+  // Finish caller metadata work before the shared fresh source proof. Do not
+  // retry this observed prefix, or accept a caller's copied range as authority.
+  const actualPath=copyMetadata(path);
+  let matching=Array.isArray(actualPath)&&actualPath.length===state.path.length;
+  if(matching)for(let index=0;index<actualPath.length;index++)if(actualPath[index]!==state.path[index]){matching=false;break;}
+  const actual=originalMethodRefusalRangeGrouped(surface,state.parentPath);
+  if(!matching)return {methodRange:null,projectRange:null};
+  // Independently rejoin the project association and full current parent. The
+  // shared reader above includes original tokens, parser, namespace, lowering,
+  // semantic body/signature and genuine shared-field evidence validation.
+  if(!actual||actual.start!==state.range.start||actual.end!==state.range.end||metadataDigest(surface)!==state.digest)throw new TypeError('Original project refusal source/layout changed after parser capture');
+  return {methodRange:actual,projectRange:state.range};
+}
