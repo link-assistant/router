@@ -7,11 +7,58 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pathToFileURL } from 'node:url';
-import { loadTypeScript, parseNativeJavaScript, emitNativeTypeScript, runtimeAST, compileNativeTypeScript, regenerateNativeTypeScript, reconstructSyntax, sourceModules } from '../native-typescript.mjs';
+import { loadTypeScript, buildNativeTypeScript, parseNativeJavaScript, emitNativeTypeScript, runtimeAST, compileNativeTypeScript, regenerateNativeTypeScript, reconstructSyntax, sourceModules } from '../native-typescript.mjs';
 import { inferenceProgram, typeNode } from '../native-inference.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const SOURCE = process.env.ROUTER_NATIVE_TS_SOURCE_ROOT ? resolve(process.env.ROUTER_NATIVE_TS_SOURCE_ROOT) : ROOT;
+
+// Full private-build versus unchanged public-parser comparison. This fixture is
+// additional work; the original four regeneration builds below remain intact.
+async function lexicalThisBuildControls(ts,directory) {
+  const root=join(directory,'lexical-this-build'),javascript=join(root,'packages/javascript'),sourcePath='packages/javascript/native/lexical.mjs';
+  mkdirSync(join(javascript,'native'),{recursive:true});
+  symlinkSync(join(SOURCE,'packages/javascript/node_modules'),join(javascript,'node_modules'),'dir');
+  writeFileSync(join(javascript,'package.json'),JSON.stringify({name:'lexical-this-fixture',version:'0.0.0',type:'module'}));
+  writeFileSync(join(javascript,'catalog.json'),'{}\n');
+  for(const name of ['index.js','testing.js'])writeFileSync(join(javascript,name),'export {};\n');
+  const source=`export function lexical() { return (() => this.value)(); }
+export function nested() { function child() { return (()=>this.value)(); } return child.call({value:7}); }
+export async function asyncLexical() { return await (async () => this.value)(); }
+export function* generatorLexical() { yield this.value; yield (() => this.value)(); }
+export async function* asyncGeneratorLexical() { yield this.value; yield await (async()=>this.value)(); }
+export function defaults(value = (() => this.value)()) { return value; }
+export function objectBoundary() { const value = {number:3, method(){return this.number;}, get item(){return this.number;}, set item(next){this.number=next;}, ['this'](){return this.number;},[(function computedKey(){return this.key;}).call({key:'dynamic'})](){return this.number;}};value.item=5;return value.method()+value['this']()+value.dynamic(); }
+export function classBoundary() { class Base {base=1;} class Child extends Base {value=3;arrow=()=>this.value;static count=4;static {this.count+=1;}static read=()=>this.count;constructor(){super();this.value+=1;}method(){return this.value;}get item(){return this.value;}set item(next){this.value=next;}}const value=new Child();value.item=6;return value.arrow()+value.method()+Child.read(); }
+export function classExpressionBoundary() { const Type=class {value=2;arrow=()=>this.value;static count=3;static{this.count+=1;}};return (new Type()).arrow()+Type.count; }
+export const named = function namedExpression() { return this.value; };
+/** this is data, not a receiver expression. */
+export function dataOnly() { const value = {this:'猫😀'}; return [value.this, 'this', /this/u.test('this')]; }
+export function propertyArrow() { const value = {read: () => this.value}; return value.read(); }
+export function outerGenerator() { const value = function* nestedGenerator(){yield this.value;}; return value.call({value:9}).next().value; }
+`;
+  writeFileSync(join(root,sourcePath),source);
+  const paths=sourceModules(root),artifacts=buildNativeTypeScript(root),fresh=inferenceProgram(ts,root,paths),expectedFlags=new Map([['lexical',true],['nested',false],['child',true],['asyncLexical',true],['generatorLexical',true],['asyncGeneratorLexical',true],['defaults',true],['objectBoundary',false],['computedKey',true],['classBoundary',false],['classExpressionBoundary',false],['namedExpression',true],['dataOnly',false],['propertyArrow',true],['outerGenerator',false],['nestedGenerator',true]]);
+  for(const path of paths) {
+    const text=readFileSync(join(root,path),'utf8'),file=fresh.program.getSourceFile(join(root,path)),legacy=parseNativeJavaScript(ts,path,text,{file,checker:fresh.checker}),metaPath='tools/translation/js-to-rust/generated/native-typescript/'+path.slice('packages/javascript/'.length)+'.meta.json',wire=artifacts.get(metaPath);
+    assert.equal(wire,JSON.stringify(legacy)+'\n',path+': complete private/public meta byte equality');
+    const meta=JSON.parse(wire),output=emitNativeTypeScript(ts,legacy),target=path.replace('packages/javascript/','packages/typescript/').replace(/\.(?:mjs|js)$/u,'.ts'),header='// GENERATED JavaScript -> structured syntax AST -> TypeScript draft.\n// Meta sha256='+createHash('sha256').update(wire).digest('hex')+'; dynamic any annotations are explicit draft gaps.\n';
+    assert.equal(artifacts.get(target),header+output.text,path+': complete target byte equality');
+    if(path===sourcePath) {
+      let index=0;const functions=[];const inspect=node=>{if(ts.isFunctionLike(node)&&node.parameters){const annotation=meta.annotations[index++];functions.push(node);if(ts.isFunctionDeclaration(node)||ts.isFunctionExpression(node)){assert.ok(expectedFlags.has(node.name?.text),'independent expected function '+node.name?.text);assert.equal(annotation.thisContext===true,expectedFlags.get(node.name.text),node.name.text);assert.deepEqual(Object.keys(annotation),['function','parameters','returns',...(annotation.thisContext?['thisContext']:[])]);}else assert.equal(Object.hasOwn(annotation,'thisContext'),false,'arrows/methods/constructor/accessors retain no ordinary-function receiver annotation');}ts.forEachChild(node,inspect);};inspect(file);assert.equal(index,meta.annotations.length);
+      // Custom-ts observations remain on the complete original public route.
+      const visits=[],expected=[],observed=Object.create(ts);Object.defineProperty(observed,'forEachChild',{value:(node,visit,nodes)=>{visits.push([node.kind,node.pos,node.end]);return ts.forEachChild(node,visit,nodes);}});
+      for(const fn of functions.filter(node=>ts.isFunctionDeclaration(node)||ts.isFunctionExpression(node))){const receiver=node=>{if(node!==fn&&(ts.isFunctionLike(node)&&!ts.isArrowFunction(node)||ts.isClassDeclaration(node)||ts.isClassExpression(node)))return;expected.push([node.kind,node.pos,node.end]);ts.forEachChild(node,receiver);};receiver(fn);}
+      const instrumented=parseNativeJavaScript(observed,path,text,{file}),ordinary=parseNativeJavaScript(ts,path,text,{file});assert.equal(JSON.stringify(instrumented),JSON.stringify(ordinary));assert.deepEqual(visits,expected);assert.ok(visits.length>functions.length);
+    }
+  }
+  for(const [path,value]of artifacts){const file=join(root,path);mkdirSync(dirname(file),{recursive:true});writeFileSync(file,value);}
+  symlinkSync(join(javascript,'node_modules'),join(root,'packages/typescript/node_modules'),'dir');
+  const strict=join(directory,'lexical-this-strict'),targets=paths.map(path=>join(root,path.replace('packages/javascript/','packages/typescript/').replace(/\.(?:mjs|js)$/u,'.ts')));
+  execFileSync(process.execPath,[join(SOURCE,'packages/javascript/node_modules/typescript/lib/tsc.js'),'--strict','--skipLibCheck','--target','ES2022','--module','commonjs','--outDir',strict,...targets],{encoding:'utf8',timeout:20_000,maxBuffer:1024*1024,stdio:'pipe'});
+  const compiled=await import(pathToFileURL(join(strict,'native/lexical.js')).href),original=await import(pathToFileURL(join(root,sourcePath)).href);
+  const verify=async runtime=>{assert.equal(runtime.lexical.call({value:11}),11);assert.equal(runtime.nested(),7);assert.equal(await runtime.asyncLexical.call({value:12}),12);assert.deepEqual([...runtime.generatorLexical.call({value:13})],[13,13]);assert.equal(runtime.defaults.call({value:14}),14);const generated=[];for await(const value of runtime.asyncGeneratorLexical.call({value:18}))generated.push(value);assert.deepEqual(generated,[18,18]);assert.equal(runtime.objectBoundary(),15);assert.equal(runtime.classBoundary(),17);assert.equal(runtime.classExpressionBoundary(),6);assert.equal(runtime.named.call({value:15}),15);assert.deepEqual(runtime.dataOnly(),['猫😀','this',true]);assert.equal(runtime.propertyArrow.call({value:16}),16);assert.equal(runtime.outerGenerator(),9);};await verify(original);await verify(compiled);
+}
 
 test('closed compiler inference exposes primitive returns while retaining dynamic parameter and object gaps', async () => {
   const ts = loadTypeScript(SOURCE);
@@ -43,6 +90,7 @@ export function opaque() { const record = { kind: 'object' }; return record; }`;
     assert.equal(await runtime.flag(), true);
     assert.equal(runtime.nullable(false), null);
     assert.throws(() => typeNode(ts, { kind: 'primitive', name: 'string; runCode()' }), /unsupported native type inference hint/u);
+    await lexicalThisBuildControls(ts,directory);
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 

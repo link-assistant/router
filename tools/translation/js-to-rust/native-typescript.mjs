@@ -280,6 +280,98 @@ export function emitNativeTypeScript(ts, meta) {
   } finally { if(result)result.dispose(); }
 }
 
+// Fixed build-only sibling. The public serializer/parser above deliberately
+// retain custom-ts/checker traversal observations. This stock-compiler route
+// folds lexical-this classification into its existing semantic collect pass;
+// getChildren token encoding, inference and every source/hash check stay fresh.
+function serializeBuild(ts, sourceFile, checker) {
+  if (!checker) return serialize(ts, sourceFile, checker);
+  let count = 0;
+  let functionIndex = 0;
+  const annotations = [];
+  const locals = [];
+  const indices = [];
+  const gaps=[];
+  const occurrences=new Map();
+  const globalGaps=new Set();
+  const loopBindings=new Set();
+  const reassignedBindings=new Set();
+  const lexicalThis=new WeakSet();
+  if(checker) {
+    const collect=(node,target=null)=>{
+      if(ts.isFunctionDeclaration(node)||ts.isFunctionExpression(node))target=node;
+      else if(target!==null&&(ts.isFunctionLike(node)&&!ts.isArrowFunction(node)||ts.isClassDeclaration(node)||ts.isClassExpression(node)))target=null;
+      if(target!==null&&node.kind===ts.SyntaxKind.ThisKeyword)lexicalThis.add(target);
+      if(ts.isForInStatement(node) && ts.isVariableDeclarationList(node.initializer))for(const declaration of node.initializer.declarations)if(ts.isIdentifier(declaration.name)){const symbol=checker.getSymbolAtLocation(declaration.name);if(symbol)loopBindings.add(symbol);}
+      if(ts.isBinaryExpression(node) && ts.isAssignmentOperator(node.operatorToken.kind) && ts.isIdentifier(node.left)){const symbol=checker.getSymbolAtLocation(node.left);if(symbol)reassignedBindings.add(symbol);}
+      ts.forEachChild(node,child=>collect(child,target));
+    };
+    collect(sourceFile);
+  }
+  const encode = (node) => {
+    if (ts.isJSDoc(node)) return null;
+    const occurrence=occurrences.get(node.kind)??0;occurrences.set(node.kind,occurrence+1);
+    if (ts.isFunctionLike(node) && node.parameters) {
+      const params = node.parameters.map((parameter) => {
+        const doc = ts.getJSDocType(parameter);
+        if (doc && [ts.SyntaxKind.StringKeyword, ts.SyntaxKind.NumberKeyword, ts.SyntaxKind.BooleanKeyword].includes(doc.kind)) return ts.SyntaxKind[doc.kind].replace('Keyword', '').toLowerCase();
+        // JS default expressions are not contracts: fallback='' can still be
+        // called with null. Only explicit JSDoc primitive contracts narrow it.
+        return 'any';
+      });
+      const thisContext=(ts.isFunctionDeclaration(node)||ts.isFunctionExpression(node))&&lexicalThis.has(node);
+      annotations.push({ function: functionIndex++, parameters: params, returns: returnHint(ts, checker, node), ...(thisContext ? { thisContext: true } : {}) });
+    }
+    if (ts.isVariableDeclaration(node)) locals.push(localHint(ts, checker, node));
+    if (ts.isElementAccessExpression(node)) indices.push(dynamicIndex(ts, checker, node));
+    const gap={};
+    if(checker) {
+      const propertyName=node.parent && (ts.isPropertyAccessExpression(node.parent)&&node.parent.name===node || ts.isPropertyAssignment(node.parent)&&node.parent.name===node || ts.isBindingElement(node.parent)&&node.parent.propertyName===node);
+      if(ts.isIdentifier(node) && !propertyName && ts.isInExpressionContext(node) && !ts.isDeclarationName(node) && !checker.getSymbolAtLocation(node)) globalGaps.add(node.text);
+      if(ts.isIdentifier(node) && !propertyName && !ts.isDeclarationName(node) && loopBindings.has(checker.getSymbolAtLocation(node)))gap.loopBinding=true;
+      if(ts.isCallExpression(node) && !ts.isOptionalChain(node) && ![ts.SyntaxKind.ImportKeyword,ts.SyntaxKind.SuperKeyword].includes(node.expression.kind)) {
+        const signature=checker.getResolvedSignature(node),parameters=signature?.getParameters()??[];
+        const formal=signature?.declaration?.parameters;
+        const rest=formal?formal.at(-1)?.dotDotDotToken:parameters.at(-1)?.declarations?.some(declaration=>declaration.dotDotDotToken);
+        // The JS checker can infer extra parameters from callers. The emitted
+        // declaration still has the original formal list, so compare that list.
+        if(node.arguments.length>(formal?.length??parameters.length) && !rest || ts.isPropertyAccessExpression(node.expression) && node.expression.name.text==='bind') gap.call=true;
+      }
+      if(ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression)) {
+        const symbol=checker.getSymbolAtLocation(node.expression);
+        if(symbol?.declarations?.some(declaration=>declaration.getSourceFile().isDeclarationFile))gap.globalProperty=true;
+      }
+      if(ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) && reassignedBindings.has(checker.getSymbolAtLocation(node.expression)) && checker.getTypeAtLocation(node.expression).flags&ts.TypeFlags.Any)gap.globalProperty=true;
+      if(ts.isBinaryExpression(node)) {
+        if(ts.isAssignmentOperator(node.operatorToken.kind) && ts.isIdentifier(node.left))gap.assignment=true;
+        if(node.operatorToken.kind===ts.SyntaxKind.PlusToken && [node.left,node.right].some(value=>checker.getTypeAtLocation(value).flags & ts.TypeFlags.BooleanLike))gap.coercion=true;
+        if([node.left,node.right].some(value=>ts.isStringLiteralLike(value)&&value.text==='unknown') && [node.left,node.right].some(ts.isTypeOfExpression))gap.coercion=true;
+      }
+    }
+    if(Object.keys(gap).length)gaps.push({kind:node.kind,occurrence,...gap});
+    count++;
+    const children = node.getChildren(sourceFile).map(encode).filter(Boolean);
+    if (children.length) return [node.kind, children];
+    const start = node.getStart(sourceFile);
+    const text = sourceFile.text.slice(start, node.end);
+    if (!text || node.kind === ts.SyntaxKind.EndOfFileToken) return [node.kind, []];
+    // Preserve line terminators because JavaScript automatic semicolon
+    // insertion and postfix operators observe them; horizontal trivia is free.
+    const leading = sourceFile.text.slice(node.pos, start);
+    return [node.kind, text, /[\r\n]/u.test(leading) ? 1 : 0];
+  };
+  const tree=encode(sourceFile);
+  return { tree, annotations, locals, indices, gaps, globalGaps:[...globalGaps].sort(), nodes: count };
+}
+
+function parseBuildNativeJavaScript(ts, path, source, { file: inferredFile, checker } = {}) {
+  source=prepareReverseConcreteSource(source).source;
+  const file = inferredFile ?? ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  if (file.text !== source) throw new Error(`inference source snapshot differs for ${path}`);
+  if (file.parseDiagnostics.length) throw new Error(`invalid authoritative JavaScript syntax in ${path}`);
+  return { schema: 'native-js-syntax-ast-v1', compiler: ts.version, path, sourceSha256: hash(source), ...serializeBuild(ts, file, checker) };
+}
+
 export function buildNativeTypeScript(sourceRoot) {
   const ts = loadTypeScript(sourceRoot);
   const paths = sourceModules(sourceRoot);
@@ -289,7 +381,7 @@ export function buildNativeTypeScript(sourceRoot) {
   const inference = inferenceProgram(ts, sourceRoot, paths);
   for (const path of paths) {
     const source = readFileSync(join(sourceRoot, path), 'utf8');
-    const meta = parseNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });
+    const meta = parseBuildNativeJavaScript(ts, path, source, { file: inference.program.getSourceFile(join(sourceRoot, path)), checker: inference.checker });
     const metaText = `${JSON.stringify(meta)}\n`;
     const reparsed = JSON.parse(metaText);
     const output = emitNativeTypeScript(ts, reparsed);
