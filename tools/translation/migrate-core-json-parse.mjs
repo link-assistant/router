@@ -39,10 +39,11 @@ function singleArgument(tokens,start,end){
  }
  return tokens.slice(start,last);
 }
-function tailRoot(tokens,at,stop,body,parameter){
- if(!parameter||at!==body+1||tokens[stop+1]?.text!=='?')return null;
- let cursor=stop+2,methods=0;while(cursor<tokens.length-1){if(tokens[cursor]?.text!=='.'||!ident(tokens[cursor+1])||tokens[cursor+2]?.text!=='(')return null;const end=close(tokens,cursor+2);if(end<0)return null;cursor=end+1;if(tokens[cursor]?.text==='?')cursor++;methods++;}
- return methods&&cursor===tokens.length-1?{span:[tokens[at].start,tokens[cursor-1].end],questionEnd:tokens[stop+1].end}:null;
+function tailRoot(source,tokens,at,stop,body,parameter){
+ const question=tokens[stop+1],fused=token=>token?.text==='?.'&&token.end===token.start+2&&source.slice(token.start,token.end)==='?.';
+ if(!parameter||at!==body+1||!(question?.text==='?'||fused(question)))return null;
+ let cursor=stop+(question.text==='?'?2:1),methods=0;while(cursor<tokens.length-1){if(!(tokens[cursor]?.text==='.'||fused(tokens[cursor]))||!ident(tokens[cursor+1])||tokens[cursor+2]?.text!=='(')return null;const end=close(tokens,cursor+2);if(end<0)return null;cursor=end+1;if(tokens[cursor]?.text==='?')cursor++;methods++;}
+ return methods&&cursor===tokens.length-1?{span:[tokens[at].start,tokens[cursor-1].end],questionEnd:fused(question)?question.start+1:question.end}:null;
 }
 function scope(module,modules,profile,context){
  const ancestors=modules.filter(parent=>parent.path.length<=module.path.length&&parent.path.every((name,at)=>module.path[at]===name)),problems=[],imports=[],identifiers=new Set();
@@ -83,7 +84,7 @@ function select(source,item,module,identifiers){
   }
   if(!mode)continue;
   const complete=[span[0],tokens[stop].end];if(item.tokens.some(token=>token.type==='comment'&&token.start>=complete[0]&&token.end<=complete[1]&&!(token.start>=interior[0]&&token.end<=interior[1])))continue;
-  const root=mode==='discard-error-ok'?tailRoot(tokens,at,stop,body,parameter):null;
+  const root=mode==='discard-error-ok'?tailRoot(source,tokens,at,stop,body,parameter):null;
   if(root){const names=new Set(identifiers);for(const token of tokens)if(token.type==='ident')names.add(token.text.replace(/^r#/u,''));let suffix=0;while(names.has('__router_json_root_'+suffix))suffix++;roots.push({...root,name:'__router_json_root_'+suffix,hygiene:{identifiers:[...names].sort(),sourceModule:module.path},function:item.name});}
   if(patternEdit)edits.push(patternEdit);edits.push({span:complete,expected:source.slice(...complete),replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span:complete,operation,mode,argument:{...(parameter??{}),expression},sourceTarget:target,originalCall:source.slice(...span),replacement,sourceModule:module.path,originalParserImplementationTranslated:false,originalErrorDropAdmitted:false,executableAdmission:false,evaluationOrder:['borrowed-input-once']});at=stop;
  }
