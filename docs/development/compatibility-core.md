@@ -72,6 +72,9 @@ destruction, type checking or later body refusals.
 | `json!` | `serde_json::json!` | Bounded literal objects, arrays and scalars; checked borrowed text, booleans, canonical JSON copies and fixed integers through 64 bits. Each interpolation retains its actual type, effects and outer `?` behavior. Custom `Serialize`, floating point, owned text and effectful interpolation remain refused. |
 | `json_copy(&Json) -> Json` | `Clone::clone` on the canonical JSON type | Explicit qualified shared copy into independent checked canonical storage; no general `.clone()` dispatch or custom `Clone` admission. |
 | `json_with_field(Json, &Str, Json) -> Json` | By-value native JSON indexing and replacement | Object or null base, literal or checked borrowed scalar-text key and canonical JSON value; null promotes to an object. Other base kinds abort. Copies/results retain the JSON bounds and independent storage. |
+| `json_index_str(&Json, &Str) -> &Json` | Shared canonical Value string indexing | Existing node identity; absent keys and wrong kinds return canonical Null. The result borrows its receiver. |
+| `json_index_usize(&Json, usize) -> &Json` | Shared canonical Value array indexing | Actual by-value source `usize`, including checked contextual and explicit literals; absent positions and wrong kinds return Null. Other integer identities remain refused. |
+| `json_map_index(&Map<String, Json>, &Str) -> &Json` | Shared canonical object-map indexing | Existing node identity; an absent entry panics without insertion. Value indexing retains its different missing-key behavior. |
 | `f64_inclusive_contains` | Same-type `Into<f64> + Copy` arguments, widened once before ordered comparisons | Checked `f64` inputs only; IEEE NaN, infinity and signed-zero behavior with once-only left-to-right arguments. Native Rust also accepts `f32`; that does not admit translated `f32` callers. |
 | `unicode_scalar_count` | Borrowed `str::chars().count()` | Validated Unicode scalar text to the existing 64-bit `usize` BigInt ABI; one input evaluation, with no general iterator admission. |
 
@@ -116,6 +119,21 @@ This does not waive the ordinary
 checker or establish a general Rust borrow checker, arbitrary `Serialize`,
 allocator/OOM or payload Drop equivalence. Native library internals stay
 intentionally untranslated.
+
+The three indexing operations use source-bound canonical layouts and receiver
+loans. Serialized metadata or a familiar helper name cannot create a borrow
+permit. The explicit `json-indices` proposal sequence rewrites whole shared
+index-read leaves inside qualified owned JSON interpolation. It retains complete
+source, CST, substitutions and inverses, and leaves uncertain aliases, writes,
+move-sensitive surrounding expressions and unknown producers unchanged. The
+independent semantic checker still decides whether the resulting whole function
+can execute. The source adopter and its receiving tests do not establish a
+measured application coverage gain.
+
+The shared interpolation grammar distinguishes prefix `!` and binary `||` from
+macro bangs and closures. Actual parsing, type checks, purity and supported JSON
+conversion remain separate requirements. Logical operands retain short circuit
+behavior, and object values evaluate in source order before output-key sorting.
 
 ## Produce portable source-adoption proposals
 
