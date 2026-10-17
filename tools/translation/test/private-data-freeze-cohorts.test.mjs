@@ -71,10 +71,11 @@ function child(mode,which){
  return {record,result};
 }
 function counts(report){
- const {record,result}=report,rows=result.coverage.result.filter(row=>row.url===record.subject.url);assert.equal(rows.length,1);const methods=rows[0].functions.filter(row=>row.functionName==='plan');assert.equal(methods.length,1);const range=methods[0].ranges[0];
- assert.equal(result.helperScriptSource,record.subject.copiedSource);assert.equal(result.fixtureScriptSource,record.code);assert.equal(result.helperScriptSource.slice(range.startOffset,range.endOffset),result.planSource);
+ const {record,result}=report,rows=result.coverage.result.filter(row=>row.url===record.subject.url);assert.equal(rows.length,1);const methods=rows[0].functions.filter(row=>row.functionName==='plan'),packed=rows[0].functions.filter(row=>row.functionName==='packedPlan'),hasPacked=record.subject.source.includes('function packedPlan(value,lookup){');
+ assert.equal(result.helperScriptSource,record.subject.copiedSource);assert.equal(result.fixtureScriptSource,record.code);assert.ok(result.helperScriptSource.includes(result.planSource));assert.equal(packed.length,hasPacked?1:0);assert.equal(methods.length<=1,true);if(!hasPacked)assert.equal(methods.length,1);for(const method of methods){const range=method.ranges[0];assert.equal(result.helperScriptSource.slice(range.startOffset,range.endOffset),result.planSource);}
+ const oldPlanCalls=methods[0]?.ranges[0].count??0,packedPlanCalls=packed[0]?.ranges[0].count??0,physicalTraversals=oldPlanCalls+packedPlanCalls;retain(record.mode+'-'+record.which+'-raw-traversal-coverage',{old:methods,packed,oldPlanCalls,packedPlanCalls,packedFallbackRetries:hasPacked?oldPlanCalls:0,physicalTraversals});
  const scripts=result.coverage.result.filter(row=>row.url===result.fixtureScriptURL);assert.equal(scripts.length,1);const original=scripts[0].functions.filter(row=>row.functionName==='freeze');assert.equal(original.length,1);
- const observed={planCalls:range.count,knownPlanProbeCalls:1,scenarioPlanCalls:range.count-1,originalFreezeCalls:original[0].ranges[0].count,knownOriginalProbeCalls:1,scenarioFallbackCalls:original[0].ranges[0].count-1};retain(record.mode+'-'+record.which+'-complete-counts',{record,result,observed});return observed;
+ const observed={planCalls:physicalTraversals,knownPlanProbeCalls:1,scenarioPlanCalls:physicalTraversals-1,originalFreezeCalls:original[0].ranges[0].count,knownOriginalProbeCalls:1,scenarioFallbackCalls:original[0].ranges[0].count-1,oldPlanCalls,packedPlanCalls,packedFallbackRetries:hasPacked?oldPlanCalls:0};retain(record.mode+'-'+record.which+'-complete-counts',{record,result,observed});return observed;
 }
 function paired(mode){
  retain(mode+'-complete-original-sources',{manifest,originals:[...originals],subjects,relocations,legacy});
