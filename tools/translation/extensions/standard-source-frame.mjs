@@ -3,14 +3,14 @@ import {sharedReferenceCopyIdentity,SHARED_REFERENCE_COPY_SOURCE,STANDARD_OPTION
 // create this scope or turn an original predicate loan into an escaping borrow.
 import {renameFunction} from '../vendor/meta-language/translation/ir.js';
 import {sameType} from '../checked-types.mjs';
-import {metadataDigest} from './source-links.mjs';
+import {copyMetadata,metadataDigest} from './source-links.mjs';
 import {alphaTree,retargetCheckedCallback,optionPayload} from './standard-body-checker.mjs';
 import {parsedPinnedBodyEvidence,pinnedOptionPartialEqBody} from './standard-body-source.mjs';
 import {originalStandardCallContext} from './original-standard-calls.mjs';
 import {originalOptionPartialEqSource} from './option-equality-source.mjs';
 import {requireOriginalOptionEqualityOperand} from './option-equality.mjs';
 import {typeError} from '../vendor/meta-language/translation/diagnostics.js';
-const frames=new Map(),frameOrigins=new WeakSet(),loans=new Map(),activeFrames=new WeakMap();
+const frames=new Map(),frameOrigins=new WeakSet(),loans=new Map(),callbackInputs=new WeakMap(),activeFrames=new WeakMap();
 export function originalCallbackLoanType(checker,payload,span){
   const type=checker.sharedFieldType(payload,{rustReference:{kind:'shared',span}},span);
   type.patternOwnershipRefusal='shared source reference';
@@ -23,7 +23,8 @@ export function checkOriginalCallbackLoan(checker,syntax,env,path,expected){
   if(!sameType(value.type,pointee))throw typeError('Original callback loan pointee differs from its checked source argument',syntax.span);
   checker.expectedOwnership(value.type,pointee,path,syntax.span);checker.expectedPrimitiveIdentity(value.type,pointee,path,syntax.span);
   const type=originalCallbackLoanType(checker,value.type,syntax.span),proof={profile:'original-standard-ephemeral-callback-loan-v1',key:metadataDigest({value:alphaTree(value),type}),escapes:false,mutable:false};
-  loans.set(proof.key,{proof:structuredClone(proof),value:structuredClone(value),type:structuredClone(type)});
+  const record={proof:structuredClone(proof),value:structuredClone(value),type:structuredClone(type)};loans.set(proof.key,record);
+  callbackInputs.set(proof,{...record,expectedType:structuredClone(expected)});
   return {k:'routerOriginalCallbackLoan',value,type,originalLoanProof:proof,span:syntax.span};
 }
 // Rust's equality operator supplies the shared method operands. This issuer
@@ -49,6 +50,13 @@ export function checkOriginalSourceFrame(checker,syntax,bindings,resultType,orig
 }
 export const hasOriginalSourceFrame=node=>frameOrigins.has(node.sourceFrameProof);
 export function hasOriginalCallbackLoan(node){const state=loans.get(node.originalLoanProof?.key);return Boolean(state&&metadataDigest(node.originalLoanProof)===metadataDigest(state.proof));}
+// This exact pair was checked at the actual application of the pinned FnOnce
+// parameter. It is not reference equivalence inferred from public spans/types.
+export function originalCallbackLoanInputMatches(node,type){
+ const state=callbackInputs.get(node?.originalLoanProof);
+ const encode=value=>JSON.stringify(copyMetadata(value),(_key,item)=>typeof item==='bigint'?{$integer:item.toString()}:item),same=(actual,expected)=>encode(actual)===encode(expected);
+ return Boolean(state?.expectedType&&node.k==='routerOriginalCallbackLoan'&&same(node.originalLoanProof,state.proof)&&same(node.type,state.type)&&same(node.value,state.value)&&same(type,state.expectedType));
+}
 // The tail boundary changes traversal only. Host still authenticates the entire
 // enclosing checked function before opening the private nested emission scope.
 const nodes=(value,result=[])=>{if(!value||typeof value!=='object')return result;if(value.k==='routerOriginalSharedPatternMatch'&&value.sourceSharedPatternProof?.functionTail===true)return result;if(['routerOriginalStandardFrame','routerOriginalCallbackLoan'].includes(value.k))result.push(value);for(const [key,child]of Object.entries(value))if(!['type','sourceFrameProof','originalLoanProof','pinnedStandardBodyProof','sharedBodyProof','originalCallbackProof'].includes(key))Array.isArray(child)?child.forEach(item=>nodes(item,result)):nodes(child,result);return result;};

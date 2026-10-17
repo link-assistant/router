@@ -12,7 +12,7 @@ import {requirePinnedOptionCallbackBody} from './extensions/standard-option-call
 import {requireOriginalMappedBody} from './extensions/standard-mapped-body.mjs';
 import {alphaTree,retargetCheckedCallback,requirePinnedStandardBody} from './extensions/standard-body-checker.mjs';
 import {captureBorrowedLayouts,requireBorrowedLayouts} from './extensions/standard-borrowed-body.mjs';
-import {renameFunction} from './vendor/meta-language/translation/ir.js';
+import {renameFunction,renameExpr,Scope} from './vendor/meta-language/translation/ir.js';
 import {coerce} from './checked-coercions.mjs';
 import {validateOwnedJsonFlow,describeOwnedJsonDifference} from './owned-json-flow.mjs';
 import {SOURCE_STR,sourceShared} from './extensions/source-contract-types.mjs';
@@ -232,7 +232,7 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
      closedErrors:{
       callee:(node)=>{const target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return target.entry;},
       format:(node,entry)=>{
-       if(node.k!=='routerConstObligation'||node.sourceFeature!=='router-core-format')return null;const frame=current(entry.fullName).receipt,record=frame.formatted?.find(record=>isSameSemantic(node,record.value)&&same(record.syntax,record.original));if(!record)return null;
+       if(node.k!=='routerConstObligation'||node.sourceFeature!=='router-core-format')return null;const fact=current(entry.fullName),frame=fact.receipt,record=frame.formatted?.find(record=>isSameSemantic(node,record.value)&&same(record.syntax,record.original))??frame.formatted?.find(record=>same(record.syntax,record.original)&&checkedTailFormatSame(fact,node,record,tailOrigin));if(!record)return null;
        let body=node.k==='routerConstObligation'?node.value:node;const values=[];while(body?.k==='let'){values.push(body.value);body=body.body;}return values;
       },
       diagnostic:node=>node?.k==='routerConstObligation'&&node.sourceFeature==='router-core-format'?{join:'format-record',function:fact.entry.fullName.slice(0,120),candidates:(fact.receipt.formatted??[]).slice(0,3).map(record=>({difference:describeOwnedJsonDifference(alphaTree(node),alphaTree(record.value))}))}:null,
@@ -246,6 +246,38 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
   // Store detached data only, after every fresh helper/source join succeeds.
   publishProjectionContexts(fact.receipt,fact.entry,[...dependencies.values()],checker);
  }
+}
+// The complete current function was just rejoined by current(). Only a
+// privately issued function-tail match may contribute an enclosing rename.
+function checkedTailFormatSame(fact,target,record,tailOrigin){
+ const originalBindings=[];let sourceCells=100000;
+ const raw=value=>{if(!value||typeof value!=='object')return;if(--sourceCells<0)fail();if(['bind','bindOrCtor'].includes(value.k))originalBindings.push(value);for(const [key,child]of Object.entries(value))if(!['type','span','sourcePattern','sourceParameterPatterns'].includes(key))Array.isArray(child)?child.forEach(raw):raw(child);};raw(fact.receipt.syntax);
+ let cells=100000,found=0,matched=false;
+ const visit=(value,names=new Map(),inside=false,depth=0)=>{
+  if(!value||typeof value!=='object')return;if(--cells<0||depth>160)fail();
+  if(value===target){found++;if(!inside||!same(target.span,record.value.span))return;
+   const env=new Map();const variables=node=>{if(!node||typeof node!=='object')return;if(node.k==='var')env.set(node.name,node.name);for(const [key,child]of Object.entries(node))if(!['type','span','compatibilityCore','formatProvenance'].includes(key))Array.isArray(child)?child.forEach(variables):variables(child);};variables(record.value);for(const [before,after]of names)env.set(before,after);
+   matched=names.size>0&&canonicalSemanticSame(target,renameExpr(record.value,env,new Scope(name=>name,new Set(env.values()))));return;
+  }
+  if(value.k==='routerOriginalSharedPatternMatch'){
+   if(!tailOrigin(value)||value.sourceSharedPatternProof.functionTail!==true)return;
+   visit(value.body,names,true,depth+1);return;
+  }
+  if(inside&&value.k==='let'&&value.patternControl?.kind==='ordered-scalar-match'&&value.body?.k==='routerOrderedMatchArms'){
+   const rows=value.patternControl.rows,branches=value.body.branches;
+   if(!Array.isArray(rows)||rows.length!==branches.length||rows.some(row=>row.guarded||row.alternatives!==1))return;
+   for(let at=0;at<rows.length;at++){
+    const row=rows[at],branch=branches[at],bindings=row.plan?.bindings,inner=new Map(names);if(!Array.isArray(bindings)||bindings.length>1)return;
+    if(bindings.length){const binding=bindings[0],source=row.sourcePattern?.pattern,let_=branch.body,type=binding.type;
+     if(!['bind','bindOrCtor'].includes(source?.k)||source.name!==binding.name||originalBindings.filter(node=>node.name===binding.name&&same(node.span,binding.span)).length!==1||binding.projection?.length!==0||branch.cond?.k!=='lit'||branch.cond.value!==true||let_?.k!=='let'||let_.mutable!==false||let_.value?.k!=='var'||let_.value.name!==value.name||!same(let_.span,binding.span)||!sameType(let_.value.type,type)||type.kind!=='string'||type.rustReference||type.patternOwnershipRefusal||type.rustBorrowingUnresolved||type.rustGenericIdentityUnresolved||type.rustOwnership?.kind!=='borrowed'||type.rustOwnership.source!=='str')return;
+     inner.set(binding.name,let_.name);
+    }
+    visit(branch.body,inner,true,depth+1);
+   }return;
+  }
+  for(const [key,child]of Object.entries(value))if(!['type','span','patternControl','compatibilityCore','pinnedStandardBodyProof','originalCallbackProof','sourceFrameProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof','formatProvenance'].includes(key))Array.isArray(child)?child.forEach(node=>visit(node,names,inside,depth+1)):visit(child,names,inside,depth+1);
+ };
+ visit(fact.entry.body);return found===1&&matched;
 }
 function containsExit(node){if(!node||typeof node!=='object'||node.k==='routerLambda')return false;if(['routerReturn','routerBreak','routerContinue'].includes(node.k))return true;return Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value)));}
 export function checkRouterCoreJsonMutableLet(checker,node,env,path,expected,allowLiteral){
@@ -325,14 +357,16 @@ export function prepareOriginalJsonProjectionEmission(emitter,entry,Checker){
   const context=projectionContexts.get(node.compatibilityCore?.sourceProjectionKey),fn=context?.functionContext;
   if(!context||!fn||node.id!==context.id||entry.fullName!==fn.name&&entry.fullName!=='rp_'+Buffer.from(fn.name).toString('hex'))throw new Error('Owned JSON projection lacks its actual source function');
   const expected=retargetCheckedCallback(context.call,emitter.program),wanted=retargetCheckedCallback(fn,emitter.program);
-  if(!isSameSemantic(node,expected)||!isSameSemantic({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source function or checked call changed [comparison '+JSON.stringify({function:entry.fullName.slice(0,120),id:node.id,call:describeOwnedJsonDifference(alphaTree(node),alphaTree(expected)),body:describeOwnedJsonDifference(alphaTree({params:entry.params,ret:entry.ret,body:entry.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body}))})+']');
+  if(!projectionSemanticSame(node,expected)||!projectionSemanticSame({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source function or checked call changed [comparison '+JSON.stringify({function:entry.fullName.slice(0,120),id:node.id,call:describeOwnedJsonDifference(alphaTree(node),alphaTree(expected)),body:describeOwnedJsonDifference(alphaTree({params:entry.params,ret:entry.ret,body:entry.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body}))})+']');
   requireBorrowedLayouts(context.layouts,checker,emitter.program,retargetCheckedCallback(context.roots,emitter.program));
   for(const dependency of fn.dependencies??[]){const wanted=retargetCheckedCallback(dependency,emitter.program),name=emitter.program.declarations.has(dependency.name)?dependency.name:'rp_'+Buffer.from(dependency.name).toString('hex'),actual=emitter.program.declarations.get(name);if(!actual||!isSameSemantic({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper changed from its actual checked source body');}
   requireOriginalPrimitiveTryFromChecker(checker);
  }
  const previous=emissionFrames.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());emissionFrames.set(emitter,projectionNodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));return ()=>{if(previous)emissionFrames.set(emitter,previous);else emissionFrames.delete(emitter);};
 }
+const canonicalSemanticSame=(actual,expected)=>same(alphaTree(copyMetadata(actual)),alphaTree(copyMetadata(expected)));
 const isSameSemantic=(actual,expected)=>metadataDigest(alphaTree(actual))===metadataDigest(alphaTree(expected));
+const projectionSemanticSame=(actual,expected)=>isSameSemantic(actual,expected)||canonicalSemanticSame(actual,expected);
 export function requireOriginalJsonProjectionEmission(emitter,node){
  if(!emissionCall(node))return;
  if(!emissionFrames.get(emitter)?.includes(metadataDigest(alphaTree(node))))throw new Error('Owned JSON projection changed from its rechecked actual source function');

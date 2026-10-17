@@ -4,13 +4,13 @@
 import {JSON_CONTRACTS,JSON_DATA,JSON_TYPES} from './extensions/json-contracts.mjs';
 import {sameType} from './checked-types.mjs';
 import {canonicalResult} from './extensions/result-iterators.mjs';
-import {hasOriginalCallbackLoan,hasOriginalSourceFrame} from './extensions/standard-source-frame.mjs';
+import {hasOriginalCallbackLoan,hasOriginalSourceFrame,originalCallbackLoanInputMatches} from './extensions/standard-source-frame.mjs';
 import {hasOriginalSharedDomainGuard} from './extensions/standard-borrowed-body.mjs';
 import {sharedReferenceCopyIdentity} from './shared-reference-copy-source.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
 const linear=kind=>kind==='json'||kind==='linear'||kind==='json-vector'||kind==='owned-text'||kind==='loan-result',path=parts=>JSON.stringify(parts);
 const empty=()=>({loans:new Map(),tags:null});
-const copy=value=>({loans:new Map([...value.loans].map(([key,roots])=>[key,new Set(roots)])),tags:value.tags&&new Set(value.tags),...(value.localLoanType?{localLoanType:value.localLoanType}:{})});
+const copy=value=>({loans:new Map([...value.loans].map(([key,roots])=>[key,new Set(roots)])),tags:value.tags&&new Set(value.tags),...(value.localLoanType?{localLoanType:value.localLoanType,localLoanOrigin:value.localLoanOrigin}:{})});
 function union(left,right){const result=copy(left);for(const [key,roots]of right.loans)result.loans.set(key,new Set([...(result.loans.get(key)??[]),...roots]));result.tags=left.tags&&right.tags?new Set([...left.tags,...right.tags]):null;return result;}
 function prefix(value,part){return {loans:new Map([...value.loans].map(([key,roots])=>[path([part,...JSON.parse(key)]),new Set(roots)])),tags:null};}
 function project(value,part){return {loans:new Map([...value.loans].filter(([key])=>JSON.parse(key)[0]===part).map(([key,roots])=>[path(JSON.parse(key).slice(1)),new Set(roots)])),tags:null};}
@@ -113,7 +113,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   return generic.arguments.some(argument=>retainsLoan(checker.resolveType(argument,owner.modulePath,entry.span),inner));
  };
  const clone=state=>({names:new Map(state.names),available:new Map(state.available),values:new Map([...state.values].map(([slot,value])=>[slot,copy(value)])),alive:state.alive,callbackCaptures:state.callbackCaptures,lambdaInputs:state.lambdaInputs,optionCallback:state.optionCallback,standardScope:state.standardScope,localReturns:state.localReturns,tailNode:state.tailNode,entry:state.entry,external:state.external,callPath:state.callPath,functionReturns:state.functionReturns});
- const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const local=value.localLoanType;if(local&&JSON.stringify(local)!==JSON.stringify(type))refuse('original callback loan type changed',node);const kind=local?'borrow':domain(type,node);if(kind==='loan-result')refuse('stored borrowed Result requires a separate retained-carrier proof',node);const slot={name,kind,type,mutable,input,...(local?{localLoanType:local}:{})};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
+ const bind=(state,name,type,mutable,node,value=empty(),input=false)=>{const local=value.localLoanType;if(local&&JSON.stringify(local)!==JSON.stringify(type))refuse('original callback loan type changed',node);const kind=local?'borrow':domain(type,node);if(kind==='loan-result')refuse('stored borrowed Result requires a separate retained-carrier proof',node);const slot={name,kind,type,mutable,input,...(local?{localLoanType:local,localLoanOrigin:value.localLoanOrigin}:{})};state.names.set(name,slot);state.available.set(slot,true);state.values.set(slot,copy(value));return slot;};
  const createState=(current,arguments_=null,external=new Set(),callPath=[])=>{
   const state={names:new Map(),available:new Map(),values:new Map(),alive:true,entry:current,external,callPath,functionReturns:[]};
   for(const [at,param]of current.params.entries()){
@@ -138,7 +138,10 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   const slot=state.names.get(node.name);if(!slot)refuse('unbound lexical variable',node);
   if(state.callbackCaptures?.has(slot)&&(linear(slot.kind)||slot.mutable))refuse('collection callback cannot capture owned or mutable state',node);
   if(state.available.get(slot)!==true)refuse('use after move or possibly moved value: '+slot.name,node);
-  if(!sameType(node.type,slot.type)||slot.localLoanType&&JSON.stringify(node.type)!==JSON.stringify(slot.localLoanType)||!slot.localLoanType&&mode!=='borrow'&&domain(node.type,node)!==slot.kind)refuse('lexical binding source ownership changed',node,{join:'lexical-variable',name:node.name.slice(0,120),mode,slotKind:slot.kind,type:describeOwnedJsonDifference(node.type,slot.type),localLoan:slot.localLoanType?describeOwnedJsonDifference(node.type,slot.localLoanType,{propertyOrder:true}):null});
+  if(!sameType(node.type,slot.type)||slot.localLoanType&&JSON.stringify(node.type)!==JSON.stringify(slot.localLoanType)||!slot.localLoanType&&mode!=='borrow'&&domain(node.type,node)!==slot.kind){
+   if(!sameType(node.type,slot.type)||!state.standardScope||!slot.localLoanType||!slot.localLoanOrigin||slot.localLoanOrigin.type!==slot.localLoanType||!originalCallbackLoanInputMatches(slot.localLoanOrigin,node.type))refuse('lexical binding source ownership changed',node,{join:'lexical-variable',name:node.name.slice(0,120),mode,slotKind:slot.kind,type:describeOwnedJsonDifference(node.type,slot.type),localLoan:slot.localLoanType?describeOwnedJsonDifference(node.type,slot.localLoanType,{propertyOrder:true}):null});
+   checker.expectedOwnership(node.type,slot.localLoanType,state.entry.modulePath,node.span);checker.expectedPrimitiveIdentity(node.type,slot.localLoanType,state.entry.modulePath,node.span);
+  }
   const value=copy(state.values.get(slot));ensureRoots(value,state,node);
   if(mode==='borrow'&&slot.kind==='json')value.loans.set(path([]),new Set([slot]));
   if(mode!=='borrow'&&linear(slot.kind)){if(live(state,slot))refuse('moving an owned JSON root with a live lexical loan: '+slot.name,node);state.available.set(slot,false);}
@@ -164,7 +167,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(node.k==='var')return variable(node,state,mode);
   if(closedErrors&&node.k==='routerOriginalCallbackLoan'){
    if(!state.standardScope||!hasOriginalCallbackLoan(node))refuse('callback loan lacks its selected private standard frame',node);const value=read(node.value,'borrow');
-   if(node.type.rustReference?.pointee?.rustReference){if(!canonical(node.type.rustReference.pointee.rustReference.pointee,node))refuse('callback loan cannot widen a noncanonical aggregate',node);value.localLoanType=node.type;}return value;
+   if(node.type.rustReference?.pointee?.rustReference){if(!canonical(node.type.rustReference.pointee.rustReference.pointee,node))refuse('callback loan cannot widen a noncanonical aggregate',node);value.localLoanType=node.type;value.localLoanOrigin=node;}return value;
   }
   const kind=domain(node.type,node);
   if(closedErrors){
