@@ -8,6 +8,8 @@ import {resolveModuleBindings} from '../module-bindings.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("macro-use-bindings.test.mjs");
 
 const options=files=>({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path],compilationProfile:PRODUCTION_PROFILE});
 const graph=files=>resolveModuleGraph(options(files));
@@ -15,9 +17,9 @@ const bindings=files=>{const value=graph(files);return resolveModuleBindings({mo
 const root=result=>result.scopes.find(scope=>scope.path.length===0);
 const hash=value=>createHash('sha256').update(value).digest('hex');
 
-function originalOutput(){const source=readFileSync(new URL('../../../src/operation_output.rs',import.meta.url),'utf8');assert.equal(hash(source),'1a7dc0667a29686dff795f223097f655760b0118823a80111b0d3eff29811322');return source;}
+function originalOutput(){const source=staticOriginal.source('src/operation_output.rs');assert.equal(hash(source),'1a7dc0667a29686dff795f223097f655760b0118823a80111b0d3eff29811322');return source;}
 function originalRootDeclarations(){
-  const source=readFileSync(new URL('../../../src/lib.rs',import.meta.url),'utf8');assert.equal(hash(source),'3c9605387b5454634325dbbf7604e0ad919931be17dac05905a60ea0268286af');
+  const source=staticOriginal.source('src/lib.rs');assert.equal(hash(source),'3c9605387b5454634325dbbf7604e0ad919931be17dac05905a60ea0268286af');
   return sourceItems(source).filter(item=>item.term==='mod'&&['operation_output','account_http'].includes(item.name)).map(item=>source.slice(item.start,item.end)).join('\n');
 }
 
@@ -73,7 +75,7 @@ test('custom textual format preserves import order evidence and conservatively r
 });
 
 test('unchanged account_http non_empty checks and executes with original tracked output macro names',async()=>{
-  const source=readFileSync(new URL('../../../src/account_http.rs',import.meta.url),'utf8');assert.equal(hash(source),'876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09');
+  const source=staticOriginal.source('src/account_http.rs');assert.equal(hash(source),'876e7e38985d93f896c9d191f9d7591abb66697f93504a202d4fd208217bdd09');
   const selected=sourceItems(source).find(item=>item.name==='non_empty');assert.equal(hash(source.slice(selected.start,selected.end)),'4c1bb4cb6df8b811efb497fc5266ca0ae5cc6da15e216231283c009fe89b12b4');
   const result=translateProject(options({'src/lib.rs':originalRootDeclarations(),'src/operation_output.rs':originalOutput(),'src/account_http.rs':source}));
   assert.equal(result.meta.runtimeParity,false);assert.ok(result.meta.executable.some(item=>item.name==='account_http.non_empty'&&item.span.start===selected.start&&item.span.end===selected.end));

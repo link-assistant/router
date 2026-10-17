@@ -11,6 +11,8 @@ import {resolveModuleGraph} from '../project.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("derive-bang-footprints.test.mjs");
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
 function context(source,rootSource='mod model;'){
@@ -135,12 +137,12 @@ test('original formatting owner census retains complete file and declaration byt
   assert.equal(frontier.firstRefusals,404);assert.deepEqual(frontier.terms,{fn:307,method:97});
   assert.equal(frontier.directLiteralFirstTemplates,404);assert.equal(frontier.typeOrExecutionProof,false);
   assert.equal(frontier.overlappingTextualFeatureCounts.basic,396);
-  for(const file of frontier.originalFiles){const bytes=readFileSync(new URL(file.source,root));assert.equal(hash(bytes),file.sha256);assert.equal(bytes.length,file.bytes);}
-  for(const pin of frontier.focusedPins){const source=readFileSync(new URL(pin.source,root),'utf8');assert.equal(hash(source),pin.sourceSha256);assert.equal(hash(source.slice(pin.span.start,pin.span.end)),pin.sha256);}
+  for(const file of frontier.originalFiles){const bytes=Buffer.from(staticOriginal.source(file.source),'utf8');assert.equal(hash(bytes),file.sha256);assert.equal(bytes.length,file.bytes);}
+  for(const pin of frontier.focusedPins){const source=staticOriginal.source(pin.source);assert.equal(hash(source),pin.sourceSha256);assert.equal(hash(source.slice(pin.span.start,pin.span.end)),pin.sha256);}
 });
 
 test('complete original library RunState proof keeps unrelated neutral macro uncertainty',{timeout:30000},()=>{
-  const original=originalCsvContext(),paths=original.inputs.sources.map(entry=>entry.source).filter(path=>path.endsWith('.rs'));
+  const original=staticOriginal,paths=original.inputs.sources.map(entry=>entry.source).filter(path=>path.endsWith('.rs'));
   // Namespace/quote analysis only. Deliberately do not read .result, which
   // would request the separate, expensive full semantic project translation.
   const graph=resolveModuleGraph({entry:'src/lib.rs',paths,readSource:original.source,compilationProfile:PRODUCTION_PROFILE});

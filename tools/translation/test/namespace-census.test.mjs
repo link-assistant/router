@@ -7,6 +7,8 @@ import {STANDARD_NAMESPACE_EVIDENCE,STANDARD_NAMESPACE_BINDINGS,isStandardNamesp
 import {externalModuleBindings} from '../registered-bindings.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("namespace-census.test.mjs");
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 
@@ -78,7 +80,7 @@ test('specific unresolved imports retain named obligations without inventing glo
 });
 
 test('whole unchanged Router formatting imports resolve while unsupported argument effects remain carried',()=>{
-  const path='src/operation_output.rs',source=readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
+  const path='src/operation_output.rs',source=staticOriginal.source(path);
   assert.equal(hash(source),'1a7dc0667a29686dff795f223097f655760b0118823a80111b0d3eff29811322');
   const result=translateProject({entry:path,paths:[path],readSource:()=>source});
   const binding=result.meta.bindingEvidence.scopes[0].bindings.find(binding=>binding.namespace==='type'&&binding.name==='Arguments');

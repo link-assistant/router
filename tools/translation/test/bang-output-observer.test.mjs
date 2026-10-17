@@ -10,6 +10,8 @@ import {roundTripProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {loadStandardMatchesSourceProfile,standardMatchesOriginalSource,standardMatchesOriginalDefinition} from '../matches-source-profile.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("bang-output-observer.test.mjs");
 const retain=(name,value)=>{const directory=process.env.ROUTER_BANG_OUTPUT_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(directory+'/'+name+'.json',JSON.stringify(value)+'\n',{flag:'wx'});}};
 const compile=(source,name,input='',owner=['fixture'])=>{const definition=compileDeclarativeMacro(source,{name,owner}),expansion=expandDeclarativeMacro(definition,originalMacroTrees(input));return {source,definition,expansion};};
 const source='macro_rules! inner { ($value:tt) => {{if $value { false } else { true }}}; } macro_rules! outer { ($value:tt) => {{inner!($value)}}; }';
@@ -66,7 +68,7 @@ test('output projection data and child arrays reject forgeries proxies accessors
  assert.throws(()=>observeBangOutput(fixture.parent.expansion,{children:[fixture.child],namespaceAuthority:true}),/own child/);assert.equal(getters,0);retain('07-public-data-no-private-authority',{fixture,getters});
 });
 test('actual Router resume source remains unchanged and carries its complete unresolved caller obligations',()=>{
- const root=new URL('../../../',import.meta.url),accounts=readFileSync(new URL('src/accounts_cli.rs',root),'utf8'),unix=readFileSync(new URL('src/unix_listener.rs',root),'utf8');
+ const root=new URL('../../../',import.meta.url),accounts=staticOriginal.source('src/accounts_cli.rs'),unix=staticOriginal.source('src/unix_listener.rs');
  assert.ok(accounts.includes('fn resume_message(name: &str, was_paused: bool) -> String {'));assert.ok(accounts.includes('format!("resumed {name}")'));assert.ok(accounts.includes('format!("{name} was not paused")'));assert.ok(unix.includes('tracing::info!'));assert.ok(unix.includes('tracing::error!'));
  retain('08-original-source-frontier',{accounts,unix,callerOwnerResolved:false,transitiveTracingOutputClosed:false,formatArgsOutputClosed:false,conditionalUnixSelected:false,originalRouterBodyGains:0});
 });

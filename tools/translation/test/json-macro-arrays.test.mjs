@@ -12,6 +12,8 @@ import {translateProject} from '../project.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {serde_json_to_string} from '../extensions/json-runtime.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("json-macro-arrays.test.mjs");
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const dependencies=()=>loadJsonMacroSourceProof({manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')});
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,jsonMacroDependencies:dependencies()});
@@ -66,7 +68,7 @@ test('empty construction does not grant custom roots Serialize Drop Deref or unk
 test('whole unchanged production array sources retain contextual prerequisites and original source pins',()=>{
   const receipt=JSON.parse(readFileSync(new URL('../fixtures/json-macro-frontier/array-original.json',import.meta.url),'utf8'));
   for(const row of [receipt,...receipt.additionalOriginals]){
-    const source=readFileSync(new URL(row.file,root),'utf8');assert.equal(hash(source),row.fileSha256);assert.equal(hash(source.slice(row.span.start,row.span.end)),row.functionSha256);
+    const source=staticOriginal.source(row.file);assert.equal(hash(source),row.fileSha256);assert.equal(hash(source.slice(row.span.start,row.span.end)),row.functionSha256);
     const result=translateProject({entry:row.file,paths:[row.file],readSource:()=>source,compilationProfile:PRODUCTION_PROFILE,jsonMacroDependencies:dependencies()});
     assert.equal(result.meta.executable.some(item=>item.name===row.function),false);assert.equal(result.meta.runtimeParity,false);
     assert.equal(row.originalFunctionExecuted,false);assert.equal(row.sourceBodyRewritten,false);

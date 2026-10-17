@@ -12,6 +12,8 @@ import {regenerate,planRegeneration,validateRegenerationPlan,applyRegenerationPl
 import {regenerateCompilationMatrix} from '../matrix-bulk.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 import {loadProjectMetaStorage} from '../project-meta-storage.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("matrix-bulk.test.mjs");
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const matrix=()=>createCompilationMatrix({profiles:DECLARED_FAMILY_PROFILES});
 const paths=['src/lib.rs','src/windows.rs'];
@@ -110,7 +112,7 @@ test('reusable CLI drafts and checks the complete tracked profile corpus without
 test('whole unchanged lib and Unix listener retain separate original configured graphs and all unresolved obligations',{timeout:30_000},async()=>{
   const directory=root(),repository=fileURLToPath(new URL('../../../',import.meta.url));try{
     const originals={'src/lib.rs':'3c9605387b5454634325dbbf7604e0ad919931be17dac05905a60ea0268286af','src/unix_listener.rs':'f2697b44c95c5f9a7aab7d2fc55a03c80360da08b1f987a4caaf4d47fe0441b5'};
-    for(const [path,expected]of Object.entries(originals)){const source=trackedSource(repository,path);assert.equal(hash(source),expected);writeFileSync(join(directory,path),source);}
+    for(const [path,expected]of Object.entries(originals)){const source=staticOriginal.source(path);assert.equal(hash(source),expected);writeFileSync(join(directory,path),source);}
     const result=regenerateCompilationMatrix({root:directory,matrix:matrix(),sources:Object.keys(originals)});
     for(const member of result.manifest.profiles){
       const project=member.projects.find(project=>project.entry==='src/lib.rs'),meta=loadProjectMetaStorage(readFileSync(join(directory,project.targets.meta)),{metaPath:project.targets.meta,targets:project.targets,read:name=>readFileSync(join(directory,name))}).meta;

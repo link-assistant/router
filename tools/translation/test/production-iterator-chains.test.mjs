@@ -5,6 +5,8 @@ import {createHash} from 'node:crypto';
 import {sourceItems} from '../rust-structure.mjs';
 import {translateProject} from '../project.mjs';
 import {verifyCohortTargets} from './cohort-targets.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("production-iterator-chains.test.mjs");
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{field0}),none=tag('None');
 function json(value) {
@@ -14,7 +16,7 @@ function json(value) {
   const entries=Object.keys(value).sort((a,b)=>Buffer.compare(Buffer.from(a),Buffer.from(b))).map(key=>tag('MapEntry',{key,value:json(value[key])}));return tag('Object',{field0:tag('Map',{entries:Object.freeze(entries)})});
 }
 function original(path,sourceSha256,names,imports=[]) {
-  const source=readFileSync(new URL(path,root),'utf8');assert.equal(hash(source),sourceSha256);
+  const source=staticOriginal.source(path);assert.equal(hash(source),sourceSha256);
   const items=sourceItems(source),selected=[...imports.map(text=>{const matches=items.filter(item=>item.term==='use'&&source.slice(item.start,item.end).trim()===text);assert.equal(matches.length,1);return matches[0];}),...names.map(name=>{const matches=items.filter(item=>item.term==='fn'&&item.name===name);assert.equal(matches.length,1);return matches[0];})].sort((a,b)=>a.start-b.start);
   // Select complete original declarations mechanically. No Rust body tokens,
   // attributes, identifiers or operators are replaced to obtain admission.

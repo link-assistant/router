@@ -18,6 +18,8 @@ import {serde_json_from_str} from '../extensions/json-runtime.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("option-ok-or.test.mjs");
 
 const hash=value=>createHash('sha256').update(value).digest('hex'),rule='rust.option.ok-or.original-body.v1';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
@@ -56,7 +58,7 @@ test('receiver then eager error evaluate once for both variants and preserve exa
 });
 
 test('complete original ActivityPub parent executes require_string and dependent validate_activity through genuine project scopes',{timeout:60_000},async()=>{
- const corpus=originalCsvContext(),entry=corpus.inputs.entry,file='src/activitypub.rs',source=corpus.source(file),items=sourceItems(source),required=items.find(item=>item.term==='fn'&&item.name==='require_string'),validate=items.find(item=>item.term==='fn'&&item.name==='validate_activity');assert.equal(entry,'src/lib.rs');assert.ok(required);assert.ok(validate);
+ const corpus=staticOriginal,entry=corpus.inputs.entry,file='src/activitypub.rs',source=corpus.source(file),items=sourceItems(source),required=items.find(item=>item.term==='fn'&&item.name==='require_string'),validate=items.find(item=>item.term==='fn'&&item.name==='validate_activity');assert.equal(entry,'src/lib.rs');assert.ok(required);assert.ok(validate);
  assert.equal(Buffer.byteLength(source),8842);assert.equal(hash(source),'1eec701e38326ba002bea83922b861fb8c4cae773384fe8c27d7a6a6adba0645');assert.equal(hash(source.slice(required.start,required.end)),'3035d244a59027a0e631ae13903af34c3a75eceb969c4c22806f6fb8bd86db0e');
  const manifest=corpus.source('Cargo.toml'),lock=corpus.source('Cargo.lock'),paths=corpus.inputs.sources.filter(row=>row.source.endsWith('.rs')).map(row=>row.source);retain('04-complete-original-inputs',{inputs:corpus.inputs,allOriginals:corpus.inputs.sources.map(row=>({...row,content:corpus.source(row.source)})),paths,source,required,validate});
  const progressDirectory=process.env.ROUTER_OPTION_OK_OR_VECTOR_DIR,progressStarted=progressDirectory?process.hrtime.bigint():null;

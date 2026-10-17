@@ -8,6 +8,8 @@ import {parseProgram} from '../semantic-meta.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("slice-membership-originals.test.mjs");
 
 const root=new URL('../../../',import.meta.url);
 const fixture=JSON.parse(readFileSync(new URL('../fixtures/slice-membership-originals.json',import.meta.url),'utf8'));
@@ -19,7 +21,7 @@ const dependencies=loadDeriveDependencyProof({manifest:readFileSync(new URL('Car
 test('whole original cookie header and secret predicates retain source and literal policy',async()=>{
   let outcomes=0;
   for(const entry of fixture.entries){
-    const source=readFileSync(new URL(entry.path,root),'utf8');
+    const source=staticOriginal.source(entry.path);
     assert.equal(Buffer.byteLength(source),entry.bytes);assert.equal(hash(source),entry.sourceSha256);
     const items=sourceItems(source);
     for(const pin of entry.declarations){

@@ -11,6 +11,8 @@ import {parseProgram} from '../semantic-meta.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {verifyCohortTargets} from './cohort-targets.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("integer-range-patterns.test.mjs");
 const root=new URL('../../../',import.meta.url),hash=value=>createHash('sha256').update(value).digest('hex');
 const primitive=name=>({...rustFixedType(name),rustPrimitiveName:name});
 const literal=value=>({k:'numLit',value:String(value).replace(/^-/u,''),...(String(value).startsWith('-')?{negative:true}:{})});
@@ -80,7 +82,7 @@ test('range gaps guard-only domains and wrong source types stay explicitly refus
 });
 
 test('original logging http_failure keeps exact declaration bytes and threshold semantics',{timeout:30_000},async()=>{
-  const source=readFileSync(new URL('src/logging.rs',root),'utf8');assert.equal(hash(source),'9b53f3aa6b958bb2c499f880b3f9e8c2995b6857d151eb80c99b2891bea034d3');
+  const source=staticOriginal.source('src/logging.rs');assert.equal(hash(source),'9b53f3aa6b958bb2c499f880b3f9e8c2995b6857d151eb80c99b2891bea034d3');
   const item=sourceItems(source).find(item=>item.term==='fn'&&item.name==='http_failure');assert.ok(item);assert.deepEqual([item.start,item.end],[2740,3140]);
   const text=source.slice(item.start,item.end);assert.equal(hash(text),'04504b3dc1fa18df4876410df05fbedc3eceb4c7f4af3b34cc65c7f848e48090');
   const result=project(text);assert.deepEqual(result.meta.refused,[]);assert.deepEqual(result.meta.executable.map(item=>item.name),['http_failure']);
@@ -91,7 +93,7 @@ test('original logging http_failure keeps exact declaration bytes and threshold 
 });
 
 test('original ThinkingLevel from_budget retains full enum attrs and mechanically extracted method',{timeout:30_000},async()=>{
-  const source=readFileSync(new URL('src/thinking/mod.rs',root),'utf8');assert.equal(hash(source),'26a39c5916007a8fd5ca6c65b25e2135b788ba6831d9ba77674b7b80da1e1b3b');
+  const source=staticOriginal.source('src/thinking/mod.rs');assert.equal(hash(source),'26a39c5916007a8fd5ca6c65b25e2135b788ba6831d9ba77674b7b80da1e1b3b');
   const data=sourceItems(source).find(item=>item.term==='enum'&&item.name==='ThinkingLevel');assert.deepEqual([data.start,data.end],[818,1050]);
   assert.equal(hash(source.slice(data.start,data.end)),'45cc1da23cd28ec9698b5cd8ec0e2f4148168920ae33ce5e9fe3f045232ff077');
   const method=extractImplDeclarations(source).implementations.find(item=>item.typePath?.join('::')==='ThinkingLevel').methods.find(method=>method.name==='from_budget');

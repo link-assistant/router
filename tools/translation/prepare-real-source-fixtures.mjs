@@ -168,3 +168,89 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const args=process.argv.slice(2);if(![6,8].includes(args.length)||args[0]!=='--root'||args[2]!=='--current-revision'||args[4]!=='--output'||args.length===8&&args[6]!=='--history-archive')fail('usage: --root PATH --current-revision SHA --output ABSOLUTE_PATH [--history-archive REVIEWED_DIRECTORY]');
   const proposal=prepareRealSourceFixtures({root:args[1],currentRevision:args[3],historyArchive:args[7]??null});process.stdout.write(JSON.stringify({output:writeRealSourceFixtureProposal(proposal,args[5]),historyMode:proposal.historyMode,files:proposal.files.map(({path,bytes,sha256})=>({path,bytes,sha256})),trace:proposal.trace})+'\n');
 }
+
+
+// Explicit sibling test-data contract. The original producer above is unchanged.
+// Complete historical sources never issue namespace, ownership or behavior facts.
+export const STATIC_SOURCE_LIFECYCLE_LIMITS=Object.freeze({paths:20000,fileBytes:8*1024*1024,sourceBytes:64*1024*1024,outputBytes:256*1024*1024});
+export const STATIC_SOURCE_LIFECYCLE_CASES=Object.freeze({"bang-output-observer.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","compilation-matrix.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","derive-bang-footprints.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","fixed-arrays.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","integer-range-patterns.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","json-macro-arrays.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","json-source-f64-borrows.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","macro-use-bindings.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","matrix-bulk.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","namespace-census.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","option-ok-or-else.test.mjs":"e4561e76506ed25a7e638fb1e00a965f8479e1db","option-ok-or.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","production-iterator-chains.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","rust-structure-performance.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","slice-membership-originals.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","trait-object-derive-source.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5"});
+export const STATIC_SOURCE_LIFECYCLE_PROFILES=Object.freeze({"5de1dea8b777dcd6e637758efc2c260150735af5":{"files":806,"bytes":9952429,"sourceSetSha256":"fa513c50ae94c3ccba510ddd5a954451bedf63a2a823805c62eb8fee08b4affa"},"e4561e76506ed25a7e638fb1e00a965f8479e1db":{"files":808,"bytes":9961521,"sourceSetSha256":"8683ed8c1f78d91f109d9c3f41151fa54e605833e03caac2bb821f00aa8f6d16"}});
+const STATIC_SOURCE_PREFIX='tools/translation/source-profiles/static-source-lifecycle/';
+const staticFail=message=>{throw new TypeError('Static source lifecycle: '+message);};
+const staticGit=(root,args,options={})=>execFileSync('/usr/bin/git',['-C',root,...args],{timeout:30000,maxBuffer:STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes+8*1024*1024,...options});
+const staticBlob=bytes=>createHash('sha1').update(Buffer.from(`blob ${bytes.length}\0`)).update(bytes).digest('hex');
+const staticRowsDigest=rows=>hash(JSON.stringify(rows));
+function staticCapture(root,rev){
+  const listing=staticGit(root,['ls-tree','-r','-l','-z',rev]).toString('utf8').split('\0').filter(Boolean),rows=[];
+  for(const record of listing){const tab=record.indexOf('\t'),path=record.slice(tab+1),fields=record.slice(0,tab).trim().split(/\s+/u);
+    if(!path.endsWith('.rs')&&!['Cargo.toml','Cargo.lock'].includes(path))continue;
+    if(tab<0||fields.length!==4||fields[1]!=='blob'||path.startsWith('/')||path.includes('\\')||path.split('/').some(value=>!value||value==='.'||value==='..'))staticFail('complete tracked source row required');
+    const bytes=Number(fields[3]);if(!Number.isSafeInteger(bytes)||bytes<0||bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.fileBytes)staticFail('individual source byte bound');
+    rows.push({path,gitBlob:fields[2],bytes});
+  }
+  rows.sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
+  if(!rows.length||rows.length>STATIC_SOURCE_LIFECYCLE_LIMITS.paths||new Set(rows.map(row=>row.path)).size!==rows.length||rows.reduce((sum,row)=>sum+row.bytes,0)>STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes)staticFail('complete source census bound');
+  const raw=staticGit(root,['cat-file','--batch'],{input:rows.map(row=>rev+':'+row.path+'\n').join('')}),sources=new Map();let at=0;
+  for(const row of rows){const end=raw.indexOf(10,at);if(end<at)staticFail('complete source header');const fields=raw.subarray(at,end).toString('ascii').split(' ');at=end+1;
+    if(fields.length!==3||fields[0]!==row.gitBlob||fields[1]!=='blob'||Number(fields[2])!==row.bytes)staticFail('source Git association differs');
+    const bytes=raw.subarray(at,at+row.bytes);at+=row.bytes;if(bytes.length!==row.bytes||raw[at++]!==10||staticBlob(bytes)!==row.gitBlob)staticFail('complete original Git body differs');
+    const source=decode(bytes);row.sourceId=hash(bytes);sources.set(row.sourceId,{source,bytes:bytes.length,gitBlob:row.gitBlob});
+  }
+  if(at!==raw.length)staticFail('extra source batch bytes');return {files:rows,sources,sourceSetSha256:staticRowsDigest(rows)};
+}
+function staticReadArchive(folder){
+  const index=JSON.parse(decode(readFileSync(resolve(folder,'manifest.json'))));
+  if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('reviewed index differs');
+  const packed=readFileSync(resolve(folder,index.archive));if(packed.length!==index.bytes||hash(packed)!==index.sha256)staticFail('reviewed packed source differs');
+  const raw=gunzipSync(packed,{maxOutputLength:STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes});if(raw.length!==index.rawBytes||hash(raw)!==index.rawSha256)staticFail('reviewed full source differs');
+  const bundle=JSON.parse(decode(raw));if(bundle.schema!==index.schema||JSON.stringify(bundle.cases)!==JSON.stringify(STATIC_SOURCE_LIFECYCLE_CASES))staticFail('fixed test association differs');
+  return {index,bundle};
+}
+/** Source-only deterministic proposal. No application or generated source installs. */
+export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileURLToPath(import.meta.url)),'../..'),currentRevision='HEAD',historyArchive=null}={}){
+  root=realpathSync(root);const subjectRevision=revision(root,currentRevision),history=historyArchive===null?null:staticReadArchive(historyArchive),sources=new Map(),profiles=[];
+  let sourceBytes=0,retainedBytes=0;
+  const add=(id,row)=>{if(sources.has(id)){if(sources.get(id).source!==row.source)staticFail('source identity collision');return;}sourceBytes+=row.bytes;if(sourceBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes)staticFail('deduplicated complete source byte bound');sources.set(id,{...row});};
+  const revisions=[...new Set(Object.values(STATIC_SOURCE_LIFECYCLE_CASES))];
+  for(const rev of revisions){
+    let captured;
+    if(history){const profile=history.bundle.profiles.find(row=>row.revision===rev);if(!profile||profile.sourceSetSha256!==staticRowsDigest(profile.files))staticFail('historical full profile differs');captured={...profile,sources:new Map(profile.files.map(row=>{const value=history.bundle.sources[row.sourceId];if(!value||value.bytes!==row.bytes||hash(value.source)!==row.sourceId||staticBlob(Buffer.from(value.source))!==row.gitBlob)staticFail('historical complete source bytes differ');return [row.sourceId,value];}))};}
+    else captured=staticCapture(root,revision(root,rev));
+    const expected=STATIC_SOURCE_LIFECYCLE_PROFILES[rev];if(captured.files.length!==expected.files||captured.files.reduce((sum,row)=>sum+row.bytes,0)!==expected.bytes||captured.sourceSetSha256!==expected.sourceSetSha256)staticFail('fixed complete historical universe differs');
+    profiles.push({revision:rev,files:captured.files,sourceSetSha256:captured.sourceSetSha256});for(const [id,row]of captured.sources)add(id,row);
+  }
+  const fresh=staticCapture(root,subjectRevision);for(const [id,row]of fresh.sources)add(id,row);
+  const actual=()=>fresh.files.map(row=>{let bytes;try{bytes=readFileSync(resolve(root,row.path));}catch(error){if(error.code!=='ENOENT')throw error;bytes=staticGit(root,['show',subjectRevision+':'+row.path]);}if(bytes.length!==row.bytes||hash(bytes)!==row.sourceId||staticBlob(bytes)!==row.gitBlob)staticFail('current physical/Git source differs: '+row.path);return row;});
+  const before=actual(),provenanceRevision=history?.bundle.current.sourceSetSha256===fresh.sourceSetSha256?history.bundle.current.producerRevision:subjectRevision;
+  const frontier=JSON.parse(decode(staticGit(root,['show',subjectRevision+':tools/translation/fixtures/formatting-owner-frontier.json'])));
+  const historical=profiles.find(row=>row.revision===revisions[0]);for(const row of frontier.originalFiles){const file=historical.files.find(file=>file.path===row.source);if(!file||file.sourceId!==row.sha256||file.bytes!==row.bytes)staticFail('all original formatting parents must join');}
+  const currentByPath=new Map(fresh.files.map(row=>[row.path,row])),changedIds=new Set(),lineage=[];
+  for(const profile of profiles){const files=[];for(const before of profile.files){const after=currentByPath.get(before.path);if(!after){files.push({path:before.path,status:'deleted',before,current:null,originalPreserved:true});continue;}if(before.sourceId!==after.sourceId){changedIds.add(before.sourceId);changedIds.add(after.sourceId);files.push({path:before.path,status:'changed',before,after});}}lineage.push({revision:profile.revision,files});}
+  const pipeline=createRulePipeline([
+    {phase:'language',rules:[{id:'static-fixture.complete-original-cst-and-current-source-joins',apply:()=>{
+      for(const [id,row]of sources){retainedBytes+=Buffer.byteLength(JSON.stringify({source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('retained source bound');
+        if(changedIds.has(id)){const cst=transportConcreteSyntaxSource(row.source,{language:'Rust'});if(cst.source!==row.source)staticFail('complete source CST differs');row.canonical=cst.meta;row.document=cst.document;retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');}
+      }
+      for(const stage of lineage)for(const row of stage.files)if(row.status==='changed'){
+        // delta() widens to COMPLETE original CST token/group boundaries, so a
+        // changed identifier can never be cut into a partial-token edit.
+        Object.assign(row,delta(sources.get(row.before.sourceId),sources.get(row.after.sourceId)));retainedBytes+=Buffer.byteLength(JSON.stringify(row));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete inverse retention bound');
+      }
+      return {lineage};
+    }}]},
+    {phase:'repository',rules:[{id:'static-fixture.fixed-historical-universes-and-reversible-current-parents',apply:state=>({schema:'router-static-source-lifecycle-v1',cases:STATIC_SOURCE_LIFECYCLE_CASES,profiles,current:{producerRevision:provenanceRevision,files:fresh.files,sourceSetSha256:fresh.sourceSetSha256},lineage:state.lineage,sources:Object.fromEntries([...sources].map(([id,row])=>[id,{source:row.source,bytes:row.bytes,gitBlob:row.gitBlob,...(row.canonical?{canonical:row.canonical}:{})}])),authority:{namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}})}]},
+  ]),result=pipeline.run(null),bundle={...result.value,trace:result.trace},raw=Buffer.from(JSON.stringify(bundle)+'\n');
+  if(raw.length>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete output byte bound');
+  const packed=gzipSync(raw,{level:9,mtime:0}),index={schema:bundle.schema,archive:'originals.json.gz',rawBytes:raw.length,rawSha256:hash(raw),bytes:packed.length,sha256:hash(packed),profiles:profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})),current:bundle.current.sourceSetSha256,trace:result.trace},notice='# Complete static source lifecycle fixtures\n\nTwo complete original Router Rust/Cargo source universes and separately captured current source parents. All original LICENSE terms apply. Historical revisions: '+revisions.join(', ')+'. Full source/Git blob/CST joins and reversible actual source evolution are data only: no namespace, dispatch, ownership, trait, semantic or execution authority. Current producer revision is provenance; exact full source rows determine freshness across compiler/asset-only commits.\n';
+  const files=[{path:STATIC_SOURCE_PREFIX+'originals.json.gz',encoding:'base64',content:packed.toString('base64')},{path:STATIC_SOURCE_PREFIX+'manifest.json',encoding:'utf8',content:JSON.stringify(index,null,2)+'\n'},{path:STATIC_SOURCE_PREFIX+'NOTICE.md',encoding:'utf8',content:notice}].map(row=>({...row,bytes:Buffer.byteLength(row.content,row.encoding),sha256:hash(Buffer.from(row.content,row.encoding))}));
+  const after=actual();if(JSON.stringify(before)!==JSON.stringify(after))staticFail('source inputs changed');
+  return {schema:'router-static-source-lifecycle-proposal-v1',sourceRoot:root,subjectRevision,provenanceRevision,before,after,files,trace:result.trace,limits:STATIC_SOURCE_LIFECYCLE_LIMITS,completeInverse:true,authority:bundle.authority};
+}
+export function writeStaticSourceLifecycleProposal(proposal,output){
+  if(proposal?.schema!=='router-static-source-lifecycle-proposal-v1'||typeof output!=='string'||!isAbsolute(output))staticFail('explicit external proposal output required');
+  if(!Array.isArray(proposal.files)||proposal.files.length!==3||new Set(proposal.files.map(row=>row.path)).size!==3)staticFail('three complete fixed artifacts required');
+  const root=realpathSync(proposal.sourceRoot),target=resolve(output),expected=physical(target),overlaps=value=>value===root||within(root,value)||within(value,root);if(overlaps(target)||overlaps(expected))staticFail('output overlaps sources');
+  mkdirSync(target,{recursive:true});if(realpathSync(target)!==expected||overlaps(realpathSync(target)))staticFail('output physical identity differs');
+  for(const row of proposal.files){const name=row.path.slice(STATIC_SOURCE_PREFIX.length);if(row.path!==STATIC_SOURCE_PREFIX+name||!['manifest.json','originals.json.gz','NOTICE.md'].includes(name))staticFail('fixed output path required');const bytes=Buffer.from(row.content,row.encoding);if(bytes.length!==row.bytes||hash(bytes)!==row.sha256)staticFail('full proposal bytes differ');writeFileSync(resolve(target,name),bytes,{flag:'wx'});}
+  writeFileSync(resolve(target,'proposal.json'),JSON.stringify(proposal,null,2)+'\n',{flag:'wx'});return target;
+}

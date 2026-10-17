@@ -4,6 +4,8 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {createCompilationMatrix,compilationMatrixDescription,profileRelativePath,DECLARED_FAMILY_PROFILES} from '../compilation-matrix.mjs';
 import {analyzeCompilationMatrix,PROFILE_GRAPH_LIMITS} from '../profile-graph-evidence.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("compilation-matrix.test.mjs");
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const matrix=()=>createCompilationMatrix({profiles:DECLARED_FAMILY_PROFILES});
 const analyze=(files,options={})=>analyzeCompilationMatrix({matrix:matrix(),entries:['src/lib.rs'],paths:Object.keys(files),readSource:path=>files[path],...options});
@@ -111,7 +113,7 @@ test('source and namespace changes invalidate context keys instead of reusing pr
 
 test('whole original Unix module declaration and both full sources remain pinned as analysis evidence',()=>{
   const pins=JSON.parse(readFileSync(new URL('./fixtures/configuration-frontier.json',import.meta.url),'utf8'));
-  const files=Object.fromEntries(pins.sources.map(pin=>{const source=readFileSync(new URL('../../../'+pin.path,import.meta.url),'utf8');assert.equal(hash(source),pin.sha256);return [pin.path,source];}));
+  const files=Object.fromEntries(pins.sources.map(pin=>{const source=staticOriginal.source(pin.path);assert.equal(hash(source),pin.sha256);return [pin.path,source];}));
   const declaration=files['src/lib.rs'].slice(pins.declaration.span.start,pins.declaration.span.end);assert.equal(declaration,pins.declaration.text);assert.equal(hash(declaration),pins.declaration.sha256);
   // This bounded original pair intentionally leaves other crate modules
   // unprovided; all missing-module obligations stay visible in every profile.

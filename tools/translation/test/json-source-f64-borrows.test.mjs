@@ -16,6 +16,8 @@ import {pinnedJsonOriginalSource,isJsonMacroSourceProof} from '../json-macro-inp
 import {sourceItems} from '../rust-structure.mjs';
 import {originalCsvContext} from './original-csv-context.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("json-source-f64-borrows.test.mjs");
 const hash=value=>createHash('sha256').update(value).digest('hex'),range={start:0,end:1};
 const compile=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 const tag=($,field0)=>Object.freeze(field0===undefined?{$}:{$,field0}),some=value=>tag('Some',value),none=tag('None'),number=($,value)=>tag($,value),value=number=>tag('Number',number);
@@ -68,6 +70,6 @@ test('shared read ingress keeps complete depth and source identity and never inv
 });
 
 test('the retained six first-blocker owners remain separate complete original witnesses with no six-gain claim',()=>{
- const corpus=originalCsvContext(),owners=[['src/chat_config.rs','chat_admin_config','3c5a56dbe8089de70a40c07c5b1e23047850ca43561e85eac06163abe38f92fc'],['src/model_contract.rs','validate_translated_response','3e0afe5d9b65fb9145254d5dda67b9e26d98c3f4c8430d1b46e6c1438b488793'],['src/model_contract.rs','validate_translated_response_for_selector','63ae79d25fe090476aacdb9ec29b733322e5d484294830a2ab4c3c711219164f'],['src/openai.rs','map_model','65b0835df19aa61a0a06a6f0e8b7bc700ae36fb046439414f582172dbd425d35'],['src/subscription.rs','non_empty','98a9de7ca9f4ded12f7533430828944e94cff9bba1164d22679551ea490d25e9'],['src/subscription_usage_normalize.rs','safe_number','0f6e667a69815ab806ed7e03e1c225d5f0a720d5d8d6ad423ff1f2263d93b301']],observations=[];
+ const corpus=staticOriginal,owners=[['src/chat_config.rs','chat_admin_config','3c5a56dbe8089de70a40c07c5b1e23047850ca43561e85eac06163abe38f92fc'],['src/model_contract.rs','validate_translated_response','3e0afe5d9b65fb9145254d5dda67b9e26d98c3f4c8430d1b46e6c1438b488793'],['src/model_contract.rs','validate_translated_response_for_selector','63ae79d25fe090476aacdb9ec29b733322e5d484294830a2ab4c3c711219164f'],['src/openai.rs','map_model','65b0835df19aa61a0a06a6f0e8b7bc700ae36fb046439414f582172dbd425d35'],['src/subscription.rs','non_empty','98a9de7ca9f4ded12f7533430828944e94cff9bba1164d22679551ea490d25e9'],['src/subscription_usage_normalize.rs','safe_number','0f6e667a69815ab806ed7e03e1c225d5f0a720d5d8d6ad423ff1f2263d93b301']],observations=[];
  for(const [file,name,digest]of owners){const source=corpus.source(file),item=sourceItems(source).find(item=>item.term==='fn'&&item.name===name);assert.ok(item);assert.equal(hash(source.slice(item.start,item.end)),digest);observations.push({file,name,item,source,sourceSha256:hash(source),declarationSha256:digest});}retain('08-six-original-owners',{observations,scope:'retained canonical first-frontier witnesses, not six executable gains',wholeRootContextRequired:true});assert.equal(observations.filter(row=>row.name==='safe_number').length,1);
 });

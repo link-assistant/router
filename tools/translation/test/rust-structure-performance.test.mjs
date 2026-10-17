@@ -7,6 +7,8 @@ import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {rustTokens,sourceItems} from '../rust-structure.mjs';
 import {DERIVE_SOURCE_PROFILE,deriveDependencySource,loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("rust-structure-performance.test.mjs");
 const root=fileURLToPath(new URL('../../../',import.meta.url));
 const originalCommit='688bf9b9a1257a1dc58c758b50b6906ecc4eee63';
 const git=args=>execFileSync('git',args,{cwd:root,maxBuffer:64*1024*1024});
@@ -61,9 +63,9 @@ test('all804 immutable original Rust files plus current Rust inputs and locked d
   assert.equal(current.size,paths.length);
   for(const pin of inventory.rustSources){
     const actual=current.get(pin.path),matches=actual&&actual.bytes.length===pin.bytes&&actual.gitBlob===pin.gitBlob&&actual.sha256===pin.sha256;
-    const retained=historicalFixtures.get(pin.path);
+    const retained=historicalFixtures.get(pin.path)??'static-source-lifecycle:'+pin.path;
     if(!matches)assert.ok(retained,pin.path+' historical mismatch requires a complete retained original witness');
-    const bytes=matches?actual.bytes:readFileSync(new URL(retained,fixtureRoot));
+    const bytes=matches?actual.bytes:historicalFixtures.has(pin.path)?readFileSync(new URL(retained,fixtureRoot)):Buffer.from(staticOriginal.source(pin.path),'utf8');
     assert.equal(bytes.length,pin.bytes,pin.path);assert.equal(hash(bytes),pin.sha256,pin.path);assert.equal(gitBlob(bytes),pin.gitBlob,pin.path);
     rows.push({...compare(bytes.toString('utf8'),pin.path),gitBlob:pin.gitBlob,witness:matches?'current-HEAD-bytes-identical-to-historical-pin':retained});
   }

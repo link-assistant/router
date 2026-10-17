@@ -22,8 +22,10 @@ import {captureSerializationContext} from '../serialization-schema/extract.mjs';
 import {serializeSerializationMeta,parseSerializationMeta} from '../serialization-schema/meta.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("trait-object-derive-source.test.mjs");
 
-const root=new URL('../../../',import.meta.url),read=file=>readFileSync(new URL(file,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
+const root=new URL('../../../',import.meta.url),read=file=>staticOriginal.source(file),hash=value=>createHash('sha256').update(value).digest('hex');
 const manifest=read('Cargo.toml'),lock=read('Cargo.lock'),dependencies=loadDeriveDependencyProof({manifest,lock});
 const compiler=createQuoteFragmentCompiler(inventoryDeriveQuoteMeta(dependencies));
 function retain(name,value){const path=process.env.ROUTER_TRAIT_OBJECT_SOURCE_VECTOR_DIR;if(path){mkdirSync(path,{recursive:true});writeFileSync(join(path,name+'.json'),JSON.stringify(value),{flag:'wx'});}}
@@ -44,7 +46,7 @@ function setup(source,name='Record',owner='Debug'){
   return {context,certificate,invocation:attribute&&{path:[owner],attributeSpan:attribute.span}};
 }
 function original(file,name,owner){
-  const paths=execFileSync('git',['ls-files','-z','--','src/*.rs'],{cwd:fileURLToPath(root),encoding:'utf8'}).split('\0').filter(Boolean);
+  const paths=staticOriginal.inputs.sources.map(row=>row.source).filter(path=>path.startsWith('src/')&&path.endsWith('.rs'));
   const graph=resolveModuleGraph({entry:file,paths,readSource:read,compilationProfile:PRODUCTION_PROFILE}),context=createDeriveFootprintContext({modules:graph.modules,dependencies,compilationProfile:PRODUCTION_PROFILE});
   const certificate=context.certificates.find(row=>row.source===file&&row.name===name),attribute=certificate?.attributes.find(row=>row.derives?.some(path=>path.join('::')===owner));
   return {source:read(file),graph,context,certificate,invocation:attribute&&{path:[owner],attributeSpan:attribute.span}};

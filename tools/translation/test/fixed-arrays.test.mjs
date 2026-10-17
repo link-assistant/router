@@ -15,6 +15,8 @@ import {valueSchema} from '../type-layout.mjs';
 import {validateRustValue} from '../type-layout-runtime.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
+import {staticSourceLifecycleContext} from './real-source-fixtures.mjs';
+const staticOriginal=staticSourceLifecycleContext("fixed-arrays.test.mjs");
 
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source});
 async function both(result,assertions,consumer=null) {
@@ -147,7 +149,7 @@ test('six unchanged original constant declarations carry fresh source proofs and
   const fixtures=JSON.parse(readFileSync(new URL('../fixtures/rust-fixed-array-sources.json',import.meta.url),'utf8'));
   const declarations=[];
   for(const fixture of fixtures) {
-    const source=readFileSync(new URL('../../../'+fixture.path,import.meta.url),'utf8');
+    const source=staticOriginal.source(fixture.path);
     assert.equal(createHash('sha256').update(source).digest('hex'),fixture.fileSha256);
     const item=sourceItems(source).find(item=>item.term==='const'&&item.name===fixture.name);
     assert.equal(item.start,fixture.start);assert.equal(item.end,fixture.end);
