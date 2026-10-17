@@ -9,7 +9,7 @@ import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
 const hash=value=>createHash('sha256').update(value).digest('hex'),read=path=>readFileSync(new URL('../../../'+path,import.meta.url),'utf8');
 const archive=readFileSync(new URL('fixtures/current-core-text-sources.json.gz',import.meta.url));
-assert.equal(hash(archive),"7b9031cb5861d93177469b27b91bd844a3150767d14d004e081a02f382e19bbe");const raw=gunzipSync(archive,{maxOutputLength:4194304});assert.equal(hash(raw),"661d6bfeda36b9b18bdd5fa142eb36ccb36b38a7a82bb611b7124de3542d9cd1");const oracle=JSON.parse(raw);
+assert.equal(hash(archive),"358aa7749c5d305caed2b75eec91ac2cfce2a79cc684e55fd425a49eb5f67ad4");const raw=gunzipSync(archive,{maxOutputLength:4194304});assert.equal(hash(raw),"d484c8599546faebc8f1cde10fe85a4559ba617b50efb98f3ead806d0afd7f8d");const oracle=JSON.parse(raw);
 assert.equal(oracle.schema,'current-core-text-source-fixtures-v1');
 for(const row of oracle.inputs){const source=read(row.path);assert.equal(source,row.source,row.path);assert.equal(Buffer.byteLength(source),row.bytes);assert.equal(hash(source),row.sha256);}
 const dependencyInputs={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},jsonMacroDependencies=loadJsonMacroSourceProof(dependencyInputs),deriveDependencies=loadDeriveDependencyProof(dependencyInputs);
