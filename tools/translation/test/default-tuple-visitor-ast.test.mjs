@@ -21,6 +21,7 @@ import {createToolAttributeContext} from '../tool-attributes.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
 import {translateProject,resolveModuleGraph} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
+import {transportConcreteSyntaxSource,transportConcreteSyntaxMeta,serializeConcreteSyntaxMeta,applyConcreteSyntaxSubstitutions} from '../concrete-syntax-meta.mjs';
 import {parseProgram,serializeProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const root=new URL('../../../',import.meta.url),read=path=>readFileSync(new URL(path,root),'utf8'),hash=value=>createHash('sha256').update(value).digest('hex');
@@ -85,8 +86,21 @@ test('copied output proofs foreign source contexts and callback roots cannot bor
 });
 
 test('tuple field namespace closure supports checked independent behavior without admitting Default execution',{timeout:60000},async()=>{
- const source='#[derive(Default)]pub struct Record{value:Vec<(String,String)>}pub fn accepted(value:Option<u8>)->bool{matches!(value,Some(n) if n>2)}pub fn bad()->Record{Record::default()}',result=compile(source);retain('06-complete-independent-project',{source,result});assert.equal(result.meta.bindingEvidence.scopes[0].unresolvedTypeScope,false);assert.ok(result.meta.executable.some(row=>row.name==='accepted'));assert.equal(result.meta.executable.some(row=>row.name==='bad'),false);assert.ok(result.meta.refused.some(row=>row.name==='bad'));assert.equal(result.meta.checkedMethods.some(row=>row.name==='Record.default'),false);
- const wire=JSON.stringify(result.meta.checkedSemanticProgram);assert.equal(serializeProgram(parseProgram(wire)),wire);await verifyTypedTargets(result,api=>{assert.equal(api.accepted(Object.freeze({$:'None'})),false);for(const[n,want]of[[0n,false],[2n,false],[3n,true],[255n,true]])assert.equal(api.accepted(Object.freeze({$:'Some',field0:n})),want);assert.throws(()=>api.accepted(Object.freeze({$:'Some',field0:256n})));},{childTimeoutMs:20000});
+ const source='#[derive(Default)]pub struct Record{value:Vec<(String,String)>}pub fn accepted(value:Option<u8>)->bool{matches!(value,Some(n) if n>2)}pub fn bad()->Record{Record::default()}',result=compile(source);retain('06-complete-independent-project',{source,result});
+ // Vec<T>::default constructs an empty vector without requiring T:Default.
+ // Preserve this complete original subject as a legitimate existing positive.
+ const expected='value:Vec<(String,String)>',replacement='value:(String,String)',at=source.indexOf(expected);assert.equal(source.indexOf(expected,at+1),-1);
+ const beforeCst=transportConcreteSyntaxSource(source,{language:'Rust'}),applied=applyConcreteSyntaxSubstitutions(beforeCst.document,{languageRules:[{id:'default-fixture:retain-complete-source',edits:[]}],repositoryRules:[{id:'default-fixture:direct-tuple-field',edits:[{span:[at,at+expected.length],expected,replacement}]}]}),afterCst=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value)),directSource=afterCst.source,inverse=directSource.slice(0,at)+expected+directSource.slice(at+replacement.length),direct=compile(directSource);
+ retain('06-complete-direct-tuple-project',{source,expected,replacement,at,beforeCst,applied,afterCst,directSource,inverse,direct});assert.equal(directSource,source.replace(expected,replacement));assert.equal(directSource.slice(at,at+replacement.length),replacement);assert.equal(inverse,source);
+ for(const current of [result,direct]){assert.equal(current.meta.bindingEvidence.scopes[0].unresolvedTypeScope,false);assert.ok(current.meta.executable.some(row=>row.name==='accepted'));for(const field of ['checkedSemanticProgram','targetSemanticProgram']){const wire=JSON.stringify(current.meta[field]);assert.equal(serializeProgram(parseProgram(wire)),wire);}}
+ assert.ok(result.meta.executable.some(row=>row.name==='bad'));assert.equal(result.meta.refused.some(row=>row.name==='bad'),false);
+ assert.equal(direct.meta.executable.some(row=>row.name==='bad'),false);assert.ok(direct.meta.refused.some(row=>row.name==='bad'));assert.equal(direct.meta.checkedMethods.some(row=>row.name==='Record.default'),false);
+ const observations=[];try{for(const [label,current]of [['empty-Vec',result],['direct-tuple',direct]])await verifyTypedTargets(current,api=>{
+  const observed={label,target:observations.length,accepted:[],default:null};observations.push(observed);assert.equal(api.accepted(Object.freeze({$:'None'})),false);
+  for(const[n,want]of[[0n,false],[2n,false],[3n,true],[255n,true]]){const actual=api.accepted(Object.freeze({$:'Some',field0:n}));observed.accepted.push({n,actual});assert.equal(actual,want);}
+  assert.throws(()=>api.accepted(Object.freeze({$:'Some',field0:256n})));for(const n of [0,2,3,255])assert.throws(()=>api.accepted(Object.freeze({$:'Some',field0:n})),TypeError);
+  if(label==='empty-Vec'){const first=api.bad(),second=api.bad();observed.default={first,second};assert.deepEqual(first,{$:'Record',value:[]});assert.deepEqual(second,first);assert.ok(Object.isFrozen(first));assert.ok(Object.isFrozen(first.value));assert.notStrictEqual(first,second);assert.notStrictEqual(first.value,second.value);}else assert.equal(Object.hasOwn(api,'bad'),false);
+ },{childTimeoutMs:20000});}finally{retain('06-complete-independent-outcomes',observations);}assert.equal(observations.length,4);
 });
 
 test('complete unchanged ResolvedDeploy retains all four original modules and every sibling owner',{timeout:60000},()=>{
