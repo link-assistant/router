@@ -124,3 +124,39 @@ Execute emitted JavaScript and strict TypeScript independently. Preserve opaque
 and error source and explicit semantic refusals. Focused receiving checks do not
 establish generated freshness, full runtime parity or permission to run Rust;
 the complete same-SHA JavaScript gate remains required before Rust CI.
+
+## Paired forward target input types
+
+The explicit owned-core reverse profile can obtain missing JavaScript parameter
+types from a matching complete TypeScript source. Pair paths are fixed by the
+receiving runtime/declaration roots and the same relative module stem; competing
+`.ts` and `.mts` sources refuse. Actual application TypeScript is now captured
+alongside application JavaScript and both complete runtime inputs. Existing
+written JavaScript/JSDoc contracts retain their original path.
+
+Both complete paired sources pass through serialized/reparsed lossless CST and
+native grammar checks. The adapter erases only native-AST-selected type
+annotations and complete type-only imports, retains the full forward/inverse
+recipe, and compares every remaining token, including comments. Functions and
+parameters join by ordered native declaration spans and names; the erased native
+JavaScript syntax must also agree, including ASI. Written local and return types
+must match independently inferred JavaScript domains. Generics,
+overloads, assertions, mixed type-only imports and unknown declaration forms
+remain unsupported. Only the existing source-resolved canonical `JsonValue`,
+string, boolean and fixed-operation input domains can supply written contracts;
+similarly shaped nominal aliases and public proof flags cannot do so.
+
+The original JavaScript still supplies every actual lexical symbol, imported
+callee, expression, argument order and return/loan root. TypeScript declarations
+do not issue ownership or body permission. Checked meta and both target
+boundaries reconstruct the pair afresh; native compiler objects remain local to
+that invocation. Underscore-containing ordinary names are supported, with
+reserved/private names and collisions after Rust name conversion refused.
+
+The existing module preflight, successful-resource/error boundaries, parser
+budgets and regeneration workloads are unchanged. Unrelated imports, startup
+evaluation, arbitrary aliases, callbacks and unimplemented operations continue
+to refuse. The stored forward inventory may be historical; its flags and hashes
+cannot recreate source authority. Fresh forward materialization and separate
+canonical-type/packaging work are required before claiming application coverage.
+This source draft has not yet received Node/Bun or strict TypeScript checks.

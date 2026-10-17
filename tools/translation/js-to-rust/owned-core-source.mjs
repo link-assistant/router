@@ -12,6 +12,7 @@ import {selectOriginalRouterCoreFacade} from '../router-core-facade-source.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {assertReverseConcreteSourceHost} from './concrete-source.mjs';
+import {ownedCorePairedTypePath,prepareOwnedCorePairedTypes} from './owned-core-paired-types.mjs';
 
 const contexts=new WeakMap(),traversals=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse source: '+message);};
@@ -118,6 +119,33 @@ function originalOwnedCoreModule(handle,path){
  const traversal={ts,syntax,file,source:state.files.get(path),checker:program.getTypeChecker(),runtimeRoot:state.data.runtimeRoot};
  traversals.set(traversal,{handle,state});return traversal;
 }
+function pairedFunction(handle,path,declaration,analysis){
+ const privateState=traversals.get(analysis);if(privateState?.handle!==handle)fail('foreign paired traversal');
+ const {state}=privateState;
+ if(analysis.pairedTypes===undefined){
+  const target=ownedCorePairedTypePath(path,state.files,state.data.runtimeRoot,state.data.declarationRoot);
+  analysis.pairedTypes=target===null?null:prepareOwnedCorePairedTypes(path,analysis.source,target,state.files.get(target));
+ }
+ const pair=analysis.pairedTypes;if(!pair)return null;
+ const span=[declaration.getStart(analysis.file),declaration.end],selected=pair.functions.filter(item=>item.javascriptSpan[0]===span[0]&&item.javascriptSpan[1]===span[1]);
+ if(selected.length!==1)fail('actual paired function span differs');
+ const evidence=selected[0],file=analysis.syntax.get(pair.typescript.path);
+ if(!file||file.text!==pair.typescript.source)fail('complete paired original source differs');
+ const nodes=file.statements.filter(node=>analysis.ts.isFunctionDeclaration(node)&&node.getStart(file)===evidence.typescriptSpan[0]&&node.end===evidence.typescriptSpan[1]);
+ if(nodes.length!==1||nodes[0].name.text!==declaration.name.text)fail('actual paired native declaration differs');
+ const typed={...analysis,file,source:file.text};traversals.set(typed,{handle,state,paired:true});
+ return {declaration:nodes[0],analysis:typed,evidence,pair};
+}
+function originalImportTarget(from,specifier,analysis,state){
+ const target=relative(from,specifier);
+ // A paired TS import resolves its genuine .d.mts in declarationRoot. Its
+ // fixed runtime counterpart remains the independently checked JS callee.
+ if(traversals.get(analysis)?.paired&&posix.dirname(target)===state.data.declarationRoot&&['json-update-runtime.mjs','json-macro-runtime.mjs'].includes(posix.basename(target))){
+  const runtime=state.data.runtimeRoot+'/'+posix.basename(target);
+  if(state.files.has(target)&&state.files.get(target)!==state.files.get(runtime))fail('paired runtime counterpart differs');return runtime;
+ }
+ return target;
+}
 /** Resolve an actual source import symbol, including only exact named reexports. */
 function originalOwnedCoreImport(handle,path,node,analysis){
  const {file,ts,checker,syntax}=analysis,privateState=traversals.get(analysis);assertReverseConcreteSourceHost();const state=contexts.get(handle);
@@ -127,7 +155,7 @@ function originalOwnedCoreImport(handle,path,node,analysis){
  if(!declarations||declarations.length!==1||!ts.isImportSpecifier(declarations[0]))fail('callee is not the actual import symbol');
  const spec=declarations[0],declaration=spec.parent.parent.parent;
  if(declaration.getSourceFile()!==file||!ts.isStringLiteral(declaration.moduleSpecifier))fail('foreign import declaration');
- let target=relative(path,declaration.moduleSpecifier.text),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
+ let target=originalImportTarget(path,declaration.moduleSpecifier.text,analysis,state),name=(spec.propertyName??spec.name).text,ownerFile=file,ownerDeclaration=declaration;const links=[];
  for(let depth=0;depth<32;depth++){
   const source=state.files.get(target);if(source===undefined)fail('import target missing');links.push({path:target,name,source,from:{path:ownerFile.fileName,span:[ownerDeclaration.getStart(ownerFile),ownerDeclaration.end]}});
   if(target===state.data.runtimeRoot+'/json-update-runtime.mjs'||target===state.data.runtimeRoot+'/json-macro-runtime.mjs'){
@@ -157,7 +185,7 @@ function originalOwnedCoreType(handle,path,type,analysis){
   if(binding.target===state.data.runtimeRoot+'/json-macro-runtime.mjs'&&binding.name==='JsonValue'&&!type.typeArguments)return 'json-ref';
  }
  if(ts.isImportTypeNode(type)&&!type.isTypeOf&&ts.isLiteralTypeNode(type.argument)&&ts.isStringLiteral(type.argument.literal)&&type.qualifier?.text==='JsonValue'&&!type.typeArguments){
-  if(relative(path,type.argument.literal.text)!==state.data.runtimeRoot+'/json-macro-runtime.mjs')fail('unregistered type import');return 'json-ref';
+  if(originalImportTarget(path,type.argument.literal.text,analysis,state)!==state.data.runtimeRoot+'/json-macro-runtime.mjs')fail('unregistered type import');return 'json-ref';
  }
  // Map and byte domains must be written through the actual imported operation,
  // not a caller's similarly-shaped object/array declaration.
@@ -188,9 +216,9 @@ const OPS=Object.freeze({
  json_macro_u64:{args:['u64'],ret:'json',rust:null},
  json_macro_i64:{args:['i64'],ret:'json',rust:null},
 });
-const KEYS=new Set('as async await break const continue crate default do dyn else enum export extern false fn for function if impl import in let loop match mod move mut new null pub ref return self static struct super switch this throw trait true try type typeof undefined unsafe use var void where while with yield'.split(' '));
+const KEYS=new Set('as async await break const continue crate default do dyn else enum export extern false fn for function if impl import in let loop match mod move mut new null pub ref return self static struct super switch this throw trait true try type typeof undefined unsafe use var void where while with yield abstract become box final gen macro override priv unsized virtual'.split(' '));
 function rustName(name){
- if(!/^[a-z][A-Za-z0-9]*$/u.test(name)||KEYS.has(name))fail('nonportable declaration name');
+ if(!/^[a-z][A-Za-z0-9_]*$/u.test(name)||KEYS.has(name))fail('nonportable declaration name');
  const rust=name.replace(/[A-Z]/gu,c=>'_'+c.toLowerCase());if(KEYS.has(rust))fail('reserved declaration name');return rust;
 }
 const json=type=>type==='json'||type==='json-ref';
@@ -219,15 +247,23 @@ export function analyzeOriginalOwnedCoreSource(context,path){
 function checkFunction(context,path,declaration,analysis){
  const {ts,file,source,checker}=analysis;
  if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
- const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0;
+ const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0,paired=null;
  const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
  function bind(identifier,value,scope){
   if(!ts.isIdentifier(identifier)||scope.has(identifier.text)||identifier.text.startsWith('__ro'))fail('duplicate, reserved or nonidentifier binding');
-  const symbol=checker.getSymbolAtLocation(identifier);if(!symbol)fail('unresolved lexical declaration');scope.set(identifier.text,{...value,symbol});return identifier.text;
+  const rust=rustName(identifier.text);if([...scope.values()].some(binding=>binding.rust===rust))fail('colliding Rust binding');
+  const symbol=checker.getSymbolAtLocation(identifier);if(!symbol)fail('unresolved lexical declaration');scope.set(identifier.text,{...value,symbol,rust});return identifier.text;
  }
- for(const param of declaration.parameters){
+ for(let index=0;index<declaration.parameters.length;index++){
+  const param=declaration.parameters[index];
   if(param.dotDotDotToken||param.questionToken||param.initializer||param.modifiers?.length)fail('default/rest/optional parameter');
-  const type=originalOwnedCoreType(context,path,param.type??ts.getJSDocType(param),analysis),identifier=param.name;
+  const written=param.type??ts.getJSDocType(param);let type;
+  if(written)type=originalOwnedCoreType(context,path,written,analysis);
+  else{
+   paired??=pairedFunction(context,path,declaration,analysis);
+   type=paired?originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis):originalOwnedCoreType(context,path,undefined,analysis);
+  }
+  const identifier=param.name;
   const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str'].includes(type)?identifier.text:null,input:true},environment);
   params.push({name:sourceName,rust:rustName(sourceName),type});
  }
@@ -279,7 +315,20 @@ function checkFunction(context,path,declaration,analysis){
    tick(depth);if(terminated)fail('statement after terminating return');
    if(ts.isVariableStatement(statement)){
     if(statement.modifiers?.length||(statement.declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const)fail('only fresh immutable local declarations');
-    for(const declaration of statement.declarationList.declarations){if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1),name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});}
+    for(const declaration of statement.declarationList.declarations){
+     if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1);
+     if(paired){
+      const evidence=paired.evidence.locals.filter(item=>item.javascriptSpan[0]===declaration.getStart(file)&&item.javascriptSpan[1]===declaration.end);if(evidence.length!==1)fail('actual paired local span differs');
+      const span=evidence[0].typeSpan;
+      if(span){
+       let actual;const find=node=>{if(ts.isVariableDeclaration(node)&&node.getStart(paired.analysis.file)===evidence[0].typescriptSpan[0]&&node.end===evidence[0].typescriptSpan[1])actual=node;ts.forEachChild(node,find);};find(paired.declaration.body);
+       if(!actual?.type||actual.type.getStart(paired.analysis.file)!==span[0]||actual.type.end!==span[1])fail('actual paired local type differs');
+       const written=originalOwnedCoreType(context,paired.pair.typescript.path,actual.type,paired.analysis);
+       if(written==='json-ref'?!json(value.type):written!==value.type)fail('paired written local ABI differs');
+      }
+     }
+     const name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});
+    }
    }else if(ts.isReturnStatement(statement)&&statement.expression){
     const value=expression(statement.expression,scope,depth+1);
     if(!['json','json-ref','bool','str','usize'].includes(value.type))fail('unsupported owned result');
@@ -294,6 +343,10 @@ function checkFunction(context,path,declaration,analysis){
   return {body,terminated};
  }
  const checked=block(declaration.body.statements,environment,0);if(!checked.terminated)fail('missing return');
+ if(paired)for(let index=0;index<params.length;index++){
+  const actual=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis);
+  if(actual!==params[index].type)fail('paired written parameter ABI differs');
+ }
  const writtenReturn=declaration.type??ts.getJSDocReturnType(declaration);
  if(writtenReturn){
   const written=originalOwnedCoreType(context,path,writtenReturn,analysis);
@@ -301,7 +354,12 @@ function checkFunction(context,path,declaration,analysis){
   // A written Value domain accepts owned or borrowed results; it never
   // supplies or changes the independently checked loan/root identity.
  }
+ if(paired?.declaration.type){
+  const written=originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.type,paired.analysis);
+  if(written==='json-ref'?!json(resultType):written!==resultType)fail('paired written return ABI differs');
+ }
  if(!hostCalls.length)fail('no actual owned-core call');
  const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
+ if(paired)item.pairedSource={path:paired.pair.typescript.path,source:paired.pair.typescript.source,span:paired.evidence.typescriptSpan,parameters:paired.evidence.parameters,locals:paired.evidence.locals,returnSpan:paired.evidence.returnSpan,erasure:paired.pair.erasure.edits};
  requireOwnedCoreSourceCurrent(context);return item;
 }

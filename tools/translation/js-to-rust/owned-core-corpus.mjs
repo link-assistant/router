@@ -35,7 +35,7 @@ export function captureOwnedCoreCorpus(root){
    if(entry.isDirectory())visit(path);else if(entry.isFile()&&(/\.(?:mjs|mts|ts)$/u.test(entry.name)||/LICENSE|NOTICE/iu.test(entry.name)))add(path);
   }
  }
- visit(ROOT);visit(TYPED+'/runtime');
+ visit(ROOT);visit(TYPED);
  if(files.length)for(const path of ['src/lib.rs','src/translation_core.rs','src/translation_core/primitives.rs','Cargo.toml','Cargo.lock'])add(path);
  const rows=files.sort((a,b)=>a.path.localeCompare(b.path));
  return {files:rows,bytes,requireCurrent(){for(const row of rows)if(strictSource(physical(root,row.path))!==row.source)throw TypeError('Owned receiving complete input changed: '+row.path);}};

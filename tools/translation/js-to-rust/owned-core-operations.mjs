@@ -18,9 +18,9 @@ const OPS=Object.freeze({
  json_macro_u64:{args:['u64'],ret:'json',rust:null},
  json_macro_i64:{args:['i64'],ret:'json',rust:null},
 });
-const KEYS=new Set('as async await break const continue crate default do dyn else enum export extern false fn for function if impl import in let loop match mod move mut new null pub ref return self static struct super switch this throw trait true try type typeof undefined unsafe use var void where while with yield'.split(' '));
+const KEYS=new Set('as async await break const continue crate default do dyn else enum export extern false fn for function if impl import in let loop match mod move mut new null pub ref return self static struct super switch this throw trait true try type typeof undefined unsafe use var void where while with yield abstract become box final gen macro override priv unsized virtual'.split(' '));
 function rustName(name){
- if(!/^[a-z][A-Za-z0-9]*$/u.test(name)||KEYS.has(name))fail('nonportable declaration name');
+ if(!/^[a-z][A-Za-z0-9_]*$/u.test(name)||KEYS.has(name))fail('nonportable declaration name');
  const rust=name.replace(/[A-Z]/gu,c=>'_'+c.toLowerCase());if(KEYS.has(rust))fail('reserved declaration name');return rust;
 }
 const json=type=>type==='json'||type==='json-ref';
