@@ -23,7 +23,7 @@ import {createRulePipeline} from './rule-pipeline.mjs';
 import {requireRouterCoreFacade,requireRouterCoreFacadeCurrent} from './router-core-formatting.mjs';
 import {ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_PRIMITIVES_SHA256} from './router-core-source-data.mjs';
 import {unsupported,typeError,TranslationError} from './vendor/meta-language/translation/diagnostics.js';
-const qualified=originalDataFreezeIntrinsicsUnchanged(),calls=new WeakMap(),checkedCalls=new WeakMap(),functions=new WeakMap(),activeFunctions=new WeakMap(),issued=new WeakMap(),completedFunctions=new WeakMap();
+const qualified=originalDataFreezeIntrinsicsUnchanged(),calls=new WeakMap(),rawArgumentCalls=new WeakMap(),checkedCalls=new WeakMap(),functions=new WeakMap(),activeFunctions=new WeakMap(),issued=new WeakMap(),completedFunctions=new WeakMap();
 const own=Object.hasOwn,descriptor=Object.getOwnPropertyDescriptor,keys=Reflect.ownKeys,prototype=Object.getPrototypeOf,isArray=Array.isArray,isProxy=types.isProxy,plainPrototype=Object.prototype,arrayPrototype=Array.prototype;
 const freeze=value=>{if(value&&typeof value==='object'){for(const value_ of Object.values(value))freeze(value_);Object.freeze(value);}return value;};
 const updateContracts=['json_copy','json_with_field'].map(name=>({
@@ -50,8 +50,19 @@ function same(a,b,budget={cells:200000},depth=0){
  for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||!own(b,names[at]))return false;
  for(let at=0;at<wanted.length;at++){const key=wanted[at],x=descriptor(a,key),y=descriptor(b,key);if(!x||!y||!own(x,'value')||!own(y,'value')||x.enumerable!==y.enumerable||!same(x.value,y.value,budget,depth+1))return false;}return true;
 }
+// The upstream block parser shallow-copies its tail with one block:true field.
+// Recovery is available only at a genuine unchanged parsed parent/node join;
+// the private original argument identity is necessary in addition to equality.
+function parsedCallReceipt(origin){
+ const node=origin.original,exact=calls.get(node);if(exact)return exact;
+ if(!node||typeof node!=='object'||isProxy(node)||prototype(node)!==plainPrototype)return null;
+ const names=keys(node),wanted=['k','operation','args','span','block'];if(names.length!==wanted.length)return null;for(let at=0;at<wanted.length;at++)if(names[at]!==wanted[at])return null;
+ let args,block;for(let at=0;at<names.length;at++){const field=descriptor(node,names[at]);if(!field||!own(field,'value')||field.enumerable!==true||field.configurable!==true||field.writable!==true)return null;if(at===2)args=field.value;if(at===4)block=field.value;}if(block!==true)return null;
+ const original=rawArgumentCalls.get(args);if(!original||original.parser!==origin.parser)return null;
+ const syntax={...original.syntax,block:true};return same(node,syntax)?{...original,syntax}:null;
+}
 export function parseRouterCoreJsonUpdate(parser,path){
- const collection=sourceContract(()=>parseRouterCoreJsonCollection(parser,path),parser.cursor.peek());if(collection){const node=collection.node;calls.set(node,{parser,syntax:copyMetadata(node),trace:collection.trace});return node;}
+ const collection=sourceContract(()=>parseRouterCoreJsonCollection(parser,path),parser.cursor.peek());if(collection){const node=collection.node,receipt={parser,syntax:copyMetadata(node),trace:collection.trace};calls.set(node,receipt);rawArgumentCalls.set(node.args,receipt);return node;}
  const c=parser.cursor;if(!['crate','::','translation_core','::'].every((word,at)=>c.is(word,at))||[0,2,4].some(at=>c.peek(at).kind!=='identifier'))return null;
  const operation=c.peek(4).value;if(!['json_copy','json_with_field'].includes(operation)&&!projectionNames.has(operation))return null;
  const first=c.peek(),location={start:first.start,end:c.peek(4).end},tokens=c.tokens,start=c.index;
@@ -68,7 +79,7 @@ export function parseRouterCoreJsonUpdate(parser,path){
  ]).run(null),location);
  const current=end=>sourceContract(()=>{if(!originalDataFreezeIntrinsicsUnchanged())fail();requireRouterCoreFacadeCurrent(parser,facade);if(matchesParserFacts(parser)!==state||leaf(state)!==original||original.sourceView!==view||parser.cursor!==c||c.tokens!==tokens||c.index!==end)fail();},location);
  current(start);c.index+=5;c.expect('(','owned JSON update');const args=[];while(!c.is(')')){args.push(parser.expr(path));if(!c.eat(','))break;}const last=c.expect(')','owned JSON update');current(c.index);
- const node={k:'routerCoreJsonUpdateCall',operation,args,span:{start:first.start,end:last.end}},syntax=copyMetadata(node);current(c.index);calls.set(node,{parser,syntax,trace:stage.trace});return node;
+ const node={k:'routerCoreJsonUpdateCall',operation,args,span:{start:first.start,end:last.end}},syntax=copyMetadata(node);current(c.index);const receipt={parser,syntax,trace:stage.trace};calls.set(node,receipt);rawArgumentCalls.set(node.args,receipt);return node;
 }
 export function captureRouterCoreJsonUpdates(checker,surface){
  if(!qualified)return;const nodes=new WeakMap(),entries=new WeakMap();let guarded=false;
@@ -76,7 +87,7 @@ export function captureRouterCoreJsonUpdates(checker,surface){
   let candidates=null,cells=200000;const members=new WeakMap(),matches=new WeakMap(),formats=new WeakMap();
   const visit=(node,depth=0)=>{if(--cells<0||depth>160||!node||typeof node!=='object'||isProxy(node))return;const parent=prototype(node);if(parent!==plainPrototype&&parent!==null&&parent!==arrayPrototype)return;const names=keys(node);for(let at=0;at<names.length;at++)if(names[at]==='stack')return;const kind=descriptor(node,'k');if(kind&&own(kind,'value')&&kind.value==='let')members.set(node,true);if(kind&&own(kind,'value')&&kind.value==='routerOrderedMatch')matches.set(node,copyMetadata(node));if(kind&&own(kind,'value')&&kind.value==='routerConstObligation'){const feature=descriptor(node,'sourceFeature');if(feature&&own(feature,'value')&&feature.value==='router-core-format')formats.set(node,copyMetadata(node));}if(kind&&own(kind,'value')&&kind.value==='routerCoreJsonUpdateCall')candidates={node,next:candidates};for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string'||key==='type'||key==='span'||key==='length')continue;const field=descriptor(node,key);if(field&&own(field,'value'))visit(field.value,depth+1);}};visit(entry);
   if(!qualified||!originalDataFreezeIntrinsicsUnchanged())fail();if(!guarded){requireOriginalPrimitiveTryFromChecker(checker);guarded=true;}if(!originalParsedDeclarationEvidence(entry))return;
-  let captured=false;while(candidates){const node=candidates.node,origin=originalParsedSyntaxNode(entry,node),receipt=origin&&calls.get(origin.original);if(origin?.actual===node&&receipt?.parser===origin.parser){const snapshot=copyMetadata(node);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();const current=originalParsedSyntaxNode(entry,node);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();if(current?.actual===node&&current.original===origin.original&&current.parser===receipt.parser&&same(origin.original,receipt.syntax)&&same(node,origin.relocated)&&same(node,snapshot)){nodes.set(node,{receipt,syntax:snapshot});captured=true;}}candidates=candidates.next;}
+  let captured=false;while(candidates){const node=candidates.node,origin=originalParsedSyntaxNode(entry,node),receipt=origin&&parsedCallReceipt(origin);if(origin?.actual===node&&receipt?.parser===origin.parser){const snapshot=copyMetadata(node);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();const current=originalParsedSyntaxNode(entry,node);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();if(current?.actual===node&&current.original===origin.original&&current.parser===receipt.parser&&same(origin.original,receipt.syntax)&&same(node,origin.relocated)&&same(node,snapshot)){nodes.set(node,{receipt,syntax:snapshot});captured=true;}}candidates=candidates.next;}
   {const syntax=copyMetadata(entry);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!originalParsedDeclarationEvidence(entry)||!same(entry,syntax))fail();entries.set(entry,{syntax,members,matches,formats,owns:captured});}
  };
  let itemCells=200000;
@@ -123,7 +134,7 @@ function checkedCollection(checker,node,capture,env,path,expected){
  const stage=createRulePipeline([{phase:'language',rules:[{id:'owned-json-collections:check-shared-input-and-local-callback',apply:()=>checkRouterCoreJsonCollection(checker,node,env,path,expected)}]},{phase:'repository',rules:[{id:'router-core:retain-actual-eager-collection',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-collections-v1',symbol:'crate::translation_core::'+node.operation,sourceSha256:routerCoreJsonCollectionSourceHash,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]}]).run(null);
  const value=stage.value,record={checker,frame:activeFunctions.get(checker),id:value.id,args:copyMetadata(value.args)};
  requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!same(node,capture.syntax))fail();
- record.layouts=copyMetadata(captureBorrowedLayouts(checker,[value.args[0].type,value.type]));record.roots=copyMetadata([value.args[0].type,value.type]);
+ const roots=[value.args[0].type,value.type,value.args[1].type.result];record.layouts=copyMetadata(captureBorrowedLayouts(checker,roots));record.roots=copyMetadata(roots);
  record.key=metadataDigest({functionName:record.frame.functionName,source:record.frame.syntax,call:value,layouts:record.layouts});value.compatibilityCore.sourceProjectionKey=record.key;record.call=copyMetadata(value);
  (record.frame.projections??=new Set()).add(record);issued.set(value.compatibilityCore,record);return value;
 }

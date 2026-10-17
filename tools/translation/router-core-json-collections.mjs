@@ -35,6 +35,19 @@ function canonical(checker,type,path,span){
  if(!sameType(type,expected)||entry?.hostTypePath?.join('::')!=='serde_json::Value'||entry.generated!=='router-json-contract'||type.rustReference||type.rustOwnership||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON collection item','requires actual by-value canonical Json',span);
  checker.expectedOwnership(type,expected,path,span);return expected;
 }
+// Only this fixed source-bound library callback supplies the missing contextual
+// Option metadata. The actual current declaration and every written payload
+// must still agree with its independently checked canonical Json signature.
+function requireCallbackOption(checker,type,expected,json,path,span){
+ const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type?.rustStandardGeneric,wanted=expected.rustStandardGeneric;
+ if(type?.rustReference||type?.rustOwnership||type?.patternOwnershipRefusal||type?.rustGenericIdentityUnresolved||type?.rustBorrowingUnresolved||!sameType(type,expected)||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2||wanted?.kind!=='Option'||wanted.arguments?.length!==1||source&&(source.kind!=='Option'||source.arguments?.length!==1))throw unsupported('owned JSON collection Option','requires the actual fixed by-value Option<Json> result',span);
+ const some=owner.ctors.filter(ctor=>ctor.name==='Some'),none=owner.ctors.filter(ctor=>ctor.name==='None');
+ if(some.length!==1||none.length!==1||some[0].fields?.length!==1||some[0].fields[0].name!=='field0'||none[0].fields?.length!==0)throw typeError('owned JSON collection Option constructor layout changed',span);
+ for(const written of [wanted.arguments[0],owner.standardGeneric.arguments[0],some[0].fields[0].type,...(source?source.arguments:[])]){
+  const actual=checker.resolveType(written,owner.modulePath,span);canonical(checker,actual,path,span);if(!sameType(actual,json))throw typeError('owned JSON collection Option payload changed',span);checker.expectedOwnership(actual,json,path,span);checker.expectedPrimitiveIdentity(actual,json,path,span);
+ }
+ checker.expectedOwnership(type,expected,path,span);checker.expectedPrimitiveIdentity(type,expected,path,span);
+}
 export function checkRouterCoreJsonCollection(checker,node,env,path,expected){
  const checked=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(!qualified||!originalDataFreezeIntrinsicsUnchanged())fail();};checked();
  if(node.args.length!==2||node.args[1].k!=='routerLambda'||node.args[1].params.length!==1||node.args[1].params[0].pattern)throw unsupported('owned JSON collection callback','requires one actual inline immutable parameter',node.span);
@@ -45,9 +58,10 @@ export function checkRouterCoreJsonCollection(checker,node,env,path,expected){
  const json=canonical(checker,pointee.element,path,node.span),item=sourceShared(json),result=node.operation==='json_filter_map'?checker.instantiations.option(json,node.span):json;
  // Fresh boundary for EVERY callback, including an ordinary tail body. The
  // existing lambda checker still handles parameter identities and local returns.
- const callback=checker.hostLambda(node.args[1],[item],checker.callbackEnvironment(new Map(env),result),path,result,{source:'owned-json-collection',receiverType:type});checked();
+ let callback=checker.hostLambda(node.args[1],[item],checker.callbackEnvironment(new Map(env),result),path,result,{source:'owned-json-collection',receiverType:type});checked();
  if(!sameType(callback.type.result,result))throw typeError('owned JSON collection callback result differs',node.span);
  checker.expectedOwnership(callback.type.result,result,path,node.span);
+ if(node.operation==='json_filter_map'){requireCallbackOption(checker,callback.type.result,result,json,path,node.span);requireCallbackOption(checker,callback.binding.type,result,json,path,node.span);callback={...callback,type:{...callback.type,result}};}
  const output={...sourceVector(json),rustSourceType:true};
  if(expected){if(!sameType(output,expected))throw typeError('owned JSON collection result differs',node.span);checker.expectedOwnership(output,expected,path,node.span);}
  checked();return {k:'routerCoreJsonCollection',id:'router_core_'+node.operation,args:[receiver,callback],type:output,constEligible:false,span:node.span};
