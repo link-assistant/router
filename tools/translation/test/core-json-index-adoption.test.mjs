@@ -45,7 +45,7 @@ test('Some reader aliases select Map panic rather than Value Null and preserve l
  await targets(result,api=>{const input=json({name:{v:'Ω'}}),before=structuredClone(input);assert.deepEqual(native(api.mapped(input,true)),{name:{v:'Ω'}});assert.deepEqual(input,before);assert.throws(()=>api.mapped(json({}),true),/no entry found/);assert.deepEqual(native(api.mapped(json({}),false)),{skip:true});assert.equal(native(api.mapped(json(null),true)),null);});
 });
 test('Cargo-bound renamed canonical declarations and immutable reader chains retain complete role evidence',()=>{
- const source='use serde_json::{Value as V,Map as M};pub fn aliases(value:&V,map:&M<String,V>,key:&str)->'+T+'{'+J+'({"v":value[key],"m":map[key]})}pub fn readers(value:&V)->'+C+'Outcome<'+T+',String>{let map=value.get("schema").and_then(V::as_object).ok_or_else(||'+C+'format!("{}","object required"))?;'+J+'({"name":map["name"]})}',input=files(source),proposal=propose(input);assert.equal(count(proposal),3);const selected=proposal.proposals[0].selections;assert.deepEqual(selected.map(row=>row.operation),['json_index_str','json_map_index','json_map_index']);assert.ok(selected.at(-1).candidateRole.evidence.some(row=>row.kind==='immutable-reader-alias'));assert.ok(selected[0].imports.some(row=>row.role?.role.dependency?.package==='serde_json'));
+ const source='use serde_json::{Value as V,Map as M};pub fn aliases(value:&V,map:&M<String,V>,key:&str)->'+T+'{'+J+'({"v":value[key],"m":map[key]})}pub fn readers(value:&V)->'+C+'Outcome<'+T+',String>{let map=value.get("schema").and_then(V::as_object).ok_or_else(||'+C+'format!("{}","object required"))?;'+J+'({"name":map["name"]})}pub fn block_error(value:&V)->'+C+'Outcome<'+T+',String>{let map=value.as_object().ok_or_else(||{('+C+'format!("{}","object required"))})?;'+J+'({"name":map["name"]})}',input=files(source),proposal=propose(input);assert.equal(count(proposal),4);const selected=proposal.proposals[0].selections;assert.deepEqual(selected.map(row=>row.operation),['json_index_str','json_map_index','json_map_index','json_map_index']);assert.ok(selected.at(-1).candidateRole.evidence.some(row=>row.kind==='immutable-reader-alias'));assert.ok(selected[0].imports.some(row=>row.role?.role.dependency?.package==='serde_json'));
  for(const dependencies of [undefined,{...dependencyInputs,lock:dependencyInputs.lock+'\n# changed'}]){const refused=propose(input,{dependencyInputs:dependencies});assert.equal(count(refused),0);assert.deepEqual(refused.before,refused.after);}
  const counterfeit=files(body);counterfeit['src/translation_core/primitives.rs']+='\n// changed complete original\n';assert.throws(()=>propose(counterfeit),/complete current owned/);
 });
@@ -64,6 +64,7 @@ test('unknown aliases traits mutable writes nonowned macros and shadowed binders
   'pub fn no(value:&'+T+')->'+T+'{'+J+'({"v":unknown(value["k"])})}',
   'pub fn no(value:&'+T+')->'+T+'{'+J+'({"v":value["k"].clone()})}',
   'pub fn no(value:&'+T+')->'+T+'{unknown(||'+J+'({"v":value["k"]}))}',
+  'pub fn no(value:&'+T+')->'+C+'Outcome<'+T+',String>{let map=value.as_object().ok_or_else(||{side_effect();'+C+'format!("{}","no")})?;'+J+'({"v":map["k"]})}',
   'trait IndexCompetition{}'+body,
   'use external::UnknownTrait;'+body,
   'use external::*;'+body,

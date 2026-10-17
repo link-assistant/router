@@ -91,6 +91,14 @@ function interpolationReads(tokens,start,stop,accept,depth=0){
  // alter Rust overload or move behavior before the independent checker runs.
  if(ident(tokens[start])&&tokens[start+1]?.text==='['&&close(tokens,start+1)===stop-1)accept(start,stop-1);
 }
+function errorFormatTail(tokens,start,stop){
+ for(let depth=0;depth<=32;depth++){
+  if(start>=stop)return false;
+  if(['{','('].includes(tokens[start].text)&&close(tokens,start)===stop-1){start++;stop--;continue;}
+  const call=macroAt(tokens,start,'format');return !!call&&call.end===stop-1;
+ }
+ return false;
+}
 function select(source,item,scoped){
  const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,[]),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[],skipped=[];let open=name+1;
  // Only source lifetimes may appear between the actual name and parameter list.
@@ -104,7 +112,7 @@ function select(source,item,scoped){
   const macro=macroAt(tokens,at,'json')??macroAt(tokens,at,'format');if(macro){at=macro.open;continue;}
   if(tokens[at].text==='#'||tokens[at].type==='ident'&&tokens[at].text.startsWith('r#')||['unsafe','async','await','yield','fn','mod','use','extern','macro_rules','macro','trait','impl','struct','enum','union','type','const','static','for','while','loop'].includes(tokens[at].text)||tokens[at].type==='ident'&&tokens[at].text.endsWith('!')||tokens[at].text==='!'&&ident(tokens[at-1])&&['(','[','{'].includes(tokens[at+1]?.text))return {edits:[],selections:[],skipped:[{function:item.name,reason:'unknown expansion, loop, local declaration or effect'}]};
   if(tokens[at].text==='|'&&ident(tokens[at+1])){const end=tokens[at-1]?.text==='('?close(tokens,at-1):-1,args=end<0?'':text(tokens.slice(at,end));if(tokens[at-2]?.text!=='filter'||tokens[at-3]?.text!=='.'||!/^\|([\p{ID_Start}_][\p{ID_Continue}_]*)\|!?\1\.(?:is_object|is_null)\(\)$/u.test(args))return {edits:[],selections:[],skipped:[{function:item.name,reason:'unknown callback binding/effects'}]};blocked.add(tokens[at+1].text);at+=2;continue;}
-  if(tokens[at].text==='||'&&['=','(',',','return','{','=>'].includes(tokens[at-1]?.text)){const end=tokens[at-1].text==='('?close(tokens,at-1):-1,error=macroAt(tokens,at+1,'format');if(tokens[at-2]?.text!=='ok_or_else'||tokens[at-3]?.text!=='.'||!error||error.end!==end-1)return {edits:[],selections:[],skipped:[{function:item.name,reason:'unknown callback binding/effects'}]};}
+  if(tokens[at].text==='||'&&['=','(',',','return','{','=>'].includes(tokens[at-1]?.text)){const end=tokens[at-1].text==='('?close(tokens,at-1):-1;if(tokens[at-2]?.text!=='ok_or_else'||tokens[at-3]?.text!=='.'||end<0||!errorFormatTail(tokens,at+1,end))return {edits:[],selections:[],skipped:[{function:item.name,reason:'unknown callback binding/effects'}]};}
   // Unknown closure and conditional-pattern names cannot borrow outer roles.
   if(tokens[at].text==='=>'){let start=at-1;while(start>body&&!['{','}',',',';'].includes(tokens[start-1].text))start--;const pattern=tokens.slice(start,at);if(pattern.length!==1||!['string','number','ident'].includes(pattern[0].type))return {edits:[],selections:[],skipped:[{function:item.name,reason:'nontrivial match binder scope requires separate roles'}]};if(ident(pattern[0]))blocked.add(pattern[0].text);}
   if(tokens[at].text==='let'&&['if','while'].includes(tokens[at-1]?.text)){const stop=tokens.slice(at+1).findIndex(token=>token.text==='=');for(const token of tokens.slice(at+1,stop<0?at+1:at+1+stop))if(ident(token))blocked.add(token.text);}
