@@ -70,6 +70,8 @@ gate below and the same-commit JavaScript-first requirements for Rust CI.
 
 Assign work to isolated worktrees, keep ownership explicit and send draft commits to one push gate owner. The owner integrates the complete batch, runs the full JavaScript gate, reviews generated diffs and publishes one tested head. Leave running CI intact. After CI finishes, collect failures from every required job, separate code defects from infrastructure or missing evidence, repair the complete failure set and rerun the gate before the next push. Repeated pushes while checks are still running obscure which head was verified and spend additional runner time.
 
+For active issue #759, the user has given standing authorization for the designated push owner to push the coordinated repair batch and update its draft pull request without another approval request. Wait for the published head's entire CI cycle to finish, collect and handle every failure, and then publish the reviewed fixes promptly for fresh feedback. This authorization preserves the single publisher, honest failed/unrun evidence and same-SHA JavaScript gate before Rust execution.
+
 Every CI job capable of compiling Rust must depend on the JavaScript gate. It must check the current head and strict parity, not accept an inventory-only result or a stamp from another SHA. Workflow structure checks guard bypass paths; they complement the behavioral tests. Publication belongs to the push gate owner, including PR updates. Preserve draft or blocked status when complete parity is unavailable.
 
 ## Keep local Rust exceptions bounded
