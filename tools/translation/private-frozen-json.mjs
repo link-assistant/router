@@ -173,11 +173,12 @@ export function createPrivateFrozenJsonComposer(){
   function quotedUnits(value,limit){
    if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;let units=2;
    for(let at=0;at<value.length;at++){
-    const char=value[at];
-    if(char==='"'||char==='\\')units+=2;
-    else if(char<='\u001f')units+=char==='\b'||char==='\f'||char==='\n'||char==='\r'||char==='\t'?2:6;
-    else if(char>='\ud800'&&char<='\udbff'){const low=at+1<value.length?value[at+1]:'';if(low>='\udc00'&&low<='\udfff'){units+=2;at++;}else units+=6;}
-    else units+=char>='\udc00'&&char<='\udfff'?6:1;
+    // charCodeAt is already pinned by the fresh lexical intrinsic guard.
+    const code=value.charCodeAt(at);
+    if(code===34||code===92)units+=2;
+    else if(code<32)units+=code===8||code===12||code===10||code===13||code===9?2:6;
+    else if(code>=55296&&code<=56319){const low=at+1<value.length?value.charCodeAt(at+1):-1;if(low>=56320&&low<=57343){units+=2;at++;}else units+=6;}
+    else units+=code>=56320&&code<=57343?6:1;
     if(units>limit)return -1;
    }return units;
   }
