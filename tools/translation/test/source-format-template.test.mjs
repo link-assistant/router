@@ -17,7 +17,7 @@ const assert=new Proxy(originalAssert,{get(target,key){const original=target[key
  if(key==='throws'){let failure;const [call,...rest]=args,result=original(()=>{try{return call();}catch(error){failure={name:error.name,message:error.message,...(error.code?{code:error.code}:{})};throw error;}},...rest);observe('assert-throws',{failure,expected:rest});return result;}
  const result=original(...args);observe('assert-'+String(key),args);return result;
 };}});
-const test=(name,run)=>originalTest(name,async()=>{observations=[];await run();if(vectorDirectory){mkdirSync(vectorDirectory,{recursive:true});writeFileSync(join(vectorDirectory,Buffer.from(name).toString('hex')+'.json'),encode({name,observations})+'\n');}});
+const test=(name,run)=>originalTest(name,{},async()=>{observations=[];await run();if(vectorDirectory){mkdirSync(vectorDirectory,{recursive:true});writeFileSync(join(vectorDirectory,Buffer.from(name).toString('hex')+'.json'),encode({name,observations})+'\n');}});
 async function verifyObservedTargets(label,result,verify){
  const before=new Set(vectorDirectory?readdirSync(tmpdir()).filter(name=>name.startsWith('router-typed-targets-')):[]);let captured=false;
  observe('production-'+label,result);
