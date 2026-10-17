@@ -28,6 +28,7 @@ function protectedInput(name) {
   // Exclude only exact producer-owned outputs. Their handwritten neighbors
   // remain original inputs, including other native descriptors and Rust files.
   if(name==='src/generated_js_first/policy.rs'||name==='src/generated_js_first/mod.rs'
+    ||name==='tools/translation/js-to-rust/generated/owned-core-witness.rs'
     ||name===affinityDescriptor)return false;
   return name.endsWith('.rs')||/(^|\/)Cargo\.(?:toml|lock)$/u.test(name)
     ||name.startsWith('packages/javascript/native/')
