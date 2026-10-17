@@ -1,5 +1,28 @@
 # Translation rule API and verification boundaries
 
+The explicit `modeled-external-ordinary-library-v1` request in
+[`external-library-namespace.mjs`](../../tools/translation/extensions/external-library-namespace.mjs)
+models a direct dependency's ordinary library input without injected `cfg(test)`.
+It requires a genuine current parser frame, the complete pinned package and
+fresh original Cargo/default-feature inputs. It does not prove the actual Cargo
+unit, invocation flags, native parity, attribute owners, or trait behavior.
+`configureOriginalExternalLibraryDomain` and
+`captureOriginalExternalLibraryContext` are additive APIs; the existing
+two-argument trait closure and std-only default-context APIs keep their existing
+domains. The new trait closure still refuses the unresolved base64 namespace.
+
+`originalNamespaceAttributeInputs` retains complete source-bound literal-doc
+inspection candidates with `callerOwnerResolved: false`. Consumers must not
+use those candidates as namespace or availability authority. The per-invocation
+`proveBuiltinDeriveEmptyEnclosingEffect` lane independently reissues every
+actual builtin owner through the existing complete output issuer and joins the
+original Impl namespace theorem. It requires an already genuine input context;
+it cannot supply the missing original ancestor/tool-owner proof for that input.
+In particular, the retained `core::arch::x86_64::*` non-trait import theorem does
+not prove absence of a competing `rustfmt` type-prefix binding. A complete
+source-backed export/producer closure remains required; registered spelling or
+a public namespace flag cannot replace it.
+
 The [rule-layer contract](translation-rules.md) defines the required separation
 between language semantics and repository conventions. The implementation in
 [`rule-pipeline.mjs`](../../tools/translation/rule-pipeline.mjs) accepts exactly

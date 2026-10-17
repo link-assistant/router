@@ -4,6 +4,8 @@ import {types} from 'node:util';
 import {originalDeriveBangEnclosingOutputs,deriveBangOutputAt} from './derive-bang-context.mjs';
 import {originalImplNamespaceSourcePlan,requireOriginalImplNamespaceSourcePlan} from './derive-ancestor-attribute-scope.mjs';
 import {moduleScopeKey} from './source-module-views.mjs';
+import {deriveFootprintAt,deriveFootprintStandardInputSource} from './derive-footprints.mjs';
+import {proveBuiltinDeriveBangFootprint,originalBuiltinDeriveEnclosingOutput} from './builtin-derive-bang-footprints.mjs';
 
 export const DERIVE_EMPTY_ENCLOSING_EFFECT_RULE=Object.freeze({
  id:'rust.original-complete-derived-enclosing-name-effect.v1',
@@ -89,4 +91,38 @@ export function proveDeriveRequestedNameUnchanged(token,context,deriveContext,mo
 }
 export function deriveRequestedNameEffectFacts(proof,token,context,deriveContext,module,item){
  const state=requests.get(proof);if(!state||state.effect!==token||deriveEmptyEnclosingEffectFacts(token,context,deriveContext,module,item)!==state.state)fail('copied or foreign requested-name proof');return state;
+}
+
+// Fixed per-invocation lane: every actual owner is independently reissued.
+// This avoids constructing an unrelated whole-package bang context; it does
+// not bypass original input/ancestor/generated-attribute owner validation.
+function builtinEnclosingEffects(deriveContext,module,item){
+ const certificate=deriveFootprintAt(deriveContext,module,item);
+ if(!certificate)fail('genuine current original derive input required');
+ const original=deriveFootprintStandardInputSource(deriveContext,certificate);
+ if(moduleScopeKey(original.module)!==moduleScopeKey(module)||original.module.source!==module.source||original.module.sourceView!==module.sourceView)fail('builtin effect module differs from its private original input');
+ const invocations=certificate.attributes.filter(attribute=>attribute.name==='derive').flatMap(attribute=>attribute.derives.map(path=>({path,attributeSpan:attribute.span})));
+ if(!invocations.length||invocations.length>256||invocations.length!==original.input.derives.length)fail('complete bounded original builtin owner list required');
+ const alternatives=[];
+ for(let at=0;at<invocations.length;at++){
+  const invocation=invocations[at],actual=original.input.derives[at];
+  if(invocation.path.length!==1||actual.path.length!==1||invocation.path[0]!==actual.path[0]||invocation.attributeSpan.start!==actual.attributeSpan.start||invocation.attributeSpan.end!==actual.attributeSpan.end)fail('builtin owner order or actual invocation changed');
+  const proof=proveBuiltinDeriveBangFootprint({context:deriveContext,certificate,invocation}),output=originalBuiltinDeriveEnclosingOutput(proof,deriveContext,certificate,invocation);
+  if(output.sink.kind!=='ItemKind::Impl')fail('actual complete builtin output is not an Impl sink');
+  alternatives.push(Object.freeze({invocation,kind:'ItemKind::Impl',originalCompleteOutput:output}));
+ }
+ if(deriveFootprintAt(deriveContext,module,item)!==certificate)fail('original invocation changed during complete output reissue');
+ return {certificate,sourcePlan:requireOriginalImplNamespaceSourcePlan(originalImplNamespaceSourcePlan()),alternatives:Object.freeze(alternatives)};
+}
+export function proveBuiltinDeriveEmptyEnclosingEffect(deriveContext,module,item){
+ const original=builtinEnclosingEffects(deriveContext,module,item),token=Object.freeze({schema:'private-builtin-empty-derived-enclosing-name-effect-v1'});
+ issued.set(token,Object.freeze({builtinOnly:true,deriveContext,moduleKey:moduleScopeKey(module),source:module.source,sourceView:module.sourceView,itemStart:item.start,itemEnd:item.end,...original,enclosingTypeBindings:Object.freeze([]),enclosingUsableValueBindings:Object.freeze([]),runtimeAuthority:false}));return token;
+}
+export function builtinDeriveEmptyEnclosingEffectFacts(token,deriveContext,module,item){
+ const state=issued.get(token);
+ if(!state?.builtinOnly||state.deriveContext!==deriveContext||state.moduleKey!==moduleScopeKey(module)||state.source!==module.source||state.sourceView!==module.sourceView||state.itemStart!==item.start||state.itemEnd!==item.end)fail('copied, foreign or changed builtin invocation effect');
+ const current=builtinEnclosingEffects(deriveContext,module,item);
+ if(current.certificate!==state.certificate)fail('current original builtin input differs');
+ requireOriginalImplNamespaceSourcePlan(state.sourcePlan);
+ return Object.freeze({...state,alternatives:current.alternatives});
 }
