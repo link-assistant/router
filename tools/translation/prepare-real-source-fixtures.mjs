@@ -175,11 +175,56 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
 export const STATIC_SOURCE_LIFECYCLE_LIMITS=Object.freeze({paths:20000,fileBytes:8*1024*1024,sourceBytes:64*1024*1024,outputBytes:256*1024*1024});
 export const STATIC_SOURCE_LIFECYCLE_CASES=Object.freeze({"bang-output-observer.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","compilation-matrix.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","derive-bang-footprints.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","fixed-arrays.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","integer-range-patterns.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","json-macro-arrays.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","json-source-f64-borrows.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","macro-use-bindings.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","matrix-bulk.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","namespace-census.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","option-ok-or-else.test.mjs":"e4561e76506ed25a7e638fb1e00a965f8479e1db","option-ok-or.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","production-iterator-chains.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","rust-structure-performance.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","slice-membership-originals.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5","trait-object-derive-source.test.mjs":"5de1dea8b777dcd6e637758efc2c260150735af5"});
 export const STATIC_SOURCE_LIFECYCLE_PROFILES=Object.freeze({"5de1dea8b777dcd6e637758efc2c260150735af5":{"files":806,"bytes":9952429,"sourceSetSha256":"fa513c50ae94c3ccba510ddd5a954451bedf63a2a823805c62eb8fee08b4affa"},"e4561e76506ed25a7e638fb1e00a965f8479e1db":{"files":808,"bytes":9961521,"sourceSetSha256":"8683ed8c1f78d91f109d9c3f41151fa54e605833e03caac2bb821f00aa8f6d16"}});
+import {transportConcreteSyntaxSources,transportConcreteSyntaxMetaChunks} from './concrete-syntax-meta.mjs';
 const STATIC_SOURCE_PREFIX='tools/translation/source-profiles/static-source-lifecycle/';
 const staticFail=message=>{throw new TypeError('Static source lifecycle: '+message);};
 const staticGit=(root,args,options={})=>execFileSync('/usr/bin/git',['-C',root,...args],{timeout:30000,maxBuffer:STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes+8*1024*1024,...options});
 const staticBlob=bytes=>createHash('sha1').update(Buffer.from(`blob ${bytes.length}\0`)).update(bytes).digest('hex');
 const staticRowsDigest=rows=>hash(JSON.stringify(rows));
+// New sibling schedule only. Native APIs still independently rebuild every row;
+// these grouping counts never grant CST, namespace or semantic admission.
+function staticSourceCsts(rows,accept){
+  let pending=[],units=0,bytes=0;
+  const flush=()=>{if(!pending.length)return;const actual=transportConcreteSyntaxSources(pending.map(([,row])=>({source:row.source,language:'Rust'})));
+    if(actual.rows.length!==pending.length)staticFail('complete source batch census differs');for(let i=0;i<pending.length;i++)accept(pending[i][0],actual.rows[i]);pending=[];units=0;bytes=0;};
+  for(const [id,row]of rows){const size=Buffer.byteLength(row.source);if(row.source.length>65536){flush();accept(id,transportConcreteSyntaxSource(row.source,{language:'Rust'}));continue;}
+    if(pending.length===256||units+row.source.length>65536||bytes+size>262144)flush();pending.push([id,row]);units+=row.source.length;bytes+=size;
+  }flush();
+}
+/** Full untrusted stored-CST transport; no source-origin shortcut or receipt. */
+export function transportStaticSourceLifecycleCanonicals(rows){
+  const out=new Map();let pending=[],units=0,bytes=0,nodes=0,canonical=0;
+  const flush=()=>{if(!pending.length)return;const actual=transportConcreteSyntaxMetaChunks([pending.map(([,row])=>row.canonical)]),values=actual.chunks[0]?.rows;
+    if(!values||values.length!==pending.length)staticFail('complete canonical batch census differs');
+    for(let i=0;i<pending.length;i++){const [id,row]=pending[i],value=values[i];if(value.meta!==row.canonical||value.source!==row.source||value.document.language!=='Rust')staticFail('complete canonical source association differs');out.set(id,value.document);}
+    pending=[];units=0;bytes=0;nodes=0;canonical=0;};
+  for(const [id,row]of rows){if(typeof row.source!=='string'||typeof row.canonical!=='string')staticFail('complete changed-parent CST missing');
+    // Parsed data is a scheduling hint only. The original untrusted CST API
+    // checks all shapes, classifications, encoding and actual counts again.
+    const hint=JSON.parse(row.canonical),count=Array.isArray(hint?.nodes)?hint.nodes.length:0,size=Buffer.byteLength(row.source);
+    if(pending.length&&(pending.length===256||units+row.source.length>2097152||bytes+size>8388608||nodes+count>200000||canonical+row.canonical.length>33554432))flush();
+    pending.push([id,row]);units+=row.source.length;bytes+=size;nodes+=count;canonical+=row.canonical.length;
+  }flush();return out;
+}
+function staticDelta(before,after){
+  const operation=createRulePipeline([
+    {phase:'language',rules:[{id:'static-fixture.whole-original-cst-span',apply:()=>{
+      let start=0,end=before.source.length,suffix=after.source.length;
+      while(start<end&&start<suffix&&before.source[start]===after.source[start])start++;
+      while(end>start&&suffix>start&&before.source[end-1]===after.source[suffix-1]){end--;suffix--;}
+      const boundaries=[...new Set([0,before.source.length,...before.document.nodes.flatMap(row=>[row[2],row[3]])])].sort((a,b)=>a-b);
+      start=boundaries.filter(at=>at<=start).at(-1);end=boundaries.find(at=>at>=end);suffix=end+after.source.length-before.source.length;
+      return {span:[start,end],expected:before.source.slice(start,end),replacement:after.source.slice(start,suffix)};
+    }}]},
+    {phase:'repository',rules:[{id:'static-fixture.exact-current-parent-and-inverse',apply:edit=>{
+      const [start,end]=edit.span;if(before.source.slice(start,end)!==edit.expected||before.source.slice(0,start)+edit.replacement+before.source.slice(end)!==after.source)staticFail('actual whole-parent substitution differs');
+      const inverse={span:[start,start+edit.replacement.length],expected:edit.replacement,replacement:edit.expected};
+      if(after.source.slice(...inverse.span)!==inverse.expected||after.source.slice(0,inverse.span[0])+inverse.replacement+after.source.slice(inverse.span[1])!==before.source)staticFail('complete adoption inverse differs');
+      return {edit,inverse};
+    }}]},
+  ]).run(null);
+  return {...operation.value,trace:operation.trace,afterCanonicalSha256:hash(after.canonical),completeInverse:true,meaning:'Exact reviewed Git adoption source delta; not a new semantic or dispatch proof.'};
+}
 function staticCapture(root,rev){
   const listing=staticGit(root,['ls-tree','-r','-l','-z',rev]).toString('utf8').split('\0').filter(Boolean),rows=[];
   for(const record of listing){const tab=record.indexOf('\t'),path=record.slice(tab+1),fields=record.slice(0,tab).trim().split(/\s+/u);
@@ -228,13 +273,13 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
   for(const profile of profiles){const files=[];for(const before of profile.files){const after=currentByPath.get(before.path);if(!after){files.push({path:before.path,status:'deleted',before,current:null,originalPreserved:true});continue;}if(before.sourceId!==after.sourceId){changedIds.add(before.sourceId);changedIds.add(after.sourceId);files.push({path:before.path,status:'changed',before,after});}}lineage.push({revision:profile.revision,files});}
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'static-fixture.complete-original-cst-and-current-source-joins',apply:()=>{
-      for(const [id,row]of sources){retainedBytes+=Buffer.byteLength(JSON.stringify({source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('retained source bound');
-        if(changedIds.has(id)){const cst=transportConcreteSyntaxSource(row.source,{language:'Rust'});if(cst.source!==row.source)staticFail('complete source CST differs');row.canonical=cst.meta;row.document=cst.document;retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');}
-      }
+      for(const row of sources.values()){retainedBytes+=Buffer.byteLength(JSON.stringify({source:row.source,bytes:row.bytes,gitBlob:row.gitBlob}));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('retained source bound');}
+      const changed=[...sources].filter(([id])=>changedIds.has(id));
+      staticSourceCsts(changed,(id,cst)=>{const row=sources.get(id);if(cst.source!==row.source||cst.document.language!=='Rust')staticFail('complete source CST differs');retainedBytes+=Buffer.byteLength(JSON.stringify(cst.meta));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete retained CST bound');row.canonical=cst.meta;row.document=cst.document;});
+      const reparsed=transportStaticSourceLifecycleCanonicals(changed);
+      for(const [id,row]of changed){const document=reparsed.get(id);if(JSON.stringify(document)!==JSON.stringify(row.document))staticFail('independent complete CST classification differs');row.document=document;}
       for(const stage of lineage)for(const row of stage.files)if(row.status==='changed'){
-        // delta() widens to COMPLETE original CST token/group boundaries, so a
-        // changed identifier can never be cut into a partial-token edit.
-        Object.assign(row,delta(sources.get(row.before.sourceId),sources.get(row.after.sourceId)));retainedBytes+=Buffer.byteLength(JSON.stringify(row));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete inverse retention bound');
+        Object.assign(row,staticDelta(sources.get(row.before.sourceId),sources.get(row.after.sourceId)));retainedBytes+=Buffer.byteLength(JSON.stringify(row));if(retainedBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticFail('complete inverse retention bound');
       }
       return {lineage};
     }}]},
@@ -244,7 +289,7 @@ export function prepareStaticSourceLifecycleProposal({root=resolve(dirname(fileU
   const packed=gzipSync(raw,{level:9,mtime:0}),index={schema:bundle.schema,archive:'originals.json.gz',rawBytes:raw.length,rawSha256:hash(raw),bytes:packed.length,sha256:hash(packed),profiles:profiles.map(({revision,files,sourceSetSha256})=>({revision,files:files.length,sourceSetSha256})),current:bundle.current.sourceSetSha256,trace:result.trace},notice='# Complete static source lifecycle fixtures\n\nTwo complete original Router Rust/Cargo source universes and separately captured current source parents. All original LICENSE terms apply. Historical revisions: '+revisions.join(', ')+'. Full source/Git blob/CST joins and reversible actual source evolution are data only: no namespace, dispatch, ownership, trait, semantic or execution authority. Current producer revision is provenance; exact full source rows determine freshness across compiler/asset-only commits.\n';
   const files=[{path:STATIC_SOURCE_PREFIX+'originals.json.gz',encoding:'base64',content:packed.toString('base64')},{path:STATIC_SOURCE_PREFIX+'manifest.json',encoding:'utf8',content:JSON.stringify(index,null,2)+'\n'},{path:STATIC_SOURCE_PREFIX+'NOTICE.md',encoding:'utf8',content:notice}].map(row=>({...row,bytes:Buffer.byteLength(row.content,row.encoding),sha256:hash(Buffer.from(row.content,row.encoding))}));
   const after=actual();if(JSON.stringify(before)!==JSON.stringify(after))staticFail('source inputs changed');
-  return {schema:'router-static-source-lifecycle-proposal-v1',sourceRoot:root,subjectRevision,provenanceRevision,before,after,files,trace:result.trace,limits:STATIC_SOURCE_LIFECYCLE_LIMITS,completeInverse:true,authority:bundle.authority};
+  return {schema:'router-static-source-lifecycle-proposal-v1',sourceRoot:root,subjectRevision,provenanceRevision,before,after,files,cstSchedule:{source:'existing bounded Sources; large rows existing single transport',canonical:'every canonical through full untrusted MetaChunks',substitution:'actual whole-span language/repository pipeline; full inverse'},trace:result.trace,limits:STATIC_SOURCE_LIFECYCLE_LIMITS,completeInverse:true,authority:bundle.authority};
 }
 export function writeStaticSourceLifecycleProposal(proposal,output){
   if(proposal?.schema!=='router-static-source-lifecycle-proposal-v1'||typeof output!=='string'||!isAbsolute(output))staticFail('explicit external proposal output required');

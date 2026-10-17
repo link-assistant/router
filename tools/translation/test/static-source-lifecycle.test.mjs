@@ -7,9 +7,9 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {gzipSync,gunzipSync} from 'node:zlib';
-import {prepareStaticSourceLifecycleProposal,writeStaticSourceLifecycleProposal,STATIC_SOURCE_LIFECYCLE_CASES,STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS,selectRealSourceFixture} from '../prepare-real-source-fixtures.mjs';
+import {prepareStaticSourceLifecycleProposal,writeStaticSourceLifecycleProposal,STATIC_SOURCE_LIFECYCLE_CASES,STATIC_SOURCE_LIFECYCLE_PROFILES,STATIC_SOURCE_LIFECYCLE_LIMITS,selectRealSourceFixture,transportStaticSourceLifecycleCanonicals} from '../prepare-real-source-fixtures.mjs';
 import {readStaticSourceLifecycle,staticSourceLifecycleContext,originalRealSourceManifest} from './real-source-fixtures.mjs';
-import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
+import {transportConcreteSyntaxMeta,transportConcreteSyntaxMetaChunks,applyConcreteSyntaxSubstitutions,serializeConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {translateProject} from '../project.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
@@ -44,14 +44,18 @@ test('actual sibling producer is deterministic and complete without changing the
 });
 
 test('all changed full current parents preserve whole CST token boundaries and complete inverses',{timeout:60000},()=>{
- const {bundle}=readStaticSourceLifecycle(),rows=[];
+ const {bundle}=readStaticSourceLifecycle(),rows=[],documents=transportStaticSourceLifecycleCanonicals(Object.entries(bundle.sources).filter(([,row])=>row.canonical!==undefined));
  for(const stage of bundle.lineage)for(const row of stage.files){if(row.status==='deleted'){assert.equal(row.originalPreserved,true);assert.ok(bundle.sources[row.before.sourceId].source);continue;}
-  const before=bundle.sources[row.before.sourceId],after=bundle.sources[row.after.sourceId],original=transportConcreteSyntaxMeta(before.canonical),current=transportConcreteSyntaxMeta(after.canonical);assert.equal(original.source,before.source);assert.equal(current.source,after.source);
-  const boundaries=new Set([0,before.source.length,...original.document.nodes.flatMap(node=>[node[2],node[3]])]);assert.ok(boundaries.has(row.edit.span[0]));assert.ok(boundaries.has(row.edit.span[1]));
+  const before=bundle.sources[row.before.sourceId],after=bundle.sources[row.after.sourceId],original=documents.get(row.before.sourceId),current=documents.get(row.after.sourceId);assert.equal(original.source,before.source);assert.equal(current.source,after.source);
+  const boundaries=new Set([0,before.source.length,...original.nodes.flatMap(node=>[node[2],node[3]])]);assert.ok(boundaries.has(row.edit.span[0]));assert.ok(boundaries.has(row.edit.span[1]));
   assert.equal(before.source.slice(...row.edit.span),row.edit.expected);assert.equal(before.source.slice(0,row.edit.span[0])+row.edit.replacement+before.source.slice(row.edit.span[1]),after.source);
   assert.equal(after.source.slice(...row.inverse.span),row.inverse.expected);assert.equal(after.source.slice(0,row.inverse.span[0])+row.inverse.replacement+after.source.slice(row.inverse.span[1]),before.source);rows.push(row);
  }
- assert.ok(rows.length>0);retain('03-full-current-and-original-cst-inverses',{rows,authority:bundle.authority});
+ assert.ok(rows.length>0);
+ for(const path of ['src/credential_recovery_store.rs','src/refresh.rs']){const row=rows.find(row=>row.path===path);assert.ok(row,path);const before=bundle.sources[row.before.sourceId],after=bundle.sources[row.after.sourceId],old=applyConcreteSyntaxSubstitutions(documents.get(row.before.sourceId),{languageRules:[],repositoryRules:[{id:'repository.reviewed-native-adoption-history',edits:[row.edit]}]});
+  assert.equal(old.value.source,after.source);assert.equal(serializeConcreteSyntaxMeta(old.value),after.canonical);assert.equal(hash(serializeConcreteSyntaxMeta(old.value)),row.afterCanonicalSha256);assert.deepEqual(row.trace,[{phase:'language',id:'static-fixture.whole-original-cst-span'},{phase:'repository',id:'static-fixture.exact-current-parent-and-inverse'}]);
+ }
+ retain('03-full-current-and-original-cst-inverses',{rows,authority:bundle.authority});
 });
 
 test('original native constants and a current complete formatting body retain independent typed behavior',{timeout:60000},async()=>{
@@ -76,6 +80,10 @@ test('matching complete ancestry and Cargo stay distinct and unknown profiles ca
 test('forged archives paths source spans CST and inverse facts cannot replace complete originals',{timeout:60000},t=>{
  const controls=[bundle=>{bundle.cases['fixed-arrays.test.mjs']='foreign';},bundle=>{bundle.profiles[0].files[0].sourceId='0'.repeat(64);},bundle=>{bundle.profiles[0].files.push(bundle.profiles[0].files[0]);},bundle=>{const row=Object.values(bundle.sources)[0];row.source+=' ';},bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');row.edit.span[0]++;},bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');row.inverse.replacement+=' ';},bundle=>{const row=Object.values(bundle.sources).find(row=>row.canonical);const doc=JSON.parse(row.canonical);doc.source+=' ';row.canonical=JSON.stringify(doc);},bundle=>{bundle.current.files[0].path='../outside.rs';}];
  for(const [index,mutate]of controls.entries()){const folder=changedFolder(t,mutate);assert.throws(()=>readStaticSourceLifecycle({folder}),TypeError);retain('06-tampered-'+index,{folder,kind:'full fresh digest recomputed around deliberately forged source association; refused'});}
+ const canonical=Object.values(readStaticSourceLifecycle().bundle.sources).find(row=>row.canonical).canonical,actual=transportConcreteSyntaxMeta(canonical);
+ for(const mutate of [doc=>{doc.nodes[1][2]++;},doc=>{doc.nodes[1][0]='unknown-classification';},doc=>{doc.sourceEncoding.utf8Bytes++;},doc=>{doc.unknown=true;},doc=>{doc.source='cross-row source';}]){const doc=JSON.parse(canonical);mutate(doc);assert.throws(()=>transportConcreteSyntaxMetaChunks([[JSON.stringify(doc)]]),TypeError);}
+ const metas=[canonical,canonical];Object.defineProperty(metas,'1',{get(){throw new Error('late accessor must not run');},enumerable:true});assert.throws(()=>transportConcreteSyntaxMetaChunks([metas]),TypeError);
+ assert.equal(actual.source,JSON.parse(canonical).source);
  const folder=changedFolder(t,()=>{}),packed=readFileSync(join(folder,'originals.json.gz'));packed[packed.length-1]^=1;writeFileSync(join(folder,'originals.json.gz'),packed);assert.throws(()=>readStaticSourceLifecycle({folder}),TypeError);
 });
 
