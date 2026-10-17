@@ -576,7 +576,11 @@ function projectionSpansSame(actual,expected,budget={cells:200000},depth=0){
   else if(!projectionSpansSame(a.value,b?.value,budget,depth+1))return false;
  }
  for(let at=0;at<wanted.length;at++){
-  const name=wanted[at];if(actualObject&&own(actual,name))continue;const b=descriptor(expected,name);if(!b||!own(b,'value')||name==='span'||!projectionSpansSame(undefined,b.value,budget,depth+1))return false;
+  const name=wanted[at];if(actualObject&&own(actual,name))continue;const b=descriptor(expected,name);if(!b||!own(b,'value'))return false;
+  // Genuine semantic JSON omits an undefined callback-input diagnostic span.
+  // Numeric, null and object spans still require the complete matching value.
+  if(name==='span'){if(b.value!==undefined)return false;continue;}
+  if(!projectionSpansSame(undefined,b.value,budget,depth+1))return false;
  }return true;
 }
 // Failure-only first span difference; this never grants or repairs source authority.
@@ -591,7 +595,7 @@ function projectionSpanDiagnostic(pairs){
  const field=(value,name)=>{const scan=census(value);if(scan.reason||!value||typeof value!=='object')return null;const result=descriptor(value,name);return result&&own(result,'value')?result:null;};
  const summary=value=>{
   const kind=field(value,'k'),span=field(value,'span'),start=span&&field(span.value,'start'),end=span&&field(span.value,'end');
-  return {kind:typeof kind?.value==='string'?text(kind.value,40):null,span:span?'present':'absent',start:typeof start?.value==='number'?start.value:null,end:typeof end?.value==='number'?end.value:null,startType:start?typeof start.value:'absent',endType:end?typeof end.value:'absent'};
+  return {kind:typeof kind?.value==='string'?text(kind.value,40):null,span:span?'present':'absent',spanType:span?typeof span.value:'absent',start:typeof start?.value==='number'?start.value:null,end:typeof end?.value==='number'?end.value:null,startType:start?typeof start.value:'absent',endType:end?typeof end.value:'absent'};
  };
  const walk=(actual,expected,path,depth,span=false,parents=null)=>{
   const difference=reason=>({path:text(path),reason,actual:summary(parents?parents.actual:actual),expected:summary(parents?parents.expected:expected)});

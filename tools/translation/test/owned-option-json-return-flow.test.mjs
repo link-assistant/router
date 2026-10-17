@@ -108,6 +108,15 @@ test('actual allocating callbacks retain current source bodies layouts and priva
   retain('513-complete-source-span-tamper',{mutation,wire:serializeProgram(program)});assert.throws(()=>emitJavaScript(program),/source|span|projection|body|changed|checked|private|binding/i,mutation);
  }
  const restored=emitJavaScript(parseProgram(wire));retain('513-complete-restored-source-emission',restored);assert.deepEqual(restored,emitJavaScript(parseProgram(wire)));
+ // The real standard callback specialization gives an internal var span:undefined;
+ // genuine semantic JSON omits it without losing a numeric source coordinate.
+ const unspanned=program=>find([...program.declarations.values()],node=>node.k==='var'&&typeof node.name==='string'&&node.name.startsWith('ml_standard_callback_arg_')&&!Object.hasOwn(node,'span'));
+ const omitted=parseProgram(wire),internal=unspanned(omitted);assert.ok(internal);internal.span=undefined;const omittedWire=serializeProgram(omitted);assert.equal(omittedWire,wire);const roundTripped=parseProgram(omittedWire);assert.ok(unspanned(roundTripped));assert.deepEqual(emitJavaScript(roundTripped),restored);retain('522-complete-undefined-span-roundtrip',{wire:omittedWire,emission:emitJavaScript(parseProgram(omittedWire))});
+ for(const [mutation,span]of [['null',null],['empty-object',{}],['numeric-zero',{start:0,end:0}],['numeric-shifted',{start:1,end:2}]]){
+  const program=parseProgram(wire),variable=unspanned(program);assert.ok(variable,mutation);variable.span=span;retain('522-complete-added-internal-span-tamper',{mutation,wire:serializeProgram(program)});assert.throws(()=>emitJavaScript(program),/source|span|projection|body|changed|checked|private/i,mutation);
+ }
+ assert.deepEqual(emitJavaScript(parseProgram(wire)),restored);
+
 });
 test('unknown allocating callbacks shadowed traits custom carriers and absent parser bindings remain refused',()=>{
  const sources=[
