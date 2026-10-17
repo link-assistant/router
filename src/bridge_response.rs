@@ -301,7 +301,7 @@ pub fn openai_annotations_to_anthropic(
     };
     let annotations = annotations
         .as_array()
-        .ok_or_else(|| "annotations must be an array".to_string())?;
+        .ok_or_else(|| crate::translation_core::format!("{}", "annotations must be an array"))?;
     annotations
         .iter()
         .enumerate()
