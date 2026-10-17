@@ -86,7 +86,8 @@ test('CST reconstruction and checked Links reissue retain all source and type bo
  assert.throws(()=>receive(typedSource.replace(': import("./runtime/json-macro-runtime.mjs").JsonValue',': boolean')),/written return ABI/u);
  assert.throws(()=>receive(typedSource.replace(': import("./runtime/json-macro-runtime.mjs").JsonValue',': Promise<boolean>')),/actual import symbol/u);
  const shadow=typedSource.replace('import type {JsonValue} from "./runtime/json-macro-runtime.mjs";','type JsonValue = {readonly counterfeit: true};');assert.throws(()=>receive(shadow),/unsupported declaration/u);
- assert.throws(()=>translate(imports+param+'/** @returns {boolean} */\nexport function copied(value){return copy(value);}'),/written return ABI/u);
+ const malformedJSDoc=imports+param+'/** @returns {boolean} */\nexport function copied(value){return copy(value);}';assert.throws(()=>translate(malformedJSDoc),/written input domain required/u);
+ const wrongJSDocReturn=imports+'/** @param {import("./runtime/json-macro-runtime.mjs").JsonValue} value\n * @returns {boolean} */\nexport function copied(value){return copy(value);}';assert.throws(()=>translate(wrongJSDocReturn),/written return ABI/u);
 
 });
 test('canonical JSON aggregate boundaries and wrong kinds preserve actual runtime refusals',limits,async t=>{
