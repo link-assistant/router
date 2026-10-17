@@ -10,7 +10,30 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const fail=message=>{throw new TypeError('Portable original Git fixture: '+message);};
 function temporary(t,label){const root=fs.mkdtempSync(join(tmpdir(),'router-portable-'+label+'-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));return root;}
 function put(root,path,bytes,mode=0o644){const target=join(root,path);fs.mkdirSync(dirname(target),{recursive:true});fs.writeFileSync(target,bytes,{flag:'wx',mode});}
-function originalObjects(root,fixture){portableGit(root,['init','--quiet','--template=']);for(const row of fixture.objects.values()){const id=portableGit(root,['hash-object','-w','-t',row.kind,'--stdin'],row.raw).toString('ascii').trim();if(id!==row.id)fail('stock Git object identity differs');}for(const profile of [fixture.data.concrete,fixture.data.compiler])if(portableGit(root,['rev-parse','--verify',profile.commit+'^{commit}']).toString('ascii').trim()!==profile.commit)fail('genuine original commit unavailable');}
+function originalObjects(root,fixture){
+ portableGit(root,['init','--quiet','--template=']);
+ const rows=[...fixture.objects.values()],inputs=join(root,'.git/router-original-object-inputs');
+ fs.mkdirSync(inputs);
+ // One native Git batch per original kind replaces one process per object.
+ // These are current-call raw inputs, not a source/verdict cache. Keep the
+ // original type checks, native IDs, complete bodies and ten-second bound.
+ for(const row of rows)fs.writeFileSync(join(inputs,row.id),row.raw,{flag:'wx',mode:0o600});
+ for(const kind of ['commit','tree','blob']){
+  const selected=rows.filter(row=>row.kind===kind);if(!selected.length)continue;
+  const ids=portableGit(root,['hash-object','-w','-t',kind,'--stdin-paths','--no-filters'],selected.map(row=>'.git/router-original-object-inputs/'+row.id+'\n').join('')).toString('ascii').trimEnd().split('\n');
+  if(ids.length!==selected.length||ids.some((id,index)=>id!==selected[index].id))fail('stock Git object identity differs');
+ }
+ // Independently reopen every actual object through stock Git. The complete
+ // ordered headers, original types and full bodies must match, with no suffix.
+ const actual=portableGit(root,['cat-file','--batch'],rows.map(row=>row.id+'\n').join(''));let at=0;
+ for(const row of rows){
+  const end=actual.indexOf(10,at);if(end<at||actual.subarray(at,end).toString('ascii')!==row.id+' '+row.kind+' '+row.raw.length)fail('complete stock Git object header differs');
+  at=end+1;if(!actual.subarray(at,at+row.raw.length).equals(row.raw)||actual[at+row.raw.length]!==10)fail('complete stock Git original object body differs');at+=row.raw.length+1;
+ }
+ if(at!==actual.length)fail('extra stock Git original object bytes');
+ fs.rmSync(inputs,{recursive:true,force:false});
+ for(const profile of [fixture.data.concrete,fixture.data.compiler])if(portableGit(root,['rev-parse','--verify',profile.commit+'^{commit}']).toString('ascii').trim()!==profile.commit)fail('genuine original commit unavailable');
+}
 export function materializeConcreteOriginalGit(t,{folder}={}){const fixture=readPortableGitFixture({folder}),root=temporary(t,'concrete');originalObjects(root,fixture);return {root,revision:PORTABLE_CONCRETE_REVISION,fixture};}
 export function materializeRegisteredCompilerGit(t,{root,registry,folder}){
  const fixture=readPortableGitFixture({folder}),packed=fs.readFileSync(join(root,'tools/translation/source-profiles/isolated-project-compiler/manifest.json.gz')),actual=JSON.parse(gunzipSync(packed).toString('utf8'));

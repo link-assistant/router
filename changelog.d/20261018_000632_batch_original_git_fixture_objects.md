@@ -1,0 +1,3 @@
+### Changed
+- Materialize the portable test fixture through one native Git hash-object batch per original object kind, then independently reopen and compare every complete object through stock Git. The current fixture has 389 objects; 389 individual writer processes become three bounded batches. Keep original commit/tree/blob types, IDs, source bytes, missing ancestry, the ten-second Git bound, all existing whole tests and strict target checks.
+- This test-data change follows an actual Node fixture failure where a single per-object Git process timed out. Preserve that failed run; batching has no measured performance claim until the original complete files are requalified under Node and Bun. No compiler, source/owner authority or across-call cache changes.
