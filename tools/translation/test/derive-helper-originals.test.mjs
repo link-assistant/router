@@ -11,9 +11,9 @@ import {inertInnerLintItem} from '../tool-attributes.mjs';
 import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
 import {parseProgram} from '../semantic-meta.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
-import {associatedOriginalInputs,associatedOriginalDependencyInputs} from './associated-original-context.mjs';
+import {associatedOriginalParentInputs,associatedOriginalDependencyInputs} from './associated-original-context.mjs';
 const root=new URL('../../../',import.meta.url),fixture=JSON.parse(readFileSync(new URL('../fixtures/derive-helper-originals.json',import.meta.url),'utf8'));
-const associatedData=associatedOriginalInputs('derive-helper-originals.test.mjs');
+const associatedData=associatedOriginalParentInputs('derive-helper-originals.test.mjs');
 const dependencies=loadDeriveDependencyProof(associatedOriginalDependencyInputs(associatedData)),hash=value=>createHash('sha256').update(value).digest('hex'),tag=($,fields={})=>Object.freeze({$,...fields});
 function original(path) {
   const pin=fixture.entries.find(entry=>entry.path===path),source=associatedData.source(path);assert.ok(pin);assert.equal(hash(source),pin.sourceSha256);

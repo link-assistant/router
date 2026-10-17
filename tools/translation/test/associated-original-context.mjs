@@ -36,3 +36,17 @@ export function associatedOriginalCsvContext(){
   if(failed)throw failure;return result;
  }});return csvContext;
 }
+
+// The returned closure is created in this separate module-level factory.
+// Its only per-call captured object is the already selected own string table.
+function associatedSourceProjection(sources){
+ return path=>{if(!Object.hasOwn(sources,path))fail('path is outside the projected original parents/Cargo');return sources[path];};
+}
+export function associatedOriginalParentInputs(id){
+ const context=associatedOriginalInputs(id),sources=Object.create(null);
+ for(const path of [...context.association.parents.map(row=>row.path),'Cargo.toml','Cargo.lock']){
+  if(Object.hasOwn(sources,path))fail('duplicate projected original path');
+  sources[path]=context.source(path);
+ }
+ return Object.freeze({source:associatedSourceProjection(Object.freeze(sources))});
+}
