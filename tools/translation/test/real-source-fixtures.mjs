@@ -84,12 +84,18 @@ function staticCst(source,doc){
   if(doc.schema!=='meta-language-concrete-syntax-v1'||doc.language!=='Rust'||doc.source!==source||!Array.isArray(doc.nodes))staticError('complete CST source differs');
   let end=0;for(const node of doc.nodes.slice(1))if(node[0]!=='group'){if(node[2]!==end||!Number.isSafeInteger(node[3])||node[3]<end||node[3]>source.length)staticError('whole CST leaf partition differs');end=node[3];}if(end!==source.length)staticError('complete source CST partition required');return doc;
 }
-export function readStaticSourceLifecycle({folder=STATIC_FOLDER}={}){
+// Release packed/raw archive backing before complete native CST validation.
+// The full index and decoded bundle remain fresh ordinary return data.
+function readStaticArchiveData(folder){
   const index=JSON.parse(text(readFileSync(resolve(folder,'manifest.json'))));
   if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticError('fixed complete index required');
   const packed=readFileSync(resolve(folder,index.archive));if(packed.length!==index.bytes||hash(packed)!==index.sha256)staticError('full packed source differs');
   const raw=gunzipSync(packed,{maxOutputLength:STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes});if(raw.length!==index.rawBytes||hash(raw)!==index.rawSha256)staticError('full original source differs');
-  const bundle=JSON.parse(text(raw));if(bundle.schema!==index.schema||JSON.stringify(bundle.cases)!==JSON.stringify(STATIC_SOURCE_LIFECYCLE_CASES)||JSON.stringify(bundle.authority)!==JSON.stringify({namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}))staticError('test-data contract differs');
+  const bundle=JSON.parse(text(raw));return {index,bundle};
+}
+export function readStaticSourceLifecycle({folder=STATIC_FOLDER}={}){
+  const {index,bundle}=readStaticArchiveData(folder);
+  if(bundle.schema!==index.schema||JSON.stringify(bundle.cases)!==JSON.stringify(STATIC_SOURCE_LIFECYCLE_CASES)||JSON.stringify(bundle.authority)!==JSON.stringify({namespace:false,dispatch:false,ownership:false,semantic:false,executable:false}))staticError('test-data contract differs');
   if(!Array.isArray(bundle.profiles)||bundle.profiles.length!==2||new Set(bundle.profiles.map(row=>row.revision)).size!==2)staticError('two complete historical universes required');
   let bytes=0;for(const [id,row]of Object.entries(bundle.sources)){if(!/^[a-f0-9]{64}$/u.test(id)||typeof row.source!=='string'||Buffer.byteLength(row.source)!==row.bytes||row.bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.fileBytes||hash(row.source)!==id||staticHashBlob(Buffer.from(row.source))!==row.gitBlob)staticError('complete source content address differs');bytes+=row.bytes;if(bytes>STATIC_SOURCE_LIFECYCLE_LIMITS.sourceBytes)staticError('complete original source budget');}
   const canonicalRows=Object.entries(bundle.sources).filter(([,row])=>row.canonical!==undefined),boundariesBySource=new Map();

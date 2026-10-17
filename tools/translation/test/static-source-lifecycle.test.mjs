@@ -91,16 +91,21 @@ test('matching complete ancestry and Cargo stay distinct and unknown profiles ca
 test('forged archives paths source spans CST and inverse facts cannot replace complete originals',{timeout:60000},t=>{
  // One complete data-only preimage for this CASE; each altered bank below
  // remains a fresh full packet passed through the unchanged untrusted reader.
- const pristine=readStaticSourceLifecycle(),preimage=JSON.stringify(pristine);
+ // Keep the full original preimage, not its duplicate parsed object graph,
+ // through every fresh mutation reader. Canonical selection moves earlier
+ // only in this explicit data-only fixture schedule.
+ const {preimage,canonical}=(()=>{const pristine=readStaticSourceLifecycle();return {preimage:JSON.stringify(pristine),canonical:Object.values(pristine.bundle.sources).find(row=>row.canonical).canonical};})();
  const controls=[bundle=>{bundle.cases['fixed-arrays.test.mjs']='foreign';},bundle=>{bundle.profiles[0].files[0].sourceId='0'.repeat(64);},bundle=>{bundle.profiles[0].files.push(bundle.profiles[0].files[0]);},bundle=>{const row=Object.values(bundle.sources)[0];row.source+=' ';},bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');row.edit.span[0]++;},bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');row.inverse.replacement+=' ';},bundle=>{const row=Object.values(bundle.sources).find(row=>row.canonical);const doc=JSON.parse(row.canonical);doc.source+=' ';row.canonical=JSON.stringify(doc);},bundle=>{bundle.current.files[0].path='../outside.rs';}];
  for(const [index,mutate]of controls.entries()){const folder=changedFolder(t,mutate,preimage);assert.throws(()=>readStaticSourceLifecycle({folder}),TypeError);retain('06-tampered-'+index,{folder,kind:'full fresh digest recomputed around deliberately forged source association; refused'});}
  for(const side of ['before','after']){const folder=changedFolder(t,bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');delete bundle.sources[row[side].sourceId].canonical;},preimage);assert.throws(()=>readStaticSourceLifecycle({folder}),/both changed-parent canonical documents required/);retain('06-missing-'+side+'-canonical',{folder,scope:'Full original and latest changed-parent canonical documents are each mandatory.'});}
- const canonical=Object.values(pristine.bundle.sources).find(row=>row.canonical).canonical,actual=transportConcreteSyntaxMeta(canonical);
+ // The complete native transport still executes here; only its source
+ // primitive is needed across the following independent forgery attempts.
+ const actualSource=transportConcreteSyntaxMeta(canonical).source;
  for(const mutate of [doc=>{doc.nodes[1][2]++;},doc=>{doc.nodes[1][0]='unknown-classification';},doc=>{doc.sourceEncoding.utf8Bytes++;},doc=>{doc.unknown=true;},doc=>{doc.source='cross-row source';}]){const doc=JSON.parse(canonical);mutate(doc);assert.throws(()=>transportConcreteSyntaxMetaChunks([[JSON.stringify(doc)]]),TypeError);}
  assert.throws(()=>transportStaticSourceLifecycleCanonicals([['bounded',{source:'',canonical:' '.repeat(33554433)}]]),/canonical code-unit bound/);
  assert.throws(()=>transportStaticSourceLifecycleCanonicals([['deep',{source:'',canonical:'['.repeat(258)+'0'+']'.repeat(258)}]]),TypeError);
  const metas=[canonical,canonical];Object.defineProperty(metas,'1',{get(){throw new Error('late accessor must not run');},enumerable:true});assert.throws(()=>transportConcreteSyntaxMetaChunks([metas]),TypeError);
- assert.equal(actual.source,JSON.parse(canonical).source);
+ assert.equal(actualSource,JSON.parse(canonical).source);
  const folder=changedFolder(t,()=>{},preimage),packed=readFileSync(join(folder,'originals.json.gz'));packed[packed.length-1]^=1;writeFileSync(join(folder,'originals.json.gz'),packed);assert.throws(()=>readStaticSourceLifecycle({folder}),TypeError);
 });
 
