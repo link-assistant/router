@@ -1,0 +1,3 @@
+### Changed
+- Refresh the isolated compiler registration from the actual reviewed 1,272-file proposal for source commit 5df0cc72befcc9bb5cb149f4d2eae5d61466a02d, including the complete installed TypeScript 5.9.3 package. Preserve all six generated bootstrap substitutions and their full inverses, registry gzip readback, and the existing notice/license tail.
+- Actual proposal and independent full-source review passed their original resource limits. This registration is source data; full receiving qualification, portable fixture refresh, bulk generation, strict parity, and the complete JavaScript gate remain separate obligations. The original two Bun derive deadline failures remain open.
