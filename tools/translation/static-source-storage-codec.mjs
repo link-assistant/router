@@ -419,7 +419,7 @@ export function decodeStaticSourceStorage(raw,index){
  let sources=decodeColumnTables(stored.payload.sources,stored.columnTables);
  sources=decodeSourceStrings(sources,stored.payload.lineage);
  sources=decodeCanonicalColumns(sources,stored.payload.lineage);
- for(const [id,row]of Object.entries(sources))if(record(row)&&Object.hasOwn(row,'canonical'))sources[id]={...row,canonical:decode(row)};
+ sources=Object.fromEntries(Object.entries(sources).map(([id,row])=>[id,record(row)&&Object.hasOwn(row,'canonical')?{...row,canonical:decode(row)}:row]));
  const logical=logicalDigest(stored.payload,sources);
  assert(logical.bytes===descriptor.logicalRawBytes&&logical.sha256===descriptor.logicalRawSha256,'complete reconstructed logical length/SHA');
  const lineage=stored.payload.lineage.map(stage=>({...stage,files:stage.files.map(row=>decodeLineageRow(row,sources))}));
