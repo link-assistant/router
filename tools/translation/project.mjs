@@ -32,7 +32,8 @@ import { sha256, tsType, annotateRuntimeTypes, typeParameterName } from './trans
 import {linkProjectDeclaration,linkProjectMethodDeclaration,originalParsedDeclarationEvidence,copyMetadata,metadataDigest} from './extensions/source-links.mjs';
 import {createOriginalMethodTokenTransform,originalMethodTransformFacts} from './source-method-transforms.mjs';
 import {parseOriginalMethodTransform,originalMethodParsedFacts} from './source-method-parser.mjs';
-import {originalMethodSemantic,relocateOriginalMethodSemantic,originalMethodRefusalRange} from './source-method-admission.mjs';
+import {originalMethodSemantic,relocateOriginalMethodSemantic,originalMethodRefusalRange,isOriginalMethodSemanticSource} from './source-method-admission.mjs';
+import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
 import {createDeriveFootprintContext,deriveFootprintAt,deriveFootprintExternalModules} from './derive-footprints.mjs';
 import {configureDeriveLayout} from './derive-layout.mjs';
@@ -86,6 +87,28 @@ export function originalProjectDeclarationRefusalRange(surface,path){
   }else actual=originalParentRange(state.parent,state.parentPath);
   if(!actual||actual.start!==state.range.start||actual.end!==state.range.end||metadataDigest(surface)!==state.digest)throw new TypeError('Original project refusal source/layout changed after parser capture');
   return state.range;
+}
+// An explicit grouped observation contract, not a reusable proof token. Only
+// the same privately issued original method/parent can share this one fresh
+// source-validation chain; every other origin executes the old readers in order.
+export function originalProjectDeclarationRefusalRanges(surface,path) {
+  const previous=()=>({methodRange:originalMethodRefusalRange(surface,path),projectRange:originalProjectDeclarationRefusalRange(surface,path)});
+  if(!originalDataFreezeIntrinsicsUnchanged()||!isOriginalMethodSemanticSource(surface))return previous();
+  const state=declarationRanges.get(surface);
+  if(!state||state.parent!==surface||state.defaultGenerated||state.cloneGenerated||state.structural||state.path.length!==state.parentPath.length)return previous();
+  for(let index=0;index<state.path.length;index++)if(state.path[index]!==state.parentPath[index])return previous();
+  // Finish caller metadata work before the shared fresh source proof. Do not
+  // retry this observed prefix, or accept a caller's copied range as authority.
+  const actualPath=copyMetadata(path);
+  let matching=Array.isArray(actualPath)&&actualPath.length===state.path.length;
+  if(matching)for(let index=0;index<actualPath.length;index++)if(actualPath[index]!==state.path[index]){matching=false;break;}
+  const actual=originalMethodRefusalRange(surface,state.parentPath);
+  if(!matching)return {methodRange:null,projectRange:null};
+  // Independently rejoin the project association and full current parent. The
+  // shared reader above includes original tokens, parser, namespace, lowering,
+  // semantic body/signature and genuine shared-field evidence validation.
+  if(!actual||actual.start!==state.range.start||actual.end!==state.range.end||metadataDigest(surface)!==state.digest)throw new TypeError('Original project refusal source/layout changed after parser capture');
+  return {methodRange:actual,projectRange:state.range};
 }
 function issueMethodFieldEvidence(parsed,fields) {
   const capture=originalMethodParsedFacts(parsed),transform=capture.transform;

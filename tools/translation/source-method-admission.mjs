@@ -64,6 +64,9 @@ export function originalMethodSemantic(parsed,options={}) {
   surface.sourceMethodProof=freezeMacroTree({schema:'original-method-semantic-source-v1',parse:parsed.proof,originalTokenTransformVerified:true,originalHostParseVerified:true,checkedSourceAssociation:false,copyAuthority:false,namespaceAuthority:false,applicationEffectCompleteness:false,runtimeParity:false});
   const validation=captureOriginalMethodValidation(surface);semantics.set(surface,Object.freeze({parsed,transform:capture.transform,fieldEvidence,offset:0,relocated:false,digest:validation.digest,validation:validation.capture}));return surface;
 }
+// Boolean private-identity inspection only. This grants no source, type, owner,
+// layout or executable authority; grouped readers must still revalidate fully.
+export const isOriginalMethodSemanticSource=value=>semantics.has(value);
 export function originalMethodSemanticFacts(surface) {
   const state=semantics.get(surface);if(!state)throw new TypeError('Original method semantic source is copied, unsealed or caller fabricated');
   originalMethodParsedFacts(state.parsed);originalMethodTransformFacts(state.transform);

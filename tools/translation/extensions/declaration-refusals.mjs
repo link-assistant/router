@@ -2,7 +2,7 @@
 // returns checked IR; callers discard this checker and recheck the survivors.
 import {TranslationError} from '../vendor/meta-language/translation/diagnostics.js';
 import {originalMethodRefusalRange} from '../source-method-admission.mjs';
-import {originalProjectDeclarationRefusalRange} from '../project.mjs';
+import {originalProjectDeclarationRefusalRange,originalProjectDeclarationRefusalRanges} from '../project.mjs';
 const collectors=new WeakMap(),batches=new WeakMap();
 function failedPhase(errors) {
   const error=new Error('Original declaration phase contains semantic refusals');
@@ -32,7 +32,7 @@ export function withDeclarationRefusalCollection(Base) {return class extends Bas
     try {return super.visitDeclaration(item,path,entry,visit,phase);}
     catch(error) {
       if(!(error instanceof TranslationError))throw error;
-      const methodRange=originalMethodRefusalRange(item,path),projectRange=originalProjectDeclarationRefusalRange(item,path),source=methodRange??projectRange??item.span,range=error.span;
+      const {methodRange,projectRange}=originalProjectDeclarationRefusalRanges(item,path),source=methodRange??projectRange??item.span,range=error.span;
       // Generated/host declarations without actual ranges and unattributed
       // errors keep the ordinary first-failure behavior. Internal exceptions
       // are never converted into unsupported source declarations.
