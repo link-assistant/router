@@ -86,12 +86,13 @@ function staticCst(source,doc){
 }
 // Release packed/raw archive backing before complete native CST validation.
 // The full index and decoded bundle remain fresh ordinary return data.
+import {decodeStaticSourceStorage} from '../static-source-storage-codec.mjs';
 function readStaticArchiveData(folder){
   const index=JSON.parse(text(readFileSync(resolve(folder,'manifest.json'))));
   if(index.schema!=='router-static-source-lifecycle-v1'||index.archive!=='originals.json.gz'||!Number.isSafeInteger(index.rawBytes)||index.rawBytes<0||index.rawBytes>STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes)staticError('fixed complete index required');
   const packed=readFileSync(resolve(folder,index.archive));if(packed.length!==index.bytes||hash(packed)!==index.sha256)staticError('full packed source differs');
   const raw=gunzipSync(packed,{maxOutputLength:STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes});if(raw.length!==index.rawBytes||hash(raw)!==index.rawSha256)staticError('full original source differs');
-  const bundle=JSON.parse(text(raw));return {index,bundle};
+  const bundle=decodeStaticSourceStorage(raw,index);return {index,bundle};
 }
 export function readStaticSourceLifecycle({folder=STATIC_FOLDER}={}){
   const {index,bundle}=readStaticArchiveData(folder);
