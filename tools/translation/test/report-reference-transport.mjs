@@ -82,7 +82,7 @@ export function runReferenceProof({name,code,execPath,directory,provenance=null}
  mkdirSync(directory,{recursive:true});
  const codePath=exclusive(join(directory,name+'.code.mjs'),code),wirePath=join(directory,name+'.wire.gz'),envelopePath=join(directory,name+'.envelope.json');
  let wire;
- try{wire=execFileSync(execPath,['--input-type=module','--eval',code],{timeout:10000,maxBuffer:WIRE_BYTES});}
+ try{wire=execFileSync(execPath,['--input-type=module'],{input:code,timeout:10000,maxBuffer:WIRE_BYTES});}
  catch(error){
   const stdoutPath=exclusive(join(directory,name+'.partial-stdout.bin'),Buffer.from(error.stdout??[])),stderrPath=exclusive(join(directory,name+'.partial-stderr.bin'),Buffer.from(error.stderr??[]));
   exclusive(join(directory,name+'.failed.json'),JSON.stringify({codePath,execPath,stdoutPath,stderrPath,error:{name:error.name,message:error.message,status:error.status,signal:error.signal},partial:true}));throw error;

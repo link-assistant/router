@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,mkdirSync,rmSync,writeFileSync,readFileSync,statSync,truncateSync,renameSync,openSync,closeSync,writeSync,utimesSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {packReport,unpackReport,validateReportEnvelope,referenceProofReport,withReferenceProof,compareReferenceProofFiles} from './report-reference-transport.mjs';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {packReport,unpackReport,validateReportEnvelope,referenceProofReport,runReferenceProof,withReferenceProof,compareReferenceProofFiles} from './report-reference-transport.mjs';
 import {withIndexedReferenceProof} from './report-reference-file-cursor.mjs';
 
 const temporary=mkdtempSync(join(tmpdir(),'router-indexed-report-'));
@@ -41,7 +43,64 @@ function refused(label,outer,{transportOnly=false}={}){
  return {record,old,actual};
 }
 
+
+// Test-only transport observations. Native stderr stays complete and distinct;
+// native Error.stack is never requested by the parent descriptor census.
+function transportError(error){
+  const value=item=>Buffer.isBuffer(item)?{bufferBase64:item.toString('base64'),bytes:item.length}:Array.isArray(item)?item.map(value):item===null||['undefined','string','number','boolean'].includes(typeof item)?item:{unobservedType:typeof item};
+  const fields=[];
+  for(const key of Reflect.ownKeys(error)){
+    if(key==='stack'){fields.push({key,unobservedLazyStack:true});continue;}
+    const descriptor=Object.getOwnPropertyDescriptor(error,key);
+    fields.push({key:typeof key==='symbol'?{symbol:String(key)}:key,enumerable:descriptor.enumerable,configurable:descriptor.configurable,...(Object.hasOwn(descriptor,'value')?{writable:descriptor.writable,value:value(descriptor.value)}:{accessor:true})});
+  }
+  return {name:error.name,fields};
+}
+function moduleTransport(mode,code){
+  assert.ok(['eval','stdin'].includes(mode));
+  if(mode==='eval')assert.ok(Buffer.byteLength(code)<64*1024,'legacy comparator stays below Linux per-argument limit');
+  const argv=mode==='eval'?['--input-type=module','--eval',code]:['--input-type=module'];
+  let stdout,stderr=Buffer.alloc(0),error=null,status=0,signal=null;
+  try{stdout=execFileSync(process.execPath,argv,{...(mode==='stdin'?{input:code}:{}),timeout:10000,maxBuffer:8*1024*1024,stdio:['pipe','pipe','pipe']});}
+  catch(caught){stdout=Buffer.from(caught.stdout??[]);stderr=Buffer.from(caught.stderr??[]);error=transportError(caught);status=caught.status;signal=caught.signal;}
+  return {mode,code,execPath:process.execPath,argv,limits:{childMs:10000,maxBuffer:8*1024*1024},status,signal,stdout:{base64:stdout.toString('base64'),bytes:stdout.length},stderr:{base64:stderr.toString('base64'),bytes:stderr.length},error};
+}
+function transportControls(){
+  const code="import {basename} from 'node:path';const tape=['module'];const value='Ω😀\\u0000';await Promise.resolve();tape.push('await');const sentinel=new TypeError('owned child sentinel');let caught;try{throw sentinel;}catch(error){caught={name:error.name,message:error.message,same:error===sentinel};tape.push('caught');}const payload={value,basename:basename('/original/full/source.rs'),sum:7+9,tape,caught};process.stdout.write(JSON.stringify({payload,entry:{url:import.meta.url,argv:process.argv,execArgv:process.execArgv}}));";
+  const legacy=moduleTransport('eval',code),current=moduleTransport('stdin',code);
+  retain('01-complete-small-legacy-and-stdin-modules',{code,legacy,current});
+  assert.equal(legacy.status,0);assert.equal(current.status,0);assert.equal(legacy.signal,null);assert.equal(current.signal,null);assert.equal(legacy.error,null);assert.equal(current.error,null);
+  const left=JSON.parse(Buffer.from(legacy.stdout.base64,'base64').toString('utf8')),right=JSON.parse(Buffer.from(current.stdout.base64,'base64').toString('utf8'));
+  assert.deepEqual(left.payload,right.payload);assert.deepEqual(right.payload,{value:'Ω😀\u0000',basename:'source.rs',sum:16,tape:['module','await','caught'],caught:{name:'TypeError',message:'owned child sentinel',same:true}});
+  // argv, execArgv and anonymous module URL are full raw observations, not
+  // presumed equal across Node/Bun eval/stdin loader implementations.
+  for(const entry of [left.entry,right.entry]){assert.equal(typeof entry.url,'string');assert.ok(Array.isArray(entry.argv));assert.ok(Array.isArray(entry.execArgv));}
+  retain('01-complete-loader-observations',{legacy:left.entry,stdin:right.entry});
+  const fixed="process.stdout.write('fixed-out Ω😀\\n');process.stderr.write('fixed-err Ω😀\\n');process.exitCode=23;";
+  const failedLegacy=moduleTransport('eval',fixed),failedCurrent=moduleTransport('stdin',fixed);retain('01-complete-controlled-native-errors',{code:fixed,legacy:failedLegacy,current:failedCurrent});
+  assert.equal(failedLegacy.status,23);assert.equal(failedCurrent.status,23);assert.equal(failedLegacy.signal,null);assert.equal(failedCurrent.signal,null);assert.ok(failedLegacy.error);assert.ok(failedCurrent.error);assert.deepEqual(failedCurrent.stdout,failedLegacy.stdout);assert.deepEqual(failedCurrent.stderr,failedLegacy.stderr);
+  assert.equal(Buffer.from(failedCurrent.stdout.base64,'base64').toString('utf8'),'fixed-out Ω😀\n');assert.equal(Buffer.from(failedCurrent.stderr.base64,'base64').toString('utf8'),'fixed-err Ω😀\n');
+  for(const source of ['export const = 1;','throw new TypeError("transport deliberate failure");']){
+    const old=moduleTransport('eval',source),now=moduleTransport('stdin',source);retain('01-complete-native-syntax-or-throw-errors',{source,old,current:now});
+    assert.notEqual(old.status,0);assert.equal(now.status,old.status);assert.equal(now.signal,old.signal);assert.deepEqual(now.stdout,old.stdout);assert.ok(old.stderr.bytes>0);assert.ok(now.stderr.bytes>0);assert.ok(old.error);assert.ok(now.error);
+    // Full native frame/URL/command differences remain above without any
+    // stack, path or source normalization, and cannot mint a passing report.
+  }
+}
+function largeStdinProof(){
+  const text='Ω😀'.repeat(30000),transport=new URL('./report-reference-transport.mjs',import.meta.url).href;
+  const code="import {writeReferenceProofReport} from "+JSON.stringify(transport)+";const text="+JSON.stringify(text)+";const tape=[];const read=value=>{tape.push(value);return value;};read('first');await Promise.resolve();read('second');writeReferenceProofReport({text,tail:'last complete byte',tape,entry:{url:import.meta.url,argv:process.argv,execArgv:process.execArgv}});";
+  assert.ok(Buffer.byteLength(code)>128*1024);assert.ok(Buffer.byteLength(code)<512*1024);
+  const record=runReferenceProof({name:'08-large-stdin-proof',code,execPath:process.execPath,directory});
+  const stored=readFileSync(record.codePath,'utf8');assert.equal(stored,code);assert.equal(record.codeBytes,Buffer.byteLength(code));assert.equal(record.codeSha256,createHash('sha256').update(code).digest('hex'));
+  const old=oldReport(record);assert.equal(old.decoded.text,text);assert.equal(old.decoded.tail,'last complete byte');assert.deepEqual(old.decoded.tape,['first','second']);
+  const observed={};withReferenceProof(record,view=>{observed.text=view.read('text');observed.tail=view.read('tail');observed.tapeLength=view.arrayLength('tape');observed.first=view.read('tape',0);observed.second=view.read('tape',1);observed.url=view.read('entry','url');});
+  assert.equal(observed.text,text);assert.equal(observed.tail,'last complete byte');assert.equal(observed.tapeLength,2);assert.equal(observed.first,'first');assert.equal(observed.second,'second');assert.equal(typeof observed.url,'string');
+  retain('08-complete-large-UTF8-stdin-proof',{code,text,record,old,observed,scope:'New stdin source exceeds Linux per-argument128KiB. No oversized legacy launch is attempted; small legacy comparison retains the portable old observer oracle.'});
+}
+
 test('complete generic report values retain independent old DOM observations identities descriptors and every source byte',{timeout:60000},()=>{
+  transportControls();
  const shared=Object.freeze(Object.assign(Object.create(null),{text:'Ω😀\u0000\ud800',absent:undefined,negativeZero:-0,nan:NaN,positive:Infinity,negative:-Infinity,big:-12345678901234567890n}));
  const original={shared,again:shared,array:[undefined,,shared],nothing:undefined};original.self=original;
  Object.defineProperty(original,'__proto__',{value:'own data',enumerable:false,configurable:false,writable:false});Object.preventExtensions(original);
@@ -153,6 +212,7 @@ test('file replacement truncation callback failure reentry and cursor lifetimes 
 });
 
 test('complete large reference reports keep independent old DOM values and every byte after a late file mismatch',{timeout:60000},()=>{
+  largeStdinProof();
  const source='complete source Ω😀\n'.repeat(25000),shared=Object.freeze({source,proof:false,missing:undefined}),original={source,shared,again:shared,records:Array.from({length:3000},(_,index)=>({index,text:'original-'+index,shared})),tail:'last complete value'};
  const outer=referenceProofReport(original),expected=file('08-expected',outer),actual=file('08-actual',outer),old=oldReport(actual);
  const paths=[['source'],['shared','source'],['again','proof'],['records',0,'text'],['records',2999,'index'],['records',2999,'shared','missing'],['tail']];
