@@ -1,6 +1,7 @@
 // Complete storage-only transport witnesses. Compiler admission remains independent.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
+import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 import fs from 'node:fs';
 import {createHash,Hash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
@@ -24,7 +25,7 @@ const OLD={bytes:27113,sha256:'b57e0549035704ca77bbc30ad3a6b28249d73b17d718eadf1
 const nativeJson=JSON.stringify,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty;
 const script=fileURLToPath(new URL('../propose-core-adoption-corpus.mjs',import.meta.url)),hash=value=>createHash('sha256').update(value).digest('hex');
 const READER='pub fn value(json:&crate::translation_core::Json)->crate::translation_core::Maybe<&crate::translation_core::Str>{json.get("v").and_then(crate::translation_core::Json::as_str)}';
-function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const out=process.env.ROUTER_COMPRESSED_PACKET_VECTOR_DIR;if(out){fs.mkdirSync(out,{recursive:true});const source=nativeJson({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n';fs.writeFileSync(join(out,Buffer.from(name).toString('hex')+'.json.gz'),gzipSync(source));}}});}
+function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const out=process.env.ROUTER_COMPRESSED_PACKET_VECTOR_DIR;if(out){fs.mkdirSync(out,{recursive:true});const source=nativeJson({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value);writeJsonTextGzip(join(out,Buffer.from(name).toString('hex')+'.json.gz'),source);}}});}
 function fixture(t,source='pub fn label()->String{"猫😀".to_owned()}',extra={},root='pub mod translation_core;mod sample;'){
  const parent=fs.mkdtempSync(join(tmpdir(),'router-compressed-packets-')),directory=join(parent,'input');fs.mkdirSync(directory);t.after(()=>fs.rmSync(parent,{recursive:true,force:true}));
  const files=Object.fromEntries(Object.entries({'src/lib.rs':root,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE,'src/translation_core/json_collections.rs':ROUTER_CORE_JSON_COLLECTIONS_SOURCE,'src/sample.rs':source,...extra}).sort(([a],[b])=>a<b?-1:a>b?1:0));
