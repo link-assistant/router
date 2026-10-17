@@ -1,5 +1,4 @@
 // Rust tuple products have their own checked layout, distinct from tuple structs.
-import {originalStandardTupleContext,originalStandardTupleField,originalStandardTupleIdentity,recordOriginalStandardTuple} from './standard-method-context.mjs';
 import {PatternControlRustParser,PatternControlChecker,PatternControlEmitter} from './pattern-control.mjs';
 import {monomorphicTypeName} from '../monomorphic.mjs';
 import {sameType,UNIT,rustFixedType} from '../checked-types.mjs';
@@ -13,7 +12,7 @@ const SHARED_ITERATOR_PAIR=Symbol('checked-source-shared-scalar-iterator-pair');
 // Portable widths and scalar encodings are insufficient to intern Rust tuple
 // layouts: usize/u64 and String/&str have different source contracts. Keep
 // source qualifiers in an injective suffix, without location-dependent spans.
-function sourceQualifiers(type) {
+export function sourceQualifiers(type) {
   return {
     ...(type.rustPrimitiveName?{primitive:type.rustPrimitiveName}:{}),
     ...(type.patternOwnershipRefusal?{ownership:type.patternOwnershipRefusal}:{}),
@@ -24,7 +23,7 @@ function sourceQualifiers(type) {
     ...(type.rustStandardGeneric?{generic:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(sourceQualifiers)}}:{}),
   };
 }
-function tupleName(fields) {
+export function tupleName(fields) {
   const qualifiers=Buffer.from(JSON.stringify(fields.map(field=>sourceQualifiers(field.type))),'utf8').toString('hex');
   return monomorphicTypeName('Tuple',fields.map(field=>field.type))+'_rust_'+qualifiers;
 }
@@ -64,6 +63,9 @@ export class TupleRustParser extends withParameterPatternParser(PatternControlRu
 const __routerOriginalBirth286_TupleRustParser=[TupleRustParser,TupleRustParser.prototype,null,[["constructor",TupleRustParser],["tupleType",TupleRustParser.prototype["tupleType"]],["type",TupleRustParser.prototype["type"]],["primary",TupleRustParser.prototype["primary"]]]];
 
 
+// This pure metadata selector never exposes the private iterator-pair token.
+export function tupleInferenceKind(referenceContext){return referenceContext?.token===SHARED_ITERATOR_PAIR?'checked-source-shared-scalar-iterator-pair':'checked-scalar-expression-product';}
+
 export class TupleChecker extends PatternControlChecker {
   program(surface) {
     this.inferredTupleLayouts=new Map();
@@ -74,7 +76,6 @@ export class TupleChecker extends PatternControlChecker {
     return program;
   }
   inferredTupleField(type,location,depth,active,verified,budget,referenceContext) {
-    if(originalStandardTupleField(this,referenceContext,type,depth)){if(--budget.cells<0)throw unsupported('original shared tuple budget','exceeds the existing checked product bound',location);return;}
     if(referenceContext?.token===SHARED_ITERATOR_PAIR&&depth===0&&type===referenceContext.itemType) {
       const reference=type.rustReference,pointee=reference?.pointee;
       if(--budget.cells<0||reference?.kind!=='shared'||!pointee||!['fixed','bool'].includes(pointee.kind)||type.rustOwnership||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved||type.patternOwnershipRefusal!=='shared source reference')throw unsupported('inferred iterator tuple reference','requires the actual checked immutable scalar Item; no aggregate, mutable or owned field is inferred',location);
@@ -101,7 +102,7 @@ export class TupleChecker extends PatternControlChecker {
     if(args.length<1||args.length>32)throw unsupported('inferred tuple arity','requires one to thirty-two actual checked fields',location);
     const active=new Set(),verified=new Set(),budget={cells:16000};
     for(const argument of args)this.inferredTupleField(argument.type,location,0,active,verified,budget,referenceContext);
-    const fields=args.map((argument,index)=>({name:'field'+index,type:argument.type})),sourceIdentity=originalStandardTupleIdentity(this,referenceContext,args),name=tupleName(fields)+(sourceIdentity?'_source_'+sourceIdentity:'');
+    const fields=args.map((argument,index)=>({name:'field'+index,type:argument.type})),name=tupleName(fields);
     if(Buffer.byteLength(name)>8192)throw unsupported('inferred tuple identity budget','the source-qualified product name exceeds the checked bound',location);
     let entry=this.items.get(name);
     if(entry) {
@@ -120,7 +121,7 @@ export class TupleChecker extends PatternControlChecker {
       if(!expected) {
         // Check the original field expressions once, in source order. A
         // later result context never supplies missing Rust field identities.
-        const args=node.items.map(item=>this.expr(item,env,path,undefined,true)),context=originalStandardTupleContext(this,node,args),{entry,type}=this.inferTuple(args,node.span,context);if(context)recordOriginalStandardTuple(this,context,entry,type);
+        const args=node.items.map(item=>this.expr(item,env,path,undefined,true)),{entry,type}=this.inferTuple(args,node.span,undefined,node);
         return {k:'ctor',data:entry.fullName,ctor:entry.ctors[0].name,args,type,span:node.span,tupleInference:{kind:'checked-scalar-expression-product',fieldTypes:args.map(argument=>structuredClone(argument.type)),defaultedFields:false}};
       }
       if(expected?.kind==='named')expected=this.resolveType(expected,path,node.span);
