@@ -11,6 +11,7 @@ import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_COR
 import {prepareCoreJsonUpdateSourceData} from '../prepare-core-json-update-sources.mjs';
 import {router_core_json_index_str as atKey,router_core_json_index_usize as atIndex,router_core_json_map_index as atMap} from '../json-update-runtime.mjs';
 import {checkRouterCoreJsonUpdate} from '../router-core-json-updates.mjs';
+import {originalParsedDeclarationEvidence} from '../extensions/source-links.mjs';
 import {loadJsonMacroSourceProof} from '../json-macro-sources.mjs';
 import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
 import {serde_json_from_str,serde_json_to_string} from '../extensions/json-runtime.mjs';
@@ -53,7 +54,12 @@ test('named lifetimes belong only to the receiver and invalid ownership domains 
  for(const index of ['0u64','0u32','-0usize','-1usize','18446744073709551616usize','0.0','&0usize'])no(project(files('pub fn bad(value:&'+T+')->&'+T+'{'+C+'json_index_usize(value,'+index+')}')),'bad');
  no(project(files('pub fn bad<\'a>(value:&\'a '+T+',index:&usize)->&\'a '+T+'{'+C+'json_index_usize(value,index)}')),'bad');
  assert.throws(()=>checkRouterCoreJsonUpdate({}, {k:'routerCoreJsonUpdateCall',operation:'json_index_str',args:[],span:{start:0,end:1}},new Map(),[]),/actual qualified/);
- const copied=structuredClone(parseRust('pub fn fake()->bool{true}fn main(){}'));assert.throws(()=>checkProgram(copied),/source|private|original/);
+ // Ordinary portable scalar checking needs no source-owned projection receipt.
+ const scalarSource='pub fn fake()->bool{true}fn main(){}',parsed=parseRust(scalarSource),original=parsed.items.find(row=>row.k==='fn'&&row.name==='fake');assert.ok(original);assert.ok(originalParsedDeclarationEvidence(original));
+ const copied=structuredClone(parsed),scalar=copied.items.find(row=>row.k==='fn'&&row.name==='fake');assert.ok(scalar);assert.equal(originalParsedDeclarationEvidence(scalar),null);const portable=checkProgram(copied),checked=portable.declarations.get('fake');assert.ok(checked);assert.equal(checked.ret.kind,'bool');assert.ok(find(checked.body,node=>node.k==='lit'&&node.type?.kind==='bool'&&node.value===true));retain('complete-portable-scalar-copy-positive',{scalarSource,parsed,copied,checked:JSON.parse(serializeProgram(portable))});
+ // A copied declaration cannot authorize a source-owned operation merely by
+ // containing its public node shape, source coordinates or compatibility id.
+ const forged=structuredClone(parsed),entry=forged.items.find(row=>row.k==='fn'&&row.name==='fake'),span={...entry.body.span};entry.body={k:'routerCoreJsonUpdateCall',operation:'json_index_str',args:[{k:'name',path:['missing_receiver'],span},{k:'str',value:'key',span}],compatibilityCore:{id:'router-owned-json-update-v1',symbol:C+'json_index_str'},span};assert.equal(originalParsedDeclarationEvidence(entry),null);retain('complete-forged-projection-on-copied-scalar',{scalarSource,forged});assert.throws(()=>checkProgram(forged),/owned JSON update lacks its actual qualified source call/);
 });
 test('emission rejects copied call envelopes changed receivers types layouts and source keys',()=>{
  const source='pub fn pick<\'a>(value:&\'a '+T+',other:&\'a '+T+',key:&str)->&\'a '+T+'{'+C+'json_index_str(value,key)}',result=project(files(source));yes(result,['pick']);
