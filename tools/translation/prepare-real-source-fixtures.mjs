@@ -193,17 +193,17 @@ function staticSourceCsts(rows,accept){
 }
 /** Full untrusted stored-CST transport; no source-origin shortcut or receipt. */
 export function transportStaticSourceLifecycleCanonicals(rows){
-  const out=new Map();let pending=[],units=0,bytes=0,nodes=0,canonical=0;
+  const out=new Map();let pending=[],units=0,bytes=0,canonical=0;
   const flush=()=>{if(!pending.length)return;const actual=transportConcreteSyntaxMetaChunks([pending.map(([,row])=>row.canonical)]),values=actual.chunks[0]?.rows;
     if(!values||values.length!==pending.length)staticFail('complete canonical batch census differs');
     for(let i=0;i<pending.length;i++){const [id,row]=pending[i],value=values[i];if(value.meta!==row.canonical||value.source!==row.source||value.document.language!=='Rust')staticFail('complete canonical source association differs');out.set(id,value.document);}
-    pending=[];units=0;bytes=0;nodes=0;canonical=0;};
+    pending=[];units=0;bytes=0;canonical=0;};
   for(const [id,row]of rows){if(typeof row.source!=='string'||typeof row.canonical!=='string')staticFail('complete changed-parent CST missing');
-    // Parsed data is a scheduling hint only. The original untrusted CST API
-    // checks all shapes, classifications, encoding and actual counts again.
-    const hint=JSON.parse(row.canonical),count=Array.isArray(hint?.nodes)?hint.nodes.length:0,size=Buffer.byteLength(row.source);
-    if(pending.length&&(pending.length===256||units+row.source.length>2097152||bytes+size>8388608||nodes+count>200000||canonical+row.canonical.length>33554432))flush();
-    pending.push([id,row]);units+=row.source.length;bytes+=size;nodes+=count;canonical+=row.canonical.length;
+    // Never parse untrusted metadata to plan a batch. Primitive length is
+    // bounded first; the existing native preflight/grammar owns every parse.
+    if(row.canonical.length>33554432)staticFail('complete canonical code-unit bound');const size=Buffer.byteLength(row.source);
+    if(pending.length&&(pending.length===256||units+row.source.length>65536||bytes+size>262144||canonical+row.canonical.length>33554432))flush();
+    pending.push([id,row]);units+=row.source.length;bytes+=size;canonical+=row.canonical.length;
   }flush();return out;
 }
 function staticDelta(before,after){
