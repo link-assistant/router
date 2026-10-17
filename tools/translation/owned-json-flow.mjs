@@ -184,10 +184,10 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   }
   if(node.k==='routerOrderedMatchArms'){
    if((!state.callbackCaptures||!genuineTextMatch?.(node))&&!(closedErrors&&state.tailNode===node)||!Array.isArray(node.branches)||!node.branches.length||node.branches.length>256)refuse('ordered flow is limited to closed callback text alternatives',node);
+   const functionTail=Boolean(closedErrors&&state.tailNode===node);
    let subject=null;const states=[],values=[];
    for(let at=0;at<node.branches.length;at++){
-    const branch=node.branches[at],condition=branch.cond,arm=branch.body;
-    if(arm?.k!=='routerOrderedArm'||arm.guard||!sameType(arm.type,node.type))refuse('callback text alternatives cannot introduce bindings or guards',node);
+    const branch=node.branches[at],condition=branch.cond;let arm=branch.body;
     const wildcard=condition?.k==='lit'&&condition.type.kind==='bool'&&condition.value===true;
     if(wildcard){if(at!==node.branches.length-1)refuse('text fallback must be the final actual arm',node);}
     else{
@@ -195,7 +195,16 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
      if(condition?.k!=='binary'||condition.op!=='eq'||!slot||slot.type.kind!=='string'||slot.type.rustReference||slot.type.patternOwnershipRefusal||slot.type.rustBorrowingUnresolved||slot.type.rustGenericIdentityUnresolved||slot.type.rustOwnership?.kind!=='borrowed'||slot.type.rustOwnership.source!=='str'||literal?.k!=='lit'||typeof literal.value!=='string'||subject&&subject!==slot)refuse('callback alternative requires one actual borrowed-text slot and literal',node);
      subject=slot;
     }
-    const branchState=clone(state);visit(condition,branchState,'move',depth+1);values.push(visit(arm.body,branchState,'move',depth+1));states.push(branchState);
+    const branchState=clone(state);visit(condition,branchState,'move',depth+1);
+    // A privately checked function-tail text pattern may name its final
+    // fallback subject. This copies only that same immutable borrowed str;
+    // callback alternatives retain their existing no-binding contract.
+    if(functionTail&&wildcard&&arm?.k==='let'){
+     if(--cells<0||arm.mutable!==false||arm.value?.k!=='var'||!subject||state.names.get(arm.value.name)!==subject||!sameType(arm.value.type,subject.type))refuse('function-tail text fallback requires its actual immutable subject binding',node);
+     const value=visit(arm.value,branchState,'borrow',depth+1);bind(branchState,arm.name,arm.value.type,false,arm,value);arm=arm.body;
+    }
+    if(arm?.k!=='routerOrderedArm'||arm.guard||!sameType(arm.type,node.type))refuse('callback text alternatives cannot introduce bindings or guards',node);
+    values.push(visit(arm.body,branchState,'move',depth+1));states.push(branchState);
    }
    if(!subject||node.branches.at(-1).cond.k!=='lit'||node.branches.at(-1).cond.value!==true)refuse('callback text alternatives need an actual literal subject and final fallback',node);
    let joined=states[0],result=values[0];for(let at=1;at<states.length;at++){const next=clone(state);result=joined.alive&&states[at].alive?union(result,values[at]):copy(joined.alive?result:values[at]);merge(next,joined,states[at]);joined=next;}
