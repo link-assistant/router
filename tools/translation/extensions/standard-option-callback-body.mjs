@@ -38,6 +38,7 @@ export function checkPinnedOptionCallbackBody(checker,node,receiver,env,path,exp
 export function requirePinnedOptionCallbackBody(node,program,Parser,Checker){const proof=node.originalCallbackProof,state=issued.get(proof?.key);if(!state||metadataDigest(proof)!==metadataDigest(state.proof)||node.body?.k!=='let')throw new Error('Option callback requires its actual privately checked original source');if(metadataDigest(alphaTree(node.body))!==metadataDigest(alphaTree(retargetCheckedCallback(state.body,program))))throw new Error('Option callback receiver/body or captured binding changed');const checker=new (Checker??state.Checker)('Rust',[]);checker.program({language:'Rust',items:[...program.declarations.values()].filter(item=>item.k==='data').map(item=>({...structuredClone(item),name:item.fullName})),main:null});restoreOptionNominals(checker,state.nominals);const receiver=node.body.value.k==='routerOriginalSharedDomainGuard'?node.body.value.value:node.body.value,{owner}=optionPayload(checker,receiver.type,[],node.span,{allowShared:true}),originalOwner=payloadOwner(checker,retargetCheckedCallback(state.payload,program),node.span,{allowShared:true});requireBorrowedLayouts(state.layouts,checker,program,[receiver.type,node.type]);if(owner!==originalOwner)throw new Error('Option callback source payload changed');const selection=pinnedOptionBody(proof.method);contract(selection,proof.method);const callbacks=state.callbacks.map(value=>retargetCheckedCallback(value,program)),subject={k:'var',name:node.body.name,type:receiver.type,span:node.span},{body,evidence}=rebuild(checker,selection,proof.method,subject,callbacks,node.type,Parser,node.body.name);if(evidence.syntaxSha256!==proof.syntaxSha256||metadataDigest(alphaTree(originalFrameSemanticTree(body)))!==metadataDigest(alphaTree(originalFrameSemanticTree(node.body.body))))throw new Error('Option callback body or captured binding changed from its original specialization');return node.body;}
 
 const functions=new WeakMap(),frameParents=new WeakMap();
+const originalMapGet=Map.prototype.get,originalReflectApply=Reflect.apply;
 // A parent association is only a weak identity hint. Every use independently
 // rebuilds the current complete callback, including its enclosing receiver let.
 // In particular, a later Host prepare failure may leave a hint behind.
@@ -74,7 +75,7 @@ const ownParentData=(node,key)=>{
 };
 function currentCallbackParent(emitter,entry,node,parent){
  const program=ownParentData(emitter,'program'),declarations=ownParentData(program,'declarations'),name=ownParentData(entry,'fullName'),body=ownParentData(entry,'body');
- if(!declarations||nodeTypes.isProxy(declarations)||!nodeTypes.isMap(declarations)||declarations.get(name)!==entry||callbackFrameParents(body).get(node)!==parent)return null;
+ if(!declarations||nodeTypes.isProxy(declarations)||!nodeTypes.isMap(declarations)||originalReflectApply(originalMapGet,declarations,[name])!==entry||callbackFrameParents(body).get(node)!==parent)return null;
  return program;
 }
 export function originalOptionCallbackNestedFrame(emitter,entry,node){
@@ -94,7 +95,10 @@ export function prepareOriginalOptionCallbacks(emitter,entry,Parser,Checker){con
  const previousParents=frameParents.get(emitter),parents=new WeakMap();
  // Only the constructors captured by the actual original call can establish a
  // hint. Other public prepare callers retain the existing callback behavior.
- if(nodes.every(node=>{const state=issued.get(node.originalCallbackProof?.key);return state?.Parser===Parser&&state.Checker===Checker;}))parents.set(entry,callbackFrameParents(entry.body));
+ // Hints are optional: their whole-entry census must never newly reject an
+ // otherwise valid original child. Only a later body mismatch needs a hint,
+ // and its fresh current membership census still refuses every uncertainty.
+ try{if(nodes.every(node=>{const state=issued.get(node.originalCallbackProof?.key);return state?.Parser===Parser&&state.Checker===Checker;}))parents.set(entry,callbackFrameParents(entry.body));}catch{}
  frameParents.set(emitter,parents);
  return ()=>{if(previous)functions.set(emitter,previous);else functions.delete(emitter);if(previousParents)frameParents.set(emitter,previousParents);else frameParents.delete(emitter);};}
 export function requireOriginalOptionCallbackEmission(emitter,node){if(!functions.get(emitter)?.includes(metadataDigest(alphaTree(node))))throw new Error('Option callback changed from its exact privately validated source function rename');return node.body;}

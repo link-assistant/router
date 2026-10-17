@@ -598,7 +598,14 @@ test('stale pre-try callback associations revalidate the actual emitter entry pa
   assert.equal(originalOptionCallbackNestedFrame(emitter,entry,structuredClone(frame)),false,'a copied child lacks actual weak membership');
   let proxyReads=0;const proxy=new Proxy(frame,{get(){proxyReads++;throw new Error('proxy should not run');}});assert.equal(originalOptionCallbackNestedFrame(emitter,entry,proxy),false);assert.equal(proxyReads,0);
   const replacement={...entry};program.declarations.set(entry.fullName,replacement);
-  try{assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'the entry must be the actual current declaration');}finally{program.declarations.set(entry.fullName,entry);}
+  try{
+   assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'the entry must be the actual current declaration');
+   for(const mode of ['forged-method','getter']){
+    let reads=0;const lie=()=>{reads++;return entry;};
+    Object.defineProperty(program.declarations,'get',mode==='getter'?{configurable:true,get(){reads++;return lie;}}:{configurable:true,value:lie});
+    try{assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,mode+' cannot fabricate actual Map membership');assert.equal(reads,0,mode+' is never observed');}finally{delete program.declarations.get;}
+   }
+  }finally{program.declarations.set(entry.fullName,entry);}
   entry.body=structuredClone(oldBody);
   try{assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'the child must remain in the actual current parent');}finally{entry.body=oldBody;}
   const foreignParent=structuredClone(parent);foreignParent.body.body=frame;entry.body=foreignParent;
@@ -612,5 +619,32 @@ test('stale pre-try callback associations revalidate the actual emitter entry pa
   retain('complete-same-emitter-recovery',{entry:entry.fullName,wire:serializeProgram(program)});
  }finally{frame.type=oldType;receiver.name=oldName;entry.body=oldBody;parent.originalCallbackProof=oldProof;restoreFrames?.();restoreCallbacks?.();}
  assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'restoration removes the contextual hint');
+ assert.deepEqual(emitJavaScript(program),emitJavaScript(parseProgram(wire)));
+});
+
+
+test('an unavailable optional whole-entry hint neither rejects original passing frame guards nor permits a changed frame',async()=>{
+ const {HostEmitter,HostRustParser,HostChecker}=await import('../extensions/host-contracts.mjs'),{emitWith}=await import('../extensions/core.mjs'),{prepareOriginalOptionCallbacks,originalOptionCallbackNestedFrame}=await import('../extensions/standard-option-callback-body.mjs'),{prepareOriginalSourceFrames}=await import('../extensions/standard-source-frame.mjs');
+ const source="pub fn plain<'a>(value:Option<&'a str>,other:Option<&'a str>)->Option<&'a str>{value.filter(|text|!text.is_empty())}",result=project(files(source));yes(result,['plain']);
+ await targets(result,api=>{for(const text of ['猫😀','https://example','\0'])assert.deepEqual(api.plain(some(text),some('other')),some(text));assert.deepEqual(api.plain(some(''),some('other')),none);assert.deepEqual(api.plain(none,some('other')),none);});
+ const wire=nativeJson(result.meta.targetSemanticProgram),program=parseProgram(wire),entry=program.declarations.get('rp_'+Buffer.from('plain').toString('hex'));assert.ok(entry&&entry.k==='fn');
+ const parent=find(entry.body,node=>node.k==='routerPinnedOptionCallbackBody'&&node.originalCallbackProof?.method==='filter'),frame=find(parent?.body,node=>node.k==='routerOriginalStandardFrame');assert.ok(parent&&frame);
+ const receiver=find(frame.body,node=>node.k==='var'&&node.name===parent.body.name);assert.ok(receiver);
+ let emitter;class CaptureEmitter extends HostEmitter{constructor(...args){super(...args);emitter=this;}file(){return '';}}emitWith(program,CaptureEmitter);
+ // A complete scalar own-data extension is outside the private callback body.
+ // The old callback/rename and per-child guards ignore that annotation. The
+ // optional whole-entry walk counts its 100001 keys AND scalar values and must
+ // exhaust 200000 cells. No source or semantic permission comes from this data.
+ const oldBody=entry.body,oldName=receiver.name,opaque=Array(100001).fill(null);
+ entry.body={k:'let',name:'unrelated_checked_entry',value:{k:'bool',value:false,type:{kind:'bool'}},body:oldBody,type:oldBody.type,unrelatedOwnData:opaque};
+ let restoreCallbacks,restoreFrames;
+ try{
+  restoreCallbacks=prepareOriginalOptionCallbacks(emitter,entry,HostRustParser,HostChecker);assert.equal(typeof restoreCallbacks,'function','optional census exhaustion does not reject the original callback');
+  assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'no hint was published from the exhausted census');
+  restoreFrames=prepareOriginalSourceFrames(emitter,entry);assert.equal(typeof restoreFrames,'function','all four original frame guards pass without a hint');
+  receiver.name=entry.params[1].name;
+  try{assert.throws(()=>prepareOriginalSourceFrames(emitter,entry),/Original standard frame\/loan.*join body/u,'an unavailable hint cannot waive the original body guard');}finally{receiver.name=oldName;}
+  retain('complete-unavailable-hint-control',{source,wire,opaqueScalarCells:opaque.length,originalFrame:frame,originalCallbacksAccepted:true,originalFramesAccepted:true,changedFrameRefused:true});
+ }finally{receiver.name=oldName;entry.body=oldBody;restoreFrames?.();restoreCallbacks?.();}
  assert.deepEqual(emitJavaScript(program),emitJavaScript(parseProgram(wire)));
 });
