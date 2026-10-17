@@ -81,6 +81,8 @@ test('same frozen multiedge data debits exact logical cells and relative depth i
 });
 test('every difference or uncertain value preserves complete fresh then stored fallback callbacks and errors',async(t,retain)=>{
  const modes=['left-getter','left-throw','right-getter','proxy','toJSON','boxed','symbol','bigint','undefined','cycle','hole','extra-array','nonfinite','function','reordered'];
+ const boxedDomains=[['String','a','b'],['Number',1,2],['Boolean',true,false],['BigInt',1n,2n],['Symbol',Symbol('a'),Symbol('b')]];
+ for(const [kind,a,b]of boxedDomains)for(const parent of [Object.prototype,null]){const left=Object.freeze(Object.setPrototypeOf(Object(a),parent)),right=Object.freeze(Object.setPrototypeOf(Object(b),parent));assert.equal(storage.privateFrozenJsonEqualHint(left,right),null);assert.equal(storage.privateFrozenJsonEqualHint(left,left),null);const before=outcome(()=>comparison(storage,left,right,false)),current=outcome(()=>comparison(storage,left,right,true));assert.deepEqual(current,before);retain('erased-boxed-prototypes',{kind,parent:parent===null?'null':'Object.prototype',before,current});}
  for(const mode of modes){const run=hinted=>{const tape=[];let left={a:1},right={a:1};
   if(mode==='left-getter'||mode==='left-throw')left={get a(){tape.push('left');if(mode==='left-throw')throw Error('left stop');return 1;}};
   if(mode==='right-getter')right={get a(){tape.push('right');return 1;}};

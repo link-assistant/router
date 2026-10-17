@@ -272,7 +272,7 @@ export function privateFrozenJsonEqualHint(left,right){
    if(ak==='string'||ak==='boolean')return a===b;
    return ak==='number'&&a===b&&a===a&&a!==1/0&&a!==-1/0;
   }
-  if(isProxy(a)||isProxy(b))return false;
+  if(isProxy(a)||isProxy(b)||apply(compositionBoxedField.value,compositionTypes,[a])||apply(compositionBoxedField.value,compositionTypes,[b]))return false;
   if(a===b){
    // No immutableCost call: a miss issues NO eligibility records or counters.
    const saved=existingSyntaxCost(a);
