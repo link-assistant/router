@@ -72,6 +72,8 @@ destruction, type checking or later body refusals.
 | `json!` | `serde_json::json!` | Bounded literal objects, arrays and scalars; checked borrowed text, booleans, canonical JSON copies and fixed integers through 64 bits. Each interpolation retains its actual type, effects and outer `?` behavior. Custom `Serialize`, floating point, owned text and effectful interpolation remain refused. |
 | `json_copy(&Json) -> Json` | `Clone::clone` on the canonical JSON type | Explicit qualified shared copy into independent checked canonical storage; no general `.clone()` dispatch or custom `Clone` admission. |
 | `json_with_field(Json, &Str, Json) -> Json` | By-value native JSON indexing and replacement | Object or null base, literal or checked borrowed scalar-text key and canonical JSON value; null promotes to an object. Other base kinds abort. Copies/results retain the JSON bounds and independent storage. |
+| `json_parse(&Str) -> Maybe<Json>` | Native `serde_json::from_str::<Json>(value).ok()` | Source-selected `float_roundtrip` canonical decoder; success includes `Some(Null)`, while JSON syntax failure is `None`. |
+| `json_parse_bytes(&[u8]) -> Maybe<Json>` | Native `serde_json::from_slice::<Json>(value).ok()` | The same decoder with genuine borrowed `u8` slices; invalid UTF-8 is a parse failure. |
 | `json_index_str(&Json, &Str) -> &Json` | Shared canonical Value string indexing | Existing node identity; absent keys and wrong kinds return canonical Null. The result borrows its receiver. |
 | `json_index_usize(&Json, usize) -> &Json` | Shared canonical Value array indexing | Actual by-value source `usize`, including checked contextual and explicit literals; absent positions and wrong kinds return Null. Other integer identities remain refused. |
 | `json_map_index(&Map<String, Json>, &Str) -> &Json` | Shared canonical object-map indexing | Existing node identity; an absent entry panics without insertion. Value indexing retains its different missing-key behavior. |
@@ -84,6 +86,34 @@ copies. Dense containers also retain their 4,096-element limit. Individually
 valid inputs can exceed the aggregate result limit; those executions remain
 outside the translated profile. Literal syntax keeps its separate 65,536-byte,
 16-level and 256-node limits. Extending the literal grammar does not raise them.
+
+Optional decoding is an explicit owned library boundary. The existing default
+serde parser capability and arbitrary `Deserialize`/error destruction admission
+remain unchanged. The owned call requires the complete current facade and leaf,
+genuine source-linked call receipts, canonical `Maybe<Json>` layouts and the
+exact locked feature/source profile. Native serde parser/allocation/error Drop
+internals remain untranslated. Only a parser `Err` is discarded into `None`;
+malformed JavaScript adapter values and resource-domain failures throw. The
+existing roundtrip limits remain 1 MiB of input, 769 retained mantissa digits,
+4,096 digit bounds and recursion depth 128. Subsequent JSON copy/construction
+keeps its separate limits above; parsing does not raise them.
+
+The explicit proposal-only CLI is:
+
+```sh
+node tools/translation/propose-core-adoption-corpus.mjs --root /path/to/repo --output /outside/fresh-proposal --sequence json-parse
+```
+
+It retains full source/CST, dependency inputs, every proposal field and inverse.
+The fixed adopter recognizes canonical explicit parse calls followed by `.ok()`
+or an ordinary `let Ok(name) = ... else` discard boundary. It emits qualified
+owned APIs and `Maybe::Some`, preserving the input evaluation and failure block.
+Unknown owners, producers, binders, macros and custom error handling are retained
+as refusals. This is API adoption, not translation of serde internals or a grant
+for the rest of the function. Both CST and checked semantic roundtrips remain
+required. The separate JavaScript-to-Rust pipeline has no owned parser-operation
+rule yet: reverse synchronization and full application coverage remain pending,
+even if focused forward JavaScript and strict TypeScript receiving later pass.
 
 The two copy/update operations bind the complete owned facade and primitive
 source. Direct call arguments evaluate once, left to right. The assignment

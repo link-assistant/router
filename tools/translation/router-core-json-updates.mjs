@@ -1,6 +1,7 @@
 // Only source-bound owned JSON operations enter this language rule. The Rust
 // library bodies remain untranslated; no general Clone/IndexMut is admitted.
 import {types} from 'node:util';
+import {parseRouterCoreJsonParse,checkRouterCoreJsonParse,isRouterCoreJsonParse,ROUTER_CORE_JSON_PARSE_CONTRACTS} from './router-core-json-parse.mjs';
 import {parseRouterCoreJsonCollection,checkRouterCoreJsonCollection,isRouterCoreJsonCollection,routerCoreJsonCollectionSourceHash} from './router-core-json-collections.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
@@ -36,7 +37,7 @@ const updateContracts=['json_copy','json_with_field'].map(name=>({
   'Deep copies and final results retain existing 4096-node/depth32/dense4096 bounds and Unicode/UTF8 map ordering.',
   'Null promotes to an object; other non-object bases panic. Allocation/OOM/allocator and payload Drop internals remain outside the bounded successful-resource projection.'],
 }));
-export const ROUTER_CORE_JSON_UPDATE_CONTRACTS=freeze([...updateContracts,...['json_index_str','json_index_usize','json_map_index'].map(name=>({id:'router_core_'+name,jsExport:'router_core_'+name,rustPath:['crate','translation_core',name],kind:'function',family:'json-update',params:[sourceShared(name==='json_map_index'?JSON_TYPES.map:JSON_TYPES.value),name==='json_index_usize'?{kind:'fixed',bits:64,signed:false,rustSourceType:true,rustPrimitiveName:'usize'}:SOURCE_STR],ret:sourceShared(JSON_TYPES.value),async:false,pure:true,constEligible:false,requiresRefinement:'genuine-router-owned-json-projection',assumptions:['Actual complete facade/primitive sources bind this shared projection.','Result borrows only argument zero; the key grants no lifetime.','Value missing/wrong-kind returns canonical Null; Map missing entry panics.','Existing canonical JSON bounds apply; no Index/IndexMut/Copy/Drop or arbitrary borrowing authority.']}))]);
+export const ROUTER_CORE_JSON_UPDATE_CONTRACTS=freeze([...ROUTER_CORE_JSON_PARSE_CONTRACTS,...updateContracts,...['json_index_str','json_index_usize','json_map_index'].map(name=>({id:'router_core_'+name,jsExport:'router_core_'+name,rustPath:['crate','translation_core',name],kind:'function',family:'json-update',params:[sourceShared(name==='json_map_index'?JSON_TYPES.map:JSON_TYPES.value),name==='json_index_usize'?{kind:'fixed',bits:64,signed:false,rustSourceType:true,rustPrimitiveName:'usize'}:SOURCE_STR],ret:sourceShared(JSON_TYPES.value),async:false,pure:true,constEligible:false,requiresRefinement:'genuine-router-owned-json-projection',assumptions:['Actual complete facade/primitive sources bind this shared projection.','Result borrows only argument zero; the key grants no lifetime.','Value missing/wrong-kind returns canonical Null; Map missing entry panics.','Existing canonical JSON bounds apply; no Index/IndexMut/Copy/Drop or arbitrary borrowing authority.']}))]);
 const projectionNames=new Set(['json_index_str','json_index_usize','json_map_index']),projectionContexts=new Map(),emissionFrames=new WeakMap();
 const projectionDefinitions={"json_index_str":"pub fn json_index_str<'a>(value: &'a Json, key: &Str) -> &'a Json {\n    &value[key]\n}","json_index_usize":"pub fn json_index_usize<'a>(value: &'a Json, index: usize) -> &'a Json {\n    &value[index]\n}","json_map_index":"pub fn json_map_index<'a>(\n    value: &'a ::serde_json::Map<::std::string::String, Json>,\n    key: &Str,\n) -> &'a Json {\n    &value[key]\n}"};
 const projectionId=id=>typeof id==='string'&&id.startsWith('router_core_')&&(projectionNames.has(id.replace(/^router_core_/u,''))||isRouterCoreJsonCollection(id.replace(/^router_core_/u,'')));
@@ -62,7 +63,7 @@ function parsedCallReceipt(origin){
  const syntax={...original.syntax,block:true};return same(node,syntax)?{...original,syntax}:null;
 }
 export function parseRouterCoreJsonUpdate(parser,path){
- const collection=sourceContract(()=>parseRouterCoreJsonCollection(parser,path),parser.cursor.peek());if(collection){const node=collection.node,receipt={parser,syntax:copyMetadata(node),trace:collection.trace};calls.set(node,receipt);rawArgumentCalls.set(node.args,receipt);return node;}
+ const collection=sourceContract(()=>parseRouterCoreJsonParse(parser,path)??parseRouterCoreJsonCollection(parser,path),parser.cursor.peek());if(collection){const node=collection.node,receipt={parser,syntax:copyMetadata(node),trace:collection.trace,...(collection.numericProfile?{numericProfile:copyMetadata(collection.numericProfile)}:{})};calls.set(node,receipt);rawArgumentCalls.set(node.args,receipt);return node;}
  const c=parser.cursor;if(!['crate','::','translation_core','::'].every((word,at)=>c.is(word,at))||[0,2,4].some(at=>c.peek(at).kind!=='identifier'))return null;
  const operation=c.peek(4).value;if(!['json_copy','json_with_field'].includes(operation)&&!projectionNames.has(operation))return null;
  const first=c.peek(),location={start:first.start,end:c.peek(4).end},tokens=c.tokens,start=c.index;
@@ -108,6 +109,7 @@ export function checkRouterCoreJsonUpdate(checker,node,env,path,expected){
  const contract=ROUTER_CORE_JSON_UPDATE_CONTRACTS.find(row=>row.rustPath.at(-1)===node.operation);if(!contract||node.args.length!==contract.params.length)throw typeError('owned JSON update argument count',node.span);
  const stage=createRulePipeline([
   {phase:'language',rules:[{id:'owned-json-update:check-canonical-ownership-and-operands',apply:()=>{
+   if(isRouterCoreJsonParse(node.operation))return checkRouterCoreJsonParse(checker,node,env,path,expected);
    let args;const evaluate=syntax=>{requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();const value=checker.expr(syntax,env,path);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();return value;};
    if(projectionNames.has(node.operation)){args=projectionArguments(checker,node,env,path,evaluate);}
    else if(node.operation==='json_copy'){
@@ -117,9 +119,9 @@ export function checkRouterCoreJsonUpdate(checker,node,env,path,expected){
    }
    const type=projectionNames.has(node.operation)?{...sourceShared(checker.hostType(JSON_TYPES.value,path,node.span)),rustSourceType:true}:{...checker.hostType(JSON_TYPES.value,path,node.span),rustSourceType:true};if(expected&&!sameType(type,expected))throw typeError('owned JSON update result type differs',node.span);if(expected)checker.expectedOwnership?.(type,expected,path,node.span);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!same(node,capture.syntax))throw typeError('owned JSON update changed during checking',node.span);return {k:'routerHostCall',id:contract.id,args,type,span:node.span,constEligible:false};
   }}]},
-  {phase:'repository',rules:[{id:'router-core:retain-owned-json-update-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-update-v1',symbol:contract.rustPath.join('::'),sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
+  {phase:'repository',rules:[{id:'router-core:retain-owned-json-update-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-update-v1',symbol:contract.rustPath.join('::'),sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,sourceTrace:capture.receipt.trace,...(capture.receipt.numericProfile?{numericProfile:capture.receipt.numericProfile}:{}),libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
  ]);const value=stage.run(null).value,record={checker,frame:activeFunctions.get(checker),id:value.id,args:copyMetadata(value.args)};
- if(projectionNames.has(node.operation)||record.frame.errorLane){
+ if(projectionNames.has(node.operation)||isRouterCoreJsonParse(node.operation)||record.frame.errorLane){
   const layouts=copyMetadata(captureBorrowedLayouts(checker,[...value.args.map(arg=>arg.type),value.type]));
   const key=metadataDigest({functionName:record.frame.functionName,source:record.frame.syntax,call:value,layouts});value.compatibilityCore.sourceProjectionKey=key;
   record.call=copyMetadata(value);record.layouts=layouts;record.roots=copyMetadata([...value.args.map(arg=>arg.type),value.type]);
@@ -342,7 +344,7 @@ export function hasOriginalRouterCoreJsonProjection(node){return !!projectionRec
 export function hasCurrentRouterCoreJsonProjection(checker,node){
  const record=projectionRecord(node);return !!record&&record.checker===checker&&record.frame===activeFunctions.get(checker);
 }
-const emissionCall=node=>projectionId(node?.id)||['router_core_json_copy','router_core_json_with_field'].includes(node?.id)&&typeof node.compatibilityCore?.sourceProjectionKey==='string';
+const emissionCall=node=>projectionId(node?.id)||['router_core_json_parse','router_core_json_parse_bytes'].includes(node?.id)||['router_core_json_copy','router_core_json_with_field'].includes(node?.id)&&typeof node.compatibilityCore?.sourceProjectionKey==='string';
 function projectionNodes(node,result=[]){
  if(!node||typeof node!=='object')return result;
  if(['routerHostCall','routerCoreJsonCollection'].includes(node.k)&&emissionCall(node))result.push(node);

@@ -64,3 +64,19 @@ pub fn json_map_index<'a>(
 ) -> &'a Json {
     &value[key]
 }
+
+/// Decode canonical JSON text, discarding only the native parser's error value.
+/// Successful JSON null is `Some(Json::Null)`, distinct from invalid JSON.
+/// The checked translation uses its bounded, source-selected roundtrip adapter;
+/// native serde_json allocation, parser and error Drop internals stay untranslated.
+#[must_use]
+pub fn json_parse(value: &Str) -> Maybe<Json> {
+    ::serde_json::from_str::<Json>(value).ok()
+}
+
+/// Decode canonical JSON bytes with the same optional success boundary.
+/// Invalid JSON or UTF-8 returns None; translation adapter-domain errors throw.
+#[must_use]
+pub fn json_parse_bytes(value: &[u8]) -> Maybe<Json> {
+    ::serde_json::from_slice::<Json>(value).ok()
+}

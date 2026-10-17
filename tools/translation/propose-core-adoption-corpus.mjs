@@ -179,25 +179,26 @@ function fixedAdoptionStage(name,files,propose,original,write,dependencies,produ
   ]).run(null);
 }
 export async function proposeCoreAdoptionSequence(input,sequence='literal'){
-  if(sequence!=='literal'&&sequence!=='literal-algebraic'&&sequence!=='scalar-count'&&sequence!=='json-algebraic-primitives'&&sequence!=='json-updates'&&sequence!=='json-indices'&&sequence!=='json-collections'&&sequence!=='json-copies')fail('fixed sequence must be literal, literal-algebraic, scalar-count, json-algebraic-primitives, json-updates, json-indices, json-copies or json-collections');
+  if(sequence!=='literal'&&sequence!=='literal-algebraic'&&sequence!=='scalar-count'&&sequence!=='json-algebraic-primitives'&&sequence!=='json-updates'&&sequence!=='json-indices'&&sequence!=='json-collections'&&sequence!=='json-copies'&&sequence!=='json-parse')fail('fixed sequence must be literal, literal-algebraic, scalar-count, json-algebraic-primitives, json-updates, json-indices, json-copies, json-collections or json-parse');
   if(!['darwin','linux'].includes(process.platform))fail('POSIX source-proposal receiving required');
   const requested=options(input);
   // Lazy imports preserve the old API's module initialization graph. Selected
   // imports finish before taking the operation's complete source snapshot.
-  const jsonSequence=sequence==='json-algebraic-primitives',jsonUpdates=sequence==='json-updates',jsonIndices=sequence==='json-indices',jsonCollections=sequence==='json-collections',jsonCopies=sequence==='json-copies';
-  const proposeCoreLiteralTextCorpus=sequence==='scalar-count'||jsonSequence||jsonUpdates||jsonIndices||jsonCollections||jsonCopies?null:(await import('./migrate-core-literal-text.mjs')).proposeCoreLiteralTextCorpus;
+  const jsonSequence=sequence==='json-algebraic-primitives',jsonUpdates=sequence==='json-updates',jsonIndices=sequence==='json-indices',jsonCollections=sequence==='json-collections',jsonCopies=sequence==='json-copies',jsonParse=sequence==='json-parse';
+  const proposeCoreLiteralTextCorpus=sequence==='scalar-count'||jsonSequence||jsonUpdates||jsonIndices||jsonCollections||jsonCopies||jsonParse?null:(await import('./migrate-core-literal-text.mjs')).proposeCoreLiteralTextCorpus;
   const updates=jsonUpdates?(await import('./migrate-core-json-updates.mjs')).proposeCoreJsonUpdateCorpus:null;
   const copies=jsonCopies?(await import('./migrate-core-json-copies.mjs')).proposeCoreJsonCopiesCorpus:null;
+  const parse=jsonParse?(await import('./migrate-core-json-parse.mjs')).proposeCoreJsonParseCorpus:null;
   const indices=jsonIndices?(await import('./migrate-core-json-indices.mjs')).proposeCoreJsonIndicesCorpus:null;
   const collections=jsonCollections?(await import('./migrate-core-json-collections.mjs')).proposeCoreJsonCollectionsCorpus:null;
   const json=jsonSequence?(await import('./migrate-core-json.mjs')).proposeCoreJsonCorpus:null;
   const scalars=sequence==='scalar-count'?(await import('./migrate-core-scalars.mjs')).proposeCoreScalarsCorpus:null;
   const algebraic=sequence==='literal-algebraic'||jsonSequence?(await import('./migrate-core-algebraic.mjs')).proposeCoreAlgebraicCorpus:null;
   const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target),stages=[];
-  let stage=jsonCopies?'json-copies':jsonCollections?'json-collections':jsonIndices?'json-indices':jsonUpdates?'json-updates':sequence==='scalar-count'?'scalar-count':jsonSequence?'json':'literal',after=original.files;
+  let stage=jsonParse?'json-parse':jsonCopies?'json-copies':jsonCollections?'json-collections':jsonIndices?'json-indices':jsonUpdates?'json-updates':sequence==='scalar-count'?'scalar-count':jsonSequence?'json':'literal',after=original.files;
   try{
-    for(const name of jsonCopies?['json-copies']:jsonCollections?['json-collections']:jsonIndices?['json-indices']:jsonUpdates?['json-updates']:jsonSequence?['json','algebraic','primitives']:sequence==='scalar-count'?['scalar-count']:sequence==='literal'?['literal']:['literal','algebraic']){
-      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='json-copies'?copies:name==='json-collections'?collections:name==='json-indices'?indices:name==='json-updates'?updates:name==='json'?json:name==='primitives'?proposeCorePrimitivesCorpus:name==='scalar-count'?scalars:name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies,jsonSequence||jsonUpdates||jsonIndices||jsonCollections||jsonCopies);
+    for(const name of jsonParse?['json-parse']:jsonCopies?['json-copies']:jsonCollections?['json-collections']:jsonIndices?['json-indices']:jsonUpdates?['json-updates']:jsonSequence?['json','algebraic','primitives']:sequence==='scalar-count'?['scalar-count']:sequence==='literal'?['literal']:['literal','algebraic']){
+      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='json-parse'?parse:name==='json-copies'?copies:name==='json-collections'?collections:name==='json-indices'?indices:name==='json-updates'?updates:name==='json'?json:name==='primitives'?proposeCorePrimitivesCorpus:name==='scalar-count'?scalars:name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies,jsonSequence||jsonUpdates||jsonIndices||jsonCollections||jsonCopies||jsonParse);
       after=next.value.files;stages.push({name,packets:next.value.packets,summary:next.value.summary,trace:next.trace});
     }
     stage='final-source-and-index';const dependencyInputs=dependencies.rows.map((row,at)=>write.json('dependency-inputs/'+numbered(at)+'.json',row)),inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
