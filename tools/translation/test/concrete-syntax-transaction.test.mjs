@@ -1,3 +1,4 @@
+import {materializeConcreteOriginalGit} from './portable-git-fixtures.mjs';
 import test, {after} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,rmSync,realpathSync} from 'node:fs';
@@ -93,8 +94,8 @@ function compareSource(source,language,label){
   return current;
 }
 
-test('fixed transactions preserve complete retained Router parents and complete original JavaScript provider source',{timeout:60000},()=>{
-  const root=fileURLToPath(new URL('../../../',import.meta.url)),head='3f83171fe5ae5a51058482070a0c75442b08ad26';
+test('fixed transactions preserve complete retained Router parents and complete original JavaScript provider source',{timeout:60000},t=>{
+  const {root}=materializeConcreteOriginalGit(t),head='3f83171fe5ae5a51058482070a0c75442b08ad26';
   const selected=[['src/lib.rs','Rust','3c9605387b5454634325dbbf7604e0ad919931be17dac05905a60ea0268286af'],
     ['src/github_proxy.rs','Rust','3c65440f41bef37e9f55641ae298a8083884a42cffa9797e6c8ab40e81ef4e37'],
     ['src/responses_chat_input.rs','Rust','d234872e60a23b40b07261f63d870bafb5706993157b43e7a3794baaf7b69ef0'],

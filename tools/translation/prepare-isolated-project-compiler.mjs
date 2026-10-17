@@ -19,8 +19,13 @@ function crc32(bytes){let value=0xffffffff;for(let at=0;at<bytes.length;at++){va
 function storedGzip(bytes){const parts=[Buffer.from([31,139,8,0,0,0,0,0,0,255])];for(let at=0;at<bytes.length;){const count=Math.min(65535,bytes.length-at),header=Buffer.alloc(5);header[0]=at+count===bytes.length?1:0;header.writeUInt16LE(count,1);header.writeUInt16LE(65535-count,3);parts.push(header,bytes.subarray(at,at+count));at+=count;}const footer=Buffer.alloc(8);footer.writeUInt32LE(crc32(bytes),0);footer.writeUInt32LE(bytes.length>>>0,4);parts.push(footer);return Buffer.concat(parts);}
 function capture(root,revision){
   const sourceHead=git(root,['rev-parse','--verify',revision+'^{commit}']).toString('utf8').trim();if(!/^[a-f0-9]{40}$/u.test(sourceHead))throw Error('complete SHA1 source revision required');
-  const tree=git(root,['ls-tree','-rlz',sourceHead,'--','tools/translation',...EXTRA]).toString('utf8').split('\0').filter(Boolean),records=[];
-  for(const line of tree){const match=/^(\d{6}) (\S+) ([a-f0-9]{40}) +(\d+)\t(.+)$/u.exec(line);if(!match)throw Error('unknown original Git tree entry');const [,mode,kind,gitBlob,count,path]=match;if(!selected(path))continue;if(!safe(path)||kind!=='blob'||!['100644','100755'].includes(mode)||Number(count)>33554432)throw Error('unsafe original compiler member');records.push({path,mode,gitBlob,bytes:Number(count)});}
+  // Select metadata before asking Git for sizes: excluded test/generated blob
+  // bodies need not exist in a genuine portable historical object database.
+  const tree=git(root,['ls-tree','-rz',sourceHead,'--','tools/translation',...EXTRA]).toString('utf8').split('\0').filter(Boolean),records=[];
+  for(const line of tree){const match=/^(\d{6}) (\S+) ([a-f0-9]{40})\t(.+)$/u.exec(line);if(!match)throw Error('unknown original Git tree entry');const [,mode,kind,gitBlob,path]=match;if(!selected(path))continue;if(!safe(path)||kind!=='blob'||!['100644','100755'].includes(mode))throw Error('unsafe original compiler member');records.push({path,mode,gitBlob});}
+  if(records.length>2048)throw Error('compiler member bound');
+  const sizeBytes=git(root,['cat-file','--batch-check'],Buffer.from(records.map(row=>row.gitBlob+'\n').join(''))),sizes=sizeBytes.length?sizeBytes.toString('utf8').trimEnd().split('\n'):[];if(sizes.length!==records.length)throw Error('complete selected Git size census');
+  for(let at=0;at<records.length;at++){const row=records[at],match=/^([a-f0-9]{40}) blob (\d+)$/u.exec(sizes[at]);if(!match||match[1]!==row.gitBlob||!Number.isSafeInteger(Number(match[2]))||Number(match[2])>33554432)throw Error('unsafe original compiler member');row.bytes=Number(match[2]);}
   if(records.length>2048)throw Error('compiler member bound');const all=git(root,['cat-file','--batch'],Buffer.from(records.map(row=>row.gitBlob+'\n').join(''))),rows=[];let at=0,total=0;
   for(const row of records){const end=all.indexOf(10,at);if(end<0||all.subarray(at,end).toString('utf8')!==`${row.gitBlob} blob ${row.bytes}`)throw Error('original Git byte header');at=end+1;const bytes=all.subarray(at,at+row.bytes);at+=row.bytes;if(all[at++]!==10)throw Error('original Git byte boundary');const blob=createHash('sha1').update(Buffer.from(`blob ${bytes.length}\0`)).update(bytes).digest('hex');if(blob!==row.gitBlob)throw Error('original Git full byte digest');total+=bytes.length;if(total>67108864)throw Error('compiler source byte bound');rows.push({path:row.path,origin:'compiler',mode:row.mode,gitBlob:row.gitBlob,bytes:bytes.length,sha256:hash(bytes)});}
   if(at!==all.length)throw Error('unexpected Git byte suffix');
@@ -68,3 +73,6 @@ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const args=process.argv.slice(2),options={};for(let at=0;at<args.length;at+=2){const key=args[at],value=args[at+1];if(!['--root','--revision','--output'].includes(key)||!value||Object.hasOwn(options,key.slice(2)))throw Error('usage: --root ORIGINAL --revision COMMIT --output FRESH_PROPOSAL');options[key.slice(2)]=value;}
   console.log(JSON.stringify(prepareIsolatedProjectCompiler(options)));
 }
+
+// Exact existing selector, shared only with the portable test-data producer.
+export {selected as isIsolatedCompilerSourcePath};
