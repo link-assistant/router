@@ -174,6 +174,7 @@ export function createPrivateFrozenJsonComposer(){
   const entryUnits=(ENTRY_BYTES-128)/2;
   // Successful primitive sizes live only through this one completed plan.
   const quotedSizes=new Map();let quotedEntries=0,quotedKeyUnits=0;
+  const sharedMeasurements=new weakConstructor();let sharedMeasurementRecords=0;
   function quotedUnits(value,limit){
    if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;let units=2;
    const saved=apply(mapGet,quotedSizes,[value]);if(saved!==undefined&&saved<=limit)return saved;
@@ -214,8 +215,11 @@ export function createPrivateFrozenJsonComposer(){
   function measuredFrozenUnits(node,limit,depth){
    const prior=node.measurement;
    if(prior&&prior.depth===depth&&prior.units<=limit&&prior.cells<=measureCells&&prior.text<=measureText){measureCells-=prior.cells;measureText-=prior.text;return prior.units;}
-   const cellsBefore=measureCells,textBefore=measureText,units=frozenUnits(node.value,limit,depth);
+   const cellsBefore=measureCells,textBefore=measureText,shared=apply(weakGet,sharedMeasurements,[node.value]);let units;
+   if(shared&&shared.depth===depth&&shared.units<=limit&&shared.cells<=measureCells&&shared.text<=measureText){measureCells-=shared.cells;measureText-=shared.text;units=shared.units;}
+   else units=frozenUnits(node.value,limit,depth);
    if(units>=0&&measurementRecords<1024&&cellsBefore-measureCells>=64){node.measurement={depth,units,cells:cellsBefore-measureCells,text:textBefore-measureText};measurementRecords++;}
+   if(!shared&&units>=0&&sharedMeasurementRecords<1024&&cellsBefore-measureCells>=64){apply(weakSet,sharedMeasurements,[node.value,{depth,units,cells:cellsBefore-measureCells,text:textBefore-measureText}]);sharedMeasurementRecords++;}
    return units;
   }
   function planUnits(node,limit,depth){
