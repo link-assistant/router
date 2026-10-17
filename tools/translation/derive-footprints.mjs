@@ -1,7 +1,7 @@
 import {createHash,Hash} from 'node:crypto';
 import {createPrivateFrozenJsonCache} from './private-frozen-json.mjs';
 import {types} from 'node:util';
-import {originalJsonIntrinsicsUnchanged,originalPathMembershipIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalJsonIntrinsicsUnchanged,originalPathMembershipIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {resolveModuleBindings} from './module-bindings.mjs';
 import {compilationProfile,itemConfiguration,isInertConditionalAttribute} from './cfg-profile.mjs';
 import {sourceItems} from './rust-structure.mjs';
@@ -93,6 +93,36 @@ function standardModulePathIndex(modules,ancestors){
 const key=path=>path.join('::');
 const invocationId=(module,item)=>moduleScopeKey(module)+':'+item.start+':'+item.end;
 const standardOwner=(path,scope)=>path.length===1&&STANDARD_LAYOUT_DERIVES.has(path[0])&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.name===path[0]&&binding.macroKind!=='bang');
+// One query's candidate references only; no source/owner/closure facts are stored.
+const requestedProjectionPins=itemScanNative&&originalDataFreezeIntrinsicsUnchanged()&&descriptor===Object.getOwnPropertyDescriptor&&hasOwn===Object.hasOwn&&helperOwn===Object.hasOwn&&itemScanPrototype===Object.getPrototypeOf&&itemScanFrozen===Object.isFrozen&&itemScanProxy===types.isProxy?{some:descriptor(itemScanArray,'some'),keys:Reflect.ownKeys,objectPrototype:Object.prototype}:null;
+function requestedSomeUnchanged(bindings){
+  if(!requestedProjectionPins||itemScanPrototype(bindings)!==itemScanArray||descriptor(bindings,'some'))return false;
+  const current=descriptor(itemScanArray,'some'),prior=requestedProjectionPins.some;
+  return !!current&&hasOwn(current,'value')&&current.value===prior.value&&current.writable===prior.writable&&current.enumerable===prior.enumerable&&current.configurable===prior.configurable;
+}
+function requestedBindingProjection(scope){
+  if(!requestedProjectionPins||!originalDataFreezeIntrinsicsUnchanged())return null;
+  if(!scope||typeof scope!=='object'||itemScanProxy(scope)||itemScanPrototype(scope)!==requestedProjectionPins.objectPrototype||!itemScanFrozen(scope))return null;
+  const field=descriptor(scope,'bindings');if(!field||!hasOwn(field,'value'))return null;
+  const bindings=field.value;if(!bindings||itemScanProxy(bindings)||!Array.isArray(bindings)||!requestedSomeUnchanged(bindings)||!itemScanFrozen(bindings))return null;
+  const length=descriptor(bindings,'length');if(!length||!hasOwn(length,'value')||typeof length.value!=='number'||length.value<0||length.value>20000||length.value%1||requestedProjectionPins.keys(bindings).length!==length.value+1)return null;
+  const candidates=[];
+  for(let at=0;at<length.value;at++){
+    const cell=descriptor(bindings,''+at);if(!cell||!hasOwn(cell,'value'))return null;
+    const binding=cell.value;if(!binding||typeof binding!=='object'||itemScanProxy(binding)||itemScanPrototype(binding)!==requestedProjectionPins.objectPrototype||!itemScanFrozen(binding))return null;
+    const namespace=descriptor(binding,'namespace');if(!namespace||!hasOwn(namespace,'value')||typeof namespace.value!=='string')return null;
+    if(namespace.value==='macro'){
+      const kind=descriptor(binding,'macroKind');if(!kind||!hasOwn(kind,'value')||typeof kind.value!=='string')return null;
+      if(kind.value!=='bang')candidates[candidates.length]=binding;
+    }
+  }
+  return {bindings,candidates};
+}
+function requestedBindingCollision(scope,condition,projection){
+  const bindings=scope.bindings,selected=projection&&projection.bindings===bindings&&requestedSomeUnchanged(bindings)?projection.candidates:bindings;
+  return selected.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name));
+}
+
 function originalDeclarationHeader(item,condition,module,scope) {
   if(inertInnerLintItem(item,module.source,module.sourceView,module.compilationProfile))return true;
   const tokens=item.tokens.filter(token=>token.type!=='comment'),end=condition.attributes.at(-1)?.span.end??item.start;
@@ -189,17 +219,18 @@ export function createDeriveFootprintContext({modules,dependencies,compilationPr
     const attributes=[...new Set(['cfg','derive',...input.attributes.map(attribute=>attribute.name),...input.derives.map(invocation=>invocation.path.at(-1)),...names])],types=[...new Set(['core','std',...input.derives.flatMap(invocation=>invocation.path.length>1?[invocation.path[0]]:[invocation.path[0]]),...attributes])];
     return [...attributes.map(name=>({namespace:'attribute',name})),...types.map(name=>({namespace:'type',name}))];
   };
-  const activeOriginalItemClosed=(module,scope,candidate)=>{
+  const activeOriginalItemClosed=(module,scope,candidate,projection=null)=>{
     const condition=itemConfiguration(candidate.tokens,profile);if(condition.status!=='active')return false;
     const input=moduleInputs.get(moduleScopeKey(module)).get(candidate.start);
     if(input){const owners=input.derives.map(invocation=>standardOwner(invocation.path,scope)?true:actualOwner(invocation.path,scope,scopes,external,dependencies));if(owners.some(owner=>!owner)||clapSourceRefusals.has(invocationId(module,candidate)))return false;for(const owner of owners.filter(owner=>owner!==true&&owner.target[0]==='clap')){const output=clapSourceOutputs.get(invocationId(module,candidate));if(owner.target.join('::')==='clap::ValueEnum'&&!output?.valueEnum||owner.target.join('::')==='clap::Args'&&!output?.args)return false;}return true;}
-    return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!scope.bindings.some(binding=>binding.namespace==='macro'&&binding.macroKind!=='bang'&&condition.attributes.some(attribute=>!isInertConditionalAttribute(attribute)&&attribute.name===binding.name))&&originalDeclarationHeader(candidate,condition,module,scope);
+    return condition.attributes.every(attribute=>isInertConditionalAttribute(attribute)||['cfg','path','doc','allow','warn','deny','forbid','must_use','inline','cold','deprecated','repr','non_exhaustive','track_caller','macro_use','macro_export'].includes(attribute.name))&&!requestedBindingCollision(scope,condition,projection)&&originalDeclarationHeader(candidate,condition,module,scope);
   };
   const requestedAttributeClosure=(scope,caller,requests)=>{
     const module=modules.find(module=>moduleScopeKey(module)===moduleScopeKey(scope));if(!module||scope.configurationCondition!=='active'||caller.configurationCondition==='unknown'||caller.configurationCondition==='inactive')return null;
     if(attributeClosure.get(moduleScopeKey(scope)))return {originalAttributeFootprintClosed:true,conditionalSiblingProofs:[]};
     const names=new Set(requests.map(request=>request.name));if(scope.unresolvedImports.some(entry=>entry.glob||names.has(entry.name))||scope.bindings.some(binding=>names.has(binding.name)&&macroBindingAffects(binding,'attribute')))return null;
-    const conditionalSiblingProofs=[];for(const candidate of module.items){const condition=itemConfiguration(candidate.tokens,profile);if(condition.status==='active'){if(!activeOriginalItemClosed(module,scope,candidate))return null;continue;}
+    const projection=requestedBindingProjection(scope);
+    const conditionalSiblingProofs=[];for(const candidate of module.items){const condition=itemConfiguration(candidate.tokens,profile);if(condition.status==='active'){if(!activeOriginalItemClosed(module,scope,candidate,projection))return null;continue;}
       try{ancestorSourceContext??=createOriginalAncestorAttributeScopeContext({modules,binding:baseline,dependencies});conditionalSiblingProofs.push(proveOriginalConditionalSiblingScope({context:ancestorSourceContext,module,item:candidate,caller,requests}));}catch{return null;}
     }
     return conditionalSiblingProofs.length?{originalAttributeFootprintClosed:false,conditionalSiblingProofs}:null;
