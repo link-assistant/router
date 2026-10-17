@@ -1,3 +1,4 @@
+import {isOwnedCoreItem,emitOwnedCoreProgram} from './owned-core-operations.mjs';
 import { constructMap } from './vendor/constructs.mjs';
 import { camelFromSnake,snakeFromCamel,check } from './vendor/ir.mjs';
 import { constantValue } from './vendor/constants.mjs';
@@ -168,6 +169,7 @@ fn js_trim(value: &str) -> String {
 }`;
 
 function emitter(program, target,{outputPath}={}) {
+  if(program.some(isOwnedCoreItem)){if(!program.every(isOwnedCoreItem))throw Error('mixed owned/portable profiles');return emitOwnedCoreProgram(program,target,{outputPath});}
   const children=new Map(),originalClosures=new WeakSet();
   const collect=(value,sourceBound)=>{if(!value||typeof value!=='object')return;if(['source-create','owned-some'].includes(value.kind)&&!sourceBound)throw Error('unissued original caller creation or iteration');if(value.kind==='source-create'){const old=children.get(value.closure.name);if(old&&JSON.stringify(old)!==JSON.stringify(value.closure))throw Error('conflicting source callable bodies');children.set(value.closure.name,value.closure);}for(const [key,child]of Object.entries(value))if(!['environment','sourceCalls','closure'].includes(key)){if(Array.isArray(child))child.forEach(value=>collect(value,sourceBound));else collect(child,sourceBound);}};
   program=program.map(item=>{

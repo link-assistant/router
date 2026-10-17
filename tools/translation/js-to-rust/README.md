@@ -521,3 +521,54 @@ The initial host-global reference belongs to that bootstrap boundary (Bun marks
 its own global wrapper as a proxy). Replacing it before module initialization is
 outside this claim. This does not admit caller-supplied roots: every derived
 feature prototype and public byte value still rejects proxies before probing.
+
+## Source-bound owned-core calls (source draft)
+
+The explicit owned-core profile has its own receiving context, concrete stage
+and canonical checked Links document. It resolves actual imported symbols from
+complete source, checks the registered materialized runtime and owned Rust
+facade/leaf, and reconstructs the whole original function when checking meta or
+emitting either target. It never treats helper names, public source flags or a
+copied JSON layout as a callable permit. Native syntax analysis is ephemeral;
+no TypeScript Program/Checker or traversal frame is retained in a context.
+
+Use `createOwnedCoreSourceContext({files,runtimeRoot,declarationRoot})`, then
+`analyzeOwnedCoreJavaScript` or `translateOwnedCoreJavaScript` with
+`{sourcePath,context}`. `translateOwnedCoreConcreteSyntaxMeta` consumes canonical
+JS/TS concrete meta. `parseOwnedCoreMeta` reconstructs private checks from its
+complete source context; its results also pass fresh target checks. The old
+portable APIs and their option readers remain separate. There is no public
+checked flag or cross-call owner/source/verdict cache.
+
+The initial scope is immutable local copy/update/index and closed branches.
+Actual source input annotations specify canonical JSON/scalar receiving
+domains only; the checker independently proves imports, operands, lexical
+bindings, complete control flow and input-root loans. JavaScript's reusable
+update operands become Rust argument temporaries followed by bounded copies.
+Error identity, reflection, mutable aliases, arbitrary source helpers and
+callbacks refuse. Canonical resources remain 4096 nodes/depth 32/dense 4096;
+there is no general native panic/JavaScript Error equivalence. Optional parse
+and collection callback operations remain explicitly reverse-refused.
+
+Default regeneration consumes actual forward-produced application modules,
+retains all full input sources and reports every admitted/refused function.
+The original portable/native/unsupported workloads remain. Owned Rust drafts
+are separate from the old std-only portable contract and require the actual
+receiving compatibility core plus serde_json. Neither a new fixture nor a
+zero-admission inventory proves whole-project synchronization. All new
+receiving suites, strict emitted TypeScript and native CI are unrun at this
+source checkpoint; publication and the same-SHA gate remain unchanged.
+
+A separate, explicitly staged CI witness is emitted by the real regenerator
+from `tests/translation_core_reverse_owned_oracle.rs`. Full before/after source,
+its reversible generated comment, all source inputs, CST and checked Links are
+retained. Its TypeScript/runtime files can be strictly checked, and the Rust
+oracle includes the actual emitted `.rs` with an alias to the genuine library
+core. Installation and native execution belong to Root/CI; witness function
+counts never enter the actual application inventory.
+
+The exact written `Parameters<typeof actualImportedOperation>[0|1]` form is
+also an input-domain declaration for that source-bound registered ABI position;
+any competing source declaration of the type helper refuses. It grants no call
+permission or Rust trait/type inference. Ordinary unconstrained `bigint` and
+structural map/byte annotations do not acquire canonical index domains.

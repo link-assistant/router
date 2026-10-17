@@ -1,3 +1,5 @@
+import {isOwnedCoreItem,evaluateOwnedCoreProgram} from './owned-core-operations.mjs';
+export {prepareOwnedCoreRuntime} from './owned-core-operations.mjs';
 import {matchesSequence} from './vendor/sequence-patterns.mjs';
 // Independent evaluator for the semantic IR. Used alongside authored fixtures
 // and execution of the authoritative source; neither emitter is consulted.
@@ -10,6 +12,7 @@ import {prepareOriginalConstructorRuntime,constructOriginalError,checkedOriginal
 const applyCallable=Reflect.apply;
 
 export function evaluate(program, functionName, arguments_,originalConstructorRuntime) {
+  if(program.some(isOwnedCoreItem)){if(!program.every(isOwnedCoreItem))throw Error('mixed owned/portable evaluator profiles');return evaluateOwnedCoreProgram(program,functionName,arguments_,originalConstructorRuntime);}
   if(originalConstructorRuntime!==undefined)assertOriginalConstructorRuntimeProgram(program,originalConstructorRuntime);
   const table = new Map();
   for(let index=0;index<program.length;index++)table.set(program[index].name,program[index]);

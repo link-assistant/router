@@ -664,3 +664,6 @@ function unquote(text) {
 export function javascriptName(name) {
   return camelFromSnake(name);
 }
+
+// Separate source-bound profile; the old parser never receives this context.
+export {analyzeOwnedCoreModule as parseOwnedCoreJavaScriptModule} from '../owned-core-operations.mjs';

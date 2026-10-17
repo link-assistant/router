@@ -164,6 +164,9 @@ export function synchronizationSteps({root,direction='both',check=false,profiles
   if(!directions.has(direction)||typeof check!=='boolean'||typeof profiles!=='boolean')throw Error('Invalid synchronization options');
   originalFileStatus(root,affinityDescriptor);
   const steps=[];
+  // Every reverse producer now consumes the explicit owned application profile.
+  // Its own full source/runtime snapshot is re-read before artifact packaging;
+  // forward-generated receiving inputs are not mislabelled handwritten inputs.
   const reverse=id=>({id,timeoutMs:120_000,args:producer('scripts/regenerate-js-first.mjs',`const result=producer.regenerate(root,{check});console.log(JSON.stringify(result));if(check&&result.changed.length)process.exitCode=1;`,root,check)});
   const affinity=(checkOnly=false)=>({id:'original-affinity-schema',timeoutMs:600_000,args:producer('tools/translation/serialization-schema/native-descriptor.mjs',`console.log(JSON.stringify(await producer.produceNativeAffinityDescriptor({root,write:!check})));`,root,check||checkOnly)});
   // The native descriptor is itself a reverse input. Its complete source
@@ -240,7 +243,7 @@ export function syncRouter({root=implementationRoot,direction='both',check=false
   let after,inputError=null;
   try{after=captureSyncInputs(root);}catch(error){inputError=error.message;}
   const inputsUnchanged=after!==undefined&&JSON.stringify(before)===JSON.stringify(after);
-  const receipt={schema:'router-translation-sync-v1',root,direction,mode:check?'check':'write',profiles,directory:output,records,originalInputsUnchanged:inputsUnchanged,inputError,elapsedSeconds:(performance.now()-started)/1000,exitCode:failed||!inputsUnchanged?1:0,artifactsCurrent:check&&!failed&&inputsUnchanged,scope:'Checked translator drafts; explicit refusals and handwritten original bodies remain. This receipt does not certify whole-source synchronization.',runtimeParity:false,wholeSourceSynchronization:false,fullGatePass:false,rustExecuted:false};
+  const receipt={schema:'router-translation-sync-v1',root,direction,mode:check?'check':'write',profiles,directory:output,records,originalInputsUnchanged:inputsUnchanged,inputError,elapsedSeconds:(performance.now()-started)/1000,exitCode:failed||!inputsUnchanged?1:0,artifactsCurrent:check&&!failed&&inputsUnchanged,ownedCoreProfile:'router-owned-core-reverse-v1; actual generated application discovery with full per-operation input reread and refusal inventory',scope:'Checked translator drafts; explicit refusals and handwritten original bodies remain. This receipt does not certify whole-source synchronization.',runtimeParity:false,wholeSourceSynchronization:false,fullGatePass:false,rustExecuted:false};
   if(after)fs.writeFileSync(path.join(output,'inputs-after.json'),JSON.stringify(after,null,2)+'\n');
   fs.writeFileSync(path.join(output,'receipt.json'),JSON.stringify(receipt,null,2)+'\n',{flag:'wx'});
   return receipt;

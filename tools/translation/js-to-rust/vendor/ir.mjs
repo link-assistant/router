@@ -37,6 +37,8 @@ import { checkClosedJson,jsonResponseStatus,closedJsonValue,utf16Link,utf16Of } 
 import {sourceConstructorItem,isOriginalConstructorBodyCheck,checkOriginalConstructorBody} from './constructor-bodies.mjs';
 import {reissueImportedErrorConstructor,originalImportedErrorConstructor} from './source-constructors.mjs';
 
+import {isOwnedCoreItem,checkOwnedCoreItem} from '../owned-core-operations.mjs';
+
 export const FRAGMENT = 'portable-router-v1';
 function callableOf(type){if(typeof type!=='string'||!type.startsWith('callable:'))return null;return JSON.parse(type.slice(9));}
 
@@ -217,6 +219,7 @@ export function lowerSourceClosure(handle,name) {
   return {...checked,kind:'closure',captures:checked.params.slice(0,count),params:checked.params.slice(count),environment:environment.proof,...(collection?{conditionalCaptures:true}:{})};
 }
 export function check(item, table) {
+  if(isOwnedCoreItem(item))return checkOwnedCoreItem(item);
   if(sourceConstructorItem(item)&&!isOriginalConstructorBodyCheck(item))return checkOriginalConstructorBody(item);
   if(sourceCallItem(item))return checkSourceCalls(item);
   if(item.conditionalCalls&&!isOriginalSourceCallCheck(item))refuse('collection','a conditional call without privately checked original creation');
@@ -583,6 +586,7 @@ function expression(expr, names, table) {
  * @returns {string}
  */
 export function toLino(item) {
+  if(isOwnedCoreItem(item))return writeLink(['owned-function',encodeConstructorProofWord(JSON.stringify(checkOwnedCoreItem(item)))]);
   const flag = item.exported ? [['exported']] : [];
   if (item.kind === 'constant') return writeLink(['constant', item.name, ...flag, ['type', item.type], ['value', linkOf(item.value)]]);
   return writeLink([
@@ -678,10 +682,11 @@ function linkOf(expr) {
  * @returns {Array<object>}
  */
 export function fromLino(text) {
-  return parseLinks(text).filter((link) => ['function','constant','closure'].includes(link[0])).map(itemOf);
+  return parseLinks(text).filter((link) => ['function','constant','closure','owned-function'].includes(link[0])).map(itemOf);
 }
 
 function itemOf(link) {
+  if(link[0]==='owned-function'){if(link.length!==2)throw Error('invalid owned meta fields');const item=JSON.parse(textOf(link[1]));if(!isOwnedCoreItem(item))throw Error('invalid owned meta kind');return item;}
   const exported = Boolean(field(link, 'exported'));
   if (link[0] === 'constant') {
     return { kind: 'constant', name: link[1], exported, type: field(link, 'type')[1], value: exprOf(field(link, 'value')[1]) };

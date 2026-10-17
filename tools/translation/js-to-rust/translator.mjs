@@ -349,3 +349,51 @@ export function analyzeJavaScriptIndependentCorpus(input,options){
     snapshot.requireCurrent();return result.value;
   }finally{batch=null;analyses=null;}
 }
+
+
+// New explicit owned-core receiving profile. The legacy option reader and
+// source/CST/native-check schedules above are unchanged.
+import {createOwnedCoreSourceContext,ownedCoreSourceData,requireOwnedCoreSourceCurrent} from './owned-core-source.mjs';
+import {parseOwnedCoreJavaScriptModule} from './vendor/frontends.mjs';
+import {checkOwnedCoreProgram} from './owned-core-operations.mjs';
+import {encodeWord,textOf,writeLink} from './vendor/lino.mjs';
+export {createOwnedCoreSourceContext} from './owned-core-source.mjs';
+export function analyzeOwnedCoreJavaScript(source,{sourcePath,context}={}){
+ const stage=prepareReverseConcreteSource(source);return analyzeOwnedCoreStage(stage,sourcePath,context);
+}
+function analyzeOwnedCoreStage(stage,sourcePath,context){
+ assertPrivateParserExecution();assertReverseConcreteSourceHost();
+ requireOwnedCoreSourceCurrent(context);
+ if(ownedCoreSourceData(context).files.find(row=>row.path===sourcePath)?.source!==stage.source)throw TypeError('Owned reverse complete original source differs');
+ const analysis=parseOwnedCoreJavaScriptModule(context,sourcePath);
+ requireOwnedCoreSourceCurrent(context);assertPrivateParserExecution();assertReverseConcreteSourceHost();
+ return {...analysis,concreteSyntax:stage.concreteSyntax};
+}
+export function parseOwnedCoreMeta(text,{context}={}){
+ if(typeof text!=='string'||Buffer.byteLength(text)>33554432)throw TypeError('Owned meta byte bound');
+ const links=parseLinks(text),header=links[0];
+ if(!header||header[0]!=='owned-core-context'||header.length!==2||links.slice(1).some(row=>row[0]!=='owned-function'))throw TypeError('Owned meta context/functions required');
+ const data=JSON.parse(textOf(header[1]));
+ if(context){if(JSON.stringify(ownedCoreSourceData(context))!==JSON.stringify(data))throw TypeError('Owned meta current context differs');}
+ else context=createOwnedCoreSourceContext(data);
+ const raw=fromLino(text),program=checkOwnedCoreProgram(raw,context);
+ const canonical=writeLink(['owned-core-context',encodeWord(JSON.stringify(ownedCoreSourceData(context)))])+'\n'+program.map(toLino).join('\n')+'\n';
+ if(canonical!==text)throw TypeError('Noncanonical owned checked meta');
+ requireOwnedCoreSourceCurrent(context);return program;
+}
+function translateOwnedStage(stage,{sourcePath,context,typescriptOutputPath}={}){
+ const pipeline=createRulePipeline([
+  {phase:'language',rules:[
+   {id:'owned-core:source-symbols-and-body',apply:()=>{const analyzed=analyzeOwnedCoreStage(stage,sourcePath,context);if(analyzed.diagnostics.length)throw TypeError(analyzed.diagnostics[0].message);return analyzed;}},
+   {id:'owned-core:checked-links-roundtrip',apply:analyzed=>{
+    const meta=writeLink(['owned-core-context',encodeWord(JSON.stringify(ownedCoreSourceData(context)))])+'\n'+analyzed.program.map(toLino).join('\n')+'\n';
+    const program=parseOwnedCoreMeta(meta,{context});return {analyzed,meta,program};
+   }},
+   {id:'owned-core:both-checked-targets',apply:row=>({...row,rust:emitRust(row.program),typescript:emitTypeScript(row.program,{outputPath:typescriptOutputPath})})},
+  ]},
+  {phase:'repository',rules:[{id:'owned-core:package-source-artifacts',apply:row=>({...row,concreteSyntax:stage.concreteSyntax,profile:'router-owned-core-reverse-v1',runtimeParity:false})}]},
+ ]);
+ const result=pipeline.run(undefined);requireOwnedCoreSourceCurrent(context);return {...result.value,trace:result.trace};
+}
+export function translateOwnedCoreJavaScript(source,options){return translateOwnedStage(prepareReverseConcreteSource(source),options);}
+export function translateOwnedCoreConcreteSyntaxMeta(text,options){return translateOwnedStage(parseReverseConcreteSource(text),options);}

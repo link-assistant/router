@@ -7,6 +7,8 @@ import { analyzeJavaScriptIndependentCorpus, translateJavaScript, parseMeta, emi
 import { camelFromSnake } from '../tools/translation/js-to-rust/vendor/ir.mjs';
 import { buildNativePortableArtifacts, buildNativePortableArtifactsCorpusBulk } from '../tools/translation/js-to-rust/native-portable-artifacts.mjs';
 
+import {buildOwnedCoreArtifacts} from '../tools/translation/js-to-rust/owned-core-corpus.mjs';
+
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const json = (value) => `${JSON.stringify(value)}\n`;
@@ -93,6 +95,8 @@ export function buildArtifacts(root = ROOT) {
     ['packages/typescript/native/js-first-policy.ts', `${header}${emitTypeScript(program)}`],
   ]);
   for (const [path, content] of nativeDraft.artifacts) artifacts.set(path, content);
+  const ownedDraft=buildOwnedCoreArtifacts(root);
+  for(const [path,content]of ownedDraft.artifacts)artifacts.set(path,content);
   const manifest = {
     schemaVersion: 1,
     translator: 'tools/translation/js-to-rust/translator.mjs',
@@ -113,6 +117,7 @@ export function buildArtifacts(root = ROOT) {
     nativePortableDraft: { manifest: 'parity/js-native-portable-draft.json', topLevel: nativeDraft.manifest.topLevel,
       scopedFunctions: nativeDraft.manifest.scopedFunctions, wholeNativeImplementationTranslated: false, runtimeParity: false },
     unsupportedExamples: unsupported,
+    ownedCoreDraft:{manifest:'parity/js-owned-core-reverse-draft.json',...ownedDraft.manifest.totals,runtimeParity:false},
     outputs: [...artifacts].map(([path, content]) => ({ path, bytes: Buffer.byteLength(content), sha256: sha256(content) })),
   };
   artifacts.set('parity/js-first-translation.json', json(manifest));
@@ -122,9 +127,17 @@ export function buildArtifacts(root = ROOT) {
 export function regenerate(root = ROOT, { check = false } = {}) {
   const artifacts = buildArtifacts(root);
   const changed = [];
+  const witnessPrefix='tools/translation/js-to-rust/generated/owned-core-witness';
+  const witnessIndex=join(root,witnessPrefix+'-inputs.json'),previousWitness=new Map();
+  if(existsSync(witnessIndex)){
+    if(lstatSync(witnessIndex).isSymbolicLink()||lstatSync(witnessIndex).size>32*1024*1024)throw Error('Invalid old owned witness index');
+    const previous=JSON.parse(readFileSync(witnessIndex,'utf8'));
+    if(previous.schema!=='owned-core-reverse-ci-witness-v1'||!Array.isArray(previous.stagedReceivingInputs?.files))throw Error('Unknown old owned witness index');
+    for(const row of previous.stagedReceivingInputs.files)if(typeof row.path==='string'&&row.path.startsWith(witnessPrefix+'/')&&typeof row.source==='string')previousWitness.set(row.path,row.source);
+  }
   // Empty current programs are emitted too, so a newly refused body cannot
   // survive. Removed source modules also remove only recognized owned drafts.
-  for (const directory of ['tools/translation/js-to-rust/generated/native-portable', 'packages/typescript/native/portable-draft']) {
+  for (const directory of ['tools/translation/js-to-rust/generated/native-portable', 'packages/typescript/native/portable-draft','tools/translation/js-to-rust/generated/owned-core','packages/typescript/generated/reverse-owned-core',witnessPrefix]) {
     const visit = (path) => {
       if (!existsSync(join(root, path))) return;
       if (lstatSync(join(root, path)).isSymbolicLink()) throw new Error(`linked generated draft: ${path}`);
@@ -133,7 +146,7 @@ export function regenerate(root = ROOT, { check = false } = {}) {
         if (entry.isSymbolicLink()) throw new Error(`linked generated draft: ${child}`);
         if (entry.isDirectory()) visit(child);
         else if (!artifacts.has(child)) {
-          if (!readFileSync(join(root, child), 'utf8').startsWith(entry.name.endsWith('.lino') ? '# GENERATED:' : '// GENERATED:')) {
+          if (previousWitness.get(child)!==readFileSync(join(root,child),'utf8')&&!(child.endsWith('/inputs.json')&&JSON.parse(readFileSync(join(root,child),'utf8')).schema==='owned-core-reverse-original-inputs-v1')&&!readFileSync(join(root, child), 'utf8').startsWith(entry.name.endsWith('.lino') ? '# GENERATED:' : '// GENERATED:')) {
             throw new Error(`unrecognized stale native draft: ${child}`);
           }
           changed.push(child);
@@ -142,6 +155,14 @@ export function regenerate(root = ROOT, { check = false } = {}) {
       }
     };
     visit(directory);
+  }
+  for(const path of [witnessPrefix+'.rs',witnessPrefix+'.lino',witnessPrefix+'-inputs.json']){
+    const absolute=join(root,path);if(!existsSync(absolute)||artifacts.has(path))continue;
+    if(lstatSync(absolute).isSymbolicLink())throw Error('Linked old owned witness output');
+    const content=readFileSync(absolute,'utf8');
+    if(path.endsWith('.rs')?!content.startsWith('// GENERATED: actual checked reverse owned-core receiving witness.'):
+       path.endsWith('.lino')?!content.startsWith('(owned-core-context '):JSON.parse(content).schema!=='owned-core-reverse-ci-witness-v1')throw Error('Unknown old owned witness output');
+    changed.push(path);if(!check)rmSync(absolute);
   }
   for (const [path, content] of artifacts) {
     const absolute = join(root, path);
