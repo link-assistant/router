@@ -1,3 +1,4 @@
+import {hasOriginalRouterCoreJsonProjection} from '../router-core-json-updates.mjs';
 import {hasOriginalMappedOrigin} from './standard-mapped-body.mjs';
 import {sameType} from '../checked-types.mjs';
 import {originalCloneReceiverOrigin} from './clone-source-body.mjs';
@@ -444,6 +445,7 @@ function origins(node,env,context,returns,depth=0) {
   }
   if(node.k==='routerHostCall') {
     const arguments_=node.args.map(value=>read(value));
+    if(borrowed&&hasOriginalRouterCoreJsonProjection(node))return uniformOrigins(node.type,at(arguments_[0]??new Set([UNKNOWN]),[]),context);
     // Registered shared receiver methods borrow from that receiver; no
     // lifetime permission is inferred for free functions or owned receivers.
     const contract=node.contract??context.hostContracts?.find(contract=>contract.id===node.id);

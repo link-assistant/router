@@ -7,6 +7,7 @@ mod primitives;
 pub use self::primitives::{Json, Maybe, Outcome, Str};
 pub use self::primitives::unicode_scalar_count;
 pub use self::primitives::{json_copy, json_with_field};
+pub use self::primitives::{json_index_str, json_index_usize, json_map_index};
 
 mod ranges;
 pub use self::ranges::f64_inclusive_contains;

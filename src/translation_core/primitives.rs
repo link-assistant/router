@@ -40,3 +40,27 @@ pub fn json_with_field(mut base: Json, key: &Str, value: Json) -> Json {
     base[key] = value;
     base
 }
+
+/// Read a string key; absent keys and non-object values return JSON Null.
+/// The returned reference borrows only `value`, never the key.
+#[must_use]
+pub fn json_index_str<'a>(value: &'a Json, key: &Str) -> &'a Json {
+    &value[key]
+}
+
+/// Read an array position; absent positions and non-arrays return JSON Null.
+/// The returned reference borrows only `value`.
+#[must_use]
+pub fn json_index_usize<'a>(value: &'a Json, index: usize) -> &'a Json {
+    &value[index]
+}
+
+/// Read an existing map entry, panicking when the key is absent.
+/// This differs from Value indexing and never inserts an entry.
+#[must_use]
+pub fn json_map_index<'a>(
+    value: &'a ::serde_json::Map<::std::string::String, Json>,
+    key: &Str,
+) -> &'a Json {
+    &value[key]
+}

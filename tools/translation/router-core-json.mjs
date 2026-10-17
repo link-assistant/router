@@ -1,7 +1,7 @@
 // Owned JSON construction: the real Rust library delegation is explicit.
 // A genuine qualified source call selects this route; ordinary json! is unchanged.
 import {types} from 'node:util';
-import {hasCurrentRouterCoreJsonCopy} from './router-core-json-updates.mjs';
+import {hasCurrentRouterCoreJsonCopy,hasCurrentRouterCoreJsonProjection} from './router-core-json-updates.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
 import {copyMetadata,originalParsedDeclarationEvidence,originalParsedSyntaxNode} from './extensions/source-links.mjs';
@@ -112,7 +112,7 @@ const readers=new Set(['serde_json_value_get_string','serde_json_value_get_usize
 function pure(checker,node){
   if(!node||typeof node!=='object')return true;
   if(node.k&&!pureKinds.has(node.k))return false;
-  if(node.k==='routerHostCall'&&!readers.has(node.id)&&!(node.id==='router_core_json_copy'&&hasCurrentRouterCoreJsonCopy(checker,node))){
+  if(node.k==='routerHostCall'&&!readers.has(node.id)&&!(node.id==='router_core_json_copy'&&hasCurrentRouterCoreJsonCopy(checker,node))&&!hasCurrentRouterCoreJsonProjection(checker,node)){
     const contract=checker.instantiations?.contracts.get(node.id);
     // The private new-copy receipt only opens the branch above; its complete
     // argument still goes through the recursive old purity walk below. All

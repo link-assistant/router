@@ -159,6 +159,13 @@ export function validateOwnedJsonFlow(checker,entry,{genuine}) {
    for(const argument of node.args){const value=argument.value;if(!value?.k)refuse('missing checked JSON interpolation',node);read(value,value.k==='var'?'borrow':'move');}return empty();
   }
   if(node.k==='routerHostCall'){
+   if(['router_core_json_index_str','router_core_json_index_usize','router_core_json_map_index'].includes(node.id)){
+    if(!genuine(node)||node.args.length!==2||kind!=='borrow')refuse('projection requires its private actual borrowed-call receipt',node);
+    const receiver=read(node.args[0],'borrow');read(node.args[1],'borrow');ensureRoots(receiver,state,node);
+    if(!receiver.loans.get(path([]))?.size)refuse('projection requires its live canonical receiver root',node);
+    return {loans:new Map([[path([]),new Set(receiver.loans.get(path([])))]]),tags:null};
+   }
+
    if(['router_core_json_copy','router_core_json_with_field'].includes(node.id)){
     if(!genuine(node))refuse('new operation has no private checked source receipt',node);
     if(node.id==='router_core_json_copy'){if(node.args.length!==1)refuse('copy arity',node);read(node.args[0],'borrow');}
