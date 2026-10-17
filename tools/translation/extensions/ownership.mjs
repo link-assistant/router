@@ -1,8 +1,7 @@
 // Source ownership qualifiers are distinct from equal portable value domains.
 // No borrow, move, dereference or allocation is fabricated by this adapter.
 import {TextRustParser,TextChecker} from './text.mjs';
-import {isDeepStrictEqual} from 'node:util';
-import {SOURCE_STR} from './source-contract-types.mjs';
+import {SOURCE_STR,hasSourceBorrowedStrSignature} from './source-contract-types.mjs';
 import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 import {fixedArrayLength} from '../checked-types.mjs';
 
@@ -177,7 +176,7 @@ export function withOwnershipChecker(Base=TextChecker) {
         owner=BORROWED_STR;
         const receiver=value.string;
         const actual=receiver?.type,actualOwner=ownership(actual);
-        const sourceReceiver=actual?.rustSourceType===true||isDeepStrictEqual(actual?.rustStandardSignature,SOURCE_STR.rustStandardSignature)||actual?.rustBorrowLifetime?.kind==='static'&&actual.rustBorrowLifetime.source==='string-literal';
+        const sourceReceiver=actual?.rustSourceType===true||hasSourceBorrowedStrSignature(actual)||actual?.rustBorrowLifetime?.kind==='static'&&actual.rustBorrowLifetime.source==='string-literal';
         if(actualOwner&&['str','String'].includes(actualOwner.source)&&sourceReceiver)value={...value,type:{...value.type,rustStandardSignature:SOURCE_STR.rustStandardSignature}};
         if(ownership(receiver?.type)?.kind==='owned')value={...value,type:{...value.type,rustBorrowingUnresolved:'borrow of owned String'}};
       }

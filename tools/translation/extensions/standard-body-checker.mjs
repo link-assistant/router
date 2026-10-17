@@ -10,7 +10,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {createHash} from 'node:crypto';
 import {rustFixedType,sameType} from '../checked-types.mjs';
 import {checkedOptionNominal,optionNominalContext,restoreOptionNominals} from './option-nominal-proof.mjs';
-import {SOURCE_STR} from './source-contract-types.mjs';
+import {hasSourceBorrowedStrSignature} from './source-contract-types.mjs';
 import {tokenizeRust} from './lexical.mjs';
 import {TranslationError,unsupported,typeError} from '../vendor/meta-language/translation/diagnostics.js';
 import {pinnedOptionBody,pinnedDefaultBody,parsePinnedBody,parsedPinnedBodyEvidence,STANDARD_BODY_SOURCE_PROFILE} from './standard-body-source.mjs';
@@ -23,7 +23,7 @@ const EAGER_OPTION_RESULT_RULE='rust.option.ok-or.original-body.v1';
 const refuse=(span,site)=>{throw unsupported('pinned standard body owner','requires an actual by-value canonical Option with a checked scalar, borrowed str, or privately certified Copy nominal payload [original Option payload: '+site+']',span);};
 function scalarOwner(type,span){
   if(!type||type.rustReference||type.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse(span,'scalar-qualifiers');
-  if(type.kind==='string'&&(type.rustSourceType||isDeepStrictEqual(type.rustStandardSignature,SOURCE_STR.rustStandardSignature)||type.rustBorrowLifetime?.kind==='static'&&type.rustBorrowLifetime.source==='string-literal')&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return '&str';
+  if(type.kind==='string'&&(type.rustSourceType||hasSourceBorrowedStrSignature(type)||type.rustBorrowLifetime?.kind==='static'&&type.rustBorrowLifetime.source==='string-literal')&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str')return '&str';
   if(type.kind==='bool'&&!type.rustOwnership)return 'bool';
   if(type.kind==='fixed'){
     const actual=rustFixedType(type.rustPrimitiveName);
