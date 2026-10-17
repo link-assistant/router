@@ -226,7 +226,7 @@ fn validate_name_and_strict(
     strict: crate::translation_core::Maybe<&crate::translation_core::Json>,
     path: &crate::translation_core::Str,
 ) -> crate::translation_core::Outcome<(), String> {
-    if name.and_then(Value::as_str).is_none_or(str::is_empty) {
+    if { let __router_json_reader_0 = name; if let crate::translation_core::Maybe::Some(__router_json_reader_1) = __router_json_reader_0 { crate::translation_core::Json::as_str(__router_json_reader_1) } else { crate::translation_core::Maybe::None } }.is_none_or(str::is_empty) {
         return Err(crate::translation_core::format!("{path}.name must be a non-empty string"));
     }
     if strict.is_some_and(|value| !value.is_boolean()) {

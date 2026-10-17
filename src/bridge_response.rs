@@ -231,11 +231,11 @@ pub fn anthropic_text_and_annotations(content: crate::translation_core::Maybe<&c
 }
 
 fn citation_url(citation: &crate::translation_core::Json) -> crate::translation_core::Maybe<&crate::translation_core::Str> {
-    match citation.get("type").and_then(crate::translation_core::Json::as_str) {
-        Some("web_search_result_location") => citation.get("url").and_then(crate::translation_core::Json::as_str),
-        Some("search_result_location") => citation
+    match { let __router_json_reader_0 = citation.get("type"); if let crate::translation_core::Maybe::Some(__router_json_reader_1) = __router_json_reader_0 { crate::translation_core::Json::as_str(__router_json_reader_1) } else { crate::translation_core::Maybe::None } } {
+        Some("web_search_result_location") => { let __router_json_reader_2 = citation.get("url"); if let crate::translation_core::Maybe::Some(__router_json_reader_3) = __router_json_reader_2 { crate::translation_core::Json::as_str(__router_json_reader_3) } else { crate::translation_core::Maybe::None } },
+        Some("search_result_location") => { let __router_json_reader_4 = citation
             .get("source")
-            .and_then(crate::translation_core::Json::as_str)
+            ; if let crate::translation_core::Maybe::Some(__router_json_reader_5) = __router_json_reader_4 { crate::translation_core::Json::as_str(__router_json_reader_5) } else { crate::translation_core::Maybe::None } }
             .filter(|source| source.starts_with("https://") || source.starts_with("http://")),
         _ => None,
     }
