@@ -1,0 +1,31 @@
+{
+  "schema": "router-static-source-lifecycle-v1",
+  "archive": "originals.json.gz",
+  "rawBytes": 62544609,
+  "rawSha256": "09e24c444cf59f0c8acffde2cbe4e747d13c6f2fabbb1c4e5ff0601acac6ba2b",
+  "bytes": 10279246,
+  "sha256": "729d715d54eb561437d506e0414bd28fead3bb045c5bc5a7ca8999c7519bf7bf",
+  "profiles": [
+    {
+      "revision": "5de1dea8b777dcd6e637758efc2c260150735af5",
+      "files": 806,
+      "sourceSetSha256": "fa513c50ae94c3ccba510ddd5a954451bedf63a2a823805c62eb8fee08b4affa"
+    },
+    {
+      "revision": "e4561e76506ed25a7e638fb1e00a965f8479e1db",
+      "files": 808,
+      "sourceSetSha256": "8683ed8c1f78d91f109d9c3f41151fa54e605833e03caac2bb821f00aa8f6d16"
+    }
+  ],
+  "current": "9b123e23726cf91fb098ef615ee0634fc78508565eccc57cbee62d8a2be4b4e9",
+  "trace": [
+    {
+      "phase": "language",
+      "id": "static-fixture.complete-original-cst-and-current-source-joins"
+    },
+    {
+      "phase": "repository",
+      "id": "static-fixture.fixed-historical-universes-and-reversible-current-parents"
+    }
+  ]
+}
