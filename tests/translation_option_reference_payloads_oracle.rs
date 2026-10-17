@@ -38,9 +38,11 @@ fn references_copy_without_copying_or_dropping_the_owned_string_record() {
 
 #[test]
 fn nested_option_result_and_named_reference_identity_remain_distinct() {
+    #[allow(clippy::unnecessary_lazy_evaluations)] // Keep the lazy Option body under test.
     fn nested(value: Option<Option<&Owner>>) -> Result<Option<&Owner>, bool> {
         value.ok_or_else(|| false)
     }
+    #[allow(clippy::unnecessary_lazy_evaluations)] // Keep the contextual lazy Option join.
     fn contextual(value: Option<&Owner>) -> Result<Option<&Owner>, bool> {
         value.map(Some).ok_or_else(|| false)
     }
@@ -61,6 +63,7 @@ fn nested_option_result_and_named_reference_identity_remain_distinct() {
 }
 
 #[test]
+#[allow(clippy::unnecessary_lazy_evaluations)] // The witness retains the lazy error operation.
 fn json_field_reference_borrows_its_value_and_not_the_short_lived_key() {
     fn field<'a>(value: &'a Value, key: &str) -> Option<&'a Value> {
         value.get(key)

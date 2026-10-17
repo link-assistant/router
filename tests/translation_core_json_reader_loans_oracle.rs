@@ -82,7 +82,7 @@ fn a_shadow_does_not_change_the_loan_of_the_original_input() {
     assert_eq!(input, core::json!({"copy": [true]}));
 }
 
-fn returned<'a, 'b>(input: &'a Json, key: &'b Str) -> Maybe<&'a Json> {
+fn returned<'a>(input: &'a Json, key: &Str) -> Maybe<&'a Json> {
     let _copy = core::json_copy(input);
     input.get(key)
 }

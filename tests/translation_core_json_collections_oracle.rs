@@ -75,6 +75,7 @@ fn callback_panic_stops_before_later_rows() {
 }
 
 #[test]
+#[allow(clippy::manual_unwrap_or)] // Compare the explicit adopted branch with unwrap_or.
 fn canonical_option_expansion_preserves_payload_and_default() {
     let input = vec![json!({"image": {"url": "猫"}}), json!({"image": {"url": true}}), json!({})];
     let original = json_map(&input, |value| {
