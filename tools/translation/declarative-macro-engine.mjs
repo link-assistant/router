@@ -8,8 +8,10 @@ import {originalMacroArrayTypeRules,originalMacroArrayLiteralLength} from './mac
 import {originalMacroSequenceFollowRule,assertOriginalMacroSequenceFollowRule} from './macro-follow-source.mjs';
 import {originalMacroMetavarRules,assertOriginalMacroMetavarRules} from './macro-metavar-source.mjs';
 import {requireOriginalMacroLiteralGrammar,originalMacroLiteralEnd} from './macro-literal-source.mjs';
+import {requireOriginalMacroEofRule} from './macro-eof-source.mjs';
 // Each instance keeps separate definition, expansion and forwarding authority.
-export function createDeclarativeMacroEngine(sourceFragmentAdapter=null,literalGrammar=null) {
+export function createDeclarativeMacroEngine(sourceFragmentAdapter=null,literalGrammar=null,eofRule=null) {
+if(eofRule!==null)requireOriginalMacroEofRule(eofRule);
 if(literalGrammar!==null)requireOriginalMacroLiteralGrammar(literalGrammar);
 const definitions=new WeakMap(),expansions=new WeakMap(),forwardedInputs=new WeakMap(),nestedInvocations=new WeakMap();
 const {isOriginalMacroFragmentContext,originalMacroFragmentDefinition,parseOriginalMacroFragment}=sourceFragmentAdapter??{};
@@ -129,7 +131,11 @@ function matcherLiteralPrefixesDisjoint(left,right) {
       if(x.kind==='group'&&y.kind==='group'){if(sequences(x.children,y.children,depth+1))return true;if(!equalFixed(x.children,y.children,depth+1))return false;continue;}
       return false;
     }
-    return false;
+    // Only an actual exhausted sequence versus a required fixed terminal is
+    // separated by EOF. A capture, nullable prefix, equal empty paths, or an
+    // exhausted proof budget retains the old ambiguity refusal.
+    const remaining=a.length>b.length?a.slice(b.length):b.slice(a.length);
+    return eofRule!==null&&a.length!==b.length&&['literal','group'].includes(remaining[0]?.kind);
   }
   return sequences(left,right,0);
 }
@@ -430,6 +436,7 @@ function checkOutputBudget(trees) {
 
 function expandDeclarativeMacro(definition,input,{steps=16000,repetitions=128,output=32000}={}) {
   if(literalGrammar!==null)requireOriginalMacroLiteralGrammar(literalGrammar);
+  if(eofRule!==null)requireOriginalMacroEofRule(eofRule);
   const forwarded=forwardedInputs.get(input),original=macroTreeSource(input);
   if(!definitions.has(definition)||!original&&!forwarded)throw new TypeError('Declarative expansion requires sealed definition and original or privately forwarded input trees');
   const inputEvidence=forwarded?{kind:forwarded.nested?'checked-nested-macro-input':'checked-expansion',parentDigest:forwarded.parent.digest,path:forwarded.path,sha256:hash(JSON.stringify(input))}:{kind:'original-source',sha256:original.sha256};

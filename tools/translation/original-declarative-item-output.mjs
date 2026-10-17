@@ -3,6 +3,7 @@
 import {types} from 'node:util';
 import {createHash} from 'node:crypto';
 import {createDeclarativeMacroEngine} from './declarative-macro-engine.mjs';
+import {originalMacroEofRule,requireOriginalMacroEofRule} from './macro-eof-source.mjs';
 import {originalMacroTrees,originalTopLevelMacroInvocations,originalMacroTreeText} from './macro-token-trees.mjs';
 import {originalMacroLiteralGrammar,requireOriginalMacroLiteralGrammar} from './macro-literal-source.mjs';
 import {isSourceModuleView,originalModuleViewItems,originalSourceModuleItems} from './source-module-views.mjs';
@@ -26,6 +27,7 @@ function moduleInput(module){
 }
 function sameModule(before,current){return before.source===current.source&&before.file===current.file&&before.sourceView===current.sourceView&&before.compilationProfile===current.compilationProfile&&before.path.length===current.path.length&&before.path.every((part,index)=>part===current.path[index]);}
 function rejoin(state,supplied){
+ requireOriginalMacroEofRule(state.eofRule);
  const row=options(supplied),definition=moduleInput(row.definitionModule),invocation=moduleInput(row.invocationModule),span=dense(row.invocationSpan,2);
  if(row.definitionModule!==state.definitionModule||row.invocationModule!==state.invocationModule||row.definitionName!==state.definitionName||span.length!==2||span[0]!==state.span[0]||span[1]!==state.span[1]||!sameModule(state.definition,definition)||!sameModule(state.invocation,invocation))fail('current original source or invocation association changed');
  guard();return row;
@@ -62,7 +64,7 @@ export async function captureOriginalDeclarativeItemOutput(supplied){
  const definitionSource=definition.source.slice(definition.bodySpan.start,definition.bodySpan.end),inputSource=invocation.source.slice(...span),originalInvocations=originalTopLevelMacroInvocations(invocation.source.slice(invocation.bodySpan.start,invocation.bodySpan.end));
  const selected=originalInvocations.filter(row=>row.sourceSpan.start+invocation.bodySpan.start===span[0]&&row.sourceSpan.end+invocation.bodySpan.start===span[1]);if(selected.length!==1)fail('invocation is not an exact original module item candidate');const input=selected[0];
  if(input.path.length!==1||input.path[0]!==request.definitionName)fail('written invocation candidate differs from selected definition; no owner inferred');
- const grammar=originalMacroLiteralGrammar();requireOriginalMacroLiteralGrammar(grammar);guard();const engine=createDeclarativeMacroEngine(null,grammar),compiled=engine.compileDeclarativeMacro(definitionSource,{name:request.definitionName,owner:['crate',...definition.path]}),header=engine.declarativeDefinitionHeader(compiled),lineage=[];
+ const grammar=originalMacroLiteralGrammar();requireOriginalMacroLiteralGrammar(grammar);guard();const eofRule=originalMacroEofRule(),engine=createDeclarativeMacroEngine(null,grammar,eofRule),compiled=engine.compileDeclarativeMacro(definitionSource,{name:request.definitionName,owner:['crate',...definition.path]}),header=engine.declarativeDefinitionHeader(compiled),lineage=[];
  let expansion=engine.expandDeclarativeMacro(compiled,input.trees);
  engine.declarativeExpansionOriginalInput(expansion,input.trees);
  for(let depth=0;;depth++){
@@ -79,7 +81,7 @@ export async function captureOriginalDeclarativeItemOutput(supplied){
  const languageId='rust:instantiate-selected-declarative-item-candidate',repositoryId='router:retain-unresolved-generated-item-owners';
  const applied=concrete.applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:languageId,edits:[{span:[...span],expected:inputSource,replacement:generated.source}]}],repositoryRules:[{id:repositoryId,edits:[]}]});
  const serialized=concrete.serializeConcreteSyntaxMeta(applied.value),after=concrete.transportConcreteSyntaxMeta(serialized);guard();const mapping=fullMap(invocation.source,after.source,span,generated.source);
- const state={...request,definition,invocation,span:[...span],engine,compiled,input,expansion,meta:serialized};rejoin(state,supplied);guard();
+ const state={...request,definition,invocation,span:[...span],engine,compiled,eofRule,input,expansion,meta:serialized};rejoin(state,supplied);guard();
  const facts=freeze({schema:'original-declarative-item-output-provenance-v1',definition:{file:definition.file,source:definition.source,sourceSha256:definition.sourceSha256,bodySpan:definition.bodySpan,header,compiled},invocation:{file:invocation.file,source:invocation.source,sourceSha256:invocation.sourceSha256,span:[...span],input},lineage,expansion,nested,generated,dataCandidates,definitionCst,generatedCst,before,after,mapping,trace:applied.trace,languageRules:[languageId],repositoryRules:[repositoryId],completeCstRoundTrip:true,completeSourceInverse:true,sourceDefinitionSelectionConditional:true,recursiveDefinitionOwnersResolved:false,generatedDeriveOwnersResolved:false,namespaceAuthority:false,typeAuthority:false,runtimeAuthority:false});
  guard();const token=Object.freeze({schema:'private-original-declarative-item-output-v1'});issued.set(token,{...state,facts});return token;
 }
