@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
 import {tmpdir} from 'node:os';
 import {join,dirname,resolve} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {proposeCoreAdoptionSequence} from '../propose-core-adoption-corpus.mjs';
 import {openCoreAdoptionGzipPackets} from '../core-adoption-packet-storage.mjs';
 import {transportConcreteSyntaxMeta} from '../concrete-syntax-meta.mjs';
@@ -40,7 +40,7 @@ retained.push({...row,snapshot:'input-blobs/'+sha256+'.bin',physicalPresent:true
 // selecting report bytes. This exercises operational authorization/data joins;
 // it does not replace the production V3 namespace/producer reviewer or qualify
 // real Router application coverage. Root must receive that real integration.
-function fixtureReview(run,root,head,capture){const storage=openCoreAdoptionGzipPackets(join(run,'migration-proposal')),index=storage.index;
+function fixtureReview(run,root,head,capture,expectedChanged=1){const storage=openCoreAdoptionGzipPackets(join(run,'migration-proposal')),index=storage.index;
 assert.equal(index.sourceRoot,root);const load=ref=>{const raw=storage.read(ref);
 return ref.kind==='json'?JSON.parse(raw):raw.toString();
 };
@@ -79,7 +79,7 @@ assert.equal(digest(raw),c.afterSha256);
 files.push({path:c.path,beforeSha256:c.beforeSha256,afterSha256:c.afterSha256,bytes:raw.length,producerSource:join(run,'migration-proposal',c.source.path+'.gz'),storageEncoding:'gzip',logicalPacket:c.source,storedPacket:storage.storage.packets.find(row=>row.path===c.source.path)});
 }storage.verify();
 assert.equal(index.sequence,'json-readers');
-assert.equal(files.length,1);
+assert.equal(files.length,expectedChanged);
 const snapshots={};
 for(const phase of ['before','after']){write(join(run,'full-input-snapshots-'+phase+'.json'),{sourceHead:head,files:capture.retained});
 write(join(run,'all-rust-cargo-'+phase+'.json'),{sourceHead:head,files:capture.retained.filter(row=>row.path.endsWith('.rs')||['Cargo.toml','Cargo.lock'].includes(row.path))});
@@ -116,13 +116,14 @@ write(join(f.run,'review-v2/review.json'),report);
 write(join(f.run,'review-v2/installation-plan.json'),plan);
 return {...f.options,indexSha256:report.indexSha256,reviewSha256:digest(text(report)),planSha256:digest(text(plan))};
 }
-async function fixture(callback){const home=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-reviewed-application-'))),root=join(home,'source'),run=join(home,'run'),temporary=join(home,'producer-temp');
+async function fixture(callback,configuration={}){const home=fs.realpathSync(fs.mkdtempSync(join(tmpdir(),'router-reviewed-application-'))),root=join(home,'source'),run=join(home,'run'),temporary=join(home,'producer-temp');
 try{fs.mkdirSync(root);
 fs.mkdirSync(run);
 fs.mkdirSync(temporary);
 write(join(root,'.gitignore'),'packages/javascript/node_modules/\n');
 for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml','Cargo.lock'])write(join(root,path),fs.readFileSync(join(ROOT,path),'utf8'));
-write(join(root,'src/lib.rs'),ORIGINAL);
+write(join(root,'src/lib.rs'),ORIGINAL+(configuration.twoTargets?'mod second;\n':''));
+if(configuration.twoTargets)write(join(root,'src/second.rs'),ORIGINAL.replace('pub mod translation_core;\n','').replace('fn picked(','fn second_picked('));
 const compiler=process.env.ROUTER_TRANSLATION_TSC?dirname(dirname(resolve(process.env.ROUTER_TRANSLATION_TSC))):join(ROOT,'packages/javascript/node_modules/typescript');
 assert.equal(JSON.parse(fs.readFileSync(join(compiler,'package.json'))).version,'5.9.3');
 fs.cpSync(compiler,join(root,'packages/javascript/node_modules/typescript'),{recursive:true,dereference:true});
@@ -140,7 +141,8 @@ assert.equal(git(root,'status','--porcelain'),'');
 write(join(run,'receipt.json'),[{sourceHead:head,exitCode:0,resourceReason:null,inputsUnchanged:true,headUnchanged:true,cleanAfter:true,sourceGuardsAfterFailureStatus:'complete-fresh-byte-rejoin'}]);
 write(join(run,'review/review.json'),{oldFailedReview:true});
 write(join(run,'review-monitor/receipt.json'),{exitCode:-9,reviewerQualified:false});
-const selected=fixtureReview(run,root,head,capture);
+if(configuration.controller)write(join(run,'review-monitor-v2/external-temporary-roots.json'),{paths:[]});
+const selected=fixtureReview(run,root,head,capture,configuration.twoTargets?2:1);
 return await callback({home,root,run,head,...selected,options:{root,run,head,reviewDirectory:'review-v2',reviewMonitorDirectory:'review-monitor-v2',output:join(home,'application'),indexSha256:selected.indexSha256,reviewSha256:selected.reviewSha256,planSha256:selected.planSha256}});
 }finally{fs.rmSync(home,{recursive:true,force:true});
 }}
@@ -225,3 +227,97 @@ await assert.rejects(recoverReviewedCoreAdoption({application:applied.output,out
 assert.equal(fs.readFileSync(join(f.root,'src/lib.rs'),'utf8'),f.after);
 assert.ok(fs.existsSync(statePath));
 }));
+
+
+// Additional operational receiving controls. The original eight callbacks above
+// remain byte exact. Both controller children retain their original twenty-second
+// child cap inside this whole sixty-second case; no Rust process is launched.
+test('actual bounded Python controller applies and explicitly recovers selected review-v2 bytes',{timeout:60000},()=>fixture(async f=>{
+const script=join(ROOT,'scripts/apply-reviewed-core-adoption.py');
+const command=(mode,output,extra)=>{
+const args=[script,mode,'--root',f.root,'--run',f.run,'--output',output,...extra];
+const raw=execFileSync('python3',args,{encoding:'utf8',timeout:20000,maxBuffer:1024**2,env:{...process.env}});
+const receipt=JSON.parse(raw);
+assert.equal(receipt.complete,true);
+assert.equal(receipt.RustExecuted,false);
+assert.equal(receipt.processGroupEmpty,true);
+assert.equal(receipt.wallCapSeconds,60);
+assert.ok(receipt.finalEvidenceBudget.allocatedBytes<=384*1024**2);
+assert.ok(fs.existsSync(join(output,'command.json')));
+assert.ok(fs.existsSync(join(output,'resources.jsonl')));
+return receipt;
+};
+const firstOutput=join(f.home,'controller-apply');
+const first=command('apply',firstOutput,['--expected-head',f.head,'--review-directory','review-v2','--review-monitor-directory','review-monitor-v2','--review-sha256',f.reviewSha256,'--plan-sha256',f.planSha256,'--index-sha256',f.indexSha256]);
+assert.equal(first.sourceInstalled,true);
+assert.equal(fs.readFileSync(join(f.root,'src/lib.rs'),'utf8'),f.after);
+const application=first.applicationDirectory;
+const state=fs.readFileSync(join(application,'application-state.json'));
+const secondOutput=join(f.home,'controller-recovery');
+const second=command('recover',secondOutput,['--application',application,'--state-sha256',digest(state)]);
+assert.equal(second.explicitRecoveryCompleted,true);
+assert.equal(fs.readFileSync(join(f.root,'src/lib.rs'),'utf8'),ORIGINAL);
+assert.equal(git(f.root,'status','--porcelain'),'');
+assert.ok(fs.readFileSync(join(application,'application-state.json')).equals(state));
+assert.ok(fs.existsSync(join(application,'events.jsonl')));
+assert.ok(fs.existsSync(join(application,'before-0.bin')));
+assert.ok(fs.existsSync(join(firstOutput,'temporary')));
+assert.ok(fs.existsSync(join(secondOutput,'temporary')));
+},{controller:true}));
+
+test('interrupted two-target application retains a mixed full-source state and unmodified recovery restores both',{timeout:60000},()=>fixture(async f=>{
+const actualPath=join(ROOT,'tools/translation/apply-reviewed-core-adoption.mjs');
+const original=fs.readFileSync(actualPath,'utf8');
+let adapter=original;
+const substitutions=[];
+const replace=(expected,replacement)=>{
+const start=adapter.indexOf(expected);
+assert.ok(start>=0);
+assert.equal(adapter.indexOf(expected,start+expected.length),-1);
+substitutions.push({before:[start,start+expected.length],after:[start,start+replacement.length],expected,replacement});
+adapter=adapter.slice(0,start)+replacement+adapter.slice(start+expected.length);
+};
+// Relocate the three genuine fixed imports without duplicating their helpers.
+for(const path of ['./core-adoption-packet-storage.mjs','./concrete-syntax-meta.mjs','./rule-pipeline.mjs']){
+replace("from '"+path+"'","from "+JSON.stringify(new URL(path,pathToFileURL(actualPath)).href));
+}
+const anchor="checkpoint('replace-intent',row.path);\nfs.renameSync(pending,target);";
+replace(anchor,"checkpoint('replace-intent',row.path);\nif(state.rows.some(other=>other.status==='applied'))throw Error('fixture interruption after durable second intent');\nfs.renameSync(pending,target);");
+let inverse=adapter;
+for(const row of [...substitutions].reverse()){
+assert.equal(inverse.slice(...row.after),row.replacement);
+inverse=inverse.slice(0,row.after[0])+row.expected+inverse.slice(row.after[1]);
+}
+assert.equal(inverse,original);
+const adapterPath=join(f.home,'interrupted-applicator.mjs');
+fs.writeFileSync(adapterPath,adapter);
+write(join(f.home,'full-adapter-source-and-inverse.json'),{original,adapter,substitutions,inverse,productionHook:false});
+const issued=await import(pathToFileURL(adapterPath).href);
+await assert.rejects(issued.applyReviewedCoreAdoption(f.options),/fixture interruption after durable second intent/);
+const rawState=fs.readFileSync(join(f.options.output,'application-state.json'));
+const state=JSON.parse(rawState);
+assert.equal(state.rows.length,2);
+assert.equal(state.rows[0].status,'applied');
+assert.equal(state.rows[1].status,'intent');
+assert.equal(state.complete,false);
+assert.match(state.error,/fixture interruption/);
+assert.ok(state.events.some(row=>row.kind==='failed'));
+assert.ok(fs.readFileSync(join(f.root,state.rows[0].path)).equals(fs.readFileSync(join(f.options.output,state.rows[0].after))));
+assert.ok(fs.readFileSync(join(f.root,state.rows[1].path)).equals(fs.readFileSync(join(f.options.output,state.rows[1].before))));
+const pending=fs.readdirSync(f.options.output).filter(name=>/^replacement-[0-9]+\.bin$/.test(name));
+assert.equal(pending.length,1);
+const pendingBefore=fs.readFileSync(join(f.options.output,pending[0]));
+assert.ok(pendingBefore.equals(fs.readFileSync(join(f.options.output,state.rows[1].after))));
+const journalBefore=fs.readFileSync(join(f.options.output,'events.jsonl'));
+const recovered=await recoverReviewedCoreAdoption({application:f.options.output,output:join(f.home,'mixed-recovery'),stateSha256:digest(rawState)});
+assert.equal(recovered.complete,true);
+for(const row of state.rows){
+assert.ok(fs.readFileSync(join(f.root,row.path)).equals(fs.readFileSync(join(f.options.output,row.before))));
+assert.ok(fs.existsSync(join(f.options.output,row.after)));
+}
+assert.equal(git(f.root,'status','--porcelain'),'');
+assert.ok(fs.readFileSync(join(f.options.output,'application-state.json')).equals(rawState));
+assert.ok(fs.readFileSync(join(f.options.output,'events.jsonl')).equals(journalBefore));
+assert.ok(fs.readFileSync(join(f.options.output,pending[0])).equals(pendingBefore));
+assert.equal(fs.readFileSync(actualPath,'utf8'),original);
+},{twoTargets:true}));
