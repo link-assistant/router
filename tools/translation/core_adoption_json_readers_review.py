@@ -12,6 +12,29 @@ sys.dont_write_bytecode=True
 import core_adoption_review as source_review
 from core_adoption_review import (require, fields, pairs, parse, encoded, sha, digest, relative, regular, identity, read_stable, check_identity, u16, span, part, trace, check_cst, proposal, GzipTransport, reader_mapping)
 
+def reader_stage_metadata(metadata, before):
+    """Exact producer return shapes; absent effects require full-source absence.
+
+    The actual producer does not create a derive context when there is no
+    invocation. This is only a conservative data/source check: even an inert
+    comment or string containing the spelling refuses this absent-field lane.
+    No graph item census, copied role or empty certificate proves absence.
+    """
+    fields(metadata, ['keys', 'values'], 'stage metadata')
+    values = metadata['values']
+    require(isinstance(values, dict), 'complete stage own values')
+    has_effect = 'producerEffects' in values
+    keys = ['schema','entry','compilationProfile','dependencyInputs','inputs','before','after','proposals','skipped']
+    if has_effect: keys.append('producerEffects')
+    keys += ['moduleGraph','migrationSemantics','executableAdmission']
+    require(metadata['keys'] == keys and list(values) == [key for key in keys if key not in ['before','after','inputs','moduleGraph','proposals']], 'unknown stage return/key order')
+    if has_effect:
+        require(isinstance(values['producerEffects'], dict), 'present producerEffects requires complete evidence')
+    else:
+        require(isinstance(before, dict) and before and all(isinstance(file, str) and isinstance(source, str) for file, source in before.items()), 'complete before sources for absent producerEffects')
+        require(all('derive' not in source for source in before.values()), 'absent producerEffects requires independent complete-source derive absence')
+    return values
+
 def retained_problem_source(problem, ancestor_items):
     """Validate retained diagnostic data against original items, never issue a proof."""
     fields(problem,['span','reason'],'exact primitive producer problem record')
@@ -546,7 +569,6 @@ def main():
                 require(member.isfile() and not member.issym() and member.size <= 2 * 1024 * 1024, 'regular bounded original member')
                 raw = tar.extractfile(member).read(); require(len(raw) == pin['bytes'] and sha(raw) == pin['sha256'], 'complete registered original member')
                 external[(package['name'], pin['path'])] = (raw.decode('utf8'), package)
-    schemas = {'json-readers': ['schema','entry','compilationProfile','dependencyInputs','inputs','before','after','proposals','skipped','producerEffects','moduleGraph','migrationSemantics','executableAdmission']}
     stage_schema = {'json-readers': 'router-owned-json-reader-corpus-v1'}
     proposal_trace = {'json-readers': ['canonical-json-readers:expand-option-and-then-on-shared-root','router-core:bind-generated-json-reader-paths']}
     require([stage['name'] for stage in index['stages']] == ['json-readers'], 'fixed complete singleton json-readers sequence')
@@ -560,27 +582,29 @@ def main():
         fields(packet, ['metadata', 'before', 'after', 'inputs', 'proposals', 'moduleGraph'], 'complete stage packet references')
         before, after = source_rows(packet['before']), source_rows(packet['after'])
         require(before == previous and set(after) == set(original), 'full stage source chain')
-        metadata = read(packet['metadata']); fields(metadata, ['keys', 'values'], 'stage metadata')
-        require(metadata['keys'] == schemas[name] and list(metadata['values']) == [k for k in schemas[name] if k not in ['before', 'after', 'inputs', 'moduleGraph', 'proposals']], 'unknown stage return/key order')
-        values = metadata['values']; require(values['schema'] == stage_schema[name] and values['entry'] == 'src/lib.rs' and values['compilationProfile'] == index['compilationProfile'] and values['executableAdmission'] is False, 'stage source-only contract')
+        metadata = read(packet['metadata']); values = reader_stage_metadata(metadata, before)
+        require(values['schema'] == stage_schema[name] and values['entry'] == 'src/lib.rs' and values['compilationProfile'] == index['compilationProfile'] and values['executableAdmission'] is False, 'stage source-only contract')
         require(values['migrationSemantics']=='canonical shared Json Option equation, followed only by owned generated-path binding; fresh semantic checks required','explicit owned API adoption boundary')
         require(values['dependencyInputs']=={'manifest':cargo['Cargo.toml'],'lock':cargo['Cargo.lock']},'complete index-stage Cargo inputs retained')
-        effect = values['producerEffects']
-        fields(effect, ['schema', 'dependencyInputs', 'dependenciesDigest', 'compilationProfile', 'deriveDiagnostics', 'bangDiagnostics', 'selections', 'runtimeAuthority', 'generatedImplBehavior'], 'complete producerEffects')
-        require(effect['schema'] == 'core-adoption-original-producer-effects-v1' and effect['dependencyInputs'] == {'manifest': cargo['Cargo.toml'], 'lock': cargo['Cargo.lock']} and effect['compilationProfile'] == index['compilationProfile'] and effect['runtimeAuthority'] is False and effect['generatedImplBehavior'] is False, 'producerEffects source provenance/domain')
-        digest(effect['dependenciesDigest']); require(effect['dependenciesDigest']==expected_dependency_digest,'full independently reconstructed original dependency digest'); dependency_digest = dependency_digest or effect['dependenciesDigest']; require(effect['dependenciesDigest'] == dependency_digest, 'stage dependency composition drift')
-        require(all(isinstance(effect[k], list) for k in ['deriveDiagnostics', 'bangDiagnostics', 'selections']), 'producerEffects complete arrays')
-        for selected in effect['selections']:
-            fields(selected, ['file', 'module', 'sourceSha256', 'span', 'itemSha256', 'inputDigest', 'languageRule', 'completeInvocationDigest', 'retainedAlternatives', 'enclosingTypeBindings', 'enclosingUsableValueBindings', 'runtimeAuthority', 'generatedImplBehavior'], 'producer selected effect')
-            require(selected['file'] in before and selected['sourceSha256'] == sha(before[selected['file']].encode()) and selected['itemSha256'] == sha(part(before[selected['file']], selected['span']).encode()) and selected['languageRule'] == 'rust.original-complete-derived-enclosing-name-effect.v1' and selected['enclosingTypeBindings'] == selected['enclosingUsableValueBindings'] == [] and selected['runtimeAuthority'] is False and selected['generatedImplBehavior'] is False, 'producer selected original source join')
-            digest(selected['inputDigest']); digest(selected['completeInvocationDigest'])
-            require(isinstance(selected['retainedAlternatives'], list) and 0 < len(selected['retainedAlternatives']) <= 256, 'retained complete output alternatives')
-            for alt in selected['retainedAlternatives']:
-                fields(alt, ['invocation', 'kind', 'rootKinds'], 'producer retained alternative')
-                fields(alt['invocation'], ['path', 'attributeSpan'], 'original derive invocation')
-                a, b = span(alt['invocation']['attributeSpan'], len(u16(before[selected['file']])) // 2)
-                require(selected['span']['start'] <= a <= b <= selected['span']['end'], 'derive attribute/item source association')
-                require((alt['kind'] == 'ItemKind::Impl' and alt['rootKinds'] is None) or (alt['kind'] is None and isinstance(alt['rootKinds'], list) and alt['rootKinds'] and all(k in ['ItemKind::Impl', 'ItemKind::Const'] for k in alt['rootKinds'])), 'unknown complete output alternative kind')
+        effect_selections = []
+        if 'producerEffects' in values:
+            effect = values['producerEffects']
+            fields(effect, ['schema', 'dependencyInputs', 'dependenciesDigest', 'compilationProfile', 'deriveDiagnostics', 'bangDiagnostics', 'selections', 'runtimeAuthority', 'generatedImplBehavior'], 'complete producerEffects')
+            require(effect['schema'] == 'core-adoption-original-producer-effects-v1' and effect['dependencyInputs'] == {'manifest': cargo['Cargo.toml'], 'lock': cargo['Cargo.lock']} and effect['compilationProfile'] == index['compilationProfile'] and effect['runtimeAuthority'] is False and effect['generatedImplBehavior'] is False, 'producerEffects source provenance/domain')
+            digest(effect['dependenciesDigest']); require(effect['dependenciesDigest']==expected_dependency_digest,'full independently reconstructed original dependency digest'); dependency_digest = dependency_digest or effect['dependenciesDigest']; require(effect['dependenciesDigest'] == dependency_digest, 'stage dependency composition drift')
+            require(all(isinstance(effect[k], list) for k in ['deriveDiagnostics', 'bangDiagnostics', 'selections']), 'producerEffects complete arrays')
+            for selected in effect['selections']:
+                fields(selected, ['file', 'module', 'sourceSha256', 'span', 'itemSha256', 'inputDigest', 'languageRule', 'completeInvocationDigest', 'retainedAlternatives', 'enclosingTypeBindings', 'enclosingUsableValueBindings', 'runtimeAuthority', 'generatedImplBehavior'], 'producer selected effect')
+                require(selected['file'] in before and selected['sourceSha256'] == sha(before[selected['file']].encode()) and selected['itemSha256'] == sha(part(before[selected['file']], selected['span']).encode()) and selected['languageRule'] == 'rust.original-complete-derived-enclosing-name-effect.v1' and selected['enclosingTypeBindings'] == selected['enclosingUsableValueBindings'] == [] and selected['runtimeAuthority'] is False and selected['generatedImplBehavior'] is False, 'producer selected original source join')
+                digest(selected['inputDigest']); digest(selected['completeInvocationDigest'])
+                require(isinstance(selected['retainedAlternatives'], list) and 0 < len(selected['retainedAlternatives']) <= 256, 'retained complete output alternatives')
+                for alt in selected['retainedAlternatives']:
+                    fields(alt, ['invocation', 'kind', 'rootKinds'], 'producer retained alternative')
+                    fields(alt['invocation'], ['path', 'attributeSpan'], 'original derive invocation')
+                    a, b = span(alt['invocation']['attributeSpan'], len(u16(before[selected['file']])) // 2)
+                    require(selected['span']['start'] <= a <= b <= selected['span']['end'], 'derive attribute/item source association')
+                    require((alt['kind'] == 'ItemKind::Impl' and alt['rootKinds'] is None) or (alt['kind'] is None and isinstance(alt['rootKinds'], list) and alt['rootKinds'] and all(k in ['ItemKind::Impl', 'ItemKind::Const'] for k in alt['rootKinds'])), 'unknown complete output alternative kind')
+            effect_selections = effect['selections']
         inputs = {}
         for ref in packet['inputs']:
             row = read(ref); key = 'file'; fields(row, [key, 'source', 'sha256'], 'full stage input')
@@ -609,7 +633,7 @@ def main():
                     span([item['start'], item['end']], len(source_units) // 2)
                     for token in item['tokens']: require(part(source, [token['start'], token['end']], source_units) == token['text'], 'complete original item token slice')
             modules[key] = {'source': source, 'view': view, 'items':module['items'], 'originalItems':module.get('allItems',module['items']), 'sourceUnits':len(source_units)//2}
-        for selected in effect['selections']:
+        for selected in effect_selections:
             key=(selected['file'],tuple(selected['module']))
             require(key in modules and any([item['start'],item['end']]==[selected['span']['start'],selected['span']['end']] for item in modules[key]['items']),'producer effect actual graph declaration association')
         for module in modules.values():
@@ -662,7 +686,7 @@ def main():
         summary = {'sourceFiles': len(before), 'proposals': len(seen), 'selections': count_selections, 'edits': count_edits, 'changedFiles': changed, 'skippedFiles': len(values['skipped'])}
         require(summary == stage['summary'], 'complete stage summary counts')
         trace(stage['trace'], ['core-adoption:prepare-json-readers-corpus-stream', 'core-adoption:json-readers-stream-complete-packets'])
-        stages.append({'name': name, **summary, 'producerEffectSelections': len(effect['selections'])}); previous = after
+        stages.append({'name': name, **summary, 'producerEffectSelections': len(effect_selections)}); previous = after
     changes = {}
     for row in index['changes']: require(row['path'] not in changes, 'duplicate final changed path'); changes[row['path']] = row
     require(set(changes) == {file for file in original if original[file] != previous[file]}, 'exact actual final changes census')
