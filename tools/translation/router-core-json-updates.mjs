@@ -220,16 +220,29 @@ function publishProjectionContexts(receipt,entry,dependencies=[],checker=null){
 
 // The standard constructor may omit per-use metadata on an actual checked
 // None/Some join. Recovery is allowed only by a separately private membership.
-function currentOptionLayout(checker,type,span,recover=false){
+// Failure-only, bounded own-data summaries. These never select a proof or
+// inspect public fake checker inputs when no actual source call was captured.
+function optionDiagnosticData(value,key){if(!value||typeof value!=='object'||isProxy(value))return undefined;const field=descriptor(value,key);return field&&own(field,'value')?field.value:undefined;}
+function optionDiagnosticText(value,limit=120){if(typeof value!=='string')return value===undefined?'undefined':value===null?'null':typeof value==='boolean'||typeof value==='number'?''+value:typeof value;let text='';for(let at=0;at<value.length&&at<limit;at++)text+=value[at];return text;}
+function optionDiagnosticType(type,owner,source){
+ const primitive=(value,key)=>optionDiagnosticText(optionDiagnosticData(value,key),96),args=optionDiagnosticData(source,'arguments');
+ return 'kind='+primitive(type,'kind')+' name='+primitive(type,'name')+' perUse='+(!!type&&typeof type==='object'&&!isProxy(type)&&own(type,'rustStandardGeneric'))+' ref='+primitive(type,'rustReference')+' ownership='+primitive(type,'rustOwnership')+' refusal='+primitive(type,'patternOwnershipRefusal')+' genericUnresolved='+primitive(type,'rustGenericIdentityUnresolved')+' borrowUnresolved='+primitive(type,'rustBorrowingUnresolved')+' owner='+primitive(owner,'fullName')+' ownerKind='+primitive(owner,'k')+' ownerGeneric='+primitive(optionDiagnosticData(owner,'standardGeneric'),'kind')+' ctors='+primitive(optionDiagnosticData(owner,'ctors'),'length')+' sourceKind='+primitive(source,'kind')+' args='+primitive(args,'length');
+}
+function optionDiagnosticNode(node){const part=key=>optionDiagnosticText(optionDiagnosticData(node,key),96),span=optionDiagnosticData(node,'span');return 'k='+part('k')+' method='+part('method')+' operation='+part('operation')+' id='+part('id')+' span='+optionDiagnosticText(optionDiagnosticData(span,'start'))+'..'+optionDiagnosticText(optionDiagnosticData(span,'end'));}
+function optionDiagnosticDifference(actual,expected){
+ let cells=4096;const visit=(a,b,path,depth)=>{if(--cells<0||depth>64)return path+':bound';if(a===b)return null;if(!a||!b||typeof a!=='object'||typeof b!=='object')return path+':actual='+optionDiagnosticText(a)+' expected='+optionDiagnosticText(b);if(isProxy(a)||isProxy(b))return path+':proxy';const names=keys(a),wanted=keys(b);if(names.length!==wanted.length)return path+':key-count '+names.length+'/'+wanted.length;for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||!own(b,names[at]))return path+':key='+optionDiagnosticText(names[at],48);for(let at=0;at<names.length;at++){const name=names[at],x=descriptor(a,name),y=descriptor(b,name);if(!x||!y||!own(x,'value')||!own(y,'value'))return path+'/'+optionDiagnosticText(name,48)+':nondata';const difference=visit(x.value,y.value,optionDiagnosticText(path+'/'+optionDiagnosticText(name,48),1024),depth+1);if(difference)return difference;}return null;};return visit(actual,expected,'',0)??'no own-data difference';
+}
+function optionLayoutDiagnostic(diagnostic,gate,type,owner,source){if(diagnostic){diagnostic.gate=gate;diagnostic.detail=optionDiagnosticType(type,owner,source);}return null;}
+function currentOptionLayout(checker,type,span,recover=false,diagnostic=null){
  const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type&&!own(type,'rustStandardGeneric')&&recover?owner?.standardGeneric:type?.rustStandardGeneric;
- if(type?.rustReference||type?.rustOwnership||type?.rustBorrowingUnresolved||type?.rustGenericIdentityUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return null;
- const some=owner.ctors.find(row=>row.name==='Some'),none=owner.ctors.find(row=>row.name==='None');if(!some||some.fields?.length!==1||some.fields[0].name!=='field0'||!none||none.fields?.length)return null;
+ if(type?.rustReference||type?.rustOwnership||type?.rustBorrowingUnresolved||type?.rustGenericIdentityUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return optionLayoutDiagnostic(diagnostic,'option.type-owner-source',type,owner,source);
+ const some=owner.ctors.find(row=>row.name==='Some'),none=owner.ctors.find(row=>row.name==='None');if(!some||some.fields?.length!==1||some.fields[0].name!=='field0'||!none||none.fields?.length)return optionLayoutDiagnostic(diagnostic,'option.Some-None-fields',type,owner,source);
  const payload=checker.resolveType(source.arguments[0],owner.modulePath,span);
- for(const written of [owner.standardGeneric.arguments[0],some.fields[0].type]){const actual=checker.resolveType(written,owner.modulePath,span);if(!sameType(actual,payload))return null;checker.expectedOwnership(actual,payload,owner.modulePath,span);checker.expectedPrimitiveIdentity(actual,payload,owner.modulePath,span);}
+ let position=0;for(const written of [owner.standardGeneric.arguments[0],some.fields[0].type]){const actual=checker.resolveType(written,owner.modulePath,span);if(!sameType(actual,payload))return optionLayoutDiagnostic(diagnostic,position===0?'option.owner-argument':'option.Some-field-payload',type,owner,source);position++;checker.expectedOwnership(actual,payload,owner.modulePath,span);checker.expectedPrimitiveIdentity(actual,payload,owner.modulePath,span);}
  let summary=false;if(type.patternOwnershipRefusal){
   if(payload.kind==='string'&&payload.rustOwnership?.kind==='owned'&&payload.rustOwnership.source==='String'&&!payload.rustReference&&!payload.rustBorrowingUnresolved&&!payload.rustGenericIdentityUnresolved&&type.patternOwnershipRefusal==='ownership-bearing String type')summary=true;
   else if(recover&&type.patternOwnershipRefusal==='owned String source type'&&payload.kind==='data'&&!payload.rustReference&&!payload.rustOwnership&&!payload.patternOwnershipRefusal){projectionOwner(checker,payload,span,false);summary=true;}
-  else return null;
+  else return optionLayoutDiagnostic(diagnostic,'option.ownership-summary',type,owner,source);
  }
  return {owner,payload,summary};
 }
@@ -247,34 +260,72 @@ function observeOptionReader(checker,node,value,frame){
 }
 // An outer ownership wrapper carries only its actual inner issued reader.
 // Neither a copied fallback nor an equal public source marker can supply it.
-function optionReaderWrapperCurrent(checker,frame,value,record){
- if(!record.inner)return true;const inner=record.inner,node=record.source;
- return node.k==='routerStringOwnership'&&node.operation==='as_str'&&node.fallback===inner.source&&node.fallback?.k==='routerDispatchMethod'&&node.fallback.method==='as_str'&&node.fallback.args?.length===0&&node.object===node.fallback.object&&same(node.span,node.fallback.span)&&inner.kind==='option-reader'&&inner.checker===checker&&inner.frame===frame&&same(inner.source,inner.syntax)&&same(value,inner.call);
+function optionReaderWrapperCurrent(checker,frame,value,record,diagnostic=null){
+ if(!record.inner)return true;const inner=record.inner,node=record.source,refuse=gate=>{if(diagnostic)diagnostic.gate=gate;return false;};
+ if(node.k!=='routerStringOwnership')return refuse('wrapper.kind');
+ if(node.operation!=='as_str')return refuse('wrapper.operation');
+ if(node.fallback!==inner.source)return refuse('wrapper.fallback-identity');
+ if(node.fallback?.k!=='routerDispatchMethod')return refuse('wrapper.fallback-kind');
+ if(node.fallback.method!=='as_str')return refuse('wrapper.fallback-method');
+ if(node.fallback.args?.length!==0)return refuse('wrapper.fallback-arity');
+ if(node.object!==node.fallback.object)return refuse('wrapper.object-identity');
+ if(!same(node.span,node.fallback.span))return refuse('wrapper.span');
+ if(inner.kind!=='option-reader')return refuse('wrapper.inner-kind');
+ if(inner.checker!==checker)return refuse('wrapper.inner-checker');
+ if(inner.frame!==frame)return refuse('wrapper.inner-frame');
+ if(!same(inner.source,inner.syntax))return refuse('wrapper.inner-source');
+ if(!same(value,inner.call))return refuse('wrapper.inner-call');
+ return true;
 }
 // Called only by the existing standard callback gate. A copied semantic
 // receiver or public Option/control marker cannot manufacture this membership.
 export function originalJsonOptionReceiver(checker,node,receiver){
- const frame=activeFunctions.get(checker),record=issued.get(receiver);if(!frame?.optionLane||!record||record.kind!=='option-reader'||record.checker!==checker||record.frame!==frame||record.source!==node.object||!hasOriginalStandardCall(checker,node))return false;
+ const frame=activeFunctions.get(checker),record=issued.get(receiver);
+ const report=(gate,detail='')=>{if(!frame||!hasOriginalStandardCall(checker,node))return false;const sourceSpan=optionDiagnosticData(node,'span'),start=optionDiagnosticData(sourceSpan,'start'),end=optionDiagnosticData(sourceSpan,'end');throw unsupported('Option callback control','requires ordinary tail callback/argument values; private receiver gate='+optionDiagnosticText(gate,1024)+(detail?' detail='+optionDiagnosticText(detail,2800):''),typeof start==='number'&&typeof end==='number'?{start,end}:null);};
+ if(!frame?.optionLane)return report('eligibility.option-lane');
+ if(!record)return report('eligibility.missing-reader-receipt',optionDiagnosticNode(receiver));
+ if(record.kind!=='option-reader')return report('eligibility.reader-kind');
+ if(record.checker!==checker)return report('eligibility.checker');
+ if(record.frame!==frame)return report('eligibility.frame');
+ if(record.source!==node.object)return report('eligibility.raw-source-identity','issued='+optionDiagnosticNode(record.source)+' actual='+optionDiagnosticNode(optionDiagnosticData(node,'object')));
+ if(!hasOriginalStandardCall(checker,node))return false;
  const source=originalStandardCallContext(checker,node);currentFunction(checker,frame.activeItem,frame);
- if(source.owner!==frame.functionName||!same(record.source,record.syntax)||!same(receiver,record.call))return false;
- if(!optionReaderWrapperCurrent(checker,frame,receiver,record))return false;
- let cells=100000,found=false;
+ if(source.owner!==frame.functionName)return report('source.function-owner');
+ if(!same(record.source,record.syntax))return report('source.raw-syntax',optionDiagnosticDifference(record.source,record.syntax));
+ if(!same(receiver,record.call))return report('source.checked-call',optionDiagnosticDifference(receiver,record.call));
+ const wrapperDiagnostic={};if(!optionReaderWrapperCurrent(checker,frame,receiver,record,wrapperDiagnostic))return report(wrapperDiagnostic.gate??'wrapper.unknown');
+ let cells=100000,found=false,rejection=null;
+ const reject=(gate,path='',detail='')=>{if(!rejection)rejection={gate:gate+' path='+optionDiagnosticText(path,1024),detail};return false;};
  const readerPayload=(type,span)=>{if(type?.kind==='data'){projectionOwner(checker,type,span,false);return true;}return type?.kind==='string'&&!type.rustReference&&!type.patternOwnershipRefusal&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str';};
- const output=currentOptionLayout(checker,receiver.type,node.span,false);if(!output||!readerPayload(output.payload,node.span))return false;
- const visit=(value,depth=0)=>{
-  if(!value||typeof value!=='object'||--cells<0||depth>160)return false;
-  if(['routerReturn','routerBreak','routerContinue','routerAwait','routerLambda','call','app'].includes(value.k))return false;
+ const outputDiagnostic={},output=currentOptionLayout(checker,receiver.type,node.span,false,outputDiagnostic);if(!output)return report('output.'+(outputDiagnostic.gate??'layout'),outputDiagnostic.detail??'');if(!readerPayload(output.payload,node.span))return report('output.payload',optionDiagnosticType(output.payload,null,null));
+ const visit=(value,depth=0,path='')=>{
+  if(!value||typeof value!=='object')return reject('tree.nonobject',path);
+  if(--cells<0||depth>160)return reject('tree.bound',path);
+  if(['routerReturn','routerBreak','routerContinue','routerAwait','routerLambda','call','app'].includes(value.k))return reject('tree.nonlocal-kind',path,optionDiagnosticText(value.k));
   if(value.k==='routerTry'){
-   const proof=issued.get(value),actual=currentOptionLayout(checker,value.value?.type,value.span,false);if(value.option!==true||!proof||proof.kind!=='option-reader'||proof.checker!==checker||proof.frame!==frame||!same(value,proof.call)||!same(proof.source,proof.syntax)||!actual||!sameType(value.type,actual.payload)||!readerPayload(actual.payload,value.span))return false;checker.expectedOwnership(value.type,actual.payload,frame.activeItem.modulePath??[],value.span);found=true;
+   const proof=issued.get(value),diagnostic={},actual=currentOptionLayout(checker,value.value?.type,value.span,false,diagnostic);
+   if(value.option!==true)return reject('try.not-Option',path);
+   if(!proof)return reject('try.missing-receipt',path);
+   if(proof.kind!=='option-reader')return reject('try.receipt-kind',path);
+   if(proof.checker!==checker)return reject('try.checker',path);
+   if(proof.frame!==frame)return reject('try.frame',path);
+   if(!same(value,proof.call))return reject('try.checked-call',path,optionDiagnosticDifference(value,proof.call));
+   if(!same(proof.source,proof.syntax))return reject('try.raw-syntax',path,optionDiagnosticDifference(proof.source,proof.syntax));
+   if(!actual)return reject('try.'+(diagnostic.gate??'layout'),path,diagnostic.detail??'');
+   if(!sameType(value.type,actual.payload))return reject('try.output-type',path,optionDiagnosticType(value.type,null,null));
+   if(!readerPayload(actual.payload,value.span))return reject('try.payload',path,optionDiagnosticType(actual.payload,null,null));
+   checker.expectedOwnership(value.type,actual.payload,frame.activeItem.modulePath??[],value.span);found=true;
   }
   if(value.k==='routerHostCall'){
-   if(['router_core_json_parse','router_core_json_parse_bytes'].includes(value.id)){const proof=issued.get(value.compatibilityCore);if(proof?.checker!==checker||proof.frame!==frame||proof.id!==value.id||!same(value,proof.call))return false;}
-   else if(['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id)){const proof=issued.get(value);if(proof?.kind!=='option-reader'||proof.checker!==checker||proof.frame!==frame||!same(value,proof.call)||!same(proof.source,proof.syntax)||!optionReaderWrapperCurrent(checker,frame,value,proof))return false;}
-   else return false;
+   if(['router_core_json_parse','router_core_json_parse_bytes'].includes(value.id)){
+    const proof=issued.get(value.compatibilityCore);if(proof?.checker!==checker)return reject('parse.checker-or-receipt',path);if(proof.frame!==frame)return reject('parse.frame',path);if(proof.id!==value.id)return reject('parse.id',path);if(!same(value,proof.call))return reject('parse.checked-call',path,optionDiagnosticDifference(value,proof.call));
+   }else if(['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id)){
+    const proof=issued.get(value);if(proof?.kind!=='option-reader')return reject('reader.kind-or-receipt',path);if(proof.checker!==checker)return reject('reader.checker',path);if(proof.frame!==frame)return reject('reader.frame',path);if(!same(value,proof.call))return reject('reader.checked-call',path,optionDiagnosticDifference(value,proof.call));if(!same(proof.source,proof.syntax))return reject('reader.raw-syntax',path,optionDiagnosticDifference(proof.source,proof.syntax));const diagnostic={};if(!optionReaderWrapperCurrent(checker,frame,value,proof,diagnostic))return reject(diagnostic.gate??'reader.wrapper',path);
+   }else return reject('reader.unknown-host-operation',path,optionDiagnosticText(value.id));
   }
-  for(const [key,child]of Object.entries(value))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const nested of Array.isArray(child)?child:[child])if(nested&&typeof nested==='object'&&!visit(nested,depth+1))return false;return true;
+  for(const [key,child]of Object.entries(value))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key)){let index=0;for(const nested of Array.isArray(child)?child:[child]){if(nested&&typeof nested==='object'&&!visit(nested,depth+1,optionDiagnosticText(path+'/'+key+'/'+index,1024)))return false;index++;}}return true;
  };
- const valid=visit(receiver)&&found;currentFunction(checker,frame.activeItem,frame);return valid;
+ const valid=visit(receiver)&&found;currentFunction(checker,frame.activeItem,frame);if(!valid)return report(rejection?.gate??'tree.no-Option-try',rejection?.detail??'');return valid;
 }
 // Only a direct, actually issued owned parser can enter this let-else lane.
 // Existing Pattern code still handles every scalar/shared/uncertain case.
