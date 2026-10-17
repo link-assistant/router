@@ -14,12 +14,13 @@ after(()=>rmSync(directory,{recursive:true,force:true}));
 function retain(name,value){const output=process.env.ROUTER_PRIVATE_JSON_COHORT_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json'),JSON.stringify(value)+'\n',{flag:'wx'});}}
 
 test('complete previous helper and exact 63/64-cell subtrees preserve JSON budgets and bounded cohorts',{timeout:5000},()=>{
- assert.deepEqual(Object.keys(current),Object.keys(old));assert.deepEqual(current.privateFrozenJsonCacheFacts().limits,old.privateFrozenJsonCacheFacts().limits);
+ assert.deepEqual(Object.keys(old),['createPrivateFrozenJsonCache','privateFrozenJsonCacheFacts']);assert.deepEqual(Object.keys(current),['createPrivateFrozenJsonCache','createPrivateFrozenJsonComposer','privateFrozenJsonCacheFacts']);assert.deepEqual(current.privateFrozenJsonCacheFacts().limits,old.privateFrozenJsonCacheFacts().limits);
  assert.equal(current.privateFrozenJsonCacheFacts().eligibilityMemo.maximumEntries,old.privateFrozenJsonCacheFacts().eligibilityMemo.maximumEntries);
  for(const [name,source]of Object.entries(sources)){assert.equal(source.relocated.replace(/\bfrom (['"])(file:[^'"]+)\1/g,(whole,quote,url)=>{const row=source.imports.find(row=>row.url===url);return row?'from '+quote+row.path+quote:whole;}),source.source);retain('01-source-'+name,source);}
  const small=Object.freeze(Array(62).fill(null)),large=Object.freeze(Array(63).fill(null)),root=Object.freeze({small,large}),cache=current.createPrivateFrozenJsonCache(),before=current.privateFrozenJsonCacheFacts();
  assert.equal(cache(root),old.createPrivateFrozenJsonCache()(root));const middle=current.privateFrozenJsonCacheFacts();assert.equal(middle.eligibilityMemo.subtrees.small.entries,before.eligibilityMemo.subtrees.small.entries+1);assert.equal(middle.eligibilityMemo.subtrees.large.entries,before.eligibilityMemo.subtrees.large.entries+1);
  const alias=Object.freeze({anotherSmall:small,anotherLarge:large});assert.equal(cache(alias),JSON.stringify(alias));const after=current.privateFrozenJsonCacheFacts();assert.equal(after.eligibilityMemo.subtrees.large.hits,middle.eligibilityMemo.subtrees.large.hits+1);assert.equal(after.eligibilityMemo.subtrees.small.hits,middle.eligibilityMemo.subtrees.small.hits+1);
+ assert.equal(typeof current.createPrivateFrozenJsonComposer,'function');const compose=current.createPrivateFrozenJsonComposer();assert.equal(typeof compose,'function');const wrapper={entry:root,sequence:0},first=compose(wrapper),repeat=compose(wrapper);assert.equal(first,JSON.stringify(wrapper));assert.equal(repeat,first);wrapper.sequence=1;const changed=compose(wrapper);assert.equal(changed,JSON.stringify(wrapper));assert.notEqual(changed,first);retain('01-current-composer-extension',{wrapper,first,repeat,changed});
  retain('01-boundary',{root,alias,before,middle,after});
 });
 
