@@ -325,6 +325,6 @@ export function coreTypeProducerProblems(source,{compilationProfile:input=null}=
 export function inspectCoreTypePositions(source,options={}){return inspectTypePositions(source,options);}
 export function inspectCoreTypePositionsWithProducerContext(context,source,options={}){const binding=coreAdoptionProducerBindings(context);if(binding&&JSON.stringify(binding.compilationProfile)!==JSON.stringify(normalizeProfile(options.compilationProfile)))fail('producer context profile differs');return inspectTypePositions(source,options,context);}
 export function coreTypeProducerProblemsForModule(context,module){
- if(context===null)return coreTypeProducerProblems(module.source,{compilationProfile:module.compilationProfile});
+ if(context===null)return scopeProblems(originalSourceModuleItems(module),normalizeProfile(module.compilationProfile),module.path);
  const binding=coreAdoptionProducerBindings(context),profile=normalizeProfile(module.compilationProfile);if(JSON.stringify(binding.compilationProfile)!==JSON.stringify(profile))fail('producer context profile differs');return scopeProblems(originalSourceModuleItems(module),profile,module.path,producerSelection(context,module));
 }
