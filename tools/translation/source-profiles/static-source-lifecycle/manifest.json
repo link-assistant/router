@@ -1,10 +1,16 @@
 {
   "schema": "router-static-source-lifecycle-v1",
   "archive": "originals.json.gz",
-  "rawBytes": 62574177,
-  "rawSha256": "f174f2d01e1d66d2c0a1ee0faa4f178bfe872d981ac7097aab74e93c04aff287",
-  "bytes": 10283119,
-  "sha256": "ff0d06be300d394a803ef027c810bfbb2c64558b1e6b8290495b1b97e671e085",
+  "rawBytes": 17690042,
+  "rawSha256": "ffd8064f255ee387eb7d0ef6934431cdac7c591d30468c31d1f67c90bc1a859a",
+  "bytes": 4111948,
+  "sha256": "8bb5ed58d428c9f4bbe7c2a7457615aa2104199a06de3375327755c9a64395e5",
+  "storage": {
+    "schema": "router-static-source-lifecycle-storage-v1",
+    "codec": "router-static-cst-global-column-table-storage-v1",
+    "logicalRawBytes": 62574177,
+    "logicalRawSha256": "f174f2d01e1d66d2c0a1ee0faa4f178bfe872d981ac7097aab74e93c04aff287"
+  },
   "profiles": [
     {
       "revision": "5de1dea8b777dcd6e637758efc2c260150735af5",
