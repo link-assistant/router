@@ -1,10 +1,10 @@
 {
   "schema": "router-static-source-lifecycle-v1",
   "archive": "originals.json.gz",
-  "rawBytes": 62544609,
-  "rawSha256": "09e24c444cf59f0c8acffde2cbe4e747d13c6f2fabbb1c4e5ff0601acac6ba2b",
-  "bytes": 10279246,
-  "sha256": "729d715d54eb561437d506e0414bd28fead3bb045c5bc5a7ca8999c7519bf7bf",
+  "rawBytes": 62551937,
+  "rawSha256": "a74ba7ff9e69e3f84d4664bfaf5f02d2e36d6e76186af4115651715285212b62",
+  "bytes": 10280626,
+  "sha256": "78fb114301112498d9eb5dea35129882ed79258628f343cae24a9b81ce2d08e1",
   "profiles": [
     {
       "revision": "5de1dea8b777dcd6e637758efc2c260150735af5",
@@ -17,7 +17,7 @@
       "sourceSetSha256": "8683ed8c1f78d91f109d9c3f41151fa54e605833e03caac2bb821f00aa8f6d16"
     }
   ],
-  "current": "9b123e23726cf91fb098ef615ee0634fc78508565eccc57cbee62d8a2be4b4e9",
+  "current": "2167bf0775538f0e5369e9e2757da5d5e3b58202b67fd56459c779f9b5bc972d",
   "trace": [
     {
       "phase": "language",
