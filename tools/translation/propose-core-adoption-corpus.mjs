@@ -67,8 +67,9 @@ function ownDirectory(destination){
   if(!own.isDirectory()||own.isSymbolicLink()||realpathSync(destination.path)!==destination.physical||!directorySame(destination.identity,lstatSync(destination.parent)))fail('output identity changed');
   return own;
 }
-function writer(target){
+function writer(target,gzipStorage=null){
   const records=[],directories=new Map();let totalBytes=0,created=false,identity=null;
+  const storageRows=[];let storedBytes=0,preparedGzip=null;
   function current(){if(!created){identity=ownDirectory(target);created=true;directories.set('',identity);}if(!directorySame(identity,lstatSync(target.path))||realpathSync(target.path)!==target.physical)fail('owned proposal root changed');}
   function parent(relative){
     current();const parts=relative.split('/');parts.pop();let path='';
@@ -77,12 +78,33 @@ function writer(target){
   function put(relative,text,kind='json'){
     if(records.length>=L.packets||typeof text!=='string'||relative.split('/').some(part=>!part||part==='.'||part==='..')||relative.includes('\\'))fail('packet path/count');
     const bytes=Buffer.byteLength(text);if(bytes>L.packetBytes||totalBytes+bytes>L.outputBytes-FAILURE_RESERVE)fail('packet/output byte limit');
-    const sha256=hash(text);parent(relative);writeFileSync(join(target.path,relative),text,{flag:'wx'});totalBytes+=bytes;
+    const sha256=hash(text);parent(relative);
+    if(gzipStorage){
+      const encoded=gzipStorage.encodeCoreAdoptionGzipPacket(text),file=relative+'.gz';
+      if(storedBytes+encoded.bytes.length>gzipStorage.CORE_ADOPTION_GZIP_LIMITS.storedBytes-FAILURE_RESERVE)fail('stored packet/output byte limit');
+      parent(file);writeFileSync(join(target.path,file),encoded.bytes,{flag:'wx'});storedBytes+=encoded.bytes.length;
+      storageRows.push({path:relative,kind,rawBytes:bytes,rawSha256:sha256,file,bytes:encoded.bytes.length,sha256:encoded.sha256});
+    }else writeFileSync(join(target.path,relative),text,{flag:'wx'});
+    totalBytes+=bytes;
     const record={path:relative,kind,bytes,sha256};records.push(record);return record;
   }
   const json=(path,value)=>put(path,JSON.stringify(value)+'\n');
   return {json,text:(path,value)=>put(path,value,'rust-source'),get records(){return records;},get bytes(){return totalBytes;},get created(){return created;},
     complete(text){const bytes=Buffer.byteLength(text);if(bytes>L.packetBytes||totalBytes+bytes>L.outputBytes-FAILURE_RESERVE)fail('index/output byte limit');parent('index.pending.json');writeFileSync(join(target.path,'index.pending.json'),text,{flag:'wx'});renameSync(join(target.path,'index.pending.json'),join(target.path,'index.json'));totalBytes+=bytes;},
+    prepareGzip(text){
+      if(!gzipStorage||preparedGzip)fail('one explicit gzip publication required');
+      preparedGzip=gzipStorage.prepareCoreAdoptionGzipIndex(text,storageRows);
+      if(preparedGzip.logicalOutputBytes!==totalBytes+preparedGzip.indexBytes+preparedGzip.bytes||preparedGzip.storedOutputBytes!==storedBytes+preparedGzip.indexBytes+preparedGzip.bytes)fail('complete storage accounting differs');
+      return preparedGzip;
+    },
+    completeGzip(text,prepared){
+      if(!gzipStorage||prepared!==preparedGzip)fail('unprepared gzip publication');
+      parent('packet-storage.pending.json');writeFileSync(join(target.path,'packet-storage.pending.json'),prepared.source,{flag:'wx'});
+      renameSync(join(target.path,'packet-storage.pending.json'),join(target.path,'packet-storage.json'));
+      // Reuse the exact original index writer and its last rename. All codec,
+      // serialization and hash work finished before the final source guard.
+      this.complete(text);totalBytes+=prepared.bytes;storedBytes=prepared.storedOutputBytes;
+    },
     failure(error,stage){
       if(!created)return;
       // Report no arbitrary thrown-object getter, proxy or lazy stack.
@@ -178,7 +200,8 @@ function fixedAdoptionStage(name,files,propose,original,write,dependencies,produ
     }}]},
   ]).run(null);
 }
-export async function proposeCoreAdoptionSequence(input,sequence='literal'){
+export async function proposeCoreAdoptionSequence(input,sequence='literal',packetStorage){
+  if(packetStorage!==undefined&&packetStorage!=='gzip')fail('packet storage must be the explicit gzip mode');
   if(sequence!=='literal'&&sequence!=='literal-algebraic'&&sequence!=='scalar-count'&&sequence!=='json-algebraic-primitives'&&sequence!=='json-updates'&&sequence!=='json-indices'&&sequence!=='json-collections'&&sequence!=='json-copies'&&sequence!=='json-parse'&&sequence!=='json-readers')fail('fixed sequence must be literal, literal-algebraic, scalar-count, json-algebraic-primitives, json-updates, json-indices, json-copies, json-collections, json-parse or json-readers');
   if(!['darwin','linux'].includes(process.platform))fail('POSIX source-proposal receiving required');
   const requested=options(input);
@@ -195,7 +218,8 @@ export async function proposeCoreAdoptionSequence(input,sequence='literal'){
   const json=jsonSequence?(await import('./migrate-core-json.mjs')).proposeCoreJsonCorpus:null;
   const scalars=sequence==='scalar-count'?(await import('./migrate-core-scalars.mjs')).proposeCoreScalarsCorpus:null;
   const algebraic=sequence==='literal-algebraic'||jsonSequence?(await import('./migrate-core-algebraic.mjs')).proposeCoreAlgebraicCorpus:null;
-  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target),stages=[];
+  const gzipStorage=packetStorage==='gzip'?await import('./core-adoption-packet-storage.mjs'):null;
+  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target,gzipStorage),stages=[];
   let stage=jsonReaders?'json-readers':jsonParse?'json-parse':jsonCopies?'json-copies':jsonCollections?'json-collections':jsonIndices?'json-indices':jsonUpdates?'json-updates':sequence==='scalar-count'?'scalar-count':jsonSequence?'json':'literal',after=original.files;
   try{
     for(const name of jsonReaders?['json-readers']:jsonParse?['json-parse']:jsonCopies?['json-copies']:jsonCollections?['json-collections']:jsonIndices?['json-indices']:jsonUpdates?['json-updates']:jsonSequence?['json','algebraic','primitives']:sequence==='scalar-count'?['scalar-count']:sequence==='literal'?['literal']:['literal','algebraic']){
@@ -206,12 +230,15 @@ export async function proposeCoreAdoptionSequence(input,sequence='literal'){
     for(const [path,source]of Object.entries(after)){pathName(path);if(!Object.hasOwn(original.files,path))fail('unexpected adopted source path');if(source!==original.files[path])changes.push({path,beforeSha256:hash(original.files[path]),afterSha256:hash(source),source:write.text('after/'+path,source)});}
     if(Object.keys(after).length!==original.rows.length)fail('adopted source path census differs');
     const index={schema:'router-core-adoption-sequence-packets-v1',complete:true,sequence,entry:'src/lib.rs',sourceRoot:root,compilationProfile:PRODUCTION_PROFILE,limits:L,inputs,dependencyInputs,census,stages,changes,packets:[...write.records],packetBytes:write.bytes,semanticAdmission:false,installation:'proposal only; review every complete stage and inverse before application; this CLI never applies sources',sourceChain:'each stage before equals previous complete after; reverse stage order and full per-file mappings to recover original sources',hostBoundary:'stock Node/Bun filesystem/JSON/rule runner; exclusive owned output lifetime; non-atomic source snapshots, no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim',memory:'one full API proposal/graph at a time; per-packet serialization; actual live heap/RSS requires receiving evidence'};
-    const text=JSON.stringify(index)+'\n';rejoin(original);dependencies.verify();write.complete(text);
-    return {schema:index.schema,complete:true,sequence,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:stages.map(({name,summary})=>({name,...summary})),packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:write.bytes,semanticAdmission:false};
+    const text=JSON.stringify(index)+'\n',preparedStorage=gzipStorage?write.prepareGzip(text):null;
+    rejoin(original);dependencies.verify();if(gzipStorage)write.completeGzip(text,preparedStorage);else write.complete(text);
+    const receipt={schema:index.schema,complete:true,sequence,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:stages.map(({name,summary})=>({name,...summary})),packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:write.bytes,semanticAdmission:false};
+    return gzipStorage?{...receipt,outputBytes:preparedStorage.storedOutputBytes,logicalOutputBytes:write.bytes,packetStorage:'gzip',storageIndex:'packet-storage.json',storageSha256:preparedStorage.sha256}:receipt;
   }catch(error){try{write.failure(error,stage);}catch(reportFailure){const failure=new Error('sequence proposal failed and its incomplete receipt could not be written');failure.cause=error;failure.reportFailure=reportFailure;throw failure;}throw error;}
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const args=process.argv.slice(2);
-  if(args.length===6&&args[0]==='--root'&&args[2]==='--output'&&args[4]==='--sequence')proposeCoreAdoptionSequence({root:args[1],output:args[3]},args[5]).then(receipt=>console.log(JSON.stringify(receipt)));
+  if(args.length===8&&args[0]==='--root'&&args[2]==='--output'&&args[4]==='--sequence'&&args[6]==='--packet-storage')proposeCoreAdoptionSequence({root:args[1],output:args[3]},args[5],args[7]).then(receipt=>console.log(JSON.stringify(receipt)));
+  else if(args.length===6&&args[0]==='--root'&&args[2]==='--output'&&args[4]==='--sequence')proposeCoreAdoptionSequence({root:args[1],output:args[3]},args[5]).then(receipt=>console.log(JSON.stringify(receipt)));
   else {if(args.length!==4||args[0]!=='--root'||args[2]!=='--output')fail('usage: --root SOURCE_ROOT --output FRESH_OUTSIDE_DIRECTORY');console.log(JSON.stringify(proposeCoreAdoptionCorpus({root:args[1],output:args[3]})));}
 }

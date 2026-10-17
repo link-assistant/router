@@ -357,3 +357,46 @@ node tools/translation/propose-core-adoption-corpus.mjs \
 The singleton uses the existing exclusive writer, quotas, complete Cargo/source
 snapshots and failure receipt. JavaScript/strict TypeScript receiving and the
 paired CI-only Rust oracle must pass before claiming actual executable gains.
+
+### Optional compressed proposal packets
+
+Fixed sequences also accept explicit storage-only gzip transport:
+
+```sh
+node tools/translation/propose-core-adoption-corpus.mjs \
+  --root /path/to/receiving-repository --output /outside/fresh-reader-proposal \
+  --sequence json-readers --packet-storage gzip
+```
+
+The corresponding API is `proposeCoreAdoptionSequence({root, output}, sequence,
+'gzip')`. Omitting the third argument preserves the original plain packet writer,
+index schema and receipt. Compression does not change the logical index or any
+packet's full decoded bytes, digest, source/CST, metadata, skips, forward mapping
+or inverse. The writer stores each logical packet at its path plus `.gz`, writes
+`packet-storage.json` with the complete ordered raw/stored associations, and
+publishes the original `index.json` last. All compression and manifest hashing
+precede the final fresh source and Cargo checks. It never installs source.
+
+`openCoreAdoptionGzipPackets(output)` checks the complete successful index,
+sidecar and physical inventory. Read **every** logical `reader.index.packets`
+descriptor with `reader.read(descriptor)`, then call `reader.verify()` to rejoin
+the full inventory and controls. Each read freshly checks the regular physical
+file and identity, complete stored bytes/digest, bounded decoded bytes/digest and
+strict UTF-8. This transport is not a source, binding or executable-admission
+proof. It retains no decoded packet or semantic verdict cache.
+
+The original 64 MiB per-packet and 1 GiB logical-output limits still apply,
+including the transport sidecar; compressed stored/pending output has a separate
+384 MiB limit and the existing failure reserve. Receiving monitors also count
+snapshots, logs and active external temporary files within their own total
+budget. No full-corpus fit, speed or translated-function gain is implied.
+Gzip byte identity across engines is not required. Valid additional empty gzip
+members may decode to the same exact packet; extra decoded bytes, invalid UTF-8
+or a size/digest mismatch fail verification.
+
+Failed runs retain the existing bounded incomplete receipt and partial stored
+files, including any `.gz` packets or pending index. The complete reader rejects
+incomplete output and any retained failure receipt. Raw-digest and complete
+inventory validation are success-only obligations; any bounded diagnostic decode
+of failed bytes is non-authoritative. There is no recovery journal or partial
+packet acceptance protocol.
