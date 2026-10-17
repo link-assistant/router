@@ -77,7 +77,7 @@ test('historical thirty-five failures retain all original entry subjects and col
 test('fresh canonical format text data and host entries initialize without an import warmup',()=>{
   cold('extensions/formatting.mjs','assert.equal(typeof module.FormatRustParser,"function");assert.equal(typeof module.FormatChecker,"function");');
   cold('extensions/text.mjs','assert.equal(typeof module.TextRustParser,"function");assert.equal(typeof module.TextChecker,"function");');
-  for(const path of ['extensions/data.mjs','extensions/host-contracts.mjs'])cold(path,'const surface=module.parseRust("fn answer()->u8{7}fn main(){}");const program=module.checkProgram(surface);assert.equal(program.declarations.get("answer").ret.rustPrimitiveName,"u8");');
+  for(const path of ['extensions/data.mjs','extensions/host-contracts.mjs'])cold(path,'const surface=module.parseRust("fn answer()->u8{7}fn main(){}");const program=module.checkProgram(surface);const ret=program.declarations.get("answer").ret;assert.deepEqual({kind:ret.kind,bits:ret.bits,signed:ret.signed},{kind:"fixed",bits:8,signed:false});');
 });
 
 test('ordinary bare tuple checking ignores fabricated public hooks and rejects borrowed fields',()=>{
