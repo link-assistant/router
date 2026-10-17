@@ -364,6 +364,8 @@ export function analyzeOwnedCoreJavaScript(source,{sourcePath,context}={}){
 function analyzeOwnedCoreStage(stage,sourcePath,context){
  assertPrivateParserExecution();assertReverseConcreteSourceHost();
  requireOwnedCoreSourceCurrent(context);
+ const expectedLanguage=/\.(?:mts|ts)$/u.test(sourcePath)?'TypeScript':'JavaScript';
+ if(stage.concreteSyntax.language!==expectedLanguage)throw TypeError('Owned reverse source language/path differs');
  if(ownedCoreSourceData(context).files.find(row=>row.path===sourcePath)?.source!==stage.source)throw TypeError('Owned reverse complete original source differs');
  const analysis=parseOwnedCoreJavaScriptModule(context,sourcePath);
  requireOwnedCoreSourceCurrent(context);assertPrivateParserExecution();assertReverseConcreteSourceHost();

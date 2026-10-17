@@ -36,13 +36,15 @@ The first source draft supports immutable straight-line and closed branch uses
 of copy, update and the explicit string/usize/map index APIs. Rust evaluates all
 arguments into temporaries before compensating copies, preserving reusable JS
 inputs. Borrowed index results must originate from a live input root. Canonical
-JSON inputs use the existing 4096-node/depth-32 domain; native Rust needs the
+JSON/string inputs retain the actual Unicode-scalar and registered ABI domains.
+Copy/update use the existing 4096-node/depth-32 domain; native Rust needs the
 emitted matching copy/update guards. No JSON reference identity, reflection,
 custom coercion, mutable aliases, callbacks, unknown helper calls or error
 identity/stack/catch observation is admitted. This is a bounded successful
 resource/value contract; native panics are not catchable JavaScript TypeErrors.
 Index `bigint` inputs need the actual registered parameter type, not an
-unconstrained numeric spelling; the emitted usize conversion remains checked.
+unconstrained numeric spelling; an index above native `usize` returns canonical
+Null, matching an out-of-range immutable array read without truncation.
 
 The 479 optional parse operations remain reverse-refused until their full
 1 MiB, lexical digit, depth, UTF-8 and locked numeric-profile behavior has a

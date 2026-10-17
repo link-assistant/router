@@ -34,6 +34,7 @@ test('owned copy and update retain independent source, IR and strict TypeScript 
  const api=await targets(t,source),input=json_macro_object([['old',json_macro_string('🦀')]]),expected=json_macro_object([['old',json_macro_string('🦀')],['k',input]]);
  for(const result of [api.sourceModule.changed(input),api.typed.changed(input),api.run('changed',[input])]){assert.deepEqual(result,expected);assert.notEqual(result,input);assert.ok(Object.isFrozen(result));}
  assert.deepEqual(input,json_macro_object([['old',json_macro_string('🦀')]]));assert.match(api.result.rust,/crate::translation_core::json_with_field/u);
+ const reused=await targets(t,imports+param+'export function retained(value){const local=copy(value);const alias=local;return update(local,"again",alias);}');const object=json_macro_object([['a',json_macro_bool(true)]]);assert.deepEqual(reused.run('retained',[object]),reused.typed.retained(object));assert.match(reused.result.rust,/let alias = __ro_copy\(&local\)/u);assert.match(reused.result.rust,/let __ro_arg_[0-9]+ = &local;/u);
 });
 test('all source arguments bind before consuming copies and complete meta edits refuse',limits,async t=>{
  const api=await targets(t,imports+param+'export function preserved(value){ const next=update(value,"nested",value); return update(next,"again",value); }');
@@ -68,6 +69,8 @@ test('CST reconstruction and checked Links reissue retain all source and type bo
  assert.throws(()=>parseOwnedCoreMeta(result.meta.replace('owned-function','function'),{context}));
  const fake=JSON.parse(JSON.stringify(result.program));fake[0].returns='bool';assert.throws(()=>emitRust(fake),/unissued/u);
  assert.ok(analyzeJavaScript(source).diagnostics.length);assert.equal(ownedCoreSourceData(context).files.find(row=>row.path==='caller.mjs').source,source);
+ const invalidJavaScript=imports+'export function copied(value: string){return copy(value);}';assert.throws(()=>translate(invalidJavaScript),/native source syntax/u);
+ const typedData=corpus(source);typedData.files.find(row=>row.path==='caller.mjs').path='caller.mts';const typedContext=createOwnedCoreSourceContext(typedData);assert.throws(()=>translateOwnedCoreJavaScript(source,{sourcePath:'caller.mts',context:typedContext}),/source language/u);
 });
 test('canonical JSON aggregate boundaries and wrong kinds preserve actual runtime refusals',limits,async t=>{
  const api=await targets(t,imports+param+'export function copied(value){return copy(value);}');

@@ -102,7 +102,7 @@ export function requireOwnedCoreSourceCurrent(handle){
 export function ownedCoreSourceData(handle){requireOwnedCoreSourceCurrent(handle);return ownedPlainData(contexts.get(handle).data);}
 // Native AST/Program/checker storage is confined to a single fresh traversal.
 // Neither the receiving handle nor issued emission facts retains it.
-export function originalOwnedCoreModule(handle,path){
+function originalOwnedCoreModule(handle,path){
  requireOwnedCoreSourceCurrent(handle);const state=contexts.get(handle);ownedSourcePath(path);const ts=ownershipCompiler(),syntax=new Map();
  for(const [name,source]of state.files)if(/\.(?:mjs|mts|ts)$/u.test(name))syntax.set(name,parsed(ts,name,source));
  const file=syntax.get(path);if(!file)fail('actual original module absent');
@@ -112,11 +112,12 @@ export function originalOwnedCoreModule(handle,path){
   const selected=syntax.has(declaration)?declaration:syntax.has(paired)?paired:target;return syntax.has(selected)?{resolvedFileName:selected,extension:selected.endsWith('.d.mts')?ts.Extension.Dmts:selected.endsWith('.mts')?ts.Extension.Mts:selected.endsWith('.ts')?ts.Extension.Ts:ts.Extension.Mjs}:undefined;
  })};
  const program=ts.createProgram([...syntax.keys()],{allowJs:true,checkJs:true,noLib:true,module:ts.ModuleKind.NodeNext,moduleResolution:ts.ModuleResolutionKind.NodeNext,target:ts.ScriptTarget.ES2022},host);
+ if(program.getSyntacticDiagnostics(file).length)fail('native source syntax: '+path);
  const traversal={ts,syntax,file,source:state.files.get(path),checker:program.getTypeChecker(),runtimeRoot:state.data.runtimeRoot};
  traversals.set(traversal,{handle,state});return traversal;
 }
 /** Resolve an actual source import symbol, including only exact named reexports. */
-export function originalOwnedCoreImport(handle,path,node,analysis){
+function originalOwnedCoreImport(handle,path,node,analysis){
  const {file,ts,checker,syntax}=analysis,privateState=traversals.get(analysis);assertReverseConcreteSourceHost();const state=contexts.get(handle);
  if(!privateState||privateState.handle!==handle||privateState.state!==state||file.fileName!==path)fail('foreign source traversal');
  if(!ts.isIdentifier(node))fail('direct original imported call required');
@@ -143,7 +144,7 @@ export function originalOwnedCoreImport(handle,path,node,analysis){
  fail('reexport depth');
 }
 
-export function originalOwnedCoreType(handle,path,type,analysis){
+function originalOwnedCoreType(handle,path,type,analysis){
  const {ts,file}=analysis,privateState=traversals.get(analysis);if(privateState?.handle!==handle)fail('foreign type traversal');const state=privateState.state;
  if(!type)fail('written input domain required');
  if(type.kind===ts.SyntaxKind.StringKeyword)return 'str';
@@ -168,4 +169,130 @@ export function originalOwnedCoreType(handle,path,type,analysis){
   }
  }
  fail('unregistered written type domain');
+}
+
+// The compiler traversal is entirely private. Only detached source/body facts
+// leave this operation; every emission boundary reconstructs them afresh.
+const OPS=Object.freeze({
+ router_core_json_copy:{args:['json'],ret:'json',rust:'json_copy'},
+ router_core_json_with_field:{args:['json','str','json'],ret:'json',rust:'json_with_field'},
+ router_core_json_index_str:{args:['json','str'],ret:'json-ref',rust:'json_index_str',root:0},
+ router_core_json_index_usize:{args:['json','usize'],ret:'json-ref',rust:'json_index_usize',root:0},
+ router_core_json_map_index:{args:['map-ref','str'],ret:'json-ref',rust:'json_map_index',root:0},
+ json_macro_value:{args:['json'],ret:'json',rust:'json_copy'},
+ json_macro_null:{args:[],ret:'json',rust:null},
+ json_macro_bool:{args:['bool'],ret:'json',rust:null},
+ json_macro_string:{args:['str'],ret:'json',rust:null},
+ json_macro_u64:{args:['u64'],ret:'json',rust:null},
+ json_macro_i64:{args:['i64'],ret:'json',rust:null},
+});
+const KEYS=new Set('as async await break const continue crate default do dyn else enum export extern false fn for function if impl import in let loop match mod move mut new null pub ref return self static struct super switch this throw trait true try type typeof undefined unsafe use var void where while with yield'.split(' '));
+function rustName(name){
+ if(!/^[a-z][A-Za-z0-9]*$/u.test(name)||KEYS.has(name))fail('nonportable declaration name');
+ const rust=name.replace(/[A-Z]/gu,c=>'_'+c.toLowerCase());if(KEYS.has(rust))fail('reserved declaration name');return rust;
+}
+const json=type=>type==='json'||type==='json-ref';
+const compatible=(actual,wanted)=>wanted==='json'?json(actual):wanted==='i64'?actual==='i64'||actual==='usize':wanted==='u64'?actual==='usize':actual===wanted;
+export function analyzeOriginalOwnedCoreSource(context,path){
+ const analysis=originalOwnedCoreModule(context,path),{ts,file,source}=analysis,program=[],diagnostics=[],items=[];
+ const functions=file.statements.filter(ts.isFunctionDeclaration);
+ // Top-level evaluation, namespace imports and unsupported exports are not
+ // silently erased. Their full source remains in the refusal manifest.
+ for(const item of file.statements){
+  if(ts.isImportDeclaration(item)){
+   if(!item.importClause?.namedBindings||!ts.isNamedImports(item.importClause.namedBindings))fail('only actual named imports');
+   for(const spec of item.importClause.namedBindings.elements)originalOwnedCoreImport(context,path,spec.name,analysis);continue;
+  }
+  if(ts.isFunctionDeclaration(item))continue;
+  if(ts.isEmptyStatement(item))continue;
+  fail('top-level evaluation or unsupported declaration');
+ }
+ for(const declaration of functions){
+  const span=[declaration.getStart(file),declaration.end],name=declaration.name?.text??null;
+  try{const item=checkFunction(context,path,declaration,analysis);program.push(item);items.push({name,span,status:'translated'});}
+  catch(error){if(!(error instanceof TypeError))throw error;const diagnostic={kind:'owned-core',name,span,message:error.message};diagnostics.push(diagnostic);items.push({name,span,status:'unsupported',diagnostic});}
+ }
+ requireOwnedCoreSourceCurrent(context);return {program,diagnostics,items,source,path};
+}
+function checkFunction(context,path,declaration,analysis){
+ const {ts,file,source,checker}=analysis;
+ if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
+ const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0;
+ const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
+ function bind(identifier,value,scope){
+  if(!ts.isIdentifier(identifier)||scope.has(identifier.text)||identifier.text.startsWith('__ro'))fail('duplicate, reserved or nonidentifier binding');
+  const symbol=checker.getSymbolAtLocation(identifier);if(!symbol)fail('unresolved lexical declaration');scope.set(identifier.text,{...value,symbol});return identifier.text;
+ }
+ for(const param of declaration.parameters){
+  if(param.dotDotDotToken||param.questionToken||param.initializer||param.modifiers?.length)fail('default/rest/optional parameter');
+  const type=originalOwnedCoreType(context,path,param.type??ts.getJSDocType(param),analysis),identifier=param.name;
+  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str'].includes(type)?identifier.text:null,input:true},environment);
+  params.push({name:sourceName,rust:rustName(sourceName),type});
+ }
+ const hostCalls=[];
+ function expression(node,scope,depth){
+  tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
+  if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)){
+   if(/\p{Surrogate}/u.test(node.text))fail('unpaired UTF16 string');return {kind:'string',value:node.text,type:'str',root:null};
+  }
+  if(node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword,type:'bool',root:null};
+  if(ts.isBigIntLiteral(node)){
+   const text=node.text.replace(/n$/u,'').replaceAll('_','');let value;try{value=BigInt(text);}catch{fail('invalid integer');}
+   if(value<0n||value>18446744073709551615n)fail('u64 literal bound');return {kind:'integer',value:value.toString(),type:'usize',root:null};
+  }
+  if(ts.isIdentifier(node)){
+   const value=scope.get(node.text);if(!value||checker.getSymbolAtLocation(node)!==value.symbol)fail('unknown, shadowed or moved binding');
+   return {kind:'variable',name:node.text,type:value.type,root:value.root};
+  }
+  if(ts.isCallExpression(node)){
+   if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
+   const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
+   const expected=analysis.runtimeRoot+'/'+(binding.name.startsWith('json_macro_')?'json-macro-runtime.mjs':'json-update-runtime.mjs');
+   if(!op||binding.target!==expected)fail('unregistered source operation');
+   const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
+   if(args.length!==op.args.length||args.some((argument,index)=>!compatible(argument.type,op.args[index])))fail('owned argument type differs');
+   // Shared index loans from temporaries cannot outlive their owner. No alias
+   // or public source flag changes the actual root identity.
+   const root=op.root===undefined?null:args[op.root].root;
+   if(op.root!==undefined&&!root)fail('index requires a live input root');
+   hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});
+   return {kind:'owned-call',name:binding.name,args,type:op.ret,root};
+  }
+  if(ts.isConditionalExpression(node)){
+   const cond=expression(node.condition,scope,depth+1),yes=expression(node.whenTrue,scope,depth+1),no=expression(node.whenFalse,scope,depth+1);
+   if(cond.type!=='bool'||yes.type!==no.type||yes.root!==no.root)fail('conditional result or loan differs');return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:yes.root};
+  }
+  if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
+  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(node.operatorToken.kind)){
+   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);
+   if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':!['bool','str','usize'].includes(left.type)||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
+   return {kind:'binary',op,left,right,type:'bool',root:null};
+  }
+  fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
+ }
+ let resultType=null,resultRoot=null;
+ function block(statements,scope,depth){
+  const body=[];let terminated=false;
+  for(const statement of statements){
+   tick(depth);if(terminated)fail('statement after terminating return');
+   if(ts.isVariableStatement(statement)){
+    if(statement.modifiers?.length||(statement.declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const)fail('only fresh immutable local declarations');
+    for(const declaration of statement.declarationList.declarations){if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1),name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});}
+   }else if(ts.isReturnStatement(statement)&&statement.expression){
+    const value=expression(statement.expression,scope,depth+1);
+    if(!['json','json-ref','bool','str','usize'].includes(value.type))fail('unsupported owned result');
+    if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref'].includes(param.type)))fail('returned local loan');
+    if(resultType!==null&&(resultType!==value.type||resultRoot!==value.root))fail('return domains differ');resultType=value.type;resultRoot=value.root;body.push({kind:'return',value});terminated=true;
+   }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
+    const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
+    const yes=block(statement.thenStatement.statements,new Map(scope),depth+1),no=block(statement.elseStatement.statements,new Map(scope),depth+1);
+    if(!yes.terminated||!no.terminated)fail('partial branch flow');body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=true;
+   }else fail('statement/effects outside owned profile');
+  }
+  return {body,terminated};
+ }
+ const checked=block(declaration.body.statements,environment,0);if(!checked.terminated)fail('missing return');
+ if(!hostCalls.length)fail('no actual owned-core call');
+ const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
+ requireOwnedCoreSourceCurrent(context);return item;
 }

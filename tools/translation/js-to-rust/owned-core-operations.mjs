@@ -2,7 +2,7 @@
 // The body is always reconstructed from the current complete original source.
 import {isDeepStrictEqual,types} from 'node:util';
 import {posix} from 'node:path';
-import {originalOwnedCoreModule,originalOwnedCoreImport,originalOwnedCoreType,requireOwnedCoreSourceCurrent,ownedPlainData,ownedCoreSourceData} from './owned-core-source.mjs';
+import {analyzeOriginalOwnedCoreSource,requireOwnedCoreSourceCurrent,ownedPlainData,ownedCoreSourceData} from './owned-core-source.mjs';
 const issued=new WeakMap(),runtimes=new WeakMap();
 const fail=message=>{throw new TypeError('Owned reverse operation: '+message);};
 const OPS=Object.freeze({
@@ -28,114 +28,16 @@ const compatible=(actual,wanted)=>wanted==='json'?json(actual):wanted==='i64'?ac
 /** Only a private original check can create an executable item. */
 export const isOwnedCoreItem=item=>!!item&&typeof item==='object'&&!types.isProxy(item)&&Object.getOwnPropertyDescriptor(item,'kind')?.value==='owned-function';
 export function analyzeOwnedCoreModule(context,path){
- const analysis=originalOwnedCoreModule(context,path),{ts,file,source}=analysis,program=[],diagnostics=[],items=[];
- const functions=file.statements.filter(ts.isFunctionDeclaration);
- // Top-level evaluation, namespace imports and unsupported exports are not
- // silently erased. Their full source remains in the refusal manifest.
- for(const item of file.statements){
-  if(ts.isImportDeclaration(item)){
-   if(!item.importClause?.namedBindings||!ts.isNamedImports(item.importClause.namedBindings))fail('only actual named imports');
-   for(const spec of item.importClause.namedBindings.elements)originalOwnedCoreImport(context,path,spec.name,analysis);continue;
-  }
-  if(ts.isFunctionDeclaration(item))continue;
-  if(ts.isEmptyStatement(item))continue;
-  fail('top-level evaluation or unsupported declaration');
- }
- for(const declaration of functions){
-  const span=[declaration.getStart(file),declaration.end],name=declaration.name?.text??null;
-  try{const item=checkFunction(context,path,declaration,analysis);program.push(item);items.push({name,span,status:'translated'});}
-  catch(error){if(!(error instanceof TypeError))throw error;const diagnostic={kind:'owned-core',name,span,message:error.message};diagnostics.push(diagnostic);items.push({name,span,status:'unsupported',diagnostic});}
- }
- requireOwnedCoreSourceCurrent(context);return {program,diagnostics,items,source,path};
-}
-function checkFunction(context,path,declaration,analysis){
- const {ts,file,source,checker}=analysis;
- if(!declaration.name||!declaration.body||declaration.asteriskToken||declaration.typeParameters||declaration.modifiers?.some(mod=>mod.kind!==ts.SyntaxKind.ExportKeyword))fail('ordinary original named function required');
- const name=rustName(declaration.name.text),params=[],environment=new Map();let cells=0;
- const tick=depth=>{if(++cells>100000||depth>160)fail('whole function flow budget');};
- function bind(identifier,value,scope){
-  if(!ts.isIdentifier(identifier)||scope.has(identifier.text)||identifier.text.startsWith('__ro'))fail('duplicate, reserved or nonidentifier binding');
-  const symbol=checker.getSymbolAtLocation(identifier);if(!symbol)fail('unresolved lexical declaration');scope.set(identifier.text,{...value,symbol});return identifier.text;
- }
- for(const param of declaration.parameters){
-  if(param.dotDotDotToken||param.questionToken||param.initializer||param.modifiers?.length)fail('default/rest/optional parameter');
-  const type=originalOwnedCoreType(context,path,param.type??ts.getJSDocType(param),analysis),identifier=param.name;
-  const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str'].includes(type)?identifier.text:null,input:true},environment);
-  params.push({name:sourceName,rust:rustName(sourceName),type});
- }
- const hostCalls=[];
- function expression(node,scope,depth){
-  tick(depth);if(ts.isParenthesizedExpression(node))return expression(node.expression,scope,depth+1);
-  if(ts.isStringLiteral(node)||ts.isNoSubstitutionTemplateLiteral(node)){
-   if(/\p{Surrogate}/u.test(node.text))fail('unpaired UTF16 string');return {kind:'string',value:node.text,type:'str',root:null};
-  }
-  if(node.kind===ts.SyntaxKind.TrueKeyword||node.kind===ts.SyntaxKind.FalseKeyword)return {kind:'bool',value:node.kind===ts.SyntaxKind.TrueKeyword,type:'bool',root:null};
-  if(ts.isBigIntLiteral(node)){
-   const text=node.text.replace(/n$/u,'').replaceAll('_','');let value;try{value=BigInt(text);}catch{fail('invalid integer');}
-   if(value<0n||value>18446744073709551615n)fail('u64 literal bound');return {kind:'integer',value:value.toString(),type:'usize',root:null};
-  }
-  if(ts.isIdentifier(node)){
-   const value=scope.get(node.text);if(!value||checker.getSymbolAtLocation(node)!==value.symbol)fail('unknown, shadowed or moved binding');
-   return {kind:'variable',name:node.text,type:value.type,root:value.root};
-  }
-  if(ts.isCallExpression(node)){
-   if(node.questionDotToken||node.typeArguments?.length||node.arguments.some(ts.isSpreadElement))fail('optional/generic/spread call');
-   const binding=originalOwnedCoreImport(context,path,node.expression,analysis),op=OPS[binding.name];
-   const expected=analysis.runtimeRoot+'/'+(binding.name.startsWith('json_macro_')?'json-macro-runtime.mjs':'json-update-runtime.mjs');
-   if(!op||binding.target!==expected)fail('unregistered source operation');
-   const args=node.arguments.map(argument=>expression(argument,scope,depth+1));
-   if(args.length!==op.args.length||args.some((argument,index)=>!compatible(argument.type,op.args[index])))fail('owned argument type differs');
-   // Shared index loans from temporaries cannot outlive their owner. No alias
-   // or public source flag changes the actual root identity.
-   const root=op.root===undefined?null:args[op.root].root;
-   if(op.root!==undefined&&!root)fail('index requires a live input root');
-   hostCalls.push({name:binding.name,target:binding.target,links:binding.links,span:[node.getStart(file),node.end]});
-   return {kind:'owned-call',name:binding.name,args,type:op.ret,root};
-  }
-  if(ts.isConditionalExpression(node)){
-   const cond=expression(node.condition,scope,depth+1),yes=expression(node.whenTrue,scope,depth+1),no=expression(node.whenFalse,scope,depth+1);
-   if(cond.type!=='bool'||yes.type!==no.type||yes.root!==no.root)fail('conditional result or loan differs');return {kind:'choose',cond,then:yes,else:no,type:yes.type,root:yes.root};
-  }
-  if(ts.isPrefixUnaryExpression(node)&&node.operator===ts.SyntaxKind.ExclamationToken){const value=expression(node.operand,scope,depth+1);if(value.type!=='bool')fail('boolean negation only');return {kind:'not',value,type:'bool',root:null};}
-  if(ts.isBinaryExpression(node)&&[ts.SyntaxKind.AmpersandAmpersandToken,ts.SyntaxKind.BarBarToken,ts.SyntaxKind.EqualsEqualsEqualsToken,ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(node.operatorToken.kind)){
-   const left=expression(node.left,scope,depth+1),right=expression(node.right,scope,depth+1),op=node.operatorToken.getText(file);
-   if(['&&','||'].includes(op)?left.type!=='bool'||right.type!=='bool':!['bool','str','usize'].includes(left.type)||left.type!==right.type)fail('identity/coercion comparison outside owned profile');
-   return {kind:'binary',op,left,right,type:'bool',root:null};
-  }
-  fail('unimplemented expression '+ts.SyntaxKind[node.kind]);
- }
- let resultType=null,resultRoot=null;
- function block(statements,scope,depth){
-  const body=[];let terminated=false;
-  for(const statement of statements){
-   tick(depth);if(terminated)fail('statement after terminating return');
-   if(ts.isVariableStatement(statement)){
-    if(statement.modifiers?.length||(statement.declarationList.flags&ts.NodeFlags.BlockScoped)!==ts.NodeFlags.Const)fail('only fresh immutable local declarations');
-    for(const declaration of statement.declarationList.declarations){if(!declaration.initializer||declaration.exclamationToken||declaration.type)fail('unsupported local declaration');const value=expression(declaration.initializer,scope,depth+1),name=bind(declaration.name,{type:value.type,root:value.root},scope);body.push({kind:'let',name,value});}
-   }else if(ts.isReturnStatement(statement)&&statement.expression){
-    const value=expression(statement.expression,scope,depth+1);
-    if(!['json','json-ref','bool','str','usize'].includes(value.type))fail('unsupported owned result');
-    if(value.type==='json-ref'&&!params.some(param=>param.name===value.root&&['json-ref','map-ref'].includes(param.type)))fail('returned local loan');
-    if(resultType!==null&&(resultType!==value.type||resultRoot!==value.root))fail('return domains differ');resultType=value.type;resultRoot=value.root;body.push({kind:'return',value});terminated=true;
-   }else if(ts.isIfStatement(statement)&&ts.isBlock(statement.thenStatement)&&statement.elseStatement&&ts.isBlock(statement.elseStatement)){
-    const cond=expression(statement.expression,scope,depth+1);if(cond.type!=='bool')fail('nonboolean condition');
-    const yes=block(statement.thenStatement.statements,new Map(scope),depth+1),no=block(statement.elseStatement.statements,new Map(scope),depth+1);
-    if(!yes.terminated||!no.terminated)fail('partial branch flow');body.push({kind:'if',cond,then:yes.body,else:no.body});terminated=true;
-   }else fail('statement/effects outside owned profile');
-  }
-  return {body,terminated};
- }
- const checked=block(declaration.body.statements,environment,0);if(!checked.terminated)fail('missing return');
- if(!hostCalls.length)fail('no actual owned-core call');
- const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
- requireOwnedCoreSourceCurrent(context);issued.set(item,{context});return item;
+ const result=analyzeOriginalOwnedCoreSource(context,path);
+ for(const item of result.program)issued.set(item,{context});
+ return result;
 }
 /** Reconstruct the exact original function; detached or edited items refuse. */
 export function checkOwnedCoreItem(item,context=issued.get(item)?.context){
- if(!context)fail('unissued function');const input=ownedPlainData(item),analysis=originalOwnedCoreModule(context,input.source.path),{ts,file,source}=analysis;
- if(source!==input.source.source)fail('complete caller source differs');
- const candidates=file.statements.filter(node=>ts.isFunctionDeclaration(node)&&node.getStart(file)===input.source.span[0]&&node.end===input.source.span[1]);
- if(candidates.length!==1)fail('original function span differs');const result=checkFunction(context,input.source.path,candidates[0],analysis);
+ if(!context)fail('unissued function');const input=ownedPlainData(item),analysis=analyzeOwnedCoreModule(context,input.source.path);
+ if(analysis.source!==input.source.source)fail('complete caller source differs');
+ const candidates=analysis.program.filter(value=>value.source.span[0]===input.source.span[0]&&value.source.span[1]===input.source.span[1]);
+ if(candidates.length!==1)fail('original function span or checked domain differs');const result=candidates[0];
  if(!isDeepStrictEqual(result,input))fail('checked function/meta differs');return result;
 }
 export function checkOwnedCoreProgram(program,context){
@@ -150,9 +52,9 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
  const context=issued.get(program[0]).context;requireOwnedCoreSourceCurrent(context);const sourceData=ownedCoreSourceData(context);
  if(program.some(item=>issued.get(item).context!==context))fail('mixed receiving contexts');
  let sequence=0;const imports=new Set();
- function expr(value){
+ function expr(value,borrowOwned=false){
   switch(value.kind){
-   case 'variable':return rust?rustName(value.name):value.name;
+   case 'variable':return rust?(value.type==='json'?(borrowOwned?'&'+rustName(value.name):'__ro_copy(&'+rustName(value.name)+')'):rustName(value.name)):value.name;
    case 'string':return rust?rustString(value.value):JSON.stringify(value.value);
    case 'bool':return String(value.value);
    case 'integer':return rust?value.value+'_u64':value.value+'n';
@@ -162,8 +64,13 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
    case 'owned-call':{
     const op=OPS[value.name];imports.add(value.name);
     if(!rust)return '__ro_'+value.name+'('+value.args.map(expr).join(', ')+')';
-    const names=value.args.map(()=> '__ro_arg_'+sequence++),lines=value.args.map((argument,index)=>'let '+names[index]+' = '+expr(argument)+';');
-    const args=value.args.map((argument,index)=>json(argument.type)&&argument.type==='json'?'&'+names[index]:names[index]);
+    const names=value.args.map(()=> '__ro_arg_'+sequence++),lines=value.args.map((argument,index)=>{
+     const source=argument.type==='json'?(argument.kind==='variable'?expr(argument,true):'&'+expr(argument)):expr(argument);
+     return 'let '+names[index]+' = '+source+';';
+    });
+    // All source arguments are bound in order. Owned local variables are
+    // borrowed here; compensating copies happen only inside the fixed call.
+    const args=names;
     let call;
     if(value.name==='json_macro_null')call='::serde_json::Value::Null';
     else if(value.name==='json_macro_bool')call='::serde_json::Value::Bool('+args[0]+')';
@@ -172,7 +79,7 @@ export function emitOwnedCoreProgram(input,target,{outputPath}={}){
     else if(value.name==='json_macro_i64')call='::serde_json::Value::from(i64::try_from('+args[0]+').expect("owned reverse i64 bound"))';
     else if(op.rust==='json_copy')call='__ro_copy('+args.join(', ')+')';
     else if(op.rust==='json_with_field')call='__ro_with_field('+args.join(', ')+')';
-    else if(op.rust==='json_index_usize')call='crate::translation_core::json_index_usize('+args[0]+', usize::try_from('+args[1]+').expect("owned reverse usize bound"))';
+    else if(op.rust==='json_index_usize')call='match usize::try_from('+args[1]+') { Ok(index) => crate::translation_core::json_index_usize('+args[0]+', index), Err(_) => &::serde_json::Value::Null }';
     else call='crate::translation_core::'+op.rust+'('+args.join(', ')+')';
     return '{ '+lines.join(' ')+' '+call+' }';
    }

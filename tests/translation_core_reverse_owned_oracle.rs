@@ -8,16 +8,21 @@ use link_assistant_router::translation_core;
 
 /// Authored receiving source; the real producer performs both meta round trips.
 /// Fixture functions are excluded from actual application coverage counts.
+// The fixed producer delimiter is intentionally stable across JS source edits.
+#[allow(clippy::needless_raw_string_hashes)]
 pub const REVERSE_OWNED_JS_WITNESS: &str = r###"import {router_core_json_copy as copy,router_core_json_with_field as update,router_core_json_index_str as index} from './runtime/json-update-runtime.mjs';
 /** @param {import('./runtime/json-macro-runtime.mjs').JsonValue} value */
 export function copied(value){return copy(value);}
 /** @param {import('./runtime/json-macro-runtime.mjs').JsonValue} value */
-export function nested(value){return update(value,"nested",value);}
+export function nested(value){const local=copy(value);const alias=local;return update(local,"nested",alias);}
 /** @param {import('./runtime/json-macro-runtime.mjs').JsonValue} value */
 export function named(value){return index(value,"name");}
 "###;
 
 // Root installs this exact actual producer output. Never hand-author it.
+// Preserve explicit semantic-IR returns and hygienic compiler temporary names.
+// These narrow source-predicted allowances do not replace actual CI Clippy.
+#[allow(clippy::needless_return, clippy::used_underscore_binding)]
 #[path = "../tools/translation/js-to-rust/generated/owned-core-witness.rs"]
 mod reverse_generated;
 

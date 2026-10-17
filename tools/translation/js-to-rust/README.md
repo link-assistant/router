@@ -530,7 +530,9 @@ complete source, checks the registered materialized runtime and owned Rust
 facade/leaf, and reconstructs the whole original function when checking meta or
 emitting either target. It never treats helper names, public source flags or a
 copied JSON layout as a callable permit. Native syntax analysis is ephemeral;
-no TypeScript Program/Checker or traversal frame is retained in a context.
+no TypeScript Program/Checker or traversal frame leaves its private traversal.
+The existing trusted compiler/registered-runtime bootstrap remains a premise;
+fresh source joins do not attest the historical evaluation of cached modules.
 
 Use `createOwnedCoreSourceContext({files,runtimeRoot,declarationRoot})`, then
 `analyzeOwnedCoreJavaScript` or `translateOwnedCoreJavaScript` with
