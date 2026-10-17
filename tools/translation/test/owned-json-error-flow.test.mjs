@@ -88,6 +88,13 @@ test('new Result propagation preserves local named static error and foreign owne
 test('actual function-tail text matches preserve enclosing returns ordered arms and error laziness',async()=>{
  const source='pub fn choose(value:&'+T+',kind:&str)->'+R+'<'+M+'<'+T+'>,String>{match kind{"none"=>Ok(None),"copy"=>{if value.is_null(){return Err('+F+'("{}","null"));}Ok(Some('+COPY+'(value)))},other=>Err('+F+'("unknown: {other}"))}}',result=project(files(source));yes(result,['choose']);
  await targets(result,api=>{const input=json({v:'猫😀'}),before=structuredClone(input);assert.deepEqual(outcome(api.choose(input,'none')),{ok:null});assert.deepEqual(outcome(api.choose(input,'copy')),{ok:{v:'猫😀'}});assert.deepEqual(outcome(api.choose(json(null),'copy')),{error:'null'});assert.deepEqual(outcome(api.choose(input,'Ω')),{error:'unknown: Ω'});assert.deepEqual(input,before);});
+ const scalarSource='pub fn nested(kind:&str,flag:bool)->u8{match kind{"猫"=>{if flag{return 7;}8},_=>9}}',scalar=project(files(scalarSource));yes(scalar,['nested']);
+ await targets(scalar,api=>{for(const [kind,flag,wanted]of [['猫',true,7n],['猫',false,8n],['Ω',true,9n],['',false,9n]])assert.equal(api.nested(kind,flag),wanted);});
+ for(const source of [
+  'pub fn bad(kind:&str,flag:bool)->u8{let value=match kind{"猫"=>{if flag{return 7;}8},_=>9};value}',
+  'pub fn bad(kind:String,flag:bool)->u8{match kind{"猫"=>{if flag{return 7;}8},_=>9}}',
+  'pub fn bad(kind:&mut str,flag:bool)->u8{match kind{"猫"=>{if flag{return 7;}8},_=>9}}',
+ ])no(project(files(source)),['bad']);
 });
 test('semantic re-emission rejects changed Result errors format bodies layouts and private source associations',()=>{
  const result=project(files('pub fn checked(value:&'+T+')->'+R+'<'+M+'<'+T+'>,String>{let child=value.get("v").ok_or_else(||'+F+'("{}","missing"))?;Ok(Some('+COPY+'(child)))}'));yes(result,['checked']);const wire=JSON.stringify(result.meta.targetSemanticProgram);assert.equal(serializeProgram(parseProgram(wire)),wire);retain('complete-reemitted',emitJavaScript(parseProgram(wire)));

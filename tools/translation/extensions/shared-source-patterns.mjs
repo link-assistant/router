@@ -372,7 +372,11 @@ export function createOriginalSharedPatternAdapter() {
         const existingOwner = checker.items.get(captured.owner), existingLayout = subject.type.rustReference?.kind === 'shared' ? checker.items.get(referencePointee(subject.type, node.span).name) : null;
         if (existingOwner?.impl?.method && node.k === 'match' && existingLayout?.ctors.every(ctor => ctor.fields.every(field => !field.type.rustReference && ['fixed', 'bool', 'float', 'unit'].includes(field.type.kind))))
             return null;
-        if (!hasShared(subject.type, checker) || subject.type.rustReference?.source === 'shared-field-projection')
+        // Borrowed str uses scalar source ownership rather than rustReference.
+        // Its actual captured continuation position may use the same checked
+        // function-tail statement join; value positions keep their old domain.
+        const textTail = captured.functionTail && subject.type.kind === 'string' && subject.type.rustSourceType === true && !subject.type.rustReference && !subject.type.patternOwnershipRefusal && !subject.type.rustGenericIdentityUnresolved && !subject.type.rustBorrowingUnresolved && subject.type.rustOwnership?.kind === 'borrowed' && subject.type.rustOwnership.source === 'str';
+        if ((!hasShared(subject.type, checker) && !textTail) || subject.type.rustReference?.source === 'shared-field-projection')
             return null;
         const rows = node.k === 'match' ? node.rows.map(row => ({ ...row, pattern: unwrapPattern(row.patterns[0]), sourcePattern: { pattern: structuredClone(row.patterns[0]), span: row.span } })) : node.rows.map(row => ({ ...row, pattern: unwrapPattern(row.pattern) })), patterns = new WeakSet();
         rows.forEach(row => walk(row.pattern, node => patterns.add(node)));

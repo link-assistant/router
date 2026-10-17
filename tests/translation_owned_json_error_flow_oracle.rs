@@ -83,3 +83,27 @@ fn readonly_helpers_forward_only_the_actual_success_borrow() {
     assert_eq!(outer(&value), Ok(value.clone()));
     assert_eq!(outer(&Json::Null), Err(String::from("text required")));
 }
+
+
+#[test]
+fn borrowed_text_tail_arms_return_from_the_enclosing_function() {
+    fn nested(kind: &str, flag: bool) -> u8 {
+        match kind {
+            "猫" => {
+                if flag {
+                    return 7;
+                }
+                8
+            }
+            _ => 9,
+        }
+    }
+    for (kind, flag, expected) in [
+        ("猫", true, 7),
+        ("猫", false, 8),
+        ("Ω", true, 9),
+        ("", false, 9),
+    ] {
+        assert_eq!(nested(kind, flag), expected);
+    }
+}
