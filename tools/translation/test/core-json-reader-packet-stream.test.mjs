@@ -37,8 +37,62 @@ function inverse(row){let previous=0,current=0,restored=row.after.source;assert.
 function collect(files){const cursor=iterateCoreJsonReadersCorpusPackets(options(files)),events=[];let finish;for(;;){const next=cursor.next();if(next.done){finish=next.value;break;}assert.deepEqual(Object.keys(next.value),['section','ordinal','text']);assert.equal(typeof next.value.text,'string');events.push(next.value);}cursor.verify();const groups=new Map();for(const event of events){const group=groups.get(event.section)??[];assert.equal(event.ordinal,group.length);group.push(JSON.parse(event.text));groups.set(event.section,group);}const metadata=groups.get('metadata')[0],graph={modules:groups.get('graph-modules'),edges:groups.get('graph-edges')[0],diagnostics:groups.get('graph-diagnostics')[0],concreteSyntaxMeta:groups.get('graph-concrete')},replacement={before:Object.fromEntries(groups.get('before').map(row=>[row.path,row.source])),after:Object.fromEntries(groups.get('after').map(row=>[row.path,row.source])),inputs:groups.get('inputs'),proposals:groups.get('proposals'),moduleGraph:graph},proposal=Object.fromEntries(metadata.keys.map(key=>[key,Object.hasOwn(metadata.values,key)?metadata.values[key]:replacement[key]]));return {events,finish,proposal};}
 function readAll(output){const reader=openCoreAdoptionGzipPackets(output),packets=reader.index.packets.map(row=>{const raw=reader.read(row);assert.equal(raw.length,row.bytes);assert.equal(hash(raw),row.sha256);return {descriptor:row,text:raw.toString('utf8')};});reader.verify();return {index:reader.index,packets};}
 function hashes(run){const update=descriptor(Hash.prototype,'update'),digest=descriptor(Hash.prototype,'digest'),tape=[];try{define(Hash.prototype,'update',{...update,value:function(...args){const values=args.map(value=>typeof value==='string'?{type:'string',value}:{type:'bytes',base64:Buffer.from(value).toString('base64')}),result=apply(update.value,this,args);tape.push({op:'update',args:values,sameReceiver:result===this});return result;}});define(Hash.prototype,'digest',{...digest,value:function(...args){const result=apply(digest.value,this,args);tape.push({op:'digest',args,result:typeof result==='string'?result:{base64:Buffer.from(result).toString('base64')}});return result;}});return {value:run(),tape};}finally{define(Hash.prototype,'update',update);define(Hash.prototype,'digest',digest);}}
-async function adapter(t,retain,edits,readerEdits=[]){const directory=fs.mkdtempSync(join(tmpdir(),'router-reader-stream-adapter-'));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));const override=new Map(),recipes=[];for(const [name,changes]of [...(readerEdits.length?[['migrate-core-json-readers.mjs',readerEdits]]:[]),['propose-core-adoption-corpus.mjs',edits]]){const original=fs.readFileSync(new URL(name,base),'utf8');let source=original;for(const edit of changes){assert.equal(source.split(edit.before).length,2);source=source.replace(edit.before,edit.after);}let inverse=source;for(const edit of [...changes].reverse()){assert.equal(inverse.split(edit.after).length,2);inverse=inverse.replace(edit.after,edit.before);}assert.equal(inverse,original);const imports=[],relocated=source.replace(/((?:from\s+|import\()(['"]))(\.\.?\/[^'"\n]+)(\2)/gu,(whole,prefix,_quote,spec,suffix)=>{const url=override.get(spec)??new URL(spec,base).href,replacement=prefix+url+suffix;imports.push({before:whole,after:replacement});return replacement;});let restored=relocated;for(const edit of [...imports].reverse()){assert.equal(restored.split(edit.after).length,2);restored=restored.replace(edit.after,edit.before);}assert.equal(restored,source);const path=join(directory,name);fs.writeFileSync(path,relocated);override.set('./'+name,pathToFileURL(path).href);recipes.push({name,original,source,inverse,relocated,imports,restored,changes});}retain('complete-test-only-source-adapter-and-inverses',recipes);return import(pathToFileURL(join(directory,'propose-core-adoption-corpus.mjs')).href);}
-function failure(output){assert.equal(fs.existsSync(join(output,'index.json')),false);assert.equal(fs.existsSync(join(output,'packet-storage.json')),false);const receipt=JSON.parse(fs.readFileSync(join(output,'failure.json'),'utf8'));assert.equal(receipt.complete,false);assert.equal(receipt.semanticAdmission,false);const partial=[];function walk(path){for(const name of fs.readdirSync(path)){const full=join(path,name),s=fs.lstatSync(full);assert.equal(s.isSymbolicLink(),false);if(s.isDirectory())walk(full);else if(name.endsWith('.gz')){const raw=gunzipSync(fs.readFileSync(full));JSON.parse(raw.toString('utf8'));partial.push({path:full.slice(output.length+1),bytes:raw.length,sha256:hash(raw),source:raw.toString('utf8')});}}}walk(output);assert.equal(partial.length,receipt.packetCount);return {receipt,partial};}
+async function adapter(t,retain,edits,readerEdits=[]){
+ const directory=fs.mkdtempSync(join(tmpdir(),'router-reader-stream-adapter-'));
+ t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));
+ const override=new Map(),recipes=[];
+ for(const [name,changes]of [...(readerEdits.length?[['migrate-core-json-readers.mjs',readerEdits]]:[]),['propose-core-adoption-corpus.mjs',edits]]){
+  const original=fs.readFileSync(new URL(name,base),'utf8');let source=original;
+  for(const edit of changes){assert.equal(source.split(edit.before).length,2);source=source.replace(edit.before,edit.after);}
+  let inverse=source;
+  for(const edit of [...changes].reverse()){assert.equal(inverse.split(edit.after).length,2);inverse=inverse.replace(edit.after,edit.before);}
+  assert.equal(inverse,original);
+  const imports=[];let delta=0;
+  const relocated=source.replace(/((?:from\s+|import\()(['"]))(\.\.?\/[^'"\n]+)(\2)/gu,(whole,prefix,_quote,spec,suffix,offset)=>{
+   const url=override.get(spec)??new URL(spec,base).href,replacement=prefix+url+suffix,start=offset+delta;
+   imports.push({before:whole,after:replacement,beforeSpan:[offset,offset+whole.length],afterSpan:[start,start+replacement.length]});
+   delta+=replacement.length-whole.length;return replacement;
+  });
+  let restored=relocated;
+  for(const edit of [...imports].reverse()){
+   assert.equal(source.slice(...edit.beforeSpan),edit.before);
+   assert.equal(restored.slice(...edit.afterSpan),edit.after);
+   restored=restored.slice(0,edit.afterSpan[0])+edit.before+restored.slice(edit.afterSpan[1]);
+  }
+  assert.equal(restored,source);
+  let forward=source;
+  for(const edit of [...imports].reverse())forward=forward.slice(0,edit.beforeSpan[0])+edit.after+forward.slice(edit.beforeSpan[1]);
+  assert.equal(forward,relocated);
+  const path=join(directory,name);fs.writeFileSync(path,relocated);override.set('./'+name,pathToFileURL(path).href);
+  recipes.push({name,original,source,inverse,relocated,imports,restored,forward,changes});
+ }
+ retain('complete-test-only-source-adapter-and-inverses',recipes);
+ return import(pathToFileURL(join(directory,'propose-core-adoption-corpus.mjs')).href);
+}
+function failure(output){
+ assert.equal(fs.existsSync(join(output,'index.json')),false);
+ assert.equal(fs.existsSync(join(output,'packet-storage.json')),false);
+ const receipt=JSON.parse(fs.readFileSync(join(output,'failure.json'),'utf8'));
+ assert.equal(receipt.complete,false);assert.equal(receipt.semanticAdmission,false);
+ const partial=[];
+ function walk(path){
+  for(const name of fs.readdirSync(path)){
+   const full=join(path,name),s=fs.lstatSync(full);assert.equal(s.isSymbolicLink(),false);
+   if(s.isDirectory())walk(full);
+   else if(name.endsWith('.gz')){
+    const relative=full.slice(output.length+1),raw=gunzipSync(fs.readFileSync(full)),source=raw.toString('utf8');
+    assert.ok(Buffer.from(source,'utf8').equals(raw),'complete decoded UTF-8 bytes');
+    let kind;
+    if(relative.endsWith('.json.gz')){JSON.parse(source);kind='json';}
+    else{assert.ok(relative.startsWith('after/')&&relative.endsWith('.rs.gz'),'known complete Rust source packet path');kind='rust-source';}
+    partial.push({path:relative,kind,bytes:raw.length,sha256:hash(raw),source});
+   }
+  }
+ }
+ walk(output);assert.equal(partial.length,receipt.packetCount);
+ assert.equal(partial.reduce((total,row)=>total+row.bytes,0),receipt.packetBytes);
+ return {receipt,partial};
+}
 
 test('complete materialized and detached proposals preserve every full payload CST source and inverse',async(t,retain)=>{
  const files=inputs(READER,{'src/orphan.rs':'pub fn unreachable()->bool{false}'}),before=proposeCoreJsonReadersCorpus(options(files)),current=collect(files);assert.equal(json(current.proposal),json(before));assert.deepEqual(Object.keys(current.proposal),Object.keys(before));assert.equal(current.finish.summary.proposals,before.proposals.length);assert.equal(current.finish.summary.skippedFiles,1);assert.ok(before.proposals.some(row=>row.selections.length===1));for(const row of current.proposal.proposals){inverse(row);assert.equal(row.stages.length,2);for(const stage of row.stages)inverse(stage);}for(const event of current.events)assert.equal(json(JSON.parse(event.text))+'\n',event.text);retain('complete-original-and-detached-proposals',{files,before,current});
