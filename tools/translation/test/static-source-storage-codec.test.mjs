@@ -50,7 +50,12 @@ test('four lineage roles and malformed original values preserve exact literal da
  for(const value of values){const raw=Buffer.from(json(value)+'\n'),stored=encodeStaticSourceStorage(value,raw);assert.equal(stored.storage,undefined);assert.ok(stored.raw.equals(raw));assert.deepEqual(decodeStaticSourceStorage(stored.raw,indexFor(stored)),value);}
  for(const value of [null,7,[],['router-global-column-row-v1',0,[]],'{malformed']){const bundle=bundleFor(),id=Object.keys(bundle.sources)[0];bundle.sources[id].canonical=value;const {raw,stored,index}=encoded(bundle);assert.equal(stored.storage,undefined);assert.ok(stored.raw.equals(raw));assert.deepEqual(decodeStaticSourceStorage(stored.raw,index),bundle);}
  const malformed=bundleFor();Object.values(malformed.sources)[0].canonical=json({...doc('different'),nodes:[]});const value=encoded(malformed);assert.equal(value.stored.storage,undefined);assert.deepEqual(decodeStaticSourceStorage(value.stored.raw,value.index),malformed);
- retain('02-full-lineage-literal-controls',{controls,values,malformed});
+ // A supported owned value must match EVERY original byte; this is never shape fallback.
+ const pair=bundleFor(),pairRaw=Buffer.from(json(pair)+'\n'),content=Buffer.from(pairRaw);content[content.indexOf(Buffer.from('cases'))]=67;
+ const mismatches=[pairRaw.subarray(0,-1),Buffer.concat([pairRaw,Buffer.from('\n')]),content];
+ for(const wrong of mismatches)assert.throws(()=>encodeStaticSourceStorage(pair,wrong),error=>error.constructor===TypeError&&/complete original logical payload/.test(error.message),'shorter, longer or changed raw bytes refuse, never return legacy');
+ assert.ok(encodeStaticSourceStorage(pair,pairRaw).storage,'genuine supported pair still compacts');
+ retain('02-full-lineage-literal-controls',{controls,values,malformed,mismatchedPairRefusals:mismatches.length});
 });
 
 test('only actual earlier same-path source and canonical edges factor full payloads',{timeout:60000},async()=>{
@@ -71,6 +76,11 @@ test('compact metadata byte counts hashes and strict framing never grant legacy 
  const container=JSON.parse(stored.raw);for(const mutate of [value=>{value.schema='foreign';},value=>{value.extra=true;},value=>{value.logicalRawBytes++;},value=>{value.payload.current.changed=true;},value=>{value.payload.sources[Object.keys(value.payload.sources)[0]].source='foreign';},value=>{value.columnTables[0].push('AA==');}]){const changed=clone(container);mutate(changed);assert.throws(()=>decodeStaticSourceStorage(Buffer.from(json(changed)+'\n'),index));}
  assert.throws(()=>decodeStaticSourceStorage(Buffer.concat([stored.raw,Buffer.from('{}')]),index));assert.throws(()=>decodeStaticSourceStorage(Buffer.from([0xff]),index));
  const packed=gzipSync(stored.raw),corrupt=Buffer.from(packed);corrupt[corrupt.length-1]^=1;assert.throws(()=>gunzipSync(corrupt));assert.throws(()=>gunzipSync(packed.subarray(0,-5)));
+ // Default TextDecoder BOM removal would otherwise silently alter old JSON.parse behavior.
+ for(const [bytes,manifest]of [[raw,{schema:bundle.schema}],[stored.raw,index]]){
+  const bom=Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),bytes]);assert.throws(()=>decodeStaticSourceStorage(bom,manifest),SyntaxError,'legacy and compact transport BOM must remain rejected');
+  const malformed=Buffer.concat([Buffer.from([0xff]),bytes]);assert.throws(()=>decodeStaticSourceStorage(malformed,manifest),TypeError,'legacy and compact malformed UTF8 must remain rejected');
+ }
  assert.deepEqual(decodeStaticSourceStorage(stored.raw,index),bundle);retain('05-actual-stored-and-logical-byte-joins',{raw:raw.toString('utf8'),stored:stored.raw.toString('utf8'),index,mutations:mutations.length});
 });
 

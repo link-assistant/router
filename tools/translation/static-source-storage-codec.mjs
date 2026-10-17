@@ -353,7 +353,7 @@ function decodeColumnTables(sources,columnTables,statistics=null){
 // Hash every complete logical byte without retaining a second whole JSON buffer.
 function logicalDigest(payload,sources,expected=null){
  let at=0;const digest=createHash('sha256');
- function emit(text){const bytes=Buffer.from(text);assert(at+bytes.length<=MAX,'logical output byte bound');if(expected!==null)assert(at+bytes.length<=expected.length&&expected.subarray(at,at+bytes.length).equals(bytes),'complete original logical payload byte mismatch');digest.update(bytes);at+=bytes.length;}
+ function emit(text){const bytes=Buffer.from(text);assert(at+bytes.length<=MAX,'logical output byte bound');if(expected!==null&&!(at+bytes.length<=expected.length&&expected.subarray(at,at+bytes.length).equals(bytes)))throw new TypeError('complete original logical payload byte mismatch');digest.update(bytes);at+=bytes.length;}
 function emitLineage(lineage,sources){
  assert(Array.isArray(lineage),'complete stored lineage');emit('[');let firstStage=true;
  for(const stage of lineage){assert(record(stage)&&Array.isArray(stage.files),'complete stored stage');if(!firstStage)emit(',');firstStage=false;emit('{');let firstField=true;
@@ -368,13 +368,14 @@ function emitLineage(lineage,sources){
   if(key==='lineage'){emitLineage(value,sources);continue;}
   if(key!=='sources'){emit(json(value));continue;}
   emit('{');let firstRow=true;for(const [id,row]of Object.entries(sources)){if(!firstRow)emit(',');firstRow=false;emit(json(id)+':');emit(json(row));}emit('}');
- }emit('}\n');if(expected!==null)assert(at===expected.length,'complete original logical payload length');return {bytes:at,sha256:digest.digest('hex')};
+ }emit('}\n');if(expected!==null&&at!==expected.length)throw new TypeError('complete original logical payload length');return {bytes:at,sha256:digest.digest('hex')};
 }
 const logicalKeys=['schema','cases','profiles','current','lineage','sources','authority','trace'];
 const containerKeys=['schema','logicalRawBytes','logicalRawSha256','columnTables','payload'];
 const storageKeys=['schema','codec','logicalRawBytes','logicalRawSha256'];
 const storageSchema='router-static-source-lifecycle-storage-v1';
-const text=bytes=>new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+// Preserve a transport BOM so native JSON.parse rejects it; source-string BOMs remain data.
+const text=bytes=>new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes);
 function originalShape(bundle){
  assert(sameKeys(bundle,logicalKeys)&&bundle.schema==='router-static-source-lifecycle-v1'&&record(bundle.sources)&&Array.isArray(bundle.lineage),'complete logical bank shape required');
  assert(Object.keys(bundle.sources).length<=MAX_SOURCE_ROWS,'bounded complete source rows');let sourceBytes=0;
