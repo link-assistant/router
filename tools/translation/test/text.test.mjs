@@ -10,6 +10,7 @@ import {tokenizeRust} from '../extensions/lexical.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE} from '../router-core-formatting.mjs';
 import {ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-primitives.mjs';
 import {ROUTER_CORE_RANGES_SOURCE} from '../router-core-ranges.mjs';
+import {currentCoreFiles,currentCoreOptions,assertCurrentCoreRefusals,currentTextParent} from './current-core-text-fixture.mjs';
 async function translate(source,verify) {
   const result=translateSource(source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   assert.equal(result.ir.counts.carried,0,JSON.stringify(result.ir.items.filter(item=>item.status==='carried').map(item=>item.diagnostic)));
@@ -94,15 +95,15 @@ test('unchanged original string functions translate with exact source identity i
   for(const [path,name,observations] of cases){
     const original=readFileSync(new URL('../../../'+path,import.meta.url),'utf8'),item=sourceItems(original).find(item=>item.term==='fn'&&item.name===name);assert.ok(item);
     const source=original.slice(item.start,item.end),names=path.slice(4,-3).split('/');
-    const files={'src/lib.rs':`pub mod translation_core; mod ${names[0]};`,'src/translation_core.rs':ROUTER_FORMATTING_FACADE_SOURCE,'src/translation_core/primitives.rs':ROUTER_CORE_PRIMITIVES_SOURCE,'src/translation_core/ranges.rs':ROUTER_CORE_RANGES_SOURCE};
+    const files=currentCoreFiles(path,name,source);
     for(let depth=1;depth<names.length;depth++)files['src/'+names.slice(0,depth).join('/')+'.rs']=`mod ${names[depth]};`;
     files[path]=source;
-    const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:file=>files[file]});
+    const result=translateProject(currentCoreOptions(files));
     // The owned library body deliberately stays generic and untranslated.
     // Assert its complete exact boundary; any additional application or
     // library refusal still fails this full-array comparison.
     assert.equal(ROUTER_CORE_RANGES_SOURCE.slice(437,445),'<\n    T:');
-    assert.deepEqual(result.meta.refused,[{file:'src/translation_core/ranges.rs',module:['translation_core','ranges'],name:'f64_inclusive_contains',term:'fn',kind:'unsupported',message:'generic function: requires contiguous original named lifetime tokens or separately checked monomorphization',span:{start:437,end:445}}]);
+    assertCurrentCoreRefusals(result,path,name,source);
     const key=names.join('.')+'.'+name,entry=result.meta.executable.find(entry=>entry.name===key);assert.ok(entry,key);assert.equal(entry.source,path);assert.deepEqual(entry.span,{start:0,end:source.length});assert.equal(sha256(source.slice(entry.span.start,entry.span.end)),sha256(source));
     await verifyTypedTargets(result,api=>{for(const [value,expected] of observations)assert.equal(api[key](value),expected);});
   }
@@ -115,13 +116,13 @@ test('original shell quoting and XML escaping bodies recover through the same ge
     {path:'src/deploy_local/service.rs',name:'xml',fileSha256:'11acbe449d5b18fec6e4935bdbcb8414a15fa63eb1a3be6815d59218f2ab007d',start:5042,end:5208,bodySha256:'111eb7d9ca36de5200181278fc7d4cccb0325ffef04bf687a67339d391430c3d',observations:[['&<>"','&amp;&lt;&gt;&quot;'],['&lt;','&amp;lt;'],['😀Ω','😀Ω'],['','']]},
   ];
   for(const fixture of cases){
-    const original=readFileSync(new URL('../../../'+fixture.path,import.meta.url),'utf8');assert.equal(sha256(original),fixture.fileSha256);
-    const item=sourceItems(original).find(item=>item.term==='fn'&&item.name===fixture.name);assert.deepEqual([item.start,item.end],[fixture.start,fixture.end]);
-    const source=original.slice(item.start,item.end);assert.equal(sha256(source),fixture.bodySha256);
-    const names=fixture.path.slice(4,-3).split('/'),files={'src/lib.rs':`mod ${names[0]};`};
+    const original=readFileSync(new URL('../../../'+fixture.path,import.meta.url),'utf8'),evolution=currentTextParent(fixture,original);
+    const item=sourceItems(original).find(item=>item.term==='fn'&&item.name===fixture.name);assert.deepEqual([item.start,item.end],evolution.span);
+    const source=original.slice(item.start,item.end);assert.equal(sha256(source),evolution.bodySha256);
+    const names=fixture.path.slice(4,-3).split('/'),files=evolution.requiresCore?currentCoreFiles(fixture.path,fixture.name,source):{'src/lib.rs':`mod ${names[0]};`};
     for(let depth=1;depth<names.length;depth++)files['src/'+names.slice(0,depth).join('/')+'.rs']=`mod ${names[depth]};`;
     files[fixture.path]=source;
-    const result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});assert.deepEqual(result.meta.refused,[]);
+    const result=translateProject(evolution.requiresCore?currentCoreOptions(files):{entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});if(evolution.requiresCore)assertCurrentCoreRefusals(result,fixture.path,fixture.name,source);else assert.deepEqual(result.meta.refused,[]);
     const key=names.join('.')+'.'+fixture.name,entry=result.meta.executable.find(entry=>entry.name===key);assert.deepEqual(entry.span,{start:0,end:source.length});assert.equal(entry.source,fixture.path);
     await verifyTypedTargets(result,api=>{for(const [value,expected] of fixture.observations)assert.equal(api[key](value),expected);assert.throws(()=>api[key]('\ud800'),TypeError);});
   }

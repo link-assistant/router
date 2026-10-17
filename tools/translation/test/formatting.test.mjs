@@ -5,6 +5,7 @@ import {translateSource,sha256} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
+import {currentCoreFiles,currentCoreOptions,assertCurrentCoreRefusals} from './current-core-text-fixture.mjs';
 async function source(source,verify) {
   const result=translateSource(source);assert.equal(result.ir.items.map(item=>item.source).join(''),source);
   assert.equal(result.ir.counts.carried,0,JSON.stringify(result.ir.items.filter(item=>item.status==='carried').map(item=>item.diagnostic)));
@@ -105,12 +106,8 @@ test('original humanize_minutes retains source spans, early returns and literal 
 
 test('actual accounts header translates through its source-bound formatting interface',async()=>{
   const original=readFileSync(new URL('../../../src/accounts_cli.rs',import.meta.url),'utf8'),item=sourceItems(original).find(item=>item.name==='header');
-  assert.ok(item);const body=original.slice(item.start,item.end),files={
-    'src/lib.rs':'pub mod translation_core;\n'+body,
-    'src/translation_core.rs':readFileSync(new URL('../../../src/translation_core.rs',import.meta.url),'utf8'),
-    'src/translation_core/primitives.rs':readFileSync(new URL('../../../src/translation_core/primitives.rs',import.meta.url),'utf8'),
-  },result=translateProject({entry:'src/lib.rs',paths:Object.keys(files),readSource:path=>files[path]});
-  assert.deepEqual(result.meta.refused,[]);const executable=result.meta.executable.find(entry=>entry.name==='header');
-  assert.equal(sha256(files['src/lib.rs'].slice(executable.span.start,executable.span.end)),sha256(body));
-  await verifyTypedTargets(result,api=>assert.equal(api.header(),'name              healthy   credential    used    limit      remaining  home'));
+  assert.ok(item);const body=original.slice(item.start,item.end),files=currentCoreFiles('src/accounts_cli.rs','header',body),result=translateProject(currentCoreOptions(files));
+  assertCurrentCoreRefusals(result,'src/accounts_cli.rs','header',body);const executable=result.meta.executable.find(entry=>entry.name==='accounts_cli.header');
+  assert.equal(executable.source,'src/accounts_cli.rs');assert.deepEqual(executable.span,{start:0,end:body.length});assert.equal(sha256(files['src/accounts_cli.rs'].slice(executable.span.start,executable.span.end)),sha256(body));
+  await verifyTypedTargets(result,api=>assert.equal(api['accounts_cli.header'](),'name              healthy   credential    used    limit      remaining  home'));
 });
