@@ -195,3 +195,62 @@ export function proposeCoreJsonReadersCorpus(options={}){
  const producerEffects=finishCoreAdoptionProducerContext(context);imports.verify();verifyLiteralTextImportRoles(roleFor);dependencies.verify();captured.verify();supplied.verify();
  return {schema:'router-owned-json-reader-corpus-v1',entry,compilationProfile:profile,dependencyInputs:{...dependencyInputs},inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),before:{...files},after,proposals,skipped,...(producerEffects?{producerEffects}:{}),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},migrationSemantics:'canonical shared Json Option equation, followed only by owned generated-path binding; fresh semantic checks required',executableAdmission:false};
 }
+
+// Explicit detached packet iteration. The materialized API above is unchanged.
+// Events contain primitive JSON snapshots only; no live scope/view/proof escapes.
+// Storage consumers may write between next() calls. That NEW writer/producer
+// hash interleaving is not the old materialized API's observer schedule.
+export function iterateCoreJsonReadersCorpusPackets(options={}){
+ const supplied=record(options,['entry','files','compilationProfile','dependencyInputs'],4,'options'),{entry='src/lib.rs',files:input,compilationProfile:inputProfile=PRODUCTION_PROFILE,dependencyInputs:requestedDependencies}=supplied.value,captured=filesSnapshot(input),files=captured.value,profile=compilationProfile(inputProfile),dependencies=record(requestedDependencies,['manifest','lock'],2,'dependency inputs'),dependencyInputs=dependencies.value;
+ if(Object.keys(dependencyInputs).length!==2||Object.values(dependencyInputs).some(source=>typeof source!=='string'||source.length>2_000_000))fail('complete bounded Cargo sources required');
+ if(typeof entry!=='string'||!Object.hasOwn(files,entry))fail('actual source entry required');
+ const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),root=graph.modules.filter(module=>!module.path.length),core=graph.modules.filter(module=>same(module.path,['translation_core'])),leaf=graph.modules.filter(module=>same(module.path,['translation_core','primitives']));
+ if(root.length!==1||core.length!==1||leaf.length!==1||core[0].file!=='src/translation_core.rs'||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].file!=='src/translation_core/primitives.rs'||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('complete current owned facade and primitive source required');
+ for(const [path,source]of [['ranges',ROUTER_CORE_RANGES_SOURCE],['json_collections',ROUTER_CORE_JSON_COLLECTIONS_SOURCE]]){
+  const selected=graph.modules.filter(module=>same(module.path,['translation_core',path]));
+  if(selected.length!==1||selected[0].file!=='src/translation_core/'+path+'.rs'||selected[0].source!==source||selected[0].configurationCondition!=='active')fail('complete current owned core leaf source required');
+ }
+ const edges=originalSourceModuleItems(root[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edges.length!==1||root[0].source.slice(edges[0].start,edges[0].end).trim()!=='pub mod translation_core;')fail('actual public core edge required');
+ let roleFor=null,context=null,selfAlias=null,imports=null,finished=false;
+ const after={...files},skipped=[],summary={sourceFiles:Object.keys(files).length,proposals:0,selections:0,edits:0,changedFiles:0,skippedFiles:0};
+ const packet=(section,ordinal,value)=>({section,ordinal,text:JSON.stringify(value)+'\n'});
+ function verifyOriginal(){imports.verify();verifyLiteralTextImportRoles(roleFor);dependencies.verify();captured.verify();supplied.verify();}
+ function encodedFile(file,modules){
+  const edits=[],selections=[],preserved=[],names=new Set(files[file].match(/[\p{ID_Start}_][\p{ID_Continue}_]*/gu)??[]);
+  for(const module of modules){const scoped=scope(module,graph.modules,profile,roleFor,context,selfAlias);for(const item of originalSourceModuleItems(module)){
+   if(item.term!=='fn')continue;const condition=itemConfiguration(item.tokens,profile);
+   if(scoped.problems.length||module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(attribute=>!inert.has(attribute.name))){preserved.push({function:item.name,span:[item.start,item.end],reason:'configuration, source producer or namespace uncertainty',problems:scoped.problems});continue;}
+   const selected=selectReaders(files[file],item,module,scoped,imports,names);edits.push(...selected.edits);selections.push(...selected.selections);preserved.push(...selected.preserved);
+  }}
+  const proposal=apply(files[file],edits),row={file,...proposal,selections,preserved};
+  // This scope ends before yield: no completed per-file CST remains in a list
+  // or suspended generator local. Only primitive text/source/counters survive.
+  return {text:JSON.stringify(row)+'\n',source:row.after.source,selections:selections.length,edits:row.edits.length,changed:row.before.source!==row.after.source};
+ }
+ function* packets(){
+  for(const [at,[path,source]]of Object.entries(files).entries())yield packet('before',at,{path,source});
+  yield packet('graph-metadata',0,{keys:['modules','edges','diagnostics','concreteSyntaxMeta'],values:{}});
+  for(let at=0;at<graph.modules.length;at++)yield packet('graph-modules',at,graph.modules[at]);
+  yield packet('graph-edges',0,graph.edges);yield packet('graph-diagnostics',0,graph.diagnostics);
+  for(let at=0;at<graph.concreteSyntaxMeta.length;at++)yield packet('graph-concrete',at,graph.concreteSyntaxMeta[at]);
+  roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs);context=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});selfAlias=createCoreAdoptionSelfAliasSelector({modules:graph.modules,compilationProfile:profile,context});imports=importedJsonTargets(graph.modules,profile,context);
+  for(const file of Object.keys(files)){
+   if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;
+   const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>!module.sourceView.modulePath.length);if(origins.length!==1){skipped.push({file,reason:'one complete physical source origin required'});continue;}
+   const encoded=encodedFile(file,modules);after[file]=encoded.source;summary.selections+=encoded.selections;summary.edits+=encoded.edits;if(encoded.changed)summary.changedFiles++;
+   yield {section:'proposals',ordinal:summary.proposals++,text:encoded.text};
+  }
+  const producerEffects=finishCoreAdoptionProducerContext(context);verifyOriginal();
+  // Preserve the original producer-only hash order: input source digests are
+  // computed after the existing final producer/import/own-input checks.
+  const inputs=Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)}));
+  for(let at=0;at<inputs.length;at++)yield packet('inputs',at,inputs[at]);
+  for(const [at,[path,source]]of Object.entries(after).entries())yield packet('after',at,{path,source});
+  const keys=['schema','entry','compilationProfile','dependencyInputs','inputs','before','after','proposals','skipped',...(producerEffects?['producerEffects']:[]),'moduleGraph','migrationSemantics','executableAdmission'];
+  const values={schema:'router-owned-json-reader-corpus-v1',entry,compilationProfile:profile,dependencyInputs:{...dependencyInputs},skipped,...(producerEffects?{producerEffects}:{}),migrationSemantics:'canonical shared Json Option equation, followed only by owned generated-path binding; fresh semantic checks required',executableAdmission:false};
+  yield packet('metadata',0,{keys,values});verifyOriginal();finished=true;summary.skippedFiles=skipped.length;
+  return {after,summary,counts:{modules:graph.modules.length,concreteSyntaxMeta:graph.concreteSyntaxMeta.length}};
+ }
+ const iterator=packets();
+ return {next:()=>iterator.next(),return:()=>iterator.return(),verify(){if(!finished)fail('unfinished packet stream');verifyOriginal();}};
+}
