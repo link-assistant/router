@@ -10,6 +10,7 @@ import {originalStandardCallContext} from './original-standard-calls.mjs';
 import {originalOptionPartialEqSource} from './option-equality-source.mjs';
 import {requireOriginalOptionEqualityOperand} from './option-equality.mjs';
 import {typeError} from '../vendor/meta-language/translation/diagnostics.js';
+import {originalOptionCallbackNestedFrame} from './standard-option-callback-body.mjs';
 const frames=new Map(),frameOrigins=new WeakSet(),loans=new Map(),callbackInputs=new WeakMap(),activeFrames=new WeakMap();
 export function originalCallbackLoanType(checker,payload,span){
   const type=checker.sharedFieldType(payload,{rustReference:{kind:'shared',span}},span);
@@ -112,7 +113,9 @@ function originalFrameBodyDifference(actual,expected){
 export function prepareOriginalSourceFrames(emitter,entry){
   const found=nodes(entry.body);if(!found.length)return null;
   for(const node of found){const frame=node.k==='routerOriginalStandardFrame',proof=frame?node.sourceFrameProof:node.originalLoanProof,state=(frame?frames:loans).get(proof?.key),value=frame?node.body:node.value;
-    let failed='private-state',actualBody,expectedBody;if(!state||(failed='proof',metadataDigest(proof)!==metadataDigest(state.proof))||(failed='type',metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,emitter.program)))||(failed='body',metadataDigest(actualBody=alphaTree(value))!==metadataDigest(expectedBody=alphaTree(retargetCheckedCallback(frame?state.body:state.value,emitter.program)))))throw new Error('Original standard frame/loan changed or lacks private source authority [join '+failed+(failed==='body'?'; '+originalFrameBodyDifference(actualBody,expectedBody):'')+']');
+    let failed='private-state',actualBody,expectedBody;if(!state||(failed='proof',metadataDigest(proof)!==metadataDigest(state.proof))||(failed='type',metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,emitter.program)))||(failed='body',metadataDigest(actualBody=alphaTree(value))!==metadataDigest(expectedBody=alphaTree(retargetCheckedCallback(frame?state.body:state.value,emitter.program))))){
+      if(failed!=='body'||!originalOptionCallbackNestedFrame(emitter,entry,node))throw new Error('Original standard frame/loan changed or lacks private source authority [join '+failed+(failed==='body'?'; '+originalFrameBodyDifference(actualBody,expectedBody):'')+']');
+    }
   }
   const previous=functions.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());functions.set(emitter,nodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));
   return ()=>{if(previous)functions.set(emitter,previous);else functions.delete(emitter);};

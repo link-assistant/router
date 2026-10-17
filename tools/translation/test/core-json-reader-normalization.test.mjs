@@ -537,3 +537,80 @@ test('cold singleton CLI retains all packets Cargo source stages and fresh seman
   await assert.rejects(proposeCoreAdoptionSequence({root:source,output},'json-readers'),TypeError);await assert.rejects(proposeCoreAdoptionSequence({root:source,output:join(source,'generated')},'json-readers'),TypeError);
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+
+
+// These two additional cases leave all eight original receiving callbacks exact.
+// They use the complete original citation_url body with a second, equally typed
+// source parameter so a wrong but already-bound receiver is a real forgery.
+function enclosingFrameFixture(){
+ const target=original('citation_url'),oldHeader=`fn citation_url(citation: &${T}) -> ${M}<&${S}>`,newHeader=`pub fn checked<'a>(citation: &'a ${T},other: &'a ${T}) -> ${M}<&'a ${S}>`;
+ assert.equal(target.source.split(oldHeader).length,2);
+ const source=target.source.replace(oldHeader,newHeader),input=files(source),value=proposal(input),result=project(value.after);yes(result,['checked']);
+ retain('complete-enclosing-frame-source',{target,oldHeader,newHeader,source,input,value,result,scope:'Complete original body with an explicitly shared lifetime and an independent second parameter; not its whole original module.'});
+ return result;
+}
+function enclosingFrameNodes(program){
+ const entry=program.declarations.get('rp_'+Buffer.from('checked').toString('hex'));assert.ok(entry&&entry.k==='fn');assert.equal(entry.params.length,2);
+ const parent=find(entry.body,node=>node.k==='routerPinnedOptionCallbackBody'&&node.originalCallbackProof?.method==='filter');assert.ok(parent);
+ const frame=find(parent.body,node=>node.k==='routerOriginalStandardFrame');assert.ok(frame);
+ const receiver=find(frame.body,node=>node.k==='var'&&node.name===parent.body.name);assert.ok(receiver);
+ return {entry,parent,frame,receiver};
+}
+test('renamed filter frames keep the full genuine enclosing callback and reject bound receiver proof type and layout changes',async()=>{
+ const result=enclosingFrameFixture();await targets(result,api=>{
+  for(const [source,expected]of [['{}',none],['{"type":"web_search_result_location","url":"猫😀"}',some('猫😀')],['{"type":"search_result_location","source":"https://example/猫😀"}',some('https://example/猫😀')],['{"type":"search_result_location","source":"http://x"}',some('http://x')],['{"type":"search_result_location","source":"file:///x"}',none],['{"type":"search_result_location","source":false}',none],['{"type":false,"source":"https://unused"}',none]]){
+   const input=json(source),other=json('{"type":"search_result_location","source":"https://wrong"}'),before=structuredClone(input),otherBefore=structuredClone(other);
+   assert.deepEqual(api.checked(input,other),expected,source);assert.deepEqual(input,before);assert.deepEqual(other,otherBefore);
+  }
+ });
+ const wire=nativeJson(result.meta.targetSemanticProgram),baseline=emitJavaScript(parseProgram(wire));
+ for(const mutation of ['bound-receiver','frame-proof','frame-type','loan-proof','parent-proof','parent-type','parent-receiver','payload-layout','detached-frame']){
+  const program=parseProgram(wire),{entry,parent,frame,receiver}=enclosingFrameNodes(program);
+  if(mutation==='bound-receiver')receiver.name=entry.params[1].name;
+  if(mutation==='frame-proof')frame.sourceFrameProof.key='0'.repeat(64);
+  if(mutation==='frame-type')frame.type={kind:'bool'};
+  if(mutation==='loan-proof'){const loan=find(frame.body,node=>node.k==='routerOriginalCallbackLoan');assert.ok(loan);loan.originalLoanProof.key='0'.repeat(64);}
+  if(mutation==='parent-proof')parent.originalCallbackProof.key='0'.repeat(64);
+  if(mutation==='parent-type')parent.type={kind:'bool'};
+  if(mutation==='parent-receiver'){const originalReceiver=find(parent.body.value,node=>node.k==='var'&&node.name===entry.params[0].name);assert.ok(originalReceiver);originalReceiver.name=entry.params[1].name;}
+  if(mutation==='payload-layout'){const owner=program.declarations.get(frame.type.name),some=owner?.ctors.find(ctor=>ctor.name==='Some');assert.ok(some?.fields.length===1);some.fields[0].type={kind:'bool'};}
+  if(mutation==='detached-frame')entry.body=frame;
+  retain('complete-enclosing-frame-forgery',{mutation,wire:serializeProgram(program)});
+  assert.throws(()=>emitJavaScript(program),/Option|callback|frame|loan|source|layout|body|payload|type|constructor|unbound/iu,mutation);
+  assert.deepEqual(emitJavaScript(parseProgram(wire)),baseline,mutation+' restored genuine program');
+ }
+});
+
+test('stale pre-try callback associations revalidate the actual emitter entry parent and nested frame after every throw',async()=>{
+ const {HostEmitter,HostRustParser,HostChecker}=await import('../extensions/host-contracts.mjs'),{emitWith}=await import('../extensions/core.mjs'),{prepareOriginalOptionCallbacks,originalOptionCallbackNestedFrame}=await import('../extensions/standard-option-callback-body.mjs'),{prepareOriginalSourceFrames}=await import('../extensions/standard-source-frame.mjs');
+ const result=enclosingFrameFixture(),wire=nativeJson(result.meta.targetSemanticProgram),program=parseProgram(wire),{entry,parent,frame,receiver}=enclosingFrameNodes(program);let emitter;
+ class CaptureEmitter extends HostEmitter{constructor(...args){super(...args);emitter=this;}file(){return '';}}
+ emitWith(program,CaptureEmitter);assert.ok(emitter);
+ assert.throws(()=>prepareOriginalSourceFrames(emitter,entry),/Original standard frame\/loan.*join body/u,'a standalone renamed frame has no enclosing callback authority');
+ const restoreCallbacks=prepareOriginalOptionCallbacks(emitter,entry,HostRustParser,HostChecker),oldType=frame.type,oldName=receiver.name,oldBody=entry.body,oldProof=parent.originalCallbackProof;let restoreFrames;
+ try{
+  // This is Host's actual pre-try order: callbacks prepare successfully, then
+  // the following frame preparation throws before any restoration is invoked.
+  frame.type={kind:'bool'};
+  try{assert.throws(()=>prepareOriginalSourceFrames(emitter,entry),/Original standard frame\/loan.*join type/u);}finally{frame.type=oldType;}
+  receiver.name=entry.params[1].name;
+  try{assert.throws(()=>prepareOriginalSourceFrames(emitter,entry),/Option callback.*(?:body|binding)|enclosing Option callback changed/u,'a stale parent association is never a body verdict');}finally{receiver.name=oldName;}
+  assert.equal(originalOptionCallbackNestedFrame(emitter,entry,structuredClone(frame)),false,'a copied child lacks actual weak membership');
+  let proxyReads=0;const proxy=new Proxy(frame,{get(){proxyReads++;throw new Error('proxy should not run');}});assert.equal(originalOptionCallbackNestedFrame(emitter,entry,proxy),false);assert.equal(proxyReads,0);
+  const replacement={...entry};program.declarations.set(entry.fullName,replacement);
+  try{assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'the entry must be the actual current declaration');}finally{program.declarations.set(entry.fullName,entry);}
+  entry.body=structuredClone(oldBody);
+  try{assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'the child must remain in the actual current parent');}finally{entry.body=oldBody;}
+  const foreignParent=structuredClone(parent);foreignParent.body.body=frame;entry.body=foreignParent;
+  try{assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'an actual child moved beneath a different parent cannot reuse its hint');}finally{entry.body=oldBody;}
+  parent.originalCallbackProof={...oldProof,key:'0'.repeat(64)};
+  try{assert.throws(()=>prepareOriginalSourceFrames(emitter,entry),/Original standard frame\/loan.*join body/u,'a stale parent key confers no permission');}finally{parent.originalCallbackProof=oldProof;}
+  let getterReads=0;Object.defineProperty(parent.body,'untrusted',{enumerable:true,configurable:true,get(){getterReads++;throw new Error('getter should not run');}});
+  try{assert.throws(()=>originalOptionCallbackNestedFrame(emitter,entry,frame),/own data/u);assert.equal(getterReads,0);}finally{delete parent.body.untrusted;}
+  restoreFrames=prepareOriginalSourceFrames(emitter,entry);assert.equal(typeof restoreFrames,'function');assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),true);
+  assert.equal(typeof emitter.fn(entry),'string','the same genuine emitter and entry recover after the failed prepares');
+  retain('complete-same-emitter-recovery',{entry:entry.fullName,wire:serializeProgram(program)});
+ }finally{frame.type=oldType;receiver.name=oldName;entry.body=oldBody;parent.originalCallbackProof=oldProof;restoreFrames?.();restoreCallbacks?.();}
+ assert.equal(originalOptionCallbackNestedFrame(emitter,entry,frame),false,'restoration removes the contextual hint');
+ assert.deepEqual(emitJavaScript(program),emitJavaScript(parseProgram(wire)));
+});
