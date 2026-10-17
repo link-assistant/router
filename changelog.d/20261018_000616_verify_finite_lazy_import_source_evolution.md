@@ -1,0 +1,3 @@
+Retain the complete original JSON-reader materialized function and its historical digest, then verify the two explicit 591 lazy-import substitutions with a full inverse. The expected current function digest is derived from that authenticated source; neither the original source pin nor a general hash function is replaced.
+
+All eight original packet-stream callbacks and deadlines remain byte exact. A separate ninth 60-second case verifies the complete current function and exact loader bodies and refuses extra, missing, repeated or altered source. Producer behavior, native hash tapes, source guards and storage are unchanged; whole-file Node/Bun receiving remains pending.
