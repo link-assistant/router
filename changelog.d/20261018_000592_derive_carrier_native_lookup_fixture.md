@@ -1,0 +1,1 @@
+Repair the derive carrier source oracle to retain the complete byte-cache experiment and its native-left rollback. Add a separate getter-changing-serializer regression for callee lookup, receiver, error order, restoration, and checked JS/strict TypeScript. Production behavior is unchanged; source-only receiving is pending.
