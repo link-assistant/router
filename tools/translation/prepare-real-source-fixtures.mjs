@@ -20,7 +20,7 @@ export const REAL_SOURCE_MANIFEST_SHA256='fc81dbdc0ddf1c650f41c41a4c44f3e30db4c2
 export const REAL_SOURCE_FIXTURE_LIMITS=Object.freeze({files:64,fileBytes:2*1024*1024,rawBytes:8*1024*1024,outputBytes:32*1024*1024});
 const MANIFEST='tools/translation/fixtures/real-source-provenance.json';
 const PREFIX='tools/translation/source-profiles/real-source-fixtures/';
-const CORE=['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','Cargo.toml','Cargo.lock'];
+const CORE=['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs','Cargo.toml','Cargo.lock'];
 const ADOPTIONS=['bcfbe8516a87d9cbd85c3573ac05fa80cf8dc85b','92a6d41d671d8288e9bd3e3adcd47309ff1c6c9a','400e77e0fbcce4f8bfc035a51220a9ccfe68b776','eeb05407b75f32ee46a55913cbf3731760b76d15'];
 const CURRENT_IDS=['identity-token','identity-first-block','login-status','format-resume_message'];
 const hash=value=>createHash('sha256').update(value).digest('hex');

@@ -65,7 +65,7 @@ export function currentRealSourceEntry(id,options={}){
   const original=sourceAt(bundle,'current',entry.path,{...options,physical:true}),selection=selectRealSourceFixture(original,entry,{current:true}),expected=bundle.current.selections.find(row=>row.id===id);
   if(JSON.stringify(selection)!==JSON.stringify(expected))fail('exact current selection changed');
   const files={'src/lib.rs':'pub mod translation_core;\n'+selection.source};
-  for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs'])files[path]=sourceAt(bundle,'current',path,{...options,physical:true});
+  for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs'])files[path]=sourceAt(bundle,'current',path,{...options,physical:true});
   const dependencyInputs={manifest:sourceAt(bundle,'current','Cargo.toml',{...options,physical:true}),lock:sourceAt(bundle,'current','Cargo.lock',{...options,physical:true})};
   return {entry,original,source:selection.source,selection,files,dependencyInputs,revision:bundle.current.revision,scope:'Current full source parent retained; exact declarations in an authored Core carrier, not full parent/crate admission.'};
 }
