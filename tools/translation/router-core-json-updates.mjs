@@ -3,7 +3,7 @@
 import {types} from 'node:util';
 import {parseRouterCoreJsonParse,checkRouterCoreJsonParse,isRouterCoreJsonParse,ROUTER_CORE_JSON_PARSE_CONTRACTS} from './router-core-json-parse.mjs';
 import {parseRouterCoreJsonCollection,checkRouterCoreJsonCollection,isRouterCoreJsonCollection,routerCoreJsonCollectionSourceHash} from './router-core-json-collections.mjs';
-import {requireOriginalPrimitiveTryFromChecker} from './extensions/host-contracts.mjs';
+import {requireOriginalPrimitiveTryFromChecker,originalJsonCaptureCheckerEligible} from './extensions/host-contracts.mjs';
 import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {copyMetadata,metadataDigest,originalParsedDeclarationEvidence,originalParsedSyntaxNode} from './extensions/source-links.mjs';
 import {JSON_TYPES,JSON_DATA} from './extensions/json-contracts.mjs';
@@ -88,7 +88,7 @@ export function parseRouterCoreJsonUpdate(parser,path){
  const node={k:'routerCoreJsonUpdateCall',operation,args,span:{start:first.start,end:last.end}},syntax=copyMetadata(node);current(c.index);const receipt={parser,syntax,trace:stage.trace};calls.set(node,receipt);rawArgumentCalls.set(node.args,receipt);return node;
 }
 export function captureRouterCoreJsonUpdates(checker,surface){
- if(!qualified)return;const nodes=new WeakMap(),entries=new WeakMap();let guarded=false;
+ if(!qualified||!originalJsonCaptureCheckerEligible(checker))return;const nodes=new WeakMap(),entries=new WeakMap();let guarded=false;
  const declaration=entry=>{
   let candidates=null,cells=200000;const members=new WeakMap(),matches=new WeakMap(),formats=new WeakMap();
   const visit=(node,depth=0)=>{if(--cells<0||depth>160||!node||typeof node!=='object'||isProxy(node))return;const parent=prototype(node);if(parent!==plainPrototype&&parent!==null&&parent!==arrayPrototype)return;const names=keys(node);for(let at=0;at<names.length;at++)if(names[at]==='stack')return;const kind=descriptor(node,'k');if(kind&&own(kind,'value')&&kind.value==='let')members.set(node,true);if(kind&&own(kind,'value')&&kind.value==='routerOrderedMatch')matches.set(node,copyMetadata(node));if(kind&&own(kind,'value')&&kind.value==='routerConstObligation'){const feature=descriptor(node,'sourceFeature');if(feature&&own(feature,'value')&&feature.value==='router-core-format')formats.set(node,copyMetadata(node));}if(kind&&own(kind,'value')&&kind.value==='routerCoreJsonUpdateCall')candidates={node,next:candidates};for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string'||key==='type'||key==='span'||key==='length')continue;const field=descriptor(node,key);if(field&&own(field,'value'))visit(field.value,depth+1);}};visit(entry);

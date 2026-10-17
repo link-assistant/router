@@ -1,10 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {writeFileSync} from 'node:fs';
-import {translateProject} from '../project.mjs';
-import {parseRust,HostChecker} from '../extensions/host-contracts.mjs';
+import {writeFileSync,readFileSync} from 'node:fs';
+import {translateProject,resolveModuleGraph} from '../project.mjs';
+import {parseRust,HostChecker,HostRustParser,originalJsonCaptureCheckerEligible} from '../extensions/host-contracts.mjs';
+import {tokenizeRust} from '../extensions/lexical.mjs';
+import {createMatchesMacroContext,configureMatchesMacroParser} from '../matches-macro-context.mjs';
+import {sourceItems} from '../rust-structure.mjs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate} from '../router-core-json-updates.mjs';
 import {finalizeOriginalConversions,requireOriginalConversionEmission,hasOriginalConversionIssuance} from '../extensions/source-conversion-body.mjs';
-import {bindCheckedSourceLinks,checkedSourceContext,metadataDigest} from '../extensions/source-links.mjs';
+import {bindCheckedSourceLinks,checkedSourceContext,metadataDigest,linkProjectDeclaration} from '../extensions/source-links.mjs';
 import {verifyTypedTargets} from './typed-targets.mjs';
 const source='pub fn count(n:u64,value:u64)->u64{if n==0{value}else{count(n-1,value).into()}}';
 const vectors={source,observations:[]};
@@ -74,6 +79,28 @@ test('no-conversion Host subclasses retain ordinary checking while conversion is
   const state=checked();assert.equal(hasOriginalConversionIssuance(state.checker),true);state.checker.hasOriginalConversionIssuance=false;assert.equal(hasOriginalConversionIssuance(state.checker),true);
   assert.equal(hasOriginalConversionIssuance({...state.checker}),false);negative('no-conversion-subclass-cannot-finalize',()=>finalizeOriginalConversions(extension,state.program,state.links),/actual original Host checker/);
   Object.setPrototypeOf(state.checker,Extension.prototype);negative('issued-host-prototype-mutation',()=>finalizeOriginalConversions(state.checker,state.program,state.links),/actual original Host checker/);
-  const falseIssuer=new Extension('Rust',[]);negative('subclass-cannot-issue-conversion',()=>{try{return falseIssuer.program(parseRust(source+'fn main(){}'));}catch(error){assert.ok(error instanceof TypeError);throw error;}},/^Original parser\/cursor source class changed$/);assert.equal(hasOriginalConversionIssuance(falseIssuer),false);
+  const falseIssuer=new Extension('Rust',[]);negative('subclass-cannot-issue-conversion',()=>{try{return falseIssuer.program(parseRust(source+'fn main(){}'));}catch(error){assert.ok(error instanceof TypeError);throw error;}},/^Original conversion body: requires actual original Host checker$/);assert.equal(hasOriginalConversionIssuance(falseIssuer),false);
+  const get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,setPrototype=Object.setPrototypeOf,apply=Reflect.apply,text=Function.prototype.toString,eligible=originalJsonCaptureCheckerEligible,genuine=new HostChecker('Rust',[]),originObservations=[];
+  assert.equal(eligible(genuine),true);assert.equal(eligible(extension),false);assert.equal(eligible({...genuine}),false);assert.equal(eligible(Object.create(HostChecker.prototype)),false);
+  const forged=new Extension('Rust',[]);setPrototype(forged,HostChecker.prototype);forged.originalJsonCaptureCheckerEligible=true;assert.equal(eligible(forged),false);
+  let queryCallbacks=0;const foreignAccessor=Object.defineProperty({},'program',{get(){queryCallbacks++;throw Error('getter');}}),guardedProxy=new Proxy(genuine,{get(){queryCallbacks++;throw Error('get');},getPrototypeOf(){queryCallbacks++;throw Error('prototype');},getOwnPropertyDescriptor(){queryCallbacks++;throw Error('descriptor');}});
+  for(const value of [null,undefined,0,'HostChecker',foreignAccessor,guardedProxy])assert.equal(eligible(value),false);assert.equal(queryCallbacks,0);
+  setPrototype(genuine,Extension.prototype);try{assert.throws(()=>eligible(genuine),error=>error instanceof TypeError&&error.message==='Original parser/cursor source class changed');}finally{setPrototype(genuine,HostChecker.prototype);}assert.equal(eligible(genuine),true);
+  const expr=get(HostChecker.prototype,'expr');let methodCallbacks=0;
+  try{define(HostChecker.prototype,'expr',{...expr,value:function(){methodCallbacks++;throw Error('prototype method');}});assert.throws(()=>eligible(genuine),/method identity changed/);}finally{define(HostChecker.prototype,'expr',expr);}assert.equal(eligible(genuine),true);assert.equal(methodCallbacks,0);
+  try{define(genuine,'expr',{configurable:true,get(){methodCallbacks++;throw Error('own getter');}});assert.throws(()=>eligible(genuine),/callbacks or accessors changed/);}finally{delete genuine.expr;}assert.equal(eligible(genuine),true);assert.equal(methodCallbacks,0);
+  for(const[owner,key]of [[WeakSet.prototype,'has'],[WeakSet.prototype,'add'],[Object,'getPrototypeOf'],[Reflect,'apply']]){
+    const original=get(owner,key);let callbacks=0,error;
+    try{define(owner,key,{...original,value:function(){callbacks++;throw Error('native replacement');}});try{eligible(genuine);}catch(cause){error=cause;}}finally{define(owner,key,original);}
+    assert.ok(error instanceof TypeError);assert.equal(error.message,'Owned JSON original checker native operations changed');assert.equal(callbacks,0);assert.equal(eligible(genuine),true);assert.deepEqual(get(owner,key),original);originObservations.push({key,original:{...original,source:apply(text,original.value,[])},callbacks,error:{name:error.name,message:error.message},restored:true});
+  }
+  // A real qualified operation is parsed from the complete current owned Core
+  // graph. Its parser receipt is genuine; an Extension still gets no frame.
+  const read=path=>readFileSync(new URL('../../../'+path,import.meta.url),'utf8'),inputs={'src/lib.rs':'pub mod translation_core;\n'+'pub fn copied(value:&crate::translation_core::Json)->crate::translation_core::Json{crate::translation_core::json_copy(value)}'};
+  for(const path of ['src/translation_core.rs','src/translation_core/primitives.rs','src/translation_core/ranges.rs','src/translation_core/json_collections.rs'])inputs[path]=read(path);
+  const cargo={manifest:read('Cargo.toml'),lock:read('Cargo.lock')},deriveDependencies=loadDeriveDependencyProof(cargo),graph=resolveModuleGraph({entry:'src/lib.rs',paths:Object.keys(inputs),readSource:path=>inputs[path]}),context=createMatchesMacroContext({modules:graph.modules,deriveDependencies}),full=inputs['src/lib.rs'],item=sourceItems(full).find(row=>row.name==='copied'&&row.term==='fn'),parser=new HostRustParser(tokenizeRust(full.slice(item.start,item.end)));
+  configureMatchesMacroParser(parser,context,{file:'src/lib.rs',offset:item.start});parser.attributes();parser.visibility();const raw=parser.fn([]),relocate=value=>Array.isArray(value)?value.map(relocate):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([key,row])=>[key,key==='span'&&row?{start:row.start+item.start,end:row.end+item.start}:relocate(row)])):value,semantic=relocate(raw);assert.equal(linkProjectDeclaration(parser,raw,semantic,{source:full,sourcePath:'src/lib.rs',itemSpan:{start:item.start,end:item.end},itemOffset:item.start,globalOffset:0,path:[],scope:null}),true);
+  const findUpdate=value=>{if(!value||typeof value!=='object')return null;if(value.k==='routerCoreJsonUpdateCall')return value;for(const row of Object.values(value)){if(Array.isArray(row)){for(const child of row){const found=findUpdate(child);if(found)return found;}}else{const found=findUpdate(row);if(found)return found;}}return null;},operation=findUpdate(semantic);assert.ok(operation);assert.equal(operation.operation,'json_copy');captureRouterCoreJsonUpdates(extension,{language:'Rust',items:[semantic],main:null});negative('foreign-checker-real-owned-json-operation',()=>checkRouterCoreJsonUpdate(extension,operation,new Map(),[],null),/owned JSON update lacks its actual qualified source call/);
+  record('protected-json-origin-genuine-foreign-and-restored',{originObservations,queryCallbacks,methodCallbacks,foreignOriginalClass:false,genuineCurrent:true,inputs,cargo,graph,context,raw,semantic,operation});
   record('no-conversion-subclass-preserves-lifecycle',{source:'pub const GOOD:u8=1;fn main(){}',constant:program.declarations.get('GOOD'),unissuedSubclass:false,publicFlagsIgnored:true,proxyTraps:reads});
 });
