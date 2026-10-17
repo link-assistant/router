@@ -1,0 +1,5 @@
+Keep all original 42 JSON storage/composition callbacks and their limits byte exact while making575 historical adapters explicit. The plan comparison rolls back the complete575 source edits before574 and all earlier pinned native helpers; no baseline bytes or hashes are replaced.
+
+Policy and packed adapters validate every actual namespace export and descriptor, including the current-only equality hint, before projecting the original function bindings for historical API callbacks. They retain the complete namespace/source evidence and do not claim that old/current full export sets are identical. Their historical proof consumers use the exact pre575 import and native comparison, with a unique forward replay to the current complete consumer; no fake hint export or callback is supplied.
+
+Production helpers, fresh source/semantic checks and mandatory Hash work are unchanged. Existing whole8 equality tests and all historical workloads, native tapes, observers, callbacks and caps remain intact. Source-only: receiving and performance are UNRUN; original13 remains deadline RED.
