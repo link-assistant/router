@@ -14,6 +14,7 @@ import {translateSource} from '../translate.mjs';
 import {translateProject} from '../project.mjs';
 import {serializeProgram,parseProgram} from '../semantic-meta.mjs';
 import {writeRuntimeAssets} from './artifact-loader.mjs';
+import {currentPollingConstantPin} from './polling-constant-source-evolution.mjs';
 
 const hash=text=>createHash('sha256').update(text).digest('hex');
 const relocated=(node,offset)=>Array.isArray(node)?node.map(item=>relocated(item,offset)):node&&typeof node==='object'?Object.fromEntries(Object.entries(node).map(([key,value])=>[key,key==='span'&&value?{start:value.start+offset,end:value.end+offset}:relocated(value,offset)])):node;
@@ -87,11 +88,12 @@ test('original STACK_BYTES and MAX_RETRY_AFTER receive independently pinned sour
   }
 });
 test('three unchanged polling constants use pinned const Duration::from_millis',{timeout:60000},async()=>{
-  for(const pin of [
+  for(const previousPin of [
     {path:'src/codex_loopback_bridge.rs',name:'POLL_INTERVAL',sourceSha:'6e93120f6cebbce644471086d38f2b1443eb2e0d8e7d25fdae23f7e9123c4b9e',span:[1558,1616],declarationSha:'ff3f1926098891ff576a03be741995ad34e963da1900667d81db063b0035acca',bodySha:'8721112d525e1e6c8f10115701f2caa5993537cd1095213a918ab485978c568d',nanos:25000000n},
     {path:'src/login_pty.rs',name:'POLL_INTERVAL',sourceSha:'ce27eba647479e2a4f909b90f05de08cd212284797706fe7220e8c56d19ebe22',span:[1991,2049],declarationSha:'029a611a5d2eed5caf9a66114e45d465bba6bc8d61c0034f3370ad750c96044f',bodySha:'1d54ee699ce08f5572f1e35f770f92de0ca974308cff0babbb48c111c47ca5f5',nanos:50000000n},
     {path:'src/durable_file.rs',name:'LOCK_POLL_INTERVAL',sourceSha:'970eae37d4f282547bdcc178ce08eb119ce87ed0e593a6bad6aa5444433de6f0',span:[13448,13533],declarationSha:'2a432a643307b6540395ad3ffe7b52bf091fe32b359f3d62735d5d725060ac0d',bodySha:'9a4f0e5f1fda452e1e25755fc85437ae882627728e16b632159c370dd49c1198',nanos:20000000n},
   ]) {
+    const pin=currentPollingConstantPin(previousPin,process.env.ROUTER_POLLING_CONSTANT_VECTOR_DIR);
     const source=readFileSync(new URL('../../../'+pin.path,import.meta.url),'utf8');assert.equal(hash(source),pin.sourceSha);
     const result=translateProject({entry:pin.path,paths:[pin.path],readSource:()=>source});
     const entry=parseProgram(JSON.stringify(result.meta.checkedSemanticProgram)).declarations.get(pin.name);assert.ok(entry,JSON.stringify(result.meta.refused));
