@@ -63,13 +63,30 @@ test('hygiene comments Unicode and original callback-local declarations survive 
 });
 test('closed reader callbacks keep None Some default and nested Option branch roots',async()=>{
  const source=`pub fn readers(values:&[${T}])->Vec<${T}>{values.iter().map(|item|{let text=item.get("image").and_then(|value|value.get("url")).and_then(${T}::as_str).unwrap_or("fallback");let present=item.get("present").is_some();${J}({"text":text,"present":present})}).collect()}`;
- const value=proposal(files(source));assert.equal(selections(value).length,1);const row=selections(value)[0];assert.ok(row.readerNormalizations.length>=2);assert.ok(row.readerNormalizations.every(edit=>edit.replacement.includes('if let '+M+'::Some')));
+ const value=proposal(files(source));assert.equal(selections(value).length,1);const row=selections(value)[0];assert.ok(row.readerNormalizations.length>=2);assert.ok(row.readerNormalizations.every(edit=>edit.replacement.includes('if let Some(')&&!edit.replacement.includes('if let '+M+'::Some')));
+ for(const edit of row.readerNormalizations){assert.equal(source.slice(...edit.span),edit.expected);assert.equal((edit.replacement.match(/item\.get\(/gu)??[]).length,1,'each original reader receiver remains once');if(edit.expected.includes('unwrap_or')){assert.equal((edit.replacement.match(/"fallback"/gu)??[]).length,1);assert.ok(edit.replacement.indexOf('item.get(')<edit.replacement.indexOf(' = \"fallback\";'));assert.ok(edit.replacement.indexOf(' = \"fallback\";')<edit.replacement.lastIndexOf('if let Some('));}if(edit.expected.includes('and_then'))assert.ok(edit.replacement.includes('else { None }'));}
+ retain('actual-standard-Option-normalization-order',{source,normalizations:row.readerNormalizations,profile:'Existing source-resolved standard Option patterns; no public constructor-owner flags or original Iterator dispatch authority.'});
  const result=project(value.after);yes(result,['readers']);await targets(result,({readers})=>assert.deepEqual(readers(Object.freeze([json({image:{url:'猫'}}),json({image:{url:true},present:null}),json({})])).map(plain),[{text:'猫',present:false},{text:'fallback',present:true},{text:'fallback',present:false}]));
+ const renamed=`use serde_json::Value as V;pub fn renamed(values:&[V])->Vec<V>{values.iter().map(|item|{let text=item.get("text").and_then(V::as_str).unwrap_or("Ω");${J}({"text":text})}).collect()}`,renamedProposal=proposal(files(renamed));assert.equal(selections(renamedProposal).length,1);assert.ok(selections(renamedProposal)[0].readerNormalizations.every(edit=>edit.replacement.includes('if let Some(')));const renamedResult=project(renamedProposal.after);yes(renamedResult,['renamed']);await targets(renamedResult,({renamed})=>assert.deepEqual(renamed(Object.freeze([json({text:'猫😀'}),json({text:false}),json(null)])).map(plain),[{text:'猫😀'},{text:'Ω'},{text:'Ω'}]));
 });
 test('shadow trait glob local producer and unknown callback or original macro routes remain refused',()=>{
  const body=`pub fn f(values:&[${T}])->Vec<${T}>{values.iter().map(|item|{${P}(item)}).collect()}`;
  for(const source of ['trait Shadow{}\n'+body,'use serde_json::*;\n'+body,body.replace('map(|item|{','map(move |item|{'),body.replace('map(|item|{','map(|item|{let item=' +J+'(null);')])assert.equal(selections(proposal(files(source))).length,0);
  const raw=`use serde_json::{Value,json};pub fn unknown(values:&[Value])->Vec<Value>{values.iter().map(|item|{json!({"source":item})}).collect()}`;assert.equal(selections(proposal(files(raw))).length,0);
+ const reader=`pub fn reader(values:&[${T}])->Vec<${T}>{values.iter().map(|item|{let text=item.get("text").and_then(${T}::as_str).unwrap_or("fallback");${J}({"text":text})}).collect()}`;
+ const blocked=[
+  'struct Some;'+reader,'enum Option{Other}'+reader,'use custom::Some;'+reader,'use custom::*;'+reader,
+  reader.replace('values:&[','Some:bool,values:&['),reader.replace('map(|item|{','map(|Some|{').replaceAll('item.get','Some.get'),
+  reader.replace('{values.iter()', '{let None=false;values.iter()'),reader.replace('{values.iter()', '{let Option=false;values.iter()'),
+  reader.replace('{values.iter()', '{type Option=bool;values.iter()'),reader.replace('{values.iter()', '{use custom::Some;values.iter()'),
+  reader.replace('{values.iter()', '{unknown!();values.iter()'),reader.replace('{values.iter()', '{macro_rules! maybe {()=>{true}}values.iter()'),
+  reader.replace('item.get("text").and_then('+T+'::as_str)', 'item.get("nested").and_then(|Some|Some.get("text")).and_then('+T+'::as_str)'),
+ ];
+ for(const source of blocked){const value=proposal(files(source));assert.equal(selections(value).length,0,source);assert.deepEqual(value.after,value.before,source);}
+ // No new ordinary-prelude patterns are introduced by a plain copy callback,
+ // so the added local scope census does not narrow that existing proposal lane.
+ const plain=proposal(files(body.replace('{values.iter()', '{let unused=Some(true);values.iter()')));assert.equal(selections(plain).length,1);assert.equal(selections(plain)[0].readerNormalizations.length,0);
+
 });
 test('counterfeit core source Cargo accessors and changed physical source data cannot qualify',()=>{
  const source=`pub fn f(values:&[${T}])->Vec<${T}>{values.iter().map(|item|{${P}(item)}).collect()}`;

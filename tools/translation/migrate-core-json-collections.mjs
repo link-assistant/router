@@ -56,6 +56,25 @@ function sliceRole(tokens,scoped){
  const value=text(tokens);if(!value.startsWith('&[')||!value.endsWith(']'))return false;
  const item=value.slice(2,-1);return item===C+'Json'||scoped.jsonNames.has(item);
 }
+// Only new reader normalizations introduce ordinary standard Option patterns.
+// The module/ancestor scope is already closed above; this additional original
+// function census excludes local bindings or producers that could replace them.
+function optionNormalizationProblem(tokens,body,parameters,callbackParameter){
+ const names=new Set(['Some','None','Option']);
+ if(names.has(callbackParameter)||parameters.some(row=>names.has(row[0]?.text)))return 'standard Option constructor parameter shadow';
+ for(let at=body+1;at<tokens.length;at++){
+  const macro=macroAt(tokens,at,'json')??macroAt(tokens,at,'format');if(macro){at=macro.end;continue;}
+  const word=tokens[at].text;
+  if(word==='#'||['use','extern','fn','mod','struct','enum','union','type','trait','impl','macro_rules','macro','const','static'].includes(word)||word.endsWith('!')&&word!=='!'||word==='!'&&ident(tokens[at-1])&&!['if','else','return','let','match','while'].includes(tokens[at-1].text)&&['(','[','{'].includes(tokens[at+1]?.text))return 'local declaration, attribute or macro producer may replace standard Option constructors';
+  if(word==='let'){
+   for(let end=at+1;end<tokens.length&&!['=',':',';','{','}'].includes(tokens[end].text);end++)if(ident(tokens[end])&&names.has(tokens[end].text))return 'local Option constructor pattern or binding requires separate scope';
+  }
+  if(word==='|'&&['=','(',',','return','{','=>','move'].includes(tokens[at-1]?.text)){
+   let end=at+1;for(;end<tokens.length&&tokens[end].text!=='|';end++)if(ident(tokens[end])&&names.has(tokens[end].text))return 'local callback parameter shadows standard Option constructor';
+  }
+ }
+ return null;
+}
 function select(source,item,scoped,modulePath,names){
  const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),params=close(tokens,name+1),edits=[],selections=[],skipped=[];
  if(name<0||tokens[name+1]?.text!=='('||params<0)return {edits,selections,skipped};
@@ -87,12 +106,12 @@ function select(source,item,scoped,modulePath,names){
      if(!selected||selected.end!==innerEnd||!selected.optional)return null;
      knownCallbackBinders.add(args[0].start);called='{ let '+args[1].text+' = '+payload+'; '+selected.value+' }';output=selected.role;
     }else return null;
-    rendered='{ let '+input+' = '+rendered+'; if let '+C+'Maybe::Some('+payload+') = '+input+' { '+called+' } else { '+C+'Maybe::None } }';role=output;changed=true;
+    rendered='{ let '+input+' = '+rendered+'; if let Some('+payload+') = '+input+' { '+called+' } else { None } }';role=output;changed=true;
    }else if(method==='unwrap_or'&&optional&&role==='str'&&args.length===1&&args[0].type==='string'){
     const input=fresh(),fallback=fresh(),payload=fresh(),value=source.slice(args[0].start,args[0].end);
-    rendered='{ let '+input+' = '+rendered+'; let '+fallback+' = '+value+'; if let '+C+'Maybe::Some('+payload+') = '+input+' { '+payload+' } else { '+fallback+' } }';optional=false;changed=true;
+    rendered='{ let '+input+' = '+rendered+'; let '+fallback+' = '+value+'; if let Some('+payload+') = '+input+' { '+payload+' } else { '+fallback+' } }';optional=false;changed=true;
    }else if(method==='is_some'&&optional&&role==='value'&&!args.length){
-    const input=fresh();rendered='{ let '+input+' = '+rendered+'; if let '+C+'Maybe::Some(_) = '+input+' { true } else { false } }';optional=false;role='bool';changed=true;
+    const input=fresh();rendered='{ let '+input+' = '+rendered+'; if let Some(_) = '+input+' { true } else { false } }';optional=false;role='bool';changed=true;
    }else break;
    at=end+1;
   }
@@ -127,7 +146,9 @@ function select(source,item,scoped,modulePath,names){
    if(word==='let'){let end=index+1;while(end<bodyEnd&&!['=',';','{','}'].includes(tokens[end].text))end++;if(tokens.slice(index+1,end).some(token=>token.text===parameter))uncertain=true;}
   }
   if(uncertain){skipped.push({function:item.name,reason:'callback producer, effect, loop or shadow uncertainty'});continue;}
-  const callback=source.slice(tokens[begin].start,tokens[callbackBody].end)+normalize(callbackBody+1,bodyEnd,parameter,tokens[callbackBody].end,tokens[bodyEnd].start)+source.slice(tokens[bodyEnd].start,tokens[bodyEnd].end);
+  const normalizationStart=normalizations.length,callback=source.slice(tokens[begin].start,tokens[callbackBody].end)+normalize(callbackBody+1,bodyEnd,parameter,tokens[callbackBody].end,tokens[bodyEnd].start)+source.slice(tokens[bodyEnd].start,tokens[bodyEnd].end);
+  const optionProblem=normalizations.length>normalizationStart?optionNormalizationProblem(tokens,body,parameters,parameter):null;
+  if(optionProblem){skipped.push({function:item.name,reason:optionProblem});continue;}
   if(tokens.slice(callbackBody+1,bodyEnd).some((token,index,list)=>token.text==='|'&&ident(list[index+1])&&list[index+2]?.text==='|'&&!knownCallbackBinders.has(token.start)||token.text==='||'&&['=','(',',','return','{','=>'].includes(list[index-1]?.text))){skipped.push({function:item.name,reason:'unknown nested callback binding/effect'});continue;}
   const span=[tokens[at].start,tokens[end].end],replacement=C+'json_'+operation+'('+receiver+', '+callback+')';
   edits.push({span,expected:source.slice(...span),replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span,operation:'json_'+operation,receiver,callbackParameter:parameter,readerNormalizations:[...normalizations],oldTraitDispatchProved:false,executableAdmission:false,evaluationOrder:['receiver-once','callback-once','ordered-eager-collection']});at=end;
