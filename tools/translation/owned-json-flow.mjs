@@ -17,7 +17,7 @@ function project(value,part){return {loans:new Map([...value.loans].filter(([key
 const roots=value=>new Set([...value.loans.values()].flatMap(value=>[...value]));
 export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,closedErrors=null}) {
  const refuse=(detail,node)=>{throw unsupported('owned JSON flow',detail,node?.span??entry.span);};
- let cells=100000,callCount=0;
+ let cells=100000,callCount=0,selectedOptionTypes=null;
  const ownedText=type=>type?.kind==='string'&&!type.rustReference&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&[undefined,'ownership-bearing String type','owned String source type','owned String formatting'].includes(type.patternOwnershipRefusal);
  const resultOwner=(type,node)=>{const result=canonicalResult(checker,type,entry.modulePath,node?.span??entry.span,false);if(!result||!ownedText(result.error))refuse('requires actual canonical Result with owned standard String error',node);return result;};
  const canonical=(type,node)=>{
@@ -32,14 +32,21 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   }
   return name;
  };
+ // Metadata recovery is confined to exact type objects in a body whose
+ // existing private source/call issuer was just revalidated, never a public flag.
+ const selectedBody=(body,run)=>{
+  const previous=selectedOptionTypes,types=new WeakSet();
+  const collect=(value,depth=0)=>{if(!value||typeof value!=='object')return;if(--cells<0||depth>160)refuse('selected original body type bound',body);if(value.type?.kind==='data')types.add(value.type);for(const [key,child]of Object.entries(value))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','originalCallbackProof','sourceFrameProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))Array.isArray(child)?child.forEach(item=>collect(item,depth+1)):collect(child,depth+1);};collect(body);
+  selectedOptionTypes=types;try{return run();}finally{selectedOptionTypes=previous;}
+ };
  const option=(type,node)=>{
-  const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type?.rustStandardGeneric;
+  const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type&&!Object.hasOwn(type,'rustStandardGeneric')&&selectedOptionTypes?.has(type)&&owner?.standardGeneric?.kind==='Option'?owner.standardGeneric:type?.rustStandardGeneric;
   if(type?.rustReference||type?.rustOwnership||type?.patternOwnershipRefusal||type?.rustGenericIdentityUnresolved||type?.rustBorrowingUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return null;
   const some=owner.ctors.find(ctor=>ctor.name==='Some'),none=owner.ctors.find(ctor=>ctor.name==='None');
   if(!some||some.fields?.length!==1||some.fields[0].name!=='field0'||!none||none.fields?.length)return null;
   const payload=checker.resolveType(source.arguments[0],owner.modulePath,node?.span??entry.span);
   for(const written of [owner.standardGeneric.arguments[0],some.fields[0].type]){const actual=checker.resolveType(written,owner.modulePath,node?.span??entry.span);if(!sameType(payload,actual))return null;checker.expectedOwnership(actual,payload,owner.modulePath,node?.span??entry.span);}
-  return {owner,payload};
+  return {owner,payload,type:type.rustStandardGeneric?type:{...type,rustStandardGeneric:{kind:'Option',arguments:[payload]}}};
  };
  const domain=(type,node,active=new Set())=>{
   if(!type||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)refuse('requires resolved source types',node);
@@ -67,7 +74,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
     return retainsLoan(actual.success)?'loan-result':arguments_.some(linear)?'linear':'copy';
    }
    if(arguments_.some(kind=>kind==='borrow'||kind==='loan-option')){
-    const actual=option(type,node),proof=actual&&checker.sourceStandardFieldCopy({type},node?.span??entry.span);
+    const actual=option(type,node),proof=actual&&checker.sourceStandardFieldCopy({type:actual.type},node?.span??entry.span);
     if(arguments_.length!==1||arguments_[0]!=='borrow'||proof?.kind!=='source-standard-option-payload-copy'||proof.referenceDepth!==1||!proof.referenceSource||!sameType(proof.payload,actual.payload)||!canonical(actual.payload.rustReference?.pointee,node))refuse('stored JSON loan requires exact Option shared-payload Copy',node);
     return 'loan-option';
    }
@@ -157,7 +164,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const child=clone(state);child.callbackCaptures=new Set(state.names.values());child.lambdaInputs=[{loans:new Map([[path([]),new Set(inputRoots)]]),tags:null}];
    // The single enclosing cells/depth budget is charged by every nested visit;
    // no reset per callback or branch and no borrowing permission from IR tags.
-   const result=visit(callback.binding,child,'move',depth+1);if(result.loans.size)refuse('a collection callback cannot return a borrowed output',node);return empty();
+   const result=selectedBody(callback.binding,()=>visit(callback.binding,child,'move',depth+1));if(result.loans.size)refuse('a collection callback cannot return a borrowed output',node);return empty();
   }
 
   if(['lit','unit'].includes(node.k)){if(linear(kind)||kind==='borrow'||kind==='loan-option')refuse('unproved JSON literal ownership',node);return empty();}
@@ -226,7 +233,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    if(node.k==='routerOriginalStandardFrame'){
     if(!state.standardScope||!hasOriginalSourceFrame(node))refuse('local return frame lacks its original standard body',node);const child=clone(state);child.localReturns=[];const value=visit(node.body,child,mode,depth+1),completions=[...(child.alive?[{state:child,value}]:[]),...child.localReturns];if(!completions.length)refuse('standard local frame has no closed continuation',node);let joined=completions[0].state,result=completions[0].value;for(const next of completions.slice(1)){const target=clone(state);merge(target,joined,next.state);joined=target;result=union(result,next.value);}joined.alive=true;merge(state,joined,joined);return result;
    }
-   const body=closedErrors.standard(node,state.entry);if(!body)refuse('standard wrapper lacks its current private source body',node);const child=clone(state);child.standardScope=true;const value=visit(body,child,mode,depth+1);merge(state,child,child);return value;
+   const body=closedErrors.standard(node,state.entry);if(!body)refuse('standard wrapper lacks its current private source body',node);const child=clone(state);child.standardScope=true;const value=selectedBody(body,()=>visit(body,child,mode,depth+1));merge(state,child,child);return value;
   }
   if(closedErrors&&node.k==='routerOptionCallback'){
    const actual=option(node.value.type,node);if(!actual||node.op!=='and_then'||node.callback?.k!=='routerLambda'||node.callback.arity!==1||!option(node.type,node))refuse('only the actual checked readonly Option and_then is supported',node);
@@ -288,7 +295,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    if(closedErrors){
     const target=closedErrors.callee(node,state.entry);if(!target||target.params.length!==node.args.length||++callCount>128||state.callPath.length>=32||state.callPath.includes(target.fullName))refuse('readonly helper needs a fresh bounded acyclic original body',node);
     const arguments_=[];for(const [at,arg]of node.args.entries()){const wanted=target.params[at].type,part=domain(arg.type,arg),expected=domain(wanted,arg);if(!['copy','borrow','loan-option'].includes(part)||part!==expected||!sameType(arg.type,wanted))refuse('helper arguments may not transfer owned or mutable storage',node);checker.expectedOwnership(arg.type,wanted,target.modulePath,node.span);checker.expectedPrimitiveIdentity(arg.type,wanted,target.modulePath,node.span);arguments_.push(read(arg,'borrow'));}
-    const child=createState(target,arguments_,new Set(arguments_.flatMap(value=>[...roots(value)])),[...state.callPath,target.fullName]);let value=visit(target.body,child,'move',depth+1);for(const returned of child.functionReturns)value=union(value,returned);returnRoots(value,node,child);closedErrors.callee(node,state.entry);ensureRoots(value,state,node);return value;
+    const child=createState(target,arguments_,new Set(arguments_.flatMap(value=>[...roots(value)])),[...state.callPath,target.fullName]),previousSelected=selectedOptionTypes;let value;selectedOptionTypes=null;try{value=visit(target.body,child,'move',depth+1);}finally{selectedOptionTypes=previousSelected;}for(const returned of child.functionReturns)value=union(value,returned);returnRoots(value,node,child);closedErrors.callee(node,state.entry);ensureRoots(value,state,node);return value;
    }
    const target=checker.items.get(node.fn);
    if(!target?.params||target.params.length!==node.args.length||linear(kind)||kind==='borrow'||kind==='loan-option')refuse('source call needs a separate JSON transfer/return proof',node);
