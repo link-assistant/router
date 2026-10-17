@@ -1,0 +1,5 @@
+Register the qualified owned-source document corpus in default reverse regeneration. The existing portable, native and unsupported-fixture workloads remain; the legacy owned corpus API and receiving witness producer retain their original formats. Each main owned document expands its complete source/CST references before the existing independent per-item semantic checks.
+
+Recognize only the existing fixed stale witness path with its legacy context prefix or the canonical document-v1 profile/context prefix. Unknown document versions and ordinary JSON remain refused. Extend the existing whole synchronization suite with complete actual witness conversions, check-only preservation, deletion and freshness controls, retaining every original case and deadline.
+
+Source draft only: no local engines or Rust tools ran. Actual whole-file receiving, artifact proposal/review/installation and freshness remain Root work. This registration establishes neither an application-coverage gain nor a performance result.

@@ -7,7 +7,8 @@ import { analyzeJavaScriptIndependentCorpus, translateJavaScript, parseMeta, emi
 import { camelFromSnake } from '../tools/translation/js-to-rust/vendor/ir.mjs';
 import { buildNativePortableArtifacts, buildNativePortableArtifactsCorpusBulk } from '../tools/translation/js-to-rust/native-portable-artifacts.mjs';
 
-import {buildOwnedCoreArtifacts} from '../tools/translation/js-to-rust/owned-core-corpus.mjs';
+import {buildOwnedCoreDocumentArtifacts} from '../tools/translation/js-to-rust/owned-core-corpus.mjs';
+import {encodeWord} from '../tools/translation/js-to-rust/vendor/lino.mjs';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
@@ -95,7 +96,7 @@ export function buildArtifacts(root = ROOT) {
     ['packages/typescript/native/js-first-policy.ts', `${header}${emitTypeScript(program)}`],
   ]);
   for (const [path, content] of nativeDraft.artifacts) artifacts.set(path, content);
-  const ownedDraft=buildOwnedCoreArtifacts(root);
+  const ownedDraft=buildOwnedCoreDocumentArtifacts(root);
   for(const [path,content]of ownedDraft.artifacts)artifacts.set(path,content);
   const manifest = {
     schemaVersion: 1,
@@ -161,7 +162,7 @@ export function regenerate(root = ROOT, { check = false } = {}) {
     if(lstatSync(absolute).isSymbolicLink())throw Error('Linked old owned witness output');
     const content=readFileSync(absolute,'utf8');
     if(path.endsWith('.rs')?!content.startsWith('// GENERATED: actual checked reverse owned-core receiving witness.'):
-       path.endsWith('.lino')?!content.startsWith('(owned-core-context '):JSON.parse(content).schema!=='owned-core-reverse-ci-witness-v1')throw Error('Unknown old owned witness output');
+       path.endsWith('.lino')?!(content.startsWith('(owned-core-context ')||content.startsWith('(owned-source-document ')&&content.startsWith('(owned-source-document '+encodeWord('{"profile":"router-owned-core-source-document-v1","context":'))):JSON.parse(content).schema!=='owned-core-reverse-ci-witness-v1')throw Error('Unknown old owned witness output');
     changed.push(path);if(!check)rmSync(absolute);
   }
   for (const [path, content] of artifacts) {

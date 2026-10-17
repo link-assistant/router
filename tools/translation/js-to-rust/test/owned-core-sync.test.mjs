@@ -6,7 +6,9 @@ import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {buildOwnedCoreArtifacts,captureOwnedCoreCorpus} from '../owned-core-corpus.mjs';
-import {ownedCoreRuntimeSources} from '../owned-core-source.mjs';
+import {ownedCoreRuntimeSources,createOwnedCoreSourceContext} from '../owned-core-source.mjs';
+import {serializeOwnedCoreDocument} from '../owned-core-document.mjs';
+import {encodeWord} from '../vendor/lino.mjs';
 import {buildArtifacts,regenerate} from '../../../../scripts/regenerate-js-first.mjs';
 import {synchronizationSteps} from '../../../../scripts/sync-router.mjs';
 import {parseOwnedCoreMeta,emitRust} from '../translator.mjs';
@@ -28,6 +30,7 @@ function fixture(t){
 test('registered default regeneration discovers actual forward application paths',limits,t=>{
  const {directory}=fixture(t),draft=buildArtifacts(directory),manifest=JSON.parse(draft.get('parity/js-owned-core-reverse-draft.json'));
  assert.equal(manifest.discoveryRoot,base);assert.equal(manifest.totals.modules,1);assert.equal(manifest.totals.translatedItems,1);assert.equal(manifest.runtimeParity,false);
+ assert.equal(manifest.profile,'router-owned-core-source-document-v1');assert.ok(draft.get('tools/translation/js-to-rust/generated/owned-core/src/lib.lino').startsWith('# GENERATED: owned-core source/checked Links.\n(owned-source-document '+encodeWord('{"profile":"router-owned-core-source-document-v1","context":')));
  assert.ok(draft.has('src/generated_js_first/policy.rs'));assert.ok(draft.has('tools/translation/js-to-rust/generated/owned-core-witness.rs'));assert.equal(manifest.witness.applicationItems,0);assert.ok(draft.has('tools/translation/js-to-rust/generated/owned-core/src/lib.lino'));
 });
 test('every explicit source and full refusal remains in the owned corpus inventory',limits,t=>{
@@ -59,6 +62,24 @@ test('old portable outputs and owned draft outputs participate in the same fresh
  const {directory}=fixture(t);regenerate(directory,{check:false});assert.deepEqual(regenerate(directory,{check:true}).changed,[]);
  writeFileSync(join(directory,'tools/translation/js-to-rust/generated/owned-core/src/lib.rs.txt'),'// GENERATED: changed\n');assert.ok(regenerate(directory,{check:true}).changed.includes('tools/translation/js-to-rust/generated/owned-core/src/lib.rs.txt'));
  const steps=synchronizationSteps({root:directory,direction:'javascript-to-rust'});assert.ok(steps.some(row=>row.id==='javascript-meta-rust'));assert.ok(steps.every(row=>Number.isFinite(row.timeoutMs)));
+ // Preserve the original drift assertions above, then repair that fixture's
+ // target before independently exercising the fixed stale witness path.
+ regenerate(directory,{check:false});
+ const prefix='tools/translation/js-to-rust/generated/owned-core-witness',path=prefix+'.lino',absolute=join(directory,path),legacy=readFileSync(absolute,'utf8');
+ const inputs=JSON.parse(readFileSync(join(directory,prefix+'-inputs.json'),'utf8')),context=createOwnedCoreSourceContext(inputs.stagedReceivingInputs);
+ const document=serializeOwnedCoreDocument(parseOwnedCoreMeta(legacy,{context}),{context}),profile=encodeWord('router-owned-core-source-document-v1');
+ assert.ok(document.startsWith('(owned-source-document '+encodeWord('{"profile":"router-owned-core-source-document-v1","context":')));assert.equal(document.split(profile).length,2);
+ const oracle='tests/translation_core_reverse_owned_oracle.rs';assert.equal(readFileSync(join(directory,oracle),'utf8'),inputs.oracle.source);
+ // The temporary oracle disappears. Remove its other temporary generated
+ // files explicitly so this control isolates sibling .lino recognition.
+ rmSync(join(directory,oracle));rmSync(join(directory,prefix),{recursive:true});rmSync(join(directory,prefix+'.rs'));rmSync(join(directory,prefix+'-inputs.json'));
+ const unknownVersion=document.replace(profile,encodeWord('router-owned-core-source-document-v2'));
+ for(const unknown of [unknownVersion,JSON.stringify({profile:'router-owned-core-source-document-v1',context:inputs.stagedReceivingInputs})]){
+  writeFileSync(absolute,unknown);assert.throws(()=>regenerate(directory,{check:false}),/Unknown old owned witness output/u);assert.equal(readFileSync(absolute,'utf8'),unknown);
+ }
+ writeFileSync(absolute,document);assert.ok(regenerate(directory,{check:true}).changed.includes(path));assert.equal(readFileSync(absolute,'utf8'),document);
+ assert.ok(regenerate(directory,{check:false}).changed.includes(path));assert.equal(existsSync(absolute),false);assert.deepEqual(regenerate(directory,{check:true}).changed,[]);
+ writeFileSync(absolute,legacy);assert.ok(regenerate(directory,{check:false}).changed.includes(path));assert.equal(existsSync(absolute),false);
 });
 test('missing forward corpus is explicit unavailable input, never a successful coverage claim',limits,t=>{
  const directory=mkdtempSync(join(tmpdir(),'owned-empty-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const result=buildOwnedCoreArtifacts(directory);
