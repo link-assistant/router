@@ -2,7 +2,7 @@
 // This helper grants no source/checker/namespace authority. Callers must perform
 // their private owner join first; every ineligible case runs normal stringify.
 import {types} from 'node:util';
-import {originalNamespaceTraversalIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalNamespaceTraversalIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
 import {completedDataTraversalExceedsBudget,completedDataJsonWithinBudget} from './private-data-freeze.mjs';
 const enabled=originalNamespaceTraversalIntrinsicsUnchanged()&&originalLexingIntrinsicsUnchanged();
@@ -252,4 +252,66 @@ export function createPrivateFrozenJsonComposer(){
   }
   emit(plan);return overflow?JSON.stringify(value):pieces.join('');
  };
+}
+
+// Optional JSON equality only, never source/proof authority. A true result
+// avoids comparison serialization; its byte-cache warming/counters therefore
+// reflect less actual work. Diagnostic counter observers are not an equivalence
+// contract. Every difference or uncertainty retains the complete old fallback.
+// No hash calls, eligibility issuance, new cache or across-call state occur.
+export function privateFrozenJsonEqualHint(left,right){
+ if(!compositionIntrinsics()||!originalDataFreezeIntrinsicsUnchanged())return null;
+ let leftCells=CELLS,rightCells=CELLS,fieldCells=CELLS;
+ function equal(a,b,depth){
+  if(depth>DEPTH)return false;
+  const ak=typeof a,bk=typeof b;
+  if(a===null||b===null||ak!=='object'||bk!=='object'){
+   if(--leftCells<0||--rightCells<0)return false;
+   if(a===null||b===null)return a===null&&b===null;
+   if(ak!==bk)return false;
+   if(ak==='string'||ak==='boolean')return a===b;
+   return ak==='number'&&a===b&&a===a&&a!==1/0&&a!==-1/0;
+  }
+  if(isProxy(a)||isProxy(b))return false;
+  if(a===b){
+   // No immutableCost call: a miss issues NO eligibility records or counters.
+   const saved=existingSyntaxCost(a);
+   if(saved){
+    const packed=saved>>>1,cells=packed%(CELLS+1),height=(packed/(CELLS+1))|0;
+    if(cells>leftCells||cells>rightCells||height>DEPTH-depth)return false;
+    leftCells-=cells;rightCells-=cells;return true;
+   }
+  }
+  if(--leftCells<0||--rightCells<0)return false;
+  const array=isArray(a),parent=prototype(a);
+  if(array!==isArray(b)||parent!==prototype(b)||parent!==(array?arrayPrototype:objectPrototype)&&!(parent===null&&!array))return false;
+  const an=keys(a),bn=keys(b);
+  if(an.length!==bn.length||an.length>CELLS+1)return false;
+  // Both complete key censuses precede ANY descriptor, including length or
+  // native freeze checks that could encounter a captured lazy stack cell.
+  for(let at=0;at<an.length;at++){
+   const name=an[at];if(name!==bn[at]||typeof name!=='string'||name==='stack'||name==='toJSON'||name==='rawJSON')return false;
+  }
+  if(!apply(frozenField.value,Object,[a])||!apply(frozenField.value,Object,[b]))return false;
+  let count=an.length;
+  if(array){
+   const al=descriptor(a,'length'),bl=descriptor(b,'length');
+   if(!al||!bl||!own(al,'value')||!own(bl,'value')||al.enumerable||bl.enumerable||al.value!==bl.value||an.length!==al.value+1||an[an.length-1]!=='length')return false;
+   count=al.value;for(let at=0;at<count;at++)if(an[at]!==''+at)return false;
+  }
+  // Bound all temporary continuations independently of logical subtree costs.
+  if(count>fieldCells)return false;fieldCells-=count;
+  // Own literal fields and a linked continuation avoid numeric array writes.
+  // All descriptors are validated before visiting any child pair.
+  let first=null,last=null;
+  for(let at=0;at<count;at++){
+   const af=descriptor(a,an[at]),bf=descriptor(b,bn[at]);
+   if(!af||!bf||!own(af,'value')||!own(bf,'value')||!af.enumerable||!bf.enumerable)return false;
+   const child={left:af.value,right:bf.value,next:null};if(last)last.next=child;else first=child;last=child;
+  }
+  for(let child=first;child;child=child.next)if(!equal(child.left,child.right,depth+1))return false;
+  return true;
+ }
+ try{if(!equal(left,right,0))return null;}catch{return null;}
+ return compositionIntrinsics()&&originalDataFreezeIntrinsicsUnchanged()?true:null;
 }

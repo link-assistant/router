@@ -1,0 +1,129 @@
+// Positive equality is optional storage work, never a source/owner verdict.
+import {translateProject} from '../project.mjs';
+import testCase from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,rmSync} from 'node:fs';
+import {join} from 'node:path';
+import {tmpdir} from 'node:os';
+import {pathToFileURL} from 'node:url';
+import {Hash,createHash} from 'node:crypto';
+import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
+import * as storage from '../private-frozen-json.mjs';
+import {loadDeriveDependencyProof} from '../derive-dependencies.mjs';
+import {createDeriveFootprintContext} from '../derive-footprints.mjs';
+import {captureSourceModuleViews} from '../source-module-views.mjs';
+import {PRODUCTION_PROFILE} from '../cfg-profile.mjs';
+import {verifyTypedTargets} from './typed-targets.mjs';
+const base=new URL('../',import.meta.url),root=new URL('../../../',import.meta.url);
+const json=JSON.stringify,get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply;
+const hash=value=>createHash('sha256').update(value).digest('hex');
+const oldImport="import {originalNamespaceTraversalIntrinsicsUnchanged} from './original-json-intrinsics.mjs';";
+const newImport=oldImport.replace('originalNamespaceTraversalIntrinsicsUnchanged}','originalNamespaceTraversalIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged}');
+const marker='\n// Optional JSON equality only, never source/proof authority.';
+function test(name,run){testCase(name,{timeout:60_000},async t=>{
+ const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};
+ try{await run(t,retain);}finally{const folder=process.env.ROUTER_BUILTIN_JSON_EQUALITY_VECTOR_DIR;if(folder){mkdirSync(folder,{recursive:true});writeJsonTextGzip(join(folder,Buffer.from(name).toString('hex')+'.json.gz'),json({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}
+});}
+function freeze(value,seen=new WeakSet()){if(value&&typeof value==='object'&&!seen.has(value)){seen.add(value);for(const field of Object.values(Object.getOwnPropertyDescriptors(value)))if(Object.hasOwn(field,'value'))freeze(field.value,seen);Object.freeze(value);}return value;}
+function outcome(run){try{return {value:run()};}catch(error){return {error:{type:error instanceof TypeError?'TypeError':error instanceof RangeError?'RangeError':'Error',message:get(error,'message')?.value??null}};}}
+function once(source,before,after){assert.equal(source.split(before).length,2);return source.replace(before,after);}
+function warm(api,value){return api.createPrivateFrozenJsonComposer()({recipes:Object.freeze({held:value})});}
+function comparison(api,left,right,hinted=true){return hinted&&api.privateFrozenJsonEqualHint(left,right)===true?true:api.createPrivateFrozenJsonComposer()(left)===(right.schema==='builtin-debug-data-bang-output-v1'?api.createPrivateFrozenJsonComposer()(right):api.createPrivateFrozenJsonCache()(right));}
+function hashes(run){const update=get(Hash.prototype,'update'),digest=get(Hash.prototype,'digest'),tape=[];try{
+ define(Hash.prototype,'update',{...update,value:function(...args){const recorded=args.map(value=>typeof value==='string'?{type:'string',value}:{type:'bytes',base64:Buffer.from(value).toString('base64')}),result=apply(update.value,this,args);tape.push({op:'update',args:recorded,sameReceiver:result===this});return result;}});
+ define(Hash.prototype,'digest',{...digest,value:function(...args){const result=apply(digest.value,this,args);tape.push({op:'digest',args,result:typeof result==='string'?result:{base64:Buffer.from(result).toString('base64')}});return result;}});
+ return {result:outcome(run),tape};
+ }finally{define(Hash.prototype,'update',update);define(Hash.prototype,'digest',digest);}}
+async function modules(t,retain,{instrument=false}={}){
+ const helper=readFileSync(new URL('private-frozen-json.mjs',base),'utf8'),consumer=readFileSync(new URL('builtin-derive-bang-footprints.mjs',base),'utf8');
+ assert.equal(helper.split(marker).length,2);const beforeHelper=once(helper.slice(0,helper.indexOf(marker)),newImport,oldImport);
+ assert.equal(Buffer.byteLength(beforeHelper),23438);assert.equal(hash(beforeHelper),'c6e2096b6f28e400265a5b5499419e60fb095148a2b0f8f90183af605c4a7544');
+ const currentConsumerImport="import {createPrivateFrozenJsonCache,createPrivateFrozenJsonComposer,privateFrozenJsonEqualHint} from './private-frozen-json.mjs';";
+ const beforeConsumer=once(once(consumer,currentConsumerImport,currentConsumerImport.replace(',privateFrozenJsonEqualHint','')),'if(privateFrozenJsonEqualHint(fresh,proof)!==true&&composeJson(fresh)','if(composeJson(fresh)');
+ assert.equal(Buffer.byteLength(beforeConsumer),38939);assert.equal(hash(beforeConsumer),'96465eedd68c6c32a32968abe7204d7c7e68c996ebaef8225a57fd23ec7dca28');
+ const directory=mkdtempSync(join(tmpdir(),'router-equality-hint-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));const result={};
+ for(const [mode,rawHelper,rawConsumer]of [['before',beforeHelper,beforeConsumer],['current',helper,consumer]]){
+  const urls={'private-frozen-json.mjs':pathToFileURL(join(directory,mode+'-storage.mjs')).href,'builtin-derive-bang-footprints.mjs':pathToFileURL(join(directory,mode+'-builtin.mjs')).href};
+  for(const [name,source]of [['private-frozen-json.mjs',rawHelper],['builtin-derive-bang-footprints.mjs',rawConsumer]]){
+   const edits=[],relocated=source.replace(/(from\s+)(['"])(\.\.?\/[^'"\n]+)\2/g,(whole,prefix,quote,spec)=>{const leaf=spec.startsWith('./')?spec.slice(2):null,replacement=prefix+quote+(urls[leaf]??new URL(spec,base).href)+quote;edits.push({before:whole,after:replacement});return replacement;});
+   let undo=relocated;for(const edit of [...edits].reverse())undo=once(undo,edit.after,edit.before);assert.equal(undo,source);assert.equal(source.includes('import.meta'),false);
+   writeFileSync(new URL(urls[name]),relocated);retain(mode+'-complete-'+name,{source,relocated,edits,undo});
+  }
+  result[mode]={storage:await import(urls['private-frozen-json.mjs']),api:await import(urls['builtin-derive-bang-footprints.mjs'])};
+ }
+ if(instrument){
+  const edits=[{before:'export function privateFrozenJsonEqualHint(left,right){',after:'let hintReceipt=null;export const testHintReceipt=()=>hintReceipt&&({...hintReceipt});\nexport function privateFrozenJsonEqualHint(left,right){\n hintReceipt=null;'},
+   {before:' try{if(!equal(left,right,0))return null;}catch{return null;}',after:' try{const matched=equal(left,right,0);hintReceipt={matched,leftCells:CELLS-leftCells,rightCells:CELLS-rightCells,fields:CELLS-fieldCells};if(!matched)return null;}catch{return null;}'}];
+  let source=helper;for(const edit of edits)source=once(source,edit.before,edit.after);let undo=source;for(const edit of [...edits].reverse())undo=once(undo,edit.after,edit.before);assert.equal(undo,helper);
+  const relocated=source.replace(/(from\s+)(['"])(\.\.?\/[^'"\n]+)\2/g,(_whole,prefix,quote,spec)=>prefix+quote+new URL(spec,base).href+quote),file=join(directory,'instrumented.mjs');writeFileSync(file,relocated);result.instrumented=await import(pathToFileURL(file).href);retain('complete-source-bound-budget-adapter',{helper,source,relocated,edits,undo});
+ }
+ return result;
+}
+function sourceInput(source){const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo),views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}),module={file:'src/lib.rs',path:[],source,sourceView:views.views[0],compilationProfile:PRODUCTION_PROFILE},context=createDeriveFootprintContext({modules:[module],dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates[0];assert.ok(certificate);const attribute=certificate.attributes.find(row=>row.name==='derive');return {source,cargo,dependencies,views,module,context,certificate,select:name=>({context,certificate,invocation:{path:[name],attributeSpan:attribute.span}})};}
+
+test('positive primitive and frozen wrapper equality grants no authority or new cache activity',async(t,retain)=>{
+ const pairs=[[null,null],[true,true],[false,false],['猫😀\ud800','猫😀\ud800'],[7,7],[-0,0]];
+ for(const [left,right]of pairs){const observed=hashes(()=>storage.privateFrozenJsonEqualHint(left,right));assert.deepEqual(observed.tape,[]);assert.equal(observed.result.value,true);assert.equal(json(left),json(right));retain('primitive',{left,right,observed});}
+ for(const pair of [[null,false],[0,1],['a','b'],[NaN,NaN],[Infinity,Infinity],[undefined,undefined],[1n,1n],[Symbol('x'),Symbol('x')]])assert.equal(storage.privateFrozenJsonEqualHint(...pair),null);
+ const child=freeze({syntax:[{word:'Ω',span:{start:0,end:1}}]}),left=freeze({first:1,recipes:child}),right=freeze({first:1,recipes:child});warm(storage,child);
+ const before=storage.privateFrozenJsonCacheFacts(),observed=hashes(()=>storage.privateFrozenJsonEqualHint(left,right)),after=storage.privateFrozenJsonCacheFacts();assert.equal(observed.result.value,true);assert.deepEqual(observed.tape,[]);assert.deepEqual(after,before);assert.equal(json(left),json(right));
+ const mutable={field:1},carrier=Object.freeze({mutable});assert.equal(storage.privateFrozenJsonEqualHint(carrier,carrier),null);mutable.field=2;assert.equal(storage.privateFrozenJsonEqualHint(carrier,carrier),null);retain('full-wrapper-and-no-new-facts',{left,right,before,after,observed,carrier});
+});
+test('same frozen multiedge data debits exact logical cells and relative depth independently on both sides',async(t,retain)=>{
+ const {instrumented:api}=await modules(t,retain,{instrument:true}),leaf=Object.freeze(Array(49998).fill(1));warm(api,leaf);
+ const make=extra=>Object.freeze({a:leaf,b:leaf,c:leaf,d:leaf,x:1,y:2,z:3,...extra}),left=make({}),right=make({});assert.equal(api.privateFrozenJsonEqualHint(left,right),true);assert.deepEqual(api.testHintReceipt(),{matched:true,leftCells:200000,rightCells:200000,fields:7});assert.equal(json(left),json(right));retain('exact-200k-both',{receipt:api.testHintReceipt(),left,right});
+ assert.equal(api.privateFrozenJsonEqualHint(make({over:4}),make({over:4})),null);assert.equal(api.testHintReceipt().matched,false);
+ const chain=(value,count)=>{for(let at=0;at<count;at++)value=Object.freeze({value});return value;};
+ assert.equal(api.privateFrozenJsonEqualHint(chain(leaf,159),chain(leaf,159)),true);assert.deepEqual(api.testHintReceipt(),{matched:true,leftCells:50158,rightCells:50158,fields:159});
+ assert.equal(api.privateFrozenJsonEqualHint(chain(leaf,160),chain(leaf,160)),null);retain('depth-failure',{receipt:api.testHintReceipt()});
+ const wide=()=>{let value=null;for(let at=0;at<110;at++){const next={first:value};for(let index=0;index<1999;index++)next['p'+index]=index;value=Object.freeze(next);}return value;};assert.equal(api.privateFrozenJsonEqualHint(wide(),wide()),null);assert.ok(api.testHintReceipt().fields<=200000);retain('bounded-negative-continuation-allocation',api.testHintReceipt());
+ const newValue=Object.freeze(Array(49998).fill(2));assert.equal(api.privateFrozenJsonEqualHint(make({}),Object.freeze({a:newValue,b:leaf,c:leaf,d:leaf,x:1,y:2,z:3})),null);
+});
+test('every difference or uncertain value preserves complete fresh then stored fallback callbacks and errors',async(t,retain)=>{
+ const modes=['left-getter','left-throw','right-getter','proxy','toJSON','boxed','symbol','bigint','undefined','cycle','hole','extra-array','nonfinite','function','reordered'];
+ for(const mode of modes){const run=hinted=>{const tape=[];let left={a:1},right={a:1};
+  if(mode==='left-getter'||mode==='left-throw')left={get a(){tape.push('left');if(mode==='left-throw')throw Error('left stop');return 1;}};
+  if(mode==='right-getter')right={get a(){tape.push('right');return 1;}};
+  if(mode==='proxy')right=new Proxy(right,{get(target,key,receiver){tape.push('get:'+String(key));return Reflect.get(target,key,receiver);},ownKeys(target){tape.push('keys');return Reflect.ownKeys(target);},getOwnPropertyDescriptor(target,key){tape.push('descriptor:'+String(key));return Reflect.getOwnPropertyDescriptor(target,key);},getPrototypeOf(target){tape.push('prototype');return Reflect.getPrototypeOf(target);}});
+  if(mode==='toJSON')right={toJSON(key){tape.push('toJSON:'+key);return {a:1};}};
+  if(mode==='boxed')right=new String('a');if(mode==='symbol')left=Object.freeze({a:Symbol('x')});if(mode==='bigint')left=Object.freeze({a:1n});if(mode==='undefined')left=Object.freeze({a:undefined});if(mode==='cycle'){left.self=left;Object.freeze(left);}if(mode==='hole')left=Object.freeze(Array(2));if(mode==='extra-array'){left=[1];left.extra=2;Object.freeze(left);}if(mode==='nonfinite')left=Object.freeze({a:NaN});if(mode==='function')left=Object.freeze({a(){}});if(mode==='reordered'){left=Object.freeze({a:1,b:2});right=Object.freeze({b:2,a:1});}
+  return {result:outcome(()=>comparison(storage,left,right,hinted)),tape};};const before=run(false),current=run(true);assert.deepEqual(current,before,mode);retain(mode,{before,current});}
+});
+test('lazy native stack and changed JSON reflection or inherited numeric operations retain old fallbacks',async(t,retain)=>{
+ const prepare=get(Error,'prepareStackTrace');assert.equal(typeof Error.captureStackTrace,'function');
+ const run=hinted=>{const tape=[];try{define(Error,'prepareStackTrace',{configurable:true,writable:true,value:function(_error,sites){const inHint=sites.some(site=>['privateFrozenJsonEqualHint','equal'].includes(site.getFunctionName()));tape.push({inHint});return inHint?'unexpected hint':'old formatter';}});const value={actual:1};Error.captureStackTrace(value);Object.freeze(value);return {result:outcome(()=>comparison(storage,{recipes:value},{recipes:value},hinted)),tape};}finally{if(prepare)define(Error,'prepareStackTrace',prepare);else delete Error.prepareStackTrace;}};
+ const old=run(false),current=run(true);assert.deepEqual(current,old);assert.ok(current.tape.every(row=>!row.inHint));retain('lazy-stack',{old,current});
+ for(const mode of ['JSON','descriptor','ownKeys','object-numeric']){const owner=mode==='JSON'?JSON:mode==='descriptor'?Object:mode==='ownKeys'?Reflect:Object.prototype,key=mode==='JSON'?'stringify':mode==='descriptor'?'getOwnPropertyDescriptor':mode==='ownKeys'?'ownKeys':'0',prior=get(owner,key);
+  const observe=hinted=>{const tape=[];let active=false,numericCalls=0;try{if(mode==='object-numeric')define(owner,key,{configurable:true,set(_value){numericCalls++;throw Error('numeric setter');}});else define(owner,key,{...prior,value:function(...args){tape.push(mode);return apply(prior.value,this,args);}});active=true;return {result:outcome(()=>comparison(storage,freeze({a:1}),freeze({a:1}),hinted)),tape,numericCalls};}finally{if(active){if(prior)define(owner,key,prior);else delete owner[key];}}};
+  const before=observe(false),after=observe(true);assert.deepEqual(after,before,mode);retain(mode,{before,after});
+ }
+});
+test('same qualified immutable raw JSON identity is distinct from structural rawJSON-key guessing',async(t,retain)=>{
+ const available=typeof JSON.rawJSON==='function',raw=available?JSON.rawJSON('7'):Object.freeze(Object.assign(Object.create(null),{rawJSON:'7'})),held=Object.freeze({raw}),left=freeze({held}),right=freeze({held});warm(storage,held);
+ assert.equal(storage.privateFrozenJsonEqualHint(left,right),true);assert.equal(json(left),json(right));
+ const plain=Object.freeze(Object.assign(Object.create(null),{rawJSON:'7'}));assert.equal(storage.privateFrozenJsonEqualHint(raw,plain),null);assert.equal(storage.privateFrozenJsonEqualHint(plain,Object.freeze(Object.assign(Object.create(null),{rawJSON:'7'}))),null);
+ const before=comparison(storage,raw,plain,false),after=comparison(storage,raw,plain,true);assert.equal(after,before);if(available)assert.equal(after,false);retain('complete-raw-domain',{available,raw,plain,left,right,before,after});
+});
+test('complete genuine builtin reissues preserve every mandatory native Hash argument result and private refusal',async(t,retain)=>{
+ const sides=await modules(t,retain),ordinary=sourceInput('#[derive(Copy,Clone,Eq,PartialEq)] pub struct Payload { first:u8,second:u8 }'),debug=sourceInput('#[derive(Debug)] pub struct DebugPayload { first:u8,second:u8 }');
+ for(const name of ['Copy','Eq','PartialEq','Debug']){const input=name==='Debug'?debug:ordinary,args=input.select(name),before=sides.before.api.proveBuiltinDeriveBangFootprint(args),current=sides.current.api.proveBuiltinDeriveBangFootprint(args);assert.deepEqual(current,before);
+  const old=hashes(()=>sides.before.api.originalBuiltinDeriveEnclosingOutput(before,args.context,args.certificate,args.invocation)),fresh=hashes(()=>sides.current.api.originalBuiltinDeriveEnclosingOutput(current,args.context,args.certificate,args.invocation));assert.deepEqual(fresh,old);assert.ok(fresh.tape.length);assert.notStrictEqual(fresh.result.value.proof,current);retain('full-'+name,{input:input.source,args,before,current,old,fresh});
+  for(const [side,proof]of [[sides.before,before],[sides.current,current]]){assert.throws(()=>side.api.originalBuiltinDeriveEnclosingOutput(structuredClone(proof),args.context,args.certificate,args.invocation),/original invocation/);assert.throws(()=>side.api.originalBuiltinDeriveEnclosingOutput(proof,structuredClone(args.context),args.certificate,args.invocation),/original invocation/);assert.throws(()=>side.api.originalBuiltinDeriveEnclosingOutput(proof,args.context,args.certificate,{...args.invocation,attributeSpan:{start:1,end:2}}),/original invocation/);}
+ }
+});
+test('late Hash observers retain fresh source checks and hooked serialization always uses the full old comparison',async(t,retain)=>{
+ const sides=await modules(t,retain),input=sourceInput('#[derive(Debug)] pub struct Payload { first:u8,second:u8 }'),args=input.select('Debug'),left=sides.before.api.proveBuiltinDeriveBangFootprint(args),right=sides.current.api.proveBuiltinDeriveBangFootprint(args);
+ const observe=(api,proof)=>{const field=get(JSON,'stringify'),tape=[];try{define(JSON,'stringify',{...field,value:function(...values){const result=apply(field.value,this,values);tape.push({argc:values.length,sameReceiver:this===JSON,result});return result;}});return {result:outcome(()=>api.originalBuiltinDeriveEnclosingOutput(proof,args.context,args.certificate,args.invocation)),tape};}finally{define(JSON,'stringify',field);}};
+ const before=observe(sides.before.api,left),current=observe(sides.current.api,right);assert.deepEqual(current,before);assert.ok(current.tape.length);retain('full-native-fallback-observers',{before,current});
+ const original=get(Hash.prototype,'update'),execute=(api,proof)=>{let calls=0;try{define(Hash.prototype,'update',{...original,value:function(...values){calls++;return apply(original.value,this,values);}});return {result:outcome(()=>api.originalBuiltinDeriveEnclosingOutput(proof,args.context,args.certificate,args.invocation)),calls};}finally{define(Hash.prototype,'update',original);}};
+ const old=execute(sides.before.api,left),fresh=execute(sides.current.api,right);assert.deepEqual(fresh,old);assert.ok(fresh.calls);retain('all-mandatory-fresh-hashes',{old,fresh});
+ const corrupt=(api,proof)=>{let altered=0;try{define(Hash.prototype,'update',{...original,value:function(...values){if(!altered&&values[0]===input.source){values[0]+=' ';altered++;}return apply(original.value,this,values);}});return {result:outcome(()=>api.originalBuiltinDeriveEnclosingOutput(proof,args.context,args.certificate,args.invocation)),altered};}finally{define(Hash.prototype,'update',original);}};
+ const invalidBefore=corrupt(sides.before.api,left),invalidCurrent=corrupt(sides.current.api,right);assert.deepEqual(invalidCurrent,invalidBefore);assert.ok(invalidCurrent.result.error);assert.equal(invalidCurrent.altered,1);retain('actual-fresh-source-hash-mutation',{input:input.source,invalidBefore,invalidCurrent});
+});
+test('whole checked derive metadata JavaScript and strict TypeScript retain independent callable behavior',async(t,retain)=>{
+ const source='#[derive(Debug,PartialEq,Eq,Copy,Clone)] pub struct Payload { pub first:u8,pub second:u8 }\npub fn answer()->u8{7u8}\npub fn enabled()->bool{true}\n',input=sourceInput(source),before=await modules(t,retain);
+ for(const name of ['Copy','Eq','PartialEq','Debug']){const args=input.select(name),old=before.before.api.proveBuiltinDeriveBangFootprint(args),fresh=before.current.api.proveBuiltinDeriveBangFootprint(args);assert.deepEqual(fresh,old);assert.deepEqual(before.current.api.originalBuiltinDeriveEnclosingOutput(fresh,args.context,args.certificate,args.invocation),before.before.api.originalBuiltinDeriveEnclosingOutput(old,args.context,args.certificate,args.invocation));}
+ const result=translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source,deriveDependencies:input.dependencies});retain('complete-project',{source,result});
+ assert.ok(result.meta.executable.some(row=>row.name==='answer'));assert.ok(result.meta.executable.some(row=>row.name==='enabled'));
+ await verifyTypedTargets(result,api=>{assert.equal(api.answer(),7n);assert.equal(api.enabled(),true);},{childTimeoutMs:20_000});
+});

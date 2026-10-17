@@ -1,7 +1,7 @@
 // Bounded actual builtin generator routes. Copy and Eq close source-selected associated
 // list; callback-valued routes remain source-bearing obligations, not guesses.
 import {createHash} from 'node:crypto';
-import {createPrivateFrozenJsonCache,createPrivateFrozenJsonComposer} from './private-frozen-json.mjs';
+import {createPrivateFrozenJsonCache,createPrivateFrozenJsonComposer,privateFrozenJsonEqualHint} from './private-frozen-json.mjs';
 import {createCompletedDataFreezer} from './private-data-freeze.mjs';
 import {originalBuiltinCopyOutputSyntax} from './builtin-copy-output-syntax.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule,deriveFootprintHelperAttributeAt,isDeriveFootprintHelperAttributeProof} from './derive-footprints.mjs';
@@ -208,7 +208,7 @@ export const isBuiltinDeriveBangFootprint=value=>!!value&&proofs.has(value);
 export function originalBuiltinDeriveEnclosingOutput(proof,context,certificate,invocation){
  assertBuiltinDeriveBangFootprint(proof,context,certificate,invocation);
  const fresh=proveBuiltinDeriveBangFootprint({context,certificate,invocation});
- if(composeJson(fresh)!==(proof.schema==='builtin-debug-data-bang-output-v1'?composeJson(proof):originalJson(proof)))throw new TypeError('Builtin complete original output changed before namespace effect');
+ if(privateFrozenJsonEqualHint(fresh,proof)!==true&&composeJson(fresh)!==(proof.schema==='builtin-debug-data-bang-output-v1'?composeJson(proof):originalJson(proof)))throw new TypeError('Builtin complete original output changed before namespace effect');
  const sink=fresh.slotProofs?.outputKind;
  if(sink?.kind!=='ItemKind::Impl')throw new TypeError('Builtin namespace effect requires a source-proved complete Impl sink');
  return freezeCompleted({schema:'original-complete-builtin-enclosing-output-v1',proof:fresh,sink,route:fresh.route??null});
