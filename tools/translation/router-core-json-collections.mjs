@@ -39,7 +39,9 @@ export function checkRouterCoreJsonCollection(checker,node,env,path,expected){
  const checked=()=>{requireOriginalPrimitiveTryFromChecker(checker);if(!qualified||!originalDataFreezeIntrinsicsUnchanged())fail();};checked();
  if(node.args.length!==2||node.args[1].k!=='routerLambda'||node.args[1].params.length!==1||node.args[1].params[0].pattern)throw unsupported('owned JSON collection callback','requires one actual inline immutable parameter',node.span);
  const receiver=checker.expr(node.args[0],env,path);checked();const type=receiver.type,pointee=type?.rustReference?.pointee;
- if(type.rustReference?.kind!=='shared'||pointee?.kind!=='array'||pointee.rustFixedArray||pointee.rustOwnership||pointee.patternOwnershipRefusal||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON collection input','requires one actual checked shared Json slice',node.span);
+ const reference=type.rustReference,sourceSlice=value=>value?.kind==='array'&&value.rustSourceType===true&&value.rustOwnership?.kind==='borrowed'&&value.rustOwnership.source==='slice'&&!value.rustFixedArray&&!value.rustGenericIdentityUnresolved&&!value.rustBorrowingUnresolved;
+ if(reference?.kind!=='shared'||!sourceSlice(type)||!sourceSlice(pointee)||pointee.rustReference||pointee.patternOwnershipRefusal||type.patternOwnershipRefusal!=='shared source reference'||reference.tokens?.[0]?.value!=='&'||!Number.isInteger(reference.span?.start)||!Number.isInteger(reference.span?.end)||reference.span.start<0||reference.span.end<reference.span.start||!sameType(type.element,pointee.element))throw unsupported('owned JSON collection input','requires one actual checked shared Json slice',node.span);
+ canonical(checker,type.element,path,node.span);checker.expectedOwnership(type.element,pointee.element,path,node.span);
  const json=canonical(checker,pointee.element,path,node.span),item=sourceShared(json),result=node.operation==='json_filter_map'?checker.instantiations.option(json,node.span):json;
  // Fresh boundary for EVERY callback, including an ordinary tail body. The
  // existing lambda checker still handles parameter identities and local returns.

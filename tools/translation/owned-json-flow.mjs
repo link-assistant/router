@@ -42,7 +42,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch}) 
    if(type.rustReference.kind!=='shared'||!type.rustReference.pointee||!sharedReferenceCopyIdentity(type))refuse('mutable or unresolved reference',node);
    if(canonical(type.rustReference.pointee,node))return 'borrow';
    const pointee=type.rustReference.pointee;
-   if(pointee.kind==='array'&&!pointee.rustFixedArray&&!pointee.rustOwnership&&!pointee.patternOwnershipRefusal&&canonical(pointee.element,node)==='serde_json::Value')return 'slice';
+   if(type.kind==='array'&&type.rustSourceType===true&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='slice'&&!type.rustFixedArray&&type.patternOwnershipRefusal==='shared source reference'&&type.rustReference.tokens?.[0]?.value==='&'&&Number.isInteger(type.rustReference.span?.start)&&Number.isInteger(type.rustReference.span?.end)&&type.rustReference.span.start>=0&&type.rustReference.span.end>=type.rustReference.span.start&&pointee.kind==='array'&&pointee.rustSourceType===true&&pointee.rustOwnership?.kind==='borrowed'&&pointee.rustOwnership.source==='slice'&&!pointee.rustReference&&!pointee.rustFixedArray&&!pointee.patternOwnershipRefusal&&!pointee.rustGenericIdentityUnresolved&&!pointee.rustBorrowingUnresolved&&sameType(type.element,pointee.element)&&canonical(type.element,node)==='serde_json::Value'&&canonical(pointee.element,node)==='serde_json::Value'){checker.expectedOwnership(type.element,pointee.element,entry.modulePath??[],node?.span??entry.span);return 'slice';}
    if(domain(type.rustReference.pointee,node,active)==='copy')return 'copy';
    refuse('aggregate reference requires a separate loan proof',node);
   }
