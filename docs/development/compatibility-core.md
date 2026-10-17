@@ -111,8 +111,14 @@ owned APIs and `Maybe::Some`, preserving the input evaluation and failure block.
 Its canonical-target selector retains the complete balanced argument source,
 including nested groups, comments and an optional unary trailing comma. It
 rejects multiple arguments and comments that a path or `.ok()` replacement
-would delete. Imported `Value`, impl methods, uncertain include origins and
-existing macro/loop/producer boundaries remain outside this selector.
+would delete. A bare target imported directly from `serde_json::Value`, including
+grouped and renamed imports, additionally needs one fresh resolved enum binding
+in the consumer's actual type namespace and the complete active original import
+source. Ancestor-only imports, duplicate or raw imports, globs, conditional or
+unknown producers, local aliases and shadowed candidates remain refused. These
+extra alias checks do not disable otherwise supported qualified calls. Impl
+methods, uncertain include origins and existing macro/loop/producer boundaries
+remain outside this selector.
 
 A separate fixed language/repository pass can bind a complete final method chain
 rooted at `json_parse[_bytes](borrowed_parameter)?` to a hygienic immutable local
@@ -120,6 +126,11 @@ Json. The new inner block covers the entire former tail; the original suffix,
 comments and `?` order stay intact. Argument-created owners are not hoisted:
 introducing a let semicolon could shorten their temporary lifetime. Both passes
 retain original, intermediate and final CST/source, mappings and full inverses.
+An already-qualified owned parse tail can enter the same normalization with an
+explicit identity first stage. It still needs the current complete owned facade,
+primitive leaf and locked Cargo feature/source profile; an owned spelling alone
+is not evidence. Compact `?.` and separated question/dot tokens retain the exact
+source-aware checks.
 The ordinary checker must still prove borrowing, destruction, canonical layouts
 and every suffix call, including allocating String conversions. This normalization
 does not admit escaped loans or extend the temporary-borrow model.

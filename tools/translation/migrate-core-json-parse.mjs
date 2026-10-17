@@ -4,8 +4,9 @@ import {createHash} from 'node:crypto';
 import {types} from 'node:util';
 import {resolveModuleGraph} from './project.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
-import {originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';
-import {createCoreAdoptionProducerContext,finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
+import {originalDeclarationHeader,originalUseDeclarationLeaves,resolveModuleBindings,assertResolvedSourceScopeOrigin} from './module-bindings.mjs';
+import {createCoreAdoptionProducerContext,coreAdoptionProducerBindings,finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
+import {registeredStandardHostBindings} from './standard-host-bindings.mjs';
 import {coreTypeProducerProblemsForModule} from './migrate-core-primitives.mjs';
 import {compilationProfile,itemConfiguration,PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {jsonMacroDependencyProfile} from './json-macro-inputs.mjs';
@@ -55,7 +56,45 @@ function scope(module,modules,profile,context){
   if(item.term==='use')for(const leaf of originalUseDeclarationLeaves(item,parent.path)){imports.push({file:parent.file,module:parent.path,span:[item.start,item.end],leaf});if(leaf.glob||reserved.has(leaf.name))problems.push('glob or competing decode root/constructor import '+leaf.name);}
  }}return {problems,imports,identifiers};
 }
-function select(source,item,module,identifiers){
+// Per-invocation candidates only: the binder/private producer context owns
+// import identity, while the newly reconstructed source is checked separately.
+function importedJsonTargets(modules,profile,context){
+ let binding=null;const same=(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((part,at)=>part===b[at]);
+ let origins=null;
+ const verify=()=>{if(origins===null)return;if(modules.length!==origins.length||origins.some((row,at)=>modules[at]!==row.module||row.module.file!==row.file||row.module.source!==row.source||row.module.sourceView!==row.view||row.module.configurationCondition!==row.condition||JSON.stringify(row.module.compilationProfile)!==row.profile||!same(row.module.path,row.path)))fail('canonical import original source changed');};
+ const current=()=>{if(binding===null){binding=coreAdoptionProducerBindings(context);if(binding===null){binding=resolveModuleBindings({modules,externalModules:registeredStandardHostBindings(),compilationProfile:profile});assertResolvedSourceScopeOrigin(binding.scopes,{modules,compilationProfile:profile});}}return binding;};
+ const select=(module,name)=>{
+  if(origins===null)origins=modules.map(module=>({module,file:module.file,path:[...module.path],source:module.source,view:module.sourceView,condition:module.configurationCondition,profile:JSON.stringify(module.compilationProfile)}));verify();if(!origins.some(row=>row.module===module)||module.configurationCondition!=='active')return null;
+  // Imports in another/ancestor module do not lexically bind this consumer.
+  const scopes=current().scopes.filter(scope=>scope.file===module.file&&same(scope.path,module.path));if(scopes.length!==1||scopes[0].configurationCondition!=='active'||scopes[0].unresolvedTypeScope)return null;
+  const rows=scopes[0].bindings.filter(row=>row.namespace==='type'&&row.name===name);if(rows.length!==1)return null;const row=rows[0];
+  if(row.status!=='resolved'||row.kind!=='enum'||!same(row.target,['serde_json','Value'])||row.via!=='named-import'||row.source!==module.file)return null;
+  const candidates=[];
+  for(const item of originalSourceModuleItems(module)){
+   if(item.term!=='use')continue;const condition=itemConfiguration(item.tokens,profile);if(condition.status==='inactive')continue;
+   for(const leaf of originalUseDeclarationLeaves(item,module.path))if(leaf.name===name)candidates.push({item,condition,leaf});
+  }
+  if(candidates.length!==1)return null;const {item,condition,leaf}=candidates[0];
+  if(condition.status!=='active'||condition.attributes.some(attribute=>attribute.name==='cfg'||!inert.has(attribute.name))||leaf.glob||leaf.self||leaf.validateOnly||leaf.name==='_'||!same(leaf.segments,['serde_json','Value'])||row.span?.start!==item.start||row.span?.end!==item.end)return null;
+  const tokens=item.tokens;for(let at=0;at<tokens.length;at++)if(tokens[at].rawIdentifier||tokens[at].text.startsWith('r#')||tokens[at].text==='r'&&tokens[at+1]?.text==='#'&&tokens[at].end===tokens[at+1].start&&tokens[at+1].end===tokens[at+2]?.start)return null;
+  verify();return {kind:'original-direct-canonical-json-import-candidate',file:module.file,module:[...module.path],sourceSha256:hash(module.source),span:[item.start,item.end],source:module.source.slice(item.start,item.end),leaf,binding:row,executableAdmission:false};
+ };
+ return {select,verify};
+}
+function aliasShadowed(tokens,body,parameters,name){
+ if(parameters.has(name))return true;
+ for(let at=body+1;at<tokens.length-1;at++){
+  if(tokens[at].text==='let'){let end=at+1;while(end<tokens.length&&!['=',';'].includes(tokens[end].text))end++;if(tokens.slice(at+1,end).some(token=>ident(token)&&token.text===name))return true;}
+  if(tokens[at].text==='|'&&['(',',','=','{','return','=>'].includes(tokens[at-1]?.text)){let end=at+1;while(end<tokens.length&&tokens[end].text!=='|')end++;if(tokens.slice(at+1,end).some(token=>ident(token)&&token.text===name))return true;at=end;}
+ }
+ return false;
+}
+function selectedRoot(source,tokens,at,stop,body,parameter,identifiers,module,item){
+ const root=tailRoot(source,tokens,at,stop,body,parameter);if(!root)return null;
+ const names=new Set(identifiers);for(const token of tokens)if(token.type==='ident')names.add(token.text.replace(/^r#/u,''));let suffix=0;while(names.has('__router_json_root_'+suffix))suffix++;
+ return {...root,name:'__router_json_root_'+suffix,hygiene:{identifiers:[...names].sort(),sourceModule:module.path},function:item.name};
+}
+function select(source,item,module,identifiers,imports){
  const tokens=item.tokens.filter(token=>token.type!=='comment'),header=originalDeclarationHeader(item,module.path),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),edits=[],selections=[],roots=[];
  const skip=reason=>({edits:[],selections:[],roots:[],preserved:[{function:item.name,span:[item.start,item.end],reason}]});
  if(name<0||tokens[name+1]?.text!=='(')return skip('ordinary nongeneric function declaration required');
@@ -74,7 +113,7 @@ function select(source,item,module,identifiers){
  for(let at=body+1;at<tokens.length-1;at++){
   if(tokens[at].text!=='serde_json'||['::','.'].includes(tokens[at-1]?.text)||tokens[at+1]?.text!=='::'||!['from_str','from_slice'].includes(tokens[at+2]?.text)||words(tokens.slice(at+3,at+5))!=='::<')continue;
   let endType=at+5;while(endType<tokens.length&&!['>','(',')',';','{'].includes(tokens[endType].text))endType++;
-  const target=words(tokens.slice(at+5,endType));if(!['serde_json::Value',C+'Json'].includes(target)||tokens[endType]?.text!=='>'||tokens[endType+1]?.text!=='(')continue;
+  const targetTokens=tokens.slice(at+5,endType),target=words(targetTokens);if(tokens[endType]?.text!=='>'||tokens[endType+1]?.text!=='(')continue;let importedTarget=null;if(!['serde_json::Value',C+'Json'].includes(target)){if(targetTokens.length!==1||!ident(targetTokens[0])||aliasShadowed(tokens,body,parameters,target))continue;importedTarget=imports.select(module,target);if(!importedTarget)continue;}
   const end=close(tokens,endType+1),argument=end<0?null:singleArgument(tokens,endType+2,end);if(!argument)continue;
   const kind=tokens[at+2].text==='from_str'?'text':'bytes',role=argument.length===1&&ident(argument[0])?parameters.get(argument[0].text):null,parameter=role?.kind===kind?{name:argument[0].text,...role}:null;
   const interior=[tokens[endType+1].end,tokens[end].start],expression={span:interior,source:source.slice(...interior)},operation=kind==='text'?'json_parse':'json_parse_bytes',span=[tokens[at].start,tokens[end].end],replacement=C+operation+'('+expression.source+')';let mode=null,stop=end,patternEdit=null;
@@ -84,9 +123,16 @@ function select(source,item,module,identifiers){
   }
   if(!mode)continue;
   const complete=[span[0],tokens[stop].end];if(item.tokens.some(token=>token.type==='comment'&&token.start>=complete[0]&&token.end<=complete[1]&&!(token.start>=interior[0]&&token.end<=interior[1])))continue;
-  const root=mode==='discard-error-ok'?tailRoot(source,tokens,at,stop,body,parameter):null;
-  if(root){const names=new Set(identifiers);for(const token of tokens)if(token.type==='ident')names.add(token.text.replace(/^r#/u,''));let suffix=0;while(names.has('__router_json_root_'+suffix))suffix++;roots.push({...root,name:'__router_json_root_'+suffix,hygiene:{identifiers:[...names].sort(),sourceModule:module.path},function:item.name});}
-  if(patternEdit)edits.push(patternEdit);edits.push({span:complete,expected:source.slice(...complete),replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span:complete,operation,mode,argument:{...(parameter??{}),expression},sourceTarget:target,originalCall:source.slice(...span),replacement,sourceModule:module.path,originalParserImplementationTranslated:false,originalErrorDropAdmitted:false,executableAdmission:false,evaluationOrder:['borrowed-input-once']});at=stop;
+  const root=mode==='discard-error-ok'?selectedRoot(source,tokens,at,stop,body,parameter,identifiers,module,item):null;if(root)roots.push(root);
+  if(patternEdit)edits.push(patternEdit);edits.push({span:complete,expected:source.slice(...complete),replacement});selections.push({function:item.name,functionSpan:[item.start,item.end],span:complete,operation,mode,argument:{...(parameter??{}),expression},sourceTarget:target,...(importedTarget?{importedTarget}:{}),originalCall:source.slice(...span),replacement,sourceModule:module.path,originalParserImplementationTranslated:false,originalErrorDropAdmitted:false,executableAdmission:false,evaluationOrder:['borrowed-input-once']});at=stop;
+ }
+ // Previously adopted calls have no native alias edit. They still pass all
+ // original source/profile gates and retain an explicit identity first stage.
+ for(let at=body+1;at<tokens.length-1;at++){
+  if(words(tokens.slice(at,at+4))!=='crate::translation_core::'||['::','.'].includes(tokens[at-1]?.text)||!['json_parse','json_parse_bytes'].includes(tokens[at+4]?.text)||tokens[at+5]?.text!=='(')continue;
+  const end=close(tokens,at+5),argument=end<0?null:singleArgument(tokens,at+6,end),kind=tokens[at+4].text==='json_parse'?'text':'bytes',role=argument?.length===1&&ident(argument[0])?parameters.get(argument[0].text):null,parameter=role?.kind===kind?{name:argument[0].text,...role}:null;
+  const root=end<0?null:selectedRoot(source,tokens,at,end,body,parameter,identifiers,module,item);if(!root)continue;
+  roots.push(root);selections.push({function:item.name,functionSpan:[item.start,item.end],span:[tokens[at].start,tokens[end].end],operation:tokens[at+4].text,mode:'already-owned-full-tail-root',argument:{...parameter,expression:{span:[tokens[at+5].end,tokens[end].start],source:source.slice(tokens[at+5].end,tokens[end].start)}},sourceTarget:C+'Json',originalCall:source.slice(tokens[at].start,tokens[end].end),sourceModule:module.path,originalParserImplementationTranslated:false,originalErrorDropAdmitted:false,executableAdmission:false,evaluationOrder:['borrowed-input-once']});at=end;
  }
  return {edits,selections,roots,preserved:selections.length?[]:[{function:item.name,span:[item.start,item.end],reason:'no exact canonical unary parse with a retained balanced argument and discarded error'}]};
 }
@@ -116,12 +162,12 @@ export function proposeCoreJsonParseCorpus(options={}){
  if(root.length!==1||core.length!==1||leaf.length!==1||core[0].file!=='src/translation_core.rs'||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].file!=='src/translation_core/primitives.rs'||leaf[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active'||!core[0].source.includes('pub use self::primitives::{json_parse, json_parse_bytes};'))fail('complete current owned decoder interface required');
  const edges=originalSourceModuleItems(root[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edges.length!==1||root[0].source.slice(edges[0].start,edges[0].end).trim()!=='pub mod translation_core;')fail('actual public core edge required');
  for(const name of ['json_parse','json_parse_bytes'])if(originalSourceModuleItems(leaf[0]).filter(item=>item.term==='fn'&&item.name===name).length!==1)fail('actual owned decoder declarations required');
- const context=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs}),proposals=[],skipped=[],after={...files};
+ const context=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs}),imports=importedJsonTargets(graph.modules,profile,context),proposals=[],skipped=[],after={...files};
  for(const file of Object.keys(files)){
   if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>!module.sourceView.modulePath.length);if(origins.length!==1){skipped.push({file,reason:'unique complete physical source origin required'});continue;}
-  const edits=[],selections=[],roots=[],preserved=[];for(const module of modules){const scoped=scope(module,graph.modules,profile,context);for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;const condition=itemConfiguration(item.tokens,profile);if(module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(attribute=>!inert.has(attribute.name))||scoped.problems.length){preserved.push({function:item.name,span:[item.start,item.end],reason:'configuration, producer or decode owner uncertainty',problems:scoped.problems});continue;}const selected=select(files[file],item,module,scoped.identifiers);edits.push(...selected.edits);roots.push(...selected.roots);selections.push(...selected.selections.map(row=>({...row,imports:scoped.imports})));preserved.push(...selected.preserved);}}
+  const edits=[],selections=[],roots=[],preserved=[];for(const module of modules){const scoped=scope(module,graph.modules,profile,context);for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;const condition=itemConfiguration(item.tokens,profile);if(module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(attribute=>!inert.has(attribute.name))||scoped.problems.length){preserved.push({function:item.name,span:[item.start,item.end],reason:'configuration, producer or decode owner uncertainty',problems:scoped.problems});continue;}const selected=select(files[file],item,module,scoped.identifiers,imports);edits.push(...selected.edits);roots.push(...selected.roots);selections.push(...selected.selections.map(row=>({...row,imports:scoped.imports})));preserved.push(...selected.preserved);}}
   const proposal=normalize(files[file],edits,roots);proposals.push({file,...proposal,selections,preserved});after[file]=proposal.after.source;
  }
- const producerEffects=finishCoreAdoptionProducerContext(context),result={schema:'router-owned-optional-json-parse-corpus-v1',entry,compilationProfile:profile,dependencyInputs:{...dependencyInputs},inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),before:{...files},after,proposals,skipped,...(producerEffects?{producerEffects}:{}),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},numericSourceProfile:numericProfile,migrationSemantics:'explicit maintainer-owned optional canonical decode adoption; only existing discarded-error contexts; no general Deserialize/Error Drop or old parser capability; fresh checked semantics required',executableAdmission:false};
+ imports.verify();const producerEffects=finishCoreAdoptionProducerContext(context),result={schema:'router-owned-optional-json-parse-corpus-v1',entry,compilationProfile:profile,dependencyInputs:{...dependencyInputs},inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),before:{...files},after,proposals,skipped,...(producerEffects?{producerEffects}:{}),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},numericSourceProfile:numericProfile,migrationSemantics:'explicit maintainer-owned optional canonical decode adoption; only existing discarded-error contexts; no general Deserialize/Error Drop or old parser capability; fresh checked semantics required',executableAdmission:false};
  dependencies.verify();captured.verify();supplied.verify();return result;
 }
