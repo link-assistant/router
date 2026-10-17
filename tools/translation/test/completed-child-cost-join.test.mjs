@@ -72,10 +72,18 @@ function scenario(kind,subject){
   observed=outcome(()=>read(input)===input);details.budgets=[subject.completedDataTraversalExceedsBudget(input,4),subject.completedDataTraversalExceedsBudget(input,5),subject.completedDataJsonWithinBudget(input,5,2),subject.completedDataJsonWithinBudget(input,5,1)];
  }else if(kind==='unknown-lookup-native-flag'){
   const child={v:1};read(child);input={a:child,b:child};before=graph(input);
-  const prior=Object.getOwnPropertyDescriptor(Array.prototype,'pop'),apply=Reflect.apply,lookups=[];let installed=false,pops=0,selected;
-  const custom=value=>{lookups.push(value===input?'root':value===child?'child':'other');if(value===child&&!installed){installed=true;Object.defineProperty(Array.prototype,'pop',{...prior,value(){pops++;return apply(prior.value,this,[]);}});}return value===child?(1*200002+2)*4+3:undefined;};
-  try{selected=subject.planForObservation(input,custom,true);}finally{Object.defineProperty(Array.prototype,'pop',prior);}
-  details.plan=compactPlan(selected);details.lookups=lookups;details.pops=pops;observed=outcome(()=>read(input)===input);
+  const prior=Object.getOwnPropertyDescriptor(Array.prototype,'pop'),mapPrior=Object.getOwnPropertyDescriptor(Map.prototype,'get'),apply=Reflect.apply,lookups=[],mapGets=[];let installed=false,pops=0,selected;
+  const custom=value=>{lookups.push(value===input?'root':value===child?'child':'other');if(value===child&&!installed){installed=true;Object.defineProperty(Array.prototype,'pop',{...prior,value(){pops++;return apply(prior.value,this,[]);}});Object.defineProperty(Map.prototype,'get',{...mapPrior,value(key){mapGets.push(key===input?'root':key===child?'child':'other');return apply(mapPrior.value,this,[key]);}});}return value===child?(1*200002+2)*4+3:undefined;};
+  try{selected=subject.planForObservation(input,custom,true);}finally{try{Object.defineProperty(Array.prototype,'pop',prior);}finally{Object.defineProperty(Map.prototype,'get',mapPrior);}}
+  details.plan=compactPlan(selected);details.lookups=lookups;details.pops=pops;details.mapGets=mapGets;
+  // A caller's extra boolean is not a permit to suppress a custom lookup or
+  // a method replacement installed by that lookup. Both plans must propagate
+  // the next real private Map.get failure, independent of traversal spelling.
+  details.operationRefusals=[false,true].map(nativeFlag=>{
+   const lookups=[],gets=[];let installed=false,result;
+   try{result=outcome(()=>subject.planForObservation(input,value=>{lookups.push(value===input?'root':value===child?'child':'other');if(value===child&&!installed){installed=true;Object.defineProperty(Map.prototype,'get',{...mapPrior,value(key){gets.push(key===child?'child':'other');throw Error('custom Map.get refusal');}});}return value===child?(1*200002+2)*4+3:undefined;},nativeFlag));}finally{Object.defineProperty(Map.prototype,'get',mapPrior);}
+   return {nativeFlag,lookups,gets,result};
+  });observed=outcome(()=>read(input)===input);
  }else if(kind.startsWith('mixed-')){
   const first={v:1},second={v:2};read(first);read(second);const cold={nested:{v:3}},wide=kind.startsWith('mixed-wide-'),position=kind.slice(wide?11:6);
   if(wide){const slot=position==='first'?0:position==='middle'?31:63,children=Array.from({length:64},(_,at)=>at===slot?cold:at%2?first:second);input=Object.fromEntries(children.map((value,at)=>['f'+at,value]));}
@@ -168,14 +176,24 @@ test('full before source and private completed child probe retain aliases and ha
  assert.equal(subjects.current.source.split('let allCompleted=').length,3);assert.equal(oldPlan.split('let allCompleted=').length,2);assert.equal(packedPlan.split('let allCompleted=').length,2);const threshold='let allCompleted=objectChildren>=MIN_COMPLETED_CHILDREN&&originalDataFreezeIntrinsicsUnchanged();';assert.equal(oldPlan.split(threshold).length,2);assert.equal(packedPlan.split(threshold).length,2);
  const costStart="   if(typeof cost!=='number'||depth+1+(((cost>>>2)/RECORD_BASE)|0)>DEPTH_LIMIT)";assert.ok(oldPlan.includes(costStart)&&packedPlan.includes(costStart));assert.equal(packedPlan.slice(packedPlan.indexOf(costStart),packedPlan.indexOf('  const selected=records.length;')),oldPlan.slice(oldPlan.indexOf(costStart),oldPlan.indexOf('  const selected={value')));
  const {old,current}=paired('aliases');assert.equal(current.observed.same,true);assert.deepEqual(current.details.privatePlan,old.details.privatePlan);assert.deepEqual(current.details.budgets,[true,false,true,false]);assert.equal(current.details.privatePlan.root.cells,5);assert.equal(current.details.privatePlan.root.height,2);
- assert.deepEqual(current.details.pureLookupProbe.lookups,['root','child','child','child','child','root']);assert.deepEqual(old.details.pureLookupProbe.lookups,['root','child','child','child','child','root']);assert.deepEqual(current.details.pureLookupProbe.plan,old.details.pureLookupProbe.plan);
- for(const count of [63,64]){const pair=paired('aliases-'+count),expectedCells=1+2*count,oldTrace=['root',...Array(count*2).fill('child'),'root'],currentTrace=['root',...Array(count===64?count:count*2).fill('child'),'root'];assert.deepEqual(pair.current.details.privatePlan,pair.old.details.privatePlan);assert.deepEqual(pair.current.details.privatePlan.root,{cells:expectedCells,height:2,jsonFlags:3,done:true});assert.deepEqual(pair.current.details.pureLookupProbe.plan,pair.old.details.pureLookupProbe.plan);assert.deepEqual(pair.current.details.budgets,[true,true,false,false]);assert.deepEqual(pair.current.details.budgets,pair.old.details.budgets);assert.deepEqual(pair.old.details.pureLookupProbe.lookups,oldTrace);assert.deepEqual(pair.current.details.pureLookupProbe.lookups,currentTrace);assert.equal(pair.current.observed.same,true);}
+ // The immutable pre-258 source joins children a second time; the pre-462
+ // recursive source returns each cost directly. These are private probe
+ // schedules, not a promise of equal arbitrary-callback implementations.
+ assert.deepEqual(current.details.pureLookupProbe.lookups,['root','child','child','root']);assert.deepEqual(old.details.pureLookupProbe.lookups,['root','child','child','child','child','root']);assert.deepEqual(current.details.pureLookupProbe.plan,old.details.pureLookupProbe.plan);
+ for(const count of [63,64]){const pair=paired('aliases-'+count),expectedCells=1+2*count,oldTrace=['root',...Array(count*2).fill('child'),'root'],currentTrace=['root',...Array(count).fill('child'),'root'];assert.deepEqual(pair.current.details.privatePlan,pair.old.details.privatePlan);assert.deepEqual(pair.current.details.privatePlan.root,{cells:expectedCells,height:2,jsonFlags:3,done:true});assert.deepEqual(pair.current.details.pureLookupProbe.plan,pair.old.details.pureLookupProbe.plan);assert.deepEqual(pair.current.details.budgets,[true,true,false,false]);assert.deepEqual(pair.current.details.budgets,pair.old.details.budgets);assert.deepEqual(pair.old.details.pureLookupProbe.lookups,oldTrace);assert.deepEqual(pair.current.details.pureLookupProbe.lookups,currentTrace);assert.equal(pair.current.observed.same,true);}
 });
 test('every mixed cold or local child keeps complete original ordered state and whole graph outcomes',{timeout:60000},()=>{
  for(const kind of ['mixed-first','mixed-middle','mixed-last','cold','mixed-wide-first','mixed-wide-middle','mixed-wide-last']){const {old,current}=paired(kind);assert.deepEqual(current.details,old.details);assert.equal(current.observed.same,true);}
 });
 test('a custom lookup cannot claim a closed native segment or erase its reentrant operation callbacks',{timeout:60000},()=>{
- const {old,current}=paired('unknown-lookup-native-flag');assert.deepEqual(current.details,old.details);assert.deepEqual(current.details.lookups,['root','child','child','child','child','root']);assert.equal(current.details.pops,6);assert.equal(current.details.plan.root.cells,5);assert.equal(current.observed.same,true);
+ const {old,current}=paired('unknown-lookup-native-flag');assert.deepEqual(current.details.plan,old.details.plan);
+ assert.deepEqual(old.details.lookups,['root','child','child','child','child','root']);assert.deepEqual(current.details.lookups,['root','child','child','root']);
+ // The old pending stack performs six post-hook pops; recursive DFS has no
+ // pop at all. Both original hook workloads remain recorded. Dynamic Map.get
+ // now independently witnesses the current planner's reentrant operation.
+ assert.equal(old.details.pops,6);assert.equal(current.details.pops,0);assert.deepEqual(old.details.mapGets,['child','child','child']);assert.deepEqual(current.details.mapGets,['child']);
+ const expectedRefusals=[false,true].map(nativeFlag=>({nativeFlag,lookups:['root','child'],gets:['child'],result:{error:{name:'Error',message:'custom Map.get refusal'}}}));assert.deepEqual(old.details.operationRefusals,expectedRefusals);assert.deepEqual(current.details.operationRefusals,expectedRefusals);
+ assert.equal(current.details.plan.root.cells,5);assert.equal(current.observed.same,true);
  const expected=hostile('error-restore','old'),actual=hostile('error-restore','current'),formatterObserved=expected.tape.some(row=>row[0]==='formatter');retain('error-restore-complete-hostile-pair',{expected,actual,capability:{originalFormatterObserved:formatterObserved,currentFormatterObserved:actual.tape.some(row=>row[0]==='formatter')}});assert.deepEqual(actual,expected);assert.equal(actual.result.same,true);if(formatterObserved){assert.ok(actual.tape.some(row=>row[0]==='restored-and-reentered'));assert.ok(actual.tape.some(row=>row[0]==='weak-get'));}
 });
 test('each cached incoming height is charged at exact depth and over-depth retains whole original fallback',{timeout:60000},()=>{
