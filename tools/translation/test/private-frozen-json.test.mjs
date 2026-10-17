@@ -70,14 +70,51 @@ test('complete fresh builtin proof reissue preserves every crypto byte callback 
 // Every child loads the SAME existing private source/native issuers first;
 // then both COMPLETE consumer copies are cold-imported under the observer.
 // This does not claim equivalence of the whole common issuer bootstrap.
-function cold(leaf,mode){const code=`
+function cold(leaf,mode,warm=false){let code=`
 const json=JSON.stringify,apply=Reflect.apply,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty,text=Function.prototype.toString;
 const {loadDeriveDependencyProof}=await import(${json(new URL('../derive-dependencies.mjs',import.meta.url).href)}),{createDeriveFootprintContext}=await import(${json(new URL('../derive-footprints.mjs',import.meta.url).href)}),{captureSourceModuleViews}=await import(${json(new URL('../source-module-views.mjs',import.meta.url).href)}),{PRODUCTION_PROFILE}=await import(${json(new URL('../cfg-profile.mjs',import.meta.url).href)}),helper=await import(${json(new URL('../private-frozen-json.mjs',import.meta.url).href)});
 const source=${json(source)},dependencies=loadDeriveDependencyProof(${json(cargo)}),views=captureSourceModuleViews({source,sourcePath:'src/lib.rs',compilationProfile:PRODUCTION_PROFILE}).views,modules=views.map(sourceView=>({file:'src/lib.rs',path:[...sourceView.modulePath],source,sourceView,compilationProfile:sourceView.compilationProfile,configurationCondition:sourceView.configurationCondition})),context=createDeriveFootprintContext({modules,dependencies,compilationProfile:PRODUCTION_PROFILE}),certificate=context.certificates[0],attribute=certificate.attributes.find(row=>row.name==='derive'),input={context,certificate,invocation:{path:['Copy'],attributeSpan:attribute.span}};
 const mode=${json(mode)},owner=mode==='call'?Function.prototype:mode==='apply'?Reflect:mode==='get'?WeakMap.prototype:mode==='set'?Map.prototype:mode==='ownKeys'?Reflect:Object,key=mode,previous=descriptor(owner,key),tape=[];let result,probe;
 define(owner,key,{...previous,value:function(...args){const value=apply(previous.value,this,args);if(mode==='call'||mode==='apply'){if(mode==='call'?this===text:args[0]===text)tape[tape.length]=value;}else{const fields=[];for(let at=0;at<args.length;at++)fields[at]=typeof args[at]==='string'?args[at]:typeof args[at];tape[tape.length]=fields;}return value;}});
 try{if(mode==='call')apply(owner[key],text,[function probe(){}]);else if(mode==='apply')owner[key](text,function probe(){},[]);else if(mode==='get')apply(owner[key],new WeakMap(),[{}]);else if(mode==='set')apply(owner[key],new Map(),['probe',true]);else if(mode==='ownKeys')owner[key]({probe:true});else owner[key](Object.freeze({probe:true}));probe=tape.slice();tape.length=0;const implementation=await import(${json(leaf.url)});const proof=implementation.proveBuiltinDeriveBangFootprint(input);result=implementation.originalBuiltinDeriveEnclosingOutput(proof,context,certificate,input.invocation);}catch(error){result={error:{name:error.name,message:error.message}};}finally{define(owner,key,previous);}process.stdout.write(json({engine:process.versions,probe,tape,result}));`;
- return {code,result:JSON.parse(execFileSync(process.execPath,['--input-type=module','-'],{input:code,encoding:'utf8',timeout:15000,maxBuffer:32*1024*1024}))};}
-test('cold complete consumer copies preserve prebound reflection call and collection callback tapes',{timeout:60000},()=>{
- for(const mode of ['call','apply','get','set','ownKeys','isFrozen']){const expected=cold(leaves.builtin.old,mode),actual=cold(leaves.builtin.current,mode);equal('09-cold-'+mode,expected.result,actual.result,{expectedChild:expected.code,actualChild:actual.code});assert.equal(actual.result.probe.length,1);assert.ok(actual.result.result.proof);}
+ const originalCode=code,edits=[];
+ if(warm){
+  const before='result=implementation.originalBuiltinDeriveEnclosingOutput(proof,context,certificate,input.invocation);',after=before+'var coldLength=tape.length,warmProof=implementation.proveBuiltinDeriveBangFootprint(input),warmResult=implementation.originalBuiltinDeriveEnclosingOutput(warmProof,context,certificate,input.invocation);';
+  assert.equal(code.split(before).length,2);code=code.replace(before,after);edits.push({before,after});
+  const outputBefore='json({engine:process.versions,probe,tape,result})',outputAfter='json({engine:process.versions,probe,tape:tape.slice(0,coldLength),result,warmTape:tape.slice(coldLength),warmResult})';
+  assert.equal(code.split(outputBefore).length,2);code=code.replace(outputBefore,outputAfter);edits.push({before:outputBefore,after:outputAfter});
+  let undo=code;for(const edit of [...edits].reverse()){assert.equal(undo.split(edit.after).length,2);undo=undo.replace(edit.after,edit.before);}assert.equal(undo,originalCode);
+ }
+ return {code,originalCode,edits,result:JSON.parse(execFileSync(process.execPath,['--input-type=module','-'],{input:code,encoding:'utf8',timeout:15000,maxBuffer:32*1024*1024}))};}
+test('cold complete consumer copies preserve prebound reflection call and collection callback tapes',{timeout:60000},async()=>{
+ // Source variants are prepared before observers; no historical Git objects are required.
+ const fixtureSource=readFileSync(new URL('./fixtures/frozen-plan-json-composition.mjs',import.meta.url),'utf8');
+ assert.equal(hash(fixtureSource),'ea329cea34f2551f6c2e939f5b6e19faf15a1c4a654e817a1430635a28034efe');
+ const {FROZEN_PLAN_JSON_BEFORE}=await import('./fixtures/frozen-plan-json-composition.mjs'),edits=FROZEN_PLAN_JSON_BEFORE['builtin-derive-bang-footprints.mjs'].edits.slice(-4);
+ assert.equal(edits.length,4);
+ const replace=(source,before,after)=>{assert.equal(source.split(before).length,2);return source.replace(before,after);};
+ let previous=leaves.builtin.current.source;for(const edit of [...edits].reverse())previous=replace(previous,edit.after,edit.before);
+ assert.equal(hash(previous),'c1b3ec4440dc8cdabeefd4c0a6a812603d7f133dd518c65ca5212df7dd54020f');
+ let forward=previous;for(const edit of edits)forward=replace(forward,edit.before,edit.after);assert.equal(forward,leaves.builtin.current.source);
+ assert.equal(hash(leaves.builtin.current.source),'96465eedd68c6c32a32968abe7204d7c7e68c996ebaef8225a57fd23ec7dca28');
+ const routeEdit=edits[1],reference=replace(leaves.builtin.old.source,routeEdit.before,routeEdit.after);
+ assert.equal(hash(reference),'18a8b0dd9e736d09349c424996b4bbc92db50703630029e84db1f59e2c5f5f17');
+ assert.equal(replace(reference,routeEdit.after,routeEdit.before),leaves.builtin.old.source);
+ const pre529=relocate(previous,'builtin-pre529'),currentReference=relocate(reference,'builtin-current529-reference');
+ for(const [label,leaf]of [['pre529',pre529],['current529-reference',currentReference]]){
+  assert.equal(readFileSync(leaf.path,'utf8'),leaf.relocated);
+  assert.equal(leaf.relocated.replace(/\bfrom (['"])(file:[^'"]+)\1/g,(whole,quote,url)=>{const row=leaf.imports.find(row=>row.url===url);return row?'from '+quote+row.path+quote:whole;}),leaf.source);
+  retain('09-source-'+label,{leaf,fixtureSource,edits,original:leaves.builtin.old,current:leaves.builtin.current});
+ }
+ // FIRST: unchanged complete historical native-JSON oracle, all original controls.
+ for(const mode of ['call','apply','get','set','ownKeys','isFrozen']){const expected=cold(leaves.builtin.old,mode),actual=cold(pre529,mode);equal('09-cold-'+mode,expected.result,actual.result,{expectedChild:expected.code,actualChild:actual.code});assert.equal(actual.result.probe.length,1);assert.ok(actual.result.result.proof);}
+ // THEN: an explicit current route-DATA profile for the same genuine Copy input.
+ // This reference does not implement or authorize Ord/PartialOrd proof behavior.
+ for(const mode of ['call','apply','get','set','ownKeys','isFrozen']){
+  const expected=cold(currentReference,mode,true),actual=cold(leaves.builtin.current,mode,true);
+  equal('09-current529-cold-warm-'+mode,expected.result,actual.result,{expectedChild:expected,actualChild:actual});
+  assert.equal(actual.result.probe.length,1);assert.ok(actual.result.result.proof);assert.ok(actual.result.warmResult.proof);
+  assert.deepEqual(actual.result.warmResult,actual.result.result);
+  if(mode==='set')assert.deepEqual(actual.result.tape.slice(0,9),['Copy','Clone','Default','Debug','PartialEq','Eq','Hash','Ord','PartialOrd'].map(name=>[name,'object']));
+ }
 });
