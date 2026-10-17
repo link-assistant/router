@@ -9,6 +9,9 @@ import {copyMetadata,metadataDigest,originalParsedDeclarationEvidence,originalPa
 import {JSON_TYPES,JSON_DATA} from './extensions/json-contracts.mjs';
 import {sameType} from './checked-types.mjs';
 import {canonicalResult} from './extensions/result-iterators.mjs';
+import {planStandardMethod,completeStandardMethod} from './extensions/standard-method-plans.mjs';
+import {CSV_STRING_PROFILE,checkedAllocatingStringItem,requireCsvEmitterProof} from './extensions/csv-strings.mjs';
+import {originalStandardCallContext} from './extensions/original-standard-calls.mjs';
 import {requirePinnedOptionCallbackBody} from './extensions/standard-option-callback-body.mjs';
 import {requireOriginalMappedBody} from './extensions/standard-mapped-body.mjs';
 import {alphaTree,retargetCheckedCallback,requirePinnedStandardBody} from './extensions/standard-body-checker.mjs';
@@ -121,7 +124,7 @@ export function checkRouterCoreJsonUpdate(checker,node,env,path,expected){
   }}]},
   {phase:'repository',rules:[{id:'router-core:retain-owned-json-update-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-update-v1',symbol:contract.rustPath.join('::'),sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,sourceTrace:capture.receipt.trace,...(capture.receipt.numericProfile?{numericProfile:capture.receipt.numericProfile}:{}),libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
  ]);const value=stage.run(null).value,record={checker,frame:activeFunctions.get(checker),id:value.id,args:copyMetadata(value.args)};
- if(projectionNames.has(node.operation)||isRouterCoreJsonParse(node.operation)||record.frame.errorLane){
+ if(projectionNames.has(node.operation)||isRouterCoreJsonParse(node.operation)||record.frame.errorLane||record.frame.optionLane){
   const layouts=copyMetadata(captureBorrowedLayouts(checker,[...value.args.map(arg=>arg.type),value.type]));
   const key=metadataDigest({functionName:record.frame.functionName,source:record.frame.syntax,call:value,layouts});value.compatibilityCore.sourceProjectionKey=key;
   record.call=copyMetadata(value);record.layouts=layouts;record.roots=copyMetadata([...value.args.map(arg=>arg.type),value.type]);
@@ -171,10 +174,43 @@ export function observeOriginalJsonErrorFormat(checker,node,value){
  (frame.formatted??=[]).push({value:copyMetadata(value),syntax,original:node});return value;
 }
 const stringError=(checker,entry)=>{const actual=canonicalResult(checker,entry.ret,entry.modulePath,entry.span,false);return actual?.error.kind==='string'&&actual.error.rustOwnership?.kind==='owned'&&actual.error.rustOwnership.source==='String'&&!actual.error.rustReference&&!actual.error.rustBorrowingUnresolved&&!actual.error.rustGenericIdentityUnresolved;};
+// Qualification only: the complete flow below still checks every operation,
+// current canonical field/layout, source lifetime and original caller receipt.
+function ownedOptionReturn(checker,entry){
+ const type=entry.ret,owner=type?.kind==='data'?checker.items.get(type.name):null,source=type?.rustStandardGeneric;
+ if(type?.rustReference||type?.rustOwnership||type?.rustGenericIdentityUnresolved||type?.rustBorrowingUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return false;
+ const some=owner.ctors.find(row=>row.name==='Some'),none=owner.ctors.find(row=>row.name==='None');if(!some||some.fields?.length!==1||some.fields[0].name!=='field0'||!none||none.fields?.length)return false;
+ const payload=checker.resolveType(source.arguments[0],owner.modulePath,entry.span),text=payload.kind==='string'&&payload.rustSourceType===true&&payload.rustOwnership?.kind==='owned'&&payload.rustOwnership.source==='String'&&!payload.rustReference&&!payload.rustGenericIdentityUnresolved&&!payload.rustBorrowingUnresolved&&[undefined,'ownership-bearing String type','owned String source type','owned String formatting'].includes(payload.patternOwnershipRefusal);
+ if(type.patternOwnershipRefusal&&!(text&&type.patternOwnershipRefusal==='ownership-bearing String type'))return false;
+ if(!text){if(payload.kind!=='data'||payload.rustReference||payload.rustOwnership||payload.patternOwnershipRefusal||payload.rustBorrowingUnresolved||payload.rustGenericIdentityUnresolved||checker.items.get(payload.name)?.hostTypePath?.join('::')!=='serde_json::Value')return false;}
+ for(const written of [owner.standardGeneric.arguments[0],some.fields[0].type]){const actual=checker.resolveType(written,owner.modulePath,entry.span);if(!sameType(actual,payload))return false;checker.expectedOwnership(actual,payload,owner.modulePath,entry.span);checker.expectedPrimitiveIdentity(actual,payload,owner.modulePath,entry.span);}return true;
+}
+// Both raw and checked membership are local to this actual completed function.
+// No source checksum, copied callback or standalone CSV marker is an issuer.
+function closedOptionSource(checker,fact,current,Parser,Checker,program){
+ const allocations=new WeakSet();
+ const member=(root,target,predicate)=>{let cells=100000,hits=[];const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(target?node===target:predicate(node))hits.push(node);for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','originalCallbackProof','sourceFrameProof','originalLoanProof','sharedBodyProof','sourceSharedPatternProof'].includes(key))Array.isArray(value)?value.forEach(child=>visit(child,depth+1)):visit(value,depth+1);};visit(root);return hits;};
+ return {
+  standard:node=>{current(fact.entry.fullName);let body=null;if(node.k==='routerPinnedStandardBody'){requirePinnedStandardBody(node,Parser,{Checker,program});body=node.body;}else if(node.k==='routerPinnedOptionCallbackBody')body=requirePinnedOptionCallbackBody(node,program,Parser,Checker);else if(node.k==='routerOriginalMappedBody')body=requireOriginalMappedBody(node,program,Parser,Checker);current(fact.entry.fullName);return body;},
+  map:(node,entry)=>{
+   if(current(entry.fullName)!==fact||node.k!=='routerStandardMethod'||node.operation!=='option_map'||node.constEligible!==false||member(entry.body,node).length!==1)return null;
+   const source=member(fact.item.body,null,value=>value.k==='routerDispatchMethod'&&value.method==='map'&&same(value.span,node.span));if(source.length!==1)return null;
+   const raw=source[0],context=originalStandardCallContext(checker,raw);requireOriginalPrimitiveTryFromChecker(checker);current(entry.fullName);
+   const item=raw.args?.[0],callback=node.callback,binding=callback?.binding,allocation=binding?.body;
+   if(context.owner!==entry.fullName||raw.args.length!==1||item?.k!=='routerStandardFunctionItem'||!['str::to_string','ToString::to_string'].includes(item.operation)||item.sourceFunctionItem?.profile!==CSV_STRING_PROFILE.id||callback?.k!=='routerLambda'||callback.arity!==1||binding?.k!=='let'||binding.mutable===true||binding.value?.k!=='routerLambdaInput'||binding.value.position!==0||allocation?.k!=='routerAllocatingStringItem'||allocation.object?.k!=='var'||allocation.object.name!==binding.name||!same(allocation.span,item.span))return null;
+   requireCsvEmitterProof(allocation);const result=checkedAllocatingStringItem(allocation.object.type,allocation.span);
+   const plan=planStandardMethod(node.value.type,'map',{declarations:checker.items,resolveType:(type,span)=>checker.resolveType(type,entry.modulePath,span),expected:node.type,argumentCount:1,span:node.span});
+   if(!plan||!sameType(binding.value.type,plan.callbackParameters[0])||!sameType(allocation.object.type,binding.value.type)||!sameType(allocation.type,result)||!sameType(callback.type.result,result)||!sameType(completeStandardMethod(plan,callback.type.result,{optionType:()=>node.type,span:node.span}),node.type))return null;
+   for(const actual of [binding.value.type,allocation.object.type]){checker.expectedOwnership(actual,plan.callbackParameters[0],entry.modulePath,node.span);checker.expectedPrimitiveIdentity(actual,plan.callbackParameters[0],entry.modulePath,node.span);}checker.expectedOwnership(allocation.type,result,entry.modulePath,node.span);checker.expectedOwnership(callback.type.result,result,entry.modulePath,node.span);
+   current(entry.fullName);allocations.add(allocation);return {input:plan.callbackParameters[0],result};
+  },
+  allocate:(node,entry)=>{current(entry.fullName);if(!allocations.has(node))return false;requireCsvEmitterProof(node);const wanted=checkedAllocatingStringItem(node.object.type,node.span);checker.expectedOwnership(node.type,wanted,entry.modulePath,node.span);return sameType(node.type,wanted);},
+ };
+}
 function publishProjectionContexts(receipt,entry,dependencies=[],checker=null){
  if(!receipt.projections)return;
  const functionContext=freeze(copyMetadata({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body,...(dependencies.length?{dependencies}:{} )}));
- const extraRoots=receipt.errorLane?[...entry.params.map(param=>param.type),entry.ret,...dependencies.flatMap(item=>[...item.params.map(param=>param.type),item.ret])]:[],extraLayouts=extraRoots.length?freeze(copyMetadata(captureBorrowedLayouts(checker,extraRoots))):[];
+ const extraRoots=receipt.errorLane||receipt.optionLane?[...entry.params.map(param=>param.type),entry.ret,...dependencies.flatMap(item=>[...item.params.map(param=>param.type),item.ret])]:[],extraLayouts=extraRoots.length?freeze(copyMetadata(captureBorrowedLayouts(checker,extraRoots))):[];
  for(const projection of receipt.projections)projectionContexts.set(projection.key,freeze({id:projection.id,call:projection.call,layouts:extraLayouts.length?[...projection.layouts,...extraLayouts]:projection.layouts,roots:extraRoots.length?[...projection.roots,...extraRoots]:projection.roots,functionContext}));
 }
 
@@ -191,12 +227,12 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
  return (...args)=>{
   const name=[...path,item.name].join('.');
   if(item.k!=='fn'||entry!==checker.items.get(name)||entry.fullName!==name)fail();
-  currentFunction(checker,item,receipt);if(activeFunctions.has(checker))fail();receipt.functionName=name;receipt.errorLane=receipt.owns&&stringError(checker,entry);activeFunctions.set(checker,receipt);
+  currentFunction(checker,item,receipt);if(activeFunctions.has(checker))fail();receipt.functionName=name;receipt.errorLane=receipt.owns&&stringError(checker,entry);receipt.optionLane=receipt.owns&&!receipt.errorLane&&ownedOptionReturn(checker,entry);activeFunctions.set(checker,receipt);
   try{
    const result=visit(...args),body=copyMetadata(entry.body);
    currentFunction(checker,item,receipt);if(!same(entry.body,body))fail();
    const completed={item,receipt,entry,snapshot:copyMetadata({params:entry.params,ret:entry.ret,body:entry.body})};completedFunctions.get(checker).set(name,completed);
-   if(!receipt.owns||receipt.errorLane)return result;
+   if(!receipt.owns||receipt.errorLane||receipt.optionLane)return result;
    createRulePipeline([
     {phase:'language',rules:[{id:'owned-json-flow:check-whole-function-linear-state',apply:()=>{
      validateOwnedJsonFlow(checker,entry,{genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
@@ -225,13 +261,14 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
   currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();return fact;
  };
  for(const [name,fact]of records){
-  if(!fact.receipt.errorLane)continue;current(name);const dependencies=new Map();
+  if(!fact.receipt.errorLane&&!fact.receipt.optionLane)continue;current(name);const dependencies=new Map();
   try{createRulePipeline([
    {phase:'language',rules:[{id:'owned-json-error-flow:check-current-linear-result-and-readonly-closure',apply:()=>{
     validateOwnedJsonFlow(checker,fact.entry,{
      genuine:(node,entry)=>{const owner=records.get(entry.fullName),proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===owner?.receipt&&proof.id===node.id&&same(node.args,proof.args);},
      genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true,
-     closedErrors:{
+     closedOption:fact.receipt.optionLane?closedOptionSource(checker,fact,current,Parser,Checker,program):null,
+     closedErrors:fact.receipt.errorLane?{
       callee:(node)=>{const target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return target.entry;},
       format:(node,entry)=>{
        if(node.k!=='routerConstObligation'||node.sourceFeature!=='router-core-format')return null;const fact=current(entry.fullName),frame=fact.receipt,record=frame.formatted?.find(record=>isSameSemantic(node,record.value)&&same(record.syntax,record.original))??frame.formatted?.find(record=>same(record.syntax,record.original)&&checkedTailFormatSame(fact,node,record,tailOrigin));if(!record)return null;
@@ -240,7 +277,7 @@ export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tai
       diagnostic:node=>node?.k==='routerConstObligation'&&node.sourceFeature==='router-core-format'?{join:'format-record',function:fact.entry.fullName.slice(0,120),candidates:(fact.receipt.formatted??[]).slice(0,3).map(record=>({difference:describeOwnedJsonDifference(alphaTree(node),alphaTree(record.value))}))}:null,
       standard:(node)=>{if(node.k==='routerPinnedStandardBody'){requirePinnedStandardBody(node,Parser,{Checker,program});return node.body;}if(node.k==='routerPinnedOptionCallbackBody')return requirePinnedOptionCallbackBody(node,program,Parser,Checker);if(node.k==='routerOriginalMappedBody')return requireOriginalMappedBody(node,program,Parser,Checker);return null;},
       tail:(node,entry)=>{current(entry.fullName);return tailOrigin(node)&&node.sourceSharedPatternProof.functionTail===true;},
-     },
+     }:null,
     });return null;
    }}]},
    {phase:'repository',rules:[{id:'router-core:rejoin-complete-error-flow-callers-and-helper-bodies',apply:value=>{current(name);for(const dependency of dependencies.keys())current(dependency);return value;}}]},

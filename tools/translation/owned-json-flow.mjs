@@ -33,8 +33,9 @@ export function describeOwnedJsonDifference(actual,expected,{propertyOrder=false
  };
  return visit(actual,expected,'',0);
 }
-export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,closedErrors=null}) {
+export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,closedErrors=null,closedOption=null}) {
  const refuse=(detail,node,comparison=null)=>{const diagnostic=comparison??closedErrors?.diagnostic?.(node);throw unsupported('owned JSON flow',detail+(diagnostic?' [comparison '+JSON.stringify(diagnostic)+']':''),node?.span??entry.span);};
+ const standardContext=closedErrors??closedOption;
  let cells=100000,callCount=0,selectedOptionTypes=null,optionalParseBoundary=null;
  const hasOptionalParse=()=>{
   if(optionalParseBoundary!==null)return optionalParseBoundary;
@@ -64,7 +65,8 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
  };
  const option=(type,node)=>{
   const owner=type?.kind==='data'?checker.items.get(type.name):null,source=type&&!Object.hasOwn(type,'rustStandardGeneric')&&selectedOptionTypes?.has(type)&&owner?.standardGeneric?.kind==='Option'?owner.standardGeneric:type?.rustStandardGeneric;
-  if(type?.rustReference||type?.rustOwnership||type?.patternOwnershipRefusal||type?.rustGenericIdentityUnresolved||type?.rustBorrowingUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return null;
+  const stringSummary=closedOption&&type?.patternOwnershipRefusal==='ownership-bearing String type'&&source?.kind==='Option'&&source.arguments?.length===1&&ownedText(checker.resolveType(source.arguments[0],owner?.modulePath??entry.modulePath,node?.span??entry.span));
+  if(type?.rustReference||type?.rustOwnership||type?.patternOwnershipRefusal&&!stringSummary||type?.rustGenericIdentityUnresolved||type?.rustBorrowingUnresolved||owner?.k!=='data'||owner.fullName!==type.name||owner.standardGeneric?.kind!=='Option'||source?.kind!=='Option'||source.arguments?.length!==1||owner.standardGeneric.arguments?.length!==1||owner.ctors?.length!==2)return null;
   const some=owner.ctors.find(ctor=>ctor.name==='Some'),none=owner.ctors.find(ctor=>ctor.name==='None');
   if(!some||some.fields?.length!==1||some.fields[0].name!=='field0'||!none||none.fields?.length)return null;
   const payload=checker.resolveType(source.arguments[0],owner.modulePath,node?.span??entry.span);
@@ -96,6 +98,8 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    if(active.has(type.name))refuse('recursive or unknown aggregate Drop',node);
    const generic=type.rustStandardGeneric??owner?.standardGeneric;
    if(!['Option','Result'].includes(owner?.standardGeneric?.kind)||generic?.kind!==owner.standardGeneric.kind)refuse('unknown aggregate Drop or ownership',node);
+   if(closedOption&&generic.kind==='Result')refuse('owned Option flow grants no Result error or residual transfer',node);
+   if(closedOption&&generic.kind==='Option'&&!option(type,node))refuse('owned Option source arguments or field layout changed',node);
    const inner=new Set(active).add(type.name),arguments_=generic.arguments.map(argument=>domain(checker.resolveType(argument,owner.modulePath,node?.span??entry.span),node,inner));
    if(closedErrors&&generic.kind==='Result'){
     const actual=resultOwner(type,node);if(!sameType(actual.success,checker.resolveType(generic.arguments[0],owner.modulePath,node?.span??entry.span)))refuse('Result success source changed',node);
@@ -109,7 +113,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    return arguments_.some(linear)?'linear':'copy';
   }
   if(type.kind==='string'){
-   if(closedErrors&&ownedText(type))return 'owned-text';
+   if((closedErrors||closedOption)&&ownedText(type))return 'owned-text';
    if(type.rustOwnership&&!(type.rustOwnership.kind==='borrowed'&&type.rustOwnership.source==='str')||type.patternOwnershipRefusal)refuse('owned text or unknown Drop',node);
    return 'copy';
   }
@@ -175,7 +179,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(!node||typeof node!=='object')refuse('missing checked expression',entry);
   const read=(value,how='move')=>visit(value,state,how,depth+1);
   if(node.k==='var')return variable(node,state,mode);
-  if(closedErrors&&node.k==='routerOriginalCallbackLoan'){
+  if(standardContext&&node.k==='routerOriginalCallbackLoan'){
    if(!state.standardScope||!hasOriginalCallbackLoan(node))refuse('callback loan lacks its selected private standard frame',node);const value=read(node.value,'borrow');
    if(node.type.rustReference?.pointee?.rustReference){if(!canonical(node.type.rustReference.pointee.rustReference.pointee,node))refuse('callback loan cannot widen a noncanonical aggregate',node);value.localLoanType=node.type;value.localLoanOrigin=node;}return value;
   }
@@ -184,7 +188,7 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    const format=closedErrors.format(node,state.entry);if(format){for(const argument of format)read(argument,'borrow');return empty();}
   }
   if(node.k==='routerLambdaInput'){
-   const value=state.lambdaInputs?.[node.position];if(!value||kind!=='borrow'&&!(closedErrors&&state.optionCallback&&kind==='copy'))refuse('callback item requires its actual shared slice root',node);ensureRoots(value,state,node);return copy(value);
+   const value=state.lambdaInputs?.[node.position];if(!value||kind!=='borrow'&&!(standardContext&&state.optionCallback&&kind==='copy'))refuse('callback item requires its actual shared slice root',node);ensureRoots(value,state,node);return copy(value);
   }
   if(node.k==='routerCoreJsonCollection'){
    if(!genuine(node,state.entry)||node.args.length!==2||kind!=='json-vector'||state.callbackCaptures)refuse('collection requires its actual source call and one closed callback boundary',node);
@@ -265,27 +269,38 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
    checker.expectedOwnership(node.type,actual.payload,actual.owner.modulePath,node.span);if(domain(node.type,node)!==domain(actual.payload,node))refuse('Option projection cannot erase its shared ownership',node);
    return project(read(object,'borrow'),'field0');
   }
-  if(closedErrors&&['routerPinnedStandardBody','routerPinnedOptionCallbackBody','routerOriginalMappedBody','routerOriginalSharedDomainGuard','routerOriginalStandardFrame','routerOriginalSharedPatternMatch'].includes(node.k)){
+  if(standardContext&&['routerPinnedStandardBody','routerPinnedOptionCallbackBody','routerOriginalMappedBody','routerOriginalSharedDomainGuard','routerOriginalStandardFrame','routerOriginalSharedPatternMatch'].includes(node.k)){
    if(node.k==='routerOriginalSharedDomainGuard'){if(!hasOriginalSharedDomainGuard(node))refuse('shared domain guard changed',node);return read(node.value,'borrow');}
    if(node.k==='routerOriginalSharedPatternMatch'){
-    if(!closedErrors.tail(node,state.entry))refuse('function-tail flow lacks its private original frame',node);const child=clone(state);let body=node.body;while(body?.k==='let')body=body.body;if(body?.k!=='routerOrderedMatchArms')refuse('function-tail flow requires its actual ordered arms',node);child.tailNode=body;const result=visit(node.body,child,mode,depth+1);merge(state,child,child);return result;
+    if(!closedErrors?.tail(node,state.entry))refuse('function-tail flow lacks its private original frame',node);const child=clone(state);let body=node.body;while(body?.k==='let')body=body.body;if(body?.k!=='routerOrderedMatchArms')refuse('function-tail flow requires its actual ordered arms',node);child.tailNode=body;const result=visit(node.body,child,mode,depth+1);merge(state,child,child);return result;
    }
    if(node.k==='routerOriginalStandardFrame'){
     if(!state.standardScope||!hasOriginalSourceFrame(node))refuse('local return frame lacks its original standard body',node);const child=clone(state);child.localReturns=[];const value=visit(node.body,child,mode,depth+1),completions=[...(child.alive?[{state:child,value}]:[]),...child.localReturns];if(!completions.length)refuse('standard local frame has no closed continuation',node);let joined=completions[0].state,result=completions[0].value;for(const next of completions.slice(1)){const target=clone(state);merge(target,joined,next.state);joined=target;result=union(result,next.value);}joined.alive=true;merge(state,joined,joined);return result;
    }
-   const body=closedErrors.standard(node,state.entry);if(!body)refuse('standard wrapper lacks its current private source body',node);const child=clone(state);child.standardScope=true;const value=selectedBody(body,()=>visit(body,child,mode,depth+1));merge(state,child,child);return value;
+   const body=standardContext.standard(node,state.entry);if(!body)refuse('standard wrapper lacks its current private source body',node);const child=clone(state);child.standardScope=true;const value=selectedBody(body,()=>visit(body,child,mode,depth+1));merge(state,child,child);return value;
   }
   if(closedErrors&&node.k==='routerOptionCallback'){
    const actual=option(node.value.type,node);if(!actual||node.op!=='and_then'||node.callback?.k!=='routerLambda'||node.callback.arity!==1||!option(node.type,node))refuse('only the actual checked readonly Option and_then is supported',node);
    const value=read(node.value),child=clone(state);child.callbackCaptures=new Set(state.names.values());child.optionCallback=true;child.lambdaInputs=[project(value,'field0')];const result=visit(node.callback.binding,child,'move',depth+1);ensureRoots(result,state,node);return union(result,{loans:new Map(),tags:new Set(['None'])});
   }
-  if(closedErrors&&node.k==='match'){
+  if(standardContext&&node.k==='match'){
    if(!state.standardScope||!Array.isArray(node.cases)||node.cases.length!==2)refuse('aggregate match needs its privately selected standard frame',node);const actual=option(node.scrutinee.type,node);if(!actual)refuse('standard match requires actual canonical Option',node);const subject=read(node.scrutinee),states=[],values=[],seen=new Set();
    for(const arm of node.cases){const pattern=arm.pattern,ctor=actual.owner.ctors.find(row=>row.name===pattern.ctor);if(pattern.k!=='ctor'||pattern.data!==actual.owner.fullName||!ctor||seen.has(ctor.name)||!Array.isArray(pattern.binds)||pattern.binds.length!==ctor.fields.length||arm.guard)refuse('standard match constructor or field changed',node);seen.add(ctor.name);const child=clone(state);if(node.scrutinee.k==='var'){const slot=child.names.get(node.scrutinee.name),fact=copy(child.values.get(slot));fact.tags=new Set([ctor.name]);if(ctor.name==='None')fact.loans.clear();child.values.set(slot,fact);}for(const [at,name]of pattern.binds.entries())if(name){if(typeof name!=='string')refuse('standard match binder changed',node);const field=checker.resolveType(ctor.fields[at].type,actual.owner.modulePath,node.span);bind(child,name,field,false,node,project(subject,ctor.fields[at].name));}values.push(visit(arm.body,child,mode,depth+1));states.push(child);}
    if(!seen.has('Some')||!seen.has('None'))refuse('standard Option match is not exhaustive',node);merge(state,states[0],states[1]);return states[0].alive&&states[1].alive?union(values[0],values[1]):copy(states[0].alive?values[0]:values[1]);
   }
-  if(closedErrors&&node.k==='routerStringOperation'&&node.op==='is_empty'){
+  if(standardContext&&node.k==='routerStringOperation'&&node.op==='is_empty'){
    if(node.string?.type.kind!=='string'||node.string.type.rustOwnership?.kind!=='borrowed'||node.string.type.rustOwnership.source!=='str')refuse('string predicate requires its actual borrowed str',node);read(node.string,'borrow');return empty();
+  }
+  if(closedOption&&node.k==='routerStandardMethod'){
+   const proof=closedOption.map(node,state.entry),input=option(node.value?.type,node),output=option(node.type,node),callback=node.callback;
+   if(!proof||!input||!output||!sameType(proof.input,input.payload)||!sameType(proof.result,output.payload)||!ownedText(output.payload))refuse('Option map needs its actual standard allocating source callback',node);
+   checker.expectedOwnership(output.payload,proof.result,state.entry.modulePath,node.span);
+   const value=read(node.value),child=clone(state);child.callbackCaptures=new Set(state.names.values());child.optionCallback=true;child.lambdaInputs=[project(value,'field0')];
+   const result=visit(callback.binding,child,'move',depth+1);if(result.loans.size)refuse('owned String allocation cannot retain its borrowed input',node);return {loans:new Map(),tags:new Set(['Some','None'])};
+  }
+  if(closedOption&&node.k==='routerAllocatingStringItem'){
+   if(!closedOption.allocate(node,state.entry)||!ownedText(node.type)||domain(node.object.type,node.object)!=='copy')refuse('allocation needs its actual source-bound borrowed str function item',node);
+   ensureRoots(read(node.object,'borrow'),state,node);return empty();
   }
   if(node.k==='routerJsonMacro'){
    if(kind!=='json')refuse('JSON construction requires its actual canonical result',node);
