@@ -1,5 +1,10 @@
 //! Independent borrowed-text adoption behavior. UNRUN locally for issue #759.
 //! Rust execution remains gated on every JavaScript CI stage at the same SHA.
+// These oracle cases intentionally retain the exact adopted formatting API
+// and its explicit argument. Keep those witnesses instead of simplifying the
+// format expression or changing it to a captured-argument spelling.
+#![allow(clippy::uninlined_format_args, clippy::useless_format)]
+
 use link_assistant_router::translation_core::{self, Maybe, Str, Text};
 
 fn canonical_provider(provider: &Str) -> Text {
