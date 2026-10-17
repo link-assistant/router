@@ -1,6 +1,7 @@
 // Candidate-only, maintainer-authorized owned API adoption. No original Index
 // dispatch, public type/borrow authority or executable admission is issued.
 import {createHash} from 'node:crypto';
+import {createLegacyJsonReaderNormalizer} from './core-json-reader-normalization.mjs';
 import {types} from 'node:util';
 import {resolveModuleGraph} from './project.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
@@ -84,46 +85,7 @@ function select(source,item,scoped,modulePath,names){
  for(const row of parameters){if(!ident(row[0])||row[1]?.text!==':'||parameters.filter(other=>other[0]?.text===row[0].text).length!==1)return {edits,selections,skipped:[{function:item.name,reason:'distinct immutable parameter binding required'}]};if(sliceRole(row.slice(2),scoped))slices.add(row[0].text);}
  const result=text(tokens.slice(params+1,body)),vector=/^->(?:Vec|std::vec::Vec|::std::vec::Vec)<(.+)>$/u.exec(result);
  if(!vector||!(vector[1]===C+'Json'||scoped.jsonNames.has(vector[1])))return {edits,selections,skipped:[{function:item.name,reason:'actual canonical Vec<Json> result syntax required'}]};
- let serial=0;
- const fresh=()=>{let value;do{value='__router_json_collection_'+(++serial);}while(names.has(value));names.add(value);return value;};
- const normalizations=[],knownCallbackBinders=new Set();
- function readers(start,stop,parameter,depth=0){
-  if(depth>32)return null;const first=tokens[start];if(first?.text!==parameter)return null;
-  let at=start+1,role='value',optional=false,changed=false,rendered=source.slice(first.start,first.end);
-  while(at<stop&&tokens[at]?.text==='.'&&ident(tokens[at+1])&&tokens[at+2]?.text==='('){
-   const end=close(tokens,at+2);if(end<0||end>=stop)return null;
-   const method=tokens[at+1].text,args=tokens.slice(at+3,end),raw=source.slice(tokens[at-1].end,tokens[end].end);
-   if(method==='get'&&!optional&&role==='value'&&args.length===1&&args[0].type==='string'){rendered+=raw;optional=true;}
-   else if(method==='as_str'&&!optional&&role==='value'&&!args.length){rendered+=raw;optional=true;role='str';}
-   else if(method==='and_then'&&optional&&role==='value'){
-    const input=fresh(),payload=fresh();let called,output;
-    const fn=text(args),owner=fn.endsWith('::as_str')?fn.slice(0,-8):null;
-    if(owner&&(owner===C+'Json'||scoped.jsonNames.has(owner))){called=C+'Json::as_str('+payload+')';output='str';}
-    else if(args[0]?.text==='|'&&ident(args[1])&&args[2]?.text==='|'){
-     const begin=at+6,finish=end;let innerStart=begin,innerEnd=finish;
-     if(tokens[innerStart]?.text==='{'&&close(tokens,innerStart)===finish-1){innerStart++;innerEnd--;}
-     const selected=readers(innerStart,innerEnd,args[1].text,depth+1);
-     if(!selected||selected.end!==innerEnd||!selected.optional)return null;
-     knownCallbackBinders.add(args[0].start);called='{ let '+args[1].text+' = '+payload+'; '+selected.value+' }';output=selected.role;
-    }else return null;
-    rendered='{ let '+input+' = '+rendered+'; if let Some('+payload+') = '+input+' { '+called+' } else { None } }';role=output;changed=true;
-   }else if(method==='unwrap_or'&&optional&&role==='str'&&args.length===1&&args[0].type==='string'){
-    const input=fresh(),fallback=fresh(),payload=fresh(),value=source.slice(args[0].start,args[0].end);
-    rendered='{ let '+input+' = '+rendered+'; let '+fallback+' = '+value+'; if let Some('+payload+') = '+input+' { '+payload+' } else { '+fallback+' } }';optional=false;changed=true;
-   }else if(method==='is_some'&&optional&&role==='value'&&!args.length){
-    const input=fresh();rendered='{ let '+input+' = '+rendered+'; if let Some(_) = '+input+' { true } else { false } }';optional=false;role='bool';changed=true;
-   }else break;
-   at=end+1;
-  }
-  return {end:at,value:rendered,role,optional,changed};
- }
- function normalize(start,stop,parameter,from,to){
-  let output='',position=from;
-  for(let at=start;at<stop;at++)if(tokens[at].text===parameter){
-   const read=readers(at,stop,parameter);if(read?.changed){const end=tokens[read.end-1].end;output+=source.slice(position,tokens[at].start)+read.value;normalizations.push({span:[tokens[at].start,end],expected:source.slice(tokens[at].start,end),replacement:read.value});position=end;at=read.end-1;}
-  }
-  return output+source.slice(position,to);
- }
+ const {fresh,normalizations,knownCallbackBinders,readers,normalize}=createLegacyJsonReaderNormalizer(source,tokens,scoped.jsonNames,names);
  for(let at=body+1;at<tokens.length;at++){
   if(!slices.has(tokens[at].text)||!ident(tokens[at])||text(tokens.slice(at+1,at+6))!=='.iter().')continue;
   // The receiver is an unshadowed immutable source parameter for this first

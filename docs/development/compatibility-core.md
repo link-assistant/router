@@ -318,3 +318,42 @@ The new checked callback text-match lane is limited to original, source-ordered,
 unguarded literal-text alternatives and a final wildcard over one live borrowed
 text binding. Guards, binders, aggregate patterns and outside-callback matches
 receive no permission from that lane.
+
+
+## Ordinary canonical JSON reader proposals
+
+The fixed `json-readers` sequence proposes ordinary-function substitutions for
+canonical `Option<&Json>::and_then(Json::as_str/as_bool/as_u64/as_i64/as_null)`
+readers. It reuses the collection-adopter reader kernel; that existing collection
+sequence retains its original rendering, source maps and observer schedule.
+
+The language stage introduces one hygienic immutable receiver local and an
+explicit canonical Option branch. The repository stage replaces only the newly
+generated canonical paths with the source-bound owned `Maybe`/`Json` paths.
+Complete original, intermediate and final CST transports, source maps and inverses
+remain in each proposal. Receiver trivia, suffix filters/defaults/`?`, branch
+placement and source evaluation count are retained. These equations reuse native
+Rust Option/serde behavior and existing checked JavaScript scalar readers; their
+library internals remain untranslated.
+
+Initial candidates start at a shared canonical Json formal, or a qualified owned
+`Maybe<&Json>` formal, with supported literal/borrowed-text-key `get` steps and a
+shared-formal `unwrap_or` fallback. Direct canonical imports require fresh actual
+source namespace evidence. Unknown imports, competing producers/traits, mutable
+or inferred roots, generic or named-lifetime functions, arbitrary receiver calls
+and unknown macros remain unchanged. Native spelled `Option<&Json>` formals,
+borrowed aggregate readers and `as_f64` are outside this initial selector domain.
+The whole independent checker still decides source/type/lifetime/Drop admission;
+proposal fields never grant execution. Full parent outcomes stay distinct from
+isolated exact-body behavior, and neither provides a whole-crate coverage claim.
+
+To retain complete proposal packets without applying application sources:
+
+```sh
+node tools/translation/propose-core-adoption-corpus.mjs \
+  --root /path/to/source --output /fresh/outside/path --sequence json-readers
+```
+
+The singleton uses the existing exclusive writer, quotas, complete Cargo/source
+snapshots and failure receipt. JavaScript/strict TypeScript receiving and the
+paired CI-only Rust oracle must pass before claiming actual executable gains.
