@@ -83,10 +83,10 @@ function localReturnTail(tokens,body,declaration,afterUpdates,local){
  }
  return false;
 }
-function select(source,item){
+function select(source,item,modulePath){
  const tokens=item.tokens.filter(token=>token.type!=='comment'),selections=[],skipped=[],edits=[],claimed=new Set(),names=new Set(tokens.filter(ident).map(token=>token.text)),macroRanges=[];
  if(tokens.some(token=>token.type==='ident'&&token.text.startsWith('r#')))return {edits:[],selections:[],skipped:[{function:item.name,reason:'raw local identity requires separate hygiene checking'}]};
- const header=originalDeclarationHeader(item,[]),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),params=close(tokens,name+1);let body=params+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(name<0||tokens[name+1]?.text!=='('||params<0||body>=tokens.length||close(tokens,body)!==tokens.length-1)return {edits:[],selections:[],skipped:[{function:item.name,reason:'complete ordinary function body required'}]};
+ const header=originalDeclarationHeader(item,modulePath),name=tokens.findIndex(token=>token.start===header?.nameSpan?.start),params=close(tokens,name+1);let body=params+1;while(body<tokens.length&&tokens[body].text!=='{')body++;if(name<0||tokens[name+1]?.text!=='('||params<0||body>=tokens.length||close(tokens,body)!==tokens.length-1)return {edits:[],selections:[],skipped:[{function:item.name,reason:'complete ordinary function body required'}]};
  for(let at=body+1;at<tokens.length;at++){
   // Unknown expansions/local declarations retain the whole original body. A
   // fixed owned JSON/format call cannot introduce Rust bindings into the caller.
@@ -142,7 +142,7 @@ export function proposeCoreJsonUpdateCorpus({entry='src/lib.rs',files:input,comp
     const header=originalDeclarationHeader(item,parent.path);if(header?.name==='translation_core'&&!(parent===root[0]&&item.term==='mod'&&item.start===edges[0].start&&item.end===edges[0].end))uncertain=true;if(item.term==='use'&&originalUseDeclarationLeaves(item,parent.path).some(leaf=>leaf.glob))uncertain=true;
    }
    for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;const condition=itemConfiguration(item.tokens,profile);if(module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(attribute=>!inert.has(attribute.name))||problems.length||uncertain){preserved.push({function:item.name,span:[item.start,item.end],reason:'configuration, producer, glob or competing core uncertainty'});continue;}
-    const selected=select(files[file],item);edits.push(...selected.edits);selections.push(...selected.selections);preserved.push(...selected.skipped);
+    const selected=select(files[file],item,module.path);edits.push(...selected.edits);selections.push(...selected.selections);preserved.push(...selected.skipped);
    }
   }
   const result=apply(files[file],edits);proposals.push({file,...result,selections,preserved});after[file]=result.after.source;
