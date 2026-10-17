@@ -338,6 +338,24 @@
       "archiveSha256": "f9ed6c38faf580c80cce3692c11ec3b13c20811db4228b78740c21dc2418b593",
       "namespaceAuthority": false,
       "generatedImplBehavior": false
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/deriving/cmp/ord.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/deriving/cmp/ord.rs",
+      "bytes": 2877,
+      "sha256": "29bb464e738ef22cc0ee126e9981b647c4f6394c8d3e3c88aad083d98fffd19d",
+      "archive": "rust-1.89-compiler_rustc_builtin_macros_src_deriving_cmp_ord.rs.gz",
+      "archiveBytes": 1132,
+      "archiveSha256": "ed18001c83a71638df60fd503ebcc9485a55ea31846d2c244c6eccb5412e08fe"
+    },
+    {
+      "path": "compiler/rustc_builtin_macros/src/deriving/cmp/partial_ord.rs",
+      "url": "https://raw.githubusercontent.com/rust-lang/rust/1.89.0/compiler/rustc_builtin_macros/src/deriving/cmp/partial_ord.rs",
+      "bytes": 6181,
+      "sha256": "e34196d3620eee0db4e0dd20a42a96f4b7ad25817089d2c8164b1e8ede8e8fa2",
+      "archive": "rust-1.89-compiler_rustc_builtin_macros_src_deriving_cmp_partial_ord.rs.gz",
+      "archiveBytes": 2099,
+      "archiveSha256": "779ed39b5005a2fd2438e24b77211d2833178ecf9d9c6003c05a43e346e222d3"
     }
   ],
   "generatedImplBehavior": false,

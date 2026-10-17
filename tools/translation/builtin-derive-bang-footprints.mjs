@@ -13,6 +13,7 @@ import {liftBuiltinEqAstRoute} from './builtin-eq-ast-route.mjs';
 import {liftBuiltinCloneAstRoute} from './builtin-clone-ast-route.mjs';
 import {liftBuiltinDebugAstRoute} from './builtin-debug-ast-route.mjs';
 import {liftBuiltinPartialEqAstRoute} from './builtin-partial-eq-ast-route.mjs';
+import {liftBuiltinOrderingAstRoute} from './builtin-ordering-ast-route.mjs';
 import {liftBuiltinDefaultAstRoute,builtinDefaultOriginalSourcePlan,originalBuiltinDefaultAstOutput} from './builtin-default-ast-route.mjs';
 import {proveBuiltinScalarSourceOutput,assertBuiltinScalarSourceOutput} from './builtin-scalar-ast-route.mjs';
 import {attributeOwners} from './serde-bang-footprints.mjs';
@@ -32,6 +33,8 @@ const routes=new Map([
   ['PartialEq',{path:'cmp/partial_eq.rs',entry:'expand_deriving_partial_eq',callbackFunctions:['get_substructure_equality_expr','get_field_equality_expr','peel_refs','wrap_block_expr'],branches:['fieldless enum discrimination','struct/enum fields','short-circuit conjunction and value expression recipes']}],
   ['Eq',{path:'cmp/eq.rs',entry:'expand_deriving_eq',callbackFunctions:['cs_total_eq_assert'],branches:['static struct/enum field type assertions','type-name deduplication']}],
   ['Hash',{path:'hash.rs',entry:'expand_deriving_hash',callbackFunctions:['hash_substructure'],branches:['struct/matching enum','enum discriminant plus match','hash state argument and per-field call statements']}],
+  ['Ord',{path:'cmp/ord.rs',entry:'expand_deriving_ord',callbackFunctions:['cs_cmp'],branches:['unit-enum Unify: one variant Fieldless; multiple variants discriminant Single','payload/Combine outputs remain outside the selected input domain']}],
+  ['PartialOrd',{path:'cmp/partial_ord.rs',entry:'expand_deriving_partial_ord',callbackFunctions:['cs_partial_cmp'],branches:['actual zero dataful variants: discr_then_data=true','unit-enum Unify: one variant Fieldless; multiple variants discriminant Single']}],
 ]);
 export const hasBuiltinDeriveBangRoute=name=>routes.has(name);
 function originalInput(context,certificate,invocation){
@@ -47,7 +50,7 @@ function originalInput(context,certificate,invocation){
 export function planBuiltinDeriveBangOutput({context,certificate,invocation}={}){
   const original=originalInput(context,certificate,invocation),route=routes.get(original.name),profile=builtinDeriveAstSourceProfile(original.dependencies);
   const entry=originalAstFunction(profile,directory+route.path,route.entry),registry=builtinAstOriginal(profile,'compiler/rustc_builtin_macros/src/lib.rs');
-  const prefix=route.path==='cmp/partial_eq.rs'?'partial_eq':route.path==='cmp/eq.rs'?'eq':route.path.slice(0,-3);
+  const prefix=route.path==='cmp/ord.rs'?'ord':route.path==='cmp/partial_ord.rs'?'partial_ord':route.path==='cmp/partial_eq.rs'?'partial_eq':route.path==='cmp/eq.rs'?'eq':route.path.slice(0,-3);
   const registered=original.name+': '+prefix+'::'+route.entry;
   const registrationStart=registry.source.indexOf(registered);
   if(registrationStart<0||registry.source.indexOf(registered,registrationStart+1)>=0)throw new TypeError('Builtin registry owner route is not unique');
@@ -146,6 +149,19 @@ export function proveBuiltinDeriveBangFootprint({context,certificate,invocation}
   if(state.original.name==='PartialEq'){
     const selected=partialEqDataInput(state,context,certificate),route=liftBuiltinPartialEqAstRoute({...state,original:state.original,input:selected.input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc','PartialEq',...certificate.attributes.map(attribute=>attribute.name)]));
     const evidence={schema:'builtin-partial-eq-data-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:selected.input,originalHelperOwners:selected.helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',implementations:2,structuralAssociatedItems:0,equalityAssociatedItems:1,associatedKind:'AssocItemKind::Fn',bodyCallbacksEvaluated:1},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true,structuralAlways:'Const::No'}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['generated PartialEq/equality and intrinsic behavior remain unlowered','all other derives, original scopes, ownership and const eligibility require independent proofs']};
+    const proof=freezeCompleted({...evidence,digest:hash(composeJson(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
+  }
+  if(state.original.name==='Ord'||state.original.name==='PartialOrd'){
+    const input=builtinDeriveDataInputs({source:state.original.module.source,span:certificate.span}),item=originalSourceModuleItems(state.original.module).find(row=>row.start===certificate.span.start&&row.end===certificate.span.end),helpers=[],declaration=sourceItems(state.original.module.source.slice(certificate.span.start,certificate.span.end)).find(row=>row.start===0&&row.end===certificate.span.end-certificate.span.start);
+    for(const attribute of input.attributes){
+      if(attribute.name==='doc'&&attribute.sourceFeature==='original-line-doc-comment'){
+        if(!declaration?.tokens.some(token=>token.type==='comment'&&token.text.startsWith('///')&&token.start+certificate.span.start===attribute.span.start&&token.end+certificate.span.start===attribute.span.end&&token.text===attribute.source))throw new TypeError('Original ordering doc comment differs from its private invocation');continue;
+      }
+      if(!certificate.attributes.some(row=>row.name===attribute.name&&row.position===attribute.position&&row.span.start===attribute.span.start&&row.span.end===attribute.span.end))throw new TypeError('Original ordering attribute differs from its private invocation');
+      if(attribute.position!=='container'&&attribute.name!=='doc'){const proof=deriveFootprintHelperAttributeAt(context,state.original.module,item,attribute.span);if(!isDeriveFootprintHelperAttributeProof(proof))throw new TypeError('Original ordering nested attribute requires its genuine active helper owner');helpers.push(proof);}
+    }
+    const route=liftBuiltinOrderingAstRoute({...state,original:state.original,input}),attributes=attributeOwners(state.original,certificate,new Set(['automatically_derived','inline','doc',state.original.name,...certificate.attributes.map(attribute=>attribute.name)]));
+    const evidence={schema:'builtin-unit-enum-ordering-bang-output-v1',source:certificate.source,sourceSha256:certificate.sourceSha256,span:certificate.span,itemSha256:certificate.itemSha256,inputCertificateDigest:certificate.digest,dependenciesDigest:state.original.dependencies.digest,compilationProfile:certificate.compilationProfile,owner:plan.owner,planDigest:plan.digest,profileDigest:state.profile.digest,route,inputSyntax:input,originalHelperOwners:helpers,slotProofs:{outputKind:{kind:'ItemKind::Impl',associatedItems:1,associatedKind:'AssocItemKind::Fn',bodyKind:'Block',recursivelyClosed:true},constness:{outcomes:['Const::Yes','Const::No'],bothPreserveSink:true}},attributeOwners:attributes,semanticSyntaxRoundTrip:true,selectedOwnerBangComplete:true,dimensions:{bangMacroComplete:true,typeNamespaceComplete:false,valueNamespaceComplete:false,attributeMacroComplete:false},copyAuthority:false,noDropAuthority:false,constAuthority:false,generatedImplBehavior:false,obligations:['ordering and discriminant runtime behavior and trait validity remain uncompiled','all sibling derive owners and original ancestor scopes require separate closed output proofs','payload/generic/conditional layouts and compiler errors remain refused']};
     const proof=freezeCompleted({...evidence,digest:hash(composeJson(evidence))});proofs.set(proof,{context,certificate,invocation});return proof;
   }
   if(state.original.name==='Hash')return proveHashDataOutput(state,plan,context,certificate,invocation);
