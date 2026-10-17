@@ -38,7 +38,23 @@ test('actual sibling producer is deterministic and complete without changing the
  const oldIndex=read('../source-profiles/real-source-fixtures/manifest.json'),oldArchive=hash(readFileSync(new URL('../source-profiles/real-source-fixtures/originals.json.gz',import.meta.url))),a=prepareStaticSourceLifecycleProposal({root:ROOT,historyArchive:ASSETS}),b=prepareStaticSourceLifecycleProposal({root:ROOT,historyArchive:ASSETS});
  retain('02-two-complete-proposals',{a,b});assert.deepEqual(a,b);assert.deepEqual(a.trace.map(row=>row.phase),['language','repository']);assert.equal(a.files.length,3);assert.deepEqual(a.before,a.after);assert.equal(a.completeInverse,true);
  const folder=mkdtempSync(join(tmpdir(),'router-static-source-proposal-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));writeStaticSourceLifecycleProposal(a,folder);
- for(const row of a.files){const raw=readFileSync(join(folder,row.path.split('/').at(-1)));assert.equal(raw.length,row.bytes);assert.equal(hash(raw),row.sha256);assert.deepEqual(raw,readFileSync(join(ASSETS,row.path.split('/').at(-1))),'complete installed artifact: '+row.path);}
+ // Complete decoded bytes and every manifest meaning field are uniform
+ // across native gzip implementations; compressed bytes need not be equal.
+ const compareArchives=(actual,installed)=>{
+  const left=gunzipSync(actual,{maxOutputLength:STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes}),right=gunzipSync(installed,{maxOutputLength:STATIC_SOURCE_LIFECYCLE_LIMITS.outputBytes});
+  assert.ok(left.equals(right),'complete decoded installed archive bytes');
+  return [[actual,left],[installed,right]].map(([packed,decoded])=>({bytes:packed.length,sha256:hash(packed),rawBytes:decoded.length,rawSha256:hash(decoded)}));
+ };
+ let archiveFacts;
+ for(const row of a.files){const raw=readFileSync(join(folder,row.path.split('/').at(-1)));assert.equal(raw.length,row.bytes);assert.equal(hash(raw),row.sha256);
+  const name=row.path.split('/').at(-1),installed=readFileSync(join(ASSETS,name));
+  if(name==='originals.json.gz')archiveFacts=compareArchives(raw,installed);
+  else if(name==='manifest.json'){
+   assert.ok(archiveFacts,'actual complete archive must precede its manifest');const actualIndex=JSON.parse(raw.toString('utf8')),installedIndex=JSON.parse(installed.toString('utf8'));
+   for(const [index,facts]of [[actualIndex,archiveFacts[0]],[installedIndex,archiveFacts[1]]]){assert.equal(index.archive,'originals.json.gz');for(const key of ['bytes','sha256','rawBytes','rawSha256'])assert.equal(index[key],facts[key],key+' authenticates its own complete archive');}
+   assert.deepEqual(actualIndex,{...installedIndex,bytes:actualIndex.bytes,sha256:actualIndex.sha256},'all other complete manifest fields are identical');
+  }else{assert.equal(name,'NOTICE.md');assert.ok(raw.equals(installed),'complete installed NOTICE bytes');}
+ }
  const produced=readStaticSourceLifecycle({folder}),installed=readStaticSourceLifecycle();assert.deepEqual(produced.bundle,installed.bundle);
  assert.equal(read('../source-profiles/real-source-fixtures/manifest.json'),oldIndex);assert.equal(hash(readFileSync(new URL('../source-profiles/real-source-fixtures/originals.json.gz',import.meta.url))),oldArchive);
 });
