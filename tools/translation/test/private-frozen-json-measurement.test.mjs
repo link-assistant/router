@@ -2,6 +2,7 @@
 import {translateProject} from '../project.mjs';
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
+import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 import {Hash,createHash} from 'node:crypto';
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
@@ -26,7 +27,7 @@ const base=new URL('../',import.meta.url),json=JSON.stringify,descriptor=Object.
 const hash=value=>createHash('sha256').update(value).digest('hex');
 function test(name,run){testCase(name,{timeout:60000},async t=>{
  const vectors=[],retain=(label,value)=>{vectors.push({label,value});return value;};
- try{await run(t,retain);}finally{const folder=process.env.ROUTER_JSON_MEASUREMENT_VECTOR_DIR;if(folder){mkdirSync(folder,{recursive:true});writeFileSync(join(folder,Buffer.from(name).toString('hex')+'.json'),json({name,vectors})+'\n');}}
+ try{await run(t,retain);}finally{const folder=process.env.ROUTER_JSON_MEASUREMENT_VECTOR_DIR;if(folder){mkdirSync(folder,{recursive:true});writeJsonTextGzip(join(folder,Buffer.from(name).toString('hex')+'.json.gz'),json({name,vectors}));}}
 });}
 function frozen(value,seen=new WeakSet()){if(value&&typeof value==='object'&&!seen.has(value)){seen.add(value);for(const field of Object.values(Object.getOwnPropertyDescriptors(value)))if(Object.hasOwn(field,'value'))frozen(field.value,seen);Object.freeze(value);}return value;}
 function outcome(run){try{return {value:run()};}catch(error){return {error:{kind:error instanceof TypeError?'TypeError':error instanceof RangeError?'RangeError':'Error',message:descriptor(error,'message')?.value??null}};}}

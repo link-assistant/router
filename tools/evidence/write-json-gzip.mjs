@@ -9,3 +9,10 @@ export function writeJsonGzip(path,value,replacer){
   const payload=gzipSync(encoded,{mtime:0}),newline=gzipSync('\n',{mtime:0});
   writeFileSync(path,Buffer.concat([payload,newline]));
 }
+
+// Store caller-encoded text without selecting or invoking a JSON serializer.
+export function writeJsonTextGzip(path,encoded){
+  const text=encoded+'';
+  const payload=gzipSync(text,{mtime:0}),newline=gzipSync('\n',{mtime:0});
+  writeFileSync(path,Buffer.concat([payload,newline]));
+}

@@ -1,6 +1,7 @@
 // Complete source and behavior oracle: immutable bytes never issue owner facts.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
+import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -31,7 +32,7 @@ const SUCCESSFUL_MEASUREMENT_EDITS=[{"before":"   if(saved&&!isArray(value)){con
 const json=JSON.stringify,descriptor=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply;
 const base=new URL('../',import.meta.url),root=new URL('../../../',import.meta.url),sha=value=>createHash('sha256').update(value).digest('hex');
 const cargo={manifest:readFileSync(new URL('Cargo.toml',root),'utf8'),lock:readFileSync(new URL('Cargo.lock',root),'utf8')},dependencies=loadDeriveDependencyProof(cargo);
-function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const directory=process.env.ROUTER_PLAN_JSON_COMPOSITION_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeFileSync(join(directory,Buffer.from(name).toString('hex')+'.json'),json({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value)+'\n');}}});}
+function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{const directory=process.env.ROUTER_PLAN_JSON_COMPOSITION_VECTOR_DIR;if(directory){mkdirSync(directory,{recursive:true});writeJsonTextGzip(join(directory,Buffer.from(name).toString('hex')+'.json.gz'),json({name,vectors},(_key,value)=>typeof value==='bigint'?{$integer:String(value)}:value));}}});}
 function outcome(run){try{return {value:run()};}catch(error){return {error:{type:error instanceof TypeError?'TypeError':error instanceof RangeError?'RangeError':'Error',message:descriptor(error,'message')?.value??null}};}}
 function equal(retain,label,before,current){retain(label,{before,current});assert.deepEqual(current,before);return current;}
 function freeze(value,seen=new WeakSet()){if(value&&typeof value==='object'&&!seen.has(value)){seen.add(value);for(const child of Object.values(value))freeze(child,seen);Object.freeze(value);}return value;}

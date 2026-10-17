@@ -1,6 +1,7 @@
 // Full source/hash oracle; composition stores immutable substrings, never proof decisions.
 import testCase from 'node:test';
 import assert from 'node:assert/strict';
+import {writeJsonTextGzip} from '../../evidence/write-json-gzip.mjs';
 import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
@@ -29,7 +30,7 @@ const json=JSON.stringify,define=Object.defineProperty,descriptor=Object.getOwnP
 const root=new URL('../../../',import.meta.url),sha=text=>createHash('sha256').update(text).digest('hex');
 const outcome=run=>{try{return {value:run()};}catch(error){return {error:{type:error instanceof TypeError?'TypeError':error instanceof Error?'Error':typeof error,message:descriptor(error,'message')?.value??null}};}};
 function equal(retain,label,before,current){retain(label,{before,current});assert.deepEqual(current,before);return current;}
-function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{if(process.env.ROUTER_PROOF_JSON_COMPOSITION_VECTOR_DIR){mkdirSync(process.env.ROUTER_PROOF_JSON_COMPOSITION_VECTOR_DIR,{recursive:true});writeFileSync(join(process.env.ROUTER_PROOF_JSON_COMPOSITION_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json'),json({name,vectors},(_key,value)=>value===undefined?{$undefined:true}:typeof value==='bigint'?{$integer:String(value)}:typeof value==='number'&&(value!==value||value===Infinity||value===-Infinity||is(value,-0))?{$number:is(value,-0)?'-0':String(value)}:value)+'\n');}}});}
+function test(name,run){testCase(name,{timeout:60_000},async t=>{const vectors=[],retain=(kind,value)=>{vectors.push({kind,value});return value;};try{await run(t,retain);}finally{if(process.env.ROUTER_PROOF_JSON_COMPOSITION_VECTOR_DIR){mkdirSync(process.env.ROUTER_PROOF_JSON_COMPOSITION_VECTOR_DIR,{recursive:true});writeJsonTextGzip(join(process.env.ROUTER_PROOF_JSON_COMPOSITION_VECTOR_DIR,Buffer.from(name).toString('hex')+'.json.gz'),json({name,vectors},(_key,value)=>value===undefined?{$undefined:true}:typeof value==='bigint'?{$integer:String(value)}:typeof value==='number'&&(value!==value||value===Infinity||value===-Infinity||is(value,-0))?{$number:is(value,-0)?'-0':String(value)}:value));}}});}
 function freeze(value,seen=new WeakSet()){if(value&&typeof value==='object'&&!seen.has(value)){seen.add(value);for(const child of Object.values(value))freeze(child,seen);Object.freeze(value);}return value;}
 // Exact reviewed 480 evolution; complete historical fixtures remain unchanged.
 const STRUCTURAL_ARRAY_EDITS=[{"before":"if(saved){const cost=saved>>>1","after":"if(saved&&!isArray(value)){const cost=saved>>>1"},{"before":"if(substrate&&apply(frozenField.value,Object,[value]))","after":"if(substrate&&!array&&apply(frozenField.value,Object,[value]))"}];
