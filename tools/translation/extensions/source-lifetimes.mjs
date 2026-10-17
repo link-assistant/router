@@ -1,4 +1,7 @@
-import {hasOriginalRouterCoreJsonProjection} from '../router-core-json-updates.mjs';
+import {canonicalResult} from './result-iterators.mjs';
+import {JSON_DATA} from './json-contracts.mjs';
+import {sharedReferenceCopyIdentity} from '../shared-reference-copy-source.mjs';
+import {hasOriginalRouterCoreJsonProjection,hasOriginalJsonStringErrorContext} from '../router-core-json-updates.mjs';
 import {hasOriginalMappedOrigin} from './standard-mapped-body.mjs';
 import {sameType} from '../checked-types.mjs';
 import {originalCloneReceiverOrigin} from './clone-source-body.mjs';
@@ -316,7 +319,7 @@ function origins(node,env,context,returns,depth=0) {
     const value=read(node.value);
     // Option's None residual contains no borrow; Some passes its actual leaf
     // origins. Result residual lifetimes need separate error-origin lowering.
-    if(!node.option&&(borrowed||hasBorrow(node.value.type,context)))throw unsupported('borrowed Result propagation','requires checked residual error lifetime origins',node.span);
+    if(!node.option&&(borrowed||hasBorrow(node.value.type,context))&&!closedStringErrorTry(node,context))throw unsupported('borrowed Result propagation','requires checked residual error lifetime origins',node.span);
     return borrowed?project(value,['argument',0]):new Set();
   }
   if(node.k==='routerStaticArrayElement'&&hasStaticElementOrigin(node))return uniformOrigins(node.type,new Set(['static']),context);
@@ -550,6 +553,27 @@ function emptyBorrowValue(node,context,depth=0) {
   return false;
 }
 
+// Result's Err residual is nonborrowed here; this does not infer origins for
+// arbitrary errors or stored aggregate loans. Existing return/static checks
+// still consume the actual success leaf origins below.
+function closedStringErrorTry(node,context){
+ const checker=context.checker;if(!checker||!hasOriginalJsonStringErrorContext(checker,context.entry))return false;
+ const input=canonicalResult(checker,node.value.type,context.entry.modulePath,node.span,false),output=canonicalResult(checker,context.entry.ret,context.entry.modulePath,node.span,false);
+ if(!input||!output)return false;
+ const string=type=>type.kind==='string'&&type.rustSourceType===true&&!type.rustReference&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='owned'&&type.rustOwnership.source==='String'&&[undefined,'ownership-bearing String type','owned String source type','owned String formatting'].includes(type.patternOwnershipRefusal);
+ if(!string(input.error)||!string(output.error)||!sameType(input.error,output.error)||hasBorrow(input.error,context)||hasBorrow(output.error,context)||!sameType(input.success,node.type))return false;
+ checker.expectedOwnership(input.error,output.error,context.entry.modulePath,node.span);checker.expectedPrimitiveIdentity(input.error,output.error,context.entry.modulePath,node.span);checker.expectedOwnership(node.type,input.success,context.entry.modulePath,node.span);
+ const success=input.success;
+ if(success.kind==='string'&&!success.rustReference&&!success.patternOwnershipRefusal&&success.rustSourceType===true&&success.rustOwnership?.kind==='borrowed'&&success.rustOwnership.source==='str')return true;
+ const pointee=success.rustReference?.pointee,owner=pointee?.kind==='data'?context.declarations.get(pointee.name):null,name=owner?.hostTypePath?.join('::'),original=JSON_DATA[0].items.find(item=>'serde_json::'+item.name===name);
+ if(!sharedReferenceCopyIdentity(success)||success.rustReference?.kind!=='shared'||pointee?.rustReference||pointee?.rustOwnership||pointee?.patternOwnershipRefusal||!original||!['serde_json::Value','serde_json::Map_String_Value'].includes(name)||owner.generated!=='router-json-contract'||owner.ctors.length!==original.ctors.length)return false;
+ for(const [at,expected]of original.ctors.entries()){
+  const actual=owner.ctors[at];if(actual.name!==expected.name||actual.fields.length!==expected.fields.length)return false;
+  for(const [index,field]of expected.fields.entries())if(actual.fields[index].name!==field.name||!sameType(checker.resolveType(actual.fields[index].type,owner.modulePath,node.span),checker.hostType(field.type,owner.modulePath,node.span)))return false;
+ }
+ return true;
+}
+
 export function withSourceLifetimeChecker(Base) {
   return class extends Base {
     expr(node,env,path,expected,allowLiteral=false) {
@@ -565,7 +589,7 @@ export function withSourceLifetimeChecker(Base) {
       const mutableParameters=new Map();
       const collect=(items,path=[])=>{for(const item of items)if(item.k==='module')collect(item.items,[...path,item.name]);else if(item.k==='fn')mutableParameters.set([...path,item.name].join('.'),item.params.filter(param=>param.mutable).map(param=>param.name));};
       collect(surface.items);
-      const program=super.program(surface),context={sourceSharedPatternReader:node=>this.sourceSharedPatternProofOrigin?.(node),declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
+      const program=super.program(surface),context={checker:this,sourceSharedPatternReader:node=>this.sourceSharedPatternProofOrigin?.(node),declarations:program.declarations,resolveType:(type,path,span)=>this.resolveType(type,path,span)};
       const signatures=new Map();
       for(const entry of program.declarations.values())if(entry.k==='fn')signatures.set(entry.fullName,functionLifetimeSignature(entry,context));
       for(const entry of program.declarations.values())if(entry.k==='fn') {

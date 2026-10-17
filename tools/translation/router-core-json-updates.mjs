@@ -7,7 +7,10 @@ import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.
 import {copyMetadata,metadataDigest,originalParsedDeclarationEvidence,originalParsedSyntaxNode} from './extensions/source-links.mjs';
 import {JSON_TYPES,JSON_DATA} from './extensions/json-contracts.mjs';
 import {sameType} from './checked-types.mjs';
-import {alphaTree,retargetCheckedCallback} from './extensions/standard-body-checker.mjs';
+import {canonicalResult} from './extensions/result-iterators.mjs';
+import {requirePinnedOptionCallbackBody} from './extensions/standard-option-callback-body.mjs';
+import {requireOriginalMappedBody} from './extensions/standard-mapped-body.mjs';
+import {alphaTree,retargetCheckedCallback,requirePinnedStandardBody} from './extensions/standard-body-checker.mjs';
 import {captureBorrowedLayouts,requireBorrowedLayouts} from './extensions/standard-borrowed-body.mjs';
 import {renameFunction} from './vendor/meta-language/translation/ir.js';
 import {coerce} from './checked-coercions.mjs';
@@ -19,8 +22,8 @@ import {transportConcreteSyntaxSource} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {requireRouterCoreFacade,requireRouterCoreFacadeCurrent} from './router-core-formatting.mjs';
 import {ROUTER_CORE_PRIMITIVES_SOURCE,ROUTER_CORE_PRIMITIVES_SHA256} from './router-core-source-data.mjs';
-import {unsupported,typeError} from './vendor/meta-language/translation/diagnostics.js';
-const qualified=originalDataFreezeIntrinsicsUnchanged(),calls=new WeakMap(),checkedCalls=new WeakMap(),functions=new WeakMap(),activeFunctions=new WeakMap(),issued=new WeakMap();
+import {unsupported,typeError,TranslationError} from './vendor/meta-language/translation/diagnostics.js';
+const qualified=originalDataFreezeIntrinsicsUnchanged(),calls=new WeakMap(),checkedCalls=new WeakMap(),functions=new WeakMap(),activeFunctions=new WeakMap(),issued=new WeakMap(),completedFunctions=new WeakMap();
 const own=Object.hasOwn,descriptor=Object.getOwnPropertyDescriptor,keys=Reflect.ownKeys,prototype=Object.getPrototypeOf,isArray=Array.isArray,isProxy=types.isProxy,plainPrototype=Object.prototype,arrayPrototype=Array.prototype;
 const freeze=value=>{if(value&&typeof value==='object'){for(const value_ of Object.values(value))freeze(value_);Object.freeze(value);}return value;};
 const updateContracts=['json_copy','json_with_field'].map(name=>({
@@ -70,15 +73,15 @@ export function parseRouterCoreJsonUpdate(parser,path){
 export function captureRouterCoreJsonUpdates(checker,surface){
  if(!qualified)return;const nodes=new WeakMap(),entries=new WeakMap();let guarded=false;
  const declaration=entry=>{
-  let candidates=null,cells=200000;const members=new WeakMap(),matches=new WeakMap();
-  const visit=(node,depth=0)=>{if(--cells<0||depth>160||!node||typeof node!=='object'||isProxy(node))return;const parent=prototype(node);if(parent!==plainPrototype&&parent!==null&&parent!==arrayPrototype)return;const names=keys(node);for(let at=0;at<names.length;at++)if(names[at]==='stack')return;const kind=descriptor(node,'k');if(kind&&own(kind,'value')&&kind.value==='let')members.set(node,true);if(kind&&own(kind,'value')&&kind.value==='routerOrderedMatch')matches.set(node,copyMetadata(node));if(kind&&own(kind,'value')&&kind.value==='routerCoreJsonUpdateCall')candidates={node,next:candidates};for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string'||key==='type'||key==='span'||key==='length')continue;const field=descriptor(node,key);if(field&&own(field,'value'))visit(field.value,depth+1);}};visit(entry);
-  if(!candidates)return;if(!qualified||!originalDataFreezeIntrinsicsUnchanged())fail();if(!guarded){requireOriginalPrimitiveTryFromChecker(checker);guarded=true;}if(!originalParsedDeclarationEvidence(entry))return;
+  let candidates=null,cells=200000;const members=new WeakMap(),matches=new WeakMap(),formats=new WeakMap();
+  const visit=(node,depth=0)=>{if(--cells<0||depth>160||!node||typeof node!=='object'||isProxy(node))return;const parent=prototype(node);if(parent!==plainPrototype&&parent!==null&&parent!==arrayPrototype)return;const names=keys(node);for(let at=0;at<names.length;at++)if(names[at]==='stack')return;const kind=descriptor(node,'k');if(kind&&own(kind,'value')&&kind.value==='let')members.set(node,true);if(kind&&own(kind,'value')&&kind.value==='routerOrderedMatch')matches.set(node,copyMetadata(node));if(kind&&own(kind,'value')&&kind.value==='routerConstObligation'){const feature=descriptor(node,'sourceFeature');if(feature&&own(feature,'value')&&feature.value==='router-core-format')formats.set(node,copyMetadata(node));}if(kind&&own(kind,'value')&&kind.value==='routerCoreJsonUpdateCall')candidates={node,next:candidates};for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string'||key==='type'||key==='span'||key==='length')continue;const field=descriptor(node,key);if(field&&own(field,'value'))visit(field.value,depth+1);}};visit(entry);
+  if(!qualified||!originalDataFreezeIntrinsicsUnchanged())fail();if(!guarded){requireOriginalPrimitiveTryFromChecker(checker);guarded=true;}if(!originalParsedDeclarationEvidence(entry))return;
   let captured=false;while(candidates){const node=candidates.node,origin=originalParsedSyntaxNode(entry,node),receipt=origin&&calls.get(origin.original);if(origin?.actual===node&&receipt?.parser===origin.parser){const snapshot=copyMetadata(node);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();const current=originalParsedSyntaxNode(entry,node);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged())fail();if(current?.actual===node&&current.original===origin.original&&current.parser===receipt.parser&&same(origin.original,receipt.syntax)&&same(node,origin.relocated)&&same(node,snapshot)){nodes.set(node,{receipt,syntax:snapshot});captured=true;}}candidates=candidates.next;}
-  if(captured){const syntax=copyMetadata(entry);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!originalParsedDeclarationEvidence(entry)||!same(entry,syntax))fail();entries.set(entry,{syntax,members,matches});}
+  {const syntax=copyMetadata(entry);requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!originalParsedDeclarationEvidence(entry)||!same(entry,syntax))fail();entries.set(entry,{syntax,members,matches,formats,owns:captured});}
  };
  let itemCells=200000;
  const items=(list,depth=0)=>{if(--itemCells<0||depth>160||!list||typeof list!=='object'||isProxy(list)||!isArray(list)||prototype(list)!==arrayPrototype)return;const length=descriptor(list,'length');if(!length||!own(length,'value')||length.value>200000)return;for(let at=0;at<length.value;at++){const field=descriptor(list,at),entry=field&&own(field,'value')?field.value:null;if(!entry||typeof entry!=='object'||isProxy(entry))continue;const names=keys(entry);let stack=false;for(let index=0;index<names.length;index++)if(names[index]==='stack')stack=true;if(stack)continue;const kind=descriptor(entry,'k');if(!kind||!own(kind,'value'))continue;if(kind.value==='fn')declaration(entry);else if(kind.value==='module'){const child=descriptor(entry,'items');if(child&&own(child,'value'))items(child.value,depth+1);}}};
- if(surface&&typeof surface==='object'&&!isProxy(surface)){const names=keys(surface);let stack=false;for(let at=0;at<names.length;at++)if(names[at]==='stack')stack=true;if(!stack){const field=descriptor(surface,'items');if(field&&own(field,'value'))items(field.value);}}checkedCalls.set(checker,nodes);functions.set(checker,entries);
+ if(surface&&typeof surface==='object'&&!isProxy(surface)){const names=keys(surface);let stack=false;for(let at=0;at<names.length;at++)if(names[at]==='stack')stack=true;if(!stack){const field=descriptor(surface,'items');if(field&&own(field,'value'))items(field.value);}}checkedCalls.set(checker,nodes);functions.set(checker,entries);completedFunctions.set(checker,new Map());
 }
 function canonical(checker,type,span,shared){
  if(type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)throw unsupported('owned JSON update operand','unresolved source ownership',span);
@@ -105,7 +108,7 @@ export function checkRouterCoreJsonUpdate(checker,node,env,path,expected){
   }}]},
   {phase:'repository',rules:[{id:'router-core:retain-owned-json-update-boundary',apply:call=>({...call,compatibilityCore:{id:'router-owned-json-update-v1',symbol:contract.rustPath.join('::'),sourceSha256:ROUTER_CORE_PRIMITIVES_SHA256,sourceTrace:capture.receipt.trace,libraryImplementation:'untranslated-owned-rust-library',boundedProjection:true,runtimeParity:false}})}]},
  ]);const value=stage.run(null).value,record={checker,frame:activeFunctions.get(checker),id:value.id,args:copyMetadata(value.args)};
- if(projectionNames.has(node.operation)){
+ if(projectionNames.has(node.operation)||record.frame.errorLane){
   const layouts=copyMetadata(captureBorrowedLayouts(checker,[...value.args.map(arg=>arg.type),value.type]));
   const key=metadataDigest({functionName:record.frame.functionName,source:record.frame.syntax,call:value,layouts});value.compatibilityCore.sourceProjectionKey=key;
   record.call=copyMetadata(value);record.layouts=layouts;record.roots=copyMetadata([...value.args.map(arg=>arg.type),value.type]);
@@ -144,6 +147,24 @@ export function visitOriginalJsonCollectionTextMatch(checker,node,run){
  return result;
 }
 
+// This hook sees only the output of the actual Host expression visit. The
+// complete original function, qualified raw member and formatter stay joined;
+// neither public format metadata nor a copied semantic node opens the lane.
+export function observeOriginalJsonErrorFormat(checker,node,value){
+ const frame=activeFunctions.get(checker),syntax=frame?.formats.get(node);if(!syntax)return value;
+ requireOriginalPrimitiveTryFromChecker(checker);if(!originalDataFreezeIntrinsicsUnchanged()||!same(node,syntax)||value?.type.kind!=='string'||value.type.rustOwnership?.kind!=='owned'||value.type.rustOwnership.source!=='String')fail();
+ const inner=value.k==='routerConstObligation'?value.value:value;if(!inner.formatProvenance||inner.formatProvenance.profile!=='checked-primitive-format-v1')fail();
+ value={...value,type:{...value.type,rustSourceType:true}};
+ (frame.formatted??=[]).push({value:copyMetadata(value),syntax,original:node});return value;
+}
+const stringError=(checker,entry)=>{const actual=canonicalResult(checker,entry.ret,entry.modulePath,entry.span,false);return actual?.error.kind==='string'&&actual.error.rustOwnership?.kind==='owned'&&actual.error.rustOwnership.source==='String'&&!actual.error.rustReference&&!actual.error.rustBorrowingUnresolved&&!actual.error.rustGenericIdentityUnresolved;};
+function publishProjectionContexts(receipt,entry,dependencies=[],checker=null){
+ if(!receipt.projections)return;
+ const functionContext=freeze(copyMetadata({name:entry.fullName,params:entry.params,ret:entry.ret,body:entry.body,...(dependencies.length?{dependencies}:{} )}));
+ const extraRoots=receipt.errorLane?[...entry.params.map(param=>param.type),entry.ret,...dependencies.flatMap(item=>[...item.params.map(param=>param.type),item.ret])]:[],extraLayouts=extraRoots.length?freeze(copyMetadata(captureBorrowedLayouts(checker,extraRoots))):[];
+ for(const projection of receipt.projections)projectionContexts.set(projection.key,freeze({id:projection.id,call:projection.call,layouts:extraLayouts.length?[...projection.layouts,...extraLayouts]:projection.layouts,roots:extraRoots.length?[...projection.roots,...extraRoots]:projection.roots,functionContext}));
+}
+
 // These receipts exist only during this checker's actual attributed body visit.
 // A public shape, copied IR or fabricated source marker cannot open this lane.
 function currentFunction(checker,item,receipt){
@@ -157,10 +178,12 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
  return (...args)=>{
   const name=[...path,item.name].join('.');
   if(item.k!=='fn'||entry!==checker.items.get(name)||entry.fullName!==name)fail();
-  currentFunction(checker,item,receipt);if(activeFunctions.has(checker))fail();receipt.functionName=name;activeFunctions.set(checker,receipt);
+  currentFunction(checker,item,receipt);if(activeFunctions.has(checker))fail();receipt.functionName=name;receipt.errorLane=receipt.owns&&stringError(checker,entry);activeFunctions.set(checker,receipt);
   try{
    const result=visit(...args),body=copyMetadata(entry.body);
    currentFunction(checker,item,receipt);if(!same(entry.body,body))fail();
+   const completed={item,receipt,entry,snapshot:copyMetadata({params:entry.params,ret:entry.ret,body:entry.body})};completedFunctions.get(checker).set(name,completed);
+   if(!receipt.owns||receipt.errorLane)return result;
    createRulePipeline([
     {phase:'language',rules:[{id:'owned-json-flow:check-whole-function-linear-state',apply:()=>{
      validateOwnedJsonFlow(checker,entry,{genuine:node=>{const proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===receipt&&proof.id===node.id&&same(node.args,proof.args);},genuineTextMatch:node=>receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true});
@@ -171,22 +194,53 @@ export function visitRouterCoreJsonUpdateFunction(checker,item,path,entry,visit,
      if(entry!==checker.items.get(name)||!same(entry.body,body))fail();return value;
     }}]},
    ]).run(null);
-   if(receipt.projections){
-    // Global emission storage contains immutable data only. The live checker
-    // and visit receipt remain solely in the weak checking registry above.
-    const functionContext=freeze(copyMetadata({name,params:entry.params,ret:entry.ret,body:entry.body}));
-    for(const projection of receipt.projections)projectionContexts.set(projection.key,freeze({id:projection.id,call:projection.call,layouts:projection.layouts,roots:projection.roots,functionContext}));
-   }
+   publishProjectionContexts(receipt,entry);
    return result;
   }finally{activeFunctions.delete(checker);}
  };
+}
+// Membership is conjunctive with the lifetime walk's current Result/layout checks.
+// No returned record, summary or public flag can authorize a borrowed residual.
+export function hasOriginalJsonStringErrorContext(checker,entry){
+ const fact=completedFunctions.get(checker)?.get(entry.fullName);if(!fact||fact.entry!==entry)return false;
+ currentFunction(checker,fact.item,fact.receipt);return same({params:entry.params,ret:entry.ret,body:entry.body},fact.snapshot);
+}
+export function finalizeOriginalJsonErrorFlow(checker,program,Parser,Checker,tailOrigin){
+ const records=completedFunctions.get(checker);if(!records)return;
+ const current=name=>{
+  const fact=records.get(name);if(!fact||program.declarations.get(name)!==fact.entry||checker.items.get(name)!==fact.entry)throw unsupported('owned JSON helper','requires an actual completed original source body',program.declarations.get(name)?.span);
+  currentFunction(checker,fact.item,fact.receipt);if(!same({params:fact.entry.params,ret:fact.entry.ret,body:fact.entry.body},fact.snapshot))fail();return fact;
+ };
+ for(const [name,fact]of records){
+  if(!fact.receipt.errorLane)continue;current(name);const dependencies=new Map();
+  try{createRulePipeline([
+   {phase:'language',rules:[{id:'owned-json-error-flow:check-current-linear-result-and-readonly-closure',apply:()=>{
+    validateOwnedJsonFlow(checker,fact.entry,{
+     genuine:(node,entry)=>{const owner=records.get(entry.fullName),proof=issued.get(node.compatibilityCore);return proof?.checker===checker&&proof.frame===owner?.receipt&&proof.id===node.id&&same(node.args,proof.args);},
+     genuineTextMatch:node=>fact.receipt.textMatches?.some(record=>same(node,record.body)&&same(record.syntax,record.original))===true,
+     closedErrors:{
+      callee:(node)=>{const target=current(node.fn);dependencies.set(node.fn,{name:node.fn,...target.snapshot});return target.entry;},
+      format:(node,entry)=>{
+       if(node.k!=='routerConstObligation'||node.sourceFeature!=='router-core-format')return null;const frame=current(entry.fullName).receipt,record=frame.formatted?.find(record=>isSameSemantic(node,record.value)&&same(record.syntax,record.original));if(!record)return null;
+       let body=node.k==='routerConstObligation'?node.value:node;const values=[];while(body?.k==='let'){values.push(body.value);body=body.body;}return values;
+      },
+      standard:(node)=>{if(node.k==='routerPinnedStandardBody'){requirePinnedStandardBody(node,Parser,{Checker,program});return node.body;}if(node.k==='routerPinnedOptionCallbackBody')return requirePinnedOptionCallbackBody(node,program,Parser,Checker);if(node.k==='routerOriginalMappedBody')return requireOriginalMappedBody(node,program,Parser,Checker);return null;},
+      tail:(node,entry)=>{current(entry.fullName);return tailOrigin(node)&&node.sourceSharedPatternProof.functionTail===true;},
+     },
+    });return null;
+   }}]},
+   {phase:'repository',rules:[{id:'router-core:rejoin-complete-error-flow-callers-and-helper-bodies',apply:value=>{current(name);for(const dependency of dependencies.keys())current(dependency);return value;}}]},
+  ]).run(null);}catch(error){if(!(error instanceof TranslationError))throw error;throw new TranslationError(error.kind,error.reason,fact.entry.span,{...error.details,originalJsonFlowDiagnostic:{span:error.span,reason:error.reason}});}
+  // Store detached data only, after every fresh helper/source join succeeds.
+  publishProjectionContexts(fact.receipt,fact.entry,[...dependencies.values()],checker);
+ }
 }
 function containsExit(node){if(!node||typeof node!=='object'||node.k==='routerLambda')return false;if(['routerReturn','routerBreak','routerContinue'].includes(node.k))return true;return Object.entries(node).some(([key,value])=>key!=='type'&&(Array.isArray(value)?value.some(containsExit):containsExit(value)));}
 export function checkRouterCoreJsonMutableLet(checker,node,env,path,expected,allowLiteral){
  const receipt=activeFunctions.get(checker);
  // This is a temporary checking permission for a genuine fresh JSON producer;
  // the entire checked body must subsequently pass the linear state analysis.
- if(node.k!=='let'||!node.mutable||!receipt?.members.has(node)||!['routerCoreJsonCall','routerJsonMacro','routerCoreJsonUpdateCall'].includes(node.value?.k))return null;
+ if(node.k!=='let'||!node.mutable||!receipt?.owns||!receipt.members.has(node)||!['routerCoreJsonCall','routerJsonMacro','routerCoreJsonUpdateCall'].includes(node.value?.k))return null;
  if(containsExit(node.value))throw unsupported('control in value expression','nonlocal exits cannot be lowered through a value IIFE',node.value.span);
  env=checker.contextEnvironment(node,env,expected);const declared=node.type?checker.resolveType(node.type,path,node.span):undefined;
  let value=checker.expr(node.value,env,path,declared);if(declared)value=coerce(value,declared,checker.language,node.span);canonical(checker,value.type,node.span,false);
@@ -244,9 +298,10 @@ export function hasOriginalRouterCoreJsonProjection(node){return !!projectionRec
 export function hasCurrentRouterCoreJsonProjection(checker,node){
  const record=projectionRecord(node);return !!record&&record.checker===checker&&record.frame===activeFunctions.get(checker);
 }
+const emissionCall=node=>projectionId(node?.id)||['router_core_json_copy','router_core_json_with_field'].includes(node?.id)&&typeof node.compatibilityCore?.sourceProjectionKey==='string';
 function projectionNodes(node,result=[]){
  if(!node||typeof node!=='object')return result;
- if(['routerHostCall','routerCoreJsonCollection'].includes(node.k)&&projectionId(node.id))result.push(node);
+ if(['routerHostCall','routerCoreJsonCollection'].includes(node.k)&&emissionCall(node))result.push(node);
  for(const [key,value]of Object.entries(node))if(!['type','span','compatibilityCore','pinnedStandardBodyProof','originalCallbackProof','sourceFrameProof'].includes(key))Array.isArray(value)?value.forEach(child=>projectionNodes(child,result)):projectionNodes(value,result);
  return result;
 }
@@ -260,12 +315,13 @@ export function prepareOriginalJsonProjectionEmission(emitter,entry,Checker){
   const expected=retargetCheckedCallback(context.call,emitter.program),wanted=retargetCheckedCallback(fn,emitter.program);
   if(!isSameSemantic(node,expected)||!isSameSemantic({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source function or checked call changed');
   requireBorrowedLayouts(context.layouts,checker,emitter.program,retargetCheckedCallback(context.roots,emitter.program));
+  for(const dependency of fn.dependencies??[]){const wanted=retargetCheckedCallback(dependency,emitter.program),name=emitter.program.declarations.has(dependency.name)?dependency.name:'rp_'+Buffer.from(dependency.name).toString('hex'),actual=emitter.program.declarations.get(name);if(!actual||!isSameSemantic({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper changed from its actual checked source body');}
   requireOriginalPrimitiveTryFromChecker(checker);
  }
  const previous=emissionFrames.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());emissionFrames.set(emitter,projectionNodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));return ()=>{if(previous)emissionFrames.set(emitter,previous);else emissionFrames.delete(emitter);};
 }
 const isSameSemantic=(actual,expected)=>metadataDigest(alphaTree(actual))===metadataDigest(alphaTree(expected));
 export function requireOriginalJsonProjectionEmission(emitter,node){
- if(!projectionId(node.id))return;
+ if(!emissionCall(node))return;
  if(!emissionFrames.get(emitter)?.includes(metadataDigest(alphaTree(node))))throw new Error('Owned JSON projection changed from its rechecked actual source function');
 }

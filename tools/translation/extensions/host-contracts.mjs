@@ -89,7 +89,7 @@ import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
 import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern} from '../router-core-algebraic.mjs';
 import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
 import {parseRouterCoreJson,captureRouterCoreJsonCalls,checkRouterCoreJson} from '../router-core-json.mjs';
-import {parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,visitOriginalJsonCollectionTextMatch,visitRouterCoreJsonUpdateFunction,checkRouterCoreJsonMutableLet,prepareOriginalJsonProjectionEmission,requireOriginalJsonProjectionEmission,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
+import {parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,visitOriginalJsonCollectionTextMatch,observeOriginalJsonErrorFormat,finalizeOriginalJsonErrorFlow,visitRouterCoreJsonUpdateFunction,checkRouterCoreJsonMutableLet,prepareOriginalJsonProjectionEmission,requireOriginalJsonProjectionEmission,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
 
 export const HOST_CONTRACTS=[...ROUTER_CORE_JSON_UPDATE_CONTRACTS,ROUTER_CORE_SCALAR_CONTRACT,ROUTER_CORE_RANGE_CONTRACT,...FLOAT_CONTRACTS,...JSON_CONTRACTS.map(contract=>({...contract,family:'json',pure:true,constEligible:false})),...TIME_CONTRACTS.map(contract=>({...contract,family:'time'})),...INTEGER_ERROR_CONTRACTS.map(contract=>({...contract,family:'integer',assumptions:['Registered standard ParseIntError layout and source-derived diagnostic behavior.']}))];
 const pathKey=path=>path.filter((part,index)=>index!==0||part!=='crate').join('::');
@@ -532,7 +532,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     if(node.k==='binary'&&value.k==='binary'&&value.op==='eq'&&value.domain?.rustPrimitiveName==='f64')value={...value,span:node.span};
     this.expectedOwnership?.(value.type,expected,path,node.span);
     this.expectedPrimitiveIdentity(value.type,expected,path,node.span);
-    return value;
+    return observeOriginalJsonErrorFormat(this,node,value);
   }
   expectedPrimitiveIdentity(actual,expected,path,range) {
     assertCharacterBoundary(actual,expected,range);
@@ -771,6 +771,7 @@ export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroC
     const sourceContext=checkedSourceContext(program);
     sourcePatterns.finalizeOriginalSharedPatterns(this,program);
     finalizeOriginalMappedBodies(this,program);
+    finalizeOriginalJsonErrorFlow(this,program,HostRustParser,HostChecker,node=>sourcePatterns.hasOriginalSharedPatternFrame(node));
     program.items.push(...this.instantiations.items);
     const forbidden=(node,seen=new Set(),runtimeConstFunction=false)=>{
       if(!node||typeof node!=='object')return false;
