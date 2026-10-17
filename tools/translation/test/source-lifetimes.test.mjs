@@ -99,18 +99,22 @@ test('computed standard Option results retain borrowed source leaves',{timeout:3
   for(const source of ["pub fn bad(v:&str)->Option<&'static str>{v.strip_prefix(\"x\")}","pub fn bad(v:&str)->Option<(&'static str,&'static str)>{v.split_once('=')}"])assert.ok(project(source).meta.refused.some(entry=>entry.name==='bad'));
   const dynamic="pub fn current(v:&str)->Option<&str>{Some(v)}pub fn nested(v:&str)->Option<Option<&str>>{Some(Some(v))}pub fn ok(v:&str)->Result<&str,u8>{Ok(v)}pub fn err(v:&str)->Result<u8,&str>{Err(v)}";
   const frozen="pub fn frozen(v:&'static str)->Option<&'static str>{Some(v)}pub fn frozen_nested(v:&'static str)->Option<Option<&'static str>>{Some(Some(v))}pub fn frozen_ok(v:&'static str)->Result<&'static str,u8>{Ok(v)}pub fn frozen_err(v:&'static str)->Result<u8,&'static str>{Err(v)}";
-  for(const parts of [[frozen,dynamic],[dynamic,frozen]]){
+  const nestedDynamic="pub fn nested_ok(v:&str)->Result<Option<&str>,u8>{Ok(Some(v))}pub fn nested_err(v:&str)->Result<u8,Option<&str>>{Err(Some(v))}",nestedFrozen="pub fn frozen_nested_ok(v:&'static str)->Result<Option<&'static str>,u8>{Ok(Some(v))}pub fn frozen_nested_err(v:&'static str)->Result<u8,Option<&'static str>>{Err(Some(v))}";
+  for(const parts of [[frozen,dynamic,nestedFrozen,nestedDynamic],[dynamic,frozen,nestedDynamic,nestedFrozen]]){
     const input=parts.join(' '),result=project(input);
     await both(result,api=>{
       for(const value of ['', '猫😀', '\0']){
         assert.deepEqual(api.current(value),{$:'Some',field0:value});assert.deepEqual(api.frozen(value),{$:'Some',field0:value});
         assert.deepEqual(api.nested(value),{$:'Some',field0:{$:'Some',field0:value}});assert.deepEqual(api.frozen_nested(value),{$:'Some',field0:{$:'Some',field0:value}});
         assert.deepEqual(api.ok(value),{$:'Ok',field0:value});assert.deepEqual(api.err(value),{$:'Err',field0:value});
+        assert.deepEqual(api.nested_ok(value),{$:'Ok',field0:{$:'Some',field0:value}});assert.deepEqual(api.nested_err(value),{$:'Err',field0:{$:'Some',field0:value}});
+        assert.deepEqual(api.frozen_nested_ok(value),{$:'Ok',field0:{$:'Some',field0:value}});assert.deepEqual(api.frozen_nested_err(value),{$:'Err',field0:{$:'Some',field0:value}});
       }
     });
     for(const body of ["pub fn bad(v:&str)->Option<&'static str>{Some(v)}","pub fn bad(v:&str)->Option<Option<&'static str>>{Some(Some(v))}","pub fn bad(v:&str)->Result<&'static str,u8>{Ok(v)}","pub fn bad(v:&str)->Result<u8,&'static str>{Err(v)}","struct Holder{value:&'static str}pub fn bad(v:&str)->Holder{Holder{value:v}}","fn needs(v:Option<&'static str>)->u8{1u8}pub fn bad(v:&str)->u8{needs(Some(v))}"]){
       const refused=project(input+' '+body),failure=refused.meta.refused.find(entry=>entry.name==='bad');assert.ok(failure,body);assert.match(failure.message,/static source parameter|escaping source borrow/);assert.equal(refused.meta.executable.some(entry=>entry.name==='bad'),false);
     }
+    for(const body of ["pub fn bad(v:&str)->Result<Option<&'static str>,u8>{Ok(Some(v))}","pub fn bad(v:&str)->Result<u8,Option<&'static str>>{Err(Some(v))}"]){const refused=project(input+' '+body),failure=refused.meta.refused.find(entry=>entry.name==='bad');assert.ok(failure,body);assert.match(failure.message,/static source parameter|escaping source borrow/);assert.equal(refused.meta.executable.some(entry=>entry.name==='bad'),false);}
   }
 });
 test('source static reference field copies retain their written origin',{timeout:30_000},async()=>{

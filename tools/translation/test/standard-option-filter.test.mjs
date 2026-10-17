@@ -1,5 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';
 import {translateProject} from '../project.mjs';import {parseProgram} from '../semantic-meta.mjs';import {parseRust,checkProgram,emitJavaScript} from '../extensions/host-contracts.mjs';import {originalSourceFramePatternRead} from '../extensions/standard-source-frame.mjs';import {verifyTypedTargets} from './typed-targets.mjs';
+import {HostChecker} from '../extensions/host-contracts.mjs';
+import {withSourceLifetimeChecker,sourceBorrowRegions} from '../extensions/source-lifetimes.mjs';
 const project=source=>translateProject({entry:'src/lib.rs',paths:['src/lib.rs'],readSource:()=>source}),tag=($,fields={})=>Object.freeze({$,...fields}),some=field0=>tag('Some',{field0}),none=tag('None');
 const find=(node,kind)=>node&&typeof node==='object'?(node.k===kind?node:Object.values(node).map(value=>find(value,kind)).find(Boolean)):null;
 
@@ -51,6 +53,29 @@ test('public source callers and changed original frame/loan snapshots cannot iss
   if(mutation==='payload')ctor.type.rustStandardGeneric.arguments[0]={kind:'bool'};
   assert.throws(()=>emitJavaScript(program),/changed|private|captured|source|body/,mutation);
  }
+ // Bookkeeping observation only: this base never checks/emits a function or
+ // issues source authority. Layouts and type comparisons come from the real
+ // checker; it records only whether dispatch received a temporary field view.
+ const real=new HostChecker('Rust',[]),program=real.program(parseRust("pub fn frozen(v:&'static str)->Option<Option<&'static str>>{Some(Some(v))}pub fn current(v:&str)->Option<Option<&str>>{Some(Some(v))}fn main(){}")),expected=program.declarations.get('current').ret,declaration=program.declarations.get(expected.name),ctor=declaration.ctors.find(row=>row.name==='Some'),observations=[];
+ class ObservationOnlyBase{
+  constructor(){this.language='Rust';this.items=real.items;}
+  resolveType(...args){return real.resolveType(...args);}
+  expectedOwnership(...args){return real.expectedOwnership(...args);}
+  expectedPrimitiveIdentity(...args){return real.expectedPrimitiveIdentity(...args);}
+  application(head,args,env,path,type,range){
+   if(head.mode==='nested'||head.mode==='nested-null')assert.throws(()=>this.application({mode:'throw'},[...args],env,path,head.mode==='nested'?undefined:expected,range),/observation-only throw/);
+   const value=this.construct(declaration,ctor,head.mode==='args'?[...args]:args,head.mode==='env'?new Map(env):env,head.mode==='path'?[...path]:path,head.mode==='range'?{...range}:range);
+   if(head.mode==='throw')throw new Error('observation-only throw');return value;
+  }
+  construct(owner,current,args,env,path,range){observations.push({original:current===ctor,fields:current.fields.map(field=>field.type),args,env,path,range});return {type:{kind:'data',name:owner.fullName}};}
+ }
+ const observed=new (withSourceLifetimeChecker(ObservationOnlyBase))(),args=[{k:'name',path:['raw_argument']}],env=new Map(),path=[],range={start:1,end:2};
+ const regions=type=>sourceBorrowRegions(type,{declarations:real.items,resolveType:(...args)=>real.resolveType(...args)});assert.ok(regions(ctor.fields[0].type).some(region=>region.kind==='static'));
+ observed.application({mode:'same'},args,env,path,expected,range);assert.equal(observations.at(-1).original,false);const currentRegions=regions(observations.at(-1).fields[0]);assert.ok(currentRegions.length>0);assert.ok(currentRegions.every(region=>region.kind!=='static'));
+ for(const mode of ['args','env','path','range']){observed.application({mode},args,env,path,expected,range);assert.equal(observations.at(-1).original,true,mode);}
+ assert.throws(()=>observed.application({mode:'throw'},args,env,path,expected,range),/observation-only throw/);observed.construct(declaration,ctor,args,env,path,range);assert.equal(observations.at(-1).original,true);
+ observed.application({mode:'nested'},args,env,path,expected,range);assert.equal(observations.at(-1).original,false);observed.application({mode:'nested-null'},args,env,path,undefined,range);assert.equal(observations.at(-1).original,true);
+ observed.construct(declaration,ctor,args,env,path,range);assert.equal(observations.at(-1).original,true);
 });
 
 test('fresh serialized frames need genuine original source recompilation',()=>{

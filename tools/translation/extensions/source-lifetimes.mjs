@@ -15,6 +15,8 @@ import {rustFixedType} from '../checked-types.mjs';
 import {metadataDigest,ownData,copyMetadata} from './source-links.mjs';
 
 const UNKNOWN='unproved-borrow-origin';
+// Active synchronous application context only; no type/verdict cache survives a call.
+const constructorApplications=new WeakMap();
 const key=path=>JSON.stringify(path);
 function leafOrigins(leaves) {
   const result=new Set([...leaves.values()].flatMap(origins=>[...origins]));result.leaves=leaves;return result;
@@ -606,6 +608,20 @@ function constructorLifetimeFields(type,declaration,ctor,context,range) {
 
 export function withSourceLifetimeChecker(Base) {
   return class extends Base {
+    application(head,args,env,path,expected,range) {
+      const previous=constructorApplications.get(this);
+      constructorApplications.set(this,{expected,args,env,path,range});
+      try{return super.application(head,args,env,path,expected,range);}
+      finally{if(previous)constructorApplications.set(this,previous);else constructorApplications.delete(this);}
+    }
+    construct(declaration,ctor,args,env,path,range) {
+      const application=constructorApplications.get(this),expected=application?.expected;
+      if(!application||application.args!==args||application.env!==env||application.path!==path||application.range!==range||this.language!=='Rust'||expected?.kind!=='data'||!expected.rustStandardGeneric||expected.name!==declaration.fullName)return super.construct(declaration,ctor,args,env,path,range);
+      const fields=constructorLifetimeFields(expected,declaration,ctor,{checker:this,resolveType:(type,path,span)=>this.resolveType(type,path,span)},range);
+      const current={...ctor,fields:ctor.fields.map((field,index)=>({...field,type:fields[index]}))};
+      const value=super.construct(declaration,current,args,env,path,range);
+      return {...value,type:{...value.type,rustStandardGeneric:copyMetadata(expected.rustStandardGeneric)}};
+    }
     expr(node,env,path,expected,allowLiteral=false) {
       let value=super.expr(node,env,path,expected,allowLiteral);
       if(this.language==='Rust'&&value.k==='ctor'&&expected?.rustStandardGeneric&&expected.kind==='data'&&value.data===expected.name&&sameType(value.type,expected)) {
