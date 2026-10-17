@@ -228,3 +228,36 @@ source chain and inverse before applying actual producer bytes. A selected edit
 or a successful proposal is not an executable coverage gain: regenerate checked
 meta and targets, measure actual application functions, and run receiving checks
 before reporting gains or parity.
+
+
+The explicit owned `json_map` and `json_filter_map` operations collect eagerly
+from a shared canonical JSON slice. Rust executes the real library functions;
+the checked target profile visits inputs once in order and accepts only fresh
+owned JSON callback results (or actual `Some(Json)`/`None`). Callback-local
+updates use the existing linear flow analysis. Captures are limited to immutable
+scalars and live shared input roots; captured owned moves, mutation, escaping
+loans, unknown source calls/Drop, loops, and callback `?` remain refused.
+
+The new standalone `--sequence json-collections` proposal is explicit API
+adoption, with full source/CST mappings and inverses. It does not prove the
+original Iterator or Option method dispatch. Closed reader chains are
+materialized as hygienic, receiver-once canonical Option `if let` control;
+`unwrap_or` retains receiver-before-eager-default order. The full application
+chain must first run the existing JSON and JSON-update producers on each fresh
+stage. It never assumes original `json!` calls already have owned bindings.
+Default sequences and the 1 GiB packet quota stay unchanged.
+
+The successful-resource projection limits the input to a dense immutable array
+of 4096 items, retains the actual registered immutable view guard (65536 cells,
+depth 1024), and separately validates each input JSON value at 4096 nodes/depth
+32. The complete constructed output retains 4096 nodes/depth 32/dense 4096.
+The entire expanded function and all callbacks share the existing 100000-cell,
+160-depth flow budget and unchanged source-lifetime pass. No cross-call source,
+owner, hash or verdict cache is introduced. Allocator/OOM and arbitrary Drop
+observations remain outside this bounded projection. These additions are a
+source draft until complete Node/Bun and strict TypeScript receiving passes;
+the independent Rust oracle is CI-only behind the same-SHA JavaScript gate.
+The new checked callback text-match lane is limited to original, source-ordered,
+unguarded literal-text alternatives and a final wildcard over one live borrowed
+text binding. Guards, binders, aggregate patterns and outside-callback matches
+receive no permission from that lane.

@@ -9,6 +9,9 @@ pub use self::primitives::unicode_scalar_count;
 pub use self::primitives::{json_copy, json_with_field};
 pub use self::primitives::{json_index_str, json_index_usize, json_map_index};
 
+mod json_collections;
+pub use self::json_collections::{json_map, json_filter_map};
+
 mod ranges;
 pub use self::ranges::f64_inclusive_contains;
 

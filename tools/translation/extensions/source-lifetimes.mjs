@@ -236,6 +236,13 @@ function origins(node,env,context,returns,depth=0) {
     if(node.k==='routerStringNext')return borrowed?uniformOrigins(node.type,at(value,[]),context):new Set();
     read(node.separator);return new Set(); // join allocates an owned String.
   }
+  if(node.k==='routerCoreJsonCollection'){
+    if(!hasOriginalRouterCoreJsonProjection(node)||node.args.length!==2||node.args[1].k!=='routerLambda'||node.args[1].arity!==1)throw unsupported('owned collection borrow origin','requires its actual private checked function/call context',node.span);
+    const input=read(node.args[0]),item=node.args[0].type.rustReference?.pointee?.element;
+    if(!item||node.type.kind!=='array'||node.type.rustOwnership?.kind!=='owned'||node.type.rustOwnership.source!=='Vec')throw unsupported('owned collection source type','requires actual shared input and owned output',node.span);
+    readCallback(node.args[1].binding,[uniformOrigins({...item,rustReference:{kind:'shared',pointee:item}},at(input,[]),context)]);
+    return new Set(); // Every successful callback returns owned canonical Json.
+  }
   if(node.k==='routerLambdaInput')return borrowed?(context.lambdaInputs?.[node.position]??new Set([UNKNOWN])):new Set();
   if(node.k==='routerLoopInput') {
     let value=context.loopInputOrigins??new Set([UNKNOWN]);
