@@ -35,11 +35,11 @@ function immutableJson(value,noStack=false){
  while(stack){const frame=stack;stack=frame.next;const value=frame.value;
   if(frame.exit){
    apply(setDelete,active,[value]);
-   const record=noStack?{cells:frame.total.cells,height:frame.total.height,stackFree:true}:{cells:frame.total.cells,height:frame.total.height};
+   const record=(frame.total.height*(CELLS+1)+frame.total.cells)*2+(noStack?1:0);
    if(frame.parent===null){
     if(ownerEntries>=OWNERS){owners=new weakConstructor();ownerEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
     apply(weakSet,owners,[value,record]);ownerEntries++;
-   }else if(record.cells>=LARGE_CELLS){
+   }else if(frame.total.cells>=LARGE_CELLS){
     if(largeEntries>=LARGE_SUBTREES){largeSubtrees=new weakConstructor();largeEntries=0;if(subtreeRotations<9007199254740991)subtreeRotations++;}
     apply(weakSet,largeSubtrees,[value,record]);largeEntries++;
    }else{
@@ -54,7 +54,7 @@ function immutableJson(value,noStack=false){
   if(typeof value!=='object'||isProxy(value)||apply(setHas,active,[value]))return false;
   if(noStack&&apply(compositionBoxedField.value,compositionTypes,[value]))return false;
   const owner=apply(weakGet,owners,[value]),large=owner?null:apply(weakGet,largeSubtrees,[value]),saved=owner||large||apply(weakGet,subtrees,[value]);
-  if(saved&&(!noStack||own(saved,'stackFree')&&saved.stackFree===true)){if(saved.cells-1>cells||saved.height>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=saved.cells-1;charge(frame.parent,saved.cells,saved.height);if(subtreeHits<9007199254740991)subtreeHits++;if(owner){if(ownerHits<9007199254740991)ownerHits++;}else if(large){if(largeHits<9007199254740991)largeHits++;}else if(smallHits<9007199254740991)smallHits++;continue;}
+  if(saved&&(!noStack||(saved&1)===1)){const cost=saved>>>1,savedCells=cost%(CELLS+1),savedHeight=(cost/(CELLS+1))|0;if(savedCells-1>cells||savedHeight>DEPTH-frame.depth){if(subtreeBudgetRefusals<9007199254740991)subtreeBudgetRefusals++;return false;}cells-=savedCells-1;charge(frame.parent,savedCells,savedHeight);if(subtreeHits<9007199254740991)subtreeHits++;if(owner){if(ownerHits<9007199254740991)ownerHits++;}else if(large){if(largeHits<9007199254740991)largeHits++;}else if(smallHits<9007199254740991)smallHits++;continue;}
   if(subtreeMisses<9007199254740991)subtreeMisses++;
   let earlyNames=null;
   if(noStack){const parent=prototype(value),array=isArray(value);if(parent!==objectPrototype&&parent!==null&&!(array&&parent===arrayPrototype))return false;if(array){const length=descriptor(value,'length');if(!length||!own(length,'value')||length.value>CELLS)return false;}earlyNames=keys(value);for(let at=0;at<earlyNames.length;at++)if(earlyNames[at]==='stack')return false;}
@@ -129,7 +129,7 @@ const compositionStringify=qualified?descriptor(compositionReceiver,'stringify')
 const encodeSyntaxSubstrate=createPrivateFrozenJsonCache();
 const COMPOSITION_UNITS=8388608;
 function syntaxSubstrateKey(key){return key==='recipes'||key==='compilerMeta'||key==='schemas'||key==='positiveSchemas'||key==='parserFieldSpans'||key==='descriptor'||key==='method'||key==='entry'||key==='callbackRecipes'||key==='positiveSchema'||key==='constructionSink'||key==='descriptors';}
-function existingSyntaxCost(value){const record=apply(weakGet,owners,[value])||apply(weakGet,largeSubtrees,[value])||apply(weakGet,subtrees,[value]);return record&&own(record,'stackFree')&&record.stackFree===true?record:null;}
+function existingSyntaxCost(value){const record=apply(weakGet,owners,[value])||apply(weakGet,largeSubtrees,[value])||apply(weakGet,subtrees,[value]);return record&&(record&1)===1?record:null;}
 function immutableCost(value){const saved=existingSyntaxCost(value);if(saved)return saved;if(!immutableJson(value,true))return null;return existingSyntaxCost(value);}
 export function createPrivateFrozenJsonComposer(){
  return value=>{
@@ -143,7 +143,7 @@ export function createPrivateFrozenJsonComposer(){
    // complete native operation, including its omissions, hooks and errors.
    if(kind!=='object'||isProxy(value)||apply(compositionBoxedField.value,compositionTypes,[value]))return null;
    const substrate=arraySubstrate||syntaxSubstrateKey(key),saved=substrate?existingSyntaxCost(value):null;
-   if(saved){if(saved.cells>CELLS-cells||saved.height>DEPTH-depth)return null;cells+=saved.cells;return {kind:1,value};}
+   if(saved){const cost=saved>>>1,savedCells=cost%(CELLS+1),savedHeight=(cost/(CELLS+1))|0;if(savedCells>CELLS-cells||savedHeight>DEPTH-depth)return null;cells+=savedCells;return {kind:1,value};}
    if(apply(setHas,active,[value]))return null;
    const array=isArray(value),parent=prototype(value);
    if(parent!==(array?arrayPrototype:objectPrototype)&&!(parent===null&&!array))return null;
@@ -152,7 +152,7 @@ export function createPrivateFrozenJsonComposer(){
    // Native captured stacks can be lazy data descriptors on ordinary objects.
    // Reject their key before any descriptor could invoke a formatter.
    for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON'||names[at].length>COMPOSITION_UNITS)return null;
-   if(substrate&&apply(frozenField.value,Object,[value])){const cost=immutableCost(value);if(!cost||cost.cells>CELLS-cells||cost.height>DEPTH-depth)return null;cells+=cost.cells;return {kind:1,value};}
+   if(substrate&&apply(frozenField.value,Object,[value])){const cost=immutableCost(value);if(!cost)return null;const packed=cost>>>1,costCells=packed%(CELLS+1),costHeight=(packed/(CELLS+1))|0;if(costCells>CELLS-cells||costHeight>DEPTH-depth)return null;cells+=costCells;return {kind:1,value};}
    if(++cells>CELLS)return null;
    let length=names.length;
    if(array){if(names.length!==arrayLength+1||names[names.length-1]!=='length')return null;length=arrayLength;for(let at=0;at<length;at++)if(names[at]!==''+at)return null;}
