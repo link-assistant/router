@@ -61,10 +61,12 @@ function framed(text){
  if(!rows.length||rows[0].head!=='owned-source-document')fail('document header required');return rows;
 }
 function payload(row){
- const text=textOf(row.word);let depth=0,cells=0;const cst=row.head==='owned-source-cst',max=cst?2000100:100000;
+ // Colons/commas are not ownedPlainData cells: each field can add two.
+ // Container depth includes the root here; the old checker starts at zero.
+ const text=textOf(row.word);let depth=0,cells=0;const cst=row.head==='owned-source-cst',max=cst?2000100:200000;
  for(let at=0;at<text.length;at++){
   const char=text[at];if(char==='"'){for(at++;at<text.length;at++){if(text[at]==='\\')at++;else if(text[at]==='"')break;}}
-  else if(char==='{'||char==='['){if(++depth>(cst?8:160))fail('JSON depth bound');}
+  else if(char==='{'||char==='['){if(++depth>(cst?8:161))fail('JSON depth bound');}
   else if(char==='}'||char===']'){if(--depth<0)fail('JSON delimiters');}
   else if(char===','||char===':'){if(++cells>max)fail('JSON cell bound');}
  }
