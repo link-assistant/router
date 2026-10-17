@@ -3,7 +3,7 @@
 import {createHash} from 'node:crypto';
 import {deriveDependencySource} from './derive-dependencies.mjs';
 import {deriveFootprintOriginalContext,deriveFootprintOriginalModule} from './derive-footprints.mjs';
-import {inventoryDeriveQuoteMeta,createQuoteFragmentCompiler,inspectQuoteFragment} from './derive-quote-meta.mjs';
+import {inventoryDeriveQuoteMeta,createDeserializeQuoteFragmentCompiler,inspectQuoteFragment} from './derive-quote-meta.mjs';
 import {originalFunction,selectedTemplate,boundedInput,attributeOwners,emptySerdeMacro,joinOriginalSerdeFieldHelpers} from './serde-bang-footprints.mjs';
 import {liftSerdeDeserializeStructRoutes,liftSerdeDeserializeInPlaceRoute} from './serde-deserialize-struct-route.mjs';
 import {liftSerdeDeserializeUnitEnumRoute,liftSerdeDeserializeUnitEnumInPlaceRoute} from './serde-deserialize-unit-enum-route.mjs';
@@ -20,7 +20,7 @@ export function proveSerdeDeserializeBangFootprint({context,certificate}={}){
   input.denyUnknownFields=certificate.attributes.some(attribute=>attribute.position==='container'&&attribute.helpers?.some(helper=>helper.key==='deny_unknown_fields'));
   const dependencies=original.dependencies;
   let inventory=inventories.get(dependencies);if(!inventory){inventory=inventoryDeriveQuoteMeta(dependencies);inventories.set(dependencies,inventory);}
-  const compiler=createQuoteFragmentCompiler(inventory),fieldHelpers=joinOriginalSerdeFieldHelpers({context,certificate,module,input,compiler,owner:'Deserialize',dependencies}),routes=[],branchProofs=[],bindingProofs=[];
+  const compiler=createDeserializeQuoteFragmentCompiler(inventory),fieldHelpers=joinOriginalSerdeFieldHelpers({context,certificate,module,input,compiler,owner:'Deserialize',dependencies}),routes=[],branchProofs=[],bindingProofs=[];
   const definition=(path,name,predicate)=>{const result=originalFunction(dependencies,path,name,predicate),{text,...evidence}=result;routes.push(evidence);return result;};
   const inst=(template,bindings,role)=>compiler.instantiate(template,new Map(Object.entries(bindings)),{role,inputCertificateDigest:certificate.digest});
   const leaf=(text,type,role)=>compiler.token(text,type,{role,inputCertificateDigest:certificate.digest});
