@@ -162,7 +162,15 @@ test('unknown sibling producers imports and cfg alternatives remain unresolved',
 });
 
 test('opaque bodies types helpers additional derives and generated attributes cannot borrow empty effects',()=>{
- const rows=[];
+ const rows=[],states=[];
+ function observe(source,rootSource='mod model;',label=String(rows.length+1).padStart(2,'0')){
+  const observed={label,source,rootSource,action:'proveDeriveEmptyEnclosingEffect(context,deriveContext,module,item)',setupCompleted:false,token:null,error:null,actual:null,factsError:null};
+  const state={row:null,token:null,error:null,setupError:null};
+  try{state.row=setup(source,rootSource);observed.setupCompleted=true;observed.row=state.row;try{state.token=effect(state.row);observed.token=state.token;}catch(error){state.error=error;observed.error={name:error.name,message:error.message};}}
+  catch(error){state.setupError=error;observed.setupError={name:error.name,message:error.message};}
+  rows.push(observed);states.push(state);retain('07-initial-'+label,observed);
+ }
+
  for(const source of [
   '#[derive(Clone,Ord)]pub struct Payload{value:u8}',
   '#[derive(Clone)]pub enum Payload{Value(u8),None}',
@@ -170,9 +178,22 @@ test('opaque bodies types helpers additional derives and generated attributes ca
   '#[derive(Clone)]pub struct Payload{#[unknown]value:u8}',
   '#[derive(Clone)]pub struct Payload{value:u8=unknown!()}',
   '#[derive(serde::Serialize)]#[serde(serialize_with="unknown")]pub struct Payload{value:u8}',
- ]){const row=setup(source);rows.push({row,error:failure(()=>effect(row))});}
- for(const name of ['inline','automatically_derived']){const row=setup('#[derive(Clone)]pub struct Payload{value:u8}','use unknown::'+name+';mod model;');rows.push({row,error:failure(()=>effect(row))});}
+ ]){observe(source);}
+ for(const name of ['inline','automatically_derived'])observe('#[derive(Clone)]pub struct Payload{value:u8}','use unknown::'+name+';mod model;');
+ // Initial actions remain unwrapped. Inspect a successful private token only
+ // after every original subject has run; no Hash observer/reissue is added.
+ for(let index=0;index<states.length;index++){
+  const state=states[index],observed=rows[index];
+  if(state.token)try{observed.actual=facts(state.token,state.row);}catch(error){observed.factsError={name:error.name,message:error.message};}
+  retain('07-complete-'+observed.label,observed);
+ }
  retain('07-no-opaque-associated-or-generated-effects',{rows});
+ // Preserve the original refusal obligation for every initial action. A setup
+ // exception cannot substitute for the action's actual expected TypeError.
+ for(let index=0;index<states.length;index++){
+  const state=states[index];assert.equal(state.setupError,null,rows[index].label+' original setup');
+  assert.throws(()=>{if(state.error)throw state.error;return state.token;},TypeError,rows[index].label+' original effect');
+ }
 });
 
 test('metadata copies changed sources and equal-byte foreign contexts cannot replay private effects',()=>{
