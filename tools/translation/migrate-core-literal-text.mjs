@@ -3,6 +3,8 @@
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
 import {sourceItems} from './rust-structure.mjs';
+import {selectBorrowedTextConversions} from './core-borrowed-text-adoption.mjs';
+import {createCoreAdoptionProducerContext,coreAdoptionDeriveAttributeClosed,finishCoreAdoptionProducerContext} from './core-adoption-producer-context.mjs';
 import {createLiteralTextImportRoles,verifyLiteralTextImportRoles} from './literal-text-import-roles.mjs';
 import {captureSourceModuleViews,originalSourceModuleItems} from './source-module-views.mjs';
 import {originalUseDeclarationLeaves,originalDeclarationHeader} from './module-bindings.mjs';
@@ -36,7 +38,7 @@ function conditionalModule(item,condition,path){
   if(keyword<0||tail.length!==3||tail[0].text!=='mod'||tail[1].text!==header.name||tail[2].text!==';')return null;
   return {module:[...path],name:header.name,span:[item.start,item.end],declarationTokens:rows.map(row=>({text:row.text,type:row.type,start:row.start,end:row.end})),configuration:condition,predicateSelected:false,alternatives:[{present:false},{present:true,kind:'mod',name:header.name}],role:'noncompeting-external-module-declaration',semanticAdmission:false};
 }
-function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRoles=[],conditionalDeclarations=[]){
+function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRoles=[],conditionalDeclarations=[],producerContext=null){
   const problems=[];
   for(const item of items){
     const condition=itemConfiguration(item.tokens,profile);if(condition.status==='inactive'||item.comment)continue;
@@ -45,7 +47,7 @@ function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRole
       if(rows[at].text==='r'&&rows[at+1]?.text==='#'&&rows[at+2]?.type==='ident'&&rows[at].end===rows[at+1].start&&rows[at+1].end===rows[at+2].start){names.push(rows[at+2].text);at+=2;}else names.push(rows[at].text);
     }
     if(condition.status!=='active'){const alternative=conditionalModule(item,condition,path);if(alternative)conditionalDeclarations.push(alternative);else problems.push('unknown declaration configuration');}
-    if(condition.attributes.some(attribute=>!inert.has(attribute.name)&&attribute.name!=='cfg'&&!(item.term==='mod'&&attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')))problems.push('unresolved declaration attribute producer');
+    if(condition.attributes.some(attribute=>!inert.has(attribute.name)&&attribute.name!=='cfg'&&!(item.term==='mod'&&attribute.name==='macro_use'&&attribute.tokens.join('')==='#[macro_use]')&&!(module&&coreAdoptionDeriveAttributeClosed(producerContext,module.source,module.file,module.sourceView?.modulePath??module.path,item,attribute))))problems.push('unresolved declaration attribute producer');
     if(item.term==='use'){
       try{for(const leaf of originalUseDeclarationLeaves(item,path)){
         if(leaf.glob||['ToString','ToOwned','String','_','std','core'].includes(leaf.name)||leaf.segments.some(name=>['ToString','ToOwned'].includes(name)))problems.push('conversion trait/type import or glob competition');
@@ -65,6 +67,16 @@ function scopeProblems(items,profile,path=[],module=null,roleFor=null,importRole
   }
   return [...new Set(problems)];
 }
+// These additional names matter only to the new shared-text candidate lane;
+// the original literal-only namespace rules and outputs remain intact.
+function borrowedScopeProblems(items,profile,path=[]){
+  const reserved=new Set(['str','Option','Some','None','translation_core']),problems=[];
+  for(const item of items){if(item.comment||itemConfiguration(item.tokens,profile).status==='inactive')continue;
+    const header=originalDeclarationHeader(item,path);if(header&&reserved.has(header.name)&&!(header.kind==='mod'&&header.name==='translation_core'&&path.length===0))problems.push('competing borrowed-text source binding '+header.name);
+    if(item.term==='use')try{for(const leaf of originalUseDeclarationLeaves(item,path))if(leaf.glob||reserved.has(leaf.name))problems.push('competing borrowed-text import '+leaf.name);}catch{problems.push('unresolved borrowed-text import');}
+    const rows=significant(item);if(rows[0]?.text==='extern'&&rows[1]?.text==='crate'&&reserved.has(rows[3]?.text==='as'?rows[4]?.text:rows[2]?.text))problems.push('competing borrowed-text crate alias');
+  }return problems;
+}
 function macroOpen(rows,at){
   const row=rows[at];if(row?.type!=='ident')return -1;
   const merged=row.text.endsWith('!'),name=merged?row.text.slice(0,-1):row.text;
@@ -72,7 +84,7 @@ function macroOpen(rows,at){
   if(keywords.has(name)&&!raw)return -1;
   const open=at+(merged?1:2);return (merged||rows[at+1]?.text==='!')&&['(','[','{'].includes(rows[open]?.text)?open:-1;
 }
-function functionSelection(source,item,path,profile,problems){
+function functionSelection(source,item,path,profile,problems,borrowedProblems=[]){
   const header=originalDeclarationHeader(item,path),condition=itemConfiguration(item.tokens,profile),rows=significant(item);
   if(!header||header.kind!=='fn')return null;
   const record={function:header.name,module:[...path],span:[item.start,item.end]},skipped=[];
@@ -101,18 +113,23 @@ function functionSelection(source,item,path,profile,problems){
     const original=source.slice(literal.start,literal.end),edit={span,expected:source.slice(...span),replacement:`${target}("{}", ${original})`};
     edits.push(edit);selected.push({span,method:rows[at+2].text,literal:original,originalDispatchProved:false});at+=4;
   }
+  if(!borrowedProblems.length){
+    const borrowed=selectBorrowedTextConversions(source,item,{rows,parameters,body,macroSpans});skipped.push(...borrowed.skipped.map(row=>({...record,...row})));
+    for(const candidate of borrowed.candidates){const replacement=candidate.kind==='option-function-item'?`|${candidate.operand}| ${target}("{}", ${candidate.operand})`:`${target}("{}", ${candidate.operand})`;
+      edits.push({span:candidate.span,expected:source.slice(...candidate.span),replacement});selected.push({...candidate,sourceResolvedCandidate:true,checkedTypeAuthority:false});}
+  }else skipped.push({...record,reason:'borrowed-text namespace uncertainty: '+borrowedProblems.join('; ')});
   if(!edits.length)return {edits,selection:null,skipped};
   const result=rows.slice(parameters+1,body),bare=result.length===2&&result[0].text==='->'&&result[1].text==='String';
   if(bare)edits.push({span:[result[1].start,result[1].end],expected:'String',replacement:textType});
   return {edits,selection:{...record,conversions:selected,ownedReturnAlias:bare,bodyAdmission:false},skipped};
 }
-function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile),externalConditions=[]){
+function propose(source,modules,profile,externalProblems=[],roleFor=createLiteralTextImportRoles(modules,profile),externalConditions=[],producerContext=null,externalBorrowedProblems=[]){
   const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[],importRoles=[],conditionalDeclarations=[...externalConditions];
   for(const module of modules){
     const ancestors=modules.filter(parent=>parent!==module&&parent.path.length<module.path.length&&parent.path.every((word,at)=>word===module.path[at]));
-    const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,parent,roleFor,importRoles,conditionalDeclarations)),...scopeProblems(items,profile,module.path,module,roleFor,importRoles,conditionalDeclarations)];
+    const items=originalSourceModuleItems(module),problems=[...externalProblems,...ancestors.flatMap(parent=>scopeProblems(originalSourceModuleItems(parent),profile,parent.path,parent,roleFor,importRoles,conditionalDeclarations,producerContext)),...scopeProblems(items,profile,module.path,module,roleFor,importRoles,conditionalDeclarations,producerContext)];
     if(module.configurationCondition!=='active'){skipped.push({module:module.path,reason:'module configuration is not active'});continue;}
-    for(const item of items){if(item.term!=='fn')continue;let result;try{result=functionSelection(source,item,module.path,profile,problems);}catch(error){skipped.push({span:[item.start,item.end],reason:error.message});continue;}if(!result)continue;edits.push(...result.edits);skipped.push(...result.skipped);if(result.selection)selections.push(result.selection);}
+    for(const item of items){if(item.term!=='fn')continue;let result;try{result=functionSelection(source,item,module.path,profile,problems,[...externalBorrowedProblems,...ancestors.flatMap(parent=>borrowedScopeProblems(originalSourceModuleItems(parent),profile,parent.path)),...borrowedScopeProblems(items,profile,module.path)]);}catch(error){skipped.push({span:[item.start,item.end],reason:error.message});continue;}if(!result)continue;edits.push(...result.edits);skipped.push(...result.skipped);if(result.selection)selections.push(result.selection);}
   }
   edits.sort((a,b)=>a.span[0]-b.span[0]);for(let at=0;at<edits.length;at++)if(source.slice(...edits[at].span)!==edits[at].expected||at&&edits[at-1].span[1]>edits[at].span[0])fail('source substitutions overlap or differ');
   const applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'literal-text:retain-complete-literal-operands',edits:[]}],repositoryRules:[{id:'router-core:adopt-owned-literal-formatting',edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value));
@@ -125,7 +142,7 @@ function propose(source,modules,profile,externalProblems=[],roleFor=createLitera
 }
 export function migrateCoreLiteralText(source,{rootSource='',compilationProfile:input=PRODUCTION_PROFILE}={}){
   bounded(source);bounded(rootSource);const profile=normalizeProfile(input),captured=captureSourceModuleViews({source,sourcePath:'src/literal_adoption.rs',compilationProfile:profile}),modules=captured.views.map(view=>({file:'src/literal_adoption.rs',source,path:[...view.modulePath],sourceView:view,compilationProfile:profile,configurationCondition:view.configurationCondition}));
-  const conditions=[],problems=rootSource?scopeProblems(sourceItems(rootSource),profile,[],null,null,[],conditions):[];return propose(source,modules,profile,problems,undefined,conditions);
+  const conditions=[],problems=rootSource?scopeProblems(sourceItems(rootSource),profile,[],null,null,[],conditions):[];return propose(source,modules,profile,problems,undefined,conditions,null,rootSource?borrowedScopeProblems(sourceItems(rootSource),profile,[]):[]);
 }
 function sourceMap(input){
   if(!input||typeof input!=='object'||types.isProxy(input)||![null,Object.prototype].includes(Object.getPrototypeOf(input)))fail('own primitive source map required');
@@ -141,9 +158,10 @@ export function proposeCoreLiteralTextCorpus(options={}){
   const roots=graph.modules.filter(module=>same(module,[])),cores=graph.modules.filter(module=>same(module,['translation_core'])),leaves=graph.modules.filter(module=>same(module,['translation_core','primitives']));
   if(roots.length!==1||cores.length!==1||leaves.length!==1||cores[0].file!=='src/translation_core.rs'||cores[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaves[0].file!=='src/translation_core/primitives.rs'||leaves[0].source!==ROUTER_CORE_PRIMITIVES_SOURCE||cores[0].configurationCondition!=='active'||leaves[0].configurationCondition!=='active')fail('complete actual owned facade/primitive source routes required');
   const edge=originalSourceModuleItems(roots[0]).filter(item=>item.term==='mod'&&item.name==='translation_core');if(edge.length!==1||roots[0].source.slice(edge[0].start,edge[0].end).trim()!=='pub mod translation_core;')fail('actual unadorned public core edge required');
-  const after={...files},proposals=[],skipped=[],roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs);
-  for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),conditions=[],problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor,[],conditions)),result=propose(files[file],modules,profile,problems,roleFor,conditions);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
+  const after={...files},proposals=[],skipped=[],roleFor=createLiteralTextImportRoles(graph.modules,profile,dependencyInputs),producerContext=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs});
+  for(const file of Object.keys(files)){const modules=graph.modules.filter(module=>module.file===file),origins=modules.filter(module=>module.sourceView?.modulePath.length===0);if(origins.length!==1){skipped.push({file,reason:'physical source has no unique original module origin'});continue;}const origin=origins[0],ancestors=graph.modules.filter(module=>module.file!==file&&module.path.length<origin.path.length&&module.path.every((name,at)=>origin.path[at]===name)),conditions=[],problems=ancestors.flatMap(module=>scopeProblems(originalSourceModuleItems(module),profile,module.path,module,roleFor,[],conditions,producerContext)),borrowedProblems=ancestors.flatMap(module=>borrowedScopeProblems(originalSourceModuleItems(module),profile,module.path)),result=propose(files[file],modules,profile,problems,roleFor,conditions,producerContext,borrowedProblems);proposals.push({file,module:origin.path,...result});after[file]=result.after.source;}
   const result={schema:'router-owned-literal-text-corpus-v1',entry,compilationProfile:profile,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,executableAdmission:false};
+  const producerEffects=finishCoreAdoptionProducerContext(producerContext);if(producerEffects)result.producerEffects=producerEffects;
   verifyLiteralTextImportRoles(roleFor);const currentDependency=Object.getOwnPropertyDescriptor(options,'dependencyInputs');
   if(!!currentDependency!==!!dependencyField||dependencyField&&(!currentDependency||!Object.hasOwn(currentDependency,'value')||currentDependency.value!==dependencyInputs||currentDependency.writable!==dependencyField.writable||currentDependency.enumerable!==dependencyField.enumerable||currentDependency.configurable!==dependencyField.configurable))fail('dependencyInputs option changed');
   return result;
