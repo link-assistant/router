@@ -1,3 +1,6 @@
+import {tupleName,sourceQualifiers,tupleInferenceKind} from './tuples.mjs';
+import {sameType} from '../checked-types.mjs';
+import {typeError,unsupported} from '../vendor/meta-language/translation/diagnostics.js';
 // A borrowed standard method keeps the issuer of every original AST node.
 // Tuple/pattern helpers can query this private interval, never a public flag.
 import {requireOriginalPrimitiveTryFromChecker} from './host-contracts.mjs';
@@ -49,3 +52,33 @@ export function recordOriginalStandardTuple(checker,token,entry,type){
  record.state.tuples.set(type.name,{entry,digest:metadataDigest(entry),type:structuredClone(type),proof:freeze({kind:'original-standard-method-shared-parameter-product',source:record.state.evidence,originalTuple:structuredClone(record.origin),sharedReferenceCopy:SHARED_REFERENCE_COPY_SOURCE,byValueProduct:true,pointeeMoveAuthority:false,pointeeDropAuthority:false})});
 }
 export function originalStandardTupleLayout(checker,type,entry){const record=active.get(checker)?.tuples.get(type?.name);if(!record)return null;if(record.entry!==entry||metadataDigest(entry)!==record.digest||metadataDigest(type)!==metadataDigest(record.type))fail('original shared tuple layout changed');return record.proof;}
+
+// Only this higher checker layer can consult the existing private source frame.
+// Bare TupleChecker never reads optional public proof hooks or their getters.
+export function withOriginalStandardTupleChecker(Base){return class extends Base {
+  inferredTupleField(type,location,depth,active,verified,budget,referenceContext){
+    if(originalStandardTupleField(this,referenceContext,type,depth)){if(--budget.cells<0)throw unsupported('original shared tuple budget','exceeds the existing checked product bound',location);return;}
+    return super.inferredTupleField(type,location,depth,active,verified,budget,referenceContext);
+  }
+  inferTuple(args,location,referenceContext,sourceNode){
+    const context=originalStandardTupleContext(this,sourceNode,args);
+    if(!context)return super.inferTuple(args,location,referenceContext);
+    referenceContext=context;
+    if(args.length<1||args.length>32)throw unsupported('inferred tuple arity','requires one to thirty-two actual checked fields',location);
+    const active=new Set(),verified=new Set(),budget={cells:16000};
+    for(const argument of args)this.inferredTupleField(argument.type,location,0,active,verified,budget,referenceContext);
+    const fields=args.map((argument,index)=>({name:'field'+index,type:argument.type})),sourceIdentity=originalStandardTupleIdentity(this,referenceContext,args),name=tupleName(fields)+(sourceIdentity?'_source_'+sourceIdentity:'');
+    if(Buffer.byteLength(name)>8192)throw unsupported('inferred tuple identity budget','the source-qualified product name exceeds the checked bound',location);
+    let entry=this.items.get(name);
+    if(entry) {
+      const actual=entry.ctors?.[0]?.fields;
+      if(!entry.tuple||entry.generated!=='router-tuple-type'||entry.ctors.length!==1||actual.length!==fields.length||actual.some((field,index)=>field.name!==fields[index].name||!sameType(field.type,fields[index].type)||JSON.stringify(sourceQualifiers(field.type))!==JSON.stringify(sourceQualifiers(fields[index].type))))throw typeError('inferred tuple has a conflicting actual source-qualified layout',location);
+    }else {
+      if(this.inferredTupleLayouts.size>=1024)throw unsupported('inferred tuple layout budget','a source program exceeds the checked product bound',location);
+      this.declare([{k:'data',name,tuple:true,generated:'router-tuple-type',ctors:[{name:'Tuple',fields,ctorStyle:'tuple'}],span:location,tupleInference:{kind:tupleInferenceKind(referenceContext),sourceSpan:location,fieldTypes:fields.map(field=>structuredClone(field.type)),defaultedFields:false}}],[]);
+      entry=this.items.get(name);this.inferredTupleLayouts.set(name,entry);
+    }
+    const result={entry,type:{kind:'data',name:entry.fullName,rustGeneratedTypeOwner:{name,generated:'router-tuple-type'},rustTupleLifetimeFields:fields.map(field=>structuredClone(field.type))}};
+    recordOriginalStandardTuple(this,referenceContext,entry,result.type);return result;
+  }
+};}

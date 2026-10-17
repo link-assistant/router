@@ -5,6 +5,7 @@ import {parseRouterCoreFormatting,parseRouterCoreText} from '../router-core-form
 import {withOriginalFormatDisplayParser,withOriginalFormatDisplayChecker} from './source-display-formatting.mjs';
 import {checkOriginalMappedBody,checkOriginalMappedApplication,prepareOriginalMappedBodies,requireOriginalMappedEmission,finalizeOriginalMappedBodies} from './standard-mapped-body.mjs';
 import {createOriginalSharedPatternAdapter} from './shared-source-patterns.mjs';
+import {withOriginalStandardTupleChecker} from './standard-method-context.mjs';
 import {captureOriginalMoveTuples} from './standard-move-payload.mjs';
 import {captureConstMatchSources} from './const-match-source-context.mjs';
 import {prepareOriginalSourceFrames,requireOriginalSourceFrameEmission,assertOriginalSourceFrameEnvelope,originalSourceFramePatternRead} from './standard-source-frame.mjs';
@@ -416,7 +417,7 @@ const originalHostParserIdentity=Object.freeze({
 });
 export function originalHostParserIdentitySnapshot(){return originalHostParserIdentity;}
 const sourcePatterns=createOriginalSharedPatternAdapter();
-export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroChecker(withDeclarationRefusalCollection(withSharedNullaryEnumChecker(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(MethodChecker)))))))))))) {
+export class HostChecker extends withOriginalFormatDisplayChecker(withJsonMacroChecker(withDeclarationRefusalCollection(withSharedNullaryEnumChecker(withCheckedSourceLinks(withCheckedMethodCopyReceivers(withFloatZeroSignChecker(withSourceLifetimeChecker(withSharedArrayBorrowChecker(withNestedMatchPatternsChecker(withSourceOwnershipChecker(withFixedArrayChecker(withOriginalStandardTupleChecker(MethodChecker))))))))))))) {
   constructor(language,externals){super(language,externals);this.instantiations=new HostInstantiations(this);this.sourceLifetimeHostContracts=HOST_CONTRACTS;}
   visitDeclaration(item,path,entry,visit,phase){return super.visitDeclaration(item,path,entry,visitRouterCoreJsonUpdateFunction(this,item,path,entry,visit,phase),phase);}
   resolveType(type,path,range){if(type?.kind==='char')return checkedCharacterType(type,range);const resolved=super.resolveType(type,path,range);return {...resolved,...(type?.rustTupleLifetimeFields?{rustTupleLifetimeFields:type.rustTupleLifetimeFields.map(field=>this.resolveType(field,path,range))}:{}),...(type?.patternOwnershipRefusal?{patternOwnershipRefusal:type.patternOwnershipRefusal}:{}),...(type?.rustReference?{rustReference:{...type.rustReference,...(type.rustReference.pointee?{pointee:this.resolveType(type.rustReference.pointee,path,range)}:{})}}:{}),...(type?.rustGenericIdentityUnresolved?{rustGenericIdentityUnresolved:true}:{}),...(type?.rustStandardGeneric?{rustStandardGeneric:{kind:type.rustStandardGeneric.kind,arguments:type.rustStandardGeneric.arguments.map(argument=>this.resolveType(argument,path,range))}}:{})};}
