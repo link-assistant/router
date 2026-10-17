@@ -233,11 +233,23 @@ function currentOptionLayout(checker,type,span,recover=false){
  }
  return {owner,payload,summary};
 }
-function captureOptionReaders(root,output){let cells=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(node.k==='routerTry'||node.k==='routerDispatchMethod'&&['get','as_str'].includes(node.method))output.set(node,copyMetadata(node));for(const [key,value]of Object.entries(node))if(!['type','span'].includes(key))Array.isArray(value)?value.forEach(child=>visit(child,depth+1)):visit(value,depth+1);};visit(root);}
+function captureOptionReaders(root,output){let cells=100000;const visit=(node,depth=0)=>{if(!node||typeof node!=='object')return;if(--cells<0||depth>160)fail();if(node.k==='routerTry'||node.k==='routerDispatchMethod'&&['get','as_str'].includes(node.method)||node.k==='routerStringOwnership'&&node.operation==='as_str'&&node.fallback?.k==='routerDispatchMethod'&&node.fallback.method==='as_str'&&node.fallback.args?.length===0&&node.fallback.object===node.object)output.set(node,copyMetadata(node));for(const [key,value]of Object.entries(node))if(!['type','span'].includes(key))Array.isArray(value)?value.forEach(child=>visit(child,depth+1)):visit(value,depth+1);};visit(root);}
 function observeOptionReader(checker,node,value,frame){
  const source=frame?.optionLane&&frame.readers?.get(node);if(!source)return;
+ let inner=null;if(node.k==='routerStringOwnership'){
+  if(value.k!=='routerHostCall'||value.id!=='serde_json_value_as_str')return;
+  inner=issued.get(value);if(inner?.kind!=='option-reader'||inner.checker!==checker||inner.frame!==frame||inner.source!==node.fallback||!same(value,inner.call)||!same(inner.source,inner.syntax))fail();
+  if(node.operation!=='as_str'||node.fallback?.k!=='routerDispatchMethod'||node.fallback.method!=='as_str'||node.fallback.args?.length!==0||node.fallback.object!==node.object||!same(node.span,node.fallback.span))fail();
+ }
  currentFunction(checker,frame.activeItem,frame);if(!same(node,source))fail();
- if(value.k==='routerTry'&&value.option===true||value.k==='routerHostCall'&&['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id))issued.set(value,{kind:'option-reader',checker,frame,source:node,syntax:source,call:copyMetadata(value)});
+ if(inner){const actual=currentOptionLayout(checker,value.type,node.span,false),payload=actual?.payload;if(!payload||payload.kind!=='string'||payload.rustReference||payload.patternOwnershipRefusal||payload.rustBorrowingUnresolved||payload.rustGenericIdentityUnresolved||payload.rustOwnership?.kind!=='borrowed'||payload.rustOwnership.source!=='str')fail();}
+ if(value.k==='routerTry'&&value.option===true||value.k==='routerHostCall'&&['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id))issued.set(value,{kind:'option-reader',checker,frame,source:node,syntax:source,call:copyMetadata(value),...(inner?{inner}: {})});
+}
+// An outer ownership wrapper carries only its actual inner issued reader.
+// Neither a copied fallback nor an equal public source marker can supply it.
+function optionReaderWrapperCurrent(checker,frame,value,record){
+ if(!record.inner)return true;const inner=record.inner,node=record.source;
+ return node.k==='routerStringOwnership'&&node.operation==='as_str'&&node.fallback===inner.source&&node.fallback?.k==='routerDispatchMethod'&&node.fallback.method==='as_str'&&node.fallback.args?.length===0&&node.object===node.fallback.object&&same(node.span,node.fallback.span)&&inner.kind==='option-reader'&&inner.checker===checker&&inner.frame===frame&&same(inner.source,inner.syntax)&&same(value,inner.call);
 }
 // Called only by the existing standard callback gate. A copied semantic
 // receiver or public Option/control marker cannot manufacture this membership.
@@ -245,6 +257,7 @@ export function originalJsonOptionReceiver(checker,node,receiver){
  const frame=activeFunctions.get(checker),record=issued.get(receiver);if(!frame?.optionLane||!record||record.kind!=='option-reader'||record.checker!==checker||record.frame!==frame||record.source!==node.object||!hasOriginalStandardCall(checker,node))return false;
  const source=originalStandardCallContext(checker,node);currentFunction(checker,frame.activeItem,frame);
  if(source.owner!==frame.functionName||!same(record.source,record.syntax)||!same(receiver,record.call))return false;
+ if(!optionReaderWrapperCurrent(checker,frame,receiver,record))return false;
  let cells=100000,found=false;
  const readerPayload=(type,span)=>{if(type?.kind==='data'){projectionOwner(checker,type,span,false);return true;}return type?.kind==='string'&&!type.rustReference&&!type.patternOwnershipRefusal&&!type.rustBorrowingUnresolved&&!type.rustGenericIdentityUnresolved&&type.rustOwnership?.kind==='borrowed'&&type.rustOwnership.source==='str';};
  const output=currentOptionLayout(checker,receiver.type,node.span,false);if(!output||!readerPayload(output.payload,node.span))return false;
@@ -256,7 +269,7 @@ export function originalJsonOptionReceiver(checker,node,receiver){
   }
   if(value.k==='routerHostCall'){
    if(['router_core_json_parse','router_core_json_parse_bytes'].includes(value.id)){const proof=issued.get(value.compatibilityCore);if(proof?.checker!==checker||proof.frame!==frame||proof.id!==value.id||!same(value,proof.call))return false;}
-   else if(['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id)){const proof=issued.get(value);if(proof?.kind!=='option-reader'||proof.checker!==checker||proof.frame!==frame||!same(value,proof.call)||!same(proof.source,proof.syntax))return false;}
+   else if(['serde_json_value_get_string','serde_json_value_get_usize','serde_json_value_as_str'].includes(value.id)){const proof=issued.get(value);if(proof?.kind!=='option-reader'||proof.checker!==checker||proof.frame!==frame||!same(value,proof.call)||!same(proof.source,proof.syntax)||!optionReaderWrapperCurrent(checker,frame,value,proof))return false;}
    else return false;
   }
   for(const [key,child]of Object.entries(value))if(!['type','span','compatibilityCore','sourceFunctionItem'].includes(key))for(const nested of Array.isArray(child)?child:[child])if(nested&&typeof nested==='object'&&!visit(nested,depth+1))return false;return true;

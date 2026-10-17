@@ -86,7 +86,7 @@ import {originalMethodSnapshot,assertOriginalParserIdentity} from '../original-p
 import {TokenCursor} from '../vendor/meta-language/translation/lexer.js';
 import {validateOriginalMethodAssociations,withCheckedMethodCopyReceivers} from '../source-method-admission.mjs';
 import {withSharedNullaryEnumChecker} from '../shared-nullary-enum.mjs';
-import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern} from '../router-core-algebraic.mjs';
+import {parseRouterCoreAlgebraicType,parseRouterCoreAlgebraicExpression,parseRouterCoreAlgebraicPattern,routerCoreAlgebraicControlPatternOwner} from '../router-core-algebraic.mjs';
 import {parseRouterCoreScalarCall,checkRouterCoreScalarCall,captureRouterCoreScalarCalls,ROUTER_CORE_SCALAR_CONTRACT} from '../router-core-scalars.mjs';
 import {parseRouterCoreJson,captureRouterCoreJsonCalls,checkRouterCoreJson} from '../router-core-json.mjs';
 import {checkOriginalOwnedJsonLetElse,parseRouterCoreJsonUpdate,captureRouterCoreJsonUpdates,checkRouterCoreJsonUpdate,visitOriginalJsonCollectionTextMatch,observeOriginalJsonErrorFormat,finalizeOriginalJsonErrorFlow,visitRouterCoreJsonUpdateFunction,checkRouterCoreJsonMutableLet,prepareOriginalJsonProjectionEmission,requireOriginalJsonProjectionEmission,ROUTER_CORE_JSON_UPDATE_CONTRACTS} from '../router-core-json-updates.mjs';
@@ -189,6 +189,7 @@ export class HostRustParser extends withOriginalFormatDisplayParser(withJsonMacr
     if(this.shadowedImportedBindings?.has(segments[0]) && resolved.length===segments.length && resolved.every((part,index)=>part===segments[index]))return ['crate','ml_unresolved_source_import',...segments];
     return resolved;
   }
+  registeredPatternOwner(written,resolved,path,location) {return routerCoreAlgebraicControlPatternOwner(this,written,resolved,path,location)??super.registeredPatternOwner(written,resolved,path,location);}
   registeredGenericKind(segments,path=this.modulePath,sourceName=segments[0]) {
     const target=this.resolveSourceNamespace(segments,path,'type'),kind=target.join('::')==='std::option::Option'?'Option':target.join('::')==='std::result::Result'?'Result':null;
     if(!kind)return null;

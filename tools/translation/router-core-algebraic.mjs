@@ -27,7 +27,7 @@ function identity(parser){
   assertOriginalParserIdentity(parser,HostRustParser.prototype,new Map(snapshot.parserMethods));
   assertOriginalParserIdentity(parser.cursor,TokenCursor.prototype,new Map(snapshot.cursorMethods),{originalGuard:originalTextCursorGuard(parser.cursor)});
 }
-function context(parser,row){
+function context(parser,row,position=row.start){
   identity(parser);const state=matchesParserFacts(parser),facade=requireRouterCoreFacade(parser);
   const leaves=state.facts.modules.filter(module=>module.path.join('.')==='translation_core.primitives');
   if(leaves.length!==1)fail('requires the complete owned primitives leaf');const leaf=leaves[0];
@@ -39,7 +39,7 @@ function context(parser,row){
     {phase:'repository',rules:[{id:'router-core:select-qualified-algebraic-alias',apply:value=>value}]},
   ]).run(null);
   if(stage.value.source!==ROUTER_CORE_PRIMITIVES_SOURCE)fail('primitives reconstruction changed');
-  current(parser,row,{state,facade,leaf},row.start);return {state,facade,leaf};
+  current(parser,row,{state,facade,leaf},position);return {state,facade,leaf};
 }
 function current(parser,row,proof,end){
   requireRouterCoreFacadeCurrent(parser,proof.facade);identity(parser);
@@ -47,6 +47,18 @@ function current(parser,row,proof,end){
   for(let at=0;at<row.head.length;at++){const expected=row.head[at],actual=row.tokens[row.start+at];if(actual!==expected.token)fail('qualified source token identity changed');for(const key of ['value','kind','start','end']){const field=Object.getOwnPropertyDescriptor(actual,key);if(!field||!Object.hasOwn(field,'value')||field.value!==expected[key])fail('qualified source token data changed');}}
 }
 function sourceContract(run,span){try{return run();}catch(error){if(!(error instanceof TypeError))throw error;throw unsupported('Router owned algebraic interface',error.message,span);}}
+// controlPattern resolves a path after consuming its actual original tokens.
+// The ordinary type/expression/pattern entry points still use their old start.
+export function routerCoreAlgebraicControlPatternOwner(parser,written,resolved,path,span){
+ if(written.length!==4||written[0]!=='crate'||written[1]!=='translation_core'||!Object.hasOwn(kinds,written[2])||!(written[2]==='Maybe'?['Some','None']:['Ok','Err']).includes(written[3]))return null;
+ identity(parser);const c=parser.cursor,end=c.index,start=end-7,tokens=c.tokens;if(start<0)fail('owned control path lacks its original tokens');
+ const words=[written[0],'::',written[1],'::',written[2],'::',written[3]],captured=[];
+ for(let at=0;at<7;at++){const token=tokens[start+at];if(!token||token.value!==words[at]||token.kind!==(at%2?'punct':'identifier'))fail('owned control path token changed');captured.push({token,value:token.value,kind:token.kind,start:token.start,end:token.end});}
+ const first=tokens[start],last=tokens[end-1];if(first.start!==span.start||last.end!==span.end)fail('owned control path span changed');
+ const row={c,name:written[2],first,last,start,tokens,head:captured},proof=sourceContract(()=>context(parser,row,end),span),actual=parser.resolve(written,path);
+ if(actual.length!==resolved.length||actual.some((name,index)=>name!==resolved[index]))fail('owned control path resolution changed');
+ sourceContract(()=>current(parser,row,proof,end),span);return kinds[row.name];
+}
 export function parseRouterCoreAlgebraicType(parser){
   const row=selected(parser);if(!row)return null;const {c,name,first,last}=row,span=location(first,last);
   // A following associated member belongs to expression/pattern parsing.
