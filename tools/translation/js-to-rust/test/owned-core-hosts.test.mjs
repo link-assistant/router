@@ -8,6 +8,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createOwnedCoreSourceContext,translateOwnedCoreJavaScript,translateOwnedCoreConcreteSyntaxMeta,parseOwnedCoreMeta,analyzeJavaScript,emitRust} from '../translator.mjs';
 import {ownedCoreRuntimeSources,ownedCoreSourceData} from '../owned-core-source.mjs';
 import {evaluate,prepareOwnedCoreRuntime} from '../interpreter.mjs';
+import {prepareReverseConcreteSource} from '../concrete-source.mjs';
 import {json_macro_null,json_macro_string,json_macro_object,json_macro_bool,json_macro_array} from '../../json-macro-runtime.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../../router-core-source-data.mjs';
 const root=fileURLToPath(new URL('../../../../',import.meta.url));
@@ -63,7 +64,7 @@ test('shadowed, forged, reexport-mutated and custom source calls never gain host
  const altered=corpus(source);altered.files.find(row=>row.path==='src/translation_core/primitives.rs').source+='\n';assert.throws(()=>createOwnedCoreSourceContext(altered),/owned Rust sources differ/u);
  const inputData=corpus(source);Object.defineProperty(inputData,'runtimeRoot',{get(){assert.fail('accessor invoked');}});assert.throws(()=>createOwnedCoreSourceContext(inputData),/accessor/u);
 });
-test('CST reconstruction and checked Links reissue retain all source and type boundaries',limits,()=>{
+test('CST reconstruction and checked Links reissue retain all source and type boundaries',limits,async t=>{
  const source=imports+param+'export function copied(value){return copy(value);}';const {context,result}=translate(source);
  const again=translateOwnedCoreConcreteSyntaxMeta(result.concreteSyntax.meta,{sourcePath:'caller.mjs',context});assert.equal(again.rust,result.rust);assert.equal(again.meta,result.meta);
  assert.throws(()=>parseOwnedCoreMeta(result.meta.replace('owned-function','function'),{context}));
@@ -71,6 +72,22 @@ test('CST reconstruction and checked Links reissue retain all source and type bo
  assert.ok(analyzeJavaScript(source).diagnostics.length);assert.equal(ownedCoreSourceData(context).files.find(row=>row.path==='caller.mjs').source,source);
  const invalidJavaScript=imports+'export function copied(value: string){return copy(value);}';assert.throws(()=>translate(invalidJavaScript),/native source syntax/u);
  const typedData=corpus(source);typedData.files.find(row=>row.path==='caller.mjs').path='caller.mts';const typedContext=createOwnedCoreSourceContext(typedData);assert.throws(()=>translateOwnedCoreJavaScript(source,{sourcePath:'caller.mts',context:typedContext}),/source language/u);
+ const typedSource=imports+'import type {JsonValue} from "./runtime/json-macro-runtime.mjs";\nexport function copied(value: JsonValue): import("./runtime/json-macro-runtime.mjs").JsonValue {return copy(value);}';
+ const receive=text=>{const data=corpus(text);data.files.find(row=>row.path==='caller.mjs').path='caller.mts';const context=createOwnedCoreSourceContext(data),stage=prepareReverseConcreteSource(text,'TypeScript');return {data,context,result:translateOwnedCoreConcreteSyntaxMeta(stage.concreteSyntax.meta,{sourcePath:'caller.mts',context})};};
+ const received=receive(typedSource),directory=mkdtempSync(join(tmpdir(),'owned-written-return-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
+ for(const row of received.data.files.filter(row=>row.path.startsWith('runtime/'))){mkdirSync(dirname(join(directory,row.path)),{recursive:true});writeFileSync(join(directory,row.path),row.source);}
+ writeFileSync(join(directory,'original.mts'),typedSource);writeFileSync(join(directory,'caller.mts'),received.result.typescript);
+ try{execFileSync(process.execPath,[join(root,'packages/javascript/node_modules/typescript/bin/tsc'),'--strict','--skipLibCheck','--target','ES2022','--module','NodeNext','--moduleResolution','NodeNext','--outDir',join(directory,'out'),join(directory,'original.mts'),join(directory,'caller.mts')],{cwd:root,encoding:'utf8',timeout:20000,stdio:'pipe'});}catch(error){assert.fail('strict original/emitted written-return TypeScript failed\n'+String(error.stdout??'')+'\n'+String(error.stderr??''));}
+ mkdirSync(join(directory,'out/runtime'),{recursive:true});for(const row of received.data.files.filter(row=>row.path.startsWith('runtime/')))writeFileSync(join(directory,'out',row.path),row.source);
+ const actual=await import(pathToFileURL(join(directory,'out/original.mjs')).href),emitted=await import(pathToFileURL(join(directory,'out/caller.mjs')).href),input=json_macro_object([['name',json_macro_string('🦀')]]),golden=json_macro_object([['name',json_macro_string('🦀')]]);
+ assert.deepEqual(actual.copied(input),golden);assert.deepEqual(emitted.copied(input),golden);assert.notEqual(emitted.copied(input),input);
+ assert.equal(parseOwnedCoreMeta(received.result.meta,{context:received.context})[0].returns,'json');
+ const borrowed=receive(typedSource.replace('return copy(value);','return index(value,"name");'));assert.equal(borrowed.result.program[0].returns,'json-ref');assert.equal(borrowed.result.program[0].resultRoot,'value');
+ assert.throws(()=>receive(typedSource.replace(': import("./runtime/json-macro-runtime.mjs").JsonValue',': boolean')),/written return ABI/u);
+ assert.throws(()=>receive(typedSource.replace(': import("./runtime/json-macro-runtime.mjs").JsonValue',': Promise<boolean>')),/actual import symbol/u);
+ const shadow=typedSource.replace('import type {JsonValue} from "./runtime/json-macro-runtime.mjs";','type JsonValue = {readonly counterfeit: true};');assert.throws(()=>receive(shadow),/unsupported declaration/u);
+ assert.throws(()=>translate(imports+param+'/** @returns {boolean} */\nexport function copied(value){return copy(value);}'),/written return ABI/u);
+
 });
 test('canonical JSON aggregate boundaries and wrong kinds preserve actual runtime refusals',limits,async t=>{
  const api=await targets(t,imports+param+'export function copied(value){return copy(value);}');

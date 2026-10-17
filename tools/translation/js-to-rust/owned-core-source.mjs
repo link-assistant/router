@@ -292,6 +292,13 @@ function checkFunction(context,path,declaration,analysis){
   return {body,terminated};
  }
  const checked=block(declaration.body.statements,environment,0);if(!checked.terminated)fail('missing return');
+ const writtenReturn=declaration.type??ts.getJSDocReturnType(declaration);
+ if(writtenReturn){
+  const written=originalOwnedCoreType(context,path,writtenReturn,analysis);
+  if(written==='json-ref'?!json(resultType):written!==resultType)fail('written return ABI differs from original checked body');
+  // A written Value domain accepts owned or borrowed results; it never
+  // supplies or changes the independently checked loan/root identity.
+ }
  if(!hostCalls.length)fail('no actual owned-core call');
  const item={kind:'owned-function',name,javascript:declaration.name.text,exported:!!declaration.modifiers?.some(mod=>mod.kind===ts.SyntaxKind.ExportKeyword),params,returns:resultType,resultRoot,body:checked.body,source:{path,source,span:[declaration.getStart(file),declaration.end]},hostCalls};
  requireOwnedCoreSourceCurrent(context);return item;
