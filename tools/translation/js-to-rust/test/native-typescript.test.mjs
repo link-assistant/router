@@ -22,7 +22,7 @@ async function lexicalThisBuildControls(ts,directory) {
   writeFileSync(join(javascript,'package.json'),JSON.stringify({name:'lexical-this-fixture',version:'0.0.0',type:'module'}));
   writeFileSync(join(javascript,'catalog.json'),'{}\n');
   for(const name of ['index.js','testing.js'])writeFileSync(join(javascript,name),'export {};\n');
-  const source=`export function lexical() { return (() => this.value)(); }
+  const historicalSource=`export function lexical() { return (() => this.value)(); }
 export function nested() { function child() { return (()=>this.value)(); } return child.call({value:7}); }
 export async function asyncLexical() { return await (async () => this.value)(); }
 export function* generatorLexical() { yield this.value; yield (() => this.value)(); }
@@ -37,6 +37,19 @@ export function dataOnly() { const value = {this:'猫😀'}; return [value.this,
 export function propertyArrow() { const value = {read: () => this.value}; return value.read(); }
 export function outerGenerator() { const value = function* nestedGenerator(){yield this.value;}; return value.call({value:9}).next().value; }
 `;
+  const executableClassEdits=[{"before":"export function classBoundary() { class Base {base=1;} class Child extends Base {value=3;arrow=()=>this.value;static count=4;static {this.count+=1;}static read=()=>this.count;constructor(){super();this.value+=1;}method(){return this.value;}get item(){return this.value;}set item(next){this.value=next;}}const value=new Child();value.item=6;return value.arrow()+value.method()+Child.read(); }","after":"export function classBoundary() { class Base {constructor(){this.base=1;}} class Child extends Base {constructor(){super();this.value=3;this.arrow=()=>this.value;this.value+=1;}static {if(typeof this!=='function')throw new Error('class static receiver');}static read(){return this===Child?5:0;}method(){return this.value;}get item(){return this.value;}set item(next){this.value=next;}}const value=new Child();value.item=6;return value.arrow()+value.method()+Child.read(); }"},{"before":"export function classExpressionBoundary() { const Type=class {value=2;arrow=()=>this.value;static count=3;static{this.count+=1;}};return (new Type()).arrow()+Type.count; }","after":"export function classExpressionBoundary() { const Type=class {constructor(){this.value=2;this.arrow=()=>this.value;}static {if(typeof this!=='function')throw new Error('class expression static receiver');}static read(){return typeof this==='function'?4:0;}};return (new Type()).arrow()+Type.read(); }"}];
+  // Complete 489 carrier retained: its initialized fields intentionally remain
+  // public-parser coverage, outside the unchanged assignment-erasure identity.
+  assert.equal(createHash('sha256').update(historicalSource).digest('hex'),'35c6547be5a780fc03d93ba1dc6fa3256a7f955f89bb4608a3ba87f87f0b39ad');
+  const historicalFile=ts.createSourceFile(sourcePath,historicalSource,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS),historicalMeta=parseNativeJavaScript(ts,sourcePath,historicalSource,{file:historicalFile});
+  assert.deepEqual(JSON.parse(JSON.stringify(historicalMeta)),historicalMeta);
+  assert.deepEqual(runtimeAST(ts,reconstructSyntax(historicalMeta)),runtimeAST(ts,historicalSource));
+  const initializedFields=[],staticBlocks=[],initializerArrows=[],outerClassReceivers=[];let historicalFunction=0;
+  const hasThis=node=>{if(node.kind===ts.SyntaxKind.ThisKeyword)return true;let found=false;ts.forEachChild(node,child=>{if(hasThis(child))found=true;});return found;};
+  const historicalVisit=node=>{if(ts.isFunctionLike(node)&&node.parameters){const annotation=historicalMeta.annotations[historicalFunction++];if(['classBoundary','classExpressionBoundary'].includes(node.name?.text)){assert.equal(annotation.thisContext===true,false,node.name.text+': nested class receivers stay outside the outer ordinary function');outerClassReceivers.push(node.name.text);}}if(ts.isPropertyDeclaration(node)&&node.initializer){initializedFields.push(node);if(ts.isArrowFunction(node.initializer))initializerArrows.push(node.initializer);}if(ts.isClassStaticBlockDeclaration(node))staticBlocks.push(node);ts.forEachChild(node,historicalVisit);};historicalVisit(historicalFile);
+  assert.equal(historicalFunction,historicalMeta.annotations.length);assert.deepEqual(outerClassReceivers,['classBoundary','classExpressionBoundary']);assert.equal(initializedFields.length,8);assert.equal(initializerArrows.length,3);assert.equal(staticBlocks.length,2);assert.ok(initializerArrows.every(hasThis));assert.ok(staticBlocks.every(hasThis));
+  // The executable carrier uses only two exact class-line substitutions.
+  let source=historicalSource;for(const edit of executableClassEdits){assert.equal(source.split(edit.before).length,2);source=source.replace(edit.before,edit.after);}let inverse=source;for(const edit of [...executableClassEdits].reverse()){assert.equal(inverse.split(edit.after).length,2);inverse=inverse.replace(edit.after,edit.before);}assert.equal(inverse,historicalSource);
   writeFileSync(join(root,sourcePath),source);
   const paths=sourceModules(root),artifacts=buildNativeTypeScript(root),fresh=inferenceProgram(ts,root,paths),expectedFlags=new Map([['lexical',true],['nested',false],['child',true],['asyncLexical',true],['generatorLexical',true],['asyncGeneratorLexical',true],['defaults',true],['objectBoundary',false],['computedKey',true],['classBoundary',false],['classExpressionBoundary',false],['namedExpression',true],['dataOnly',false],['propertyArrow',true],['outerGenerator',false],['nestedGenerator',true]]);
   for(const path of paths) {
