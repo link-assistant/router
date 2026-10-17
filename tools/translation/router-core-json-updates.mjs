@@ -551,9 +551,9 @@ export function prepareOriginalJsonProjectionEmission(emitter,entry,Checker){
   if(!context||!fn||node.id!==context.id||entry.fullName!==fn.name&&entry.fullName!=='rp_'+Buffer.from(fn.name).toString('hex'))throw new Error('Owned JSON projection lacks its actual source function');
   const expected=retargetCheckedCallback(context.call,emitter.program),wanted=retargetCheckedCallback(fn,emitter.program);
   if(!projectionSemanticSame(node,expected)||!projectionSemanticSame({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source function or checked call changed [comparison '+JSON.stringify({function:entry.fullName.slice(0,120),id:node.id,call:describeOwnedJsonDifference(alphaTree(node),alphaTree(expected)),body:describeOwnedJsonDifference(alphaTree({params:entry.params,ret:entry.ret,body:entry.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body}))})+']');
-  if(!projectionSpansSame(node,expected)||!projectionSpansSame({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source spans changed from its actual checked function');
+  if(!projectionSpansSame(node,expected)||!projectionSpansSame({params:entry.params,ret:entry.ret,body:entry.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON projection source spans changed from its actual checked function [comparison '+JSON.stringify(projectionSpanDiagnostic([{join:'call',actual:node,expected},{join:'body',actual:{params:entry.params,ret:entry.ret,body:entry.body},expected:{params:wanted.params,ret:wanted.ret,body:wanted.body}}]))+']');
   requireBorrowedLayouts(context.layouts,checker,emitter.program,retargetCheckedCallback(context.roots,emitter.program));
-  for(const dependency of fn.dependencies??[]){const wanted=retargetCheckedCallback(dependency,emitter.program),name=emitter.program.declarations.has(dependency.name)?dependency.name:'rp_'+Buffer.from(dependency.name).toString('hex'),actual=emitter.program.declarations.get(name);if(!actual||!projectionSemanticSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper changed from its actual checked source body [comparison '+JSON.stringify({helper:name.slice(0,120),difference:actual?describeOwnedJsonDifference(alphaTree({params:actual.params,ret:actual.ret,body:actual.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body})):{reason:'actual helper absent'}})+']');if(!projectionSpansSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper source spans changed from its actual checked body');}
+  for(const dependency of fn.dependencies??[]){const wanted=retargetCheckedCallback(dependency,emitter.program),name=emitter.program.declarations.has(dependency.name)?dependency.name:'rp_'+Buffer.from(dependency.name).toString('hex'),actual=emitter.program.declarations.get(name);if(!actual||!projectionSemanticSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper changed from its actual checked source body [comparison '+JSON.stringify({helper:name.slice(0,120),difference:actual?describeOwnedJsonDifference(alphaTree({params:actual.params,ret:actual.ret,body:actual.body}),alphaTree({params:wanted.params,ret:wanted.ret,body:wanted.body})):{reason:'actual helper absent'}})+']');if(!projectionSpansSame({params:actual.params,ret:actual.ret,body:actual.body},{params:wanted.params,ret:wanted.ret,body:wanted.body}))throw new Error('Owned JSON readonly helper source spans changed from its actual checked body [comparison '+JSON.stringify(projectionSpanDiagnostic([{join:'helper',actual:{params:actual.params,ret:actual.ret,body:actual.body},expected:{params:wanted.params,ret:wanted.ret,body:wanted.body}}]))+']');}
   requireOriginalPrimitiveTryFromChecker(checker);
  }
  const previous=emissionFrames.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());emissionFrames.set(emitter,projectionNodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));return ()=>{if(previous)emissionFrames.set(emitter,previous);else emissionFrames.delete(emitter);};
@@ -578,6 +578,43 @@ function projectionSpansSame(actual,expected,budget={cells:200000},depth=0){
  for(let at=0;at<wanted.length;at++){
   const name=wanted[at];if(actualObject&&own(actual,name))continue;const b=descriptor(expected,name);if(!b||!own(b,'value')||name==='span'||!projectionSpansSame(undefined,b.value,budget,depth+1))return false;
  }return true;
+}
+// Failure-only first span difference; this never grants or repairs source authority.
+// Keep the rejecting comparison above unchanged and expose no evidence objects.
+function projectionSpanDiagnostic(pairs){
+ const budget={cells:4096},text=(value,limit=512)=>{let result='';for(let at=0;at<value.length&&at<limit;at++)result+=value[at];return result;};
+ const census=value=>{
+  if(!value||typeof value!=='object')return {names:[]};if(isProxy(value))return {reason:'proxy'};
+  const parent=prototype(value);if(parent!==plainPrototype&&parent!==arrayPrototype&&parent!==null)return {reason:'prototype'};
+  const names=keys(value);if(names.length>budget.cells)return {reason:'diagnostic key bound'};for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack')return {reason:'key'};return {names};
+ };
+ const field=(value,name)=>{const scan=census(value);if(scan.reason||!value||typeof value!=='object')return null;const result=descriptor(value,name);return result&&own(result,'value')?result:null;};
+ const summary=value=>{
+  const kind=field(value,'k'),span=field(value,'span'),start=span&&field(span.value,'start'),end=span&&field(span.value,'end');
+  return {kind:typeof kind?.value==='string'?text(kind.value,40):null,span:span?'present':'absent',start:typeof start?.value==='number'?start.value:null,end:typeof end?.value==='number'?end.value:null,startType:start?typeof start.value:'absent',endType:end?typeof end.value:'absent'};
+ };
+ const walk=(actual,expected,path,depth,span=false,parents=null)=>{
+  const difference=reason=>({path:text(path),reason,actual:summary(parents?parents.actual:actual),expected:summary(parents?parents.expected:expected)});
+  if(--budget.cells<0||depth>64)return difference('diagnostic bound');if(actual===expected)return null;
+  const aObject=actual!==null&&typeof actual==='object',bObject=expected!==null&&typeof expected==='object';
+  if(!aObject&&!bObject)return span?difference('span primitive differs'):null;
+  const a=census(actual),b=census(expected);if(a.reason||b.reason)return difference('own-data '+(a.reason??b.reason));
+  // Both key censuses finish before any unknown field descriptor is read.
+  for(let at=0;at<a.names.length;at++){
+   const name=a.names[at],left=descriptor(actual,name),right=bObject?descriptor(expected,name):null,next=text(path+'/'+name);
+   if(!left||!own(left,'value')||right&&!own(right,'value'))return difference('non-data field');
+   if(!right&&(span||name==='span'))return {path:next,reason:'expected span field absent',actual:summary(parents?parents.actual:actual),expected:summary(parents?parents.expected:expected)};
+   const found=walk(left.value,right?.value,next,depth+1,span||name==='span',parents??(name==='span'?{actual,expected}:null));if(found)return found;
+  }
+  for(let at=0;at<b.names.length;at++){
+   const name=b.names[at];if(aObject&&own(actual,name))continue;const right=descriptor(expected,name),next=text(path+'/'+name);
+   if(!right||!own(right,'value'))return difference('non-data field');
+   if(span||name==='span')return {path:next,reason:'actual span field absent',actual:summary(parents?parents.actual:actual),expected:summary(parents?parents.expected:expected)};
+   const found=walk(undefined,right.value,next,depth+1);if(found)return found;
+  }return null;
+ };
+ for(let at=0;at<pairs.length;at++){const pair=pairs[at],found=walk(pair.actual,pair.expected,'',0);if(found)return {join:pair.join,...found};}
+ return {reason:'no difference found within diagnostic domain'};
 }
 const canonicalSemanticSame=(actual,expected)=>same(alphaTree(copyMetadata(actual)),alphaTree(copyMetadata(expected)));
 const isSameSemantic=(actual,expected)=>metadataDigest(alphaTree(actual))===metadataDigest(alphaTree(expected));
