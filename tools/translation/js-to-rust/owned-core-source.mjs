@@ -8,6 +8,7 @@ import {jsonMacroDependencyProfile} from '../json-macro-inputs.mjs';
 import {proveJsonMacroFeatures} from '../json-macro-features.mjs';
 import {hostRuntimeAssets} from '../host-assets.mjs';
 import {resolveModuleBindings} from '../module-bindings.mjs';
+import {selectOriginalRouterCoreFacade} from '../router-core-facade-source.mjs';
 import {captureSourceModuleViews,originalModuleViewItems} from '../source-module-views.mjs';
 import {ROUTER_FORMATTING_FACADE_SOURCE,ROUTER_CORE_PRIMITIVES_SOURCE} from '../router-core-source-data.mjs';
 import {assertReverseConcreteSourceHost} from './concrete-source.mjs';
@@ -72,12 +73,13 @@ function rustEdge(files){
  if(typeof files.get('Cargo.toml')!=='string'||typeof files.get('Cargo.lock')!=='string')fail('complete receiving Cargo sources required');
  const dependencies=jsonMacroDependencyProfile({manifest:files.get('Cargo.toml'),lock:files.get('Cargo.lock')}).proof;
  if(!dependencies)fail('actual locked JSON source profile required');const features=proveJsonMacroFeatures(dependencies);
- const modules=[{file:'src/lib.rs',path:[],source,sourceView:views.views[0],configurationCondition:'active'}];
- for(const [path,name]of [['src/translation_core.rs',['translation_core']],['src/translation_core/primitives.rs',['translation_core','primitives']]])modules.push({file:path,path:name,source:files.get(path),configurationCondition:'active'});
- const evidence=resolveModuleBindings({modules}),scope=evidence.scopes.find(scope=>scope.file==='src/lib.rs'&&scope.path.length===0);
- const binding=scope?.bindings.filter(binding=>binding.name==='translation_core'&&binding.namespace==='type');
- if(!scope||scope.unresolvedTypeScope||scope.unresolvedMacroScope||binding?.length!==1||binding[0].status!=='resolved'||binding[0].kind!=='mod'||binding[0].source!=='src/lib.rs'||binding[0].target?.join('::')!=='crate::translation_core')fail('original facade namespace remains unresolved');
- return {path:'src/lib.rs',span:[declarations[0].start,declarations[0].end],dependencyDigest:dependencies.digest,features:[...features.features]};
+ const modules=[{file:'src/lib.rs',path:[],source,sourceView:views.views[0],configurationCondition:views.views[0].configurationCondition}];
+ for(const [path,name]of [['src/translation_core.rs',['translation_core']],['src/translation_core/primitives.rs',['translation_core','primitives']]]){
+  const text=files.get(path),capture=captureSourceModuleViews({source:text,sourcePath:path}),sourceView=capture.views[0];
+  modules.push({file:path,path:name,source:text,sourceView,configurationCondition:sourceView.configurationCondition});
+ }
+ const evidence=resolveModuleBindings({modules}),selected=selectOriginalRouterCoreFacade({modules,sourceScopes:evidence.scopes,compilationProfile:evidence.compilationProfile});
+ return {path:selected.rootFile,span:[...selected.span],dependencyDigest:dependencies.digest,features:[...features.features],bindingDiagnostics:evidence.diagnostics};
 }
 /** Fresh source selection; no source/owner/verdict is shared across calls. */
 export function createOwnedCoreSourceContext(input){

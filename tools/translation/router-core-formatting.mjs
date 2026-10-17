@@ -4,7 +4,7 @@
 import {FormatRustParser} from './extensions/formatting.mjs';
 import {STRING} from './checked-types.mjs';
 import {matchesParserFacts} from './matches-macro-context.mjs';
-import {originalSourceModuleItems} from './source-module-views.mjs';
+import {selectOriginalRouterCoreFacade} from './router-core-facade-source.mjs';
 import {transportConcreteSyntaxSource} from './concrete-syntax-meta.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {unsupported} from './vendor/meta-language/translation/diagnostics.js';
@@ -25,17 +25,7 @@ function qualified(parser,leaf,kind){
 }
 export function requireRouterCoreFacade(parser){
   const before=matchesParserFacts(parser),cursor=parser.cursor,index=cursor.index,tokens=cursor.tokens;
-  const roots=before.facts.modules.filter(module=>module.path.length===0),cores=before.facts.modules.filter(module=>module.path.length===1&&module.path[0]==='translation_core');
-  if(roots.length!==1||cores.length!==1)fail();
-  const root=roots[0],core=cores[0];
-  // The actual tracked edge must select this complete external source. No alias,
-  // cfg, attribute macro, caller flag or copied source-view can supply the API.
-  const declarations=originalSourceModuleItems(root).filter(item=>item.term==='mod'&&item.name==='translation_core');
-  if(declarations.length!==1||root.source.slice(declarations[0].start,declarations[0].end).trim()!=='pub mod translation_core;'||core.file!=='src/translation_core.rs'||core.source!==ROUTER_FORMATTING_FACADE_SOURCE||core.configurationCondition!=='active')fail();
-  const scope=before.facts.evidence.scopes.find(scope=>scope.file===root.file&&scope.path.length===0),bindings=scope?.bindings.filter(binding=>binding.namespace==='type'&&binding.name==='translation_core');
-  if(bindings?.length!==1||bindings[0].status!=='resolved'||bindings[0].kind!=='mod'||bindings[0].via!=='declaration'||bindings[0].source!==root.file||bindings[0].target?.join('::')!=='crate::translation_core'||bindings[0].span.start!==declarations[0].start||bindings[0].span.end!==declarations[0].end)fail();
-  if(originalSourceModuleItems(root).some(item=>item.term==='use'&&item.tokens.some(token=>token.text==='translation_core')))fail();
-  originalSourceModuleItems(core);
+  const selected=selectOriginalRouterCoreFacade({modules:before.facts.modules,sourceScopes:before.facts.evidence.scopes,compilationProfile:before.facts.compilationProfile});
   const pipeline=createRulePipeline([
     {phase:'language',rules:[{id:'compatibility-format:lossless-owned-interface',apply:source=>{
       const stage=transportConcreteSyntaxSource(source,{language:'Rust'});
@@ -43,7 +33,7 @@ export function requireRouterCoreFacade(parser){
     }}]},
     {phase:'repository',rules:[{id:'router-core:qualified-format-interface',apply:stage=>stage}]},
   ]);
-  const stage=pipeline.run(core.source);
+  const stage=pipeline.run(selected.source);
   const after=matchesParserFacts(parser);
   if(after!==before||parser.cursor!==cursor||cursor.index!==index||cursor.tokens!==tokens)fail();
   formatterCurrent();
