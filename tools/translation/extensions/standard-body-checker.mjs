@@ -226,7 +226,7 @@ function checkPinnedOptionResult(checker,node,receiver,env,path,expected,Parser)
   body={k:'let',name,value:boundReceiver,body:{...body,type:{...resultType,...body.type}},type:resultType,span:node.span};
   const layoutState=pinnedLayouts(checker,[receiver.type,resultType,callback.type.result,...captures.map(value=>value.type)],optionResultDependencies(checker.items,receiver.type.name,resultType.name));
   const proof={languageRule:OPTION_RESULT_RULE,callbackBinding:callback.binding,profile:STANDARD_BODY_SOURCE_PROFILE.id,method:'ok_or_else',owner,selection,syntaxSha256:syntax.syntaxSha256,defaultSelection:null,defaultSyntaxSha256:null,evaluationOrder:'actual-source-parameters-left-to-right-once; selected-original-body',constEligible:false,namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false,checkedBodyDigest:bodyDigest(body,sharedOwner(owner)?layoutState.layouts:null)};
-  issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),callbackBinding:structuredClone(callback.binding),receiverBinding:structuredClone(boundReceiver),...layoutState});
+  issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),callbackBinding:structuredClone(callback.binding),receiverBinding:structuredClone(boundReceiver),...(sharedOwner(owner)?{bodyResultType:structuredClone(body.type)}:{}),...layoutState});
   requireOriginalPrimitiveTryFromChecker(checker);
   return {k:'routerPinnedStandardBody',body,type:resultType,constEligible:false,pinnedStandardBodyProof:proof,span:node.span};
 }
@@ -252,7 +252,7 @@ function checkPinnedEagerOptionResult(checker,node,receiver,env,path,expected,Pa
   for(let index=values.length-1;index>=0;index--)body={k:'let',name:names.get(parameters[index].name),value:values[index],body,type:resultType,span:node.span};
   const layoutState=pinnedLayouts(checker,[resultType,...values.map(value=>value.type)],optionResultDependencies(checker.items,receiver.type.name,resultType.name));
   const proof={languageRule:EAGER_OPTION_RESULT_RULE,profile:STANDARD_BODY_SOURCE_PROFILE.id,method:'ok_or',owner,selection,syntaxSha256:syntax.syntaxSha256,defaultSelection:null,defaultSyntaxSha256:null,evaluationOrder:'actual-source-parameters-left-to-right-once; selected-original-body',constEligible:false,namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false,checkedBodyDigest:bodyDigest(body,sharedOwner(owner)?layoutState.layouts:null)};
-  issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),receiverBinding:structuredClone(values[0]),errorBinding:structuredClone(error),...layoutState});
+  issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),receiverBinding:structuredClone(values[0]),errorBinding:structuredClone(error),...(sharedOwner(owner)?{bodyResultType:structuredClone(body.type)}:{}),...layoutState});
   return {k:'routerPinnedStandardBody',body,type:resultType,constEligible:false,pinnedStandardBodyProof:proof,span:node.span};
 }
 export function checkPinnedOptionBody(checker,node,receiver,env,path,expected,Parser){
@@ -283,7 +283,7 @@ export function checkPinnedOptionBody(checker,node,receiver,env,path,expected,Pa
   for(let index=values.length-1;index>=0;index--)body={k:'let',name:names.get(parameters[index].name),value:values[index],body,type:body.type,span:node.span};
   const layoutState=pinnedLayouts(checker,[resultType,...values.map(value=>value.type),callback?.type.result,...captures.map(value=>value.type)],dataDependencies(checker.items,receiver.type.name));
   const proof={...(extended?{payloadMode:'original-whole-Some-move-no-payload-copy-or-drop'}:{}),...(lazy?{callbackBinding:callback.binding}:{}),profile:STANDARD_BODY_SOURCE_PROFILE.id,method,owner,selection,syntaxSha256:syntax.syntaxSha256,defaultSelection,defaultSyntaxSha256:defaultSyntax?.syntaxSha256??null,evaluationOrder:'actual-source-parameters-left-to-right-once; selected-original-body',constEligible:false,namespaceComplete:false,traitComplete:false,wholeCoreTranslated:false,checkedBodyDigest:bodyDigest(body,sharedOwner(owner)?layoutState.layouts:null)};
-  issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),callbackBinding:callback?.binding,moves:originalMoveContext(checker),...layoutState});
+  issuedContexts.set(proof.checkedBodyDigest,{Checker:checker.constructor,entry:structuredClone(checker.items.get(receiver.type.name)),language:checker.language,nominals:optionNominalContext(checker),callbackBinding:callback?.binding,moves:originalMoveContext(checker),...(sharedOwner(owner)?{receiverBinding:structuredClone(values[0]),bodyResultType:structuredClone(body.type)}:{}),...layoutState});
   return {k:'routerPinnedStandardBody',body,type:body.type,constEligible:false,pinnedStandardBodyProof:proof,span:node.span};
 }
 // Canonicalize only bound local names. Function/data references remain exact
@@ -321,6 +321,11 @@ export function requirePinnedStandardBody(node,Parser,{Checker,program}={}){
   }
   const issued=issuedContexts.get(proof.checkedBodyDigest),ActualChecker=Checker??issued?.Checker;
   if(sharedOwner(proof.owner)&&!issued?.layouts)throw new Error('Shared standard body requires its privately issued source layouts');
+  if(sharedOwner(proof.owner)){
+    const result=program?retargetCheckedCallback(issued.bodyResultType,program):issued.bodyResultType,receiver=program?retargetCheckedCallback(issued.receiverBinding,program):issued.receiverBinding;
+    if(!result||!isDeepStrictEqual(alphaTree(node.type),alphaTree(result))||!isDeepStrictEqual(alphaTree(node.body.type),alphaTree(result)))throw new Error('Shared standard outer body result differs from its privately checked source type');
+    if(!receiver||!isDeepStrictEqual(alphaTree(bindings[0].value),alphaTree(receiver)))throw new Error('Shared standard receiver differs from its privately checked source binding');
+  }
   const entry=program?.declarations.get(bindings[0].value.type.name)??issued?.entry;
   if(typeof ActualChecker!=='function'||!entry||entry.fullName!==bindings[0].value.type.name)throw new Error('standard body validation requires actual checked declaration context');
   const optionResult=['ok_or','ok_or_else'].includes(proof.method);
