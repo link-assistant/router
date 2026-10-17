@@ -31,12 +31,23 @@ export function parseJsonMacroSyntax(source,{maxBytes=65536,maxDepth=16,maxNodes
       if(token.type==='string')return {kind:'string',value:literal(token),span};
     }
     let requiresQuestionMarkFlow=false;
-    const inspect=tree=>{
-      if(tree.kind==='group'){if(tree.delimiter!=='(')fail('interpolation block, array/index or record syntax requires another checked profile');tree.children.forEach(inspect);return;}
-      if(tree.kind!=='token'||['!','#',';','=','+=','-=','|','||','&mut'].includes(tree.text)||['unsafe','async','await','return','break','continue','loop','while','for','move','mut','let','fn','impl','use','yield'].includes(tree.text))fail('macro, mutation, closure or effectful interpolation requires separate checking');
-      if(tree.text==='?')requiresQuestionMarkFlow=true;
+    const inspect=items=>{
+      let operand=true,prefix=true;
+      for(let at=0;at<items.length;at++){
+        const tree=items[at];
+        if(tree.kind==='group'){if(tree.delimiter!=='(')fail('interpolation block, array/index or record syntax requires another checked profile');inspect(tree.children);operand=false;prefix=false;continue;}
+        if(tree.kind!=='token'||['#',';','=','+=','-=','|','&mut'].includes(tree.text)||['unsafe','async','await','return','break','continue','loop','while','for','move','mut','let','fn','impl','use','yield'].includes(tree.text))fail('macro, mutation, closure or effectful interpolation requires separate checking');
+        // Prefix ! is ordinary Rust syntax; a bang after a completed path,
+        // member or operand is not. Leading || still denotes a closure.
+        if(tree.text==='!'){if(!operand||!prefix||at+1===items.length)fail('macro, mutation, closure or effectful interpolation requires separate checking');continue;}
+        if(tree.text==='||'){if(operand||at+1===items.length)fail('macro, mutation, closure or effectful interpolation requires separate checking');operand=true;prefix=true;continue;}
+        if(tree.text==='?')requiresQuestionMarkFlow=true;
+        if(['::','.','as'].includes(tree.text)){operand=true;prefix=false;}
+        else if([',','&&','==','!=','<','<=','>','>=','+','-','*','/','%','&','^','<<','>>'].includes(tree.text)){operand=true;prefix=true;}
+        else{operand=false;prefix=false;}
+      }
     };
-    trees.forEach(inspect);
+    inspect(trees);
     const leaf={kind:'expression',index:leaves.length,span,source:source.slice(span.start,span.end),trees,requiresQuestionMarkFlow};
     leaves.push(leaf);return leaf;
   }

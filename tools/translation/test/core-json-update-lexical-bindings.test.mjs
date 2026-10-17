@@ -37,25 +37,26 @@ function inverse(row){
 function proposal(input){const value=retain('complete-source-proposal',proposeCoreJsonUpdateCorpus({files:input,dependencyInputs,compilationProfile:PRODUCTION_PROFILE}));for(const row of value.proposals)inverse(row);return value;}
 const selections=value=>value.proposals.flatMap(row=>row.selections);
 const has=(result,name)=>result.meta.executable.some(row=>row.name===name);
+const yes=(result,names)=>{for(const name of names)assert.equal(has(result,name),true,JSON.stringify(result.meta.refused));};
 const plain=value=>{const encoded=serde_json_to_string(value);assert.equal(encoded.$,'Ok');return JSON.parse(encoded.field0);};
-async function targets(value,verify){const result=project(value.after);const wire=JSON.stringify(result.meta.checkedSemanticProgram);assert.equal(serializeProgram(parseProgram(wire)),wire);retain('complete-checked-targets',{wire,javascript:result.javascript,typescript:result.typescript});try{await verifyTypedTargets(result,verify,{childTimeoutMs:20_000});}catch(error){retain('strict-child-failure',{name:error.name,message:error.message,stdout:error.stdout?.toString('utf8'),stderr:error.stderr?.toString('utf8'),status:error.status,signal:error.signal});throw error;}return result;}
+async function targets(value,verify,names){const result=project(value.after);assert.ok(names.length);yes(result,names);const wire=JSON.stringify(result.meta.checkedSemanticProgram);assert.equal(serializeProgram(parseProgram(wire)),wire);retain('complete-checked-targets',{wire,javascript:result.javascript,typescript:result.typescript});try{await verifyTypedTargets(result,verify,{childTimeoutMs:20_000});}catch(error){retain('strict-child-failure',{name:error.name,message:error.message,stdout:error.stdout?.toString('utf8'),stderr:error.stderr?.toString('utf8'),status:error.status,signal:error.signal});throw error;}return result;}
 
 test('same local spelling in sibling if branches has independent actual scopes',async()=>{
  const source=`pub fn choose(flag:bool)->${T}{if flag{let mut doc=${J}({"branch":"left"});doc["ok"]=${J}(true);doc}else{let mut doc=${J}({"branch":"right"});doc["ok"]=${J}(false);doc}}`;
  const value=proposal(files(source));assert.equal(selections(value).length,2);assert.equal(new Set(selections(value).map(row=>JSON.stringify(row.lexicalBinding.block))).size,2);
- const result=await targets(value,api=>{for(const flag of [true,false,true])assert.deepEqual(plain(api.choose(flag)),{branch:flag?'left':'right',ok:flag});const a=api.choose(true),b=api.choose(true);assert.notEqual(a,b);assert.notEqual(a.field0,b.field0);});assert.equal(has(result,'choose'),true);
+ const result=await targets(value,api=>{for(const flag of [true,false,true])assert.deepEqual(plain(api.choose(flag)),{branch:flag?'left':'right',ok:flag});const a=api.choose(true),b=api.choose(true);assert.notEqual(a,b);assert.notEqual(a.field0,b.field0);},['choose']);assert.equal(has(result,'choose'),true);
 });
 
 test('same local spelling in three scalar match branches retains branch behavior',async()=>{
  const source=`pub fn branch(kind:&${C}Str)->${T}{match kind{"text"=>{let mut block=${J}({"kind":"text"});block["cache"]=${J}(true);block},"image"|"input_image"=>{let mut block=${J}({"kind":"image"});block["cache"]=${J}(false);block},_=>{let mut block=${J}({"kind":"other"});block["cache"]=${J}(true);block}}}`;
  const value=proposal(files(source));assert.equal(selections(value).length,3);
- const result=await targets(value,api=>{for(const [kind,name,cache]of [['text','text',true],['image','image',false],['input_image','image',false],['Ω😀','other',true]])assert.deepEqual(plain(api.branch(kind)),{kind:name,cache});});assert.equal(has(result,'branch'),true);
+ const result=await targets(value,api=>{for(const [kind,name,cache]of [['text','text',true],['image','image',false],['input_image','image',false],['Ω😀','other',true]])assert.deepEqual(plain(api.branch(kind)),{kind:name,cache});},['branch']);assert.equal(has(result,'branch'),true);
 });
 
 test('successive lexical blocks and distinct simultaneous locals preserve complete values',async()=>{
  const source=`pub fn nested()->${T}{let first={let mut doc=${J}({});doc["value"]=${J}(true);doc};let second={let mut doc=${J}({});doc["value"]=${J}(false);doc};${J}({"first":first,"second":second})}pub fn simultaneous()->${T}{let mut first=${J}({});first["a"]=${J}(true);let mut second=${J}({});second["b"]=${J}(false);${J}({"first":first,"second":second})}`;
  const value=proposal(files(source));assert.equal(selections(value).length,4);
- const result=await targets(value,api=>{assert.deepEqual(plain(api.nested()),{first:{value:true},second:{value:false}});assert.deepEqual(plain(api.simultaneous()),{first:{a:true},second:{b:false}});});for(const name of ['nested','simultaneous'])assert.equal(has(result,name),true);
+ const result=await targets(value,api=>{assert.deepEqual(plain(api.nested()),{first:{value:true},second:{value:false}});assert.deepEqual(plain(api.simultaneous()),{first:{a:true},second:{b:false}});},['nested','simultaneous']);for(const name of ['nested','simultaneous'])assert.equal(has(result,name),true);
 });
 
 test('aliases active shadows RHS root reads and repeated final uses retain refusal',()=>{
@@ -85,7 +86,7 @@ test('nested closure loop macro and new alias boundaries cannot borrow a selecte
 test('comments raw strings Unicode and conditional updates retain RHS-first hygienic edits',async()=>{
  const source=`// block spelling outside any binding: doc Ω😀\r\npub fn unicode(flag:bool)->${T}{\r\n let __router_json_rhs_394=true;\r\n let mut doc=${J}({"raw":r#"Ω😀 { doc }"#}); /* doc comment */\r\n if flag {doc[r#"猫"#]=${J}(!false || false);}else{doc[r#"猫"#]=${J}(false);}\r\n doc\r\n}`;
  const value=proposal(files(source)),rows=selections(value);assert.equal(rows.length,2);for(const row of rows){assert.notEqual(row.temporary,'__router_json_rhs_394');const file=value.proposals.find(file=>file.selections.includes(row)),edit=file.edits.find(edit=>edit.span[0]===row.span[0]);assert.ok(edit.replacement.endsWith('};'));assert.ok(edit.replacement.indexOf(file.before.source.slice(...row.rhs))<edit.replacement.indexOf(C+'json_with_field'));assert.equal(Buffer.from(file.before.source.slice(...row.span)).toString('utf8'),edit.expected);}
- const result=await targets(value,api=>{assert.deepEqual(plain(api.unicode(true)),{raw:'Ω😀 { doc }',猫:true});assert.deepEqual(plain(api.unicode(false)),{raw:'Ω😀 { doc }',猫:false});});assert.equal(has(result,'unicode'),true);
+ const result=await targets(value,api=>{assert.deepEqual(plain(api.unicode(true)),{raw:'Ω😀 { doc }',猫:true});assert.deepEqual(plain(api.unicode(false)),{raw:'Ω😀 { doc }',猫:false});},['unicode']);assert.equal(has(result,'unicode'),true);
 });
 
 test('entire actual translate_parts parent selects all three fresh branch updates without admission claims',()=>{
