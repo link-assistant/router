@@ -40,7 +40,9 @@ export function prepareOwnedCorePairedTypes(javascriptPath,javascript,typescript
  const originalTokens=tokens(ts,typescript),edits=[];
  function erase(start,end){if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start<0||start>=end||end>typescript.length)fail('type erasure span');edits.push({span:[start,end],expected:typescript.slice(start,end)});}
  function annotation(type){
-  if(!type)return;const start=type.getStart(typed),prior=originalTokens.filter(token=>token.end<=start).at(-1);
+  if(!type)return;const start=type.getStart(typed);let low=0,high=originalTokens.length;
+  while(low<high){const middle=low+((high-low)>>>1);if(originalTokens[middle].end<=start)low=middle+1;else high=middle;}
+  const prior=originalTokens[low-1];
   if(prior?.kind!==ts.SyntaxKind.ColonToken)fail('actual type annotation colon required');erase(prior.start,type.end);
  }
  for(const statement of typed.statements){

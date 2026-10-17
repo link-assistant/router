@@ -59,6 +59,15 @@ test('complete paired CST, ordered executable tokens and every erasure have whol
  assert.throws(()=>prepareOwnedCorePairedTypes(JS,copied.replace('return copy(value);','return\ncopy(value);'),TS,copiedTyped),/erased native syntax differs/u);
  const {context,result}=translate(source,typed),again=translateOwnedCoreConcreteSyntaxMeta(result.concreteSyntax.meta,{context,sourcePath:JS,typescriptOutputPath:'typed/src/reverse.mts'});assert.equal(again.meta,result.meta);assert.equal(again.rust,result.rust);
  assert.throws(()=>parseOwnedCoreMeta(result.meta.replace('copied','counterfeit'),{context}));
+ const bodies=Array.from({length:1024},(_,index)=>({js:'export function copied_'+index+'(value){return copy(value);}',ts:'export function copied_'+index+'(value:JsonValue):JsonValue{return copy(value);}'}));
+ const completeJS=imports+bodies.map(row=>row.js).join('\n'),completeTS=imports+types+bodies.map(row=>row.ts).join('\n'),large=prepareOwnedCorePairedTypes(JS,completeJS,TS,completeTS);
+ assert.equal(large.functions.length,1024);assert.equal(large.erasure.edits.length,2049);assert.equal(large.javascript.source,completeJS);assert.equal(large.typescript.source,completeTS);
+ for(let at=0;at<bodies.length;at++){const row=large.functions[at];assert.equal(row.name,'copied_'+at);assert.equal(completeJS.slice(...row.javascriptSpan),bodies[at].js);assert.equal(completeTS.slice(...row.typescriptSpan),bodies[at].ts);}
+ let restored=large.erasure.source;for(const edit of [...large.erasure.edits].reverse())restored=restored.slice(0,edit.afterSpan[0])+edit.expected+restored.slice(edit.afterSpan[1]);assert.equal(restored,completeTS);
+ assert.throws(()=>prepareOwnedCorePairedTypes(JS,completeJS,TS,completeTS.replace('copied_1023(value:JsonValue):JsonValue{return copy(value);}','copied_1023(value:JsonValue):JsonValue{return index(value,"late");}')),/complete executable tokens differ/u);
+ // The selected predecessor is a comment here, so the original colon refusal
+ // is preserved instead of searching backward past that comment.
+ assert.throws(()=>prepareOwnedCorePairedTypes(JS,copied,TS,copiedTyped.replace('value:JsonValue','value:/*written*/JsonValue')),/actual type annotation colon required/u);
 });
 test('written types never replace actual imported symbols, result ABI or unknown layouts',limits,()=>{
  assert.throws(()=>translate(copied,copiedTyped.replace(':JsonValue{return',':boolean{return')),/paired written return ABI/u);
