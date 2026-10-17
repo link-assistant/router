@@ -20,7 +20,7 @@ const ROOT=fileURLToPath(new URL('../../../',import.meta.url)),ASSETS=fileURLToP
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 function retain(name,value){const output=process.env.ROUTER_STATIC_SOURCE_LIFECYCLE_VECTOR_DIR;if(output){mkdirSync(output,{recursive:true});writeFileSync(join(output,name+'.json.gz'),gzipSync(JSON.stringify(value)+'\n'));}}
 function context(name='fixed-arrays.test.mjs',options={}){return staticSourceLifecycleContext(name,options);}
-function changedFolder(t,mutate){const folder=mkdtempSync(join(tmpdir(),'router-static-source-tamper-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));const {bundle,index}=readStaticSourceLifecycle();mutate(bundle,index);const raw=Buffer.from(JSON.stringify(bundle)+'\n'),packed=gzipSync(raw);writeFileSync(join(folder,'originals.json.gz'),packed);writeFileSync(join(folder,'manifest.json'),JSON.stringify({...index,rawBytes:raw.length,rawSha256:hash(raw),bytes:packed.length,sha256:hash(packed)}));return folder;}
+function changedFolder(t,mutate,preimage){const folder=mkdtempSync(join(tmpdir(),'router-static-source-tamper-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));const {bundle,index}=JSON.parse(preimage);mutate(bundle,index);const raw=Buffer.from(JSON.stringify(bundle)+'\n'),packed=gzipSync(raw);writeFileSync(join(folder,'originals.json.gz'),packed);writeFileSync(join(folder,'manifest.json'),JSON.stringify({...index,rawBytes:raw.length,rawSha256:hash(raw),bytes:packed.length,sha256:hash(packed)}));return folder;}
 
 test('all fixed historical universes and every existing original frontier pin remain complete',{timeout:60000},()=>{
  const data=readStaticSourceLifecycle(),a=context(),b=context('option-ok-or-else.test.mjs');retain('01-full-bank-and-current-source-joins',{data,a,b});
@@ -52,7 +52,7 @@ test('all changed full current parents preserve whole CST token boundaries and c
   assert.equal(after.source.slice(...row.inverse.span),row.inverse.expected);assert.equal(after.source.slice(0,row.inverse.span[0])+row.inverse.replacement+after.source.slice(row.inverse.span[1]),before.source);rows.push(row);
  }
  assert.ok(rows.length>0);
- for(const path of ['src/credential_recovery_store.rs','src/refresh.rs']){const row=rows.find(row=>row.path===path);assert.ok(row,path);const before=bundle.sources[row.before.sourceId],after=bundle.sources[row.after.sourceId],old=applyConcreteSyntaxSubstitutions(documents.get(row.before.sourceId),{languageRules:[],repositoryRules:[{id:'repository.reviewed-native-adoption-history',edits:[row.edit]}]});
+ for(const path of ['src/credential_recovery_store.rs','src/accounts_cli.rs']){const row=rows.find(row=>row.path===path);assert.ok(row,path);const before=bundle.sources[row.before.sourceId],after=bundle.sources[row.after.sourceId],old=applyConcreteSyntaxSubstitutions(documents.get(row.before.sourceId),{languageRules:[],repositoryRules:[{id:'repository.reviewed-native-adoption-history',edits:[row.edit]}]});
   assert.equal(old.value.source,after.source);assert.equal(serializeConcreteSyntaxMeta(old.value),after.canonical);assert.equal(hash(serializeConcreteSyntaxMeta(old.value)),row.afterCanonicalSha256);assert.deepEqual(row.trace,[{phase:'language',id:'static-fixture.whole-original-cst-span'},{phase:'repository',id:'static-fixture.exact-current-parent-and-inverse'}]);
  }
  retain('03-full-current-and-original-cst-inverses',{rows,authority:bundle.authority});
@@ -78,16 +78,19 @@ test('matching complete ancestry and Cargo stay distinct and unknown profiles ca
 });
 
 test('forged archives paths source spans CST and inverse facts cannot replace complete originals',{timeout:60000},t=>{
+ // One complete data-only preimage for this CASE; each altered bank below
+ // remains a fresh full packet passed through the unchanged untrusted reader.
+ const pristine=readStaticSourceLifecycle(),preimage=JSON.stringify(pristine);
  const controls=[bundle=>{bundle.cases['fixed-arrays.test.mjs']='foreign';},bundle=>{bundle.profiles[0].files[0].sourceId='0'.repeat(64);},bundle=>{bundle.profiles[0].files.push(bundle.profiles[0].files[0]);},bundle=>{const row=Object.values(bundle.sources)[0];row.source+=' ';},bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');row.edit.span[0]++;},bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');row.inverse.replacement+=' ';},bundle=>{const row=Object.values(bundle.sources).find(row=>row.canonical);const doc=JSON.parse(row.canonical);doc.source+=' ';row.canonical=JSON.stringify(doc);},bundle=>{bundle.current.files[0].path='../outside.rs';}];
- for(const [index,mutate]of controls.entries()){const folder=changedFolder(t,mutate);assert.throws(()=>readStaticSourceLifecycle({folder}),TypeError);retain('06-tampered-'+index,{folder,kind:'full fresh digest recomputed around deliberately forged source association; refused'});}
- for(const side of ['before','after']){const folder=changedFolder(t,bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');delete bundle.sources[row[side].sourceId].canonical;});assert.throws(()=>readStaticSourceLifecycle({folder}),/both changed-parent canonical documents required/);retain('06-missing-'+side+'-canonical',{folder,scope:'Full original and latest changed-parent canonical documents are each mandatory.'});}
- const canonical=Object.values(readStaticSourceLifecycle().bundle.sources).find(row=>row.canonical).canonical,actual=transportConcreteSyntaxMeta(canonical);
+ for(const [index,mutate]of controls.entries()){const folder=changedFolder(t,mutate,preimage);assert.throws(()=>readStaticSourceLifecycle({folder}),TypeError);retain('06-tampered-'+index,{folder,kind:'full fresh digest recomputed around deliberately forged source association; refused'});}
+ for(const side of ['before','after']){const folder=changedFolder(t,bundle=>{const row=bundle.lineage.flatMap(stage=>stage.files).find(row=>row.status==='changed');delete bundle.sources[row[side].sourceId].canonical;},preimage);assert.throws(()=>readStaticSourceLifecycle({folder}),/both changed-parent canonical documents required/);retain('06-missing-'+side+'-canonical',{folder,scope:'Full original and latest changed-parent canonical documents are each mandatory.'});}
+ const canonical=Object.values(pristine.bundle.sources).find(row=>row.canonical).canonical,actual=transportConcreteSyntaxMeta(canonical);
  for(const mutate of [doc=>{doc.nodes[1][2]++;},doc=>{doc.nodes[1][0]='unknown-classification';},doc=>{doc.sourceEncoding.utf8Bytes++;},doc=>{doc.unknown=true;},doc=>{doc.source='cross-row source';}]){const doc=JSON.parse(canonical);mutate(doc);assert.throws(()=>transportConcreteSyntaxMetaChunks([[JSON.stringify(doc)]]),TypeError);}
  assert.throws(()=>transportStaticSourceLifecycleCanonicals([['bounded',{source:'',canonical:' '.repeat(33554433)}]]),/canonical code-unit bound/);
  assert.throws(()=>transportStaticSourceLifecycleCanonicals([['deep',{source:'',canonical:'['.repeat(258)+'0'+']'.repeat(258)}]]),TypeError);
  const metas=[canonical,canonical];Object.defineProperty(metas,'1',{get(){throw new Error('late accessor must not run');},enumerable:true});assert.throws(()=>transportConcreteSyntaxMetaChunks([metas]),TypeError);
  assert.equal(actual.source,JSON.parse(canonical).source);
- const folder=changedFolder(t,()=>{}),packed=readFileSync(join(folder,'originals.json.gz'));packed[packed.length-1]^=1;writeFileSync(join(folder,'originals.json.gz'),packed);assert.throws(()=>readStaticSourceLifecycle({folder}),TypeError);
+ const folder=changedFolder(t,()=>{},preimage),packed=readFileSync(join(folder,'originals.json.gz'));packed[packed.length-1]^=1;writeFileSync(join(folder,'originals.json.gz'),packed);assert.throws(()=>readStaticSourceLifecycle({folder}),TypeError);
 });
 
 test('every old804 witness remains available while actual current additions and changes stay separate',{timeout:60000},()=>{
