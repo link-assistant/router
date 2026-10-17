@@ -1,0 +1,1 @@
+Qualify the derive item association native probes with the existing complete data-freeze intrinsic guard. Changed bootstrap function-text observers take the existing ordinary path. Preserve all historical source archives through one additive fixture-evolution stage; no source, owner or semantic permission changes. Source-only receiving is pending.
