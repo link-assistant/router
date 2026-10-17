@@ -61,6 +61,24 @@ test('ordinary Maybe Json and prior String-error Result remain independent passi
  await targets(owned,api=>{for(const [source,wanted]of [['null',true],['false',false],['{}',false],['bad',false]]){const input=bytes(source),before=structuredClone(input);assert.equal(api.owned(source),wanted);assert.equal(api.owned_bytes(input),wanted);assert.deepEqual(input,before);}});
  const aliases=project(files('pub fn parenthesized(value:'+M+'<bool>)->bool{if let ('+M+'::Some(found))=value{found}else{false}}pub fn empty(value:'+M+'<bool>)->bool{if let '+M+'::None=value{true}else{false}}pub fn nested(value:'+M+'<'+M+'<bool>>)->bool{if let '+M+'::Some('+M+'::Some(found))=value{found}else{false}}pub fn success(value:'+C+'Outcome<bool,bool>)->bool{if let '+C+'Outcome::Ok(found)=value{found}else{false}}'));yes(aliases,['parenthesized','empty','nested','success']);
  await targets(aliases,api=>{const absent=Object.freeze({$:'None'}),present=value=>Object.freeze({$:'Some',field0:value});assert.equal(api.parenthesized(present(true)),true);assert.equal(api.parenthesized(present(false)),false);assert.equal(api.parenthesized(absent),false);assert.equal(api.empty(absent),true);assert.equal(api.empty(present(true)),false);assert.equal(api.nested(present(present(true))),true);assert.equal(api.nested(present(absent)),false);assert.equal(api.nested(absent),false);assert.equal(api.success(Object.freeze({$:'Ok',field0:true})),true);assert.equal(api.success(Object.freeze({$:'Err',field0:true})),false);});
+ // Each transform borrows its input; only the genuine owned parser allocates.
+ const trims=project(files(['trim','trim_start','trim_end'].map(op=>'pub fn '+op+'(value:&'+S+')->'+M+'<'+T+'>{'+P+'(value.'+op+'())}').join('')));yes(trims,['trim','trim_start','trim_end']);
+ await targets(trims,api=>{
+  for(const [op,input]of [['trim','\u0085"猫😀"\u0085'],['trim_start','\u0085"猫😀" '],['trim_end',' "猫😀"\u0085']]){const before=input;assert.deepEqual(api[op](input),some('猫😀'));assert.equal(input,before);}
+  for(const op of ['trim','trim_start','trim_end']){assert.deepEqual(api[op]('null'),some(null));assert.deepEqual(api[op]('broken'),none);assert.deepEqual(api[op]('\ufeffnull'),none);assert.deepEqual(api[op]('null\ufeff'),none);}
+ });
+ const trimWire=JSON.stringify(trims.meta.targetSemanticProgram),trimEmission=emitJavaScript(parseProgram(trimWire));retain('516-complete-trim-source-targets',{source:trims,wire:trimWire,emission:trimEmission});
+ for(const mutation of ['operation','receiver-owned','receiver-reference','source-span','receiver-variable']){
+  const program=parseProgram(trimWire),trim=find([...program.declarations.values()],node=>node.k==='routerStringOperation'&&node.op==='trim');assert.ok(trim,mutation);
+  if(mutation==='operation')trim.op='to_ascii_uppercase';
+  if(mutation==='receiver-owned')trim.string.type.rustOwnership={kind:'owned',source:'String'};
+  if(mutation==='receiver-reference')trim.string.type.rustReference={kind:'shared',pointee:structuredClone(trim.string.type)};
+  if(mutation==='source-span')trim.span={...trim.span,end:trim.span.end+1};
+  if(mutation==='receiver-variable'){assert.equal(trim.string.k,'var');trim.string.name='foreign';}
+  retain('516-complete-trim-tamper',{mutation,wire:serializeProgram(program)});assert.throws(()=>emitJavaScript(program),/source|projection|body|changed|checked|private|ownership|borrow|unbound|reference/i,mutation);
+ }
+ assert.deepEqual(emitJavaScript(parseProgram(trimWire)),trimEmission);
+ for(const source of ['pub fn bad(value:String)->'+M+'<'+T+'>{'+P+'(value.trim())}','pub fn bad(value:&mut '+S+')->'+M+'<'+T+'>{'+P+'(value.trim())}','pub fn bad(value:&&'+S+')->'+M+'<'+T+'>{'+P+'(value.trim())}','struct Other;impl Other{fn trim(&self)->&str{"null"}}pub fn bad(value:&Other)->'+M+'<'+T+'>{'+P+'(value.trim())}','pub fn bad(value:&'+S+')->'+M+'<'+T+'>{'+P+'(value.trim("x"))}'])no(project(files(source)),'bad');
 });
 test('actual allocating callbacks retain current source bodies layouts and private issuance on semantic re-emission',()=>{
  const result=project(files(field));yes(result,['field']);const wire=JSON.stringify(result.meta.targetSemanticProgram);retain('complete-reemitted',emitJavaScript(parseProgram(wire)));

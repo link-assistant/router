@@ -291,6 +291,10 @@ export function validateOwnedJsonFlow(checker,entry,{genuine,genuineTextMatch,cl
   if(standardContext&&node.k==='routerStringOperation'&&node.op==='is_empty'){
    if(node.string?.type.kind!=='string'||node.string.type.rustOwnership?.kind!=='borrowed'||node.string.type.rustOwnership.source!=='str')refuse('string predicate requires its actual borrowed str',node);read(node.string,'borrow');return empty();
   }
+  if(closedOption&&node.k==='routerStringOperation'&&['trim','trim_start','trim_end'].includes(node.op)){
+   if(!closedOption.readOnlyString(node,state.entry)||node.args.length!==0||domain(node.type,node)!=='copy'||domain(node.string.type,node.string)!=='copy')refuse('string trim requires its actual source-bound borrowed str',node);
+   return read(node.string,'borrow');
+  }
   if(closedOption&&node.k==='routerStandardMethod'){
    const proof=closedOption.map(node,state.entry),input=option(node.value?.type,node),output=option(node.type,node),callback=node.callback;
    if(!proof||!input||!output||!sameType(proof.input,input.payload)||!sameType(proof.result,output.payload)||!ownedText(output.payload))refuse('Option map needs its actual standard allocating source callback',node);

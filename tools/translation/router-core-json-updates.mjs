@@ -21,6 +21,7 @@ import {renameFunction,renameExpr,Scope} from './vendor/meta-language/translatio
 import {coerce} from './checked-coercions.mjs';
 import {validateOwnedJsonFlow,describeOwnedJsonDifference} from './owned-json-flow.mjs';
 import {SOURCE_STR,sourceShared} from './extensions/source-contract-types.mjs';
+import {requireBorrowedString} from './extensions/string-iterators.mjs';
 import {matchesParserFacts} from './matches-macro-context.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {transportConcreteSyntaxSource} from './concrete-syntax-meta.mjs';
@@ -207,6 +208,13 @@ function closedOptionSource(checker,fact,current,Parser,Checker,program){
    if(!plan||!sameType(binding.value.type,plan.callbackParameters[0])||!sameType(allocation.object.type,binding.value.type)||!sameType(allocation.type,result)||!sameType(callback.type.result,result)||!sameType(completeStandardMethod(plan,callback.type.result,{optionType:()=>node.type,span:node.span}),node.type))return null;
    for(const actual of [binding.value.type,allocation.object.type]){checker.expectedOwnership(actual,plan.callbackParameters[0],entry.modulePath,node.span);checker.expectedPrimitiveIdentity(actual,plan.callbackParameters[0],entry.modulePath,node.span);}checker.expectedOwnership(allocation.type,result,entry.modulePath,node.span);checker.expectedOwnership(callback.type.result,result,entry.modulePath,node.span);
    current(entry.fullName);allocations.add(allocation);return {input:plan.callbackParameters[0],result};
+  },
+  readOnlyString:(node,entry)=>{
+   if(current(entry.fullName)!==fact||node.k!=='routerStringOperation'||!['trim','trim_start','trim_end'].includes(node.op)||!Array.isArray(node.args)||node.args.length!==0||member(entry.body,node).length!==1)return false;
+   const source=member(fact.item.body,null,value=>value.k==='routerStringOperation'&&value.op===node.op&&Array.isArray(value.args)&&value.args.length===0&&same(value.span,node.span));if(source.length!==1)return false;
+   for(const actual of [node.string?.type,node.type]){requireBorrowedString(actual,node.span);if(actual.patternOwnershipRefusal)return false;checker.expectedOwnership(actual,SOURCE_STR,entry.modulePath,node.span);checker.expectedPrimitiveIdentity(actual,SOURCE_STR,entry.modulePath,node.span);}
+   if(current(entry.fullName)!==fact||member(entry.body,node).length!==1)return false;
+   const original=member(fact.item.body,source[0]);return original.length===1&&original[0]===source[0];
   },
   allocate:(node,entry)=>{current(entry.fullName);if(!allocations.has(node))return false;requireCsvEmitterProof(node);const wanted=checkedAllocatingStringItem(node.object.type,node.span);checker.expectedOwnership(node.type,wanted,entry.modulePath,node.span);return sameType(node.type,wanted);},
  };
