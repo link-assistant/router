@@ -5,6 +5,7 @@ import {types} from 'node:util';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {gzipSync} from 'node:zlib';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {translateProject,originalProjectDeclarationRefusalRange,originalProjectDeclarationRefusalRanges} from '../project.mjs';
 import {originalMethodRefusalRange,originalMethodSemanticFacts,isOriginalMethodSemanticSource} from '../source-method-admission.mjs';
 import {originalMethodParsedFacts} from '../source-method-parser.mjs';
@@ -31,12 +32,15 @@ function compile(files,options={}){return translateProject({entry:'src/lib.rs',p
 // at that same genuine capture before the checker or any later proof executes.
 function capturedProject(files,{method='bad',...options}={}){
   const attempt=++captureAttempt,update=get(hashPrototype,'update'),weakSet=get(WeakMap.prototype,'set');let armed=false,captured=null;
-  const marker='"method":'+JSON.stringify(method),observations=[];
-  const directCapture=()=>{const frames=String(new Error().stack).split('\n'),index=frames.findIndex(frame=>/\bmetadataDigest\b/u.test(frame));return index>=0&&frames[index+1]?.includes('captureDeclarationRange');};
+  const marker='"method":'+JSON.stringify(method),observations=[],linksURL=new URL('../extensions/source-links.mjs',import.meta.url),projectURL=new URL('../project.mjs',import.meta.url);
+  const sourceFrame=(frame,name,url)=>{if(typeof frame!=='string')return false;const value=frame.trim(),prefix='at '+name+' (';if(!value.startsWith(prefix)||!value.endsWith(')'))return false;const location=value.slice(prefix.length,-1);return [url.href,fileURLToPath(url)].some(source=>location.startsWith(source+':')&&/^[0-9]+:[0-9]+$/u.test(location.slice(source.length+1)));};
+  const directCapture=()=>{const stack=String(new Error().stack),frames=stack.split('\n'),index=frames.findIndex(frame=>sourceFrame(frame,'hash',linksURL));if(index<0)return null;let next=index+1;if(sourceFrame(frames[next],'metadataDigest',linksURL))next++;return sourceFrame(frames[next],'captureDeclarationRange',projectURL)?{stack,hashFrameIndex:index,captureFrameIndex:next}:null;};
   try{
     define(hashPrototype,'update',{...update,value(...args){
       const result=apply(update.value,this,args);
-      if(!armed&&!captured&&typeof args[0]==='string'&&args[0].includes(marker)&&args[0].includes('original-method-semantic-source-v1')&&directCapture()){
+      if(!armed&&!captured&&typeof args[0]==='string'&&args[0].includes(marker)&&args[0].includes('original-method-semantic-source-v1')){
+        const selection=directCapture();if(selection){
+        observations.push({kind:'selected-direct-project-range-digest',...selection,argument:args[0],sourceLinks:linksURL.href,project:projectURL.href,returnedSameReceiver:result===this});
         armed=true;
         define(WeakMap.prototype,'set',{...weakSet,value(key,value){
           const result=apply(weakSet.value,this,[key,value]);
@@ -46,6 +50,7 @@ function capturedProject(files,{method='bad',...options}={}){
           }
           return result;
         }});
+        }
       }
       return result;
     }});
@@ -68,7 +73,7 @@ test('one genuine project method returns both independently joined ranges with c
   retain('01-genuine-grouped-range',{subject:complete(row),guard:originalDataFreezeIntrinsicsUnchanged(),old,current,groupedScheduleExplicit:true,fullTapesIntentionallyDifferent:true});
   assert.deepEqual(current.result,old.result);assert.deepEqual(current.result.value,{methodRange:row.association.range,projectRange:row.association.range});
   if(originalDataFreezeIntrinsicsUnchanged())assert.ok(current.calls.length<old.calls.length);else assert.deepEqual(current.calls,old.calls);
-  assert.ok(row.result.meta.refused.some(entry=>entry.name==='Counter.bad'));assert.deepEqual(row.result.meta.checkedMethods.map(entry=>entry.name),['Counter.good']);
+  const refusal=row.result.meta.refused.find(entry=>entry.name===row.surface.name),missingStart=body.indexOf('missing()');assert.ok(refusal);assert.equal(refusal.kind,'type');assert.equal(refusal.message,'unknown name missing');assert.deepEqual(refusal.span,{start:missingStart,end:missingStart+'missing()'.length});assert.deepEqual(row.result.meta.checkedMethods.map(entry=>entry.name),['Counter.good']);
   await verifyTypedTargets(row.result,api=>{assert.equal(api.run(4n),6n);assert.equal(api.run(5n),7n);assert.throws(()=>api.run(255n),RangeError);},{childTimeoutMs:20000});
 });
 
@@ -105,11 +110,12 @@ test('ordinary generated Default Clone and unresolved structural origins retain 
 
 test('altered native operations preserve the exact old fallback observations without retrying a prefix',{timeout:60000},()=>{
   const row=capturedProject({'src/lib.rs':body}),rows=[];
-  for(const [owner,key]of [[Object,'defineProperty'],[Array.prototype,'some'],[WeakMap.prototype,'get']]){
-    const previous=get(owner,key);let calls=0,old,current,left,right;
-    try{define(owner,key,{...previous,value(...args){calls++;return apply(previous.value,this,args);}});assert.equal(originalDataFreezeIntrinsicsUnchanged(),false);calls=0;old=tape(()=>pair(row.surface,[]));left=calls;calls=0;current=tape(()=>originalProjectDeclarationRefusalRanges(row.surface,[]));right=calls;}
+  for(const [owner,key,exactFallback]of [[Object,'defineProperty',false],[Object,'freeze',true],[Array.prototype,'some',true],[WeakMap.prototype,'get',true]]){
+    const previous=get(owner,key);let calls=0,old,current,left,right,guard;
+    try{define(owner,key,{...previous,value(...args){calls++;return apply(previous.value,this,args);}});guard=originalDataFreezeIntrinsicsUnchanged();calls=0;old=tape(()=>pair(row.surface,[]));left=calls;calls=0;current=tape(()=>originalProjectDeclarationRefusalRanges(row.surface,[]));right=calls;}
     finally{define(owner,key,previous);}
-    rows.push({operation:key,left,right,old,current});retain('06-operation-'+key,rows.at(-1));assert.deepEqual(current,old);assert.equal(right,left);assert.ok(left>0);
+    rows.push({operation:key,exactFallback,guard,left,right,old,current});retain('06-operation-'+key,rows.at(-1));assert.deepEqual(current.result,old.result);assert.ok(left>0);assert.ok(right>0);
+    if(exactFallback){assert.equal(guard,false);assert.deepEqual(current.calls,old.calls);assert.equal(right,left);}else{assert.equal(guard,true,'the unchanged data-freeze guard does not qualify Object.defineProperty');if(current.result.value)assert.deepEqual(current.result.value,{methodRange:row.association.range,projectRange:row.association.range});}
   }
   let reads=0;for(const [label,path]of [['getter',Object.defineProperty([],0,{enumerable:true,get(){reads++;throw Error('path getter');}})],['proxy',new Proxy([],{get(){reads++;throw Error('path proxy');}})],['sparse',Array(1)],['extended',Object.assign([],{extra:1})]]){const actual=outcome(()=>originalProjectDeclarationRefusalRanges(row.surface,path)),old=outcome(()=>pair(row.surface,path));rows.push({label,actual,old});retain('06-path-'+label,rows.at(-1));assert.ok(actual.error);assert.deepEqual(actual,old);}
   retain('06-observer-fallbacks',{subject:complete(row),rows,reads});assert.equal(reads,0);
