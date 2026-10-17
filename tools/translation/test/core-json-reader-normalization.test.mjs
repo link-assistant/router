@@ -542,12 +542,26 @@ test('cold singleton CLI retains all packets Cargo source stages and fresh seman
 // These two additional cases leave all eight original receiving callbacks exact.
 // They use the complete original citation_url body with a second, equally typed
 // source parameter so a wrong but already-bound receiver is a real forgery.
-function enclosingFrameFixture(){
+async function enclosingFrameFixture(){
+ const {renameExpr,Scope}=await import('../vendor/meta-language/translation/ir.js'),{annotateRuntimeTypes}=await import('../translate.mjs'),{HostEmitter}=await import('../extensions/host-contracts.mjs'),{emitWith}=await import('../extensions/core.mjs'),{prepareOriginalSourceFrames}=await import('../extensions/standard-source-frame.mjs');
  const target=original('citation_url'),oldHeader=`fn citation_url(citation: &${T}) -> ${M}<&${S}>`,newHeader=`pub fn checked<'a>(citation: &'a ${T},other: &'a ${T}) -> ${M}<&'a ${S}>`;
  assert.equal(target.source.split(oldHeader).length,2);
  const source=target.source.replace(oldHeader,newHeader),input=files(source),value=proposal(input),result=project(value.after);yes(result,['checked']);
  retain('complete-enclosing-frame-source',{target,oldHeader,newHeader,source,input,value,result,scope:'Complete original body with an explicitly shared lifetime and an independent second parameter; not its whole original module.'});
- return result;
+ // Use the same whole-expression hygienic rename as ordered-matches. Keep
+ // actual parameter identities fixed; only complete lexical binders/uses move.
+ const originalWire=nativeJson(result.meta.targetSemanticProgram),program=parseProgram(originalWire),before=enclosingFrameNodes(program),oldBody=before.entry.body,oldName=before.parent.body.name,oldProof=structuredClone(before.frame.sourceFrameProof),runtimeModule='../runtime/effects.mjs',originalEmission=emitJavaScript(parseProgram(originalWire),{runtimeModule});
+ before.entry.body=renameExpr(oldBody,new Map(before.entry.params.map(param=>[param.name,param.name])),new Scope(name=>'ml_arm_'+name+'_573'));
+ const renamed=enclosingFrameNodes(program);assert.notEqual(renamed.parent.body.name,oldName);assert.deepEqual(renamed.frame.sourceFrameProof,oldProof);assert.deepEqual(renamed.parent.originalCallbackProof,before.parent.originalCallbackProof);
+ let probe;class CaptureEmitter extends HostEmitter{constructor(...args){super(...args);probe=this;}file(){return '';}}emitWith(program,CaptureEmitter);
+ assert.throws(()=>prepareOriginalSourceFrames(probe,renamed.entry),/Original standard frame\/loan.*join body/u,'actual renamed lexical receiver requires its enclosing callback');
+ const emitted=emitJavaScript(program,{runtimeModule});assert.ok(result.javascript.startsWith(originalEmission.text));
+ // Re-enter the existing project annotation producer on the genuine re-emission;
+ // signatures, data layouts and repository exports are unchanged by the rename.
+ const javascript=emitted.text+result.javascript.slice(originalEmission.text.length),dataTypes=[...program.declarations.values()].filter(entry=>entry.k==='data'),signatures=[...program.declarations.values()].filter(entry=>entry.k==='fn').map(entry=>({target:emitted.mappings.find(mapping=>mapping.source===entry.fullName)?.target,params:entry.params,ret:entry.async?{kind:'routerFuture',value:entry.ret}:entry.ret})),parameters=new Map(signatures.map(entry=>[entry.target,entry.params])),returns=new Map(signatures.map(entry=>[entry.target,entry.ret])),typedExport=result.typescript.match(/^export const translated: [^\n]+ =/mu)?.[0];assert.ok(typedExport);
+ const typescript=annotateRuntimeTypes(javascript,parameters,dataTypes,returns,emitted.checkedLocalBindings??[]).replace('export const translated =',typedExport),targetSemanticProgram=JSON.parse(serializeProgram(program));
+ retain('complete-actual-scoped-rename-and-reemission',{originalWire,renamedWire:serializeProgram(program),parameterIdentity:before.entry.params,oldCallbackBinder:oldName,currentCallbackBinder:renamed.parent.body.name,originalEmission,emitted,javascript,typescript});
+ return {...result,javascript,typescript,meta:{...result.meta,targetSemanticProgram}};
 }
 function enclosingFrameNodes(program){
  const entry=program.declarations.get('rp_'+Buffer.from('checked').toString('hex'));assert.ok(entry&&entry.k==='fn');assert.equal(entry.params.length,2);
@@ -557,7 +571,7 @@ function enclosingFrameNodes(program){
  return {entry,parent,frame,receiver};
 }
 test('renamed filter frames keep the full genuine enclosing callback and reject bound receiver proof type and layout changes',async()=>{
- const result=enclosingFrameFixture();await targets(result,api=>{
+ const result=await enclosingFrameFixture();await targets(result,api=>{
   for(const [source,expected]of [['{}',none],['{"type":"web_search_result_location","url":"猫😀"}',some('猫😀')],['{"type":"search_result_location","source":"https://example/猫😀"}',some('https://example/猫😀')],['{"type":"search_result_location","source":"http://x"}',some('http://x')],['{"type":"search_result_location","source":"file:///x"}',none],['{"type":"search_result_location","source":false}',none],['{"type":false,"source":"https://unused"}',none]]){
    const input=json(source),other=json('{"type":"search_result_location","source":"https://wrong"}'),before=structuredClone(input),otherBefore=structuredClone(other);
    assert.deepEqual(api.checked(input,other),expected,source);assert.deepEqual(input,before);assert.deepEqual(other,otherBefore);
@@ -583,7 +597,7 @@ test('renamed filter frames keep the full genuine enclosing callback and reject 
 
 test('stale pre-try callback associations revalidate the actual emitter entry parent and nested frame after every throw',async()=>{
  const {HostEmitter,HostRustParser,HostChecker}=await import('../extensions/host-contracts.mjs'),{emitWith}=await import('../extensions/core.mjs'),{prepareOriginalOptionCallbacks,originalOptionCallbackNestedFrame}=await import('../extensions/standard-option-callback-body.mjs'),{prepareOriginalSourceFrames}=await import('../extensions/standard-source-frame.mjs');
- const result=enclosingFrameFixture(),wire=nativeJson(result.meta.targetSemanticProgram),program=parseProgram(wire),{entry,parent,frame,receiver}=enclosingFrameNodes(program);let emitter;
+ const result=await enclosingFrameFixture(),wire=nativeJson(result.meta.targetSemanticProgram),program=parseProgram(wire),{entry,parent,frame,receiver}=enclosingFrameNodes(program);let emitter;
  class CaptureEmitter extends HostEmitter{constructor(...args){super(...args);emitter=this;}file(){return '';}}
  emitWith(program,CaptureEmitter);assert.ok(emitter);
  assert.throws(()=>prepareOriginalSourceFrames(emitter,entry),/Original standard frame\/loan.*join body/u,'a standalone renamed frame has no enclosing callback authority');
