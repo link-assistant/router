@@ -22,6 +22,10 @@ const hash=value=>createHash('sha256').update(value).digest('hex'),blob=value=>c
 const manifest=JSON.parse(readFileSync(new URL('./fixtures/outside-static-source-associations.json',import.meta.url),'utf8'));
 const test=(name,run)=>testCase(name,{timeout:60000},async t=>{const vectors=[];try{await run(t,(kind,value)=>{vectors.push({kind,value});return value;});}finally{const folder=process.env.ROUTER_ASSOCIATED_TEXT_DATA_VECTOR_DIR;if(folder){mkdirSync(folder,{recursive:true});writeJsonGzip(join(folder,Buffer.from(name).toString('hex')+'.json.gz'),{name,vectors},(_key,value)=>typeof value==='bigint'?{$bigint:String(value)}:value instanceof Map?{$map:[...value]}:value);}}});
 function folderFor(t){const folder=mkdtempSync(join(tmpdir(),'router-associated-text-data-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));for(const path of ['manifest.json','originals.json.gz'])writeFileSync(join(folder,path),readFileSync(join(ASSETS,path)));return folder;}
+function actualCandidateBytes(folder){
+ const manifest=readFileSync(join(folder,'manifest.json')),archive=readFileSync(join(folder,'originals.json.gz'));
+ return {authority:false,manifest:{bytes:manifest.length,sha256:hash(manifest),utf8:manifest.toString('utf8'),base64:manifest.toString('base64')},archive:{bytes:archive.length,sha256:hash(archive),encoding:'base64',content:archive.toString('base64')},temporaryPathWillBeRemoved:true};
+}
 function smallBank(){
  const before='pub fn selected()->u8{1}\n',after='pub fn selected()->u8{2}\n',a=hash(before),b=hash(after),file=(id,source)=>({path:'src/lib.rs',sourceId:id,bytes:Buffer.byteLength(source),gitBlob:blob(source)}),old=file(a,before),now=file(b,after),edit={span:[0,before.length],expected:before,replacement:after},inverse={span:[0,after.length],expected:after,replacement:before};
  const sources={[a]:{source:before,bytes:old.bytes,gitBlob:old.gitBlob,canonical:transportConcreteSyntaxSource(before,{language:'Rust'}).meta},[b]:{source:after,bytes:now.bytes,gitBlob:now.gitBlob,canonical:transportConcreteSyntaxSource(after,{language:'Rust'}).meta}};
@@ -62,7 +66,7 @@ test('unknown associations nonparents and source URL escapes stay explicit refus
 
 test('recomputed archive hashes cannot authenticate mutations outside actual current Git', (t,retain)=>{
  const cases=[['manifest',folder=>{const path=join(folder,'manifest.json'),index=JSON.parse(readFileSync(path,'utf8'));index.current='0'.repeat(64);writeFileSync(path,json(index));}],['stored-bytes',folder=>{const path=join(folder,'originals.json.gz'),bytes=readFileSync(path);bytes[bytes.length-1]^=1;writeFileSync(path,bytes);}],['self-consistent-other-bank',folder=>{const bundle=smallBank(),raw=Buffer.from(json(bundle)+'\n'),packed=gzipSync(raw),index=JSON.parse(readFileSync(join(folder,'manifest.json'),'utf8'));delete index.storage;Object.assign(index,{bytes:packed.length,sha256:hash(packed),rawBytes:raw.length,rawSha256:hash(raw)});writeFileSync(join(folder,'manifest.json'),json(index));writeFileSync(join(folder,'originals.json.gz'),packed);}]];
- for(const [label,mutate]of cases){const folder=folderFor(t);mutate(folder);assert.throws(()=>staticSourceAssociatedTextData('copy-translation.test.mjs',{folder}),/archive\/index differs from actual current Git/u);retain(label,{folder,refusal:'full current Git bytes required before source-data decode'});}
+ for(const [label,mutate]of cases){const folder=folderFor(t);mutate(folder);retain(label,{folder,input:actualCandidateBytes(folder),refusal:'full current Git bytes required before source-data decode',authority:false});assert.throws(()=>staticSourceAssociatedTextData('copy-translation.test.mjs',{folder}),/archive\/index differs from actual current Git/u);}
 });
 
 test('the source-only codec preserves complete strings and inverses while default CST decoding stays separate',(_t,retain)=>{
@@ -80,15 +84,16 @@ test('the source-only codec preserves complete strings and inverses while defaul
 
 test('missing physical source universes and late observable candidate mutations refuse', (t,retain)=>{
  const missing=mkdtempSync(join(tmpdir(),'router-text-data-missing-root-'));t.after(()=>rmSync(missing,{recursive:true,force:true}));execFileSync('/usr/bin/git',['init','--quiet',missing],{timeout:20000});assert.throws(()=>staticSourceAssociatedTextData('copy-translation.test.mjs',{root:missing}));
- const folder=folderFor(t),path=join(folder,'manifest.json'),prototype=Object.getPrototypeOf(createHash('sha256')),descriptor=Object.getOwnPropertyDescriptor(prototype,'update');let changed=false;
- try{Object.defineProperty(prototype,'update',{...descriptor,value:function(value,...args){if(!changed&&typeof value==='string'){changed=true;writeFileSync(path,readFileSync(path,'utf8')+'\n');}return Reflect.apply(descriptor.value,this,[value,...args]);}});assert.throws(()=>staticSourceAssociatedTextData('copy-translation.test.mjs',{folder}),/input identity changed before return/u);}
+ const folder=folderFor(t),path=join(folder,'manifest.json'),prototype=Object.getPrototypeOf(createHash('sha256')),descriptor=Object.getOwnPropertyDescriptor(prototype,'update');let changed=false,failure;
+ try{Object.defineProperty(prototype,'update',{...descriptor,value:function(value,...args){if(!changed&&typeof value==='string'){changed=true;writeFileSync(path,readFileSync(path,'utf8')+'\n');}return Reflect.apply(descriptor.value,this,[value,...args]);}});try{staticSourceAssociatedTextData('copy-translation.test.mjs',{folder});}catch(error){failure=error;}}
  finally{Object.defineProperty(prototype,'update',descriptor);}
- assert.equal(changed,true);assert.throws(()=>staticSourceAssociatedTextData('copy-translation.test.mjs',{folder}),/archive\/index differs from actual current Git/u);retain('late-input-mutation',{folder,changed,fullRawMutationRetainedByTestPath:true});
+ retain('late-input-mutation',{folder,changed,input:actualCandidateBytes(folder),outcome:failure?{name:failure.name,message:failure.message,stack:failure.stack}:null,fullRawInputBytesRetained:true,fullRawMutationBytesRetained:changed,authority:false});
+ assert.equal(changed,true);assert.ok(failure instanceof TypeError);assert.match(failure.message,/input identity changed before return/u);assert.throws(()=>staticSourceAssociatedTextData('copy-translation.test.mjs',{folder}),/archive\/index differs from actual current Git/u);
 });
 
 test('fresh calls reauthenticate storage and old complete context remains the native CST lane', (t,retain)=>{
  const folder=folderFor(t),first=staticSourceAssociatedTextData('copy-translation.test.mjs',{folder}),path=join(folder,'originals.json.gz'),original=readFileSync(path),altered=Buffer.from(original);altered[0]^=1;writeFileSync(path,altered);
- assert.throws(()=>staticSourceAssociatedTextData('copy-translation.test.mjs',{folder}),/archive\/index differs from actual current Git/u);writeFileSync(path,original);
+ retain('fresh-call-mutated-archive',{folder,input:actualCandidateBytes(folder),authority:false});assert.throws(()=>staticSourceAssociatedTextData('copy-translation.test.mjs',{folder}),/archive\/index differs from actual current Git/u);writeFileSync(path,original);
  const second=staticSourceAssociatedTextData('copy-translation.test.mjs',{folder});assert.notStrictEqual(first,second);assert.notStrictEqual(first.source,second.source);assert.equal(first.source('src/stream_termination.rs'),second.source('src/stream_termination.rs'));
  // Keep the public full-context API present and distinct; the original full
  // outside/static suites execute it unchanged with every native CST guard.
