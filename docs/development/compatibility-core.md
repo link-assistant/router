@@ -400,3 +400,52 @@ incomplete output and any retained failure receipt. Raw-digest and complete
 inventory validation are success-only obligations; any bounded diagnostic decode
 of failed bytes is non-authoritative. There is no recovery journal or partial
 packet acceptance protocol.
+
+A complete reviewed `json-readers` gzip proposal can be applied with
+`scripts/apply-reviewed-core-adoption.py apply --root ROOT --run PRODUCER_RUN
+--output FRESH_EXTERNAL_OUTPUT --expected-head FULL_HEAD
+--review-directory EXACT_REVIEW_SUBDIRECTORY
+--review-monitor-directory EXACT_MONITOR_SUBDIRECTORY --review-sha256 REVIEW_SHA
+--plan-sha256 PLAN_SHA --index-sha256 INDEX_SHA`. Supply the exact full digests
+and exact direct review/monitor subdirectory names (no automatic latest-review
+selection). Recovery retains these names in the application state. Supply them
+only after the actual complete producer and independent reviewer have passed,
+including their final source/resource guards. The controller uses the existing
+packet decoder and the checked-in `apply-reviewed-core-adoption.mjs` API. Its
+entire preflight, staging, application and receipts share a hard 60-second
+POSIX real-time alarm (deadline termination remains RED), 1 GiB
+aggregate memory, 384 MiB of producer/review/application/pending/TMP evidence,
+3 GiB initial free space and a 2 GiB reserve. These are application bounds;
+they do not extend the producer, reviewer or any original test deadline.
+
+The explicit report digests select operational data; a copied approval field,
+CST, hash, selection or report does not issue semantic or private owner authority.
+Application freshly rejoins all captured original/Git/physical/132-TypeScript
+inputs, every complete decoded packet, source inventory, source chain and full
+mapping inverses. Each changed parent's complete language and repository CST
+stages receive fresh native reconstruction. Unchanged CST packets remain joined
+to the exact independently reviewed bytes; namespace and semantic issuance is
+not repeated or waived by the applicator. Only exact final Rust source packets
+are staged, read back and installed with recoverable, per-file replacements.
+The complete worktree update is not atomic, and arbitrary concurrent writers
+remain outside this stock-filesystem contract. Keep the source freeze intact.
+
+Failures retain the full preimages, postimages and operation journal. Nothing
+rolls back automatically. Explicit recovery uses
+`scripts/apply-reviewed-core-adoption.py recover --root ROOT --run PRODUCER_RUN
+--output FRESH_EXTERNAL_RECOVERY --application APPLICATION_DIRECTORY
+--state-sha256 EXACT_REVIEWED_STATE_SHA`; it freshly checks the original source
+context and each saved byte and refuses unrelated later edits. Recovery does
+not remove the failed application evidence or restore old inode identities.
+
+Installing a proposal establishes no executable coverage, parity, deadline pass
+or generated freshness. Any Rust/Cargo change requires the actual complete
+static-source bank refresh. Changes intersecting the native fixture's retained
+parents also require a separately reviewed adoption-commit history extension
+and actual fixture production. Refresh the isolated compiler and portable Git
+exports from their complete selected inputs, then actual canonical/profile and
+reverse outputs. If reverse generation changes a Rust witness, refresh the bank
+and dependent exports again. Retain all historical sources, callbacks, oracles,
+failed runs and original limits; obtain the complete current gate before claiming
+completion. The application tool and eight source regressions remain unqualified
+until Root receives them; no local Rust execution is authorized.
