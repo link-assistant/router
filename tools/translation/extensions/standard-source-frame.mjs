@@ -71,10 +71,48 @@ export function assertOriginalSourceFrameEnvelope(node,program){
   if(!state||metadataDigest(proof)!==metadataDigest(state.proof)||metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,program)))throw new Error('Original standard frame/loan changed or lacks private source authority');
 }
 const functions=new WeakMap();
+// Failure-only inspection of the two plain alpha snapshots which already passed
+// their original complete metadata hashes. This never accepts a frame or loan.
+function originalFrameBodyDifference(actual,expected){
+ try{
+  let remaining=4096;
+  const snippet=(value,maximum=32)=>{let text='';for(let at=0;at<value.length&&at<maximum;at++){const code=value.charCodeAt(at);text+=code>=32&&code<=126&&code!==92?value[at]:'\\u'+code.toString(16).padStart(4,'0');}return text+(value.length>maximum?'...':'');};
+  const preview=value=>value===undefined?'undefined':value===null?'null':typeof value==='string'?'string('+value.length+'):'+snippet(value):typeof value==='object'?(Array.isArray(value)?'array':'object'):typeof value+':'+value;
+  const index=name=>{if(!name.length||name.length>10||name.length>1&&name[0]==='0')return -1;let value=0;for(let at=0;at<name.length;at++){const digit=name.charCodeAt(at)-48;if(digit<0||digit>9)return -1;value=value*10+digit;}return value<4294967295?value:-1;};
+  const order=(a,b)=>{const left=index(a),right=index(b);return left>=0||right>=0?left<0?1:right<0?-1:left-right:a<b?-1:a>b?1:0;};
+  const fields=value=>{
+   const descriptors=Object.getOwnPropertyDescriptors(value),names=Reflect.ownKeys(descriptors);
+   if(names.length>remaining)return null;remaining-=names.length;
+   for(const name of names)if(typeof name!=='string'||!Object.hasOwn(descriptors[name],'value'))throw new Error('diagnostic own-data snapshot required');
+   return {descriptors,names};
+  };
+  const visit=(a,b,path,depth,preserveOrder=false)=>{
+   if(--remaining<0||depth>64||path.length>384)return 'path='+path.slice(0,384)+' reason=diagnostic-bound';
+   if(a===b)return null;
+   const difference=reason=>'path='+path+' reason='+reason+' actual='+preview(a)+' expected='+preview(b);
+   if(a===null||b===null||typeof a!=='object'||typeof b!=='object')return difference('primitive');
+   const array=Array.isArray(a);if(array!==Array.isArray(b))return difference('container-kind');
+   const left=fields(a),right=fields(b);if(!left||!right)return difference('diagnostic-bound');
+   if(array){
+    const length=left.descriptors.length.value,wanted=right.descriptors.length.value;
+    if(length!==wanted)return 'path='+path+' reason=array-length actual='+length+' expected='+wanted;
+    for(let at=0;at<length;at++){const x=left.descriptors[at].value,y=right.descriptors[at].value,found=visit(x===undefined?null:x,y===undefined?null:y,path+'/'+at,depth+1,preserveOrder);if(found)return found;}
+   }else{
+    const names=left.names.filter(name=>left.descriptors[name].value!==undefined),wanted=right.names.filter(name=>right.descriptors[name].value!==undefined);
+    if(!preserveOrder){names.sort(order);wanted.sort(order);}
+    if(names.length!==wanted.length)return 'path='+path+' reason=own-key-count actual='+names.length+' expected='+wanted.length;
+    for(let at=0;at<names.length;at++)if(names[at]!==wanted[at])return 'path='+path+' reason='+(preserveOrder?'signed-key-order':'own-key')+' actual='+snippet(names[at])+' expected='+snippet(wanted[at]);
+    for(const name of names){const found=visit(left.descriptors[name].value,right.descriptors[name].value,path+'/'+snippet(name,48),depth+1,preserveOrder||name==='copyCertificate');if(found)return found;}
+   }
+   return null;
+  };
+  return visit(actual,expected,'',0)??'reason=no-primitive-difference-within-bound';
+ }catch{return 'reason=diagnostic-unavailable';}
+}
 export function prepareOriginalSourceFrames(emitter,entry){
   const found=nodes(entry.body);if(!found.length)return null;
   for(const node of found){const frame=node.k==='routerOriginalStandardFrame',proof=frame?node.sourceFrameProof:node.originalLoanProof,state=(frame?frames:loans).get(proof?.key),value=frame?node.body:node.value;
-    let failed='private-state';if(!state||(failed='proof',metadataDigest(proof)!==metadataDigest(state.proof))||(failed='type',metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,emitter.program)))||(failed='body',metadataDigest(alphaTree(value))!==metadataDigest(alphaTree(retargetCheckedCallback(frame?state.body:state.value,emitter.program)))))throw new Error('Original standard frame/loan changed or lacks private source authority [join '+failed+']');
+    let failed='private-state',actualBody,expectedBody;if(!state||(failed='proof',metadataDigest(proof)!==metadataDigest(state.proof))||(failed='type',metadataDigest(node.type)!==metadataDigest(retargetCheckedCallback(state.type,emitter.program)))||(failed='body',metadataDigest(actualBody=alphaTree(value))!==metadataDigest(expectedBody=alphaTree(retargetCheckedCallback(frame?state.body:state.value,emitter.program)))))throw new Error('Original standard frame/loan changed or lacks private source authority [join '+failed+(failed==='body'?'; '+originalFrameBodyDifference(actualBody,expectedBody):'')+']');
   }
   const previous=functions.get(emitter),renamed=renameFunction(entry,emitter.state.ident,emitter.state.localReserved());functions.set(emitter,nodes(renamed.body).map(node=>metadataDigest(alphaTree(node))));
   return ()=>{if(previous)functions.set(emitter,previous);else functions.delete(emitter);};
