@@ -1,0 +1,3 @@
+Extend the historical-source fixture producer with the independently reviewed bulk-adoption commit eeb05407b75f32ee46a55913cbf3731760b76d15. Preserve the original three adoption entries and every historical declaration pin, and require complete continuous fourth-stage source mappings and inverses for the five changed fixture parents. The existing whole-file fixture case now checks the exact four revisions, final parent and all five affected paths without changing its other checks or deadlines.
+
+Fixture assets must come from the actual producer and independent full-source review. Source lineage is observational evidence, with no namespace, ownership, executable coverage or runtime parity authority. No Rust was executed.
