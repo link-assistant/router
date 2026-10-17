@@ -135,7 +135,7 @@ def temporary_census():
 OUTPUT_CREATED=False
 
 def main():
- global ROOT,RUN,HEAD,PAYLOAD,OUT,REPORT,TS_PREFIX,COMPILER,REVIEWER,START_FREE,CAPTURED_RAW,INPUTS,TEMP_ROOTS,OUTPUT_CREATED
+ global ROOT,RUN,HEAD,PAYLOAD,OUT,REPORT,TS_PREFIX,COMPILER,REVIEWER,REVIEWER_RAW,START_FREE,CAPTURED_RAW,INPUTS,TEMP_ROOTS,OUTPUT_CREATED
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--root',type=Path,required=True);parser.add_argument('--run',type=Path,required=True);parser.add_argument('--expected-head',required=True);parser.add_argument('--review-directory',required=True);parser.add_argument('--review-monitor-directory',required=True);args=parser.parse_args()
  ROOT=args.root.resolve();RUN=args.run.resolve();HEAD=args.expected_head;PAYLOAD=RUN/'migration-proposal';OUT=RUN/args.review_monitor_directory;REPORT=RUN/args.review_directory;TS_PREFIX='packages/javascript/node_modules/typescript/';COMPILER=(ROOT/TS_PREFIX).resolve()
  if sys.platform not in ['darwin','linux']:fail('POSIX Darwin/Linux resource receiving required')
