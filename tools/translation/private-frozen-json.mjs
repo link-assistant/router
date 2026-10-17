@@ -194,10 +194,10 @@ export function createPrivateFrozenJsonComposer(){
    // Keep the full key census before descriptors, even on already checked data.
    for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON'||array&&at<length&&names[at]!==''+at)return -1;
    for(let at=0;at<length;at++){
-    const name=names[at],field=descriptor(value,name);if(!field||!own(field,'value')||!field.enumerable)return -1;
-    if(!array&&field.value===undefined)continue;
+    const name=names[at],childValue=value[name];
+    if(!array&&childValue===undefined)continue;
     if(count++)units++;if(!array){const quoted=quotedUnits(name,limit-units-1);if(quoted<0)return -1;units+=quoted+1;}
-    const child=frozenUnits(field.value,limit-units,depth+1);if(child<0)return -1;units+=child;
+    const child=frozenUnits(childValue,limit-units,depth+1);if(child<0)return -1;units+=child;
    }return units<=limit?units:-1;
   }
   function planUnits(node,limit,depth){
