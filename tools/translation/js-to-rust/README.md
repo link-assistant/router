@@ -605,3 +605,29 @@ Qualification belongs to the recorded source checkpoint and complete original
 receiving suites, including the twelve-function case and its original deadlines.
 This implementation alone establishes no performance, coverage or synchronization
 gain. No local Rust execution is authorized.
+
+### Reverse owned JSON reader loans
+
+The explicit owned source profile resolves eight read-only json-runtime exports
+through their real native TypeScript import symbols, complete registered JS and
+declaration originals and current locked Rust/Cargo JSON profile. get-by-string,
+get-by-index and pointer return optional loans rooted in the actual Json input;
+as_str retains that root. Optional bool/u64/i64 are Copy scalar results and
+is_null returns bool. Missing data differs from Some(Json::Null). No trait
+permission follows from an imported name or the data-only operation table.
+
+Written operation ReturnType/Parameters domains and complete paired bodies
+remain mandatory. A checked Some tag must dominate field0 projection. Only the
+closed Some/None constructor shape is supported; it preserves original ordinary
+JS allocation rather than claiming reconstructed Rust object identity. Generic
+property reads, unions, mutation, callbacks and loans from local owned values
+remain refused. Actual source/meta/CST is reconstructed again at each emission
+or evaluation boundary. No source/owner/verdict persists across calls.
+
+Parsing remains a separate unimplemented reverse lane: its 1 MiB/depth128 parser
+contract must not be narrowed to the copy constructor 4096-node/depth32 domain.
+Parameterized forward definition packaging also needs its own complete guard
+and source-equation adaptation; these API additions alone establish no actual
+application coverage, current generation freshness or whole-module startup
+equivalence. The authored native Rust oracle is CI-only and does not claim an
+unproduced generated Rust target compiled.
