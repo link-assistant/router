@@ -2,8 +2,9 @@
 // This helper grants no source/checker/namespace authority. Callers must perform
 // their private owner join first; every ineligible case runs normal stringify.
 import {types} from 'node:util';
-import {originalNamespaceTraversalIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
-import {originalLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+import {originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';
+const originalNamespaceTraversalIntrinsicsUnchanged=originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged=originalBatchedDataFreezeIntrinsicsUnchanged,originalLexingIntrinsicsUnchanged=originalBatchedLexingIntrinsicsUnchanged;
 import {completedDataTraversalExceedsBudget,completedDataJsonWithinBudget} from './private-data-freeze.mjs';
 const enabled=originalNamespaceTraversalIntrinsicsUnchanged()&&originalLexingIntrinsicsUnchanged();
 const descriptor=enabled?Object.getOwnPropertyDescriptor:null,prototype=enabled?Object.getPrototypeOf:null,own=enabled?Object.hasOwn:null,keys=enabled?Reflect.ownKeys:null,apply=enabled?Reflect.apply:null,isProxy=enabled?types.isProxy:null,isArray=enabled?Array.isArray:null;

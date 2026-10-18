@@ -584,3 +584,21 @@ export function createOriginalDigestMetadataCopierForInternalSources(fallback,or
  return copyMetadata(value);
  };
 }
+
+// Optional fresh fixed-owner descriptor collection. Reuse only the existing
+// immutable expected plans; this API never initializes or warms parser state.
+// Every global lookup and every original guard boundary remains independent.
+function descriptorBatchingReady(){
+ if(!privateExpectedPlans||!traversalNative||!same(descriptor(originalObject,'getOwnPropertyDescriptors'),traversalDescriptors)||!same(descriptor(types,'isProxy'),pathIsProxy))return false;
+ for(let slot=0;slot<batchedDescriptorOwners.length;slot++)if(pathIsProxy.value(batchedDescriptorOwners[slot]))return false;
+ return true;
+}
+export function originalBatchedJsonIntrinsicsUnchanged(){
+ return descriptorBatchingReady()?batchedExpectedJsonIntrinsicsUnchanged():originalJsonIntrinsicsUnchanged();
+}
+export function originalBatchedNamespaceTraversalIntrinsicsUnchanged(){
+ return descriptorBatchingReady()?batchedExpectedNamespaceTraversalIntrinsicsUnchanged():originalNamespaceTraversalIntrinsicsUnchanged();
+}
+export function originalBatchedDataFreezeIntrinsicsUnchanged(){
+ return !!(dataFreezeNative&&originalBatchedNamespaceTraversalIntrinsicsUnchanged()&&same(descriptor(originalObject,'freeze'),dataFreeze)&&same(descriptor(originalObject,'isFrozen'),dataIsFrozen)&&same(descriptor(pathWeakPrototype,'get'),dataWeakGet)&&same(descriptor(pathWeakPrototype,'set'),dataWeakSet)&&dataFreezeNumericSafe());
+}

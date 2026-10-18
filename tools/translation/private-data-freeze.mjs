@@ -1,7 +1,8 @@
 // Native-only allocation/control-flow reuse, never original-source authority.
 // A completed record contains scalar traversal costs only, with weak keys.
 import {types} from 'node:util';
-import {originalDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+const originalDataFreezeIntrinsicsUnchanged=originalBatchedDataFreezeIntrinsicsUnchanged;
 const MIN_COMPLETED_CHILDREN=64;
 const ROOT_LIMIT=1024,LARGE_LIMIT=2048,SMALL_LIMIT=1024,LARGE_CELLS=64,NODE_LIMIT=32768,CELL_LIMIT=200000,DEPTH_LIMIT=160,RECORD_BASE=CELL_LIMIT+2;
 // Shared scalar-only weak records; no owner or proof root is retained.

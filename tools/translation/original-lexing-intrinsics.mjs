@@ -1,7 +1,7 @@
 // Qualify only the operations skipped by a source span index. Changed host
 // operations retain the original lexer path; this is no source authority.
 import {types} from 'node:util';
-import {originalJsonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
+import {originalJsonIntrinsicsUnchanged,originalBatchedJsonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 const descriptor=Object.getOwnPropertyDescriptor,own=Object.hasOwn,prototype=Object.getPrototypeOf,apply=Reflect.apply,text=Function.prototype.toString,isProxy=types.isProxy;
 const stringPrototype=prototype(''),regexpPrototype=prototype(/(?:)/u),arrayPrototype=prototype([]),objectPrototype=prototype({});
 const species=descriptor(Array,Symbol.species);
@@ -14,6 +14,14 @@ let qualified=iteratorPrototype!==null&&Array.prototype===arrayPrototype&&specie
 if(qualified)try{const key={},map=new WeakMap(),iterator=[key][Symbol.iterator]();qualified=map.set(key,key)===map&&map.get(key)===key&&iterator.next().value===key&&iterator.next().done===true;}catch{qualified=false;}
 export function originalLexingIntrinsicsUnchanged(){
  if(!qualified||!originalJsonIntrinsicsUnchanged()||Array.prototype!==arrayPrototype||prototype(stringPrototype)!==objectPrototype||prototype(regexpPrototype)!==objectPrototype)return false;
+ const actualSpecies=descriptor(Array,Symbol.species);if(!actualSpecies||!own(actualSpecies,'get')||!own(actualSpecies,'set')||own(actualSpecies,'value')||actualSpecies.get!==species.get||actualSpecies.set!==species.set||actualSpecies.enumerable!==species.enumerable||actualSpecies.configurable!==species.configurable)return false;
+ for(let i=0;i<pins.length;i++){const pin=pins[i],actual=descriptor(pin.owner,pin.key);if(!actual||!own(actual,'value')||actual.value!==pin.field.value||actual.writable!==pin.field.writable||actual.enumerable!==pin.field.enumerable||actual.configurable!==pin.field.configurable)return false;}
+ return true;
+}
+
+// Separate explicit sibling; the original lexical guard and all pins stay exact.
+export function originalBatchedLexingIntrinsicsUnchanged(){
+ if(!qualified||!originalBatchedJsonIntrinsicsUnchanged()||Array.prototype!==arrayPrototype||prototype(stringPrototype)!==objectPrototype||prototype(regexpPrototype)!==objectPrototype)return false;
  const actualSpecies=descriptor(Array,Symbol.species);if(!actualSpecies||!own(actualSpecies,'get')||!own(actualSpecies,'set')||own(actualSpecies,'value')||actualSpecies.get!==species.get||actualSpecies.set!==species.set||actualSpecies.enumerable!==species.enumerable||actualSpecies.configurable!==species.configurable)return false;
  for(let i=0;i<pins.length;i++){const pin=pins[i],actual=descriptor(pin.owner,pin.key);if(!actual||!own(actual,'value')||actual.value!==pin.field.value||actual.writable!==pin.field.writable||actual.enumerable!==pin.field.enumerable||actual.configurable!==pin.field.configurable)return false;}
  return true;

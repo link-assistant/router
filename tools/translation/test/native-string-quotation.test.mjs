@@ -22,6 +22,8 @@ const QUOTATION_EDIT={"before":"   const saved=apply(mapGet,quotedSizes,[value])
 // Complete actual measurement extraction with673 native-capture data plumbing.
 // Reproduce the complete actual native capture initializer for partial private
 // counters; do not disable the new lane or invent test-only native authority.
+import {originalBatchedNamespaceTraversalIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
+import {originalBatchedLexingIntrinsicsUnchanged} from '../original-lexing-intrinsics.mjs';
 function shortQuotationBindings(source){
  const marker='// Primitive property lookup uses the realm intrinsic String prototype, not\n',start=source.indexOf(marker);
  if(start<0)return {};
@@ -29,7 +31,8 @@ function shortQuotationBindings(source){
  assert.ok(prefixStart>=0&&prefixEnd>prefixStart&&end>start);
  const prefix=source.slice(prefixStart,prefixEnd),captures=source.slice(start,end),suffix='return {descriptor,own,shortQuotationStringPrototype,shortQuotationChar,shortQuotationNative};';
  const run=new Function('types','originalNamespaceTraversalIntrinsicsUnchanged','originalLexingIntrinsicsUnchanged',prefix+captures+suffix);
- return run(types,originalNamespaceTraversalIntrinsicsUnchanged,originalLexingIntrinsicsUnchanged);
+ const selected=source.includes("import {originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalBatchedDataFreezeIntrinsicsUnchanged} from './original-json-intrinsics.mjs';\nimport {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrinsics.mjs';\nconst originalNamespaceTraversalIntrinsicsUnchanged=originalBatchedNamespaceTraversalIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged=originalBatchedDataFreezeIntrinsicsUnchanged,originalLexingIntrinsicsUnchanged=originalBatchedLexingIntrinsicsUnchanged;\n");
+ return run(types,selected?originalBatchedNamespaceTraversalIntrinsicsUnchanged:originalNamespaceTraversalIntrinsicsUnchanged,selected?originalBatchedLexingIntrinsicsUnchanged:originalLexingIntrinsicsUnchanged);
 }
 function measurementSequence(source,requests,details=false){
  const start=source.indexOf('  function quotedUnits('),end=source.indexOf('  function planUnits(',start);assert.ok(start>=0&&end>start);
