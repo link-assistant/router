@@ -7,7 +7,7 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, unlinkSync
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { translateSource, json, PIN, sha256 } from './translate.mjs';
-import {translateProjectOwnedDefinitions as translateProject} from './project.mjs';
+import {translateProjectOwnedCoreReaderDefinitions as translateProject} from './project.mjs';
 import {PRODUCTION_PROFILE,compilationProfile} from './cfg-profile.mjs';
 import { effectRuntimeAssets } from './effect-assets.mjs';
 import {hostRuntimeAssets} from './host-assets.mjs';
