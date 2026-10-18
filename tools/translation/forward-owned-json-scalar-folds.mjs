@@ -39,6 +39,20 @@ function scalar(type){
  if(type?.kind==='fixed'&&type.bits===64&&type.signed===true&&type.rustPrimitiveName==='i64')return 'i64';
  return null;
 }
+// rustSourceType records that a type was written in Rust syntax. It is not
+// part of the primitive identity already rechecked by the original body issuer.
+// Only that exact true/absent marker is omitted from these result comparisons;
+// all qualifiers and every remaining field must still agree exactly.
+function sameScalarType(left,right){
+ const role=scalar(left);if(!role||scalar(right)!==role)return false;
+ function semantic(type){
+  const marker=Object.getOwnPropertyDescriptor(type,'rustSourceType');
+  if(marker&&(!Object.hasOwn(marker,'value')||marker.value!==true))return null;
+  const entries=Object.entries(type);
+  return Object.fromEntries(entries.filter(([key])=>key!=='rustSourceType'));
+ }
+ const a=semantic(left),b=semantic(right);return a!==null&&b!==null&&same(a,b);
+}
 function optional(type,program,names){
  if(type?.kind!=='data'||type.rustReference||type.rustGenericIdentityUnresolved||type.rustBorrowingUnresolved)fail('actual by-value Option required');
  const row=program.declarations.get(type.name),source=type.rustStandardGeneric??row?.standardGeneric;
@@ -66,12 +80,12 @@ function project(fn,program,names){
  requirePinnedStandardBody(fn.body,HostRustParser,{Checker:HostChecker,program});
  const proof=fn.body.pinnedStandardBodyProof;if(proof.method!=='unwrap_or')return null;
  const self=fn.body.body,fallback=self?.body,match=fallback?.body;
- if(self?.k!=='let'||fallback?.k!=='let'||self.mutable===true||fallback.mutable===true||typeof self.name!=='string'||typeof fallback.name!=='string'||self.name===fallback.name||!same(fn.body.type,fn.ret)||!same(self.type,fn.ret)||!same(fallback.type,fn.ret))fail('exact eager original parameter bindings required');
+ if(self?.k!=='let'||fallback?.k!=='let'||self.mutable===true||fallback.mutable===true||typeof self.name!=='string'||typeof fallback.name!=='string'||self.name===fallback.name||!sameScalarType(fn.body.type,fn.ret)||!sameScalarType(self.type,fn.ret)||!sameScalarType(fallback.type,fn.ret))fail('exact eager original parameter bindings required');
  const owner=optional(self.value?.type,program,names);if(owner.role!==role||!same(owner.payload,fallback.value?.type)||scalar(fallback.value?.type)!==role)fail('actual eager scalar argument differs');
  const literal=fallback.value;if(literal.k!=='lit'||role==='bool'&&typeof literal.value!=='boolean'||role==='i64'&&(!i64Literal(literal.value)))fail('eager primitive literal default required');
- if(match?.k!=='match'||match.cases?.length!==2||match.scrutinee?.k!=='var'||match.scrutinee.name!==self.name||!same(match.scrutinee.type,self.value.type)||!same(match.type,fn.ret))fail('complete original unwrap_or match required');
+ if(match?.k!=='match'||match.cases?.length!==2||match.scrutinee?.k!=='var'||match.scrutinee.name!==self.name||!same(match.scrutinee.type,self.value.type)||!sameScalarType(match.type,fn.ret))fail('complete original unwrap_or match required');
  const branches=new Map();for(const branch of match.cases){const pattern=branch.pattern;if(pattern?.k!=='ctor'||pattern.data!==self.value.type.name||!['None','Some'].includes(pattern.ctor)||branches.has(pattern.ctor)||pattern.binds?.length!==(pattern.ctor==='Some'?1:0))fail('complete actual unwrap_or constructors required');branches.set(pattern.ctor,branch);}
- const absent=branches.get('None'),present=branches.get('Some');if(!absent||!present||absent.body?.k!=='var'||absent.body.name!==fallback.name||!same(absent.body.type,fn.ret)||present.body?.k!=='var'||present.body.name!==present.pattern.binds[0]||!same(present.body.type,fn.ret))fail('actual unwrap_or payload/default result differs');
+ const absent=branches.get('None'),present=branches.get('Some');if(!absent||!present||absent.body?.k!=='var'||absent.body.name!==fallback.name||!sameScalarType(absent.body.type,fn.ret)||present.body?.k!=='var'||present.body.name!==present.pattern.binds[0]||!sameScalarType(present.body.type,fn.ret))fail('actual unwrap_or payload/default result differs');
  let cells=0;const tick=depth=>{if(++cells>4096||depth>64)fail('finite reader fold budget');};
  const variable=(node,name,type)=>node?.k==='var'&&node.name===name&&same(node.type,type);
  function argument(node,id){
