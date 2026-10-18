@@ -2,7 +2,7 @@
 // a caller-supplied file checksum. Private contexts are not semantic IR nodes.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
-import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged} from '../original-json-intrinsics.mjs';
+import {originalFlatTokenIntrinsicsUnchanged,originalDataFreezeIntrinsicsUnchanged,copyOriginalDigestMetadata} from '../original-json-intrinsics.mjs';
 import {sourceItems} from '../rust-structure.mjs';
 import {capturedRustTokenSource} from './lexical.mjs';
 
@@ -51,6 +51,11 @@ export function copyMetadata(value,{cells=200000,bytes=4194304,preserveKeyOrder=
 }
 export function metadataDigest(value) {
   return hash(JSON.stringify(copyMetadata(value),(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item));
+}
+// Explicit sibling; the public copier/digest and their observer contracts stay
+// unchanged. Every actual hash still receives the complete canonical bytes.
+export function metadataDigestWithPrivateAssignments(value) {
+  return hash(JSON.stringify(copyOriginalDigestMetadata(value,copyMetadata,ordinal),(_,item)=>typeof item==='bigint'?{$integer:item.toString()}:item));
 }
 function freeze(value){if(value&&typeof value==='object'){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;}
 const signature=entry=>({name:entry.name,params:entry.params??[],ret:entry.ret??null,constant:Boolean(entry.constant),constFunction:Boolean(entry.constFunction),async:Boolean(entry.async),...(Object.hasOwn(entry,'sourceLifetimeParameters')?{sourceLifetimeParameters:ownData(entry,'sourceLifetimeParameters')}:{})});
