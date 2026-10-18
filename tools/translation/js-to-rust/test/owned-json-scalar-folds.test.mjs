@@ -99,7 +99,20 @@ test('signed reader bounds and literal-first reverse joins require genuine check
 });
 test('nested literal lookups keep each Some loan and refuse captured keys wrong binders effects and lazy defaults',async t=>{
  const source=completeDeclaration('src/log_analysis.rs','request_asks_for_a_stream').source,selected=rows(forward(source));assert.equal(selected.length,1);const received=await checked(t,selected);compareAll(selected[0],received,0,nestedCases());
- const subjects=[source.replace('body.get("stream")','record.get("stream")'),source.replace('body.get("json")','body.get(key)'),declaration().replace('.unwrap_or(false)','.unwrap_or_else(|| false)'),declaration().replace('.unwrap_or(false)','.unwrap_or_default()'),declaration().replace('Json::as_bool','Json::as_i64'),declaration().replace('value.get("x")','unknown_effect(value)')];const outcomes=[];for(const subject of subjects){let result,error;try{result=forward(subject);assert.equal(rows(result).length,0);}catch(value){error=value;}assert.ok(error||result.ownedDefinitions.unsupported.length);outcomes.push({subject,result,error:error&&{name:error.name,message:error.message},rawStack:error?.stack});}retain('all-complete-finite-source-refusal-subjects',outcomes);
+ const subjects=[source.replace('body.get("stream")','record.get("stream")'),source.replace('body.get("json")','body.get(key)'),declaration().replace('.unwrap_or(false)','.unwrap_or_else(|| false)'),declaration().replace('.unwrap_or(false)','.unwrap_or_default()'),declaration().replace('Json::as_bool','Json::as_i64'),declaration().replace('value.get("x")','unknown_effect(value)')];const outcomes=[];for(const subject of subjects){
+  let result,error,didThrow=false;
+  try{result=forward(subject);}catch(value){error=value;didThrow=true;}
+  const names=[...subject.matchAll(/^fn\s+([A-Za-z_][A-Za-z_0-9]*)\s*\(/gmu)],subjectName=names.length===1?names[0][1]:null;
+  const compileRefusals=Array.isArray(result?.meta?.refused)?result.meta.refused.filter(row=>row.file==='src/lib.rs'&&row.name===subjectName&&row.term==='fn'):[];
+  const projectionRefusals=Array.isArray(result?.ownedDefinitions?.unsupported)?result.ownedDefinitions.unsupported.filter(row=>row.source==='src/lib.rs'&&row.name===subjectName):[];
+  const observation={subject,subjectName,didThrow,result,error:error&&{name:error.name,message:error.message},rawStack:error?.stack,compileRefusals,projectionRefusals,stages:didThrow?['compiler-exception']:[...(compileRefusals.length?['compile']:[]),...(projectionRefusals.length?['projection']:[])]};
+  outcomes.push(observation);retain('complete-negative-stage-before-assertion-'+outcomes.length,observation);
+  assert.equal(names.length,1,'negative fixture must contain one complete root function');
+  if(!didThrow){
+   assert.equal(rows(result).length,0,'negative subject must never acquire the scalar format');
+   assert.ok(compileRefusals.length||projectionRefusals.length,'returned result must contain a genuine refusal for this root function');
+  }
+ }retain('all-complete-finite-source-refusal-subjects',outcomes);
 });
 test('unchanged original body reissue precedes scalar projection and copied public proof records remain unissued',()=>{
  const source=declaration('private_body'),result=forward(source),selected=rows(result);assert.equal(selected.length,1);const observations=[];
