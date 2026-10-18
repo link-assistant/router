@@ -42,6 +42,7 @@ function nativeReady(){
 }
 function withinNativeBudget(value){
  let cells=0,units=0,resultHeight=0;
+ const nativeDescriptorData=parent(objectPrototypeField)===objectPrototype&&!get(objectPrototype,'writable');
  // Private dense native-call argument storage; both arrays have existing own
  // writable slots. Only slot values reach qualified natives, never the arrays.
  const unaryArgs=[null],binaryArgs=[null,null];
@@ -99,13 +100,13 @@ function withinNativeBudget(value){
   // A native lazy stack must be rejected before ANY descriptor materializes it.
   for(let at=0;at<names.length;at++)if(typeof names[at]!=='string'||names[at]==='stack'||names[at]==='toJSON'||names[at]==='rawJSON')return false;
   let length=names.length;
-  if(array){const field=get(value,'length');if(!field||!has(field,'value')||field.enumerable||field.value<0||field.value%1||field.value>CELLS||names.length!==field.value+1||names[names.length-1]!=='length')return false;length=field.value;for(let at=0;at<length;at++)if(names[at]!==''+at)return false;}
+  if(array){const field=get(value,'length');if(!field||(nativeDescriptorData?field.writable===undefined:!has(field,'value'))||field.enumerable||field.value<0||field.value%1||field.value>CELLS||names.length!==field.value+1||names[names.length-1]!=='length')return false;length=field.value;for(let at=0;at<length;at++)if(names[at]!==''+at)return false;}
   if(!charge(2+(length?length-1:0)))return false;
   // Every descriptor precedes descent. Captured native ownKeys supplies a
   // fresh private array whose existing own slots can safely hold child values.
   for(let at=0;at<length;at++){
    const name=names[at],field=get(value,name);
-   if(!field||!has(field,'value')||!field.enumerable||!array&&(!quoted(name)||!charge(1)))return false;
+   if(!field||(nativeDescriptorData?field.writable===undefined:!has(field,'value'))||!field.enumerable||!array&&(!quoted(name)||!charge(1)))return false;
    names[at]=field.value;
   }
   (binaryArgs[0]=value,binaryArgs[1]=0,apply(weakSet,costs,binaryArgs));let height=0;
