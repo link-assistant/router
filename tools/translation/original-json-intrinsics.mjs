@@ -468,7 +468,7 @@ export function copyOriginalDigestMetadata(value,fallback,ordinal){
   const define=descriptor(originalObject,'defineProperty');
   return !!(define&&hasOwn(define,'value')&&define.value===syntaxDefine.value);
  }
- function copy(value,{cells=200000,bytes=4194304,preserveKeyOrder=false}={},depth=0,active=new Set(),budget=null){
+ function copyMetadata(value,{cells=200000,bytes=4194304,preserveKeyOrder=false}={},depth=0,active=new Set(),budget=null){
   budget??={cells,bytes};if(--budget.cells<0||depth>160)fail('metadata budget exhausted');
   if(value===null||value===undefined||typeof value==='boolean'||typeof value==='bigint')return value;
   if(typeof value==='number'){if(!Number.isSafeInteger(value))fail('non-integer metadata number');return value;}
@@ -482,7 +482,7 @@ export function copyOriginalDigestMetadata(value,fallback,ordinal){
   if(array){
    const length=descriptors.length.value;if(!Number.isSafeInteger(length)||length<0||length>budget.cells)fail('array metadata budget exhausted');
    if(keys.length!==length+1)fail('array metadata holes or extra properties');
-   result=[];for(let index=0;index<length;index++){const key=String(index);if(ownIndexes[index]!==true)fail('array metadata hole');const descriptor=descriptors[key];if(!descriptor)fail('array metadata hole');result.push(copy(descriptor.value,{preserveKeyOrder},depth+1,active,budget));}
+   result=[];for(let index=0;index<length;index++){const key=String(index);if(ownIndexes[index]!==true)fail('array metadata hole');const descriptor=descriptors[key];if(!descriptor)fail('array metadata hole');result.push(copyMetadata(descriptor.value,{preserveKeyOrder},depth+1,active,budget));}
   }else{
    // The actual legacy Object lookup happens once at its original position.
    // A foreign/proxy receiver is never inspected by optional qualification.
@@ -494,7 +494,7 @@ export function copyOriginalDigestMetadata(value,fallback,ordinal){
     if(privateTarget&&typeof key==='string'&&nativeDefine(Object)){
      // Select the actual old receiver/callee BEFORE any child callback.
      const receiver=Object,selected=receiver.defineProperty;
-     const child=copy(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget);
+     const child=copyMetadata(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget);
      if(!descriptor(objectPrototype,'get')&&!descriptor(objectPrototype,'set'))result[key]=child;
      else{
       // Descriptor conversion can observe inherited get/set after the child.
@@ -506,12 +506,12 @@ export function copyOriginalDigestMetadata(value,fallback,ordinal){
      // A caller operation can retain this output, even if native identities
      // are restored before a later field. Privacy is never reacquired.
      privateTarget=false;
-     Object.defineProperty(result,key,{value:copy(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget),enumerable:true,writable:true,configurable:true});
+     Object.defineProperty(result,key,{value:copyMetadata(descriptors[key].value,{preserveKeyOrder:preserveKeyOrder||key==='copyCertificate'},depth+1,active,budget),enumerable:true,writable:true,configurable:true});
     }
     }
    }
   }
   active.delete(value);return result;
  }
- return copy(value);
+ return copyMetadata(value);
 }
