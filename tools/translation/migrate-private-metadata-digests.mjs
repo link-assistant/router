@@ -80,3 +80,54 @@ export function restorePrivateMetadataDigestSources(input){
  let links=files[LINKS].slice(0,-DIGEST.length);links=exact(links,NEW_IMPORT,OLD_IMPORT,'restore-factory-import');links=exact(links,NEW_READER,OLD_READER,'restore-private-reader');result[LINKS]=links;
  result[CLONE]=exact(files[CLONE],NEW_CLONE_IMPORT,OLD_CLONE_IMPORT,'restore-clone-import');captured.verify();return result;
 }
+
+// Fixed method adoption DATA. The original three-source API above stays exact.
+// Private reader/issuer bodies are unchanged; only the explicitly selected
+// digest binding changes. Every source/CST/semantic obligation still applies.
+const METHOD_VALIDATION='tools/translation/source-method-validation.mjs';
+const METHOD_TRANSFORMS='tools/translation/source-method-transforms.mjs';
+const METHOD_IMPORT_RULES=Object.freeze([
+ Object.freeze({path:METHOD_VALIDATION,before:"import {copyMetadata,metadataDigestWithPrivateAssignments as metadataDigest} from './extensions/source-links.mjs';",after:"import {copyMetadata,metadataDigestForInternalSources as metadataDigest} from './extensions/source-links.mjs';",expressions:3}),
+ Object.freeze({path:METHOD_TRANSFORMS,before:"import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';",after:"import {copyMetadata,metadataDigestForInternalSources as metadataDigest} from './extensions/source-links.mjs';",expressions:5}),
+]);
+export const METHOD_METADATA_DIGEST_SOURCE_PATHS=Object.freeze([METHOD_VALIDATION,METHOD_TRANSFORMS]);
+function methodDigestSources(input){
+ if(!input||typeof input!=='object'||types.isProxy(input)||![Object.prototype,null].includes(Object.getPrototypeOf(input)))fail('two complete own method source strings required');
+ const prototype=Object.getPrototypeOf(input),keys=Reflect.ownKeys(input),fields=Object.getOwnPropertyDescriptors(input),value=Object.create(null);let total=0;
+ if(keys.length!==2||keys.some(key=>typeof key!=='string'||!METHOD_METADATA_DIGEST_SOURCE_PATHS.includes(key)))fail('exact two method source paths required');
+ for(const path of METHOD_METADATA_DIGEST_SOURCE_PATHS){const field=fields[path];if(!field||!Object.hasOwn(field,'value')||!field.enumerable||typeof field.value!=='string'||field.value.length>524288)fail('bounded own primitive method source required');total+=field.value.length;value[path]=field.value;}
+ if(total>1048576)fail('whole method source budget');
+ return {value,verify(){if(Object.getPrototypeOf(input)!==prototype)fail('method source record changed');const current=Reflect.ownKeys(input);if(current.length!==keys.length||current.some((key,index)=>key!==keys[index]))fail('method source keys changed');for(const key of keys){const a=fields[key],b=Object.getOwnPropertyDescriptor(input,key);if(!b||!Object.hasOwn(b,'value')||a.value!==b.value||a.enumerable!==b.enumerable||a.writable!==b.writable||a.configurable!==b.configurable)fail('method source fields changed');}}};
+}
+function methodDigestRule(source,rule,inverse=false){
+ const before=inverse?rule.after:rule.before,after=inverse?rule.before:rule.after;
+ if(source.split(before).length!==2||[...source.matchAll(/\bmetadataDigest\(/gu)].length!==rule.expressions)fail('unique unchanged method import and digest sites required');
+ return exact(source,before,after,(inverse?'restore-':'')+'method-digest-binding');
+}
+export function proposeMethodMetadataDigestSources(input){
+ const captured=methodDigestSources(input),rows=[];
+ for(const rule of METHOD_IMPORT_RULES){
+  const source=captured.value[rule.path],languageId='private-digest:method-default-data-equation',repositoryId='router-translator:method-private-digest-binding';
+  // Complete identity language transport precedes the repository binding rule.
+  // The existing default-copy equation remains an independent obligation.
+  const pipeline=createRulePipeline([
+   {phase:'language',rules:[{id:languageId,apply:value=>stage(value,value,'language',languageId)}]},
+   {phase:'repository',rules:[{id:repositoryId,apply:first=>({first,second:stage(first.after.source,methodDigestRule(first.after.source,rule),'repository',repositoryId)})}]},
+  ]);
+  const run=pipeline.run(source),{first,second}=run.value;
+  rows.push({file:rule.path,before:first.before,intermediate:first.after,after:second.after,stages:[first,second],trace:run.trace,completeInverse:true});
+ }
+ captured.verify();
+ return {schema:'method-metadata-digest-source-proposal-v1',rows,selectedSyntaxSites:{validationFallbackDigestExpressions:3,transformDigestExpressions:5,directCopyExpressionsChanged:0},authority:{source:false,owner:false,type:false,executable:false},semanticChecksPassed:false,installApproved:false,obligations:[
+  'Fresh complete physical/Git method/common/source-link/compiler-profile joins before and after proposal serialization.',
+  'Independent complete CST, genuine private method/parser/semantic issuance and all original native Hash callbacks remain required.',
+  'Validation selects the explicit 645-to-647 frame and JSON-expression contract; retain complete old/new observations separately.',
+  'Arbitrary factory/copy stack introspection is outside the scoped equivalence contract; no source or error normalization.',
+  'Complete original derive4, original13 and all source/method suites retain their original deadlines; no speed qualification is issued.',
+ ]};
+}
+export function restoreMethodMetadataDigestSources(input){
+ const captured=methodDigestSources(input),result=Object.create(null);
+ for(const rule of METHOD_IMPORT_RULES)result[rule.path]=methodDigestRule(captured.value[rule.path],rule,true);
+ captured.verify();return result;
+}

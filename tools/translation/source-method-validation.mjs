@@ -3,7 +3,7 @@
 // descriptor traversal. Every successful call still performs the actual hash.
 import {createHash} from 'node:crypto';
 import {types} from 'node:util';
-import {copyMetadata,metadataDigestWithPrivateAssignments as metadataDigest} from './extensions/source-links.mjs';
+import {copyMetadata,metadataDigestForInternalSources as metadataDigest} from './extensions/source-links.mjs';
 import {originalJsonIntrinsicsUnchanged} from './original-json-intrinsics.mjs';
 const descriptor=Object.getOwnPropertyDescriptor,descriptors=Object.getOwnPropertyDescriptors,prototype=Object.getPrototypeOf,keys=Reflect.ownKeys,own=Object.hasOwn,isArray=Array.isArray,isFrozen=Object.isFrozen,apply=Reflect.apply,functionText=Function.prototype.toString;
 const objectPrototype=Object.prototype,arrayPrototype=Array.prototype,isProxy=types.isProxy;

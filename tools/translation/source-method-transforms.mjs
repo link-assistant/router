@@ -1,7 +1,7 @@
 // Original inherent members acquire only a token-transform source association.
 // Ownership, Copy, method checking and effects remain separate obligations.
 import {tokenizeRust,capturedRustTokenSource} from './extensions/lexical.mjs';
-import {copyMetadata,metadataDigest} from './extensions/source-links.mjs';
+import {copyMetadata,metadataDigestForInternalSources as metadataDigest} from './extensions/source-links.mjs';
 import {originalMethodMember,originalMethodLowering} from './impl-resolver.mjs';
 import {originalMethodNamespaceOwner} from './matches-macro-context.mjs';
 import {freezeMacroTree} from './macro-token-trees.mjs';
