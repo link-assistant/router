@@ -9,6 +9,7 @@ import {PRODUCTION_PROFILE} from './cfg-profile.mjs';
 import {createRulePipeline} from './rule-pipeline.mjs';
 import {proposeCoreFormattingCorpus} from './propose-core-formatting-corpus.mjs';
 import {proposeCorePrimitivesCorpus} from './migrate-core-primitives.mjs';
+import {translationProgressReporter} from './translation-progress.mjs';
 
 // Keep each relocatable lazy module edge at one source location. These helpers
 // perform the original dynamic import on every request; no extra cache or
@@ -73,7 +74,7 @@ function ownDirectory(destination){
   if(!own.isDirectory()||own.isSymbolicLink()||realpathSync(destination.path)!==destination.physical||!directorySame(destination.identity,lstatSync(destination.parent)))fail('output identity changed');
   return own;
 }
-function writer(target,gzipStorage=null){
+function writer(target,gzipStorage=null,progress=null){
   const records=[],directories=new Map();let totalBytes=0,created=false,identity=null;
   const storageRows=[];let storedBytes=0,preparedGzip=null;
   function current(){if(!created){identity=ownDirectory(target);created=true;directories.set('',identity);}if(!directorySame(identity,lstatSync(target.path))||realpathSync(target.path)!==target.physical)fail('owned proposal root changed');}
@@ -84,6 +85,7 @@ function writer(target,gzipStorage=null){
   function put(relative,text,kind='json'){
     if(records.length>=L.packets||typeof text!=='string'||relative.split('/').some(part=>!part||part==='.'||part==='..')||relative.includes('\\'))fail('packet path/count');
     const bytes=Buffer.byteLength(text);if(bytes>L.packetBytes||totalBytes+bytes>L.outputBytes-FAILURE_RESERVE)fail('packet/output byte limit');
+    if(progress)progress({stage:'plan',state:'start',source:relative,phase:'proposal-packet-emit',completed:records.length,bytes});
     const sha256=hash(text);parent(relative);
     if(gzipStorage){
       const encoded=gzipStorage.encodeCoreAdoptionGzipPacket(text),file=relative+'.gz';
@@ -92,7 +94,9 @@ function writer(target,gzipStorage=null){
       storageRows.push({path:relative,kind,rawBytes:bytes,rawSha256:sha256,file,bytes:encoded.bytes.length,sha256:encoded.sha256});
     }else writeFileSync(join(target.path,relative),text,{flag:'wx'});
     totalBytes+=bytes;
-    const record={path:relative,kind,bytes,sha256};records.push(record);return record;
+    const record={path:relative,kind,bytes,sha256};records.push(record);
+    if(progress)progress({stage:'plan',state:'end',source:relative,phase:'proposal-packet-emit',completed:records.length,bytes});
+    return record;
   }
   const json=(path,value)=>put(path,JSON.stringify(value)+'\n');
   return {json,jsonText:(path,text)=>put(path,text),text:(path,value)=>put(path,value,'rust-source'),get records(){return records;},get bytes(){return totalBytes;},get created(){return created;},
@@ -130,9 +134,12 @@ function primitivePackets(proposal,write){
   const result={metadata:write.json('primitives/metadata.json',{keys:Object.keys(proposal),values:fieldsExcept(proposal,['before','after','inputs','moduleGraph','proposals'])}),before:Object.entries(proposal.before).map(([path,source],at)=>write.json('primitives/before/'+numbered(at)+'.json',{path,source})),after:Object.entries(proposal.after).map(([path,source],at)=>write.json('primitives/after/'+numbered(at)+'.json',{path,source})),inputs:proposal.inputs.map((row,at)=>write.json('primitives/inputs/'+numbered(at)+'.json',row)),proposals:proposal.proposals.map((row,at)=>write.json('primitives/proposals/'+numbered(at)+'.json',row)),moduleGraph:{modules:graph.modules.map((row,at)=>write.json('primitives/graph/modules/'+numbered(at)+'.json',row)),edges:write.json('primitives/graph/edges.json',graph.edges),diagnostics:write.json('primitives/graph/diagnostics.json',graph.diagnostics),concreteSyntaxMeta:graph.concreteSyntaxMeta.map((row,at)=>write.json('primitives/graph/concrete/'+numbered(at)+'.json',row))}};
   return result;
 }
-export function proposeCoreAdoptionCorpus(input){
+export function proposeCoreAdoptionCorpus(input,progressInput=undefined){
   if(!['darwin','linux'].includes(process.platform))fail('POSIX source-proposal receiving required');
-  const requested=options(input),root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),write=writer(target);
+  const requested=options(input),progress=progressInput==null?null:translationProgressReporter(progressInput);
+  if(progress)progress({stage:'corpus',state:'start',phase:'input-discovery'});
+  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),write=writer(target,null,progress);
+  if(progress)progress({stage:'corpus',state:'end',phase:'input-discovery',total:original.rows.length});
   let stage='formatting',formatting=null,primitives=null,after=null,formattingTrace=null,primitiveTrace=null,summary=null;
   try{
     const first=createRulePipeline([
@@ -161,6 +168,7 @@ export function proposeCoreAdoptionCorpus(input){
     const text=JSON.stringify(index)+'\n';
     // Every packet hash precedes this final fresh source rejoin. No hash or
     // caller-provided action occurs between it and stock index publication.
+    if(progress)progress({stage:'fingerprint',state:'start',phase:'final-source-and-index'});
     rejoin(original);write.complete(text);return {schema:index.schema,complete:true,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:write.bytes,semanticAdmission:false};
   }catch(error){try{write.failure(error,stage);}catch(reportFailure){const failure=new Error('combined proposal failed and its incomplete receipt could not be written');failure.cause=error;failure.reportFailure=reportFailure;throw failure;}throw error;}
 }
@@ -180,12 +188,12 @@ function assertAdoptionInverse(row){
   for(let at=row.mapping.length-1;at>=0;at--){const part=row.mapping[at];if(part.kind==='substitution')restored=restored.slice(0,part.after[0])+part.expected+restored.slice(part.after[1]);}
   if(restored!==row.before.source)fail('whole source inverse differs');
 }
-function completeAdoptionPackets(proposal,write,files,name){
+function completeAdoptionPackets(proposal,write,files,name,progress=null){
   const graph=proposal.moduleGraph,excluded=['before','after','inputs','moduleGraph','proposals'];
   if(!graph||Object.keys(proposal.before).length!==Object.keys(files).length||Object.keys(proposal.after).length!==Object.keys(files).length)fail('complete returned source census differs');
   for(const path of Object.keys(files))if(proposal.before[path]!==files[path]||typeof proposal.after[path]!=='string')fail('returned source chain differs');
   const packets={metadata:write.json(name+'/metadata.json',{keys:Object.keys(proposal),values:fieldsExcept(proposal,excluded)}),before:Object.entries(proposal.before).map(([path,source],at)=>write.json(name+'/before/'+numbered(at)+'.json',{path,source})),after:Object.entries(proposal.after).map(([path,source],at)=>write.json(name+'/after/'+numbered(at)+'.json',{path,source})),inputs:proposal.inputs.map((row,at)=>write.json(name+'/inputs/'+numbered(at)+'.json',row)),proposals:[],moduleGraph:{metadata:write.json(name+'/graph/metadata.json',{keys:Object.keys(graph),values:fieldsExcept(graph,['modules','edges','diagnostics','concreteSyntaxMeta'])}),modules:graph.modules.map((row,at)=>write.json(name+'/graph/modules/'+numbered(at)+'.json',row)),edges:write.json(name+'/graph/edges.json',graph.edges),diagnostics:write.json(name+'/graph/diagnostics.json',graph.diagnostics),concreteSyntaxMeta:graph.concreteSyntaxMeta.map((row,at)=>write.json(name+'/graph/concrete/'+numbered(at)+'.json',row))}};
-  for(let at=0;at<proposal.proposals.length;at++){const row=proposal.proposals[at];if(row.before.source!==files[row.file]||row.after.source!==proposal.after[row.file])fail('per-file source chain differs');assertAdoptionInverse(row);packets.proposals.push(write.json(name+'/proposals/'+numbered(at)+'.json',row));}
+  for(let at=0;at<proposal.proposals.length;at++){const row=proposal.proposals[at];if(row.before.source!==files[row.file]||row.after.source!==proposal.after[row.file])fail('per-file source chain differs');if(progress)progress({stage:'project-serialize',state:'start',source:row.file,phase:'packet-whole-source-inverse',completed:at});assertAdoptionInverse(row);if(progress)progress({stage:'project-serialize',state:'end',source:row.file,phase:'packet-whole-source-inverse',completed:at+1});packets.proposals.push(write.json(name+'/proposals/'+numbered(at)+'.json',row));}
   return packets;
 }
 // Only the explicit adoption sequences capture Cargo inputs. The original
@@ -195,22 +203,30 @@ function sequenceDependencies(root){
   const rows=capture(),inputs=rows.every(row=>!row.absent)?{manifest:rows[0].source,lock:rows[1].source}:undefined;
   return {rows,inputs,verify(){const current=capture();for(let at=0;at<rows.length;at++){const a=rows[at],b=current[at];if(a.path!==b.path||a.absent!==b.absent||a.source!==b.source||!a.absent&&!fileSame(a.identity,b.identity))fail('complete optional Cargo input changed');}}};
 }
-function fixedAdoptionStage(name,files,propose,original,write,dependencies,producerDependencies=false){
+function fixedAdoptionStage(name,files,propose,original,write,dependencies,producerDependencies=false,progressInput){
+  const progress=progressInput==null?null:translationProgressReporter(progressInput);
   // The full proposal/graph is reachable only in this call. Return the next
   // primitive source map and packet references, never the live proposal.
   return createRulePipeline([
-    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>propose({entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE,...((name==='literal'||name==='scalar-count'||name==='json'||producerDependencies)&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})})}]},
+    {phase:'language',rules:[{id:'core-adoption:complete-'+name+'-corpus',apply:()=>{
+      if(progress)progress({stage:'project',state:'start',entry:'src/lib.rs',phase:name+'-analysis'});
+      const request={entry:'src/lib.rs',files,compilationProfile:PRODUCTION_PROFILE,...((name==='literal'||name==='scalar-count'||name==='json'||producerDependencies)&&dependencies.inputs?{dependencyInputs:dependencies.inputs}:{})};
+      const result=name==='base64'&&progress?propose(request,progressInput):propose(request);
+      if(progress)progress({stage:'project',state:'end',entry:'src/lib.rs',phase:name+'-analysis'});
+      return result;
+    }}]},
     {phase:'repository',rules:[{id:'core-adoption:'+name+'-complete-packets',apply:proposal=>{
-      rejoin(original);dependencies.verify();const packets=completeAdoptionPackets(proposal,write,files,name);
+      rejoin(original);dependencies.verify();const packets=completeAdoptionPackets(proposal,write,files,name,progress);
       return {files:proposal.after,packets,summary:{sourceFiles:Object.keys(proposal.before).length,proposals:proposal.proposals.length,selections:proposal.proposals.reduce((sum,row)=>sum+row.selections.length,0),edits:proposal.proposals.reduce((sum,row)=>sum+row.edits.length,0),changedFiles:proposal.proposals.filter(row=>row.before.source!==row.after.source).length,skippedFiles:proposal.skipped.length}};
     }}]},
   ]).run(null);
 }
-export async function proposeCoreAdoptionSequence(input,sequence='literal',packetStorage){
+export async function proposeCoreAdoptionSequence(input,sequence='literal',packetStorage,progressInput){
   if(packetStorage!==undefined&&packetStorage!=='gzip')fail('packet storage must be the explicit gzip mode');
   if(sequence!=='literal'&&sequence!=='literal-algebraic'&&sequence!=='scalar-count'&&sequence!=='json-algebraic-primitives'&&sequence!=='json-updates'&&sequence!=='json-indices'&&sequence!=='json-collections'&&sequence!=='json-copies'&&sequence!=='json-parse'&&sequence!=='json-readers'&&sequence!=='base64')fail('fixed sequence must be literal, literal-algebraic, scalar-count, json-algebraic-primitives, json-updates, json-indices, json-copies, json-collections, json-parse, json-readers or base64');
   if(!['darwin','linux'].includes(process.platform))fail('POSIX source-proposal receiving required');
-  const requested=options(input);
+  const requested=options(input),progress=progressInput==null?null:translationProgressReporter(progressInput);
+  if(progress)progress({stage:'project',state:'start',phase:'producer-module-load'});
   // Lazy imports preserve the old API's module initialization graph. Selected
   // imports finish before taking the operation's complete source snapshot.
   const jsonSequence=sequence==='json-algebraic-primitives',jsonUpdates=sequence==='json-updates',jsonIndices=sequence==='json-indices',jsonCollections=sequence==='json-collections',jsonCopies=sequence==='json-copies',jsonParse=sequence==='json-parse',jsonReaders=sequence==='json-readers',base64=sequence==='base64';
@@ -226,11 +242,14 @@ export async function proposeCoreAdoptionSequence(input,sequence='literal',packe
   const scalars=sequence==='scalar-count'?(await import('./migrate-core-scalars.mjs')).proposeCoreScalarsCorpus:null;
   const algebraic=sequence==='literal-algebraic'||jsonSequence?(await import('./migrate-core-algebraic.mjs')).proposeCoreAlgebraicCorpus:null;
   const gzipStorage=packetStorage==='gzip'?await loadPacketStorageModule():null;
-  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target,gzipStorage),stages=[];
+  if(progress)progress({stage:'project',state:'end',phase:'producer-module-load'});
+  if(progress)progress({stage:'corpus',state:'start',phase:'input-discovery'});
+  const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target,gzipStorage,progress),stages=[];
+  if(progress)progress({stage:'corpus',state:'end',phase:'input-discovery',total:original.rows.length});
   let stage=base64?'base64':jsonReaders?'json-readers':jsonParse?'json-parse':jsonCopies?'json-copies':jsonCollections?'json-collections':jsonIndices?'json-indices':jsonUpdates?'json-updates':sequence==='scalar-count'?'scalar-count':jsonSequence?'json':'literal',after=original.files;
   try{
     for(const name of base64?['base64']:jsonReaders?['json-readers']:jsonParse?['json-parse']:jsonCopies?['json-copies']:jsonCollections?['json-collections']:jsonIndices?['json-indices']:jsonUpdates?['json-updates']:jsonSequence?['json','algebraic','primitives']:sequence==='scalar-count'?['scalar-count']:sequence==='literal'?['literal']:['literal','algebraic']){
-      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='base64'?base64Producer:name==='json-readers'?readers:name==='json-parse'?parse:name==='json-copies'?copies:name==='json-collections'?collections:name==='json-indices'?indices:name==='json-updates'?updates:name==='json'?json:name==='primitives'?proposeCorePrimitivesCorpus:name==='scalar-count'?scalars:name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies,base64||jsonSequence||jsonUpdates||jsonIndices||jsonCollections||jsonCopies||jsonParse||jsonReaders);
+      stage=name;rejoin(original);dependencies.verify();const next=fixedAdoptionStage(name,after,name==='base64'?base64Producer:name==='json-readers'?readers:name==='json-parse'?parse:name==='json-copies'?copies:name==='json-collections'?collections:name==='json-indices'?indices:name==='json-updates'?updates:name==='json'?json:name==='primitives'?proposeCorePrimitivesCorpus:name==='scalar-count'?scalars:name==='literal'?proposeCoreLiteralTextCorpus:algebraic,original,write,dependencies,base64||jsonSequence||jsonUpdates||jsonIndices||jsonCollections||jsonCopies||jsonParse||jsonReaders,progressInput);
       after=next.value.files;stages.push({name,packets:next.value.packets,summary:next.value.summary,trace:next.trace});
     }
     stage='final-source-and-index';const dependencyInputs=dependencies.rows.map((row,at)=>write.json('dependency-inputs/'+numbered(at)+'.json',row)),inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
@@ -238,6 +257,9 @@ export async function proposeCoreAdoptionSequence(input,sequence='literal',packe
     if(Object.keys(after).length!==original.rows.length)fail('adopted source path census differs');
     const index={schema:'router-core-adoption-sequence-packets-v1',complete:true,sequence,entry:'src/lib.rs',sourceRoot:root,compilationProfile:PRODUCTION_PROFILE,limits:L,inputs,dependencyInputs,census,stages,changes,packets:[...write.records],packetBytes:write.bytes,semanticAdmission:false,installation:'proposal only; review every complete stage and inverse before application; this CLI never applies sources',sourceChain:'each stage before equals previous complete after; reverse stage order and full per-file mappings to recover original sources',hostBoundary:'stock Node/Bun filesystem/JSON/rule runner; exclusive owned output lifetime; non-atomic source snapshots, no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim',memory:'one full API proposal/graph at a time; per-packet serialization; actual live heap/RSS requires receiving evidence'};
     const text=JSON.stringify(index)+'\n',preparedStorage=gzipStorage?write.prepareGzip(text):null;
+    // Final progress precedes the fresh source guard. Never call an observer
+    // between this rejoin and index publication; stdout reports completion.
+    if(progress)progress({stage:'fingerprint',state:'start',phase:'final-source-and-index'});
     rejoin(original);dependencies.verify();if(gzipStorage)write.completeGzip(text,preparedStorage);else write.complete(text);
     const receipt={schema:index.schema,complete:true,sequence,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:stages.map(({name,summary})=>({name,...summary})),packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:write.bytes,semanticAdmission:false};
     return gzipStorage?{...receipt,outputBytes:preparedStorage.storedOutputBytes,logicalOutputBytes:write.bytes,packetStorage:'gzip',storageIndex:'packet-storage.json',storageSha256:preparedStorage.sha256}:receipt;
@@ -298,10 +320,15 @@ function fixedAdoptionStreamStage(name,files,createStream,original,write,depende
 }
 // Only the actual CLI's explicit json-readers+gzip route selects this new
 // schedule. Existing materialized APIs retain their original hash/observer work.
-export async function proposeCoreJsonReadersGzipPackets(input){
+export async function proposeCoreJsonReadersGzipPackets(input,progressInput=undefined){
  if(!['darwin','linux'].includes(process.platform))fail('POSIX source-proposal receiving required');
- const requested=options(input),{iterateCoreJsonReadersCorpusPackets}=await loadJsonReaderModule(),gzipStorage=await loadPacketStorageModule();
- const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target,gzipStorage),name='json-readers';let stage=name;
+ const requested=options(input),progress=progressInput==null?null:translationProgressReporter(progressInput);
+ if(progress)progress({stage:'project',state:'start',phase:'producer-module-load'});
+ const {iterateCoreJsonReadersCorpusPackets}=await loadJsonReaderModule(),gzipStorage=await loadPacketStorageModule();
+ if(progress)progress({stage:'project',state:'end',phase:'producer-module-load'});
+ if(progress)progress({stage:'corpus',state:'start',phase:'input-discovery'});
+ const root=realpathSync(resolve(requested.root)),target=destination(root,requested.output),original=snapshot(root),dependencies=sequenceDependencies(root),write=writer(target,gzipStorage,progress),name='json-readers';let stage=name;
+ if(progress)progress({stage:'corpus',state:'end',phase:'input-discovery',total:original.rows.length});
  try{
   rejoin(original);dependencies.verify();const next=fixedAdoptionStreamStage(name,original.files,iterateCoreJsonReadersCorpusPackets,original,write,dependencies),after=next.value.files,stages=[{name,packets:next.value.packets,summary:next.value.summary,trace:next.trace}];
   stage='final-source-and-index';const dependencyInputs=dependencies.rows.map((row,at)=>write.json('dependency-inputs/'+numbered(at)+'.json',row)),inputs=original.rows.map((row,at)=>write.json('inputs/'+numbered(at)+'.json',row)),census=write.json('inputs/census.json',{root,rows:original.census,sourceFiles:original.rows.length,sourceUnits:original.units}),changes=[];
@@ -309,14 +336,21 @@ export async function proposeCoreJsonReadersGzipPackets(input){
   if(Object.keys(after).length!==original.rows.length)fail('adopted source path census differs');
   const index={schema:'router-core-adoption-sequence-packets-v1',complete:true,sequence:name,entry:'src/lib.rs',sourceRoot:root,compilationProfile:PRODUCTION_PROFILE,limits:L,inputs,dependencyInputs,census,stages,changes,packets:[...write.records],packetBytes:write.bytes,semanticAdmission:false,installation:'proposal only; review every complete stage and inverse before application; this CLI never applies sources',sourceChain:'each stage before equals previous complete after; reverse stage order and full per-file mappings to recover original sources',hostBoundary:'stock Node/Bun filesystem/JSON/rule runner; exclusive owned output lifetime; non-atomic source snapshots, no arbitrary concurrent same-UID writer or hostile-intrinsic-total claim',memory:'one full graph/context and one complete per-file CST at a time; detached packet serialization; actual live heap/RSS requires receiving evidence'};
   const text=JSON.stringify(index)+'\n',preparedStorage=write.prepareGzip(text);
+  if(progress)progress({stage:'fingerprint',state:'start',phase:'final-source-and-index'});
   next.value.verify();rejoin(original);dependencies.verify();write.completeGzip(text,preparedStorage);
   return {schema:index.schema,complete:true,sequence:name,output:target.physical,index:'index.json',sourceFiles:original.rows.length,changedFiles:changes.length,stages:stages.map(({name,summary})=>({name,...summary})),packetCount:index.packets.length,packetBytes:index.packetBytes,outputBytes:preparedStorage.storedOutputBytes,semanticAdmission:false,logicalOutputBytes:write.bytes,packetStorage:'gzip',storageIndex:'packet-storage.json',storageSha256:preparedStorage.sha256};
  }catch(error){try{write.failure(error,stage);}catch(reportFailure){const failure=new Error('stream sequence failed and its incomplete receipt could not be written');failure.cause=error;failure.reportFailure=reportFailure;throw failure;}throw error;}
 }
 
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  const args=process.argv.slice(2);
-  if(args.length===8&&args[0]==='--root'&&args[2]==='--output'&&args[4]==='--sequence'&&args[6]==='--packet-storage')(args[5]==='json-readers'&&args[7]==='gzip'?proposeCoreJsonReadersGzipPackets({root:args[1],output:args[3]}):proposeCoreAdoptionSequence({root:args[1],output:args[3]},args[5],args[7])).then(receipt=>console.log(JSON.stringify(receipt)));
-  else if(args.length===6&&args[0]==='--root'&&args[2]==='--output'&&args[4]==='--sequence')proposeCoreAdoptionSequence({root:args[1],output:args[3]},args[5]).then(receipt=>console.log(JSON.stringify(receipt)));
-  else {if(args.length!==4||args[0]!=='--root'||args[2]!=='--output')fail('usage: --root SOURCE_ROOT --output FRESH_OUTSIDE_DIRECTORY');console.log(JSON.stringify(proposeCoreAdoptionCorpus({root:args[1],output:args[3]})));}
+  const raw=process.argv.slice(2),selected=[5,7,9].includes(raw.length)&&raw.at(-1)==='--progress';
+  // Append the flag; existing positional path/sequence values keep their meaning.
+  const args=selected?raw.slice(0,-1):raw;
+  // Opt-in diagnostics only: complete source/private metadata never enters a
+  // record. Read the monotonic clock only for this explicitly selected route.
+  const started=selected?process.hrtime.bigint():null;
+  const progress=selected?record=>process.stderr.write(JSON.stringify({...record,elapsedMilliseconds:Number((process.hrtime.bigint()-started)/1000000n)})+'\n'):undefined;
+  if(args.length===8&&args[0]==='--root'&&args[2]==='--output'&&args[4]==='--sequence'&&args[6]==='--packet-storage')(args[5]==='json-readers'&&args[7]==='gzip'?proposeCoreJsonReadersGzipPackets({root:args[1],output:args[3]},progress):proposeCoreAdoptionSequence({root:args[1],output:args[3]},args[5],args[7],progress)).then(receipt=>console.log(JSON.stringify(receipt)));
+  else if(args.length===6&&args[0]==='--root'&&args[2]==='--output'&&args[4]==='--sequence')proposeCoreAdoptionSequence({root:args[1],output:args[3]},args[5],undefined,progress).then(receipt=>console.log(JSON.stringify(receipt)));
+  else {if(args.length!==4||args[0]!=='--root'||args[2]!=='--output')fail('usage: --root SOURCE_ROOT --output FRESH_OUTSIDE_DIRECTORY');console.log(JSON.stringify(proposeCoreAdoptionCorpus({root:args[1],output:args[3]},progress)));}
 }

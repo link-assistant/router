@@ -3,6 +3,7 @@
 import {types} from 'node:util';
 import {createHash} from 'node:crypto';
 import {resolveModuleGraph} from './project.mjs';
+import {translationProgressReporter} from './translation-progress.mjs';
 import {originalSourceModuleItems} from './source-module-views.mjs';
 import {originalDeclarationHeader,originalUseDeclarationLeaves} from './module-bindings.mjs';
 import {createCoreAdoptionProducerContext,finishCoreAdoptionProducerContext,createCoreAdoptionNonTraitImportSelector} from './core-adoption-producer-context.mjs';
@@ -53,10 +54,18 @@ function scope(module,modules,profile,context,nonTrait){
   }
  }}return {problems,methodProblems,engineImports,imports};
 }
-function fileProposal(source,modules,all,profile,context,nonTrait){
+function fileProposal(source,modules,all,profile,context,nonTrait,progress=null){
+ const file=progress?modules[0].file:null;
+ if(progress)progress({stage:'project-serialize',state:'start',source:file,phase:'base64-original-CST'});
  const before=transportConcreteSyntaxSource(source,{language:'Rust'}),edits=[],selections=[],skipped=[],importRoles=[];
- for(const module of modules){const owners=scope(module,all,profile,context,nonTrait);importRoles.push(...owners.imports);
-  for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;const rows=item.tokens.filter(row=>row.type!=='comment'),condition=itemConfiguration(item.tokens,profile),header=originalDeclarationHeader(item,module.path),base={function:item.name,module:module.path,span:[item.start,item.end]},stop=reason=>skipped.push({...base,reason});
+ if(progress)progress({stage:'project-serialize',state:'end',source:file,phase:'base64-original-CST'});
+ for(const module of modules){
+  if(progress)progress({stage:'namespace',state:'start',source:file,declaration:module.path.join('::')||'crate',phase:'base64-module-bindings'});
+  const owners=scope(module,all,profile,context,nonTrait);importRoles.push(...owners.imports);
+  if(progress)progress({stage:'namespace',state:'end',source:file,declaration:module.path.join('::')||'crate',phase:'base64-module-bindings'});
+  for(const item of originalSourceModuleItems(module)){if(item.term!=='fn')continue;
+   if(progress)progress({stage:'standalone',state:'advance',source:file,declaration:item.name,phase:'base64-function-analysis'});
+   const rows=item.tokens.filter(row=>row.type!=='comment'),condition=itemConfiguration(item.tokens,profile),header=originalDeclarationHeader(item,module.path),base={function:item.name,module:module.path,span:[item.start,item.end]},stop=reason=>skipped.push({...base,reason});
    if(module.configurationCondition!=='active'||condition.status!=='active'||condition.attributes.some(row=>!inert.has(row.name))||owners.problems.length){stop('enclosing source producer, dependency shadow or conditional uncertainty');continue;}
    const name=rows.findIndex(row=>row.start===header?.nameSpan?.start),open=name+1,last=close(rows,open);if(name<0||rows[open]?.text!=='('||last<0){stop('ordinary nongeneric function required');continue;}
    const bindings=parameters(rows.slice(open+1,last));let body=last+1;while(body<rows.length&&rows[body].text!=='{')body++;if(!bindings||body>=rows.length||close(rows,body)!==rows.length-1){stop('complete concrete parameter and function body required');continue;}
@@ -76,24 +85,42 @@ function fileProposal(source,modules,all,profile,context,nonTrait){
     // Trivia inside the argument is preserved. Other removed trivia must be
     // whitespace: comments are never silently discarded by a substitution.
     if(item.tokens.some(row=>row.type==='comment'&&row.start>=span[0]&&row.end<=span[1]&&!(row.start>=argumentStart&&row.end<=argumentEnd))){stop('receiver/UFCS trivia contains an original comment');continue;}
-    edits.push({span,expected:source.slice(...span),replacement});selections.push({...base,callSpan:span,configuration:config,nativeOperation:method,ownedOperation:selected,operand,syntax,libraryUnit:'base64-0.23.1-normal-dependency-ABI',originalTraitPermission:false});at=finish;
+    edits.push({span,expected:source.slice(...span),replacement});selections.push({...base,callSpan:span,configuration:config,nativeOperation:method,ownedOperation:selected,operand,syntax,libraryUnit:'base64-0.23.1-normal-dependency-ABI',originalTraitPermission:false});
+    if(progress)progress({stage:'standalone',state:'advance',source:file,declaration:item.name,phase:'base64-candidate-lowering',completed:edits.length});
+    at=finish;
    }
   }
  }
  edits.sort((a,b)=>a.span[0]-b.span[0]);for(let at=1;at<edits.length;at++)if(edits[at-1].span[1]>edits[at].span[0])fail('overlap');
+ if(progress)progress({stage:'project-serialize',state:'start',source:file,phase:'base64-edited-CST-roundtrip'});
  const applied=applyConcreteSyntaxSubstitutions(before.document,{languageRules:[{id:'base64:concrete-native-unit-binding-and-once-only-argument',edits:[]}],repositoryRules:[{id:'router-core:adopt-qualified-owned-base64',edits}]}),after=transportConcreteSyntaxMeta(serializeConcreteSyntaxMeta(applied.value)),mapping=[];let old=0,current=0;
+ if(progress)progress({stage:'project-serialize',state:'end',source:file,phase:'base64-edited-CST-roundtrip'});
+ if(progress)progress({stage:'project-serialize',state:'start',source:file,phase:'base64-whole-source-inverse'});
  for(const edit of edits){if(edit.span[0]>old){const length=edit.span[0]-old;mapping.push({kind:'unchanged',before:[old,edit.span[0]],after:[current,current+length]});current+=length;}mapping.push({kind:'substitution',before:edit.span,after:[current,current+edit.replacement.length],expected:edit.expected,replacement:edit.replacement});current+=edit.replacement.length;old=edit.span[1];}if(old<source.length)mapping.push({kind:'unchanged',before:[old,source.length],after:[current,current+source.length-old]});let restored=after.source;for(const row of [...mapping].reverse())if(row.kind==='substitution')restored=restored.slice(0,row.after[0])+row.expected+restored.slice(row.after[1]);if(restored!==source)fail('full inverse changed');
+ if(progress)progress({stage:'project-serialize',state:'end',source:file,phase:'base64-whole-source-inverse',completed:edits.length});
  return {schema:'router-owned-base64-file-proposal-v1',before:{source,meta:before.meta,sha256:hash(source)},after:{source:after.source,meta:after.meta,sha256:hash(after.source)},edits,mapping,selections,skipped,importRoles,trace:applied.trace,executableAdmission:false};
 }
-export function proposeCoreBase64Corpus(input={}){
+// The optional callback receives only the existing bounded progress schema.
+// It is diagnostic data, never a source/owner permit; callback errors propagate.
+export function proposeCoreBase64Corpus(input={},progressInput){
+ const progress=progressInput==null?null:translationProgressReporter(progressInput);
  const options=record(input,['entry','files','compilationProfile','dependencyInputs']),files=record(options.files),entry=options.entry??'src/lib.rs',profile=compilationProfile(options.compilationProfile??PRODUCTION_PROFILE);let total=0;
  for(const [path,source]of Object.entries(files)){if(!path.endsWith('.rs')||path.length>4096||path.includes('\\')||/[\x00-\x1f:]/u.test(path)||path.split('/').some(part=>!part||part==='.'||part==='..')||typeof source!=='string'||source.length>2000000)fail('bounded canonical full sources required');total+=source.length;if(total>32000000)fail('source total bound');}
  if(!Object.hasOwn(files,entry))fail('entry missing');const dependencies=record(options.dependencyInputs,['manifest','lock']);if(typeof dependencies.manifest!=='string'||typeof dependencies.lock!=='string'||dependencies.manifest.length>2000000||dependencies.lock.length>2000000)fail('complete bounded Cargo inputs required');
+ if(progress)progress({stage:'project',state:'start',entry,phase:'base64-dependency-proof'});
  const proof=deriveDependencyProfile(dependencies).proof;if(!proof)fail('actual locked dependency proof required');const library=originalExternalTraitPackageInputs(captureOriginalExternalTraitPackage(proof,'base64'));
- const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile}),core=graph.modules.filter(row=>row.path.join('::')==='translation_core'),leaf=graph.modules.filter(row=>row.path.join('::')==='translation_core::base64'),root=graph.modules.filter(row=>!row.path.length);
+ if(progress)progress({stage:'project',state:'end',entry,phase:'base64-dependency-proof'});
+ if(progress)progress({stage:'project-graph',state:'start',entry,phase:'base64-module-discovery'});
+ const graph=resolveModuleGraph({entry,paths:Object.keys(files),readSource:path=>files[path],compilationProfile:profile},progress?progressInput:undefined),core=graph.modules.filter(row=>row.path.join('::')==='translation_core'),leaf=graph.modules.filter(row=>row.path.join('::')==='translation_core::base64'),root=graph.modules.filter(row=>!row.path.length);
  if(core.length!==1||leaf.length!==1||root.length!==1||core[0].file!=='src/translation_core.rs'||leaf[0].file!=='src/translation_core/base64.rs'||core[0].source!==ROUTER_FORMATTING_FACADE_SOURCE||leaf[0].source!==ROUTER_CORE_BASE64_SOURCE||core[0].configurationCondition!=='active'||leaf[0].configurationCondition!=='active')fail('complete active owned facade and leaf required');const edge=originalSourceModuleItems(root[0]).filter(row=>row.term==='mod'&&row.name==='translation_core');if(edge.length!==1||root[0].source.slice(edge[0].start,edge[0].end).trim()!=='pub mod translation_core;')fail('actual public root edge required');
+ if(progress)progress({stage:'project-graph',state:'end',entry,phase:'base64-module-discovery',total:graph.modules.length});
+ if(progress)progress({stage:'namespace',state:'start',entry,phase:'base64-producer-context'});
  const context=createCoreAdoptionProducerContext({modules:graph.modules,compilationProfile:profile,dependencyInputs:dependencies}),nonTrait=createCoreAdoptionNonTraitImportSelector({modules:graph.modules,compilationProfile:profile,context}),after={...files},proposals=[],skipped=[];
- for(const file of Object.keys(files)){if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;const modules=graph.modules.filter(row=>row.file===file);if(!modules.length){skipped.push({file,reason:'source is not a selected module'});continue;}const proposal=fileProposal(files[file],modules,graph.modules,profile,context,nonTrait);proposals.push({file,...proposal});after[file]=proposal.after.source;}
+ if(progress)progress({stage:'namespace',state:'end',entry,phase:'base64-producer-context'});
+ for(const file of Object.keys(files)){if(file==='src/translation_core.rs'||file.startsWith('src/translation_core/'))continue;const modules=graph.modules.filter(row=>row.file===file);if(!modules.length){skipped.push({file,reason:'source is not a selected module'});continue;}if(progress)progress({stage:'standalone',state:'start',entry,source:file,phase:'base64-file-analysis'});
+  const proposal=fileProposal(files[file],modules,graph.modules,profile,context,nonTrait,progress);proposals.push({file,...proposal});after[file]=proposal.after.source;
+  if(progress)progress({stage:'standalone',state:'end',entry,source:file,phase:'base64-file-analysis',completed:proposals.length});}
+ if(progress)progress({stage:'namespace',state:'start',entry,phase:'base64-final-private-verification'});
  nonTrait.verify();const producerEffects=finishCoreAdoptionProducerContext(context);
  return {schema:'router-owned-base64-corpus-v1',entry,compilationProfile:profile,dependencyInputs:dependencies,libraryInputs:library,before:{...files},after,inputs:Object.entries(files).map(([file,source])=>({file,source,sha256:hash(source)})),moduleGraph:{modules:graph.modules,edges:graph.edges,diagnostics:graph.diagnostics,concreteSyntaxMeta:graph.concreteSyntaxMeta},proposals,skipped,...(producerEffects?{producerEffects}:{}),executableAdmission:false};
 }

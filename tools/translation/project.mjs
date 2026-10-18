@@ -146,7 +146,9 @@ const relocate = (node, offset) => Array.isArray(node) ? node.map(value => reloc
 // and executable dependency discovery while preserving it in serialized meta.
 const sourceEvidence = key => ['copyCertificate', 'sourceParameterPatterns', 'sourceParameterPattern', 'sourcePattern', 'constantEvaluationProof','deriveNamespaceProof','toolAttributeProof','jsonMacroProof','sourceMatchesProof','pinnedStandardBodyProof','sourceMethodProof','sourceDisplayScope','sourceBoolFromScope','defaultSourceProof','sourceConversionProof','sourceSharedPatternProof','sourcePatternProjectionProof','sourceSharedStringViewProof','cloneSourceProof'].includes(key);
 
-export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null }) {
+// The separate optional argument leaves every old option read unchanged.
+export function resolveModuleGraph({ entry, paths, readSource, compilationProfile:profileInput=null },progressInput=undefined) {
+  const moduleProgress=progressInput==null?null:translationProgressReporter(progressInput);
   const profile=compilationProfile(profileInput);
   const tracked = new Set(paths);
   if (!tracked.has(entry)) throw new Error(`crate entrypoint is not tracked: ${entry}`);
@@ -161,6 +163,7 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
     const key = path.join('.');
     if (visited.has(key)) throw new Error(`duplicate module path ${key}`);
     visited.add(key);
+    if(moduleProgress)moduleProgress({stage:'module-parse',state:'start',entry,source:file,phase:'source-module',declaration:key||'crate',completed:modules.length});
     // Only whole physical inputs cross the CST boundary. Inline module views
     // reuse their parent's exact reconstructed source and original coordinates.
     const concrete=original?null:createRustConcreteSyntaxStage(readSource(file));
@@ -182,7 +185,13 @@ export function resolveModuleGraph({ entry, paths, readSource, compilationProfil
         if(module.configurationCondition==='inactive'||condition.status==='inactive'){module.inactiveItems.push({span:{start:item.start,end:item.end},condition});return false;}return true;
       });
     }
-    catch (error) { module.configurationCondition='unknown';diagnostics.push({ file, ...diagnostic(error) }); return; }
+    catch (error) {
+      module.configurationCondition='unknown';diagnostics.push({ file, ...diagnostic(error) });
+      // Outside the caught parser body: diagnostic callback errors stay errors.
+      if(moduleProgress)moduleProgress({stage:'module-parse',state:'end',entry,source:file,phase:'source-module-refusal',declaration:key||'crate',completed:modules.length});
+      return;
+    }
+    if(moduleProgress)moduleProgress({stage:'module-parse',state:'end',entry,source:file,phase:'source-module',declaration:key||'crate',completed:modules.length});
     for (const item of module.items.filter(item => item.term === 'mod')) {
       const condition=itemConfiguration(item.tokens,profile);
       const childView=original.capture.views.find(view=>view.declaration?.span.start===item.start&&view.declaration?.span.end===item.end);
