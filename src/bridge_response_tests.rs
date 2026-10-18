@@ -435,3 +435,22 @@ fn citation_offsets_count_unicode_scalars_and_repeated_matches_advance() {
     assert_eq!(annotations[1]["start_index"], 4);
     assert_eq!(annotations[1]["end_index"], 6);
 }
+
+#[test]
+fn optional_json_service_tier_uses_actual_bridge_function() {
+    use crate::bridge_response::anthropic_service_tier_from_openai;
+    assert_eq!(anthropic_service_tier_from_openai(None), None);
+    for (value, expected) in [
+        (json!("default"), Some("standard")),
+        (json!("auto"), Some("standard")),
+        (json!("priority"), Some("priority")),
+        (json!("unknown"), None),
+        (json!(null), None),
+        (json!(true), None),
+        (json!(0), None),
+        (json!([]), None),
+        (json!({}), None),
+    ] {
+        assert_eq!(anthropic_service_tier_from_openai(Some(&value)), expected);
+    }
+}

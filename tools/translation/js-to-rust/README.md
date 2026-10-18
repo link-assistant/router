@@ -685,3 +685,29 @@ they are not patched by hand. A declaration count or isolated source proposal
 is not application coverage, current corpus freshness or startup equivalence.
 Optional public inputs, callback chains, arbitrary guarded modules and parsing
 remain separate open capabilities.
+
+### Checked optional Json text composition
+
+The explicit core-reader definition format can project an actual checked
+`Option<&Json>.and_then(Json::as_str)` and finite ordered literal decisions.
+The original function, target and fresh lower product are independently joined;
+new JS/TS source still requires lossless CST, meta and private reverse admission.
+`Parameters<typeof router_core_json_option_as_str>[0]` is opaque: only that
+actual registered operation can consume it. Structural readonly spelling is
+not input validation. All other public optional/Result inputs remain refused.
+
+The new runtime checks an exact ordinary own-data Some/None carrier and snapshots
+it without invoking getters or Proxy traps. A Some payload must be frozen
+canonical Json (numeric bounds, scalar text, unique UTF8 map ordering and no
+cycles/holes/accessors). Its NEW successful-resource envelope is 65,536 visited
+occurrences, depth 1,024 and 1,048,576 total scalar UTF16 units, including tags.
+Tags and map-key values count toward scalar work; each record/array and own
+data value is an occurrence. Outer carrier fields and array-length metadata
+are not payload occurrences. Outstanding child tasks reserve that same cell
+budget before allocation, so deep/wide invalid inputs cannot multiply private
+pending storage. It captures primordial operations at import and constructs controlled results;
+it does not promise hostile cold-import or legacy internal observer equality.
+No source/type/owner permit or cross-call receipt is returned. Literal Some
+strings remain static in emitted Rust; actual reader loans retain their input
+root, and None alone is neutral. The first real application criterion is the
+original bridge response service-tier function, never a copied wrapper count.

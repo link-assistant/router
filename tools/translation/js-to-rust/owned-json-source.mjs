@@ -24,3 +24,8 @@ export function ownedJsonReaderRustCall(name,args){
  if(name==='serde_json_value_get_usize')return 'match usize::try_from('+args[1]+') { Ok(index) => ::serde_json::Value::get('+args[0]+', index), Err(_) => None }';
  return '::serde_json::Value::'+op.method+'('+args.join(', ')+')';
 }
+
+// Separate NEW checked-carrier operation; the original eight readers are exact.
+const optionalInputOperation=Object.freeze({name:'router_core_json_option_as_str',input:'json-option-input',ret:'str-option-ref',root:0});
+export const ownedJsonOptionalReaderOperation=name=>name===optionalInputOperation.name?optionalInputOperation:null;
+export function ownedJsonOptionalReaderRustCall(name,argument){if(!ownedJsonOptionalReaderOperation(name)||typeof argument!=='string'||!/^__ro_arg_[0-9]+$/u.test(argument))throw TypeError('Owned optional JSON: fixed operation and bound input required');return 'match '+argument+' { Some(value) => ::serde_json::Value::as_str(value), None => None }';}
