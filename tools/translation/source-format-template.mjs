@@ -522,3 +522,166 @@ export function evaluateFormatSourceScalarExpression(source){
   if(!Number.isInteger(result)||result<0||result>0xffffffff)fail('original scalar expression is outside u32');
   return {source,ir,result,namespaceAuthority:false};
 }
+
+// This region stays in the existing realm. Source/canonical inputs are DATA;
+// only the private caller's fresh native/source transaction may issue proof.
+function asciiRegionOperations(dependencies){
+  dependencies.assertParser();
+  const descriptor=Object.getOwnPropertyDescriptor,own=Object.hasOwn,keys=Reflect.ownKeys,prototype=Object.getPrototypeOf;
+  const allowed=['constructor','__defineGetter__','__defineSetter__','hasOwnProperty','__lookupGetter__','__lookupSetter__','isPrototypeOf','propertyIsEnumerable','toString','valueOf','__proto__','toLocaleString'];
+  const names=keys(Object.prototype);if(names.length!==allowed.length)fail('ASCII region requires closed native Object prototype');
+  for(let at=0;at<names.length;at++)if(!allowed.includes(names[at]))fail('ASCII region has an inherited callback field');
+  const field=descriptor(globalThis,'parseInt');
+  if(!field||!own(field,'value')||typeof field.value!=='function'||dependencies.isProxy(field.value)||prototype(field.value)!==Function.prototype||dependencies.nativeSource(field.value)!=='function parseInt() { [native code] }')fail('ASCII region requires native own parseInt');
+  return {descriptor,own,keys,prototype,parse:JSON.parse,stringify:JSON.stringify,freeze:Object.freeze,isArray:Array.isArray,
+    isProxy:dependencies.isProxy,parseIntField:field,
+    finish(){dependencies.assertParser();const now=descriptor(globalThis,'parseInt');if(!now||!own(now,'value')||now.value!==field.value||now.writable!==field.writable||now.enumerable!==field.enumerable||now.configurable!==field.configurable)fail('ASCII region parseInt changed');const after=keys(Object.prototype);if(after.length!==names.length)fail('ASCII region inherited fields changed');for(let at=0;at<after.length;at++)if(after[at]!==names[at])fail('ASCII region inherited field order changed');}};
+}
+function asciiRegionRecord(value,names,ops,label){
+  if(!value||typeof value!=='object'||ops.isProxy(value)||ops.isArray(value)||![Object.prototype,null].includes(ops.prototype(value)))fail(label+' requires ordinary own data');
+  const found=ops.keys(value);if(found.length!==names.length)fail(label+' fields differ');
+  const result={};for(let at=0;at<names.length;at++){const key=names[at];if(found[at]!==key)fail(label+' field order differs');const field=ops.descriptor(value,key);if(!field||!ops.own(field,'value')||!field.enumerable)fail(label+' contains an accessor');Object.defineProperty(result,key,{value:field.value,enumerable:true});}return result;
+}
+function asciiRegionArray(value,limit,ops,label){
+  if(!ops.isArray(value)||ops.isProxy(value)||ops.prototype(value)!==Array.prototype)fail(label+' requires a native dense array');
+  const length=ops.descriptor(value,'length');if(!length||!ops.own(length,'value')||typeof length.value!=='number'||length.value<0||length.value%1||length.value>limit)fail(label+' array bound');
+  const keys=ops.keys(value);if(keys.length!==length.value+1||keys[keys.length-1]!=='length')fail(label+' dense fields differ');
+  for(let at=0;at<length.value;at++){if(keys[at]!==''+at)fail(label+' dense index differs');const field=ops.descriptor(value,''+at);if(!field||!ops.own(field,'value')||!field.enumerable)fail(label+' array accessor');}return value;
+}
+function asciiCanonicalPreflight(source){
+  if(typeof source!=='string'||source.length>33554432)fail('ASCII canonical primitive length bound');
+  let depth=0,arrays=0,cells=0,strings=0;
+  for(let at=0;at<source.length;at++){const unit=source[at];
+    if(unit==='"'){if(++strings>600100)fail('ASCII canonical string-count bound');for(at++;at<source.length;at++){if(source[at]==='\\')at++;else if(source[at]==='"')break;}if(at>=source.length)fail('ASCII canonical unclosed string');}
+    else if(unit==='['||unit==='{'){if(++depth>4)fail('ASCII canonical nesting bound');if(unit==='['&&++arrays>400016)fail('ASCII canonical array-count bound');}
+    else if(unit===']'||unit==='}'){if(--depth<0)fail('ASCII canonical delimiters');}
+    else if((unit===','||unit===':')&&++cells>2000100)fail('ASCII canonical cell bound');
+  }if(depth!==0)fail('ASCII canonical delimiters');
+}
+function asciiCanonicalDocument(source,canonical,ops){
+  if(typeof source!=='string'||source.length>200000)fail('bounded actual lexical source required');asciiCanonicalPreflight(canonical);
+  const parsed=ops.parse(canonical),doc=asciiRegionRecord(parsed,['schema','representationLevel','language','source','sourceEncoding','status','nodes','diagnostics','authority'],ops,'ASCII native CST');
+  if(doc.schema!=='meta-language-concrete-syntax-v1'||doc.representationLevel!=='concrete-syntax'||doc.language!=='Rust'||doc.source!==source||doc.status!=='lexical')fail('ASCII native CST complete source differs');
+  const encoding=asciiRegionRecord(doc.sourceEncoding,['utf16CodeUnits','utf8Bytes','wellFormedUnicode','utf8BytePreservation','utf8Mapping'],ops,'ASCII CST encoding');
+  const authority=asciiRegionRecord(doc.authority,['type','owner','executable'],ops,'ASCII CST data level');if(authority.type!==false||authority.owner!==false||authority.executable!==false)fail('ASCII CST cannot grant authority');
+  const offsets=[0];let bytes=0;for(let at=0;at<source.length;at++){let unit=source.charCodeAt(at);if(unit>=55296&&unit<=56319){const next=source.charCodeAt(at+1);if(!(next>=56320&&next<=57343))fail('ASCII source unpaired surrogate');offsets.push(-1);at++;bytes+=4;}else{if(unit>=56320&&unit<=57343)fail('ASCII source unpaired surrogate');bytes+=unit<128?1:unit<2048?2:3;}offsets.push(bytes);}
+  if(bytes>200000||encoding.utf16CodeUnits!==source.length||encoding.utf8Bytes!==bytes||encoding.wellFormedUnicode!==true||encoding.utf8BytePreservation!==true||encoding.utf8Mapping!=='unicode-scalar-boundaries')fail('ASCII CST full UTF8 mapping differs');
+  const nodes=asciiRegionArray(doc.nodes,200000,ops,'ASCII CST nodes'),diagnostics=asciiRegionArray(doc.diagnostics,200000,ops,'ASCII CST diagnostics');if(!nodes.length||diagnostics.length)fail('ASCII CST requires full lexical partition');
+  const containers=[0],children=new Map(),stack=[0];children.set(0,[]);let cursor=0;
+  for(let at=0;at<nodes.length;at++){
+    const node=asciiRegionArray(nodes[at],7,ops,'ASCII CST node');if(node.length!==7)fail('ASCII CST node fields differ');
+    for(let field=2;field<=5;field++)if(typeof node[field]!=='number'||node[field]<0||node[field]%1||node[field]>8388608)fail('ASCII CST finite coordinates required');
+    if(node[2]>node[3]||node[3]>source.length||offsets[node[2]]<0||offsets[node[3]]<0||node[4]!==offsets[node[2]]||node[5]!==offsets[node[3]])fail('ASCII CST complete coordinates differ');
+    if(at===0){if(node[0]!=='root'||node[1]!=='file'||node[2]!==0||node[3]!==source.length||node[6]!==-1)fail('ASCII CST root differs');continue;}
+    if(typeof node[6]!=='number'||node[6]%1||node[6]<0||node[6]>=at||node[6]!==stack[stack.length-1])fail('ASCII CST complete parent differs');
+    if(node[0]==='group'){
+      if(!['brace','paren','bracket'].includes(node[1])||node[2]!==cursor||stack.length>=256)fail('ASCII CST group differs');children.get(node[6]).push(at);children.set(at,[]);containers.push(at);stack.push(at);continue;
+    }
+    if(!['token','trivia'].includes(node[0])||!['identifier','macro','number','string','template','regex','char','punct','comment','bom','whitespace','delimiter'].includes(node[1])||node[2]!==cursor||node[3]<=cursor)fail('ASCII CST complete leaf partition differs');
+    const spelling=source.slice(node[2],node[3]);cursor=node[3];
+    if(node[1]==='delimiter'){
+      const group=nodes[stack[stack.length-1]],open=group[1]==='brace'?'{':group[1]==='paren'?'(':'[',close=open==='{'?'}':open==='('?')':']';
+      if(node[2]===group[2]){if(spelling!==open)fail('ASCII CST opening delimiter differs');}
+      else{if(spelling!==close||node[3]!==group[3])fail('ASCII CST closing delimiter differs');stack.pop();}
+    }else if(node[0]==='token')children.get(node[6]).push(at);
+  }
+  if(cursor!==source.length||stack.length!==1||ops.stringify(parsed)!==canonical)fail('ASCII CST full canonical/source equation differs');
+  return {source,canonical,document:parsed,nodes,children,containers};
+}
+function asciiProjectFunctions(packet,prefix,ops){
+  const {source,nodes,children,containers}=packet,selected=[],wanted=prefix==='lexer::'?['is_id_start','is_id_continue']:['is_xid_start','is_xid_continue'];
+  const raw=id=>source.slice(nodes[id][2],nodes[id][3]);
+  function project(id){const row=nodes[id],span={start:row[2],end:row[3]};
+    if(row[0]==='group'){
+      if(row[1]!=='paren')fail('ASCII predicate has an unsupported nested group');const nested=[],list=children.get(id);for(let at=0;at<list.length;at++)nested.push(project(list[at]));return {kind:'group',delimiter:'(',children:nested,span};
+    }
+    const spelling=raw(id),type=row[1]==='identifier'?'ident':row[1];
+    if(type==='ident'){
+      if(!['c','self','char','true','false','unicode_xid','UnicodeXID','is_xid_start','is_xid_continue','derived_property','XID_Start','XID_Continue'].includes(spelling))fail('ASCII predicate identifier requires another rule');
+    }else if(type==='char'){
+      if(!(spelling.length===3&&spelling[0]==="'"&&spelling[2]==="'"&&spelling.charCodeAt(1)<=127&&spelling[1]!=='\\')&&spelling!=="'\\x7f'")fail('ASCII predicate char requires another rule');
+    }else if(type!=='punct'||!['::',':','==','<','<=','>','>=','&&','||',','].includes(spelling))fail('ASCII predicate token requires another rule');
+    return {kind:'token',type,text:spelling,span};
+  }
+  for(let ci=0;ci<containers.length;ci++){
+    const list=children.get(containers[ci]);for(let at=0;at+5<list.length;at++){
+      if(raw(list[at])!=='fn'||!wanted.includes(raw(list[at+1])))continue;
+      const parameter=nodes[list[at+2]],arrow=raw(list[at+3]),output=raw(list[at+4]),body=nodes[list[at+5]];
+      if(parameter[0]!=='group'||parameter[1]!=='paren'||arrow!=='->'||output!=='bool'||body[0]!=='group'||body[1]!=='brace')continue;
+      const name=raw(list[at+1]);if(selected.some(row=>row.name===prefix+name))fail('ASCII predicate definition is not unique');
+      if(prefix==='lexer::'){if(containers[ci]!==0)fail('actual root lexer function required');}
+      else{const container=containers[ci],root=children.get(0);let header=-1;for(let hi=0;hi<root.length;hi++)if(root[hi]===container)header=hi;if(container===0||nodes[container][6]!==0||header<4||raw(root[header-4])!=='impl'||raw(root[header-3])!=='UnicodeXID'||raw(root[header-2])!=='for'||raw(root[header-1])!=='char')fail('actual UnicodeXID for char implementation required');}
+      const parameters=[],parameterIds=children.get(list[at+2]);for(let pi=0;pi<parameterIds.length;pi++)parameters.push(project(parameterIds[pi]));
+      if(prefix==='lexer::'?(parameters.length!==3||word(parameters[0])!=='c'||word(parameters[1])!==':'||word(parameters[2])!=='char'):(parameters.length!==1||word(parameters[0])!=='self'))fail('ASCII predicate parameter contract differs');
+      const bodyTokens=[],bodyIds=children.get(list[at+5]);for(let bi=0;bi<bodyIds.length;bi++)bodyTokens.push(project(bodyIds[bi]));
+      const parser=new SourceControlParser(bodyTokens,{cells:32000,expressions:0,conditionals:0}),ir=parser.block();if(parser.at!==parser.nodes.length)fail('ASCII predicate did not consume its full body');
+      selected.push({name:prefix+name,parameters:split(parameters),ir,refusal:null,span:{start:nodes[list[at]][2],end:body[3]},original:source.slice(nodes[list[at]][2],body[3])});
+    }
+  }
+  if(selected.length!==2)fail('ASCII predicate actual complete definitions missing');return selected;
+}
+function asciiFiniteIr(fn){
+  if(fn.ir.kind!=='control-block'||fn.ir.statements.length!==0||!fn.ir.tail||fn.parameters.length!==1)fail('ASCII predicate requires a tail-only body');
+  const argument=fn.name.slice(0,7)==='lexer::'?'c':'self';let cells=0;
+  function visit(node,depth){if(++cells>32000||depth>64)fail('ASCII predicate IR bound');
+    if(node.kind==='literal'){if(!['char','bool'].includes(node.sourceLiteralKind))fail('ASCII predicate literal kind');return node.sourceLiteralKind;}
+    if(node.kind==='parenthesized')return visit(node.value,depth+1);
+    if(node.kind==='written-path'){const spelling=node.path.join('::');if(![argument,'unicode_xid::UnicodeXID::is_xid_start','unicode_xid::UnicodeXID::is_xid_continue','derived_property::XID_Start','derived_property::XID_Continue'].includes(spelling))fail('ASCII predicate written path');return spelling===argument?'char':'callee';}
+    if(node.kind==='binary'){if(!['==','<','<=','>','>=','&&','||'].includes(node.operation))fail('ASCII predicate binary operator');const left=visit(node.left,depth+1),right=visit(node.right,depth+1),expected=node.operation==='&&'||node.operation==='||'?'bool':'char';if(left!==expected||right!==expected)fail('ASCII predicate primitive operand domains');return 'bool';}
+    if(node.kind==='call'){
+      const path=node.callee?.kind==='written-path'?node.callee.path.join('::'):null;
+      if(!['unicode_xid::UnicodeXID::is_xid_start','unicode_xid::UnicodeXID::is_xid_continue','derived_property::XID_Start','derived_property::XID_Continue'].includes(path)||node.arguments.length!==1||node.arguments[0].kind!=='written-path'||node.arguments[0].path.length!==1||node.arguments[0].path[0]!==argument)fail('ASCII predicate direct call contract');if(visit(node.callee,depth+1)!=='callee'||visit(node.arguments[0],depth+1)!=='char')fail('ASCII predicate primitive call domains');return 'bool';
+    }fail('ASCII predicate IR requires another rule');
+  }if(visit(fn.ir.tail,0)!=='bool')fail('ASCII predicate bool return domain');
+}
+function asciiFreezeData(value,ops,seen=new WeakSet(),depth=0,budget={cells:16777216}){
+  if(--budget.cells<0||depth>256)fail('ASCII private data freeze bound');
+  if(value===null||typeof value==='string'||typeof value==='number'||typeof value==='boolean'||value===undefined)return value;
+  if(typeof value!=='object'||ops.isProxy(value))fail('ASCII region cannot expose executable data');if(seen.has(value))return value;
+  const array=ops.isArray(value),parent=ops.prototype(value);if(parent!==(array?Array.prototype:Object.prototype)&&parent!==null)fail('ASCII region cannot expose class/collection storage');seen.add(value);
+  const names=ops.keys(value);for(let at=0;at<names.length;at++){const key=names[at];if(typeof key!=='string')fail('ASCII region cannot expose symbols');if(array&&key==='length')continue;const field=ops.descriptor(value,key);if(!field||!ops.own(field,'value')||!field.enumerable)fail('ASCII region cannot expose an accessor');asciiFreezeData(field.value,ops,seen,depth+1,budget);}return ops.freeze(value);
+}
+/** Pure DATA execution; the private caller separately proves fresh native/source joins. */
+function asciiExecuteFreshPredicates(input,dependencies){
+  const ops=asciiRegionOperations(dependencies),row=asciiRegionRecord(input,['lexer','xid'],ops,'ASCII concrete source input'),packets=[],functions=new Map();
+  for(let at=0;at<2;at++){
+    const source=asciiRegionRecord(row[at===0?'lexer':'xid'],['source','canonical'],ops,'ASCII concrete source pair'),packet=asciiCanonicalDocument(source.source,source.canonical,ops);packets.push(packet);
+    const selected=asciiProjectFunctions(packet,at===0?'lexer::':'xid::',ops);for(let fi=0;fi<selected.length;fi++){const fn=selected[fi];asciiFiniteIr(fn);asciiFreezeData(fn,ops);functions.set(fn.name,fn);}
+  }
+  const machine=new Machine(functions,null),characters=[],alphabet="\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\u007f";
+  for(let code=0;code<128;code++){const character=alphabet[code],start=machine.call('lexer::is_id_start',[character]),continued=machine.call('lexer::is_id_continue',[character]);if(typeof start!=='boolean'||typeof continued!=='boolean')fail('actual ASCII lexical predicate boolean required');characters.push({code,character,start,continue:continued});}
+  const result=asciiFreezeData({schema:'fresh-source-ascii-identifier-predicates-v1',sources:{lexer:{source:packets[0].source,canonical:packets[0].canonical},xid:{source:packets[1].source,canonical:packets[1].canonical}},characters,trace:machine.trace,sourceDataOnly:true,namespaceAuthority:false,runtimeAuthority:false},ops);
+  for(let at=0;at<packets.length;at++){const packet=packets[at];asciiFreezeData(packet.document,ops);for(let ci=0;ci<packet.containers.length;ci++)asciiFreezeData(packet.children.get(packet.containers[ci]),ops);packet.children.clear();packet.children=null;asciiFreezeData(packet.containers,ops);ops.freeze(packet);}
+  functions.clear();machine.constants.clear();machine.functions=null;machine.constants=null;machine.methods=null;ops.freeze(machine);ops.finish();return result;
+}
+// Only genuine fixed modules/native references are captured. This closure
+// retains no source, canonical, IR, program, table, proof or verdict across calls.
+export async function createFreshSourceAsciiIdentifierPredicateExecutor(){
+  const parser=await import('./private-parser-execution.mjs'),intrinsics=await import('./original-json-intrinsics.mjs'),util=await import('node:util');
+  parser.assertPrivateParserExecution();
+  const dependencies=Object.freeze({assertParser:parser.assertPrivateParserExecution,nativeSource:intrinsics.originalCapturedFunctionSource,isProxy:util.types.isProxy});
+  asciiRegionOperations(dependencies);
+  return input=>asciiExecuteFreshPredicates(input,dependencies);
+}
+// Fresh native transport precedes the synchronous region. This public wrapper
+// returns DATA even for modified original source; it is never a private issuer.
+export async function executeFreshSourceAsciiIdentifierPredicates(sources){
+  const native=await import('./concrete-syntax-meta.mjs'),util=await import('node:util'),parser=await import('./private-parser-execution.mjs'),execute=await createFreshSourceAsciiIdentifierPredicateExecutor();
+  const parserCurrent=parser.assertPrivateParserExecution;parserCurrent();
+  if(!sources||typeof sources!=='object'||util.types.isProxy(sources))fail('ordinary lexical source input required');
+  // Entry qualification already ran in the no-argument factory. Capture current
+  // descriptors here; actual execution independently qualifies the full region.
+  const keys=Reflect.ownKeys(sources??{});
+  if(!sources||typeof sources!=='object'||keys.length!==2||!keys.includes('lexer')||!keys.includes('xid'))fail('two lexical sources required');
+  const fields=[Object.getOwnPropertyDescriptor(sources,'lexer'),Object.getOwnPropertyDescriptor(sources,'xid')],parent=Object.getPrototypeOf(sources);
+  if(![Object.prototype,null].includes(parent))fail('ordinary lexical source input required');
+  for(let at=0;at<2;at++){const field=fields[at];if(!field||!Object.hasOwn(field,'value')||!field.enumerable||typeof field.value!=='string'||field.value.length>200000)fail('bounded primitive own lexical sources required');}
+  const row={lexer:fields[0].value,xid:fields[1].value};
+  function current(){parserCurrent();const nowKeys=Reflect.ownKeys(sources);if(Object.getPrototypeOf(sources)!==parent||nowKeys.length!==2||!nowKeys.includes('lexer')||!nowKeys.includes('xid'))fail('lexical source input changed');for(let at=0;at<2;at++){const now=Object.getOwnPropertyDescriptor(sources,at===0?'lexer':'xid'),old=fields[at];if(!now||!Object.hasOwn(now,'value')||now.value!==old.value||now.enumerable!==old.enumerable||now.configurable!==old.configurable||now.writable!==old.writable)fail('lexical source descriptor changed');}}
+  current();
+  const first=native.transportConcreteSyntaxSources([{source:row.lexer,language:'Rust'},{source:row.xid,language:'Rust'}]);current();
+  const second=native.transportConcreteSyntaxMetaChunks([first.rows.map(item=>item.meta)]);current();
+  if(second.chunks.length!==1||second.chunks[0].rows.length!==2)fail('full fresh native predicate source transaction differs');
+  for(let at=0;at<2;at++)if(second.chunks[0].rows[at].meta!==first.rows[at].meta||second.chunks[0].rows[at].source!==(at===0?row.lexer:row.xid))fail('full fresh native predicate source differs');
+  const result=execute({lexer:{source:row.lexer,canonical:second.chunks[0].rows[0].meta},xid:{source:row.xid,canonical:second.chunks[0].rows[1].meta}});current();return result;
+}
