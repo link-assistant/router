@@ -182,7 +182,34 @@ function hashTrial(implementation,mode){
  }finally{define(Hash.prototype,'update',{__proto__:null,...update});define(Hash.prototype,'digest',{__proto__:null,...digest});define(JSON,'stringify',{__proto__:null,...stringify});define(BigInt.prototype,'toString',{__proto__:null,...big});define(Buffer,'byteLength',{__proto__:null,...byte});}
  return {rows,tape,value};
 }
+// Complete native stacks stay separate. Derived frame names are checks only;
+// source locations and raw stack strings are never normalized or compared.
+function observeHashFrames(implementation){
+ const before=get(Hash.prototype,'update'),observations=[];let result;
+ try{
+  define(Hash.prototype,'update',{__proto__:null,...before,value(...args){
+   const rawStack=new Error('internal digest native Hash frame observation').stack;
+   append(observations,{rawStack,args,argumentTypes:args.map(value=>typeof value)});
+   return apply(before.value,this,args);
+  }});
+  result={value:implementation({a:{text:'λ😀'},b:7n})};
+ }catch(error){result={error:{name:error?.name,message:error?.message,rawStack:error?.stack}};}
+ finally{define(Hash.prototype,'update',{__proto__:null,...before});}
+ const frames=observations.map(observation=>{
+  const orderedFrames=[];
+  if(typeof observation.rawStack==='string')for(const rawLine of observation.rawStack.split('\n')){
+   const match=/^\s*at ([^ (]+)(?: \(|$)/u.exec(rawLine);
+   if(match)append(orderedFrames,{name:match[1],rawLine});
+  }
+  const hashIndex=orderedFrames.findIndex(frame=>frame.name==='hash'),next=orderedFrames[hashIndex+1],after=orderedFrames[hashIndex+2];
+  const observedMode=hashIndex<0?'missing-hash':next?.name==='metadataDigest'&&after?.name==='observeHashFrames'?'metadataDigest-frame':next?.name==='observeHashFrames'?'native-inlined-metadataDigest':'unexpected-frame-order';
+  return {...observation,orderedFrames,hashIndex,observedMode};
+ });
+ return {implementationName:implementation.name,result,observations:frames};
+}
 test('complete JSON bigint Buffer and native hash observations remain fresh exact and ordered',(_t,retain)=>{
+ const hashFrameObservations={old:observeHashFrames(metadataDigest),current:observeHashFrames(selected)};
+ retain('complete-native-Hash-callback-raw-stacks',hashFrameObservations);
  const rows=[];for(const mode of ['native','json','bigint','mutate'])append(rows,{mode,old:hashTrial(metadataDigest,mode),current:hashTrial(selected,mode)});
  const dynamic=oldAndNew(({record,hook})=>{for(const [owner,key]of [[Object,'getOwnPropertyDescriptors'],[Reflect,'ownKeys'],[Object,'hasOwn'],[Object,'defineProperty'],[Set.prototype,'has'],[Set.prototype,'add'],[Set.prototype,'delete'],[types,'isProxy'],[Number,'isSafeInteger']]){const fn=owner[key];hook(owner,key,function(...args){record({operation:key});return apply(fn,this,args);});}const sort=Array.prototype.sort;hook(Array.prototype,'sort',function(compare){record({operation:'sort',sameComparator:compare===ordinal});return apply(sort,this,[compare]);});},()=>({b:['λ',1],a:{x:2}}));
  const stringKeys=oldAndNew(({record,hook})=>{const string=String;hook(globalThis,'String',function(...args){record('String');const key=apply(string,undefined,args);return {[Symbol.toPrimitive](){record('coerce-string-index');return key;}};});},()=>[1,2]);
@@ -196,6 +223,18 @@ test('complete JSON bigint Buffer and native hash observations remain fresh exac
  }),()=>({a:'λ',b:3n})});
  retain('complete-JSON-noncallable-native-diagnostics',{jsonErrors});for(const row of jsonErrors)assert.deepEqual(row.pair.current,row.pair.old);
  retain('complete-serialization-hashes',{rows,dynamic,stringKeys,toJSON,first,second,ordered});for(const row of rows)assert.deepEqual(row.current,row.old);assert.deepEqual(dynamic.current,dynamic.old);assert.deepEqual(stringKeys.current,stringKeys.old);for(const row of toJSON)assert.deepEqual(row.pair.current,row.pair.old);same(second);same(ordered);assert.notEqual(first,second.current.value);assert.notEqual(second.current.value,ordered.current.value);assert.equal(rows[0].current.tape.filter(row=>row.operation==='update').length,2);
+ // Existing byte/callback comparisons above remain unchanged. Check only the
+ // promised active Hash caller chain, allowing the engine's native inlining.
+ for(const row of [hashFrameObservations.old,hashFrameObservations.current]){
+  assert.equal(row.implementationName,'metadataDigest');assert.equal(row.result.error,undefined);assert.equal(row.observations.length,1);
+  for(const observation of row.observations){
+   assert.equal(typeof observation.rawStack,'string');assert.ok(observation.rawStack.length);assert.ok(observation.hashIndex>=0);
+   assert.ok(['metadataDigest-frame','native-inlined-metadataDigest'].includes(observation.observedMode));
+   const names=observation.orderedFrames.slice(observation.hashIndex,observation.hashIndex+(observation.observedMode==='metadataDigest-frame'?3:2)).map(frame=>frame.name);
+   assert.deepEqual(names,observation.observedMode==='metadataDigest-frame'?['hash','metadataDigest','observeHashFrames']:['hash','observeHashFrames']);
+  }
+ }
+ assert.equal(hashFrameObservations.current.result.value,hashFrameObservations.old.result.value);
 });
 
 function dependencyInputs(){const base=new URL('../../../',import.meta.url);return {manifest:readFileSync(new URL('Cargo.toml',base),'utf8'),lock:readFileSync(new URL('Cargo.lock',base),'utf8')};}
