@@ -42,6 +42,9 @@ function nativeReady(){
 }
 function withinNativeBudget(value){
  let cells=0,units=0,resultHeight=0;
+ // Private dense native-call argument storage; both arrays have existing own
+ // writable slots. Only slot values reach qualified natives, never the arrays.
+ const unaryArgs=[null],binaryArgs=[null,null];
  // Fresh scalar measurements only; neither this map nor a record escapes the
  // callback-free scan. Logical occurrence costs are always charged again.
  const active=new setOwner(),completed=new weakOwner();
@@ -52,22 +55,22 @@ function withinNativeBudget(value){
  function quoted(value){
   if(value.length>UNITS-units-2)return false;
   const short=value.length<=128;
-  if(short){const known=apply(mapGet,quotedCosts,[value]);if(known!==undefined)return charge(known);}
+  if(short){const known=(unaryArgs[0]=value,apply(mapGet,quotedCosts,unaryArgs));if(known!==undefined)return charge(known);}
   // Native exec scans ordinary spans without a JS call per source unit.
   // Each fresh literal owns lastIndex; no regex or match array can escape.
   const special=/["\\\u0000-\u001f\ud800-\udfff]/g;let count=value.length+2,match;
-  while((match=apply(exec,special,[value]))!==null){
-   const at=match.index,code=apply(charCode,value,[at]);
+  while((match=(unaryArgs[0]=value,apply(exec,special,unaryArgs)))!==null){
+   const at=match.index,code=(unaryArgs[0]=at,apply(charCode,value,unaryArgs));
    if(code===34||code===92||code===8||code===9||code===10||code===12||code===13)count++;
    else if(code<32)count+=5;
    else if(code>=55296&&code<=56319){
-    const next=at+1<value.length?apply(charCode,value,[at+1]):-1;
+    const next=at+1<value.length?(unaryArgs[0]=at+1,apply(charCode,value,unaryArgs)):-1;
     if(next>=56320&&next<=57343)special.lastIndex=at+2;else count+=5;
    }else count+=5;
    if(count>UNITS-units)return false;
   }
   if(!charge(count))return false;
-  if(short&&quotedEntries<4096){apply(mapSet,quotedCosts,[value,count]);quotedEntries++;}
+  if(short&&quotedEntries<4096){(binaryArgs[0]=value,binaryArgs[1]=count,apply(mapSet,quotedCosts,binaryArgs));quotedEntries++;}
   return true;
  }
  function visit(value,depth){
@@ -81,8 +84,8 @@ function withinNativeBudget(value){
   // charged, and root undefined still selects the original composer.
   if(kind==='undefined')return depth>0&&charge(4);
   if(kind==='number')return charge(32);
-  if(kind!=='object'||isProxy(value)||apply(boxedField.value,typeOwner,[value])||apply(isViewField.value,bufferOwner,[value])||apply(setHas,active,[value]))return false;
-  const known=apply(weakGet,completed,[value]);
+  if(kind!=='object'||isProxy(value)||(unaryArgs[0]=value,apply(boxedField.value,typeOwner,unaryArgs))||(unaryArgs[0]=value,apply(isViewField.value,bufferOwner,unaryArgs))||(unaryArgs[0]=value,apply(setHas,active,unaryArgs)))return false;
+  const known=(unaryArgs[0]=value,apply(weakGet,completed,unaryArgs));
   if(known){
    if(known.cells-1>CELLS-cells||known.units>UNITS-units||known.height>DEPTH-depth)return false;
    cells+=known.cells-1;units+=known.units;resultHeight=known.height;return true;
@@ -103,13 +106,13 @@ function withinNativeBudget(value){
    if(!field||!has(field,'value')||!field.enumerable||!array&&(!quoted(name)||!charge(1)))return false;
    names[at]=field.value;
   }
-  apply(setAdd,active,[value]);let height=0;
+  (unaryArgs[0]=value,apply(setAdd,active,unaryArgs));let height=0;
   for(let at=0;at<length;at++){
    if(!visit(names[at],depth+1))return false;
    if(resultHeight+1>height)height=resultHeight+1;
   }
-  apply(setDelete,active,[value]);
-  apply(weakSet,completed,[value,{cells:cells-cellsBefore,units:units-unitsBefore,height}]);
+  (unaryArgs[0]=value,apply(setDelete,active,unaryArgs));
+  (binaryArgs[0]=value,binaryArgs[1]={cells:cells-cellsBefore,units:units-unitsBefore,height},apply(weakSet,completed,binaryArgs));
   resultHeight=height;return true;
  }
  return visit(value,0);

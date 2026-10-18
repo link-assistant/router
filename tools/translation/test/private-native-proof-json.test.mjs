@@ -148,7 +148,7 @@ async function shortStringFixture(t,retain){
  const step=(old,next)=>{assert.equal(source.split(old).length,2);const previous=source;source=source.replace(old,()=>next);assert.equal(source.replace(next,()=>old),previous);steps.push({before:old,after:next});};
  for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'])step("from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
  step('  const special=','  receivingScans++;const special=');
- step('apply(mapSet,quotedCosts,[value,count]);quotedEntries++;','apply(mapSet,quotedCosts,[value,count]);quotedEntries++;receivingWrites++;');
+ step("(binaryArgs[0]=value,binaryArgs[1]=count,apply(mapSet,quotedCosts,binaryArgs));quotedEntries++;","(binaryArgs[0]=value,binaryArgs[1]=count,apply(mapSet,quotedCosts,binaryArgs));quotedEntries++;receivingWrites++;");
  step('   if(selected)return apply(stringifyField.value,jsonOwner,[value]);','   if(selected){receivingNative++;return apply(stringifyField.value,jsonOwner,[value]);}');
  step('  return fallback(value);','  receivingFallback++;return fallback(value);');
  source+='\nlet receivingScans=0,receivingWrites=0,receivingNative=0,receivingFallback=0;export function shortStringFacts(){return {scans:receivingScans,writes:receivingWrites,native:receivingNative,fallback:receivingFallback,ready:nativeReady()};}\n';
@@ -191,5 +191,28 @@ test('short quotation Map qualification refuses late and cold hooks without expo
  for(const key of ['get','set']){
   const script=`const get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply,json=JSON.stringify,tape=[];\nconst legacy=await import(${json(new URL('../private-frozen-json.mjs',import.meta.url).href)});\nconst owner=Map.prototype,key=${json(key)},field=get(owner,key);let candidate;try{define(owner,key,{...field,value:function(...args){tape.push(key);return apply(field.value,this,args);}});candidate=await import(${json(sourceURL.href)});}finally{define(owner,key,field);}\nconst value={first:'\\ud800',second:'\\ud800'},before=legacy.createPrivateFrozenJsonComposer()(value),current=candidate.createPrivateNativeProofJsonSerializer()(value);console.log(json({before,current,tape,sourceAuthority:false}));\n`;
   const path=join(folder,'cold-Map-'+key+'.mjs');writeFileSync(path,script);const child=spawnSync(process.execPath,[path],{encoding:'utf8',timeout:20_000,maxBuffer:4*1024*1024});retain('complete-cold-Map-'+key,{script,path,status:child.status,signal:child.signal,stdout:child.stdout,stderr:child.stderr,error:child.error?{name:child.error.name,message:child.error.message}:null});assert.equal(child.error,undefined);assert.equal(child.status,0);const result=JSON.parse(child.stdout);assert.equal(result.before,result.current);assert.equal(result.sourceAuthority,false);
+ }
+});
+
+// All old15 callbacks exercise the current source. These additions mix native
+// argument widths and recursion; no copied scanner supplies expected answers.
+test('private dense native arguments reset across recursive aliases quotation operations and independent calls',async(t,retain)=>{
+ const {module}=await fixture(t,retain,true),serialize=module.createPrivateNativeProofJsonSerializer(),leaf={['"\\\ud800']:'\x00\udc00😀'},value={first:[leaf,{child:leaf}],second:leaf,strings:['\ud800x\udc00','😀','"\\\x00','same','same'],scalars:[true,false,null,-0,NaN,undefined]};
+ for(let invocation=0;invocation<3;invocation++){
+  const start=module.receivingFacts(),before=createPrivateFrozenJsonComposer()(value),current=serialize(value),final=module.receivingFacts();assert.equal(start.ready,true);assert.equal(current,before);assert.equal(current,json(value));assert.equal(final.nativeCalls-start.nativeCalls,1);retain('complete-recursive-native-argument-reset',{invocation,value,before,current,start,final});leaf['"\\\ud800']=invocation===0?'\ud800😀\udc00':'changed'+invocation;
+ }
+ const cycle={};cycle.loop=cycle;equal(retain,'argument-state-on-cycle-refusal',materialize(outcome(()=>createPrivateFrozenJsonComposer()(cycle))),materialize(outcome(()=>serialize(cycle))));
+ for(const mode of ['getter','proxy','toJSON'])pair(retain,'full-argument-state-refusal-'+mode,module,()=>{const tape=[];let value={first:'\ud800',last:1};if(mode==='getter')define(value,'last',{enumerable:true,get(){tape.push('last-get');return {leaf:'😀'};}});if(mode==='proxy')value=new Proxy(value,{ownKeys(target){tape.push('ownKeys');return keys(target);},get(target,key,receiver){tape.push('get:'+String(key));return Reflect.get(target,key,receiver);}});if(mode==='toJSON')value.toJSON=function(key){tape.push('toJSON:'+key);return {result:'\x00'};};return {value,tape};});
+ const next={again:[{value:'\ud800😀'},leaf,leaf]},start=module.receivingFacts(),current=serialize(next),final=module.receivingFacts();assert.equal(current,json(next));assert.equal(final.nativeCalls-start.nativeCalls,1);retain('complete-fresh-call-after-all-refusals',{next,current,start,final});
+});
+
+test('private dense native argument own slots avoid numeric inherited accessors and nonwritable prototype cells',async(t,retain)=>{
+ const {module}=await fixture(t,retain),serialize=module.createPrivateNativeProofJsonSerializer(),value={first:[{text:'\ud800x\udc00'},true],second:{bytes:'"\\\x00😀',tail:null}},expected=json(value);
+ for(const key of ['0','1'])for(const mode of ['accessor','nonwritable']){
+  const field=descriptor(Array.prototype,key),lengthField=descriptor(Array.prototype,'length'),events={first:null,last:null},start=module.receivingFacts();let captured;
+  const note=(operation,value)=>{const row={operation,value,next:null};if(events.last)events.last.next=row;else events.first=row;events.last=row;};
+  try{define(Array.prototype,key,mode==='accessor'?{configurable:true,enumerable:false,get(){note('get',undefined);return undefined;},set(value){note('set',value);}}:{configurable:true,enumerable:false,writable:false,value:'inherited numeric poison'});captured=outcome(()=>serialize(value));}
+  finally{if(field)define(Array.prototype,key,field);else delete Array.prototype[key];define(Array.prototype,'length',lengthField);}
+  const current=materialize(captured),final=module.receivingFacts(),tape=[];for(let row=events.first;row;row=row.next)tape.push({operation:row.operation,value:row.value});assert.deepEqual(descriptor(Array.prototype,'length'),lengthField);assert.deepEqual(current,{value:expected});assert.deepEqual(tape,[]);assert.equal(final.nativeCalls-start.nativeCalls,1);retain('complete-native-argument-prototype-control',{key,mode,value,current,start,final,tape,lengthField});
  }
 });
