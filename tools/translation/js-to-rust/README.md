@@ -635,3 +635,26 @@ and source-equation adaptation; these API additions alone establish no actual
 application coverage, current generation freshness or whole-module startup
 equivalence. The authored native Rust oracle is CI-only and does not claim an
 unproduced generated Rust target compiled.
+
+### Parameterized forward reader definition proposals
+
+The existing owned-definition producer additionally packages direct checked calls
+to the eight registered JSON readers from the same genuine private project
+lowering closure. Source, flattened and freshly lowered signatures and complete
+canonical JSON layouts must agree. Ordinary shared Json inputs, actual source
+bindings and the checked reader result are retained; optional public inputs and
+callback chains remain unsupported.
+
+Every emitted guard, schema literal, refinement Map, helper and import remains
+byte-for-byte present. Repository projection inserts only the target export.
+Actual generated TypeScript aliases and checked annotations remain intact. A
+separate bounded paired-source DATA verifier records complete native type
+erasure, executable token/topology equality, CST roundtrips and full inverses.
+The old paired-types API and old literal-definition path remain unchanged.
+
+These modules are genuine definition source proposals, not new reverse
+permissions. The owned reverse checker still refuses their unimplemented
+module schema setup and guard statements. Parameterized guarded reverse
+admission, complete application coverage, startup equivalence and current
+generated freshness remain open. No public capability field, pair receipt or
+schema hash grants source, type, ownership or executable authority.

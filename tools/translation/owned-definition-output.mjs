@@ -10,6 +10,7 @@ import {discoverCompilerSourceInputs} from './compiler-source-inputs.mjs';
 import {discoverSourceProfileInputs} from './source-profile-inputs.mjs';
 import {transportConcreteSyntaxMeta} from './concrete-syntax-meta.mjs';
 import {prepareOwnedCorePairedTypes} from './js-to-rust/owned-core-paired-types.mjs';
+import {prepareForwardJsonReaderPair} from './forward-owned-json-reader-definitions.mjs';
 export const OWNED_DEFINITION_ROOTS=Object.freeze(['tools/translation/generated/owned-definitions','packages/javascript/generated/rust-owned-definitions','packages/typescript/generated/rust-owned-definitions']);
 export const OWNED_DEFINITION_LIMITS=Object.freeze({packetBytes:16*1024*1024,evidenceBytes:384*1024*1024,paths:32768,filesBytes:256*1024*1024});
 const freeze=value=>{if(value&&typeof value==='object'&&!Object.isFrozen(value)){for(const child of Object.values(value))freeze(child);Object.freeze(value);}return value;};
@@ -76,7 +77,7 @@ export function packageOwnedDefinitions({result,entry,expected,outputRoots,prefi
   if(row.javascriptPath!=='app/owned-definitions/definition_'+at+'.mjs'||row.typescriptPath!=='typed/owned-definitions/definition_'+at+'.mts')fail('unexpected actual definition path');requireOwnedDefinitionStage(row.javascript);requireOwnedDefinitionStage(row.typescript);
   const captured=states.get(inputs)?.source.inputs.find(value=>value.path===row.source);if(!captured||captured.sha256!==row.sourceSha256)fail('actual parent differs from captured whole source');
   const parent=result.parents.find(value=>value.id===row.original.parent);if(!parent||parent.source!==captured.source||parent.file!==row.source||ownedDefinitionHash(parent.source)!==row.sourceSha256||parent.sha256!==row.sourceSha256||parent.source.slice(row.span.start,row.span.end)!==row.original.source||ownedDefinitionHash(row.original.source)!==row.original.sha256)fail('complete original source selection differs');
-  const javascript=jsRoot+'/'+row.javascriptPath.slice(4),typescript=tsRoot+'/'+row.typescriptPath.slice(6);prepareOwnedCorePairedTypes(javascript,row.javascript.after.source,typescript,row.typescript.after.source);
+  const javascript=jsRoot+'/'+row.javascriptPath.slice(4),typescript=tsRoot+'/'+row.typescriptPath.slice(6);if(row.canonicalAbi==='registered-json-reader-definition-v1')prepareForwardJsonReaderPair(javascript,row.javascript.after.source,typescript,row.typescript.after.source);else prepareOwnedCorePairedTypes(javascript,row.javascript.after.source,typescript,row.typescript.after.source);
   put(expected,javascript,row.javascript.after.source);put(expected,typescript,row.typescript.after.source);definitions.push({identity:row.identity,name:row.name,original:{file:row.source,parentSha256:row.sourceSha256,span:row.span,sha256:row.original.sha256},javascript,typescript,packet:packet('definition_'+at,row)});
  }
  // Preserve all fields, including future reviewed diagnostics; never manufacture success.

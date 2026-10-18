@@ -7,3 +7,8 @@ Refuse optional public parameters before target issuance until exact carrier and
 ### Fixed
 
 Evolve the named-host regression explicitly for the newly selected complete JSON declaration: preserve legacy six-root byte equality, verify the expanded current named closure and strict bidirectional JSON signatures, and retain the complete reader-source CST inverse for historical comparison only. Original whole tests and deadlines remain.
+
+Package direct, genuinely checked parameterized JSON-reader definitions through
+the existing producer without removing their guards, schemas, refinement setup
+or actual TypeScript aliases. Keep complete source pairing as data only and
+retain the separate guarded reverse-admission frontier.
