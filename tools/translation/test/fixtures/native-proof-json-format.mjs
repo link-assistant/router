@@ -20,6 +20,7 @@ function exact(source,before,after,id){return exactSubstitutionRule(id,before,af
  * actual selected-mode source and complete inverse stay separate test DATA.
  */
 export function legacyProofConsumerSource(source,retain=()=>{}){
+ source=unscopedCreatorSource(source,retain);
  source=statelessProofConsumerSource(source,retain);
  if(typeof source!=='string')fail('complete source text required');
  let selected=null;for(const row of RULES)if(source.includes(row.after)&&(!selected||row.after.length>selected.after.length))selected=row;
@@ -95,4 +96,17 @@ export function restoreScopedProofConsumerFormats(input){
  const captured=ownSources(input),restored=Object.create(null);
  for(const row of SCOPED_RULES){const source=captured.value[row.path],pin=SCOPED_PROOF_JSON_FORMAT_SOURCE_PINS[row.path].after;if(source.length!==pin.utf16Units||hash(source)!==pin.sha256)fail('complete scoped consumer afterimage differs');const before=statelessProofConsumerSource(source);if(exact(before,row.before,row.after,'scoped-restore-forward')!==source)fail('whole scoped restore inverse');restored[row.path]=before;}
  captured.verify();return restored;
+}
+
+// Default creator selection is explicit format DATA, not source/owner authority.
+const DEFAULT_CREATOR_HEADER={"before":"export function createDeriveBangContext({deriveContext}={}){","after":"export function createUnscopedDeriveBangContext({deriveContext}={}){"},EXPLICIT_CREATOR_CALL={"before":" return withPrivateNativeProofCostScope(()=>createDeriveBangContext(options));","after":" return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext(options));"},DEFAULT_CREATOR_APPEND="\n// Default selection scopes only the genuine synchronous creator body.\nexport function createDeriveBangContext({deriveContext}={}){\n return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));\n}\n";
+export function unscopedCreatorSource(source,retain=()=>{}){
+ if(typeof source!=='string')fail('complete creator source text required');
+ if(!source.includes(DEFAULT_CREATOR_HEADER.after)&&!source.includes(EXPLICIT_CREATOR_CALL.after)&&!source.includes(DEFAULT_CREATOR_APPEND))return source;
+ if(source.split(DEFAULT_CREATOR_HEADER.after).length!==2||source.split(EXPLICIT_CREATOR_CALL.after).length!==2||source.split(DEFAULT_CREATOR_APPEND).length!==2||!source.endsWith(DEFAULT_CREATOR_APPEND))fail('incomplete or duplicate default creator format');
+ const withoutAppend=source.slice(0,-DEFAULT_CREATOR_APPEND.length),oldCall=exact(withoutAppend,EXPLICIT_CREATOR_CALL.after,EXPLICIT_CREATOR_CALL.before,'restore-explicit-one-scope-callee'),unscoped=exact(oldCall,DEFAULT_CREATOR_HEADER.after,DEFAULT_CREATOR_HEADER.before,'restore-original-creator-declaration');
+ const reheaded=exact(unscoped,DEFAULT_CREATOR_HEADER.before,DEFAULT_CREATOR_HEADER.after,'replay-unscoped-control-declaration'),recalled=exact(reheaded,EXPLICIT_CREATOR_CALL.before,EXPLICIT_CREATOR_CALL.after,'replay-explicit-one-scope-callee'),replayed=recalled+DEFAULT_CREATOR_APPEND;
+ if(replayed!==source)fail('complete default creator source inverse differs');
+ retain('complete-default-creator-format-and-unscoped-history',{actualSource:source,unscopedSource:unscoped,replayedSource:replayed,stages:[{phase:'language',before:unscoped,after:reheaded,rule:DEFAULT_CREATOR_HEADER},{phase:'repository',before:reheaded,after:recalled,rule:EXPLICIT_CREATOR_CALL},{phase:'repository',before:recalled,after:source,fullRootAppend:{before:recalled,after:source}}],authority:{source:false,owner:false,type:false,executable:false}});
+ return unscoped;
 }

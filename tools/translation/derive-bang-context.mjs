@@ -27,7 +27,7 @@ const routes=new Map([
   ['schemars::JsonSchema',{prove:proveSchemarsBangFootprint,assert:assertSchemarsBangFootprint}],
 ]);
 
-export function createDeriveBangContext({deriveContext}={}){
+export function createUnscopedDeriveBangContext({deriveContext}={}){
   if(!isDeriveFootprintContext(deriveContext))throw new TypeError('Bang output requires an original sealed derive context');
   if(cachedContexts.has(deriveContext))return cachedContexts.get(deriveContext);
   const original=deriveFootprintSourceContext(deriveContext),byId=new Map(),diagnostics=[],rows=[];
@@ -141,5 +141,10 @@ export function originalDeriveBangEnclosingOutputs(context,deriveContext,module,
 // stay unchanged. Closing is synchronous, including return/throw/reentrant paths.
 import {withPrivateNativeProofCostScope} from './private-native-proof-json.mjs';
 export function createScopedProofDeriveBangContext(options){
- return withPrivateNativeProofCostScope(()=>createDeriveBangContext(options));
+ return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext(options));
+}
+
+// Default selection scopes only the genuine synchronous creator body.
+export function createDeriveBangContext({deriveContext}={}){
+ return withPrivateNativeProofCostScope(()=>createUnscopedDeriveBangContext({deriveContext}));
 }
