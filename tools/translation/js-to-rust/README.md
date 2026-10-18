@@ -617,7 +617,11 @@ is_null returns bool. Missing data differs from Some(Json::Null). No trait
 permission follows from an imported name or the data-only operation table.
 
 Written operation ReturnType/Parameters domains and complete paired bodies
-remain mandatory. A checked Some tag must dominate field0 projection. Only the
+remain mandatory. Optional public parameters are refused until a complete
+carrier/payload runtime boundary is implemented; typed bigint fields alone do
+not prove u64/i64 ranges, nor do readonly unions prove accessor/Proxy absence.
+Actual reader-produced locals and their loan roots remain supported. A checked
+Some tag must dominate field0 projection. Only the
 closed Some/None constructor shape is supported; it preserves original ordinary
 JS allocation rather than claiming reconstructed Rust object identity. Generic
 property reads, unions, mutation, callbacks and loans from local owned values

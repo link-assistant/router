@@ -296,6 +296,7 @@ function checkFunction(context,path,declaration,analysis){
    type=paired?originalOwnedCoreType(context,paired.pair.typescript.path,paired.declaration.parameters[index].type,paired.analysis):originalOwnedCoreType(context,path,undefined,analysis);
   }
   if(type==='base64-result')fail('native base64 result input control is not implemented');
+  if(ownedJsonOptionalPayload(type))fail('optional public parameters require an independently checked carrier boundary');
   if(type==='text-owned')type='str';
   const identifier=param.name;
   const sourceName=bind(identifier,{type,root:['json-ref','map-ref','str','bytes-ref','base64-error-ref'].includes(type)||ownedJsonBorrowed(type)?identifier.text:null,input:true},environment);
