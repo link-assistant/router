@@ -140,3 +140,56 @@ test('native regex matches and own result slots cannot expose measurements throu
   const current=materialize(captured),tape=[];for(let row=events.first;row;row=row.next)tape.push({operation:row.operation,key:row.key,value:row.value});retain('complete-private-native-match-hook-control',{owner:owner===RegExp.prototype?'RegExp.prototype':'Array.prototype',key:String(key),value,current,tape});assert.deepEqual(current,{value:expected});assert.deepEqual(tape,[]);
  }
 });
+
+// Receiving-only counters on the complete current source; never proof authority.
+async function shortStringFixture(t,retain){
+ const folder=mkdtempSync(join(tmpdir(),'router-native-proof-short-string-'));t.after(()=>rmSync(folder,{recursive:true,force:true}));
+ const before=readFileSync(sourceURL,'utf8'),steps=[];let source=before;
+ const step=(old,next)=>{assert.equal(source.split(old).length,2);const previous=source;source=source.replace(old,()=>next);assert.equal(source.replace(next,()=>old),previous);steps.push({before:old,after:next});};
+ for(const name of ['private-frozen-json.mjs','original-json-intrinsics.mjs','original-lexing-intrinsics.mjs'])step("from './"+name+"'","from '"+new URL('../'+name,import.meta.url).href+"'");
+ step('  const special=','  receivingScans++;const special=');
+ step('apply(mapSet,quotedCosts,[value,count]);quotedEntries++;','apply(mapSet,quotedCosts,[value,count]);quotedEntries++;receivingWrites++;');
+ step('   if(selected)return apply(stringifyField.value,jsonOwner,[value]);','   if(selected){receivingNative++;return apply(stringifyField.value,jsonOwner,[value]);}');
+ step('  return fallback(value);','  receivingFallback++;return fallback(value);');
+ source+='\nlet receivingScans=0,receivingWrites=0,receivingNative=0,receivingFallback=0;export function shortStringFacts(){return {scans:receivingScans,writes:receivingWrites,native:receivingNative,fallback:receivingFallback,ready:nativeReady()};}\n';
+ const path=join(folder,'short-string.mjs');writeFileSync(path,source);assert.equal(readFileSync(path,'utf8'),source);retain('complete-short-string-counter-source',{before,source,steps,path});return {module:await import(pathToFileURL(path).href),folder};
+}
+
+test('short quotation costs are exact per-call scalar measurements with every repeated occurrence charged',async(t,retain)=>{
+ const {module}=await shortStringFixture(t,retain),serialize=module.createPrivateNativeProofJsonSerializer(),value=Array.from({length:1000},()=>({repeat:'same',key:'same'}));
+ for(let invocation=0;invocation<2;invocation++){
+  const start=module.shortStringFacts(),current=serialize(value),final=module.shortStringFacts();assert.equal(start.ready,true);assert.equal(current,json(value));assert.equal(final.scans-start.scans,3);assert.equal(final.writes-start.writes,3);assert.equal(final.native-start.native,1);retain('full-fresh-short-string-call',{invocation,value,current,start,final});
+ }
+ value[0].repeat='changed';const start=module.shortStringFacts();assert.equal(serialize(value),json(value));assert.equal(module.shortStringFacts().scans-start.scans,4);
+ for(const text of ['','"\\\x00\b\t\n\f\r','\ud800','\udc00','\ud800x\udc00','😀','\ufffd']){
+  const value=[text,text,text],start=module.shortStringFacts(),current=serialize(value),final=module.shortStringFacts();assert.equal(current,json(value));assert.equal(final.scans-start.scans,1);retain('exact-repeated-UTF16-cost',{value,current,start,final});
+ }
+ const over=Array.from({length:11000},()=> '\x00'.repeat(128)),before=module.shortStringFacts(),current=serialize(over),after=module.shortStringFacts();assert.equal(current,json(over));assert.equal(after.native,before.native);assert.equal(after.fallback-before.fallback,1);assert.equal(after.scans-before.scans,1);retain('every-memo-hit-still-charges-eight-MiB',{input:over,current,before,after});
+});
+
+test('short quotation memo limits retain exact regex fallback for long and over-quota strings',async(t,retain)=>{
+ const {module}=await shortStringFixture(t,retain),serialize=module.createPrivateNativeProofJsonSerializer(),value=Array.from({length:5000},(_,at)=>'s'+at);value.push('s0','s4095','s4096','s4096');
+ for(let invocation=0;invocation<2;invocation++){
+  const start=module.shortStringFacts(),current=serialize(value),final=module.shortStringFacts();assert.equal(current,json(value));assert.equal(final.scans-start.scans,5002);assert.equal(final.writes-start.writes,4096);assert.equal(final.native-start.native,1);retain('complete-saturation-and-fresh-reset',{invocation,value,current,start,final});
+ }
+ for(const [length,scans,writes]of [[128,1,1],[129,2,0]]){
+  const value=['x'.repeat(length),'x'.repeat(length)],start=module.shortStringFacts(),current=serialize(value),final=module.shortStringFacts();assert.equal(current,json(value));assert.equal(final.scans-start.scans,scans);assert.equal(final.writes-start.writes,writes);retain('complete-short-string-cutoff',{length,value,current,start,final});
+ }
+});
+
+test('short quotation Map qualification refuses late and cold hooks without exposing private strings or tables',async(t,retain)=>{
+ const {module,folder}=await shortStringFixture(t,retain);
+ for(const key of ['get','set']){
+  for(const accessor of [false,true]){
+   const run=factory=>{const field=descriptor(Map.prototype,key),tape=[];return {result:armed(Map.prototype,key,()=>accessor?{enumerable:field.enumerable,configurable:field.configurable,get(){tape.push({key,operation:'descriptor-get'});return field.value;}}:{...field,value:function(...args){tape.push({key,args});return apply(field.value,this,args);}},()=>factory()({key:'repeated',another:'repeated'})),tape};};
+   equal(retain,'full-late-Map-'+key+'-'+accessor,run(createPrivateFrozenJsonComposer),run(module.createPrivateNativeProofJsonSerializer));
+  }
+ }
+ const field=descriptor(globalThis,'Map'),tape=[];let row;
+ try{define(globalThis,'Map',{enumerable:field.enumerable,configurable:field.configurable,get(){tape.push('global-Map');return field.value;}});row=outcome(()=>module.createPrivateNativeProofJsonSerializer()({key:'repeated',another:'repeated'}));}finally{define(globalThis,'Map',field);}
+ assert.deepEqual(materialize(row),{value:'{"key":"repeated","another":"repeated"}'});assert.deepEqual(tape,[]);retain('unchanged-fixed-owner-global-binding-contract',{row:materialize(row),tape});
+ for(const key of ['get','set']){
+  const script=`const get=Object.getOwnPropertyDescriptor,define=Object.defineProperty,apply=Reflect.apply,json=JSON.stringify,tape=[];\nconst legacy=await import(${json(new URL('../private-frozen-json.mjs',import.meta.url).href)});\nconst owner=Map.prototype,key=${json(key)},field=get(owner,key);let candidate;try{define(owner,key,{...field,value:function(...args){tape.push(key);return apply(field.value,this,args);}});candidate=await import(${json(sourceURL.href)});}finally{define(owner,key,field);}\nconst value={first:'\\ud800',second:'\\ud800'},before=legacy.createPrivateFrozenJsonComposer()(value),current=candidate.createPrivateNativeProofJsonSerializer()(value);console.log(json({before,current,tape,sourceAuthority:false}));\n`;
+  const path=join(folder,'cold-Map-'+key+'.mjs');writeFileSync(path,script);const child=spawnSync(process.execPath,[path],{encoding:'utf8',timeout:20_000,maxBuffer:4*1024*1024});retain('complete-cold-Map-'+key,{script,path,status:child.status,signal:child.signal,stdout:child.stdout,stderr:child.stderr,error:child.error?{name:child.error.name,message:child.error.message}:null});assert.equal(child.error,undefined);assert.equal(child.status,0);const result=JSON.parse(child.stdout);assert.equal(result.before,result.current);assert.equal(result.sourceAuthority,false);
+ }
+});

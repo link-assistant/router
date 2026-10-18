@@ -10,9 +10,9 @@ import {originalBatchedLexingIntrinsicsUnchanged} from './original-lexing-intrin
 // Bootstrap remains conservative; no captured owner or native function escapes.
 const initiallyNative=originalBatchedNamespaceTraversalIntrinsicsUnchanged()&&originalBatchedLexingIntrinsicsUnchanged();
 const get=initiallyNative?Object.getOwnPropertyDescriptor:null,has=initiallyNative?Object.hasOwn:null,ownKeys=initiallyNative?Reflect.ownKeys:null,apply=initiallyNative?Reflect.apply:null,parent=initiallyNative?Object.getPrototypeOf:null;
-const objectOwner=initiallyNative?Object:null,arrayOwner=initiallyNative?Array:null,jsonOwner=initiallyNative?JSON:null,bufferOwner=initiallyNative?ArrayBuffer:null,setOwner=initiallyNative?Set:null,weakOwner=initiallyNative?WeakMap:null,typeOwner=initiallyNative?types:null;
+const objectOwner=initiallyNative?Object:null,arrayOwner=initiallyNative?Array:null,jsonOwner=initiallyNative?JSON:null,bufferOwner=initiallyNative?ArrayBuffer:null,setOwner=initiallyNative?Set:null,weakOwner=initiallyNative?WeakMap:null,mapOwner=initiallyNative?Map:null,typeOwner=initiallyNative?types:null;
 const isProxy=initiallyNative?types.isProxy:null,isArray=initiallyNative?Array.isArray:null;
-const ownersOrdinary=!!(initiallyNative&&objectOwner&&arrayOwner&&jsonOwner&&bufferOwner&&setOwner&&weakOwner&&typeOwner&&!isProxy(weakOwner)&&!isProxy(typeOwner)&&!isProxy(objectOwner)&&!isProxy(arrayOwner)&&!isProxy(jsonOwner)&&!isProxy(bufferOwner)&&!isProxy(setOwner));
+const ownersOrdinary=!!(initiallyNative&&objectOwner&&arrayOwner&&jsonOwner&&bufferOwner&&setOwner&&weakOwner&&mapOwner&&typeOwner&&!isProxy(mapOwner)&&!isProxy(weakOwner)&&!isProxy(typeOwner)&&!isProxy(objectOwner)&&!isProxy(arrayOwner)&&!isProxy(jsonOwner)&&!isProxy(bufferOwner)&&!isProxy(setOwner));
 const data=field=>field&&has(field,'value')?field.value:undefined;
 const objectPrototypeField=ownersOrdinary?get(objectOwner,'prototype'):null,arrayPrototypeField=ownersOrdinary?get(arrayOwner,'prototype'):null,setPrototypeField=ownersOrdinary?get(setOwner,'prototype'):null;
 const objectPrototype=data(objectPrototypeField),arrayPrototype=data(arrayPrototypeField),setPrototype=data(setPrototypeField),functionPrototype=ownersOrdinary?parent(function(){}):null;
@@ -21,10 +21,12 @@ const stringifyField=ownersOrdinary?get(jsonOwner,'stringify'):null,isArrayField
 const native=(field,name)=>!!(field&&has(field,'value')&&typeof field.value==='function'&&!isProxy(field.value)&&parent(field.value)===functionPrototype&&apply(textField.value,field.value,[])===`function ${name}() { [native code] }`);
 const weakPrototypeField=ownersOrdinary?get(weakOwner,'prototype'):null,weakPrototype=data(weakPrototypeField),stringPrototype=ownersOrdinary?parent(''):null,regexpPrototype=ownersOrdinary?parent(/(?:)/):null;
 const weakGetField=weakPrototype&&!isProxy(weakPrototype)?get(weakPrototype,'get'):null,weakSetField=weakPrototype&&!isProxy(weakPrototype)?get(weakPrototype,'set'):null,charCodeField=stringPrototype&&!isProxy(stringPrototype)?get(stringPrototype,'charCodeAt'):null;
+const mapPrototypeField=ownersOrdinary?get(mapOwner,'prototype'):null,mapPrototype=data(mapPrototypeField);
+const mapGetField=mapPrototype&&!isProxy(mapPrototype)?get(mapPrototype,'get'):null,mapSetField=mapPrototype&&!isProxy(mapPrototype)?get(mapPrototype,'set'):null;
 const execField=regexpPrototype&&!isProxy(regexpPrototype)?get(regexpPrototype,'exec'):null;
 const setHasField=setPrototype&&!isProxy(setPrototype)?get(setPrototype,'has'):null,setAddField=setPrototype&&!isProxy(setPrototype)?get(setPrototype,'add'):null,setDeleteField=setPrototype&&!isProxy(setPrototype)?get(setPrototype,'delete'):null;
-const qualified=!!(ownersOrdinary&&objectPrototype&&arrayPrototype&&setPrototype&&!isProxy(objectPrototype)&&!isProxy(arrayPrototype)&&!isProxy(setPrototype)&&textField&&has(textField,'value')&&native({value:get},'getOwnPropertyDescriptor')&&native({value:has},'hasOwn')&&native({value:ownKeys},'ownKeys')&&native({value:apply},'apply')&&native({value:parent},'getPrototypeOf')&&native({value:setOwner},'Set')&&native(boxedField,'isBoxedPrimitive')&&native(isViewField,'isView')&&native(stringifyField,'stringify')&&native(isArrayField,'isArray')&&native(proxyField,'isProxy')&&native(setHasField,'has')&&native(setAddField,'add')&&native(setDeleteField,'delete')&&native({value:weakOwner},'WeakMap')&&native(weakGetField,'get')&&native(weakSetField,'set')&&native(charCodeField,'charCodeAt')&&native(execField,'exec'));
-const setHas=data(setHasField),setAdd=data(setAddField),setDelete=data(setDeleteField),weakGet=data(weakGetField),weakSet=data(weakSetField),charCode=data(charCodeField),exec=data(execField);
+const qualified=!!(ownersOrdinary&&objectPrototype&&arrayPrototype&&setPrototype&&!isProxy(objectPrototype)&&!isProxy(arrayPrototype)&&!isProxy(setPrototype)&&textField&&has(textField,'value')&&native({value:get},'getOwnPropertyDescriptor')&&native({value:has},'hasOwn')&&native({value:ownKeys},'ownKeys')&&native({value:apply},'apply')&&native({value:parent},'getPrototypeOf')&&native({value:setOwner},'Set')&&native(boxedField,'isBoxedPrimitive')&&native(isViewField,'isView')&&native(stringifyField,'stringify')&&native(isArrayField,'isArray')&&native(proxyField,'isProxy')&&native(setHasField,'has')&&native(setAddField,'add')&&native(setDeleteField,'delete')&&native({value:weakOwner},'WeakMap')&&native(weakGetField,'get')&&native(weakSetField,'set')&&native(charCodeField,'charCodeAt')&&native(execField,'exec')&&native({value:mapOwner},'Map')&&native(mapGetField,'get')&&native(mapSetField,'set'));
+const setHas=data(setHasField),setAdd=data(setAddField),setDelete=data(setDeleteField),weakGet=data(weakGetField),weakSet=data(weakSetField),charCode=data(charCodeField),exec=data(execField),mapGet=data(mapGetField),mapSet=data(mapSetField);
 const CELLS=200000,DEPTH=160,UNITS=8388608;
 function sameField(actual,expected){return !!(actual&&expected&&has(actual,'value')&&has(expected,'value')&&actual.value===expected.value&&actual.writable===expected.writable&&actual.enumerable===expected.enumerable&&actual.configurable===expected.configurable);}
 function nativeReady(){
@@ -33,6 +35,7 @@ function nativeReady(){
  if(!qualified||types!==typeOwner)return false;
  if(!sameField(get(typeOwner,'isProxy'),proxyField)||!sameField(get(typeOwner,'isBoxedPrimitive'),boxedField)||!sameField(get(bufferOwner,'isView'),isViewField)||!sameField(get(jsonOwner,'stringify'),stringifyField)||!sameField(get(arrayOwner,'isArray'),isArrayField))return false;
  if(!sameField(get(objectOwner,'prototype'),objectPrototypeField)||!sameField(get(arrayOwner,'prototype'),arrayPrototypeField)||!sameField(get(setOwner,'prototype'),setPrototypeField))return false;
+ if(!sameField(get(mapOwner,'prototype'),mapPrototypeField)||!sameField(get(mapPrototype,'get'),mapGetField)||!sameField(get(mapPrototype,'set'),mapSetField))return false;
  if(parent(objectPrototype)!==null||parent(arrayPrototype)!==objectPrototype||get(objectPrototype,'toJSON')||get(arrayPrototype,'toJSON'))return false;
  if(!sameField(get(weakOwner,'prototype'),weakPrototypeField)||!sameField(get(weakPrototype,'get'),weakGetField)||!sameField(get(weakPrototype,'set'),weakSetField)||!sameField(get(stringPrototype,'charCodeAt'),charCodeField)||parent(regexpPrototype)!==objectPrototype||!sameField(get(regexpPrototype,'exec'),execField))return false;
  return sameField(get(setPrototype,'has'),setHasField)&&sameField(get(setPrototype,'add'),setAddField)&&sameField(get(setPrototype,'delete'),setDeleteField);
@@ -42,9 +45,14 @@ function withinNativeBudget(value){
  // Fresh scalar measurements only; neither this map nor a record escapes the
  // callback-free scan. Logical occurrence costs are always charged again.
  const active=new setOwner(),completed=new weakOwner();
+ // Exact short-string costs only, bounded and discarded with this scan. Every
+ // occurrence still pays its complete cost; no input/source verdict is stored.
+ const quotedCosts=new mapOwner();let quotedEntries=0;
  const charge=count=>{if(count>UNITS-units)return false;units+=count;return true;};
  function quoted(value){
   if(value.length>UNITS-units-2)return false;
+  const short=value.length<=128;
+  if(short){const known=apply(mapGet,quotedCosts,[value]);if(known!==undefined)return charge(known);}
   // Native exec scans ordinary spans without a JS call per source unit.
   // Each fresh literal owns lastIndex; no regex or match array can escape.
   const special=/["\\\u0000-\u001f\ud800-\udfff]/g;let count=value.length+2,match;
@@ -58,7 +66,9 @@ function withinNativeBudget(value){
    }else count+=5;
    if(count>UNITS-units)return false;
   }
-  return charge(count);
+  if(!charge(count))return false;
+  if(short&&quotedEntries<4096){apply(mapSet,quotedCosts,[value,count]);quotedEntries++;}
+  return true;
  }
  function visit(value,depth){
   resultHeight=0;
