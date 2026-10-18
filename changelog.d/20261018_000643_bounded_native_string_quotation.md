@@ -1,0 +1,3 @@
+### Changed
+
+- Measure primitive strings of 257 through 65,536 UTF16 units with the composer's already qualified native JSON encoder after the unchanged raw text debit and cache lookup. Every other input keeps the prior loop, bounds, cache policy and fallback. Append full source evolution to five historical receiver adapters while retaining their 42 original callbacks and deadlines; add eight independent quoting, budget, observer, Hash, concrete syntax, semantic and strict TypeScript controls. This source candidate has not been received under Node or Bun and makes no speed or deadline qualification claim.

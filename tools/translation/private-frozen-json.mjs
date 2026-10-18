@@ -178,6 +178,10 @@ export function createPrivateFrozenJsonComposer(){
   function quotedUnits(value,limit){
    if(value.length+2>limit||value.length>measureText)return -1;measureText-=value.length;let units=2;
    const saved=apply(mapGet,quotedSizes,[value]);if(saved!==undefined&&saved<=limit)return saved;
+   if(typeof value==='string'&&value.length>256&&value.length<=65536){
+    const nativeUnits=apply(compositionStringify,compositionReceiver,[value]).length;
+    return nativeUnits<=limit?nativeUnits:-1;
+   }
    for(let at=0;at<value.length;at++){
     // charCodeAt is already pinned by the fresh lexical intrinsic guard.
     const code=value.charCodeAt(at);
